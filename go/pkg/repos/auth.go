@@ -1,4 +1,4 @@
-package repositories
+package repos
 
 import (
 	"context"
@@ -38,6 +38,19 @@ func (a *Auth) Insert(ctx context.Context, email, password string) error {
 		Password: bcryptPassword,
 	}).Insert(ctx, a.db, boil.Infer()); err != nil {
 		return fmt.Errorf("auth insert: %w", err)
+	}
+
+	return nil
+}
+
+func (a *Auth) CompareEmailAndPassword(ctx context.Context, email, password string) error {
+	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, a.db)
+	if err != nil {
+		return fmt.Errorf("auth fetch: %w", err)
+	}
+
+	if err = bcrypt.CompareHashAndPassword(auth.Password, []byte(password)); err != nil {
+		return fmt.Errorf("hash and password comparision: %w", err)
 	}
 
 	return nil

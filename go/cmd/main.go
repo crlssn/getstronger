@@ -3,9 +3,10 @@ package main
 import (
 	"github.com/crlssn/getstronger/go/pkg/db"
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/go/pkg/repositories"
+	"github.com/crlssn/getstronger/go/pkg/repos"
 	"github.com/crlssn/getstronger/go/rpc/auth"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"net/http"
@@ -28,9 +29,10 @@ func options() []fx.Option {
 				}
 			},
 			db.New,
+			zap.NewNop,
 			auth.NewHandler,
 			http.NewServeMux,
-			repositories.NewAuth,
+			repos.NewAuth,
 		),
 		fx.Invoke(
 			func(mux *http.ServeMux, auth apiv1connect.AuthServiceHandler) error {
