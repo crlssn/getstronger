@@ -9,8 +9,8 @@ resource "aws_db_instance" "db" {
   engine_version = "16.4"  # PostgreSQL version 16.4
   instance_class = "db.t3.micro"  # Smallest instance type available
   db_name = "getstronger"  # Name of your database
-  username = "admin"  # Master username
-  password = "yourpassword"  # Master password
+  username = var.db_username  # Master username
+  password = var.db_password  # Master password
   parameter_group_name = "default.postgres16"  # Parameter group for PostgreSQL 16
   skip_final_snapshot = true  # Skips the final snapshot on deletion
 
