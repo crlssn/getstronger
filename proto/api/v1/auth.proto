@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package api.v1;
+
+//import "google/protobuf/timestamp.proto";
+//import "buf/validate/validate.proto";
+
+message SignupRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message SignupResponse {}
+
+service AuthService {
+  rpc Signup(SignupRequest) returns (SignupResponse) {}
+//  rpc Login(LoginRequest) returns (LoginResponse) {}
+//  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
+//  rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+}
