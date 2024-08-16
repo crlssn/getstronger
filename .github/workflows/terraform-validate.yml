@@ -18,12 +18,16 @@ jobs:
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
+        working-directory: ./infra
 
       - name: Terraform Init
         run: terraform init
+        working-directory: ./infra
 
       - name: Terraform Validate
         run: terraform validate
+        working-directory: ./infra
 
       - name: Terraform Plan
         run: terraform plan
+        working-directory: ./infra
