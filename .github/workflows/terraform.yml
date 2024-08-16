@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - workflows
 
 jobs:
   terraform:
