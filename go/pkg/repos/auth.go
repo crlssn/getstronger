@@ -55,3 +55,7 @@ func (a *Auth) CompareEmailAndPassword(ctx context.Context, email, password stri
 
 	return nil
 }
+
+func (a *Auth) FromEmail(ctx context.Context, email string) (*orm.Auth, error) {
+	return orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, a.db)
+}

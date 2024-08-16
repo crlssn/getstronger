@@ -50,13 +50,19 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(""))
 	}
 
-	tokens, err := jwt.GenerateTokens(req.Msg.Email)
+	auth, err := h.repo.FromEmail(ctx, req.Msg.Email)
+	if err != nil {
+		h.log.Error("fetch failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+	}
+
+	tokens, err := jwt.GenerateTokens(auth.ID)
 	if err != nil {
 		h.log.Error("token generation failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
 	}
 
-	h.log.Info("user logged in")
+	h.log.Info("logged in")
 	return connect.NewResponse(&v1.LoginResponse{
 		AccessToken:  tokens.Access,
 		RefreshToken: tokens.Refresh,
