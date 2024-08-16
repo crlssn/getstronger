@@ -71,7 +71,9 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 func (h *handler) RefreshToken(ctx context.Context, req *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	claims, err := jwt.ValidateToken(req.Msg.RefreshToken)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
+		h.log.Error("token validation failed", zap.Error(err), zap.String("token", req.Msg.RefreshToken))
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		//return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
 	}
 
 	tokens, err := jwt.GenerateTokens(claims.UserID)
