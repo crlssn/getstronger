@@ -1,0 +1,15 @@
+output = "pkg/orm"
+pkgname = "orm"
+wipe = true
+no-tests = true
+add-enum-types = true
+
+[psql]
+dbname = "postgres"
+host = "localhost"
+port = 5433
+user = "root"
+pass = "root"
+schema = "getstronger"
+sslmode = "disable"
+blacklist = ["schema_migrations"]
