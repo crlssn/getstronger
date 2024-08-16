@@ -6,3 +6,8 @@ run_migrations:
 	migrate -path db/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose down --all
 	migrate -path db/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
 	sqlboiler -c ./db/sqlboiler.toml psql
+
+migrate:
+	$(MAKE) run_db
+	sleep 1
+	$(MAKE) run_migrations
