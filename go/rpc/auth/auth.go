@@ -23,8 +23,8 @@ func NewHandler(repo *repositories.Auth) apiv1connect.AuthServiceHandler {
 func (h *handler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
 	if err := h.repo.Insert(ctx, req.Msg.Email, req.Msg.Password); err != nil {
 		if errors.Is(err, repositories.ErrAuthEmailExists) {
-			// DEBT: Don't leak registered emails.
-			return nil, connect.NewError(connect.CodeAlreadyExists, err)
+			// Do not leak registered emails.
+			return connect.NewResponse(&v1.SignupResponse{}), nil
 		}
 
 		return nil, connect.NewError(connect.CodeInternal, err)

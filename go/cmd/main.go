@@ -11,8 +11,6 @@ import (
 	"net/http"
 )
 
-const address = "localhost:8080"
-
 func main() {
 	fx.New(options()...).Run()
 }
@@ -22,22 +20,22 @@ func options() []fx.Option {
 		fx.Provide(
 			func() db.Options {
 				return db.Options{
-					Host:     "",
-					Port:     0,
-					User:     "",
-					Password: "",
-					Database: "",
+					Host:     "localhost",
+					Port:     5433,
+					User:     "root",
+					Password: "root",
+					Database: "postgres",
 				}
 			},
 			db.New,
+			auth.NewHandler,
 			http.NewServeMux,
 			repositories.NewAuth,
-			auth.NewHandler,
 		),
 		fx.Invoke(
 			func(mux *http.ServeMux, auth apiv1connect.AuthServiceHandler) error {
 				mux.Handle(apiv1connect.NewAuthServiceHandler(auth))
-				return http.ListenAndServe(address, h2c.NewHandler(mux, &http2.Server{}))
+				return http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{}))
 			},
 		),
 	}
