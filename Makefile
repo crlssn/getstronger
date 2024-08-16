@@ -11,3 +11,6 @@ migrate:
 	$(MAKE) run_db
 	sleep 1
 	$(MAKE) run_migrations
+
+protos:
+	buf generate

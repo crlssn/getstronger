@@ -22,7 +22,16 @@ message LoginResponse {
   string refresh_token = 2;
 }
 
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+}
+
 service AuthService {
   rpc Signup(SignupRequest) returns (SignupResponse) {}
   rpc Login(LoginRequest) returns (LoginResponse) {}
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
 }

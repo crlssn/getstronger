@@ -37,19 +37,24 @@ const (
 	AuthServiceSignupProcedure = "/api.v1.AuthService/Signup"
 	// AuthServiceLoginProcedure is the fully-qualified name of the AuthService's Login RPC.
 	AuthServiceLoginProcedure = "/api.v1.AuthService/Login"
+	// AuthServiceRefreshTokenProcedure is the fully-qualified name of the AuthService's RefreshToken
+	// RPC.
+	AuthServiceRefreshTokenProcedure = "/api.v1.AuthService/RefreshToken"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	authServiceServiceDescriptor      = v1.File_api_v1_auth_proto.Services().ByName("AuthService")
-	authServiceSignupMethodDescriptor = authServiceServiceDescriptor.Methods().ByName("Signup")
-	authServiceLoginMethodDescriptor  = authServiceServiceDescriptor.Methods().ByName("Login")
+	authServiceServiceDescriptor            = v1.File_api_v1_auth_proto.Services().ByName("AuthService")
+	authServiceSignupMethodDescriptor       = authServiceServiceDescriptor.Methods().ByName("Signup")
+	authServiceLoginMethodDescriptor        = authServiceServiceDescriptor.Methods().ByName("Login")
+	authServiceRefreshTokenMethodDescriptor = authServiceServiceDescriptor.Methods().ByName("RefreshToken")
 )
 
 // AuthServiceClient is a client for the api.v1.AuthService service.
 type AuthServiceClient interface {
 	Signup(context.Context, *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error)
 	Login(context.Context, *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error)
+	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 }
 
 // NewAuthServiceClient constructs a client for the api.v1.AuthService service. By default, it uses
@@ -74,13 +79,20 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceLoginMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		refreshToken: connect.NewClient[v1.RefreshTokenRequest, v1.RefreshTokenResponse](
+			httpClient,
+			baseURL+AuthServiceRefreshTokenProcedure,
+			connect.WithSchema(authServiceRefreshTokenMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // authServiceClient implements AuthServiceClient.
 type authServiceClient struct {
-	signup *connect.Client[v1.SignupRequest, v1.SignupResponse]
-	login  *connect.Client[v1.LoginRequest, v1.LoginResponse]
+	signup       *connect.Client[v1.SignupRequest, v1.SignupResponse]
+	login        *connect.Client[v1.LoginRequest, v1.LoginResponse]
+	refreshToken *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
 }
 
 // Signup calls api.v1.AuthService.Signup.
@@ -93,10 +105,16 @@ func (c *authServiceClient) Login(ctx context.Context, req *connect.Request[v1.L
 	return c.login.CallUnary(ctx, req)
 }
 
+// RefreshToken calls api.v1.AuthService.RefreshToken.
+func (c *authServiceClient) RefreshToken(ctx context.Context, req *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
+	return c.refreshToken.CallUnary(ctx, req)
+}
+
 // AuthServiceHandler is an implementation of the api.v1.AuthService service.
 type AuthServiceHandler interface {
 	Signup(context.Context, *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error)
 	Login(context.Context, *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error)
+	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -117,12 +135,20 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceLoginMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	authServiceRefreshTokenHandler := connect.NewUnaryHandler(
+		AuthServiceRefreshTokenProcedure,
+		svc.RefreshToken,
+		connect.WithSchema(authServiceRefreshTokenMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthServiceSignupProcedure:
 			authServiceSignupHandler.ServeHTTP(w, r)
 		case AuthServiceLoginProcedure:
 			authServiceLoginHandler.ServeHTTP(w, r)
+		case AuthServiceRefreshTokenProcedure:
+			authServiceRefreshTokenHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -138,4 +164,8 @@ func (UnimplementedAuthServiceHandler) Signup(context.Context, *connect.Request[
 
 func (UnimplementedAuthServiceHandler) Login(context.Context, *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.AuthService.Login is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.AuthService.RefreshToken is not implemented"))
 }

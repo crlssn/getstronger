@@ -46,8 +46,7 @@ func (h *handler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequ
 
 func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.Email, req.Msg.Password); err != nil {
-		h.log.Warn("invalid credentials")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(""))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid credentials"))
 	}
 
 	auth, err := h.repo.FromEmail(ctx, req.Msg.Email)
@@ -66,5 +65,23 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 	return connect.NewResponse(&v1.LoginResponse{
 		AccessToken:  tokens.Access,
 		RefreshToken: tokens.Refresh,
+	}), nil
+}
+
+func (h *handler) RefreshToken(ctx context.Context, req *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
+	claims, err := jwt.ValidateToken(req.Msg.RefreshToken)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
+	}
+
+	tokens, err := jwt.GenerateTokens(claims.UserID)
+	if err != nil {
+		h.log.Error("token generation failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+	}
+
+	h.log.Info("token refreshed")
+	return connect.NewResponse(&v1.RefreshTokenResponse{
+		AccessToken: tokens.Access,
 	}), nil
 }

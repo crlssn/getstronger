@@ -54,7 +54,7 @@ func GenerateTokens(userID string) (*Tokens, error) {
 
 var ErrInvalidToken = fmt.Errorf("invalid token")
 
-func ValidateToken(tokenString string, secret []byte) (*Claims, error) {
+func ValidateToken(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
