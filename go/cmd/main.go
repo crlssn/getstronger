@@ -3,9 +3,9 @@ package main
 import (
 	"connectrpc.com/connect"
 	"context"
-	"fmt"
 	v1 "github.com/crlssn/getstronger/go/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
+	"go.uber.org/fx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"log"
@@ -15,16 +15,20 @@ import (
 const address = "localhost:8080"
 
 func main() {
-	mux := http.NewServeMux()
-	path, handler := apiv1connect.NewAuthServiceHandler(&petStoreServiceServer{})
-	mux.Handle(path, handler)
-	fmt.Println("... Listening on", address, path)
-	if err := http.ListenAndServe(
-		address,
-		// Use h2c so we can serve HTTP/2 without TLS.
-		h2c.NewHandler(mux, &http2.Server{}),
-	); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+	fx.New(options()...).Run()
+}
+
+func options() []fx.Option {
+	return []fx.Option{
+		fx.Provide(
+			http.NewServeMux,
+		),
+		fx.Invoke(
+			func(mux *http.ServeMux) error {
+				mux.Handle(apiv1connect.NewAuthServiceHandler(&petStoreServiceServer{}))
+				return http.ListenAndServe(address, h2c.NewHandler(mux, &http2.Server{}))
+			},
+		),
 	}
 }
 
