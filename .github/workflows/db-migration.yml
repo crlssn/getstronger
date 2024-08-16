@@ -2,8 +2,8 @@ name: Database Migration
 
 on:
   push:
-#    branches:
-#      - main
+    branches:
+      - main
 
 jobs:
   terraform:
