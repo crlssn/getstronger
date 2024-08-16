@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	connectrpc.com/connect v1.16.2 // indirect
 	github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
