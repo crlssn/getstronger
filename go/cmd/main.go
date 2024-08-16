@@ -1,14 +1,13 @@
 package main
 
 import (
-	"connectrpc.com/connect"
-	"context"
-	v1 "github.com/crlssn/getstronger/go/pkg/pb/api/v1"
+	"github.com/crlssn/getstronger/go/pkg/db"
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/go/pkg/repositories"
+	"github.com/crlssn/getstronger/go/rpc/auth"
 	"go.uber.org/fx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"log"
 	"net/http"
 )
 
@@ -21,24 +20,25 @@ func main() {
 func options() []fx.Option {
 	return []fx.Option{
 		fx.Provide(
+			func() db.Options {
+				return db.Options{
+					Host:     "",
+					Port:     0,
+					User:     "",
+					Password: "",
+					Database: "",
+				}
+			},
+			db.New,
 			http.NewServeMux,
+			repositories.NewAuth,
+			auth.NewHandler,
 		),
 		fx.Invoke(
-			func(mux *http.ServeMux) error {
-				mux.Handle(apiv1connect.NewAuthServiceHandler(&petStoreServiceServer{}))
+			func(mux *http.ServeMux, auth apiv1connect.AuthServiceHandler) error {
+				mux.Handle(apiv1connect.NewAuthServiceHandler(auth))
 				return http.ListenAndServe(address, h2c.NewHandler(mux, &http2.Server{}))
 			},
 		),
 	}
-}
-
-var _ apiv1connect.AuthServiceHandler = (*petStoreServiceServer)(nil)
-
-type petStoreServiceServer struct{}
-
-func (s *petStoreServiceServer) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
-	name := req.Msg.GetEmail()
-	petType := req.Msg.GetPassword()
-	log.Printf("Got a request to create a %v named %s", petType, name)
-	return connect.NewResponse(&v1.SignupResponse{}), nil
 }

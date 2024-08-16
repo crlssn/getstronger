@@ -25,7 +25,7 @@ import (
 type Auth struct {
 	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Email     string    `boil:"email" json:"email" toml:"email" yaml:"email"`
-	Password  string    `boil:"password" json:"password" toml:"password" yaml:"password"`
+	Password  []byte    `boil:"password" json:"password" toml:"password" yaml:"password"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *authR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -85,6 +85,15 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
+type whereHelper__byte struct{ field string }
+
+func (w whereHelper__byte) EQ(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelper__byte) NEQ(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelper__byte) LT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 type whereHelpertime_Time struct{ field string }
 
 func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
@@ -109,12 +118,12 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 var AuthWhere = struct {
 	ID        whereHelperstring
 	Email     whereHelperstring
-	Password  whereHelperstring
+	Password  whereHelper__byte
 	CreatedAt whereHelpertime_Time
 }{
 	ID:        whereHelperstring{field: "\"getstronger\".\"auth\".\"id\""},
 	Email:     whereHelperstring{field: "\"getstronger\".\"auth\".\"email\""},
-	Password:  whereHelperstring{field: "\"getstronger\".\"auth\".\"password\""},
+	Password:  whereHelper__byte{field: "\"getstronger\".\"auth\".\"password\""},
 	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"auth\".\"created_at\""},
 }
 

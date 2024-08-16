@@ -2,7 +2,7 @@ CREATE TABLE getstronger.auth
 (
     id         UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     email      VARCHAR(255)     NOT NULL UNIQUE,
-    password   VARCHAR(255)     NOT NULL,
+    password   BYTEA            NOT NULL,
     created_at TIMESTAMP        NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
 );
 
