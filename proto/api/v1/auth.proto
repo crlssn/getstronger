@@ -8,10 +8,12 @@ import "buf/validate/validate.proto";
 message SignupRequest {
   string email = 1 [(buf.validate.field).string.min_len = 2];
   string password = 2;
-  google.protobuf.Timestamp created_at = 3;
 }
 
-message SignupResponse {}
+message SignupResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
 
 service AuthService {
   rpc Signup(SignupRequest) returns (SignupResponse) {}
