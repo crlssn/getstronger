@@ -7,7 +7,6 @@ import (
 	"github.com/crlssn/getstronger/go/pkg/orm"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
 )
 
 type Auth struct {
@@ -21,7 +20,6 @@ func NewAuth(db *sql.DB) *Auth {
 var ErrAuthEmailExists = fmt.Errorf("email already exists")
 
 func (a *Auth) Insert(ctx context.Context, email, password string) error {
-	email = strings.ReplaceAll(email, " ", "")
 	exists, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).Exists(ctx, a.db)
 	if err != nil {
 		return fmt.Errorf("email exists check: %w", err)

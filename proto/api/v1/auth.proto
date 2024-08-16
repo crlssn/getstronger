@@ -6,15 +6,23 @@ import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
 message SignupRequest {
-  string email = 1 [(buf.validate.field).string.min_len = 2];
+  string email = 1 [(buf.validate.field).string.email = true];
+  string password = 2 [(buf.validate.field).string.min_len = 6];
+}
+
+message SignupResponse {}
+
+message LoginRequest {
+  string email = 1;
   string password = 2;
 }
 
-message SignupResponse {
+message LoginResponse {
   string access_token = 1;
   string refresh_token = 2;
 }
 
 service AuthService {
   rpc Signup(SignupRequest) returns (SignupResponse) {}
+  rpc Login(LoginRequest) returns (LoginResponse) {}
 }
