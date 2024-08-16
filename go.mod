@@ -1,4 +1,4 @@
-module getstronger
+module github.com/crlssn/getstronger
 
 go 1.23.0
 

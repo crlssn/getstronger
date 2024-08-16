@@ -8,7 +8,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1 "getstronger/go/pkg/pb/api/v1"
+	v1 "github.com/crlssn/getstronger/go/pkg/pb/api/v1"
 	http "net/http"
 	strings "strings"
 )
