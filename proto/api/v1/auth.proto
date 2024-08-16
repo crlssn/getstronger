@@ -6,7 +6,7 @@ import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
 message SignupRequest {
-  string email = 1 [(buf.validate.field).string.min_len = 1];
+  string email = 1 [(buf.validate.field).string.min_len = 2];
   string password = 2;
   google.protobuf.Timestamp created_at = 3;
 }
