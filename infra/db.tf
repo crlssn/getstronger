@@ -16,7 +16,7 @@ resource "aws_db_instance" "db" {
 
   # VPC & Subnet group settings
   db_subnet_group_name = aws_db_subnet_group.default.name
-  publicly_accessible  = false # Set to true if you need public access
+  publicly_accessible  = true # Set to true if you need public access
 
   # Security group settings
   vpc_security_group_ids = [aws_security_group.default.id]
@@ -24,7 +24,7 @@ resource "aws_db_instance" "db" {
 
 # Optional: Create a DB subnet group if you don't have one already
 resource "aws_db_subnet_group" "default" {
-  name       = "my-db-subnet-group"
+  name       = "db-subnet-group"
   subnet_ids = ["subnet-0977de5206e697577", "subnet-040d4c7a3aaa9a63d", "subnet-0cf0e0b715c1ec540"] # Replace with your subnet IDs
 
   tags = {
@@ -34,7 +34,7 @@ resource "aws_db_subnet_group" "default" {
 
 # Optional: Create a security group if you don't have one already
 resource "aws_security_group" "default" {
-  name        = "my-db-security-group"
+  name        = "db-security-group"
   description = "Allow DB access"
   vpc_id      = "vpc-016eba058ed193190" # Replace with your VPC ID
 
@@ -42,7 +42,7 @@ resource "aws_security_group" "default" {
     from_port   = 5432 # PostgreSQL default port
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # Adjust this range as needed
+    cidr_blocks = ["0.0.0.0/0"] # Allow access from anywhere
   }
 
   egress {
