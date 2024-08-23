@@ -11,59 +11,114 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-type Tokens struct {
-	Access  string
-	Refresh string
+type Secrets struct {
+	AccessKey  []byte
+	RefreshKey []byte
 }
 
-var accessSecret = []byte("very-secret-access-key")
-var refreshSecret = []byte("very-secret-refresh-key")
+func (s Secrets) ResolveKey(tokenType TokenType) []byte {
+	switch tokenType {
+	case TokenTypeAccess:
+		return s.AccessKey
+	case TokenTypeRefresh:
+		return s.RefreshKey
+	default:
+		return nil
+	}
+}
 
-func GenerateTokens(userID string) (*Tokens, error) {
-	accessClaims := &Claims{
+type Manager struct {
+	Secrets Secrets
+}
+
+func NewManager(accessKey, refreshKey []byte) *Manager {
+	return &Manager{
+		Secrets: Secrets{
+			AccessKey:  accessKey,
+			RefreshKey: refreshKey,
+		},
+	}
+}
+
+type TokenType string
+
+func (tt TokenType) Validate() bool {
+	switch tt {
+	case TokenTypeAccess, TokenTypeRefresh:
+		return true
+	default:
+		return false
+	}
+}
+
+func (tt TokenType) String() string {
+	return string(tt)
+}
+
+const (
+	TokenTypeAccess  TokenType = "access_token"
+	TokenTypeRefresh TokenType = "refresh_token"
+)
+
+const (
+	expiryTimeAccess  = 15 * time.Minute
+	expiryTimeRefresh = 30 * 24 * time.Hour
+)
+
+func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error) {
+	if !tokenType.Validate() {
+		return "", fmt.Errorf("unexpected token type: %v", tokenType)
+	}
+
+	now := time.Now().UTC()
+
+	expiryTime := expiryTimeAccess
+	if tokenType == TokenTypeRefresh {
+		expiryTime = expiryTimeRefresh
+	}
+
+	claims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(expiryTime)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			Subject:   tokenType.String(),
 		},
 	}
 
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessTokenString, err := accessToken.SignedString(accessSecret)
-	if err != nil {
-		return nil, fmt.Errorf("access token signing: %w", err)
-	}
-
-	refreshClaims := &Claims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
-		},
-	}
-
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshTokenString, err := refreshToken.SignedString(refreshSecret)
-	if err != nil {
-		return nil, fmt.Errorf("refresh token signing: %w", err)
-	}
-
-	return &Tokens{
-		Access:  accessTokenString,
-		Refresh: refreshTokenString,
-	}, nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(m.Secrets.ResolveKey(tokenType))
 }
 
 var ErrInvalidToken = fmt.Errorf("invalid token")
 
-func ValidateToken(tokenString string) (*Claims, error) {
+func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, error) {
+	if !tokenType.Validate() {
+		return nil, fmt.Errorf("unexpected token type: %v", tokenType)
+	}
+
 	claims := new(Claims)
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-	})
+	t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		subject, err := token.Claims.GetSubject()
+		if err != nil {
+			return nil, fmt.Errorf("getting subject: %w", err)
+		}
+
+		if subject != tokenType.String() {
+			return nil, fmt.Errorf("unexpected subject: %v", subject)
+		}
+
+		return m.Secrets.ResolveKey(tokenType), nil
+	}, jwt.WithLeeway(5*time.Second))
 	if err != nil {
 		return nil, fmt.Errorf("token parsing: %w", err)
 	}
 
-	if !token.Valid {
+	if !t.Valid {
 		return nil, ErrInvalidToken
 	}
 
