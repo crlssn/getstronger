@@ -17,10 +17,11 @@ var _ apiv1connect.AuthServiceHandler = (*handler)(nil)
 type handler struct {
 	log  *zap.Logger
 	repo *repos.Auth
+	jwt  *jwt.Manager
 }
 
-func NewHandler(log *zap.Logger, repo *repos.Auth) apiv1connect.AuthServiceHandler {
-	return &handler{log, repo}
+func NewHandler(log *zap.Logger, repo *repos.Auth, jwt *jwt.Manager) apiv1connect.AuthServiceHandler {
+	return &handler{log, repo, jwt}
 }
 
 func (h *handler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
@@ -55,7 +56,13 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
 	}
 
-	tokens, err := jwt.GenerateTokens(auth.ID)
+	accessToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeAccess)
+	if err != nil {
+		h.log.Error("token generation failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+	}
+
+	refreshToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeRefresh)
 	if err != nil {
 		h.log.Error("token generation failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
@@ -63,20 +70,19 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 
 	h.log.Info("logged in")
 	return connect.NewResponse(&v1.LoginResponse{
-		AccessToken:  tokens.Access,
-		RefreshToken: tokens.Refresh,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}), nil
 }
 
 func (h *handler) RefreshToken(ctx context.Context, req *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
-	claims, err := jwt.ValidateToken(req.Msg.RefreshToken)
+	claims, err := h.jwt.ClaimsFromToken(req.Msg.RefreshToken, jwt.TokenTypeRefresh)
 	if err != nil {
-		h.log.Error("token validation failed", zap.Error(err), zap.String("token", req.Msg.RefreshToken))
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
-		//return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
+		h.log.Error("token parsing failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
 	}
 
-	tokens, err := jwt.GenerateTokens(claims.UserID)
+	accessToken, err := h.jwt.CreateToken(claims.UserID, jwt.TokenTypeAccess)
 	if err != nil {
 		h.log.Error("token generation failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
@@ -84,6 +90,6 @@ func (h *handler) RefreshToken(ctx context.Context, req *connect.Request[v1.Refr
 
 	h.log.Info("token refreshed")
 	return connect.NewResponse(&v1.RefreshTokenResponse{
-		AccessToken: tokens.Access,
+		AccessToken: accessToken,
 	}), nil
 }
