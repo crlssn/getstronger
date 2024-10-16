@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 )
 
 type Claims struct {
@@ -29,7 +30,9 @@ func (s Secrets) ResolveKey(tokenType TokenType) []byte {
 }
 
 type Manager struct {
-	Secrets Secrets
+	Log       *zap.Logger
+	Secrets   Secrets
+	Validator *jwt.Validator
 }
 
 func NewManager(accessKey, refreshKey []byte) *Manager {
@@ -124,4 +127,17 @@ func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, e
 	}
 
 	return claims, nil
+}
+
+func (m *Manager) ValidateAccessToken(token string) error {
+	claims, err := m.ClaimsFromToken(token, TokenTypeAccess)
+	if err != nil {
+		return fmt.Errorf("parsing claims: %w", err)
+	}
+
+	if err = m.Validator.Validate(claims); err != nil {
+		return fmt.Errorf("validating claims: %w", err)
+	}
+
+	return nil
 }
