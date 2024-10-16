@@ -1,21 +1,23 @@
 package main
 
 import (
+	"net/http"
+
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"google.golang.org/grpc"
+
 	"github.com/crlssn/getstronger/go/pkg/db"
+	"github.com/crlssn/getstronger/go/pkg/jwt"
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/go/pkg/repos"
 	"github.com/crlssn/getstronger/go/rpc/auth"
 	"github.com/crlssn/getstronger/go/rpc/interceptors"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"net"
-	"net/http"
 )
 
 func main() {
-	grpc.NewServer()
-
 	fx.New(options()...).Run()
 }
 
@@ -39,9 +41,12 @@ func options() []fx.Option {
 					grpc.StreamInterceptor(authInterceptor.Stream()),
 				}
 			},
-			func() (net.Listener, error) {
-				return net.Listen("tcp", ":8080")
+			func() *jwt.Manager {
+				return jwt.NewManager([]byte("access-key"), []byte("refresh-key"))
 			},
+			//func() (net.Listener, error) {
+			//	return net.Listen("tcp", ":8080")
+			//},
 			db.New,
 			zap.NewNop,
 			auth.NewHandler,
@@ -50,13 +55,13 @@ func options() []fx.Option {
 			grpc.NewServer,
 		),
 		fx.Invoke(
-			func(server *grpc.Server, listener net.Listener, handler apiv1connect.AuthServiceHandler) error {
-				return server.Serve(listener)
-			},
-			//func(mux *http.ServeMux, auth apiv1connect.AuthServiceHandler) error {
-			//	mux.Handle(apiv1connect.NewAuthServiceHandler(auth))
-			//	return http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{}))
+			//func(server *grpc.Server, listener net.Listener, handler apiv1connect.AuthServiceHandler) error {
+			//	return server.Serve(listener)
 			//},
+			func(mux *http.ServeMux, auth apiv1connect.AuthServiceHandler) error {
+				mux.Handle(apiv1connect.NewAuthServiceHandler(auth))
+				return http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{}))
+			},
 		),
 	}
 }

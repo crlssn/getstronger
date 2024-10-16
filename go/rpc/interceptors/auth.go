@@ -2,7 +2,8 @@ package interceptors
 
 import (
 	"context"
-	apiv1 "github.com/crlssn/getstronger/go/pkg/pb/api/v1"
+	"log"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -10,7 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"log"
+
+	apiv1 "github.com/crlssn/getstronger/go/pkg/pb/api/v1"
 )
 
 // AuthInterceptor is an interceptor for authenticating requests.
@@ -98,24 +100,24 @@ func validateToken(token string) bool {
 
 // getMethodDescriptor retrieves the service and method descriptors based on the full method name.
 func getMethodDescriptor(fullMethodName string) (protoreflect.ServiceDescriptor, protoreflect.MethodDescriptor) {
-	// Assume you have registered your service descriptor somewhere
-	// Replace 'MyService_ServiceDesc' with your actual service descriptor.
-	serviceDesc := apiv1.File_api_v1_auth_proto.Services()
-
-	for i := 0; i < serviceDesc.NumMethods(); i++ {
-		methodDesc := serviceDesc.Method(i)
-		if fullMethodName == "/"+serviceDesc.FullName()+"/"+string(methodDesc.Name()) {
-			return serviceDesc, methodDesc
-		}
-	}
+	//// Assume you have registered your service descriptor somewhere
+	//// Replace 'MyService_ServiceDesc' with your actual service descriptor.
+	//serviceDesc := apiv1.File_api_v1_auth_proto.Services()
+	//
+	//for i := 0; i < serviceDesc.NumMethods(); i++ {
+	//	methodDesc := serviceDesc.Method(i)
+	//	if fullMethodName == "/"+serviceDesc.FullName()+"/"+string(methodDesc.Name()) {
+	//		return serviceDesc, methodDesc
+	//	}
+	//}
 
 	return nil, nil
 }
 
-func getServiceDescriptors() grpc.ServiceDesc {
-	for _, asd := range apiv1.File_api_v1_auth_proto.Services() {
-		asd.
-	}
-
-	return apiv1.File_api_v1_auth_proto.Services().ByName("AuthService")
-}
+//func getServiceDescriptors() grpc.ServiceDesc {
+//	for _, asd := range apiv1.File_api_v1_auth_proto.Services() {
+//		//asd.
+//	}
+//
+//	return apiv1.File_api_v1_auth_proto.Services().ByName("AuthService")
+//}

@@ -1,9 +1,10 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
-	"testing"
 )
 
 func TestWireup(t *testing.T) {
