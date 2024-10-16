@@ -23,6 +23,8 @@ func main() {
 
 func options() []fx.Option {
 	return []fx.Option{
+		jwt.Module(),
+		interceptors.NewModule(),
 		fx.Provide(
 			func() db.Options {
 				return db.Options{
@@ -33,21 +35,22 @@ func options() []fx.Option {
 					Database: "postgres",
 				}
 			},
-			func(interceptors []interceptors.Interceptor) []grpc.ServerOption {
-				var opts []grpc.ServerOption
-				for _, i := range interceptors {
-					opts = append(opts, grpc.UnaryInterceptor(i.Unary()))
-					opts = append(opts, grpc.StreamInterceptor(i.Stream()))
-				}
-				return opts
-			},
-			func() *jwt.Manager {
-				return jwt.NewManager([]byte("access-key"), []byte("refresh-key"))
-			},
+			//func(interceptors []interceptors.Interceptor) []grpc.ServerOption {
+			//	var opts []grpc.ServerOption
+			//	for _, i := range interceptors {
+			//		opts = append(opts, grpc.UnaryInterceptor(i.Unary()))
+			//		opts = append(opts, grpc.StreamInterceptor(i.Stream()))
+			//	}
+			//	return opts
+			//},
+			//func() *jwt.Manager {
+			//	return jwt.NewManager([]byte("access-key"), []byte("refresh-key"))
+			//},
 			//func() (net.Listener, error) {
 			//	return net.Listen("tcp", ":8080")
 			//},
-			interceptors.NewAuthInterceptor,
+			//interceptors.NewAuthInterceptor,
+
 			db.New,
 			zap.NewNop,
 			auth.NewHandler,

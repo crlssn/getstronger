@@ -25,7 +25,7 @@ type auth struct {
 }
 
 // NewAuthInterceptor returns a new AuthInterceptor
-func NewAuthInterceptor(log *zap.Logger, jwt *jwt.Manager) Interceptor {
+func newAuthInterceptor(log *zap.Logger, jwt *jwt.Manager) Interceptor {
 	a := &auth{
 		log:     log,
 		jwt:     jwt,
