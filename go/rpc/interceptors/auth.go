@@ -26,12 +26,16 @@ type auth struct {
 
 // NewAuthInterceptor returns a new AuthInterceptor
 func NewAuthInterceptor(log *zap.Logger, jwt *jwt.Manager) Interceptor {
-	a := &auth{log: log, jwt: jwt}
-	a.init()
+	a := &auth{
+		log:     log,
+		jwt:     jwt,
+		methods: make(map[string]bool),
+	}
+	a.initMethods()
 	return a
 }
 
-func (a *auth) init() {
+func (a *auth) initMethods() {
 	fileDescriptor := apiv1.File_api_v1_auth_proto
 
 	// Iterate over the services in the file descriptor.

@@ -41,6 +41,9 @@ func NewManager(accessKey, refreshKey []byte) *Manager {
 			AccessKey:  accessKey,
 			RefreshKey: refreshKey,
 		},
+		Validator: jwt.NewValidator(
+			jwt.WithLeeway(5 * time.Second),
+		),
 	}
 }
 
