@@ -35,7 +35,5 @@ message RefreshTokenResponse {
 service AuthService {
   rpc Signup(SignupRequest) returns (SignupResponse) {}
   rpc Login(LoginRequest) returns (LoginResponse) {}
-  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
-    option (requires_auth) = true;
-  }
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
 }
