@@ -16,7 +16,7 @@ message SignupResponse {}
 
 message LoginRequest {
   string email = 1 [(buf.validate.field).string.email = true];
-  string password = 2 [(buf.validate.field).string.min_len = 6];
+  string password = 2 [(buf.validate.field).string.min_len = 1];
 }
 
 message LoginResponse {
@@ -25,7 +25,7 @@ message LoginResponse {
 }
 
 message RefreshTokenRequest {
-  string refresh_token = 1;
+  string refresh_token = 1 [(buf.validate.field).string.len = 223];
 }
 
 message RefreshTokenResponse {
