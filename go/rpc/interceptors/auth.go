@@ -2,14 +2,13 @@ package interceptors
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 
+	"connectrpc.com/connect"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	_ "google.golang.org/grpc/peer"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 
@@ -17,15 +16,13 @@ import (
 	apiv1 "github.com/crlssn/getstronger/go/pkg/pb/api/v1"
 )
 
-// AuthInterceptor is an interceptor for authenticating requests.
 type auth struct {
 	log     *zap.Logger
 	jwt     *jwt.Manager
 	methods map[string]bool
 }
 
-// NewAuthInterceptor returns a new AuthInterceptor
-func newAuth(log *zap.Logger, jwt *jwt.Manager) Interceptor {
+func NewAuth(log *zap.Logger, jwt *jwt.Manager) Interceptor {
 	a := &auth{
 		log:     log,
 		jwt:     jwt,
@@ -65,64 +62,43 @@ func (a *auth) initMethods() {
 }
 
 // Unary is the unary interceptor method for authentication.
-func (a *auth) Unary() grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		if err := a.authorize(ctx, info.FullMethod); err != nil {
-			return nil, err
+func (a *auth) Unary() connect.UnaryInterceptorFunc {
+	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(
+			ctx context.Context,
+			req connect.AnyRequest,
+		) (connect.AnyResponse, error) {
+			if err := a.authorize(req.Spec().Procedure, req.Header()); err != nil {
+				a.log.Warn("unauthenticated request", zap.Error(err))
+				return nil, connect.NewError(connect.CodeUnauthenticated, err)
+			}
+			return next(ctx, req)
 		}
-
-		return handler(ctx, req)
 	}
-}
-
-// Stream is the stream interceptor method for authentication.
-func (a *auth) Stream() grpc.StreamServerInterceptor {
-	return func(
-		srv interface{},
-		ss grpc.ServerStream,
-		info *grpc.StreamServerInfo,
-		handler grpc.StreamHandler,
-	) error {
-		if err := a.authorize(ss.Context(), info.FullMethod); err != nil {
-			return err
-		}
-
-		return handler(srv, ss)
-	}
+	return interceptor
 }
 
 // authorize checks the authorization of the request.
-func (a *auth) authorize(ctx context.Context, methodName string) error {
+func (a *auth) authorize(methodName string, header http.Header) error {
 	requiresAuth := a.methods[methodName]
 	if !requiresAuth {
 		a.log.Info("method does not require authentication", zap.String("method", methodName))
 		return nil
 	}
 
-	// Extract metadata from the incoming context.
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		a.log.Warn("missing metadata")
-		return status.Error(codes.Unauthenticated, "missing metadata")
+	authHeader := header.Get("Authorization")
+	if authHeader == "" {
+		return errors.New("authorization token is missing")
 	}
 
-	// Extract the "authorization" header.
-	authHeaders := md.Get("authorization")
-	if len(authHeaders) == 0 {
-		a.log.Warn("authorization token is missing")
-		return status.Error(codes.Unauthenticated, "authorization token is missing")
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		return errors.New("invalid authorization header format")
 	}
 
-	// Validate the token.
-	token := authHeaders[0]
+	token := strings.TrimPrefix(authHeader, bearerPrefix)
 	if err := a.jwt.ValidateAccessToken(token); err != nil {
-		a.log.Warn("invalid authorization token", zap.Error(err))
-		return status.Error(codes.Unauthenticated, "invalid authorization token")
+		return errors.New("invalid authorization token")
 	}
 
 	return nil

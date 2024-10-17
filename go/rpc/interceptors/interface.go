@@ -1,8 +1,9 @@
 package interceptors
 
-import "google.golang.org/grpc"
+import (
+	"connectrpc.com/connect"
+)
 
 type Interceptor interface {
-	Unary() grpc.UnaryServerInterceptor
-	Stream() grpc.StreamServerInterceptor
+	Unary() connect.UnaryInterceptorFunc
 }
