@@ -1,10 +1,13 @@
 package rpc
 
 import (
+	"context"
 	"net/http"
 
 	"connectrpc.com/connect"
 	"go.uber.org/fx"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/go/rpc/auth"
@@ -62,31 +65,23 @@ func newHandlers(p Handlers) []Handler {
 }
 
 func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.HandlerOption) {
-	// Create your HTTP server or router.
 	mux := http.NewServeMux()
-
-	// Register each handler.
 	for _, h := range handlers {
 		path, handler := h(options...)
 		mux.Handle(path, handler)
 	}
 
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		panic(err)
-	}
-
-	// Start the HTTP server.
-	//lc.Append(fx.Hook{
-	//	OnStart: func(_ context.Context) error {
-	//		println("Starting server")
-	//		if err := http.ListenAndServe("localhost:9876", mux); err != nil {
-	//			panic(err)
-	//		}
-	//		return nil
-	//		//return http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{}))
-	//	},
-	//	OnStop: func(_ context.Context) error {
-	//		return nil
-	//	},
-	//})
+	lc.Append(fx.Hook{
+		OnStart: func(_ context.Context) error {
+			go func() {
+				if err := http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{})); err != nil {
+					panic(err)
+				}
+			}()
+			return nil
+		},
+		OnStop: func(_ context.Context) error {
+			return nil
+		},
+	})
 }
