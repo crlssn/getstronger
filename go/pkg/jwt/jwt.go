@@ -69,7 +69,7 @@ const (
 
 const (
 	expiryTimeAccess  = 15 * time.Minute
-	expiryTimeRefresh = 30 * 24 * time.Hour
+	ExpiryTimeRefresh = 30 * 24 * time.Hour
 )
 
 func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error) {
@@ -81,7 +81,7 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 
 	expiryTime := expiryTimeAccess
 	if tokenType == TokenTypeRefresh {
-		expiryTime = expiryTimeRefresh
+		expiryTime = ExpiryTimeRefresh
 	}
 
 	claims := &Claims{
@@ -148,3 +148,7 @@ func (m *Manager) ValidateAccessToken(token string) error {
 func (m *Manager) ValidateClaims(claims *Claims) error {
 	return m.Validator.Validate(claims)
 }
+
+type contextKey string
+
+const ContextKeyRefreshToken contextKey = "refreshToken"

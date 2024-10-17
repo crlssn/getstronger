@@ -5,11 +5,13 @@ go 1.23.0
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240920164238-5a7b106cbb87.2
 	connectrpc.com/connect v1.16.2
+	connectrpc.com/cors v0.1.0
 	github.com/bufbuild/protovalidate-go v0.7.2
 	github.com/friendsofgo/errors v0.9.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.6.0
+	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.9.0
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.16.2
@@ -17,6 +19,7 @@ require (
 	go.uber.org/fx v1.22.2
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.27.0
+	golang.org/x/net v0.29.0
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
 )
@@ -39,7 +42,6 @@ require (
 	go.uber.org/dig v1.18.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
-	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect

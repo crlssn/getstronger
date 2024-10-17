@@ -13,5 +13,14 @@ plugins:
   - remote: buf.build/connectrpc/go
     out: go/pkg/pb
     opt: paths=source_relative
+  - local: protoc-gen-es
+    opt: target=ts
+    out: js/src/pb
+    include_imports: true
+  - local: protoc-gen-connect-es
+    out: js/src/pb
+    opt: target=ts
+#  - remote: buf.build/protocolbuffers/js:v3.21.4
+#    out: js/src/pb
 inputs:
   - directory: proto
