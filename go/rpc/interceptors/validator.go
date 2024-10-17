@@ -2,6 +2,7 @@ package interceptors
 
 import (
 	"context"
+	"errors"
 
 	"connectrpc.com/connect"
 	"github.com/bufbuild/protovalidate-go"
@@ -27,10 +28,17 @@ func (v *validator) Unary() connect.UnaryInterceptorFunc {
 			ctx context.Context,
 			req connect.AnyRequest,
 		) (connect.AnyResponse, error) {
-			if err := v.validator.Validate(req.(proto.Message)); err != nil {
+			msg, ok := req.Any().(proto.Message)
+			if !ok {
+				v.log.Warn("request message is not a proto.Message")
+				return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("request message is not a proto.Message"))
+			}
+
+			if err := v.validator.Validate(msg); err != nil {
 				v.log.Warn("invalid request", zap.Error(err))
 				return nil, connect.NewError(connect.CodeInvalidArgument, err)
 			}
+
 			return next(ctx, req)
 		}
 	}
