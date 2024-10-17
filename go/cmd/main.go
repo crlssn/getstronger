@@ -31,7 +31,7 @@ func options() []fx.Option {
 				}
 			},
 			db.New,
-			zap.NewNop,
+			zap.NewDevelopment,
 			repos.NewAuth,
 			grpc.NewServer,
 			protovalidate.New,
