@@ -91,6 +91,11 @@ func (h *handler) RefreshToken(ctx context.Context, req *connect.Request[v1.Refr
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
 	}
 
+	if err = h.jwt.ValidateClaims(claims); err != nil {
+		log.Error("token validation failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
+	}
+
 	accessToken, err := h.jwt.CreateToken(claims.UserID, jwt.TokenTypeAccess)
 	if err != nil {
 		log.Error("token generation failed", zap.Error(err))

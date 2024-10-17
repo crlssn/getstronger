@@ -138,9 +138,13 @@ func (m *Manager) ValidateAccessToken(token string) error {
 		return fmt.Errorf("parsing claims: %w", err)
 	}
 
-	if err = m.Validator.Validate(claims); err != nil {
+	if err = m.ValidateClaims(claims); err != nil {
 		return fmt.Errorf("validating claims: %w", err)
 	}
 
 	return nil
+}
+
+func (m *Manager) ValidateClaims(claims *Claims) error {
+	return m.Validator.Validate(claims)
 }
