@@ -10,6 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/crlssn/getstronger/go/pkg/jwt"
@@ -33,30 +34,34 @@ func NewAuth(log *zap.Logger, jwt *jwt.Manager) Interceptor {
 }
 
 func (a *auth) initMethods() {
-	fileDescriptor := apiv1.File_api_v1_auth_proto
+	fileDescriptors := []protoreflect.FileDescriptor{
+		apiv1.File_api_v1_auth_proto,
+	}
 
-	// Iterate over the services in the file descriptor.
-	services := fileDescriptor.Services()
-	for i := 0; i < services.Len(); i++ {
-		service := services.Get(i)
-		methods := service.Methods()
-		for j := 0; j < methods.Len(); j++ {
-			method := methods.Get(j)
-			requiresAuth := false
+	for _, fileDescriptor := range fileDescriptors {
+		// Iterate over the services in the file descriptor.
+		services := fileDescriptor.Services()
+		for i := 0; i < services.Len(); i++ {
+			service := services.Get(i)
+			methods := service.Methods()
+			for j := 0; j < methods.Len(); j++ {
+				method := methods.Get(j)
+				requiresAuth := false
 
-			// Access the custom options.
-			options := method.Options().(*descriptorpb.MethodOptions)
-			if proto.HasExtension(options, apiv1.E_RequiresAuth) {
-				if ext := proto.GetExtension(options, apiv1.E_RequiresAuth); ext != nil {
-					if v, ok := ext.(bool); ok {
-						requiresAuth = v
+				// Access the custom options.
+				options := method.Options().(*descriptorpb.MethodOptions)
+				if proto.HasExtension(options, apiv1.E_RequiresAuth) {
+					if ext := proto.GetExtension(options, apiv1.E_RequiresAuth); ext != nil {
+						if v, ok := ext.(bool); ok {
+							requiresAuth = v
+						}
 					}
 				}
-			}
 
-			// Build the full method name.
-			fullMethodName := fmt.Sprintf("/%s/%s", service.FullName(), method.Name())
-			a.methods[fullMethodName] = requiresAuth
+				// Build the full method name.
+				fullMethodName := fmt.Sprintf("/%s/%s", service.FullName(), method.Name())
+				a.methods[fullMethodName] = requiresAuth
+			}
 		}
 	}
 }
