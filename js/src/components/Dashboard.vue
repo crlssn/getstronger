@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref} from 'vue'
+import {computed, ref} from 'vue'
 import {
   Dialog,
   DialogPanel,
@@ -17,14 +17,16 @@ import {
   BookOpenIcon,
   HomeIcon,
   XMarkIcon,
+  FolderIcon,
 } from '@heroicons/vue/24/outline'
 import {ChevronDownIcon, MagnifyingGlassIcon} from '@heroicons/vue/20/solid'
-import {RouterView} from "vue-router";
+import {RouterView, useLink, useRoute} from "vue-router";
 
 const navigation = [
-  {name: 'Home', href: '/home', icon: HomeIcon, current: true},
-  {name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon, current: false},
-  {name: 'Exercises', href: '/exercises', icon: BookOpenIcon, current: false},
+  {name: 'Home', href: '/home', icon: HomeIcon},
+  {name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon},
+  {name: 'Exercises', href: '/exercises', icon: BookOpenIcon},
+  {name: 'Workouts', href: '/workouts', icon: FolderIcon},
 ]
 
 const userNavigation = [
@@ -33,6 +35,11 @@ const userNavigation = [
 ]
 
 const sidebarOpen = ref(false)
+
+const route = useRoute()
+
+const isActive = (basePath) => computed(() => route.path.startsWith(basePath))
+
 </script>
 
 <template>
@@ -72,10 +79,10 @@ const sidebarOpen = ref(false)
                     <li>
                       <ul role="list" class="-mx-2 space-y-1">
                         <li v-for="item in navigation" :key="item.name">
-                          <RouterLink :to="item.href"
-                                      :class="[item.current ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-700 hover:text-white', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                          <RouterLink :to="item.href" @click="sidebarOpen = false"
+                                      :class="[isActive(item.href).value ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-700 hover:text-white', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
                             <component :is="item.icon"
-                                       :class="[item.current ? 'text-white' : 'text-indigo-200 group-hover:text-white', 'h-6 w-6 shrink-0']"
+                                       :class="[isActive(item.href).value ? 'text-white' : 'text-indigo-200 group-hover:text-white', 'h-6 w-6 shrink-0']"
                                        aria-hidden="true"/>
                             {{ item.name }}
                           </RouterLink>
@@ -105,9 +112,9 @@ const sidebarOpen = ref(false)
               <ul role="list" class="-mx-2 space-y-1">
                 <li v-for="item in navigation" :key="item.name">
                   <RouterLink :to="item.href"
-                              :class="[item.current ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-700 hover:text-white', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                              :class="[isActive(item.href).value ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-700 hover:text-white', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
                     <component :is="item.icon"
-                               :class="[item.current ? 'text-white' : 'text-indigo-200 group-hover:text-white', 'h-6 w-6 shrink-0']"
+                               :class="[isActive(item.href).value ? 'text-white' : 'text-indigo-200 group-hover:text-white', 'h-6 w-6 shrink-0']"
                                aria-hidden="true"/>
                     {{ item.name }}
                   </RouterLink>
