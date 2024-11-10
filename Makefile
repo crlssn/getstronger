@@ -15,9 +15,6 @@ migrate:
 protos:
 	buf generate
 
-#keys:
-	#openssl req -x509 -newkey rsa:4096 -keyout .secrets/key.pem -out .secrets/cert.pem -days 365 -nodes
-
 generate-cert:
 	@bash -c 'openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
 	-newkey rsa:2048 -nodes -sha256 \
