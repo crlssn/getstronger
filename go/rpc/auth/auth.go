@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -35,6 +36,10 @@ func (h *handler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequ
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid email"))
 	}
 
+	if req.Msg.Password != req.Msg.PasswordConfirmation {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("passwords do not match"))
+	}
+
 	if err := h.repo.Insert(ctx, email, req.Msg.Password); err != nil {
 		if errors.Is(err, repos.ErrAuthEmailExists) {
 			log.Warn("email already exists")
@@ -45,6 +50,8 @@ func (h *handler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequ
 		log.Error("insert failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
 	}
+
+	// TODO: Send a confirmation email.
 
 	log.Info("user signed up")
 	return connect.NewResponse(&v1.SignupResponse{}), nil
@@ -75,17 +82,35 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
 	}
 
+	res := connect.NewResponse(&v1.LoginResponse{
+		AccessToken: accessToken,
+	})
+
+	cookie := &http.Cookie{
+		Name:     "refreshToken",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode, // TODO: Set to http.SameSiteStrictMode.
+		Path:     apiv1connect.AuthServiceRefreshTokenProcedure,
+		MaxAge:   int(jwt.ExpiryTimeRefresh),
+	}
+	res.Header().Set("Set-Cookie", cookie.String())
+
 	log.Info("logged in")
-	return connect.NewResponse(&v1.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}), nil
+	return res, nil
 }
 
-func (h *handler) RefreshToken(ctx context.Context, req *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
+func (h *handler) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceRefreshTokenProcedure))
 
-	claims, err := h.jwt.ClaimsFromToken(req.Msg.RefreshToken, jwt.TokenTypeRefresh)
+	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
+	if !ok {
+		log.Warn("refresh token not found")
+		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
+	}
+
+	claims, err := h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
 	if err != nil {
 		log.Error("token parsing failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid refresh token"))
@@ -102,8 +127,27 @@ func (h *handler) RefreshToken(ctx context.Context, req *connect.Request[v1.Refr
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
 	}
 
-	h.log.Info("token refreshed")
+	log.Info("token refreshed")
 	return connect.NewResponse(&v1.RefreshTokenResponse{
 		AccessToken: accessToken,
 	}), nil
+}
+
+func (h *handler) Logout(_ context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
+	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceLogoutProcedure))
+
+	res := connect.NewResponse(&v1.LogoutResponse{})
+	cookie := &http.Cookie{
+		Name:     "refreshToken",
+		Value:    "",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode, // TODO: Set to http.SameSiteStrictMode.
+		Path:     apiv1connect.AuthServiceRefreshTokenProcedure,
+		MaxAge:   -1,
+	}
+	res.Header().Set("Set-Cookie", cookie.String())
+
+	log.Info("logged out")
+	return res, nil
 }

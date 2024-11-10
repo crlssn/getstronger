@@ -30,8 +30,8 @@ func TestGenerateTokens(t *testing.T) {
 	claims, err = m.ClaimsFromToken(refreshToken, TokenTypeRefresh)
 	require.NoError(t, err)
 	require.Equal(t, userID, claims.UserID)
-	require.True(t, claims.ExpiresAt.After(now.Add(expiryTimeRefresh-time.Second)))
-	require.True(t, claims.ExpiresAt.Before(now.Add(expiryTimeRefresh+time.Second)))
+	require.True(t, claims.ExpiresAt.After(now.Add(ExpiryTimeRefresh-time.Second)))
+	require.True(t, claims.ExpiresAt.Before(now.Add(ExpiryTimeRefresh+time.Second)))
 
 	_, err = m.CreateToken(userID, "")
 	require.Error(t, err)

@@ -5,10 +5,13 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
+	connectcors "connectrpc.com/cors"
+	"github.com/rs/cors"
 	"go.uber.org/fx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
+	"github.com/crlssn/getstronger/go/pkg/jwt"
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/go/rpc/auth"
 	"github.com/crlssn/getstronger/go/rpc/interceptors"
@@ -64,17 +67,22 @@ func newHandlers(p Handlers) []Handler {
 	}
 }
 
+const (
+	certFile = "/Users/christian/Code/crlssn/getstronger/.secrets/localhost.crt"
+	keyFile  = "/Users/christian/Code/crlssn/getstronger/.secrets/localhost.key"
+)
+
 func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.HandlerOption) {
 	mux := http.NewServeMux()
 	for _, h := range handlers {
 		path, handler := h(options...)
-		mux.Handle(path, handler)
+		mux.Handle(path, CookieMiddleware(withCORS(handler)))
 	}
 
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				if err := http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{})); err != nil {
+				if err := http.ListenAndServeTLS(":1234", certFile, keyFile, h2c.NewHandler(mux, &http2.Server{})); err != nil {
 					panic(err)
 				}
 			}()
@@ -83,5 +91,28 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 		OnStop: func(_ context.Context) error {
 			return nil
 		},
+	})
+}
+
+func withCORS(h http.Handler) http.Handler {
+	middleware := cors.New(cors.Options{
+		AllowedOrigins:   []string{"https://localhost:5173"},
+		AllowedMethods:   connectcors.AllowedMethods(),
+		AllowedHeaders:   connectcors.AllowedHeaders(),
+		ExposedHeaders:   connectcors.ExposedHeaders(),
+		AllowCredentials: true,
+	})
+	return middleware.Handler(h)
+}
+
+func CookieMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("refreshToken")
+		if err == nil {
+			ctx := context.WithValue(r.Context(), jwt.ContextKeyRefreshToken, cookie.Value)
+			r = r.WithContext(ctx)
+		}
+
+		h.ServeHTTP(w, r)
 	})
 }
