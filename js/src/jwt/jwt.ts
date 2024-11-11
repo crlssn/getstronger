@@ -1,12 +1,25 @@
-import {Auth} from "@/clients/clients";
+import {AuthClient} from "@/clients/clients";
 import {RefreshTokenRequest} from "@/pb/api/v1/auth_pb";
 import {useAuthStore} from "@/stores/auth";
+import {Code, ConnectError} from "@connectrpc/connect";
+import router from "@/router/router";
 
-export async function RefreshAccessToken(): Promise<void> {
-  const authStore = useAuthStore();
-  const response = await Auth.refreshToken(new RefreshTokenRequest());
-  authStore.setAccessToken(response.accessToken);
-  console.log('refreshed access token');
+export async function RefreshAccessTokenOrLogout(): Promise<void> {
+  try {
+    const authStore = useAuthStore();
+    const response = await AuthClient.refreshToken(new RefreshTokenRequest());
+    authStore.setAccessToken(response.accessToken);
+    console.log('refreshed access token');
+  } catch (error) {
+    if (error instanceof ConnectError) {
+      if (error.code === Code.Unauthenticated) {
+        console.warn('user unauthenticated: logging out');
+        return router.push('/logout')
+      }
+    }
+    console.log('failed to refresh access token:', error);
+    throw error;
+  }
 }
 
 export function ScheduleTokenRefresh(): number {
@@ -16,9 +29,9 @@ export function ScheduleTokenRefresh(): number {
   return setInterval(async () => {
     try {
       console.log('refreshing access token');
-      await RefreshAccessToken();
+      await RefreshAccessTokenOrLogout();
     } catch (error) {
-      console.error('Failed to refresh token:', error);
+      console.error('failed to refresh token:', error);
     }
   }, interval);
 }

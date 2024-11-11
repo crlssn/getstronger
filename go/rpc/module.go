@@ -13,8 +13,8 @@ import (
 
 	"github.com/crlssn/getstronger/go/pkg/jwt"
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/go/rpc/auth"
 	"github.com/crlssn/getstronger/go/rpc/interceptors"
+	"github.com/crlssn/getstronger/go/rpc/v1"
 )
 
 type Handler func(opts ...connect.HandlerOption) (string, http.Handler)
@@ -37,7 +37,8 @@ func NewModule() fx.Option {
 				fx.ParamTags(fxGroupInterceptors),
 			),
 			newHandlers,
-			auth.NewHandler,
+			v1.NewAuthHandler,
+			v1.NewExerciseHandler,
 		),
 		fx.Invoke(
 			registerHandlers,
@@ -56,13 +57,17 @@ func newInterceptors(interceptors []interceptors.Interceptor) []connect.HandlerO
 type Handlers struct {
 	fx.In
 
-	Auth apiv1connect.AuthServiceHandler
+	Auth     apiv1connect.AuthServiceHandler
+	Exercise apiv1connect.ExerciseServiceHandler
 }
 
 func newHandlers(p Handlers) []Handler {
 	return []Handler{
 		func(options ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewAuthServiceHandler(p.Auth, options...)
+		},
+		func(options ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewExerciseServiceHandler(p.Exercise, options...)
 		},
 	}
 }
@@ -96,9 +101,21 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 
 func withCORS(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://localhost:5173"},
-		AllowedMethods:   connectcors.AllowedMethods(),
-		AllowedHeaders:   connectcors.AllowedHeaders(),
+		AllowedOrigins: []string{"https://localhost:5173"},
+		AllowedMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodOptions,
+		},
+		AllowedHeaders: []string{
+			"Content-Type",             // for all protocols
+			"Connect-Protocol-Version", // for Connect
+			"Connect-Timeout-Ms",       // for Connect
+			"Grpc-Timeout",             // for gRPC-web
+			"X-Grpc-Web",               // for gRPC-web
+			"X-User-Agent",             // for all protocols
+			"Authorization",            // for all protocols
+		},
 		ExposedHeaders:   connectcors.ExposedHeaders(),
 		AllowCredentials: true,
 	})

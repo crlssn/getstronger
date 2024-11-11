@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+
+import "buf/validate/validate.proto";
+
+service ExerciseService {
+  rpc Create(CreateExerciseRequest) returns (CreateExerciseResponse) {
+    option (auth) = true;
+  }
+  rpc Get(GetExerciseRequest) returns (GetExerciseResponse) {
+    option (auth) = true;
+  }
+  rpc Update(UpdateExerciseRequest) returns (UpdateExerciseResponse) {
+    option (auth) = true;
+  }
+  rpc Delete(DeleteExerciseRequest) returns (DeleteExerciseResponse) {
+    option (auth) = true;
+  }
+  rpc List(ListExercisesRequest) returns (ListExercisesResponse) {
+    option (auth) = true;
+  }
+}
+
+message CreateExerciseRequest {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string label = 2;
+  RestBetweenSets rest_between_sets = 3;
+}
+message CreateExerciseResponse {
+  string id = 1;
+}
+
+message GetExerciseRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetExerciseResponse {
+  Exercise exercise = 1;
+}
+
+message UpdateExerciseRequest {
+  Exercise exercise = 1 [(buf.validate.field).required = true];
+  google.protobuf.FieldMask update_mask = 2;
+}
+message UpdateExerciseResponse {
+  Exercise exercise = 1;
+}
+
+message DeleteExerciseRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeleteExerciseResponse {}
+
+message ListExercisesRequest {
+  string name = 1;
+  bytes page_token = 2;
+}
+message ListExercisesResponse {
+  repeated Exercise exercises = 1;
+  bytes next_page_token = 2;
+}
+
+message Exercise {
+  string id = 1;
+  string name = 2;
+  string label = 3;
+  RestBetweenSets rest_between_sets = 4;
+}
+
+message RestBetweenSets {
+  int32 seconds = 1 [(buf.validate.field).int32.gt = 0];
+}
+

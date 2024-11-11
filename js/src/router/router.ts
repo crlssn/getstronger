@@ -1,11 +1,14 @@
 import {createRouter, createWebHistory, type RouteLocationNormalized} from 'vue-router'
 import HomeView from '@/views/Home.vue'
-import LoginView from '@/views/Login.vue'
-import Signup from "@/views/Signup.vue";
+import LoginView from '@/views/Auth/Login.vue'
+import Signup from "@/views/Auth/Signup.vue";
 import NotFound from "@/views/NotFound.vue";
 import {useAuthStore} from '@/stores/auth';
-import {Auth} from "@/clients/clients";
+import {AuthClient} from "@/clients/clients";
 import {LogoutRequest} from "@/pb/api/v1/auth_pb";
+import CreateExercise from "@/views/Exercises/CreateExercise.vue";
+import ListExercises from "@/views/Exercises/ListExercises.vue";
+import UpdateExercise from "@/views/Exercises/UpdateExercise.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +17,24 @@ const router = createRouter({
       path: '/home',
       name: 'home',
       component: HomeView,
+      beforeEnter: [auth],
+    },
+    {
+      path: '/exercises',
+      name: 'exercises',
+      component: ListExercises,
+      beforeEnter: [auth],
+    },
+    {
+      path: '/exercises/create',
+      name: 'create-exercise',
+      component: CreateExercise,
+      beforeEnter: [auth],
+    },
+    {
+      path: '/exercises/:id/edit',
+      name: 'update-exercise',
+      component: UpdateExercise,
       beforeEnter: [auth],
     },
     {
@@ -42,7 +63,7 @@ const router = createRouter({
 })
 
 async function logout() {
-  await Auth.logout(new LogoutRequest())
+  await AuthClient.logout(new LogoutRequest())
   const authStore = useAuthStore();
   authStore.logout();
   return {

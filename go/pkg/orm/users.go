@@ -24,8 +24,8 @@ import (
 // User is an object representing the database table.
 type User struct {
 	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	AuthID    string    `boil:"auth_id" json:"auth_id" toml:"auth_id" yaml:"auth_id"`
-	Name      string    `boil:"name" json:"name" toml:"name" yaml:"name"`
+	FirstName string    `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
+	LastName  string    `boil:"last_name" json:"last_name" toml:"last_name" yaml:"last_name"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -34,25 +34,25 @@ type User struct {
 
 var UserColumns = struct {
 	ID        string
-	AuthID    string
-	Name      string
+	FirstName string
+	LastName  string
 	CreatedAt string
 }{
 	ID:        "id",
-	AuthID:    "auth_id",
-	Name:      "name",
+	FirstName: "first_name",
+	LastName:  "last_name",
 	CreatedAt: "created_at",
 }
 
 var UserTableColumns = struct {
 	ID        string
-	AuthID    string
-	Name      string
+	FirstName string
+	LastName  string
 	CreatedAt string
 }{
 	ID:        "users.id",
-	AuthID:    "users.auth_id",
-	Name:      "users.name",
+	FirstName: "users.first_name",
+	LastName:  "users.last_name",
 	CreatedAt: "users.created_at",
 }
 
@@ -60,24 +60,24 @@ var UserTableColumns = struct {
 
 var UserWhere = struct {
 	ID        whereHelperstring
-	AuthID    whereHelperstring
-	Name      whereHelperstring
+	FirstName whereHelperstring
+	LastName  whereHelperstring
 	CreatedAt whereHelpertime_Time
 }{
 	ID:        whereHelperstring{field: "\"getstronger\".\"users\".\"id\""},
-	AuthID:    whereHelperstring{field: "\"getstronger\".\"users\".\"auth_id\""},
-	Name:      whereHelperstring{field: "\"getstronger\".\"users\".\"name\""},
+	FirstName: whereHelperstring{field: "\"getstronger\".\"users\".\"first_name\""},
+	LastName:  whereHelperstring{field: "\"getstronger\".\"users\".\"last_name\""},
 	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"users\".\"created_at\""},
 }
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-	Auth      string
+	IDAuth    string
 	Exercises string
 	Routines  string
 	Workouts  string
 }{
-	Auth:      "Auth",
+	IDAuth:    "IDAuth",
 	Exercises: "Exercises",
 	Routines:  "Routines",
 	Workouts:  "Workouts",
@@ -85,7 +85,7 @@ var UserRels = struct {
 
 // userR is where relationships are stored.
 type userR struct {
-	Auth      *Auth         `boil:"Auth" json:"Auth" toml:"Auth" yaml:"Auth"`
+	IDAuth    *Auth         `boil:"IDAuth" json:"IDAuth" toml:"IDAuth" yaml:"IDAuth"`
 	Exercises ExerciseSlice `boil:"Exercises" json:"Exercises" toml:"Exercises" yaml:"Exercises"`
 	Routines  RoutineSlice  `boil:"Routines" json:"Routines" toml:"Routines" yaml:"Routines"`
 	Workouts  WorkoutSlice  `boil:"Workouts" json:"Workouts" toml:"Workouts" yaml:"Workouts"`
@@ -96,11 +96,11 @@ func (*userR) NewStruct() *userR {
 	return &userR{}
 }
 
-func (r *userR) GetAuth() *Auth {
+func (r *userR) GetIDAuth() *Auth {
 	if r == nil {
 		return nil
 	}
-	return r.Auth
+	return r.IDAuth
 }
 
 func (r *userR) GetExercises() ExerciseSlice {
@@ -128,9 +128,9 @@ func (r *userR) GetWorkouts() WorkoutSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "auth_id", "name", "created_at"}
-	userColumnsWithoutDefault = []string{"auth_id", "name"}
-	userColumnsWithDefault    = []string{"id", "created_at"}
+	userAllColumns            = []string{"id", "first_name", "last_name", "created_at"}
+	userColumnsWithoutDefault = []string{"id", "first_name", "last_name"}
+	userColumnsWithDefault    = []string{"created_at"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )
@@ -440,10 +440,10 @@ func (q userQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
-// Auth pointed to by the foreign key.
-func (o *User) Auth(mods ...qm.QueryMod) authQuery {
+// IDAuth pointed to by the foreign key.
+func (o *User) IDAuth(mods ...qm.QueryMod) authQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.AuthID),
+		qm.Where("\"id\" = ?", o.ID),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -493,9 +493,9 @@ func (o *User) Workouts(mods ...qm.QueryMod) workoutQuery {
 	return Workouts(queryMods...)
 }
 
-// LoadAuth allows an eager lookup of values, cached into the
+// LoadIDAuth allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (userL) LoadAuth(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+func (userL) LoadIDAuth(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
 	var slice []*User
 	var object *User
 
@@ -526,7 +526,7 @@ func (userL) LoadAuth(ctx context.Context, e boil.ContextExecutor, singular bool
 		if object.R == nil {
 			object.R = &userR{}
 		}
-		args[object.AuthID] = struct{}{}
+		args[object.ID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -534,7 +534,7 @@ func (userL) LoadAuth(ctx context.Context, e boil.ContextExecutor, singular bool
 				obj.R = &userR{}
 			}
 
-			args[obj.AuthID] = struct{}{}
+			args[obj.ID] = struct{}{}
 
 		}
 	}
@@ -589,22 +589,22 @@ func (userL) LoadAuth(ctx context.Context, e boil.ContextExecutor, singular bool
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.Auth = foreign
+		object.R.IDAuth = foreign
 		if foreign.R == nil {
 			foreign.R = &authR{}
 		}
-		foreign.R.Users = append(foreign.R.Users, object)
+		foreign.R.IDUser = object
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.AuthID == foreign.ID {
-				local.R.Auth = foreign
+			if local.ID == foreign.ID {
+				local.R.IDAuth = foreign
 				if foreign.R == nil {
 					foreign.R = &authR{}
 				}
-				foreign.R.Users = append(foreign.R.Users, local)
+				foreign.R.IDUser = local
 				break
 			}
 		}
@@ -952,10 +952,10 @@ func (userL) LoadWorkouts(ctx context.Context, e boil.ContextExecutor, singular 
 	return nil
 }
 
-// SetAuth of the user to the related item.
-// Sets o.R.Auth to related.
-// Adds o to related.R.Users.
-func (o *User) SetAuth(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Auth) error {
+// SetIDAuth of the user to the related item.
+// Sets o.R.IDAuth to related.
+// Adds o to related.R.IDUser.
+func (o *User) SetIDAuth(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Auth) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -965,7 +965,7 @@ func (o *User) SetAuth(ctx context.Context, exec boil.ContextExecutor, insert bo
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"getstronger\".\"users\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"auth_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"id"}),
 		strmangle.WhereClause("\"", "\"", 2, userPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -979,21 +979,21 @@ func (o *User) SetAuth(ctx context.Context, exec boil.ContextExecutor, insert bo
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.AuthID = related.ID
+	o.ID = related.ID
 	if o.R == nil {
 		o.R = &userR{
-			Auth: related,
+			IDAuth: related,
 		}
 	} else {
-		o.R.Auth = related
+		o.R.IDAuth = related
 	}
 
 	if related.R == nil {
 		related.R = &authR{
-			Users: UserSlice{o},
+			IDUser: o,
 		}
 	} else {
-		related.R.Users = append(related.R.Users, o)
+		related.R.IDUser = o
 	}
 
 	return nil
