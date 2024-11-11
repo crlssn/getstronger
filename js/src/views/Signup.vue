@@ -14,14 +14,11 @@ const requestError = ref(null);
 const router = useRouter()
 
 const signup = async () => {
-  console.log('signup')
-
   const request = new SignupRequest()
   request.email = email.value
   request.password = password.value
   request.passwordConfirmation = passwordConfirmation.value
 
-  console.log('request', request)
   try {
     requestError.value = null;
     await Auth.signup(request);

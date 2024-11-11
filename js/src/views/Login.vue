@@ -2,7 +2,7 @@
 import {LoginRequest} from "@/pb/api/v1/auth_pb";
 import {Auth} from "@/clients/clients";
 import {ref} from 'vue'
-import {RouterLink} from 'vue-router'
+import {RouterLink, useRoute} from 'vue-router'
 import {ConnectError} from "@connectrpc/connect";
 import {useAuthStore} from "@/stores/auth";
 import router from "@/router/router";
@@ -42,6 +42,9 @@ const login = async () => {
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+      <div v-if="useRoute().query.success === null" class="bg-green-200 rounded-md py-3 px-5 mb-2 text-sm/6 text-green-800" role="alert">
+        You have successfully signed up. Please login.
+      </div>
       <div v-if="resError" class="bg-red-200 rounded-md py-3 px-5 mb-2 text-sm/6 text-red-800" role="alert">{{
           resError
         }}
