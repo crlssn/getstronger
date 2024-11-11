@@ -82,6 +82,11 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
 	}
 
+	if err = h.repo.UpdateRefreshToken(ctx, auth.ID, refreshToken); err != nil {
+		log.Error("refresh token upsert failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+	}
+
 	res := connect.NewResponse(&v1.LoginResponse{
 		AccessToken: accessToken,
 	})
@@ -92,7 +97,7 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode, // TODO: Set to http.SameSiteStrictMode.
-		Path:     apiv1connect.AuthServiceRefreshTokenProcedure,
+		Path:     "/api.v1.AuthService",
 		MaxAge:   int(jwt.ExpiryTimeRefresh),
 	}
 	res.Header().Set("Set-Cookie", cookie.String())
@@ -133,8 +138,19 @@ func (h *handler) RefreshToken(ctx context.Context, _ *connect.Request[v1.Refres
 	}), nil
 }
 
-func (h *handler) Logout(_ context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
+func (h *handler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceLogoutProcedure))
+
+	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
+	if !ok {
+		log.Warn("refresh token not found")
+		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
+	}
+
+	if err := h.repo.DeleteRefreshToken(ctx, refreshToken); err != nil {
+		log.Error("refresh token deletion failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+	}
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
 	cookie := &http.Cookie{
@@ -143,7 +159,7 @@ func (h *handler) Logout(_ context.Context, _ *connect.Request[v1.LogoutRequest]
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode, // TODO: Set to http.SameSiteStrictMode.
-		Path:     apiv1connect.AuthServiceRefreshTokenProcedure,
+		Path:     "/api.v1.AuthService",
 		MaxAge:   -1,
 	}
 	res.Header().Set("Set-Cookie", cookie.String())

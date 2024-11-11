@@ -4,9 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/crlssn/getstronger/go/pkg/orm"
+
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/crlssn/getstronger/go/pkg/orm"
 )
 
 type Auth struct {
@@ -58,4 +61,15 @@ func (a *Auth) CompareEmailAndPassword(ctx context.Context, email, password stri
 
 func (a *Auth) FromEmail(ctx context.Context, email string) (*orm.Auth, error) {
 	return orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, a.db)
+}
+
+func (a *Auth) UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error {
+	auth := &orm.Auth{ID: authID, RefreshToken: null.StringFrom(refreshToken)}
+	_, err := auth.Update(ctx, a.db, boil.Whitelist(orm.AuthColumns.RefreshToken))
+	return err
+}
+
+func (a *Auth) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
+	_, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).UpdateAll(ctx, a.db, orm.M{orm.AuthColumns.RefreshToken: nil})
+	return err
 }

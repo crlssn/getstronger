@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,37 +24,42 @@ import (
 
 // Auth is an object representing the database table.
 type Auth struct {
-	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Email     string    `boil:"email" json:"email" toml:"email" yaml:"email"`
-	Password  []byte    `boil:"password" json:"password" toml:"password" yaml:"password"`
-	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID           string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Email        string      `boil:"email" json:"email" toml:"email" yaml:"email"`
+	Password     []byte      `boil:"password" json:"password" toml:"password" yaml:"password"`
+	RefreshToken null.String `boil:"refresh_token" json:"refresh_token,omitempty" toml:"refresh_token" yaml:"refresh_token,omitempty"`
+	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *authR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L authL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AuthColumns = struct {
-	ID        string
-	Email     string
-	Password  string
-	CreatedAt string
+	ID           string
+	Email        string
+	Password     string
+	RefreshToken string
+	CreatedAt    string
 }{
-	ID:        "id",
-	Email:     "email",
-	Password:  "password",
-	CreatedAt: "created_at",
+	ID:           "id",
+	Email:        "email",
+	Password:     "password",
+	RefreshToken: "refresh_token",
+	CreatedAt:    "created_at",
 }
 
 var AuthTableColumns = struct {
-	ID        string
-	Email     string
-	Password  string
-	CreatedAt string
+	ID           string
+	Email        string
+	Password     string
+	RefreshToken string
+	CreatedAt    string
 }{
-	ID:        "auth.id",
-	Email:     "auth.email",
-	Password:  "auth.password",
-	CreatedAt: "auth.created_at",
+	ID:           "auth.id",
+	Email:        "auth.email",
+	Password:     "auth.password",
+	RefreshToken: "auth.refresh_token",
+	CreatedAt:    "auth.created_at",
 }
 
 // Generated where
@@ -94,6 +100,56 @@ func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.f
 func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
 func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_String) LIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" LIKE ?", x)
+}
+func (w whereHelpernull_String) NLIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT LIKE ?", x)
+}
+func (w whereHelpernull_String) ILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" ILIKE ?", x)
+}
+func (w whereHelpernull_String) NILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT ILIKE ?", x)
+}
+func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 type whereHelpertime_Time struct{ field string }
 
 func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
@@ -116,15 +172,17 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 }
 
 var AuthWhere = struct {
-	ID        whereHelperstring
-	Email     whereHelperstring
-	Password  whereHelper__byte
-	CreatedAt whereHelpertime_Time
+	ID           whereHelperstring
+	Email        whereHelperstring
+	Password     whereHelper__byte
+	RefreshToken whereHelpernull_String
+	CreatedAt    whereHelpertime_Time
 }{
-	ID:        whereHelperstring{field: "\"getstronger\".\"auth\".\"id\""},
-	Email:     whereHelperstring{field: "\"getstronger\".\"auth\".\"email\""},
-	Password:  whereHelper__byte{field: "\"getstronger\".\"auth\".\"password\""},
-	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"auth\".\"created_at\""},
+	ID:           whereHelperstring{field: "\"getstronger\".\"auth\".\"id\""},
+	Email:        whereHelperstring{field: "\"getstronger\".\"auth\".\"email\""},
+	Password:     whereHelper__byte{field: "\"getstronger\".\"auth\".\"password\""},
+	RefreshToken: whereHelpernull_String{field: "\"getstronger\".\"auth\".\"refresh_token\""},
+	CreatedAt:    whereHelpertime_Time{field: "\"getstronger\".\"auth\".\"created_at\""},
 }
 
 // AuthRels is where relationship names are stored.
@@ -155,9 +213,9 @@ func (r *authR) GetUsers() UserSlice {
 type authL struct{}
 
 var (
-	authAllColumns            = []string{"id", "email", "password", "created_at"}
+	authAllColumns            = []string{"id", "email", "password", "refresh_token", "created_at"}
 	authColumnsWithoutDefault = []string{"email", "password"}
-	authColumnsWithDefault    = []string{"id", "created_at"}
+	authColumnsWithDefault    = []string{"id", "refresh_token", "created_at"}
 	authPrimaryKeyColumns     = []string{"id"}
 	authGeneratedColumns      = []string{}
 )
