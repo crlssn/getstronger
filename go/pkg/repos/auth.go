@@ -73,3 +73,7 @@ func (a *Auth) DeleteRefreshToken(ctx context.Context, refreshToken string) erro
 	_, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).UpdateAll(ctx, a.db, orm.M{orm.AuthColumns.RefreshToken: nil})
 	return err
 }
+
+func (a *Auth) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
+	return orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, a.db)
+}

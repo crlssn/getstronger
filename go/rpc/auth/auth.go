@@ -111,8 +111,18 @@ func (h *handler) RefreshToken(ctx context.Context, _ *connect.Request[v1.Refres
 
 	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
 	if !ok {
-		log.Warn("refresh token not found")
+		log.Warn("refresh token not provided")
 		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
+	}
+
+	exists, err := h.repo.RefreshTokenExists(ctx, refreshToken)
+	if err != nil {
+		log.Error("refresh token check failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+	}
+	if !exists {
+		log.Warn("refresh token not found")
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("refresh token not found"))
 	}
 
 	claims, err := h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
