@@ -2,37 +2,8 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/options.proto";
-
 import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
-
-message SignupRequest {
-  string email = 1 [(buf.validate.field).string.email = true];
-  string password = 2 [(buf.validate.field).string.min_len = 6];
-  string password_confirmation = 3;
-}
-
-message SignupResponse {}
-
-message LoginRequest {
-  string email = 1 [(buf.validate.field).string.email = true];
-  string password = 2 [(buf.validate.field).string.min_len = 1];
-}
-
-message LoginResponse {
-  string access_token = 1;
-}
-
-// The refresh token is sent as a cookie.
-message RefreshTokenRequest {}
-
-message RefreshTokenResponse {
-  string access_token = 1;
-}
-
-message LogoutRequest {}
-message LogoutResponse {}
 
 service AuthService {
   rpc Signup(SignupRequest) returns (SignupResponse) {}
@@ -40,3 +11,28 @@ service AuthService {
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
 }
+
+message SignupRequest {
+  string email = 1 [(buf.validate.field).string.email = true];
+  string password = 2 [(buf.validate.field).string.min_len = 6];
+  string password_confirmation = 3;
+  string first_name = 4 [(buf.validate.field).string.min_len = 1];
+  string last_name = 5 [(buf.validate.field).string.min_len = 1];
+}
+message SignupResponse {}
+
+message LoginRequest {
+  string email = 1 [(buf.validate.field).string.email = true];
+  string password = 2 [(buf.validate.field).string.min_len = 1];
+}
+message LoginResponse {
+  string access_token = 1;
+}
+
+message RefreshTokenRequest {}
+message RefreshTokenResponse {
+  string access_token = 1;
+}
+
+message LogoutRequest {}
+message LogoutResponse {}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/crlssn/getstronger/go/pkg/db"
 	"github.com/crlssn/getstronger/go/pkg/jwt"
-	"github.com/crlssn/getstronger/go/pkg/repos"
+	"github.com/crlssn/getstronger/go/pkg/repo"
 	"github.com/crlssn/getstronger/go/rpc"
 )
 
@@ -32,7 +32,7 @@ func options() []fx.Option {
 			},
 			db.New,
 			zap.NewDevelopment,
-			repos.NewAuth,
+			repo.New,
 			grpc.NewServer,
 			protovalidate.New,
 		),

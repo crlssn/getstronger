@@ -1,4 +1,4 @@
-package auth
+package v1
 
 import (
 	"context"
@@ -12,43 +12,55 @@ import (
 	"github.com/crlssn/getstronger/go/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/go/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/go/pkg/repos"
+	"github.com/crlssn/getstronger/go/pkg/repo"
 	"github.com/crlssn/getstronger/go/pkg/xzap"
 )
 
-var _ apiv1connect.AuthServiceHandler = (*handler)(nil)
+var _ apiv1connect.AuthServiceHandler = (*auth)(nil)
 
-type handler struct {
+type auth struct {
 	log  *zap.Logger
-	repo *repos.Auth
+	repo *repo.Repo
 	jwt  *jwt.Manager
 }
 
-func NewHandler(log *zap.Logger, repo *repos.Auth, jwt *jwt.Manager) apiv1connect.AuthServiceHandler {
-	return &handler{log, repo, jwt}
+func NewAuthHandler(log *zap.Logger, repo *repo.Repo, jwt *jwt.Manager) apiv1connect.AuthServiceHandler {
+	return &auth{log, repo, jwt}
 }
 
-func (h *handler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
+func (h *auth) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceSignupProcedure))
 
 	email := strings.ReplaceAll(req.Msg.Email, " ", "")
 	if !strings.Contains(email, "@") {
+		log.Warn("invalid email")
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid email"))
 	}
 
 	if req.Msg.Password != req.Msg.PasswordConfirmation {
+		log.Warn("passwords do not match")
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("passwords do not match"))
 	}
 
-	if err := h.repo.Insert(ctx, email, req.Msg.Password); err != nil {
-		if errors.Is(err, repos.ErrAuthEmailExists) {
-			log.Warn("email already exists")
-			// Do not leak registered emails.
-			return connect.NewResponse(&v1.SignupResponse{}), nil
+	if err := h.repo.NewTx(ctx, func(r *repo.Repo) error {
+		auth, err := r.CreateAuth(ctx, email, req.Msg.Password)
+		if err != nil {
+			log.Error("create auth", zap.Error(err))
+			return connect.NewError(connect.CodeInternal, errors.New(""))
 		}
 
-		log.Error("insert failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+		if err = r.CreateUser(ctx, repo.CreateUserParams{
+			ID:        auth.ID,
+			FirstName: req.Msg.FirstName,
+			LastName:  req.Msg.LastName,
+		}); err != nil {
+			log.Error("create user", zap.Error(err))
+			return connect.NewError(connect.CodeInternal, errors.New(""))
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	// TODO: Send a confirmation email.
@@ -57,7 +69,7 @@ func (h *handler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequ
 	return connect.NewResponse(&v1.SignupResponse{}), nil
 }
 
-func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
+func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceLoginProcedure))
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.Email, req.Msg.Password); err != nil {
@@ -106,7 +118,7 @@ func (h *handler) Login(ctx context.Context, req *connect.Request[v1.LoginReques
 	return res, nil
 }
 
-func (h *handler) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
+func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceRefreshTokenProcedure))
 
 	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
@@ -148,18 +160,15 @@ func (h *handler) RefreshToken(ctx context.Context, _ *connect.Request[v1.Refres
 	}), nil
 }
 
-func (h *handler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
+func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceLogoutProcedure))
 
 	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
-	if !ok {
-		log.Warn("refresh token not found")
-		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
-	}
-
-	if err := h.repo.DeleteRefreshToken(ctx, refreshToken); err != nil {
-		log.Error("refresh token deletion failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+	if ok {
+		if err := h.repo.DeleteRefreshToken(ctx, refreshToken); err != nil {
+			log.Error("refresh token deletion failed", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, errors.New(""))
+		}
 	}
 
 	res := connect.NewResponse(&v1.LogoutResponse{})

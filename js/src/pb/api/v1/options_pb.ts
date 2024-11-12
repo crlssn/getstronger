@@ -6,10 +6,10 @@
 import { MethodOptions, proto3 } from "@bufbuild/protobuf";
 
 /**
- * @generated from extension: bool requires_auth = 50001;
+ * @generated from extension: bool auth = 50001;
  */
-export const requires_auth = proto3.makeExtension<MethodOptions, boolean>(
-  "api.v1.requires_auth", 
+export const auth = proto3.makeExtension<MethodOptions, boolean>(
+  "api.v1.auth", 
   MethodOptions, 
   { no: 50001, kind: "scalar", T: 8 /* ScalarType.BOOL */ },
 );

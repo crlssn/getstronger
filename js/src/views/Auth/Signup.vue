@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import {SignupRequest} from "@/pb/api/v1/auth_pb";
-import {Auth} from "@/clients/clients";
+import {AuthClient} from "@/clients/clients";
 import {ref} from 'vue'
-import {RouterLink} from "vue-router";
+import {RouterLink, useRouter} from "vue-router";
 import {ConnectError} from "@connectrpc/connect";
-import {useRouter} from "vue-router";
 
+const firstName = ref('')
+const lastName = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
@@ -14,17 +15,20 @@ const requestError = ref(null);
 const router = useRouter()
 
 const signup = async () => {
-  const request = new SignupRequest()
-  request.email = email.value
-  request.password = password.value
-  request.passwordConfirmation = passwordConfirmation.value
+  const request = new SignupRequest({
+    firstName: firstName.value,
+    lastName: lastName.value,
+    email: email.value,
+    password: password.value,
+    passwordConfirmation: passwordConfirmation.value
+  })
 
   try {
     requestError.value = null;
-    await Auth.signup(request);
+    await AuthClient.signup(request);
     await router.push('/login?success')
   } catch (error) {
-    console.error('Signup failed:', error);
+    console.error('signup failed:', error);
     if (error instanceof ConnectError) {
       requestError.value = error.message;
       return
@@ -46,6 +50,22 @@ const signup = async () => {
         {{ requestError }}
       </div>
       <form class="space-y-6" method="POST" @submit.prevent="signup">
+        <div>
+          <label for="email" class="block text-sm/6 font-medium text-gray-900">First name</label>
+          <div class="mt-2">
+            <input v-model="firstName" id="firstname" name="firstname" type="text" required
+                   class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6">
+          </div>
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm/6 font-medium text-gray-900">Last name</label>
+          <div class="mt-2">
+            <input v-model="lastName" id="lastname" name="lastname" type="text" required
+                   class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6">
+          </div>
+        </div>
+
         <div>
           <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
           <div class="mt-2">
@@ -70,7 +90,7 @@ const signup = async () => {
             <label for="password" class="block text-sm/6 font-medium text-gray-900">Confirm Password</label>
           </div>
           <div class="mt-2">
-            <input v-model="passwordConfirmation" id="password" name="password" type="password"
+            <input v-model="passwordConfirmation" id="passwordConfirmation" name="passwordConfirmation" type="password"
                    autocomplete="current-password" required
                    class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6">
           </div>

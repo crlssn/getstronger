@@ -5,5 +5,5 @@ package api.v1;
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.MethodOptions {
-  bool requires_auth = 50001;
+  bool auth = 50001;
 }

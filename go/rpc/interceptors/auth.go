@@ -36,6 +36,7 @@ func NewAuth(log *zap.Logger, jwt *jwt.Manager) Interceptor {
 func (a *auth) initMethods() {
 	fileDescriptors := []protoreflect.FileDescriptor{
 		apiv1.File_api_v1_auth_proto,
+		apiv1.File_api_v1_exercise_proto,
 	}
 
 	for _, fileDescriptor := range fileDescriptors {
@@ -50,8 +51,8 @@ func (a *auth) initMethods() {
 
 				// Access the custom options.
 				options := method.Options().(*descriptorpb.MethodOptions)
-				if proto.HasExtension(options, apiv1.E_RequiresAuth) {
-					if ext := proto.GetExtension(options, apiv1.E_RequiresAuth); ext != nil {
+				if proto.HasExtension(options, apiv1.E_Auth) {
+					if ext := proto.GetExtension(options, apiv1.E_Auth); ext != nil {
 						if v, ok := ext.(bool); ok {
 							requiresAuth = v
 						}
@@ -73,40 +74,47 @@ func (a *auth) Unary() connect.UnaryInterceptorFunc {
 			ctx context.Context,
 			req connect.AnyRequest,
 		) (connect.AnyResponse, error) {
-			if err := a.authorize(req.Spec().Procedure, req.Header()); err != nil {
-				a.log.Warn("unauthenticated request", zap.Error(err))
-				return nil, connect.NewError(connect.CodeUnauthenticated, err)
+			requiresAuth := a.methods[req.Spec().Procedure]
+			if !requiresAuth {
+				a.log.Info("method does not require authentication", zap.String("method", req.Spec().Procedure))
+				return next(ctx, req)
 			}
-			return next(ctx, req)
+
+			claims, err := a.authorize(req.Header())
+			if err != nil {
+				a.log.Warn("unauthenticated request", zap.Error(err))
+				return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+			}
+
+			return next(context.WithValue(ctx, jwt.ContextKeyUserID, claims.UserID), req)
 		}
 	}
 	return interceptor
 }
 
 // authorize checks the authorization of the request.
-func (a *auth) authorize(methodName string, header http.Header) error {
-	requiresAuth := a.methods[methodName]
-	if !requiresAuth {
-		a.log.Info("method does not require authentication", zap.String("method", methodName))
-		return nil
-	}
-
+func (a *auth) authorize(header http.Header) (*jwt.Claims, error) {
 	authHeader := header.Get("Authorization")
 	if authHeader == "" {
-		return errors.New("authorization token is missing")
+		return nil, errors.New("authorization token is missing")
 	}
 
 	const bearerPrefix = "Bearer "
 	if !strings.HasPrefix(authHeader, bearerPrefix) {
-		return errors.New("invalid authorization header format")
+		return nil, errors.New("invalid authorization header format")
 	}
 
 	token := strings.TrimPrefix(authHeader, bearerPrefix)
-	if err := a.jwt.ValidateAccessToken(token); err != nil {
-		return errors.New("invalid authorization token")
+	claims, err := a.jwt.ClaimsFromToken(token, jwt.TokenTypeAccess)
+	if err != nil {
+		return nil, fmt.Errorf("claims from token: %w", err)
 	}
 
-	return nil
+	if err = a.jwt.ValidateClaims(claims); err != nil {
+		return nil, fmt.Errorf("validate claims: %w", err)
+	}
+
+	return claims, nil
 }
 
 var _ Interceptor = (*auth)(nil)

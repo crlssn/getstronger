@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -27,6 +28,7 @@ type Routine struct {
 	UserID    string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 	Title     string    `boil:"title" json:"title" toml:"title" yaml:"title"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	DeletedAt null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *routineR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L routineL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -37,11 +39,13 @@ var RoutineColumns = struct {
 	UserID    string
 	Title     string
 	CreatedAt string
+	DeletedAt string
 }{
 	ID:        "id",
 	UserID:    "user_id",
 	Title:     "title",
 	CreatedAt: "created_at",
+	DeletedAt: "deleted_at",
 }
 
 var RoutineTableColumns = struct {
@@ -49,11 +53,13 @@ var RoutineTableColumns = struct {
 	UserID    string
 	Title     string
 	CreatedAt string
+	DeletedAt string
 }{
 	ID:        "routines.id",
 	UserID:    "routines.user_id",
 	Title:     "routines.title",
 	CreatedAt: "routines.created_at",
+	DeletedAt: "routines.deleted_at",
 }
 
 // Generated where
@@ -63,26 +69,31 @@ var RoutineWhere = struct {
 	UserID    whereHelperstring
 	Title     whereHelperstring
 	CreatedAt whereHelpertime_Time
+	DeletedAt whereHelpernull_Time
 }{
 	ID:        whereHelperstring{field: "\"getstronger\".\"routines\".\"id\""},
 	UserID:    whereHelperstring{field: "\"getstronger\".\"routines\".\"user_id\""},
 	Title:     whereHelperstring{field: "\"getstronger\".\"routines\".\"title\""},
 	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"routines\".\"created_at\""},
+	DeletedAt: whereHelpernull_Time{field: "\"getstronger\".\"routines\".\"deleted_at\""},
 }
 
 // RoutineRels is where relationship names are stored.
 var RoutineRels = struct {
 	User      string
 	Exercises string
+	Workouts  string
 }{
 	User:      "User",
 	Exercises: "Exercises",
+	Workouts:  "Workouts",
 }
 
 // routineR is where relationships are stored.
 type routineR struct {
 	User      *User         `boil:"User" json:"User" toml:"User" yaml:"User"`
 	Exercises ExerciseSlice `boil:"Exercises" json:"Exercises" toml:"Exercises" yaml:"Exercises"`
+	Workouts  WorkoutSlice  `boil:"Workouts" json:"Workouts" toml:"Workouts" yaml:"Workouts"`
 }
 
 // NewStruct creates a new relationship struct
@@ -104,13 +115,20 @@ func (r *routineR) GetExercises() ExerciseSlice {
 	return r.Exercises
 }
 
+func (r *routineR) GetWorkouts() WorkoutSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Workouts
+}
+
 // routineL is where Load methods for each relationship are stored.
 type routineL struct{}
 
 var (
-	routineAllColumns            = []string{"id", "user_id", "title", "created_at"}
+	routineAllColumns            = []string{"id", "user_id", "title", "created_at", "deleted_at"}
 	routineColumnsWithoutDefault = []string{"user_id", "title"}
-	routineColumnsWithDefault    = []string{"id", "created_at"}
+	routineColumnsWithDefault    = []string{"id", "created_at", "deleted_at"}
 	routinePrimaryKeyColumns     = []string{"id"}
 	routineGeneratedColumns      = []string{}
 )
@@ -446,6 +464,20 @@ func (o *Routine) Exercises(mods ...qm.QueryMod) exerciseQuery {
 	return Exercises(queryMods...)
 }
 
+// Workouts retrieves all the workout's Workouts with an executor.
+func (o *Routine) Workouts(mods ...qm.QueryMod) workoutQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"getstronger\".\"workouts\".\"routine_id\"=?", o.ID),
+	)
+
+	return Workouts(queryMods...)
+}
+
 // LoadUser allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (routineL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybeRoutine interface{}, mods queries.Applicator) error {
@@ -621,7 +653,7 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"exercises\".\"id\", \"getstronger\".\"exercises\".\"user_id\", \"getstronger\".\"exercises\".\"title\", \"getstronger\".\"exercises\".\"sub_title\", \"getstronger\".\"exercises\".\"created_at\", \"a\".\"routine_id\""),
+		qm.Select("\"getstronger\".\"exercises\".\"id\", \"getstronger\".\"exercises\".\"user_id\", \"getstronger\".\"exercises\".\"title\", \"getstronger\".\"exercises\".\"sub_title\", \"getstronger\".\"exercises\".\"rest_between_sets\", \"getstronger\".\"exercises\".\"created_at\", \"getstronger\".\"exercises\".\"deleted_at\", \"a\".\"routine_id\""),
 		qm.From("\"getstronger\".\"exercises\""),
 		qm.InnerJoin("\"getstronger\".\"routine_exercises\" as \"a\" on \"getstronger\".\"exercises\".\"id\" = \"a\".\"exercise_id\""),
 		qm.WhereIn("\"a\".\"routine_id\" in ?", argsSlice...),
@@ -642,7 +674,7 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 		one := new(Exercise)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.SubTitle, &one.CreatedAt, &localJoinCol)
+		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.SubTitle, &one.RestBetweenSets, &one.CreatedAt, &one.DeletedAt, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for exercises")
 		}
@@ -688,6 +720,119 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 					foreign.R = &exerciseR{}
 				}
 				foreign.R.Routines = append(foreign.R.Routines, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadWorkouts allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (routineL) LoadWorkouts(ctx context.Context, e boil.ContextExecutor, singular bool, maybeRoutine interface{}, mods queries.Applicator) error {
+	var slice []*Routine
+	var object *Routine
+
+	if singular {
+		var ok bool
+		object, ok = maybeRoutine.(*Routine)
+		if !ok {
+			object = new(Routine)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeRoutine)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeRoutine))
+			}
+		}
+	} else {
+		s, ok := maybeRoutine.(*[]*Routine)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeRoutine)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeRoutine))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &routineR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &routineR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`getstronger.workouts`),
+		qm.WhereIn(`getstronger.workouts.routine_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load workouts")
+	}
+
+	var resultSlice []*Workout
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice workouts")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on workouts")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for workouts")
+	}
+
+	if len(workoutAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Workouts = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &workoutR{}
+			}
+			foreign.R.Routine = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.RoutineID {
+				local.R.Workouts = append(local.R.Workouts, foreign)
+				if foreign.R == nil {
+					foreign.R = &workoutR{}
+				}
+				foreign.R.Routine = local
 				break
 			}
 		}
@@ -886,6 +1031,59 @@ func removeExercisesFromRoutinesSlice(o *Routine, related []*Exercise) {
 			break
 		}
 	}
+}
+
+// AddWorkouts adds the given related objects to the existing relationships
+// of the routine, optionally inserting them as new records.
+// Appends related to o.R.Workouts.
+// Sets related.R.Routine appropriately.
+func (o *Routine) AddWorkouts(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Workout) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.RoutineID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"getstronger\".\"workouts\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"routine_id"}),
+				strmangle.WhereClause("\"", "\"", 2, workoutPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.RoutineID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &routineR{
+			Workouts: related,
+		}
+	} else {
+		o.R.Workouts = append(o.R.Workouts, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &workoutR{
+				Routine: o,
+			}
+		} else {
+			rel.R.Routine = o
+		}
+	}
+	return nil
 }
 
 // Routines retrieves all the records using an executor.

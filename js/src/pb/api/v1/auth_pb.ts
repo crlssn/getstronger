@@ -25,6 +25,16 @@ export class SignupRequest extends Message<SignupRequest> {
    */
   passwordConfirmation = "";
 
+  /**
+   * @generated from field: string first_name = 4;
+   */
+  firstName = "";
+
+  /**
+   * @generated from field: string last_name = 5;
+   */
+  lastName = "";
+
   constructor(data?: PartialMessage<SignupRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -36,6 +46,8 @@ export class SignupRequest extends Message<SignupRequest> {
     { no: 1, name: "email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "password", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "password_confirmation", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "first_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "last_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SignupRequest {
@@ -167,8 +179,6 @@ export class LoginResponse extends Message<LoginResponse> {
 }
 
 /**
- * The refresh token is sent as a cookie.
- *
  * @generated from message api.v1.RefreshTokenRequest
  */
 export class RefreshTokenRequest extends Message<RefreshTokenRequest> {

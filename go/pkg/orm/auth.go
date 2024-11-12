@@ -187,14 +187,14 @@ var AuthWhere = struct {
 
 // AuthRels is where relationship names are stored.
 var AuthRels = struct {
-	Users string
+	IDUser string
 }{
-	Users: "Users",
+	IDUser: "IDUser",
 }
 
 // authR is where relationships are stored.
 type authR struct {
-	Users UserSlice `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
+	IDUser *User `boil:"IDUser" json:"IDUser" toml:"IDUser" yaml:"IDUser"`
 }
 
 // NewStruct creates a new relationship struct
@@ -202,11 +202,11 @@ func (*authR) NewStruct() *authR {
 	return &authR{}
 }
 
-func (r *authR) GetUsers() UserSlice {
+func (r *authR) GetIDUser() *User {
 	if r == nil {
 		return nil
 	}
-	return r.Users
+	return r.IDUser
 }
 
 // authL is where Load methods for each relationship are stored.
@@ -525,23 +525,20 @@ func (q authQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
-// Users retrieves all the user's Users with an executor.
-func (o *Auth) Users(mods ...qm.QueryMod) userQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
+// IDUser pointed to by the foreign key.
+func (o *Auth) IDUser(mods ...qm.QueryMod) userQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.ID),
 	}
 
-	queryMods = append(queryMods,
-		qm.Where("\"getstronger\".\"users\".\"auth_id\"=?", o.ID),
-	)
+	queryMods = append(queryMods, mods...)
 
 	return Users(queryMods...)
 }
 
-// LoadUsers allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (authL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAuth interface{}, mods queries.Applicator) error {
+// LoadIDUser allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (authL) LoadIDUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAuth interface{}, mods queries.Applicator) error {
 	var slice []*Auth
 	var object *Auth
 
@@ -578,6 +575,7 @@ func (authL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular boo
 			if obj.R == nil {
 				obj.R = &authR{}
 			}
+
 			args[obj.ID] = struct{}{}
 		}
 	}
@@ -595,7 +593,7 @@ func (authL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular boo
 
 	query := NewQuery(
 		qm.From(`getstronger.users`),
-		qm.WhereIn(`getstronger.users.auth_id in ?`, argsSlice...),
+		qm.WhereIn(`getstronger.users.id in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -603,16 +601,16 @@ func (authL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular boo
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load users")
+		return errors.Wrap(err, "failed to eager load User")
 	}
 
 	var resultSlice []*User
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice users")
+		return errors.Wrap(err, "failed to bind eager loaded slice User")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on users")
+		return errors.Wrap(err, "failed to close results of eager load for users")
 	}
 	if err = results.Err(); err != nil {
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for users")
@@ -625,25 +623,28 @@ func (authL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular boo
 			}
 		}
 	}
-	if singular {
-		object.R.Users = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &userR{}
-			}
-			foreign.R.Auth = object
-		}
+
+	if len(resultSlice) == 0 {
 		return nil
 	}
 
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.AuthID {
-				local.R.Users = append(local.R.Users, foreign)
+	if singular {
+		foreign := resultSlice[0]
+		object.R.IDUser = foreign
+		if foreign.R == nil {
+			foreign.R = &userR{}
+		}
+		foreign.R.IDAuth = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.ID {
+				local.R.IDUser = foreign
 				if foreign.R == nil {
 					foreign.R = &userR{}
 				}
-				foreign.R.Auth = local
+				foreign.R.IDAuth = local
 				break
 			}
 		}
@@ -652,55 +653,52 @@ func (authL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular boo
 	return nil
 }
 
-// AddUsers adds the given related objects to the existing relationships
-// of the auth, optionally inserting them as new records.
-// Appends related to o.R.Users.
-// Sets related.R.Auth appropriately.
-func (o *Auth) AddUsers(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*User) error {
+// SetIDUser of the auth to the related item.
+// Sets o.R.IDUser to related.
+// Adds o to related.R.IDAuth.
+func (o *Auth) SetIDUser(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
 	var err error
-	for _, rel := range related {
-		if insert {
-			rel.AuthID = o.ID
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"getstronger\".\"users\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"auth_id"}),
-				strmangle.WhereClause("\"", "\"", 2, userPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
 
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
+	if insert {
+		related.ID = o.ID
 
-			rel.AuthID = o.ID
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
 		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"getstronger\".\"users\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"id"}),
+			strmangle.WhereClause("\"", "\"", 2, userPrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.ID = o.ID
 	}
 
 	if o.R == nil {
 		o.R = &authR{
-			Users: related,
+			IDUser: related,
 		}
 	} else {
-		o.R.Users = append(o.R.Users, related...)
+		o.R.IDUser = related
 	}
 
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &userR{
-				Auth: o,
-			}
-		} else {
-			rel.R.Auth = o
+	if related.R == nil {
+		related.R = &userR{
+			IDAuth: o,
 		}
+	} else {
+		related.R.IDAuth = o
 	}
 	return nil
 }

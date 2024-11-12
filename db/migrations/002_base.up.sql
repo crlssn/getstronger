@@ -9,9 +9,9 @@ CREATE TABLE getstronger.auth
 
 CREATE TABLE getstronger.users
 (
-    id         UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    auth_id    UUID             NOT NULL REFERENCES getstronger.auth (id),
-    name       VARCHAR          NOT NULL,
+    id         UUID PRIMARY KEY NOT NULL REFERENCES getstronger.auth (id),
+    first_name VARCHAR          NOT NULL,
+    last_name  VARCHAR          NOT NULL,
     created_at TIMESTAMP        NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
 );
 
@@ -20,16 +20,19 @@ CREATE TABLE getstronger.routines
     id         UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     user_id    UUID             NOT NULL REFERENCES getstronger.users (id),
     title      VARCHAR          NOT NULL,
-    created_at TIMESTAMP        NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
+    created_at TIMESTAMP        NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
+    deleted_at TIMESTAMP        NULL
 );
 
 CREATE TABLE getstronger.exercises
 (
-    id         UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    user_id    UUID             NOT NULL REFERENCES getstronger.users (id),
-    title      VARCHAR          NOT NULL,
-    sub_title  VARCHAR,
-    created_at TIMESTAMP        NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
+    id                UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    user_id           UUID             NOT NULL REFERENCES getstronger.users (id),
+    title             VARCHAR          NOT NULL,
+    sub_title         VARCHAR,
+    rest_between_sets SMALLINT         NULL,
+    created_at        TIMESTAMP        NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
+    deleted_at        TIMESTAMP        NULL
 );
 
 CREATE TABLE getstronger.routine_exercises
@@ -43,6 +46,7 @@ CREATE TABLE getstronger.workouts
 (
     id         UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     user_id    UUID             NOT NULL REFERENCES getstronger.users (id),
+    routine_id UUID             NOT NULL REFERENCES getstronger.routines (id),
     date       DATE             NOT NULL,
     created_at TIMESTAMP        NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
 );

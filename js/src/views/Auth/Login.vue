@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {LoginRequest} from "@/pb/api/v1/auth_pb";
-import {Auth} from "@/clients/clients";
+import {AuthClient} from "@/clients/clients";
 import {ref} from 'vue'
 import {RouterLink, useRoute} from 'vue-router'
 import {ConnectError} from "@connectrpc/connect";
@@ -19,7 +19,7 @@ const login = async () => {
   request.password = password.value
 
   try {
-    const response = await Auth.login(request);
+    const response = await AuthClient.login(request);
     authStore.setAccessToken(response.accessToken);
     authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
     await router.push('/home')
