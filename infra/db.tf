@@ -44,7 +44,6 @@ resource "aws_db_subnet_group" "default" {
 
 # Optional: Create a security group if you don't have one already
 resource "aws_security_group" "default" {
-  id          = "sg-0517ff4946c44591d"
   name        = "db-security-group-4"
   description = "Allow DB access"
   vpc_id      = "vpc-016eba058ed193190" # Replace with your VPC ID
