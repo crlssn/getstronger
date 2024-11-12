@@ -3,9 +3,6 @@ name: Migrate database
 runs:
   using: 'composite'
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Install golang-migrate/migrate
       run: |
         wget https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
