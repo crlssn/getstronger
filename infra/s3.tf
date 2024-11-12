@@ -1,5 +1,9 @@
 resource "aws_s3_bucket" "vue_js_bucket" {
   bucket = var.bucket_name
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {
