@@ -31,6 +31,7 @@ runs:
       run: |
         terraform import aws_db_subnet_group.default db-subnet-group-4
         terraform import aws_security_group.default db-security-group-4
+      working-directory: ./infra
       shell: bash
 
     - name: Terraform Plan
