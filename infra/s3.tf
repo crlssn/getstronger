@@ -1,6 +1,5 @@
 resource "aws_s3_bucket" "vue_js_bucket" {
   bucket = var.bucket_name
-  count = 1
 
   lifecycle {
     prevent_destroy = true
@@ -8,7 +7,7 @@ resource "aws_s3_bucket" "vue_js_bucket" {
 }
 
 resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {
-  bucket = aws_s3_bucket.vue_js_bucket[0].id
+  bucket = aws_s3_bucket.vue_js_bucket.id
 
   index_document {
     suffix = "index.html"
@@ -20,7 +19,7 @@ resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {
 }
 
 resource "aws_s3_bucket_policy" "public_access" {
-  bucket = aws_s3_bucket.vue_js_bucket[0].id
+  bucket = aws_s3_bucket.vue_js_bucket.id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -29,16 +28,16 @@ resource "aws_s3_bucket_policy" "public_access" {
         Effect    = "Allow"
         Principal = "*"
         Action    = ["s3:GetObject"]
-        Resource  = ["${aws_s3_bucket.vue_js_bucket[0].arn}/*"]
+        Resource  = ["${aws_s3_bucket.vue_js_bucket.arn}/*"]
       }
     ]
   })
 }
 
 output "bucket_name" {
-  value = aws_s3_bucket.vue_js_bucket[0].bucket
+  value = aws_s3_bucket.vue_js_bucket.bucket
 }
 
 output "bucket_website_endpoint" {
-  value = aws_s3_bucket.vue_js_bucket[0].website_endpoint
+  value = aws_s3_bucket.vue_js_bucket.website_endpoint
 }
