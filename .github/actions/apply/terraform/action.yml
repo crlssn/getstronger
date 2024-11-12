@@ -28,9 +28,11 @@ runs:
       shell: bash
 
     - name: Terraform Plan
-      run: terraform plan
+      run: terraform plan -input=false
       working-directory: ./infra
       shell: bash
+      env:
+        TF_LOG: DEBUG
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
