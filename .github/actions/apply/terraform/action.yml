@@ -27,6 +27,11 @@ runs:
       working-directory: ./infra
       shell: bash
 
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: ./infra
+      shell: bash
+
     - name: Terraform Apply
       run: terraform apply -auto-approve
       working-directory: ./infra
