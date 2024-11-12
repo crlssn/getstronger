@@ -1,5 +1,19 @@
 name: Deploy web app to S3
 
+inputs:
+  aws_access_key_id:
+    description: "AWS Access Key ID"
+    required: true
+  aws_secret_access_key:
+    description: "AWS Secret Access Key"
+    required: true
+  aws_region:
+    description: "AWS Region"
+    required: true
+  aws_bucket_name:
+    description: "AWS S3 Bucket Name"
+    required: true
+
 runs:
   using: 'composite'
   steps:
@@ -16,10 +30,10 @@ runs:
 
     - name: Deploy to S3
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+        AWS_REGION: ${{ inputs.aws_region }}
+        AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
       run: |
         # Install AWS CLI
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"

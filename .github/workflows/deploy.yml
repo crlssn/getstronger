@@ -22,6 +22,17 @@ jobs:
 
       - name: Migrate database
         uses: ./.github/actions/migrate/database
+        with:
+          db_host: ${{ vars.DB_HOST }}
+          db_port: ${{ vars.DB_PORT }}
+          db_name: ${{ vars.DB_NAME }}
+          db_user: ${{ secrets.DB_USER }}
+          db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Deploy web app to S3
         uses: ./.github/actions/deploy/web-app
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          aws_bucket_name: ${{ secrets.AWS_BUCKET_NAME }}
