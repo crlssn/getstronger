@@ -35,26 +35,18 @@ runs:
       working-directory: ./infra
       shell: bash
       env:
-        TF_LOG: DEBUG
+#        TF_LOG: DEBUG
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
         TF_VAR_db_username: ${{ inputs.db_username }}
         TF_VAR_db_password: ${{ inputs.db_password }}
-
-    - name: Terraform Plan
-      run: terraform plan -input=false -var="db_username=${{ inputs.db_username }}" -var="db_password=${{ inputs.db_password }}"
-      working-directory: ./infra
-      shell: bash
-      env:
-        TF_LOG: DEBUG
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
       working-directory: ./infra
       shell: bash
       env:
+#        TF_LOG: DEBUG
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
         TF_VAR_db_username: ${{ inputs.db_username }}
