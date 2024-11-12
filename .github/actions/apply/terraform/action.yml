@@ -30,7 +30,7 @@ runs:
     - name: Terraform Import
       run: |
         terraform import aws_db_subnet_group.default db-subnet-group-4 
-        terraform import aws_security_group.default db-security-group-4
+        terraform import aws_security_group.default sg-0b1b3b3b3b3b3b3b3
       working-directory: ./infra
       shell: bash
       env:
