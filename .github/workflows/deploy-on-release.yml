@@ -12,12 +12,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install db migration pkg
+      - name: Install golang-migrate/migrate
         run: |
           wget https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
           sudo dpkg -i migrate.linux-amd64.deb
 
-      - name: DB Migration
+      - name: Run database migration
         env:
           DB_HOST: ${{ vars.DB_HOST }}
           DB_PORT: ${{ vars.DB_PORT }}
