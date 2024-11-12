@@ -1,0 +1,24 @@
+name: Migrate database
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install golang-migrate/migrate
+      run: |
+        wget https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
+        sudo dpkg -i migrate.linux-amd64.deb
+
+    - name: Run database migration
+      env:
+        DB_HOST: ${{ vars.DB_HOST }}
+        DB_PORT: ${{ vars.DB_PORT }}
+        DB_NAME: ${{ vars.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        migrate -path db/migrations/ \
+          -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}" \
+          -verbose up
