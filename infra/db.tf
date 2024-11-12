@@ -20,6 +20,10 @@ resource "aws_db_instance" "db" {
 
   # Security group settings
   vpc_security_group_ids = [aws_security_group.default.id]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Optional: Create a DB subnet group if you don't have one already
