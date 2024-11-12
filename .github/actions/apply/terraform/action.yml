@@ -28,7 +28,7 @@ runs:
       shell: bash
 
     - name: Terraform Plan
-      run: terraform plan -input=false -var="db_username=${{ inputs.db_username }}" -var="db_password=${{ inputs.db_password }}"
+      run: terraform plan -input=false -var="db_username=${{ inputs.db_username }}" -var="db_password=${{ inputs.db_password }}" -out
       working-directory: ./infra
       shell: bash
       env:
