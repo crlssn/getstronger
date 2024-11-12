@@ -11,11 +11,14 @@ runs:
     - name: Terraform Format Check
       run: terraform fmt -check -recursive
       working-directory: ./infra
+      shell: bash
 
     - name: Terraform Init
       run: terraform init
       working-directory: ./infra
+      shell: bash
 
     - name: Terraform Validate
       run: terraform validate
       working-directory: ./infra
+      shell: bash
