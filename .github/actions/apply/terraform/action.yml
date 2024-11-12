@@ -27,6 +27,12 @@ runs:
       working-directory: ./infra
       shell: bash
 
+    - name: Terraform Import
+      run: |
+        terraform import aws_db_subnet_group.default db-subnet-group-4
+        terraform import aws_security_group.default db-security-group-4
+      shell: bash
+
     - name: Terraform Plan
       run: terraform plan -input=false -var="db_username=${{ inputs.db_username }}" -var="db_password=${{ inputs.db_password }}"
       working-directory: ./infra
