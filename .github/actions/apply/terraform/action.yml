@@ -29,10 +29,14 @@ runs:
 
     - name: Terraform Import
       run: |
-        terraform import aws_db_subnet_group.default db-subnet-group-4
+        terraform import aws_db_subnet_group.default db-subnet-group-4 
         terraform import aws_security_group.default db-security-group-4
       working-directory: ./infra
       shell: bash
+      env:
+        TF_LOG: DEBUG
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
 
     - name: Terraform Plan
       run: terraform plan -input=false -var="db_username=${{ inputs.db_username }}" -var="db_password=${{ inputs.db_password }}"
