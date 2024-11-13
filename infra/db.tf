@@ -30,10 +30,10 @@ resource "aws_security_group" "db_access" {
   description = "Allow public access to RDS instance"
 
   ingress {
-    from_port   = 5432  # Adjust based on your database engine
+    from_port   = 5432 # Adjust based on your database engine
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Allow public access (Use specific IP ranges for security)
+    cidr_blocks = ["0.0.0.0/0"] # Allow public access (Use specific IP ranges for security)
   }
 
   egress {
