@@ -19,22 +19,22 @@ terraform {
       version = "~> 4.16"
     }
   }
+
   backend "s3" {
     bucket = "www.getstronger.co"
-    key = "state.tfstate"
+    key    = "state.tfstate"
     region = "eu-west-2"
   }
 
-
   required_version = ">= 1.2.0"
 }
-  # backend "s3" {
-  #   bucket = "getstronger-terraform-state" # Replace with your bucket name
-  #   key = "state.tfstate"     # Define a path to store the state file within the bucket
-  #   region = "eu-west-2"                # Replace with your AWS region
-  #   dynamodb_table = "terraform-lock-table"        # The DynamoDB table to use for locking
-  #   encrypt = true                          # Enable encryption at rest
-  # }
+# backend "s3" {
+#   bucket = "getstronger-terraform-state" # Replace with your bucket name
+#   key = "state.tfstate"     # Define a path to store the state file within the bucket
+#   region = "eu-west-2"                # Replace with your AWS region
+#   dynamodb_table = "terraform-lock-table"        # The DynamoDB table to use for locking
+#   encrypt = true                          # Enable encryption at rest
+# }
 
 provider "aws" {
   region = var.aws_region

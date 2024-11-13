@@ -9,7 +9,7 @@ resource "aws_db_instance" "postgres" {
   password             = var.db_password      # Master password
   parameter_group_name = "default.postgres16" # Parameter group for PostgreSQL 16
   skip_final_snapshot  = true                 # Skips the final snapshot on deletion
-  identifier           = "postgres"           # Unique identifier for the DB instance
+  identifier           = "getstronger"        # Unique identifier for the DB instance
 
   # VPC & Subnet group settings
   # db_subnet_group_name = aws_db_subnet_group.default.name
