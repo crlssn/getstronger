@@ -22,6 +22,7 @@ terraform {
   backend "s3" {
     bucket = "www.getstronger.co"
     key = "state.tfstate"
+    region = "eu-west-2"
   }
 
   # backend "s3" {
