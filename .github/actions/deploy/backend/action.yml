@@ -40,7 +40,7 @@ runs:
         AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
       run: |
         # Sync the build folder to the S3 bucket
-        aws s3 cp ./app.zip s3://getstronger-binaries
+        aws s3 cp ./cmd/bin s3://getstronger-binaries
 
 #    - name: Deploy to EC2
 #      shell: bash
