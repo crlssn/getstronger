@@ -12,7 +12,7 @@ module "acm" {
     "api.getstronger.pro",
   ]
 
-  wait_for_validation = true
+  wait_for_validation = false
 
   tags = {
     Name = "getstronger.pro"
