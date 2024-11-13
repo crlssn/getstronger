@@ -39,7 +39,7 @@ runs:
 #        REMOTE_USER: "ec2-user"
 #        TARGET: "/"
       with:
-        REMOTE_HOST: 'ec2-35-177-233-210.eu-west-2.compute.amazonaws.com'
+        REMOTE_HOST: 'ec2-52-56-62-119.eu-west-2.compute.amazonaws.com'
         REMOTE_USER: 'ec2-user'
         SSH_PRIVATE_KEY: ${{ inputs.aws_ec2_private_key }}
         SOURCE: 'go/bin/'
