@@ -27,7 +27,7 @@ runs:
       working-directory: './go'
       run: |
         go mod download
-        go build -o app
+        go build cmd/main.go
 
 #    - name: Deploy to EC2
 #      shell: bash
