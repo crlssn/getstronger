@@ -32,6 +32,10 @@ runs:
         terraform import aws_db_subnet_group.default db-subnet-group-4 
         terraform import aws_security_group.default sg-0517ff4946c44591d
         terraform import aws_s3_bucket.vue_js_bucket vue-js-app
+        terraform import aws_db_instance.db
+        terraform import aws_s3_bucket_policy.public_access
+        terraform import aws_s3_bucket_public_access_block.public_access_block
+        terraform import aws_s3_bucket_website_configuration.vue_js_bucket
       working-directory: ./infra
       shell: bash
       env:
