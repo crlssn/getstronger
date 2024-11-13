@@ -24,11 +24,14 @@ runs:
 
     - name: Install dependencies
       run: npm install
+      shell: bash
 
     - name: Build the Vue.js project
       run: npm run build
+      shell: bash
 
     - name: Deploy to S3
+      shell: bash
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
