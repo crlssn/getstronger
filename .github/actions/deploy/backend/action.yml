@@ -1,4 +1,4 @@
-name: Deploy web app to S3
+name: Deploy backend
 
 inputs:
   aws_access_key_id:
@@ -24,22 +24,39 @@ runs:
 
     - name: Build the app
       shell: bash
-      working-directory: './go'
+      working-directory: ./go
       run: |
         go mod download
-        go build cmd/main.go
+        GOOS=linux go build -o cmd/bin cmd/main.go
 
-    - name: Deploy to EC2
+    - name: Deploy to S3
+      working-directory: ./go
       shell: bash
       env:
-        EC2_HOST: "ip-172-31-36-227.eu-west-2.compute.internal"
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+        AWS_REGION: ${{ inputs.aws_region }}
+        AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
       run: |
-        chmod 600 ~/.ssh/id_rsa
-        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ./app ec2-user@$EC2_HOST:~/app
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@$EC2_HOST << EOF
-          pkill app || true
-          nohup ./app &
-        EOF
+        # Install AWS CLI
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --update
+
+        # Sync the build folder to the S3 bucket
+        aws s3 sync ./cmd/bin s3://getstronger-binaries --delete
+
+#    - name: Deploy to EC2
+#      shell: bash
+#      env:
+#        EC2_HOST: "ip-172-31-36-227.eu-west-2.compute.internal"
+#      run: |
+#        chmod 600 ~/.ssh/id_rsa
+#        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ./app ec2-user@$EC2_HOST:~/app
+#        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@$EC2_HOST << EOF
+#          pkill app || true
+#          nohup ./app &
+#        EOF
 #
 #      # Set up SSH for the EC2 connection
 #    - name: Add SSH Key

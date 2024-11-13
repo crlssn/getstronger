@@ -38,11 +38,7 @@ resource "aws_s3_bucket_policy" "public_access" {
     ]
   })
 }
-# #
-# # output "bucket_name" {
-# #   value = aws_s3_bucket.vue_js_bucket.bucket
-# # }
-# #
-# # # output "bucket_website_endpoint" {
-# # #   value = aws_s3_bucket.vue_js_bucket.website_endpoint
-# # # }
+
+resource "aws_s3_bucket" "getstronger_binaries" {
+  bucket = "getstronger-binaries"
+}
