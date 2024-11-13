@@ -27,20 +27,34 @@ runs:
       working-directory: ./go
       run: |
         go mod download
-        GOOS=linux go build -o cmd/bin cmd/main.go
-        zip bin.zip cmd/bin
+        GOOS=linux go build -o bin/app cmd/main.go
+#        zip bin.zip cmd/bin
 
-    - name: Deploy to S3
-      working-directory: ./go
-      shell: bash
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
-        AWS_REGION: ${{ inputs.aws_region }}
-        AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
-      run: |
-        # Sync the build folder to the S3 bucket
-        aws s3 cp ./bin.zip s3://getstronger-binaries
+    - name: Deploy to my EC2 instance
+      uses: easingthemes/ssh-deploy@v5.1.0
+#      env:
+#        SSH_PRIVATE_KEY: ${{ inputs.aws_ec2_private_key }}
+#        SOURCE: "./app"
+#        REMOTE_HOST: "ec2-34-213-48-149.us-west-2.compute.amazonaws.com"
+#        REMOTE_USER: "ec2-user"
+#        TARGET: "/"
+      with:
+        REMOTE_HOST: 'ec2-13-40-222-188.eu-west-2.compute.amazonaws.com'
+        REMOTE_USER: 'ec2-user'
+        SSH_PRIVATE_KEY: ${{ inputs.aws_ec2_private_key }}
+        SOURCE: 'go/bin/'
+
+#    - name: Deploy to S3
+#      working-directory: ./go
+#      shell: bash
+#      env:
+#        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+#        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+#        AWS_REGION: ${{ inputs.aws_region }}
+#        AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
+#      run: |
+#        # Sync the build folder to the S3 bucket
+#        aws s3 cp ./bin.zip s3://getstronger-binaries
 
 #    - name: Deploy to EC2
 #      shell: bash
