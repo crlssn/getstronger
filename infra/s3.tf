@@ -47,6 +47,6 @@ output "bucket_name" {
   value = aws_s3_bucket.vue_js_bucket.bucket
 }
 
-output "bucket_website_endpoint" {
-  value = aws_s3_bucket.vue_js_bucket.website_endpoint
-}
+# output "bucket_website_endpoint" {
+#   value = aws_s3_bucket.vue_js_bucket.website_endpoint
+# }
