@@ -27,21 +27,21 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
   restrict_public_buckets = false
 }
 
-# resource "aws_s3_bucket_policy" "public_access" {
-#   bucket = aws_s3_bucket.vue_js_bucket.id
-#
-#   policy = jsonencode({
-#     Version = "2012-10-17",
-#     Statement = [
-#       {
-#         Effect    = "Allow"
-#         Principal = "*"
-#         Action    = ["s3:GetObject"]
-#         Resource  = ["${aws_s3_bucket.vue_js_bucket.arn}/*"]
-#       }
-#     ]
-#   })
-# }
+resource "aws_s3_bucket_policy" "public_access" {
+  bucket = aws_s3_bucket.vue_js_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = ["${aws_s3_bucket.vue_js_bucket.arn}/*"]
+      }
+    ]
+  })
+}
 # #
 # # output "bucket_name" {
 # #   value = aws_s3_bucket.vue_js_bucket.bucket
