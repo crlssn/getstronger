@@ -104,7 +104,10 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 
 func withCORS(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
-		AllowedOrigins: []string{"https://localhost:5173"},
+		AllowedOrigins: []string{
+			"https://localhost:5173",
+			"http://vue-js-app.s3-website.eu-west-2.amazonaws.com",
+		},
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,

@@ -18,7 +18,8 @@ const auth: Interceptor = (next) => async (req) => {
 };
 
 const transport = createConnectTransport({
-  baseUrl: 'https://localhost:1234',
+  baseUrl: 'http://13.41.72.100',
+  // baseUrl: 'https://localhost:1234',
   fetch: (url, options) => {
     // TODO: Include credentials only on refresh token and logout requests.
     return fetch(url, {...options, credentials: 'include'}); // Add credentials
