@@ -9,7 +9,7 @@ runs:
         terraform_version: 1.1.7
 
     - name: Terraform Format Check
-      run: terraform fmt -check -recursive
+      run: terraform fmt -check -recursive -diff
       working-directory: ./infra
       shell: bash
 
