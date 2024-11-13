@@ -1,23 +1,19 @@
 resource "aws_s3_bucket" "vue_js_bucket" {
   bucket = "vue-js-app"
-
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
 }
-# #
-# # resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {
-# #   bucket = aws_s3_bucket.vue_js_bucket.id
-# #
-# #   index_document {
-# #     suffix = "index.html"
-# #   }
-# #
-# #   error_document {
-# #     key = "index.html"
-# #   }
-# # }
-# #
+
+resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {
+  bucket = aws_s3_bucket.vue_js_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
   bucket = aws_s3_bucket.vue_js_bucket.id
 
