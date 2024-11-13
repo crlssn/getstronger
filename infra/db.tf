@@ -18,10 +18,10 @@ resource "aws_db_instance" "postgres" {
   # Security group settings
   # vpc_security_group_ids = [aws_security_group.default.id]
 
-  # lifecycle {
-  #   create_before_destroy = false
-  #   prevent_destroy       = true
-  # }
+  lifecycle {
+    create_before_destroy = false
+    prevent_destroy       = true
+  }
 }
 #
 # # Optional: Create a DB subnet group if you don't have one already
