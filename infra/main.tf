@@ -25,6 +25,9 @@ terraform {
     region = "eu-west-2"
   }
 
+
+  required_version = ">= 1.2.0"
+}
   # backend "s3" {
   #   bucket = "getstronger-terraform-state" # Replace with your bucket name
   #   key = "state.tfstate"     # Define a path to store the state file within the bucket
@@ -32,9 +35,6 @@ terraform {
   #   dynamodb_table = "terraform-lock-table"        # The DynamoDB table to use for locking
   #   encrypt = true                          # Enable encryption at rest
   # }
-
-  required_version = ">= 1.2.0"
-}
 
 provider "aws" {
   region = var.aws_region
