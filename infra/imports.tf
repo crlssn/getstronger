@@ -5,5 +5,5 @@ import {
 
 import {
   id = aws_s3_bucket.vue_js_bucket
-  to = "vue_js_bucket"
+  to = "www.getstronger.co"
 }
