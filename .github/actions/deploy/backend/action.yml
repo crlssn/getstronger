@@ -24,6 +24,7 @@ runs:
 
     - name: Build the app
       shell: bash
+      working-directory: './go'
       run: |
         go mod download
         go build -o app
