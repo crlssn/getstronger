@@ -8,3 +8,5 @@
 .secrets/*.pem
 .secrets/*.key
 .secrets/*.crt
+/infra/.terraform/
+/infra/.terraform.lock.hcl

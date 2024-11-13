@@ -1,0 +1,53 @@
+name: Deploy web app to S3
+
+inputs:
+  aws_access_key_id:
+    description: "AWS Access Key ID"
+    required: true
+  aws_secret_access_key:
+    description: "AWS Secret Access Key"
+    required: true
+  aws_region:
+    description: "AWS Region"
+    required: true
+  aws_bucket_name:
+    description: "AWS S3 Bucket Name"
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm install
+      shell: bash
+
+    - name: Build the Vue.js project
+      working-directory: ./js
+      run: npm run build
+      shell: bash
+
+    - name: Deploy to S3
+      working-directory: ./js
+      shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+        AWS_REGION: ${{ inputs.aws_region }}
+        AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
+      run: |
+        # Install AWS CLI
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --update
+
+        # Sync the build folder to the S3 bucket
+        aws s3 sync ./dist s3://$AWS_BUCKET_NAME --delete
+
+        # Make sure the S3 bucket content is accessible publicly
+        aws s3 website s3://$AWS_BUCKET_NAME/ --index-document index.html --error-document index.html

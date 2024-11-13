@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DropdownItem from "@/types/dropdown";
+import {type DropdownItem} from "@/types/dropdown";
 import {EllipsisVerticalIcon} from "@heroicons/vue/20/solid";
 import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/vue";
 

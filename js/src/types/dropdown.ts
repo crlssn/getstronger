@@ -1,4 +1,4 @@
-interface DropdownItem {
+export interface DropdownItem {
   title: string
   href: string
 }

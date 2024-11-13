@@ -1,4 +1,4 @@
-import {createRouter, createWebHistory, type RouteLocationNormalized} from 'vue-router'
+import {createRouter, createWebHistory, type RouteLocationNormalized, type Router} from 'vue-router'
 import HomeView from '@/views/Home.vue'
 import LoginView from '@/views/Auth/Login.vue'
 import Signup from "@/views/Auth/Signup.vue";
@@ -10,7 +10,7 @@ import CreateExercise from "@/views/Exercises/CreateExercise.vue";
 import ListExercises from "@/views/Exercises/ListExercises.vue";
 import UpdateExercise from "@/views/Exercises/UpdateExercise.vue";
 
-const router = createRouter({
+const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
@@ -53,6 +53,8 @@ const router = createRouter({
       path: '/logout',
       name: 'logout',
       beforeEnter: [logout],
+      component: null,
+      children: [],
     },
     {
       path: '/:pathMatch(.*)*',
@@ -71,12 +73,11 @@ async function logout() {
   };
 }
 
-async function auth(to: RouteLocationNormalized) {
+async function auth() {
   const authStore = useAuthStore();
   if (!authStore.accessToken) {
     return {
       path: '/login',
-      query: {returnUrl: to.href}
     };
   }
 }

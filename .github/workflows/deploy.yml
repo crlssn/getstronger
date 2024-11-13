@@ -1,0 +1,39 @@
+name: Deployment
+
+on:
+  push:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Apply Terraform
+        uses: ./.github/actions/apply/terraform
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          db_username: ${{ secrets.TF_VAR_DB_USERNAME }}
+          db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+
+      - name: Migrate database
+        uses: ./.github/actions/migrate/database
+        with:
+          db_host: ${{ vars.DB_HOST }}
+          db_port: ${{ vars.DB_PORT }}
+          db_name: ${{ vars.DB_NAME }}
+          db_user: ${{ secrets.DB_USER }}
+          db_password: ${{ secrets.DB_PASSWORD }}
+
+      - name: Deploy web app to S3
+        uses: ./.github/actions/deploy/web-app
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
