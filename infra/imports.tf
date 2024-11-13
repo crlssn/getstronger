@@ -3,7 +3,7 @@ import {
   id = "postgres"
 }
 
-import {
-  id = aws_s3_bucket.vue_js_bucket
-  to = "www.getstronger.co"
-}
+# import {
+#   id = aws_s3_bucket.vue_js_bucket
+#   to = "www.getstronger.co"
+# }
