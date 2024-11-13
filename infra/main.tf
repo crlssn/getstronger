@@ -19,7 +19,9 @@ terraform {
       version = "~> 4.16"
     }
   }
-  backend "s3" {}
+  backend "s3" {
+    bucket = "www.getstronger.co"
+  }
 
   # backend "s3" {
   #   bucket = "getstronger-terraform-state" # Replace with your bucket name
