@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "eu-west-2"
-}
-
 resource "aws_db_instance" "db" {
   allocated_storage    = 20                   # Minimum required storage in GB
   storage_type         = "gp2"                # General Purpose SSD
