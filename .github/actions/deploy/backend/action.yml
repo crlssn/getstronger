@@ -28,8 +28,8 @@ inputs:
   db_name:
     description: "Database Name"
     required: true
-  cors_allowed_origins:
-    description: "CORS Allowed Origins"
+  cors_allowed_origin:
+    description: "CORS Allowed Origin"
     required: true
 
 runs:
@@ -57,7 +57,7 @@ runs:
         echo DB_USER=${{ inputs.db_user }} >> .env
         echo DB_PASSWORD=${{ inputs.db_password }} >> .env
         echo DB_NAME=${{ inputs.db_name }} >> .env
-        echo CORS_ALLOWED_ORIGINS=${{ inputs.cors_allowed_origins }} >> .env
+        echo CORS_ALLOWED_ORIGIN=${{ inputs.cors_allowed_origin }} >> .env
 
     - name: Deploy to EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0

@@ -42,7 +42,7 @@ jobs:
           db_user: ${{ vars.DB_USER }}
           db_password: ${{ secrets.DB_PASSWORD }}
           db_name: ${{ vars.DB_NAME }}
-          cors_allowed_origins: ${{ vars.CORS_ALLOWED_ORIGINS }}
+          cors_allowed_origin: ${{ vars.CORS_ALLOWED_ORIGIN }}
 
       - name: Deploy web app to S3
         uses: ./.github/actions/deploy/web-app
