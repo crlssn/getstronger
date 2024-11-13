@@ -21,6 +21,7 @@ terraform {
   }
   backend "s3" {
     bucket = "www.getstronger.co"
+    key = "state.tfstate"
   }
 
   # backend "s3" {
