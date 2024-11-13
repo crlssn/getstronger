@@ -10,3 +10,4 @@
 .secrets/*.crt
 /infra/.terraform/
 /infra/.terraform.lock.hcl
+/.env

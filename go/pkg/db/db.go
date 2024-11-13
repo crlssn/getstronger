@@ -16,7 +16,7 @@ type Options struct {
 }
 
 func New(opts Options) (*sql.DB, error) {
-	println(fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", opts.User, opts.Password, opts.Host, opts.Port, opts.Database))
+	println(fmt.Sprintf("postgresql://%s:password@%s:%s/%s", opts.User, opts.Host, opts.Port, opts.Database))
 	return sql.Open("pgx", fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", opts.User, opts.Password, opts.Host, opts.Port, opts.Database))
 }
 
