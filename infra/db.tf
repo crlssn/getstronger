@@ -18,6 +18,7 @@ resource "aws_db_instance" "db" {
   # vpc_security_group_ids = [aws_security_group.default.id]
 
   lifecycle {
+    create_before_destroy = false
     prevent_destroy = true
   }
 }
