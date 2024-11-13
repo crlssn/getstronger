@@ -35,5 +35,5 @@ jobs:
         with:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ secrets.AWS_REGION }}
-          aws_bucket_name: ${{ secrets.AWS_BUCKET_NAME }}
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
