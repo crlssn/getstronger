@@ -1,14 +1,15 @@
 resource "aws_db_instance" "db" {
-  allocated_storage    = 20                   # Minimum required storage in GB
-  storage_type         = "gp2"                # General Purpose SSD
-  engine               = "postgres"           # Specifies the database engine as PostgreSQL
-  engine_version       = "16.4"               # PostgreSQL version 16.4
-  instance_class       = "db.t3.micro"        # Smallest instance type available
-  db_name              = "getstronger"        # Name of your database
-  username             = var.db_username      # Master username
-  password             = var.db_password      # Master password
-  parameter_group_name = "default.postgres16" # Parameter group for PostgreSQL 16
-  skip_final_snapshot  = true                 # Skips the final snapshot on deletion
+  allocated_storage    = 20                                     # Minimum required storage in GB
+  storage_type         = "gp2"                                  # General Purpose SSD
+  engine               = "postgres"                             # Specifies the database engine as PostgreSQL
+  engine_version       = "16.4"                                 # PostgreSQL version 16.4
+  instance_class       = "db.t3.micro"                          # Smallest instance type available
+  db_name              = "getstronger"                          # Name of your database
+  username             = var.db_username                        # Master username
+  password             = var.db_password                        # Master password
+  parameter_group_name = "default.postgres16"                   # Parameter group for PostgreSQL 16
+  skip_final_snapshot  = true                                   # Skips the final snapshot on deletion
+  identifier           = "terraform-20240816113854130600000001" # Unique identifier for the DB instance
 
   # VPC & Subnet group settings
   # db_subnet_group_name = aws_db_subnet_group.default.name
@@ -19,7 +20,7 @@ resource "aws_db_instance" "db" {
 
   lifecycle {
     create_before_destroy = false
-    prevent_destroy = true
+    prevent_destroy       = true
   }
 }
 #
