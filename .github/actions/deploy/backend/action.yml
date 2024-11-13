@@ -37,7 +37,15 @@ runs:
       with:
         go-version: '1.23'
 
-    - name: 'Create env file'
+    - name: Build the app
+      shell: bash
+      working-directory: ./go
+      run: |
+        go mod download
+        GOOS=linux go build -o bin/app cmd/main.go
+
+    - name: Create env file
+      working-directory: ./go/bin
       shell: bash
       run: |
         touch .env
@@ -47,14 +55,7 @@ runs:
         echo DB_PASSWORD=${{ inputs.db_password }} >> .env
         echo DB_NAME=${{ inputs.db_name }} >> .env
 
-    - name: Build the app
-      shell: bash
-      working-directory: ./go
-      run: |
-        go mod download
-        GOOS=linux go build -o bin/app cmd/main.go
-
-    - name: Deploy to my EC2 instance
+    - name: Deploy to EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0
       with:
         REMOTE_HOST: 'ec2-13-41-72-100.eu-west-2.compute.amazonaws.com'

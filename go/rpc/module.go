@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"connectrpc.com/connect"
 	connectcors "connectrpc.com/cors"
@@ -104,10 +105,7 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 
 func withCORS(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"https://localhost:5173",
-			"http://vue-js-app.s3-website.eu-west-2.amazonaws.com",
-		},
+		AllowedOrigins: []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
