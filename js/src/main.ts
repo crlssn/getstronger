@@ -18,7 +18,7 @@ app.use(router)
 
 const authStore = useAuthStore()
 if (authStore.accessToken) {
-  await RefreshAccessTokenOrLogout()
+  RefreshAccessTokenOrLogout().catch(error => { console.log(error) })
   authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
 }
 
