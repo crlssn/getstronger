@@ -25,23 +25,23 @@ runs:
       working-directory: ./infra
       shell: bash
 
-    - name: Terraform Import
-      run: |
-        terraform import aws_db_subnet_group.default db-subnet-group-4 
-        terraform import aws_security_group.default sg-0517ff4946c44591d
-        terraform import aws_s3_bucket.vue_js_bucket vue-js-app
-#        terraform import aws_db_instance.db
-#        terraform import aws_s3_bucket_policy.public_access
-#        terraform import aws_s3_bucket_public_access_block.public_access_block
-#        terraform import aws_s3_bucket_website_configuration.vue_js_bucket
-      working-directory: ./infra
-      shell: bash
-      env:
-#        TF_LOG: DEBUG
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
-        TF_VAR_db_username: ${{ inputs.db_username }}
-        TF_VAR_db_password: ${{ inputs.db_password }}
+#    - name: Terraform Import
+#      run: |
+#        terraform import aws_db_subnet_group.default db-subnet-group-4
+#        terraform import aws_security_group.default sg-0517ff4946c44591d
+#        terraform import aws_s3_bucket.vue_js_bucket vue-js-app
+##        terraform import aws_db_instance.db
+##        terraform import aws_s3_bucket_policy.public_access
+##        terraform import aws_s3_bucket_public_access_block.public_access_block
+##        terraform import aws_s3_bucket_website_configuration.vue_js_bucket
+#      working-directory: ./infra
+#      shell: bash
+#      env:
+##        TF_LOG: DEBUG
+#        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+#        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+#        TF_VAR_db_username: ${{ inputs.db_username }}
+#        TF_VAR_db_password: ${{ inputs.db_password }}
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
