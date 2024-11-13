@@ -27,8 +27,6 @@ runs:
       working-directory: ./go
       run: |
         go mod download
-        GOOS=linux go build -o cmd/bin cmd/main.go
-        ls cmd/bin
 
     - name: Deploy to S3
       working-directory: ./go
@@ -40,7 +38,8 @@ runs:
         AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
       run: |
         # Sync the build folder to the S3 bucket
-        aws s3 sync ./cmd/bin s3://getstronger-binaries --delete
+        GOOS=linux go build -o cmd/bin cmd/main.go
+        aws s3 sync cmd/bin s3://getstronger-binaries
 
 #    - name: Deploy to EC2
 #      shell: bash
