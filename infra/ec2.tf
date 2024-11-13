@@ -1,8 +1,8 @@
 resource "aws_instance" "backend" {
-  ami           = "ami-02f617729751b375a"
-  instance_type = "t2.micro"
+  ami             = "ami-02f617729751b375a"
+  instance_type   = "t2.micro"
   security_groups = [aws_security_group.ssh_access.name]
-  key_name      = aws_key_pair.backend_ec2_key.key_name
+  key_name        = aws_key_pair.backend_ec2_key.key_name
 }
 
 resource "aws_key_pair" "backend_ec2_key" {
@@ -23,9 +23,9 @@ resource "aws_security_group" "ssh_access" {
   }
 
   egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
