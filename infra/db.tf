@@ -16,12 +16,32 @@ resource "aws_db_instance" "postgres" {
   publicly_accessible = true # Set to true if you need public access
 
   # Security group settings
+  vpc_security_group_ids = [aws_security_group.db_access.id]
   # vpc_security_group_ids = [aws_security_group.default.id]
 
   # lifecycle {
   #   create_before_destroy = false
   #   prevent_destroy       = true
   # }
+}
+
+resource "aws_security_group" "db_access" {
+  name        = "db-access"
+  description = "Allow public access to RDS instance"
+
+  ingress {
+    from_port   = 5432  # Adjust based on your database engine
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Allow public access (Use specific IP ranges for security)
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 # #
 # # # Optional: Create a DB subnet group if you don't have one already
