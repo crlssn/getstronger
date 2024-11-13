@@ -23,7 +23,7 @@ resource "aws_route53_record" "www_getstronger_pro" {
   type    = "A"
 
   alias {
-    name                   = aws_s3_bucket.vue_js_bucket.website_domain
+    name                   = aws_s3_bucket.vue_js_bucket.website_endpoint
     zone_id                = aws_s3_bucket.vue_js_bucket.hosted_zone_id
     evaluate_target_health = false
   }
