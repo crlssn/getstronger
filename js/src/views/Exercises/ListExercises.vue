@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {ListExercisesRequest} from "@/pb/api/v1/exercise_pb";
+import {Exercise, ListExercisesRequest} from "@/pb/api/v1/exercise_pb";
 import {ExerciseClient} from "@/clients/clients";
 import {onMounted, ref} from "vue";
 import Button from "@/components/Button.vue";
 
-const exercises = ref([]);
-const name = ref(null);
-const pageToken = ref(null);
+const exercises = ref(Array<Exercise>());
+const name = ref('');
+const pageToken = ref(new Uint8Array(0));
 
 onMounted(() => {
   fetchExercises()
@@ -24,7 +24,7 @@ const fetchExercises = async () => {
     const response = await ExerciseClient.list(request);
     exercises.value = [...exercises.value, ...response.exercises];
 
-    pageToken.value = null;
+    pageToken.value = new Uint8Array(0);
     if (response.nextPageToken.length > 0) {
       pageToken.value = response.nextPageToken;
     }
@@ -35,11 +35,11 @@ const fetchExercises = async () => {
 
 function searchExercises() {
   exercises.value = [];
-  pageToken.value = null;
+  pageToken.value = new Uint8Array(0);
   fetchExercises();
 }
 
-function formatTime(seconds) {
+function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
 
@@ -89,7 +89,7 @@ function formatTime(seconds) {
                   No exercises found
                 </td>
               </tr>
-              <tr v-for="exercise in exercises" :key="exercise">
+              <tr v-for="exercise in exercises" :key="exercise.id">
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                   {{ exercise.name }}
                 </td>

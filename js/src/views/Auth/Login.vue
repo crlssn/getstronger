@@ -10,7 +10,7 @@ import {ScheduleTokenRefresh} from "@/jwt/jwt";
 
 const email = ref('')
 const password = ref('')
-const resError = ref(null);
+const resError = ref('');
 const authStore = useAuthStore()
 
 const login = async () => {

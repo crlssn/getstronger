@@ -10,7 +10,7 @@ const lastName = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
-const requestError = ref(null);
+const requestError = ref('');
 
 const router = useRouter()
 
@@ -24,7 +24,7 @@ const signup = async () => {
   })
 
   try {
-    requestError.value = null;
+    requestError.value = '';
     await AuthClient.signup(request);
     await router.push('/login?success')
   } catch (error) {

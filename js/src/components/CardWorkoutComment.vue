@@ -2,7 +2,7 @@
 const props = defineProps<{
   imageURL: string,
   name: string,
-  timestamp: date,
+  timestamp: Date,
   comment: string
 }>()
 </script>

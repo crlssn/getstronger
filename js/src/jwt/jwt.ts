@@ -3,8 +3,9 @@ import {RefreshTokenRequest} from "@/pb/api/v1/auth_pb";
 import {useAuthStore} from "@/stores/auth";
 import {Code, ConnectError} from "@connectrpc/connect";
 import router from "@/router/router";
+import type {NavigationFailure} from "vue-router";
 
-export async function RefreshAccessTokenOrLogout(): Promise<void> {
+export async function RefreshAccessTokenOrLogout(): Promise<void | NavigationFailure | undefined> {
   try {
     const authStore = useAuthStore();
     const response = await AuthClient.refreshToken(new RefreshTokenRequest());
@@ -26,7 +27,7 @@ export function ScheduleTokenRefresh(): number {
   const interval = 10 * 60 * 1000; // 10 minutes
   // const interval = 10 * 1000; // 10 seconds
   console.log('scheduling access token refresh');
-  return setInterval(async () => {
+  return window.setInterval(async () => {
     try {
       console.log('refreshing access token');
       await RefreshAccessTokenOrLogout();

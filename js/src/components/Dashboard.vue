@@ -38,7 +38,7 @@ const sidebarOpen = ref(false)
 
 const route = useRoute()
 
-const isActive = (basePath) => computed(() => route.path.startsWith(basePath))
+const isActive = (basePath: string) => computed(() => route.path.startsWith(basePath))
 
 </script>
 

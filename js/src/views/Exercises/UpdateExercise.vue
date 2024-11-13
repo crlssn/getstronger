@@ -10,8 +10,8 @@ import router from "@/router/router";
 
 const name = ref('')
 const label = ref('')
-const resError = ref(null);
-const resOK = ref(null);
+const resError = ref('');
+const resOK = ref(false);
 const rest = ref(0);
 
 const route = useRoute()
@@ -32,10 +32,13 @@ const restOptions = [
 
 async function loadExercise() {
   const request = new GetExerciseRequest({
-    id: route.params.id
+    id: route.params.id[0]
   })
   try {
     const response = await ExerciseClient.get(request);
+    if (typeof response.exercise === 'undefined') {
+      return
+    }
     name.value = response.exercise.name;
     label.value = response.exercise.label;
     if (response.exercise.restBetweenSets) {
@@ -56,14 +59,14 @@ onMounted(() => {
 })
 
 async function updateExercise() {
-  let restBetweenSets = null;
+  let restBetweenSets;
   if (rest.value > 0) {
     restBetweenSets = new RestBetweenSets({seconds: rest.value});
   }
 
   const request = new UpdateExerciseRequest({
     exercise: new Exercise({
-      id: route.params.id,
+      id: route.params.id[0],
       name: name.value,
       label: label.value,
       restBetweenSets: restBetweenSets,
@@ -73,7 +76,7 @@ async function updateExercise() {
   try {
     await ExerciseClient.update(request);
     resOK.value = true;
-    resError.value = null;
+    resError.value = '';
   } catch (error) {
     resOK.value = false;
     if (error instanceof ConnectError) {
@@ -125,7 +128,7 @@ async function updateExercise() {
             <select v-model="rest" id="rest"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6">
               <option :value="0" selected>Unspecified</option>
-              <option v-for="rest in restOptions" :key="rest" :value="rest.value">{{ rest.label }}</option>
+              <option v-for="rest in restOptions" :key="rest.value" :value="rest.value">{{ rest.label }}</option>
             </select>
           </div>
         </div>
