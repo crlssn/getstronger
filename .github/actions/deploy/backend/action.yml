@@ -33,7 +33,7 @@ runs:
     - name: Deploy to my EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0
       with:
-        REMOTE_HOST: 'ec2-52-56-62-119.eu-west-2.compute.amazonaws.com'
+        REMOTE_HOST: 'ec2-13-41-72-100.eu-west-2.compute.amazonaws.com'
         REMOTE_USER: 'ec2-user'
         SSH_PRIVATE_KEY: ${{ inputs.aws_ec2_private_key }}
         SOURCE: 'go/bin/'
