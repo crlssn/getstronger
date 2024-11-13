@@ -13,6 +13,21 @@ inputs:
   aws_ec2_private_key:
     description: "AWS EC2 Private Key"
     required: true
+  db_host:
+    description: "Database Host"
+    required: true
+  db_port:
+    description: "Database Port"
+    required: true
+  db_user:
+    description: "Database User"
+    required: true
+  db_password:
+    description: "Database Password"
+    required: true
+  db_name:
+    description: "Database Name"
+    required: true
 
 runs:
   using: 'composite'
@@ -28,7 +43,12 @@ runs:
       run: |
         go mod download
         GOOS=linux go build -o bin/app cmd/main.go
-#        zip bin.zip cmd/bin
+      env:
+        DB_HOST: ${{ inputs.db_host }}
+        DB_PORT: ${{ inputs.db_port }}
+        DB_USER: ${{ inputs.db_user }}
+        DB_PASSWORD: ${{ inputs.db_password }}
+        DB_NAME: ${{ inputs.db_name }}
 
     - name: Deploy to my EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0

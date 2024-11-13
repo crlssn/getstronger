@@ -9,14 +9,14 @@ import (
 
 type Options struct {
 	Host     string
-	Port     int
+	Port     string
 	User     string
 	Password string
 	Database string
 }
 
 func New(opts Options) (*sql.DB, error) {
-	return sql.Open("pgx", fmt.Sprintf("postgresql://%s:%s@%s:%d/%s", opts.User, opts.Password, opts.Host, opts.Port, opts.Database))
+	return sql.Open("pgx", fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", opts.User, opts.Password, opts.Host, opts.Port, opts.Database))
 }
 
 func MustNewTest() *sql.DB {
