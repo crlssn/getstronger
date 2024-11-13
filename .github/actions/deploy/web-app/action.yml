@@ -23,14 +23,17 @@ runs:
         node-version: '22'
 
     - name: Install dependencies
+      working-directory: ./js
       run: npm install
       shell: bash
 
     - name: Build the Vue.js project
+      working-directory: ./js
       run: npm run build
       shell: bash
 
     - name: Deploy to S3
+      working-directory: ./js
       shell: bash
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
