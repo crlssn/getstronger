@@ -41,10 +41,10 @@ runs:
         AWS_REGION: ${{ inputs.aws_region }}
         AWS_BUCKET_NAME: ${{ inputs.aws_bucket_name }}
       run: |
-        # Install AWS CLI
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
+#        # Install AWS CLI
+#        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#        unzip awscliv2.zip
+#        sudo ./aws/install --update
 
         # Sync the build folder to the S3 bucket
         aws s3 sync ./dist s3://$AWS_BUCKET_NAME --delete
