@@ -12,7 +12,7 @@ resource "aws_db_instance" "db" {
 
   # VPC & Subnet group settings
   # db_subnet_group_name = aws_db_subnet_group.default.name
-  publicly_accessible  = true # Set to true if you need public access
+  publicly_accessible = true # Set to true if you need public access
 
   # Security group settings
   # vpc_security_group_ids = [aws_security_group.default.id]
