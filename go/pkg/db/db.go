@@ -22,7 +22,7 @@ func New(opts Options) (*sql.DB, error) {
 func MustNewTest() *sql.DB {
 	db, err := New(Options{
 		Host:     "localhost",
-		Port:     5433,
+		Port:     "5433",
 		User:     "root",
 		Password: "root",
 		Database: "postgres",
