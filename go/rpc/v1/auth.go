@@ -73,6 +73,7 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceLoginProcedure))
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.Email, req.Msg.Password); err != nil {
+		log.Error("credentials invalid", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid credentials"))
 	}
 
