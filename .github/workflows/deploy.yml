@@ -50,4 +50,3 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ vars.AWS_REGION }}
           aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
-

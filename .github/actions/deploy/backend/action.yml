@@ -37,6 +37,13 @@ runs:
       with:
         go-version: '1.23'
 
+    - name: 'Create env file'
+      shell: bash
+      run: |
+        touch .env
+        echo DB_HOST=${{ inputs.db_host }} >> .env
+        cat .env
+
     - name: Build the app
       shell: bash
       working-directory: ./go
