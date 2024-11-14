@@ -37,6 +37,18 @@ inputs:
   server_port:
     description: "Server Port"
     required: true
+  server_cert:
+    description: "Server Cert"
+    required: true
+  server_key:
+    description: "Server Key"
+    required: true
+  server_cert_path:
+    description: "Server Cert Path"
+    required: true
+  server_key_path:
+    description: "Server Key Path"
+    required: true
 
 runs:
   using: 'composite'
@@ -65,6 +77,22 @@ runs:
         echo DB_NAME=${{ inputs.db_name }} >> .env
         echo CORS_ALLOWED_ORIGIN=${{ inputs.cors_allowed_origin }} >> .env
         echo SERVER_PORT=${{ inputs.server_port }} >> .env
+        echo SERVER_CERT=${{ inputs.server_cert_path }} >> .env
+        echo SERVER_KEY=${{ inputs.server_key_path }} >> .env
+
+    - name: Create cert file
+      working-directory: ./go/bin
+      shell: bash
+      run: |
+        touch server.crt
+        echo ${{ inputs.server_cert }} >> .env
+
+    - name: Create key file
+      working-directory: ./go/bin
+      shell: bash
+      run: |
+        touch server.key
+        echo ${{ inputs.server_key }} >> .env
 
     - name: Deploy to EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0
