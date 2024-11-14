@@ -47,6 +47,8 @@ jobs:
           server_port: ${{ vars.SERVER_PORT }}
           server_cert: ${{ secrets.SERVER_CERT }}
           server_key: ${{ secrets.SERVER_KEY }}
+          server_cert_path: ${{ vars.SERVER_CERT_PATH }}
+          server_key_path: ${{ vars.SERVER_KEY_PATH }}
 
 #      - name: Deploy web app to S3
 #        uses: ./.github/actions/deploy/web-app
