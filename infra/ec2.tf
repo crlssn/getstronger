@@ -1,10 +1,8 @@
 resource "aws_instance" "backend" {
-  ami           = "ami-02f617729751b375a"
-  instance_type = "t2.micro"
+  ami             = "ami-02f617729751b375a"
+  instance_type   = "t2.micro"
   security_groups = [aws_security_group.ssh_access.name, aws_security_group.api_access.name]
-  key_name      = aws_key_pair.backend_ec2_key.key_name
-
-  user_data = file("scripts/start-server.sh")
+  key_name        = aws_key_pair.backend_ec2_key.key_name
 }
 
 resource "aws_key_pair" "backend_ec2_key" {
@@ -25,9 +23,9 @@ resource "aws_security_group" "ssh_access" {
   }
 
   egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
@@ -38,16 +36,16 @@ resource "aws_security_group" "api_access" {
 
   ingress {
     description = "Allow HTTP traffic"
-    from_port = 8080 # Replace with the port your API is using
-    to_port = 8080 # Same port
+    from_port   = 8080 # Replace with the port your API is using
+    to_port     = 8080 # Same port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # Allows traffic from any IP. Use a specific IP range if needed.
   }
 
   ingress {
     description = "Allow HTTP traffic"
-    from_port = 80 # Replace with the port your API is using
-    to_port = 80 # Same port
+    from_port   = 80 # Replace with the port your API is using
+    to_port     = 80 # Same port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # Allows traffic from any IP. Use a specific IP range if needed.
   }
@@ -61,9 +59,9 @@ resource "aws_security_group" "api_access" {
   }
 
   egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }

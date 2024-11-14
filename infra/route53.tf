@@ -20,7 +20,7 @@ resource "aws_route53_record" "api_getstronger_pro" {
 resource "aws_route53_record" "www_getstronger_pro" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
   name    = "www.getstronger.pro"
-  type    = "A"  # Change type to "A" for alias records with CloudFront
+  type    = "A" # Change type to "A" for alias records with CloudFront
 
   alias {
     name                   = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name

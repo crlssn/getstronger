@@ -48,8 +48,8 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   aliases = ["www.getstronger.pro"]
 
   default_cache_behavior {
-    allowed_methods = ["GET", "HEAD"]
-    cached_methods = ["GET", "HEAD"]
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
     target_origin_id = "S3-origin"
 
     viewer_protocol_policy = "redirect-to-https"
@@ -107,8 +107,8 @@ resource "aws_route53_record" "api_getstronger_pro_ssl_cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "api_getstronger_pro_cert_validation" {
-  provider        = aws.us_east_1
-  certificate_arn = aws_acm_certificate.api_getstronger_pro_ssl_cert.arn
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.api_getstronger_pro_ssl_cert.arn
   validation_record_fqdns = [for record in aws_route53_record.api_getstronger_pro_ssl_cert_validation : record.fqdn]
   depends_on = [
     aws_acm_certificate.api_getstronger_pro_ssl_cert,
@@ -128,7 +128,7 @@ resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
       http_port              = 80
       https_port             = 443
       origin_protocol_policy = "https-only"
-      origin_ssl_protocols = ["TLSv1.2"]
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
@@ -137,8 +137,8 @@ resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
   default_root_object = "/"
 
   default_cache_behavior {
-    allowed_methods = ["GET", "HEAD"]
-    cached_methods = ["GET", "HEAD"]
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
     target_origin_id = "EC2-origin"
 
     viewer_protocol_policy = "redirect-to-https"
