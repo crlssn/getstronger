@@ -34,6 +34,15 @@ inputs:
   cors_allowed_origin:
     description: "CORS Allowed Origin"
     required: true
+  server_port:
+    description: "Server Port"
+    required: true
+  server_cert_path:
+    description: "Server Cert Path"
+    required: true
+  server_key_path:
+    description: "Server Key Path"
+    required: true
 
 runs:
   using: 'composite'
@@ -61,6 +70,9 @@ runs:
         echo DB_PASSWORD=${{ inputs.db_password }} >> .env
         echo DB_NAME=${{ inputs.db_name }} >> .env
         echo CORS_ALLOWED_ORIGIN=${{ inputs.cors_allowed_origin }} >> .env
+        echo SERVER_PORT=${{ inputs.server_port }} >> .env
+        echo SERVER_CERT_PATH=${{ inputs.server_cert_path }} >> .env
+        echo SERVER_KEY_PATH=${{ inputs.server_key_path }} >> .env
 
     - name: Deploy to EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0

@@ -13,6 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create SSH key file
+        run: |
+          mkdir ~/.ssh
+          echo "${{ secrets.AWS_EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
       - name: Apply Terraform
         uses: ./.github/actions/apply/terraform
         with:
@@ -29,7 +35,7 @@ jobs:
           db_name: ${{ vars.DB_NAME }}
           db_user: ${{ secrets.DB_USER }}
           db_password: ${{ secrets.DB_PASSWORD }}
-
+#
       - name: Deploy backend to EC2
         uses: ./.github/actions/deploy/backend
         with:
@@ -44,7 +50,10 @@ jobs:
           db_password: ${{ secrets.DB_PASSWORD }}
           db_name: ${{ vars.DB_NAME }}
           cors_allowed_origin: ${{ vars.CORS_ALLOWED_ORIGIN }}
-#
+          server_port: ${{ vars.SERVER_PORT }}
+          server_cert_path: ${{ vars.SERVER_CERT_PATH }}
+          server_key_path: ${{ vars.SERVER_KEY_PATH }}
+
       - name: Deploy web app to S3
         uses: ./.github/actions/deploy/web-app
         with:
