@@ -1,9 +1,9 @@
-resource "aws_s3_bucket" "vue_js_bucket" {
-  bucket = "vue-js-app"
+resource "aws_s3_bucket" "www_getstronger_pro" {
+  bucket = "www.getstronger.pro"
 }
 
 resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {
-  bucket = aws_s3_bucket.vue_js_bucket.id
+  bucket = aws_s3_bucket.www_getstronger_pro.id
 
   index_document {
     suffix = "index.html"
@@ -15,7 +15,7 @@ resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {
 }
 
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
-  bucket = aws_s3_bucket.vue_js_bucket.id
+  bucket = aws_s3_bucket.www_getstronger_pro.id
 
   block_public_acls       = false
   block_public_policy     = false
@@ -24,7 +24,7 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
 }
 
 resource "aws_s3_bucket_policy" "public_access" {
-  bucket = aws_s3_bucket.vue_js_bucket.id
+  bucket = aws_s3_bucket.www_getstronger_pro.id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -33,16 +33,8 @@ resource "aws_s3_bucket_policy" "public_access" {
         Effect    = "Allow"
         Principal = "*"
         Action    = ["s3:GetObject"]
-        Resource  = ["${aws_s3_bucket.vue_js_bucket.arn}/*"]
+        Resource  = ["${aws_s3_bucket.www_getstronger_pro.arn}/*"]
       }
     ]
   })
 }
-# #
-# # output "bucket_name" {
-# #   value = aws_s3_bucket.vue_js_bucket.bucket
-# # }
-# #
-# # # output "bucket_website_endpoint" {
-# # #   value = aws_s3_bucket.vue_js_bucket.website_endpoint
-# # # }

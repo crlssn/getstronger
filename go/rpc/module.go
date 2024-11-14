@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"connectrpc.com/connect"
 	connectcors "connectrpc.com/cors"
@@ -87,9 +88,12 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				if err := http.ListenAndServeTLS(":1234", certFile, keyFile, h2c.NewHandler(mux, &http2.Server{})); err != nil {
+				if err := http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{})); err != nil {
 					panic(err)
 				}
+				//if err := http.ListenAndServeTLS(":1234", certFile, keyFile, h2c.NewHandler(mux, &http2.Server{})); err != nil {
+				//	panic(err)
+				//}
 			}()
 			return nil
 		},
@@ -101,7 +105,7 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 
 func withCORS(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
-		AllowedOrigins: []string{"https://localhost:5173"},
+		AllowedOrigins: []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,

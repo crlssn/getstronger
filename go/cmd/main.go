@@ -1,7 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"github.com/bufbuild/protovalidate-go"
+	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -23,17 +26,18 @@ func options() []fx.Option {
 		fx.Provide(
 			func() db.Options {
 				return db.Options{
-					Host:     "localhost",
-					Port:     5433,
-					User:     "root",
-					Password: "root",
-					Database: "postgres",
+					Host:     os.Getenv("DB_HOST"),
+					Port:     os.Getenv("DB_PORT"),
+					User:     os.Getenv("DB_USER"),
+					Password: os.Getenv("DB_PASSWORD"),
+					Database: os.Getenv("DB_NAME"),
 				}
 			},
 			db.New,
 			zap.NewDevelopment,
 			repo.New,
 			grpc.NewServer,
+			godotenv.Load,
 			protovalidate.New,
 		),
 	}
