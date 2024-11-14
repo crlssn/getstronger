@@ -59,6 +59,14 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
     }
   }
 
+  # Custom error response to handle SPA routing for all 403 errors
+  custom_error_response {
+    error_code            = 403
+    response_page_path    = "/index.html"
+    response_code         = 200
+    error_caching_min_ttl = 0
+  }
+
   # Associate SSL certificate
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate.www_getstronger_pro_ssl_cert.arn
