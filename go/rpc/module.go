@@ -84,9 +84,6 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				//if err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")), h2c.NewHandler(mux, &http2.Server{})); err != nil {
-				//	panic(err)
-				//}
 				if err := http.ListenAndServeTLS(fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")), os.Getenv("SERVER_CERT_PATH"), os.Getenv("SERVER_KEY_PATH"), h2c.NewHandler(mux, &http2.Server{})); err != nil {
 					panic(err)
 				}
