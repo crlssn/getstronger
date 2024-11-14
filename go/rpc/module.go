@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -88,7 +89,7 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				if err := http.ListenAndServe(":8080", h2c.NewHandler(mux, &http2.Server{})); err != nil {
+				if err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")), h2c.NewHandler(mux, &http2.Server{})); err != nil {
 					panic(err)
 				}
 				//if err := http.ListenAndServeTLS(":1234", certFile, keyFile, h2c.NewHandler(mux, &http2.Server{})); err != nil {
