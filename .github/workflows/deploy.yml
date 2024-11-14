@@ -53,6 +53,7 @@ jobs:
           server_port: ${{ vars.SERVER_PORT }}
           server_cert_path: ${{ vars.SERVER_CERT_PATH }}
           server_key_path: ${{ vars.SERVER_KEY_PATH }}
+          cookie_domain: ${{ vars.COOKIE_DOMAIN }}
 
       - name: Deploy web app to S3
         uses: ./.github/actions/deploy/web-app
