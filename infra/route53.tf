@@ -24,3 +24,11 @@ resource "aws_route53_record" "www_getstronger_pro" {
   ttl     = 300
   records = [aws_s3_bucket.www_getstronger_pro.website_endpoint]
 }
+
+resource "aws_route53_record" "ssh_getstronger_pro" {
+  zone_id = aws_route53_zone.getstronger_pro.zone_id
+  name    = "ssh.getstronger.pro"
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.ec2_instance.public_ip]
+}
