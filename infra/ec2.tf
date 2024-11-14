@@ -43,6 +43,14 @@ resource "aws_security_group" "api_access" {
   }
 
   ingress {
+    description = "Allow HTTP traffic"
+    from_port   = 80 # Replace with the port your API is using
+    to_port     = 80 # Same port
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allows traffic from any IP. Use a specific IP range if needed.
+  }
+
+  ingress {
     description = "Allow HTTPS traffic"
     from_port   = 443
     to_port     = 443
