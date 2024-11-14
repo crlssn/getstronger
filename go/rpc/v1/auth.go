@@ -109,7 +109,8 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 		Value:    refreshToken,
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode, // TODO: Set to http.SameSiteStrictMode.
+		SameSite: http.SameSiteNoneMode,
+		Domain:   ".getstronger.pro",
 		Path:     "/api.v1.AuthService",
 		MaxAge:   int(jwt.ExpiryTimeRefresh),
 	}
@@ -178,7 +179,8 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 		Value:    "",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode, // TODO: Set to http.SameSiteStrictMode.
+		SameSite: http.SameSiteNoneMode,
+		Domain:   ".getstronger.pro",
 		Path:     "/api.v1.AuthService",
 		MaxAge:   -1,
 	}
