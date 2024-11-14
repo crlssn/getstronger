@@ -6,10 +6,10 @@ resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
 
 # Validate the certificate
 resource "aws_route53_record" "s3_ssl_cert_validation" {
-  name    = aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_name
-  type    = aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_type
+  name    = aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options.resource_record_name
+  type    = aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options.resource_record_type
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  records = [aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_value]
+  records = [aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options.resource_record_value]
   ttl     = 60
 }
 
