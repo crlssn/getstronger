@@ -24,17 +24,3 @@ resource "aws_route53_record" "www_getstronger_pro" {
   ttl     = 300
   records = [aws_s3_bucket.www_getstronger_pro.website_endpoint]
 }
-
-
-# # Route 53 alias record for www.getstronger.pro -> S3 bucket
-# resource "aws_route53_record" "www_getstronger_pro" {
-#   zone_id = aws_route53_zone.getstronger_pro.zone_id
-#   name    = "www.getstronger.pro"
-#   type    = "A"
-#
-#   alias {
-#     name                   = aws_s3_bucket.vue_js_bucket.website_endpoint
-#     zone_id                = aws_s3_bucket.vue_js_bucket.hosted_zone_id
-#     evaluate_target_health = false
-#   }
-# }
