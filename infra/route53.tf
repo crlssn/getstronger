@@ -17,13 +17,13 @@ resource "aws_route53_record" "api_getstronger_pro" {
 }
 
 # Route 53 CNAME record for www.getstronger.pro -> S3 bucket
-# resource "aws_route53_record" "www_getstronger_pro" {
-#   zone_id = aws_route53_zone.getstronger_pro.zone_id
-#   name    = "www.getstronger.pro"
-#   type    = "CNAME"
-#   ttl     = 300
-#   records = [aws_s3_bucket.www_getstronger_pro.website_endpoint]
-# }
+resource "aws_route53_record" "www_getstronger_pro" {
+  zone_id = aws_route53_zone.getstronger_pro.zone_id
+  name    = "www.getstronger.pro"
+  type    = "CNAME"
+  ttl     = 300
+  records = [aws_s3_bucket.www_getstronger_pro.website_endpoint]
+}
 
 
 # # Route 53 alias record for www.getstronger.pro -> S3 bucket
