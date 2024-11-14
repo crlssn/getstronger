@@ -178,8 +178,9 @@ resource "null_resource" "letsencrypt_cert" {
 
     # Install Certbot and generate the certificate
     inline = [
-      "sudo apt update",
-      "sudo apt install -y certbot",
+      "sudo dnf update -y",
+      "sudo dnf install -y epel-release",
+      "sudo dnf install -y certbot",
       "sudo certbot certonly --standalone -d api.getstronger.pro --non-interactive --agree-tos -m admin@getstronger.pro",
       "sudo crontab -l | { cat; echo '0 0 * * * /usr/bin/certbot renew --quiet'; } | sudo crontab -"
     ]
