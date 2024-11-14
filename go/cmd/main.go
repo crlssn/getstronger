@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/bufbuild/protovalidate-go"
@@ -17,11 +16,6 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(fmt.Errorf("failed to load .env file: %w", err))
-	}
-
 	fx.New(options()...).Run()
 }
 
@@ -43,6 +37,7 @@ func options() []fx.Option {
 			zap.NewDevelopment,
 			repo.New,
 			grpc.NewServer,
+			godotenv.Load,
 			protovalidate.New,
 		),
 	}
