@@ -38,7 +38,3 @@ resource "aws_s3_bucket_policy" "public_access" {
     ]
   })
 }
-
-resource "aws_s3_bucket" "getstronger_binaries" {
-  bucket = "getstronger-binaries"
-}
