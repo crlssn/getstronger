@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -110,7 +111,7 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
-		Domain:   ".getstronger.pro",
+		Domain:   os.Getenv("COOKIE_DOMAIN"),
 		Path:     "/api.v1.AuthService",
 		MaxAge:   int(jwt.ExpiryTimeRefresh),
 	}
@@ -180,7 +181,7 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
-		Domain:   ".getstronger.pro",
+		Domain:   os.Getenv("COOKIE_DOMAIN"),
 		Path:     "/api.v1.AuthService",
 		MaxAge:   -1,
 	}
