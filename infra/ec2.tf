@@ -3,6 +3,32 @@ resource "aws_instance" "backend" {
   instance_type   = "t2.micro"
   security_groups = [aws_security_group.ssh_access.name, aws_security_group.api_access.name]
   key_name        = aws_key_pair.backend_ec2_key.key_name
+
+  user_data = <<-EOF
+    #!/bin/bash
+    # Create a systemd service for the application
+    echo "[Unit]
+    Description=Backend API
+    After=network.target
+
+    [Service]
+    ExecStart=/home/ec2-user/app
+    Restart=always
+    User=root
+    StandardOutput=file:/var/log/app.log
+    StandardError=file:/var/log/app.err
+
+    [Install]
+    WantedBy=multi-user.target" > /etc/systemd/system/app.service
+
+    # Ensure the app is executable
+    chmod +x /home/ec2-user/app
+
+    # Reload systemd and start the app service
+    sudo systemctl daemon-reload
+    sudo systemctl enable app.service
+    sudo systemctl start app.service
+  EOF
 }
 
 resource "aws_key_pair" "backend_ec2_key" {
