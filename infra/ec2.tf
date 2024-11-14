@@ -42,6 +42,14 @@ resource "aws_security_group" "api_access" {
     cidr_blocks = ["0.0.0.0/0"] # Allows traffic from any IP. Use a specific IP range if needed.
   }
 
+  ingress {
+    description = "Allow HTTPS traffic"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allows traffic from any IP. Use a specific IP range if needed.
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

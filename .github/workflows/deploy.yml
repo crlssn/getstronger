@@ -30,20 +30,20 @@ jobs:
 #          db_user: ${{ secrets.DB_USER }}
 #          db_password: ${{ secrets.DB_PASSWORD }}
 #
-#      - name: Deploy backend to EC2
-#        uses: ./.github/actions/deploy/backend
-#        with:
-#          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws_region: ${{ vars.AWS_REGION }}
-#          aws_ec2_private_key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
-#          aws_ec2_remote_host: ${{ vars.AWS_EC2_REMOTE_HOST }}
-#          db_host: ${{ vars.DB_HOST }}
-#          db_port: ${{ vars.DB_PORT }}
-#          db_user: ${{ vars.DB_USER }}
-#          db_password: ${{ secrets.DB_PASSWORD }}
-#          db_name: ${{ vars.DB_NAME }}
-#          cors_allowed_origin: ${{ vars.CORS_ALLOWED_ORIGIN }}
+      - name: Deploy backend to EC2
+        uses: ./.github/actions/deploy/backend
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_ec2_private_key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
+          aws_ec2_remote_host: ${{ vars.AWS_EC2_REMOTE_HOST }}
+          db_host: ${{ vars.DB_HOST }}
+          db_port: ${{ vars.DB_PORT }}
+          db_user: ${{ vars.DB_USER }}
+          db_password: ${{ secrets.DB_PASSWORD }}
+          db_name: ${{ vars.DB_NAME }}
+          cors_allowed_origin: ${{ vars.CORS_ALLOWED_ORIGIN }}
 ##
 #      - name: Deploy web app to S3
 #        uses: ./.github/actions/deploy/web-app
