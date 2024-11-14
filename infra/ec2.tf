@@ -5,38 +5,38 @@ resource "aws_instance" "backend" {
   key_name        = aws_key_pair.backend_ec2_key.key_name
 
   user_data = <<-EOF
-    #!/bin/bash
-    # Log file for debugging
-    LOGFILE="/var/log/user_data.log"
+#!/bin/bash
+# Log file for debugging
+LOGFILE="/var/log/user_data.log"
 
-    # Create a systemd service for the application
-    echo "[Unit]
-    Description=Backend API
-    After=network.target
+# Create a systemd service for the application
+echo "[Unit]
+Description=Backend API
+After=network.target
 
-    [Service]
-    ExecStart=/home/ec2-user/app
-    Restart=always
-    User=root
-    StandardOutput=file:/var/log/app.log
-    StandardError=file:/var/log/app.err
+[Service]
+ExecStart=/home/ec2-user/app
+Restart=always
+User=root
+StandardOutput=file:/var/log/app.log
+StandardError=file:/var/log/app.err
 
-    [Install]
-    WantedBy=multi-user.target" > /etc/systemd/system/app.service
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/app.service
 
-    echo "Service file created" >> $LOGFILE
+echo "Service file created" >> $LOGFILE
 
-    # Ensure the app is executable
-    chmod +x /home/ec2-user/app
-    echo "App made executable" >> $LOGFILE
+# Ensure the app is executable
+chmod +x /home/ec2-user/app
+echo "App made executable" >> $LOGFILE
 
-    # Reload systemd and start the app service
-    sudo systemctl daemon-reload
-    sudo systemctl enable app.service
-    sudo systemctl start app.service
+# Reload systemd and start the app service
+sudo systemctl daemon-reload
+sudo systemctl enable app.service
+sudo systemctl start app.service
 
-    echo "Systemd service started" >> $LOGFILE
-  EOF
+echo "Systemd service started" >> $LOGFILE
+EOF
 }
 
 resource "aws_key_pair" "backend_ec2_key" {
