@@ -13,6 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.AWS_EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
       - name: Apply Terraform
         uses: ./.github/actions/apply/terraform
         with:

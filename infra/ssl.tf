@@ -167,3 +167,23 @@ resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
   }
 }
 
+resource "null_resource" "letsencrypt_cert" {
+  provisioner "remote-exec" {
+    connection {
+      host        = aws_instance.backend.public_ip
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("~/.ssh/id_rsa")
+    }
+
+    # Install Certbot and generate the certificate
+    inline = [
+      "sudo apt update",
+      "sudo apt install -y certbot",
+      "sudo certbot certonly --standalone -d api.getstronger.pro --non-interactive --agree-tos -m admin@getstronger.pro",
+      "sudo crontab -l | { cat; echo '0 0 * * * /usr/bin/certbot renew --quiet'; } | sudo crontab -"
+    ]
+  }
+}
+
+
