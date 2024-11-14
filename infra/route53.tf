@@ -22,7 +22,7 @@ resource "aws_route53_record" "www_getstronger_pro" {
   name    = "www.getstronger.pro"
   type    = "CNAME"
   ttl     = 300
-  records = [aws_s3_bucket.vue_js_bucket.website_endpoint]
+  records = [aws_s3_bucket.www_getstronger_pro.website_endpoint]
 }
 
 
