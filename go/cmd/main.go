@@ -37,8 +37,10 @@ func options() []fx.Option {
 			zap.NewDevelopment,
 			repo.New,
 			grpc.NewServer,
-			godotenv.Load,
 			protovalidate.New,
+		),
+		fx.Invoke(
+			godotenv.Load,
 		),
 	}
 }
