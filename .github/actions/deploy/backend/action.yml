@@ -37,12 +37,6 @@ inputs:
   server_port:
     description: "Server Port"
     required: true
-  server_cert:
-    description: "Server Cert"
-    required: true
-  server_key:
-    description: "Server Key"
-    required: true
   server_cert_path:
     description: "Server Cert Path"
     required: true

@@ -18,7 +18,7 @@ const auth: Interceptor = (next) => async (req) => {
 };
 
 const transport = createConnectTransport({
-  baseUrl: 'http://api.getstronger.pro:8080',
+  baseUrl: 'https://api.getstronger.pro',
   // baseUrl: 'https://localhost:1234',
   fetch: (url, options) => {
     // TODO: Include credentials only on refresh token and logout requests.
