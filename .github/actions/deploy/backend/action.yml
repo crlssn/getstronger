@@ -85,3 +85,14 @@ runs:
         REMOTE_USER: 'ec2-user'
         SSH_PRIVATE_KEY: ${{ inputs.aws_ec2_private_key }}
         SOURCE: 'go/bin/'
+
+    - name: Restart app
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ inputs.aws_ec2_remote_host }}
+        username: 'ec2-user'
+        key: ${{ inputs.aws_ec2_private_key }}
+        port: 22
+        script: |
+          cd /home/ec2-user
+          sudo systemctl restart app.service        
