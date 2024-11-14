@@ -51,8 +51,6 @@ jobs:
           db_name: ${{ vars.DB_NAME }}
           cors_allowed_origin: ${{ vars.CORS_ALLOWED_ORIGIN }}
           server_port: ${{ vars.SERVER_PORT }}
-          server_cert: ${{ secrets.SERVER_CERT }}
-          server_key: ${{ secrets.SERVER_KEY }}
           server_cert_path: ${{ vars.SERVER_CERT_PATH }}
           server_key_path: ${{ vars.SERVER_KEY_PATH }}
 

@@ -80,16 +80,6 @@ runs:
         echo SERVER_CERT_PATH=${{ inputs.server_cert_path }} >> .env
         echo SERVER_KEY_PATH=${{ inputs.server_key_path }} >> .env
 
-    - name: Create cert file
-      working-directory: ./go/bin
-      shell: bash
-      run: printf "%s" "${{ inputs.server_cert }}" > server.crt
-
-    - name: Create key file
-      working-directory: ./go/bin
-      shell: bash
-      run: printf "%s" "${{ inputs.server_key }}" > server.key
-
     - name: Deploy to EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0
       with:
