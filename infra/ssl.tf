@@ -1,5 +1,11 @@
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 # Obtain an SSL certificate
 resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
+  provider = aws.us_east_1
   domain_name = "www.getstronger.pro"
   validation_method = "DNS"
 }
