@@ -83,16 +83,12 @@ runs:
     - name: Create cert file
       working-directory: ./go/bin
       shell: bash
-      run: |
-        touch server.crt
-        echo ${{ inputs.server_cert }} >> server.crt
+      run: printf "%s" "${{ inputs.server_cert }}" > server.crt
 
     - name: Create key file
       working-directory: ./go/bin
       shell: bash
-      run: |
-        touch server.key
-        echo ${{ inputs.server_key }} >> server.key
+      run: printf "%s" "${{ inputs.server_key }}" > server.key
 
     - name: Deploy to EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0
