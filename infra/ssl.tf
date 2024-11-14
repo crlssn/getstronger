@@ -182,7 +182,7 @@ resource "null_resource" "letsencrypt_cert" {
       "sudo dnf install -y epel-release",
       "sudo dnf install -y certbot",
       "sudo certbot certonly --standalone -d api.getstronger.pro --non-interactive --agree-tos -m admin@getstronger.pro",
-      "systemctl start certbot-renew.timer",
+      "sudo systemctl start certbot-renew.timer",
       # "sudo crontab -l | { cat; echo '0 0 * * * /usr/bin/certbot renew --quiet'; } | sudo crontab -"
     ]
   }
