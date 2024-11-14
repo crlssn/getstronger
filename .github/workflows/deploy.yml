@@ -45,10 +45,10 @@ jobs:
 #          db_name: ${{ vars.DB_NAME }}
 #          cors_allowed_origin: ${{ vars.CORS_ALLOWED_ORIGIN }}
 #
-#      - name: Deploy web app to S3
-#        uses: ./.github/actions/deploy/web-app
-#        with:
-#          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws_region: ${{ vars.AWS_REGION }}
-#          aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
+      - name: Deploy web app to S3
+        uses: ./.github/actions/deploy/web-app
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ vars.AWS_REGION }}
+          aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
