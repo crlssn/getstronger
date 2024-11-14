@@ -17,7 +17,7 @@ resource "aws_route53_record" "s3_ssl_cert_validation" {
 
 resource "aws_acm_certificate_validation" "s3_cert_validation" {
   certificate_arn         = aws_acm_certificate.www_getstronger_pro_ssl_cert.arn
-  validation_record_fqdns = [aws_route53_record.s3_ssl_cert_validation.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.s3_ssl_cert_validation : record.fqdn]
 }
 
 # Create CloudFront distribution for the S3 bucket
