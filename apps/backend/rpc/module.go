@@ -14,9 +14,9 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
-	apiv1connect2 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
-	interceptors2 "github.com/crlssn/getstronger/apps/backend/rpc/interceptors"
-	v2 "github.com/crlssn/getstronger/apps/backend/rpc/v1"
+	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/apps/backend/rpc/interceptors"
+	"github.com/crlssn/getstronger/apps/backend/rpc/v1"
 )
 
 type Handler func(opts ...connect.HandlerOption) (string, http.Handler)
@@ -27,11 +27,11 @@ func NewModule() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			fx.Annotate(
-				interceptors2.NewAuth,
+				interceptors.NewAuth,
 				fx.ResultTags(fxGroupInterceptors),
 			),
 			fx.Annotate(
-				interceptors2.NewValidator,
+				interceptors.NewValidator,
 				fx.ResultTags(fxGroupInterceptors),
 			),
 			fx.Annotate(
@@ -39,8 +39,8 @@ func NewModule() fx.Option {
 				fx.ParamTags(fxGroupInterceptors),
 			),
 			newHandlers,
-			v2.NewAuthHandler,
-			v2.NewExerciseHandler,
+			v1.NewAuthHandler,
+			v1.NewExerciseHandler,
 		),
 		fx.Invoke(
 			registerHandlers,
@@ -48,7 +48,7 @@ func NewModule() fx.Option {
 	)
 }
 
-func newInterceptors(i []interceptors2.Interceptor) []connect.HandlerOption {
+func newInterceptors(i []interceptors.Interceptor) []connect.HandlerOption {
 	opts := make([]connect.HandlerOption, 0, len(i))
 	for _, i := range i {
 		opts = append(opts, connect.WithInterceptors(i.Unary()))
@@ -59,17 +59,17 @@ func newInterceptors(i []interceptors2.Interceptor) []connect.HandlerOption {
 type Handlers struct {
 	fx.In
 
-	Auth     apiv1connect2.AuthServiceHandler
-	Exercise apiv1connect2.ExerciseServiceHandler
+	Auth     apiv1connect.AuthServiceHandler
+	Exercise apiv1connect.ExerciseServiceHandler
 }
 
 func newHandlers(p Handlers) []Handler {
 	return []Handler{
 		func(options ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect2.NewAuthServiceHandler(p.Auth, options...)
+			return apiv1connect.NewAuthServiceHandler(p.Auth, options...)
 		},
 		func(options ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect2.NewExerciseServiceHandler(p.Exercise, options...)
+			return apiv1connect.NewExerciseServiceHandler(p.Exercise, options...)
 		},
 	}
 }

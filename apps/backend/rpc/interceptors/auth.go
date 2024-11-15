@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
-	apiv2 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
+	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 )
 
 type auth struct {
@@ -35,8 +35,8 @@ func NewAuth(log *zap.Logger, m *jwt.Manager) Interceptor {
 
 func (a *auth) initMethods() {
 	fileDescriptors := []protoreflect.FileDescriptor{
-		apiv2.File_api_v1_auth_proto,
-		apiv2.File_api_v1_exercise_proto,
+		v1.File_api_v1_auth_proto,
+		v1.File_api_v1_exercise_proto,
 	}
 
 	for _, fileDescriptor := range fileDescriptors {
@@ -54,8 +54,8 @@ func (a *auth) initMethods() {
 				if !ok {
 					panic("invalid method options")
 				}
-				if proto.HasExtension(options, apiv2.E_Auth) {
-					if ext := proto.GetExtension(options, apiv2.E_Auth); ext != nil {
+				if proto.HasExtension(options, v1.E_Auth) {
+					if ext := proto.GetExtension(options, v1.E_Auth); ext != nil {
 						if v, ok := ext.(bool); ok {
 							requiresAuth = v
 						}

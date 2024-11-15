@@ -14,7 +14,7 @@ import (
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
-	testdb2 "github.com/crlssn/getstronger/apps/backend/pkg/test/testdb"
+	"github.com/crlssn/getstronger/apps/backend/pkg/test/testdb"
 )
 
 type exerciseSuite struct {
@@ -22,8 +22,8 @@ type exerciseSuite struct {
 
 	handler apiv1connect.ExerciseServiceHandler
 
-	testFactory   *testdb2.Factory
-	testContainer *testdb2.Container
+	testFactory   *testdb.Factory
+	testContainer *testdb.Container
 }
 
 func TestExerciseSuite(t *testing.T) {
@@ -33,8 +33,8 @@ func TestExerciseSuite(t *testing.T) {
 
 func (s *exerciseSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = testdb2.NewContainer(ctx)
-	s.testFactory = testdb2.NewFactory(s.testContainer.DB)
+	s.testContainer = testdb.NewContainer(ctx)
+	s.testFactory = testdb.NewFactory(s.testContainer.DB)
 	s.handler = NewExerciseHandler(zap.NewExample(), repo.New(s.testContainer.DB))
 
 	s.T().Cleanup(func() {

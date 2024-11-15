@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/volatiletech/null/v8"
 
-	testdb2 "github.com/crlssn/getstronger/apps/backend/pkg/test/testdb"
+	"github.com/crlssn/getstronger/apps/backend/pkg/test/testdb"
 )
 
 type repoSuite struct {
@@ -16,8 +16,8 @@ type repoSuite struct {
 
 	repo *Repo
 
-	testContainer *testdb2.Container
-	testFactory   *testdb2.Factory
+	testContainer *testdb.Container
+	testFactory   *testdb.Factory
 }
 
 func TestAuthSuite(t *testing.T) {
@@ -27,8 +27,8 @@ func TestAuthSuite(t *testing.T) {
 
 func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = testdb2.NewContainer(ctx)
-	s.testFactory = testdb2.NewFactory(s.testContainer.DB)
+	s.testContainer = testdb.NewContainer(ctx)
+	s.testFactory = testdb.NewFactory(s.testContainer.DB)
 	s.repo = New(s.testContainer.DB)
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
@@ -63,9 +63,9 @@ func (s *repoSuite) TestListExercises() {
 				PageToken: nil,
 			},
 			init: func(_ test) {
-				s.testFactory.NewExercise(testdb2.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(testdb2.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(testdb2.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
 			},
 			expected: expected{
 				err:           nil,
