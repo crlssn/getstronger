@@ -1,18 +1,16 @@
 package interceptors
 
 import (
-	"context"
+	"errors"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 
 	"github.com/crlssn/getstronger/go/pkg/jwt"
-	"github.com/crlssn/getstronger/go/pkg/pb/api/v1/apiv1connect"
 )
 
 type authSuite struct {
@@ -31,65 +29,67 @@ func (s *authSuite) SetupSuite() {
 	s.interceptor = NewAuth(zap.NewExample(), s.jwt).(*auth)
 }
 
-func (s *authSuite) TestAuthorise() {
+func (s *authSuite) TestClaimsFromHeader() {
 	type expected struct {
-		err error
+		err    error
+		claims *jwt.Claims
 	}
 
 	type test struct {
 		name     string
-		ctx      context.Context
-		method   string
 		expected expected
+		header   http.Header
 	}
 
-	accessToken, err := s.jwt.CreateToken(uuid.NewString(), jwt.TokenTypeAccess)
-	s.Require().NoError(err)
+	userID := uuid.NewString()
+	accessToken, accessTokenErr := s.jwt.CreateToken(userID, jwt.TokenTypeAccess)
+	s.Require().NoError(accessTokenErr)
 
 	tests := []test{
 		{
-			name:   "ok_valid_access_token",
-			ctx:    metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", accessToken)),
-			method: apiv1connect.AuthServiceRefreshTokenProcedure,
+			name: "ok_valid_access_token",
+			header: map[string][]string{
+				"Authorization": {fmt.Sprintf("Bearer %s", accessToken)},
+			},
 			expected: expected{
 				err: nil,
-			},
-		},
-		{
-			name:   "err_missing_metadata",
-			ctx:    context.Background(),
-			method: apiv1connect.AuthServiceRefreshTokenProcedure,
-			expected: expected{
-				err: status.Error(codes.Unauthenticated, "missing metadata"),
+				claims: &jwt.Claims{
+					UserID: userID,
+				},
 			},
 		},
 		{
 			name:   "err_missing_authorization_token",
-			ctx:    metadata.NewIncomingContext(context.Background(), metadata.Pairs("key", "value")),
-			method: apiv1connect.AuthServiceRefreshTokenProcedure,
+			header: map[string][]string{},
 			expected: expected{
-				err: status.Error(codes.Unauthenticated, "authorization token is missing"),
+				err:    errors.New("authorization token is missing"),
+				claims: nil,
 			},
 		},
 		{
-			name:   "err_invalid_authorization_token",
-			ctx:    metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "")),
-			method: apiv1connect.AuthServiceRefreshTokenProcedure,
+			name: "err_invalid_authorization_token",
+			header: map[string][]string{
+				"Authorization": {accessToken},
+			},
 			expected: expected{
-				err: status.Error(codes.Unauthenticated, "invalid authorization token"),
+				err:    errors.New("invalid authorization header format"),
+				claims: nil,
 			},
 		},
 	}
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			err = s.interceptor.authorize(t.ctx, t.method)
-			if t.expected.err == nil {
-				s.Require().Nil(err)
+			claims, err := s.interceptor.claimsFromHeader(t.header)
+			if t.expected.err != nil {
+				s.Require().Nil(claims)
+				s.Require().NotNil(err)
+				s.Require().Equal(t.expected.err, err)
 				return
 			}
-			s.Require().NotNil(err)
-			s.Require().Equal(t.expected.err, err)
+			s.Require().Nil(err)
+			s.Require().NotNil(claims)
+			s.Require().Equal(t.expected.claims.UserID, claims.UserID)
 		})
 	}
 }

@@ -1,0 +1,21 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  golang:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Examine code
+        run: go vet ./...
+
+      - name: Run tests
+        run: go test ./...

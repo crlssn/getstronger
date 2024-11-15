@@ -18,17 +18,3 @@ type Options struct {
 func New(opts Options) (*sql.DB, error) {
 	return sql.Open("pgx", fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", opts.User, opts.Password, opts.Host, opts.Port, opts.Database))
 }
-
-func MustNewTest() *sql.DB {
-	db, err := New(Options{
-		Host:     "localhost",
-		Port:     "5433",
-		User:     "root",
-		Password: "root",
-		Database: "postgres",
-	})
-	if err != nil {
-		panic(err)
-	}
-	return db
-}
