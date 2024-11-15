@@ -91,14 +91,18 @@ func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password stri
 	}
 
 	if err = bcrypt.CompareHashAndPassword(auth.Password, []byte(password)); err != nil {
-		return fmt.Errorf("hash and password comparision: %w", err)
+		return fmt.Errorf("hash and password comparison: %w", err)
 	}
 
 	return nil
 }
 
 func (r *Repo) FromEmail(ctx context.Context, email string) (*orm.Auth, error) {
-	return orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
+	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("auth fetch: %w", err)
+	}
+	return auth, nil
 }
 
 func (r *Repo) UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error {
@@ -106,21 +110,28 @@ func (r *Repo) UpdateRefreshToken(ctx context.Context, authID string, refreshTok
 		ID:           authID,
 		RefreshToken: null.StringFrom(refreshToken),
 	}
-	_, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.RefreshToken))
-	return err
+	if _, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.RefreshToken)); err != nil {
+		return fmt.Errorf("refresh token update: %w", err)
+	}
+	return nil
 }
 
 func (r *Repo) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
-	_, err := orm.Auths(
+	if _, err := orm.Auths(
 		orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken)),
 	).UpdateAll(ctx, r.executor(), orm.M{
 		orm.AuthColumns.RefreshToken: nil,
-	})
-	return err
+	}); err != nil {
+		return fmt.Errorf("refresh token delete: %w", err)
+	}
+	return nil
 }
 
 func (r *Repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
-	return orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor())
+	if _, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor()); err != nil {
+		return false, fmt.Errorf("refresh token exists check: %w", err)
+	}
+	return true, nil
 }
 
 type CreateUserParams struct {
@@ -136,7 +147,10 @@ func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) error {
 		LastName:  p.LastName,
 	}
 
-	return user.Insert(ctx, r.executor(), boil.Infer())
+	if err := user.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+		return fmt.Errorf("user insert: %w", err)
+	}
+	return nil
 }
 
 type CreateExerciseParams struct {
@@ -166,13 +180,15 @@ type SoftDeleteExerciseParams struct {
 }
 
 func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
-	_, err := orm.Exercises(
+	if _, err := orm.Exercises(
 		orm.ExerciseWhere.ID.EQ(p.ExerciseID),
 		orm.ExerciseWhere.UserID.EQ(p.UserID),
 	).UpdateAll(ctx, r.executor(), orm.M{
 		orm.ExerciseColumns.DeletedAt: null.TimeFrom(time.Now().UTC()),
-	})
-	return err
+	}); err != nil {
+		return fmt.Errorf("exercise soft delete: %w", err)
+	}
+	return nil
 }
 
 type ListExercisesParams struct {
@@ -180,16 +196,10 @@ type ListExercisesParams struct {
 	Name      null.String
 	Limit     int
 	PageToken []byte
-	//PageToken *PageToken
 }
 
-//type Pagination struct {
-//	Limit     int
-//	PageToken PageToken
-//}
-
 type pageToken struct {
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 func (r *Repo) ListExercises(ctx context.Context, p ListExercisesParams) (orm.ExerciseSlice, []byte, error) {
@@ -232,7 +242,11 @@ func (r *Repo) ListExercises(ctx context.Context, p ListExercisesParams) (orm.Ex
 }
 
 func (r *Repo) FindExercise(ctx context.Context, id string) (*orm.Exercise, error) {
-	return orm.FindExercise(ctx, r.executor(), id)
+	exercise, err := orm.FindExercise(ctx, r.executor(), id)
+	if err != nil {
+		return nil, fmt.Errorf("exercise fetch: %w", err)
+	}
+	return exercise, nil
 }
 
 func (r *Repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error {
@@ -241,5 +255,8 @@ func (r *Repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error
 		orm.ExerciseColumns.SubTitle,
 		orm.ExerciseColumns.RestBetweenSets,
 	))
-	return err
+	if err != nil {
+		return fmt.Errorf("exercise update: %w", err)
+	}
+	return nil
 }

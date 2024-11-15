@@ -8,5 +8,6 @@ import (
 )
 
 func TestWireup(t *testing.T) {
+	t.Parallel()
 	require.NoError(t, fx.ValidateApp(options()...))
 }

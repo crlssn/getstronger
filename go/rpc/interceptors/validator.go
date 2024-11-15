@@ -22,6 +22,8 @@ func NewValidator(log *zap.Logger, v *protovalidate.Validator) Interceptor {
 	}
 }
 
+var errRequestMessageNotProtoMessage = errors.New("request message is not a proto.Message")
+
 func (v *validator) Unary() connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(
@@ -31,7 +33,7 @@ func (v *validator) Unary() connect.UnaryInterceptorFunc {
 			msg, ok := req.Any().(proto.Message)
 			if !ok {
 				v.log.Warn("request message is not a proto.Message")
-				return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("request message is not a proto.Message"))
+				return nil, connect.NewError(connect.CodeInvalidArgument, errRequestMessageNotProtoMessage)
 			}
 
 			if err := v.validator.Validate(msg); err != nil {

@@ -16,26 +16,25 @@ type repoSuite struct {
 
 	repo *Repo
 
-	ctx           context.Context
 	testContainer *testdb.Container
 	testFactory   *testdb.Factory
 }
 
 func TestAuthSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(repoSuite))
 }
 
 func (s *repoSuite) SetupSuite() {
-	s.ctx = context.Background()
-	s.testContainer = testdb.NewContainer(s.ctx)
-	s.testFactory = testdb.NewFactory(s.ctx, s.testContainer.DB)
+	ctx := context.Background()
+	s.testContainer = testdb.NewContainer(ctx)
+	s.testFactory = testdb.NewFactory(s.testContainer.DB)
 	s.repo = New(s.testContainer.DB)
-}
-
-func (s *repoSuite) TearDownSuite() {
-	if err := s.testContainer.Terminate(s.ctx); err != nil {
-		log.Fatalf("failed to terminate container: %s", err)
-	}
+	s.T().Cleanup(func() {
+		if err := s.testContainer.Terminate(ctx); err != nil {
+			log.Fatalf("failed to clean container: %s", err)
+		}
+	})
 }
 
 func (s *repoSuite) TestListExercises() {
@@ -63,7 +62,7 @@ func (s *repoSuite) TestListExercises() {
 				Limit:     2,
 				PageToken: nil,
 			},
-			init: func(test test) {
+			init: func(_ test) {
 				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
 				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
 				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
@@ -79,10 +78,11 @@ func (s *repoSuite) TestListExercises() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			t.init(t)
-			exercises, nextPageToken, err := s.repo.ListExercises(s.ctx, t.req)
+			exercises, nextPageToken, err := s.repo.ListExercises(context.Background(), t.req)
 			if t.expected.err != nil {
 				s.Require().Error(err)
 				s.Require().ErrorIs(err, t.expected.err)
+
 				return
 			}
 

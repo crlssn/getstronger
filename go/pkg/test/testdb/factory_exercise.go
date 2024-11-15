@@ -1,6 +1,7 @@
 package testdb
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -27,7 +28,7 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 		opt(m)
 	}
 
-	if err := m.Insert(f.ctx, f.db, boil.Infer()); err != nil {
+	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert exercise: %w", err))
 	}
 

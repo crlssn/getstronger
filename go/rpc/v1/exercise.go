@@ -23,8 +23,8 @@ type exerciseHandler struct {
 	repo *repo.Repo
 }
 
-func NewExerciseHandler(log *zap.Logger, repo *repo.Repo) apiv1connect.ExerciseServiceHandler {
-	return &exerciseHandler{log, repo}
+func NewExerciseHandler(log *zap.Logger, r *repo.Repo) apiv1connect.ExerciseServiceHandler {
+	return &exerciseHandler{log, r}
 }
 
 func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
@@ -35,13 +35,13 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 	log = log.With(xzap.FieldUserID(userID))
 
 	var restBetweenSets int16
-	if req.Msg.RestBetweenSets != nil {
-		restBetweenSets = int16(req.Msg.RestBetweenSets.Seconds)
+	if req.Msg.GetRestBetweenSets() != nil {
+		restBetweenSets = int16(req.Msg.GetRestBetweenSets().GetSeconds())
 	}
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
 		UserID:          userID,
-		Name:            req.Msg.Name,
-		Label:           req.Msg.Label,
+		Name:            req.Msg.GetName(),
+		Label:           req.Msg.GetLabel(),
 		RestBetweenSets: restBetweenSets,
 	})
 	if err != nil {
@@ -58,10 +58,10 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceGetProcedure))
 	log.Info("request received")
 
-	exercise, err := h.repo.FindExercise(ctx, req.Msg.Id)
+	exercise, err := h.repo.FindExercise(ctx, req.Msg.GetId())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Error("exercise not found", zap.String("id", req.Msg.Id))
+			log.Error("exercise not found", zap.String("id", req.Msg.GetId()))
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
@@ -74,6 +74,8 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 	}), nil
 }
 
+var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
+
 func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceUpdateProcedure))
 	log.Info("request received")
@@ -81,7 +83,7 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
-	exercise, err := h.repo.FindExercise(ctx, req.Msg.Exercise.Id)
+	exercise, err := h.repo.FindExercise(ctx, req.Msg.GetExercise().GetId())
 	if err != nil {
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -92,20 +94,20 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	for _, path := range req.Msg.UpdateMask.Paths {
+	for _, path := range req.Msg.GetUpdateMask().GetPaths() {
 		switch path {
 		case "name":
-			exercise.Title = req.Msg.Exercise.Name
+			exercise.Title = req.Msg.GetExercise().GetName()
 		case "label":
-			exercise.SubTitle = null.NewString(req.Msg.Exercise.Label, req.Msg.Exercise.Label != "")
+			exercise.SubTitle = null.NewString(req.Msg.GetExercise().GetLabel(), req.Msg.GetExercise().GetLabel() != "")
 		case "rest_between_sets":
 			exercise.RestBetweenSets = null.NewInt16(0, false)
-			if req.Msg.Exercise.RestBetweenSets != nil {
-				exercise.RestBetweenSets = null.NewInt16(int16(req.Msg.Exercise.RestBetweenSets.Seconds), req.Msg.Exercise.RestBetweenSets.Seconds > 0)
+			if req.Msg.GetExercise().GetRestBetweenSets() != nil {
+				exercise.RestBetweenSets = null.NewInt16(int16(req.Msg.GetExercise().GetRestBetweenSets().GetSeconds()), req.Msg.GetExercise().GetRestBetweenSets().GetSeconds() > 0)
 			}
 		default:
 			log.Error("invalid update mask path", zap.String("path", path))
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid update mask path"))
+			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidUpdateMaskPath)
 		}
 	}
 
@@ -120,6 +122,8 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 	}), nil
 }
 
+var errUserIDNotProvided = errors.New("user ID not provided")
+
 func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceDeleteProcedure))
 	log.Info("request received")
@@ -127,13 +131,13 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 	userID, ok := ctx.Value(jwt.ContextKeyUserID).(string)
 	if !ok {
 		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user ID not provided"))
+		return nil, connect.NewError(connect.CodeUnauthenticated, errUserIDNotProvided)
 	}
 	log = log.With(xzap.FieldUserID(userID))
 
 	if err := h.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
 		UserID:     userID,
-		ExerciseID: req.Msg.Id,
+		ExerciseID: req.Msg.GetId(),
 	}); err != nil {
 		log.Error("delete exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -150,11 +154,12 @@ func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.List
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
+	limit := 20
 	exercises, nextPageToken, err := h.repo.ListExercises(ctx, repo.ListExercisesParams{
 		UserID:    userID,
-		Name:      null.NewString(req.Msg.Name, req.Msg.Name != ""),
-		Limit:     20,
-		PageToken: req.Msg.PageToken,
+		Name:      null.NewString(req.Msg.GetName(), req.Msg.GetName() != ""),
+		Limit:     limit,
+		PageToken: req.Msg.GetPageToken(),
 	})
 	if err != nil {
 		log.Error("list exercises failed", zap.Error(err))

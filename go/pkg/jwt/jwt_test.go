@@ -8,6 +8,7 @@ import (
 )
 
 func TestGenerateTokens(t *testing.T) {
+	t.Parallel()
 	userID := "123"
 	now := time.Now().UTC()
 
