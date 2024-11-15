@@ -55,8 +55,8 @@ jobs:
           server_key_path: ${{ vars.SERVER_KEY_PATH }}
           cookie_domain: ${{ vars.COOKIE_DOMAIN }}
 
-      - name: Deploy web app to S3
-        uses: ./.github/actions/deploy/web-app
+      - name: Deploy web to S3
+        uses: ./.github/actions/deploy/web
         with:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -57,13 +57,13 @@ runs:
 
     - name: Build the app
       shell: bash
-      working-directory: ./go
+      working-directory: ./apps/backend
       run: |
         go mod download
         GOOS=linux go build -o bin/app cmd/main.go
 
     - name: Create env file
-      working-directory: ./go/bin
+      working-directory: ./apps/backend/bin
       shell: bash
       run: |
         touch .env

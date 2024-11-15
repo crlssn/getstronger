@@ -16,12 +16,12 @@ runs:
 
     - name: Terraform Format Check
       run: terraform fmt -check -recursive -diff
-      working-directory: ./infra
+      working-directory: ./infrastructure
       shell: bash
 
     - name: Terraform Init
       run: terraform init
-      working-directory: ./infra
+      working-directory: ./infrastructure
       shell: bash
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
@@ -29,5 +29,5 @@ runs:
 
     - name: Terraform Validate
       run: terraform validate
-      working-directory: ./infra
+      working-directory: ./infrastructure
       shell: bash
