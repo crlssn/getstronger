@@ -35,6 +35,6 @@ runs:
         DB_USER: ${{ inputs.db_user }}
         DB_PASSWORD: ${{ inputs.db_password }}
       run: |
-        migrate -path db/migrations/ \
+        migrate -path database/migrations/ \
           -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}" \
           -verbose up
