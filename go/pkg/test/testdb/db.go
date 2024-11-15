@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -26,10 +27,7 @@ const (
 
 func NewContainer(ctx context.Context) *Container {
 	container, err := postgres.Run(ctx, "postgres:16.4-alpine",
-		postgres.WithInitScripts([]string{
-			filepath.Join(mustFindProjectRoot(), "db/migrations/001_schema.up.sql"),
-			filepath.Join(mustFindProjectRoot(), "db/migrations/002_base.up.sql"),
-		}...),
+		postgres.WithInitScripts(migrationFiles()...),
 		postgres.WithDatabase("test-db"),
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("postgres"),
@@ -57,20 +55,37 @@ func NewContainer(ctx context.Context) *Container {
 	}
 }
 
+func migrationFiles() []string {
+	basePath := filepath.Join(mustFindProjectRoot(), "db/migrations")
+	return mustFindMigrationFiles(basePath)
+}
+
 func mustFindProjectRoot() string {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		panic(fmt.Errorf("could not get current directory: %w", err))
 	}
-
 	for currentDir != "/" {
 		if _, err = os.Stat(filepath.Join(currentDir, "go.mod")); err == nil {
 			return currentDir
 		}
-
-		// Move up one directory
 		currentDir = filepath.Dir(currentDir)
 	}
-
 	panic("project root not found")
+}
+
+func mustFindMigrationFiles(baseDir string) []string {
+	var files []string
+	if err := filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("could not walk directory: %w", err)
+		}
+		if !d.IsDir() && filepath.Ext(path) == ".sql" {
+			files = append(files, path)
+		}
+		return nil
+	}); err != nil {
+		panic(fmt.Errorf("could not walk directory: %w", err))
+	}
+	return files
 }
