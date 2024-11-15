@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"testing"
 
@@ -19,6 +18,7 @@ type repoSuite struct {
 
 	ctx           context.Context
 	testContainer *testdb.Container
+	testFactory   *testdb.Factory
 }
 
 func TestAuthSuite(t *testing.T) {
@@ -28,6 +28,7 @@ func TestAuthSuite(t *testing.T) {
 func (s *repoSuite) SetupSuite() {
 	s.ctx = context.Background()
 	s.testContainer = testdb.NewContainer(s.ctx)
+	s.testFactory = testdb.NewFactory(s.ctx, s.testContainer.DB)
 	s.repo = New(s.testContainer.DB)
 }
 
@@ -39,57 +40,59 @@ func (s *repoSuite) TearDownSuite() {
 
 func (s *repoSuite) TestListExercises() {
 	type expected struct {
-		err error
+		err           error
+		exercises     int
+		nextPageToken bool
 	}
 
 	type test struct {
 		name     string
-		expected expected
 		req      ListExercisesParams
+		init     func(test)
+		expected expected
 	}
+
+	user := s.testFactory.NewUser()
 
 	tests := []test{
 		{
 			name: "ok_valid_access_token",
 			req: ListExercisesParams{
-				UserID:    "ba87305f-aa1f-4111-8253-d4429192aa7a",
+				UserID:    user.ID,
 				Name:      null.String{},
-				Limit:     20,
+				Limit:     2,
 				PageToken: nil,
 			},
+			init: func(test test) {
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
+			},
 			expected: expected{
-				err: nil,
+				err:           nil,
+				exercises:     2,
+				nextPageToken: true,
 			},
 		},
 	}
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			exercises, nextPageToken, err := s.repo.ListExercises(context.Background(), t.req)
+			t.init(t)
+			exercises, nextPageToken, err := s.repo.ListExercises(s.ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+
 			s.Require().NoError(err)
-			//asd := exercises[len(exercises)-1].CreatedAt
-			//spew.Dump(exercises, nextPageToken, err)
-
-			var pt pageToken
-			s.Require().NoError(json.Unmarshal(nextPageToken, &pt))
-			s.Require().Equal(exercises[len(exercises)-1].CreatedAt, pt.CreatedAt)
-			s.Require().Len(exercises, t.req.Limit)
-
-			exercises, nextPageToken, err = s.repo.ListExercises(context.Background(), ListExercisesParams{
-				UserID:    t.req.UserID,
-				Name:      t.req.Name,
-				Limit:     t.req.Limit,
-				PageToken: nextPageToken,
-			})
-			s.Require().Nil(nextPageToken)
-			s.Require().Len(exercises, 2)
-
-			//if t.expected.err == nil {
-			//	s.Require().Nil(err)
-			//	return
-			//}
-			//s.Require().NotNil(err)
-			//s.Require().Equal(t.expected.err, err)
+			s.Require().Len(exercises, t.expected.exercises)
+			if t.expected.nextPageToken {
+				s.Require().NotNil(nextPageToken)
+			} else {
+				s.Require().Nil(nextPageToken)
+			}
 		})
 	}
 }
