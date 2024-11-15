@@ -22,7 +22,7 @@ runs:
 
     - name: Terraform Init
       run: terraform init
-      working-directory: ./infra
+      working-directory: ./infrastructure
       shell: bash
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
@@ -30,7 +30,7 @@ runs:
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
-      working-directory: ./infra
+      working-directory: ./infrastructure
       shell: bash
       env:
 #        TF_LOG: DEBUG
