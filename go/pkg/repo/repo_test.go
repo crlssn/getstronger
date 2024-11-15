@@ -3,18 +3,22 @@ package repo
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/volatiletech/null/v8"
 
-	"github.com/crlssn/getstronger/go/pkg/db"
+	"github.com/crlssn/getstronger/go/pkg/test/testdb"
 )
 
 type repoSuite struct {
 	suite.Suite
 
 	repo *Repo
+
+	ctx           context.Context
+	testContainer *testdb.Container
 }
 
 func TestAuthSuite(t *testing.T) {
@@ -22,7 +26,15 @@ func TestAuthSuite(t *testing.T) {
 }
 
 func (s *repoSuite) SetupSuite() {
-	s.repo = New(db.MustNewTest())
+	s.ctx = context.Background()
+	s.testContainer = testdb.NewContainer(s.ctx)
+	s.repo = New(s.testContainer.DB)
+}
+
+func (s *repoSuite) TearDownSuite() {
+	if err := s.testContainer.Terminate(s.ctx); err != nil {
+		log.Fatalf("failed to terminate container: %s", err)
+	}
 }
 
 func (s *repoSuite) TestListExercises() {
