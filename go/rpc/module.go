@@ -48,9 +48,9 @@ func NewModule() fx.Option {
 	)
 }
 
-func newInterceptors(interceptors []interceptors.Interceptor) []connect.HandlerOption {
-	var opts []connect.HandlerOption
-	for _, i := range interceptors {
+func newInterceptors(i []interceptors.Interceptor) []connect.HandlerOption {
+	opts := make([]connect.HandlerOption, 0, len(i))
+	for _, i := range i {
 		opts = append(opts, connect.WithInterceptors(i.Unary()))
 	}
 	return opts
@@ -98,7 +98,10 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 
 func withCORS(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
-		AllowedOrigins: []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
+		AllowedOrigins:             []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
+		AllowOriginFunc:            nil,
+		AllowOriginRequestFunc:     nil,
+		AllowOriginVaryRequestFunc: nil,
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
@@ -113,8 +116,14 @@ func withCORS(h http.Handler) http.Handler {
 			"X-User-Agent",             // for all protocols
 			"Authorization",            // for all protocols
 		},
-		ExposedHeaders:   connectcors.ExposedHeaders(),
-		AllowCredentials: true,
+		ExposedHeaders:       connectcors.ExposedHeaders(),
+		MaxAge:               0,
+		AllowCredentials:     true,
+		AllowPrivateNetwork:  false,
+		OptionsPassthrough:   false,
+		OptionsSuccessStatus: 0,
+		Debug:                false,
+		Logger:               nil,
 	})
 	return middleware.Handler(h)
 }

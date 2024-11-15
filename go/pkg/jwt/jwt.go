@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 )
 
 type Claims struct {
-	UserID string `json:"user_id"`
+	UserID string `json:"userId"`
 	jwt.RegisteredClaims
 }
 
@@ -36,6 +37,8 @@ type Manager struct {
 	Validator *jwt.Validator
 }
 
+const jwtLeeway = 5 * time.Second
+
 func NewManager(accessKey, refreshKey []byte) *Manager {
 	return &Manager{
 		Secrets: Secrets{
@@ -43,7 +46,7 @@ func NewManager(accessKey, refreshKey []byte) *Manager {
 			RefreshKey: refreshKey,
 		},
 		Validator: jwt.NewValidator(
-			jwt.WithLeeway(5 * time.Second),
+			jwt.WithLeeway(jwtLeeway),
 		),
 	}
 }
@@ -73,9 +76,11 @@ const (
 	ExpiryTimeRefresh = 30 * 24 * time.Hour
 )
 
+var errUnexpectedTokenType = errors.New("unexpected token type")
+
 func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error) {
 	if !tokenType.Validate() {
-		return "", fmt.Errorf("unexpected token type: %v", tokenType)
+		return "", fmt.Errorf("%w: %v", errUnexpectedTokenType, tokenType)
 	}
 
 	now := time.Now().UTC()
@@ -95,20 +100,29 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(m.Secrets.ResolveKey(tokenType))
+	tokenString, err := token.SignedString(m.Secrets.ResolveKey(tokenType))
+	if err != nil {
+		return "", fmt.Errorf("signing token: %w", err)
+	}
+	return tokenString, nil
 }
 
-var ErrInvalidToken = fmt.Errorf("invalid token")
+var (
+	ErrInvalidToken            = fmt.Errorf("invalid token")
+	ErrUnexpectedSubject       = errors.New("unexpected subject")
+	ErrUnexpectedSigningMethod = errors.New("unexpected signing method")
+	ErrUnexpectedTokenType     = errors.New("unexpected token type")
+)
 
 func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, error) {
 	if !tokenType.Validate() {
-		return nil, fmt.Errorf("unexpected token type: %v", tokenType)
+		return nil, fmt.Errorf("%w: %v", ErrUnexpectedTokenType, tokenType)
 	}
 
 	claims := new(Claims)
 	t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("%w: %v", ErrUnexpectedSigningMethod, token.Header["alg"])
 		}
 
 		subject, err := token.Claims.GetSubject()
@@ -117,11 +131,11 @@ func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, e
 		}
 
 		if subject != tokenType.String() {
-			return nil, fmt.Errorf("unexpected subject: %v", subject)
+			return nil, fmt.Errorf("%w: %v", ErrUnexpectedSubject, subject)
 		}
 
 		return m.Secrets.ResolveKey(tokenType), nil
-	}, jwt.WithLeeway(5*time.Second))
+	}, jwt.WithLeeway(jwtLeeway))
 	if err != nil {
 		return nil, fmt.Errorf("token parsing: %w", err)
 	}
@@ -147,7 +161,10 @@ func (m *Manager) ValidateAccessToken(token string) error {
 }
 
 func (m *Manager) ValidateClaims(claims *Claims) error {
-	return m.Validator.Validate(claims)
+	if err := m.Validator.Validate(claims); err != nil {
+		return fmt.Errorf("claims validation: %w", err)
+	}
+	return nil
 }
 
 type contextKey string

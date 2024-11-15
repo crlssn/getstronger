@@ -1,7 +1,6 @@
 package interceptors
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -21,12 +20,17 @@ type authSuite struct {
 }
 
 func TestAuthSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(authSuite))
 }
 
 func (s *authSuite) SetupSuite() {
 	s.jwt = jwt.NewManager([]byte("access-token"), []byte("refresh-token"))
-	s.interceptor = NewAuth(zap.NewExample(), s.jwt).(*auth)
+
+	interceptor, ok := NewAuth(zap.NewExample(), s.jwt).(*auth)
+	s.Require().True(ok)
+
+	s.interceptor = interceptor
 }
 
 func (s *authSuite) TestClaimsFromHeader() {
@@ -62,7 +66,7 @@ func (s *authSuite) TestClaimsFromHeader() {
 			name:   "err_missing_authorization_token",
 			header: map[string][]string{},
 			expected: expected{
-				err:    errors.New("authorization token is missing"),
+				err:    errMissingAuthorizationToken,
 				claims: nil,
 			},
 		},
@@ -72,7 +76,7 @@ func (s *authSuite) TestClaimsFromHeader() {
 				"Authorization": {accessToken},
 			},
 			expected: expected{
-				err:    errors.New("invalid authorization header format"),
+				err:    errInvalidAuthorizationToken,
 				claims: nil,
 			},
 		},
@@ -83,11 +87,11 @@ func (s *authSuite) TestClaimsFromHeader() {
 			claims, err := s.interceptor.claimsFromHeader(t.header)
 			if t.expected.err != nil {
 				s.Require().Nil(claims)
-				s.Require().NotNil(err)
+				s.Require().Error(err)
 				s.Require().Equal(t.expected.err, err)
 				return
 			}
-			s.Require().Nil(err)
+			s.Require().NoError(err)
 			s.Require().NotNil(claims)
 			s.Require().Equal(t.expected.claims.UserID, claims.UserID)
 		})

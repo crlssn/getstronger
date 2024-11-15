@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib" // Register pgx driver
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -18,6 +18,11 @@ type Container struct {
 	DB        *sql.DB
 	Terminate func(ctx context.Context) error
 }
+
+const (
+	startTimeout = 5 * time.Second
+	occurrence   = 2
+)
 
 func NewContainer(ctx context.Context) *Container {
 	container, err := postgres.Run(ctx, "postgres:16.4-alpine",
@@ -30,7 +35,7 @@ func NewContainer(ctx context.Context) *Container {
 		postgres.WithPassword("postgres"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).WithStartupTimeout(5*time.Second)),
+				WithOccurrence(occurrence).WithStartupTimeout(startTimeout)),
 	)
 	if err != nil {
 		panic(fmt.Errorf("could not start postgres container: %w", err))

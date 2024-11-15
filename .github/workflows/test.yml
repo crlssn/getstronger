@@ -11,11 +11,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
       - name: Download modules
         run: go mod download
 
       - name: Examine code
         run: go vet ./...
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.62.0
+
+      - name: Run golangci-lint
+        run: golangci-lint run ./...
 
       - name: Run tests
         run: go test ./...

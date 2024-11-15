@@ -3,8 +3,9 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"net"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib" // Register pgx driver
 )
 
 type Options struct {
@@ -16,5 +17,9 @@ type Options struct {
 }
 
 func New(opts Options) (*sql.DB, error) {
-	return sql.Open("pgx", fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", opts.User, opts.Password, opts.Host, opts.Port, opts.Database))
+	db, err := sql.Open("pgx", fmt.Sprintf("postgresql://%s:%s@%s/%s", opts.User, opts.Password, net.JoinHostPort(opts.Host, opts.Port), opts.Database))
+	if err != nil {
+		return nil, fmt.Errorf("open db: %w", err)
+	}
+	return db, nil
 }

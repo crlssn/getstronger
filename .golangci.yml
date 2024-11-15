@@ -1,0 +1,21 @@
+run:
+  timeout: 5m
+
+linters:
+  enable-all: true
+  disable:
+    - godox
+    - lll
+    - wsl
+    - exportloopref
+    - depguard
+    - gci
+    - testpackage
+    - nlreturn
+    - gosec
+    - ireturn
+    - varnamelen
+    - perfsprint
+    - goimports
+    - exhaustruct
+    - funlen

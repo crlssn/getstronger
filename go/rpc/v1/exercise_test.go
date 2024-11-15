@@ -20,7 +20,6 @@ import (
 type exerciseSuite struct {
 	suite.Suite
 
-	ctx     context.Context
 	handler apiv1connect.ExerciseServiceHandler
 
 	testFactory   *testdb.Factory
@@ -28,20 +27,21 @@ type exerciseSuite struct {
 }
 
 func TestExerciseSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(exerciseSuite))
 }
 
 func (s *exerciseSuite) SetupSuite() {
-	s.ctx = context.Background()
-	s.testContainer = testdb.NewContainer(s.ctx)
-	s.testFactory = testdb.NewFactory(s.ctx, s.testContainer.DB)
+	ctx := context.Background()
+	s.testContainer = testdb.NewContainer(ctx)
+	s.testFactory = testdb.NewFactory(s.testContainer.DB)
 	s.handler = NewExerciseHandler(zap.NewExample(), repo.New(s.testContainer.DB))
-}
 
-func (s *exerciseSuite) TearDownSuite() {
-	if err := s.testContainer.Terminate(s.ctx); err != nil {
-		log.Fatalf("failed to terminate container: %s", err)
-	}
+	s.T().Cleanup(func() {
+		if err := s.testContainer.Terminate(ctx); err != nil {
+			log.Fatalf("failed to clean container: %s", err)
+		}
+	})
 }
 
 func (s *exerciseSuite) TestCreateExercise() {
@@ -60,7 +60,9 @@ func (s *exerciseSuite) TestCreateExercise() {
 			name: "valid request",
 			req: &connect.Request[v1.CreateExerciseRequest]{
 				Msg: &v1.CreateExerciseRequest{
-					Name: "Bench Press",
+					Name:            "Bench Press",
+					Label:           "",
+					RestBetweenSets: nil,
 				},
 			},
 			expected: expected{
@@ -70,7 +72,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 	}
 
 	user := s.testFactory.NewUser()
-	ctx := context.WithValue(s.ctx, jwt.ContextKeyUserID, user.ID)
+	ctx := context.WithValue(context.Background(), jwt.ContextKeyUserID, user.ID)
 
 	for _, t := range tests {
 		res, err := s.handler.Create(ctx, t.req)
@@ -78,11 +80,13 @@ func (s *exerciseSuite) TestCreateExercise() {
 			s.Require().Nil(res)
 			s.Require().Error(err)
 			s.Require().ErrorIs(err, t.expected.err)
+
 			return
 		}
-		s.Require().Nil(err)
+
+		s.Require().NoError(err)
 		s.Require().NotNil(res)
-		_, err = uuid.Parse(res.Msg.Id)
-		s.Require().Nil(err)
+		_, err = uuid.Parse(res.Msg.GetId())
+		s.Require().NoError(err)
 	}
 }

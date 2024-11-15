@@ -23,10 +23,10 @@ type auth struct {
 	methods map[string]bool
 }
 
-func NewAuth(log *zap.Logger, jwt *jwt.Manager) Interceptor {
+func NewAuth(log *zap.Logger, m *jwt.Manager) Interceptor {
 	a := &auth{
 		log:     log,
-		jwt:     jwt,
+		jwt:     m,
 		methods: make(map[string]bool),
 	}
 	a.initMethods()
@@ -42,15 +42,18 @@ func (a *auth) initMethods() {
 	for _, fileDescriptor := range fileDescriptors {
 		// Iterate over the services in the file descriptor.
 		services := fileDescriptor.Services()
-		for i := 0; i < services.Len(); i++ {
+		for i := range services.Len() {
 			service := services.Get(i)
 			methods := service.Methods()
-			for j := 0; j < methods.Len(); j++ {
+			for j := range methods.Len() {
 				method := methods.Get(j)
 				requiresAuth := false
 
 				// Access the custom options.
-				options := method.Options().(*descriptorpb.MethodOptions)
+				options, ok := method.Options().(*descriptorpb.MethodOptions)
+				if !ok {
+					panic("invalid method options")
+				}
 				if proto.HasExtension(options, apiv1.E_Auth) {
 					if ext := proto.GetExtension(options, apiv1.E_Auth); ext != nil {
 						if v, ok := ext.(bool); ok {
@@ -92,15 +95,20 @@ func (a *auth) Unary() connect.UnaryInterceptorFunc {
 	return interceptor
 }
 
+var (
+	errMissingAuthorizationToken = errors.New("authorization token is missing")
+	errInvalidAuthorizationToken = errors.New("invalid authorization header format")
+)
+
 func (a *auth) claimsFromHeader(header http.Header) (*jwt.Claims, error) {
 	authHeader := header.Get("Authorization")
 	if authHeader == "" {
-		return nil, errors.New("authorization token is missing")
+		return nil, errMissingAuthorizationToken
 	}
 
 	const bearerPrefix = "Bearer "
 	if !strings.HasPrefix(authHeader, bearerPrefix) {
-		return nil, errors.New("invalid authorization header format")
+		return nil, errInvalidAuthorizationToken
 	}
 
 	token := strings.TrimPrefix(authHeader, bearerPrefix)
