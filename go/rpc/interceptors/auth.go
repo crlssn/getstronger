@@ -80,7 +80,7 @@ func (a *auth) Unary() connect.UnaryInterceptorFunc {
 				return next(ctx, req)
 			}
 
-			claims, err := a.authorize(req.Header())
+			claims, err := a.claimsFromHeader(req.Header())
 			if err != nil {
 				a.log.Warn("unauthenticated request", zap.Error(err))
 				return nil, connect.NewError(connect.CodeUnauthenticated, nil)
@@ -92,8 +92,7 @@ func (a *auth) Unary() connect.UnaryInterceptorFunc {
 	return interceptor
 }
 
-// authorize checks the authorization of the request.
-func (a *auth) authorize(header http.Header) (*jwt.Claims, error) {
+func (a *auth) claimsFromHeader(header http.Header) (*jwt.Claims, error) {
 	authHeader := header.Get("Authorization")
 	if authHeader == "" {
 		return nil, errors.New("authorization token is missing")
