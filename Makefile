@@ -24,4 +24,8 @@ generate-cert:
 test:
 	go test ./...
 
+run_backend:
+	go run ./apps/backend/cmd/main.go
 
+run_web:
+	cd apps/web && npm run dev
