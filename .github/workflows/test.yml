@@ -11,6 +11,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download modules
+        run: go mod download
+
       - name: Examine code
         run: go vet ./...
 
