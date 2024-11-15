@@ -84,7 +84,7 @@ runs:
         REMOTE_HOST: ${{ inputs.aws_ec2_remote_host }}
         REMOTE_USER: 'ec2-user'
         SSH_PRIVATE_KEY: ${{ inputs.aws_ec2_private_key }}
-        SOURCE: 'go/bin/'
+        SOURCE: 'apps/backend/bin/'
 
     - name: Restart app
       uses: appleboy/ssh-action@v1.1.0
