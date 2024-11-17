@@ -1,7 +1,9 @@
 name: Test
 
 on:
-  push:
+  pull_request:
+    paths:
+      - 'apps/backend/**'
 
 jobs:
   backend:
