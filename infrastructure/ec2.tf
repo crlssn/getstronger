@@ -1,8 +1,47 @@
 resource "aws_instance" "backend" {
-  ami             = "ami-02f617729751b375a"
-  instance_type   = "t2.micro"
-  security_groups = [aws_security_group.ssh_access.name, aws_security_group.api_access.name]
-  key_name        = aws_key_pair.backend_ec2_key.key_name
+  ami                  = "ami-02f617729751b375a"
+  instance_type        = "t2.micro"
+  security_groups      = [aws_security_group.ssh_access.name, aws_security_group.api_access.name]
+  key_name             = aws_key_pair.backend_ec2_key.key_name
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+
+  user_data = <<-EOT
+#!/bin/bash
+# Update and install CloudWatch Agent
+sudo yum update -y
+sudo yum install -y amazon-cloudwatch-agent
+
+# Create CloudWatch Agent configuration
+cat <<EOF > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/app.log",
+            "log_group_name": "/aws/backend-service/logs",
+            "log_stream_name": "{instance_id}/stdout",
+            "timestamp_format": "%Y-%m-%d %H:%M:%S"
+          },
+          {
+            "file_path": "/var/log/app.err",
+            "log_group_name": "/aws/backend-service/logs",
+            "log_stream_name": "{instance_id}/stderr",
+            "timestamp_format": "%Y-%m-%d %H:%M:%S"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+# Start the CloudWatch Agent
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a start -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+EOT
 }
 
 resource "aws_key_pair" "backend_ec2_key" {
