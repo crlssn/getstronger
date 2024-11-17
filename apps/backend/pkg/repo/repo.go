@@ -199,49 +199,100 @@ type ListExercisesParams struct {
 	PageToken []byte
 }
 
-type pageToken struct {
+type PageToken struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (r *Repo) ListExercises(ctx context.Context, p ListExercisesParams) (orm.ExerciseSlice, []byte, error) {
-	query := []qm.QueryMod{
-		orm.ExerciseWhere.UserID.EQ(p.UserID),
-		orm.ExerciseWhere.DeletedAt.IsNull(),
-		qm.OrderBy(fmt.Sprintf("%s DESC", orm.ExerciseColumns.CreatedAt)),
-		qm.Limit(p.Limit + 1), // Fetch one more to check if there are more pages.
-	}
+type ListExercisesOpt func() ([]qm.QueryMod, error)
 
-	if p.Name.Valid {
-		query = append(query, orm.ExerciseWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", p.Name.String)))
-	}
-
-	if p.PageToken != nil {
-		var pt pageToken
-		if err := json.Unmarshal(p.PageToken, &pt); err != nil {
-			return nil, nil, fmt.Errorf("page token unmarshal: %w", err)
-		}
-		query = append(query, orm.ExerciseWhere.CreatedAt.LT(pt.CreatedAt))
-	}
-
-	exercises, err := orm.Exercises(query...).All(ctx, r.executor())
-	if err != nil {
-		return nil, nil, fmt.Errorf("exercises fetch: %w", err)
-	}
-
-	if len(exercises) > p.Limit {
-		pt, ptErr := json.Marshal(pageToken{CreatedAt: exercises[p.Limit-1].CreatedAt})
-		if ptErr != nil {
-			return nil, nil, fmt.Errorf("page token marshal: %w", ptErr)
+func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
+	return func() ([]qm.QueryMod, error) {
+		if pageToken == nil {
+			return []qm.QueryMod{
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.ExerciseColumns.CreatedAt)),
+			}, nil
 		}
 
-		return exercises[:p.Limit], pt, nil
-	}
+		var pt PageToken
+		if err := json.Unmarshal(pageToken, &pt); err != nil {
+			return nil, fmt.Errorf("page token unmarshal: %w", err)
+		}
 
-	return exercises, nil, nil
+		return []qm.QueryMod{
+			orm.ExerciseWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.ExerciseColumns.CreatedAt)),
+		}, nil
+	}
 }
 
-func (r *Repo) FindExercise(ctx context.Context, id string) (*orm.Exercise, error) {
-	exercise, err := orm.FindExercise(ctx, r.executor(), id)
+func ListExercisesWithName(name string) ListExercisesOpt {
+	return func() ([]qm.QueryMod, error) {
+		//if name == "" {
+		//	return nil, nil
+		//}
+		return []qm.QueryMod{
+			orm.ExerciseWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
+		}, nil
+	}
+}
+
+func ListExercisesWithUserID(userID string) ListExercisesOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.ExerciseWhere.UserID.EQ(userID),
+		}, nil
+	}
+}
+
+func ListExercisesWithLimit(limit int) ListExercisesOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Limit(limit),
+		}, nil
+	}
+}
+
+func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
+	var queries []qm.QueryMod
+	for _, opt := range opts {
+		query, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("exercise list opt: %w", err)
+		}
+		queries = append(queries, query...)
+	}
+
+	boil.DebugMode = true
+	exercises, err := orm.Exercises(queries...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("exercises fetch: %w", err)
+	}
+	boil.DebugMode = false
+
+	return exercises, nil
+}
+
+type GetExerciseOpt func() qm.QueryMod
+
+func GetExerciseWithID(id string) GetExerciseOpt {
+	return func() qm.QueryMod {
+		return orm.ExerciseWhere.ID.EQ(id)
+	}
+}
+
+func GetExerciseWithUserID(userID string) GetExerciseOpt {
+	return func() qm.QueryMod {
+		return orm.ExerciseWhere.UserID.EQ(userID)
+	}
+}
+
+func (r *Repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	exercise, err := orm.Exercises(query...).One(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("exercise fetch: %w", err)
 	}
@@ -256,6 +307,189 @@ func (r *Repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error
 	))
 	if err != nil {
 		return fmt.Errorf("exercise update: %w", err)
+	}
+	return nil
+}
+
+type CreateRoutineParams struct {
+	UserID      string
+	Name        string
+	ExerciseIDs []string
+}
+
+var (
+	ErrRoutineExerciseBelongsToAnotherUser = fmt.Errorf("exercise does not belong to user")
+	ErrRoutineExerciseDeleted              = fmt.Errorf("exercise is deleted")
+)
+
+func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
+	exercises, err := orm.Exercises(orm.ExerciseWhere.ID.IN(p.ExerciseIDs)).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("exercises fetch: %w", err)
+	}
+
+	for _, exercise := range exercises {
+		if exercise.UserID != p.UserID {
+			return nil, ErrRoutineExerciseBelongsToAnotherUser
+		}
+		if exercise.DeletedAt.Valid {
+			return nil, ErrRoutineExerciseDeleted
+		}
+	}
+
+	routine := &orm.Routine{
+		UserID: p.UserID,
+		Title:  p.Name,
+	}
+
+	if err = routine.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+		return nil, fmt.Errorf("routine insert: %w", err)
+	}
+
+	if err = routine.SetExercises(ctx, r.executor(), false, exercises...); err != nil {
+		return nil, fmt.Errorf("routine exercises set: %w", err)
+	}
+
+	return routine, nil
+}
+
+type GetRoutineOpt func() qm.QueryMod
+
+func GetRoutineWithID(id string) GetRoutineOpt {
+	return func() qm.QueryMod {
+		return orm.RoutineWhere.ID.EQ(id)
+	}
+}
+
+func GetRoutineWithUserID(userID string) GetRoutineOpt {
+	return func() qm.QueryMod {
+		return orm.RoutineWhere.UserID.EQ(userID)
+	}
+}
+
+func GetRoutineWithExercises() GetRoutineOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.RoutineRels.Exercises)
+	}
+}
+
+func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	routine, err := orm.Routines(query...).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("routine fetch: %w", err)
+	}
+
+	return routine, nil
+}
+
+func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
+	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(id)).DeleteAll(ctx, r.executor()); err != nil {
+		return fmt.Errorf("routine delete: %w", err)
+	}
+
+	return nil
+}
+
+type ListRoutineOpt func() ([]qm.QueryMod, error)
+
+func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
+	return func() ([]qm.QueryMod, error) {
+		if pageToken == nil {
+			return []qm.QueryMod{
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.RoutineColumns.CreatedAt)),
+			}, nil
+		}
+
+		var pt PageToken
+		if err := json.Unmarshal(pageToken, &pt); err != nil {
+			return nil, fmt.Errorf("page token unmarshal: %w", err)
+		}
+
+		return []qm.QueryMod{
+			orm.RoutineWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.ExerciseColumns.CreatedAt)),
+		}, nil
+	}
+}
+
+func ListRoutinesWithName(name string) ListRoutineOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.RoutineWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
+		}, nil
+	}
+}
+
+func ListRoutinesWithUserID(userID string) ListRoutineOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.RoutineWhere.UserID.EQ(userID),
+		}, nil
+	}
+}
+
+func ListRoutinesWithLimit(limit int) ListRoutineOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Limit(limit),
+		}, nil
+	}
+}
+
+func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
+	var query []qm.QueryMod
+	for _, opt := range opts {
+		q, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("routine list opt: %w", err)
+		}
+		query = append(query, q...)
+	}
+
+	routines, err := orm.Routines(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("routines fetch: %w", err)
+	}
+
+	return routines, nil
+}
+
+type UpdateRoutineOpt func() orm.M
+
+func UpdateRoutineName(name string) UpdateRoutineOpt {
+	return func() orm.M {
+		return orm.M{orm.RoutineColumns.Title: name}
+	}
+}
+
+func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
+	columns := orm.M{}
+	for _, opt := range opts {
+		columns = opt()
+	}
+
+	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, r.executor(), columns); err != nil {
+		return fmt.Errorf("routine update: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+	if err := routine.AddExercises(ctx, r.executor(), false, exercise); err != nil {
+		return fmt.Errorf("routine exercises add: %w", err)
+	}
+	return nil
+}
+
+func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+	if err := routine.RemoveExercises(ctx, r.executor(), exercise); err != nil {
+		return fmt.Errorf("routine exercises remove: %w", err)
 	}
 	return nil
 }

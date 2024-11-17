@@ -58,7 +58,8 @@ message DeleteExerciseResponse {}
 
 message ListExercisesRequest {
   string name = 1;
-  bytes page_token = 2;
+  int32 page_size = 2 [(buf.validate.field).int32 = {gte: 1, lte: 100}];
+  bytes page_token = 3;
 }
 message ListExercisesResponse {
   repeated Exercise exercises = 1;

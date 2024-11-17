@@ -32,7 +32,7 @@ const restOptions = [
 
 async function loadExercise() {
   const request = new GetExerciseRequest({
-    id: route.params.id[0]
+    id: route.params.id as string,
   })
   try {
     const response = await ExerciseClient.get(request);

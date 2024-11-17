@@ -4,10 +4,6 @@ import {useAuthStore} from "@/stores/auth";
 import Dashboard from '@/components/Dashboard.vue'
 
 const authStore = useAuthStore();
-// const accessToken = authStore.accessToken;
-// if (accessToken) {
-//   initializeTokenRefresh(accessToken);
-// }
 </script>
 
 <template>

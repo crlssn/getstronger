@@ -138,14 +138,17 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
         <div class="h-6 w-px bg-gray-900/10 lg:hidden" aria-hidden="true"/>
 
         <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-          <form class="relative flex flex-1" action="#" method="GET">
-            <label for="search-field" class="sr-only">Search</label>
-            <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"
-                                 aria-hidden="true"/>
-            <input id="search-field"
-                   class="block h-full w-full border-0 py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
-                   placeholder="Search..." type="search" name="search"/>
-          </form>
+          <div class="relative flex flex-1 items-center">
+            <p class="uppercase text-sm font-semibold text-gray-900 lg:hidden">{{ route.meta.title }}</p>
+          </div>
+<!--          <form class="relative flex flex-1" action="#" method="GET">-->
+<!--            <label for="search-field" class="sr-only">Search</label>-->
+<!--            <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"-->
+<!--                                 aria-hidden="true"/>-->
+<!--            <input id="search-field"-->
+<!--                   class="block h-full w-full border-0 py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"-->
+<!--                   placeholder="Search..." type="search" name="search"/>-->
+<!--          </form>-->
           <div class="flex items-center gap-x-4 lg:gap-x-6">
             <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
               <span class="sr-only">View notifications</span>
@@ -188,7 +191,7 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
         </div>
       </div>
 
-      <main class="py-10 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <main class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="px-4 sm:px-6 lg:px-8">
           <RouterView/>
         </div>
