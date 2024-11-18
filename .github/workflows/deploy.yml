@@ -8,6 +8,9 @@ on:
     types:
       - labeled
 
+permissions:
+  issues: write
+
 jobs:
   deploy:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy')
