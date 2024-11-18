@@ -97,15 +97,18 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	refreshToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeRefresh)
-	if err != nil {
-		log.Error("token generation failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
+	refreshToken := auth.RefreshToken.String
+	if !auth.RefreshToken.Valid {
+		refreshToken, err = h.jwt.CreateToken(auth.ID, jwt.TokenTypeRefresh)
+		if err != nil {
+			log.Error("token generation failed", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
 
-	if err = h.repo.UpdateRefreshToken(ctx, auth.ID, refreshToken); err != nil {
-		log.Error("refresh token upsert failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
+		if err = h.repo.UpdateRefreshToken(ctx, auth.ID, refreshToken); err != nil {
+			log.Error("refresh token update failed", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
 	}
 
 	res := connect.NewResponse(&v1.LoginResponse{
