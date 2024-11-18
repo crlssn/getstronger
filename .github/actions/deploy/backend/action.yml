@@ -46,6 +46,12 @@ inputs:
   cookie_domain:
     description: "Cookie Domain"
     required: true
+  jwt_access_token_key:
+    description: "JWT Access Token Key"
+    required: true
+  jwt_refresh_token_key:
+    description: "JWT Refresh Token
+    required: true
 
 runs:
   using: 'composite'
@@ -77,6 +83,8 @@ runs:
         echo SERVER_CERT_PATH=${{ inputs.server_cert_path }} >> .env
         echo SERVER_KEY_PATH=${{ inputs.server_key_path }} >> .env
         echo COOKIE_DOMAIN=${{ inputs.cookie_domain }} >> .env
+        echo JWT_ACCESS_TOKEN_KEY=${{ inputs.jwt_access_token_key }} >> .env
+        echo JWT_REFRESH_TOKEN_KEY=${{ inputs.jwt_refresh_token_key }} >> .env
 
     - name: Deploy to EC2 instance
       uses: easingthemes/ssh-deploy@v5.1.0

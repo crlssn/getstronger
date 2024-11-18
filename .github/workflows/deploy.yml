@@ -54,6 +54,8 @@ jobs:
           server_cert_path: ${{ vars.SERVER_CERT_PATH }}
           server_key_path: ${{ vars.SERVER_KEY_PATH }}
           cookie_domain: ${{ vars.COOKIE_DOMAIN }}
+          jwt_access_token_key: ${{ secrets.JWT_ACCESS_TOKEN_KEY }}
+          jwt_refresh_token_key: ${{ secrets.JWT_REFRESH_TOKEN_KEY }}
 
       - name: Deploy web to S3
         uses: ./.github/actions/deploy/web

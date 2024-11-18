@@ -104,6 +104,7 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 	if err != nil {
 		return "", fmt.Errorf("signing token: %w", err)
 	}
+
 	return tokenString, nil
 }
 

@@ -222,12 +222,10 @@ func (r *Repo) ListExercises(ctx context.Context, p ListExercisesParams) (orm.Ex
 		query = append(query, orm.ExerciseWhere.CreatedAt.LT(pt.CreatedAt))
 	}
 
-	boil.DebugMode = true
 	exercises, err := orm.Exercises(query...).All(ctx, r.executor())
 	if err != nil {
 		return nil, nil, fmt.Errorf("exercises fetch: %w", err)
 	}
-	boil.DebugMode = false
 
 	if len(exercises) > p.Limit {
 		pt, ptErr := json.Marshal(pageToken{CreatedAt: exercises[p.Limit-1].CreatedAt})
