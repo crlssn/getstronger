@@ -124,7 +124,7 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 	}
 	res.Header().Set("Set-Cookie", cookie.String())
 
-	log.Info("logged in")
+	log.Info("logged in", zap.String("refresh_token", refreshToken))
 	return res, nil
 }
 
@@ -135,12 +135,15 @@ var (
 
 func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceRefreshTokenProcedure))
+	log.Info("request received")
 
 	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
 	if !ok {
 		log.Warn("refresh token not provided")
 		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
 	}
+
+	log.Info("refresh token provided", zap.String("refresh_token", refreshToken))
 
 	exists, err := h.repo.RefreshTokenExists(ctx, refreshToken)
 	if err != nil {
