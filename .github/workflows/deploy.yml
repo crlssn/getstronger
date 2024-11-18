@@ -8,6 +8,10 @@ on:
     types:
       - labeled
 
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
 jobs:
   deploy:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy')
