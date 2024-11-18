@@ -128,10 +128,11 @@ func (r *Repo) DeleteRefreshToken(ctx context.Context, refreshToken string) erro
 }
 
 func (r *Repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
-	if _, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor()); err != nil {
+	exists, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor())
+	if err != nil {
 		return false, fmt.Errorf("refresh token exists check: %w", err)
 	}
-	return true, nil
+	return exists, nil
 }
 
 type CreateUserParams struct {
