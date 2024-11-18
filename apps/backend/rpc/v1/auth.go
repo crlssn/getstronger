@@ -124,7 +124,7 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 	}
 	res.Header().Set("Set-Cookie", cookie.String())
 
-	log.Info("logged in", zap.String("refresh_token", refreshToken))
+	log.Info("logged in")
 	return res, nil
 }
 
@@ -142,8 +142,6 @@ func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTo
 		log.Warn("refresh token not provided")
 		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
 	}
-
-	log.Info("refresh token provided", zap.String("refresh_token", refreshToken))
 
 	exists, err := h.repo.RefreshTokenExists(ctx, refreshToken)
 	if err != nil {
@@ -190,30 +188,17 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 	}
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
-
-	paths := []string{"/api.v1.AuthService", apiv1connect.AuthServiceRefreshTokenProcedure, "/", ""}
-	domains := []string{
-		"",
-		os.Getenv("COOKIE_DOMAIN"), // The current cookie domain
-		".getstronger.pro",         // Broad domain
-		"www.getstronger.pro",      // Specific subdomain
+	cookie := &http.Cookie{
+		Name:     "refreshToken",
+		Value:    "",
+		Path:     "/api.v1.AuthService",
+		Domain:   os.Getenv("COOKIE_DOMAIN"),
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
 	}
-
-	for _, path := range paths {
-		for _, domain := range domains {
-			cookie := &http.Cookie{
-				Name:     "refreshToken",
-				Value:    "",
-				Path:     path,
-				Domain:   domain,
-				MaxAge:   -1,
-				Secure:   true,
-				HttpOnly: true,
-				SameSite: http.SameSiteNoneMode,
-			}
-			res.Header().Set("Set-Cookie", cookie.String())
-		}
-	}
+	res.Header().Set("Set-Cookie", cookie.String())
 
 	log.Info("logged out")
 	return res, nil

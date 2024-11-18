@@ -130,13 +130,8 @@ func withCORS(h http.Handler) http.Handler {
 
 func CookieMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		for _, cookie := range r.Cookies() {
-			println("cookie found:", cookie.Name, "=", cookie.Value)
-		}
-
 		cookie, err := r.Cookie("refreshToken")
 		if err == nil {
-			println("refresh token found in cookie", cookie.Value)
 			ctx := context.WithValue(r.Context(), jwt.ContextKeyRefreshToken, cookie.Value)
 			r = r.WithContext(ctx)
 		}
