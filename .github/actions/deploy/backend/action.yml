@@ -50,7 +50,7 @@ inputs:
     description: "JWT Access Token Key"
     required: true
   jwt_refresh_token_key:
-    description: "JWT Refresh Token
+    description: "JWT Refresh Token"
     required: true
 
 runs:
