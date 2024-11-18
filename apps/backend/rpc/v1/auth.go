@@ -191,19 +191,28 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
 
-	paths := []string{"/api.v1.AuthService", apiv1connect.AuthServiceRefreshTokenProcedure}
+	paths := []string{"/api.v1.AuthService", apiv1connect.AuthServiceRefreshTokenProcedure, "/", ""}
+	domains := []string{
+		"",
+		os.Getenv("COOKIE_DOMAIN"), // The current cookie domain
+		".getstronger.pro",         // Broad domain
+		"www.getstronger.pro",      // Specific subdomain
+	}
+
 	for _, path := range paths {
-		cookie := &http.Cookie{
-			Name:     "refreshToken",
-			Value:    "",
-			Path:     path,
-			Domain:   os.Getenv("COOKIE_DOMAIN"),
-			MaxAge:   -1,
-			Secure:   true,
-			HttpOnly: true,
-			SameSite: http.SameSiteNoneMode,
+		for _, domain := range domains {
+			cookie := &http.Cookie{
+				Name:     "refreshToken",
+				Value:    "",
+				Path:     path,
+				Domain:   domain,
+				MaxAge:   -1,
+				Secure:   true,
+				HttpOnly: true,
+				SameSite: http.SameSiteNoneMode,
+			}
+			res.Header().Set("Set-Cookie", cookie.String())
 		}
-		res.Header().Set("Set-Cookie", cookie.String())
 	}
 
 	log.Info("logged out")
