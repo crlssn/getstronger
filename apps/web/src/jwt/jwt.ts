@@ -6,6 +6,7 @@ import router from "@/router/router";
 import type {NavigationFailure} from "vue-router";
 
 export async function RefreshAccessTokenOrLogout(): Promise<void | NavigationFailure | undefined> {
+  console.log('refresh access token or logout')
   try {
     const authStore = useAuthStore();
     const response = await AuthClient.refreshToken(new RefreshTokenRequest());
@@ -25,8 +26,8 @@ export async function RefreshAccessTokenOrLogout(): Promise<void | NavigationFai
 
 export function ScheduleTokenRefresh(): number {
   const interval = 10 * 60 * 1000; // 10 minutes
-  // const interval = 10 * 1000; // 10 seconds
-  console.log('scheduling access token refresh');
+  // const interval = 60 * 1000; // 1 minute
+  console.log('scheduling access token refresh every 10 minutes');
   return window.setInterval(async () => {
     try {
       console.log('refreshing access token');

@@ -15,6 +15,7 @@ import (
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
+	"github.com/crlssn/getstronger/apps/backend/pkg/xzap"
 )
 
 type auth struct {
@@ -72,27 +73,30 @@ func (a *auth) initMethods() {
 
 // Unary is the unary interceptor method for authentication.
 func (a *auth) Unary() connect.UnaryInterceptorFunc {
-	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(
 			ctx context.Context,
 			req connect.AnyRequest,
 		) (connect.AnyResponse, error) {
+			log := a.log.With(xzap.FieldRPC(req.Spec().Procedure))
+			log.Info("request received")
+
 			requiresAuth := a.methods[req.Spec().Procedure]
 			if !requiresAuth {
-				a.log.Info("method does not require authentication", zap.String("method", req.Spec().Procedure))
+				log.Info("request does not require authentication")
 				return next(ctx, req)
 			}
 
 			claims, err := a.claimsFromHeader(req.Header())
 			if err != nil {
-				a.log.Warn("unauthenticated request", zap.Error(err))
+				log.Warn("request unauthenticated", zap.Error(err))
 				return nil, connect.NewError(connect.CodeUnauthenticated, nil)
 			}
 
+			log.Info("request authenticated", xzap.FieldUserID(claims.UserID), zap.Any("claims", claims))
 			return next(context.WithValue(ctx, jwt.ContextKeyUserID, claims.UserID), req)
 		}
 	}
-	return interceptor
 }
 
 var (

@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types:
+      - labeled
 
 jobs:
   deploy:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy')
     runs-on: ubuntu-latest
 
     steps:
@@ -54,6 +58,8 @@ jobs:
           server_cert_path: ${{ vars.SERVER_CERT_PATH }}
           server_key_path: ${{ vars.SERVER_KEY_PATH }}
           cookie_domain: ${{ vars.COOKIE_DOMAIN }}
+          jwt_access_token_key: ${{ secrets.JWT_ACCESS_TOKEN_KEY }}
+          jwt_refresh_token_key: ${{ secrets.JWT_REFRESH_TOKEN_KEY }}
 
       - name: Deploy web to S3
         uses: ./.github/actions/deploy/web
@@ -62,3 +68,13 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ vars.AWS_REGION }}
           aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
+
+      - name: Remove deploy label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          curl -X DELETE \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/deploy

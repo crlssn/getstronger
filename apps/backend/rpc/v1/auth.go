@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
@@ -114,20 +113,14 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 	})
 
 	cookie := &http.Cookie{
-		Name:        "refreshToken",
-		Value:       refreshToken,
-		Quoted:      false,
-		Path:        "/api.v1.AuthService",
-		Domain:      os.Getenv("COOKIE_DOMAIN"),
-		Expires:     time.Time{},
-		RawExpires:  "",
-		MaxAge:      int(jwt.ExpiryTimeRefresh),
-		Secure:      true,
-		HttpOnly:    true,
-		SameSite:    http.SameSiteNoneMode,
-		Partitioned: false,
-		Raw:         "",
-		Unparsed:    nil,
+		Name:     "refreshToken",
+		Value:    refreshToken,
+		Path:     "/api.v1.AuthService",
+		Domain:   os.Getenv("COOKIE_DOMAIN"),
+		MaxAge:   int(jwt.ExpiryTimeRefresh),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
 	}
 	res.Header().Set("Set-Cookie", cookie.String())
 
@@ -142,6 +135,7 @@ var (
 
 func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceRefreshTokenProcedure))
+	log.Info("request received")
 
 	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
 	if !ok {
@@ -195,20 +189,14 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
 	cookie := &http.Cookie{
-		Name:        "refreshToken",
-		Value:       "",
-		Quoted:      false,
-		Path:        "/api.v1.AuthService",
-		Domain:      os.Getenv("COOKIE_DOMAIN"),
-		Expires:     time.Time{},
-		RawExpires:  "",
-		MaxAge:      -1,
-		Secure:      true,
-		HttpOnly:    true,
-		SameSite:    http.SameSiteNoneMode,
-		Partitioned: false,
-		Raw:         "",
-		Unparsed:    nil,
+		Name:     "refreshToken",
+		Value:    "",
+		Path:     "/api.v1.AuthService",
+		Domain:   os.Getenv("COOKIE_DOMAIN"),
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
 	}
 	res.Header().Set("Set-Cookie", cookie.String())
 

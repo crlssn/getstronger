@@ -66,6 +66,17 @@ func (tt TokenType) String() string {
 	return string(tt)
 }
 
+func (tt TokenType) ExpiryTime() time.Duration {
+	switch tt {
+	case TokenTypeAccess:
+		return expiryTimeAccess
+	case TokenTypeRefresh:
+		return ExpiryTimeRefresh
+	default:
+		return -1
+	}
+}
+
 const (
 	TokenTypeAccess  TokenType = "access_token"
 	TokenTypeRefresh TokenType = "refresh_token"
@@ -84,16 +95,10 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 	}
 
 	now := time.Now().UTC()
-
-	expiryTime := expiryTimeAccess
-	if tokenType == TokenTypeRefresh {
-		expiryTime = ExpiryTimeRefresh
-	}
-
 	claims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(expiryTime)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(tokenType.ExpiryTime())),
 			IssuedAt:  jwt.NewNumericDate(now),
 			Subject:   tokenType.String(),
 		},
@@ -104,6 +109,7 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 	if err != nil {
 		return "", fmt.Errorf("signing token: %w", err)
 	}
+
 	return tokenString, nil
 }
 
