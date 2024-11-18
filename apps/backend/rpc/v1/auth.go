@@ -190,17 +190,21 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 	}
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
-	cookie := &http.Cookie{
-		Name:     "refreshToken",
-		Value:    "",
-		Path:     "/api.v1.AuthService",
-		Domain:   os.Getenv("COOKIE_DOMAIN"),
-		MaxAge:   -1,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
+
+	paths := []string{"/api.v1.AuthService", apiv1connect.AuthServiceRefreshTokenProcedure}
+	for _, path := range paths {
+		cookie := &http.Cookie{
+			Name:     "refreshToken",
+			Value:    "",
+			Path:     path,
+			Domain:   os.Getenv("COOKIE_DOMAIN"),
+			MaxAge:   -1,
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteNoneMode,
+		}
+		res.Header().Set("Set-Cookie", cookie.String())
 	}
-	res.Header().Set("Set-Cookie", cookie.String())
 
 	log.Info("logged out")
 	return res, nil
