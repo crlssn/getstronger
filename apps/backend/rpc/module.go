@@ -10,7 +10,6 @@ import (
 	connectcors "connectrpc.com/cors"
 	"github.com/rs/cors"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -131,9 +130,12 @@ func withCORS(h http.Handler) http.Handler {
 
 func CookieMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for _, cookie := range r.Cookies() {
+			println("cookie found:", cookie.Name, "=", cookie.Value)
+		}
+
 		cookie, err := r.Cookie("refreshToken")
 		if err == nil {
-			zap.L().Info("refresh token found in cookie", zap.String("refresh_token", cookie.Value))
 			println("refresh token found in cookie", cookie.Value)
 			ctx := context.WithValue(r.Context(), jwt.ContextKeyRefreshToken, cookie.Value)
 			r = r.WithContext(ctx)
