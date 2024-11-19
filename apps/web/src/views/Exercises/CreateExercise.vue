@@ -85,9 +85,9 @@ async function createExercise() {
 
       <div>
         <div>
-          <label for="label" class="block text-xs font-semibold text-gray-900 uppercase"
-            >Label</label
-          >
+          <label for="label" class="block text-xs font-semibold text-gray-900 uppercase">
+            Label
+          </label>
         </div>
         <div class="mt-2">
           <input
@@ -101,9 +101,9 @@ async function createExercise() {
 
       <div>
         <div>
-          <label for="rest" class="block text-xs font-semibold text-gray-900 uppercase"
-            >Rest between sets</label
-          >
+          <label for="rest" class="block text-xs font-semibold text-gray-900 uppercase">
+            Rest between sets
+          </label>
         </div>
         <div class="mt-2">
           <select

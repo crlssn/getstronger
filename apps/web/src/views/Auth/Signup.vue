@@ -60,14 +60,7 @@ const signup = async () => {
         <div>
           <label for="email" class="block text-sm/6 font-medium text-gray-900">First name</label>
           <div class="mt-2">
-            <input
-              v-model="firstName"
-              id="firstname"
-              name="firstname"
-              type="text"
-              required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-            />
+            <input v-model="firstName" id="firstname" name="firstname" type="text" required />
           </div>
         </div>
 
@@ -76,7 +69,6 @@ const signup = async () => {
           <div class="mt-2">
             <input
               v-model="lastName"
-              id="lastname"
               name="lastname"
               type="text"
               required
@@ -119,9 +111,9 @@ const signup = async () => {
 
         <div>
           <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm/6 font-medium text-gray-900"
-              >Confirm Password</label
-            >
+            <label for="password" class="block text-sm/6 font-medium text-gray-900">
+              Confirm Password
+            </label>
           </div>
           <div class="mt-2">
             <input
@@ -148,9 +140,9 @@ const signup = async () => {
 
       <p class="mt-10 text-center text-sm/6 text-gray-400">
         Already a member?
-        <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500"
-          >Login</RouterLink
-        >
+        <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
+          Login
+        </RouterLink>
       </p>
     </div>
   </div>

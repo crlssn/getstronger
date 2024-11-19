@@ -80,6 +80,7 @@ onMounted(() => {
   >
     Your new routine has been created successfully.
   </div>
+
   <div
     v-if="resError"
     class="border-2 border-red-400 bg-red-300 mb-4 rounded-md py-3 px-5 text-sm text-red-800"
@@ -87,13 +88,13 @@ onMounted(() => {
   >
     {{ resError }}
   </div>
+
   <form class="space-y-6" @submit.prevent="createRoutine">
     <div>
       <label for="name" class="block text-xs font-semibold text-gray-900 uppercase">Name</label>
       <div class="mt-2">
         <input
           v-model="name"
-          id="name"
           type="text"
           required
           class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
