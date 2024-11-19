@@ -106,6 +106,7 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 	})
 }
 
+// TODO: Refactor middlewares to their own package.
 func withMiddleware(handler http.Handler) http.Handler {
 	middlewares := []func(http.Handler) http.Handler{
 		middlewareCORS,
