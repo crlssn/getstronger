@@ -4,22 +4,35 @@ import {onMounted, ref} from "vue";
 import {GetRoutineRequest, Routine} from "@/pb/api/v1/routines_pb";
 import {RoutineClient} from "@/clients/clients";
 import {useRoute} from "vue-router";
+import {ChevronRightIcon} from "@heroicons/vue/20/solid";
+import {usePageTitleStore} from "@/stores/pageTitle";
 
 const route = useRoute()
+const pageTitleStore = usePageTitleStore()
 const routine = ref<Routine | undefined>(undefined)
 
 const fetchRoutine = async (id: string) => {
-  const req = new GetRoutineRequest({ id })
+  const req = new GetRoutineRequest({id})
   const res = await RoutineClient.get(req)
   routine.value = res.routine
 }
 
 onMounted(async () => {
   await fetchRoutine(route.query.routine_id as string)
+  pageTitleStore.setPageTitle(routine.value?.name as string)
 })
 </script>
 
 <template>
+  <ul role="list">
+    <li v-for="exercise in routine?.exercises" :key="exercise.id">
+      <RouterLink :to="`/workouts/start?routine_id=${routine?.id}&exercise_id=${exercise.id}`">
+        {{ exercise.name }}
+        <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true"/>
+      </RouterLink>
+    </li>
+  </ul>
+
   <form>
     <div class="flex items-end">
       <div class="w-full">
@@ -38,6 +51,23 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+ul {
+  @apply divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md;
+
+  .header {
+    @apply border-b border-gray-200 bg-white px-4 py-5;
+
+    h3 {
+      @apply text-base font-medium text-gray-900;
+    }
+  }
+
+  a {
+    @apply font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800;
+  }
+}
+
+
 label {
   @apply block text-xs font-semibold text-gray-900 uppercase mb-2
 }

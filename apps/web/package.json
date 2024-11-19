@@ -21,6 +21,7 @@
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.1.5",
     "@vueuse/core": "^11.2.0",
+    "@vueuse/head": "^2.0.0",
     "pinia": "^2.2.6",
     "pinia-plugin-persistedstate": "^4.1.2",
     "vue": "^3.5.12",
