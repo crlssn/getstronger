@@ -68,7 +68,6 @@ const finishWorkout = () => {
 
 const areAllSetsFilled = (): boolean => {
   const sets = map.value.get(exerciseID.value) || [];
-  console.log(sets)
   return sets.every(set => set.weight !== undefined && set.reps !== undefined);
 };
 
