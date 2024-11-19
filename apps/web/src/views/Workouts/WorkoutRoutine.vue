@@ -27,21 +27,26 @@ onMounted(async () => {
 //   return route.query.exercise_id && route.query.exercise_id.length > 0;
 // })
 const setView = ref(false)
+const exerciseID = ref('')
+
+const setExerciseID = (id: string) => {
+  exerciseID.value = id
+  setView.value = true
+
+  const exercise = routine.value?.exercises.find((exercise) => exercise.id === id)
+  pageTitleStore.setPageTitle(exercise?.name as string)
+}
+
+const hasExerciseID = computed(() => {
+  return exerciseID.value.length > 0
+})
 
 import WorkoutExercise from "@/views/Workouts/WorkoutExercise.vue";
 </script>
 
 <template>
-  <ul role="list">
-    <li v-for="exercise in routine?.exercises" :key="exercise.id">
-      <RouterLink :to="`/workouts/${routine?.id}/exercise/${exercise.id}`">
-        {{ exercise.name }}
-        <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true"/>
-      </RouterLink>
-    </li>
-  </ul>
-
-  <form v-if="setView">
+  <form v-if="hasExerciseID">
+    <Button type="button" colour="primary" class="mb-6" @click="setExerciseID('')">Back</Button>
     <div class="flex items-end">
       <div class="w-full">
         <label for="weight">Weight</label>
@@ -56,6 +61,14 @@ import WorkoutExercise from "@/views/Workouts/WorkoutExercise.vue";
     <Button type="submit" colour="primary" class="mt-6">Add Set</Button>
     <Button type="submit" colour="red" class="mt-6">Finish Workout</Button>
   </form>
+  <ul v-else role="list">
+    <li v-for="exercise in routine?.exercises" :key="exercise.id" @click="setExerciseID(exercise.id)">
+      <div>
+        {{ exercise.name }}
+        <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true"/>
+      </div>
+    </li>
+  </ul>
 </template>
 
 <style scoped>
@@ -70,8 +83,8 @@ ul {
     }
   }
 
-  a {
-    @apply font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800;
+  a, div {
+    @apply font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800 cursor-pointer;
   }
 }
 
