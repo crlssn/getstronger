@@ -238,17 +238,12 @@ export class UpdateWorkoutResponse extends Message<UpdateWorkoutResponse> {
  */
 export class ListWorkoutsRequest extends Message<ListWorkoutsRequest> {
   /**
-   * @generated from field: string name = 1;
-   */
-  name = "";
-
-  /**
-   * @generated from field: int32 page_size = 2;
+   * @generated from field: int32 page_size = 1;
    */
   pageSize = 0;
 
   /**
-   * @generated from field: bytes page_token = 3;
+   * @generated from field: bytes page_token = 2;
    */
   pageToken = new Uint8Array(0);
 
@@ -260,9 +255,8 @@ export class ListWorkoutsRequest extends Message<ListWorkoutsRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v1.ListWorkoutsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 3, name: "page_token", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    { no: 1, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "page_token", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkoutsRequest {

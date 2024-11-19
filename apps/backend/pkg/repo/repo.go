@@ -483,3 +483,59 @@ func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exer
 	}
 	return nil
 }
+
+type ListWorkoutsOpt func() ([]qm.QueryMod, error)
+
+func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
+	var query []qm.QueryMod
+	for _, opt := range opts {
+		q, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("workout list opt: %w", err)
+		}
+		query = append(query, q...)
+	}
+
+	workouts, err := orm.Workouts(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("workouts fetch: %w", err)
+	}
+
+	return workouts, nil
+}
+
+func ListWorkoutsWithUserID(userID string) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.WorkoutWhere.UserID.EQ(userID),
+		}, nil
+	}
+}
+
+func ListWorkoutsWithLimit(size int) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Limit(size),
+		}, nil
+	}
+}
+
+func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		if token == nil {
+			return []qm.QueryMod{
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.WorkoutColumns.CreatedAt)),
+			}, nil
+		}
+
+		var pt PageToken
+		if err := json.Unmarshal(token, &pt); err != nil {
+			return nil, fmt.Errorf("page token unmarshal: %w", err)
+		}
+
+		return []qm.QueryMod{
+			orm.WorkoutWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.WorkoutColumns.CreatedAt)),
+		}, nil
+	}
+}
