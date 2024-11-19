@@ -39,6 +39,7 @@ func (a *auth) initMethods() {
 		v1.File_api_v1_auth_proto,
 		v1.File_api_v1_exercise_proto,
 		v1.File_api_v1_routines_proto,
+		v1.File_api_v1_workouts_proto,
 	}
 
 	for _, fileDescriptor := range fileDescriptors {
