@@ -21,9 +21,6 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Download modules
-        run: go mod download
-
       - name: Install dependencies
         working-directory: ./apps/web
         run: npm install
