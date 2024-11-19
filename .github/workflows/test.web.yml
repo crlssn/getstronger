@@ -26,6 +26,21 @@ jobs:
         run: npm install
         shell: bash
 
+      - name: Run formatter
+        working-directory: ./apps/web
+        run: npm run format
+        shell: bash
+
+      - name: Check for uncommitted changes
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            echo "Code is not properly formatted. Please run 'npm run format'."
+            git diff
+            exit 1
+          else
+            echo "Code is properly formatted."
+          fi
+
       - name: Build the app
         working-directory: ./apps/web
         run: npm run build
