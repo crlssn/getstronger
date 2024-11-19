@@ -220,9 +220,6 @@ func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 
 func ListExercisesWithName(name string) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
-		//if name == "" {
-		//	return nil, nil
-		//}
 		return []qm.QueryMod{
 			orm.ExerciseWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
 		}, nil

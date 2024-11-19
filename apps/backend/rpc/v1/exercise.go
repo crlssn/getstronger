@@ -148,7 +148,7 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 	return connect.NewResponse(&v1.DeleteExerciseResponse{}), nil
 }
 
-func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
+func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) { //nolint:dupl
 	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceListProcedure))
 	log.Info("request received")
 
