@@ -8,22 +8,26 @@ import (
 	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 )
 
-type ModelSlice interface {
-	orm.WorkoutSlice | orm.ExerciseSlice | orm.UserSlice | orm.RoutineSlice
+type ModelItem interface {
+	*orm.Workout | *orm.Exercise | *orm.User | *orm.Routine
 }
 
-type Pagination[T ModelSlice] struct {
-	Items         T
+type ModelSlice[T any] interface {
+	~[]T
+}
+
+type Pagination[Item ModelItem, Slice ModelSlice[Item]] struct {
+	Items         Slice
 	NextPageToken []byte
 }
 
-func PaginateSlice[S ModelSlice](
-	items S,
+func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
+	items Slice,
 	limit int,
-	timestamp func(S) time.Time,
-) (*Pagination[S], error) {
+	timestamp func(Item) time.Time,
+) (*Pagination[Item, Slice], error) {
 	if len(items) <= limit {
-		return &Pagination[S]{
+		return &Pagination[Item, Slice]{
 			Items:         items,
 			NextPageToken: nil,
 		}, nil
@@ -39,7 +43,7 @@ func PaginateSlice[S ModelSlice](
 		return nil, errors.New("failed to marshal page token")
 	}
 
-	return &Pagination[S]{
+	return &Pagination[Item, Slice]{
 		Items:         items,
 		NextPageToken: nextPageToken,
 	}, nil

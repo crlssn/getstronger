@@ -66,8 +66,8 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 	//	}
 	//}
 
-	pagination, err := repo.PaginateSlice(workouts, limit, func(workouts orm.WorkoutSlice) time.Time {
-		return workouts[0].CreatedAt
+	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *orm.Workout) time.Time {
+		return workout.CreatedAt
 	})
 	if err != nil {
 		log.Error("failed to paginate workouts", zap.Error(err))
