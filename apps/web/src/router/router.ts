@@ -1,17 +1,22 @@
-import {createRouter, createWebHistory, type RouteLocationNormalized, type Router} from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  type RouteLocationNormalized,
+  type Router,
+} from 'vue-router'
 import HomeView from '@/views/Home.vue'
 import LoginView from '@/views/Auth/Login.vue'
-import Signup from "@/views/Auth/Signup.vue";
-import NotFound from "@/views/NotFound.vue";
-import {useAuthStore} from '@/stores/auth';
-import {AuthClient} from "@/clients/clients";
-import {LogoutRequest} from "@/pb/api/v1/auth_pb";
-import CreateExercise from "@/views/Exercises/CreateExercise.vue";
-import ListExercises from "@/views/Exercises/ListExercises.vue";
-import UpdateExercise from "@/views/Exercises/UpdateExercise.vue";
-import ListRoutines from "@/views/Routines/ListRoutines.vue";
-import ViewRoutine from "@/views/Routines/ViewRoutine.vue";
-import CreateRoutine from "@/views/Routines/CreateRoutine.vue";
+import Signup from '@/views/Auth/Signup.vue'
+import NotFound from '@/views/NotFound.vue'
+import { useAuthStore } from '@/stores/auth'
+import { AuthClient } from '@/clients/clients'
+import { LogoutRequest } from '@/pb/api/v1/auth_pb'
+import CreateExercise from '@/views/Exercises/CreateExercise.vue'
+import ListExercises from '@/views/Exercises/ListExercises.vue'
+import UpdateExercise from '@/views/Exercises/UpdateExercise.vue'
+import ListRoutines from '@/views/Routines/ListRoutines.vue'
+import ViewRoutine from '@/views/Routines/ViewRoutine.vue'
+import CreateRoutine from '@/views/Routines/CreateRoutine.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -97,28 +102,28 @@ const router: Router = createRouter({
 
 async function logout() {
   await AuthClient.logout(new LogoutRequest())
-  const authStore = useAuthStore();
-  authStore.logout();
+  const authStore = useAuthStore()
+  authStore.logout()
   return {
     path: '/login',
-  };
+  }
 }
 
 async function auth() {
-  const authStore = useAuthStore();
+  const authStore = useAuthStore()
   if (!authStore.accessToken) {
     return {
       path: '/login',
-    };
+    }
   }
 }
 
 async function guest() {
-  const authStore = useAuthStore();
+  const authStore = useAuthStore()
   if (authStore.accessToken) {
     return {
       path: '/home',
-    };
+    }
   }
 }
 

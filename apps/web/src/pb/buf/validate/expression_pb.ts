@@ -17,8 +17,15 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import type {
+  BinaryReadOptions,
+  FieldList,
+  JsonReadOptions,
+  JsonValue,
+  PartialMessage,
+  PlainMessage,
+} from '@bufbuild/protobuf'
+import { Message, proto3 } from '@bufbuild/protobuf'
 
 /**
  * `Constraint` represents a validation rule written in the Common Expression
@@ -46,7 +53,7 @@ export class Constraint extends Message<Constraint> {
    *
    * @generated from field: string id = 1;
    */
-  id = "";
+  id = ''
 
   /**
    * `message` is an optional field that provides a human-readable error message
@@ -56,7 +63,7 @@ export class Constraint extends Message<Constraint> {
    *
    * @generated from field: string message = 2;
    */
-  message = "";
+  message = ''
 
   /**
    * `expression` is the actual CEL expression that will be evaluated for
@@ -66,35 +73,38 @@ export class Constraint extends Message<Constraint> {
    *
    * @generated from field: string expression = 3;
    */
-  expression = "";
+  expression = ''
 
   constructor(data?: PartialMessage<Constraint>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "buf.validate.Constraint";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'buf.validate.Constraint'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "expression", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    { no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'message', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: 'expression', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Constraint {
-    return new Constraint().fromBinary(bytes, options);
+    return new Constraint().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Constraint {
-    return new Constraint().fromJson(jsonValue, options);
+    return new Constraint().fromJson(jsonValue, options)
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Constraint {
-    return new Constraint().fromJsonString(jsonString, options);
+    return new Constraint().fromJsonString(jsonString, options)
   }
 
-  static equals(a: Constraint | PlainMessage<Constraint> | undefined, b: Constraint | PlainMessage<Constraint> | undefined): boolean {
-    return proto3.util.equals(Constraint, a, b);
+  static equals(
+    a: Constraint | PlainMessage<Constraint> | undefined,
+    b: Constraint | PlainMessage<Constraint> | undefined,
+  ): boolean {
+    return proto3.util.equals(Constraint, a, b)
   }
 }
 
@@ -111,33 +121,36 @@ export class Violations extends Message<Violations> {
    *
    * @generated from field: repeated buf.validate.Violation violations = 1;
    */
-  violations: Violation[] = [];
+  violations: Violation[] = []
 
   constructor(data?: PartialMessage<Violations>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "buf.validate.Violations";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'buf.validate.Violations'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "violations", kind: "message", T: Violation, repeated: true },
-  ]);
+    { no: 1, name: 'violations', kind: 'message', T: Violation, repeated: true },
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Violations {
-    return new Violations().fromBinary(bytes, options);
+    return new Violations().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Violations {
-    return new Violations().fromJson(jsonValue, options);
+    return new Violations().fromJson(jsonValue, options)
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Violations {
-    return new Violations().fromJsonString(jsonString, options);
+    return new Violations().fromJsonString(jsonString, options)
   }
 
-  static equals(a: Violations | PlainMessage<Violations> | undefined, b: Violations | PlainMessage<Violations> | undefined): boolean {
-    return proto3.util.equals(Violations, a, b);
+  static equals(
+    a: Violations | PlainMessage<Violations> | undefined,
+    b: Violations | PlainMessage<Violations> | undefined,
+  ): boolean {
+    return proto3.util.equals(Violations, a, b)
   }
 }
 
@@ -164,7 +177,7 @@ export class Violation extends Message<Violation> {
    *
    * @generated from field: string field_path = 1;
    */
-  fieldPath = "";
+  fieldPath = ''
 
   /**
    * `constraint_id` is the unique identifier of the `Constraint` that was not fulfilled.
@@ -172,7 +185,7 @@ export class Violation extends Message<Violation> {
    *
    * @generated from field: string constraint_id = 2;
    */
-  constraintId = "";
+  constraintId = ''
 
   /**
    * `message` is a human-readable error message that describes the nature of the violation.
@@ -180,43 +193,45 @@ export class Violation extends Message<Violation> {
    *
    * @generated from field: string message = 3;
    */
-  message = "";
+  message = ''
 
   /**
    * `for_key` indicates whether the violation was caused by a map key, rather than a value.
    *
    * @generated from field: bool for_key = 4;
    */
-  forKey = false;
+  forKey = false
 
   constructor(data?: PartialMessage<Violation>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "buf.validate.Violation";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'buf.validate.Violation'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "field_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "constraint_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "for_key", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-  ]);
+    { no: 1, name: 'field_path', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'constraint_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: 'message', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: 'for_key', kind: 'scalar', T: 8 /* ScalarType.BOOL */ },
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Violation {
-    return new Violation().fromBinary(bytes, options);
+    return new Violation().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Violation {
-    return new Violation().fromJson(jsonValue, options);
+    return new Violation().fromJson(jsonValue, options)
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Violation {
-    return new Violation().fromJsonString(jsonString, options);
+    return new Violation().fromJsonString(jsonString, options)
   }
 
-  static equals(a: Violation | PlainMessage<Violation> | undefined, b: Violation | PlainMessage<Violation> | undefined): boolean {
-    return proto3.util.equals(Violation, a, b);
+  static equals(
+    a: Violation | PlainMessage<Violation> | undefined,
+    b: Violation | PlainMessage<Violation> | undefined,
+  ): boolean {
+    return proto3.util.equals(Violation, a, b)
   }
 }
-

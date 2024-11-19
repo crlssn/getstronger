@@ -3,20 +3,31 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateExerciseRequest, CreateExerciseResponse, DeleteExerciseRequest, DeleteExerciseResponse, GetExerciseRequest, GetExerciseResponse, ListExercisesRequest, ListExercisesResponse, UpdateExerciseRequest, UpdateExerciseResponse } from "./exercise_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
+import {
+  CreateExerciseRequest,
+  CreateExerciseResponse,
+  DeleteExerciseRequest,
+  DeleteExerciseResponse,
+  GetExerciseRequest,
+  GetExerciseResponse,
+  ListExercisesRequest,
+  ListExercisesResponse,
+  UpdateExerciseRequest,
+  UpdateExerciseResponse,
+} from './exercise_pb.js'
+import { MethodKind } from '@bufbuild/protobuf'
 
 /**
  * @generated from service api.v1.ExerciseService
  */
 export const ExerciseService = {
-  typeName: "api.v1.ExerciseService",
+  typeName: 'api.v1.ExerciseService',
   methods: {
     /**
      * @generated from rpc api.v1.ExerciseService.Create
      */
     create: {
-      name: "Create",
+      name: 'Create',
       I: CreateExerciseRequest,
       O: CreateExerciseResponse,
       kind: MethodKind.Unary,
@@ -25,7 +36,7 @@ export const ExerciseService = {
      * @generated from rpc api.v1.ExerciseService.Get
      */
     get: {
-      name: "Get",
+      name: 'Get',
       I: GetExerciseRequest,
       O: GetExerciseResponse,
       kind: MethodKind.Unary,
@@ -34,7 +45,7 @@ export const ExerciseService = {
      * @generated from rpc api.v1.ExerciseService.Update
      */
     update: {
-      name: "Update",
+      name: 'Update',
       I: UpdateExerciseRequest,
       O: UpdateExerciseResponse,
       kind: MethodKind.Unary,
@@ -43,7 +54,7 @@ export const ExerciseService = {
      * @generated from rpc api.v1.ExerciseService.Delete
      */
     delete: {
-      name: "Delete",
+      name: 'Delete',
       I: DeleteExerciseRequest,
       O: DeleteExerciseResponse,
       kind: MethodKind.Unary,
@@ -52,11 +63,10 @@ export const ExerciseService = {
      * @generated from rpc api.v1.ExerciseService.List
      */
     list: {
-      name: "List",
+      name: 'List',
       I: ListExercisesRequest,
       O: ListExercisesResponse,
       kind: MethodKind.Unary,
     },
-  }
-} as const;
-
+  },
+} as const

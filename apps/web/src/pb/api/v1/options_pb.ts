@@ -3,14 +3,13 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { MethodOptions, proto3 } from "@bufbuild/protobuf";
+import { MethodOptions, proto3 } from '@bufbuild/protobuf'
 
 /**
  * @generated from extension: bool auth = 50001;
  */
-export const auth = proto3.makeExtension<MethodOptions, boolean>(
-  "api.v1.auth", 
-  MethodOptions, 
-  { no: 50001, kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-);
-
+export const auth = proto3.makeExtension<MethodOptions, boolean>('api.v1.auth', MethodOptions, {
+  no: 50001,
+  kind: 'scalar',
+  T: 8 /* ScalarType.BOOL */,
+})
