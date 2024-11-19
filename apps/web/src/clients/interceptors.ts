@@ -9,11 +9,13 @@ export const logger: Interceptor = (next) => async (req) => {
 }
 
 export const auth: Interceptor = (next) => async (req) => {
+  console.log('auth interceptor')
   const authStore = useAuthStore()
   try {
     req.header.set('Authorization', `Bearer ${authStore.accessToken}`)
     return next(req)
   } catch (error) {
+    console.error('error in auth interceptor', error)
     if (!(error instanceof ConnectError)) {
       throw error
     }
