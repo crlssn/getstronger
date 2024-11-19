@@ -41,6 +41,6 @@ import Button from "@/components/Button.vue";
       </div>
     </li>
   </ul>
-  <Button size="md" colour="amber" class="mt-4">Edit</Button>
-  <Button size="md" colour="red" class="mt-4">Delete</Button>
+  <Button type="button" colour="amber" class="mt-4">Edit</Button>
+  <Button type="button" colour="red" class="mt-4">Delete</Button>
 </template>
