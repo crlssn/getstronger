@@ -17,12 +17,18 @@ service WorkoutService {
   rpc Finish(FinishWorkoutRequest) returns (FinishWorkoutResponse) {
     option (auth) = true;
   }
-  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
-    option (auth) = true;
-  }
+//  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
+//    option (auth) = true;
+//  }
   rpc List(ListWorkoutsRequest) returns (ListWorkoutsResponse) {
     option (auth) = true;
   }
+//  rpc AddExercise(AddExerciseRequest) returns (AddExerciseResponse) {
+//    option (auth) = true;
+//  }
+//  rpc RemoveExercise(RemoveExerciseRequest) returns (RemoveExerciseResponse) {
+//    option (auth) = true;
+//  }
 }
 
 //message StartWorkoutRequest {
@@ -33,9 +39,10 @@ service WorkoutService {
 //}
 
 message FinishWorkoutRequest {
+  Workout workout = 1 [(buf.validate.field).required = true];
 //  string id = 1 [(buf.validate.field).string.uuid = true];
-  string name = 2 [(buf.validate.field).string.min_len = 1];
-  repeated ExerciseSets exercises = 3 [(buf.validate.field).repeated.min_items = 1];
+//  string name = 2 [(buf.validate.field).string.min_len = 1];
+//  repeated ExerciseSets exercises = 3 [(buf.validate.field).repeated.min_items = 1];
 }
 message FinishWorkoutResponse {}
 
@@ -54,10 +61,10 @@ message UpdateWorkoutResponse {
   Workout Workout = 1;
 }
 
-message DeleteWorkoutRequest {
-  string id = 1 [(buf.validate.field).string.uuid = true];
-}
-message DeleteWorkoutResponse {}
+//message DeleteWorkoutRequest {
+//  string id = 1 [(buf.validate.field).string.uuid = true];
+//}
+//message DeleteWorkoutResponse {}
 
 message ListWorkoutsRequest {
   string name = 1;
@@ -69,32 +76,32 @@ message ListWorkoutsResponse {
   bytes next_page_token = 2;
 }
 
-message AddExerciseRequest {
-  string Wwrkout_id = 1 [(buf.validate.field).string.uuid = true];
-  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
-}
-message AddExerciseResponse {}
-
-message RemoveExerciseRequest {
-  string workout_id = 1 [(buf.validate.field).string.uuid = true];
-  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
-}
-message RemoveExerciseResponse {}
-
-message Workout {
-  string id = 1;
-  string name = 2;
-  repeated Exercise exercises = 3;
-}
+//message AddExerciseRequest {
+//  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+//  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
+//}
+//message AddExerciseResponse {}
+//
+//message RemoveExerciseRequest {
+//  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+//  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
+//}
+//message RemoveExerciseResponse {}
 
 //message Workout {
-//  string id = 1 [(buf.validate.field).string.uuid = true];
-//  string name = 2 [(buf.validate.field).string.min_len = 1];
-//  repeated WorkoutExercise exercises = 3 [(buf.validate.field).repeated.min_items = 1];
+//  string id = 1;
+//  string name = 2;
+//  repeated ExerciseSets exercise_sets = 3;
 //}
 
+message Workout {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  repeated ExerciseSets exercise_sets = 3 [(buf.validate.field).repeated.min_items = 1];
+}
+
 message ExerciseSets {
-  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
+  Exercise exercise = 1 [(buf.validate.field).required = true];
   repeated Set sets = 2 [(buf.validate.field).repeated.min_items = 1];
 }
 
