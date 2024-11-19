@@ -1,1 +1,5 @@
 @import 'base.css';
+
+html, body {
+    touch-action: manipulation; /* Prevents pinch-zooming */
+}

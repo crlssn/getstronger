@@ -17,6 +17,7 @@ import UpdateExercise from '@/views/Exercises/UpdateExercise.vue'
 import ListRoutines from '@/views/Routines/ListRoutines.vue'
 import ViewRoutine from '@/views/Routines/ViewRoutine.vue'
 import CreateRoutine from '@/views/Routines/CreateRoutine.vue'
+import StartWorkout from "@/views/Workouts/StartWorkout.vue";
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,13 @@ const router: Router = createRouter({
       component: HomeView,
       beforeEnter: [auth],
       meta: { title: 'Home' },
+    },
+    {
+      path: '/workouts/start',
+      name: 'start-workout',
+      component: StartWorkout,
+      beforeEnter: [auth],
+      meta: { title: 'Start Workout' },
     },
     {
       path: '/routines',

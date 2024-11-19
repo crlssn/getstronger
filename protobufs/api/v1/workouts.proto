@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+import "api/v1/exercise.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+
+import "buf/validate/validate.proto";
+
+service WorkoutService {
+  rpc Start(StartWorkoutRequest) returns (StartWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc Finish(FinishWorkoutRequest) returns (FinishWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc List(ListWorkoutsRequest) returns (ListWorkoutsResponse) {
+    option (auth) = true;
+  }
+}
+
+message StartWorkoutRequest {
+  string routine_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message StartWorkoutResponse {
+  string workout_id = 1;
+  Exercise exercise = 2;
+}
+
+message FinishWorkoutRequest {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated.min_items = 1];
+}
+message FinishWorkoutResponse {}
+
+message GetWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetWorkoutResponse {
+  Workout Workout = 1;
+}
+
+message UpdateWorkoutRequest {
+  Workout Workout = 1 [(buf.validate.field).required = true];
+  google.protobuf.FieldMask update_mask = 2;
+}
+message UpdateWorkoutResponse {
+  Workout Workout = 1;
+}
+
+message DeleteWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeleteWorkoutResponse {}
+
+message ListWorkoutsRequest {
+  string name = 1;
+  int32 page_limit = 2 [(buf.validate.field).int32 = { gte: 1, lte: 100 }];
+  bytes page_token = 3;
+}
+message ListWorkoutsResponse {
+  repeated Workout Workouts = 1;
+  bytes next_page_token = 2;
+}
+
+message AddExerciseRequest {
+  string Workout_id = 1 [(buf.validate.field).string.uuid = true];
+  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
+}
+message AddExerciseResponse {}
+
+message RemoveExerciseRequest {
+  string Workout_id = 1 [(buf.validate.field).string.uuid = true];
+  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
+}
+message RemoveExerciseResponse {}
+
+message Workout {
+  string id = 1;
+  string name = 2;
+  repeated Exercise exercises = 3;
+}
+
+

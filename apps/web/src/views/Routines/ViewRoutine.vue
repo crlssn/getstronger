@@ -22,12 +22,7 @@ import Button from '@/components/Button.vue'
 </script>
 
 <template>
-  <button
-    type="button"
-    class="uppercase mb-8 border-b-8 border-b-indigo-800 hover:border-b-indigo-700 w-full items-center rounded-md bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-  >
-    Start
-  </button>
+  <Button type="link" :to="`/workouts/start?routine_id=${route.params.id}`" colour="primary" class="mb-8">Start</Button>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md mb-4"
