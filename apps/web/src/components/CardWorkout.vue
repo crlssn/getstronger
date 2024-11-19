@@ -45,7 +45,7 @@ const dropdownItems: Array<DropdownItem> = [
       </div>
       <Textarea placeholder="Write a comment..." :rows="2"/>
       <div class="flex justify-end">
-        <Button text="Comment"/>
+        <Button type="button" colour="primary">Comment</Button>
       </div>
     </div>
   </div>
