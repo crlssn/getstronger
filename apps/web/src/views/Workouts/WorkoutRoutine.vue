@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Button from "@/components/Button.vue";
-import {onMounted, ref} from "vue";
+import {onMounted, ref, computed, watch} from "vue";
 import {GetRoutineRequest, Routine} from "@/pb/api/v1/routines_pb";
 import {RoutineClient} from "@/clients/clients";
 import {useRoute} from "vue-router";
@@ -18,22 +18,30 @@ const fetchRoutine = async (id: string) => {
 }
 
 onMounted(async () => {
-  await fetchRoutine(route.query.routine_id as string)
+  console.log(route.params)
+  await fetchRoutine(route.params.routine_id as string)
   pageTitleStore.setPageTitle(routine.value?.name as string)
 })
+
+// const setView = computed(() => {
+//   return route.query.exercise_id && route.query.exercise_id.length > 0;
+// })
+const setView = ref(false)
+
+import WorkoutExercise from "@/views/Workouts/WorkoutExercise.vue";
 </script>
 
 <template>
   <ul role="list">
     <li v-for="exercise in routine?.exercises" :key="exercise.id">
-      <RouterLink :to="`/workouts/start?routine_id=${routine?.id}&exercise_id=${exercise.id}`">
+      <RouterLink :to="`/workouts/${routine?.id}/exercise/${exercise.id}`">
         {{ exercise.name }}
         <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true"/>
       </RouterLink>
     </li>
   </ul>
 
-  <form>
+  <form v-if="setView">
     <div class="flex items-end">
       <div class="w-full">
         <label for="weight">Weight</label>
