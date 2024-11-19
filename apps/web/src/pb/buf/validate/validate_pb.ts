@@ -17,24 +17,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type {
-  BinaryReadOptions,
-  FieldList,
-  JsonReadOptions,
-  JsonValue,
-  PartialMessage,
-  PlainMessage,
-} from '@bufbuild/protobuf'
-import {
-  Duration,
-  FieldOptions,
-  Message,
-  MessageOptions,
-  OneofOptions,
-  proto3,
-  Timestamp,
-} from '@bufbuild/protobuf'
-import { Constraint } from './expression_pb.js'
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
+import { Duration, FieldOptions, Message, MessageOptions, OneofOptions, proto3, Timestamp } from "@bufbuild/protobuf";
+import { Constraint } from "./expression_pb.js";
 
 /**
  * Specifies how FieldConstraints.ignore behaves. See the documentation for
@@ -219,14 +204,14 @@ export enum Ignore {
   DEFAULT = 2,
 }
 // Retrieve enum metadata with: proto3.getEnumType(Ignore)
-proto3.util.setEnumType(Ignore, 'buf.validate.Ignore', [
-  { no: 0, name: 'IGNORE_UNSPECIFIED' },
-  { no: 1, name: 'IGNORE_IF_UNPOPULATED' },
-  { no: 2, name: 'IGNORE_IF_DEFAULT_VALUE' },
-  { no: 3, name: 'IGNORE_ALWAYS' },
-  { no: 1, name: 'IGNORE_EMPTY' },
-  { no: 2, name: 'IGNORE_DEFAULT' },
-])
+proto3.util.setEnumType(Ignore, "buf.validate.Ignore", [
+  { no: 0, name: "IGNORE_UNSPECIFIED" },
+  { no: 1, name: "IGNORE_IF_UNPOPULATED" },
+  { no: 2, name: "IGNORE_IF_DEFAULT_VALUE" },
+  { no: 3, name: "IGNORE_ALWAYS" },
+  { no: 1, name: "IGNORE_EMPTY" },
+  { no: 2, name: "IGNORE_DEFAULT" },
+]);
 
 /**
  * WellKnownRegex contain some well-known patterns.
@@ -254,11 +239,11 @@ export enum KnownRegex {
   HTTP_HEADER_VALUE = 2,
 }
 // Retrieve enum metadata with: proto3.getEnumType(KnownRegex)
-proto3.util.setEnumType(KnownRegex, 'buf.validate.KnownRegex', [
-  { no: 0, name: 'KNOWN_REGEX_UNSPECIFIED' },
-  { no: 1, name: 'KNOWN_REGEX_HTTP_HEADER_NAME' },
-  { no: 2, name: 'KNOWN_REGEX_HTTP_HEADER_VALUE' },
-])
+proto3.util.setEnumType(KnownRegex, "buf.validate.KnownRegex", [
+  { no: 0, name: "KNOWN_REGEX_UNSPECIFIED" },
+  { no: 1, name: "KNOWN_REGEX_HTTP_HEADER_NAME" },
+  { no: 2, name: "KNOWN_REGEX_HTTP_HEADER_VALUE" },
+]);
 
 /**
  * MessageConstraints represents validation rules that are applied to the entire message.
@@ -280,7 +265,7 @@ export class MessageConstraints extends Message<MessageConstraints> {
    *
    * @generated from field: optional bool disabled = 1;
    */
-  disabled?: boolean
+  disabled?: boolean;
 
   /**
    * `cel` is a repeated field of type Constraint. Each Constraint specifies a validation rule to be applied to this message.
@@ -302,40 +287,34 @@ export class MessageConstraints extends Message<MessageConstraints> {
    *
    * @generated from field: repeated buf.validate.Constraint cel = 3;
    */
-  cel: Constraint[] = []
+  cel: Constraint[] = [];
 
   constructor(data?: PartialMessage<MessageConstraints>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.MessageConstraints'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.MessageConstraints";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'disabled', kind: 'scalar', T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 3, name: 'cel', kind: 'message', T: Constraint, repeated: true },
-  ])
+    { no: 1, name: "disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 3, name: "cel", kind: "message", T: Constraint, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MessageConstraints {
-    return new MessageConstraints().fromBinary(bytes, options)
+    return new MessageConstraints().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MessageConstraints {
-    return new MessageConstraints().fromJson(jsonValue, options)
+    return new MessageConstraints().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): MessageConstraints {
-    return new MessageConstraints().fromJsonString(jsonString, options)
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MessageConstraints {
+    return new MessageConstraints().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: MessageConstraints | PlainMessage<MessageConstraints> | undefined,
-    b: MessageConstraints | PlainMessage<MessageConstraints> | undefined,
-  ): boolean {
-    return proto3.util.equals(MessageConstraints, a, b)
+  static equals(a: MessageConstraints | PlainMessage<MessageConstraints> | undefined, b: MessageConstraints | PlainMessage<MessageConstraints> | undefined): boolean {
+    return proto3.util.equals(MessageConstraints, a, b);
   }
 }
 
@@ -367,36 +346,33 @@ export class OneofConstraints extends Message<OneofConstraints> {
    *
    * @generated from field: optional bool required = 1;
    */
-  required?: boolean
+  required?: boolean;
 
   constructor(data?: PartialMessage<OneofConstraints>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.OneofConstraints'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.OneofConstraints";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'required', kind: 'scalar', T: 8 /* ScalarType.BOOL */, opt: true },
-  ])
+    { no: 1, name: "required", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OneofConstraints {
-    return new OneofConstraints().fromBinary(bytes, options)
+    return new OneofConstraints().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OneofConstraints {
-    return new OneofConstraints().fromJson(jsonValue, options)
+    return new OneofConstraints().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OneofConstraints {
-    return new OneofConstraints().fromJsonString(jsonString, options)
+    return new OneofConstraints().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: OneofConstraints | PlainMessage<OneofConstraints> | undefined,
-    b: OneofConstraints | PlainMessage<OneofConstraints> | undefined,
-  ): boolean {
-    return proto3.util.equals(OneofConstraints, a, b)
+  static equals(a: OneofConstraints | PlainMessage<OneofConstraints> | undefined, b: OneofConstraints | PlainMessage<OneofConstraints> | undefined): boolean {
+    return proto3.util.equals(OneofConstraints, a, b);
   }
 }
 
@@ -425,7 +401,7 @@ export class FieldConstraints extends Message<FieldConstraints> {
    *
    * @generated from field: repeated buf.validate.Constraint cel = 23;
    */
-  cel: Constraint[] = []
+  cel: Constraint[] = [];
 
   /**
    * If `required` is true, the field must be populated. A populated field can be
@@ -448,7 +424,7 @@ export class FieldConstraints extends Message<FieldConstraints> {
    *
    * @generated from field: bool required = 25;
    */
-  required = false
+  required = false;
 
   /**
    * Skip validation on the field if its value matches the specified criteria.
@@ -467,166 +443,144 @@ export class FieldConstraints extends Message<FieldConstraints> {
    *
    * @generated from field: buf.validate.Ignore ignore = 27;
    */
-  ignore = Ignore.UNSPECIFIED
+  ignore = Ignore.UNSPECIFIED;
 
   /**
    * @generated from oneof buf.validate.FieldConstraints.type
    */
-  type:
-    | {
-        /**
-         * Scalar Field Types
-         *
-         * @generated from field: buf.validate.FloatRules float = 1;
-         */
-        value: FloatRules
-        case: 'float'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.DoubleRules double = 2;
-         */
-        value: DoubleRules
-        case: 'double'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.Int32Rules int32 = 3;
-         */
-        value: Int32Rules
-        case: 'int32'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.Int64Rules int64 = 4;
-         */
-        value: Int64Rules
-        case: 'int64'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.UInt32Rules uint32 = 5;
-         */
-        value: UInt32Rules
-        case: 'uint32'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.UInt64Rules uint64 = 6;
-         */
-        value: UInt64Rules
-        case: 'uint64'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.SInt32Rules sint32 = 7;
-         */
-        value: SInt32Rules
-        case: 'sint32'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.SInt64Rules sint64 = 8;
-         */
-        value: SInt64Rules
-        case: 'sint64'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.Fixed32Rules fixed32 = 9;
-         */
-        value: Fixed32Rules
-        case: 'fixed32'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.Fixed64Rules fixed64 = 10;
-         */
-        value: Fixed64Rules
-        case: 'fixed64'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.SFixed32Rules sfixed32 = 11;
-         */
-        value: SFixed32Rules
-        case: 'sfixed32'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.SFixed64Rules sfixed64 = 12;
-         */
-        value: SFixed64Rules
-        case: 'sfixed64'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.BoolRules bool = 13;
-         */
-        value: BoolRules
-        case: 'bool'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.StringRules string = 14;
-         */
-        value: StringRules
-        case: 'string'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.BytesRules bytes = 15;
-         */
-        value: BytesRules
-        case: 'bytes'
-      }
-    | {
-        /**
-         * Complex Field Types
-         *
-         * @generated from field: buf.validate.EnumRules enum = 16;
-         */
-        value: EnumRules
-        case: 'enum'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.RepeatedRules repeated = 18;
-         */
-        value: RepeatedRules
-        case: 'repeated'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.MapRules map = 19;
-         */
-        value: MapRules
-        case: 'map'
-      }
-    | {
-        /**
-         * Well-Known Field Types
-         *
-         * @generated from field: buf.validate.AnyRules any = 20;
-         */
-        value: AnyRules
-        case: 'any'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.DurationRules duration = 21;
-         */
-        value: DurationRules
-        case: 'duration'
-      }
-    | {
-        /**
-         * @generated from field: buf.validate.TimestampRules timestamp = 22;
-         */
-        value: TimestampRules
-        case: 'timestamp'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  type: {
+    /**
+     * Scalar Field Types
+     *
+     * @generated from field: buf.validate.FloatRules float = 1;
+     */
+    value: FloatRules;
+    case: "float";
+  } | {
+    /**
+     * @generated from field: buf.validate.DoubleRules double = 2;
+     */
+    value: DoubleRules;
+    case: "double";
+  } | {
+    /**
+     * @generated from field: buf.validate.Int32Rules int32 = 3;
+     */
+    value: Int32Rules;
+    case: "int32";
+  } | {
+    /**
+     * @generated from field: buf.validate.Int64Rules int64 = 4;
+     */
+    value: Int64Rules;
+    case: "int64";
+  } | {
+    /**
+     * @generated from field: buf.validate.UInt32Rules uint32 = 5;
+     */
+    value: UInt32Rules;
+    case: "uint32";
+  } | {
+    /**
+     * @generated from field: buf.validate.UInt64Rules uint64 = 6;
+     */
+    value: UInt64Rules;
+    case: "uint64";
+  } | {
+    /**
+     * @generated from field: buf.validate.SInt32Rules sint32 = 7;
+     */
+    value: SInt32Rules;
+    case: "sint32";
+  } | {
+    /**
+     * @generated from field: buf.validate.SInt64Rules sint64 = 8;
+     */
+    value: SInt64Rules;
+    case: "sint64";
+  } | {
+    /**
+     * @generated from field: buf.validate.Fixed32Rules fixed32 = 9;
+     */
+    value: Fixed32Rules;
+    case: "fixed32";
+  } | {
+    /**
+     * @generated from field: buf.validate.Fixed64Rules fixed64 = 10;
+     */
+    value: Fixed64Rules;
+    case: "fixed64";
+  } | {
+    /**
+     * @generated from field: buf.validate.SFixed32Rules sfixed32 = 11;
+     */
+    value: SFixed32Rules;
+    case: "sfixed32";
+  } | {
+    /**
+     * @generated from field: buf.validate.SFixed64Rules sfixed64 = 12;
+     */
+    value: SFixed64Rules;
+    case: "sfixed64";
+  } | {
+    /**
+     * @generated from field: buf.validate.BoolRules bool = 13;
+     */
+    value: BoolRules;
+    case: "bool";
+  } | {
+    /**
+     * @generated from field: buf.validate.StringRules string = 14;
+     */
+    value: StringRules;
+    case: "string";
+  } | {
+    /**
+     * @generated from field: buf.validate.BytesRules bytes = 15;
+     */
+    value: BytesRules;
+    case: "bytes";
+  } | {
+    /**
+     * Complex Field Types
+     *
+     * @generated from field: buf.validate.EnumRules enum = 16;
+     */
+    value: EnumRules;
+    case: "enum";
+  } | {
+    /**
+     * @generated from field: buf.validate.RepeatedRules repeated = 18;
+     */
+    value: RepeatedRules;
+    case: "repeated";
+  } | {
+    /**
+     * @generated from field: buf.validate.MapRules map = 19;
+     */
+    value: MapRules;
+    case: "map";
+  } | {
+    /**
+     * Well-Known Field Types
+     *
+     * @generated from field: buf.validate.AnyRules any = 20;
+     */
+    value: AnyRules;
+    case: "any";
+  } | {
+    /**
+     * @generated from field: buf.validate.DurationRules duration = 21;
+     */
+    value: DurationRules;
+    case: "duration";
+  } | {
+    /**
+     * @generated from field: buf.validate.TimestampRules timestamp = 22;
+     */
+    value: TimestampRules;
+    case: "timestamp";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * DEPRECATED: use ignore=IGNORE_ALWAYS instead. TODO: remove this field pre-v1.
@@ -634,7 +588,7 @@ export class FieldConstraints extends Message<FieldConstraints> {
    * @generated from field: bool skipped = 24 [deprecated = true];
    * @deprecated
    */
-  skipped = false
+  skipped = false;
 
   /**
    * DEPRECATED: use ignore=IGNORE_IF_UNPOPULATED instead. TODO: remove this field pre-v1.
@@ -642,61 +596,58 @@ export class FieldConstraints extends Message<FieldConstraints> {
    * @generated from field: bool ignore_empty = 26 [deprecated = true];
    * @deprecated
    */
-  ignoreEmpty = false
+  ignoreEmpty = false;
 
   constructor(data?: PartialMessage<FieldConstraints>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.FieldConstraints'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.FieldConstraints";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 23, name: 'cel', kind: 'message', T: Constraint, repeated: true },
-    { no: 25, name: 'required', kind: 'scalar', T: 8 /* ScalarType.BOOL */ },
-    { no: 27, name: 'ignore', kind: 'enum', T: proto3.getEnumType(Ignore) },
-    { no: 1, name: 'float', kind: 'message', T: FloatRules, oneof: 'type' },
-    { no: 2, name: 'double', kind: 'message', T: DoubleRules, oneof: 'type' },
-    { no: 3, name: 'int32', kind: 'message', T: Int32Rules, oneof: 'type' },
-    { no: 4, name: 'int64', kind: 'message', T: Int64Rules, oneof: 'type' },
-    { no: 5, name: 'uint32', kind: 'message', T: UInt32Rules, oneof: 'type' },
-    { no: 6, name: 'uint64', kind: 'message', T: UInt64Rules, oneof: 'type' },
-    { no: 7, name: 'sint32', kind: 'message', T: SInt32Rules, oneof: 'type' },
-    { no: 8, name: 'sint64', kind: 'message', T: SInt64Rules, oneof: 'type' },
-    { no: 9, name: 'fixed32', kind: 'message', T: Fixed32Rules, oneof: 'type' },
-    { no: 10, name: 'fixed64', kind: 'message', T: Fixed64Rules, oneof: 'type' },
-    { no: 11, name: 'sfixed32', kind: 'message', T: SFixed32Rules, oneof: 'type' },
-    { no: 12, name: 'sfixed64', kind: 'message', T: SFixed64Rules, oneof: 'type' },
-    { no: 13, name: 'bool', kind: 'message', T: BoolRules, oneof: 'type' },
-    { no: 14, name: 'string', kind: 'message', T: StringRules, oneof: 'type' },
-    { no: 15, name: 'bytes', kind: 'message', T: BytesRules, oneof: 'type' },
-    { no: 16, name: 'enum', kind: 'message', T: EnumRules, oneof: 'type' },
-    { no: 18, name: 'repeated', kind: 'message', T: RepeatedRules, oneof: 'type' },
-    { no: 19, name: 'map', kind: 'message', T: MapRules, oneof: 'type' },
-    { no: 20, name: 'any', kind: 'message', T: AnyRules, oneof: 'type' },
-    { no: 21, name: 'duration', kind: 'message', T: DurationRules, oneof: 'type' },
-    { no: 22, name: 'timestamp', kind: 'message', T: TimestampRules, oneof: 'type' },
-    { no: 24, name: 'skipped', kind: 'scalar', T: 8 /* ScalarType.BOOL */ },
-    { no: 26, name: 'ignore_empty', kind: 'scalar', T: 8 /* ScalarType.BOOL */ },
-  ])
+    { no: 23, name: "cel", kind: "message", T: Constraint, repeated: true },
+    { no: 25, name: "required", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 27, name: "ignore", kind: "enum", T: proto3.getEnumType(Ignore) },
+    { no: 1, name: "float", kind: "message", T: FloatRules, oneof: "type" },
+    { no: 2, name: "double", kind: "message", T: DoubleRules, oneof: "type" },
+    { no: 3, name: "int32", kind: "message", T: Int32Rules, oneof: "type" },
+    { no: 4, name: "int64", kind: "message", T: Int64Rules, oneof: "type" },
+    { no: 5, name: "uint32", kind: "message", T: UInt32Rules, oneof: "type" },
+    { no: 6, name: "uint64", kind: "message", T: UInt64Rules, oneof: "type" },
+    { no: 7, name: "sint32", kind: "message", T: SInt32Rules, oneof: "type" },
+    { no: 8, name: "sint64", kind: "message", T: SInt64Rules, oneof: "type" },
+    { no: 9, name: "fixed32", kind: "message", T: Fixed32Rules, oneof: "type" },
+    { no: 10, name: "fixed64", kind: "message", T: Fixed64Rules, oneof: "type" },
+    { no: 11, name: "sfixed32", kind: "message", T: SFixed32Rules, oneof: "type" },
+    { no: 12, name: "sfixed64", kind: "message", T: SFixed64Rules, oneof: "type" },
+    { no: 13, name: "bool", kind: "message", T: BoolRules, oneof: "type" },
+    { no: 14, name: "string", kind: "message", T: StringRules, oneof: "type" },
+    { no: 15, name: "bytes", kind: "message", T: BytesRules, oneof: "type" },
+    { no: 16, name: "enum", kind: "message", T: EnumRules, oneof: "type" },
+    { no: 18, name: "repeated", kind: "message", T: RepeatedRules, oneof: "type" },
+    { no: 19, name: "map", kind: "message", T: MapRules, oneof: "type" },
+    { no: 20, name: "any", kind: "message", T: AnyRules, oneof: "type" },
+    { no: 21, name: "duration", kind: "message", T: DurationRules, oneof: "type" },
+    { no: 22, name: "timestamp", kind: "message", T: TimestampRules, oneof: "type" },
+    { no: 24, name: "skipped", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 26, name: "ignore_empty", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FieldConstraints {
-    return new FieldConstraints().fromBinary(bytes, options)
+    return new FieldConstraints().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FieldConstraints {
-    return new FieldConstraints().fromJson(jsonValue, options)
+    return new FieldConstraints().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FieldConstraints {
-    return new FieldConstraints().fromJsonString(jsonString, options)
+    return new FieldConstraints().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: FieldConstraints | PlainMessage<FieldConstraints> | undefined,
-    b: FieldConstraints | PlainMessage<FieldConstraints> | undefined,
-  ): boolean {
-    return proto3.util.equals(FieldConstraints, a, b)
+  static equals(a: FieldConstraints | PlainMessage<FieldConstraints> | undefined, b: FieldConstraints | PlainMessage<FieldConstraints> | undefined): boolean {
+    return proto3.util.equals(FieldConstraints, a, b);
   }
 }
 
@@ -720,107 +671,101 @@ export class FloatRules extends Message<FloatRules> {
    *
    * @generated from field: optional float const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * @generated from oneof buf.validate.FloatRules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFloat {
-         *   // value must be less than 10.0
-         *   float value = 1 [(buf.validate.field).float.lt = 10.0];
-         * }
-         * ```
-         *
-         * @generated from field: float lt = 2;
-         */
-        value: number
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyFloat {
-         *   // value must be less than or equal to 10.0
-         *   float value = 1 [(buf.validate.field).float.lte = 10.0];
-         * }
-         * ```
-         *
-         * @generated from field: float lte = 3;
-         */
-        value: number
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFloat {
+     *   // value must be less than 10.0
+     *   float value = 1 [(buf.validate.field).float.lt = 10.0];
+     * }
+     * ```
+     *
+     * @generated from field: float lt = 2;
+     */
+    value: number;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyFloat {
+     *   // value must be less than or equal to 10.0
+     *   float value = 1 [(buf.validate.field).float.lte = 10.0];
+     * }
+     * ```
+     *
+     * @generated from field: float lte = 3;
+     */
+    value: number;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.FloatRules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFloat {
-         *   // value must be greater than 5.0 [float.gt]
-         *   float value = 1 [(buf.validate.field).float.gt = 5.0];
-         *
-         *   // value must be greater than 5 and less than 10.0 [float.gt_lt]
-         *   float other_value = 2 [(buf.validate.field).float = { gt: 5.0, lt: 10.0 }];
-         *
-         *   // value must be greater than 10 or less than 5.0 [float.gt_lt_exclusive]
-         *   float another_value = 3 [(buf.validate.field).float = { gt: 10.0, lt: 5.0 }];
-         * }
-         * ```
-         *
-         * @generated from field: float gt = 4;
-         */
-        value: number
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFloat {
-         *   // value must be greater than or equal to 5.0 [float.gte]
-         *   float value = 1 [(buf.validate.field).float.gte = 5.0];
-         *
-         *   // value must be greater than or equal to 5.0 and less than 10.0 [float.gte_lt]
-         *   float other_value = 2 [(buf.validate.field).float = { gte: 5.0, lt: 10.0 }];
-         *
-         *   // value must be greater than or equal to 10.0 or less than 5.0 [float.gte_lt_exclusive]
-         *   float another_value = 3 [(buf.validate.field).float = { gte: 10.0, lt: 5.0 }];
-         * }
-         * ```
-         *
-         * @generated from field: float gte = 5;
-         */
-        value: number
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFloat {
+     *   // value must be greater than 5.0 [float.gt]
+     *   float value = 1 [(buf.validate.field).float.gt = 5.0];
+     *
+     *   // value must be greater than 5 and less than 10.0 [float.gt_lt]
+     *   float other_value = 2 [(buf.validate.field).float = { gt: 5.0, lt: 10.0 }];
+     *
+     *   // value must be greater than 10 or less than 5.0 [float.gt_lt_exclusive]
+     *   float another_value = 3 [(buf.validate.field).float = { gt: 10.0, lt: 5.0 }];
+     * }
+     * ```
+     *
+     * @generated from field: float gt = 4;
+     */
+    value: number;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFloat {
+     *   // value must be greater than or equal to 5.0 [float.gte]
+     *   float value = 1 [(buf.validate.field).float.gte = 5.0];
+     *
+     *   // value must be greater than or equal to 5.0 and less than 10.0 [float.gte_lt]
+     *   float other_value = 2 [(buf.validate.field).float = { gte: 5.0, lt: 10.0 }];
+     *
+     *   // value must be greater than or equal to 10.0 or less than 5.0 [float.gte_lt_exclusive]
+     *   float another_value = 3 [(buf.validate.field).float = { gte: 10.0, lt: 5.0 }];
+     * }
+     * ```
+     *
+     * @generated from field: float gte = 5;
+     */
+    value: number;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -836,7 +781,7 @@ export class FloatRules extends Message<FloatRules> {
    *
    * @generated from field: repeated float in = 6;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `in` requires the field value to not be equal to any of the specified
@@ -852,7 +797,7 @@ export class FloatRules extends Message<FloatRules> {
    *
    * @generated from field: repeated float not_in = 7;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   /**
    * `finite` requires the field value to be finite. If the field value is
@@ -860,43 +805,40 @@ export class FloatRules extends Message<FloatRules> {
    *
    * @generated from field: bool finite = 8;
    */
-  finite = false
+  finite = false;
 
   constructor(data?: PartialMessage<FloatRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.FloatRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.FloatRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 2 /* ScalarType.FLOAT */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 2 /* ScalarType.FLOAT */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 2 /* ScalarType.FLOAT */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 2 /* ScalarType.FLOAT */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 2 /* ScalarType.FLOAT */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 2 /* ScalarType.FLOAT */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 2 /* ScalarType.FLOAT */, repeated: true },
-    { no: 8, name: 'finite', kind: 'scalar', T: 8 /* ScalarType.BOOL */ },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 2 /* ScalarType.FLOAT */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 2 /* ScalarType.FLOAT */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 2 /* ScalarType.FLOAT */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 2 /* ScalarType.FLOAT */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 2 /* ScalarType.FLOAT */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 2 /* ScalarType.FLOAT */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 2 /* ScalarType.FLOAT */, repeated: true },
+    { no: 8, name: "finite", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FloatRules {
-    return new FloatRules().fromBinary(bytes, options)
+    return new FloatRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FloatRules {
-    return new FloatRules().fromJson(jsonValue, options)
+    return new FloatRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FloatRules {
-    return new FloatRules().fromJsonString(jsonString, options)
+    return new FloatRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: FloatRules | PlainMessage<FloatRules> | undefined,
-    b: FloatRules | PlainMessage<FloatRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(FloatRules, a, b)
+  static equals(a: FloatRules | PlainMessage<FloatRules> | undefined, b: FloatRules | PlainMessage<FloatRules> | undefined): boolean {
+    return proto3.util.equals(FloatRules, a, b);
   }
 }
 
@@ -920,107 +862,101 @@ export class DoubleRules extends Message<DoubleRules> {
    *
    * @generated from field: optional double const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * @generated from oneof buf.validate.DoubleRules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyDouble {
-         *   // value must be less than 10.0
-         *   double value = 1 [(buf.validate.field).double.lt = 10.0];
-         * }
-         * ```
-         *
-         * @generated from field: double lt = 2;
-         */
-        value: number
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified value
-         * (field <= value). If the field value is greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyDouble {
-         *   // value must be less than or equal to 10.0
-         *   double value = 1 [(buf.validate.field).double.lte = 10.0];
-         * }
-         * ```
-         *
-         * @generated from field: double lte = 3;
-         */
-        value: number
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyDouble {
+     *   // value must be less than 10.0
+     *   double value = 1 [(buf.validate.field).double.lt = 10.0];
+     * }
+     * ```
+     *
+     * @generated from field: double lt = 2;
+     */
+    value: number;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified value
+     * (field <= value). If the field value is greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyDouble {
+     *   // value must be less than or equal to 10.0
+     *   double value = 1 [(buf.validate.field).double.lte = 10.0];
+     * }
+     * ```
+     *
+     * @generated from field: double lte = 3;
+     */
+    value: number;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.DoubleRules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or `lte`,
-         * the range is reversed, and the field value must be outside the specified
-         * range. If the field value doesn't meet the required conditions, an error
-         * message is generated.
-         *
-         * ```proto
-         * message MyDouble {
-         *   // value must be greater than 5.0 [double.gt]
-         *   double value = 1 [(buf.validate.field).double.gt = 5.0];
-         *
-         *   // value must be greater than 5 and less than 10.0 [double.gt_lt]
-         *   double other_value = 2 [(buf.validate.field).double = { gt: 5.0, lt: 10.0 }];
-         *
-         *   // value must be greater than 10 or less than 5.0 [double.gt_lt_exclusive]
-         *   double another_value = 3 [(buf.validate.field).double = { gt: 10.0, lt: 5.0 }];
-         * }
-         * ```
-         *
-         * @generated from field: double gt = 4;
-         */
-        value: number
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyDouble {
-         *   // value must be greater than or equal to 5.0 [double.gte]
-         *   double value = 1 [(buf.validate.field).double.gte = 5.0];
-         *
-         *   // value must be greater than or equal to 5.0 and less than 10.0 [double.gte_lt]
-         *   double other_value = 2 [(buf.validate.field).double = { gte: 5.0, lt: 10.0 }];
-         *
-         *   // value must be greater than or equal to 10.0 or less than 5.0 [double.gte_lt_exclusive]
-         *   double another_value = 3 [(buf.validate.field).double = { gte: 10.0, lt: 5.0 }];
-         * }
-         * ```
-         *
-         * @generated from field: double gte = 5;
-         */
-        value: number
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or `lte`,
+     * the range is reversed, and the field value must be outside the specified
+     * range. If the field value doesn't meet the required conditions, an error
+     * message is generated.
+     *
+     * ```proto
+     * message MyDouble {
+     *   // value must be greater than 5.0 [double.gt]
+     *   double value = 1 [(buf.validate.field).double.gt = 5.0];
+     *
+     *   // value must be greater than 5 and less than 10.0 [double.gt_lt]
+     *   double other_value = 2 [(buf.validate.field).double = { gt: 5.0, lt: 10.0 }];
+     *
+     *   // value must be greater than 10 or less than 5.0 [double.gt_lt_exclusive]
+     *   double another_value = 3 [(buf.validate.field).double = { gt: 10.0, lt: 5.0 }];
+     * }
+     * ```
+     *
+     * @generated from field: double gt = 4;
+     */
+    value: number;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyDouble {
+     *   // value must be greater than or equal to 5.0 [double.gte]
+     *   double value = 1 [(buf.validate.field).double.gte = 5.0];
+     *
+     *   // value must be greater than or equal to 5.0 and less than 10.0 [double.gte_lt]
+     *   double other_value = 2 [(buf.validate.field).double = { gte: 5.0, lt: 10.0 }];
+     *
+     *   // value must be greater than or equal to 10.0 or less than 5.0 [double.gte_lt_exclusive]
+     *   double another_value = 3 [(buf.validate.field).double = { gte: 10.0, lt: 5.0 }];
+     * }
+     * ```
+     *
+     * @generated from field: double gte = 5;
+     */
+    value: number;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -1036,7 +972,7 @@ export class DoubleRules extends Message<DoubleRules> {
    *
    * @generated from field: repeated double in = 6;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -1052,7 +988,7 @@ export class DoubleRules extends Message<DoubleRules> {
    *
    * @generated from field: repeated double not_in = 7;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   /**
    * `finite` requires the field value to be finite. If the field value is
@@ -1060,43 +996,40 @@ export class DoubleRules extends Message<DoubleRules> {
    *
    * @generated from field: bool finite = 8;
    */
-  finite = false
+  finite = false;
 
   constructor(data?: PartialMessage<DoubleRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.DoubleRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.DoubleRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 1 /* ScalarType.DOUBLE */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 1 /* ScalarType.DOUBLE */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 1 /* ScalarType.DOUBLE */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 1 /* ScalarType.DOUBLE */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 1 /* ScalarType.DOUBLE */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 1 /* ScalarType.DOUBLE */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 1 /* ScalarType.DOUBLE */, repeated: true },
-    { no: 8, name: 'finite', kind: 'scalar', T: 8 /* ScalarType.BOOL */ },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, repeated: true },
+    { no: 8, name: "finite", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DoubleRules {
-    return new DoubleRules().fromBinary(bytes, options)
+    return new DoubleRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DoubleRules {
-    return new DoubleRules().fromJson(jsonValue, options)
+    return new DoubleRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DoubleRules {
-    return new DoubleRules().fromJsonString(jsonString, options)
+    return new DoubleRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: DoubleRules | PlainMessage<DoubleRules> | undefined,
-    b: DoubleRules | PlainMessage<DoubleRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(DoubleRules, a, b)
+  static equals(a: DoubleRules | PlainMessage<DoubleRules> | undefined, b: DoubleRules | PlainMessage<DoubleRules> | undefined): boolean {
+    return proto3.util.equals(DoubleRules, a, b);
   }
 }
 
@@ -1120,107 +1053,101 @@ export class Int32Rules extends Message<Int32Rules> {
    *
    * @generated from field: optional int32 const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * @generated from oneof buf.validate.Int32Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field
-         * < value). If the field value is equal to or greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyInt32 {
-         *   // value must be less than 10
-         *   int32 value = 1 [(buf.validate.field).int32.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: int32 lt = 2;
-         */
-        value: number
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyInt32 {
-         *   // value must be less than or equal to 10
-         *   int32 value = 1 [(buf.validate.field).int32.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: int32 lte = 3;
-         */
-        value: number
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field
+     * < value). If the field value is equal to or greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyInt32 {
+     *   // value must be less than 10
+     *   int32 value = 1 [(buf.validate.field).int32.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: int32 lt = 2;
+     */
+    value: number;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyInt32 {
+     *   // value must be less than or equal to 10
+     *   int32 value = 1 [(buf.validate.field).int32.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: int32 lte = 3;
+     */
+    value: number;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.Int32Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyInt32 {
-         *   // value must be greater than 5 [int32.gt]
-         *   int32 value = 1 [(buf.validate.field).int32.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [int32.gt_lt]
-         *   int32 other_value = 2 [(buf.validate.field).int32 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [int32.gt_lt_exclusive]
-         *   int32 another_value = 3 [(buf.validate.field).int32 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: int32 gt = 4;
-         */
-        value: number
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified value
-         * (exclusive). If the value of `gte` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyInt32 {
-         *   // value must be greater than or equal to 5 [int32.gte]
-         *   int32 value = 1 [(buf.validate.field).int32.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [int32.gte_lt]
-         *   int32 other_value = 2 [(buf.validate.field).int32 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [int32.gte_lt_exclusive]
-         *   int32 another_value = 3 [(buf.validate.field).int32 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: int32 gte = 5;
-         */
-        value: number
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyInt32 {
+     *   // value must be greater than 5 [int32.gt]
+     *   int32 value = 1 [(buf.validate.field).int32.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [int32.gt_lt]
+     *   int32 other_value = 2 [(buf.validate.field).int32 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [int32.gt_lt_exclusive]
+     *   int32 another_value = 3 [(buf.validate.field).int32 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: int32 gt = 4;
+     */
+    value: number;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified value
+     * (exclusive). If the value of `gte` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyInt32 {
+     *   // value must be greater than or equal to 5 [int32.gte]
+     *   int32 value = 1 [(buf.validate.field).int32.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [int32.gte_lt]
+     *   int32 other_value = 2 [(buf.validate.field).int32 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [int32.gte_lt_exclusive]
+     *   int32 another_value = 3 [(buf.validate.field).int32 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: int32 gte = 5;
+     */
+    value: number;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -1236,7 +1163,7 @@ export class Int32Rules extends Message<Int32Rules> {
    *
    * @generated from field: repeated int32 in = 6;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -1252,42 +1179,39 @@ export class Int32Rules extends Message<Int32Rules> {
    *
    * @generated from field: repeated int32 not_in = 7;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   constructor(data?: PartialMessage<Int32Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.Int32Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.Int32Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 5 /* ScalarType.INT32 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 5 /* ScalarType.INT32 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 5 /* ScalarType.INT32 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 5 /* ScalarType.INT32 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 5 /* ScalarType.INT32 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 5 /* ScalarType.INT32 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 5 /* ScalarType.INT32 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 5 /* ScalarType.INT32 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 5 /* ScalarType.INT32 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 5 /* ScalarType.INT32 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 5 /* ScalarType.INT32 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 5 /* ScalarType.INT32 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 5 /* ScalarType.INT32 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Int32Rules {
-    return new Int32Rules().fromBinary(bytes, options)
+    return new Int32Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Int32Rules {
-    return new Int32Rules().fromJson(jsonValue, options)
+    return new Int32Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Int32Rules {
-    return new Int32Rules().fromJsonString(jsonString, options)
+    return new Int32Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: Int32Rules | PlainMessage<Int32Rules> | undefined,
-    b: Int32Rules | PlainMessage<Int32Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(Int32Rules, a, b)
+  static equals(a: Int32Rules | PlainMessage<Int32Rules> | undefined, b: Int32Rules | PlainMessage<Int32Rules> | undefined): boolean {
+    return proto3.util.equals(Int32Rules, a, b);
   }
 }
 
@@ -1311,107 +1235,101 @@ export class Int64Rules extends Message<Int64Rules> {
    *
    * @generated from field: optional int64 const = 1;
    */
-  const?: bigint
+  const?: bigint;
 
   /**
    * @generated from oneof buf.validate.Int64Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyInt64 {
-         *   // value must be less than 10
-         *   int64 value = 1 [(buf.validate.field).int64.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: int64 lt = 2;
-         */
-        value: bigint
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyInt64 {
-         *   // value must be less than or equal to 10
-         *   int64 value = 1 [(buf.validate.field).int64.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: int64 lte = 3;
-         */
-        value: bigint
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyInt64 {
+     *   // value must be less than 10
+     *   int64 value = 1 [(buf.validate.field).int64.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: int64 lt = 2;
+     */
+    value: bigint;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyInt64 {
+     *   // value must be less than or equal to 10
+     *   int64 value = 1 [(buf.validate.field).int64.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: int64 lte = 3;
+     */
+    value: bigint;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.Int64Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyInt64 {
-         *   // value must be greater than 5 [int64.gt]
-         *   int64 value = 1 [(buf.validate.field).int64.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [int64.gt_lt]
-         *   int64 other_value = 2 [(buf.validate.field).int64 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [int64.gt_lt_exclusive]
-         *   int64 another_value = 3 [(buf.validate.field).int64 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: int64 gt = 4;
-         */
-        value: bigint
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyInt64 {
-         *   // value must be greater than or equal to 5 [int64.gte]
-         *   int64 value = 1 [(buf.validate.field).int64.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [int64.gte_lt]
-         *   int64 other_value = 2 [(buf.validate.field).int64 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [int64.gte_lt_exclusive]
-         *   int64 another_value = 3 [(buf.validate.field).int64 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: int64 gte = 5;
-         */
-        value: bigint
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyInt64 {
+     *   // value must be greater than 5 [int64.gt]
+     *   int64 value = 1 [(buf.validate.field).int64.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [int64.gt_lt]
+     *   int64 other_value = 2 [(buf.validate.field).int64 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [int64.gt_lt_exclusive]
+     *   int64 another_value = 3 [(buf.validate.field).int64 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: int64 gt = 4;
+     */
+    value: bigint;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyInt64 {
+     *   // value must be greater than or equal to 5 [int64.gte]
+     *   int64 value = 1 [(buf.validate.field).int64.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [int64.gte_lt]
+     *   int64 other_value = 2 [(buf.validate.field).int64 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [int64.gte_lt_exclusive]
+     *   int64 another_value = 3 [(buf.validate.field).int64 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: int64 gte = 5;
+     */
+    value: bigint;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -1427,7 +1345,7 @@ export class Int64Rules extends Message<Int64Rules> {
    *
    * @generated from field: repeated int64 in = 6;
    */
-  in: bigint[] = []
+  in: bigint[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -1443,42 +1361,39 @@ export class Int64Rules extends Message<Int64Rules> {
    *
    * @generated from field: repeated int64 not_in = 7;
    */
-  notIn: bigint[] = []
+  notIn: bigint[] = [];
 
   constructor(data?: PartialMessage<Int64Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.Int64Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.Int64Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 3 /* ScalarType.INT64 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 3 /* ScalarType.INT64 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 3 /* ScalarType.INT64 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 3 /* ScalarType.INT64 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 3 /* ScalarType.INT64 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 3 /* ScalarType.INT64 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 3 /* ScalarType.INT64 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 3 /* ScalarType.INT64 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 3 /* ScalarType.INT64 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 3 /* ScalarType.INT64 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 3 /* ScalarType.INT64 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 3 /* ScalarType.INT64 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 3 /* ScalarType.INT64 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 3 /* ScalarType.INT64 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Int64Rules {
-    return new Int64Rules().fromBinary(bytes, options)
+    return new Int64Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Int64Rules {
-    return new Int64Rules().fromJson(jsonValue, options)
+    return new Int64Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Int64Rules {
-    return new Int64Rules().fromJsonString(jsonString, options)
+    return new Int64Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: Int64Rules | PlainMessage<Int64Rules> | undefined,
-    b: Int64Rules | PlainMessage<Int64Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(Int64Rules, a, b)
+  static equals(a: Int64Rules | PlainMessage<Int64Rules> | undefined, b: Int64Rules | PlainMessage<Int64Rules> | undefined): boolean {
+    return proto3.util.equals(Int64Rules, a, b);
   }
 }
 
@@ -1502,107 +1417,101 @@ export class UInt32Rules extends Message<UInt32Rules> {
    *
    * @generated from field: optional uint32 const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * @generated from oneof buf.validate.UInt32Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyUInt32 {
-         *   // value must be less than 10
-         *   uint32 value = 1 [(buf.validate.field).uint32.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: uint32 lt = 2;
-         */
-        value: number
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyUInt32 {
-         *   // value must be less than or equal to 10
-         *   uint32 value = 1 [(buf.validate.field).uint32.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: uint32 lte = 3;
-         */
-        value: number
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyUInt32 {
+     *   // value must be less than 10
+     *   uint32 value = 1 [(buf.validate.field).uint32.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: uint32 lt = 2;
+     */
+    value: number;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyUInt32 {
+     *   // value must be less than or equal to 10
+     *   uint32 value = 1 [(buf.validate.field).uint32.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: uint32 lte = 3;
+     */
+    value: number;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.UInt32Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyUInt32 {
-         *   // value must be greater than 5 [uint32.gt]
-         *   uint32 value = 1 [(buf.validate.field).uint32.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [uint32.gt_lt]
-         *   uint32 other_value = 2 [(buf.validate.field).uint32 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [uint32.gt_lt_exclusive]
-         *   uint32 another_value = 3 [(buf.validate.field).uint32 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: uint32 gt = 4;
-         */
-        value: number
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyUInt32 {
-         *   // value must be greater than or equal to 5 [uint32.gte]
-         *   uint32 value = 1 [(buf.validate.field).uint32.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [uint32.gte_lt]
-         *   uint32 other_value = 2 [(buf.validate.field).uint32 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [uint32.gte_lt_exclusive]
-         *   uint32 another_value = 3 [(buf.validate.field).uint32 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: uint32 gte = 5;
-         */
-        value: number
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyUInt32 {
+     *   // value must be greater than 5 [uint32.gt]
+     *   uint32 value = 1 [(buf.validate.field).uint32.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [uint32.gt_lt]
+     *   uint32 other_value = 2 [(buf.validate.field).uint32 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [uint32.gt_lt_exclusive]
+     *   uint32 another_value = 3 [(buf.validate.field).uint32 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: uint32 gt = 4;
+     */
+    value: number;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyUInt32 {
+     *   // value must be greater than or equal to 5 [uint32.gte]
+     *   uint32 value = 1 [(buf.validate.field).uint32.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [uint32.gte_lt]
+     *   uint32 other_value = 2 [(buf.validate.field).uint32 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [uint32.gte_lt_exclusive]
+     *   uint32 another_value = 3 [(buf.validate.field).uint32 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: uint32 gte = 5;
+     */
+    value: number;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -1618,7 +1527,7 @@ export class UInt32Rules extends Message<UInt32Rules> {
    *
    * @generated from field: repeated uint32 in = 6;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -1634,42 +1543,39 @@ export class UInt32Rules extends Message<UInt32Rules> {
    *
    * @generated from field: repeated uint32 not_in = 7;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   constructor(data?: PartialMessage<UInt32Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.UInt32Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.UInt32Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 13 /* ScalarType.UINT32 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 13 /* ScalarType.UINT32 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 13 /* ScalarType.UINT32 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 13 /* ScalarType.UINT32 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 13 /* ScalarType.UINT32 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 13 /* ScalarType.UINT32 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 13 /* ScalarType.UINT32 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 13 /* ScalarType.UINT32 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 13 /* ScalarType.UINT32 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 13 /* ScalarType.UINT32 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 13 /* ScalarType.UINT32 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 13 /* ScalarType.UINT32 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UInt32Rules {
-    return new UInt32Rules().fromBinary(bytes, options)
+    return new UInt32Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UInt32Rules {
-    return new UInt32Rules().fromJson(jsonValue, options)
+    return new UInt32Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UInt32Rules {
-    return new UInt32Rules().fromJsonString(jsonString, options)
+    return new UInt32Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: UInt32Rules | PlainMessage<UInt32Rules> | undefined,
-    b: UInt32Rules | PlainMessage<UInt32Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(UInt32Rules, a, b)
+  static equals(a: UInt32Rules | PlainMessage<UInt32Rules> | undefined, b: UInt32Rules | PlainMessage<UInt32Rules> | undefined): boolean {
+    return proto3.util.equals(UInt32Rules, a, b);
   }
 }
 
@@ -1693,107 +1599,101 @@ export class UInt64Rules extends Message<UInt64Rules> {
    *
    * @generated from field: optional uint64 const = 1;
    */
-  const?: bigint
+  const?: bigint;
 
   /**
    * @generated from oneof buf.validate.UInt64Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyUInt64 {
-         *   // value must be less than 10
-         *   uint64 value = 1 [(buf.validate.field).uint64.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: uint64 lt = 2;
-         */
-        value: bigint
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyUInt64 {
-         *   // value must be less than or equal to 10
-         *   uint64 value = 1 [(buf.validate.field).uint64.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: uint64 lte = 3;
-         */
-        value: bigint
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyUInt64 {
+     *   // value must be less than 10
+     *   uint64 value = 1 [(buf.validate.field).uint64.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: uint64 lt = 2;
+     */
+    value: bigint;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyUInt64 {
+     *   // value must be less than or equal to 10
+     *   uint64 value = 1 [(buf.validate.field).uint64.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: uint64 lte = 3;
+     */
+    value: bigint;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.UInt64Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyUInt64 {
-         *   // value must be greater than 5 [uint64.gt]
-         *   uint64 value = 1 [(buf.validate.field).uint64.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [uint64.gt_lt]
-         *   uint64 other_value = 2 [(buf.validate.field).uint64 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [uint64.gt_lt_exclusive]
-         *   uint64 another_value = 3 [(buf.validate.field).uint64 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: uint64 gt = 4;
-         */
-        value: bigint
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyUInt64 {
-         *   // value must be greater than or equal to 5 [uint64.gte]
-         *   uint64 value = 1 [(buf.validate.field).uint64.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [uint64.gte_lt]
-         *   uint64 other_value = 2 [(buf.validate.field).uint64 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [uint64.gte_lt_exclusive]
-         *   uint64 another_value = 3 [(buf.validate.field).uint64 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: uint64 gte = 5;
-         */
-        value: bigint
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyUInt64 {
+     *   // value must be greater than 5 [uint64.gt]
+     *   uint64 value = 1 [(buf.validate.field).uint64.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [uint64.gt_lt]
+     *   uint64 other_value = 2 [(buf.validate.field).uint64 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [uint64.gt_lt_exclusive]
+     *   uint64 another_value = 3 [(buf.validate.field).uint64 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: uint64 gt = 4;
+     */
+    value: bigint;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyUInt64 {
+     *   // value must be greater than or equal to 5 [uint64.gte]
+     *   uint64 value = 1 [(buf.validate.field).uint64.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [uint64.gte_lt]
+     *   uint64 other_value = 2 [(buf.validate.field).uint64 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [uint64.gte_lt_exclusive]
+     *   uint64 another_value = 3 [(buf.validate.field).uint64 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: uint64 gte = 5;
+     */
+    value: bigint;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -1809,7 +1709,7 @@ export class UInt64Rules extends Message<UInt64Rules> {
    *
    * @generated from field: repeated uint64 in = 6;
    */
-  in: bigint[] = []
+  in: bigint[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -1825,42 +1725,39 @@ export class UInt64Rules extends Message<UInt64Rules> {
    *
    * @generated from field: repeated uint64 not_in = 7;
    */
-  notIn: bigint[] = []
+  notIn: bigint[] = [];
 
   constructor(data?: PartialMessage<UInt64Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.UInt64Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.UInt64Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 4 /* ScalarType.UINT64 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 4 /* ScalarType.UINT64 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 4 /* ScalarType.UINT64 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 4 /* ScalarType.UINT64 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 4 /* ScalarType.UINT64 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 4 /* ScalarType.UINT64 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UInt64Rules {
-    return new UInt64Rules().fromBinary(bytes, options)
+    return new UInt64Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UInt64Rules {
-    return new UInt64Rules().fromJson(jsonValue, options)
+    return new UInt64Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UInt64Rules {
-    return new UInt64Rules().fromJsonString(jsonString, options)
+    return new UInt64Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: UInt64Rules | PlainMessage<UInt64Rules> | undefined,
-    b: UInt64Rules | PlainMessage<UInt64Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(UInt64Rules, a, b)
+  static equals(a: UInt64Rules | PlainMessage<UInt64Rules> | undefined, b: UInt64Rules | PlainMessage<UInt64Rules> | undefined): boolean {
+    return proto3.util.equals(UInt64Rules, a, b);
   }
 }
 
@@ -1883,107 +1780,101 @@ export class SInt32Rules extends Message<SInt32Rules> {
    *
    * @generated from field: optional sint32 const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * @generated from oneof buf.validate.SInt32Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field
-         * < value). If the field value is equal to or greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MySInt32 {
-         *   // value must be less than 10
-         *   sint32 value = 1 [(buf.validate.field).sint32.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sint32 lt = 2;
-         */
-        value: number
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MySInt32 {
-         *   // value must be less than or equal to 10
-         *   sint32 value = 1 [(buf.validate.field).sint32.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sint32 lte = 3;
-         */
-        value: number
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field
+     * < value). If the field value is equal to or greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MySInt32 {
+     *   // value must be less than 10
+     *   sint32 value = 1 [(buf.validate.field).sint32.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sint32 lt = 2;
+     */
+    value: number;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MySInt32 {
+     *   // value must be less than or equal to 10
+     *   sint32 value = 1 [(buf.validate.field).sint32.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sint32 lte = 3;
+     */
+    value: number;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.SInt32Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySInt32 {
-         *   // value must be greater than 5 [sint32.gt]
-         *   sint32 value = 1 [(buf.validate.field).sint32.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [sint32.gt_lt]
-         *   sint32 other_value = 2 [(buf.validate.field).sint32 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [sint32.gt_lt_exclusive]
-         *   sint32 another_value = 3 [(buf.validate.field).sint32 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sint32 gt = 4;
-         */
-        value: number
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySInt32 {
-         *  // value must be greater than or equal to 5 [sint32.gte]
-         *  sint32 value = 1 [(buf.validate.field).sint32.gte = 5];
-         *
-         *  // value must be greater than or equal to 5 and less than 10 [sint32.gte_lt]
-         *  sint32 other_value = 2 [(buf.validate.field).sint32 = { gte: 5, lt: 10 }];
-         *
-         *  // value must be greater than or equal to 10 or less than 5 [sint32.gte_lt_exclusive]
-         *  sint32 another_value = 3 [(buf.validate.field).sint32 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sint32 gte = 5;
-         */
-        value: number
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySInt32 {
+     *   // value must be greater than 5 [sint32.gt]
+     *   sint32 value = 1 [(buf.validate.field).sint32.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [sint32.gt_lt]
+     *   sint32 other_value = 2 [(buf.validate.field).sint32 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [sint32.gt_lt_exclusive]
+     *   sint32 another_value = 3 [(buf.validate.field).sint32 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sint32 gt = 4;
+     */
+    value: number;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySInt32 {
+     *  // value must be greater than or equal to 5 [sint32.gte]
+     *  sint32 value = 1 [(buf.validate.field).sint32.gte = 5];
+     *
+     *  // value must be greater than or equal to 5 and less than 10 [sint32.gte_lt]
+     *  sint32 other_value = 2 [(buf.validate.field).sint32 = { gte: 5, lt: 10 }];
+     *
+     *  // value must be greater than or equal to 10 or less than 5 [sint32.gte_lt_exclusive]
+     *  sint32 another_value = 3 [(buf.validate.field).sint32 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sint32 gte = 5;
+     */
+    value: number;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -1999,7 +1890,7 @@ export class SInt32Rules extends Message<SInt32Rules> {
    *
    * @generated from field: repeated sint32 in = 6;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -2015,42 +1906,39 @@ export class SInt32Rules extends Message<SInt32Rules> {
    *
    * @generated from field: repeated sint32 not_in = 7;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   constructor(data?: PartialMessage<SInt32Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.SInt32Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.SInt32Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 17 /* ScalarType.SINT32 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 17 /* ScalarType.SINT32 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 17 /* ScalarType.SINT32 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 17 /* ScalarType.SINT32 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 17 /* ScalarType.SINT32 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 17 /* ScalarType.SINT32 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 17 /* ScalarType.SINT32 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 17 /* ScalarType.SINT32 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 17 /* ScalarType.SINT32 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 17 /* ScalarType.SINT32 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 17 /* ScalarType.SINT32 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 17 /* ScalarType.SINT32 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 17 /* ScalarType.SINT32 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 17 /* ScalarType.SINT32 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SInt32Rules {
-    return new SInt32Rules().fromBinary(bytes, options)
+    return new SInt32Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SInt32Rules {
-    return new SInt32Rules().fromJson(jsonValue, options)
+    return new SInt32Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SInt32Rules {
-    return new SInt32Rules().fromJsonString(jsonString, options)
+    return new SInt32Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: SInt32Rules | PlainMessage<SInt32Rules> | undefined,
-    b: SInt32Rules | PlainMessage<SInt32Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(SInt32Rules, a, b)
+  static equals(a: SInt32Rules | PlainMessage<SInt32Rules> | undefined, b: SInt32Rules | PlainMessage<SInt32Rules> | undefined): boolean {
+    return proto3.util.equals(SInt32Rules, a, b);
   }
 }
 
@@ -2073,107 +1961,101 @@ export class SInt64Rules extends Message<SInt64Rules> {
    *
    * @generated from field: optional sint64 const = 1;
    */
-  const?: bigint
+  const?: bigint;
 
   /**
    * @generated from oneof buf.validate.SInt64Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field
-         * < value). If the field value is equal to or greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MySInt64 {
-         *   // value must be less than 10
-         *   sint64 value = 1 [(buf.validate.field).sint64.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sint64 lt = 2;
-         */
-        value: bigint
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MySInt64 {
-         *   // value must be less than or equal to 10
-         *   sint64 value = 1 [(buf.validate.field).sint64.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sint64 lte = 3;
-         */
-        value: bigint
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field
+     * < value). If the field value is equal to or greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MySInt64 {
+     *   // value must be less than 10
+     *   sint64 value = 1 [(buf.validate.field).sint64.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sint64 lt = 2;
+     */
+    value: bigint;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MySInt64 {
+     *   // value must be less than or equal to 10
+     *   sint64 value = 1 [(buf.validate.field).sint64.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sint64 lte = 3;
+     */
+    value: bigint;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.SInt64Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySInt64 {
-         *   // value must be greater than 5 [sint64.gt]
-         *   sint64 value = 1 [(buf.validate.field).sint64.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [sint64.gt_lt]
-         *   sint64 other_value = 2 [(buf.validate.field).sint64 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [sint64.gt_lt_exclusive]
-         *   sint64 another_value = 3 [(buf.validate.field).sint64 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sint64 gt = 4;
-         */
-        value: bigint
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySInt64 {
-         *   // value must be greater than or equal to 5 [sint64.gte]
-         *   sint64 value = 1 [(buf.validate.field).sint64.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [sint64.gte_lt]
-         *   sint64 other_value = 2 [(buf.validate.field).sint64 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [sint64.gte_lt_exclusive]
-         *   sint64 another_value = 3 [(buf.validate.field).sint64 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sint64 gte = 5;
-         */
-        value: bigint
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySInt64 {
+     *   // value must be greater than 5 [sint64.gt]
+     *   sint64 value = 1 [(buf.validate.field).sint64.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [sint64.gt_lt]
+     *   sint64 other_value = 2 [(buf.validate.field).sint64 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [sint64.gt_lt_exclusive]
+     *   sint64 another_value = 3 [(buf.validate.field).sint64 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sint64 gt = 4;
+     */
+    value: bigint;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySInt64 {
+     *   // value must be greater than or equal to 5 [sint64.gte]
+     *   sint64 value = 1 [(buf.validate.field).sint64.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [sint64.gte_lt]
+     *   sint64 other_value = 2 [(buf.validate.field).sint64 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [sint64.gte_lt_exclusive]
+     *   sint64 another_value = 3 [(buf.validate.field).sint64 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sint64 gte = 5;
+     */
+    value: bigint;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -2189,7 +2071,7 @@ export class SInt64Rules extends Message<SInt64Rules> {
    *
    * @generated from field: repeated sint64 in = 6;
    */
-  in: bigint[] = []
+  in: bigint[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -2205,42 +2087,39 @@ export class SInt64Rules extends Message<SInt64Rules> {
    *
    * @generated from field: repeated sint64 not_in = 7;
    */
-  notIn: bigint[] = []
+  notIn: bigint[] = [];
 
   constructor(data?: PartialMessage<SInt64Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.SInt64Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.SInt64Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 18 /* ScalarType.SINT64 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 18 /* ScalarType.SINT64 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 18 /* ScalarType.SINT64 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 18 /* ScalarType.SINT64 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 18 /* ScalarType.SINT64 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 18 /* ScalarType.SINT64 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 18 /* ScalarType.SINT64 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 18 /* ScalarType.SINT64 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 18 /* ScalarType.SINT64 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 18 /* ScalarType.SINT64 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 18 /* ScalarType.SINT64 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 18 /* ScalarType.SINT64 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 18 /* ScalarType.SINT64 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 18 /* ScalarType.SINT64 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SInt64Rules {
-    return new SInt64Rules().fromBinary(bytes, options)
+    return new SInt64Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SInt64Rules {
-    return new SInt64Rules().fromJson(jsonValue, options)
+    return new SInt64Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SInt64Rules {
-    return new SInt64Rules().fromJsonString(jsonString, options)
+    return new SInt64Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: SInt64Rules | PlainMessage<SInt64Rules> | undefined,
-    b: SInt64Rules | PlainMessage<SInt64Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(SInt64Rules, a, b)
+  static equals(a: SInt64Rules | PlainMessage<SInt64Rules> | undefined, b: SInt64Rules | PlainMessage<SInt64Rules> | undefined): boolean {
+    return proto3.util.equals(SInt64Rules, a, b);
   }
 }
 
@@ -2263,107 +2142,101 @@ export class Fixed32Rules extends Message<Fixed32Rules> {
    *
    * @generated from field: optional fixed32 const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * @generated from oneof buf.validate.Fixed32Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFixed32 {
-         *   // value must be less than 10
-         *   fixed32 value = 1 [(buf.validate.field).fixed32.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: fixed32 lt = 2;
-         */
-        value: number
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyFixed32 {
-         *   // value must be less than or equal to 10
-         *   fixed32 value = 1 [(buf.validate.field).fixed32.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: fixed32 lte = 3;
-         */
-        value: number
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFixed32 {
+     *   // value must be less than 10
+     *   fixed32 value = 1 [(buf.validate.field).fixed32.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: fixed32 lt = 2;
+     */
+    value: number;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyFixed32 {
+     *   // value must be less than or equal to 10
+     *   fixed32 value = 1 [(buf.validate.field).fixed32.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: fixed32 lte = 3;
+     */
+    value: number;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.Fixed32Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFixed32 {
-         *   // value must be greater than 5 [fixed32.gt]
-         *   fixed32 value = 1 [(buf.validate.field).fixed32.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [fixed32.gt_lt]
-         *   fixed32 other_value = 2 [(buf.validate.field).fixed32 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [fixed32.gt_lt_exclusive]
-         *   fixed32 another_value = 3 [(buf.validate.field).fixed32 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: fixed32 gt = 4;
-         */
-        value: number
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFixed32 {
-         *   // value must be greater than or equal to 5 [fixed32.gte]
-         *   fixed32 value = 1 [(buf.validate.field).fixed32.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [fixed32.gte_lt]
-         *   fixed32 other_value = 2 [(buf.validate.field).fixed32 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [fixed32.gte_lt_exclusive]
-         *   fixed32 another_value = 3 [(buf.validate.field).fixed32 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: fixed32 gte = 5;
-         */
-        value: number
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFixed32 {
+     *   // value must be greater than 5 [fixed32.gt]
+     *   fixed32 value = 1 [(buf.validate.field).fixed32.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [fixed32.gt_lt]
+     *   fixed32 other_value = 2 [(buf.validate.field).fixed32 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [fixed32.gt_lt_exclusive]
+     *   fixed32 another_value = 3 [(buf.validate.field).fixed32 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: fixed32 gt = 4;
+     */
+    value: number;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFixed32 {
+     *   // value must be greater than or equal to 5 [fixed32.gte]
+     *   fixed32 value = 1 [(buf.validate.field).fixed32.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [fixed32.gte_lt]
+     *   fixed32 other_value = 2 [(buf.validate.field).fixed32 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [fixed32.gte_lt_exclusive]
+     *   fixed32 another_value = 3 [(buf.validate.field).fixed32 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: fixed32 gte = 5;
+     */
+    value: number;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -2379,7 +2252,7 @@ export class Fixed32Rules extends Message<Fixed32Rules> {
    *
    * @generated from field: repeated fixed32 in = 6;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -2395,42 +2268,39 @@ export class Fixed32Rules extends Message<Fixed32Rules> {
    *
    * @generated from field: repeated fixed32 not_in = 7;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   constructor(data?: PartialMessage<Fixed32Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.Fixed32Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.Fixed32Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 7 /* ScalarType.FIXED32 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 7 /* ScalarType.FIXED32 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 7 /* ScalarType.FIXED32 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 7 /* ScalarType.FIXED32 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 7 /* ScalarType.FIXED32 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 7 /* ScalarType.FIXED32 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 7 /* ScalarType.FIXED32 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 7 /* ScalarType.FIXED32 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 7 /* ScalarType.FIXED32 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 7 /* ScalarType.FIXED32 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 7 /* ScalarType.FIXED32 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 7 /* ScalarType.FIXED32 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 7 /* ScalarType.FIXED32 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 7 /* ScalarType.FIXED32 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Fixed32Rules {
-    return new Fixed32Rules().fromBinary(bytes, options)
+    return new Fixed32Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Fixed32Rules {
-    return new Fixed32Rules().fromJson(jsonValue, options)
+    return new Fixed32Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Fixed32Rules {
-    return new Fixed32Rules().fromJsonString(jsonString, options)
+    return new Fixed32Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: Fixed32Rules | PlainMessage<Fixed32Rules> | undefined,
-    b: Fixed32Rules | PlainMessage<Fixed32Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(Fixed32Rules, a, b)
+  static equals(a: Fixed32Rules | PlainMessage<Fixed32Rules> | undefined, b: Fixed32Rules | PlainMessage<Fixed32Rules> | undefined): boolean {
+    return proto3.util.equals(Fixed32Rules, a, b);
   }
 }
 
@@ -2453,107 +2323,101 @@ export class Fixed64Rules extends Message<Fixed64Rules> {
    *
    * @generated from field: optional fixed64 const = 1;
    */
-  const?: bigint
+  const?: bigint;
 
   /**
    * @generated from oneof buf.validate.Fixed64Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFixed64 {
-         *   // value must be less than 10
-         *   fixed64 value = 1 [(buf.validate.field).fixed64.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: fixed64 lt = 2;
-         */
-        value: bigint
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MyFixed64 {
-         *   // value must be less than or equal to 10
-         *   fixed64 value = 1 [(buf.validate.field).fixed64.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: fixed64 lte = 3;
-         */
-        value: bigint
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFixed64 {
+     *   // value must be less than 10
+     *   fixed64 value = 1 [(buf.validate.field).fixed64.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: fixed64 lt = 2;
+     */
+    value: bigint;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MyFixed64 {
+     *   // value must be less than or equal to 10
+     *   fixed64 value = 1 [(buf.validate.field).fixed64.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: fixed64 lte = 3;
+     */
+    value: bigint;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.Fixed64Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFixed64 {
-         *   // value must be greater than 5 [fixed64.gt]
-         *   fixed64 value = 1 [(buf.validate.field).fixed64.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [fixed64.gt_lt]
-         *   fixed64 other_value = 2 [(buf.validate.field).fixed64 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [fixed64.gt_lt_exclusive]
-         *   fixed64 another_value = 3 [(buf.validate.field).fixed64 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: fixed64 gt = 4;
-         */
-        value: bigint
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyFixed64 {
-         *   // value must be greater than or equal to 5 [fixed64.gte]
-         *   fixed64 value = 1 [(buf.validate.field).fixed64.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [fixed64.gte_lt]
-         *   fixed64 other_value = 2 [(buf.validate.field).fixed64 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [fixed64.gte_lt_exclusive]
-         *   fixed64 another_value = 3 [(buf.validate.field).fixed64 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: fixed64 gte = 5;
-         */
-        value: bigint
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFixed64 {
+     *   // value must be greater than 5 [fixed64.gt]
+     *   fixed64 value = 1 [(buf.validate.field).fixed64.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [fixed64.gt_lt]
+     *   fixed64 other_value = 2 [(buf.validate.field).fixed64 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [fixed64.gt_lt_exclusive]
+     *   fixed64 another_value = 3 [(buf.validate.field).fixed64 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: fixed64 gt = 4;
+     */
+    value: bigint;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyFixed64 {
+     *   // value must be greater than or equal to 5 [fixed64.gte]
+     *   fixed64 value = 1 [(buf.validate.field).fixed64.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [fixed64.gte_lt]
+     *   fixed64 other_value = 2 [(buf.validate.field).fixed64 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [fixed64.gte_lt_exclusive]
+     *   fixed64 another_value = 3 [(buf.validate.field).fixed64 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: fixed64 gte = 5;
+     */
+    value: bigint;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -2569,7 +2433,7 @@ export class Fixed64Rules extends Message<Fixed64Rules> {
    *
    * @generated from field: repeated fixed64 in = 6;
    */
-  in: bigint[] = []
+  in: bigint[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -2585,42 +2449,39 @@ export class Fixed64Rules extends Message<Fixed64Rules> {
    *
    * @generated from field: repeated fixed64 not_in = 7;
    */
-  notIn: bigint[] = []
+  notIn: bigint[] = [];
 
   constructor(data?: PartialMessage<Fixed64Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.Fixed64Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.Fixed64Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 6 /* ScalarType.FIXED64 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 6 /* ScalarType.FIXED64 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 6 /* ScalarType.FIXED64 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 6 /* ScalarType.FIXED64 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 6 /* ScalarType.FIXED64 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 6 /* ScalarType.FIXED64 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 6 /* ScalarType.FIXED64 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 6 /* ScalarType.FIXED64 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 6 /* ScalarType.FIXED64 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 6 /* ScalarType.FIXED64 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 6 /* ScalarType.FIXED64 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 6 /* ScalarType.FIXED64 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 6 /* ScalarType.FIXED64 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 6 /* ScalarType.FIXED64 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Fixed64Rules {
-    return new Fixed64Rules().fromBinary(bytes, options)
+    return new Fixed64Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Fixed64Rules {
-    return new Fixed64Rules().fromJson(jsonValue, options)
+    return new Fixed64Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Fixed64Rules {
-    return new Fixed64Rules().fromJsonString(jsonString, options)
+    return new Fixed64Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: Fixed64Rules | PlainMessage<Fixed64Rules> | undefined,
-    b: Fixed64Rules | PlainMessage<Fixed64Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(Fixed64Rules, a, b)
+  static equals(a: Fixed64Rules | PlainMessage<Fixed64Rules> | undefined, b: Fixed64Rules | PlainMessage<Fixed64Rules> | undefined): boolean {
+    return proto3.util.equals(Fixed64Rules, a, b);
   }
 }
 
@@ -2643,107 +2504,101 @@ export class SFixed32Rules extends Message<SFixed32Rules> {
    *
    * @generated from field: optional sfixed32 const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * @generated from oneof buf.validate.SFixed32Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySFixed32 {
-         *   // value must be less than 10
-         *   sfixed32 value = 1 [(buf.validate.field).sfixed32.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed32 lt = 2;
-         */
-        value: number
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MySFixed32 {
-         *   // value must be less than or equal to 10
-         *   sfixed32 value = 1 [(buf.validate.field).sfixed32.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed32 lte = 3;
-         */
-        value: number
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySFixed32 {
+     *   // value must be less than 10
+     *   sfixed32 value = 1 [(buf.validate.field).sfixed32.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed32 lt = 2;
+     */
+    value: number;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MySFixed32 {
+     *   // value must be less than or equal to 10
+     *   sfixed32 value = 1 [(buf.validate.field).sfixed32.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed32 lte = 3;
+     */
+    value: number;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.SFixed32Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySFixed32 {
-         *   // value must be greater than 5 [sfixed32.gt]
-         *   sfixed32 value = 1 [(buf.validate.field).sfixed32.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [sfixed32.gt_lt]
-         *   sfixed32 other_value = 2 [(buf.validate.field).sfixed32 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [sfixed32.gt_lt_exclusive]
-         *   sfixed32 another_value = 3 [(buf.validate.field).sfixed32 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed32 gt = 4;
-         */
-        value: number
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySFixed32 {
-         *   // value must be greater than or equal to 5 [sfixed32.gte]
-         *   sfixed32 value = 1 [(buf.validate.field).sfixed32.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [sfixed32.gte_lt]
-         *   sfixed32 other_value = 2 [(buf.validate.field).sfixed32 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [sfixed32.gte_lt_exclusive]
-         *   sfixed32 another_value = 3 [(buf.validate.field).sfixed32 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed32 gte = 5;
-         */
-        value: number
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySFixed32 {
+     *   // value must be greater than 5 [sfixed32.gt]
+     *   sfixed32 value = 1 [(buf.validate.field).sfixed32.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [sfixed32.gt_lt]
+     *   sfixed32 other_value = 2 [(buf.validate.field).sfixed32 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [sfixed32.gt_lt_exclusive]
+     *   sfixed32 another_value = 3 [(buf.validate.field).sfixed32 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed32 gt = 4;
+     */
+    value: number;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySFixed32 {
+     *   // value must be greater than or equal to 5 [sfixed32.gte]
+     *   sfixed32 value = 1 [(buf.validate.field).sfixed32.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [sfixed32.gte_lt]
+     *   sfixed32 other_value = 2 [(buf.validate.field).sfixed32 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [sfixed32.gte_lt_exclusive]
+     *   sfixed32 another_value = 3 [(buf.validate.field).sfixed32 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed32 gte = 5;
+     */
+    value: number;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -2759,7 +2614,7 @@ export class SFixed32Rules extends Message<SFixed32Rules> {
    *
    * @generated from field: repeated sfixed32 in = 6;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -2775,42 +2630,39 @@ export class SFixed32Rules extends Message<SFixed32Rules> {
    *
    * @generated from field: repeated sfixed32 not_in = 7;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   constructor(data?: PartialMessage<SFixed32Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.SFixed32Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.SFixed32Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 15 /* ScalarType.SFIXED32 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 15 /* ScalarType.SFIXED32 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 15 /* ScalarType.SFIXED32 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 15 /* ScalarType.SFIXED32 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 15 /* ScalarType.SFIXED32 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 15 /* ScalarType.SFIXED32 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 15 /* ScalarType.SFIXED32 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 15 /* ScalarType.SFIXED32 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 15 /* ScalarType.SFIXED32 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 15 /* ScalarType.SFIXED32 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 15 /* ScalarType.SFIXED32 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 15 /* ScalarType.SFIXED32 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 15 /* ScalarType.SFIXED32 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 15 /* ScalarType.SFIXED32 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SFixed32Rules {
-    return new SFixed32Rules().fromBinary(bytes, options)
+    return new SFixed32Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SFixed32Rules {
-    return new SFixed32Rules().fromJson(jsonValue, options)
+    return new SFixed32Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SFixed32Rules {
-    return new SFixed32Rules().fromJsonString(jsonString, options)
+    return new SFixed32Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: SFixed32Rules | PlainMessage<SFixed32Rules> | undefined,
-    b: SFixed32Rules | PlainMessage<SFixed32Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(SFixed32Rules, a, b)
+  static equals(a: SFixed32Rules | PlainMessage<SFixed32Rules> | undefined, b: SFixed32Rules | PlainMessage<SFixed32Rules> | undefined): boolean {
+    return proto3.util.equals(SFixed32Rules, a, b);
   }
 }
 
@@ -2833,107 +2685,101 @@ export class SFixed64Rules extends Message<SFixed64Rules> {
    *
    * @generated from field: optional sfixed64 const = 1;
    */
-  const?: bigint
+  const?: bigint;
 
   /**
    * @generated from oneof buf.validate.SFixed64Rules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` requires the field value to be less than the specified value (field <
-         * value). If the field value is equal to or greater than the specified value,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySFixed64 {
-         *   // value must be less than 10
-         *   sfixed64 value = 1 [(buf.validate.field).sfixed64.lt = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed64 lt = 2;
-         */
-        value: bigint
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` requires the field value to be less than or equal to the specified
-         * value (field <= value). If the field value is greater than the specified
-         * value, an error message is generated.
-         *
-         * ```proto
-         * message MySFixed64 {
-         *   // value must be less than or equal to 10
-         *   sfixed64 value = 1 [(buf.validate.field).sfixed64.lte = 10];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed64 lte = 3;
-         */
-        value: bigint
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` requires the field value to be less than the specified value (field <
+     * value). If the field value is equal to or greater than the specified value,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySFixed64 {
+     *   // value must be less than 10
+     *   sfixed64 value = 1 [(buf.validate.field).sfixed64.lt = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed64 lt = 2;
+     */
+    value: bigint;
+    case: "lt";
+  } | {
+    /**
+     * `lte` requires the field value to be less than or equal to the specified
+     * value (field <= value). If the field value is greater than the specified
+     * value, an error message is generated.
+     *
+     * ```proto
+     * message MySFixed64 {
+     *   // value must be less than or equal to 10
+     *   sfixed64 value = 1 [(buf.validate.field).sfixed64.lte = 10];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed64 lte = 3;
+     */
+    value: bigint;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.SFixed64Rules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the field value to be greater than the specified value
-         * (exclusive). If the value of `gt` is larger than a specified `lt` or
-         * `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySFixed64 {
-         *   // value must be greater than 5 [sfixed64.gt]
-         *   sfixed64 value = 1 [(buf.validate.field).sfixed64.gt = 5];
-         *
-         *   // value must be greater than 5 and less than 10 [sfixed64.gt_lt]
-         *   sfixed64 other_value = 2 [(buf.validate.field).sfixed64 = { gt: 5, lt: 10 }];
-         *
-         *   // value must be greater than 10 or less than 5 [sfixed64.gt_lt_exclusive]
-         *   sfixed64 another_value = 3 [(buf.validate.field).sfixed64 = { gt: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed64 gt = 4;
-         */
-        value: bigint
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the field value to be greater than or equal to the specified
-         * value (exclusive). If the value of `gte` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MySFixed64 {
-         *   // value must be greater than or equal to 5 [sfixed64.gte]
-         *   sfixed64 value = 1 [(buf.validate.field).sfixed64.gte = 5];
-         *
-         *   // value must be greater than or equal to 5 and less than 10 [sfixed64.gte_lt]
-         *   sfixed64 other_value = 2 [(buf.validate.field).sfixed64 = { gte: 5, lt: 10 }];
-         *
-         *   // value must be greater than or equal to 10 or less than 5 [sfixed64.gte_lt_exclusive]
-         *   sfixed64 another_value = 3 [(buf.validate.field).sfixed64 = { gte: 10, lt: 5 }];
-         * }
-         * ```
-         *
-         * @generated from field: sfixed64 gte = 5;
-         */
-        value: bigint
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the field value to be greater than the specified value
+     * (exclusive). If the value of `gt` is larger than a specified `lt` or
+     * `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySFixed64 {
+     *   // value must be greater than 5 [sfixed64.gt]
+     *   sfixed64 value = 1 [(buf.validate.field).sfixed64.gt = 5];
+     *
+     *   // value must be greater than 5 and less than 10 [sfixed64.gt_lt]
+     *   sfixed64 other_value = 2 [(buf.validate.field).sfixed64 = { gt: 5, lt: 10 }];
+     *
+     *   // value must be greater than 10 or less than 5 [sfixed64.gt_lt_exclusive]
+     *   sfixed64 another_value = 3 [(buf.validate.field).sfixed64 = { gt: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed64 gt = 4;
+     */
+    value: bigint;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the field value to be greater than or equal to the specified
+     * value (exclusive). If the value of `gte` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MySFixed64 {
+     *   // value must be greater than or equal to 5 [sfixed64.gte]
+     *   sfixed64 value = 1 [(buf.validate.field).sfixed64.gte = 5];
+     *
+     *   // value must be greater than or equal to 5 and less than 10 [sfixed64.gte_lt]
+     *   sfixed64 other_value = 2 [(buf.validate.field).sfixed64 = { gte: 5, lt: 10 }];
+     *
+     *   // value must be greater than or equal to 10 or less than 5 [sfixed64.gte_lt_exclusive]
+     *   sfixed64 another_value = 3 [(buf.validate.field).sfixed64 = { gte: 10, lt: 5 }];
+     * }
+     * ```
+     *
+     * @generated from field: sfixed64 gte = 5;
+     */
+    value: bigint;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` requires the field value to be equal to one of the specified values.
@@ -2949,7 +2795,7 @@ export class SFixed64Rules extends Message<SFixed64Rules> {
    *
    * @generated from field: repeated sfixed64 in = 6;
    */
-  in: bigint[] = []
+  in: bigint[] = [];
 
   /**
    * `not_in` requires the field value to not be equal to any of the specified
@@ -2965,42 +2811,39 @@ export class SFixed64Rules extends Message<SFixed64Rules> {
    *
    * @generated from field: repeated sfixed64 not_in = 7;
    */
-  notIn: bigint[] = []
+  notIn: bigint[] = [];
 
   constructor(data?: PartialMessage<SFixed64Rules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.SFixed64Rules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.SFixed64Rules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 16 /* ScalarType.SFIXED64 */, opt: true },
-    { no: 2, name: 'lt', kind: 'scalar', T: 16 /* ScalarType.SFIXED64 */, oneof: 'less_than' },
-    { no: 3, name: 'lte', kind: 'scalar', T: 16 /* ScalarType.SFIXED64 */, oneof: 'less_than' },
-    { no: 4, name: 'gt', kind: 'scalar', T: 16 /* ScalarType.SFIXED64 */, oneof: 'greater_than' },
-    { no: 5, name: 'gte', kind: 'scalar', T: 16 /* ScalarType.SFIXED64 */, oneof: 'greater_than' },
-    { no: 6, name: 'in', kind: 'scalar', T: 16 /* ScalarType.SFIXED64 */, repeated: true },
-    { no: 7, name: 'not_in', kind: 'scalar', T: 16 /* ScalarType.SFIXED64 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 16 /* ScalarType.SFIXED64 */, opt: true },
+    { no: 2, name: "lt", kind: "scalar", T: 16 /* ScalarType.SFIXED64 */, oneof: "less_than" },
+    { no: 3, name: "lte", kind: "scalar", T: 16 /* ScalarType.SFIXED64 */, oneof: "less_than" },
+    { no: 4, name: "gt", kind: "scalar", T: 16 /* ScalarType.SFIXED64 */, oneof: "greater_than" },
+    { no: 5, name: "gte", kind: "scalar", T: 16 /* ScalarType.SFIXED64 */, oneof: "greater_than" },
+    { no: 6, name: "in", kind: "scalar", T: 16 /* ScalarType.SFIXED64 */, repeated: true },
+    { no: 7, name: "not_in", kind: "scalar", T: 16 /* ScalarType.SFIXED64 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SFixed64Rules {
-    return new SFixed64Rules().fromBinary(bytes, options)
+    return new SFixed64Rules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SFixed64Rules {
-    return new SFixed64Rules().fromJson(jsonValue, options)
+    return new SFixed64Rules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SFixed64Rules {
-    return new SFixed64Rules().fromJsonString(jsonString, options)
+    return new SFixed64Rules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: SFixed64Rules | PlainMessage<SFixed64Rules> | undefined,
-    b: SFixed64Rules | PlainMessage<SFixed64Rules> | undefined,
-  ): boolean {
-    return proto3.util.equals(SFixed64Rules, a, b)
+  static equals(a: SFixed64Rules | PlainMessage<SFixed64Rules> | undefined, b: SFixed64Rules | PlainMessage<SFixed64Rules> | undefined): boolean {
+    return proto3.util.equals(SFixed64Rules, a, b);
   }
 }
 
@@ -3024,36 +2867,33 @@ export class BoolRules extends Message<BoolRules> {
    *
    * @generated from field: optional bool const = 1;
    */
-  const?: boolean
+  const?: boolean;
 
   constructor(data?: PartialMessage<BoolRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.BoolRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.BoolRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 8 /* ScalarType.BOOL */, opt: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BoolRules {
-    return new BoolRules().fromBinary(bytes, options)
+    return new BoolRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BoolRules {
-    return new BoolRules().fromJson(jsonValue, options)
+    return new BoolRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BoolRules {
-    return new BoolRules().fromJsonString(jsonString, options)
+    return new BoolRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: BoolRules | PlainMessage<BoolRules> | undefined,
-    b: BoolRules | PlainMessage<BoolRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(BoolRules, a, b)
+  static equals(a: BoolRules | PlainMessage<BoolRules> | undefined, b: BoolRules | PlainMessage<BoolRules> | undefined): boolean {
+    return proto3.util.equals(BoolRules, a, b);
   }
 }
 
@@ -3077,7 +2917,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional string const = 1;
    */
-  const?: string
+  const?: string;
 
   /**
    * `len` dictates that the field value must have the specified
@@ -3094,7 +2934,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional uint64 len = 19;
    */
-  len?: bigint
+  len?: bigint;
 
   /**
    * `min_len` specifies that the field value must have at least the specified
@@ -3111,7 +2951,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional uint64 min_len = 2;
    */
-  minLen?: bigint
+  minLen?: bigint;
 
   /**
    * `max_len` specifies that the field value must have no more than the specified
@@ -3128,7 +2968,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional uint64 max_len = 3;
    */
-  maxLen?: bigint
+  maxLen?: bigint;
 
   /**
    * `len_bytes` dictates that the field value must have the specified number of
@@ -3144,7 +2984,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional uint64 len_bytes = 20;
    */
-  lenBytes?: bigint
+  lenBytes?: bigint;
 
   /**
    * `min_bytes` specifies that the field value must have at least the specified
@@ -3161,7 +3001,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional uint64 min_bytes = 4;
    */
-  minBytes?: bigint
+  minBytes?: bigint;
 
   /**
    * `max_bytes` specifies that the field value must have no more than the
@@ -3177,7 +3017,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional uint64 max_bytes = 5;
    */
-  maxBytes?: bigint
+  maxBytes?: bigint;
 
   /**
    * `pattern` specifies that the field value must match the specified
@@ -3194,7 +3034,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional string pattern = 6;
    */
-  pattern?: string
+  pattern?: string;
 
   /**
    * `prefix` specifies that the field value must have the
@@ -3211,7 +3051,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional string prefix = 7;
    */
-  prefix?: string
+  prefix?: string;
 
   /**
    * `suffix` specifies that the field value must have the
@@ -3227,7 +3067,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional string suffix = 8;
    */
-  suffix?: string
+  suffix?: string;
 
   /**
    * `contains` specifies that the field value must have the
@@ -3243,7 +3083,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional string contains = 9;
    */
-  contains?: string
+  contains?: string;
 
   /**
    * `not_contains` specifies that the field value must not have the
@@ -3275,7 +3115,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: repeated string in = 10;
    */
-  in: string[] = []
+  in: string[] = [];
 
   /**
    * `not_in` specifies that the field value cannot be equal to any
@@ -3290,7 +3130,7 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: repeated string not_in = 11;
    */
-  notIn: string[] = []
+  notIn: string[] = [];
 
   /**
    * `WellKnown` rules provide advanced constraints against common string
@@ -3298,347 +3138,328 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from oneof buf.validate.StringRules.well_known
    */
-  wellKnown:
-    | {
-        /**
-         * `email` specifies that the field value must be a valid email address
-         * (addr-spec only) as defined by [RFC 5322](https://tools.ietf.org/html/rfc5322#section-3.4.1).
-         * If the field value isn't a valid email address, an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid email address
-         *   string value = 1 [(buf.validate.field).string.email = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool email = 12;
-         */
-        value: boolean
-        case: 'email'
-      }
-    | {
-        /**
-         * `hostname` specifies that the field value must be a valid
-         * hostname as defined by [RFC 1034](https://tools.ietf.org/html/rfc1034#section-3.5). This constraint doesn't support
-         * internationalized domain names (IDNs). If the field value isn't a
-         * valid hostname, an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid hostname
-         *   string value = 1 [(buf.validate.field).string.hostname = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool hostname = 13;
-         */
-        value: boolean
-        case: 'hostname'
-      }
-    | {
-        /**
-         * `ip` specifies that the field value must be a valid IP
-         * (v4 or v6) address, without surrounding square brackets for IPv6 addresses.
-         * If the field value isn't a valid IP address, an error message will be
-         * generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IP address
-         *   string value = 1 [(buf.validate.field).string.ip = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ip = 14;
-         */
-        value: boolean
-        case: 'ip'
-      }
-    | {
-        /**
-         * `ipv4` specifies that the field value must be a valid IPv4
-         * address. If the field value isn't a valid IPv4 address, an error message
-         * will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IPv4 address
-         *   string value = 1 [(buf.validate.field).string.ipv4 = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv4 = 15;
-         */
-        value: boolean
-        case: 'ipv4'
-      }
-    | {
-        /**
-         * `ipv6` specifies that the field value must be a valid
-         * IPv6 address, without surrounding square brackets. If the field value is
-         * not a valid IPv6 address, an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IPv6 address
-         *   string value = 1 [(buf.validate.field).string.ipv6 = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv6 = 16;
-         */
-        value: boolean
-        case: 'ipv6'
-      }
-    | {
-        /**
-         * `uri` specifies that the field value must be a valid,
-         * absolute URI as defined by [RFC 3986](https://tools.ietf.org/html/rfc3986#section-3). If the field value isn't a valid,
-         * absolute URI, an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid URI
-         *   string value = 1 [(buf.validate.field).string.uri = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool uri = 17;
-         */
-        value: boolean
-        case: 'uri'
-      }
-    | {
-        /**
-         * `uri_ref` specifies that the field value must be a valid URI
-         * as defined by [RFC 3986](https://tools.ietf.org/html/rfc3986#section-3) and may be either relative or absolute. If the
-         * field value isn't a valid URI, an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid URI
-         *   string value = 1 [(buf.validate.field).string.uri_ref = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool uri_ref = 18;
-         */
-        value: boolean
-        case: 'uriRef'
-      }
-    | {
-        /**
-         * `address` specifies that the field value must be either a valid hostname
-         * as defined by [RFC 1034](https://tools.ietf.org/html/rfc1034#section-3.5)
-         * (which doesn't support internationalized domain names or IDNs) or a valid
-         * IP (v4 or v6). If the field value isn't a valid hostname or IP, an error
-         * message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid hostname, or ip address
-         *   string value = 1 [(buf.validate.field).string.address = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool address = 21;
-         */
-        value: boolean
-        case: 'address'
-      }
-    | {
-        /**
-         * `uuid` specifies that the field value must be a valid UUID as defined by
-         * [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.2). If the
-         * field value isn't a valid UUID, an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid UUID
-         *   string value = 1 [(buf.validate.field).string.uuid = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool uuid = 22;
-         */
-        value: boolean
-        case: 'uuid'
-      }
-    | {
-        /**
-         * `tuuid` (trimmed UUID) specifies that the field value must be a valid UUID as
-         * defined by [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.2) with all dashes
-         * omitted. If the field value isn't a valid UUID without dashes, an error message
-         * will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid trimmed UUID
-         *   string value = 1 [(buf.validate.field).string.tuuid = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool tuuid = 33;
-         */
-        value: boolean
-        case: 'tuuid'
-      }
-    | {
-        /**
-         * `ip_with_prefixlen` specifies that the field value must be a valid IP (v4 or v6)
-         * address with prefix length. If the field value isn't a valid IP with prefix
-         * length, an error message will be generated.
-         *
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IP with prefix length
-         *    string value = 1 [(buf.validate.field).string.ip_with_prefixlen = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ip_with_prefixlen = 26;
-         */
-        value: boolean
-        case: 'ipWithPrefixlen'
-      }
-    | {
-        /**
-         * `ipv4_with_prefixlen` specifies that the field value must be a valid
-         * IPv4 address with prefix.
-         * If the field value isn't a valid IPv4 address with prefix length,
-         * an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IPv4 address with prefix length
-         *    string value = 1 [(buf.validate.field).string.ipv4_with_prefixlen = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv4_with_prefixlen = 27;
-         */
-        value: boolean
-        case: 'ipv4WithPrefixlen'
-      }
-    | {
-        /**
-         * `ipv6_with_prefixlen` specifies that the field value must be a valid
-         * IPv6 address with prefix length.
-         * If the field value is not a valid IPv6 address with prefix length,
-         * an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IPv6 address prefix length
-         *    string value = 1 [(buf.validate.field).string.ipv6_with_prefixlen = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv6_with_prefixlen = 28;
-         */
-        value: boolean
-        case: 'ipv6WithPrefixlen'
-      }
-    | {
-        /**
-         * `ip_prefix` specifies that the field value must be a valid IP (v4 or v6) prefix.
-         * If the field value isn't a valid IP prefix, an error message will be
-         * generated. The prefix must have all zeros for the masked bits of the prefix (e.g.,
-         * `127.0.0.0/16`, not `127.0.0.1/16`).
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IP prefix
-         *    string value = 1 [(buf.validate.field).string.ip_prefix = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ip_prefix = 29;
-         */
-        value: boolean
-        case: 'ipPrefix'
-      }
-    | {
-        /**
-         * `ipv4_prefix` specifies that the field value must be a valid IPv4
-         * prefix. If the field value isn't a valid IPv4 prefix, an error message
-         * will be generated. The prefix must have all zeros for the masked bits of
-         * the prefix (e.g., `127.0.0.0/16`, not `127.0.0.1/16`).
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IPv4 prefix
-         *    string value = 1 [(buf.validate.field).string.ipv4_prefix = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv4_prefix = 30;
-         */
-        value: boolean
-        case: 'ipv4Prefix'
-      }
-    | {
-        /**
-         * `ipv6_prefix` specifies that the field value must be a valid IPv6 prefix.
-         * If the field value is not a valid IPv6 prefix, an error message will be
-         * generated. The prefix must have all zeros for the masked bits of the prefix
-         * (e.g., `2001:db8::/48`, not `2001:db8::1/48`).
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid IPv6 prefix
-         *    string value = 1 [(buf.validate.field).string.ipv6_prefix = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv6_prefix = 31;
-         */
-        value: boolean
-        case: 'ipv6Prefix'
-      }
-    | {
-        /**
-         * `host_and_port` specifies the field value must be a valid host and port
-         * pair. The host must be a valid hostname or IP address while the port
-         * must be in the range of 0-65535, inclusive. IPv6 addresses must be delimited
-         * with square brackets (e.g., `[::1]:1234`).
-         *
-         * @generated from field: bool host_and_port = 32;
-         */
-        value: boolean
-        case: 'hostAndPort'
-      }
-    | {
-        /**
-         * `well_known_regex` specifies a common well-known pattern
-         * defined as a regex. If the field value doesn't match the well-known
-         * regex, an error message will be generated.
-         *
-         * ```proto
-         * message MyString {
-         *   // value must be a valid HTTP header value
-         *   string value = 1 [(buf.validate.field).string.well_known_regex = KNOWN_REGEX_HTTP_HEADER_VALUE];
-         * }
-         * ```
-         *
-         * #### KnownRegex
-         *
-         * `well_known_regex` contains some well-known patterns.
-         *
-         * | Name                          | Number | Description                               |
-         * |-------------------------------|--------|-------------------------------------------|
-         * | KNOWN_REGEX_UNSPECIFIED       | 0      |                                           |
-         * | KNOWN_REGEX_HTTP_HEADER_NAME  | 1      | HTTP header name as defined by [RFC 7230](https://tools.ietf.org/html/rfc7230#section-3.2)  |
-         * | KNOWN_REGEX_HTTP_HEADER_VALUE | 2      | HTTP header value as defined by [RFC 7230](https://tools.ietf.org/html/rfc7230#section-3.2.4) |
-         *
-         * @generated from field: buf.validate.KnownRegex well_known_regex = 24;
-         */
-        value: KnownRegex
-        case: 'wellKnownRegex'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  wellKnown: {
+    /**
+     * `email` specifies that the field value must be a valid email address
+     * (addr-spec only) as defined by [RFC 5322](https://tools.ietf.org/html/rfc5322#section-3.4.1).
+     * If the field value isn't a valid email address, an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid email address
+     *   string value = 1 [(buf.validate.field).string.email = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool email = 12;
+     */
+    value: boolean;
+    case: "email";
+  } | {
+    /**
+     * `hostname` specifies that the field value must be a valid
+     * hostname as defined by [RFC 1034](https://tools.ietf.org/html/rfc1034#section-3.5). This constraint doesn't support
+     * internationalized domain names (IDNs). If the field value isn't a
+     * valid hostname, an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid hostname
+     *   string value = 1 [(buf.validate.field).string.hostname = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool hostname = 13;
+     */
+    value: boolean;
+    case: "hostname";
+  } | {
+    /**
+     * `ip` specifies that the field value must be a valid IP
+     * (v4 or v6) address, without surrounding square brackets for IPv6 addresses.
+     * If the field value isn't a valid IP address, an error message will be
+     * generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IP address
+     *   string value = 1 [(buf.validate.field).string.ip = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ip = 14;
+     */
+    value: boolean;
+    case: "ip";
+  } | {
+    /**
+     * `ipv4` specifies that the field value must be a valid IPv4
+     * address. If the field value isn't a valid IPv4 address, an error message
+     * will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IPv4 address
+     *   string value = 1 [(buf.validate.field).string.ipv4 = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv4 = 15;
+     */
+    value: boolean;
+    case: "ipv4";
+  } | {
+    /**
+     * `ipv6` specifies that the field value must be a valid
+     * IPv6 address, without surrounding square brackets. If the field value is
+     * not a valid IPv6 address, an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IPv6 address
+     *   string value = 1 [(buf.validate.field).string.ipv6 = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv6 = 16;
+     */
+    value: boolean;
+    case: "ipv6";
+  } | {
+    /**
+     * `uri` specifies that the field value must be a valid,
+     * absolute URI as defined by [RFC 3986](https://tools.ietf.org/html/rfc3986#section-3). If the field value isn't a valid,
+     * absolute URI, an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid URI
+     *   string value = 1 [(buf.validate.field).string.uri = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool uri = 17;
+     */
+    value: boolean;
+    case: "uri";
+  } | {
+    /**
+     * `uri_ref` specifies that the field value must be a valid URI
+     * as defined by [RFC 3986](https://tools.ietf.org/html/rfc3986#section-3) and may be either relative or absolute. If the
+     * field value isn't a valid URI, an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid URI
+     *   string value = 1 [(buf.validate.field).string.uri_ref = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool uri_ref = 18;
+     */
+    value: boolean;
+    case: "uriRef";
+  } | {
+    /**
+     * `address` specifies that the field value must be either a valid hostname
+     * as defined by [RFC 1034](https://tools.ietf.org/html/rfc1034#section-3.5)
+     * (which doesn't support internationalized domain names or IDNs) or a valid
+     * IP (v4 or v6). If the field value isn't a valid hostname or IP, an error
+     * message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid hostname, or ip address
+     *   string value = 1 [(buf.validate.field).string.address = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool address = 21;
+     */
+    value: boolean;
+    case: "address";
+  } | {
+    /**
+     * `uuid` specifies that the field value must be a valid UUID as defined by
+     * [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.2). If the
+     * field value isn't a valid UUID, an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid UUID
+     *   string value = 1 [(buf.validate.field).string.uuid = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool uuid = 22;
+     */
+    value: boolean;
+    case: "uuid";
+  } | {
+    /**
+     * `tuuid` (trimmed UUID) specifies that the field value must be a valid UUID as
+     * defined by [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.2) with all dashes
+     * omitted. If the field value isn't a valid UUID without dashes, an error message
+     * will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid trimmed UUID
+     *   string value = 1 [(buf.validate.field).string.tuuid = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool tuuid = 33;
+     */
+    value: boolean;
+    case: "tuuid";
+  } | {
+    /**
+     * `ip_with_prefixlen` specifies that the field value must be a valid IP (v4 or v6)
+     * address with prefix length. If the field value isn't a valid IP with prefix
+     * length, an error message will be generated.
+     *
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IP with prefix length
+     *    string value = 1 [(buf.validate.field).string.ip_with_prefixlen = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ip_with_prefixlen = 26;
+     */
+    value: boolean;
+    case: "ipWithPrefixlen";
+  } | {
+    /**
+     * `ipv4_with_prefixlen` specifies that the field value must be a valid
+     * IPv4 address with prefix.
+     * If the field value isn't a valid IPv4 address with prefix length,
+     * an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IPv4 address with prefix length
+     *    string value = 1 [(buf.validate.field).string.ipv4_with_prefixlen = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv4_with_prefixlen = 27;
+     */
+    value: boolean;
+    case: "ipv4WithPrefixlen";
+  } | {
+    /**
+     * `ipv6_with_prefixlen` specifies that the field value must be a valid
+     * IPv6 address with prefix length.
+     * If the field value is not a valid IPv6 address with prefix length,
+     * an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IPv6 address prefix length
+     *    string value = 1 [(buf.validate.field).string.ipv6_with_prefixlen = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv6_with_prefixlen = 28;
+     */
+    value: boolean;
+    case: "ipv6WithPrefixlen";
+  } | {
+    /**
+     * `ip_prefix` specifies that the field value must be a valid IP (v4 or v6) prefix.
+     * If the field value isn't a valid IP prefix, an error message will be
+     * generated. The prefix must have all zeros for the masked bits of the prefix (e.g.,
+     * `127.0.0.0/16`, not `127.0.0.1/16`).
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IP prefix
+     *    string value = 1 [(buf.validate.field).string.ip_prefix = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ip_prefix = 29;
+     */
+    value: boolean;
+    case: "ipPrefix";
+  } | {
+    /**
+     * `ipv4_prefix` specifies that the field value must be a valid IPv4
+     * prefix. If the field value isn't a valid IPv4 prefix, an error message
+     * will be generated. The prefix must have all zeros for the masked bits of
+     * the prefix (e.g., `127.0.0.0/16`, not `127.0.0.1/16`).
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IPv4 prefix
+     *    string value = 1 [(buf.validate.field).string.ipv4_prefix = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv4_prefix = 30;
+     */
+    value: boolean;
+    case: "ipv4Prefix";
+  } | {
+    /**
+     * `ipv6_prefix` specifies that the field value must be a valid IPv6 prefix.
+     * If the field value is not a valid IPv6 prefix, an error message will be
+     * generated. The prefix must have all zeros for the masked bits of the prefix
+     * (e.g., `2001:db8::/48`, not `2001:db8::1/48`).
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid IPv6 prefix
+     *    string value = 1 [(buf.validate.field).string.ipv6_prefix = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv6_prefix = 31;
+     */
+    value: boolean;
+    case: "ipv6Prefix";
+  } | {
+    /**
+     * `host_and_port` specifies the field value must be a valid host and port
+     * pair. The host must be a valid hostname or IP address while the port
+     * must be in the range of 0-65535, inclusive. IPv6 addresses must be delimited
+     * with square brackets (e.g., `[::1]:1234`).
+     *
+     * @generated from field: bool host_and_port = 32;
+     */
+    value: boolean;
+    case: "hostAndPort";
+  } | {
+    /**
+     * `well_known_regex` specifies a common well-known pattern
+     * defined as a regex. If the field value doesn't match the well-known
+     * regex, an error message will be generated.
+     *
+     * ```proto
+     * message MyString {
+     *   // value must be a valid HTTP header value
+     *   string value = 1 [(buf.validate.field).string.well_known_regex = KNOWN_REGEX_HTTP_HEADER_VALUE];
+     * }
+     * ```
+     *
+     * #### KnownRegex
+     *
+     * `well_known_regex` contains some well-known patterns.
+     *
+     * | Name                          | Number | Description                               |
+     * |-------------------------------|--------|-------------------------------------------|
+     * | KNOWN_REGEX_UNSPECIFIED       | 0      |                                           |
+     * | KNOWN_REGEX_HTTP_HEADER_NAME  | 1      | HTTP header name as defined by [RFC 7230](https://tools.ietf.org/html/rfc7230#section-3.2)  |
+     * | KNOWN_REGEX_HTTP_HEADER_VALUE | 2      | HTTP header value as defined by [RFC 7230](https://tools.ietf.org/html/rfc7230#section-3.2.4) |
+     *
+     * @generated from field: buf.validate.KnownRegex well_known_regex = 24;
+     */
+    value: KnownRegex;
+    case: "wellKnownRegex";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * This applies to regexes `HTTP_HEADER_NAME` and `HTTP_HEADER_VALUE` to
@@ -3656,110 +3477,65 @@ export class StringRules extends Message<StringRules> {
    *
    * @generated from field: optional bool strict = 25;
    */
-  strict?: boolean
+  strict?: boolean;
 
   constructor(data?: PartialMessage<StringRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.StringRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.StringRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 19, name: 'len', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 2, name: 'min_len', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 3, name: 'max_len', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 20, name: 'len_bytes', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 4, name: 'min_bytes', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 5, name: 'max_bytes', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 6, name: 'pattern', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 7, name: 'prefix', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 8, name: 'suffix', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 9, name: 'contains', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 23, name: 'not_contains', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 10, name: 'in', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 11, name: 'not_in', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 12, name: 'email', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 13, name: 'hostname', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 14, name: 'ip', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 15, name: 'ipv4', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 16, name: 'ipv6', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 17, name: 'uri', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 18, name: 'uri_ref', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 21, name: 'address', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 22, name: 'uuid', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 33, name: 'tuuid', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    {
-      no: 26,
-      name: 'ip_with_prefixlen',
-      kind: 'scalar',
-      T: 8 /* ScalarType.BOOL */,
-      oneof: 'well_known',
-    },
-    {
-      no: 27,
-      name: 'ipv4_with_prefixlen',
-      kind: 'scalar',
-      T: 8 /* ScalarType.BOOL */,
-      oneof: 'well_known',
-    },
-    {
-      no: 28,
-      name: 'ipv6_with_prefixlen',
-      kind: 'scalar',
-      T: 8 /* ScalarType.BOOL */,
-      oneof: 'well_known',
-    },
-    { no: 29, name: 'ip_prefix', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    {
-      no: 30,
-      name: 'ipv4_prefix',
-      kind: 'scalar',
-      T: 8 /* ScalarType.BOOL */,
-      oneof: 'well_known',
-    },
-    {
-      no: 31,
-      name: 'ipv6_prefix',
-      kind: 'scalar',
-      T: 8 /* ScalarType.BOOL */,
-      oneof: 'well_known',
-    },
-    {
-      no: 32,
-      name: 'host_and_port',
-      kind: 'scalar',
-      T: 8 /* ScalarType.BOOL */,
-      oneof: 'well_known',
-    },
-    {
-      no: 24,
-      name: 'well_known_regex',
-      kind: 'enum',
-      T: proto3.getEnumType(KnownRegex),
-      oneof: 'well_known',
-    },
-    { no: 25, name: 'strict', kind: 'scalar', T: 8 /* ScalarType.BOOL */, opt: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 19, name: "len", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 2, name: "min_len", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 3, name: "max_len", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 20, name: "len_bytes", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 4, name: "min_bytes", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 5, name: "max_bytes", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 6, name: "pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "prefix", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 8, name: "suffix", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 9, name: "contains", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 23, name: "not_contains", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 10, name: "in", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 11, name: "not_in", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 12, name: "email", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 13, name: "hostname", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 14, name: "ip", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 15, name: "ipv4", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 16, name: "ipv6", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 17, name: "uri", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 18, name: "uri_ref", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 21, name: "address", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 22, name: "uuid", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 33, name: "tuuid", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 26, name: "ip_with_prefixlen", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 27, name: "ipv4_with_prefixlen", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 28, name: "ipv6_with_prefixlen", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 29, name: "ip_prefix", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 30, name: "ipv4_prefix", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 31, name: "ipv6_prefix", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 32, name: "host_and_port", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 24, name: "well_known_regex", kind: "enum", T: proto3.getEnumType(KnownRegex), oneof: "well_known" },
+    { no: 25, name: "strict", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StringRules {
-    return new StringRules().fromBinary(bytes, options)
+    return new StringRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StringRules {
-    return new StringRules().fromJson(jsonValue, options)
+    return new StringRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StringRules {
-    return new StringRules().fromJsonString(jsonString, options)
+    return new StringRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: StringRules | PlainMessage<StringRules> | undefined,
-    b: StringRules | PlainMessage<StringRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(StringRules, a, b)
+  static equals(a: StringRules | PlainMessage<StringRules> | undefined, b: StringRules | PlainMessage<StringRules> | undefined): boolean {
+    return proto3.util.equals(StringRules, a, b);
   }
 }
 
@@ -3783,7 +3559,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: optional bytes const = 1;
    */
-  const?: Uint8Array
+  const?: Uint8Array;
 
   /**
    * `len` requires the field value to have the specified length in bytes.
@@ -3798,7 +3574,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: optional uint64 len = 13;
    */
-  len?: bigint
+  len?: bigint;
 
   /**
    * `min_len` requires the field value to have at least the specified minimum
@@ -3814,7 +3590,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: optional uint64 min_len = 2;
    */
-  minLen?: bigint
+  minLen?: bigint;
 
   /**
    * `max_len` requires the field value to have at most the specified maximum
@@ -3830,7 +3606,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: optional uint64 max_len = 3;
    */
-  maxLen?: bigint
+  maxLen?: bigint;
 
   /**
    * `pattern` requires the field value to match the specified regular
@@ -3848,7 +3624,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: optional string pattern = 4;
    */
-  pattern?: string
+  pattern?: string;
 
   /**
    * `prefix` requires the field value to have the specified bytes at the
@@ -3864,7 +3640,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: optional bytes prefix = 5;
    */
-  prefix?: Uint8Array
+  prefix?: Uint8Array;
 
   /**
    * `suffix` requires the field value to have the specified bytes at the end
@@ -3880,7 +3656,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: optional bytes suffix = 6;
    */
-  suffix?: Uint8Array
+  suffix?: Uint8Array;
 
   /**
    * `contains` requires the field value to have the specified bytes anywhere in
@@ -3912,7 +3688,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: repeated bytes in = 8;
    */
-  in: Uint8Array[] = []
+  in: Uint8Array[] = [];
 
   /**
    * `not_in` requires the field value to be not equal to any of the specified
@@ -3929,7 +3705,7 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from field: repeated bytes not_in = 9;
    */
-  notIn: Uint8Array[] = []
+  notIn: Uint8Array[] = [];
 
   /**
    * WellKnown rules provide advanced constraints against common byte
@@ -3937,99 +3713,92 @@ export class BytesRules extends Message<BytesRules> {
    *
    * @generated from oneof buf.validate.BytesRules.well_known
    */
-  wellKnown:
-    | {
-        /**
-         * `ip` ensures that the field `value` is a valid IP address (v4 or v6) in byte format.
-         * If the field value doesn't meet this constraint, an error message is generated.
-         *
-         * ```proto
-         * message MyBytes {
-         *   // value must be a valid IP address
-         *   optional bytes value = 1 [(buf.validate.field).bytes.ip = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ip = 10;
-         */
-        value: boolean
-        case: 'ip'
-      }
-    | {
-        /**
-         * `ipv4` ensures that the field `value` is a valid IPv4 address in byte format.
-         * If the field value doesn't meet this constraint, an error message is generated.
-         *
-         * ```proto
-         * message MyBytes {
-         *   // value must be a valid IPv4 address
-         *   optional bytes value = 1 [(buf.validate.field).bytes.ipv4 = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv4 = 11;
-         */
-        value: boolean
-        case: 'ipv4'
-      }
-    | {
-        /**
-         * `ipv6` ensures that the field `value` is a valid IPv6 address in byte format.
-         * If the field value doesn't meet this constraint, an error message is generated.
-         * ```proto
-         * message MyBytes {
-         *   // value must be a valid IPv6 address
-         *   optional bytes value = 1 [(buf.validate.field).bytes.ipv6 = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool ipv6 = 12;
-         */
-        value: boolean
-        case: 'ipv6'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  wellKnown: {
+    /**
+     * `ip` ensures that the field `value` is a valid IP address (v4 or v6) in byte format.
+     * If the field value doesn't meet this constraint, an error message is generated.
+     *
+     * ```proto
+     * message MyBytes {
+     *   // value must be a valid IP address
+     *   optional bytes value = 1 [(buf.validate.field).bytes.ip = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ip = 10;
+     */
+    value: boolean;
+    case: "ip";
+  } | {
+    /**
+     * `ipv4` ensures that the field `value` is a valid IPv4 address in byte format.
+     * If the field value doesn't meet this constraint, an error message is generated.
+     *
+     * ```proto
+     * message MyBytes {
+     *   // value must be a valid IPv4 address
+     *   optional bytes value = 1 [(buf.validate.field).bytes.ipv4 = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv4 = 11;
+     */
+    value: boolean;
+    case: "ipv4";
+  } | {
+    /**
+     * `ipv6` ensures that the field `value` is a valid IPv6 address in byte format.
+     * If the field value doesn't meet this constraint, an error message is generated.
+     * ```proto
+     * message MyBytes {
+     *   // value must be a valid IPv6 address
+     *   optional bytes value = 1 [(buf.validate.field).bytes.ipv6 = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool ipv6 = 12;
+     */
+    value: boolean;
+    case: "ipv6";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<BytesRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.BytesRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.BytesRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 12 /* ScalarType.BYTES */, opt: true },
-    { no: 13, name: 'len', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 2, name: 'min_len', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 3, name: 'max_len', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 4, name: 'pattern', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 5, name: 'prefix', kind: 'scalar', T: 12 /* ScalarType.BYTES */, opt: true },
-    { no: 6, name: 'suffix', kind: 'scalar', T: 12 /* ScalarType.BYTES */, opt: true },
-    { no: 7, name: 'contains', kind: 'scalar', T: 12 /* ScalarType.BYTES */, opt: true },
-    { no: 8, name: 'in', kind: 'scalar', T: 12 /* ScalarType.BYTES */, repeated: true },
-    { no: 9, name: 'not_in', kind: 'scalar', T: 12 /* ScalarType.BYTES */, repeated: true },
-    { no: 10, name: 'ip', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 11, name: 'ipv4', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-    { no: 12, name: 'ipv6', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'well_known' },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 12 /* ScalarType.BYTES */, opt: true },
+    { no: 13, name: "len", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 2, name: "min_len", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 3, name: "max_len", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 4, name: "pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "prefix", kind: "scalar", T: 12 /* ScalarType.BYTES */, opt: true },
+    { no: 6, name: "suffix", kind: "scalar", T: 12 /* ScalarType.BYTES */, opt: true },
+    { no: 7, name: "contains", kind: "scalar", T: 12 /* ScalarType.BYTES */, opt: true },
+    { no: 8, name: "in", kind: "scalar", T: 12 /* ScalarType.BYTES */, repeated: true },
+    { no: 9, name: "not_in", kind: "scalar", T: 12 /* ScalarType.BYTES */, repeated: true },
+    { no: 10, name: "ip", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 11, name: "ipv4", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+    { no: 12, name: "ipv6", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "well_known" },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BytesRules {
-    return new BytesRules().fromBinary(bytes, options)
+    return new BytesRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BytesRules {
-    return new BytesRules().fromJson(jsonValue, options)
+    return new BytesRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BytesRules {
-    return new BytesRules().fromJsonString(jsonString, options)
+    return new BytesRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: BytesRules | PlainMessage<BytesRules> | undefined,
-    b: BytesRules | PlainMessage<BytesRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(BytesRules, a, b)
+  static equals(a: BytesRules | PlainMessage<BytesRules> | undefined, b: BytesRules | PlainMessage<BytesRules> | undefined): boolean {
+    return proto3.util.equals(BytesRules, a, b);
   }
 }
 
@@ -4058,7 +3827,7 @@ export class EnumRules extends Message<EnumRules> {
    *
    * @generated from field: optional int32 const = 1;
    */
-  const?: number
+  const?: number;
 
   /**
    * `defined_only` requires the field value to be one of the defined values for
@@ -4101,7 +3870,7 @@ export class EnumRules extends Message<EnumRules> {
    *
    * @generated from field: repeated int32 in = 3;
    */
-  in: number[] = []
+  in: number[] = [];
 
   /**
    * `not_in` requires the field value to be not equal to any of the
@@ -4123,39 +3892,36 @@ export class EnumRules extends Message<EnumRules> {
    *
    * @generated from field: repeated int32 not_in = 4;
    */
-  notIn: number[] = []
+  notIn: number[] = [];
 
   constructor(data?: PartialMessage<EnumRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.EnumRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.EnumRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'const', kind: 'scalar', T: 5 /* ScalarType.INT32 */, opt: true },
-    { no: 2, name: 'defined_only', kind: 'scalar', T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 3, name: 'in', kind: 'scalar', T: 5 /* ScalarType.INT32 */, repeated: true },
-    { no: 4, name: 'not_in', kind: 'scalar', T: 5 /* ScalarType.INT32 */, repeated: true },
-  ])
+    { no: 1, name: "const", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 2, name: "defined_only", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 3, name: "in", kind: "scalar", T: 5 /* ScalarType.INT32 */, repeated: true },
+    { no: 4, name: "not_in", kind: "scalar", T: 5 /* ScalarType.INT32 */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EnumRules {
-    return new EnumRules().fromBinary(bytes, options)
+    return new EnumRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EnumRules {
-    return new EnumRules().fromJson(jsonValue, options)
+    return new EnumRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EnumRules {
-    return new EnumRules().fromJsonString(jsonString, options)
+    return new EnumRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: EnumRules | PlainMessage<EnumRules> | undefined,
-    b: EnumRules | PlainMessage<EnumRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(EnumRules, a, b)
+  static equals(a: EnumRules | PlainMessage<EnumRules> | undefined, b: EnumRules | PlainMessage<EnumRules> | undefined): boolean {
+    return proto3.util.equals(EnumRules, a, b);
   }
 }
 
@@ -4180,7 +3946,7 @@ export class RepeatedRules extends Message<RepeatedRules> {
    *
    * @generated from field: optional uint64 min_items = 1;
    */
-  minItems?: bigint
+  minItems?: bigint;
 
   /**
    * `max_items` denotes that this field must not exceed a
@@ -4197,7 +3963,7 @@ export class RepeatedRules extends Message<RepeatedRules> {
    *
    * @generated from field: optional uint64 max_items = 2;
    */
-  maxItems?: bigint
+  maxItems?: bigint;
 
   /**
    * `unique` indicates that all elements in this field must
@@ -4213,7 +3979,7 @@ export class RepeatedRules extends Message<RepeatedRules> {
    *
    * @generated from field: optional bool unique = 3;
    */
-  unique?: boolean
+  unique?: boolean;
 
   /**
    * `items` details the constraints to be applied to each item
@@ -4234,39 +4000,36 @@ export class RepeatedRules extends Message<RepeatedRules> {
    *
    * @generated from field: optional buf.validate.FieldConstraints items = 4;
    */
-  items?: FieldConstraints
+  items?: FieldConstraints;
 
   constructor(data?: PartialMessage<RepeatedRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.RepeatedRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.RepeatedRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'min_items', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 2, name: 'max_items', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 3, name: 'unique', kind: 'scalar', T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 4, name: 'items', kind: 'message', T: FieldConstraints, opt: true },
-  ])
+    { no: 1, name: "min_items", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 2, name: "max_items", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 3, name: "unique", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 4, name: "items", kind: "message", T: FieldConstraints, opt: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RepeatedRules {
-    return new RepeatedRules().fromBinary(bytes, options)
+    return new RepeatedRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RepeatedRules {
-    return new RepeatedRules().fromJson(jsonValue, options)
+    return new RepeatedRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RepeatedRules {
-    return new RepeatedRules().fromJsonString(jsonString, options)
+    return new RepeatedRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: RepeatedRules | PlainMessage<RepeatedRules> | undefined,
-    b: RepeatedRules | PlainMessage<RepeatedRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(RepeatedRules, a, b)
+  static equals(a: RepeatedRules | PlainMessage<RepeatedRules> | undefined, b: RepeatedRules | PlainMessage<RepeatedRules> | undefined): boolean {
+    return proto3.util.equals(RepeatedRules, a, b);
   }
 }
 
@@ -4289,7 +4052,7 @@ export class MapRules extends Message<MapRules> {
    *
    * @generated from field: optional uint64 min_pairs = 1;
    */
-  minPairs?: bigint
+  minPairs?: bigint;
 
   /**
    * Specifies the maximum number of key-value pairs allowed. If the field has
@@ -4304,7 +4067,7 @@ export class MapRules extends Message<MapRules> {
    *
    * @generated from field: optional uint64 max_pairs = 2;
    */
-  maxPairs?: bigint
+  maxPairs?: bigint;
 
   /**
    * Specifies the constraints to be applied to each key in the field.
@@ -4323,7 +4086,7 @@ export class MapRules extends Message<MapRules> {
    *
    * @generated from field: optional buf.validate.FieldConstraints keys = 4;
    */
-  keys?: FieldConstraints
+  keys?: FieldConstraints;
 
   /**
    * Specifies the constraints to be applied to the value of each key in the
@@ -4344,39 +4107,36 @@ export class MapRules extends Message<MapRules> {
    *
    * @generated from field: optional buf.validate.FieldConstraints values = 5;
    */
-  values?: FieldConstraints
+  values?: FieldConstraints;
 
   constructor(data?: PartialMessage<MapRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.MapRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.MapRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'min_pairs', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 2, name: 'max_pairs', kind: 'scalar', T: 4 /* ScalarType.UINT64 */, opt: true },
-    { no: 4, name: 'keys', kind: 'message', T: FieldConstraints, opt: true },
-    { no: 5, name: 'values', kind: 'message', T: FieldConstraints, opt: true },
-  ])
+    { no: 1, name: "min_pairs", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 2, name: "max_pairs", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 4, name: "keys", kind: "message", T: FieldConstraints, opt: true },
+    { no: 5, name: "values", kind: "message", T: FieldConstraints, opt: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MapRules {
-    return new MapRules().fromBinary(bytes, options)
+    return new MapRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MapRules {
-    return new MapRules().fromJson(jsonValue, options)
+    return new MapRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MapRules {
-    return new MapRules().fromJsonString(jsonString, options)
+    return new MapRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: MapRules | PlainMessage<MapRules> | undefined,
-    b: MapRules | PlainMessage<MapRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(MapRules, a, b)
+  static equals(a: MapRules | PlainMessage<MapRules> | undefined, b: MapRules | PlainMessage<MapRules> | undefined): boolean {
+    return proto3.util.equals(MapRules, a, b);
   }
 }
 
@@ -4400,7 +4160,7 @@ export class AnyRules extends Message<AnyRules> {
    *
    * @generated from field: repeated string in = 2;
    */
-  in: string[] = []
+  in: string[] = [];
 
   /**
    * requires the field's type_url to be not equal to any of the specified values. If it matches any of the specified values, an error message is generated.
@@ -4414,37 +4174,34 @@ export class AnyRules extends Message<AnyRules> {
    *
    * @generated from field: repeated string not_in = 3;
    */
-  notIn: string[] = []
+  notIn: string[] = [];
 
   constructor(data?: PartialMessage<AnyRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.AnyRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.AnyRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 2, name: 'in', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 3, name: 'not_in', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true },
-  ])
+    { no: 2, name: "in", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "not_in", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AnyRules {
-    return new AnyRules().fromBinary(bytes, options)
+    return new AnyRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AnyRules {
-    return new AnyRules().fromJson(jsonValue, options)
+    return new AnyRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AnyRules {
-    return new AnyRules().fromJsonString(jsonString, options)
+    return new AnyRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: AnyRules | PlainMessage<AnyRules> | undefined,
-    b: AnyRules | PlainMessage<AnyRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(AnyRules, a, b)
+  static equals(a: AnyRules | PlainMessage<AnyRules> | undefined, b: AnyRules | PlainMessage<AnyRules> | undefined): boolean {
+    return proto3.util.equals(AnyRules, a, b);
   }
 }
 
@@ -4468,107 +4225,101 @@ export class DurationRules extends Message<DurationRules> {
    *
    * @generated from field: optional google.protobuf.Duration const = 2;
    */
-  const?: Duration
+  const?: Duration;
 
   /**
    * @generated from oneof buf.validate.DurationRules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * `lt` stipulates that the field must be less than the specified value of the `google.protobuf.Duration` type,
-         * exclusive. If the field's value is greater than or equal to the specified
-         * value, an error message will be generated.
-         *
-         * ```proto
-         * message MyDuration {
-         *   // value must be less than 5s
-         *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.lt = "5s"];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Duration lt = 3;
-         */
-        value: Duration
-        case: 'lt'
-      }
-    | {
-        /**
-         * `lte` indicates that the field must be less than or equal to the specified
-         * value of the `google.protobuf.Duration` type, inclusive. If the field's value is greater than the specified value,
-         * an error message will be generated.
-         *
-         * ```proto
-         * message MyDuration {
-         *   // value must be less than or equal to 10s
-         *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.lte = "10s"];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Duration lte = 4;
-         */
-        value: Duration
-        case: 'lte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * `lt` stipulates that the field must be less than the specified value of the `google.protobuf.Duration` type,
+     * exclusive. If the field's value is greater than or equal to the specified
+     * value, an error message will be generated.
+     *
+     * ```proto
+     * message MyDuration {
+     *   // value must be less than 5s
+     *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.lt = "5s"];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Duration lt = 3;
+     */
+    value: Duration;
+    case: "lt";
+  } | {
+    /**
+     * `lte` indicates that the field must be less than or equal to the specified
+     * value of the `google.protobuf.Duration` type, inclusive. If the field's value is greater than the specified value,
+     * an error message will be generated.
+     *
+     * ```proto
+     * message MyDuration {
+     *   // value must be less than or equal to 10s
+     *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.lte = "10s"];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Duration lte = 4;
+     */
+    value: Duration;
+    case: "lte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.DurationRules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the duration field value to be greater than the specified
-         * value (exclusive). If the value of `gt` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyDuration {
-         *   // duration must be greater than 5s [duration.gt]
-         *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.gt = { seconds: 5 }];
-         *
-         *   // duration must be greater than 5s and less than 10s [duration.gt_lt]
-         *   google.protobuf.Duration another_value = 2 [(buf.validate.field).duration = { gt: { seconds: 5 }, lt: { seconds: 10 } }];
-         *
-         *   // duration must be greater than 10s or less than 5s [duration.gt_lt_exclusive]
-         *   google.protobuf.Duration other_value = 3 [(buf.validate.field).duration = { gt: { seconds: 10 }, lt: { seconds: 5 } }];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Duration gt = 5;
-         */
-        value: Duration
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the duration field value to be greater than or equal to the
-         * specified value (exclusive). If the value of `gte` is larger than a
-         * specified `lt` or `lte`, the range is reversed, and the field value must
-         * be outside the specified range. If the field value doesn't meet the
-         * required conditions, an error message is generated.
-         *
-         * ```proto
-         * message MyDuration {
-         *  // duration must be greater than or equal to 5s [duration.gte]
-         *  google.protobuf.Duration value = 1 [(buf.validate.field).duration.gte = { seconds: 5 }];
-         *
-         *  // duration must be greater than or equal to 5s and less than 10s [duration.gte_lt]
-         *  google.protobuf.Duration another_value = 2 [(buf.validate.field).duration = { gte: { seconds: 5 }, lt: { seconds: 10 } }];
-         *
-         *  // duration must be greater than or equal to 10s or less than 5s [duration.gte_lt_exclusive]
-         *  google.protobuf.Duration other_value = 3 [(buf.validate.field).duration = { gte: { seconds: 10 }, lt: { seconds: 5 } }];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Duration gte = 6;
-         */
-        value: Duration
-        case: 'gte'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  greaterThan: {
+    /**
+     * `gt` requires the duration field value to be greater than the specified
+     * value (exclusive). If the value of `gt` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyDuration {
+     *   // duration must be greater than 5s [duration.gt]
+     *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.gt = { seconds: 5 }];
+     *
+     *   // duration must be greater than 5s and less than 10s [duration.gt_lt]
+     *   google.protobuf.Duration another_value = 2 [(buf.validate.field).duration = { gt: { seconds: 5 }, lt: { seconds: 10 } }];
+     *
+     *   // duration must be greater than 10s or less than 5s [duration.gt_lt_exclusive]
+     *   google.protobuf.Duration other_value = 3 [(buf.validate.field).duration = { gt: { seconds: 10 }, lt: { seconds: 5 } }];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Duration gt = 5;
+     */
+    value: Duration;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the duration field value to be greater than or equal to the
+     * specified value (exclusive). If the value of `gte` is larger than a
+     * specified `lt` or `lte`, the range is reversed, and the field value must
+     * be outside the specified range. If the field value doesn't meet the
+     * required conditions, an error message is generated.
+     *
+     * ```proto
+     * message MyDuration {
+     *  // duration must be greater than or equal to 5s [duration.gte]
+     *  google.protobuf.Duration value = 1 [(buf.validate.field).duration.gte = { seconds: 5 }];
+     *
+     *  // duration must be greater than or equal to 5s and less than 10s [duration.gte_lt]
+     *  google.protobuf.Duration another_value = 2 [(buf.validate.field).duration = { gte: { seconds: 5 }, lt: { seconds: 10 } }];
+     *
+     *  // duration must be greater than or equal to 10s or less than 5s [duration.gte_lt_exclusive]
+     *  google.protobuf.Duration other_value = 3 [(buf.validate.field).duration = { gte: { seconds: 10 }, lt: { seconds: 5 } }];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Duration gte = 6;
+     */
+    value: Duration;
+    case: "gte";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `in` asserts that the field must be equal to one of the specified values of the `google.protobuf.Duration` type.
@@ -4584,7 +4335,7 @@ export class DurationRules extends Message<DurationRules> {
    *
    * @generated from field: repeated google.protobuf.Duration in = 7;
    */
-  in: Duration[] = []
+  in: Duration[] = [];
 
   /**
    * `not_in` denotes that the field must not be equal to
@@ -4601,42 +4352,39 @@ export class DurationRules extends Message<DurationRules> {
    *
    * @generated from field: repeated google.protobuf.Duration not_in = 8;
    */
-  notIn: Duration[] = []
+  notIn: Duration[] = [];
 
   constructor(data?: PartialMessage<DurationRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.DurationRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.DurationRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 2, name: 'const', kind: 'message', T: Duration, opt: true },
-    { no: 3, name: 'lt', kind: 'message', T: Duration, oneof: 'less_than' },
-    { no: 4, name: 'lte', kind: 'message', T: Duration, oneof: 'less_than' },
-    { no: 5, name: 'gt', kind: 'message', T: Duration, oneof: 'greater_than' },
-    { no: 6, name: 'gte', kind: 'message', T: Duration, oneof: 'greater_than' },
-    { no: 7, name: 'in', kind: 'message', T: Duration, repeated: true },
-    { no: 8, name: 'not_in', kind: 'message', T: Duration, repeated: true },
-  ])
+    { no: 2, name: "const", kind: "message", T: Duration, opt: true },
+    { no: 3, name: "lt", kind: "message", T: Duration, oneof: "less_than" },
+    { no: 4, name: "lte", kind: "message", T: Duration, oneof: "less_than" },
+    { no: 5, name: "gt", kind: "message", T: Duration, oneof: "greater_than" },
+    { no: 6, name: "gte", kind: "message", T: Duration, oneof: "greater_than" },
+    { no: 7, name: "in", kind: "message", T: Duration, repeated: true },
+    { no: 8, name: "not_in", kind: "message", T: Duration, repeated: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DurationRules {
-    return new DurationRules().fromBinary(bytes, options)
+    return new DurationRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DurationRules {
-    return new DurationRules().fromJson(jsonValue, options)
+    return new DurationRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DurationRules {
-    return new DurationRules().fromJsonString(jsonString, options)
+    return new DurationRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: DurationRules | PlainMessage<DurationRules> | undefined,
-    b: DurationRules | PlainMessage<DurationRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(DurationRules, a, b)
+  static equals(a: DurationRules | PlainMessage<DurationRules> | undefined, b: DurationRules | PlainMessage<DurationRules> | undefined): boolean {
+    return proto3.util.equals(DurationRules, a, b);
   }
 }
 
@@ -4658,135 +4406,127 @@ export class TimestampRules extends Message<TimestampRules> {
    *
    * @generated from field: optional google.protobuf.Timestamp const = 2;
    */
-  const?: Timestamp
+  const?: Timestamp;
 
   /**
    * @generated from oneof buf.validate.TimestampRules.less_than
    */
-  lessThan:
-    | {
-        /**
-         * requires the duration field value to be less than the specified value (field < value). If the field value doesn't meet the required conditions, an error message is generated.
-         *
-         * ```proto
-         * message MyDuration {
-         *   // duration must be less than 'P3D' [duration.lt]
-         *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.lt = { seconds: 259200 }];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Timestamp lt = 3;
-         */
-        value: Timestamp
-        case: 'lt'
-      }
-    | {
-        /**
-         * requires the timestamp field value to be less than or equal to the specified value (field <= value). If the field value doesn't meet the required conditions, an error message is generated.
-         *
-         * ```proto
-         * message MyTimestamp {
-         *   // timestamp must be less than or equal to '2023-05-14T00:00:00Z' [timestamp.lte]
-         *   google.protobuf.Timestamp value = 1 [(buf.validate.field).timestamp.lte = { seconds: 1678867200 }];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Timestamp lte = 4;
-         */
-        value: Timestamp
-        case: 'lte'
-      }
-    | {
-        /**
-         * `lt_now` specifies that this field, of the `google.protobuf.Timestamp` type, must be less than the current time. `lt_now` can only be used with the `within` rule.
-         *
-         * ```proto
-         * message MyTimestamp {
-         *  // value must be less than now
-         *   google.protobuf.Timestamp created_at = 1 [(buf.validate.field).timestamp.lt_now = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool lt_now = 7;
-         */
-        value: boolean
-        case: 'ltNow'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  lessThan: {
+    /**
+     * requires the duration field value to be less than the specified value (field < value). If the field value doesn't meet the required conditions, an error message is generated.
+     *
+     * ```proto
+     * message MyDuration {
+     *   // duration must be less than 'P3D' [duration.lt]
+     *   google.protobuf.Duration value = 1 [(buf.validate.field).duration.lt = { seconds: 259200 }];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Timestamp lt = 3;
+     */
+    value: Timestamp;
+    case: "lt";
+  } | {
+    /**
+     * requires the timestamp field value to be less than or equal to the specified value (field <= value). If the field value doesn't meet the required conditions, an error message is generated.
+     *
+     * ```proto
+     * message MyTimestamp {
+     *   // timestamp must be less than or equal to '2023-05-14T00:00:00Z' [timestamp.lte]
+     *   google.protobuf.Timestamp value = 1 [(buf.validate.field).timestamp.lte = { seconds: 1678867200 }];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Timestamp lte = 4;
+     */
+    value: Timestamp;
+    case: "lte";
+  } | {
+    /**
+     * `lt_now` specifies that this field, of the `google.protobuf.Timestamp` type, must be less than the current time. `lt_now` can only be used with the `within` rule.
+     *
+     * ```proto
+     * message MyTimestamp {
+     *  // value must be less than now
+     *   google.protobuf.Timestamp created_at = 1 [(buf.validate.field).timestamp.lt_now = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool lt_now = 7;
+     */
+    value: boolean;
+    case: "ltNow";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * @generated from oneof buf.validate.TimestampRules.greater_than
    */
-  greaterThan:
-    | {
-        /**
-         * `gt` requires the timestamp field value to be greater than the specified
-         * value (exclusive). If the value of `gt` is larger than a specified `lt`
-         * or `lte`, the range is reversed, and the field value must be outside the
-         * specified range. If the field value doesn't meet the required conditions,
-         * an error message is generated.
-         *
-         * ```proto
-         * message MyTimestamp {
-         *   // timestamp must be greater than '2023-01-01T00:00:00Z' [timestamp.gt]
-         *   google.protobuf.Timestamp value = 1 [(buf.validate.field).timestamp.gt = { seconds: 1672444800 }];
-         *
-         *   // timestamp must be greater than '2023-01-01T00:00:00Z' and less than '2023-01-02T00:00:00Z' [timestamp.gt_lt]
-         *   google.protobuf.Timestamp another_value = 2 [(buf.validate.field).timestamp = { gt: { seconds: 1672444800 }, lt: { seconds: 1672531200 } }];
-         *
-         *   // timestamp must be greater than '2023-01-02T00:00:00Z' or less than '2023-01-01T00:00:00Z' [timestamp.gt_lt_exclusive]
-         *   google.protobuf.Timestamp other_value = 3 [(buf.validate.field).timestamp = { gt: { seconds: 1672531200 }, lt: { seconds: 1672444800 } }];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Timestamp gt = 5;
-         */
-        value: Timestamp
-        case: 'gt'
-      }
-    | {
-        /**
-         * `gte` requires the timestamp field value to be greater than or equal to the
-         * specified value (exclusive). If the value of `gte` is larger than a
-         * specified `lt` or `lte`, the range is reversed, and the field value
-         * must be outside the specified range. If the field value doesn't meet
-         * the required conditions, an error message is generated.
-         *
-         * ```proto
-         * message MyTimestamp {
-         *   // timestamp must be greater than or equal to '2023-01-01T00:00:00Z' [timestamp.gte]
-         *   google.protobuf.Timestamp value = 1 [(buf.validate.field).timestamp.gte = { seconds: 1672444800 }];
-         *
-         *   // timestamp must be greater than or equal to '2023-01-01T00:00:00Z' and less than '2023-01-02T00:00:00Z' [timestamp.gte_lt]
-         *   google.protobuf.Timestamp another_value = 2 [(buf.validate.field).timestamp = { gte: { seconds: 1672444800 }, lt: { seconds: 1672531200 } }];
-         *
-         *   // timestamp must be greater than or equal to '2023-01-02T00:00:00Z' or less than '2023-01-01T00:00:00Z' [timestamp.gte_lt_exclusive]
-         *   google.protobuf.Timestamp other_value = 3 [(buf.validate.field).timestamp = { gte: { seconds: 1672531200 }, lt: { seconds: 1672444800 } }];
-         * }
-         * ```
-         *
-         * @generated from field: google.protobuf.Timestamp gte = 6;
-         */
-        value: Timestamp
-        case: 'gte'
-      }
-    | {
-        /**
-         * `gt_now` specifies that this field, of the `google.protobuf.Timestamp` type, must be greater than the current time. `gt_now` can only be used with the `within` rule.
-         *
-         * ```proto
-         * message MyTimestamp {
-         *   // value must be greater than now
-         *   google.protobuf.Timestamp created_at = 1 [(buf.validate.field).timestamp.gt_now = true];
-         * }
-         * ```
-         *
-         * @generated from field: bool gt_now = 8;
-         */
-        value: boolean
-        case: 'gtNow'
-      }
-    | { case: undefined; value?: undefined } = { case: undefined }
+  greaterThan: {
+    /**
+     * `gt` requires the timestamp field value to be greater than the specified
+     * value (exclusive). If the value of `gt` is larger than a specified `lt`
+     * or `lte`, the range is reversed, and the field value must be outside the
+     * specified range. If the field value doesn't meet the required conditions,
+     * an error message is generated.
+     *
+     * ```proto
+     * message MyTimestamp {
+     *   // timestamp must be greater than '2023-01-01T00:00:00Z' [timestamp.gt]
+     *   google.protobuf.Timestamp value = 1 [(buf.validate.field).timestamp.gt = { seconds: 1672444800 }];
+     *
+     *   // timestamp must be greater than '2023-01-01T00:00:00Z' and less than '2023-01-02T00:00:00Z' [timestamp.gt_lt]
+     *   google.protobuf.Timestamp another_value = 2 [(buf.validate.field).timestamp = { gt: { seconds: 1672444800 }, lt: { seconds: 1672531200 } }];
+     *
+     *   // timestamp must be greater than '2023-01-02T00:00:00Z' or less than '2023-01-01T00:00:00Z' [timestamp.gt_lt_exclusive]
+     *   google.protobuf.Timestamp other_value = 3 [(buf.validate.field).timestamp = { gt: { seconds: 1672531200 }, lt: { seconds: 1672444800 } }];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Timestamp gt = 5;
+     */
+    value: Timestamp;
+    case: "gt";
+  } | {
+    /**
+     * `gte` requires the timestamp field value to be greater than or equal to the
+     * specified value (exclusive). If the value of `gte` is larger than a
+     * specified `lt` or `lte`, the range is reversed, and the field value
+     * must be outside the specified range. If the field value doesn't meet
+     * the required conditions, an error message is generated.
+     *
+     * ```proto
+     * message MyTimestamp {
+     *   // timestamp must be greater than or equal to '2023-01-01T00:00:00Z' [timestamp.gte]
+     *   google.protobuf.Timestamp value = 1 [(buf.validate.field).timestamp.gte = { seconds: 1672444800 }];
+     *
+     *   // timestamp must be greater than or equal to '2023-01-01T00:00:00Z' and less than '2023-01-02T00:00:00Z' [timestamp.gte_lt]
+     *   google.protobuf.Timestamp another_value = 2 [(buf.validate.field).timestamp = { gte: { seconds: 1672444800 }, lt: { seconds: 1672531200 } }];
+     *
+     *   // timestamp must be greater than or equal to '2023-01-02T00:00:00Z' or less than '2023-01-01T00:00:00Z' [timestamp.gte_lt_exclusive]
+     *   google.protobuf.Timestamp other_value = 3 [(buf.validate.field).timestamp = { gte: { seconds: 1672531200 }, lt: { seconds: 1672444800 } }];
+     * }
+     * ```
+     *
+     * @generated from field: google.protobuf.Timestamp gte = 6;
+     */
+    value: Timestamp;
+    case: "gte";
+  } | {
+    /**
+     * `gt_now` specifies that this field, of the `google.protobuf.Timestamp` type, must be greater than the current time. `gt_now` can only be used with the `within` rule.
+     *
+     * ```proto
+     * message MyTimestamp {
+     *   // value must be greater than now
+     *   google.protobuf.Timestamp created_at = 1 [(buf.validate.field).timestamp.gt_now = true];
+     * }
+     * ```
+     *
+     * @generated from field: bool gt_now = 8;
+     */
+    value: boolean;
+    case: "gtNow";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * `within` specifies that this field, of the `google.protobuf.Timestamp` type, must be within the specified duration of the current time. If the field value isn't within the duration, an error message is generated.
@@ -4800,43 +4540,40 @@ export class TimestampRules extends Message<TimestampRules> {
    *
    * @generated from field: optional google.protobuf.Duration within = 9;
    */
-  within?: Duration
+  within?: Duration;
 
   constructor(data?: PartialMessage<TimestampRules>) {
-    super()
-    proto3.util.initPartial(data, this)
+    super();
+    proto3.util.initPartial(data, this);
   }
 
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'buf.validate.TimestampRules'
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "buf.validate.TimestampRules";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 2, name: 'const', kind: 'message', T: Timestamp, opt: true },
-    { no: 3, name: 'lt', kind: 'message', T: Timestamp, oneof: 'less_than' },
-    { no: 4, name: 'lte', kind: 'message', T: Timestamp, oneof: 'less_than' },
-    { no: 7, name: 'lt_now', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'less_than' },
-    { no: 5, name: 'gt', kind: 'message', T: Timestamp, oneof: 'greater_than' },
-    { no: 6, name: 'gte', kind: 'message', T: Timestamp, oneof: 'greater_than' },
-    { no: 8, name: 'gt_now', kind: 'scalar', T: 8 /* ScalarType.BOOL */, oneof: 'greater_than' },
-    { no: 9, name: 'within', kind: 'message', T: Duration, opt: true },
-  ])
+    { no: 2, name: "const", kind: "message", T: Timestamp, opt: true },
+    { no: 3, name: "lt", kind: "message", T: Timestamp, oneof: "less_than" },
+    { no: 4, name: "lte", kind: "message", T: Timestamp, oneof: "less_than" },
+    { no: 7, name: "lt_now", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "less_than" },
+    { no: 5, name: "gt", kind: "message", T: Timestamp, oneof: "greater_than" },
+    { no: 6, name: "gte", kind: "message", T: Timestamp, oneof: "greater_than" },
+    { no: 8, name: "gt_now", kind: "scalar", T: 8 /* ScalarType.BOOL */, oneof: "greater_than" },
+    { no: 9, name: "within", kind: "message", T: Duration, opt: true },
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TimestampRules {
-    return new TimestampRules().fromBinary(bytes, options)
+    return new TimestampRules().fromBinary(bytes, options);
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TimestampRules {
-    return new TimestampRules().fromJson(jsonValue, options)
+    return new TimestampRules().fromJson(jsonValue, options);
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TimestampRules {
-    return new TimestampRules().fromJsonString(jsonString, options)
+    return new TimestampRules().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: TimestampRules | PlainMessage<TimestampRules> | undefined,
-    b: TimestampRules | PlainMessage<TimestampRules> | undefined,
-  ): boolean {
-    return proto3.util.equals(TimestampRules, a, b)
+  static equals(a: TimestampRules | PlainMessage<TimestampRules> | undefined, b: TimestampRules | PlainMessage<TimestampRules> | undefined): boolean {
+    return proto3.util.equals(TimestampRules, a, b);
   }
 }
 
@@ -4847,10 +4584,10 @@ export class TimestampRules extends Message<TimestampRules> {
  * @generated from extension: optional buf.validate.MessageConstraints message = 1159;
  */
 export const message = proto3.makeExtension<MessageOptions, MessageConstraints>(
-  'buf.validate.message',
-  MessageOptions,
-  () => ({ no: 1159, kind: 'message', T: MessageConstraints, opt: true }),
-)
+  "buf.validate.message", 
+  MessageOptions, 
+  () => ({ no: 1159, kind: "message", T: MessageConstraints, opt: true }),
+);
 
 /**
  * Rules specify the validations to be performed on this oneof. By default,
@@ -4859,10 +4596,10 @@ export const message = proto3.makeExtension<MessageOptions, MessageConstraints>(
  * @generated from extension: optional buf.validate.OneofConstraints oneof = 1159;
  */
 export const oneof = proto3.makeExtension<OneofOptions, OneofConstraints>(
-  'buf.validate.oneof',
-  OneofOptions,
-  () => ({ no: 1159, kind: 'message', T: OneofConstraints, opt: true }),
-)
+  "buf.validate.oneof", 
+  OneofOptions, 
+  () => ({ no: 1159, kind: "message", T: OneofConstraints, opt: true }),
+);
 
 /**
  * Rules specify the validations to be performed on this field. By default,
@@ -4871,7 +4608,8 @@ export const oneof = proto3.makeExtension<OneofOptions, OneofConstraints>(
  * @generated from extension: optional buf.validate.FieldConstraints field = 1159;
  */
 export const field = proto3.makeExtension<FieldOptions, FieldConstraints>(
-  'buf.validate.field',
-  FieldOptions,
-  () => ({ no: 1159, kind: 'message', T: FieldConstraints, opt: true }),
-)
+  "buf.validate.field", 
+  FieldOptions, 
+  () => ({ no: 1159, kind: "message", T: FieldConstraints, opt: true }),
+);
+

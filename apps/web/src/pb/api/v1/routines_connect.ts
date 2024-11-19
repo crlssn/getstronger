@@ -3,35 +3,20 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-  AddExerciseRequest,
-  AddExerciseResponse,
-  CreateRoutineRequest,
-  CreateRoutineResponse,
-  DeleteRoutineRequest,
-  DeleteRoutineResponse,
-  GetRoutineRequest,
-  GetRoutineResponse,
-  ListRoutinesRequest,
-  ListRoutinesResponse,
-  RemoveExerciseRequest,
-  RemoveExerciseResponse,
-  UpdateRoutineRequest,
-  UpdateRoutineResponse,
-} from './routines_pb.js'
-import { MethodKind } from '@bufbuild/protobuf'
+import { AddExerciseRequest, AddExerciseResponse, CreateRoutineRequest, CreateRoutineResponse, DeleteRoutineRequest, DeleteRoutineResponse, GetRoutineRequest, GetRoutineResponse, ListRoutinesRequest, ListRoutinesResponse, RemoveExerciseRequest, RemoveExerciseResponse, UpdateRoutineRequest, UpdateRoutineResponse } from "./routines_pb.js";
+import { MethodKind } from "@bufbuild/protobuf";
 
 /**
  * @generated from service api.v1.RoutineService
  */
 export const RoutineService = {
-  typeName: 'api.v1.RoutineService',
+  typeName: "api.v1.RoutineService",
   methods: {
     /**
      * @generated from rpc api.v1.RoutineService.Create
      */
     create: {
-      name: 'Create',
+      name: "Create",
       I: CreateRoutineRequest,
       O: CreateRoutineResponse,
       kind: MethodKind.Unary,
@@ -40,7 +25,7 @@ export const RoutineService = {
      * @generated from rpc api.v1.RoutineService.Get
      */
     get: {
-      name: 'Get',
+      name: "Get",
       I: GetRoutineRequest,
       O: GetRoutineResponse,
       kind: MethodKind.Unary,
@@ -49,7 +34,7 @@ export const RoutineService = {
      * @generated from rpc api.v1.RoutineService.Update
      */
     update: {
-      name: 'Update',
+      name: "Update",
       I: UpdateRoutineRequest,
       O: UpdateRoutineResponse,
       kind: MethodKind.Unary,
@@ -58,7 +43,7 @@ export const RoutineService = {
      * @generated from rpc api.v1.RoutineService.Delete
      */
     delete: {
-      name: 'Delete',
+      name: "Delete",
       I: DeleteRoutineRequest,
       O: DeleteRoutineResponse,
       kind: MethodKind.Unary,
@@ -67,7 +52,7 @@ export const RoutineService = {
      * @generated from rpc api.v1.RoutineService.List
      */
     list: {
-      name: 'List',
+      name: "List",
       I: ListRoutinesRequest,
       O: ListRoutinesResponse,
       kind: MethodKind.Unary,
@@ -76,7 +61,7 @@ export const RoutineService = {
      * @generated from rpc api.v1.RoutineService.AddExercise
      */
     addExercise: {
-      name: 'AddExercise',
+      name: "AddExercise",
       I: AddExerciseRequest,
       O: AddExerciseResponse,
       kind: MethodKind.Unary,
@@ -85,10 +70,11 @@ export const RoutineService = {
      * @generated from rpc api.v1.RoutineService.RemoveExercise
      */
     removeExercise: {
-      name: 'RemoveExercise',
+      name: "RemoveExercise",
       I: RemoveExerciseRequest,
       O: RemoveExerciseResponse,
       kind: MethodKind.Unary,
     },
-  },
-} as const
+  }
+} as const;
+

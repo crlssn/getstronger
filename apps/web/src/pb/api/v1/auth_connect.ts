@@ -3,29 +3,20 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-  LoginRequest,
-  LoginResponse,
-  LogoutRequest,
-  LogoutResponse,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
-  SignupRequest,
-  SignupResponse,
-} from './auth_pb.js'
-import { MethodKind } from '@bufbuild/protobuf'
+import { LoginRequest, LoginResponse, LogoutRequest, LogoutResponse, RefreshTokenRequest, RefreshTokenResponse, SignupRequest, SignupResponse } from "./auth_pb.js";
+import { MethodKind } from "@bufbuild/protobuf";
 
 /**
  * @generated from service api.v1.AuthService
  */
 export const AuthService = {
-  typeName: 'api.v1.AuthService',
+  typeName: "api.v1.AuthService",
   methods: {
     /**
      * @generated from rpc api.v1.AuthService.Signup
      */
     signup: {
-      name: 'Signup',
+      name: "Signup",
       I: SignupRequest,
       O: SignupResponse,
       kind: MethodKind.Unary,
@@ -34,7 +25,7 @@ export const AuthService = {
      * @generated from rpc api.v1.AuthService.Login
      */
     login: {
-      name: 'Login',
+      name: "Login",
       I: LoginRequest,
       O: LoginResponse,
       kind: MethodKind.Unary,
@@ -43,7 +34,7 @@ export const AuthService = {
      * @generated from rpc api.v1.AuthService.RefreshToken
      */
     refreshToken: {
-      name: 'RefreshToken',
+      name: "RefreshToken",
       I: RefreshTokenRequest,
       O: RefreshTokenResponse,
       kind: MethodKind.Unary,
@@ -52,10 +43,11 @@ export const AuthService = {
      * @generated from rpc api.v1.AuthService.Logout
      */
     logout: {
-      name: 'Logout',
+      name: "Logout",
       I: LogoutRequest,
       O: LogoutResponse,
       kind: MethodKind.Unary,
     },
-  },
-} as const
+  }
+} as const;
+
