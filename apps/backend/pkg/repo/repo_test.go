@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/volatiletech/null/v8"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/test/testdb"
 )
@@ -46,7 +45,7 @@ func (s *repoSuite) TestListExercises() {
 
 	type test struct {
 		name     string
-		req      ListExercisesParams
+		opts     []ListExercisesOpt
 		init     func(test)
 		expected expected
 	}
@@ -56,11 +55,9 @@ func (s *repoSuite) TestListExercises() {
 	tests := []test{
 		{
 			name: "ok_valid_access_token",
-			req: ListExercisesParams{
-				UserID:    user.ID,
-				Name:      null.String{},
-				Limit:     2,
-				PageToken: nil,
+			opts: []ListExercisesOpt{
+				ListExercisesWithUserID(user.ID),
+				ListExercisesWithLimit(2),
 			},
 			init: func(_ test) {
 				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
@@ -78,7 +75,7 @@ func (s *repoSuite) TestListExercises() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			t.init(t)
-			exercises, nextPageToken, err := s.repo.ListExercises(context.Background(), t.req)
+			exercises, err := s.repo.ListExercises(context.Background(), t.opts...)
 			if t.expected.err != nil {
 				s.Require().Error(err)
 				s.Require().ErrorIs(err, t.expected.err)
@@ -88,11 +85,6 @@ func (s *repoSuite) TestListExercises() {
 
 			s.Require().NoError(err)
 			s.Require().Len(exercises, t.expected.exercises)
-			if t.expected.nextPageToken {
-				s.Require().NotNil(nextPageToken)
-			} else {
-				s.Require().Nil(nextPageToken)
-			}
 		})
 	}
 }

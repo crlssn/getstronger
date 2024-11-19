@@ -192,13 +192,6 @@ func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 	return nil
 }
 
-type ListExercisesParams struct {
-	UserID    string
-	Name      null.String
-	Limit     int
-	PageToken []byte
-}
-
 type PageToken struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
