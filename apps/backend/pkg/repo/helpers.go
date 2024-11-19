@@ -12,13 +12,21 @@ type ModelSlice interface {
 	orm.WorkoutSlice | orm.ExerciseSlice | orm.UserSlice | orm.RoutineSlice
 }
 
+type Pagination[T ModelSlice] struct {
+	Items         T
+	NextPageToken []byte
+}
+
 func PaginateSlice[S ModelSlice](
 	items S,
 	limit int,
 	timestamp func(S) time.Time,
-) (S, []byte, error) {
+) (*Pagination[S], error) {
 	if len(items) <= limit {
-		return items, nil, nil
+		return &Pagination[S]{
+			Items:         items,
+			NextPageToken: nil,
+		}, nil
 	}
 
 	items = items[:limit]
@@ -28,8 +36,11 @@ func PaginateSlice[S ModelSlice](
 
 	nextPageToken, err := json.Marshal(token)
 	if err != nil {
-		return nil, nil, errors.New("failed to marshal page token")
+		return nil, errors.New("failed to marshal page token")
 	}
 
-	return items, nextPageToken, nil
+	return &Pagination[S]{
+		Items:         items,
+		NextPageToken: nextPageToken,
+	}, nil
 }

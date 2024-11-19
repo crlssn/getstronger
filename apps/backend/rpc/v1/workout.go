@@ -66,16 +66,20 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 	//	}
 	//}
 
-	workouts, nextPageToken, err := repo.PaginateSlice(workouts, limit, func(workouts orm.WorkoutSlice) time.Time {
+	pagination, err := repo.PaginateSlice(workouts, limit, func(workouts orm.WorkoutSlice) time.Time {
 		return workouts[0].CreatedAt
 	})
+	if err != nil {
+		log.Error("failed to paginate workouts", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
 
-	workoutsPB, err := parseWorkoutsToPB(workouts)
+	workoutsPB, err := parseWorkoutsToPB(pagination.Items)
 
 	return &connect.Response[v1.ListWorkoutsResponse]{
 		Msg: &v1.ListWorkoutsResponse{
 			Workouts:      workoutsPB,
-			NextPageToken: nextPageToken,
+			NextPageToken: pagination.NextPageToken,
 		},
 	}, nil
 }
