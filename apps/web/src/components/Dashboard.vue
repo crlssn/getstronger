@@ -40,6 +40,8 @@ const sidebarOpen = ref(false)
 const route = useRoute()
 
 const isActive = (basePath: string) => computed(() => route.path.startsWith(basePath))
+
+import NavigationMobile from '@/components/NavigationMobile.vue'
 </script>
 
 <template>
@@ -281,21 +283,5 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
     </div>
   </div>
 
-  <nav class="mobile">
-    <div class="flex justify-evenly items-center h-full">
-      <RouterLink v-for="item in navigation" :key="item.href" :to="item.href">
-        <component
-          :is="item.icon"
-          class="h-6 w-6"
-          :class="isActive(item.href).value ? 'text-indigo-500' : 'text-gray-500'"
-        />
-      </RouterLink>
-    </div>
-  </nav>
+  <NavigationMobile :items="navigation" />
 </template>
-
-<style scoped>
-nav.mobile {
-  @apply fixed w-full bottom-0 z-50 h-16 bg-white border-t-2 border-gray-200 lg:hidden;
-}
-</style>
