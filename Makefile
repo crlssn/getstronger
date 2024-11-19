@@ -14,6 +14,7 @@ migrate:
 
 protos:
 	buf generate
+	goimports -w .
 
 generate-cert:
 	@bash -c 'openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
