@@ -32,3 +32,7 @@ run_web:
 
 lint:
 	golangci-lint run
+
+sort_packages:
+	npx sort-package-json
+	goimports -w .

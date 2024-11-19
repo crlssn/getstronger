@@ -16,7 +16,7 @@ import (
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/rpc/interceptors"
-	"github.com/crlssn/getstronger/apps/backend/rpc/v1"
+	v1 "github.com/crlssn/getstronger/apps/backend/rpc/v1"
 )
 
 type Handler func(opts ...connect.HandlerOption) (string, http.Handler)
