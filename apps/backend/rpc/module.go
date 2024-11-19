@@ -40,6 +40,7 @@ func NewModule() fx.Option {
 			),
 			newHandlers,
 			v1.NewAuthHandler,
+			v1.NewRoutineHandler,
 			v1.NewExerciseHandler,
 		),
 		fx.Invoke(
@@ -60,6 +61,7 @@ type Handlers struct {
 	fx.In
 
 	Auth     apiv1connect.AuthServiceHandler
+	Routine  apiv1connect.RoutineServiceHandler
 	Exercise apiv1connect.ExerciseServiceHandler
 }
 
@@ -67,6 +69,9 @@ func newHandlers(p Handlers) []Handler {
 	return []Handler{
 		func(options ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewAuthServiceHandler(p.Auth, options...)
+		},
+		func(options ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewRoutineServiceHandler(p.Routine, options...)
 		},
 		func(options ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewExerciseServiceHandler(p.Exercise, options...)

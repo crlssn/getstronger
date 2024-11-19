@@ -3,6 +3,7 @@ import {createClient} from "@connectrpc/connect";
 import {AuthService} from "@/pb/api/v1/auth_connect";
 import {ExerciseService} from "@/pb/api/v1/exercise_connect";
 import {auth, logger} from "@/clients/interceptors";
+import {RoutineService} from "@/pb/api/v1/routines_connect";
 
 const transport = createConnectTransport({
   baseUrl: import.meta.env.VITE_API_URL,
@@ -15,3 +16,4 @@ const transport = createConnectTransport({
 
 export const AuthClient = createClient(AuthService, transport);
 export const ExerciseClient = createClient(ExerciseService, transport);
+export const RoutineClient = createClient(RoutineService, transport);

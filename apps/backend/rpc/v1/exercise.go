@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 
 	"connectrpc.com/connect"
@@ -58,7 +59,7 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceGetProcedure))
 	log.Info("request received")
 
-	exercise, err := h.repo.FindExercise(ctx, req.Msg.GetId())
+	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Error("exercise not found", zap.String("id", req.Msg.GetId()))
@@ -83,7 +84,7 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
-	exercise, err := h.repo.FindExercise(ctx, req.Msg.GetExercise().GetId())
+	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetExercise().GetId()))
 	if err != nil {
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -147,28 +148,39 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 	return connect.NewResponse(&v1.DeleteExerciseResponse{}), nil
 }
 
-func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
+func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) { //nolint:dupl
 	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceListProcedure))
 	log.Info("request received")
 
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
-	limit := 20
-	exercises, nextPageToken, err := h.repo.ListExercises(ctx, repo.ListExercisesParams{
-		UserID:    userID,
-		Name:      null.NewString(req.Msg.GetName(), req.Msg.GetName() != ""),
-		Limit:     limit,
-		PageToken: req.Msg.GetPageToken(),
-	})
+	limit := int(req.Msg.GetPageSize())
+	exercises, err := h.repo.ListExercises(ctx,
+		repo.ListExercisesWithName(req.Msg.GetName()),
+		repo.ListExercisesWithLimit(limit+1),
+		repo.ListExercisesWithUserID(userID),
+		repo.ListExercisesWithPageToken(req.Msg.GetPageToken()),
+	)
 	if err != nil {
 		log.Error("list exercises failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("exercises listed", zap.Any("exercises", exercises))
+	var nextPageToken []byte
+	if len(exercises) > limit {
+		exercises = exercises[:limit]
+		if nextPageToken, err = json.Marshal(repo.PageToken{
+			CreatedAt: exercises[len(exercises)-1].CreatedAt,
+		}); err != nil {
+			log.Error("marshal page token failed", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
+	}
+
+	log.Info("exercises listed")
 	return connect.NewResponse(&v1.ListExercisesResponse{
-		Exercises:     parseExerciseSliceToPB(exercises),
+		Exercises:     parseExercisesToPB(exercises),
 		NextPageToken: nextPageToken,
 	}), nil
 }
