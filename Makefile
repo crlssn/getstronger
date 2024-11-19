@@ -1,3 +1,6 @@
+start_db:
+	docker start getstronger
+
 run_db:
 	docker rm getstronger -f
 	docker run --name getstronger -d -p 5433:5432 -e POSTGRES_DB=root -e POSTGRES_USER=root -e POSTGRES_HOST_AUTH_METHOD=trust postgres:16.4
@@ -33,6 +36,7 @@ run_web:
 
 lint:
 	golangci-lint run
+	cd apps/web && npm run format
 
 sort_packages:
 	npx sort-package-json

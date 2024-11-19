@@ -15,18 +15,19 @@ import {
   Bars3Icon,
   BellIcon,
   BookOpenIcon,
+  FolderIcon,
   HomeIcon,
   XMarkIcon,
-  FolderIcon,
 } from '@heroicons/vue/24/outline'
-import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import { RouterView, useLink, useRoute } from 'vue-router'
+import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { RouterView, useRoute } from 'vue-router'
 
 const navigation = [
   { name: 'Home', href: '/home', icon: HomeIcon },
   { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
   { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
   { name: 'Workouts', href: '/workouts', icon: FolderIcon },
+  { name: 'Notifications', href: '/notifications', icon: BellIcon },
 ]
 
 const userNavigation = [
@@ -42,7 +43,7 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
 </script>
 
 <template>
-  <div>
+  <div class="mb-16">
     <TransitionRoot as="template" :show="sidebarOpen">
       <Dialog class="relative z-50 lg:hidden" @close="sidebarOpen = false">
         <TransitionChild
@@ -182,20 +183,25 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
       <div
         class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8"
       >
-        <button
-          type="button"
-          class="-m-2.5 p-2.5 text-gray-700 lg:hidden"
-          @click="sidebarOpen = true"
-        >
-          <span class="sr-only">Open sidebar</span>
-          <Bars3Icon class="h-6 w-6" aria-hidden="true" />
-        </button>
+        <img
+          class="h-auto w-8 lg:hidden"
+          src="https://tailwindui.com/plus/img/logos/mark.svg"
+          alt="Your Company"
+        />
+        <!--        <button-->
+        <!--          type="button"-->
+        <!--          class="-m-2.5 p-2.5 text-gray-700 lg:hidden"-->
+        <!--          @click="sidebarOpen = true"-->
+        <!--        >-->
+        <!--          <span class="sr-only">Open sidebar</span>-->
+        <!--          <Bars3Icon class="h-6 w-6" aria-hidden="true"/>-->
+        <!--        </button>-->
 
         <!-- Separator -->
-        <div class="h-6 w-px bg-gray-900/10 lg:hidden" aria-hidden="true" />
+        <!--        <div class="h-6 w-px bg-gray-900/10 lg:hidden" aria-hidden="true"/>-->
 
         <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-          <div class="relative flex flex-1 items-center">
+          <div class="relative flex flex-1 items-center justify-center">
             <p class="uppercase text-sm font-semibold text-gray-900 lg:hidden">
               {{ route.meta.title }}
             </p>
@@ -209,13 +215,13 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
           <!--                   placeholder="Search..." type="search" name="search"/>-->
           <!--          </form>-->
           <div class="flex items-center gap-x-4 lg:gap-x-6">
-            <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
-              <span class="sr-only">View notifications</span>
-              <BellIcon class="h-6 w-6" aria-hidden="true" />
-            </button>
+            <!--            <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">-->
+            <!--              <span class="sr-only">View notifications</span>-->
+            <!--              <BellIcon class="h-6 w-6" aria-hidden="true"/>-->
+            <!--            </button>-->
 
             <!-- Separator -->
-            <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10" aria-hidden="true" />
+            <!--            <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10" aria-hidden="true"/>-->
 
             <!-- Profile dropdown -->
             <Menu as="div" class="relative">
@@ -274,4 +280,22 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
       </main>
     </div>
   </div>
+
+  <nav class="mobile">
+    <div class="flex justify-evenly items-center h-full">
+      <RouterLink v-for="item in navigation" :key="item.href" :to="item.href">
+        <component
+          :is="item.icon"
+          class="h-6 w-6"
+          :class="isActive(item.href).value ? 'text-indigo-500' : 'text-gray-500'"
+        />
+      </RouterLink>
+    </div>
+  </nav>
 </template>
+
+<style scoped>
+nav.mobile {
+  @apply fixed w-full bottom-0 z-50 h-16 bg-white border-t-2 border-gray-200 lg:hidden;
+}
+</style>
