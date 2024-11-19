@@ -2,7 +2,7 @@ package repo
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
@@ -16,35 +16,39 @@ type ModelSlice[T any] interface {
 	~[]T
 }
 
+type PaginateParams[Item ModelItem, Slice ModelSlice[Item]] struct {
+	Items     Slice
+	Limit     int
+	Timestamp func(Item) time.Time
+}
+
 type Pagination[Item ModelItem, Slice ModelSlice[Item]] struct {
 	Items         Slice
 	NextPageToken []byte
 }
 
 func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
-	items Slice,
-	limit int,
-	timestamp func(Item) time.Time,
+	p PaginateParams[Item, Slice],
 ) (*Pagination[Item, Slice], error) {
-	if len(items) <= limit {
+	if len(p.Items) <= p.Limit {
 		return &Pagination[Item, Slice]{
-			Items:         items,
+			Items:         p.Items,
 			NextPageToken: nil,
 		}, nil
 	}
 
-	items = items[:limit]
+	p.Items = p.Items[:p.Limit]
 	token := PageToken{
-		CreatedAt: timestamp(items[len(items)-1]),
+		CreatedAt: p.Timestamp(p.Items[len(p.Items)-1]),
 	}
 
 	nextPageToken, err := json.Marshal(token)
 	if err != nil {
-		return nil, errors.New("failed to marshal page token")
+		return nil, fmt.Errorf("failed to marshal page token: %w", err)
 	}
 
 	return &Pagination[Item, Slice]{
-		Items:         items,
+		Items:         p.Items,
 		NextPageToken: nextPageToken,
 	}, nil
 }
