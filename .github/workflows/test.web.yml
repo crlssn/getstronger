@@ -1,0 +1,35 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'apps/web/**'
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Install dependencies
+        working-directory: ./apps/web
+        run: npm install
+        shell: bash
+
+      - name: Build the app
+        working-directory: ./apps/web
+        run: npm run build
+        shell: bash

@@ -27,7 +27,7 @@ runs:
       run: npm install
       shell: bash
 
-    - name: Build the Vue.js project
+    - name: Build the app
       working-directory: ./apps/web
       run: npm run build
       shell: bash
