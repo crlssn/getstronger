@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Button from "@/components/Button.vue";
-import {onMounted, ref, computed, watch} from "vue";
+import {computed, onMounted, ref, type Ref} from "vue";
 import {GetRoutineRequest, Routine} from "@/pb/api/v1/routines_pb";
 import {RoutineClient} from "@/clients/clients";
 import {useRoute} from "vue-router";
@@ -17,55 +17,100 @@ const fetchRoutine = async (id: string) => {
   routine.value = res.routine
 }
 
+type Set = {
+  weight?: number
+  reps?: number
+}
+
+const map: Ref<Map<string, Set[]>> = ref(new Map());
+
 onMounted(async () => {
   console.log(route.params)
   await fetchRoutine(route.params.routine_id as string)
   pageTitleStore.setPageTitle(routine.value?.name as string)
+
+  routine.value?.exercises.forEach((exercise) => {
+    map.value.set(exercise.id, [{}])
+  })
 })
 
 // const setView = computed(() => {
 //   return route.query.exercise_id && route.query.exercise_id.length > 0;
 // })
-const setView = ref(false)
+// const setView = ref(false)
 const exerciseID = ref('')
 
 const setExerciseID = (id: string) => {
   exerciseID.value = id
-  setView.value = true
-
   const exercise = routine.value?.exercises.find((exercise) => exercise.id === id)
   pageTitleStore.setPageTitle(exercise?.name as string)
+}
+
+const clearExerciseID = () => {
+  exerciseID.value = ''
 }
 
 const hasExerciseID = computed(() => {
   return exerciseID.value.length > 0
 })
 
-import WorkoutExercise from "@/views/Workouts/WorkoutExercise.vue";
+const exerciseSets = computed(() => {
+  return map.value.get(exerciseID.value)
+})
+
+const addSet = () => {
+  const sets = map.value.get(exerciseID.value)
+  sets?.push({})
+}
+
+const finishWorkout = () => {
+}
+
+const areAllSetsFilled = (): boolean => {
+  const sets = map.value.get(exerciseID.value) || [];
+  console.log(sets)
+  return sets.every(set => set.weight !== undefined && set.reps !== undefined);
+};
+
+// Function to add a new set if all sets are filled
+const addEmptySetIfNeeded = () => {
+  if (areAllSetsFilled()) {
+    addSet()
+  }
+};
+
+const onWeightInput = (event: Event, set: Set) => {
+  const value = (event.target as HTMLInputElement).value;
+  set.weight = value === "" ? undefined : parseFloat(value);
+};
+
+const onRepsInput = (event: Event, set: Set) => {
+  const value = (event.target as HTMLInputElement).value;
+  set.reps = value === "" ? undefined : parseFloat(value);
+};
 </script>
 
 <template>
   <form v-if="hasExerciseID">
-    <Button type="button" colour="primary" class="mb-6" @click="setExerciseID('')">Back</Button>
-    <div class="flex items-end">
+    <Button type="button" colour="primary" class="mb-6" @click="clearExerciseID">Back</Button>
+    <div class="flex items-end mb-2" v-for="(set, index) in exerciseSets" :key="index">
       <div class="w-full">
         <label for="weight">Weight</label>
-        <input id="weight" type="number">
+        <input id="weight" type="number" step="0.05" v-model.number="set.weight" @keyup="addEmptySetIfNeeded" @input="onWeightInput($event, set)">
       </div>
       <span>x</span>
       <div class="w-full">
         <label for="reps">Reps</label>
-        <input id="reps" type="number">
+        <input id="reps" type="number" step="1" v-model.number="set.reps" @keyup="addEmptySetIfNeeded" @input="onRepsInput($event, set)">
       </div>
     </div>
-    <Button type="submit" colour="primary" class="mt-6">Add Set</Button>
-    <Button type="submit" colour="red" class="mt-6">Finish Workout</Button>
+    <Button type="button" colour="red" class="mt-6" @click="finishWorkout">Finish Workout</Button>
   </form>
   <ul v-else role="list">
     <li v-for="exercise in routine?.exercises" :key="exercise.id" @click="setExerciseID(exercise.id)">
       <div>
         {{ exercise.name }}
-        <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true"/>
+        <ChevronRightIcon class="size-5 flex-none text-gray-400"/>
       </div>
     </li>
   </ul>
