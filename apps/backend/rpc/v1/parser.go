@@ -51,3 +51,44 @@ func parseRoutineToPB(routine *orm.Routine) *v1.Routine {
 		Exercises: exercises,
 	}
 }
+
+func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice) []*v1.Workout {
+	workouts := make([]*v1.Workout, 0, len(workoutSlice))
+	for _, workout := range workoutSlice {
+		workouts = append(workouts, parseWorkoutToPB(workout))
+	}
+
+	return workouts
+}
+
+func parseWorkoutToPB(workout *orm.Workout) *v1.Workout {
+	var exerciseOrder []string
+	var mapExerciseSets = make(map[string][]*v1.Set)
+
+	if workout.R != nil {
+		for _, set := range workout.R.Sets {
+			if _, ok := mapExerciseSets[set.ExerciseID]; !ok {
+				exerciseOrder = append(exerciseOrder, set.ExerciseID)
+			}
+
+			mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], &v1.Set{
+				Weight: set.Weight,
+				Reps:   int32(set.Reps),
+			})
+		}
+	}
+
+	var exerciseSets []*v1.ExerciseSets
+	for _, exerciseID := range exerciseOrder {
+		exerciseSets = append(exerciseSets, &v1.ExerciseSets{
+			ExerciseId: exerciseID,
+			Sets:       mapExerciseSets[exerciseID],
+		})
+	}
+
+	return &v1.Workout{
+		Id:           workout.ID,
+		Name:         workout.Name,
+		ExerciseSets: exerciseSets,
+	}
+}
