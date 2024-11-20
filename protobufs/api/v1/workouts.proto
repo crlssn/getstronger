@@ -105,7 +105,7 @@ message ExerciseSets {
 }
 
 message Set {
-  float weight = 1; // The weight can be less than zero.
+  double weight = 1; // The weight can be less than zero.
   int32 reps = 2 [(buf.validate.field).int32 = { gte: 1 }];
 }
 
