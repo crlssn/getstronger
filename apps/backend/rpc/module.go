@@ -7,15 +7,13 @@ import (
 	"os"
 
 	"connectrpc.com/connect"
-	connectcors "connectrpc.com/cors"
-	"github.com/rs/cors"
 	"go.uber.org/fx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/rpc/interceptors"
+	"github.com/crlssn/getstronger/apps/backend/rpc/middlewares"
 	v1 "github.com/crlssn/getstronger/apps/backend/rpc/v1"
 )
 
@@ -88,7 +86,7 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 	mux := http.NewServeMux()
 	for _, h := range handlers {
 		path, handler := h(options...)
-		mux.Handle(path, withMiddleware(handler))
+		mux.Handle(path, middlewares.Register(handler))
 	}
 
 	lc.Append(fx.Hook{
@@ -103,54 +101,5 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 		OnStop: func(_ context.Context) error {
 			return nil
 		},
-	})
-}
-
-// TODO: Refactor middlewares to their own package.
-func withMiddleware(h http.Handler) http.Handler {
-	middlewares := []func(http.Handler) http.Handler{
-		middlewareCORS,
-		middlewareCookie,
-	}
-
-	for _, middleware := range middlewares {
-		h = middleware(h)
-	}
-
-	return h
-}
-
-func middlewareCORS(h http.Handler) http.Handler {
-	middleware := cors.New(cors.Options{
-		AllowCredentials: true,
-		AllowedOrigins:   []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
-		AllowedMethods: []string{
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodOptions,
-		},
-		AllowedHeaders: []string{
-			"Content-Type",
-			"Connect-Protocol-Version",
-			"Connect-Timeout-Ms",
-			"Grpc-Timeout",
-			"X-Grpc-Web",
-			"X-User-Agent",
-			"Authorization",
-		},
-		ExposedHeaders: connectcors.ExposedHeaders(),
-	})
-	return middleware.Handler(h)
-}
-
-func middlewareCookie(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("refreshToken")
-		if err == nil {
-			ctx := context.WithValue(r.Context(), jwt.ContextKeyRefreshToken, cookie.Value)
-			r = r.WithContext(ctx)
-		}
-
-		h.ServeHTTP(w, r)
 	})
 }
