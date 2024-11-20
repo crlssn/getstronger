@@ -7,6 +7,7 @@ import { type Exercise, GetExerciseRequest } from '@/pb/api/v1/exercise_pb'
 import { useWorkoutStore } from '@/stores/workout'
 import { useRoute } from 'vue-router'
 import { CreateWorkoutRequest, ExerciseSets } from '@/pb/api/v1/workouts_pb'
+import router from "@/router/router";
 
 const pageTitleStore = usePageTitleStore()
 const workoutStore = useWorkoutStore()
@@ -59,15 +60,16 @@ const finishWorkout = async () => {
     exerciseSets: eSetsList,
   })
   const res = await WorkoutClient.create(req)
-  console.log(res)
+
+  workoutStore.removeWorkout(routineID.value)
+  await router.push(`/workouts/${res.workoutId}`)
 }
 </script>
 
 <template>
   <div class="flex gap-x-10">
-    <Button type="link" colour="primary" class="mb-6" :to="`/workouts/routine/${routineID}`"
-      >All Exercises</Button
-    >
+    <Button type="link" colour="primary" class="mb-6" :to="`/workouts/routine/${routineID}`">
+      All Exercises</Button>
     <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
   </div>
   <div v-for="(set, index) in sets" :key="index">
