@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue'
-import { computed, onMounted, ref, type Ref } from 'vue'
-import { GetRoutineRequest, Routine } from '@/pb/api/v1/routines_pb'
-import { RoutineClient } from '@/clients/clients'
-import { useRoute } from 'vue-router'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { usePageTitleStore } from '@/stores/pageTitle'
+import {computed, onMounted, ref, type Ref, watch} from 'vue'
+import {GetRoutineRequest, Routine} from '@/pb/api/v1/routines_pb'
+import {RoutineClient} from '@/clients/clients'
+import {useRoute} from 'vue-router'
+import {ChevronRightIcon} from '@heroicons/vue/20/solid'
+import {usePageTitleStore} from '@/stores/pageTitle'
 
 const route = useRoute()
 const pageTitleStore = usePageTitleStore()
 const routine = ref<Routine | undefined>(undefined)
 
 const fetchRoutine = async (id: string) => {
-  const req = new GetRoutineRequest({ id })
+  const req = new GetRoutineRequest({id})
   const res = await RoutineClient.get(req)
   routine.value = res.routine
 }
@@ -25,7 +25,7 @@ type Set = {
 const map: Ref<Map<string, Set[]>> = ref(new Map())
 
 onMounted(async () => {
-  console.log(route.params)
+  console.log("route", route)
   await fetchRoutine(route.params.routine_id as string)
   pageTitleStore.setPageTitle(routine.value?.name as string)
 
@@ -33,6 +33,27 @@ onMounted(async () => {
     map.value.set(exercise.id, [{}])
   })
 })
+
+// watch(route, () => {
+//   if (route.query.exercise_id) {
+//     setExerciseID(route.query.exercise_id as string)
+//   }
+// })
+
+watch(
+  () => route.query.exercise_id,
+  (exerciseID) => {
+    console.log('exerciseID', exerciseID)
+    console.log('exerciseID === typeof undefined', exerciseID === typeof undefined)
+    if (exerciseID === typeof undefined) {
+      console.log('clearing')
+      clearExerciseID()
+    } else {
+      console.log('setting')
+      setExerciseID(exerciseID as string)
+    }
+  }
+);
 
 // const setView = computed(() => {
 //   return route.query.exercise_id && route.query.exercise_id.length > 0;
@@ -51,6 +72,7 @@ const clearExerciseID = () => {
 }
 
 const hasExerciseID = computed(() => {
+  // return route.query.exercise_id && route.query.exercise_id.length > 0
   return exerciseID.value.length > 0
 })
 
@@ -63,7 +85,8 @@ const addSet = () => {
   sets?.push({})
 }
 
-const finishWorkout = () => {}
+const finishWorkout = () => {
+}
 
 const areAllSetsFilled = (): boolean => {
   const sets = map.value.get(exerciseID.value) || []
@@ -91,7 +114,7 @@ const onRepsInput = (event: Event, set: Set) => {
 <template>
   <form v-if="hasExerciseID">
     <div class="flex gap-x-10">
-      <Button type="button" colour="primary" class="mb-6" @click="clearExerciseID">All Exercises</Button>
+      <Button type="link" colour="primary" class="mb-6" :to="route.path">All Exercises</Button>
       <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
     </div>
     <div class="flex items-end mb-2" v-for="(set, index) in exerciseSets" :key="index">
@@ -125,12 +148,11 @@ const onRepsInput = (event: Event, set: Set) => {
     <li
       v-for="exercise in routine?.exercises"
       :key="exercise.id"
-      @click="setExerciseID(exercise.id)"
     >
-      <div>
+      <RouterLink :to="`/workouts/routine/${route.params.routine_id}/exercise/${exercise.id}`">
         {{ exercise.name }}
-        <ChevronRightIcon class="size-5 flex-none text-gray-400" />
-      </div>
+        <ChevronRightIcon class="size-5 flex-none text-gray-400"/>
+      </RouterLink>
     </li>
   </ul>
 </template>

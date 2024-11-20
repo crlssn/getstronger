@@ -1,47 +1,72 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue'
-import { onMounted, ref } from 'vue'
-import { GetRoutineRequest } from '@/pb/api/v1/routines_pb'
-import { ExerciseClient } from '@/clients/clients'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import type { Exercise } from '@/pb/api/v1/exercise_pb'
-
-const props = defineProps<{
-  routine_id: string
-  exercise_id: string
-}>()
+import {onMounted, ref} from 'vue'
+import {GetRoutineRequest} from '@/pb/api/v1/routines_pb'
+import {ExerciseClient} from '@/clients/clients'
+import {usePageTitleStore} from '@/stores/pageTitle'
+import type {Exercise} from '@/pb/api/v1/exercise_pb'
+import {useWorkoutStore} from "@/stores/workout";
+import {useRoute} from "vue-router";
+import type {ExerciseSets} from "@/types/workout";
 
 const pageTitleStore = usePageTitleStore()
+const workoutStore = useWorkoutStore()
+const route = useRoute()
+
 const exercise = ref<Exercise | undefined>(undefined)
+const workoutSets = ref<ExerciseSets | undefined>(undefined)
+
+const routineID = ref('')
+const exerciseID = ref('')
 
 const fetchExercise = async (id: string) => {
-  const req = new GetRoutineRequest({ id })
+  const req = new GetRoutineRequest({id})
   const res = await ExerciseClient.get(req)
   exercise.value = res.exercise
 }
 
 onMounted(async () => {
-  await fetchExercise(props.exercise_id)
+  routineID.value = route.params.routine_id as string
+  exerciseID.value = route.params.exercise_id as string
+  await fetchExercise(exerciseID.value)
   pageTitleStore.setPageTitle(exercise.value?.name as string)
+  addEmptyWorkoutSetIfNone()
 })
+
+const addEmptyWorkoutSetIfNone = () => {
+  workoutStore.addEmptySetIfNone(routineID.value, exerciseID.value)
+}
 </script>
 
 <template>
-  <form>
-    <div class="flex items-end">
-      <div class="w-full">
-        <label for="weight">Weight</label>
-        <input id="weight" type="number" />
-      </div>
-      <span>x</span>
-      <div class="w-full">
-        <label for="reps">Reps</label>
-        <input id="reps" type="number" />
-      </div>
+  <div class="flex gap-x-10">
+    <Button type="link" colour="primary" class="mb-6" :to="`/workouts/routine/${routineID}`">All Exercises</Button>
+    <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
+  </div>
+  <div v-if="workoutStore.workoutExists(routineID)" class="flex items-end mb-2" v-for="(set, index) in workoutStore.getWorkout(routineID).exercise_sets[exerciseID]" :key="index">
+    <div class="w-full">
+      <label for="weight">Weight</label>
+      <input
+        id="weight"
+        type="number"
+        step="0.05"
+        v-model.number="set.weight"
+        @keyup="addEmptyWorkoutSetIfNone"
+      />
     </div>
-    <Button type="submit" colour="primary" class="mt-6">Add Set</Button>
-    <Button type="submit" colour="red" class="mt-6">Finish Workout</Button>
-  </form>
+    <span>x</span>
+    <div class="w-full">
+      <label for="reps">Reps</label>
+      <input
+        id="reps"
+        type="number"
+        step="1"
+        v-model.number="set.reps"
+        @keyup="addEmptyWorkoutSetIfNone"
+      />
+    </div>
+  </div>
+  <!--  <Button type="button" colour="red" class="mt-6" @click="finishWorkout">Finish Workout</Button>-->
 </template>
 
 <style scoped>

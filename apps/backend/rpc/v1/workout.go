@@ -62,6 +62,17 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	}, nil
 }
 
+type RoutineWorkout map[string]Workout
+
+type Workout struct {
+	exerciseSets map[string][]Set
+}
+
+type Set struct {
+	weight float32
+	set    int
+}
+
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceListProcedure))
 	log.Info("request received")
