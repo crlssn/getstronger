@@ -16,39 +16,31 @@ type ModelSlice[T any] interface {
 	~[]T
 }
 
-type PaginateParams[Item ModelItem, Slice ModelSlice[Item]] struct {
-	Items     Slice
-	Limit     int
-	Timestamp func(Item) time.Time
-}
-
 type Pagination[Item ModelItem, Slice ModelSlice[Item]] struct {
 	Items         Slice
 	NextPageToken []byte
 }
 
 func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
-	p PaginateParams[Item, Slice],
+	items Slice, limit int, createdAt func(Item) time.Time,
 ) (*Pagination[Item, Slice], error) {
-	if len(p.Items) <= p.Limit {
+	if len(items) <= limit {
 		return &Pagination[Item, Slice]{
-			Items:         p.Items,
+			Items:         items,
 			NextPageToken: nil,
 		}, nil
 	}
 
-	p.Items = p.Items[:p.Limit]
-	token := PageToken{
-		CreatedAt: p.Timestamp(p.Items[len(p.Items)-1]),
-	}
-
-	nextPageToken, err := json.Marshal(token)
+	items = items[:limit]
+	nextPageToken, err := json.Marshal(PageToken{
+		CreatedAt: createdAt(items[len(items)-1]),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal page token: %w", err)
 	}
 
 	return &Pagination[Item, Slice]{
-		Items:         p.Items,
+		Items:         items,
 		NextPageToken: nextPageToken,
 	}, nil
 }
