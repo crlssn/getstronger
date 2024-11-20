@@ -43,3 +43,6 @@ lint:
 	golangci-lint run
 	cd apps/web && npx sort-package-json
 	cd apps/web && npm run format
+
+vet:
+	go vet ./...

@@ -36,6 +36,10 @@ export const useWorkoutStore = defineStore('workouts', () => {
       return workouts.value[routineID].exerciseSets[exerciseID]
     }
 
+    const getExerciseSets = (routineID: RoutineID) => {
+      return workouts.value[routineID].exerciseSets
+    }
+
     const addEmptySetIfNone = (routineID: RoutineID, exerciseID: ExerciseID) => {
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {};
@@ -47,7 +51,7 @@ export const useWorkoutStore = defineStore('workouts', () => {
       }
     }
 
-    return {workouts, addEmptySetIfNone, initialiseWorkout, getSets}
+    return {workouts, addEmptySetIfNone, initialiseWorkout, getSets, getExerciseSets}
   },
   {
     persist: true,

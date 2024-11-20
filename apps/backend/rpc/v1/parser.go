@@ -73,7 +73,7 @@ func parseWorkoutToPB(workout *orm.Workout) *v1.Workout {
 			}
 
 			mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], &v1.Set{
-				Weight: set.Weight,
+				Weight: float64(set.Weight),
 				Reps:   int32(set.Reps),
 			})
 		}
@@ -101,7 +101,7 @@ func parseExerciseSetsFromPB(exerciseSetSlice []*v1.ExerciseSets) []repo.Exercis
 		for _, set := range exerciseSet.GetSets() {
 			sets = append(sets, repo.Set{
 				Reps:   int(set.GetReps()),
-				Weight: set.GetWeight(),
+				Weight: float32(set.GetWeight()),
 			})
 		}
 
