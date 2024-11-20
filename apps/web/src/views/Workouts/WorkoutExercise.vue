@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue'
-import {computed, onMounted, ref} from 'vue'
-import {ExerciseClient, WorkoutClient} from '@/clients/clients'
-import {usePageTitleStore} from '@/stores/pageTitle'
-import {type Exercise, GetExerciseRequest} from '@/pb/api/v1/exercise_pb'
-import {useWorkoutStore} from "@/stores/workout";
-import {useRoute} from "vue-router";
-import {CreateWorkoutRequest, ExerciseSets} from "@/pb/api/v1/workouts_pb";
+import { computed, onMounted, ref } from 'vue'
+import { ExerciseClient, WorkoutClient } from '@/clients/clients'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import { type Exercise, GetExerciseRequest } from '@/pb/api/v1/exercise_pb'
+import { useWorkoutStore } from '@/stores/workout'
+import { useRoute } from 'vue-router'
+import { CreateWorkoutRequest, ExerciseSets } from '@/pb/api/v1/workouts_pb'
 
 const pageTitleStore = usePageTitleStore()
 const workoutStore = useWorkoutStore()
@@ -17,7 +17,7 @@ const routineID = ref(route.params.routine_id as string)
 const exerciseID = ref(route.params.exercise_id as string)
 
 const fetchExercise = async (id: string) => {
-  const req = new GetExerciseRequest({id})
+  const req = new GetExerciseRequest({ id })
   const res = await ExerciseClient.get(req)
   exercise.value = res.exercise
 }
@@ -30,26 +30,28 @@ onMounted(async () => {
 })
 
 const sets = computed(() => {
-  return workoutStore.getSets(routineID.value, exerciseID.value);
-});
+  return workoutStore.getSets(routineID.value, exerciseID.value)
+})
 
 const finishWorkout = () => {
-  const exerciseSets = workoutStore.getExerciseSets(routineID.value);
+  const exerciseSets = workoutStore.getExerciseSets(routineID.value)
   if (!exerciseSets) {
-    throw new Error('No exercise sets found');
+    throw new Error('No exercise sets found')
   }
 
-  const eSetsList: ExerciseSets[] = [];
+  const eSetsList: ExerciseSets[] = []
   for (const [exerciseID, sets] of Object.entries(exerciseSets)) {
-    const definedSets = sets.filter(set => set.reps !== undefined && set.weight !== undefined);
+    const definedSets = sets.filter((set) => set.reps !== undefined && set.weight !== undefined)
     if (definedSets.length === 0) {
-      continue;
+      continue
     }
 
-    eSetsList.push(new ExerciseSets({
-      exerciseId: exerciseID,
-      sets: definedSets,
-    }))
+    eSetsList.push(
+      new ExerciseSets({
+        exerciseId: exerciseID,
+        sets: definedSets,
+      }),
+    )
   }
 
   const req = new CreateWorkoutRequest({
@@ -63,7 +65,9 @@ const finishWorkout = () => {
 
 <template>
   <div class="flex gap-x-10">
-    <Button type="link" colour="primary" class="mb-6" :to="`/workouts/routine/${routineID}`">All Exercises</Button>
+    <Button type="link" colour="primary" class="mb-6" :to="`/workouts/routine/${routineID}`"
+      >All Exercises</Button
+    >
     <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
   </div>
   <div v-for="(set, index) in sets" :key="index">

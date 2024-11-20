@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue'
-import {computed, onMounted, ref, type Ref, watch} from 'vue'
-import {GetRoutineRequest, Routine} from '@/pb/api/v1/routines_pb'
-import {RoutineClient} from '@/clients/clients'
-import {useRoute} from 'vue-router'
-import {ChevronRightIcon} from '@heroicons/vue/20/solid'
-import {usePageTitleStore} from '@/stores/pageTitle'
+import { computed, onMounted, ref, type Ref, watch } from 'vue'
+import { GetRoutineRequest, Routine } from '@/pb/api/v1/routines_pb'
+import { RoutineClient } from '@/clients/clients'
+import { useRoute } from 'vue-router'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { usePageTitleStore } from '@/stores/pageTitle'
 
 const route = useRoute()
 const pageTitleStore = usePageTitleStore()
 const routine = ref<Routine | undefined>(undefined)
 
 const fetchRoutine = async (id: string) => {
-  const req = new GetRoutineRequest({id})
+  const req = new GetRoutineRequest({ id })
   const res = await RoutineClient.get(req)
   routine.value = res.routine
 }
@@ -25,7 +25,7 @@ type Set = {
 const map: Ref<Map<string, Set[]>> = ref(new Map())
 
 onMounted(async () => {
-  console.log("route", route)
+  console.log('route', route)
   await fetchRoutine(route.params.routine_id as string)
   pageTitleStore.setPageTitle(routine.value?.name as string)
 
@@ -52,8 +52,8 @@ watch(
       console.log('setting')
       setExerciseID(exerciseID as string)
     }
-  }
-);
+  },
+)
 
 // const setView = computed(() => {
 //   return route.query.exercise_id && route.query.exercise_id.length > 0;
@@ -85,8 +85,7 @@ const addSet = () => {
   sets?.push({})
 }
 
-const finishWorkout = () => {
-}
+const finishWorkout = () => {}
 
 const areAllSetsFilled = (): boolean => {
   const sets = map.value.get(exerciseID.value) || []
@@ -145,13 +144,10 @@ const onRepsInput = (event: Event, set: Set) => {
     <Button type="button" colour="red" class="mt-6" @click="finishWorkout">Finish Workout</Button>
   </form>
   <ul v-else role="list">
-    <li
-      v-for="exercise in routine?.exercises"
-      :key="exercise.id"
-    >
+    <li v-for="exercise in routine?.exercises" :key="exercise.id">
       <RouterLink :to="`/workouts/routine/${route.params.routine_id}/exercise/${exercise.id}`">
         {{ exercise.name }}
-        <ChevronRightIcon class="size-5 flex-none text-gray-400"/>
+        <ChevronRightIcon class="size-5 flex-none text-gray-400" />
       </RouterLink>
     </li>
   </ul>

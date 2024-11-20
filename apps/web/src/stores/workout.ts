@@ -1,9 +1,11 @@
-import {defineStore} from 'pinia'
-import {ref} from "vue";
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
-import type {ExerciseID, RoutineID, RoutineWorkout} from "@/types/workout";
+import type { ExerciseID, RoutineID, RoutineWorkout } from '@/types/workout'
 
-export const useWorkoutStore = defineStore('workouts', () => {
+export const useWorkoutStore = defineStore(
+  'workouts',
+  () => {
     const workouts = ref({} as RoutineWorkout)
 
     const initialiseWorkout = (routineID: RoutineID, exerciseID: ExerciseID) => {
@@ -42,16 +44,16 @@ export const useWorkoutStore = defineStore('workouts', () => {
 
     const addEmptySetIfNone = (routineID: RoutineID, exerciseID: ExerciseID) => {
       const workout = workouts.value[routineID]
-      workout.exerciseSets = workout.exerciseSets || {};
-      workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || [];
+      workout.exerciseSets = workout.exerciseSets || {}
+      workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
 
-      const noEmptySet = workout.exerciseSets[exerciseID].every(set => set.weight && set.reps)
+      const noEmptySet = workout.exerciseSets[exerciseID].every((set) => set.weight && set.reps)
       if (noEmptySet) {
         workout.exerciseSets[exerciseID].push({})
       }
     }
 
-    return {workouts, addEmptySetIfNone, initialiseWorkout, getSets, getExerciseSets}
+    return { workouts, addEmptySetIfNone, initialiseWorkout, getSets, getExerciseSets }
   },
   {
     persist: true,
