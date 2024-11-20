@@ -90,7 +90,10 @@ const onRepsInput = (event: Event, set: Set) => {
 
 <template>
   <form v-if="hasExerciseID">
-    <Button type="button" colour="primary" class="mb-6" @click="clearExerciseID">Back</Button>
+    <div class="flex gap-x-10">
+      <Button type="button" colour="primary" class="mb-6" @click="clearExerciseID">All Exercises</Button>
+      <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
+    </div>
     <div class="flex items-end mb-2" v-for="(set, index) in exerciseSets" :key="index">
       <div class="w-full">
         <label for="weight">Weight</label>

@@ -25,9 +25,9 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 </script>
 
 <template>
-  <Button type="link" :to="`/workouts/${route.params.id}`" colour="primary" class="mb-8"
-    >Start</Button
-  >
+  <Button type="link" :to="`/workouts/routine/${route.params.id}`" colour="primary" class="mb-8">
+    Workout
+  </Button>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md mb-4"

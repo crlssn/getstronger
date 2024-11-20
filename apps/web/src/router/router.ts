@@ -27,14 +27,14 @@ const router: Router = createRouter({
       meta: { title: 'Home' },
     },
     {
-      path: '/workouts/:routine_id',
+      path: '/workouts/routine/:routine_id',
       name: 'workout-routine',
       component: WorkoutRoutine,
       beforeEnter: [auth],
       meta: { title: '' },
     },
     {
-      path: '/workouts/:routine_id/exercise/:exercise_id',
+      path: '/workouts/routine/:routine_id/exercise/:exercise_id',
       name: 'workout-exercise',
       component: WorkoutExercise,
       beforeEnter: [auth],
