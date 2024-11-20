@@ -1,51 +1,55 @@
 import {defineStore} from 'pinia'
+import {ref} from "vue";
 
-import type {ExerciseID, RoutineID, RoutineWorkout, Set, Workout} from "@/types/workout";
+import type {ExerciseID, RoutineID, RoutineWorkout} from "@/types/workout";
 
-export const useWorkoutStore = defineStore('workout', {
-  state: () => ({
-    routineWorkouts: {} as RoutineWorkout, // Define state with your types
-  }),
-  actions: {
-    initialiseWorkout(routineID: RoutineID) {
-      this.routineWorkouts[routineID] = {
-        exerciseSets: {},
-      };
-    },
-    addEmptySetIfNone(routineID: RoutineID, exerciseID: ExerciseID) {
-      if (!this.workoutExists(routineID)) {
-        this.initialiseWorkout(routineID);
+export const useWorkoutStore = defineStore('workouts', () => {
+    const workouts = ref({} as RoutineWorkout)
+
+    const initialiseWorkout = (routineID: RoutineID, exerciseID: ExerciseID) => {
+      if (!workouts.value[routineID]) {
+        workouts.value[routineID] = {}
       }
 
-      const workout = this.getWorkout(routineID);
-      if (!workout.exerciseSets) {
-        workout.exerciseSets = {};
+      if (!workouts.value[routineID].exerciseSets) {
+        workouts.value[routineID].exerciseSets = {}
       }
 
-      if (!workout.exerciseSets[exerciseID]) {
-        workout.exerciseSets[exerciseID] = [];
+      if (!workouts.value[routineID].exerciseSets[exerciseID]) {
+        workouts.value[routineID].exerciseSets[exerciseID] = []
+      }
+    }
+
+    const getSets = (routineID: RoutineID, exerciseID: ExerciseID) => {
+      if (!workouts.value[routineID]) {
+        return []
       }
 
-      const hasEmptySet = workout.exerciseSets[exerciseID].some(
-        set => !set.weight || !set.reps
-      );
-
-      if (!hasEmptySet) {
-        workout.exerciseSets[exerciseID].push({});
+      if (!workouts.value[routineID].exerciseSets) {
+        return []
       }
-    },
+
+      if (!workouts.value[routineID].exerciseSets[exerciseID]) {
+        return []
+      }
+
+      return workouts.value[routineID].exerciseSets[exerciseID]
+    }
+
+    const addEmptySetIfNone = (routineID: RoutineID, exerciseID: ExerciseID) => {
+      const workout = workouts.value[routineID]
+      workout.exerciseSets = workout.exerciseSets || {};
+      workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || [];
+
+      const noEmptySet = workout.exerciseSets[exerciseID].every(set => set.weight && set.reps)
+      if (noEmptySet) {
+        workout.exerciseSets[exerciseID].push({})
+      }
+    }
+
+    return {workouts, addEmptySetIfNone, initialiseWorkout, getSets}
   },
-  getters: {
-    workoutExists: (state) => (routineID: RoutineID): boolean => {
-      return state.routineWorkouts[routineID] !== undefined;
-    },
-    getWorkout: (state) => (routineID: RoutineID): Workout => {
-      if (state.routineWorkouts[routineID] === undefined) {
-        throw new Error(`Workout for routineID ${routineID} could not be found`);
-      }
-
-      return state.routineWorkouts[routineID];
-    },
+  {
+    persist: true,
   },
-  persist: true,
-});
+)

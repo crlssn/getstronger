@@ -24,16 +24,12 @@ const fetchExercise = async (id: string) => {
 onMounted(async () => {
   await fetchExercise(exerciseID.value)
   pageTitleStore.setPageTitle(exercise.value?.name as string)
-  addEmptySetIfNone()
+  workoutStore.initialiseWorkout(routineID.value, exerciseID.value)
+  workoutStore.addEmptySetIfNone(routineID.value, exerciseID.value)
 })
 
-const addEmptySetIfNone = () => {
-  workoutStore.addEmptySetIfNone(routineID.value, exerciseID.value)
-}
-
 const sets = computed(() => {
-  const workout = workoutStore.getWorkout(routineID.value);
-  return workout.exerciseSets?.[exerciseID.value] || [];
+  return workoutStore.getSets(routineID.value, exerciseID.value);
 });
 </script>
 
@@ -50,7 +46,7 @@ const sets = computed(() => {
         type="number"
         step="0.05"
         v-model.number="set.weight"
-        @keyup="addEmptySetIfNone"
+        @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
       />
     </div>
     <span>x</span>
@@ -61,7 +57,7 @@ const sets = computed(() => {
         type="number"
         step="1"
         v-model.number="set.reps"
-        @keyup="addEmptySetIfNone"
+        @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
       />
     </div>
   </div>
