@@ -9,24 +9,8 @@ export const useWorkoutStore = defineStore('workout', {
   actions: {
     initialiseWorkout(routineID: RoutineID) {
       this.routineWorkouts[routineID] = {
-        exercise_sets: {},
+        exerciseSets: {},
       };
-    },
-    addSet(routineID: RoutineID, exerciseID: ExerciseID, set: Set) {
-      if (!this.workoutExists(routineID)) {
-        this.initialiseWorkout(routineID);
-      }
-
-      const workout = this.getWorkout(routineID);
-      if (!workout.exercise_sets) {
-        throw new Error('Exercise sets does not exist');
-      }
-
-      if (!workout.exercise_sets[exerciseID]) {
-        workout.exercise_sets[exerciseID] = [];
-      }
-
-      workout.exercise_sets[exerciseID].push(set);
     },
     addEmptySetIfNone(routineID: RoutineID, exerciseID: ExerciseID) {
       if (!this.workoutExists(routineID)) {
@@ -34,20 +18,20 @@ export const useWorkoutStore = defineStore('workout', {
       }
 
       const workout = this.getWorkout(routineID);
-      if (!workout.exercise_sets) {
-        workout.exercise_sets = {};
+      if (!workout.exerciseSets) {
+        workout.exerciseSets = {};
       }
 
-      if (!workout.exercise_sets[exerciseID]) {
-        workout.exercise_sets[exerciseID] = [];
+      if (!workout.exerciseSets[exerciseID]) {
+        workout.exerciseSets[exerciseID] = [];
       }
 
-      const hasEmptySet = workout.exercise_sets[exerciseID].some(
+      const hasEmptySet = workout.exerciseSets[exerciseID].some(
         set => !set.weight || !set.reps
       );
 
       if (!hasEmptySet) {
-        workout.exercise_sets[exerciseID].push({});
+        workout.exerciseSets[exerciseID].push({});
       }
     },
   },

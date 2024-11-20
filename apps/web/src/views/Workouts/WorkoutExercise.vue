@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue'
 import {computed, onMounted, ref} from 'vue'
-import {GetRoutineRequest} from '@/pb/api/v1/routines_pb'
 import {ExerciseClient} from '@/clients/clients'
 import {usePageTitleStore} from '@/stores/pageTitle'
-import type {Exercise} from '@/pb/api/v1/exercise_pb'
+import {type Exercise, GetExerciseRequest} from '@/pb/api/v1/exercise_pb'
 import {useWorkoutStore} from "@/stores/workout";
 import {useRoute} from "vue-router";
 
@@ -13,12 +12,11 @@ const workoutStore = useWorkoutStore()
 const route = useRoute()
 
 const exercise = ref<Exercise | undefined>(undefined)
-
 const routineID = ref(route.params.routine_id as string)
 const exerciseID = ref(route.params.exercise_id as string)
 
 const fetchExercise = async (id: string) => {
-  const req = new GetRoutineRequest({id})
+  const req = new GetExerciseRequest({id})
   const res = await ExerciseClient.get(req)
   exercise.value = res.exercise
 }
@@ -35,7 +33,7 @@ const addEmptySetIfNone = () => {
 
 const sets = computed(() => {
   const workout = workoutStore.getWorkout(routineID.value);
-  return workout.exercise_sets?.[exerciseID.value] || [];
+  return workout.exerciseSets?.[exerciseID.value] || [];
 });
 </script>
 

@@ -5,7 +5,7 @@ export type RoutineWorkout = Record<RoutineID, Workout>;
 export type ExerciseSets = Record<ExerciseID, Set[]>;
 
 export interface Workout {
-  exercise_sets?: ExerciseSets
+  exerciseSets?: ExerciseSets
 }
 
 export interface Set {
