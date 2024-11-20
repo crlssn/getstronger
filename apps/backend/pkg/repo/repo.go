@@ -539,3 +539,51 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 		}, nil
 	}
 }
+
+type CreateWorkoutParams struct {
+	ID           string
+	Name         string
+	UserID       string
+	ExerciseSets []ExerciseSet
+}
+
+type ExerciseSet struct {
+	ExerciseID string
+	Sets       []Set
+}
+
+type Set struct {
+	Reps   int
+	Weight float32
+}
+
+func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
+		workout := &orm.Workout{
+			ID:     p.ID,
+			Name:   p.Name,
+			UserID: p.UserID,
+		}
+		if err := workout.Insert(ctx, tx.executor(), boil.Infer()); err != nil {
+			return fmt.Errorf("workout insert: %w", err)
+		}
+
+		for _, exerciseSet := range p.ExerciseSets {
+			sets := make([]*orm.Set, 0, len(exerciseSet.Sets))
+			for _, set := range exerciseSet.Sets {
+				sets = append(sets, &orm.Set{
+					WorkoutID:  workout.ID,
+					ExerciseID: exerciseSet.ExerciseID,
+					Reps:       set.Reps,
+					Weight:     set.Weight,
+				})
+			}
+
+			if err := workout.AddSets(ctx, tx.executor(), true, sets...); err != nil {
+				return fmt.Errorf("workout sets add: %w", err)
+			}
+		}
+
+		return nil
+	})
+}
