@@ -62,6 +62,32 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	}, nil
 }
 
+func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
+	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceCreateProcedure))
+	log.Info("request received")
+
+	userID := jwt.MustExtractUserID(ctx)
+	log = log.With(xzap.FieldUserID(userID))
+
+	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetId()))
+	if err != nil {
+		log.Error("failed to get workout", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if workout.UserID != userID {
+		log.Error("workout does not belong to user")
+		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	log.Info("workout fetched")
+	return &connect.Response[v1.GetWorkoutResponse]{
+		Msg: &v1.GetWorkoutResponse{
+			Workout: parseWorkoutToPB(workout),
+		},
+	}, nil
+}
+
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceListProcedure))
 	log.Info("request received")

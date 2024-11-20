@@ -1,10 +1,9 @@
 <script setup lang="ts">
-
-import {onMounted, ref} from "vue";
-import {WorkoutClient} from "@/clients/clients";
-import {ListWorkoutsRequest, Workout} from "@/pb/api/v1/workouts_pb";
-import Button from "@/components/Button.vue";
-import {ChevronRightIcon} from "@heroicons/vue/20/solid";
+import { onMounted, ref } from 'vue'
+import { WorkoutClient } from '@/clients/clients'
+import { ListWorkoutsRequest, Workout } from '@/pb/api/v1/workouts_pb'
+import Button from '@/components/Button.vue'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 
 const pageToken = ref(new Uint8Array(0))
 const workouts = ref(Array<Workout>())
@@ -30,7 +29,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <Button type="link" to="/routines/create" colour="primary">Create</Button>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
@@ -47,6 +45,4 @@ onMounted(() => {
   </ul>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

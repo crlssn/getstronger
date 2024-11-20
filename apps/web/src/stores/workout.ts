@@ -57,7 +57,14 @@ export const useWorkoutStore = defineStore(
       delete workouts.value[routineID]
     }
 
-    return { workouts, addEmptySetIfNone, initialiseWorkout, getSets, getExerciseSets, removeWorkout }
+    return {
+      workouts,
+      addEmptySetIfNone,
+      initialiseWorkout,
+      getSets,
+      getExerciseSets,
+      removeWorkout,
+    }
   },
   {
     persist: true,

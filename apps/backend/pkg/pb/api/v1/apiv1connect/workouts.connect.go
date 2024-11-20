@@ -36,6 +36,8 @@ const (
 const (
 	// WorkoutServiceCreateProcedure is the fully-qualified name of the WorkoutService's Create RPC.
 	WorkoutServiceCreateProcedure = "/api.v1.WorkoutService/Create"
+	// WorkoutServiceGetProcedure is the fully-qualified name of the WorkoutService's Get RPC.
+	WorkoutServiceGetProcedure = "/api.v1.WorkoutService/Get"
 	// WorkoutServiceListProcedure is the fully-qualified name of the WorkoutService's List RPC.
 	WorkoutServiceListProcedure = "/api.v1.WorkoutService/List"
 )
@@ -44,12 +46,14 @@ const (
 var (
 	workoutServiceServiceDescriptor      = v1.File_api_v1_workouts_proto.Services().ByName("WorkoutService")
 	workoutServiceCreateMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("Create")
+	workoutServiceGetMethodDescriptor    = workoutServiceServiceDescriptor.Methods().ByName("Get")
 	workoutServiceListMethodDescriptor   = workoutServiceServiceDescriptor.Methods().ByName("List")
 )
 
 // WorkoutServiceClient is a client for the api.v1.WorkoutService service.
 type WorkoutServiceClient interface {
 	Create(context.Context, *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error)
+	Get(context.Context, *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error)
 	List(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 }
 
@@ -69,6 +73,12 @@ func NewWorkoutServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(workoutServiceCreateMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		get: connect.NewClient[v1.GetWorkoutRequest, v1.GetWorkoutResponse](
+			httpClient,
+			baseURL+WorkoutServiceGetProcedure,
+			connect.WithSchema(workoutServiceGetMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		list: connect.NewClient[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse](
 			httpClient,
 			baseURL+WorkoutServiceListProcedure,
@@ -81,12 +91,18 @@ func NewWorkoutServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 // workoutServiceClient implements WorkoutServiceClient.
 type workoutServiceClient struct {
 	create *connect.Client[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse]
+	get    *connect.Client[v1.GetWorkoutRequest, v1.GetWorkoutResponse]
 	list   *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
 }
 
 // Create calls api.v1.WorkoutService.Create.
 func (c *workoutServiceClient) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
 	return c.create.CallUnary(ctx, req)
+}
+
+// Get calls api.v1.WorkoutService.Get.
+func (c *workoutServiceClient) Get(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
+	return c.get.CallUnary(ctx, req)
 }
 
 // List calls api.v1.WorkoutService.List.
@@ -97,6 +113,7 @@ func (c *workoutServiceClient) List(ctx context.Context, req *connect.Request[v1
 // WorkoutServiceHandler is an implementation of the api.v1.WorkoutService service.
 type WorkoutServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error)
+	Get(context.Context, *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error)
 	List(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 }
 
@@ -112,6 +129,12 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 		connect.WithSchema(workoutServiceCreateMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	workoutServiceGetHandler := connect.NewUnaryHandler(
+		WorkoutServiceGetProcedure,
+		svc.Get,
+		connect.WithSchema(workoutServiceGetMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	workoutServiceListHandler := connect.NewUnaryHandler(
 		WorkoutServiceListProcedure,
 		svc.List,
@@ -122,6 +145,8 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 		switch r.URL.Path {
 		case WorkoutServiceCreateProcedure:
 			workoutServiceCreateHandler.ServeHTTP(w, r)
+		case WorkoutServiceGetProcedure:
+			workoutServiceGetHandler.ServeHTTP(w, r)
 		case WorkoutServiceListProcedure:
 			workoutServiceListHandler.ServeHTTP(w, r)
 		default:
@@ -135,6 +160,10 @@ type UnimplementedWorkoutServiceHandler struct{}
 
 func (UnimplementedWorkoutServiceHandler) Create(context.Context, *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.Create is not implemented"))
+}
+
+func (UnimplementedWorkoutServiceHandler) Get(context.Context, *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.Get is not implemented"))
 }
 
 func (UnimplementedWorkoutServiceHandler) List(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {

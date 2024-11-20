@@ -14,6 +14,9 @@ service WorkoutService {
   rpc Create(CreateWorkoutRequest) returns (CreateWorkoutResponse) {
     option (auth) = true;
   }
+  rpc Get(GetWorkoutRequest) returns (GetWorkoutResponse) {
+    option (auth) = true;
+  }
   rpc List(ListWorkoutsRequest) returns (ListWorkoutsResponse) {
     option (auth) = true;
   }
@@ -49,6 +52,13 @@ message ListWorkoutsRequest {
 message ListWorkoutsResponse {
   repeated Workout workouts = 1;
   bytes next_page_token = 2;
+}
+
+message GetWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetWorkoutResponse {
+  Workout workout = 1;
 }
 
 //message StartWorkoutRequest {

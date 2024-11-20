@@ -590,3 +590,25 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 
 	return workout, nil
 }
+
+type GetWorkoutOpt func() qm.QueryMod
+
+func GetWorkoutWithID(id string) GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return orm.WorkoutWhere.ID.EQ(id)
+	}
+}
+
+func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	workout, err := orm.Workouts(query...).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("workout fetch: %w", err)
+	}
+
+	return workout, nil
+}

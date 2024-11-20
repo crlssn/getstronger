@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateWorkoutRequest, CreateWorkoutResponse, ListWorkoutsRequest, ListWorkoutsResponse } from "./workouts_pb.js";
+import { CreateWorkoutRequest, CreateWorkoutResponse, GetWorkoutRequest, GetWorkoutResponse, ListWorkoutsRequest, ListWorkoutsResponse } from "./workouts_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -19,6 +19,15 @@ export const WorkoutService = {
       name: "Create",
       I: CreateWorkoutRequest,
       O: CreateWorkoutResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc api.v1.WorkoutService.Get
+     */
+    get: {
+      name: "Get",
+      I: GetWorkoutRequest,
+      O: GetWorkoutResponse,
       kind: MethodKind.Unary,
     },
     /**
