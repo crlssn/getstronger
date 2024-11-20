@@ -44,17 +44,22 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	if err = h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		Name:         routine.Title,
 		UserID:       userID,
 		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetExerciseSets()),
-	}); err != nil {
+	})
+	if err != nil {
 		log.Error("failed to create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("workout finished")
-	return &connect.Response[v1.CreateWorkoutResponse]{}, nil
+	return &connect.Response[v1.CreateWorkoutResponse]{
+		Msg: &v1.CreateWorkoutResponse{
+			WorkoutId: workout.ID,
+		},
+	}, nil
 }
 
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {

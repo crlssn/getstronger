@@ -556,12 +556,13 @@ type Set struct {
 	Weight float32
 }
 
-func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) error {
-	return r.NewTx(ctx, func(tx *Repo) error {
-		workout := &orm.Workout{
-			Name:   p.Name,
-			UserID: p.UserID,
-		}
+func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+	workout := &orm.Workout{
+		Name:   p.Name,
+		UserID: p.UserID,
+	}
+
+	if err := r.NewTx(ctx, func(tx *Repo) error {
 		if err := workout.Insert(ctx, tx.executor(), boil.Infer()); err != nil {
 			return fmt.Errorf("workout insert: %w", err)
 		}
@@ -583,5 +584,9 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) error {
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return nil, fmt.Errorf("workout tx: %w", err)
+	}
+
+	return workout, nil
 }
