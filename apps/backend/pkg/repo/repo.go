@@ -541,7 +541,6 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 }
 
 type CreateWorkoutParams struct {
-	ID           string
 	Name         string
 	UserID       string
 	ExerciseSets []ExerciseSet
@@ -560,7 +559,6 @@ type Set struct {
 func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) error {
 	return r.NewTx(ctx, func(tx *Repo) error {
 		workout := &orm.Workout{
-			ID:     p.ID,
 			Name:   p.Name,
 			UserID: p.UserID,
 		}

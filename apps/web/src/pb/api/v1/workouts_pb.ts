@@ -4,231 +4,85 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { FieldMask, Message, proto3 } from "@bufbuild/protobuf";
+import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
- * @generated from message api.v1.FinishWorkoutRequest
+ * @generated from message api.v1.CreateWorkoutRequest
  */
-export class FinishWorkoutRequest extends Message<FinishWorkoutRequest> {
+export class CreateWorkoutRequest extends Message<CreateWorkoutRequest> {
   /**
-   *  string id = 1 [(buf.validate.field).string.uuid = true];
-   *  string name = 2 [(buf.validate.field).string.min_len = 1];
-   *  repeated ExerciseSets exercises = 3 [(buf.validate.field).repeated.min_items = 1];
-   *
-   * @generated from field: api.v1.Workout workout = 1;
+   * @generated from field: string routine_id = 1;
    */
-  workout?: Workout;
+  routineId = "";
 
-  constructor(data?: PartialMessage<FinishWorkoutRequest>) {
+  /**
+   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 3;
+   */
+  exerciseSets: ExerciseSets[] = [];
+
+  constructor(data?: PartialMessage<CreateWorkoutRequest>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.FinishWorkoutRequest";
+  static readonly typeName = "api.v1.CreateWorkoutRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workout", kind: "message", T: Workout },
+    { no: 1, name: "routine_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FinishWorkoutRequest {
-    return new FinishWorkoutRequest().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkoutRequest {
+    return new CreateWorkoutRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FinishWorkoutRequest {
-    return new FinishWorkoutRequest().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateWorkoutRequest {
+    return new CreateWorkoutRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FinishWorkoutRequest {
-    return new FinishWorkoutRequest().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateWorkoutRequest {
+    return new CreateWorkoutRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: FinishWorkoutRequest | PlainMessage<FinishWorkoutRequest> | undefined, b: FinishWorkoutRequest | PlainMessage<FinishWorkoutRequest> | undefined): boolean {
-    return proto3.util.equals(FinishWorkoutRequest, a, b);
+  static equals(a: CreateWorkoutRequest | PlainMessage<CreateWorkoutRequest> | undefined, b: CreateWorkoutRequest | PlainMessage<CreateWorkoutRequest> | undefined): boolean {
+    return proto3.util.equals(CreateWorkoutRequest, a, b);
   }
 }
 
 /**
- * @generated from message api.v1.FinishWorkoutResponse
+ * @generated from message api.v1.CreateWorkoutResponse
  */
-export class FinishWorkoutResponse extends Message<FinishWorkoutResponse> {
-  constructor(data?: PartialMessage<FinishWorkoutResponse>) {
+export class CreateWorkoutResponse extends Message<CreateWorkoutResponse> {
+  /**
+   * @generated from field: string workout_id = 1;
+   */
+  workoutId = "";
+
+  constructor(data?: PartialMessage<CreateWorkoutResponse>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.FinishWorkoutResponse";
+  static readonly typeName = "api.v1.CreateWorkoutResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workout_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FinishWorkoutResponse {
-    return new FinishWorkoutResponse().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkoutResponse {
+    return new CreateWorkoutResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FinishWorkoutResponse {
-    return new FinishWorkoutResponse().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateWorkoutResponse {
+    return new CreateWorkoutResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FinishWorkoutResponse {
-    return new FinishWorkoutResponse().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateWorkoutResponse {
+    return new CreateWorkoutResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(a: FinishWorkoutResponse | PlainMessage<FinishWorkoutResponse> | undefined, b: FinishWorkoutResponse | PlainMessage<FinishWorkoutResponse> | undefined): boolean {
-    return proto3.util.equals(FinishWorkoutResponse, a, b);
-  }
-}
-
-/**
- * @generated from message api.v1.GetWorkoutRequest
- */
-export class GetWorkoutRequest extends Message<GetWorkoutRequest> {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id = "";
-
-  constructor(data?: PartialMessage<GetWorkoutRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.GetWorkoutRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkoutRequest {
-    return new GetWorkoutRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkoutRequest {
-    return new GetWorkoutRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkoutRequest {
-    return new GetWorkoutRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: GetWorkoutRequest | PlainMessage<GetWorkoutRequest> | undefined, b: GetWorkoutRequest | PlainMessage<GetWorkoutRequest> | undefined): boolean {
-    return proto3.util.equals(GetWorkoutRequest, a, b);
-  }
-}
-
-/**
- * @generated from message api.v1.GetWorkoutResponse
- */
-export class GetWorkoutResponse extends Message<GetWorkoutResponse> {
-  /**
-   * @generated from field: api.v1.Workout Workout = 1;
-   */
-  Workout?: Workout;
-
-  constructor(data?: PartialMessage<GetWorkoutResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.GetWorkoutResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "Workout", kind: "message", T: Workout },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkoutResponse {
-    return new GetWorkoutResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkoutResponse {
-    return new GetWorkoutResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkoutResponse {
-    return new GetWorkoutResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: GetWorkoutResponse | PlainMessage<GetWorkoutResponse> | undefined, b: GetWorkoutResponse | PlainMessage<GetWorkoutResponse> | undefined): boolean {
-    return proto3.util.equals(GetWorkoutResponse, a, b);
-  }
-}
-
-/**
- * @generated from message api.v1.UpdateWorkoutRequest
- */
-export class UpdateWorkoutRequest extends Message<UpdateWorkoutRequest> {
-  /**
-   * @generated from field: api.v1.Workout Workout = 1;
-   */
-  Workout?: Workout;
-
-  /**
-   * @generated from field: google.protobuf.FieldMask update_mask = 2;
-   */
-  updateMask?: FieldMask;
-
-  constructor(data?: PartialMessage<UpdateWorkoutRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.UpdateWorkoutRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "Workout", kind: "message", T: Workout },
-    { no: 2, name: "update_mask", kind: "message", T: FieldMask },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkoutRequest {
-    return new UpdateWorkoutRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkoutRequest {
-    return new UpdateWorkoutRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkoutRequest {
-    return new UpdateWorkoutRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateWorkoutRequest | PlainMessage<UpdateWorkoutRequest> | undefined, b: UpdateWorkoutRequest | PlainMessage<UpdateWorkoutRequest> | undefined): boolean {
-    return proto3.util.equals(UpdateWorkoutRequest, a, b);
-  }
-}
-
-/**
- * @generated from message api.v1.UpdateWorkoutResponse
- */
-export class UpdateWorkoutResponse extends Message<UpdateWorkoutResponse> {
-  /**
-   * @generated from field: api.v1.Workout Workout = 1;
-   */
-  Workout?: Workout;
-
-  constructor(data?: PartialMessage<UpdateWorkoutResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.UpdateWorkoutResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "Workout", kind: "message", T: Workout },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkoutResponse {
-    return new UpdateWorkoutResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkoutResponse {
-    return new UpdateWorkoutResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkoutResponse {
-    return new UpdateWorkoutResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateWorkoutResponse | PlainMessage<UpdateWorkoutResponse> | undefined, b: UpdateWorkoutResponse | PlainMessage<UpdateWorkoutResponse> | undefined): boolean {
-    return proto3.util.equals(UpdateWorkoutResponse, a, b);
+  static equals(a: CreateWorkoutResponse | PlainMessage<CreateWorkoutResponse> | undefined, b: CreateWorkoutResponse | PlainMessage<CreateWorkoutResponse> | undefined): boolean {
+    return proto3.util.equals(CreateWorkoutResponse, a, b);
   }
 }
 
@@ -417,7 +271,7 @@ export class Set extends Message<Set> {
   /**
    * The weight can be less than zero.
    *
-   * @generated from field: float weight = 1;
+   * @generated from field: double weight = 1;
    */
   weight = 0;
 
@@ -434,7 +288,7 @@ export class Set extends Message<Set> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v1.Set";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "weight", kind: "scalar", T: 2 /* ScalarType.FLOAT */ },
+    { no: 1, name: "weight", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
     { no: 2, name: "reps", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 

@@ -26,25 +26,35 @@ func NewWorkoutHandler(log *zap.Logger, r *repo.Repo) apiv1connect.WorkoutServic
 	return &workoutHandler{log, r}
 }
 
-func (h *workoutHandler) Finish(ctx context.Context, req *connect.Request[v1.FinishWorkoutRequest]) (*connect.Response[v1.FinishWorkoutResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceFinishProcedure))
+func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
+	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceCreateProcedure))
 	log.Info("request received")
 
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
-	if err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
-		ID:           req.Msg.GetWorkout().GetId(),
-		Name:         req.Msg.GetWorkout().GetName(),
+	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
+	if err != nil {
+		log.Error("failed to get routine", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if routine.UserID != userID {
+		log.Error("routine does not belong to user")
+		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	if err = h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+		Name:         routine.Title,
 		UserID:       userID,
-		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets()),
+		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetExerciseSets()),
 	}); err != nil {
 		log.Error("failed to create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("workout finished")
-	return &connect.Response[v1.FinishWorkoutResponse]{}, nil
+	return &connect.Response[v1.CreateWorkoutResponse]{}, nil
 }
 
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {

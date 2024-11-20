@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { FinishWorkoutRequest, FinishWorkoutResponse, ListWorkoutsRequest, ListWorkoutsResponse } from "./workouts_pb.js";
+import { CreateWorkoutRequest, CreateWorkoutResponse, ListWorkoutsRequest, ListWorkoutsResponse } from "./workouts_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -13,23 +13,15 @@ export const WorkoutService = {
   typeName: "api.v1.WorkoutService",
   methods: {
     /**
-     *  rpc Start(StartWorkoutRequest) returns (StartWorkoutResponse) {
-     *    option (auth) = true;
-     *  }
-     *
-     * @generated from rpc api.v1.WorkoutService.Finish
+     * @generated from rpc api.v1.WorkoutService.Create
      */
-    finish: {
-      name: "Finish",
-      I: FinishWorkoutRequest,
-      O: FinishWorkoutResponse,
+    create: {
+      name: "Create",
+      I: CreateWorkoutRequest,
+      O: CreateWorkoutResponse,
       kind: MethodKind.Unary,
     },
     /**
-     *  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
-     *    option (auth) = true;
-     *  }
-     *
      * @generated from rpc api.v1.WorkoutService.List
      */
     list: {
