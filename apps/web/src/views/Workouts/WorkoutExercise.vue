@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
-import {onMounted, ref} from "vue";
-import {GetRoutineRequest} from "@/pb/api/v1/routines_pb";
-import {ExerciseClient} from "@/clients/clients";
-import {usePageTitleStore} from "@/stores/pageTitle";
-import type {Exercise} from "@/pb/api/v1/exercise_pb";
+import Button from '@/components/Button.vue'
+import { onMounted, ref } from 'vue'
+import { GetRoutineRequest } from '@/pb/api/v1/routines_pb'
+import { ExerciseClient } from '@/clients/clients'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import type { Exercise } from '@/pb/api/v1/exercise_pb'
 
 const props = defineProps<{
   routine_id: string
@@ -15,7 +15,7 @@ const pageTitleStore = usePageTitleStore()
 const exercise = ref<Exercise | undefined>(undefined)
 
 const fetchExercise = async (id: string) => {
-  const req = new GetRoutineRequest({id})
+  const req = new GetRoutineRequest({ id })
   const res = await ExerciseClient.get(req)
   exercise.value = res.exercise
 }
@@ -31,12 +31,12 @@ onMounted(async () => {
     <div class="flex items-end">
       <div class="w-full">
         <label for="weight">Weight</label>
-        <input id="weight" type="number">
+        <input id="weight" type="number" />
       </div>
       <span>x</span>
       <div class="w-full">
         <label for="reps">Reps</label>
-        <input id="reps" type="number">
+        <input id="reps" type="number" />
       </div>
     </div>
     <Button type="submit" colour="primary" class="mt-6">Add Set</Button>
@@ -46,7 +46,7 @@ onMounted(async () => {
 
 <style scoped>
 label {
-  @apply block text-xs font-semibold text-gray-900 uppercase mb-2
+  @apply block text-xs font-semibold text-gray-900 uppercase mb-2;
 }
 
 input {
@@ -54,7 +54,6 @@ input {
 }
 
 span {
-  @apply mx-4 font-medium mb-4 text-gray-900
+  @apply mx-4 font-medium mb-4 text-gray-900;
 }
-
 </style>

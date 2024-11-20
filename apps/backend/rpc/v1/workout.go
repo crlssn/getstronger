@@ -37,7 +37,7 @@ func (h *workoutHandler) Finish(ctx context.Context, req *connect.Request[v1.Fin
 		ID:           req.Msg.GetWorkout().GetId(),
 		Name:         req.Msg.GetWorkout().GetName(),
 		UserID:       userID,
-		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().ExerciseSets),
+		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets()),
 	}); err != nil {
 		log.Error("failed to create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

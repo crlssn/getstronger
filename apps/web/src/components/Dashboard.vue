@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue'
+import { computed, ref } from 'vue'
 import {
   Dialog,
   DialogPanel,
@@ -18,22 +18,22 @@ import {
   HomeIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import {ChevronDownIcon} from '@heroicons/vue/20/solid'
-import {RouterView, useRoute} from 'vue-router'
+import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { RouterView, useRoute } from 'vue-router'
 import NavigationMobile from '@/components/NavigationMobile.vue'
-import {usePageTitleStore} from "@/stores/pageTitle";
+import { usePageTitleStore } from '@/stores/pageTitle'
 
 const navigation = [
-  {name: 'Home', href: '/home', icon: HomeIcon},
-  {name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon},
-  {name: 'Exercises', href: '/exercises', icon: BookOpenIcon},
-  {name: 'Workouts', href: '/workouts', icon: FolderIcon},
-  {name: 'Notifications', href: '/notifications', icon: BellIcon},
+  { name: 'Home', href: '/home', icon: HomeIcon },
+  { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
+  { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
+  { name: 'Workouts', href: '/workouts', icon: FolderIcon },
+  { name: 'Notifications', href: '/notifications', icon: BellIcon },
 ]
 
 const userNavigation = [
-  {name: 'Your profile', href: '/profile'},
-  {name: 'Sign out', href: '/logout'},
+  { name: 'Your profile', href: '/profile' },
+  { name: 'Sign out', href: '/logout' },
 ]
 
 const sidebarOpen = ref(false)
@@ -58,7 +58,7 @@ const pageTitleStore = usePageTitleStore()
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 bg-gray-900/80"/>
+          <div class="fixed inset-0 bg-gray-900/80" />
         </TransitionChild>
 
         <div class="fixed inset-0 flex">
@@ -84,7 +84,7 @@ const pageTitleStore = usePageTitleStore()
                 <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
                   <button type="button" class="-m-2.5 p-2.5" @click="sidebarOpen = false">
                     <span class="sr-only">Close sidebar</span>
-                    <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true"/>
+                    <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true" />
                   </button>
                 </div>
               </TransitionChild>
@@ -237,9 +237,9 @@ const pageTitleStore = usePageTitleStore()
                 />
                 <span class="hidden lg:flex lg:items-center">
                   <span class="ml-4 text-sm/6 font-semibold text-gray-900" aria-hidden="true"
-                  >Tom Cook</span
+                    >Tom Cook</span
                   >
-                  <ChevronDownIcon class="ml-2 h-5 w-5 text-gray-400" aria-hidden="true"/>
+                  <ChevronDownIcon class="ml-2 h-5 w-5 text-gray-400" aria-hidden="true" />
                 </span>
               </MenuButton>
               <transition
@@ -278,11 +278,11 @@ const pageTitleStore = usePageTitleStore()
 
       <main class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="px-4 sm:px-6 lg:px-8">
-          <RouterView/>
+          <RouterView />
         </div>
       </main>
     </div>
   </div>
 
-  <NavigationMobile :items="navigation"/>
+  <NavigationMobile :items="navigation" />
 </template>
