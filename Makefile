@@ -39,9 +39,7 @@ run_web:
 	cd apps/web && npm run dev
 
 lint:
-	golangci-lint run
-	cd apps/web && npm run format
-
-sort_packages:
-	npx sort-package-json
 	goimports -w .
+	golangci-lint run
+	cd apps/web && npx sort-package-json
+	cd apps/web && npm run format
