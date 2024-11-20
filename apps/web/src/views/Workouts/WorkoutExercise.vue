@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue'
-import {onMounted, ref} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {GetRoutineRequest} from '@/pb/api/v1/routines_pb'
 import {ExerciseClient} from '@/clients/clients'
 import {usePageTitleStore} from '@/stores/pageTitle'
 import type {Exercise} from '@/pb/api/v1/exercise_pb'
 import {useWorkoutStore} from "@/stores/workout";
 import {useRoute} from "vue-router";
-import type {ExerciseSets} from "@/types/workout";
 
 const pageTitleStore = usePageTitleStore()
 const workoutStore = useWorkoutStore()
 const route = useRoute()
 
 const exercise = ref<Exercise | undefined>(undefined)
-const workoutSets = ref<ExerciseSets | undefined>(undefined)
 
-const routineID = ref('')
-const exerciseID = ref('')
+const routineID = ref(route.params.routine_id as string)
+const exerciseID = ref(route.params.exercise_id as string)
 
 const fetchExercise = async (id: string) => {
   const req = new GetRoutineRequest({id})
@@ -26,16 +24,19 @@ const fetchExercise = async (id: string) => {
 }
 
 onMounted(async () => {
-  routineID.value = route.params.routine_id as string
-  exerciseID.value = route.params.exercise_id as string
   await fetchExercise(exerciseID.value)
   pageTitleStore.setPageTitle(exercise.value?.name as string)
-  addEmptyWorkoutSetIfNone()
+  addEmptySetIfNone()
 })
 
-const addEmptyWorkoutSetIfNone = () => {
+const addEmptySetIfNone = () => {
   workoutStore.addEmptySetIfNone(routineID.value, exerciseID.value)
 }
+
+const sets = computed(() => {
+  const workout = workoutStore.getWorkout(routineID.value);
+  return workout.exercise_sets?.[exerciseID.value] || [];
+});
 </script>
 
 <template>
@@ -43,7 +44,7 @@ const addEmptyWorkoutSetIfNone = () => {
     <Button type="link" colour="primary" class="mb-6" :to="`/workouts/routine/${routineID}`">All Exercises</Button>
     <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
   </div>
-  <div v-if="workoutStore.workoutExists(routineID)" class="flex items-end mb-2" v-for="(set, index) in workoutStore.getWorkout(routineID).exercise_sets[exerciseID]" :key="index">
+  <div class="flex items-end mb-2" v-for="(set, index) in sets" :key="index">
     <div class="w-full">
       <label for="weight">Weight</label>
       <input
@@ -51,7 +52,7 @@ const addEmptyWorkoutSetIfNone = () => {
         type="number"
         step="0.05"
         v-model.number="set.weight"
-        @keyup="addEmptyWorkoutSetIfNone"
+        @keyup="addEmptySetIfNone"
       />
     </div>
     <span>x</span>
@@ -62,7 +63,7 @@ const addEmptyWorkoutSetIfNone = () => {
         type="number"
         step="1"
         v-model.number="set.reps"
-        @keyup="addEmptyWorkoutSetIfNone"
+        @keyup="addEmptySetIfNone"
       />
     </div>
   </div>
