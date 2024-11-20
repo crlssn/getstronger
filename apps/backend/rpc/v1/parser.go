@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
+	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
 )
 
 func parseExercisesToPB(exercises orm.ExerciseSlice) []*v1.Exercise {
@@ -91,4 +92,24 @@ func parseWorkoutToPB(workout *orm.Workout) *v1.Workout {
 		Name:         workout.Name,
 		ExerciseSets: exerciseSets,
 	}
+}
+
+func parseExerciseSetsFromPB(exerciseSetSlice []*v1.ExerciseSets) []repo.ExerciseSet {
+	exerciseSets := make([]repo.ExerciseSet, 0, len(exerciseSetSlice))
+	for _, exerciseSet := range exerciseSetSlice {
+		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
+		for _, set := range exerciseSet.GetSets() {
+			sets = append(sets, repo.Set{
+				Reps:   int(set.GetReps()),
+				Weight: set.GetWeight(),
+			})
+		}
+
+		exerciseSets = append(exerciseSets, repo.ExerciseSet{
+			ExerciseID: exerciseSet.GetExerciseId(),
+			Sets:       sets,
+		})
+	}
+
+	return exerciseSets
 }

@@ -33,27 +33,11 @@ func (h *workoutHandler) Finish(ctx context.Context, req *connect.Request[v1.Fin
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
-	exerciseSets := make([]repo.ExerciseSet, 0, len(req.Msg.GetWorkout().GetExerciseSets()))
-	for _, exerciseSet := range req.Msg.GetWorkout().GetExerciseSets() {
-		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
-		for _, set := range exerciseSet.GetSets() {
-			sets = append(sets, repo.Set{
-				Reps:   int(set.GetReps()),
-				Weight: set.GetWeight(),
-			})
-		}
-
-		exerciseSets = append(exerciseSets, repo.ExerciseSet{
-			ExerciseID: exerciseSet.GetExerciseId(),
-			Sets:       sets,
-		})
-	}
-
 	if err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		ID:           req.Msg.GetWorkout().GetId(),
 		Name:         req.Msg.GetWorkout().GetName(),
 		UserID:       userID,
-		ExerciseSets: exerciseSets,
+		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().ExerciseSets),
 	}); err != nil {
 		log.Error("failed to create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
