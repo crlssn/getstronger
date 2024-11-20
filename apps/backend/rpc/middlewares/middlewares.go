@@ -24,18 +24,6 @@ func Register(h http.Handler) http.Handler {
 	return h
 }
 
-func cookies(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("refreshToken")
-		if err == nil {
-			ctx := context.WithValue(r.Context(), jwt.ContextKeyRefreshToken, cookie.Value)
-			r = r.WithContext(ctx)
-		}
-
-		h.ServeHTTP(w, r)
-	})
-}
-
 func coors(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
 		AllowCredentials: true,
@@ -58,4 +46,16 @@ func coors(h http.Handler) http.Handler {
 	})
 
 	return middleware.Handler(h)
+}
+
+func cookies(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("refreshToken")
+		if err == nil {
+			ctx := context.WithValue(r.Context(), jwt.ContextKeyRefreshToken, cookie.Value)
+			r = r.WithContext(ctx)
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
