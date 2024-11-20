@@ -5,7 +5,6 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { FieldMask, Message, proto3 } from "@bufbuild/protobuf";
-import { Exercise } from "./exercise_pb.js";
 
 /**
  * @generated from message api.v1.FinishWorkoutRequest
@@ -373,9 +372,9 @@ export class Workout extends Message<Workout> {
  */
 export class ExerciseSets extends Message<ExerciseSets> {
   /**
-   * @generated from field: api.v1.Exercise exercise = 1;
+   * @generated from field: string exercise_id = 1;
    */
-  exercise?: Exercise;
+  exerciseId = "";
 
   /**
    * @generated from field: repeated api.v1.Set sets = 2;
@@ -390,7 +389,7 @@ export class ExerciseSets extends Message<ExerciseSets> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v1.ExerciseSets";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "exercise", kind: "message", T: Exercise },
+    { no: 1, name: "exercise_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "sets", kind: "message", T: Set, repeated: true },
   ]);
 

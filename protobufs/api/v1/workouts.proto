@@ -100,7 +100,7 @@ message Workout {
 }
 
 message ExerciseSets {
-  Exercise exercise = 1 [(buf.validate.field).required = true];
+  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
   repeated Set sets = 2 [(buf.validate.field).repeated.min_items = 1];
 }
 

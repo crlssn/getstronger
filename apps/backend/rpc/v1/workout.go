@@ -2,7 +2,7 @@ package v1
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -55,17 +55,6 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	//var nextPageToken []byte
-	//if len(workouts) > limit {
-	//	workouts = workouts[:limit]
-	//	if nextPageToken, err = json.Marshal(repo.PageToken{
-	//		CreatedAt: workouts[len(workouts)-1].CreatedAt,
-	//	}); err != nil {
-	//		log.Error("marshal page token failed", zap.Error(err))
-	//		return nil, connect.NewError(connect.CodeInternal, nil)
-	//	}
-	//}
-
 	pagination, err := repo.PaginateSlice(repo.PaginateParams[*orm.Workout, orm.WorkoutSlice]{
 		Items: workouts,
 		Limit: limit,
@@ -78,12 +67,44 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workoutsPB, err := parseWorkoutsToPB(pagination.Items)
+	workoutsPB, err := parseWorkoutSliceToPB(pagination.Items)
 
 	return &connect.Response[v1.ListWorkoutsResponse]{
 		Msg: &v1.ListWorkoutsResponse{
 			Workouts:      workoutsPB,
 			NextPageToken: pagination.NextPageToken,
 		},
+	}, nil
+}
+
+func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice) ([]*v1.Workout, error) {
+	workouts := make([]*v1.Workout, 0, len(workoutSlice))
+	for _, workout := range workoutSlice {
+		w, err := parseWorkoutToPB(workout)
+		if err != nil {
+			return nil, fmt.Errorf("parse workout to pb: %w", err)
+		}
+		workouts = append(workouts, w)
+	}
+	return workouts, nil
+}
+
+func parseWorkoutToPB(workout *orm.Workout) (*v1.Workout, error) {
+	var exerciseSets []*v1.ExerciseSets
+	if workout.R != nil {
+		for _, set := range workout.R.Sets {
+			var sets []*v1.Set
+
+			exerciseSets = append(exerciseSets, &v1.ExerciseSets{
+				ExerciseId: set.ExerciseID,
+				Sets:       sets,
+			})
+		}
+	}
+
+	return &v1.Workout{
+		Id:           workout.ID,
+		Name:         "",
+		ExerciseSets: exerciseSets,
 	}, nil
 }
