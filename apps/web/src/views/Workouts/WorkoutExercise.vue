@@ -60,9 +60,8 @@ const finishWorkout = async () => {
     exerciseSets: eSetsList,
   })
   const res = await WorkoutClient.create(req)
-
   workoutStore.removeWorkout(routineID.value)
-  await router.push(`/workouts/${res.workoutId}`)
+  await router.push(`/workouts`)
 }
 </script>
 

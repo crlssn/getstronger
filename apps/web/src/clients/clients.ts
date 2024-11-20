@@ -16,6 +16,6 @@ const transport = createConnectTransport({
 })
 
 export const AuthClient = createClient(AuthService, transport)
-export const ExerciseClient = createClient(ExerciseService, transport)
 export const RoutineClient = createClient(RoutineService, transport)
 export const WorkoutClient = createClient(WorkoutService, transport)
+export const ExerciseClient = createClient(ExerciseService, transport)
