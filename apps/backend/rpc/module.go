@@ -122,7 +122,8 @@ func withMiddleware(h http.Handler) http.Handler {
 
 func middlewareCORS(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
-		AllowedOrigins: []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
+		AllowCredentials: true,
+		AllowedOrigins:   []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,

@@ -33,7 +33,7 @@ const sets = computed(() => {
   return workoutStore.getSets(routineID.value, exerciseID.value)
 })
 
-const finishWorkout = () => {
+const finishWorkout = async () => {
   const exerciseSets = workoutStore.getExerciseSets(routineID.value)
   if (!exerciseSets) {
     throw new Error('No exercise sets found')
@@ -58,7 +58,7 @@ const finishWorkout = () => {
     routineId: routineID.value,
     exerciseSets: eSetsList,
   })
-  const res = WorkoutClient.create(req)
+  const res = await WorkoutClient.create(req)
   console.log(res)
 }
 </script>
