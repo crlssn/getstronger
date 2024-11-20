@@ -39,20 +39,14 @@ const sets = computed(() => {
     <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
   </div>
   <div v-for="(set, index) in sets" :key="index">
-    <div class="flex gap-x-4">
-      <div class="flex w-full">
-        <label class="w-full">Set {{ index + 1 }}</label>
-        <label class="w-full text-right">Weight</label>
-      </div>
-      <span class="text-gray-100">x</span>
-      <label class="w-full text-right">Reps</label>
-    </div>
+    <label>Set {{ index + 1 }}</label>
     <div class="flex items-center gap-x-4 mb-4">
       <div class="w-full">
         <input
           type="number"
           step="0.05"
           v-model.number="set.weight"
+          placeholder="Weight"
           @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
         />
       </div>
@@ -62,6 +56,7 @@ const sets = computed(() => {
           type="number"
           step="1"
           v-model.number="set.reps"
+          placeholder="Reps"
           @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
         />
       </div>
