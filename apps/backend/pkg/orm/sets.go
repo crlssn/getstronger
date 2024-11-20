@@ -18,18 +18,17 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Set is an object representing the database table.
 type Set struct {
-	ID         string        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	WorkoutID  string        `boil:"workout_id" json:"workout_id" toml:"workout_id" yaml:"workout_id"`
-	ExerciseID string        `boil:"exercise_id" json:"exercise_id" toml:"exercise_id" yaml:"exercise_id"`
-	Weight     types.Decimal `boil:"weight" json:"weight" toml:"weight" yaml:"weight"`
-	Reps       int           `boil:"reps" json:"reps" toml:"reps" yaml:"reps"`
-	CreatedAt  time.Time     `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID         string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	WorkoutID  string    `boil:"workout_id" json:"workout_id" toml:"workout_id" yaml:"workout_id"`
+	ExerciseID string    `boil:"exercise_id" json:"exercise_id" toml:"exercise_id" yaml:"exercise_id"`
+	Weight     float32   `boil:"weight" json:"weight" toml:"weight" yaml:"weight"`
+	Reps       int       `boil:"reps" json:"reps" toml:"reps" yaml:"reps"`
+	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *setR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L setL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -69,25 +68,33 @@ var SetTableColumns = struct {
 
 // Generated where
 
-type whereHelpertypes_Decimal struct{ field string }
+type whereHelperfloat32 struct{ field string }
 
-func (w whereHelpertypes_Decimal) EQ(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
-}
-func (w whereHelpertypes_Decimal) NEQ(x types.Decimal) qm.QueryMod {
+func (w whereHelperfloat32) EQ(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperfloat32) NEQ(x float32) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelpertypes_Decimal) LT(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_Decimal) LTE(x types.Decimal) qm.QueryMod {
+func (w whereHelperfloat32) LT(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperfloat32) LTE(x float32) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpertypes_Decimal) GT(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_Decimal) GTE(x types.Decimal) qm.QueryMod {
+func (w whereHelperfloat32) GT(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperfloat32) GTE(x float32) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelperfloat32) IN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperfloat32) NIN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
 type whereHelperint struct{ field string }
@@ -117,14 +124,14 @@ var SetWhere = struct {
 	ID         whereHelperstring
 	WorkoutID  whereHelperstring
 	ExerciseID whereHelperstring
-	Weight     whereHelpertypes_Decimal
+	Weight     whereHelperfloat32
 	Reps       whereHelperint
 	CreatedAt  whereHelpertime_Time
 }{
 	ID:         whereHelperstring{field: "\"getstronger\".\"sets\".\"id\""},
 	WorkoutID:  whereHelperstring{field: "\"getstronger\".\"sets\".\"workout_id\""},
 	ExerciseID: whereHelperstring{field: "\"getstronger\".\"sets\".\"exercise_id\""},
-	Weight:     whereHelpertypes_Decimal{field: "\"getstronger\".\"sets\".\"weight\""},
+	Weight:     whereHelperfloat32{field: "\"getstronger\".\"sets\".\"weight\""},
 	Reps:       whereHelperint{field: "\"getstronger\".\"sets\".\"reps\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"getstronger\".\"sets\".\"created_at\""},
 }

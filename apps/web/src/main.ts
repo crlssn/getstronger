@@ -9,12 +9,12 @@ import router from './router/router'
 import { RefreshAccessTokenOrLogout, ScheduleTokenRefresh } from '@/jwt/jwt'
 import { useAuthStore } from '@/stores/auth'
 
+const app = createApp(App)
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
-const app = createApp(App)
-app.use(pinia)
 app.use(router)
+app.use(pinia)
 
 const authStore = useAuthStore()
 if (authStore.accessToken) {

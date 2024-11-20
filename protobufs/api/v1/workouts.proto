@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+import "api/v1/exercise.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+
+import "buf/validate/validate.proto";
+
+service WorkoutService {
+  rpc Create(CreateWorkoutRequest) returns (CreateWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc Get(GetWorkoutRequest) returns (GetWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc List(ListWorkoutsRequest) returns (ListWorkoutsResponse) {
+    option (auth) = true;
+  }
+//  rpc Start(StartWorkoutRequest) returns (StartWorkoutResponse) {
+//    option (auth) = true;
+//  }
+//  rpc Finish(FinishWorkoutRequest) returns (FinishWorkoutResponse) {
+//    option (auth) = true;
+//  }
+//  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
+//    option (auth) = true;
+//  }
+//  rpc AddExercise(AddExerciseRequest) returns (AddExerciseResponse) {
+//    option (auth) = true;
+//  }
+//  rpc RemoveExercise(RemoveExerciseRequest) returns (RemoveExerciseResponse) {
+//    option (auth) = true;
+//  }
+}
+
+message CreateWorkoutRequest {
+  string routine_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated ExerciseSets exercise_sets = 3 [(buf.validate.field).repeated.min_items = 1];
+}
+message CreateWorkoutResponse {
+  string workout_id = 1;
+}
+
+message ListWorkoutsRequest {
+  int32 page_size = 1 [(buf.validate.field).int32 = { gte: 1, lte: 100 }];
+  bytes page_token = 2;
+}
+message ListWorkoutsResponse {
+  repeated Workout workouts = 1;
+  bytes next_page_token = 2;
+}
+
+message GetWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetWorkoutResponse {
+  Workout workout = 1;
+}
+
+//message StartWorkoutRequest {
+//  string routine_id = 1 [(buf.validate.field).string.uuid = true];
+//}
+//message StartWorkoutResponse {
+//  string workout_id = 1;
+//}
+
+//message FinishWorkoutRequest {
+//  Workout workout = 1 [(buf.validate.field).required = true];
+//}
+//message FinishWorkoutResponse {}
+//
+//message GetWorkoutRequest {
+//  string id = 1 [(buf.validate.field).string.uuid = true];
+//}
+//message GetWorkoutResponse {
+//  Workout Workout = 1;
+//}
+//
+//message UpdateWorkoutRequest {
+//  Workout Workout = 1 [(buf.validate.field).required = true];
+//  google.protobuf.FieldMask update_mask = 2;
+//}
+//message UpdateWorkoutResponse {
+//  Workout Workout = 1;
+//}
+//
+//message DeleteWorkoutRequest {
+//  string id = 1 [(buf.validate.field).string.uuid = true];
+//}
+//message DeleteWorkoutResponse {}
+//
+//message AddExerciseRequest {
+//  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+//  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
+//}
+//message AddExerciseResponse {}
+//
+//message RemoveExerciseRequest {
+//  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+//  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
+//}
+//message RemoveExerciseResponse {}
+
+//message Workout {
+//  string id = 1;
+//  string name = 2;
+//  repeated ExerciseSets exercise_sets = 3;
+//}
+
+message Workout {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  repeated ExerciseSets exercise_sets = 3 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message ExerciseSets {
+  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated Set sets = 2 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message Set {
+  double weight = 1; // The weight can be less than zero.
+  int32 reps = 2 [(buf.validate.field).int32 = { gte: 1 }];
+}
+
+

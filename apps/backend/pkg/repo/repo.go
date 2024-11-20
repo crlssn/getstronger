@@ -483,3 +483,132 @@ func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exer
 	}
 	return nil
 }
+
+type ListWorkoutsOpt func() ([]qm.QueryMod, error)
+
+func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
+	var query []qm.QueryMod
+	for _, opt := range opts {
+		q, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("workout list opt: %w", err)
+		}
+		query = append(query, q...)
+	}
+
+	workouts, err := orm.Workouts(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("workouts fetch: %w", err)
+	}
+
+	return workouts, nil
+}
+
+func ListWorkoutsWithUserID(userID string) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.WorkoutWhere.UserID.EQ(userID),
+		}, nil
+	}
+}
+
+func ListWorkoutsWithLimit(size int) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Limit(size),
+		}, nil
+	}
+}
+
+func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		if token == nil {
+			return []qm.QueryMod{
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.WorkoutColumns.CreatedAt)),
+			}, nil
+		}
+
+		var pt PageToken
+		if err := json.Unmarshal(token, &pt); err != nil {
+			return nil, fmt.Errorf("page token unmarshal: %w", err)
+		}
+
+		return []qm.QueryMod{
+			orm.WorkoutWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.WorkoutColumns.CreatedAt)),
+		}, nil
+	}
+}
+
+type CreateWorkoutParams struct {
+	Name         string
+	UserID       string
+	ExerciseSets []ExerciseSet
+}
+
+type ExerciseSet struct {
+	ExerciseID string
+	Sets       []Set
+}
+
+type Set struct {
+	Reps   int
+	Weight float32
+}
+
+func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+	workout := &orm.Workout{
+		Name:   p.Name,
+		UserID: p.UserID,
+	}
+
+	if err := r.NewTx(ctx, func(tx *Repo) error {
+		if err := workout.Insert(ctx, tx.executor(), boil.Infer()); err != nil {
+			return fmt.Errorf("workout insert: %w", err)
+		}
+
+		for _, exerciseSet := range p.ExerciseSets {
+			sets := make([]*orm.Set, 0, len(exerciseSet.Sets))
+			for _, set := range exerciseSet.Sets {
+				sets = append(sets, &orm.Set{
+					WorkoutID:  workout.ID,
+					ExerciseID: exerciseSet.ExerciseID,
+					Reps:       set.Reps,
+					Weight:     set.Weight,
+				})
+			}
+
+			if err := workout.AddSets(ctx, tx.executor(), true, sets...); err != nil {
+				return fmt.Errorf("workout sets add: %w", err)
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("workout tx: %w", err)
+	}
+
+	return workout, nil
+}
+
+type GetWorkoutOpt func() qm.QueryMod
+
+func GetWorkoutWithID(id string) GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return orm.WorkoutWhere.ID.EQ(id)
+	}
+}
+
+func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	workout, err := orm.Workouts(query...).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("workout fetch: %w", err)
+	}
+
+	return workout, nil
+}

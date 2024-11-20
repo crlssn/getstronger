@@ -12,7 +12,6 @@ import {
 } from '@headlessui/vue'
 import {
   ArrowPathRoundedSquareIcon,
-  Bars3Icon,
   BellIcon,
   BookOpenIcon,
   FolderIcon,
@@ -21,6 +20,8 @@ import {
 } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import { RouterView, useRoute } from 'vue-router'
+import NavigationMobile from '@/components/NavigationMobile.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
 
 const navigation = [
   { name: 'Home', href: '/home', icon: HomeIcon },
@@ -41,7 +42,7 @@ const route = useRoute()
 
 const isActive = (basePath: string) => computed(() => route.path.startsWith(basePath))
 
-import NavigationMobile from '@/components/NavigationMobile.vue'
+const pageTitleStore = usePageTitleStore()
 </script>
 
 <template>
@@ -205,7 +206,7 @@ import NavigationMobile from '@/components/NavigationMobile.vue'
         <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
           <div class="relative flex flex-1 items-center justify-center">
             <p class="uppercase text-sm font-semibold text-gray-900 lg:hidden">
-              {{ route.meta.title }}
+              {{ pageTitleStore.pageTitle }}
             </p>
           </div>
           <!--          <form class="relative flex flex-1" action="#" method="GET">-->

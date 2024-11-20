@@ -10,6 +10,10 @@ run_migrations:
 	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
 	sqlboiler -c ./database/sqlboiler.toml psql
 
+run_migrations_up:
+	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
+	sqlboiler -c ./database/sqlboiler.toml psql
+
 migrate:
 	$(MAKE) run_db
 	sleep 1
@@ -35,9 +39,10 @@ run_web:
 	cd apps/web && npm run dev
 
 lint:
+	goimports -w .
 	golangci-lint run
+	cd apps/web && npx sort-package-json
 	cd apps/web && npm run format
 
-sort_packages:
-	npx sort-package-json
-	goimports -w .
+vet:
+	go vet ./...

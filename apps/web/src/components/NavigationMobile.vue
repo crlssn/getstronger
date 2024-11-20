@@ -31,7 +31,7 @@ const iconClass = (isActive: boolean) => {
 
 <style scoped>
 nav {
-  @apply fixed w-full bottom-0 z-50 h-16 bg-white border-t-2 border-gray-200 lg:hidden;
-  @apply flex justify-evenly items-center;
+  @apply fixed w-full bottom-0 z-50 h-16 bg-white border-t-2 border-gray-200;
+  @apply lg:hidden flex justify-evenly items-center;
 }
 </style>

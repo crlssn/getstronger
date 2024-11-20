@@ -41,6 +41,7 @@ func NewModule() fx.Option {
 			newHandlers,
 			v1.NewAuthHandler,
 			v1.NewRoutineHandler,
+			v1.NewWorkoutHandler,
 			v1.NewExerciseHandler,
 		),
 		fx.Invoke(
@@ -62,6 +63,7 @@ type Handlers struct {
 
 	Auth     apiv1connect.AuthServiceHandler
 	Routine  apiv1connect.RoutineServiceHandler
+	Workout  apiv1connect.WorkoutServiceHandler
 	Exercise apiv1connect.ExerciseServiceHandler
 }
 
@@ -74,6 +76,9 @@ func newHandlers(p Handlers) []Handler {
 			return apiv1connect.NewRoutineServiceHandler(p.Routine, options...)
 		},
 		func(options ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewWorkoutServiceHandler(p.Workout, options...)
+		},
+		func(options ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewExerciseServiceHandler(p.Exercise, options...)
 		},
 	}
@@ -83,7 +88,7 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 	mux := http.NewServeMux()
 	for _, h := range handlers {
 		path, handler := h(options...)
-		mux.Handle(path, CookieMiddleware(withCORS(handler)))
+		mux.Handle(path, withMiddleware(handler))
 	}
 
 	lc.Append(fx.Hook{
@@ -101,39 +106,44 @@ func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.Han
 	})
 }
 
-func withCORS(h http.Handler) http.Handler {
+// TODO: Refactor middlewares to their own package.
+func withMiddleware(h http.Handler) http.Handler {
+	middlewares := []func(http.Handler) http.Handler{
+		middlewareCORS,
+		middlewareCookie,
+	}
+
+	for _, middleware := range middlewares {
+		h = middleware(h)
+	}
+
+	return h
+}
+
+func middlewareCORS(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
-		AllowedOrigins:             []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
-		AllowOriginFunc:            nil,
-		AllowOriginRequestFunc:     nil,
-		AllowOriginVaryRequestFunc: nil,
+		AllowCredentials: true,
+		AllowedOrigins:   []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
 			http.MethodOptions,
 		},
 		AllowedHeaders: []string{
-			"Content-Type",             // for all protocols
-			"Connect-Protocol-Version", // for Connect
-			"Connect-Timeout-Ms",       // for Connect
-			"Grpc-Timeout",             // for gRPC-web
-			"X-Grpc-Web",               // for gRPC-web
-			"X-User-Agent",             // for all protocols
-			"Authorization",            // for all protocols
+			"Content-Type",
+			"Connect-Protocol-Version",
+			"Connect-Timeout-Ms",
+			"Grpc-Timeout",
+			"X-Grpc-Web",
+			"X-User-Agent",
+			"Authorization",
 		},
-		ExposedHeaders:       connectcors.ExposedHeaders(),
-		MaxAge:               0,
-		AllowCredentials:     true,
-		AllowPrivateNetwork:  false,
-		OptionsPassthrough:   false,
-		OptionsSuccessStatus: 0,
-		Debug:                false,
-		Logger:               nil,
+		ExposedHeaders: connectcors.ExposedHeaders(),
 	})
 	return middleware.Handler(h)
 }
 
-func CookieMiddleware(h http.Handler) http.Handler {
+func middlewareCookie(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("refreshToken")
 		if err == nil {

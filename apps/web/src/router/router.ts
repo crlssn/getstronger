@@ -1,9 +1,4 @@
-import {
-  createRouter,
-  createWebHistory,
-  type RouteLocationNormalized,
-  type Router,
-} from 'vue-router'
+import { createRouter, createWebHistory, type Router } from 'vue-router'
 import HomeView from '@/views/Home.vue'
 import LoginView from '@/views/Auth/Login.vue'
 import Signup from '@/views/Auth/Signup.vue'
@@ -17,6 +12,11 @@ import UpdateExercise from '@/views/Exercises/UpdateExercise.vue'
 import ListRoutines from '@/views/Routines/ListRoutines.vue'
 import ViewRoutine from '@/views/Routines/ViewRoutine.vue'
 import CreateRoutine from '@/views/Routines/CreateRoutine.vue'
+import WorkoutRoutine from '@/views/Workouts/WorkoutRoutine.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import WorkoutExercise from '@/views/Workouts/WorkoutExercise.vue'
+import ListWorkouts from '@/views/Workouts/ListWorkouts.vue'
+import ViewWorkout from '@/views/Workouts/ViewWorkout.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +27,34 @@ const router: Router = createRouter({
       component: HomeView,
       beforeEnter: [auth],
       meta: { title: 'Home' },
+    },
+    {
+      path: '/workouts',
+      name: 'list-workouts',
+      component: ListWorkouts,
+      beforeEnter: [auth],
+      meta: { title: 'Workouts' },
+    },
+    {
+      path: '/workouts/:id',
+      name: 'view-workout',
+      component: ViewWorkout,
+      beforeEnter: [auth],
+      meta: { title: '' },
+    },
+    {
+      path: '/workouts/routine/:routine_id',
+      name: 'workout-routine',
+      component: WorkoutRoutine,
+      beforeEnter: [auth],
+      meta: { title: '' },
+    },
+    {
+      path: '/workouts/routine/:routine_id/exercise/:exercise_id',
+      name: 'workout-exercise',
+      component: WorkoutExercise,
+      beforeEnter: [auth],
+      meta: { title: '' },
     },
     {
       path: '/routines',
@@ -98,6 +126,12 @@ const router: Router = createRouter({
       meta: { title: 'Not Found' },
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const pageTitleStore = usePageTitleStore()
+  pageTitleStore.setPageTitle(to.meta.title as string)
+  next()
 })
 
 async function logout() {

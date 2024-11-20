@@ -5,9 +5,7 @@
 # Folders
 .idea/*
 /node_modules/
-.secrets/*.pem
-.secrets/*.key
-.secrets/*.crt
+/.secrets/
 /infrastructure/.terraform/
 /infrastructure/.terraform.lock.hcl
 /.env
