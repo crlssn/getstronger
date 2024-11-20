@@ -38,27 +38,33 @@ const sets = computed(() => {
     <Button type="link" colour="primary" class="mb-6" :to="`/workouts/routine/${routineID}`">All Exercises</Button>
     <Button type="button" colour="primary" class="mb-6">Next Exercise</Button>
   </div>
-  <div class="flex items-end mb-2" v-for="(set, index) in sets" :key="index">
-    <div class="w-full">
-      <label for="weight">Weight</label>
-      <input
-        id="weight"
-        type="number"
-        step="0.05"
-        v-model.number="set.weight"
-        @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
-      />
+  <div v-for="(set, index) in sets" :key="index">
+    <div class="flex gap-x-4">
+      <div class="flex w-full">
+        <label class="w-full">Set {{ index + 1 }}</label>
+        <label class="w-full text-right">Weight</label>
+      </div>
+      <span class="text-gray-100">x</span>
+      <label class="w-full text-right">Reps</label>
     </div>
-    <span>x</span>
-    <div class="w-full">
-      <label for="reps">Reps</label>
-      <input
-        id="reps"
-        type="number"
-        step="1"
-        v-model.number="set.reps"
-        @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
-      />
+    <div class="flex items-center gap-x-4 mb-4">
+      <div class="w-full">
+        <input
+          type="number"
+          step="0.05"
+          v-model.number="set.weight"
+          @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
+        />
+      </div>
+      <span class="text-gray-900">x</span>
+      <div class="w-full">
+        <input
+          type="number"
+          step="1"
+          v-model.number="set.reps"
+          @keyup="workoutStore.addEmptySetIfNone(routineID, exerciseID)"
+        />
+      </div>
     </div>
   </div>
   <!--  <Button type="button" colour="red" class="mt-6" @click="finishWorkout">Finish Workout</Button>-->
@@ -74,6 +80,6 @@ input {
 }
 
 span {
-  @apply mx-4 font-medium mb-4 text-gray-900;
+  @apply font-medium  ;
 }
 </style>
