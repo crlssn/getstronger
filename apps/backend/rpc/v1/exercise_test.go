@@ -60,9 +60,8 @@ func (s *exerciseSuite) TestCreateExercise() {
 			name: "valid request",
 			req: &connect.Request[v1.CreateExerciseRequest]{
 				Msg: &v1.CreateExerciseRequest{
-					Name:            "Bench Press",
-					Label:           "",
-					RestBetweenSets: nil,
+					Name:  "Bench Press",
+					Label: "",
 				},
 			},
 			expected: expected{

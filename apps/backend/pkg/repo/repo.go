@@ -155,18 +155,16 @@ func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) error {
 }
 
 type CreateExerciseParams struct {
-	UserID          string
-	Name            string
-	Label           string
-	RestBetweenSets int16
+	UserID string
+	Name   string
+	Label  string
 }
 
 func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
 	exercise := &orm.Exercise{
-		UserID:          p.UserID,
-		Title:           p.Name,
-		SubTitle:        null.NewString(p.Label, p.Label != ""),
-		RestBetweenSets: null.NewInt16(p.RestBetweenSets, p.RestBetweenSets > 0),
+		UserID:   p.UserID,
+		Title:    p.Name,
+		SubTitle: null.NewString(p.Label, p.Label != ""),
 	}
 	if err := exercise.Insert(ctx, r.executor(), boil.Infer()); err != nil {
 		return nil, fmt.Errorf("exercise insert: %w", err)
@@ -305,7 +303,6 @@ func (r *Repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error
 	_, err := exercise.Update(ctx, r.executor(), boil.Whitelist(
 		orm.ExerciseColumns.Title,
 		orm.ExerciseColumns.SubTitle,
-		orm.ExerciseColumns.RestBetweenSets,
 	))
 	if err != nil {
 		return fmt.Errorf("exercise update: %w", err)
