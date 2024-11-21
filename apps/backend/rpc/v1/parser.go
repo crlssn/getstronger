@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
@@ -90,6 +92,7 @@ func parseWorkoutToPB(workout *orm.Workout) *v1.Workout {
 	return &v1.Workout{
 		Id:           workout.ID,
 		Name:         workout.Name,
+		FinishedAt:   timestamppb.New(workout.FinishedAt),
 		ExerciseSets: exerciseSets,
 	}
 }

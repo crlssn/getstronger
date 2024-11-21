@@ -38,11 +38,14 @@ run_backend:
 run_web:
 	cd apps/web && npm run dev
 
-lint:
+format:
 	goimports -w .
-	golangci-lint run
 	cd apps/web && npx sort-package-json
 	cd apps/web && npm run format
+
+lint:
+	$(MAKE) lint
+	golangci-lint run
 
 vet:
 	go vet ./...

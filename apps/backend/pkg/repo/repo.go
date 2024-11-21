@@ -556,6 +556,7 @@ type CreateWorkoutParams struct {
 	Name         string
 	UserID       string
 	ExerciseSets []ExerciseSet
+	FinishedAt   time.Time
 }
 
 type ExerciseSet struct {
@@ -570,8 +571,9 @@ type Set struct {
 
 func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
 	workout := &orm.Workout{
-		Name:   p.Name,
-		UserID: p.UserID,
+		Name:       p.Name,
+		UserID:     p.UserID,
+		FinishedAt: p.FinishedAt.Truncate(time.Minute).UTC(),
 	}
 
 	if err := r.NewTx(ctx, func(tx *Repo) error {

@@ -23,58 +23,58 @@ import (
 
 // Workout is an object representing the database table.
 type Workout struct {
-	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID    string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Date      time.Time `boil:"date" json:"date" toml:"date" yaml:"date"`
-	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	Name      string    `boil:"name" json:"name" toml:"name" yaml:"name"`
+	ID         string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID     string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	FinishedAt time.Time `boil:"finished_at" json:"finished_at" toml:"finished_at" yaml:"finished_at"`
+	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	Name       string    `boil:"name" json:"name" toml:"name" yaml:"name"`
 
 	R *workoutR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L workoutL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var WorkoutColumns = struct {
-	ID        string
-	UserID    string
-	Date      string
-	CreatedAt string
-	Name      string
+	ID         string
+	UserID     string
+	FinishedAt string
+	CreatedAt  string
+	Name       string
 }{
-	ID:        "id",
-	UserID:    "user_id",
-	Date:      "date",
-	CreatedAt: "created_at",
-	Name:      "name",
+	ID:         "id",
+	UserID:     "user_id",
+	FinishedAt: "finished_at",
+	CreatedAt:  "created_at",
+	Name:       "name",
 }
 
 var WorkoutTableColumns = struct {
-	ID        string
-	UserID    string
-	Date      string
-	CreatedAt string
-	Name      string
+	ID         string
+	UserID     string
+	FinishedAt string
+	CreatedAt  string
+	Name       string
 }{
-	ID:        "workouts.id",
-	UserID:    "workouts.user_id",
-	Date:      "workouts.date",
-	CreatedAt: "workouts.created_at",
-	Name:      "workouts.name",
+	ID:         "workouts.id",
+	UserID:     "workouts.user_id",
+	FinishedAt: "workouts.finished_at",
+	CreatedAt:  "workouts.created_at",
+	Name:       "workouts.name",
 }
 
 // Generated where
 
 var WorkoutWhere = struct {
-	ID        whereHelperstring
-	UserID    whereHelperstring
-	Date      whereHelpertime_Time
-	CreatedAt whereHelpertime_Time
-	Name      whereHelperstring
+	ID         whereHelperstring
+	UserID     whereHelperstring
+	FinishedAt whereHelpertime_Time
+	CreatedAt  whereHelpertime_Time
+	Name       whereHelperstring
 }{
-	ID:        whereHelperstring{field: "\"getstronger\".\"workouts\".\"id\""},
-	UserID:    whereHelperstring{field: "\"getstronger\".\"workouts\".\"user_id\""},
-	Date:      whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"date\""},
-	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"created_at\""},
-	Name:      whereHelperstring{field: "\"getstronger\".\"workouts\".\"name\""},
+	ID:         whereHelperstring{field: "\"getstronger\".\"workouts\".\"id\""},
+	UserID:     whereHelperstring{field: "\"getstronger\".\"workouts\".\"user_id\""},
+	FinishedAt: whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"finished_at\""},
+	CreatedAt:  whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"created_at\""},
+	Name:       whereHelperstring{field: "\"getstronger\".\"workouts\".\"name\""},
 }
 
 // WorkoutRels is where relationship names are stored.
@@ -115,8 +115,8 @@ func (r *workoutR) GetSets() SetSlice {
 type workoutL struct{}
 
 var (
-	workoutAllColumns            = []string{"id", "user_id", "date", "created_at", "name"}
-	workoutColumnsWithoutDefault = []string{"user_id", "date", "name"}
+	workoutAllColumns            = []string{"id", "user_id", "finished_at", "created_at", "name"}
+	workoutColumnsWithoutDefault = []string{"user_id", "finished_at", "name"}
 	workoutColumnsWithDefault    = []string{"id", "created_at"}
 	workoutPrimaryKeyColumns     = []string{"id"}
 	workoutGeneratedColumns      = []string{}

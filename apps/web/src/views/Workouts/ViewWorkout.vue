@@ -7,6 +7,7 @@ import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
+import { formatToCompactDateTime } from '@/pkg/datetime/datetime'
 
 const workout = ref<Workout | undefined>(undefined)
 const exercises = ref<Exercise[]>()
@@ -48,7 +49,7 @@ const getExercise = (id: string) => {
 </script>
 
 <template>
-  <h6>Thu 21 Nov</h6>
+  <h6>{{ formatToCompactDateTime(workout?.finishedAt?.toDate()) }}</h6>
   <ul
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
     role="list"
@@ -60,7 +61,7 @@ const getExercise = (id: string) => {
       </p>
     </li>
   </ul>
-  <Button type="button" colour="amber" class="mt-6">Edit Workout</Button>
+  <Button type="button" colour="gray" class="mt-6">Edit Workout</Button>
   <Button type="button" colour="red" class="mt-6">Delete Workout</Button>
 </template>
 

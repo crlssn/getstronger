@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
 
 /**
  * @generated from message api.v1.CreateWorkoutRequest
@@ -16,9 +16,14 @@ export class CreateWorkoutRequest extends Message<CreateWorkoutRequest> {
   routineId = "";
 
   /**
-   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 3;
+   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 2;
    */
   exerciseSets: ExerciseSets[] = [];
+
+  /**
+   * @generated from field: google.protobuf.Timestamp finished_at = 3;
+   */
+  finishedAt?: Timestamp;
 
   constructor(data?: PartialMessage<CreateWorkoutRequest>) {
     super();
@@ -29,7 +34,8 @@ export class CreateWorkoutRequest extends Message<CreateWorkoutRequest> {
   static readonly typeName = "api.v1.CreateWorkoutRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "routine_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
+    { no: 2, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
+    { no: 3, name: "finished_at", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkoutRequest {
@@ -261,7 +267,12 @@ export class Workout extends Message<Workout> {
   name = "";
 
   /**
-   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 3;
+   * @generated from field: google.protobuf.Timestamp finished_at = 3;
+   */
+  finishedAt?: Timestamp;
+
+  /**
+   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 4;
    */
   exerciseSets: ExerciseSets[] = [];
 
@@ -275,7 +286,8 @@ export class Workout extends Message<Workout> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
+    { no: 3, name: "finished_at", kind: "message", T: Timestamp },
+    { no: 4, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Workout {

@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
 import { ListWorkoutsRequest, Workout } from '@/pb/api/v1/workouts_pb'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { DateTime } from 'luxon'
+import { formatToCompactDateTime } from '@/pkg/datetime/datetime'
 
 const pageToken = ref(new Uint8Array(0))
 const workouts = ref(Array<Workout>())
@@ -29,7 +31,7 @@ onMounted(() => {
 
 <template>
   <div v-for="workout in workouts" :key="workout.id" class="mb-4">
-    <h6>Thu 21 Nov</h6>
+    <h6>{{ formatToCompactDateTime(workout.finishedAt?.toDate()) }}</h6>
     <ul
       role="list"
       class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
