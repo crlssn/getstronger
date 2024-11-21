@@ -44,8 +44,8 @@ format:
 	cd apps/web && npm run format
 
 lint:
-	$(MAKE) lint
 	golangci-lint run
+	cd apps/web && npx eslint "src/**/*.{js,ts,vue}"
 
 vet:
 	go vet ./...
