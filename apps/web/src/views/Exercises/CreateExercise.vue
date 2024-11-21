@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CreateExerciseRequest, RestBetweenSets } from '@/pb/api/v1/exercise_pb'
+import { CreateExerciseRequest } from '@/pb/api/v1/exercise_pb'
 import AppButton from '@/components/AppButton.vue'
 import { ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
@@ -25,15 +25,9 @@ const restOptions = [
 ]
 
 async function createExercise() {
-  let restBetweenSets
-  if (rest.value > 0) {
-    restBetweenSets = new RestBetweenSets({ seconds: rest.value })
-  }
-
   const request = new CreateExerciseRequest({
     name: name.value,
     label: label.value,
-    restBetweenSets: restBetweenSets,
   })
   try {
     await ExerciseClient.create(request)

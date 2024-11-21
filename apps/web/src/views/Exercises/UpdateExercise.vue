@@ -2,7 +2,6 @@
 import {
   Exercise,
   GetExerciseRequest,
-  RestBetweenSets,
   UpdateExerciseRequest,
 } from '@/pb/api/v1/exercise_pb'
 import AppButton from '@/components/AppButton.vue'
@@ -45,9 +44,6 @@ async function loadExercise() {
     }
     name.value = response.exercise.name
     label.value = response.exercise.label
-    if (response.exercise.restBetweenSets) {
-      rest.value = response.exercise.restBetweenSets.seconds
-    }
   } catch (error) {
     resOK.value = false
     if (error instanceof ConnectError) {
@@ -63,17 +59,11 @@ onMounted(() => {
 })
 
 async function updateExercise() {
-  let restBetweenSets
-  if (rest.value > 0) {
-    restBetweenSets = new RestBetweenSets({ seconds: rest.value })
-  }
-
   const request = new UpdateExerciseRequest({
     exercise: new Exercise({
       id: route.params.id[0],
       name: name.value,
       label: label.value,
-      restBetweenSets: restBetweenSets,
     }),
     updateMask: new FieldMask({ paths: ['name', 'label', 'rest_between_sets'] }),
   })
