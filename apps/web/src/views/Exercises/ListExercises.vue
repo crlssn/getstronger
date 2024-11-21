@@ -3,7 +3,7 @@ import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
 import { ExerciseClient } from '@/clients/clients'
 import { onMounted, ref } from 'vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import Button from '@/components/FormButton.vue'
+import FormButton from '@/components/FormButton.vue'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -35,7 +35,7 @@ const fetchExercises = async () => {
 </script>
 
 <template>
-  <Button type="link" to="/exercises/create" colour="primary">Create Exercise</Button>
+  <FormButton type="link" to="/exercises/create" colour="primary">Create Exercise</FormButton>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl"

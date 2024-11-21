@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, WorkoutClient } from '@/clients/clients'
 import { GetWorkoutRequest, Workout } from '@/pb/api/v1/workouts_pb'
-import Button from '@/components/FormButton.vue'
+import FormButton from '@/components/FormButton.vue'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
@@ -60,8 +60,8 @@ const getExercise = (id: string) => {
       </p>
     </li>
   </ul>
-  <Button type="button" colour="gray" class="mt-6">Edit Workout</Button>
-  <Button type="button" colour="red" class="mt-6">Delete Workout</Button>
+  <FormButton type="button" colour="gray" class="mt-6">Edit Workout</FormButton>
+  <FormButton type="button" colour="red" class="mt-6">Delete Workout</FormButton>
 </template>
 
 <style scoped>
