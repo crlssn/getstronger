@@ -100,6 +100,11 @@ const finishWorkout = async () => {
   workoutStore.removeWorkout(routineID)
   await router.push(`/workouts`)
 }
+
+const cancelWorkout = async () => {
+  workoutStore.removeWorkout(routineID)
+  await router.push(`/routines/${routineID}`)
+}
 </script>
 
 <template>
@@ -174,8 +179,8 @@ const finishWorkout = async () => {
         />
       </div>
     </div>
-    <AppButton type="submit" colour="primary" class="mt-6"> Finish Workout</AppButton>
-    <AppButton type="button" colour="red" class="mt-6">Discard Workout</AppButton>
+    <AppButton type="submit" colour="primary" class="mt-6">Finish Workout</AppButton>
+    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout">Cancel Workout</AppButton>
   </form>
 </template>
 
