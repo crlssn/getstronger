@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
 import { ListWorkoutsRequest, Workout } from '@/pb/api/v1/workouts_pb'
-import Button from '@/components/Button.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 
 const pageToken = ref(new Uint8Array(0))
@@ -29,20 +28,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <ul
-    role="list"
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
-  >
-    <li v-for="workout in workouts" :key="workout.id">
-      <RouterLink
-        :to="`/workouts/${workout.id}`"
-        class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-800"
-      >
-        {{ workout.name }}
-        <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true" />
-      </RouterLink>
-    </li>
-  </ul>
+  <div v-for="workout in workouts" :key="workout.id" class="mb-4">
+    <h6>Thu 21 Nov</h6>
+    <ul
+      role="list"
+      class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
+    >
+      <li>
+        <RouterLink
+          :to="`/workouts/${workout.id}`"
+          class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-800"
+        >
+          {{ workout.name }}
+          <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true" />
+        </RouterLink>
+      </li>
+    </ul>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+h6 {
+  @apply text-xs font-medium text-gray-600 mb-2 uppercase;
+}
+</style>

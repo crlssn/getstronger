@@ -14,7 +14,6 @@ import ViewRoutine from '@/views/Routines/ViewRoutine.vue'
 import CreateRoutine from '@/views/Routines/CreateRoutine.vue'
 import WorkoutRoutine from '@/views/Workouts/WorkoutRoutine.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import WorkoutExercise from '@/views/Workouts/WorkoutExercise.vue'
 import ListWorkouts from '@/views/Workouts/ListWorkouts.vue'
 import ViewWorkout from '@/views/Workouts/ViewWorkout.vue'
 
@@ -46,13 +45,6 @@ const router: Router = createRouter({
       path: '/workouts/routine/:routine_id',
       name: 'workout-routine',
       component: WorkoutRoutine,
-      beforeEnter: [auth],
-      meta: { title: '' },
-    },
-    {
-      path: '/workouts/routine/:routine_id/exercise/:exercise_id',
-      name: 'workout-exercise',
-      component: WorkoutExercise,
       beforeEnter: [auth],
       meta: { title: '' },
     },

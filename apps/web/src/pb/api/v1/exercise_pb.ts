@@ -324,12 +324,17 @@ export class ListExercisesRequest extends Message<ListExercisesRequest> {
   name = "";
 
   /**
-   * @generated from field: int32 page_size = 2;
+   * @generated from field: repeated string exercise_ids = 2;
+   */
+  exerciseIds: string[] = [];
+
+  /**
+   * @generated from field: int32 page_size = 3;
    */
   pageSize = 0;
 
   /**
-   * @generated from field: bytes page_token = 3;
+   * @generated from field: bytes page_token = 4;
    */
   pageToken = new Uint8Array(0);
 
@@ -342,8 +347,9 @@ export class ListExercisesRequest extends Message<ListExercisesRequest> {
   static readonly typeName = "api.v1.ListExercisesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 3, name: "page_token", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    { no: 2, name: "exercise_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 4, name: "page_token", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListExercisesRequest {

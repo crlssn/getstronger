@@ -132,6 +132,6 @@ onMounted(() => {
       </ul>
     </div>
 
-    <Button type="submit" colour="primary" class="mt-6">Save</Button>
+    <Button type="submit" colour="primary" class="mt-6">Save Routine</Button>
   </form>
 </template>

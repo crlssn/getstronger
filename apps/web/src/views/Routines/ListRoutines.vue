@@ -27,7 +27,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Button type="link" to="/routines/create" colour="primary">Create</Button>
+  <Button type="link" to="/routines/create" colour="primary">Create Routine</Button>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
