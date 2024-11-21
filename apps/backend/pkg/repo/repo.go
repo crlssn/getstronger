@@ -573,7 +573,7 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 	workout := &orm.Workout{
 		Name:       p.Name,
 		UserID:     p.UserID,
-		FinishedAt: p.FinishedAt.UTC(),
+		FinishedAt: p.FinishedAt.Truncate(time.Minute).UTC(),
 	}
 
 	if err := r.NewTx(ctx, func(tx *Repo) error {
