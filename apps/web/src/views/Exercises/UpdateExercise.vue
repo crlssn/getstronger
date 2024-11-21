@@ -110,7 +110,9 @@ async function updateExercise() {
         </div>
       </div>
 
-      <AppButton text="Create" type="submit" colour="primary" class="mt-6">Update Exercise</AppButton>
+      <AppButton text="Create" type="submit" colour="primary" class="mt-6"
+        >Update Exercise</AppButton
+      >
     </form>
   </div>
 </template>
