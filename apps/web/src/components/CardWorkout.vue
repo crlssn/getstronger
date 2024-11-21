@@ -7,7 +7,7 @@ const props = defineProps<Props>()
 
 import DropdownButton from '@/components/DropdownButton.vue'
 import { type DropdownItem } from '@/types/dropdown'
-import FormButton from '@/components/FormButton.vue'
+import AppButton from '@/components/AppButton.vue'
 import FormTextarea from '@/components/FormTextarea.vue'
 import CardWorkoutExercise from '@/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/components/CardWorkoutComment.vue'
@@ -66,7 +66,7 @@ const dropdownItems: Array<DropdownItem> = [
       </div>
       <FormTextarea placeholder="Write a comment..." :rows="2" />
       <div class="flex justify-end">
-        <FormButton type="button" colour="primary">Comment</FormButton>
+        <AppButton type="button" colour="primary">Comment</AppButton>
       </div>
     </div>
   </div>

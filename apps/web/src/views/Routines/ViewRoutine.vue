@@ -20,14 +20,14 @@ onMounted(async () => {
   pageTitleStore.setPageTitle(routine.value?.name as string)
 })
 
-import FormButton from '@/components/FormButton.vue'
+import AppButton from '@/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 </script>
 
 <template>
-  <FormButton type="link" :to="`/workouts/routine/${route.params.id}`" colour="primary" class="mb-8">
+  <AppButton type="link" :to="`/workouts/routine/${route.params.id}`" colour="primary" class="mb-8">
     Start Workout
-  </FormButton>
+  </AppButton>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md mb-4"
@@ -48,6 +48,6 @@ import { usePageTitleStore } from '@/stores/pageTitle'
       </div>
     </li>
   </ul>
-  <FormButton type="button" colour="gray" class="mt-4">Edit Routine</FormButton>
-  <FormButton type="button" colour="red" class="mt-4">Delete Routine</FormButton>
+  <AppButton type="button" colour="gray" class="mt-4">Edit Routine</AppButton>
+  <AppButton type="button" colour="red" class="mt-4">Delete Routine</AppButton>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FormButton from '@/components/FormButton.vue'
+import AppButton from '@/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, RoutineClient } from '@/clients/clients'
 import { CreateRoutineRequest } from '@/pb/api/v1/routines_pb'
@@ -132,6 +132,6 @@ onMounted(() => {
       </ul>
     </div>
 
-    <FormButton type="submit" colour="primary" class="mt-6">Save Routine</FormButton>
+    <AppButton type="submit" colour="primary" class="mt-6">Save Routine</AppButton>
   </form>
 </template>

@@ -5,7 +5,7 @@ import {
   RestBetweenSets,
   UpdateExerciseRequest,
 } from '@/pb/api/v1/exercise_pb'
-import FormButton from '@/components/FormButton.vue'
+import AppButton from '@/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'
@@ -160,7 +160,7 @@ async function updateExercise() {
         </div>
       </div>
       <div class="px-4 py-4 sm:px-6">
-        <FormButton colour="primary" type="submit">Update Exercise</FormButton>
+        <AppButton colour="primary" type="submit">Update Exercise</AppButton>
       </div>
     </div>
   </form>
