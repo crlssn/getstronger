@@ -140,9 +140,8 @@ const cancelWorkout = async () => {
               <div class="flex items-center gap-x-4 mb-4">
                 <div class="w-full">
                   <input
-                    type="number"
+                    type="text"
                     inputmode="decimal"
-                    step="0.05"
                     v-model.number="set.weight"
                     placeholder="Weight"
                     @keyup="
@@ -155,7 +154,6 @@ const cancelWorkout = async () => {
                   <input
                     type="number"
                     inputmode="numeric"
-                    step="1"
                     v-model.number="set.reps"
                     placeholder="Reps"
                     @keyup="
