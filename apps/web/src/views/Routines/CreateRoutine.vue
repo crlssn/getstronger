@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
+import Button from '@/components/FormButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, RoutineClient } from '@/clients/clients'
 import { CreateRoutineRequest } from '@/pb/api/v1/routines_pb'

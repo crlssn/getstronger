@@ -5,10 +5,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
-import Dropdown from '@/components/Dropdown.vue'
+import Dropdown from '@/components/DropdownButton.vue'
 import { type DropdownItem } from '@/types/dropdown'
-import Button from '@/components/Button.vue'
-import Textarea from '@/components/Textarea.vue'
+import Button from '@/components/FormButton.vue'
+import Textarea from '@/components/FormTextarea.vue'
 import CardWorkoutExercise from '@/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/components/CardWorkoutComment.vue'
 

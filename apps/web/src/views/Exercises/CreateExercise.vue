@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CreateExerciseRequest, RestBetweenSets } from '@/pb/api/v1/exercise_pb'
-import Button from '@/components/Button.vue'
+import Button from '@/components/FormButton.vue'
 import { ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'

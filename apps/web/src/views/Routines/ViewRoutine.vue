@@ -20,7 +20,7 @@ onMounted(async () => {
   pageTitleStore.setPageTitle(routine.value?.name as string)
 })
 
-import Button from '@/components/Button.vue'
+import Button from '@/components/FormButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 </script>
 

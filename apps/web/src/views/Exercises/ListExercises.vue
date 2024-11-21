@@ -3,7 +3,7 @@ import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
 import { ExerciseClient } from '@/clients/clients'
 import { onMounted, ref } from 'vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import Button from '@/components/Button.vue'
+import Button from '@/components/FormButton.vue'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -31,21 +31,6 @@ const fetchExercises = async () => {
   } catch (error) {
     console.error('fetch exercises failed:', error)
   }
-}
-
-function formatTime(seconds: number) {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-
-  if (minutes === 0) {
-    return `${remainingSeconds} sec`
-  }
-
-  if (remainingSeconds === 0) {
-    return `${minutes} min`
-  }
-
-  return `${minutes} min ${remainingSeconds} sec`
 }
 </script>
 

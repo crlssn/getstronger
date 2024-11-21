@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, WorkoutClient } from '@/clients/clients'
-import { GetWorkoutRequest, ListWorkoutsRequest, Workout } from '@/pb/api/v1/workouts_pb'
-import Button from '@/components/Button.vue'
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { GetWorkoutRequest, Workout } from '@/pb/api/v1/workouts_pb'
+import Button from '@/components/FormButton.vue'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
