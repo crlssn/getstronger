@@ -18,6 +18,7 @@ export default defineConfig({
     //   key: fs.readFileSync('./../.secrets/localhost.key'),
     //   cert: fs.readFileSync('./../.secrets/localhost.crt'),
     // },
+    host: '0.0.0.0',
     port: 5173, // Optional: set the port you want to use
   },
   resolve: {
