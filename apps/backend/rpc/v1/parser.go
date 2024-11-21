@@ -18,18 +18,10 @@ func parseExercisesToPB(exercises orm.ExerciseSlice) []*v1.Exercise {
 }
 
 func parseExerciseToPB(exercise *orm.Exercise) *v1.Exercise {
-	var restBetweenSets *v1.RestBetweenSets
-	if exercise.RestBetweenSets.Valid {
-		restBetweenSets = &v1.RestBetweenSets{
-			Seconds: int32(exercise.RestBetweenSets.Int16),
-		}
-	}
-
 	return &v1.Exercise{
-		Id:              exercise.ID,
-		Name:            exercise.Title,
-		Label:           exercise.SubTitle.String,
-		RestBetweenSets: restBetweenSets,
+		Id:    exercise.ID,
+		Name:  exercise.Title,
+		Label: exercise.SubTitle.String,
 	}
 }
 

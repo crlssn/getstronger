@@ -36,15 +36,10 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
-	var restBetweenSets int16
-	if req.Msg.GetRestBetweenSets() != nil {
-		restBetweenSets = int16(req.Msg.GetRestBetweenSets().GetSeconds())
-	}
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
-		UserID:          userID,
-		Name:            req.Msg.GetName(),
-		Label:           req.Msg.GetLabel(),
-		RestBetweenSets: restBetweenSets,
+		UserID: userID,
+		Name:   req.Msg.GetName(),
+		Label:  req.Msg.GetLabel(),
 	})
 	if err != nil {
 		log.Error("create exercise failed", zap.Error(err))
@@ -102,11 +97,6 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 			exercise.Title = req.Msg.GetExercise().GetName()
 		case "label":
 			exercise.SubTitle = null.NewString(req.Msg.GetExercise().GetLabel(), req.Msg.GetExercise().GetLabel() != "")
-		case "rest_between_sets":
-			exercise.RestBetweenSets = null.NewInt16(0, false)
-			if req.Msg.GetExercise().GetRestBetweenSets() != nil {
-				exercise.RestBetweenSets = null.NewInt16(int16(req.Msg.GetExercise().GetRestBetweenSets().GetSeconds()), req.Msg.GetExercise().GetRestBetweenSets().GetSeconds() > 0)
-			}
 		default:
 			log.Error("invalid update mask path", zap.String("path", path))
 			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidUpdateMaskPath)

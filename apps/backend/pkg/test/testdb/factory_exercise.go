@@ -15,13 +15,12 @@ type ExerciseOpt func(event *orm.Exercise)
 
 func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 	m := &orm.Exercise{
-		ID:              "",
-		UserID:          f.NewUser().ID,
-		Title:           "",
-		SubTitle:        null.String{},
-		RestBetweenSets: null.Int16{},
-		CreatedAt:       time.Time{},
-		DeletedAt:       null.Time{},
+		ID:        "",
+		UserID:    f.NewUser().ID,
+		Title:     "",
+		SubTitle:  null.String{},
+		CreatedAt: time.Time{},
+		DeletedAt: null.Time{},
 	}
 
 	for _, opt := range opts {
@@ -56,12 +55,6 @@ func ExerciseTitle(title string) ExerciseOpt {
 func ExerciseSubTitle(subTitle null.String) ExerciseOpt {
 	return func(m *orm.Exercise) {
 		m.SubTitle = subTitle
-	}
-}
-
-func ExerciseRestBetweenSets(restBetweenSets null.Int16) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.RestBetweenSets = restBetweenSets
 	}
 }
 

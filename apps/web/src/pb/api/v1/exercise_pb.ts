@@ -20,11 +20,6 @@ export class CreateExerciseRequest extends Message<CreateExerciseRequest> {
    */
   label = "";
 
-  /**
-   * @generated from field: api.v1.RestBetweenSets rest_between_sets = 3;
-   */
-  restBetweenSets?: RestBetweenSets;
-
   constructor(data?: PartialMessage<CreateExerciseRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -35,7 +30,6 @@ export class CreateExerciseRequest extends Message<CreateExerciseRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "rest_between_sets", kind: "message", T: RestBetweenSets },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateExerciseRequest {
@@ -431,11 +425,6 @@ export class Exercise extends Message<Exercise> {
    */
   label = "";
 
-  /**
-   * @generated from field: api.v1.RestBetweenSets rest_between_sets = 4;
-   */
-  restBetweenSets?: RestBetweenSets;
-
   constructor(data?: PartialMessage<Exercise>) {
     super();
     proto3.util.initPartial(data, this);
@@ -447,7 +436,6 @@ export class Exercise extends Message<Exercise> {
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "rest_between_sets", kind: "message", T: RestBetweenSets },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Exercise {
@@ -464,43 +452,6 @@ export class Exercise extends Message<Exercise> {
 
   static equals(a: Exercise | PlainMessage<Exercise> | undefined, b: Exercise | PlainMessage<Exercise> | undefined): boolean {
     return proto3.util.equals(Exercise, a, b);
-  }
-}
-
-/**
- * @generated from message api.v1.RestBetweenSets
- */
-export class RestBetweenSets extends Message<RestBetweenSets> {
-  /**
-   * @generated from field: int32 seconds = 1;
-   */
-  seconds = 0;
-
-  constructor(data?: PartialMessage<RestBetweenSets>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.RestBetweenSets";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "seconds", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RestBetweenSets {
-    return new RestBetweenSets().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RestBetweenSets {
-    return new RestBetweenSets().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RestBetweenSets {
-    return new RestBetweenSets().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: RestBetweenSets | PlainMessage<RestBetweenSets> | undefined, b: RestBetweenSets | PlainMessage<RestBetweenSets> | undefined): boolean {
-    return proto3.util.equals(RestBetweenSets, a, b);
   }
 }
 
