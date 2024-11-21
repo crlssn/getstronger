@@ -152,7 +152,7 @@ const cancelWorkout = async () => {
                 <span class="text-gray-900 font-medium">x</span>
                 <div class="w-full">
                   <input
-                    type="number"
+                    type="text"
                     inputmode="numeric"
                     v-model.number="set.reps"
                     placeholder="Reps"
