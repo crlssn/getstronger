@@ -141,6 +141,7 @@ const cancelWorkout = async () => {
                 <div class="w-full">
                   <input
                     type="number"
+                    inputmode="decimal"
                     step="0.05"
                     v-model.number="set.weight"
                     placeholder="Weight"
@@ -153,6 +154,7 @@ const cancelWorkout = async () => {
                 <div class="w-full">
                   <input
                     type="number"
+                    inputmode="numeric"
                     step="1"
                     v-model.number="set.reps"
                     placeholder="Reps"
