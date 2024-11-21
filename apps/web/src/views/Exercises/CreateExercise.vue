@@ -11,19 +11,6 @@ const resError = ref('')
 const resOK = ref(false)
 const rest = ref(0)
 
-const restOptions = [
-  { value: 30, label: '30 seconds' },
-  { value: 60, label: '1 minute' },
-  { value: 90, label: '1 minute 30 seconds' },
-  { value: 120, label: '2 minutes' },
-  { value: 150, label: '2 minutes 30 seconds' },
-  { value: 180, label: '3 minutes' },
-  { value: 210, label: '3 minutes 30 seconds' },
-  { value: 240, label: '4 minutes' },
-  { value: 270, label: '4 minutes 30 seconds' },
-  { value: 300, label: '5 minutes' },
-]
-
 async function createExercise() {
   const request = new CreateExerciseRequest({
     name: name.value,
@@ -88,30 +75,12 @@ async function createExercise() {
             v-model="label"
             id="label"
             type="text"
+            placeholder="Optional"
             class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
           />
         </div>
       </div>
 
-      <div>
-        <div>
-          <label for="rest" class="block text-xs font-semibold text-gray-900 uppercase">
-            Rest between sets
-          </label>
-        </div>
-        <div class="mt-2">
-          <select
-            v-model="rest"
-            id="rest"
-            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-          >
-            <option :value="0" selected>Unspecified</option>
-            <option v-for="rest in restOptions" :key="rest.value" :value="rest.value">
-              {{ rest.label }}
-            </option>
-          </select>
-        </div>
-      </div>
       <AppButton text="Create" type="submit" colour="primary" class="mt-6">Save Exercise</AppButton>
     </form>
   </div>
