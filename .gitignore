@@ -9,3 +9,4 @@
 /infrastructure/.terraform/
 /infrastructure/.terraform.lock.hcl
 /.env
+/apps/web/.env
