@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import Dashboard from '@/components/UserDashboard.vue'
+import UserDashboard from '@/components/UserDashboard.vue'
 
 const authStore = useAuthStore()
 </script>
 
 <template>
-  <Dashboard v-if="authStore.accessToken" />
+  <UserDashboard v-if="authStore.accessToken" />
   <RouterView v-else />
 </template>
