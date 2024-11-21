@@ -8,7 +8,7 @@ const props = defineProps<Props>()
 import DropdownButton from '@/components/DropdownButton.vue'
 import { type DropdownItem } from '@/types/dropdown'
 import AppButton from '@/components/AppButton.vue'
-import FormTextarea from '@/components/FormTextarea.vue'
+import AppTextarea from '@/components/AppTextarea.vue'
 import CardWorkoutExercise from '@/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/components/CardWorkoutComment.vue'
 
@@ -64,7 +64,7 @@ const dropdownItems: Array<DropdownItem> = [
           :timestamp="new Date()"
         />
       </div>
-      <FormTextarea placeholder="Write a comment..." :rows="2" />
+      <AppTextarea placeholder="Write a comment..." :rows="2" />
       <div class="flex justify-end">
         <AppButton type="button" colour="primary">Comment</AppButton>
       </div>
