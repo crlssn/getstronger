@@ -47,6 +47,7 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		Name:         routine.Title,
 		UserID:       userID,
+		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
 		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetExerciseSets()),
 	})
 	if err != nil {

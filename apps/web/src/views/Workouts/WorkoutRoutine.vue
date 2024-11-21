@@ -9,8 +9,10 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
 import { CreateWorkoutRequest, ExerciseSets } from '@/pb/api/v1/workouts_pb'
 import router from '@/router/router'
+import { DateTime } from 'luxon'
 
 const route = useRoute()
+const date = ref(DateTime.now().toISODate())
 const routine = ref<Routine | undefined>(undefined)
 const routineID = route.params.routine_id as string
 const workoutStore = useWorkoutStore()
@@ -71,56 +73,74 @@ const finishWorkout = async () => {
 </script>
 
 <template>
-  <ul
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
-    role="list"
-  >
-    <li v-for="exercise in routine?.exercises" :key="exercise.id">
-      <RouterLink
-        :to="`?exercise_id=${exercise.id}`"
-        class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-800"
-      >
-        {{ exercise.name }}
-        <ChevronDownIcon
-          v-if="isCurrentExercise(exercise.id)"
-          class="size-5 flex-none text-gray-400"
+  <form class="space-y-6" @submit.prevent="finishWorkout">
+    <div>
+      <label class="block text-xs font-semibold text-gray-900 uppercase">Date</label>
+      <div class="mt-2">
+        <input
+          v-model="date"
+          type="datetime-local"
+          required
+          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
         />
-        <ChevronRightIcon v-else class="size-5 flex-none text-gray-400" />
-      </RouterLink>
-      <div v-if="isCurrentExercise(exercise.id)" class="px-4">
-        <div v-for="(set, index) in sets" :key="index">
-          <label>Set {{ index + 1 }}</label>
-          <div class="flex items-center gap-x-4 mb-4">
-            <div class="w-full">
-              <input
-                type="number"
-                step="0.05"
-                v-model.number="set.weight"
-                placeholder="Weight"
-                @keyup="
-                  workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
-                "
-              />
-            </div>
-            <span class="text-gray-900 font-medium">x</span>
-            <div class="w-full">
-              <input
-                type="number"
-                step="1"
-                v-model.number="set.reps"
-                placeholder="Reps"
-                @keyup="
-                  workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
-                "
-              />
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-gray-900 uppercase">Exercises</label>
+    <ul
+      class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
+      role="list"
+    >
+      <li v-for="exercise in routine?.exercises" :key="exercise.id">
+        <RouterLink
+          :to="`?exercise_id=${exercise.id}`"
+          class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-800"
+        >
+          {{ exercise.name }}
+          <ChevronDownIcon
+            v-if="isCurrentExercise(exercise.id)"
+            class="size-5 flex-none text-gray-400"
+          />
+          <ChevronRightIcon v-else class="size-5 flex-none text-gray-400" />
+        </RouterLink>
+        <div v-if="isCurrentExercise(exercise.id)" class="px-4">
+          <div v-for="(set, index) in sets" :key="index">
+            <label>Set {{ index + 1 }}</label>
+            <div class="flex items-center gap-x-4 mb-4">
+              <div class="w-full">
+                <input
+                  type="number"
+                  step="0.05"
+                  v-model.number="set.weight"
+                  placeholder="Weight"
+                  @keyup="
+                    workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
+                  "
+                />
+              </div>
+              <span class="text-gray-900 font-medium">x</span>
+              <div class="w-full">
+                <input
+                  type="number"
+                  step="1"
+                  v-model.number="set.reps"
+                  placeholder="Reps"
+                  @keyup="
+                    workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
+                  "
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </li>
-  </ul>
-  <Button type="button" colour="primary" class="mt-6" @click="finishWorkout">Finish Workout</Button>
-  <Button type="button" colour="red" class="mt-6">Discard Workout</Button>
+      </li>
+    </ul>
+    </div>
+    <Button type="submit" colour="primary" class="mt-6">
+      Finish Workout
+    </Button>
+    <Button type="button" colour="red" class="mt-6">Discard Workout</Button>
+  </form>
 </template>
 
 <style scoped>

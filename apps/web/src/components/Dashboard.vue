@@ -45,7 +45,7 @@ const pageTitleStore = usePageTitleStore()
 </script>
 
 <template>
-  <div class="mb-16">
+  <div class="mb-20">
     <TransitionRoot as="template" :show="sidebarOpen">
       <Dialog class="relative z-50 lg:hidden" @close="sidebarOpen = false">
         <TransitionChild
