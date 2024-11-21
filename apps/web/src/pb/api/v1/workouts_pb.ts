@@ -267,7 +267,12 @@ export class Workout extends Message<Workout> {
   name = "";
 
   /**
-   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 3;
+   * @generated from field: google.protobuf.Timestamp finished_at = 3;
+   */
+  finishedAt?: Timestamp;
+
+  /**
+   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 4;
    */
   exerciseSets: ExerciseSets[] = [];
 
@@ -281,7 +286,8 @@ export class Workout extends Message<Workout> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
+    { no: 3, name: "finished_at", kind: "message", T: Timestamp },
+    { no: 4, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Workout {
