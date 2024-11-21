@@ -180,7 +180,9 @@ const cancelWorkout = async () => {
       </div>
     </div>
     <AppButton type="submit" colour="primary" class="mt-6">Finish Workout</AppButton>
-    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout">Cancel Workout</AppButton>
+    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout"
+      >Cancel Workout</AppButton
+    >
   </form>
 </template>
 
