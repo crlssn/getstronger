@@ -218,6 +218,18 @@ func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 	}
 }
 
+func ListExercisesWithIDs(ids []string) ListExercisesOpt {
+	return func() ([]qm.QueryMod, error) {
+		if len(ids) == 0 {
+			return nil, nil
+		}
+
+		return []qm.QueryMod{
+			orm.ExerciseWhere.ID.IN(ids),
+		}, nil
+	}
+}
+
 func ListExercisesWithName(name string) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
@@ -596,6 +608,12 @@ type GetWorkoutOpt func() qm.QueryMod
 func GetWorkoutWithID(id string) GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return orm.WorkoutWhere.ID.EQ(id)
+	}
+}
+
+func GetWorkoutWithExerciseSets() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutRels.Sets)
 	}
 }
 

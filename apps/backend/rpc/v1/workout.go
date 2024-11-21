@@ -69,7 +69,10 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 	userID := jwt.MustExtractUserID(ctx)
 	log = log.With(xzap.FieldUserID(userID))
 
-	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetId()))
+	workout, err := h.repo.GetWorkout(ctx,
+		repo.GetWorkoutWithID(req.Msg.GetId()),
+		repo.GetWorkoutWithExerciseSets(),
+	)
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

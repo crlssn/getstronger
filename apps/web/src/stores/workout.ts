@@ -8,17 +8,13 @@ export const useWorkoutStore = defineStore(
   () => {
     const workouts = ref({} as RoutineWorkout)
 
-    const initialiseWorkout = (routineID: RoutineID, exerciseID: ExerciseID) => {
+    const initialiseWorkout = (routineID: RoutineID) => {
       if (!workouts.value[routineID]) {
         workouts.value[routineID] = {}
       }
 
       if (!workouts.value[routineID].exerciseSets) {
         workouts.value[routineID].exerciseSets = {}
-      }
-
-      if (!workouts.value[routineID].exerciseSets[exerciseID]) {
-        workouts.value[routineID].exerciseSets[exerciseID] = []
       }
     }
 
@@ -38,7 +34,7 @@ export const useWorkoutStore = defineStore(
       return workouts.value[routineID].exerciseSets[exerciseID]
     }
 
-    const getExerciseSets = (routineID: RoutineID) => {
+    const getAllSets = (routineID: RoutineID) => {
       return workouts.value[routineID].exerciseSets
     }
 
@@ -62,7 +58,7 @@ export const useWorkoutStore = defineStore(
       addEmptySetIfNone,
       initialiseWorkout,
       getSets,
-      getExerciseSets,
+      getAllSets,
       removeWorkout,
     }
   },

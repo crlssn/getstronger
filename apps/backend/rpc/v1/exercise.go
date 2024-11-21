@@ -3,14 +3,15 @@ package v1
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/volatiletech/null/v8"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
+	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
@@ -157,6 +158,7 @@ func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.List
 
 	limit := int(req.Msg.GetPageSize())
 	exercises, err := h.repo.ListExercises(ctx,
+		repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()),
 		repo.ListExercisesWithName(req.Msg.GetName()),
 		repo.ListExercisesWithLimit(limit+1),
 		repo.ListExercisesWithUserID(userID),
@@ -167,20 +169,17 @@ func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.List
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var nextPageToken []byte
-	if len(exercises) > limit {
-		exercises = exercises[:limit]
-		if nextPageToken, err = json.Marshal(repo.PageToken{
-			CreatedAt: exercises[len(exercises)-1].CreatedAt,
-		}); err != nil {
-			log.Error("marshal page token failed", zap.Error(err))
-			return nil, connect.NewError(connect.CodeInternal, nil)
-		}
+	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *orm.Exercise) time.Time {
+		return exercise.CreatedAt
+	})
+	if err != nil {
+		log.Error("paginate exercises failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("exercises listed")
 	return connect.NewResponse(&v1.ListExercisesResponse{
-		Exercises:     parseExercisesToPB(exercises),
-		NextPageToken: nextPageToken,
+		Exercises:     parseExercisesToPB(pagination.Items),
+		NextPageToken: pagination.NextPageToken,
 	}), nil
 }

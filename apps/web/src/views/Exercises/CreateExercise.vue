@@ -118,7 +118,7 @@ async function createExercise() {
           </select>
         </div>
       </div>
-      <Button text="Create" type="submit" colour="primary" class="mt-6">Save</Button>
+      <Button text="Create" type="submit" colour="primary" class="mt-6">Save Exercise</Button>
     </form>
   </div>
 </template>

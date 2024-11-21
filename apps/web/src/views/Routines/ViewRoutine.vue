@@ -26,7 +26,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 
 <template>
   <Button type="link" :to="`/workouts/routine/${route.params.id}`" colour="primary" class="mb-8">
-    Workout
+    Start Workout
   </Button>
   <ul
     role="list"
@@ -48,6 +48,6 @@ import { usePageTitleStore } from '@/stores/pageTitle'
       </div>
     </li>
   </ul>
-  <Button type="button" colour="amber" class="mt-4">Edit</Button>
-  <Button type="button" colour="red" class="mt-4">Delete</Button>
+  <Button type="button" colour="amber" class="mt-4">Edit Routine</Button>
+  <Button type="button" colour="red" class="mt-4">Delete Routine</Button>
 </template>

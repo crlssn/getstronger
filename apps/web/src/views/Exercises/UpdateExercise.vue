@@ -161,7 +161,7 @@ async function updateExercise() {
         </div>
       </div>
       <div class="px-4 py-4 sm:px-6">
-        <Button colour="primary" type="submit">Update</Button>
+        <Button colour="primary" type="submit">Update Exercise</Button>
       </div>
     </div>
   </form>
