@@ -19,7 +19,7 @@ const routineID = route.params.routine_id as string
 const workoutStore = useWorkoutStore()
 const pageTitleStore = usePageTitleStore()
 const dateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
-let dateTimeInterval: ReturnType<typeof setInterval>;
+let dateTimeInterval: ReturnType<typeof setInterval>
 const reqError = ref('')
 
 onMounted(async () => {

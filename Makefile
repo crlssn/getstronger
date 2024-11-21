@@ -41,6 +41,7 @@ run_web:
 format:
 	goimports -w .
 	cd apps/web && npx sort-package-json
+	cd apps/web && npx eslint "src/**/*.{js,ts,vue}" --fix
 	cd apps/web && npm run format
 
 lint:
