@@ -24,93 +24,50 @@ import (
 
 // Exercise is an object representing the database table.
 type Exercise struct {
-	ID              string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID          string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Title           string      `boil:"title" json:"title" toml:"title" yaml:"title"`
-	SubTitle        null.String `boil:"sub_title" json:"sub_title,omitempty" toml:"sub_title" yaml:"sub_title,omitempty"`
-	RestBetweenSets null.Int16  `boil:"rest_between_sets" json:"rest_between_sets,omitempty" toml:"rest_between_sets" yaml:"rest_between_sets,omitempty"`
-	CreatedAt       time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	DeletedAt       null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ID        string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID    string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Title     string      `boil:"title" json:"title" toml:"title" yaml:"title"`
+	SubTitle  null.String `boil:"sub_title" json:"sub_title,omitempty" toml:"sub_title" yaml:"sub_title,omitempty"`
+	CreatedAt time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	DeletedAt null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *exerciseR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L exerciseL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var ExerciseColumns = struct {
-	ID              string
-	UserID          string
-	Title           string
-	SubTitle        string
-	RestBetweenSets string
-	CreatedAt       string
-	DeletedAt       string
+	ID        string
+	UserID    string
+	Title     string
+	SubTitle  string
+	CreatedAt string
+	DeletedAt string
 }{
-	ID:              "id",
-	UserID:          "user_id",
-	Title:           "title",
-	SubTitle:        "sub_title",
-	RestBetweenSets: "rest_between_sets",
-	CreatedAt:       "created_at",
-	DeletedAt:       "deleted_at",
+	ID:        "id",
+	UserID:    "user_id",
+	Title:     "title",
+	SubTitle:  "sub_title",
+	CreatedAt: "created_at",
+	DeletedAt: "deleted_at",
 }
 
 var ExerciseTableColumns = struct {
-	ID              string
-	UserID          string
-	Title           string
-	SubTitle        string
-	RestBetweenSets string
-	CreatedAt       string
-	DeletedAt       string
+	ID        string
+	UserID    string
+	Title     string
+	SubTitle  string
+	CreatedAt string
+	DeletedAt string
 }{
-	ID:              "exercises.id",
-	UserID:          "exercises.user_id",
-	Title:           "exercises.title",
-	SubTitle:        "exercises.sub_title",
-	RestBetweenSets: "exercises.rest_between_sets",
-	CreatedAt:       "exercises.created_at",
-	DeletedAt:       "exercises.deleted_at",
+	ID:        "exercises.id",
+	UserID:    "exercises.user_id",
+	Title:     "exercises.title",
+	SubTitle:  "exercises.sub_title",
+	CreatedAt: "exercises.created_at",
+	DeletedAt: "exercises.deleted_at",
 }
 
 // Generated where
-
-type whereHelpernull_Int16 struct{ field string }
-
-func (w whereHelpernull_Int16) EQ(x null.Int16) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Int16) NEQ(x null.Int16) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Int16) LT(x null.Int16) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Int16) LTE(x null.Int16) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Int16) GT(x null.Int16) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Int16) GTE(x null.Int16) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-func (w whereHelpernull_Int16) IN(slice []int16) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelpernull_Int16) NIN(slice []int16) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-func (w whereHelpernull_Int16) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Int16) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 type whereHelpernull_Time struct{ field string }
 
@@ -137,21 +94,19 @@ func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var ExerciseWhere = struct {
-	ID              whereHelperstring
-	UserID          whereHelperstring
-	Title           whereHelperstring
-	SubTitle        whereHelpernull_String
-	RestBetweenSets whereHelpernull_Int16
-	CreatedAt       whereHelpertime_Time
-	DeletedAt       whereHelpernull_Time
+	ID        whereHelperstring
+	UserID    whereHelperstring
+	Title     whereHelperstring
+	SubTitle  whereHelpernull_String
+	CreatedAt whereHelpertime_Time
+	DeletedAt whereHelpernull_Time
 }{
-	ID:              whereHelperstring{field: "\"getstronger\".\"exercises\".\"id\""},
-	UserID:          whereHelperstring{field: "\"getstronger\".\"exercises\".\"user_id\""},
-	Title:           whereHelperstring{field: "\"getstronger\".\"exercises\".\"title\""},
-	SubTitle:        whereHelpernull_String{field: "\"getstronger\".\"exercises\".\"sub_title\""},
-	RestBetweenSets: whereHelpernull_Int16{field: "\"getstronger\".\"exercises\".\"rest_between_sets\""},
-	CreatedAt:       whereHelpertime_Time{field: "\"getstronger\".\"exercises\".\"created_at\""},
-	DeletedAt:       whereHelpernull_Time{field: "\"getstronger\".\"exercises\".\"deleted_at\""},
+	ID:        whereHelperstring{field: "\"getstronger\".\"exercises\".\"id\""},
+	UserID:    whereHelperstring{field: "\"getstronger\".\"exercises\".\"user_id\""},
+	Title:     whereHelperstring{field: "\"getstronger\".\"exercises\".\"title\""},
+	SubTitle:  whereHelpernull_String{field: "\"getstronger\".\"exercises\".\"sub_title\""},
+	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"exercises\".\"created_at\""},
+	DeletedAt: whereHelpernull_Time{field: "\"getstronger\".\"exercises\".\"deleted_at\""},
 }
 
 // ExerciseRels is where relationship names are stored.
@@ -202,9 +157,9 @@ func (r *exerciseR) GetSets() SetSlice {
 type exerciseL struct{}
 
 var (
-	exerciseAllColumns            = []string{"id", "user_id", "title", "sub_title", "rest_between_sets", "created_at", "deleted_at"}
+	exerciseAllColumns            = []string{"id", "user_id", "title", "sub_title", "created_at", "deleted_at"}
 	exerciseColumnsWithoutDefault = []string{"user_id", "title"}
-	exerciseColumnsWithDefault    = []string{"id", "sub_title", "rest_between_sets", "created_at", "deleted_at"}
+	exerciseColumnsWithDefault    = []string{"id", "sub_title", "created_at", "deleted_at"}
 	exercisePrimaryKeyColumns     = []string{"id"}
 	exerciseGeneratedColumns      = []string{}
 )

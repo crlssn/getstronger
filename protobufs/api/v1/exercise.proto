@@ -30,7 +30,6 @@ service ExerciseService {
 message CreateExerciseRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   string label = 2;
-  RestBetweenSets rest_between_sets = 3;
 }
 message CreateExerciseResponse {
   string id = 1;
@@ -71,10 +70,4 @@ message Exercise {
   string id = 1;
   string name = 2;
   string label = 3;
-  RestBetweenSets rest_between_sets = 4;
 }
-
-message RestBetweenSets {
-  int32 seconds = 1 [(buf.validate.field).int32.gt = 0];
-}
-
