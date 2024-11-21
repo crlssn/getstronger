@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
+import AppButton from '@/components/AppButton.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { GetRoutineRequest, Routine } from '@/pb/api/v1/routines_pb'
 import { RoutineClient, WorkoutClient } from '@/clients/clients'
@@ -174,8 +174,8 @@ const finishWorkout = async () => {
         />
       </div>
     </div>
-    <Button type="submit" colour="primary" class="mt-6"> Finish Workout</Button>
-    <Button type="button" colour="red" class="mt-6">Discard Workout</Button>
+    <AppButton type="submit" colour="primary" class="mt-6"> Finish Workout</AppButton>
+    <AppButton type="button" colour="red" class="mt-6">Discard Workout</AppButton>
   </form>
 </template>
 

@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory, type Router } from 'vue-router'
-import HomeView from '@/views/Home.vue'
-import LoginView from '@/views/Auth/Login.vue'
-import Signup from '@/views/Auth/Signup.vue'
-import NotFound from '@/views/NotFound.vue'
 import { useAuthStore } from '@/stores/auth'
+import { usePageTitleStore } from '@/stores/pageTitle'
 import { AuthClient } from '@/clients/clients'
 import { LogoutRequest } from '@/pb/api/v1/auth_pb'
+import HomeView from '@/views/HomeView.vue'
+import UserLogin from '@/views/Auth/UserLogin.vue'
+import UserSignup from '@/views/Auth/UserSignup.vue'
+import NotFound from '@/views/NotFound.vue'
 import CreateExercise from '@/views/Exercises/CreateExercise.vue'
 import ListExercises from '@/views/Exercises/ListExercises.vue'
 import UpdateExercise from '@/views/Exercises/UpdateExercise.vue'
@@ -13,7 +14,6 @@ import ListRoutines from '@/views/Routines/ListRoutines.vue'
 import ViewRoutine from '@/views/Routines/ViewRoutine.vue'
 import CreateRoutine from '@/views/Routines/CreateRoutine.vue'
 import WorkoutRoutine from '@/views/Workouts/WorkoutRoutine.vue'
-import { usePageTitleStore } from '@/stores/pageTitle'
 import ListWorkouts from '@/views/Workouts/ListWorkouts.vue'
 import ViewWorkout from '@/views/Workouts/ViewWorkout.vue'
 
@@ -93,16 +93,16 @@ const router: Router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginView,
+      component: UserLogin,
       beforeEnter: [guest],
       meta: { title: 'Login' },
     },
     {
       path: '/signup',
       name: 'signup',
-      component: Signup,
+      component: UserSignup,
       beforeEnter: [guest],
-      meta: { title: 'Signup' },
+      meta: { title: 'UserSignup' },
     },
     {
       path: '/logout',

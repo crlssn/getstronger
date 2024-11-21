@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CreateExerciseRequest, RestBetweenSets } from '@/pb/api/v1/exercise_pb'
-import Button from '@/components/Button.vue'
+import AppButton from '@/components/AppButton.vue'
 import { ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'
@@ -118,7 +118,7 @@ async function createExercise() {
           </select>
         </div>
       </div>
-      <Button text="Create" type="submit" colour="primary" class="mt-6">Save Exercise</Button>
+      <AppButton text="Create" type="submit" colour="primary" class="mt-6">Save Exercise</AppButton>
     </form>
   </div>
 </template>

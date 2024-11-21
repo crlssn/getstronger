@@ -5,13 +5,12 @@ import {
   RestBetweenSets,
   UpdateExerciseRequest,
 } from '@/pb/api/v1/exercise_pb'
-import Button from '@/components/Button.vue'
+import AppButton from '@/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'
 import { useRoute } from 'vue-router'
 import { FieldMask } from '@bufbuild/protobuf'
-import router from '@/router/router'
 
 const name = ref('')
 const label = ref('')
@@ -161,7 +160,7 @@ async function updateExercise() {
         </div>
       </div>
       <div class="px-4 py-4 sm:px-6">
-        <Button colour="primary" type="submit">Update Exercise</Button>
+        <AppButton colour="primary" type="submit">Update Exercise</AppButton>
       </div>
     </div>
   </form>

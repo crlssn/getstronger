@@ -5,10 +5,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
-import Dropdown from '@/components/Dropdown.vue'
+import DropdownButton from '@/components/DropdownButton.vue'
 import { type DropdownItem } from '@/types/dropdown'
-import Button from '@/components/Button.vue'
-import Textarea from '@/components/Textarea.vue'
+import AppButton from '@/components/AppButton.vue'
+import AppTextarea from '@/components/AppTextarea.vue'
 import CardWorkoutExercise from '@/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/components/CardWorkoutComment.vue'
 
@@ -31,7 +31,7 @@ const dropdownItems: Array<DropdownItem> = [
           <span class="font-semibold mr-2">Christian Carlsson</span>
           <span class="text-gray-500 text-sm">4 hours ago</span>
         </div>
-        <Dropdown :items="dropdownItems" />
+        <DropdownButton :items="dropdownItems" />
       </div>
     </div>
     <div class="px-4 py-5 sm:p-6">
@@ -64,9 +64,9 @@ const dropdownItems: Array<DropdownItem> = [
           :timestamp="new Date()"
         />
       </div>
-      <Textarea placeholder="Write a comment..." :rows="2" />
+      <AppTextarea placeholder="Write a comment..." :rows="2" />
       <div class="flex justify-end">
-        <Button type="button" colour="primary">Comment</Button>
+        <AppButton type="button" colour="primary">Comment</AppButton>
       </div>
     </div>
   </div>

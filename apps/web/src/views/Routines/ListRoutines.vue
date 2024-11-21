@@ -3,7 +3,7 @@ import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
 import { ListRoutinesRequest, Routine } from '@/pb/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
-import Button from '@/components/Button.vue'
+import AppButton from '@/components/AppButton.vue'
 
 const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())
@@ -27,7 +27,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Button type="link" to="/routines/create" colour="primary">Create Routine</Button>
+  <AppButton type="link" to="/routines/create" colour="primary">Create Routine</AppButton>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"

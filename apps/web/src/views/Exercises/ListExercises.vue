@@ -3,7 +3,7 @@ import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
 import { ExerciseClient } from '@/clients/clients'
 import { onMounted, ref } from 'vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import Button from '@/components/Button.vue'
+import AppButton from '@/components/AppButton.vue'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -32,25 +32,10 @@ const fetchExercises = async () => {
     console.error('fetch exercises failed:', error)
   }
 }
-
-function formatTime(seconds: number) {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-
-  if (minutes === 0) {
-    return `${remainingSeconds} sec`
-  }
-
-  if (remainingSeconds === 0) {
-    return `${minutes} min`
-  }
-
-  return `${minutes} min ${remainingSeconds} sec`
-}
 </script>
 
 <template>
-  <Button type="link" to="/exercises/create" colour="primary">Create Exercise</Button>
+  <AppButton type="link" to="/exercises/create" colour="primary">Create Exercise</AppButton>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl"

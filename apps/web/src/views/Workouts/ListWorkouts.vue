@@ -3,7 +3,6 @@ import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
 import { ListWorkoutsRequest, Workout } from '@/pb/api/v1/workouts_pb'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { DateTime } from 'luxon'
 import { formatToCompactDateTime } from '@/pkg/datetime/datetime'
 
 const pageToken = ref(new Uint8Array(0))

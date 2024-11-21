@@ -12,7 +12,6 @@ import {
 } from '@headlessui/vue'
 import {
   ArrowPathRoundedSquareIcon,
-  BellIcon,
   BookOpenIcon,
   FolderIcon,
   HomeIcon,
