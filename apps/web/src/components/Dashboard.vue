@@ -28,7 +28,6 @@ const navigation = [
   { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
   { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
   { name: 'Workouts', href: '/workouts', icon: FolderIcon },
-  { name: 'Notifications', href: '/notifications', icon: BellIcon },
 ]
 
 const userNavigation = [
@@ -284,5 +283,5 @@ const pageTitleStore = usePageTitleStore()
     </div>
   </div>
 
-  <NavigationMobile :items="navigation" />
+  <NavigationMobile />
 </template>

@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { type FunctionalComponent } from 'vue'
 import { useRoute } from 'vue-router'
+import {
+  BellIcon,
+  BookOpenIcon,
+  FolderIcon,
+  HomeIcon,
+  RectangleStackIcon,
+} from '@heroicons/vue/24/outline'
 
-const props = defineProps<{
-  items: Array<{
-    name: string
-    href: string
-    icon: FunctionalComponent
-  }>
-}>()
+import {
+  BellIcon as BellSolidIcon,
+  BookOpenIcon as BookOpenSolidIcon,
+  FolderIcon as FolderSolidIcon,
+  HomeIcon as HomeSolidIcon,
+  RectangleStackIcon as RectangleStackSolidIcon,
+} from '@heroicons/vue/24/solid'
 
 const route = useRoute()
 
@@ -16,15 +22,24 @@ const isActive = (basePath: string) => {
   return route.path.startsWith(basePath)
 }
 
-const iconClass = (isActive: boolean) => {
-  return isActive ? 'text-indigo-500' : 'text-gray-500'
-}
+const navigation = [
+  { name: 'Home', href: '/home', icon: HomeIcon, iconActive: HomeSolidIcon },
+  {
+    name: 'Routines',
+    href: '/routines',
+    icon: RectangleStackIcon,
+    iconActive: RectangleStackSolidIcon,
+  },
+  { name: 'Exercises', href: '/exercises', icon: BookOpenIcon, iconActive: BookOpenSolidIcon },
+  { name: 'Workouts', href: '/workouts', icon: FolderIcon, iconActive: FolderSolidIcon },
+  { name: 'Notifications', href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon },
+]
 </script>
 
 <template>
   <nav>
-    <RouterLink v-for="item in props.items" :key="item.href" :to="item.href">
-      <component :is="item.icon" class="h-6 w-6" :class="iconClass(isActive(item.href))" />
+    <RouterLink v-for="item in navigation" :key="item.href" :to="item.href">
+      <component :is="isActive(item.href) ? item.iconActive : item.icon" class="h-6 w-6" />
     </RouterLink>
   </nav>
 </template>
