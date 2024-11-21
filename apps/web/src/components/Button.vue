@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   type: 'button' | 'submit' | 'link'
-  colour: 'primary' | 'green' | 'red' | 'amber'
+  colour: 'primary' | 'green' | 'red' | 'amber' | 'gray'
   to?: string
 }>()
 
@@ -51,5 +51,9 @@ a.link {
 
 .amber {
   @apply bg-amber-600 hover:bg-amber-500 border-b-amber-800 hover:border-b-amber-700 focus-visible:outline-amber-600 text-white;
+}
+
+.gray {
+  @apply bg-gray-500 hover:bg-gray-600 border-b-gray-700 hover:border-b-gray-800 focus-visible:outline-gray-500 text-white;
 }
 </style>

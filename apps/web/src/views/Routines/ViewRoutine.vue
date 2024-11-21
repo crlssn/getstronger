@@ -48,6 +48,6 @@ import { usePageTitleStore } from '@/stores/pageTitle'
       </div>
     </li>
   </ul>
-  <Button type="button" colour="amber" class="mt-4">Edit Routine</Button>
+  <Button type="button" colour="gray" class="mt-4">Edit Routine</Button>
   <Button type="button" colour="red" class="mt-4">Delete Routine</Button>
 </template>

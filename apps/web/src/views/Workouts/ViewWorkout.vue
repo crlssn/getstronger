@@ -60,7 +60,7 @@ const getExercise = (id: string) => {
       </p>
     </li>
   </ul>
-  <Button type="button" colour="amber" class="mt-6">Edit Workout</Button>
+  <Button type="button" colour="gray" class="mt-6">Edit Workout</Button>
   <Button type="button" colour="red" class="mt-6">Delete Workout</Button>
 </template>
 

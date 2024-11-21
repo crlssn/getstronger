@@ -39,7 +39,7 @@ const fetchRoutine = async (id: string) => {
   routine.value = res.routine
 }
 
-const endWorkout = async () => {
+const finishWorkout = async () => {
   const exerciseSets = workoutStore.getAllSets(routineID)
   if (!exerciseSets) {
     throw new Error('No exercise sets found')
@@ -78,7 +78,7 @@ const endWorkout = async () => {
     <li v-for="exercise in routine?.exercises" :key="exercise.id">
       <RouterLink
         :to="`?exercise_id=${exercise.id}`"
-        class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800 cursor-pointer"
+        class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-800"
       >
         {{ exercise.name }}
         <ChevronDownIcon
@@ -119,8 +119,8 @@ const endWorkout = async () => {
       </div>
     </li>
   </ul>
-  <Button type="button" colour="primary" class="mt-6" @click="endWorkout">End Workout</Button>
-  <Button type="button" colour="red" class="mt-6" @click="endWorkout">Discard Workout</Button>
+  <Button type="button" colour="primary" class="mt-6" @click="finishWorkout">Finish Workout</Button>
+  <Button type="button" colour="red" class="mt-6">Discard Workout</Button>
 </template>
 
 <style scoped>
