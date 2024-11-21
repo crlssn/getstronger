@@ -28,7 +28,7 @@ const fetchWorkout = async () => {
 }
 
 const fetchExercises = async () => {
-  const exerciseIDs: string[] = [];
+  const exerciseIDs: string[] = []
   workout.value?.exerciseSets.forEach((exerciseSet) => {
     exerciseIDs.push(exerciseSet.exerciseId)
   })
@@ -56,7 +56,7 @@ const getExercise = (id: string) => {
     <li v-for="exerciseSet in workout?.exerciseSets" :key="exerciseSet.exerciseId">
       <p class="font-medium mb-2">{{ getExercise(exerciseSet.exerciseId)?.name }}</p>
       <p v-for="(set, index) in exerciseSet.sets" :key="index" class="text-sm mb-1">
-        <span class="font-medium">Set {{ index+1}}:</span> {{ set.reps }} x {{ set.weight }} kg
+        <span class="font-medium">Set {{ index + 1 }}:</span> {{ set.reps }} x {{ set.weight }} kg
       </p>
     </li>
   </ul>
@@ -69,6 +69,6 @@ h6 {
   @apply text-xs font-medium text-gray-600 mb-2 uppercase;
 }
 li {
-  @apply block px-4 py-5
+  @apply block px-4 py-5;
 }
 </style>

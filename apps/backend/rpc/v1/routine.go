@@ -138,7 +138,7 @@ func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 	return connect.NewResponse(&v1.DeleteRoutineResponse{}), nil
 }
 
-func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) { //nolint:dupl
+func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
 	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceListProcedure))
 	log.Info("request received")
 
