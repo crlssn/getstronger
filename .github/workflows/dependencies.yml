@@ -1,7 +1,9 @@
 name: Dependencies
 
 on:
-  push:
+  pull_request:
+    types:
+      - opened
 
 permissions:
   contents: read
@@ -47,7 +49,7 @@ jobs:
         run: |
           markdown_table="${{ steps.depu.outputs.markdown_table }}"
           # Write the comment directly with newlines
-          gh pr comment --body "**Go package check**  
+          gh pr comment --body "**Outdated Go packages**  
           $markdown_table"
 
 
