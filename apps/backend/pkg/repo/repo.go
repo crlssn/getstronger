@@ -477,6 +477,8 @@ func UpdateRoutineExerciseOrder(exerciseIDS []string) UpdateRoutineOpt {
 	}
 }
 
+var errDuplicateColumn = fmt.Errorf("duplicate column")
+
 func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	columns := orm.M{}
 	for _, opt := range opts {
@@ -486,7 +488,7 @@ func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 		}
 		for key, value := range column {
 			if columns[key] != nil {
-				return fmt.Errorf("duplicate column: %s", key)
+				return fmt.Errorf("%w: %s", errDuplicateColumn, key)
 			}
 			columns[key] = value
 		}
