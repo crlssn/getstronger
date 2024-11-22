@@ -21,13 +21,14 @@ jobs:
 
       - name: Run depu and capture output
         run: |
-          depu > outdated.txt || true
-          echo "outdated=$(cat outdated.txt | base64)" >> $GITHUB_ENV
+          depu > outdated.txt
+          cat outdated.txt
+#          echo "outdated=$(cat outdated.txt)" >> $GITHUB_ENV
 
-      - name: Post comment with outdated dependencies
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OUTDATED: ${{ env.outdated }}
-        run: |
-          outdated=$(echo "$OUTDATED" | base64 --decode)
-          gh pr comment --body "### Dependency Check Report\n\`\`\`\n$outdated\n\`\`\`"
+#      - name: Post comment with outdated dependencies
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          OUTDATED: ${{ env.outdated }}
+#        run: |
+#          outdated=$(echo "$OUTDATED" | base64 --decode)
+#          gh pr comment --body "### Dependency Check Report\n\`\`\`\n$outdated\n\`\`\`"
