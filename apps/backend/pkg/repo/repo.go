@@ -262,12 +262,10 @@ func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm
 		queries = append(queries, query...)
 	}
 
-	boil.DebugMode = true
 	exercises, err := orm.Exercises(queries...).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("exercises fetch: %w", err)
 	}
-	boil.DebugMode = false
 
 	return exercises, nil
 }
