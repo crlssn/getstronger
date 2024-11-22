@@ -25,7 +25,7 @@ func NewRoutineHandler(log *zap.Logger, r *repo.Repo) apiv1connect.RoutineServic
 }
 
 func (h *routineHandler) Create(ctx context.Context, req *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -49,7 +49,7 @@ func (h *routineHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 }
 
 func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRoutineRequest]) (*connect.Response[v1.GetRoutineResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -73,7 +73,7 @@ func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRou
 }
 
 func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateRoutineRequest]) (*connect.Response[v1.UpdateRoutineResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -114,7 +114,7 @@ func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.Upd
 }
 
 func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteRoutineRequest]) (*connect.Response[v1.DeleteRoutineResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -142,7 +142,7 @@ func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 }
 
 func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	log.Info("listing routines")
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
@@ -181,7 +181,7 @@ func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListR
 }
 
 func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error) { //nolint:dupl
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -216,7 +216,7 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[v
 }
 
 func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error) { //nolint:dupl
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")

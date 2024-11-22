@@ -26,7 +26,7 @@ func NewWorkoutHandler(log *zap.Logger, r *repo.Repo) apiv1connect.WorkoutServic
 }
 
 func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -64,7 +64,7 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 }
 
 func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -94,7 +94,7 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 }
 
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")

@@ -29,7 +29,7 @@ func NewExerciseHandler(log *zap.Logger, r *repo.Repo) apiv1connect.ExerciseServ
 }
 
 func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -52,7 +52,7 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 }
 
 func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -83,7 +83,7 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
 func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -125,7 +125,7 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 }
 
 func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
@@ -145,7 +145,7 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 }
 
 func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
-	log := xcontext.ExtractLogger(ctx, h.log)
+	log := xcontext.ExtractLogger(ctx)
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
