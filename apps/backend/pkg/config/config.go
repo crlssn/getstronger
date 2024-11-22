@@ -8,7 +8,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func init() {
+func init() { //nolint:gochecknoinits
 	if err := godotenv.Load(); err != nil {
 		panic(fmt.Errorf("failed to load .env file: %w", err))
 	}
