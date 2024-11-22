@@ -19,5 +19,20 @@ jobs:
       - name: Install depu
         run: go install github.com/kevwan/depu@latest
 
-      - name: Check for outdated Go packages
-        run: depu
+      - name: Run depu and capture output
+        run: |
+          depu > outdated.txt || true
+          echo "outdated=$(cat outdated.txt | base64)" >> $GITHUB_ENV
+
+      - name: Post comment with outdated dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          outdated=$(echo "${{ env.outdated }}" | base64 --decode)
+          if [ -n "$outdated" ]; then
+            gh pr comment --body "### Outdated Dependencies\n\`\`\`\n$outdated\n\`\`\`"
+          else
+            gh pr comment --body "All dependencies are up-to-date!"
+          fi
+
+
