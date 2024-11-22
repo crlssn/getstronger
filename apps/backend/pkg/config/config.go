@@ -25,7 +25,7 @@ func New() *Config {
 		},
 		JWT: JWT{
 			AccessTokenKey:  os.Getenv("JWT_ACCESS_TOKEN_KEY"),
-			RefreshTokenKey: os.Getenv("JWT_REFRESH"),
+			RefreshTokenKey: os.Getenv("JWT_REFRESH_TOKEN_KEY"),
 		},
 		Server: Server{
 			Port:           os.Getenv("SERVER_PORT"),
