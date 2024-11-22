@@ -645,19 +645,27 @@ func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
 }
 
 func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
-	query := make([]qm.QueryMod, 0, len(opts))
+	query := []qm.QueryMod{
+		qm.Load(orm.WorkoutRels.Sets),
+	}
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	workout, err := orm.Workouts(query...).One(ctx, r.executor())
-	if err != nil {
-		return fmt.Errorf("workout fetch: %w", err)
-	}
+	return r.NewTx(ctx, func(tx *Repo) error {
+		workout, err := orm.Workouts(query...).One(ctx, tx.executor())
+		if err != nil {
+			return fmt.Errorf("workout fetch: %w", err)
+		}
 
-	if _, err = workout.Delete(ctx, r.executor()); err != nil {
-		return fmt.Errorf("workout delete: %w", err)
-	}
+		if _, err = workout.R.Sets.DeleteAll(ctx, tx.executor()); err != nil {
+			return fmt.Errorf("workout sets delete: %w", err)
+		}
 
-	return nil
+		if _, err = workout.Delete(ctx, tx.executor()); err != nil {
+			return fmt.Errorf("workout delete: %w", err)
+		}
+
+		return nil
+	})
 }
