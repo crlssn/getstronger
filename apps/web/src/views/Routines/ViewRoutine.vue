@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
-import { GetRoutineRequest, Routine } from '@/pb/api/v1/routines_pb'
+import { GetRoutineRequest, Routine, UpdateExerciseOrderRequest } from '@/pb/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
@@ -29,19 +29,23 @@ useSortable(el, routine.value?.exercises || [], {
   ghostClass: 'sortable-ghost', // Class name for the drop placeholder
   chosenClass: 'sortable-chosen', // Class name for the chosen item
   dragClass: 'sortable-drag', // Class name for the dragging item
-  onUpdate: (event: SortableEvent) => {
+  onUpdate: async (event: SortableEvent) => {
     const oldIndex = event.oldIndex ?? 0
     const newIndex = event.newIndex ?? 0
-    console.log(oldIndex, newIndex)
     const exercises = routine.value?.exercises
-    if (exercises) {
-      const [movedExercise] = exercises.splice(oldIndex, 1)
-      exercises.splice(newIndex, 0, movedExercise)
-
-      const updatedOrder = exercises.map((e) => e.id)
-      console.log(updatedOrder)
-      // sendReorderToBackend({ updatedOrder })
+    if (!exercises) {
+      return
     }
+
+    const [movedExercise] = exercises.splice(oldIndex, 1)
+    exercises.splice(newIndex, 0, movedExercise)
+
+    const updatedOrder = exercises.map((e) => e.id)
+    const req = new UpdateExerciseOrderRequest({
+      routineId: routine.value?.id,
+      exerciseIds: updatedOrder,
+    })
+    await RoutineClient.updateExerciseOrder(req)
   },
 })
 </script>
@@ -73,8 +77,10 @@ useSortable(el, routine.value?.exercises || [], {
 .sortable-drag {
   @apply bg-white rounded-md;
 }
+
 .sortable-ghost {
   @apply text-white;
+
   svg {
     @apply text-white;
   }
