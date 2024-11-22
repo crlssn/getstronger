@@ -111,20 +111,23 @@ var ExerciseWhere = struct {
 
 // ExerciseRels is where relationship names are stored.
 var ExerciseRels = struct {
-	User     string
-	Routines string
-	Sets     string
+	User                       string
+	Routines                   string
+	RoutineExercisesSortOrders string
+	Sets                       string
 }{
-	User:     "User",
-	Routines: "Routines",
-	Sets:     "Sets",
+	User:                       "User",
+	Routines:                   "Routines",
+	RoutineExercisesSortOrders: "RoutineExercisesSortOrders",
+	Sets:                       "Sets",
 }
 
 // exerciseR is where relationships are stored.
 type exerciseR struct {
-	User     *User        `boil:"User" json:"User" toml:"User" yaml:"User"`
-	Routines RoutineSlice `boil:"Routines" json:"Routines" toml:"Routines" yaml:"Routines"`
-	Sets     SetSlice     `boil:"Sets" json:"Sets" toml:"Sets" yaml:"Sets"`
+	User                       *User                          `boil:"User" json:"User" toml:"User" yaml:"User"`
+	Routines                   RoutineSlice                   `boil:"Routines" json:"Routines" toml:"Routines" yaml:"Routines"`
+	RoutineExercisesSortOrders RoutineExercisesSortOrderSlice `boil:"RoutineExercisesSortOrders" json:"RoutineExercisesSortOrders" toml:"RoutineExercisesSortOrders" yaml:"RoutineExercisesSortOrders"`
+	Sets                       SetSlice                       `boil:"Sets" json:"Sets" toml:"Sets" yaml:"Sets"`
 }
 
 // NewStruct creates a new relationship struct
@@ -144,6 +147,13 @@ func (r *exerciseR) GetRoutines() RoutineSlice {
 		return nil
 	}
 	return r.Routines
+}
+
+func (r *exerciseR) GetRoutineExercisesSortOrders() RoutineExercisesSortOrderSlice {
+	if r == nil {
+		return nil
+	}
+	return r.RoutineExercisesSortOrders
 }
 
 func (r *exerciseR) GetSets() SetSlice {
@@ -495,6 +505,20 @@ func (o *Exercise) Routines(mods ...qm.QueryMod) routineQuery {
 	return Routines(queryMods...)
 }
 
+// RoutineExercisesSortOrders retrieves all the routine_exercises_sort_order's RoutineExercisesSortOrders with an executor.
+func (o *Exercise) RoutineExercisesSortOrders(mods ...qm.QueryMod) routineExercisesSortOrderQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"getstronger\".\"routine_exercises_sort_order\".\"exercise_id\"=?", o.ID),
+	)
+
+	return RoutineExercisesSortOrders(queryMods...)
+}
+
 // Sets retrieves all the set's Sets with an executor.
 func (o *Exercise) Sets(mods ...qm.QueryMod) setQuery {
 	var queryMods []qm.QueryMod
@@ -684,7 +708,7 @@ func (exerciseL) LoadRoutines(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"routines\".\"id\", \"getstronger\".\"routines\".\"user_id\", \"getstronger\".\"routines\".\"title\", \"getstronger\".\"routines\".\"created_at\", \"getstronger\".\"routines\".\"deleted_at\", \"getstronger\".\"routines\".\"exercise_order\", \"a\".\"exercise_id\""),
+		qm.Select("\"getstronger\".\"routines\".\"id\", \"getstronger\".\"routines\".\"user_id\", \"getstronger\".\"routines\".\"title\", \"getstronger\".\"routines\".\"created_at\", \"getstronger\".\"routines\".\"deleted_at\", \"a\".\"exercise_id\""),
 		qm.From("\"getstronger\".\"routines\""),
 		qm.InnerJoin("\"getstronger\".\"routine_exercises\" as \"a\" on \"getstronger\".\"routines\".\"id\" = \"a\".\"routine_id\""),
 		qm.WhereIn("\"a\".\"exercise_id\" in ?", argsSlice...),
@@ -705,7 +729,7 @@ func (exerciseL) LoadRoutines(ctx context.Context, e boil.ContextExecutor, singu
 		one := new(Routine)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.CreatedAt, &one.DeletedAt, &one.ExerciseOrder, &localJoinCol)
+		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.CreatedAt, &one.DeletedAt, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for routines")
 		}
@@ -751,6 +775,119 @@ func (exerciseL) LoadRoutines(ctx context.Context, e boil.ContextExecutor, singu
 					foreign.R = &routineR{}
 				}
 				foreign.R.Exercises = append(foreign.R.Exercises, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadRoutineExercisesSortOrders allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (exerciseL) LoadRoutineExercisesSortOrders(ctx context.Context, e boil.ContextExecutor, singular bool, maybeExercise interface{}, mods queries.Applicator) error {
+	var slice []*Exercise
+	var object *Exercise
+
+	if singular {
+		var ok bool
+		object, ok = maybeExercise.(*Exercise)
+		if !ok {
+			object = new(Exercise)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeExercise)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeExercise))
+			}
+		}
+	} else {
+		s, ok := maybeExercise.(*[]*Exercise)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeExercise)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeExercise))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &exerciseR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &exerciseR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`getstronger.routine_exercises_sort_order`),
+		qm.WhereIn(`getstronger.routine_exercises_sort_order.exercise_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load routine_exercises_sort_order")
+	}
+
+	var resultSlice []*RoutineExercisesSortOrder
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice routine_exercises_sort_order")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on routine_exercises_sort_order")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for routine_exercises_sort_order")
+	}
+
+	if len(routineExercisesSortOrderAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.RoutineExercisesSortOrders = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &routineExercisesSortOrderR{}
+			}
+			foreign.R.Exercise = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.ExerciseID {
+				local.R.RoutineExercisesSortOrders = append(local.R.RoutineExercisesSortOrders, foreign)
+				if foreign.R == nil {
+					foreign.R = &routineExercisesSortOrderR{}
+				}
+				foreign.R.Exercise = local
 				break
 			}
 		}
@@ -1062,6 +1199,59 @@ func removeRoutinesFromExercisesSlice(o *Exercise, related []*Routine) {
 			break
 		}
 	}
+}
+
+// AddRoutineExercisesSortOrders adds the given related objects to the existing relationships
+// of the exercise, optionally inserting them as new records.
+// Appends related to o.R.RoutineExercisesSortOrders.
+// Sets related.R.Exercise appropriately.
+func (o *Exercise) AddRoutineExercisesSortOrders(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*RoutineExercisesSortOrder) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.ExerciseID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"getstronger\".\"routine_exercises_sort_order\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"exercise_id"}),
+				strmangle.WhereClause("\"", "\"", 2, routineExercisesSortOrderPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.ExerciseID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &exerciseR{
+			RoutineExercisesSortOrders: related,
+		}
+	} else {
+		o.R.RoutineExercisesSortOrders = append(o.R.RoutineExercisesSortOrders, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &routineExercisesSortOrderR{
+				Exercise: o,
+			}
+		} else {
+			rel.R.Exercise = o
+		}
+	}
+	return nil
 }
 
 // AddSets adds the given related objects to the existing relationships

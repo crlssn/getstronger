@@ -4,19 +4,21 @@
 package orm
 
 var TableNames = struct {
-	Auth             string
-	Exercises        string
-	RoutineExercises string
-	Routines         string
-	Sets             string
-	Users            string
-	Workouts         string
+	Auth                      string
+	Exercises                 string
+	RoutineExercises          string
+	RoutineExercisesSortOrder string
+	Routines                  string
+	Sets                      string
+	Users                     string
+	Workouts                  string
 }{
-	Auth:             "auth",
-	Exercises:        "exercises",
-	RoutineExercises: "routine_exercises",
-	Routines:         "routines",
-	Sets:             "sets",
-	Users:            "users",
-	Workouts:         "workouts",
+	Auth:                      "auth",
+	Exercises:                 "exercises",
+	RoutineExercises:          "routine_exercises",
+	RoutineExercisesSortOrder: "routine_exercises_sort_order",
+	Routines:                  "routines",
+	Sets:                      "sets",
+	Users:                     "users",
+	Workouts:                  "workouts",
 }

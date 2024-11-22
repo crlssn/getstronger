@@ -339,12 +339,21 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.R
 		Title:  p.Name,
 	}
 
-	if err = routine.Insert(ctx, r.executor(), boil.Infer()); err != nil {
-		return nil, fmt.Errorf("routine insert: %w", err)
-	}
+	if err = r.NewTx(ctx, func(tx *Repo) error {
+		if err = routine.Insert(ctx, tx.executor(), boil.Infer()); err != nil {
+			return fmt.Errorf("routine insert: %w", err)
+		}
 
-	if err = routine.SetExercises(ctx, r.executor(), false, exercises...); err != nil {
-		return nil, fmt.Errorf("routine exercises set: %w", err)
+		if err = routine.SetExercises(ctx, tx.executor(), false, exercises...); err != nil {
+			return fmt.Errorf("routine exercises set: %w", err)
+		}
+
+		if err = tx.UpsertRoutineExercisesSortOrder(ctx, routine.ID, p.ExerciseIDs); err != nil {
+			return fmt.Errorf("routine update: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("routine tx: %w", err)
 	}
 
 	return routine, nil
@@ -370,16 +379,30 @@ func GetRoutineWithExercises() GetRoutineOpt {
 	}
 }
 
+func GetRoutineWithExercisesOrdered() GetRoutineOpt {
+	return func() qm.QueryMod {
+		return qm.Load(
+			orm.RoutineRels.Exercises,
+			qm.InnerJoin("getstronger.routine_exercises_sort_order AS rs ON rs.exercise_id = exercises.id"),
+			qm.InnerJoin("getstronger.routines AS r ON rs.routine_id = r.id"),
+			qm.Where("r.id = getstronger.routines.id"),
+			qm.OrderBy("rs.sort_order"),
+		)
+	}
+}
+
 func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
+	boil.DebugMode = true
 	routine, err := orm.Routines(query...).One(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("routine fetch: %w", err)
 	}
+	boil.DebugMode = false
 
 	return routine, nil
 }
@@ -456,22 +479,11 @@ func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.Ro
 	return routines, nil
 }
 
-type UpdateRoutineOpt func() (orm.M, error)
+type UpdateRoutineOpt func() orm.M
 
 func UpdateRoutineName(name string) UpdateRoutineOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.RoutineColumns.Title: name}, nil
-	}
-}
-
-func UpdateRoutineExerciseOrder(exerciseIDS []string) UpdateRoutineOpt {
-	return func() (orm.M, error) {
-		bytes, err := json.Marshal(exerciseIDS)
-		if err != nil {
-			return nil, fmt.Errorf("exercise order json marshal: %w", err)
-		}
-
-		return orm.M{orm.RoutineColumns.ExerciseOrder: null.JSONFrom(bytes)}, nil
+	return func() orm.M {
+		return orm.M{orm.RoutineColumns.Title: name}
 	}
 }
 
@@ -480,11 +492,7 @@ var errDuplicateColumn = fmt.Errorf("duplicate column")
 func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	columns := orm.M{}
 	for _, opt := range opts {
-		column, err := opt()
-		if err != nil {
-			return fmt.Errorf("routine update opt: %w", err)
-		}
-		for key, value := range column {
+		for key, value := range opt() {
 			if columns[key] != nil {
 				return fmt.Errorf("%w: %s", errDuplicateColumn, key)
 			}
@@ -693,5 +701,26 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineId string, exerciseIDs []string) error {
 	return r.NewTx(ctx, func(tx *Repo) error {
 		//tx.
+	})
+}
+
+func (r *Repo) UpsertRoutineExercisesSortOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
+		for sortOrder, exerciseID := range exerciseIDs {
+			o := &orm.RoutineExercisesSortOrder{
+				RoutineID:  routineID,
+				ExerciseID: exerciseID,
+				SortOrder:  sortOrder,
+			}
+			boil.DebugMode = true
+			conflictColumns := []string{
+				orm.RoutineExercisesSortOrderColumns.RoutineID,
+				orm.RoutineExercisesSortOrderColumns.ExerciseID,
+			}
+			if err := o.Upsert(ctx, tx.executor(), true, conflictColumns, boil.Infer(), boil.Infer()); err != nil {
+				return fmt.Errorf("routine exercises sort order upsert: %w", err)
+			}
+		}
+		return nil
 	})
 }

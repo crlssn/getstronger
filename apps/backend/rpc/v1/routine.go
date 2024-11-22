@@ -50,7 +50,7 @@ func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRou
 	routine, err := h.repo.GetRoutine(ctx,
 		repo.GetRoutineWithID(req.Msg.GetId()),
 		repo.GetRoutineWithUserID(userID),
-		repo.GetRoutineWithExercises(),
+		repo.GetRoutineWithExercisesOrdered(),
 	)
 	if err != nil {
 		log.Error("get routine failed", zap.Error(err))
@@ -255,9 +255,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		}
 	}
 
-	if err = h.repo.UpdateRoutine(ctx, routine.ID,
-		repo.UpdateRoutineExerciseOrder(req.Msg.GetExerciseIds()),
-	); err != nil {
+	if err = h.repo.UpsertRoutineExercisesSortOrder(ctx, routine.ID, req.Msg.GetExerciseIds()); err != nil {
 		log.Error("update routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
