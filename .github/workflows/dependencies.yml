@@ -22,16 +22,17 @@ jobs:
       - name: Run depu and capture output
         id: depu
         run: |
-          depu > outdated.txt
-          cat outdated.txt
+          depu >> $GITHUB_OUTPUT
+#          depu > outdated.txt
+#          cat outdated.txt
 #          echo "outdated=$(cat outdated.txt)" >> $GITHUB_ENV
 
       - name: Post comment with outdated dependencies
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          OUTDATED: ${{ env.outdated }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPU: ${{join(steps.run_tests.outputs.*, '\n')}}
         run: |
-          outdated="${{ steps.depu.outputs.outdated }}"
-          cat outdated
+#          outdated="${{ steps.depu.outputs.outdated }}"
+          echo $DEPU
 #          outdated=$(echo "$OUTDATED" | base64 --decode)
 #          gh pr comment --body "### Dependency Check Report\n\`\`\`\n$outdated\n\`\`\`"
