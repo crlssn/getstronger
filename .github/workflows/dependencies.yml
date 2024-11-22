@@ -27,12 +27,7 @@ jobs:
       - name: Post comment with outdated dependencies
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTDATED: ${{ env.outdated }}
         run: |
-          outdated=$(echo "${{ env.outdated }}" | base64 --decode)
-          if [ -n "$outdated" ]; then
-            gh pr comment --body "### Outdated Dependencies\n\`\`\`\n$outdated\n\`\`\`"
-          else
-            gh pr comment --body "All dependencies are up-to-date!"
-          fi
-
-
+          outdated=$(echo "$OUTDATED" | base64 --decode)
+          gh pr comment --body "### Dependency Check Report\n\`\`\`\n$outdated\n\`\`\`"
