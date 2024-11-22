@@ -108,34 +108,52 @@ func (s *repoSuite) TestUpdateRoutine() {
 			name:      "ok_update_routine_name",
 			routineID: uuid.NewString(),
 			opts: []UpdateRoutineOpt{
-				UpdateRoutineName("old"),
+				UpdateRoutineName("new"),
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
 					testdb.RoutineID(t.routineID),
-					testdb.RoutineName("new"),
+					testdb.RoutineName("old"),
 				)
 			},
 			expected: expected{
 				err: nil,
 			},
 		},
-		//{
-		//	name:      "ok_update_exercise_order",
-		//	routineID: uuid.NewString(),
-		//	opts: []UpdateRoutineOpt{
-		//		UpdateRoutineName("old"),
-		//	},
-		//	init: func(t test) {
-		//		s.testFactory.NewRoutine(
-		//			testdb.RoutineID(t.routineID),
-		//			testdb.RoutineName("new"),
-		//		)
-		//	},
-		//	expected: expected{
-		//		err: nil,
-		//	},
-		//},
+		{
+			name:      "ok_update_exercise_order",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			},
+			init: func(t test) {
+				s.testFactory.NewRoutine(
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineExerciseOrder([]string{"2", "1"}),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:      "ok_update_name_and_exercise_order",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineName("new"),
+				UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			},
+			init: func(t test) {
+				s.testFactory.NewRoutine(
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineName("old"),
+					testdb.RoutineExerciseOrder([]string{"2", "1"}),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
 	}
 
 	for _, t := range tests {
