@@ -224,5 +224,24 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	h.repo.UpdateRoutineExerciseOrder(ctx, req.Msg.GetRoutineId(), req.Msg.GetExerciseIds())
+	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
+	if err != nil {
+		log.Error("find routine failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if routine.UserID != userID {
+		log.Error("routine does not belong to user")
+		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	if err = h.repo.UpdateRoutine(ctx, routine.ID,
+		repo.UpdateRoutineExerciseOrder(req.Msg.GetExerciseIds()),
+	); err != nil {
+		log.Error("update routine failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("exercise order updated")
+	return connect.NewResponse(&v1.UpdateExerciseOrderResponse{}), nil
 }

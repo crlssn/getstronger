@@ -5,6 +5,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/test/testdb"
@@ -85,6 +86,63 @@ func (s *repoSuite) TestListExercises() {
 
 			s.Require().NoError(err)
 			s.Require().Len(exercises, t.expected.exercises)
+		})
+	}
+}
+
+func (s *repoSuite) TestUpdateRoutine() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name      string
+		routineID string
+		opts      []UpdateRoutineOpt
+		init      func(test)
+		expected  expected
+	}
+
+	tests := []test{
+		{
+			name:      "ok_update_routine_name",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineName("old"),
+			},
+			init: func(t test) {
+				s.testFactory.NewRoutine(
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineName("new"),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		//{
+		//	name:      "ok_update_exercise_order",
+		//	routineID: uuid.NewString(),
+		//	opts: []UpdateRoutineOpt{
+		//		UpdateRoutineName("old"),
+		//	},
+		//	init: func(t test) {
+		//		s.testFactory.NewRoutine(
+		//			testdb.RoutineID(t.routineID),
+		//			testdb.RoutineName("new"),
+		//		)
+		//	},
+		//	expected: expected{
+		//		err: nil,
+		//	},
+		//},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			err := s.repo.UpdateRoutine(context.Background(), t.routineID, t.opts...)
+			s.Require().ErrorIs(err, t.expected.err)
 		})
 	}
 }

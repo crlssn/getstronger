@@ -458,18 +458,38 @@ func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.Ro
 	return routines, nil
 }
 
-type UpdateRoutineOpt func() orm.M
+type UpdateRoutineOpt func() (orm.M, error)
 
 func UpdateRoutineName(name string) UpdateRoutineOpt {
-	return func() orm.M {
-		return orm.M{orm.RoutineColumns.Title: name}
+	return func() (orm.M, error) {
+		return orm.M{orm.RoutineColumns.Title: name}, nil
+	}
+}
+
+func UpdateRoutineExerciseOrder(exerciseIDS []string) UpdateRoutineOpt {
+	return func() (orm.M, error) {
+		bytes, err := json.Marshal(exerciseIDS)
+		if err != nil {
+			return nil, fmt.Errorf("exercise order json marshal: %w", err)
+		}
+
+		return orm.M{orm.RoutineColumns.ExerciseOrder: null.JSONFrom(bytes)}, nil
 	}
 }
 
 func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	columns := orm.M{}
 	for _, opt := range opts {
-		columns = opt()
+		column, err := opt()
+		if err != nil {
+			return fmt.Errorf("routine update opt: %w", err)
+		}
+		for key, value := range column {
+			if columns[key] != nil {
+				return fmt.Errorf("duplicate column: %s", key)
+			}
+			columns[key] = value
+		}
 	}
 
 	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, r.executor(), columns); err != nil {
