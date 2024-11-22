@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"connectrpc.com/connect"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/apps/backend/pkg/config"
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
@@ -21,13 +22,28 @@ import (
 var _ apiv1connect.AuthServiceHandler = (*auth)(nil)
 
 type auth struct {
-	log  *zap.Logger
-	repo *repo.Repo
-	jwt  *jwt.Manager
+	log    *zap.Logger
+	jwt    *jwt.Manager
+	repo   *repo.Repo
+	config *config.Config
 }
 
-func NewAuthHandler(log *zap.Logger, r *repo.Repo, m *jwt.Manager) apiv1connect.AuthServiceHandler {
-	return &auth{log, r, m}
+type AuthHandlerParams struct {
+	fx.In
+
+	Log    *zap.Logger
+	JWT    *jwt.Manager
+	Repo   *repo.Repo
+	Config *config.Config
+}
+
+func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
+	return &auth{
+		log:    p.Log,
+		jwt:    p.JWT,
+		repo:   p.Repo,
+		config: p.Config,
+	}
 }
 
 var (
@@ -119,7 +135,7 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 		Name:     "refreshToken",
 		Value:    refreshToken,
 		Path:     "/api.v1.AuthService",
-		Domain:   os.Getenv("COOKIE_DOMAIN"),
+		Domain:   h.config.Server.CookieDomain,
 		MaxAge:   int(jwt.ExpiryTimeRefresh),
 		Secure:   true,
 		HttpOnly: true,
@@ -195,7 +211,7 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 		Name:     "refreshToken",
 		Value:    "",
 		Path:     "/api.v1.AuthService",
-		Domain:   os.Getenv("COOKIE_DOMAIN"),
+		Domain:   h.config.Server.CookieDomain,
 		MaxAge:   -1,
 		Secure:   true,
 		HttpOnly: true,

@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/bufbuild/protovalidate-go"
-	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
+	"github.com/crlssn/getstronger/apps/backend/pkg/config"
 	"github.com/crlssn/getstronger/apps/backend/pkg/db"
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
@@ -17,31 +14,19 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("failed to load .env file: %w", err))
-	}
-
 	fx.New(options()...).Run()
 }
 
 func options() []fx.Option {
 	return []fx.Option{
 		jwt.Module(),
-		rpc.NewModule(),
+		rpc.Module(),
 		fx.Provide(
-			func() db.Options {
-				return db.Options{
-					Host:     os.Getenv("DB_HOST"),
-					Port:     os.Getenv("DB_PORT"),
-					User:     os.Getenv("DB_USER"),
-					Password: os.Getenv("DB_PASSWORD"),
-					Database: os.Getenv("DB_NAME"),
-				}
-			},
 			db.New,
 			zap.NewDevelopment,
 			repo.New,
 			grpc.NewServer,
+			config.New,
 			protovalidate.New,
 		),
 	}
