@@ -3,6 +3,10 @@ name: Dependencies
 on:
   push:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   outdated:
     runs-on: ubuntu-latest
