@@ -224,7 +224,10 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
+	routine, err := h.repo.GetRoutine(ctx,
+		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
+		repo.GetRoutineWithExercises(),
+	)
 	if err != nil {
 		log.Error("find routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -233,6 +236,23 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 	if routine.UserID != userID {
 		log.Error("routine does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	if len(req.Msg.GetExerciseIds()) == len(routine.R.Exercises) {
+		log.Warn("unexpected exercise count", zap.Int("expected", len(routine.R.Exercises)), zap.Int("actual", len(req.Msg.GetExerciseIds())))
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	var mapExpectedExerciseIDs = make(map[string]struct{}, len(routine.R.Exercises))
+	for _, exercise := range routine.R.Exercises {
+		mapExpectedExerciseIDs[exercise.ID] = struct{}{}
+	}
+
+	for _, exerciseID := range req.Msg.GetExerciseIds() {
+		if _, ok := mapExpectedExerciseIDs[exerciseID]; !ok {
+			log.Warn("unexpected exercise ID", zap.String("exercise_id", exerciseID))
+			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		}
 	}
 
 	if err = h.repo.UpdateRoutine(ctx, routine.ID,
