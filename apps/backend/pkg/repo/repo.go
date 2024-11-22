@@ -669,3 +669,9 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 		return nil
 	})
 }
+
+func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineId string, exerciseIDs []string) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
+		//tx.
+	})
+}
