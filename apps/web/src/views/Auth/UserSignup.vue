@@ -4,6 +4,7 @@ import { AuthClient } from '@/clients/clients'
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/components/AppButton.vue'
 
 const firstName = ref('')
 const lastName = ref('')
@@ -66,7 +67,7 @@ const signup = async () => {
               name="firstname"
               type="text"
               required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+           class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
@@ -79,7 +80,6 @@ const signup = async () => {
               name="lastname"
               type="text"
               required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
@@ -94,7 +94,6 @@ const signup = async () => {
               type="email"
               autocomplete="email"
               required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
@@ -111,7 +110,6 @@ const signup = async () => {
               type="password"
               autocomplete="current-password"
               required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
@@ -130,18 +128,14 @@ const signup = async () => {
               type="password"
               autocomplete="current-password"
               required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
 
         <div>
-          <button
-            type="submit"
-            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
+          <AppButton type="submit" colour="primary">
             Sign up
-          </button>
+          </AppButton>
         </div>
       </form>
 
@@ -154,3 +148,9 @@ const signup = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+input {
+  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm;
+}
+</style>
