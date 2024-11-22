@@ -1,7 +1,7 @@
 name: Dependencies
 
 on:
-  pull_request:
+  push:
 
 jobs:
   outdated:
@@ -32,7 +32,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPU: ${{join(steps.run_tests.outputs.*, '\n')}}
         run: |
-#          outdated="${{ steps.depu.outputs.outdated }}"
           echo $DEPU
+          gh pr comment --body "### Dependency Check Report\n\`\`\`\n$DEPUd\n\`\`\`"
+#          outdated="${{ steps.depu.outputs.outdated }}"
 #          outdated=$(echo "$OUTDATED" | base64 --decode)
-#          gh pr comment --body "### Dependency Check Report\n\`\`\`\n$outdated\n\`\`\`"
