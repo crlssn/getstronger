@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, WorkoutClient } from '@/clients/clients'
-import { GetWorkoutRequest, Workout } from '@/pb/api/v1/workouts_pb'
+import { DeleteWorkoutRequest, GetWorkoutRequest, Workout } from '@/pb/api/v1/workouts_pb'
 import AppButton from '@/components/AppButton.vue'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
 import { formatToCompactDateTime } from '@/pkg/datetime/datetime'
+import router from '@/router/router'
 
 const workout = ref<Workout | undefined>(undefined)
 const exercises = ref<Exercise[]>()
@@ -45,6 +46,14 @@ const fetchExercises = async () => {
 const getExercise = (id: string) => {
   return exercises.value?.find((exercise) => exercise.id === id)
 }
+
+const deleteWorkout = async () => {
+  const req = new DeleteWorkoutRequest({
+    id: route.params.id as string,
+  })
+  await WorkoutClient.delete(req)
+  await router.push('/workouts')
+}
 </script>
 
 <template>
@@ -61,7 +70,9 @@ const getExercise = (id: string) => {
     </li>
   </ul>
   <AppButton type="button" colour="gray" class="mt-6">Edit Workout</AppButton>
-  <AppButton type="button" colour="red" class="mt-6">Delete Workout</AppButton>
+  <AppButton type="button" colour="red" class="mt-6" @click="deleteWorkout"
+    >Delete Workout</AppButton
+  >
 </template>
 
 <style scoped>

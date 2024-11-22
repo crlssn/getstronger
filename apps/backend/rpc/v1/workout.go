@@ -115,3 +115,19 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		},
 	}, nil
 }
+
+func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if err := h.repo.DeleteWorkout(ctx,
+		repo.DeleteWorkoutWithID(req.Msg.GetId()),
+		repo.DeleteWorkoutWithUserID(userID),
+	); err != nil {
+		log.Error("failed to delete workout", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("workout deleted")
+	return &connect.Response[v1.DeleteWorkoutResponse]{}, nil
+}

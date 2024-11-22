@@ -253,6 +253,95 @@ export class GetWorkoutResponse extends Message<GetWorkoutResponse> {
 }
 
 /**
+ * message FinishWorkoutRequest {
+ *  Workout workout = 1 [(buf.validate.field).required = true];
+ * }
+ * message FinishWorkoutResponse {}
+ *
+ * message GetWorkoutRequest {
+ *  string id = 1 [(buf.validate.field).string.uuid = true];
+ * }
+ * message GetWorkoutResponse {
+ *  Workout Workout = 1;
+ * }
+ *
+ * message UpdateWorkoutRequest {
+ *  Workout Workout = 1 [(buf.validate.field).required = true];
+ *  google.protobuf.FieldMask update_mask = 2;
+ * }
+ * message UpdateWorkoutResponse {
+ *  Workout Workout = 1;
+ * }
+ *
+ *
+ * @generated from message api.v1.DeleteWorkoutRequest
+ */
+export class DeleteWorkoutRequest extends Message<DeleteWorkoutRequest> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<DeleteWorkoutRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.DeleteWorkoutRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkoutRequest {
+    return new DeleteWorkoutRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteWorkoutRequest {
+    return new DeleteWorkoutRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteWorkoutRequest {
+    return new DeleteWorkoutRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteWorkoutRequest | PlainMessage<DeleteWorkoutRequest> | undefined, b: DeleteWorkoutRequest | PlainMessage<DeleteWorkoutRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteWorkoutRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.DeleteWorkoutResponse
+ */
+export class DeleteWorkoutResponse extends Message<DeleteWorkoutResponse> {
+  constructor(data?: PartialMessage<DeleteWorkoutResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.DeleteWorkoutResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkoutResponse {
+    return new DeleteWorkoutResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteWorkoutResponse {
+    return new DeleteWorkoutResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteWorkoutResponse {
+    return new DeleteWorkoutResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteWorkoutResponse | PlainMessage<DeleteWorkoutResponse> | undefined, b: DeleteWorkoutResponse | PlainMessage<DeleteWorkoutResponse> | undefined): boolean {
+    return proto3.util.equals(DeleteWorkoutResponse, a, b);
+  }
+}
+
+/**
  * @generated from message api.v1.Workout
  */
 export class Workout extends Message<Workout> {
