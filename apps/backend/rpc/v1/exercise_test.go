@@ -35,7 +35,7 @@ func (s *exerciseSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = testdb.NewContainer(ctx)
 	s.testFactory = testdb.NewFactory(s.testContainer.DB)
-	s.handler = NewExerciseHandler(zap.NewExample(), repo.New(s.testContainer.DB))
+	s.handler = NewExerciseHandler(repo.New(s.testContainer.DB))
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
@@ -72,6 +72,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 
 	user := s.testFactory.NewUser()
 	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	for _, t := range tests {
 		res, err := s.handler.Create(ctx, t.req)

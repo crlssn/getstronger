@@ -20,12 +20,11 @@ import (
 var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
 
 type exerciseHandler struct {
-	log  *zap.Logger
 	repo *repo.Repo
 }
 
-func NewExerciseHandler(log *zap.Logger, r *repo.Repo) apiv1connect.ExerciseServiceHandler {
-	return &exerciseHandler{log, r}
+func NewExerciseHandler(r *repo.Repo) apiv1connect.ExerciseServiceHandler {
+	return &exerciseHandler{r}
 }
 
 func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
