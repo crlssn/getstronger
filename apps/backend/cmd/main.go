@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/bufbuild/protovalidate-go"
+	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -14,6 +17,10 @@ import (
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		panic(fmt.Errorf("failed to load .env file: %w", err))
+	}
+
 	fx.New(options()...).Run()
 }
 

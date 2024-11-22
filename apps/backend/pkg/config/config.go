@@ -1,18 +1,9 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
-
-func init() { //nolint:gochecknoinits
-	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("failed to load .env file: %w", err))
-	}
-}
 
 func New() *Config {
 	return &Config{
