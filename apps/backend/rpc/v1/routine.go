@@ -7,30 +7,25 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
-	"github.com/crlssn/getstronger/apps/backend/pkg/xzap"
+	"github.com/crlssn/getstronger/apps/backend/pkg/xcontext"
 )
 
 var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
 
 type routineHandler struct {
-	log  *zap.Logger
 	repo *repo.Repo
 }
 
-func NewRoutineHandler(log *zap.Logger, r *repo.Repo) apiv1connect.RoutineServiceHandler {
-	return &routineHandler{log, r}
+func NewRoutineHandler(r *repo.Repo) apiv1connect.RoutineServiceHandler {
+	return &routineHandler{r}
 }
 
 func (h *routineHandler) Create(ctx context.Context, req *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceCreateProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.CreateRoutine(ctx, repo.CreateRoutineParams{
 		UserID:      userID,
@@ -49,11 +44,8 @@ func (h *routineHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 }
 
 func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRoutineRequest]) (*connect.Response[v1.GetRoutineResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceGetProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.GetRoutine(ctx,
 		repo.GetRoutineWithID(req.Msg.GetId()),
@@ -72,11 +64,8 @@ func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRou
 }
 
 func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateRoutineRequest]) (*connect.Response[v1.UpdateRoutineResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceUpdateProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutine().GetId()))
 	if err != nil {
@@ -112,11 +101,8 @@ func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.Upd
 }
 
 func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteRoutineRequest]) (*connect.Response[v1.DeleteRoutineResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceDeleteProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetId()))
 	if err != nil {
@@ -139,11 +125,8 @@ func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 }
 
 func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceListProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPageLimit())
 	routines, err := h.repo.ListRoutines(ctx,
@@ -176,11 +159,8 @@ func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListR
 }
 
 func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error) { //nolint:dupl
-	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceAddExerciseProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.GetRoutine(ctx,
 		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
@@ -210,11 +190,8 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[v
 }
 
 func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error) { //nolint:dupl
-	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceRemoveExerciseProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.GetRoutine(ctx,
 		repo.GetRoutineWithID(req.Msg.GetRoutineId()),

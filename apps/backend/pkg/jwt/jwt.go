@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -171,20 +170,4 @@ func (m *Manager) ValidateClaims(claims *Claims) error {
 		return fmt.Errorf("claims validation: %w", err)
 	}
 	return nil
-}
-
-type contextKey string
-
-const (
-	ContextKeyUserID       contextKey = "userID"
-	ContextKeyRefreshToken contextKey = "refreshToken"
-)
-
-// MustExtractUserID can safely be used in auth protected endpoints.
-func MustExtractUserID(ctx context.Context) string {
-	id, ok := ctx.Value(ContextKeyUserID).(string)
-	if !ok {
-		panic("user ID not found in context")
-	}
-	return id
 }

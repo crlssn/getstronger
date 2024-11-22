@@ -1,14 +1,13 @@
 package middlewares
 
 import (
-	"context"
 	"net/http"
 
 	connectcors "connectrpc.com/cors"
 	"github.com/rs/cors"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/config"
-	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
+	"github.com/crlssn/getstronger/apps/backend/pkg/xcontext"
 )
 
 type Middleware struct {
@@ -60,8 +59,7 @@ func (m *Middleware) cookies(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("refreshToken")
 		if err == nil {
-			ctx := context.WithValue(r.Context(), jwt.ContextKeyRefreshToken, cookie.Value)
-			r = r.WithContext(ctx)
+			r = r.WithContext(xcontext.WithRefreshToken(r.Context(), cookie.Value))
 		}
 
 		h.ServeHTTP(w, r)

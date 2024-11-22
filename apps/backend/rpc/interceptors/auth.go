@@ -15,6 +15,7 @@ import (
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
+	"github.com/crlssn/getstronger/apps/backend/pkg/xcontext"
 	"github.com/crlssn/getstronger/apps/backend/pkg/xzap"
 )
 
@@ -84,6 +85,7 @@ func (a *auth) Unary() connect.UnaryInterceptorFunc {
 		) (connect.AnyResponse, error) {
 			log := a.log.With(xzap.FieldRPC(req.Spec().Procedure))
 			log.Info("request received")
+			ctx = xcontext.WithLogger(ctx, log)
 
 			requiresAuth := a.methods[req.Spec().Procedure]
 			if !requiresAuth {
@@ -97,8 +99,12 @@ func (a *auth) Unary() connect.UnaryInterceptorFunc {
 				return nil, connect.NewError(connect.CodeUnauthenticated, nil)
 			}
 
-			log.Info("request authenticated", xzap.FieldUserID(claims.UserID), zap.Any("claims", claims))
-			return next(context.WithValue(ctx, jwt.ContextKeyUserID, claims.UserID), req)
+			log = log.With(xzap.FieldUserID(claims.UserID))
+			log.Info("request authenticated")
+
+			ctx = xcontext.WithLogger(ctx, log)
+			ctx = xcontext.WithUserID(ctx, claims.UserID)
+			return next(ctx, req)
 		}
 	}
 }
