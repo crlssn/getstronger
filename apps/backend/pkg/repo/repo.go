@@ -629,3 +629,35 @@ func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Work
 
 	return workout, nil
 }
+
+type DeleteWorkoutOpt func() qm.QueryMod
+
+func DeleteWorkoutWithID(id string) DeleteWorkoutOpt {
+	return func() qm.QueryMod {
+		return orm.WorkoutWhere.ID.EQ(id)
+	}
+}
+
+func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
+	return func() qm.QueryMod {
+		return orm.WorkoutWhere.UserID.EQ(userID)
+	}
+}
+
+func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	workout, err := orm.Workouts(query...).One(ctx, r.executor())
+	if err != nil {
+		return fmt.Errorf("workout fetch: %w", err)
+	}
+
+	if _, err = workout.Delete(ctx, r.executor()); err != nil {
+		return fmt.Errorf("workout delete: %w", err)
+	}
+
+	return nil
+}
