@@ -29,22 +29,20 @@ jobs:
       - name: Check packages
         id: depu
         run: |
-          # Run depu and process the output
-          depu | awk '
-          BEGIN { 
-            print "| PACKAGE | CURRENT | LATEST | GOVERSION |"; 
-            print "|---------|---------|--------|-----------|";
-          }
-          NR > 3 { 
-            gsub(/[+|-]+/, ""); 
-            print "| " $1 " | " $2 " | " $3 " | " $4 " |"; 
-          }' > markdown_table.txt
-          
-          echo "markdown_table<<EOF" >> $GITHUB_OUTPUT
-          cat markdown_table.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          output=$(depu || true)
+          if [[ "$output" == *"✔ Awesome! All of your dependencies are up-to-date."* ]]; then
+            echo "dependencies_up_to_date=true" >> $GITHUB_ENV
+          else
+            echo "dependencies_up_to_date=false" >> $GITHUB_ENV
+            echo "markdown_table<<EOF" >> $GITHUB_OUTPUT
+            echo "| PACKAGE | CURRENT | LATEST | GOVERSION |" >> $GITHUB_OUTPUT
+            echo "|---------|---------|--------|-----------|" >> $GITHUB_OUTPUT
+            echo "$output" | awk 'NR > 3 { gsub(/[+|-]+/, ""); print "| " $1 " | " $2 " | " $3 " | " $4 " |"; }' >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Post comment
+        if: env.dependencies_up_to_date == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
