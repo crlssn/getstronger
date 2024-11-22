@@ -26,9 +26,9 @@ onMounted(async () => {
 })
 
 useSortable(el, routine.value?.exercises || [], {
-  ghostClass: "sortable-ghost",  // Class name for the drop placeholder
-  chosenClass: "sortable-chosen",  // Class name for the chosen item
-  dragClass: "sortable-drag",  // Class name for the dragging item
+  ghostClass: 'sortable-ghost', // Class name for the drop placeholder
+  chosenClass: 'sortable-chosen', // Class name for the chosen item
+  dragClass: 'sortable-drag', // Class name for the dragging item
   onUpdate: (event: SortableEvent) => {
     const oldIndex = event.oldIndex ?? 0
     const newIndex = event.newIndex ?? 0
