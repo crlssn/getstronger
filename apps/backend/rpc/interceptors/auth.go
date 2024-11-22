@@ -24,7 +24,9 @@ type auth struct {
 	methods map[string]bool
 }
 
-func NewAuth(log *zap.Logger, m *jwt.Manager) Interceptor {
+var _ Interceptor = (*auth)(nil)
+
+func newAuth(log *zap.Logger, m *jwt.Manager) Interceptor {
 	a := &auth{
 		log:     log,
 		jwt:     m,
@@ -129,5 +131,3 @@ func (a *auth) claimsFromHeader(header http.Header) (*jwt.Claims, error) {
 
 	return claims, nil
 }
-
-var _ Interceptor = (*auth)(nil)

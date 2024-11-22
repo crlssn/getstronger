@@ -15,7 +15,9 @@ type validator struct {
 	validator *protovalidate.Validator
 }
 
-func NewValidator(log *zap.Logger, v *protovalidate.Validator) Interceptor {
+var _ Interceptor = (*validator)(nil)
+
+func newValidator(log *zap.Logger, v *protovalidate.Validator) Interceptor {
 	return &validator{
 		log:       log,
 		validator: v,
@@ -45,5 +47,3 @@ func (v *validator) Unary() connect.UnaryInterceptorFunc {
 		}
 	}
 }
-
-var _ Interceptor = (*validator)(nil)

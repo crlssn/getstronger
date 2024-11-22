@@ -4,56 +4,34 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 
 	"connectrpc.com/connect"
 	"go.uber.org/fx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
+	"github.com/crlssn/getstronger/apps/backend/pkg/config"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/rpc/interceptors"
 	"github.com/crlssn/getstronger/apps/backend/rpc/middlewares"
 	v1 "github.com/crlssn/getstronger/apps/backend/rpc/v1"
 )
 
-type Handler func(opts ...connect.HandlerOption) (string, http.Handler)
-
-const fxGroupInterceptors = `group:"interceptors"`
-
-func NewModule() fx.Option {
+func Module() fx.Option {
 	return fx.Options(
+		interceptors.Module(),
 		fx.Provide(
-			fx.Annotate(
-				interceptors.NewAuth,
-				fx.ResultTags(fxGroupInterceptors),
-			),
-			fx.Annotate(
-				interceptors.NewValidator,
-				fx.ResultTags(fxGroupInterceptors),
-			),
-			fx.Annotate(
-				newInterceptors,
-				fx.ParamTags(fxGroupInterceptors),
-			),
-			newHandlers,
+			registerHandlers,
 			v1.NewAuthHandler,
 			v1.NewRoutineHandler,
 			v1.NewWorkoutHandler,
 			v1.NewExerciseHandler,
+			middlewares.New,
 		),
 		fx.Invoke(
-			registerHandlers,
+			startServer,
 		),
 	)
-}
-
-func newInterceptors(i []interceptors.Interceptor) []connect.HandlerOption {
-	opts := make([]connect.HandlerOption, 0, len(i))
-	for _, i := range i {
-		opts = append(opts, connect.WithInterceptors(i.Unary()))
-	}
-	return opts
 }
 
 type Handlers struct {
@@ -65,35 +43,39 @@ type Handlers struct {
 	Exercise apiv1connect.ExerciseServiceHandler
 }
 
-func newHandlers(p Handlers) []Handler {
-	return []Handler{
-		func(options ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect.NewAuthServiceHandler(p.Auth, options...)
+func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
+	handlers := []func(opts ...connect.HandlerOption) (string, http.Handler){
+		func(opts ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewAuthServiceHandler(p.Auth, opts...)
 		},
-		func(options ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect.NewRoutineServiceHandler(p.Routine, options...)
+		func(opts ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewRoutineServiceHandler(p.Routine, opts...)
 		},
-		func(options ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect.NewWorkoutServiceHandler(p.Workout, options...)
+		func(opts ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewWorkoutServiceHandler(p.Workout, opts...)
 		},
-		func(options ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect.NewExerciseServiceHandler(p.Exercise, options...)
+		func(opts ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewExerciseServiceHandler(p.Exercise, opts...)
 		},
 	}
-}
 
-func registerHandlers(lc fx.Lifecycle, handlers []Handler, options []connect.HandlerOption) {
 	mux := http.NewServeMux()
 	for _, h := range handlers {
-		path, handler := h(options...)
-		mux.Handle(path, middlewares.Register(handler))
+		path, handler := h(o...)
+		mux.Handle(path, m.Register(handler))
 	}
 
+	return mux
+}
+
+func startServer(lc fx.Lifecycle, c *config.Config, mux *http.ServeMux) {
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				if err := http.ListenAndServeTLS(fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")), os.Getenv("SERVER_CERT_PATH"), os.Getenv("SERVER_KEY_PATH"), h2c.NewHandler(mux, &http2.Server{})); err != nil {
-					panic(err)
+				address := fmt.Sprintf(":%s", c.Server.Port)
+				err := http.ListenAndServeTLS(address, c.Server.CertPath, c.Server.KeyPath, h2c.NewHandler(mux, &http2.Server{}))
+				if err != nil {
+					panic(fmt.Errorf("listen and serve: %w", err))
 				}
 			}()
 			return nil

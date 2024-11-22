@@ -27,7 +27,7 @@ func TestAuthSuite(t *testing.T) {
 func (s *authSuite) SetupSuite() {
 	s.jwt = jwt.NewManager([]byte("access-token"), []byte("refresh-token"))
 
-	interceptor, ok := NewAuth(zap.NewExample(), s.jwt).(*auth)
+	interceptor, ok := newAuth(zap.NewExample(), s.jwt).(*auth)
 	s.Require().True(ok)
 
 	s.interceptor = interceptor
