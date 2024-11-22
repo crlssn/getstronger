@@ -46,5 +46,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           markdown_table="${{ steps.depu.outputs.markdown_table }}"
-          gh pr comment --body "### Dependency Check Report\n\n$markdown_table"
+          # Write the comment directly with newlines
+          gh pr comment --body "### Dependency Check Report 
+          $markdown_table"
+
 
