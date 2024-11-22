@@ -16,7 +16,7 @@ import (
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
-	"github.com/crlssn/getstronger/apps/backend/pkg/xzap"
+	"github.com/crlssn/getstronger/apps/backend/pkg/xcontext"
 )
 
 var _ apiv1connect.AuthServiceHandler = (*auth)(nil)
@@ -52,7 +52,7 @@ var (
 )
 
 func (h *auth) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceSignupProcedure))
+	log := xcontext.ExtractLogger(ctx, h.log)
 
 	email := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
 	if !strings.Contains(email, "@") {
@@ -94,7 +94,7 @@ func (h *auth) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest
 var errInvalidCredentials = errors.New("invalid credentials")
 
 func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceLoginProcedure))
+	log := xcontext.ExtractLogger(ctx, h.log)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
 		log.Error("credentials invalid", zap.Error(err))
@@ -153,10 +153,9 @@ var (
 )
 
 func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceRefreshTokenProcedure))
-	log.Info("request received")
+	log := xcontext.ExtractLogger(ctx, h.log)
 
-	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
+	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if !ok {
 		log.Warn("refresh token not provided")
 		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
@@ -196,9 +195,9 @@ func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTo
 }
 
 func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.AuthServiceLogoutProcedure))
+	log := xcontext.ExtractLogger(ctx, h.log)
 
-	refreshToken, ok := ctx.Value(jwt.ContextKeyRefreshToken).(string)
+	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if ok {
 		if err := h.repo.DeleteRefreshToken(ctx, refreshToken); err != nil {
 			log.Error("refresh token deletion failed", zap.Error(err))

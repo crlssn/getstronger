@@ -7,12 +7,11 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
-	"github.com/crlssn/getstronger/apps/backend/pkg/xzap"
+	"github.com/crlssn/getstronger/apps/backend/pkg/xcontext"
 )
 
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
@@ -27,11 +26,12 @@ func NewWorkoutHandler(log *zap.Logger, r *repo.Repo) apiv1connect.WorkoutServic
 }
 
 func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceCreateProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
+	if !ok {
+		log.Error("user ID not provided")
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+	}
 
 	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
 	if err != nil {
@@ -64,11 +64,12 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 }
 
 func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceCreateProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
+	if !ok {
+		log.Error("user ID not provided")
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+	}
 
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
@@ -93,11 +94,12 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 }
 
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.WorkoutServiceListProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
+	if !ok {
+		log.Error("user ID not provided")
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+	}
 
 	limit := int(req.Msg.GetPageSize())
 	workouts, err := h.repo.ListWorkouts(ctx,

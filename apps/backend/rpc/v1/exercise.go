@@ -10,12 +10,11 @@ import (
 	"github.com/volatiletech/null/v8"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/apps/backend/pkg/jwt"
 	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 	v1 "github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/apps/backend/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/apps/backend/pkg/repo"
-	"github.com/crlssn/getstronger/apps/backend/pkg/xzap"
+	"github.com/crlssn/getstronger/apps/backend/pkg/xcontext"
 )
 
 var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
@@ -30,11 +29,12 @@ func NewExerciseHandler(log *zap.Logger, r *repo.Repo) apiv1connect.ExerciseServ
 }
 
 func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceCreateProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
+	if !ok {
+		log.Error("user ID not provided")
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+	}
 
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
 		UserID: userID,
@@ -52,8 +52,12 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 }
 
 func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceGetProcedure))
-	log.Info("request received")
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
+	if !ok {
+		log.Error("user ID not provided")
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+	}
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
@@ -66,6 +70,11 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	if exercise.UserID != userID {
+		log.Error("exercise does not belong to user")
+		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
 	return connect.NewResponse(&v1.GetExerciseResponse{
 		Exercise: parseExerciseToPB(exercise),
 	}), nil
@@ -74,11 +83,12 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
 func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceUpdateProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
+	if !ok {
+		log.Error("user ID not provided")
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+	}
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetExercise().GetId()))
 	if err != nil {
@@ -114,18 +124,13 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 	}), nil
 }
 
-var errUserIDNotProvided = errors.New("user ID not provided")
-
 func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceDeleteProcedure))
-	log.Info("request received")
-
-	userID, ok := ctx.Value(jwt.ContextKeyUserID).(string)
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, errUserIDNotProvided)
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
 	}
-	log = log.With(xzap.FieldUserID(userID))
 
 	if err := h.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
 		UserID:     userID,
@@ -140,11 +145,12 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 }
 
 func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
-	log := h.log.With(xzap.FieldRPC(apiv1connect.ExerciseServiceListProcedure))
-	log.Info("request received")
-
-	userID := jwt.MustExtractUserID(ctx)
-	log = log.With(xzap.FieldUserID(userID))
+	log := xcontext.ExtractLogger(ctx, h.log)
+	userID, ok := xcontext.ExtractUserID(ctx)
+	if !ok {
+		log.Error("user ID not provided")
+		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+	}
 
 	limit := int(req.Msg.GetPageSize())
 	exercises, err := h.repo.ListExercises(ctx,
