@@ -32,6 +32,9 @@ service RoutineService {
   rpc RemoveExercise(RemoveExerciseRequest) returns (RemoveExerciseResponse) {
     option (auth) = true;
   }
+  rpc UpdateExerciseOrder(UpdateExerciseOrderRequest) returns (UpdateExerciseOrderResponse) {
+    option (auth) = true;
+  }
 }
 
 message CreateRoutineRequest {
@@ -83,6 +86,12 @@ message RemoveExerciseRequest {
   string exercise_id = 2 [(buf.validate.field).string.uuid = true];
 }
 message RemoveExerciseResponse {}
+
+message UpdateExerciseOrderRequest {
+  string routine_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated.min_items = 1];
+}
+message UpdateExerciseOrderResponse {}
 
 message Routine {
   string id = 1;

@@ -19,6 +19,14 @@ type routineHandler struct {
 	repo *repo.Repo
 }
 
+func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error) {
+	log := h.log.With(xzap.FieldRPC(apiv1connect.RoutineServiceUpdateExerciseOrderProcedure))
+	log.Info("request received")
+
+	userID := jwt.MustExtractUserID(ctx)
+	log = log.With(xzap.FieldUserID(userID))
+}
+
 func NewRoutineHandler(r *repo.Repo) apiv1connect.RoutineServiceHandler {
 	return &routineHandler{r}
 }

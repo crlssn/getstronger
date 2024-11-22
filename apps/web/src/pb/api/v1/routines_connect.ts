@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AddExerciseRequest, AddExerciseResponse, CreateRoutineRequest, CreateRoutineResponse, DeleteRoutineRequest, DeleteRoutineResponse, GetRoutineRequest, GetRoutineResponse, ListRoutinesRequest, ListRoutinesResponse, RemoveExerciseRequest, RemoveExerciseResponse, UpdateRoutineRequest, UpdateRoutineResponse } from "./routines_pb.js";
+import { AddExerciseRequest, AddExerciseResponse, CreateRoutineRequest, CreateRoutineResponse, DeleteRoutineRequest, DeleteRoutineResponse, GetRoutineRequest, GetRoutineResponse, ListRoutinesRequest, ListRoutinesResponse, RemoveExerciseRequest, RemoveExerciseResponse, UpdateExerciseOrderRequest, UpdateExerciseOrderResponse, UpdateRoutineRequest, UpdateRoutineResponse } from "./routines_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -73,6 +73,15 @@ export const RoutineService = {
       name: "RemoveExercise",
       I: RemoveExerciseRequest,
       O: RemoveExerciseResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc api.v1.RoutineService.UpdateExerciseOrder
+     */
+    updateExerciseOrder: {
+      name: "UpdateExerciseOrder",
+      I: UpdateExerciseOrderRequest,
+      O: UpdateExerciseOrderResponse,
       kind: MethodKind.Unary,
     },
   }
