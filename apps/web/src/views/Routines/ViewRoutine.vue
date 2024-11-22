@@ -26,27 +26,22 @@ onMounted(async () => {
 })
 
 useSortable(el, routine.value?.exercises || [], {
+  ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+  chosenClass: "sortable-chosen",  // Class name for the chosen item
+  dragClass: "sortable-drag",  // Class name for the dragging item
   onUpdate: (event: SortableEvent) => {
     const oldIndex = event.oldIndex ?? 0
     const newIndex = event.newIndex ?? 0
     console.log(oldIndex, newIndex)
-
     const exercises = routine.value?.exercises
     if (exercises) {
-      // Move the exercise in the local array
       const [movedExercise] = exercises.splice(oldIndex, 1)
       exercises.splice(newIndex, 0, movedExercise)
 
-      // Optionally, send the updated list to the backend
       const updatedOrder = exercises.map((e) => e.id)
       console.log(updatedOrder)
       // sendReorderToBackend({ updatedOrder })
     }
-    // console.log(typeof event)
-    // console.log(event.items)
-    // console.log(event.)
-    // console.log(event.item.getAttribute('data-exercise-id'))
-    // console.log(event.item.getAttribute('data-id'))
   },
 })
 </script>
@@ -63,25 +58,25 @@ useSortable(el, routine.value?.exercises || [], {
     <li
       v-for="exercise in routine?.exercises"
       :key="exercise.id"
-      :data-exercise-id="exercise.id"
+      :data-id="exercise.id"
       class="flex justify-between items-center px-4 py-5 text-sm text-gray-900 hover:cursor-move"
     >
-      <!--      <div class="">-->
       {{ exercise.name }}
-      <ChevronUpDownIcon class="size-5 flex-none text-gray-400" aria-hidden="true" />
-      <!--        <div>-->
-      <!--          <ChevronUpIcon-->
-      <!--            class="size-5 flex-none text-gray-400 hover:text-gray-600 cursor-pointer"-->
-      <!--            aria-hidden="true"-->
-      <!--          />-->
-      <!--          <ChevronDownIcon-->
-      <!--            class="size-5 flex-none text-gray-400 hover:text-gray-600 cursor-pointer"-->
-      <!--            aria-hidden="true"-->
-      <!--          />-->
-      <!--        </div>-->
-      <!--      </div>-->
+      <ChevronUpDownIcon class="size-5 flex-none text-gray-500" aria-hidden="true" />
     </li>
   </ul>
   <AppButton type="button" colour="gray" class="mt-4">Edit Routine</AppButton>
   <AppButton type="button" colour="red" class="mt-4">Delete Routine</AppButton>
 </template>
+
+<style scoped>
+.sortable-drag {
+  @apply bg-white rounded-md;
+}
+.sortable-ghost {
+  @apply text-white;
+  svg {
+    @apply text-white;
+  }
+}
+</style>
