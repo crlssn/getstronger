@@ -22,7 +22,6 @@ import (
 var _ apiv1connect.AuthServiceHandler = (*auth)(nil)
 
 type auth struct {
-	log    *zap.Logger
 	jwt    *jwt.Manager
 	repo   *repo.Repo
 	config *config.Config
@@ -31,7 +30,6 @@ type auth struct {
 type AuthHandlerParams struct {
 	fx.In
 
-	Log    *zap.Logger
 	JWT    *jwt.Manager
 	Repo   *repo.Repo
 	Config *config.Config
@@ -39,7 +37,6 @@ type AuthHandlerParams struct {
 
 func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 	return &auth{
-		log:    p.Log,
 		jwt:    p.JWT,
 		repo:   p.Repo,
 		config: p.Config,

@@ -17,12 +17,11 @@ import (
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
-	log  *zap.Logger
 	repo *repo.Repo
 }
 
-func NewWorkoutHandler(log *zap.Logger, r *repo.Repo) apiv1connect.WorkoutServiceHandler {
-	return &workoutHandler{log, r}
+func NewWorkoutHandler(r *repo.Repo) apiv1connect.WorkoutServiceHandler {
+	return &workoutHandler{r}
 }
 
 func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {

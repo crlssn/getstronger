@@ -16,12 +16,11 @@ import (
 var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
 
 type routineHandler struct {
-	log  *zap.Logger
 	repo *repo.Repo
 }
 
-func NewRoutineHandler(log *zap.Logger, r *repo.Repo) apiv1connect.RoutineServiceHandler {
-	return &routineHandler{log, r}
+func NewRoutineHandler(r *repo.Repo) apiv1connect.RoutineServiceHandler {
+	return &routineHandler{r}
 }
 
 func (h *routineHandler) Create(ctx context.Context, req *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error) {
