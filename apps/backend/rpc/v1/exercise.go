@@ -29,12 +29,8 @@ func NewExerciseHandler(log *zap.Logger, r *repo.Repo) apiv1connect.ExerciseServ
 }
 
 func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
 		UserID: userID,
@@ -52,12 +48,8 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 }
 
 func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
@@ -83,12 +75,8 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
 func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetExercise().GetId()))
 	if err != nil {
@@ -125,12 +113,8 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 }
 
 func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	if err := h.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
 		UserID:     userID,
@@ -145,12 +129,8 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 }
 
 func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPageSize())
 	exercises, err := h.repo.ListExercises(ctx,

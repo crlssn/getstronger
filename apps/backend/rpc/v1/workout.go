@@ -26,12 +26,8 @@ func NewWorkoutHandler(log *zap.Logger, r *repo.Repo) apiv1connect.WorkoutServic
 }
 
 func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
 	if err != nil {
@@ -64,12 +60,8 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 }
 
 func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
@@ -94,12 +86,8 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 }
 
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
-	userID, ok := xcontext.ExtractUserID(ctx)
-	if !ok {
-		log.Error("user ID not provided")
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-	}
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPageSize())
 	workouts, err := h.repo.ListWorkouts(ctx,

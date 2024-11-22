@@ -52,7 +52,7 @@ var (
 )
 
 func (h *auth) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx)
 
 	email := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
 	if !strings.Contains(email, "@") {
@@ -94,7 +94,7 @@ func (h *auth) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest
 var errInvalidCredentials = errors.New("invalid credentials")
 
 func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
 		log.Error("credentials invalid", zap.Error(err))
@@ -153,7 +153,7 @@ var (
 )
 
 func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx)
 
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if !ok {
@@ -195,7 +195,7 @@ func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTo
 }
 
 func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
-	log := xcontext.ExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx)
 
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if ok {
