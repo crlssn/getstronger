@@ -143,6 +143,7 @@ func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 
 func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
 	log := xcontext.ExtractLogger(ctx, h.log)
+	log.Info("listing routines")
 	userID, ok := xcontext.ExtractUserID(ctx)
 	if !ok {
 		log.Error("user ID not provided")

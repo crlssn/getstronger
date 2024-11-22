@@ -99,8 +99,12 @@ func (a *auth) Unary() connect.UnaryInterceptorFunc {
 				return nil, connect.NewError(connect.CodeUnauthenticated, nil)
 			}
 
-			log.Info("request authenticated", xzap.FieldUserID(claims.UserID), zap.Any("claims", claims))
-			return next(xcontext.WithUserID(ctx, claims.UserID), req)
+			log = log.With(xzap.FieldUserID(claims.UserID))
+			log.Info("request authenticated")
+
+			ctx = xcontext.WithLogger(ctx, log)
+			ctx = xcontext.WithUserID(ctx, claims.UserID)
+			return next(ctx, req)
 		}
 	}
 }
