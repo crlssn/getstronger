@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
@@ -162,21 +163,18 @@ func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListR
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var nextPageToken []byte
-	if len(routines) > limit {
-		routines = routines[:limit]
-		if nextPageToken, err = json.Marshal(repo.PageToken{
-			CreatedAt: routines[len(routines)-1].CreatedAt,
-		}); err != nil {
-			log.Error("marshal page token failed", zap.Error(err))
-			return nil, connect.NewError(connect.CodeInternal, nil)
-		}
+	pagination, err := repo.PaginateSlice(routines, limit, func(routine *orm.Routine) time.Time {
+		return routine.CreatedAt
+	})
+	if err != nil {
+		log.Error("paginate routines failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("routines listed")
 	return connect.NewResponse(&v1.ListRoutinesResponse{
-		Routines:      parseRoutinesToPB(routines),
-		NextPageToken: nextPageToken,
+		Routines:      parseRoutinesToPB(pagination.Items),
+		NextPageToken: pagination.NextPageToken,
 	}), nil
 }
 

@@ -10,17 +10,17 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
-	repo2 "github.com/crlssn/getstronger/server/pkg/repo"
+	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
 
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
-	repo *repo2.Repo
+	repo *repo.Repo
 }
 
-func NewWorkoutHandler(r *repo2.Repo) apiv1connect.WorkoutServiceHandler {
+func NewWorkoutHandler(r *repo.Repo) apiv1connect.WorkoutServiceHandler {
 	return &workoutHandler{r}
 }
 
@@ -28,7 +28,7 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx, repo2.GetRoutineWithID(req.Msg.GetRoutineId()))
+	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
 	if err != nil {
 		log.Error("failed to get routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -39,7 +39,7 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	workout, err := h.repo.CreateWorkout(ctx, repo2.CreateWorkoutParams{
+	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		Name:         routine.Title,
 		UserID:       userID,
 		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
@@ -63,8 +63,8 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 	userID := xcontext.MustExtractUserID(ctx)
 
 	workout, err := h.repo.GetWorkout(ctx,
-		repo2.GetWorkoutWithID(req.Msg.GetId()),
-		repo2.GetWorkoutWithExerciseSets(),
+		repo.GetWorkoutWithID(req.Msg.GetId()),
+		repo.GetWorkoutWithExerciseSets(),
 	)
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
@@ -90,16 +90,16 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 
 	limit := int(req.Msg.GetPageSize())
 	workouts, err := h.repo.ListWorkouts(ctx,
-		repo2.ListWorkoutsWithLimit(limit+1),
-		repo2.ListWorkoutsWithUserID(userID),
-		repo2.ListWorkoutsWithPageToken(req.Msg.GetPageToken()),
+		repo.ListWorkoutsWithLimit(limit+1),
+		repo.ListWorkoutsWithUserID(userID),
+		repo.ListWorkoutsWithPageToken(req.Msg.GetPageToken()),
 	)
 	if err != nil {
 		log.Error("failed to list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo2.PaginateSlice(workouts, limit, func(workout *orm.Workout) time.Time {
+	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *orm.Workout) time.Time {
 		return workout.CreatedAt
 	})
 	if err != nil {
@@ -121,8 +121,8 @@ func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 	userID := xcontext.MustExtractUserID(ctx)
 
 	if err := h.repo.DeleteWorkout(ctx,
-		repo2.DeleteWorkoutWithID(req.Msg.GetId()),
-		repo2.DeleteWorkoutWithUserID(userID),
+		repo.DeleteWorkoutWithID(req.Msg.GetId()),
+		repo.DeleteWorkoutWithUserID(userID),
 	); err != nil {
 		log.Error("failed to delete workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
