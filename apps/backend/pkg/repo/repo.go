@@ -385,12 +385,10 @@ func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Rout
 		query = append(query, opt())
 	}
 
-	boil.DebugMode = true
 	routine, err := orm.Routines(query...).One(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("routine fetch: %w", err)
 	}
-	boil.DebugMode = false
 
 	return routine, nil
 }
