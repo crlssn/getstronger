@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     paths:
-      - 'apps/web/**'
+      - 'web/**'
 
 jobs:
   web:
@@ -22,12 +22,12 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        working-directory: ./apps/web
+        working-directory: ./web
         run: npm install
         shell: bash
 
       - name: Run formatter
-        working-directory: ./apps/web
+        working-directory: ./web
         run: npm run format
         shell: bash
 
@@ -42,11 +42,11 @@ jobs:
           fi
 
       - name: Run linter
-        working-directory: ./apps/web
+        working-directory: ./web
         run: npx eslint "src/**/*.{js,ts,vue}"
         shell: bash
 
       - name: Build the app
-        working-directory: ./apps/web
+        working-directory: ./web
         run: npm run build
         shell: bash

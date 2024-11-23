@@ -33,19 +33,19 @@ test:
 	go test ./...
 
 run_backend:
-	go run ./apps/backend/cmd/main.go
+	go run ./server/cmd/main.go
 
 run_web:
-	cd apps/web && npm run dev
+	cd web && npm run dev
 
 format:
 	goimports -w .
-	cd apps/web && npx sort-package-json
-	cd apps/web && npm run format
+	cd web && npx sort-package-json
+	cd web && npm run format
 
 lint:
 	golangci-lint run
-	cd apps/web && npx eslint "src/**/*.{js,ts,vue}"
+	cd web && npx eslint "src/**/*.{js,ts,vue}"
 
 vet:
 	go vet ./...

@@ -23,17 +23,17 @@ runs:
         node-version: '22'
 
     - name: Install dependencies
-      working-directory: ./apps/web
+      working-directory: ./web
       run: npm install
       shell: bash
 
     - name: Build the app
-      working-directory: ./apps/web
+      working-directory: ./web
       run: npm run build
       shell: bash
 
     - name: Deploy to S3
-      working-directory: ./apps/web
+      working-directory: ./web
       shell: bash
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}

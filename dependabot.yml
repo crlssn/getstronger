@@ -5,10 +5,10 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "npm"
-    directory: "apps/web"
+    directory: "web"
     schedule:
       interval: "daily"
   - package-ecosystem: "gomod"
-    directory: "apps/backend"
+    directory: "server"
     schedule:
       interval: "daily"
