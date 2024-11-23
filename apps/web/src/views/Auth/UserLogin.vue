@@ -99,9 +99,7 @@ const login = async () => {
         </div>
 
         <div>
-          <AppButton type="submit" colour="primary">
-            Login
-          </AppButton>
+          <AppButton type="submit" colour="primary"> Login </AppButton>
         </div>
       </form>
 

@@ -348,7 +348,7 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.R
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
-		if err = tx.UpdateRoutineExerciseOrder(ctx, routine.ID, p.ExerciseIDs); err != nil {
+		if err = tx.UpdateRoutine(ctx, routine.ID, UpdateRoutineExerciseOrder(p.ExerciseIDs)); err != nil {
 			return fmt.Errorf("routine update: %w", err)
 		}
 		return nil
@@ -465,11 +465,22 @@ func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.Ro
 	return routines, nil
 }
 
-type UpdateRoutineOpt func() orm.M
+type UpdateRoutineOpt func() (orm.M, error)
 
 func UpdateRoutineName(name string) UpdateRoutineOpt {
-	return func() orm.M {
-		return orm.M{orm.RoutineColumns.Title: name}
+	return func() (orm.M, error) {
+		return orm.M{orm.RoutineColumns.Title: name}, nil
+	}
+}
+
+func UpdateRoutineExerciseOrder(exerciseIDs []string) UpdateRoutineOpt {
+	return func() (orm.M, error) {
+		bytes, err := json.Marshal(exerciseIDs)
+		if err != nil {
+			return nil, fmt.Errorf("exercise IDs marshal: %w", err)
+		}
+
+		return orm.M{orm.RoutineColumns.ExerciseOrder: bytes}, nil
 	}
 }
 
@@ -478,7 +489,12 @@ var errDuplicateColumn = fmt.Errorf("duplicate column")
 func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	columns := orm.M{}
 	for _, opt := range opts {
-		for key, value := range opt() {
+		column, err := opt()
+		if err != nil {
+			return fmt.Errorf("routine update opt: %w", err)
+		}
+
+		for key, value := range column {
 			if columns[key] != nil {
 				return fmt.Errorf("%w: %s", errDuplicateColumn, key)
 			}
@@ -682,21 +698,4 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 		return nil
 	})
-}
-
-func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
-	bytes, err := json.Marshal(exerciseIDs)
-	if err != nil {
-		return fmt.Errorf("exercise IDs marshal: %w", err)
-	}
-
-	routine := &orm.Routine{
-		ID:            routineID,
-		ExerciseOrder: bytes,
-	}
-	if _, err = routine.Update(ctx, r.executor(), boil.Whitelist(orm.RoutineColumns.ExerciseOrder)); err != nil {
-		return fmt.Errorf("routine update: %w", err)
-	}
-
-	return nil
 }

@@ -67,7 +67,7 @@ const signup = async () => {
               name="firstname"
               type="text"
               required
-           class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
@@ -75,12 +75,7 @@ const signup = async () => {
         <div>
           <label for="email" class="block text-sm/6 font-medium text-gray-900">Last name</label>
           <div class="mt-2">
-            <input
-              v-model="lastName"
-              name="lastname"
-              type="text"
-              required
-            />
+            <input v-model="lastName" name="lastname" type="text" required />
           </div>
         </div>
 
@@ -133,9 +128,7 @@ const signup = async () => {
         </div>
 
         <div>
-          <AppButton type="submit" colour="primary">
-            Sign up
-          </AppButton>
+          <AppButton type="submit" colour="primary"> Sign up </AppButton>
         </div>
       </form>
 
