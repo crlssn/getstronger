@@ -19,17 +19,18 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Routine is an object representing the database table.
 type Routine struct {
-	ID            string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID        string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Title         string    `boil:"title" json:"title" toml:"title" yaml:"title"`
-	CreatedAt     time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	DeletedAt     null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
-	ExerciseOrder null.JSON `boil:"exercise_order" json:"exercise_order,omitempty" toml:"exercise_order" yaml:"exercise_order,omitempty"`
+	ID            string     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID        string     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Title         string     `boil:"title" json:"title" toml:"title" yaml:"title"`
+	CreatedAt     time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	DeletedAt     null.Time  `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ExerciseOrder types.JSON `boil:"exercise_order" json:"exercise_order" toml:"exercise_order" yaml:"exercise_order"`
 
 	R *routineR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L routineL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -69,29 +70,26 @@ var RoutineTableColumns = struct {
 
 // Generated where
 
-type whereHelpernull_JSON struct{ field string }
+type whereHelpertypes_JSON struct{ field string }
 
-func (w whereHelpernull_JSON) EQ(x null.JSON) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
+func (w whereHelpertypes_JSON) EQ(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
 }
-func (w whereHelpernull_JSON) NEQ(x null.JSON) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
+func (w whereHelpertypes_JSON) NEQ(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelpernull_JSON) LT(x null.JSON) qm.QueryMod {
+func (w whereHelpertypes_JSON) LT(x types.JSON) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpernull_JSON) LTE(x null.JSON) qm.QueryMod {
+func (w whereHelpertypes_JSON) LTE(x types.JSON) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpernull_JSON) GT(x null.JSON) qm.QueryMod {
+func (w whereHelpertypes_JSON) GT(x types.JSON) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpernull_JSON) GTE(x null.JSON) qm.QueryMod {
+func (w whereHelpertypes_JSON) GTE(x types.JSON) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
-
-func (w whereHelpernull_JSON) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_JSON) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var RoutineWhere = struct {
 	ID            whereHelperstring
@@ -99,14 +97,14 @@ var RoutineWhere = struct {
 	Title         whereHelperstring
 	CreatedAt     whereHelpertime_Time
 	DeletedAt     whereHelpernull_Time
-	ExerciseOrder whereHelpernull_JSON
+	ExerciseOrder whereHelpertypes_JSON
 }{
 	ID:            whereHelperstring{field: "\"getstronger\".\"routines\".\"id\""},
 	UserID:        whereHelperstring{field: "\"getstronger\".\"routines\".\"user_id\""},
 	Title:         whereHelperstring{field: "\"getstronger\".\"routines\".\"title\""},
 	CreatedAt:     whereHelpertime_Time{field: "\"getstronger\".\"routines\".\"created_at\""},
 	DeletedAt:     whereHelpernull_Time{field: "\"getstronger\".\"routines\".\"deleted_at\""},
-	ExerciseOrder: whereHelpernull_JSON{field: "\"getstronger\".\"routines\".\"exercise_order\""},
+	ExerciseOrder: whereHelpertypes_JSON{field: "\"getstronger\".\"routines\".\"exercise_order\""},
 }
 
 // RoutineRels is where relationship names are stored.

@@ -379,18 +379,6 @@ func GetRoutineWithExercises() GetRoutineOpt {
 	}
 }
 
-func GetRoutineWithExercisesOrdered() GetRoutineOpt {
-	return func() qm.QueryMod {
-		return qm.Load(
-			orm.RoutineRels.Exercises,
-			qm.InnerJoin("getstronger.routine_exercises_sort_order AS rs ON rs.exercise_id = exercises.id"),
-			qm.InnerJoin("getstronger.routines AS r ON rs.routine_id = r.id"),
-			qm.Where("r.id = getstronger.routines.id"),
-			qm.OrderBy("rs.sort_order"),
-		)
-	}
-}
-
 func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
@@ -706,7 +694,7 @@ func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string,
 
 	routine := &orm.Routine{
 		ID:            routineID,
-		ExerciseOrder: null.JSONFrom(bytes),
+		ExerciseOrder: bytes,
 	}
 	if _, err = routine.Update(ctx, r.executor(), boil.Whitelist(orm.RoutineColumns.ExerciseOrder)); err != nil {
 		return fmt.Errorf("routine update: %w", err)
