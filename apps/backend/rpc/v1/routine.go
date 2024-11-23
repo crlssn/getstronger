@@ -58,7 +58,7 @@ func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRou
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var mapExercises = make(map[string]*orm.Exercise, len(routine.R.Exercises))
+	mapExercises := make(map[string]*orm.Exercise, len(routine.R.Exercises))
 	for _, exercise := range routine.R.Exercises {
 		mapExercises[exercise.ID] = exercise
 	}
@@ -265,7 +265,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
-	var mapExpectedExerciseIDs = make(map[string]struct{}, len(routine.R.Exercises))
+	mapExpectedExerciseIDs := make(map[string]struct{}, len(routine.R.Exercises))
 	for _, exercise := range routine.R.Exercises {
 		mapExpectedExerciseIDs[exercise.ID] = struct{}{}
 	}

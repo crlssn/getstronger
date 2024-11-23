@@ -161,7 +161,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 				UpdateRoutineName("new"),
 				UpdateRoutineName("newer"),
 			},
-			init: func(t test) {},
+			init: func(_ test) {},
 			expected: expected{
 				err: errDuplicateColumn,
 			},
