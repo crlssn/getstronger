@@ -154,6 +154,18 @@ func (s *repoSuite) TestUpdateRoutine() {
 				err: nil,
 			},
 		},
+		{
+			name:      "err_duplicate_column_update",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineName("new"),
+				UpdateRoutineName("newer"),
+			},
+			init: func(t test) {},
+			expected: expected{
+				err: errDuplicateColumn,
+			},
+		},
 	}
 
 	for _, t := range tests {
