@@ -63,13 +63,13 @@ runs:
 
     - name: Build the app
       shell: bash
-      working-directory: ./apps/backend
+      working-directory: ./server
       run: |
         go mod download
         GOOS=linux go build -o bin/app cmd/main.go
 
     - name: Create env file
-      working-directory: ./apps/backend/bin
+      working-directory: ./server/bin
       shell: bash
       run: |
         touch .env
@@ -92,7 +92,7 @@ runs:
         REMOTE_HOST: ${{ inputs.aws_ec2_remote_host }}
         REMOTE_USER: 'ec2-user'
         SSH_PRIVATE_KEY: ${{ inputs.aws_ec2_private_key }}
-        SOURCE: 'apps/backend/bin/'
+        SOURCE: 'server/bin/'
 
     - name: Restart app
       uses: appleboy/ssh-action@v1.1.0

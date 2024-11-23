@@ -9,5 +9,5 @@
 /infrastructure/.terraform/
 /infrastructure/.terraform.lock.hcl
 /.env
-/apps/web/.env
+/web/.env
 /database/seed/*.sql

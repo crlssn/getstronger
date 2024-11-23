@@ -3,22 +3,22 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/crlssn/getstronger/apps/backend/pkg/pb
+      value: github.com/crlssn/getstronger/server/pkg/pb
   disable:
     - module: buf.build/bufbuild/protovalidate
 plugins:
   - remote: buf.build/protocolbuffers/go
-    out: apps/backend/pkg/pb
+    out: server/pkg/pb
     opt: paths=source_relative
   - remote: buf.build/connectrpc/go
-    out: apps/backend/pkg/pb
+    out: server/pkg/pb
     opt: paths=source_relative
   - local: protoc-gen-es
     opt: target=ts
-    out: apps/web/src/pb
+    out: web/src/pb
     include_imports: true
   - local: protoc-gen-connect-es
-    out: apps/web/src/pb
+    out: web/src/pb
     opt: target=ts
 inputs:
   - directory: protobufs
