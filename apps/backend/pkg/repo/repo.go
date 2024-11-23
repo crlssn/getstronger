@@ -12,7 +12,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/crypto/bcrypt"
 
-	orm "github.com/crlssn/getstronger/apps/backend/pkg/orm"
+	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 )
 
 type Repo struct {

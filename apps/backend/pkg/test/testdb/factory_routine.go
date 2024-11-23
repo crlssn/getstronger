@@ -21,7 +21,7 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *orm.Routine {
 		Title:         "",
 		CreatedAt:     time.Time{},
 		DeletedAt:     null.Time{},
-		ExerciseOrder: null.JSON{},
+		ExerciseOrder: nil,
 	}
 
 	for _, opt := range opts {
@@ -59,6 +59,6 @@ func RoutineExerciseOrder(exerciseIDs []string) RoutineOpt {
 		if err != nil {
 			panic(fmt.Errorf("failed to marshal exercise order: %w", err))
 		}
-		m.ExerciseOrder = null.JSONFrom(bytes)
+		m.ExerciseOrder = bytes
 	}
 }
