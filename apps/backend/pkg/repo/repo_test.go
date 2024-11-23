@@ -5,6 +5,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/crlssn/getstronger/apps/backend/pkg/test/testdb"
@@ -85,6 +86,93 @@ func (s *repoSuite) TestListExercises() {
 
 			s.Require().NoError(err)
 			s.Require().Len(exercises, t.expected.exercises)
+		})
+	}
+}
+
+func (s *repoSuite) TestUpdateRoutine() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name      string
+		routineID string
+		opts      []UpdateRoutineOpt
+		init      func(test)
+		expected  expected
+	}
+
+	tests := []test{
+		{
+			name:      "ok_update_routine_name",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineName("new"),
+			},
+			init: func(t test) {
+				s.testFactory.NewRoutine(
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineName("old"),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:      "ok_update_exercise_order",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			},
+			init: func(t test) {
+				s.testFactory.NewRoutine(
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineExerciseOrder([]string{"2", "1"}),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:      "ok_update_name_and_exercise_order",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineName("new"),
+				UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			},
+			init: func(t test) {
+				s.testFactory.NewRoutine(
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineName("old"),
+					testdb.RoutineExerciseOrder([]string{"2", "1"}),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:      "err_duplicate_column_update",
+			routineID: uuid.NewString(),
+			opts: []UpdateRoutineOpt{
+				UpdateRoutineName("new"),
+				UpdateRoutineName("newer"),
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: errDuplicateColumn,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			err := s.repo.UpdateRoutine(context.Background(), t.routineID, t.opts...)
+			s.Require().ErrorIs(err, t.expected.err)
 		})
 	}
 }

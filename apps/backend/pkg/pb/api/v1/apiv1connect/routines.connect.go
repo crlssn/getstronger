@@ -50,18 +50,22 @@ const (
 	// RoutineServiceRemoveExerciseProcedure is the fully-qualified name of the RoutineService's
 	// RemoveExercise RPC.
 	RoutineServiceRemoveExerciseProcedure = "/api.v1.RoutineService/RemoveExercise"
+	// RoutineServiceUpdateExerciseOrderProcedure is the fully-qualified name of the RoutineService's
+	// UpdateExerciseOrder RPC.
+	RoutineServiceUpdateExerciseOrderProcedure = "/api.v1.RoutineService/UpdateExerciseOrder"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	routineServiceServiceDescriptor              = v1.File_api_v1_routines_proto.Services().ByName("RoutineService")
-	routineServiceCreateMethodDescriptor         = routineServiceServiceDescriptor.Methods().ByName("Create")
-	routineServiceGetMethodDescriptor            = routineServiceServiceDescriptor.Methods().ByName("Get")
-	routineServiceUpdateMethodDescriptor         = routineServiceServiceDescriptor.Methods().ByName("Update")
-	routineServiceDeleteMethodDescriptor         = routineServiceServiceDescriptor.Methods().ByName("Delete")
-	routineServiceListMethodDescriptor           = routineServiceServiceDescriptor.Methods().ByName("List")
-	routineServiceAddExerciseMethodDescriptor    = routineServiceServiceDescriptor.Methods().ByName("AddExercise")
-	routineServiceRemoveExerciseMethodDescriptor = routineServiceServiceDescriptor.Methods().ByName("RemoveExercise")
+	routineServiceServiceDescriptor                   = v1.File_api_v1_routines_proto.Services().ByName("RoutineService")
+	routineServiceCreateMethodDescriptor              = routineServiceServiceDescriptor.Methods().ByName("Create")
+	routineServiceGetMethodDescriptor                 = routineServiceServiceDescriptor.Methods().ByName("Get")
+	routineServiceUpdateMethodDescriptor              = routineServiceServiceDescriptor.Methods().ByName("Update")
+	routineServiceDeleteMethodDescriptor              = routineServiceServiceDescriptor.Methods().ByName("Delete")
+	routineServiceListMethodDescriptor                = routineServiceServiceDescriptor.Methods().ByName("List")
+	routineServiceAddExerciseMethodDescriptor         = routineServiceServiceDescriptor.Methods().ByName("AddExercise")
+	routineServiceRemoveExerciseMethodDescriptor      = routineServiceServiceDescriptor.Methods().ByName("RemoveExercise")
+	routineServiceUpdateExerciseOrderMethodDescriptor = routineServiceServiceDescriptor.Methods().ByName("UpdateExerciseOrder")
 )
 
 // RoutineServiceClient is a client for the api.v1.RoutineService service.
@@ -73,6 +77,7 @@ type RoutineServiceClient interface {
 	List(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error)
 	AddExercise(context.Context, *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error)
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
+	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
 }
 
 // NewRoutineServiceClient constructs a client for the api.v1.RoutineService service. By default, it
@@ -127,18 +132,25 @@ func NewRoutineServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(routineServiceRemoveExerciseMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		updateExerciseOrder: connect.NewClient[v1.UpdateExerciseOrderRequest, v1.UpdateExerciseOrderResponse](
+			httpClient,
+			baseURL+RoutineServiceUpdateExerciseOrderProcedure,
+			connect.WithSchema(routineServiceUpdateExerciseOrderMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // routineServiceClient implements RoutineServiceClient.
 type routineServiceClient struct {
-	create         *connect.Client[v1.CreateRoutineRequest, v1.CreateRoutineResponse]
-	get            *connect.Client[v1.GetRoutineRequest, v1.GetRoutineResponse]
-	update         *connect.Client[v1.UpdateRoutineRequest, v1.UpdateRoutineResponse]
-	delete         *connect.Client[v1.DeleteRoutineRequest, v1.DeleteRoutineResponse]
-	list           *connect.Client[v1.ListRoutinesRequest, v1.ListRoutinesResponse]
-	addExercise    *connect.Client[v1.AddExerciseRequest, v1.AddExerciseResponse]
-	removeExercise *connect.Client[v1.RemoveExerciseRequest, v1.RemoveExerciseResponse]
+	create              *connect.Client[v1.CreateRoutineRequest, v1.CreateRoutineResponse]
+	get                 *connect.Client[v1.GetRoutineRequest, v1.GetRoutineResponse]
+	update              *connect.Client[v1.UpdateRoutineRequest, v1.UpdateRoutineResponse]
+	delete              *connect.Client[v1.DeleteRoutineRequest, v1.DeleteRoutineResponse]
+	list                *connect.Client[v1.ListRoutinesRequest, v1.ListRoutinesResponse]
+	addExercise         *connect.Client[v1.AddExerciseRequest, v1.AddExerciseResponse]
+	removeExercise      *connect.Client[v1.RemoveExerciseRequest, v1.RemoveExerciseResponse]
+	updateExerciseOrder *connect.Client[v1.UpdateExerciseOrderRequest, v1.UpdateExerciseOrderResponse]
 }
 
 // Create calls api.v1.RoutineService.Create.
@@ -176,6 +188,11 @@ func (c *routineServiceClient) RemoveExercise(ctx context.Context, req *connect.
 	return c.removeExercise.CallUnary(ctx, req)
 }
 
+// UpdateExerciseOrder calls api.v1.RoutineService.UpdateExerciseOrder.
+func (c *routineServiceClient) UpdateExerciseOrder(ctx context.Context, req *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error) {
+	return c.updateExerciseOrder.CallUnary(ctx, req)
+}
+
 // RoutineServiceHandler is an implementation of the api.v1.RoutineService service.
 type RoutineServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error)
@@ -185,6 +202,7 @@ type RoutineServiceHandler interface {
 	List(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error)
 	AddExercise(context.Context, *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error)
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
+	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
 }
 
 // NewRoutineServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -235,6 +253,12 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 		connect.WithSchema(routineServiceRemoveExerciseMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	routineServiceUpdateExerciseOrderHandler := connect.NewUnaryHandler(
+		RoutineServiceUpdateExerciseOrderProcedure,
+		svc.UpdateExerciseOrder,
+		connect.WithSchema(routineServiceUpdateExerciseOrderMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.RoutineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RoutineServiceCreateProcedure:
@@ -251,6 +275,8 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 			routineServiceAddExerciseHandler.ServeHTTP(w, r)
 		case RoutineServiceRemoveExerciseProcedure:
 			routineServiceRemoveExerciseHandler.ServeHTTP(w, r)
+		case RoutineServiceUpdateExerciseOrderProcedure:
+			routineServiceUpdateExerciseOrderHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -286,4 +312,8 @@ func (UnimplementedRoutineServiceHandler) AddExercise(context.Context, *connect.
 
 func (UnimplementedRoutineServiceHandler) RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.RemoveExercise is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.UpdateExerciseOrder is not implemented"))
 }

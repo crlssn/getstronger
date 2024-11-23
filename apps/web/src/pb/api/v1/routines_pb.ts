@@ -550,6 +550,80 @@ export class RemoveExerciseResponse extends Message<RemoveExerciseResponse> {
 }
 
 /**
+ * @generated from message api.v1.UpdateExerciseOrderRequest
+ */
+export class UpdateExerciseOrderRequest extends Message<UpdateExerciseOrderRequest> {
+  /**
+   * @generated from field: string routine_id = 1;
+   */
+  routineId = "";
+
+  /**
+   * @generated from field: repeated string exercise_ids = 2;
+   */
+  exerciseIds: string[] = [];
+
+  constructor(data?: PartialMessage<UpdateExerciseOrderRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.UpdateExerciseOrderRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "routine_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "exercise_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateExerciseOrderRequest {
+    return new UpdateExerciseOrderRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateExerciseOrderRequest {
+    return new UpdateExerciseOrderRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateExerciseOrderRequest {
+    return new UpdateExerciseOrderRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateExerciseOrderRequest | PlainMessage<UpdateExerciseOrderRequest> | undefined, b: UpdateExerciseOrderRequest | PlainMessage<UpdateExerciseOrderRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateExerciseOrderRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.UpdateExerciseOrderResponse
+ */
+export class UpdateExerciseOrderResponse extends Message<UpdateExerciseOrderResponse> {
+  constructor(data?: PartialMessage<UpdateExerciseOrderResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.UpdateExerciseOrderResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateExerciseOrderResponse {
+    return new UpdateExerciseOrderResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateExerciseOrderResponse {
+    return new UpdateExerciseOrderResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateExerciseOrderResponse {
+    return new UpdateExerciseOrderResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateExerciseOrderResponse | PlainMessage<UpdateExerciseOrderResponse> | undefined, b: UpdateExerciseOrderResponse | PlainMessage<UpdateExerciseOrderResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateExerciseOrderResponse, a, b);
+  }
+}
+
+/**
  * @generated from message api.v1.Routine
  */
 export class Routine extends Message<Routine> {

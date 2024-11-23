@@ -19,63 +19,92 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Routine is an object representing the database table.
 type Routine struct {
-	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID    string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Title     string    `boil:"title" json:"title" toml:"title" yaml:"title"`
-	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	DeletedAt null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ID            string     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID        string     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Title         string     `boil:"title" json:"title" toml:"title" yaml:"title"`
+	CreatedAt     time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	DeletedAt     null.Time  `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ExerciseOrder types.JSON `boil:"exercise_order" json:"exercise_order" toml:"exercise_order" yaml:"exercise_order"`
 
 	R *routineR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L routineL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var RoutineColumns = struct {
-	ID        string
-	UserID    string
-	Title     string
-	CreatedAt string
-	DeletedAt string
+	ID            string
+	UserID        string
+	Title         string
+	CreatedAt     string
+	DeletedAt     string
+	ExerciseOrder string
 }{
-	ID:        "id",
-	UserID:    "user_id",
-	Title:     "title",
-	CreatedAt: "created_at",
-	DeletedAt: "deleted_at",
+	ID:            "id",
+	UserID:        "user_id",
+	Title:         "title",
+	CreatedAt:     "created_at",
+	DeletedAt:     "deleted_at",
+	ExerciseOrder: "exercise_order",
 }
 
 var RoutineTableColumns = struct {
-	ID        string
-	UserID    string
-	Title     string
-	CreatedAt string
-	DeletedAt string
+	ID            string
+	UserID        string
+	Title         string
+	CreatedAt     string
+	DeletedAt     string
+	ExerciseOrder string
 }{
-	ID:        "routines.id",
-	UserID:    "routines.user_id",
-	Title:     "routines.title",
-	CreatedAt: "routines.created_at",
-	DeletedAt: "routines.deleted_at",
+	ID:            "routines.id",
+	UserID:        "routines.user_id",
+	Title:         "routines.title",
+	CreatedAt:     "routines.created_at",
+	DeletedAt:     "routines.deleted_at",
+	ExerciseOrder: "routines.exercise_order",
 }
 
 // Generated where
 
+type whereHelpertypes_JSON struct{ field string }
+
+func (w whereHelpertypes_JSON) EQ(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertypes_JSON) NEQ(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertypes_JSON) LT(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertypes_JSON) LTE(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertypes_JSON) GT(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertypes_JSON) GTE(x types.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
 var RoutineWhere = struct {
-	ID        whereHelperstring
-	UserID    whereHelperstring
-	Title     whereHelperstring
-	CreatedAt whereHelpertime_Time
-	DeletedAt whereHelpernull_Time
+	ID            whereHelperstring
+	UserID        whereHelperstring
+	Title         whereHelperstring
+	CreatedAt     whereHelpertime_Time
+	DeletedAt     whereHelpernull_Time
+	ExerciseOrder whereHelpertypes_JSON
 }{
-	ID:        whereHelperstring{field: "\"getstronger\".\"routines\".\"id\""},
-	UserID:    whereHelperstring{field: "\"getstronger\".\"routines\".\"user_id\""},
-	Title:     whereHelperstring{field: "\"getstronger\".\"routines\".\"title\""},
-	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"routines\".\"created_at\""},
-	DeletedAt: whereHelpernull_Time{field: "\"getstronger\".\"routines\".\"deleted_at\""},
+	ID:            whereHelperstring{field: "\"getstronger\".\"routines\".\"id\""},
+	UserID:        whereHelperstring{field: "\"getstronger\".\"routines\".\"user_id\""},
+	Title:         whereHelperstring{field: "\"getstronger\".\"routines\".\"title\""},
+	CreatedAt:     whereHelpertime_Time{field: "\"getstronger\".\"routines\".\"created_at\""},
+	DeletedAt:     whereHelpernull_Time{field: "\"getstronger\".\"routines\".\"deleted_at\""},
+	ExerciseOrder: whereHelpertypes_JSON{field: "\"getstronger\".\"routines\".\"exercise_order\""},
 }
 
 // RoutineRels is where relationship names are stored.
@@ -116,9 +145,9 @@ func (r *routineR) GetExercises() ExerciseSlice {
 type routineL struct{}
 
 var (
-	routineAllColumns            = []string{"id", "user_id", "title", "created_at", "deleted_at"}
+	routineAllColumns            = []string{"id", "user_id", "title", "created_at", "deleted_at", "exercise_order"}
 	routineColumnsWithoutDefault = []string{"user_id", "title"}
-	routineColumnsWithDefault    = []string{"id", "created_at", "deleted_at"}
+	routineColumnsWithDefault    = []string{"id", "created_at", "deleted_at", "exercise_order"}
 	routinePrimaryKeyColumns     = []string{"id"}
 	routineGeneratedColumns      = []string{}
 )

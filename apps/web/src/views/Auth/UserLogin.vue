@@ -7,6 +7,7 @@ import { ConnectError } from '@connectrpc/connect'
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router/router'
 import { ScheduleTokenRefresh } from '@/jwt/jwt'
+import AppButton from '@/components/AppButton.vue'
 
 const email = ref('')
 const password = ref('')
@@ -72,7 +73,6 @@ const login = async () => {
               type="email"
               autocomplete="email"
               required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
@@ -94,18 +94,12 @@ const login = async () => {
               type="password"
               autocomplete="current-password"
               required
-              class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
             />
           </div>
         </div>
 
         <div>
-          <button
-            type="submit"
-            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Sign in
-          </button>
+          <AppButton type="submit" colour="primary"> Login </AppButton>
         </div>
       </form>
 
@@ -118,3 +112,9 @@ const login = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+input {
+  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm;
+}
+</style>

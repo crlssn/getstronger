@@ -12,7 +12,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/crypto/bcrypt"
 
-	orm "github.com/crlssn/getstronger/apps/backend/pkg/orm"
+	"github.com/crlssn/getstronger/apps/backend/pkg/orm"
 )
 
 type Repo struct {
@@ -262,12 +262,10 @@ func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm
 		queries = append(queries, query...)
 	}
 
-	boil.DebugMode = true
 	exercises, err := orm.Exercises(queries...).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("exercises fetch: %w", err)
 	}
-	boil.DebugMode = false
 
 	return exercises, nil
 }
@@ -341,12 +339,21 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.R
 		Title:  p.Name,
 	}
 
-	if err = routine.Insert(ctx, r.executor(), boil.Infer()); err != nil {
-		return nil, fmt.Errorf("routine insert: %w", err)
-	}
+	if err = r.NewTx(ctx, func(tx *Repo) error {
+		if err = routine.Insert(ctx, tx.executor(), boil.Infer()); err != nil {
+			return fmt.Errorf("routine insert: %w", err)
+		}
 
-	if err = routine.SetExercises(ctx, r.executor(), false, exercises...); err != nil {
-		return nil, fmt.Errorf("routine exercises set: %w", err)
+		if err = routine.SetExercises(ctx, tx.executor(), false, exercises...); err != nil {
+			return fmt.Errorf("routine exercises set: %w", err)
+		}
+
+		if err = tx.UpdateRoutine(ctx, routine.ID, UpdateRoutineExerciseOrder(p.ExerciseIDs)); err != nil {
+			return fmt.Errorf("routine update: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("routine tx: %w", err)
 	}
 
 	return routine, nil
@@ -458,18 +465,41 @@ func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.Ro
 	return routines, nil
 }
 
-type UpdateRoutineOpt func() orm.M
+type UpdateRoutineOpt func() (orm.M, error)
 
 func UpdateRoutineName(name string) UpdateRoutineOpt {
-	return func() orm.M {
-		return orm.M{orm.RoutineColumns.Title: name}
+	return func() (orm.M, error) {
+		return orm.M{orm.RoutineColumns.Title: name}, nil
 	}
 }
+
+func UpdateRoutineExerciseOrder(exerciseIDs []string) UpdateRoutineOpt {
+	return func() (orm.M, error) {
+		bytes, err := json.Marshal(exerciseIDs)
+		if err != nil {
+			return nil, fmt.Errorf("exercise IDs marshal: %w", err)
+		}
+
+		return orm.M{orm.RoutineColumns.ExerciseOrder: bytes}, nil
+	}
+}
+
+var errDuplicateColumn = fmt.Errorf("duplicate column")
 
 func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	columns := orm.M{}
 	for _, opt := range opts {
-		columns = opt()
+		column, err := opt()
+		if err != nil {
+			return fmt.Errorf("routine update opt: %w", err)
+		}
+
+		for key, value := range column {
+			if columns[key] != nil {
+				return fmt.Errorf("%w: %s", errDuplicateColumn, key)
+			}
+			columns[key] = value
+		}
 	}
 
 	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, r.executor(), columns); err != nil {

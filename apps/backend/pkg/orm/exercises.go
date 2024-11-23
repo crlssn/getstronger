@@ -684,7 +684,7 @@ func (exerciseL) LoadRoutines(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"routines\".\"id\", \"getstronger\".\"routines\".\"user_id\", \"getstronger\".\"routines\".\"title\", \"getstronger\".\"routines\".\"created_at\", \"getstronger\".\"routines\".\"deleted_at\", \"a\".\"exercise_id\""),
+		qm.Select("\"getstronger\".\"routines\".\"id\", \"getstronger\".\"routines\".\"user_id\", \"getstronger\".\"routines\".\"title\", \"getstronger\".\"routines\".\"created_at\", \"getstronger\".\"routines\".\"deleted_at\", \"getstronger\".\"routines\".\"exercise_order\", \"a\".\"exercise_id\""),
 		qm.From("\"getstronger\".\"routines\""),
 		qm.InnerJoin("\"getstronger\".\"routine_exercises\" as \"a\" on \"getstronger\".\"routines\".\"id\" = \"a\".\"routine_id\""),
 		qm.WhereIn("\"a\".\"exercise_id\" in ?", argsSlice...),
@@ -705,7 +705,7 @@ func (exerciseL) LoadRoutines(ctx context.Context, e boil.ContextExecutor, singu
 		one := new(Routine)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.CreatedAt, &one.DeletedAt, &localJoinCol)
+		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.CreatedAt, &one.DeletedAt, &one.ExerciseOrder, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for routines")
 		}

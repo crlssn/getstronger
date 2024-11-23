@@ -10,3 +10,4 @@
 /infrastructure/.terraform.lock.hcl
 /.env
 /apps/web/.env
+/database/seed/*.sql
