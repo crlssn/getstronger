@@ -151,7 +151,6 @@ var (
 
 func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if !ok {
 		log.Warn("refresh token not provided")
@@ -193,7 +192,6 @@ func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTo
 
 func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if ok {
 		if err := h.repo.DeleteRefreshToken(ctx, refreshToken); err != nil {

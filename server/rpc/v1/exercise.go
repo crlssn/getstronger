@@ -13,17 +13,17 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
-	repo2 "github.com/crlssn/getstronger/server/pkg/repo"
+	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
 
 var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
 
 type exerciseHandler struct {
-	repo *repo2.Repo
+	repo *repo.Repo
 }
 
-func NewExerciseHandler(r *repo2.Repo) apiv1connect.ExerciseServiceHandler {
+func NewExerciseHandler(r *repo.Repo) apiv1connect.ExerciseServiceHandler {
 	return &exerciseHandler{r}
 }
 
@@ -31,7 +31,7 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	exercise, err := h.repo.CreateExercise(ctx, repo2.CreateExerciseParams{
+	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
 		UserID: userID,
 		Name:   req.Msg.GetName(),
 		Label:  req.Msg.GetLabel(),
@@ -50,7 +50,7 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	exercise, err := h.repo.GetExercise(ctx, repo2.GetExerciseWithID(req.Msg.GetId()))
+	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Error("exercise not found", zap.String("id", req.Msg.GetId()))
@@ -77,7 +77,7 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	exercise, err := h.repo.GetExercise(ctx, repo2.GetExerciseWithID(req.Msg.GetExercise().GetId()))
+	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetExercise().GetId()))
 	if err != nil {
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -115,7 +115,7 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.SoftDeleteExercise(ctx, repo2.SoftDeleteExerciseParams{
+	if err := h.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
 		UserID:     userID,
 		ExerciseID: req.Msg.GetId(),
 	}); err != nil {
@@ -133,18 +133,18 @@ func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.List
 
 	limit := int(req.Msg.GetPageSize())
 	exercises, err := h.repo.ListExercises(ctx,
-		repo2.ListExercisesWithIDs(req.Msg.GetExerciseIds()),
-		repo2.ListExercisesWithName(req.Msg.GetName()),
-		repo2.ListExercisesWithLimit(limit+1),
-		repo2.ListExercisesWithUserID(userID),
-		repo2.ListExercisesWithPageToken(req.Msg.GetPageToken()),
+		repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()),
+		repo.ListExercisesWithName(req.Msg.GetName()),
+		repo.ListExercisesWithLimit(limit+1),
+		repo.ListExercisesWithUserID(userID),
+		repo.ListExercisesWithPageToken(req.Msg.GetPageToken()),
 	)
 	if err != nil {
 		log.Error("list exercises failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo2.PaginateSlice(exercises, limit, func(exercise *orm.Exercise) time.Time {
+	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *orm.Exercise) time.Time {
 		return exercise.CreatedAt
 	})
 	if err != nil {
