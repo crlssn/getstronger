@@ -348,7 +348,7 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.R
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
-		if err = tx.UpsertRoutineExercisesSortOrder(ctx, routine.ID, p.ExerciseIDs); err != nil {
+		if err = tx.UpdateRoutineExerciseOrder(ctx, routine.ID, p.ExerciseIDs); err != nil {
 			return fmt.Errorf("routine update: %w", err)
 		}
 		return nil
@@ -698,29 +698,19 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	})
 }
 
-func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineId string, exerciseIDs []string) error {
-	return r.NewTx(ctx, func(tx *Repo) error {
-		//tx.
-	})
-}
+func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+	bytes, err := json.Marshal(exerciseIDs)
+	if err != nil {
+		return fmt.Errorf("exercise IDs marshal: %w", err)
+	}
 
-func (r *Repo) UpsertRoutineExercisesSortOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
-	return r.NewTx(ctx, func(tx *Repo) error {
-		for sortOrder, exerciseID := range exerciseIDs {
-			o := &orm.RoutineExercisesSortOrder{
-				RoutineID:  routineID,
-				ExerciseID: exerciseID,
-				SortOrder:  sortOrder,
-			}
-			boil.DebugMode = true
-			conflictColumns := []string{
-				orm.RoutineExercisesSortOrderColumns.RoutineID,
-				orm.RoutineExercisesSortOrderColumns.ExerciseID,
-			}
-			if err := o.Upsert(ctx, tx.executor(), true, conflictColumns, boil.Infer(), boil.Infer()); err != nil {
-				return fmt.Errorf("routine exercises sort order upsert: %w", err)
-			}
-		}
-		return nil
-	})
+	routine := &orm.Routine{
+		ID:            routineID,
+		ExerciseOrder: null.JSONFrom(bytes),
+	}
+	if _, err = routine.Update(ctx, r.executor(), boil.Whitelist(orm.RoutineColumns.ExerciseOrder)); err != nil {
+		return fmt.Errorf("routine update: %w", err)
+	}
+
+	return nil
 }

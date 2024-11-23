@@ -255,7 +255,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		}
 	}
 
-	if err = h.repo.UpsertRoutineExercisesSortOrder(ctx, routine.ID, req.Msg.GetExerciseIds()); err != nil {
+	if err = h.repo.UpdateRoutineExerciseOrder(ctx, routine.ID, req.Msg.GetExerciseIds()); err != nil {
 		log.Error("update routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
