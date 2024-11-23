@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDownIcon, ChevronUpIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
 import { GetRoutineRequest, Routine, UpdateExerciseOrderRequest } from '@/pb/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
