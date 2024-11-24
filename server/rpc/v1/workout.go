@@ -30,6 +30,11 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
+	if req.Msg.GetStartedAt().AsTime().After(req.Msg.GetFinishedAt().AsTime()) {
+		log.Warn("workout cannot start after it finishes")
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
 	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
 	if err != nil {
 		log.Error("failed to get routine", zap.Error(err))
@@ -44,6 +49,7 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		Name:         routine.Title,
 		UserID:       userID,
+		StartedAt:    req.Msg.GetStartedAt().AsTime(),
 		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
 		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetExerciseSets()),
 	})
