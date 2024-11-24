@@ -488,8 +488,8 @@ func (o *Exercise) Routines(mods ...qm.QueryMod) routineQuery {
 	}
 
 	queryMods = append(queryMods,
-		qm.InnerJoin("\"getstronger\".\"routine_exercises\" on \"getstronger\".\"routines\".\"id\" = \"getstronger\".\"routine_exercises\".\"routine_id\""),
-		qm.Where("\"getstronger\".\"routine_exercises\".\"exercise_id\"=?", o.ID),
+		qm.InnerJoin("\"getstronger\".\"exercises_routines\" on \"getstronger\".\"routines\".\"id\" = \"getstronger\".\"exercises_routines\".\"routine_id\""),
+		qm.Where("\"getstronger\".\"exercises_routines\".\"exercise_id\"=?", o.ID),
 	)
 
 	return Routines(queryMods...)
@@ -686,7 +686,7 @@ func (exerciseL) LoadRoutines(ctx context.Context, e boil.ContextExecutor, singu
 	query := NewQuery(
 		qm.Select("\"getstronger\".\"routines\".\"id\", \"getstronger\".\"routines\".\"user_id\", \"getstronger\".\"routines\".\"title\", \"getstronger\".\"routines\".\"created_at\", \"getstronger\".\"routines\".\"deleted_at\", \"getstronger\".\"routines\".\"exercise_order\", \"a\".\"exercise_id\""),
 		qm.From("\"getstronger\".\"routines\""),
-		qm.InnerJoin("\"getstronger\".\"routine_exercises\" as \"a\" on \"getstronger\".\"routines\".\"id\" = \"a\".\"routine_id\""),
+		qm.InnerJoin("\"getstronger\".\"exercises_routines\" as \"a\" on \"getstronger\".\"routines\".\"id\" = \"a\".\"routine_id\""),
 		qm.WhereIn("\"a\".\"exercise_id\" in ?", argsSlice...),
 	)
 	if mods != nil {
@@ -934,7 +934,7 @@ func (o *Exercise) AddRoutines(ctx context.Context, exec boil.ContextExecutor, i
 	}
 
 	for _, rel := range related {
-		query := "insert into \"getstronger\".\"routine_exercises\" (\"exercise_id\", \"routine_id\") values ($1, $2)"
+		query := "insert into \"getstronger\".\"exercises_routines\" (\"exercise_id\", \"routine_id\") values ($1, $2)"
 		values := []interface{}{o.ID, rel.ID}
 
 		if boil.IsDebug(ctx) {
@@ -974,7 +974,7 @@ func (o *Exercise) AddRoutines(ctx context.Context, exec boil.ContextExecutor, i
 // Replaces o.R.Routines with related.
 // Sets related.R.Exercises's Routines accordingly.
 func (o *Exercise) SetRoutines(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Routine) error {
-	query := "delete from \"getstronger\".\"routine_exercises\" where \"exercise_id\" = $1"
+	query := "delete from \"getstronger\".\"exercises_routines\" where \"exercise_id\" = $1"
 	values := []interface{}{o.ID}
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1004,7 +1004,7 @@ func (o *Exercise) RemoveRoutines(ctx context.Context, exec boil.ContextExecutor
 
 	var err error
 	query := fmt.Sprintf(
-		"delete from \"getstronger\".\"routine_exercises\" where \"exercise_id\" = $1 and \"routine_id\" in (%s)",
+		"delete from \"getstronger\".\"exercises_routines\" where \"exercise_id\" = $1 and \"routine_id\" in (%s)",
 		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
 	)
 	values := []interface{}{o.ID}
