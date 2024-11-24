@@ -41,8 +41,8 @@ onUnmounted(() => {
 
 const fetchLatestExerciseSets = async () => {
   const req = new GetLatestExerciseSetsRequest({
-    exerciseIds: routine.value?.exercises?.map((exercise) => exercise.id) || []
-  });
+    exerciseIds: routine.value?.exercises?.map((exercise) => exercise.id) || [],
+  })
   const res = await WorkoutClient.getLatestExerciseSets(req)
   prevExerciseSets.value = res.exerciseSets
 }
