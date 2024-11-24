@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -16,9 +17,9 @@ type RoutineOpt func(event *orm.Routine)
 
 func (f *Factory) NewRoutine(opts ...RoutineOpt) *orm.Routine {
 	m := &orm.Routine{
-		ID:            "",
+		ID:            uuid.NewString(),
 		UserID:        f.NewUser().ID,
-		Title:         "",
+		Title:         f.faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
 		CreatedAt:     time.Time{},
 		DeletedAt:     null.Time{},
 		ExerciseOrder: nil,

@@ -20,6 +20,10 @@ type workoutHandler struct {
 	repo *repo.Repo
 }
 
+func (h *workoutHandler) GetLatestExerciseSets(ctx context.Context, req *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error) {
+	h.repo.GetLatestExerciseSets(ctx, req.Msg.GetExerciseIds())
+}
+
 func NewWorkoutHandler(r *repo.Repo) apiv1connect.WorkoutServiceHandler {
 	return &workoutHandler{r}
 }

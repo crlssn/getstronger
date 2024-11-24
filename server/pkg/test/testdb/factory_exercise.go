@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -15,9 +16,9 @@ type ExerciseOpt func(event *orm.Exercise)
 
 func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 	m := &orm.Exercise{
-		ID:        "",
+		ID:        uuid.NewString(),
 		UserID:    f.NewUser().ID,
-		Title:     "",
+		Title:     f.faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"}),
 		SubTitle:  null.String{},
 		CreatedAt: time.Time{},
 		DeletedAt: null.Time{},

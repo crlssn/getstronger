@@ -17,7 +17,7 @@ type AuthOpt func(event *orm.Auth)
 func (f *Factory) NewAuth(opts ...AuthOpt) *orm.Auth {
 	m := &orm.Auth{
 		ID:           uuid.NewString(),
-		Email:        fmt.Sprintf("%s@email.com", uuid.NewString()),
+		Email:        f.faker.Email(),
 		Password:     []byte("password"),
 		RefreshToken: null.String{},
 		CreatedAt:    time.Time{},
