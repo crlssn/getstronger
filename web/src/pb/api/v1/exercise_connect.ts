@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateExerciseRequest, CreateExerciseResponse, DeleteExerciseRequest, DeleteExerciseResponse, GetExerciseRequest, GetExerciseResponse, ListExercisesRequest, ListExercisesResponse, UpdateExerciseRequest, UpdateExerciseResponse } from "./exercise_pb";
+import { CreateExerciseRequest, CreateExerciseResponse, DeleteExerciseRequest, DeleteExerciseResponse, GetExerciseRequest, GetExerciseResponse, ListExercisesRequest, ListExercisesResponse, UpdateExerciseRequest, UpdateExerciseResponse } from "./exercise_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**

@@ -154,7 +154,7 @@ func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.List
 
 	log.Info("exercises listed")
 	return connect.NewResponse(&v1.ListExercisesResponse{
-		Exercises:     parseExercisesToPB(pagination.Items),
+		Exercises:     parseExerciseSliceToPB(pagination.Items),
 		NextPageToken: pagination.NextPageToken,
 	}), nil
 }

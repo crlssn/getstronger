@@ -4,15 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/crypto/bcrypt"
 
-	orm2 "github.com/crlssn/getstronger/server/pkg/orm"
+	orm "github.com/crlssn/getstronger/server/pkg/orm"
 )
 
 type Repo struct {
@@ -58,8 +60,8 @@ func (r *Repo) executor() boil.ContextExecutor {
 	return r.db
 }
 
-func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*orm2.Auth, error) {
-	exists, err := orm2.Auths(orm2.AuthWhere.Email.EQ(email)).Exists(ctx, r.executor())
+func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
+	exists, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).Exists(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("email exists check: %w", err)
 	}
@@ -72,7 +74,7 @@ func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*orm2.Au
 		return nil, fmt.Errorf("bcrypt password generation: %w", err)
 	}
 
-	auth := &orm2.Auth{
+	auth := &orm.Auth{
 		Email:    email,
 		Password: bcryptPassword,
 	}
@@ -85,7 +87,7 @@ func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*orm2.Au
 }
 
 func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
-	auth, err := orm2.Auths(orm2.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
+	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
 	if err != nil {
 		return fmt.Errorf("auth fetch: %w", err)
 	}
@@ -97,8 +99,8 @@ func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password stri
 	return nil
 }
 
-func (r *Repo) FromEmail(ctx context.Context, email string) (*orm2.Auth, error) {
-	auth, err := orm2.Auths(orm2.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
+func (r *Repo) FromEmail(ctx context.Context, email string) (*orm.Auth, error) {
+	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("auth fetch: %w", err)
 	}
@@ -106,21 +108,21 @@ func (r *Repo) FromEmail(ctx context.Context, email string) (*orm2.Auth, error) 
 }
 
 func (r *Repo) UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error {
-	auth := &orm2.Auth{
+	auth := &orm.Auth{
 		ID:           authID,
 		RefreshToken: null.StringFrom(refreshToken),
 	}
-	if _, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm2.AuthColumns.RefreshToken)); err != nil {
+	if _, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.RefreshToken)); err != nil {
 		return fmt.Errorf("refresh token update: %w", err)
 	}
 	return nil
 }
 
 func (r *Repo) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
-	if _, err := orm2.Auths(
-		orm2.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken)),
-	).UpdateAll(ctx, r.executor(), orm2.M{
-		orm2.AuthColumns.RefreshToken: nil,
+	if _, err := orm.Auths(
+		orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken)),
+	).UpdateAll(ctx, r.executor(), orm.M{
+		orm.AuthColumns.RefreshToken: nil,
 	}); err != nil {
 		return fmt.Errorf("refresh token delete: %w", err)
 	}
@@ -128,7 +130,7 @@ func (r *Repo) DeleteRefreshToken(ctx context.Context, refreshToken string) erro
 }
 
 func (r *Repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
-	exists, err := orm2.Auths(orm2.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor())
+	exists, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor())
 	if err != nil {
 		return false, fmt.Errorf("refresh token exists check: %w", err)
 	}
@@ -142,7 +144,7 @@ type CreateUserParams struct {
 }
 
 func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) error {
-	user := &orm2.User{
+	user := &orm.User{
 		ID:        p.ID,
 		FirstName: p.FirstName,
 		LastName:  p.LastName,
@@ -160,8 +162,8 @@ type CreateExerciseParams struct {
 	Label  string
 }
 
-func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm2.Exercise, error) {
-	exercise := &orm2.Exercise{
+func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
+	exercise := &orm.Exercise{
 		UserID:   p.UserID,
 		Title:    p.Name,
 		SubTitle: null.NewString(p.Label, p.Label != ""),
@@ -179,11 +181,11 @@ type SoftDeleteExerciseParams struct {
 }
 
 func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
-	if _, err := orm2.Exercises(
-		orm2.ExerciseWhere.ID.EQ(p.ExerciseID),
-		orm2.ExerciseWhere.UserID.EQ(p.UserID),
-	).UpdateAll(ctx, r.executor(), orm2.M{
-		orm2.ExerciseColumns.DeletedAt: null.TimeFrom(time.Now().UTC()),
+	if _, err := orm.Exercises(
+		orm.ExerciseWhere.ID.EQ(p.ExerciseID),
+		orm.ExerciseWhere.UserID.EQ(p.UserID),
+	).UpdateAll(ctx, r.executor(), orm.M{
+		orm.ExerciseColumns.DeletedAt: null.TimeFrom(time.Now().UTC()),
 	}); err != nil {
 		return fmt.Errorf("exercise soft delete: %w", err)
 	}
@@ -200,7 +202,7 @@ func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
 		if pageToken == nil {
 			return []qm.QueryMod{
-				qm.OrderBy(fmt.Sprintf("%s DESC", orm2.ExerciseColumns.CreatedAt)),
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.ExerciseColumns.CreatedAt)),
 			}, nil
 		}
 
@@ -210,8 +212,8 @@ func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 		}
 
 		return []qm.QueryMod{
-			orm2.ExerciseWhere.CreatedAt.LT(pt.CreatedAt),
-			qm.OrderBy(fmt.Sprintf("%s DESC", orm2.ExerciseColumns.CreatedAt)),
+			orm.ExerciseWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.ExerciseColumns.CreatedAt)),
 		}, nil
 	}
 }
@@ -223,7 +225,7 @@ func ListExercisesWithIDs(ids []string) ListExercisesOpt {
 		}
 
 		return []qm.QueryMod{
-			orm2.ExerciseWhere.ID.IN(ids),
+			orm.ExerciseWhere.ID.IN(ids),
 		}, nil
 	}
 }
@@ -231,7 +233,7 @@ func ListExercisesWithIDs(ids []string) ListExercisesOpt {
 func ListExercisesWithName(name string) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm2.ExerciseWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
+			orm.ExerciseWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
 		}, nil
 	}
 }
@@ -239,7 +241,7 @@ func ListExercisesWithName(name string) ListExercisesOpt {
 func ListExercisesWithUserID(userID string) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm2.ExerciseWhere.UserID.EQ(userID),
+			orm.ExerciseWhere.UserID.EQ(userID),
 		}, nil
 	}
 }
@@ -252,7 +254,7 @@ func ListExercisesWithLimit(limit int) ListExercisesOpt {
 	}
 }
 
-func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm2.ExerciseSlice, error) {
+func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
 	var queries []qm.QueryMod
 	for _, opt := range opts {
 		query, err := opt()
@@ -262,7 +264,7 @@ func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm
 		queries = append(queries, query...)
 	}
 
-	exercises, err := orm2.Exercises(queries...).All(ctx, r.executor())
+	exercises, err := orm.Exercises(queries...).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("exercises fetch: %w", err)
 	}
@@ -274,33 +276,33 @@ type GetExerciseOpt func() qm.QueryMod
 
 func GetExerciseWithID(id string) GetExerciseOpt {
 	return func() qm.QueryMod {
-		return orm2.ExerciseWhere.ID.EQ(id)
+		return orm.ExerciseWhere.ID.EQ(id)
 	}
 }
 
 func GetExerciseWithUserID(userID string) GetExerciseOpt {
 	return func() qm.QueryMod {
-		return orm2.ExerciseWhere.UserID.EQ(userID)
+		return orm.ExerciseWhere.UserID.EQ(userID)
 	}
 }
 
-func (r *Repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm2.Exercise, error) {
+func (r *Repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	exercise, err := orm2.Exercises(query...).One(ctx, r.executor())
+	exercise, err := orm.Exercises(query...).One(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("exercise fetch: %w", err)
 	}
 	return exercise, nil
 }
 
-func (r *Repo) UpdateExercise(ctx context.Context, exercise *orm2.Exercise) error {
+func (r *Repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error {
 	_, err := exercise.Update(ctx, r.executor(), boil.Whitelist(
-		orm2.ExerciseColumns.Title,
-		orm2.ExerciseColumns.SubTitle,
+		orm.ExerciseColumns.Title,
+		orm.ExerciseColumns.SubTitle,
 	))
 	if err != nil {
 		return fmt.Errorf("exercise update: %w", err)
@@ -319,8 +321,8 @@ var (
 	ErrRoutineExerciseDeleted              = fmt.Errorf("exercise is deleted")
 )
 
-func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm2.Routine, error) {
-	exercises, err := orm2.Exercises(orm2.ExerciseWhere.ID.IN(p.ExerciseIDs)).All(ctx, r.executor())
+func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
+	exercises, err := orm.Exercises(orm.ExerciseWhere.ID.IN(p.ExerciseIDs)).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("exercises fetch: %w", err)
 	}
@@ -334,7 +336,7 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm2.
 		}
 	}
 
-	routine := &orm2.Routine{
+	routine := &orm.Routine{
 		UserID: p.UserID,
 		Title:  p.Name,
 	}
@@ -363,29 +365,29 @@ type GetRoutineOpt func() qm.QueryMod
 
 func GetRoutineWithID(id string) GetRoutineOpt {
 	return func() qm.QueryMod {
-		return orm2.RoutineWhere.ID.EQ(id)
+		return orm.RoutineWhere.ID.EQ(id)
 	}
 }
 
 func GetRoutineWithUserID(userID string) GetRoutineOpt {
 	return func() qm.QueryMod {
-		return orm2.RoutineWhere.UserID.EQ(userID)
+		return orm.RoutineWhere.UserID.EQ(userID)
 	}
 }
 
 func GetRoutineWithExercises() GetRoutineOpt {
 	return func() qm.QueryMod {
-		return qm.Load(orm2.RoutineRels.Exercises)
+		return qm.Load(orm.RoutineRels.Exercises)
 	}
 }
 
-func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm2.Routine, error) {
+func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	routine, err := orm2.Routines(query...).One(ctx, r.executor())
+	routine, err := orm.Routines(query...).One(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("routine fetch: %w", err)
 	}
@@ -394,7 +396,7 @@ func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm2.Rou
 }
 
 func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
-	if _, err := orm2.Routines(orm2.RoutineWhere.ID.EQ(id)).DeleteAll(ctx, r.executor()); err != nil {
+	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(id)).DeleteAll(ctx, r.executor()); err != nil {
 		return fmt.Errorf("routine delete: %w", err)
 	}
 
@@ -407,7 +409,7 @@ func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 	return func() ([]qm.QueryMod, error) {
 		if pageToken == nil {
 			return []qm.QueryMod{
-				qm.OrderBy(fmt.Sprintf("%s DESC", orm2.RoutineColumns.CreatedAt)),
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.RoutineColumns.CreatedAt)),
 			}, nil
 		}
 
@@ -417,8 +419,8 @@ func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 		}
 
 		return []qm.QueryMod{
-			orm2.RoutineWhere.CreatedAt.LT(pt.CreatedAt),
-			qm.OrderBy(fmt.Sprintf("%s DESC", orm2.ExerciseColumns.CreatedAt)),
+			orm.RoutineWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.ExerciseColumns.CreatedAt)),
 		}, nil
 	}
 }
@@ -426,7 +428,7 @@ func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 func ListRoutinesWithName(name string) ListRoutineOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm2.RoutineWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
+			orm.RoutineWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
 		}, nil
 	}
 }
@@ -434,7 +436,7 @@ func ListRoutinesWithName(name string) ListRoutineOpt {
 func ListRoutinesWithUserID(userID string) ListRoutineOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm2.RoutineWhere.UserID.EQ(userID),
+			orm.RoutineWhere.UserID.EQ(userID),
 		}, nil
 	}
 }
@@ -447,7 +449,7 @@ func ListRoutinesWithLimit(limit int) ListRoutineOpt {
 	}
 }
 
-func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm2.RoutineSlice, error) {
+func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
 	var query []qm.QueryMod
 	for _, opt := range opts {
 		q, err := opt()
@@ -457,7 +459,7 @@ func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm2.R
 		query = append(query, q...)
 	}
 
-	routines, err := orm2.Routines(query...).All(ctx, r.executor())
+	routines, err := orm.Routines(query...).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("routines fetch: %w", err)
 	}
@@ -465,29 +467,29 @@ func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm2.R
 	return routines, nil
 }
 
-type UpdateRoutineOpt func() (orm2.M, error)
+type UpdateRoutineOpt func() (orm.M, error)
 
 func UpdateRoutineName(name string) UpdateRoutineOpt {
-	return func() (orm2.M, error) {
-		return orm2.M{orm2.RoutineColumns.Title: name}, nil
+	return func() (orm.M, error) {
+		return orm.M{orm.RoutineColumns.Title: name}, nil
 	}
 }
 
 func UpdateRoutineExerciseOrder(exerciseIDs []string) UpdateRoutineOpt {
-	return func() (orm2.M, error) {
+	return func() (orm.M, error) {
 		bytes, err := json.Marshal(exerciseIDs)
 		if err != nil {
 			return nil, fmt.Errorf("exercise IDs marshal: %w", err)
 		}
 
-		return orm2.M{orm2.RoutineColumns.ExerciseOrder: bytes}, nil
+		return orm.M{orm.RoutineColumns.ExerciseOrder: bytes}, nil
 	}
 }
 
 var errDuplicateColumn = fmt.Errorf("duplicate column")
 
 func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
-	columns := orm2.M{}
+	columns := orm.M{}
 	for _, opt := range opts {
 		column, err := opt()
 		if err != nil {
@@ -502,21 +504,21 @@ func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 		}
 	}
 
-	if _, err := orm2.Routines(orm2.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, r.executor(), columns); err != nil {
+	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, r.executor(), columns); err != nil {
 		return fmt.Errorf("routine update: %w", err)
 	}
 
 	return nil
 }
 
-func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *orm2.Exercise, routine *orm2.Routine) error {
+func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
 	if err := routine.AddExercises(ctx, r.executor(), false, exercise); err != nil {
 		return fmt.Errorf("routine exercises add: %w", err)
 	}
 	return nil
 }
 
-func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm2.Exercise, routine *orm2.Routine) error {
+func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
 	if err := routine.RemoveExercises(ctx, r.executor(), exercise); err != nil {
 		return fmt.Errorf("routine exercises remove: %w", err)
 	}
@@ -525,7 +527,7 @@ func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm2.Exe
 
 type ListWorkoutsOpt func() ([]qm.QueryMod, error)
 
-func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm2.WorkoutSlice, error) {
+func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
 	var query []qm.QueryMod
 	for _, opt := range opts {
 		q, err := opt()
@@ -535,7 +537,7 @@ func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm2.
 		query = append(query, q...)
 	}
 
-	workouts, err := orm2.Workouts(query...).All(ctx, r.executor())
+	workouts, err := orm.Workouts(query...).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("workouts fetch: %w", err)
 	}
@@ -543,10 +545,18 @@ func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm2.
 	return workouts, nil
 }
 
+func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.WorkoutWhere.ID.IN(ids),
+		}, nil
+	}
+}
+
 func ListWorkoutsWithUserID(userID string) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm2.WorkoutWhere.UserID.EQ(userID),
+			orm.WorkoutWhere.UserID.EQ(userID),
 		}, nil
 	}
 }
@@ -563,7 +573,7 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		if token == nil {
 			return []qm.QueryMod{
-				qm.OrderBy(fmt.Sprintf("%s DESC", orm2.WorkoutColumns.CreatedAt)),
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.WorkoutColumns.CreatedAt)),
 			}, nil
 		}
 
@@ -573,8 +583,8 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 		}
 
 		return []qm.QueryMod{
-			orm2.WorkoutWhere.CreatedAt.LT(pt.CreatedAt),
-			qm.OrderBy(fmt.Sprintf("%s DESC", orm2.WorkoutColumns.CreatedAt)),
+			orm.WorkoutWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.WorkoutColumns.CreatedAt)),
 		}, nil
 	}
 }
@@ -596,8 +606,8 @@ type Set struct {
 	Weight float32
 }
 
-func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm2.Workout, error) {
-	workout := &orm2.Workout{
+func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+	workout := &orm.Workout{
 		Name:       p.Name,
 		UserID:     p.UserID,
 		FinishedAt: p.FinishedAt.Truncate(time.Minute).UTC(),
@@ -609,9 +619,9 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm2.
 		}
 
 		for _, exerciseSet := range p.ExerciseSets {
-			sets := make([]*orm2.Set, 0, len(exerciseSet.Sets))
+			sets := make([]*orm.Set, 0, len(exerciseSet.Sets))
 			for _, set := range exerciseSet.Sets {
-				sets = append(sets, &orm2.Set{
+				sets = append(sets, &orm.Set{
 					WorkoutID:  workout.ID,
 					ExerciseID: exerciseSet.ExerciseID,
 					Reps:       set.Reps,
@@ -636,23 +646,23 @@ type GetWorkoutOpt func() qm.QueryMod
 
 func GetWorkoutWithID(id string) GetWorkoutOpt {
 	return func() qm.QueryMod {
-		return orm2.WorkoutWhere.ID.EQ(id)
+		return orm.WorkoutWhere.ID.EQ(id)
 	}
 }
 
 func GetWorkoutWithExerciseSets() GetWorkoutOpt {
 	return func() qm.QueryMod {
-		return qm.Load(orm2.WorkoutRels.Sets)
+		return qm.Load(orm.WorkoutRels.Sets)
 	}
 }
 
-func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm2.Workout, error) {
+func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	workout, err := orm2.Workouts(query...).One(ctx, r.executor())
+	workout, err := orm.Workouts(query...).One(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("workout fetch: %w", err)
 	}
@@ -664,26 +674,26 @@ type DeleteWorkoutOpt func() qm.QueryMod
 
 func DeleteWorkoutWithID(id string) DeleteWorkoutOpt {
 	return func() qm.QueryMod {
-		return orm2.WorkoutWhere.ID.EQ(id)
+		return orm.WorkoutWhere.ID.EQ(id)
 	}
 }
 
 func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
 	return func() qm.QueryMod {
-		return orm2.WorkoutWhere.UserID.EQ(userID)
+		return orm.WorkoutWhere.UserID.EQ(userID)
 	}
 }
 
 func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
 	query := []qm.QueryMod{
-		qm.Load(orm2.WorkoutRels.Sets),
+		qm.Load(orm.WorkoutRels.Sets),
 	}
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
 	return r.NewTx(ctx, func(tx *Repo) error {
-		workout, err := orm2.Workouts(query...).One(ctx, tx.executor())
+		workout, err := orm.Workouts(query...).One(ctx, tx.executor())
 		if err != nil {
 			return fmt.Errorf("workout fetch: %w", err)
 		}
@@ -698,4 +708,35 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 		return nil
 	})
+}
+
+func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+	spew.Dump(exerciseIDs)
+	workoutIDs := make([]string, 0, len(exerciseIDs))
+	for _, exerciseID := range exerciseIDs {
+		// DEBT: Make this query more efficient.
+		set, err := orm.Sets(
+			qm.Select(orm.SetColumns.WorkoutID),
+			orm.SetWhere.ExerciseID.EQ(exerciseID),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+		).One(ctx, r.executor())
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
+			return nil, fmt.Errorf("sets fetch: %w", err)
+		}
+
+		workoutIDs = append(workoutIDs, set.WorkoutID)
+	}
+
+	latestSets, err := orm.Sets(
+		orm.SetWhere.WorkoutID.IN(workoutIDs),
+		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+	).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("sets fetch: %w", err)
+	}
+
+	return latestSets, nil
 }

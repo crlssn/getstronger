@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "buf/validate/validate.proto";
+
+message ExerciseSets {
+  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated Set sets = 2 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message Set {
+  double weight = 1; // The weight can be less than zero.
+  int32 reps = 2 [(buf.validate.field).int32 = { gte: 1 }];
+}

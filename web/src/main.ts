@@ -16,12 +16,14 @@ pinia.use(piniaPluginPersistedstate)
 app.use(router)
 app.use(pinia)
 
-const authStore = useAuthStore()
-if (authStore.accessToken) {
-  RefreshAccessTokenOrLogout().catch((error) => {
-    console.log(error)
-  })
-  authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
+const init = async () => {
+  const authStore = useAuthStore()
+  if (authStore.accessToken) {
+    await RefreshAccessTokenOrLogout()
+    authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
+  }
+
+  app.mount('#app')
 }
 
-app.mount('#app')
+init()

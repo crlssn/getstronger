@@ -3,12 +3,12 @@ package v1
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	orm2 "github.com/crlssn/getstronger/server/pkg/orm"
-	"github.com/crlssn/getstronger/server/pkg/pb/api/v1"
+	orm "github.com/crlssn/getstronger/server/pkg/orm"
+	apiv1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 )
 
-func parseExercisesToPB(exercises orm2.ExerciseSlice) []*apiv1.Exercise {
+func parseExerciseSliceToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
 	pbExercises := make([]*apiv1.Exercise, 0, len(exercises))
 	for _, exercise := range exercises {
 		pbExercises = append(pbExercises, parseExerciseToPB(exercise))
@@ -17,7 +17,7 @@ func parseExercisesToPB(exercises orm2.ExerciseSlice) []*apiv1.Exercise {
 	return pbExercises
 }
 
-func parseExerciseToPB(exercise *orm2.Exercise) *apiv1.Exercise {
+func parseExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
 		Id:    exercise.ID,
 		Name:  exercise.Title,
@@ -25,7 +25,7 @@ func parseExerciseToPB(exercise *orm2.Exercise) *apiv1.Exercise {
 	}
 }
 
-func parseRoutinesToPB(routines orm2.RoutineSlice) []*apiv1.Routine {
+func parseRoutineSliceToPB(routines orm.RoutineSlice) []*apiv1.Routine {
 	pbRoutines := make([]*apiv1.Routine, 0, len(routines))
 	for _, routine := range routines {
 		pbRoutines = append(pbRoutines, parseRoutineToPB(routine))
@@ -34,10 +34,10 @@ func parseRoutinesToPB(routines orm2.RoutineSlice) []*apiv1.Routine {
 	return pbRoutines
 }
 
-func parseRoutineToPB(routine *orm2.Routine) *apiv1.Routine {
+func parseRoutineToPB(routine *orm.Routine) *apiv1.Routine {
 	var exercises []*apiv1.Exercise
 	if routine.R != nil && routine.R.Exercises != nil {
-		exercises = parseExercisesToPB(routine.R.Exercises)
+		exercises = parseExerciseSliceToPB(routine.R.Exercises)
 	}
 
 	return &apiv1.Routine{
@@ -47,7 +47,7 @@ func parseRoutineToPB(routine *orm2.Routine) *apiv1.Routine {
 	}
 }
 
-func parseWorkoutSliceToPB(workoutSlice orm2.WorkoutSlice) []*apiv1.Workout {
+func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice) []*apiv1.Workout {
 	workouts := make([]*apiv1.Workout, 0, len(workoutSlice))
 	for _, workout := range workoutSlice {
 		workouts = append(workouts, parseWorkoutToPB(workout))
@@ -56,7 +56,7 @@ func parseWorkoutSliceToPB(workoutSlice orm2.WorkoutSlice) []*apiv1.Workout {
 	return workouts
 }
 
-func parseWorkoutToPB(workout *orm2.Workout) *apiv1.Workout {
+func parseWorkoutToPB(workout *orm.Workout) *apiv1.Workout {
 	var exerciseOrder []string
 	mapExerciseSets := make(map[string][]*apiv1.Set)
 
@@ -102,6 +102,30 @@ func parseExerciseSetsFromPB(exerciseSetSlice []*apiv1.ExerciseSets) []repo.Exer
 
 		exerciseSets = append(exerciseSets, repo.ExerciseSet{
 			ExerciseID: exerciseSet.GetExerciseId(),
+			Sets:       sets,
+		})
+	}
+
+	return exerciseSets
+}
+
+func parseSetSliceToExerciseSetsPB(setSlice orm.SetSlice) []*apiv1.ExerciseSets {
+	mapExerciseSets := make(map[string][]*apiv1.Set)
+	for _, set := range setSlice {
+		if _, ok := mapExerciseSets[set.ExerciseID]; !ok {
+			mapExerciseSets[set.ExerciseID] = make([]*apiv1.Set, 0)
+		}
+
+		mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], &apiv1.Set{
+			Weight: float64(set.Weight),
+			Reps:   int32(set.Reps),
+		})
+	}
+
+	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
+	for exerciseID, sets := range mapExerciseSets {
+		exerciseSets = append(exerciseSets, &apiv1.ExerciseSets{
+			ExerciseId: exerciseID,
 			Sets:       sets,
 		})
 	}

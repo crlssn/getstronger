@@ -7,11 +7,12 @@ import { useRoute } from 'vue-router'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
-import { CreateWorkoutRequest, ExerciseSets } from '@/pb/api/v1/workouts_pb'
+import { CreateWorkoutRequest, GetLatestExerciseSetsRequest } from '@/pb/api/v1/workouts_pb'
 import router from '@/router/router'
 import { DateTime } from 'luxon'
 import { Timestamp } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
+import { ExerciseSets } from '@/pb/api/v1/shared_pb'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -21,9 +22,11 @@ const pageTitleStore = usePageTitleStore()
 const dateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 let dateTimeInterval: ReturnType<typeof setInterval>
 const reqError = ref('')
+const prevExerciseSets = ref<ExerciseSets[]>([])
 
 onMounted(async () => {
   await fetchRoutine(routineID)
+  await fetchLatestExerciseSets()
   pageTitleStore.setPageTitle(routine.value?.name as string)
   workoutStore.initialiseWorkout(routineID)
   routine.value?.exercises.forEach((exercise) => {
@@ -35,6 +38,14 @@ onMounted(async () => {
 onUnmounted(() => {
   clearDateTimeInterval()
 })
+
+const fetchLatestExerciseSets = async () => {
+  const req = new GetLatestExerciseSetsRequest({
+    exerciseIds: routine.value?.exercises?.map((exercise) => exercise.id) || [],
+  })
+  const res = await WorkoutClient.getLatestExerciseSets(req)
+  prevExerciseSets.value = res.exerciseSets
+}
 
 const updateDateTime = () => {
   dateTime.value = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm")
@@ -66,7 +77,7 @@ const finishWorkout = async () => {
 
   const eSetsList: ExerciseSets[] = []
   for (const [exerciseID, sets] of Object.entries(exerciseSets)) {
-    const definedSets = sets.filter((set) => set.reps !== undefined && set.weight !== undefined)
+    const definedSets = sets.filter((set) => isNumber(set.reps) && isNumber(set.weight))
     if (definedSets.length === 0) {
       continue
     }
@@ -105,6 +116,20 @@ const cancelWorkout = async () => {
   workoutStore.removeWorkout(routineID)
   await router.push(`/routines/${routineID}`)
 }
+
+const prevSetWeight = (exerciseID: string, index: number) => {
+  const prevSet = prevExerciseSets.value.find((set) => set.exerciseId === exerciseID)?.sets[index]
+  return prevSet?.weight?.toString() || 'Weight'
+}
+
+const prevSetReps = (exerciseID: string, index: number) => {
+  const prevSet = prevExerciseSets.value.find((set) => set.exerciseId === exerciseID)?.sets[index]
+  return prevSet?.reps?.toString() || 'Reps'
+}
+
+const isNumber = (value: number | undefined | string) => {
+  return typeof value === 'number' && !Number.isNaN(value)
+}
 </script>
 
 <template>
@@ -124,7 +149,7 @@ const cancelWorkout = async () => {
       >
         <li v-for="exercise in routine?.exercises" :key="exercise.id">
           <RouterLink
-            :to="`?exercise_id=${exercise.id}`"
+            :to="isCurrentExercise(exercise.id) ? '' : `?exercise_id=${exercise.id}`"
             class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-800"
             :class="isCurrentExercise(exercise.id) && 'font-semibold'"
           >
@@ -144,7 +169,8 @@ const cancelWorkout = async () => {
                     type="text"
                     inputmode="decimal"
                     v-model.number="set.weight"
-                    placeholder="Weight"
+                    :placeholder="prevSetWeight(exercise.id, index)"
+                    :required="isNumber(set.reps)"
                     @keyup="
                       workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
                     "
@@ -156,7 +182,8 @@ const cancelWorkout = async () => {
                     type="text"
                     inputmode="numeric"
                     v-model.number="set.reps"
-                    placeholder="Reps"
+                    :placeholder="prevSetReps(exercise.id, index)"
+                    :required="isNumber(set.weight)"
                     @keyup="
                       workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
                     "
@@ -181,9 +208,9 @@ const cancelWorkout = async () => {
       </div>
     </div>
     <AppButton type="submit" colour="primary" class="mt-6">Finish Workout</AppButton>
-    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout"
-      >Cancel Workout</AppButton
-    >
+    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout">
+      Cancel Workout
+    </AppButton>
   </form>
 </template>
 

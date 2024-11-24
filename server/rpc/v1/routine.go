@@ -173,7 +173,7 @@ func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListR
 
 	log.Info("routines listed")
 	return connect.NewResponse(&v1.ListRoutinesResponse{
-		Routines:      parseRoutinesToPB(pagination.Items),
+		Routines:      parseRoutineSliceToPB(pagination.Items),
 		NextPageToken: pagination.NextPageToken,
 	}), nil
 }

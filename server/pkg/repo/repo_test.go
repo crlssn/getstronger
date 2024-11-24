@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	testdb2 "github.com/crlssn/getstronger/server/pkg/test/testdb"
+	"github.com/crlssn/getstronger/server/pkg/orm"
+	testdb "github.com/crlssn/getstronger/server/pkg/test/testdb"
 )
 
 type repoSuite struct {
@@ -16,19 +18,19 @@ type repoSuite struct {
 
 	repo *Repo
 
-	testContainer *testdb2.Container
-	testFactory   *testdb2.Factory
+	testContainer *testdb.Container
+	testFactory   *testdb.Factory
 }
 
-func TestAuthSuite(t *testing.T) {
+func TestRepoSuite(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, new(repoSuite))
 }
 
 func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = testdb2.NewContainer(ctx)
-	s.testFactory = testdb2.NewFactory(s.testContainer.DB)
+	s.testContainer = testdb.NewContainer(ctx)
+	s.testFactory = testdb.NewFactory(s.testContainer.DB)
 	s.repo = New(s.testContainer.DB)
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
@@ -61,9 +63,9 @@ func (s *repoSuite) TestListExercises() {
 				ListExercisesWithLimit(2),
 			},
 			init: func(_ test) {
-				s.testFactory.NewExercise(testdb2.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(testdb2.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(testdb2.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
 			},
 			expected: expected{
 				err:           nil,
@@ -112,8 +114,8 @@ func (s *repoSuite) TestUpdateRoutine() {
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
-					testdb2.RoutineID(t.routineID),
-					testdb2.RoutineName("old"),
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineName("old"),
 				)
 			},
 			expected: expected{
@@ -128,8 +130,8 @@ func (s *repoSuite) TestUpdateRoutine() {
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
-					testdb2.RoutineID(t.routineID),
-					testdb2.RoutineExerciseOrder([]string{"2", "1"}),
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineExerciseOrder([]string{"2", "1"}),
 				)
 			},
 			expected: expected{
@@ -145,9 +147,9 @@ func (s *repoSuite) TestUpdateRoutine() {
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
-					testdb2.RoutineID(t.routineID),
-					testdb2.RoutineName("old"),
-					testdb2.RoutineExerciseOrder([]string{"2", "1"}),
+					testdb.RoutineID(t.routineID),
+					testdb.RoutineName("old"),
+					testdb.RoutineExerciseOrder([]string{"2", "1"}),
 				)
 			},
 			expected: expected{
@@ -173,6 +175,120 @@ func (s *repoSuite) TestUpdateRoutine() {
 			t.init(t)
 			err := s.repo.UpdateRoutine(context.Background(), t.routineID, t.opts...)
 			s.Require().ErrorIs(err, t.expected.err)
+		})
+	}
+}
+
+func (s *repoSuite) TestGetLatestExerciseSets() {
+	type expected struct {
+		err  error
+		sets orm.SetSlice
+	}
+
+	type test struct {
+		name        string
+		exerciseIDs []string
+		init        func(test)
+		expected    expected
+	}
+
+	exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
+	for _, exerciseID := range exerciseIDs {
+		s.testFactory.NewExercise(testdb.ExerciseID(exerciseID))
+	}
+
+	workoutIDs := []string{uuid.NewString(), uuid.NewString()}
+	for _, workoutID := range workoutIDs {
+		s.testFactory.NewWorkout(testdb.WorkoutID(workoutID))
+	}
+
+	now := time.Now().UTC()
+
+	tests := []test{
+		{
+			name:        "ok_latest_exercise_sets",
+			exerciseIDs: exerciseIDs,
+			init: func(t test) {
+				s.testFactory.NewSet()
+				s.testFactory.NewSet()
+
+				for _, exerciseID := range t.exerciseIDs {
+					s.testFactory.NewSet(
+						testdb.SetExerciseID(exerciseID),
+						testdb.SetCreatedAt(now.Add(-time.Minute)),
+					)
+					s.testFactory.NewSet(
+						testdb.SetExerciseID(exerciseID),
+						testdb.SetCreatedAt(now.Add(-time.Minute)),
+					)
+				}
+
+				for _, set := range t.expected.sets {
+					s.testFactory.NewSet(
+						testdb.SetWorkoutID(set.WorkoutID),
+						testdb.SetExerciseID(set.ExerciseID),
+						testdb.SetReps(set.Reps),
+						testdb.SetWeight(set.Weight),
+						testdb.SetCreatedAt(set.CreatedAt),
+					)
+				}
+			},
+			expected: expected{
+				err: nil,
+				sets: orm.SetSlice{
+					{
+						WorkoutID:  workoutIDs[0],
+						ExerciseID: exerciseIDs[0],
+						Reps:       1,
+						Weight:     1,
+						CreatedAt:  now,
+					},
+					{
+						WorkoutID:  workoutIDs[0],
+						ExerciseID: exerciseIDs[0],
+						Reps:       2,
+						Weight:     2,
+						CreatedAt:  now.Add(-time.Second),
+					},
+					{
+						WorkoutID:  workoutIDs[1],
+						ExerciseID: exerciseIDs[1],
+						Reps:       3,
+						Weight:     3,
+						CreatedAt:  now.Add(-2 * time.Second),
+					},
+					{
+						WorkoutID:  workoutIDs[1],
+						ExerciseID: exerciseIDs[1],
+						Reps:       4,
+						Weight:     4,
+						CreatedAt:  now.Add(-3 * time.Second),
+					},
+				},
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			sets, err := s.repo.GetLatestExerciseSets(context.Background(), t.exerciseIDs)
+			if t.expected.err != nil {
+				s.Require().Nil(sets)
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(sets)
+			s.Require().Len(sets, len(t.expected.sets))
+			for i, set := range sets {
+				s.Require().Equal(t.expected.sets[i].WorkoutID, set.WorkoutID)
+				s.Require().Equal(t.expected.sets[i].ExerciseID, set.ExerciseID)
+				s.Require().Equal(t.expected.sets[i].Reps, set.Reps)
+				s.Require().InEpsilon(t.expected.sets[i].Weight, set.Weight, 0)
+			}
 		})
 	}
 }

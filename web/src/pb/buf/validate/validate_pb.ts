@@ -19,7 +19,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Duration, FieldOptions, Message, MessageOptions, OneofOptions, proto3, Timestamp } from "@bufbuild/protobuf";
-import { Constraint } from "./expression_pb";
+import { Constraint } from "./expression_pb.js";
 
 /**
  * Specifies how FieldConstraints.ignore behaves. See the documentation for
@@ -4584,8 +4584,8 @@ export class TimestampRules extends Message<TimestampRules> {
  * @generated from extension: optional buf.validate.MessageConstraints message = 1159;
  */
 export const message = proto3.makeExtension<MessageOptions, MessageConstraints>(
-  "buf.validate.message",
-  MessageOptions,
+  "buf.validate.message", 
+  MessageOptions, 
   () => ({ no: 1159, kind: "message", T: MessageConstraints, opt: true }),
 );
 
@@ -4596,8 +4596,8 @@ export const message = proto3.makeExtension<MessageOptions, MessageConstraints>(
  * @generated from extension: optional buf.validate.OneofConstraints oneof = 1159;
  */
 export const oneof = proto3.makeExtension<OneofOptions, OneofConstraints>(
-  "buf.validate.oneof",
-  OneofOptions,
+  "buf.validate.oneof", 
+  OneofOptions, 
   () => ({ no: 1159, kind: "message", T: OneofConstraints, opt: true }),
 );
 
@@ -4608,8 +4608,8 @@ export const oneof = proto3.makeExtension<OneofOptions, OneofConstraints>(
  * @generated from extension: optional buf.validate.FieldConstraints field = 1159;
  */
 export const field = proto3.makeExtension<FieldOptions, FieldConstraints>(
-  "buf.validate.field",
-  FieldOptions,
+  "buf.validate.field", 
+  FieldOptions, 
   () => ({ no: 1159, kind: "message", T: FieldConstraints, opt: true }),
 );
 

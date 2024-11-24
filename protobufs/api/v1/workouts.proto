@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package api.v1;
 
+import "api/v1/shared.proto";
 import "api/v1/options.proto";
-import "api/v1/exercise.proto";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
@@ -20,21 +20,32 @@ service WorkoutService {
   rpc List(ListWorkoutsRequest) returns (ListWorkoutsResponse) {
     option (auth) = true;
   }
+  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc GetLatestExerciseSets(GetLatestExerciseSetsRequest) returns (GetLatestExerciseSetsResponse) {
+    option (auth) = true;
+  }
 //  rpc Start(StartWorkoutRequest) returns (StartWorkoutResponse) {
 //    option (auth) = true;
 //  }
 //  rpc Finish(FinishWorkoutRequest) returns (FinishWorkoutResponse) {
 //    option (auth) = true;
 //  }
-  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
-    option (auth) = true;
-  }
 //  rpc AddExercise(AddExerciseRequest) returns (AddExerciseResponse) {
 //    option (auth) = true;
 //  }
 //  rpc RemoveExercise(RemoveExerciseRequest) returns (RemoveExerciseResponse) {
 //    option (auth) = true;
 //  }
+}
+
+message GetLatestExerciseSetsRequest {
+  repeated string exercise_ids = 1 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+
+message GetLatestExerciseSetsResponse {
+  repeated ExerciseSets exercise_sets = 1;
 }
 
 message CreateWorkoutRequest {
@@ -118,15 +129,3 @@ message Workout {
   google.protobuf.Timestamp finished_at = 3 [(buf.validate.field).required = true];
   repeated ExerciseSets exercise_sets = 4 [(buf.validate.field).repeated.min_items = 1];
 }
-
-message ExerciseSets {
-  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
-  repeated Set sets = 2 [(buf.validate.field).repeated.min_items = 1];
-}
-
-message Set {
-  double weight = 1; // The weight can be less than zero.
-  int32 reps = 2 [(buf.validate.field).int32 = { gte: 1 }];
-}
-
-
