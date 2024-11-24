@@ -703,6 +703,7 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
 	var workoutIDs []string
 	for _, exerciseID := range exerciseIDs {
+		// DEBT: Make this query more efficient.
 		set, err := orm.Sets(
 			qm.Select(orm.SetColumns.WorkoutID),
 			orm.SetWhere.ExerciseID.EQ(exerciseID),
