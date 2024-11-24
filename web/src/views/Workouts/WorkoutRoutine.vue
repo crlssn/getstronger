@@ -77,9 +77,7 @@ const finishWorkout = async () => {
 
   const eSetsList: ExerciseSets[] = []
   for (const [exerciseID, sets] of Object.entries(exerciseSets)) {
-    const definedSets = sets
-      .filter((set) => set.reps !== undefined && set.weight !== undefined)
-      .filter((set) => set.reps !== '' && set.weight !== '')
+    const definedSets = sets.filter((set) => isNumber(set.reps) && isNumber(set.weight))
     if (definedSets.length === 0) {
       continue
     }
@@ -128,6 +126,10 @@ const prevSetReps = (exerciseID: string, index: number) => {
   const prevSet = prevExerciseSets.value.find((set) => set.exerciseId === exerciseID)?.sets[index]
   return prevSet?.reps?.toString() || 'Reps'
 }
+
+const isNumber = (value: number | undefined | string) => {
+  return typeof value === 'number' && !Number.isNaN(value)
+}
 </script>
 
 <template>
@@ -168,6 +170,7 @@ const prevSetReps = (exerciseID: string, index: number) => {
                     inputmode="decimal"
                     v-model.number="set.weight"
                     :placeholder="prevSetWeight(exercise.id, index)"
+                    :required="isNumber(set.reps)"
                     @keyup="
                       workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
                     "
@@ -180,6 +183,7 @@ const prevSetReps = (exerciseID: string, index: number) => {
                     inputmode="numeric"
                     v-model.number="set.reps"
                     :placeholder="prevSetReps(exercise.id, index)"
+                    :required="isNumber(set.weight)"
                     @keyup="
                       workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
                     "
@@ -204,9 +208,9 @@ const prevSetReps = (exerciseID: string, index: number) => {
       </div>
     </div>
     <AppButton type="submit" colour="primary" class="mt-6">Finish Workout</AppButton>
-    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout"
-      >Cancel Workout</AppButton
-    >
+    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout">
+      Cancel Workout
+    </AppButton>
   </form>
 </template>
 
