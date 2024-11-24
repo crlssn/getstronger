@@ -202,7 +202,7 @@ const isNumber = (value: number | undefined | string) => {
     <div class="flex gap-x-6">
       <div class="w-full">
         <label class="block text-xs font-semibold text-gray-900 uppercase">Start Date</label>
-        <div class="mt-2">
+        <div>
           <input
             v-model="startDateTime"
             type="datetime-local"
@@ -213,7 +213,7 @@ const isNumber = (value: number | undefined | string) => {
       </div>
       <div class="w-full">
         <label class="block text-xs font-semibold text-gray-900 uppercase">End Date</label>
-        <div class="mt-2">
+        <div>
           <input
             v-model="endDateTime"
             type="datetime-local"
