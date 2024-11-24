@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -217,6 +218,7 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 						testdb.SetExerciseID(set.ExerciseID),
 						testdb.SetReps(set.Reps),
 						testdb.SetWeight(set.Weight),
+						testdb.SetCreatedAt(set.CreatedAt),
 					)
 				}
 			},
@@ -228,24 +230,28 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 						ExerciseID: exerciseIDs[0],
 						Reps:       1,
 						Weight:     1,
+						CreatedAt:  time.Now().Add(-time.Hour),
 					},
 					{
 						WorkoutID:  workoutIDs[0],
 						ExerciseID: exerciseIDs[0],
 						Reps:       2,
 						Weight:     2,
+						CreatedAt:  time.Now().Add(-time.Minute),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       3,
 						Weight:     3,
+						CreatedAt:  time.Now().Add(-time.Second),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       4,
 						Weight:     4,
+						CreatedAt:  time.Now(),
 					},
 				},
 			},
@@ -263,8 +269,9 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 				return
 			}
 
-			s.Require().NotNil(sets)
 			s.Require().NoError(err)
+			s.Require().NotNil(sets)
+			s.Require().Len(sets, len(t.expected.sets))
 			for i, set := range sets {
 				s.Require().Equal(t.expected.sets[i].WorkoutID, set.WorkoutID)
 				s.Require().Equal(t.expected.sets[i].ExerciseID, set.ExerciseID)

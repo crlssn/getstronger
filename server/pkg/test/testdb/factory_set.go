@@ -27,11 +27,9 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		opt(set)
 	}
 
-	boil.DebugMode = true
 	if err := set.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert set: %w", err))
 	}
-	boil.DebugMode = false
 
 	return set
 }
@@ -57,5 +55,11 @@ func SetReps(reps int) SetOpt {
 func SetWeight(weight float32) SetOpt {
 	return func(set *orm.Set) {
 		set.Weight = weight
+	}
+}
+
+func SetCreatedAt(createdAt time.Time) SetOpt {
+	return func(set *orm.Set) {
+		set.CreatedAt = createdAt
 	}
 }

@@ -701,12 +701,13 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 }
 
 func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+	boil.DebugMode = true
 	workoutSets, err := orm.Sets(
+		qm.Select(fmt.Sprintf("DISTINCT ON (%s) %s", orm.SetColumns.ExerciseID, orm.SetColumns.ExerciseID), orm.SetColumns.WorkoutID, orm.SetColumns.CreatedAt),
 		orm.SetWhere.ExerciseID.IN(exerciseIDs),
-		qm.Distinct(orm.SetColumns.ExerciseID),
-		qm.Limit(len(exerciseIDs)),
-		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+		qm.OrderBy(fmt.Sprintf("%s, %s DESC", orm.SetColumns.ExerciseID, orm.SetColumns.CreatedAt)),
 	).All(ctx, r.executor())
+	boil.DebugMode = false
 	if err != nil {
 		return nil, fmt.Errorf("sets fetch: %w", err)
 	}
@@ -718,6 +719,7 @@ func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) 
 
 	latestSets, err := orm.Sets(
 		orm.SetWhere.WorkoutID.IN(workoutIDs),
+		orm.SetWhere.ExerciseID.IN(exerciseIDs),
 		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
 	).All(ctx, r.executor())
 	if err != nil {
