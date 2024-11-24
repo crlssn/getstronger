@@ -202,14 +202,25 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 		s.testFactory.NewWorkout(testdb.WorkoutID(workoutID))
 	}
 
+	now := time.Now().UTC()
+
 	tests := []test{
 		{
 			name:        "ok_latest_exercise_sets",
 			exerciseIDs: exerciseIDs,
 			init: func(t test) {
+				s.testFactory.NewSet()
+				s.testFactory.NewSet()
+
 				for _, exerciseID := range t.exerciseIDs {
-					s.testFactory.NewSet(testdb.SetExerciseID(exerciseID))
-					s.testFactory.NewSet(testdb.SetExerciseID(exerciseID))
+					s.testFactory.NewSet(
+						testdb.SetExerciseID(exerciseID),
+						testdb.SetCreatedAt(now.Add(-time.Minute)),
+					)
+					s.testFactory.NewSet(
+						testdb.SetExerciseID(exerciseID),
+						testdb.SetCreatedAt(now.Add(-time.Minute)),
+					)
 				}
 
 				for _, set := range t.expected.sets {
@@ -230,28 +241,28 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 						ExerciseID: exerciseIDs[0],
 						Reps:       1,
 						Weight:     1,
-						CreatedAt:  time.Now().Add(-time.Hour),
+						CreatedAt:  now,
 					},
 					{
 						WorkoutID:  workoutIDs[0],
 						ExerciseID: exerciseIDs[0],
 						Reps:       2,
 						Weight:     2,
-						CreatedAt:  time.Now().Add(-time.Minute),
+						CreatedAt:  now.Add(-time.Second),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       3,
 						Weight:     3,
-						CreatedAt:  time.Now().Add(-time.Second),
+						CreatedAt:  now.Add(-2 * time.Second),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       4,
 						Weight:     4,
-						CreatedAt:  time.Now(),
+						CreatedAt:  now.Add(-3 * time.Second),
 					},
 				},
 			},

@@ -701,25 +701,22 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 }
 
 func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
-	boil.DebugMode = true
-	workoutSets, err := orm.Sets(
-		qm.Select(fmt.Sprintf("DISTINCT ON (%s) %s", orm.SetColumns.ExerciseID, orm.SetColumns.ExerciseID), orm.SetColumns.WorkoutID, orm.SetColumns.CreatedAt),
-		orm.SetWhere.ExerciseID.IN(exerciseIDs),
-		qm.OrderBy(fmt.Sprintf("%s, %s DESC", orm.SetColumns.ExerciseID, orm.SetColumns.CreatedAt)),
-	).All(ctx, r.executor())
-	boil.DebugMode = false
-	if err != nil {
-		return nil, fmt.Errorf("sets fetch: %w", err)
-	}
+	var workoutIDs []string
+	for _, exerciseID := range exerciseIDs {
+		set, err := orm.Sets(
+			qm.Select(orm.SetColumns.WorkoutID),
+			orm.SetWhere.ExerciseID.EQ(exerciseID),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+		).One(ctx, r.executor())
+		if err != nil {
+			return nil, fmt.Errorf("sets fetch: %w", err)
+		}
 
-	workoutIDs := make([]string, 0, len(workoutSets))
-	for _, set := range workoutSets {
 		workoutIDs = append(workoutIDs, set.WorkoutID)
 	}
 
 	latestSets, err := orm.Sets(
 		orm.SetWhere.WorkoutID.IN(workoutIDs),
-		orm.SetWhere.ExerciseID.IN(exerciseIDs),
 		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
 	).All(ctx, r.executor())
 	if err != nil {
