@@ -287,7 +287,7 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 				s.Require().Equal(t.expected.sets[i].WorkoutID, set.WorkoutID)
 				s.Require().Equal(t.expected.sets[i].ExerciseID, set.ExerciseID)
 				s.Require().Equal(t.expected.sets[i].Reps, set.Reps)
-				s.Require().Equal(t.expected.sets[i].Weight, set.Weight)
+				s.Require().InEpsilon(t.expected.sets[i].Weight, set.Weight, 0)
 			}
 		})
 	}

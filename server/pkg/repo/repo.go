@@ -712,7 +712,7 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
 	spew.Dump(exerciseIDs)
-	var workoutIDs []string
+	workoutIDs := make([]string, 0, len(exerciseIDs))
 	for _, exerciseID := range exerciseIDs {
 		// DEBT: Make this query more efficient.
 		set, err := orm.Sets(

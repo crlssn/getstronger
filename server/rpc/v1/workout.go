@@ -152,7 +152,7 @@ func (h *workoutHandler) GetLatestExerciseSets(ctx context.Context, req *connect
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var workoutIDs []string
+	workoutIDs := make([]string, 0, len(sets))
 	for _, set := range sets {
 		workoutIDs = append(workoutIDs, set.WorkoutID)
 	}
