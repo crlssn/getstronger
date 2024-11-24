@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -709,6 +711,7 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 }
 
 func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+	spew.Dump(exerciseIDs)
 	var workoutIDs []string
 	for _, exerciseID := range exerciseIDs {
 		// DEBT: Make this query more efficient.
@@ -718,6 +721,9 @@ func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) 
 			qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
 		).One(ctx, r.executor())
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
 			return nil, fmt.Errorf("sets fetch: %w", err)
 		}
 

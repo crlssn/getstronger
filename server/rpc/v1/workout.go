@@ -2,9 +2,11 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -138,6 +140,14 @@ func (h *workoutHandler) GetLatestExerciseSets(ctx context.Context, req *connect
 
 	sets, err := h.repo.GetLatestExerciseSets(ctx, req.Msg.GetExerciseIds())
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Info("no latest exercise sets found", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
+			return &connect.Response[v1.GetLatestExerciseSetsResponse]{
+				Msg: &v1.GetLatestExerciseSetsResponse{
+					ExerciseSets: nil,
+				},
+			}, nil
+		}
 		log.Error("failed to get latest exercise sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

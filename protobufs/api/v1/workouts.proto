@@ -41,7 +41,7 @@ service WorkoutService {
 }
 
 message GetLatestExerciseSetsRequest {
-  repeated string exercise_ids = 1 [(buf.validate.field).string.uuid = true];
+  repeated string exercise_ids = 1 [(buf.validate.field).repeated.items.string.uuid = true];
 }
 
 message GetLatestExerciseSetsResponse {
