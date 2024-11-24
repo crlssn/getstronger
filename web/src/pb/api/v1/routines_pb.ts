@@ -5,7 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { FieldMask, Message, proto3 } from "@bufbuild/protobuf";
-import { Exercise } from "./exercise_pb";
+import { Exercise } from "./exercise_pb.js";
 
 /**
  * @generated from message api.v1.CreateRoutineRequest

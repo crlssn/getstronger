@@ -11,7 +11,6 @@ import (
 	strings "strings"
 
 	connect "connectrpc.com/connect"
-
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 )
 

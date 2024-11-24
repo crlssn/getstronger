@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AddExerciseRequest, AddExerciseResponse, CreateRoutineRequest, CreateRoutineResponse, DeleteRoutineRequest, DeleteRoutineResponse, GetRoutineRequest, GetRoutineResponse, ListRoutinesRequest, ListRoutinesResponse, RemoveExerciseRequest, RemoveExerciseResponse, UpdateExerciseOrderRequest, UpdateExerciseOrderResponse, UpdateRoutineRequest, UpdateRoutineResponse } from "./routines_pb";
+import { AddExerciseRequest, AddExerciseResponse, CreateRoutineRequest, CreateRoutineResponse, DeleteRoutineRequest, DeleteRoutineResponse, GetRoutineRequest, GetRoutineResponse, ListRoutinesRequest, ListRoutinesResponse, RemoveExerciseRequest, RemoveExerciseResponse, UpdateExerciseOrderRequest, UpdateExerciseOrderResponse, UpdateRoutineRequest, UpdateRoutineResponse } from "./routines_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**

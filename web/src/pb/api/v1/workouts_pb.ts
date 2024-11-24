@@ -5,6 +5,81 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { ExerciseSets } from "./shared_pb.js";
+
+/**
+ * @generated from message api.v1.GetLatestExerciseSetsRequest
+ */
+export class GetLatestExerciseSetsRequest extends Message<GetLatestExerciseSetsRequest> {
+  /**
+   * @generated from field: repeated string exercise_ids = 1;
+   */
+  exerciseIds: string[] = [];
+
+  constructor(data?: PartialMessage<GetLatestExerciseSetsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetLatestExerciseSetsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "exercise_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetLatestExerciseSetsRequest {
+    return new GetLatestExerciseSetsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetLatestExerciseSetsRequest {
+    return new GetLatestExerciseSetsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetLatestExerciseSetsRequest {
+    return new GetLatestExerciseSetsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetLatestExerciseSetsRequest | PlainMessage<GetLatestExerciseSetsRequest> | undefined, b: GetLatestExerciseSetsRequest | PlainMessage<GetLatestExerciseSetsRequest> | undefined): boolean {
+    return proto3.util.equals(GetLatestExerciseSetsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.GetLatestExerciseSetsResponse
+ */
+export class GetLatestExerciseSetsResponse extends Message<GetLatestExerciseSetsResponse> {
+  /**
+   * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 1;
+   */
+  exerciseSets: ExerciseSets[] = [];
+
+  constructor(data?: PartialMessage<GetLatestExerciseSetsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetLatestExerciseSetsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "exercise_sets", kind: "message", T: ExerciseSets, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetLatestExerciseSetsResponse {
+    return new GetLatestExerciseSetsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetLatestExerciseSetsResponse {
+    return new GetLatestExerciseSetsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetLatestExerciseSetsResponse {
+    return new GetLatestExerciseSetsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetLatestExerciseSetsResponse | PlainMessage<GetLatestExerciseSetsResponse> | undefined, b: GetLatestExerciseSetsResponse | PlainMessage<GetLatestExerciseSetsResponse> | undefined): boolean {
+    return proto3.util.equals(GetLatestExerciseSetsResponse, a, b);
+  }
+}
 
 /**
  * @generated from message api.v1.CreateWorkoutRequest
@@ -393,94 +468,6 @@ export class Workout extends Message<Workout> {
 
   static equals(a: Workout | PlainMessage<Workout> | undefined, b: Workout | PlainMessage<Workout> | undefined): boolean {
     return proto3.util.equals(Workout, a, b);
-  }
-}
-
-/**
- * @generated from message api.v1.ExerciseSets
- */
-export class ExerciseSets extends Message<ExerciseSets> {
-  /**
-   * @generated from field: string exercise_id = 1;
-   */
-  exerciseId = "";
-
-  /**
-   * @generated from field: repeated api.v1.Set sets = 2;
-   */
-  sets: Set[] = [];
-
-  constructor(data?: PartialMessage<ExerciseSets>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.ExerciseSets";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "exercise_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "sets", kind: "message", T: Set, repeated: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ExerciseSets {
-    return new ExerciseSets().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ExerciseSets {
-    return new ExerciseSets().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ExerciseSets {
-    return new ExerciseSets().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ExerciseSets | PlainMessage<ExerciseSets> | undefined, b: ExerciseSets | PlainMessage<ExerciseSets> | undefined): boolean {
-    return proto3.util.equals(ExerciseSets, a, b);
-  }
-}
-
-/**
- * @generated from message api.v1.Set
- */
-export class Set extends Message<Set> {
-  /**
-   * The weight can be less than zero.
-   *
-   * @generated from field: double weight = 1;
-   */
-  weight = 0;
-
-  /**
-   * @generated from field: int32 reps = 2;
-   */
-  reps = 0;
-
-  constructor(data?: PartialMessage<Set>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.Set";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "weight", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
-    { no: 2, name: "reps", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Set {
-    return new Set().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Set {
-    return new Set().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Set {
-    return new Set().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: Set | PlainMessage<Set> | undefined, b: Set | PlainMessage<Set> | undefined): boolean {
-    return proto3.util.equals(Set, a, b);
   }
 }
 

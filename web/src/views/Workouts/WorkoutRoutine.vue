@@ -124,7 +124,7 @@ const cancelWorkout = async () => {
       >
         <li v-for="exercise in routine?.exercises" :key="exercise.id">
           <RouterLink
-            :to="`?exercise_id=${exercise.id}`"
+            :to="isCurrentExercise(exercise.id) ? '' : `?exercise_id=${exercise.id}`"
             class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-800"
             :class="isCurrentExercise(exercise.id) && 'font-semibold'"
           >
