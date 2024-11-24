@@ -20,10 +20,6 @@ type workoutHandler struct {
 	repo *repo.Repo
 }
 
-func (h *workoutHandler) GetLatestExerciseSets(ctx context.Context, req *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error) {
-	h.repo.GetLatestExerciseSets(ctx, req.Msg.GetExerciseIds())
-}
-
 func NewWorkoutHandler(r *repo.Repo) apiv1connect.WorkoutServiceHandler {
 	return &workoutHandler{r}
 }
@@ -134,4 +130,39 @@ func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 
 	log.Info("workout deleted")
 	return &connect.Response[v1.DeleteWorkoutResponse]{}, nil
+}
+
+func (h *workoutHandler) GetLatestExerciseSets(ctx context.Context, req *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	sets, err := h.repo.GetLatestExerciseSets(ctx, req.Msg.GetExerciseIds())
+	if err != nil {
+		log.Error("failed to get latest exercise sets", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	var workoutIDs []string
+	for _, set := range sets {
+		workoutIDs = append(workoutIDs, set.WorkoutID)
+	}
+
+	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
+	if err != nil {
+		log.Error("failed to get workouts", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	for _, workout := range workouts {
+		if workout.UserID != userID {
+			log.Error("workout does not belong to user")
+			return nil, connect.NewError(connect.CodePermissionDenied, nil)
+		}
+	}
+
+	return &connect.Response[v1.GetLatestExerciseSetsResponse]{
+		Msg: &v1.GetLatestExerciseSetsResponse{
+			ExerciseSets: parseSetSliceToExerciseSetsPB(sets),
+		},
+	}, nil
 }

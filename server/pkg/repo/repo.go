@@ -543,6 +543,14 @@ func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.W
 	return workouts, nil
 }
 
+func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.WorkoutWhere.ID.IN(ids),
+		}, nil
+	}
+}
+
 func ListWorkoutsWithUserID(userID string) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
