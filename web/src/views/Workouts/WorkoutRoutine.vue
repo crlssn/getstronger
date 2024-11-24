@@ -19,7 +19,8 @@ const routine = ref<Routine | undefined>(undefined)
 const routineID = route.params.routine_id as string
 const workoutStore = useWorkoutStore()
 const pageTitleStore = usePageTitleStore()
-const dateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
+const startDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
+const endDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 let dateTimeInterval: ReturnType<typeof setInterval>
 const reqError = ref('')
 const prevExerciseSets = ref<ExerciseSets[]>([])
@@ -48,7 +49,7 @@ const fetchLatestExerciseSets = async () => {
 }
 
 const updateDateTime = () => {
-  dateTime.value = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm")
+  endDateTime.value = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm")
 }
 
 const clearDateTimeInterval = () => {
@@ -95,8 +96,11 @@ const finishWorkout = async () => {
       new CreateWorkoutRequest({
         routineId: routineID,
         exerciseSets: eSetsList,
+        startedAt: new Timestamp({
+          seconds: BigInt(DateTime.fromISO(startDateTime.value).toSeconds()),
+        }),
         finishedAt: new Timestamp({
-          seconds: BigInt(DateTime.fromISO(dateTime.value).toSeconds()),
+          seconds: BigInt(DateTime.fromISO(endDateTime.value).toSeconds()),
         }),
       }),
     )
@@ -195,19 +199,32 @@ const isNumber = (value: number | undefined | string) => {
         </li>
       </ul>
     </div>
-    <div>
-      <label class="block text-xs font-semibold text-gray-900 uppercase">Date</label>
-      <div class="mt-2">
-        <input
-          v-model="dateTime"
-          type="datetime-local"
-          @input="clearDateTimeInterval"
-          required
-          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-        />
+    <div class="flex gap-x-6">
+      <div class="w-full">
+        <label class="block text-xs font-semibold text-gray-900 uppercase">Start Date</label>
+        <div class="mt-2">
+          <input
+            v-model="startDateTime"
+            type="datetime-local"
+            required
+            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+          />
+        </div>
+      </div>
+      <div class="w-full">
+        <label class="block text-xs font-semibold text-gray-900 uppercase">End Date</label>
+        <div class="mt-2">
+          <input
+            v-model="endDateTime"
+            type="datetime-local"
+            @input="clearDateTimeInterval"
+            required
+            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+          />
+        </div>
       </div>
     </div>
-    <AppButton type="submit" colour="primary" class="mt-6">Finish Workout</AppButton>
+    <AppButton type="submit" colour="primary" class="mt-6">Save Workout</AppButton>
     <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout">
       Cancel Workout
     </AppButton>

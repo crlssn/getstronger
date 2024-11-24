@@ -28,6 +28,7 @@ type Workout struct {
 	FinishedAt time.Time `boil:"finished_at" json:"finished_at" toml:"finished_at" yaml:"finished_at"`
 	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	Name       string    `boil:"name" json:"name" toml:"name" yaml:"name"`
+	StartedAt  time.Time `boil:"started_at" json:"started_at" toml:"started_at" yaml:"started_at"`
 
 	R *workoutR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L workoutL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,12 +40,14 @@ var WorkoutColumns = struct {
 	FinishedAt string
 	CreatedAt  string
 	Name       string
+	StartedAt  string
 }{
 	ID:         "id",
 	UserID:     "user_id",
 	FinishedAt: "finished_at",
 	CreatedAt:  "created_at",
 	Name:       "name",
+	StartedAt:  "started_at",
 }
 
 var WorkoutTableColumns = struct {
@@ -53,12 +56,14 @@ var WorkoutTableColumns = struct {
 	FinishedAt string
 	CreatedAt  string
 	Name       string
+	StartedAt  string
 }{
 	ID:         "workouts.id",
 	UserID:     "workouts.user_id",
 	FinishedAt: "workouts.finished_at",
 	CreatedAt:  "workouts.created_at",
 	Name:       "workouts.name",
+	StartedAt:  "workouts.started_at",
 }
 
 // Generated where
@@ -69,12 +74,14 @@ var WorkoutWhere = struct {
 	FinishedAt whereHelpertime_Time
 	CreatedAt  whereHelpertime_Time
 	Name       whereHelperstring
+	StartedAt  whereHelpertime_Time
 }{
 	ID:         whereHelperstring{field: "\"getstronger\".\"workouts\".\"id\""},
 	UserID:     whereHelperstring{field: "\"getstronger\".\"workouts\".\"user_id\""},
 	FinishedAt: whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"finished_at\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"created_at\""},
 	Name:       whereHelperstring{field: "\"getstronger\".\"workouts\".\"name\""},
+	StartedAt:  whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"started_at\""},
 }
 
 // WorkoutRels is where relationship names are stored.
@@ -115,8 +122,8 @@ func (r *workoutR) GetSets() SetSlice {
 type workoutL struct{}
 
 var (
-	workoutAllColumns            = []string{"id", "user_id", "finished_at", "created_at", "name"}
-	workoutColumnsWithoutDefault = []string{"user_id", "finished_at", "name"}
+	workoutAllColumns            = []string{"id", "user_id", "finished_at", "created_at", "name", "started_at"}
+	workoutColumnsWithoutDefault = []string{"user_id", "finished_at", "name", "started_at"}
 	workoutColumnsWithDefault    = []string{"id", "created_at"}
 	workoutPrimaryKeyColumns     = []string{"id"}
 	workoutGeneratedColumns      = []string{}

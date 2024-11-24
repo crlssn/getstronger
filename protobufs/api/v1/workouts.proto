@@ -51,7 +51,8 @@ message GetLatestExerciseSetsResponse {
 message CreateWorkoutRequest {
   string routine_id = 1 [(buf.validate.field).string.uuid = true];
   repeated ExerciseSets exercise_sets = 2 [(buf.validate.field).repeated.min_items = 1];
-  google.protobuf.Timestamp finished_at = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp started_at = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp finished_at = 4 [(buf.validate.field).required = true];
 }
 message CreateWorkoutResponse {
   string workout_id = 1;

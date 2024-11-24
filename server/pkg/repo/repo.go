@@ -593,6 +593,7 @@ type CreateWorkoutParams struct {
 	Name         string
 	UserID       string
 	ExerciseSets []ExerciseSet
+	StartedAt    time.Time
 	FinishedAt   time.Time
 }
 
@@ -610,6 +611,7 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 	workout := &orm.Workout{
 		Name:       p.Name,
 		UserID:     p.UserID,
+		StartedAt:  p.StartedAt.Truncate(time.Minute).UTC(),
 		FinishedAt: p.FinishedAt.Truncate(time.Minute).UTC(),
 	}
 
