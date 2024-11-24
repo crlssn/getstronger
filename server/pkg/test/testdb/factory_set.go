@@ -18,8 +18,8 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		ID:         uuid.NewString(),
 		WorkoutID:  f.NewWorkout().ID,
 		ExerciseID: f.NewExercise().ID,
-		Weight:     f.faker.Float32(),
-		Reps:       f.faker.Int(),
+		Weight:     f.faker.Float32Range(1, 100),
+		Reps:       f.faker.IntRange(1, 10),
 		CreatedAt:  time.Time{},
 	}
 
@@ -27,9 +27,35 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		opt(set)
 	}
 
+	boil.DebugMode = true
 	if err := set.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert set: %w", err))
 	}
+	boil.DebugMode = false
 
 	return set
+}
+
+func SetExerciseID(exerciseID string) SetOpt {
+	return func(set *orm.Set) {
+		set.ExerciseID = exerciseID
+	}
+}
+
+func SetWorkoutID(workoutID string) SetOpt {
+	return func(set *orm.Set) {
+		set.WorkoutID = workoutID
+	}
+}
+
+func SetReps(reps int) SetOpt {
+	return func(set *orm.Set) {
+		set.Reps = reps
+	}
+}
+
+func SetWeight(weight float32) SetOpt {
+	return func(set *orm.Set) {
+		set.Weight = weight
+	}
 }

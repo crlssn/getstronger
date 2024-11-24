@@ -32,3 +32,9 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 
 	return workout
 }
+
+func WorkoutID(workoutID string) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.ID = workoutID
+	}
+}

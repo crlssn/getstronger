@@ -21,7 +21,7 @@ type repoSuite struct {
 	testFactory   *testdb.Factory
 }
 
-func TestAuthSuite(t *testing.T) {
+func TestRepoSuite(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, new(repoSuite))
 }
@@ -191,17 +191,63 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 		expected    expected
 	}
 
+	exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
+	for _, exerciseID := range exerciseIDs {
+		s.testFactory.NewExercise(testdb.ExerciseID(exerciseID))
+	}
+
+	workoutIDs := []string{uuid.NewString(), uuid.NewString()}
+	for _, workoutID := range workoutIDs {
+		s.testFactory.NewWorkout(testdb.WorkoutID(workoutID))
+	}
+
 	tests := []test{
 		{
-			name:        "ok_update_routine_name",
-			exerciseIDs: []string{uuid.NewString(), uuid.NewString()},
+			name:        "ok_latest_exercise_sets",
+			exerciseIDs: exerciseIDs,
 			init: func(t test) {
-				s.testFactory.NewSet(
-					testdb.RoutineName("old"),
-				)
+				for _, exerciseID := range t.exerciseIDs {
+					s.testFactory.NewSet(testdb.SetExerciseID(exerciseID))
+					s.testFactory.NewSet(testdb.SetExerciseID(exerciseID))
+				}
+
+				for _, set := range t.expected.sets {
+					s.testFactory.NewSet(
+						testdb.SetWorkoutID(set.WorkoutID),
+						testdb.SetExerciseID(set.ExerciseID),
+						testdb.SetReps(set.Reps),
+						testdb.SetWeight(set.Weight),
+					)
+				}
 			},
 			expected: expected{
 				err: nil,
+				sets: orm.SetSlice{
+					{
+						WorkoutID:  workoutIDs[0],
+						ExerciseID: exerciseIDs[0],
+						Reps:       1,
+						Weight:     1,
+					},
+					{
+						WorkoutID:  workoutIDs[0],
+						ExerciseID: exerciseIDs[0],
+						Reps:       2,
+						Weight:     2,
+					},
+					{
+						WorkoutID:  workoutIDs[1],
+						ExerciseID: exerciseIDs[1],
+						Reps:       3,
+						Weight:     3,
+					},
+					{
+						WorkoutID:  workoutIDs[1],
+						ExerciseID: exerciseIDs[1],
+						Reps:       4,
+						Weight:     4,
+					},
+				},
 			},
 		},
 	}
@@ -220,7 +266,6 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 			s.Require().NotNil(sets)
 			s.Require().NoError(err)
 			for i, set := range sets {
-				s.Require().Equal(t.expected.sets[i].ID, set.ID)
 				s.Require().Equal(t.expected.sets[i].WorkoutID, set.WorkoutID)
 				s.Require().Equal(t.expected.sets[i].ExerciseID, set.ExerciseID)
 				s.Require().Equal(t.expected.sets[i].Reps, set.Reps)
