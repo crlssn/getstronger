@@ -27,10 +27,10 @@ func (h *exerciseHandler) GetPreviousSets(ctx context.Context, req *connect.Requ
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	sets, err := h.repo.GetPreviousSets(ctx, req.Msg.GetExerciseIds())
+	sets, err := h.repo.GetPreviousWorkoutSets(ctx, req.Msg.GetExerciseIds())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Info("no previous sets found", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
+			log.Warn("no previous workout sets", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
 			return &connect.Response[v1.GetPreviousSetsResponse]{
 				Msg: &v1.GetPreviousSetsResponse{
 					ExerciseSets: nil,
@@ -38,7 +38,7 @@ func (h *exerciseHandler) GetPreviousSets(ctx context.Context, req *connect.Requ
 			}, nil
 		}
 
-		log.Error("failed to get latest exercise sets", zap.Error(err))
+		log.Error("failed to get previous workout sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

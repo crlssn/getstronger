@@ -272,7 +272,7 @@ func (s *repoSuite) TestGetPreviousSets() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			t.init(t)
-			sets, err := s.repo.GetPreviousSets(context.Background(), t.exerciseIDs)
+			sets, err := s.repo.GetPreviousWorkoutSets(context.Background(), t.exerciseIDs)
 			if t.expected.err != nil {
 				s.Require().Nil(sets)
 				s.Require().Error(err)
