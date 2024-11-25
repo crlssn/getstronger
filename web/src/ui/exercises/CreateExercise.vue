@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CreateExerciseRequest } from '@/pb/api/v1/exercise_pb'
+import { CreateExerciseRequest } from '@/proto/api/v1/exercise_pb'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'

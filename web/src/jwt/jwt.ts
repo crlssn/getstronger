@@ -1,5 +1,5 @@
 import { AuthClient } from '@/clients/clients'
-import { RefreshTokenRequest } from '@/pb/api/v1/auth_pb'
+import { RefreshTokenRequest } from '@/proto/api/v1/auth_pb'
 import { useAuthStore } from '@/stores/auth'
 import { Code, ConnectError } from '@connectrpc/connect'
 import router from '@/router/router'

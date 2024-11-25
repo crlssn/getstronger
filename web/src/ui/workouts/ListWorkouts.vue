@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
-import { ListWorkoutsRequest, Workout } from '@/pb/api/v1/workouts_pb'
+import { ListWorkoutsRequest, Workout } from '@/proto/api/v1/workouts_pb'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { formatToCompactDateTime } from '@/utils/datetime'
 

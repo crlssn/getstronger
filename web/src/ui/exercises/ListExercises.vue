@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
+import { Exercise, ListExercisesRequest } from '@/proto/api/v1/exercise_pb'
 import { ExerciseClient } from '@/clients/clients'
 import { onMounted, ref } from 'vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'

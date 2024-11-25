@@ -15,10 +15,10 @@ plugins:
     opt: paths=source_relative
   - local: protoc-gen-es
     opt: target=ts
-    out: web/src/pb
+    out: web/src/proto
     include_imports: true
   - local: protoc-gen-connect-es
-    out: web/src/pb
+    out: web/src/proto
     opt: target=ts
 inputs:
   - directory: protobufs

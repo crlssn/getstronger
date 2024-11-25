@@ -2,8 +2,8 @@
 import AppButton from '@/ui/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, RoutineClient } from '@/clients/clients'
-import { CreateRoutineRequest } from '@/pb/api/v1/routines_pb'
-import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
+import { CreateRoutineRequest } from '@/proto/api/v1/routines_pb'
+import { Exercise, ListExercisesRequest } from '@/proto/api/v1/exercise_pb'
 import { ConnectError } from '@connectrpc/connect'
 import { Switch } from '@headlessui/vue'
 
