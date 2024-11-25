@@ -24,7 +24,7 @@ func (f *Factory) NewUser(opts ...UserOpt) *orm.User {
 		opt(m)
 	}
 
-	boil.DebugMode = true
+	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert user: %w", err))
 	}

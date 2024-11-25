@@ -144,7 +144,7 @@ func (h *workoutHandler) GetLatestExerciseSets(ctx context.Context, req *connect
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	sets, err := h.repo.GetLatestExerciseSets(ctx, req.Msg.GetExerciseIds())
+	sets, err := h.repo.GetPreviousSets(ctx, req.Msg.GetExerciseIds())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Info("no latest exercise sets found", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))

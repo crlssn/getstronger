@@ -179,7 +179,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 	}
 }
 
-func (s *repoSuite) TestGetLatestExerciseSets() {
+func (s *repoSuite) TestGetPreviousSets() {
 	type expected struct {
 		err  error
 		sets orm.SetSlice
@@ -192,14 +192,12 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 		expected    expected
 	}
 
-	exerciseIDs := []string{"00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"}
-	//exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
+	exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
 	for _, exerciseID := range exerciseIDs {
 		s.testFactory.NewExercise(testdb.ExerciseID(exerciseID))
 	}
 
-	workoutIDs := []string{"00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"}
-	//workoutIDs := []string{uuid.NewString(), uuid.NewString()}
+	workoutIDs := []string{uuid.NewString(), uuid.NewString()}
 	for _, workoutID := range workoutIDs {
 		s.testFactory.NewWorkout(testdb.WorkoutID(workoutID))
 	}
@@ -274,7 +272,7 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			t.init(t)
-			sets, err := s.repo.GetLatestExerciseSets(context.Background(), t.exerciseIDs)
+			sets, err := s.repo.GetPreviousSets(context.Background(), t.exerciseIDs)
 			if t.expected.err != nil {
 				s.Require().Nil(sets)
 				s.Require().Error(err)

@@ -713,111 +713,17 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	})
 }
 
-func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
-	boil.DebugMode = true
-	//workoutIDs := make([]string, 0, len(exerciseIDs))
-	//for _, exerciseID := range exerciseIDs {
-	//	// DEBT: Make this query more efficient.
-	//	set, err := orm.Sets(
-	//		qm.Select(orm.SetColumns.WorkoutID),
-	//		orm.SetWhere.ExerciseID.EQ(exerciseID),
-	//		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
-	//	).One(ctx, r.executor())
-	//	if err != nil {
-	//		if errors.Is(err, sql.ErrNoRows) {
-	//			continue
-	//		}
-	//		return nil, fmt.Errorf("sets fetch: %w", err)
-	//	}
-	//
-	//	workoutIDs = append(workoutIDs, set.WorkoutID)
-	//}
-
-	//orm.SetWhere.ID.IN(exerciseIDs)
-
-	//values := make([]interface{}, 0, len(exerciseIDs))
-	//for _, value := range exerciseIDs {
-	//	values = append(values, value)
-	//}
-
-	//all, _ := orm.Sets(qm.OrderBy("created_at DESC")).All(ctx, r.executor())
-	//fmt.Println(all)
-	//
-	//var sets orm.SetSlice
-	//if err := queries.Raw(`
-	//SELECT workout_id, exercise_id, created_at
-	//FROM (
-	//	SELECT DISTINCT ON (exercise_id) exercise_id, workout_id, created_at
-	// 	FROM getstronger.sets
-	// 	WHERE exercise_id = ANY($1)
-	//) AS sub
-	//ORDER BY created_at DESC
-	//`, types.Array(exerciseIDs)).Bind(ctx, r.executor(), &sets); err != nil {
-	//	return nil, fmt.Errorf("sets fetch: %w", err)
-	//}
-
-	//queryMods := []qm.QueryMod{
-	//	qm.Select("workout_id"),
-	//	qm.From("getstronger.sets"),
-	//	qm.WhereIn("exercise_id IN ?", []interface{}{
-	//		"b3bf3f3d-242c-4325-b06c-7fcc4aa71bf9",
-	//		"0a9f7d38-8c28-4641-b40f-1af145cc3fca",
-	//		"924283b1-9981-4551-9447-aadd5ffabda9",
-	//	}),
-	//	qm.OrderBy("created_at DESC"),
-	//}
-	//
-	//err2 := orm.NewQuery(
-	//	qm.Select("workout_id"),
-	//	qm.From("(SELECT DISTINCT ON (exercise_id) workout_id, created_at FROM getstronger.sets WHERE exercise_id IN ('b3bf3f3d-242c-4325-b06c-7fcc4aa71bf9', '0a9f7d38-8c28-4641-b40f-1af145cc3fca', '924283b1-9981-4551-9447-aadd5ffabda9')) AS sub"),
-	//	qm.OrderBy("created_at DESC"),
-	//).Bind(ctx, r.executor(), &sets)
-	//if err2 != nil {
-	//	return nil, fmt.Errorf("sets fetch: %w", err2)
-	//}
-
-	//workoutIDs := make([]string, 0, len(exerciseIDs))
-	//for _, set := range sets {
-	//	workoutIDs = append(workoutIDs, set.WorkoutID)
-	//}
-
-	//orm.Sets(
-	//	qm.Select("SELECT DISTINCT ON (%s) %s, %s", orm.SetColumns.ExerciseID, orm.SetColumns.WorkoutID, orm.SetColumns.CreatedAt),
-	//	orm.SetWhere.ExerciseID.IN(exerciseIDs),
-	//).All(ctx, r.executor())
-
-	//SELECT workout_id
-	//FROM (SELECT distinct on (exercise_id) workout_id, created_at
-	//FROM getstronger.sets
-	//where exercise_id in ('b3bf3f3d-242c-4325-b06c-7fcc4aa71bf9',
-	//	'0a9f7d38-8c28-4641-b40f-1af145cc3fca',
-	//	'924283b1-9981-4551-9447-aadd5ffabda9')) as t
-	//ORDER BY created_at DESC;
-
-	//latestSets, err := orm.Sets(
-	//	orm.SetWhere.WorkoutID.IN(workoutIDs),
-	//	qm.OrderBy(fmt.Sprintf("%s ASC", orm.SetColumns.CreatedAt)),
-	//).All(ctx, r.executor())
-	//if err != nil {
-	//	return nil, fmt.Errorf("sets fetch: %w", err)
-	//}
-
+func (r *Repo) GetPreviousSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
 	rawQuery := `
-	SELECT *
-	FROM getstronger.sets
-	WHERE workout_id IN (SELECT DISTINCT ON (exercise_id) workout_id
-						 FROM getstronger.sets
-						 WHERE exercise_id = ANY ($1)
-						 ORDER BY exercise_id, created_at DESC)
-	ORDER BY created_at;
-	`
+	SELECT * FROM getstronger.sets WHERE workout_id IN (
+		SELECT DISTINCT ON (exercise_id) workout_id	FROM getstronger.sets WHERE exercise_id = ANY ($1) ORDER BY exercise_id, created_at DESC
+	) ORDER BY created_at;
+`
 
-	// Execute the query
 	var sets orm.SetSlice
 	if err := queries.Raw(rawQuery, types.Array(exerciseIDs)).Bind(ctx, r.executor(), &sets); err != nil {
 		log.Fatalf("Failed to execute query: %v", err)
 	}
 
-	boil.DebugMode = false
 	return sets, nil
 }

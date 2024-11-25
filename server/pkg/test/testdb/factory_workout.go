@@ -27,7 +27,7 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 		opt(workout)
 	}
 
-	boil.DebugMode = true
+	boil.DebugMode = f.debug
 	if err := workout.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert workout: %w", err))
 	}
