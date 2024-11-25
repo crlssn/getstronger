@@ -7,6 +7,7 @@ var TableNames = struct {
 	Auth              string
 	Exercises         string
 	ExercisesRoutines string
+	Followers         string
 	Routines          string
 	Sets              string
 	Users             string
@@ -15,6 +16,7 @@ var TableNames = struct {
 	Auth:              "auth",
 	Exercises:         "exercises",
 	ExercisesRoutines: "exercises_routines",
+	Followers:         "followers",
 	Routines:          "routines",
 	Sets:              "sets",
 	Users:             "users",
