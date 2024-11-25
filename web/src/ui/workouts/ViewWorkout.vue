@@ -39,7 +39,6 @@ const fetchExercises = async () => {
     exerciseIDs.push(exerciseSet.exerciseId)
   })
 
-  console.log(exerciseIDs)
   const req = create(ListExercisesRequestSchema, {
     exerciseIds: exerciseIDs,
     pageSize: 100, // TODO: Handle workouts with more than 100 exercises.
@@ -75,9 +74,9 @@ const deleteWorkout = async () => {
     </li>
   </ul>
   <AppButton type="button" colour="gray" class="mt-6">Edit Workout</AppButton>
-  <AppButton type="button" colour="red" class="mt-6" @click="deleteWorkout"
-    >Delete Workout</AppButton
-  >
+  <AppButton type="button" colour="red" class="mt-6" @click="deleteWorkout">
+    Delete Workout
+  </AppButton>
 </template>
 
 <style scoped>

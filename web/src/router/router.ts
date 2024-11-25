@@ -16,6 +16,7 @@ import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
 import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
+import ProfileView from "@/ui/profile/ProfileView.vue";
 import { create } from '@bufbuild/protobuf'
 
 const router: Router = createRouter({
@@ -27,6 +28,13 @@ const router: Router = createRouter({
       component: HomeView,
       beforeEnter: [auth],
       meta: { title: 'Home' },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      beforeEnter: [auth],
+      meta: { title: 'Profile' },
     },
     {
       path: '/workouts',
