@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/volatiletech/null/v8"
@@ -722,7 +721,7 @@ func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string)
 
 	var sets orm.SetSlice
 	if err := queries.Raw(rawQuery, types.Array(exerciseIDs)).Bind(ctx, r.executor(), &sets); err != nil {
-		log.Fatalf("Failed to execute query: %v", err)
+		return nil, fmt.Errorf("previous workout sets fetch: %w", err)
 	}
 
 	return sets, nil
