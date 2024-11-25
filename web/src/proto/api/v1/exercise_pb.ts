@@ -5,7 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { FieldMask, Message, proto3 } from "@bufbuild/protobuf";
-import { ExerciseSets } from "./shared_pb.js";
+import { ExerciseSets, Set } from "./shared_pb.js";
 
 /**
  * @generated from message api.v1.CreateExerciseRequest
@@ -478,6 +478,123 @@ export class GetPreviousWorkoutSetsResponse extends Message<GetPreviousWorkoutSe
 
   static equals(a: GetPreviousWorkoutSetsResponse | PlainMessage<GetPreviousWorkoutSetsResponse> | undefined, b: GetPreviousWorkoutSetsResponse | PlainMessage<GetPreviousWorkoutSetsResponse> | undefined): boolean {
     return proto3.util.equals(GetPreviousWorkoutSetsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.GetPersonalBestsRequest
+ */
+export class GetPersonalBestsRequest extends Message<GetPersonalBestsRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<GetPersonalBestsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetPersonalBestsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPersonalBestsRequest {
+    return new GetPersonalBestsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPersonalBestsRequest {
+    return new GetPersonalBestsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPersonalBestsRequest {
+    return new GetPersonalBestsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPersonalBestsRequest | PlainMessage<GetPersonalBestsRequest> | undefined, b: GetPersonalBestsRequest | PlainMessage<GetPersonalBestsRequest> | undefined): boolean {
+    return proto3.util.equals(GetPersonalBestsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.GetPersonalBestsResponse
+ */
+export class GetPersonalBestsResponse extends Message<GetPersonalBestsResponse> {
+  /**
+   * @generated from field: repeated api.v1.PersonalBest personal_bests = 1;
+   */
+  personalBests: PersonalBest[] = [];
+
+  constructor(data?: PartialMessage<GetPersonalBestsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetPersonalBestsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "personal_bests", kind: "message", T: PersonalBest, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPersonalBestsResponse {
+    return new GetPersonalBestsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPersonalBestsResponse {
+    return new GetPersonalBestsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPersonalBestsResponse {
+    return new GetPersonalBestsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPersonalBestsResponse | PlainMessage<GetPersonalBestsResponse> | undefined, b: GetPersonalBestsResponse | PlainMessage<GetPersonalBestsResponse> | undefined): boolean {
+    return proto3.util.equals(GetPersonalBestsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.PersonalBest
+ */
+export class PersonalBest extends Message<PersonalBest> {
+  /**
+   * @generated from field: api.v1.Exercise exercise = 1;
+   */
+  exercise?: Exercise;
+
+  /**
+   * @generated from field: api.v1.Set set = 2;
+   */
+  set?: Set;
+
+  constructor(data?: PartialMessage<PersonalBest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.PersonalBest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "exercise", kind: "message", T: Exercise },
+    { no: 2, name: "set", kind: "message", T: Set },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PersonalBest {
+    return new PersonalBest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PersonalBest {
+    return new PersonalBest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PersonalBest {
+    return new PersonalBest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PersonalBest | PlainMessage<PersonalBest> | undefined, b: PersonalBest | PlainMessage<PersonalBest> | undefined): boolean {
+    return proto3.util.equals(PersonalBest, a, b);
   }
 }
 

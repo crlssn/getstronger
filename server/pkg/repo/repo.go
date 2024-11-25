@@ -729,3 +729,25 @@ func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string)
 
 	return sets, nil
 }
+
+type ListPersonalBestsOpt func() qm.QueryMod
+
+func ListPersonalBestsWithUserID(userID string) ListPersonalBestsOpt {
+	return func() qm.QueryMod {
+		return orm.PersonalBestWhere.UserID.EQ(null.StringFrom(userID))
+	}
+}
+
+func (r *Repo) ListPersonalBests(ctx context.Context, opts ...ListPersonalBestsOpt) (orm.PersonalBestSlice, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	personalBests, err := orm.PersonalBests(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("personal bests fetch: %w", err)
+	}
+
+	return personalBests, nil
+}

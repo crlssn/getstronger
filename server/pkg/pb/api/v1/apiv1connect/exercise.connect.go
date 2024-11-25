@@ -47,6 +47,9 @@ const (
 	// ExerciseServiceGetPreviousWorkoutSetsProcedure is the fully-qualified name of the
 	// ExerciseService's GetPreviousWorkoutSets RPC.
 	ExerciseServiceGetPreviousWorkoutSetsProcedure = "/api.v1.ExerciseService/GetPreviousWorkoutSets"
+	// ExerciseServiceGetPersonalBestsProcedure is the fully-qualified name of the ExerciseService's
+	// GetPersonalBests RPC.
+	ExerciseServiceGetPersonalBestsProcedure = "/api.v1.ExerciseService/GetPersonalBests"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -58,6 +61,7 @@ var (
 	exerciseServiceDeleteMethodDescriptor                 = exerciseServiceServiceDescriptor.Methods().ByName("Delete")
 	exerciseServiceListMethodDescriptor                   = exerciseServiceServiceDescriptor.Methods().ByName("List")
 	exerciseServiceGetPreviousWorkoutSetsMethodDescriptor = exerciseServiceServiceDescriptor.Methods().ByName("GetPreviousWorkoutSets")
+	exerciseServiceGetPersonalBestsMethodDescriptor       = exerciseServiceServiceDescriptor.Methods().ByName("GetPersonalBests")
 )
 
 // ExerciseServiceClient is a client for the api.v1.ExerciseService service.
@@ -68,6 +72,7 @@ type ExerciseServiceClient interface {
 	Delete(context.Context, *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error)
 	List(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
 	GetPreviousWorkoutSets(context.Context, *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error)
+	GetPersonalBests(context.Context, *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error)
 }
 
 // NewExerciseServiceClient constructs a client for the api.v1.ExerciseService service. By default,
@@ -116,6 +121,12 @@ func NewExerciseServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(exerciseServiceGetPreviousWorkoutSetsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		getPersonalBests: connect.NewClient[v1.GetPersonalBestsRequest, v1.GetPersonalBestsResponse](
+			httpClient,
+			baseURL+ExerciseServiceGetPersonalBestsProcedure,
+			connect.WithSchema(exerciseServiceGetPersonalBestsMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -127,6 +138,7 @@ type exerciseServiceClient struct {
 	delete                 *connect.Client[v1.DeleteExerciseRequest, v1.DeleteExerciseResponse]
 	list                   *connect.Client[v1.ListExercisesRequest, v1.ListExercisesResponse]
 	getPreviousWorkoutSets *connect.Client[v1.GetPreviousWorkoutSetsRequest, v1.GetPreviousWorkoutSetsResponse]
+	getPersonalBests       *connect.Client[v1.GetPersonalBestsRequest, v1.GetPersonalBestsResponse]
 }
 
 // Create calls api.v1.ExerciseService.Create.
@@ -159,6 +171,11 @@ func (c *exerciseServiceClient) GetPreviousWorkoutSets(ctx context.Context, req 
 	return c.getPreviousWorkoutSets.CallUnary(ctx, req)
 }
 
+// GetPersonalBests calls api.v1.ExerciseService.GetPersonalBests.
+func (c *exerciseServiceClient) GetPersonalBests(ctx context.Context, req *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error) {
+	return c.getPersonalBests.CallUnary(ctx, req)
+}
+
 // ExerciseServiceHandler is an implementation of the api.v1.ExerciseService service.
 type ExerciseServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error)
@@ -167,6 +184,7 @@ type ExerciseServiceHandler interface {
 	Delete(context.Context, *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error)
 	List(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
 	GetPreviousWorkoutSets(context.Context, *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error)
+	GetPersonalBests(context.Context, *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error)
 }
 
 // NewExerciseServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -211,6 +229,12 @@ func NewExerciseServiceHandler(svc ExerciseServiceHandler, opts ...connect.Handl
 		connect.WithSchema(exerciseServiceGetPreviousWorkoutSetsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	exerciseServiceGetPersonalBestsHandler := connect.NewUnaryHandler(
+		ExerciseServiceGetPersonalBestsProcedure,
+		svc.GetPersonalBests,
+		connect.WithSchema(exerciseServiceGetPersonalBestsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.ExerciseService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ExerciseServiceCreateProcedure:
@@ -225,6 +249,8 @@ func NewExerciseServiceHandler(svc ExerciseServiceHandler, opts ...connect.Handl
 			exerciseServiceListHandler.ServeHTTP(w, r)
 		case ExerciseServiceGetPreviousWorkoutSetsProcedure:
 			exerciseServiceGetPreviousWorkoutSetsHandler.ServeHTTP(w, r)
+		case ExerciseServiceGetPersonalBestsProcedure:
+			exerciseServiceGetPersonalBestsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -256,4 +282,8 @@ func (UnimplementedExerciseServiceHandler) List(context.Context, *connect.Reques
 
 func (UnimplementedExerciseServiceHandler) GetPreviousWorkoutSets(context.Context, *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.ExerciseService.GetPreviousWorkoutSets is not implemented"))
+}
+
+func (UnimplementedExerciseServiceHandler) GetPersonalBests(context.Context, *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.ExerciseService.GetPersonalBests is not implemented"))
 }

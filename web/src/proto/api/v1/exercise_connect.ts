@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateExerciseRequest, CreateExerciseResponse, DeleteExerciseRequest, DeleteExerciseResponse, GetExerciseRequest, GetExerciseResponse, GetPreviousWorkoutSetsRequest, GetPreviousWorkoutSetsResponse, ListExercisesRequest, ListExercisesResponse, UpdateExerciseRequest, UpdateExerciseResponse } from "./exercise_pb.js";
+import { CreateExerciseRequest, CreateExerciseResponse, DeleteExerciseRequest, DeleteExerciseResponse, GetExerciseRequest, GetExerciseResponse, GetPersonalBestsRequest, GetPersonalBestsResponse, GetPreviousWorkoutSetsRequest, GetPreviousWorkoutSetsResponse, ListExercisesRequest, ListExercisesResponse, UpdateExerciseRequest, UpdateExerciseResponse } from "./exercise_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -64,6 +64,15 @@ export const ExerciseService = {
       name: "GetPreviousWorkoutSets",
       I: GetPreviousWorkoutSetsRequest,
       O: GetPreviousWorkoutSetsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc api.v1.ExerciseService.GetPersonalBests
+     */
+    getPersonalBests: {
+      name: "GetPersonalBests",
+      I: GetPersonalBestsRequest,
+      O: GetPersonalBestsResponse,
       kind: MethodKind.Unary,
     },
   }
