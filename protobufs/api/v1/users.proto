@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/shared.proto";
+import "api/v1/options.proto";
+
+import "buf/validate/validate.proto";
+
+service UserService {
+  rpc Follow(FollowRequest) returns (FollowResponse) {
+    option (auth) = true;
+  }
+  rpc Unfollow(UnfollowRequest) returns (UnfollowResponse) {
+    option (auth) = true;
+  }
+  rpc ListFollowers(ListFollowersRequest) returns (ListFollowersResponse) {
+    option (auth) = true;
+  }
+  rpc ListFollowees(ListFolloweesRequest) returns (ListFolloweesResponse) {
+    option (auth) = true;
+  }
+}
+
+message FollowRequest {
+  string follow_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message FollowResponse {}
+
+message UnfollowRequest {
+  string unfollow_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message UnfollowResponse {}
+
+message ListFollowersRequest {
+  string follower_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message ListFollowersResponse {
+  repeated User followers = 1;
+}
+
+message ListFolloweesRequest {
+  string followee_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message ListFolloweesResponse {
+  repeated User followees = 1;
+}
+
+message User {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string first_name = 2 [(buf.validate.field).string.min_len = 1];
+  string last_name = 3 [(buf.validate.field).string.min_len = 1];
+}
