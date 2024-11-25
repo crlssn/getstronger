@@ -1,9 +1,6 @@
 name: Lint
 
 on:
-  push:
-    paths:
-      - 'protobufs/**'
   pull_request:
     paths:
       - 'protobufs/**'
