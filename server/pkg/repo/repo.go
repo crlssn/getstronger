@@ -739,7 +739,7 @@ func ListPersonalBestsWithUserID(userID string) ListPersonalBestsOpt {
 }
 
 func (r *Repo) ListPersonalBests(ctx context.Context, opts ...ListPersonalBestsOpt) (orm.PersonalBestSlice, error) {
-	var query []qm.QueryMod
+	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
