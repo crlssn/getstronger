@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/auth'
 import { Code, ConnectError } from '@connectrpc/connect'
 import router from '@/router/router'
 import type { NavigationFailure } from 'vue-router'
-import { DateTime } from 'luxon'
 
 export async function RefreshAccessTokenOrLogout(): Promise<void | NavigationFailure | undefined> {
   console.log('refresh access token or logout')

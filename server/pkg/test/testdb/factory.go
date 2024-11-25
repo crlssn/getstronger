@@ -1,3 +1,4 @@
+//nolint:all
 package testdb
 
 import (
@@ -30,7 +31,6 @@ func UUID(digit int) string {
 	digitStr := fmt.Sprintf("%d", digit)
 	return strings.Join([]string{
 		strings.Repeat(digitStr, 8),
-
 		strings.Repeat(digitStr, 4),
 		strings.Repeat(digitStr, 4),
 		strings.Repeat(digitStr, 4),
