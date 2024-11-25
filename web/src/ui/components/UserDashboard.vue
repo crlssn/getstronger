@@ -19,8 +19,8 @@ import {
 } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import { RouterView, useRoute } from 'vue-router'
-import NavigationMobile from '@/components/NavigationMobile.vue'
-import { usePageTitleStore } from '@/stores/pageTitle'
+import NavigationMobile from '@/ui/components/NavigationMobile.vue'
+import { usePageTitleStore } from '@/stores/pageTitle.ts'
 
 const navigation = [
   { name: 'Home', href: '/home', icon: HomeIcon },

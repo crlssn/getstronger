@@ -4,7 +4,7 @@ import { AuthClient } from '@/clients/clients'
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { ConnectError } from '@connectrpc/connect'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const firstName = ref('')
 const lastName = ref('')

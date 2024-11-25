@@ -5,7 +5,7 @@ import { GetRoutineRequest, Routine, UpdateExerciseOrderRequest } from '@/pb/api
 import { RoutineClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import type { SortableEvent } from 'sortablejs'
 

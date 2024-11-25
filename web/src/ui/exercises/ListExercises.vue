@@ -3,7 +3,7 @@ import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
 import { ExerciseClient } from '@/clients/clients'
 import { onMounted, ref } from 'vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')

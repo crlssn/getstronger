@@ -2,11 +2,11 @@
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, WorkoutClient } from '@/clients/clients'
 import { DeleteWorkoutRequest, GetWorkoutRequest, Workout } from '@/pb/api/v1/workouts_pb'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { Exercise, ListExercisesRequest } from '@/pb/api/v1/exercise_pb'
-import { formatToCompactDateTime } from '@/pkg/datetime/datetime'
+import { formatToCompactDateTime } from '@/utils/datetime'
 import router from '@/router/router'
 
 const workout = ref<Workout | undefined>(undefined)

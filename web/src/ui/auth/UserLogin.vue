@@ -7,7 +7,7 @@ import { ConnectError } from '@connectrpc/connect'
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router/router'
 import { ScheduleTokenRefresh } from '@/jwt/jwt'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const email = ref('')
 const password = ref('')

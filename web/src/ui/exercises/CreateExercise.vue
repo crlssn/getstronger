@@ -1,57 +1,28 @@
 <script setup lang="ts">
-import { Exercise, GetExerciseRequest, UpdateExerciseRequest } from '@/pb/api/v1/exercise_pb'
-import AppButton from '@/components/AppButton.vue'
-import { onMounted, ref } from 'vue'
+import { CreateExerciseRequest } from '@/pb/api/v1/exercise_pb'
+import AppButton from '@/ui/components/AppButton.vue'
+import { ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'
-import { useRoute } from 'vue-router'
-import { FieldMask } from '@bufbuild/protobuf'
 
 const name = ref('')
 const label = ref('')
 const resError = ref('')
 const resOK = ref(false)
+const rest = ref(0)
 
-const route = useRoute()
-
-async function loadExercise() {
-  const request = new GetExerciseRequest({
-    id: route.params.id as string,
+async function createExercise() {
+  const request = new CreateExerciseRequest({
+    name: name.value,
+    label: label.value,
   })
   try {
-    const response = await ExerciseClient.get(request)
-    if (typeof response.exercise === 'undefined') {
-      return
-    }
-    name.value = response.exercise.name
-    label.value = response.exercise.label
-  } catch (error) {
-    resOK.value = false
-    if (error instanceof ConnectError) {
-      resError.value = error.message
-      return
-    }
-    console.error('create exercise failed:', error)
-  }
-}
-
-onMounted(() => {
-  loadExercise()
-})
-
-async function updateExercise() {
-  const request = new UpdateExerciseRequest({
-    exercise: new Exercise({
-      id: route.params.id as string,
-      name: name.value,
-      label: label.value,
-    }),
-    updateMask: new FieldMask({ paths: ['name', 'label'] }),
-  })
-  try {
-    await ExerciseClient.update(request)
+    await ExerciseClient.create(request)
     resOK.value = true
     resError.value = ''
+    name.value = ''
+    label.value = ''
+    rest.value = 0
   } catch (error) {
     resOK.value = false
     if (error instanceof ConnectError) {
@@ -70,7 +41,7 @@ async function updateExercise() {
       class="border-2 border-green-400 bg-green-300 rounded-md py-3 px-5 mb-4 text-sm text-green-800 font-medium"
       role="alert"
     >
-      Exercise updated successfully.
+      Your new exercise has been created successfully.
     </div>
     <div
       v-if="resError"
@@ -79,7 +50,7 @@ async function updateExercise() {
     >
       {{ resError }}
     </div>
-    <form class="space-y-6" @submit.prevent="updateExercise">
+    <form class="space-y-6" @submit.prevent="createExercise">
       <div>
         <label for="name" class="block text-xs font-semibold text-gray-900 uppercase">Name</label>
         <div class="mt-2">
@@ -110,9 +81,7 @@ async function updateExercise() {
         </div>
       </div>
 
-      <AppButton text="Create" type="submit" colour="primary" class="mt-6"
-        >Update Exercise</AppButton
-      >
+      <AppButton text="Create" type="submit" colour="primary" class="mt-6">Save Exercise</AppButton>
     </form>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CardWorkout from '@/components/CardWorkout.vue'
+import CardWorkout from '@/ui/components/CardWorkout.vue'
 </script>
 
 <template>
