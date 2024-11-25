@@ -44,16 +44,20 @@ const (
 	ExerciseServiceDeleteProcedure = "/api.v1.ExerciseService/Delete"
 	// ExerciseServiceListProcedure is the fully-qualified name of the ExerciseService's List RPC.
 	ExerciseServiceListProcedure = "/api.v1.ExerciseService/List"
+	// ExerciseServiceGetPreviousSetsProcedure is the fully-qualified name of the ExerciseService's
+	// GetPreviousSets RPC.
+	ExerciseServiceGetPreviousSetsProcedure = "/api.v1.ExerciseService/GetPreviousSets"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	exerciseServiceServiceDescriptor      = v1.File_api_v1_exercise_proto.Services().ByName("ExerciseService")
-	exerciseServiceCreateMethodDescriptor = exerciseServiceServiceDescriptor.Methods().ByName("Create")
-	exerciseServiceGetMethodDescriptor    = exerciseServiceServiceDescriptor.Methods().ByName("Get")
-	exerciseServiceUpdateMethodDescriptor = exerciseServiceServiceDescriptor.Methods().ByName("Update")
-	exerciseServiceDeleteMethodDescriptor = exerciseServiceServiceDescriptor.Methods().ByName("Delete")
-	exerciseServiceListMethodDescriptor   = exerciseServiceServiceDescriptor.Methods().ByName("List")
+	exerciseServiceServiceDescriptor               = v1.File_api_v1_exercise_proto.Services().ByName("ExerciseService")
+	exerciseServiceCreateMethodDescriptor          = exerciseServiceServiceDescriptor.Methods().ByName("Create")
+	exerciseServiceGetMethodDescriptor             = exerciseServiceServiceDescriptor.Methods().ByName("Get")
+	exerciseServiceUpdateMethodDescriptor          = exerciseServiceServiceDescriptor.Methods().ByName("Update")
+	exerciseServiceDeleteMethodDescriptor          = exerciseServiceServiceDescriptor.Methods().ByName("Delete")
+	exerciseServiceListMethodDescriptor            = exerciseServiceServiceDescriptor.Methods().ByName("List")
+	exerciseServiceGetPreviousSetsMethodDescriptor = exerciseServiceServiceDescriptor.Methods().ByName("GetPreviousSets")
 )
 
 // ExerciseServiceClient is a client for the api.v1.ExerciseService service.
@@ -63,6 +67,7 @@ type ExerciseServiceClient interface {
 	Update(context.Context, *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error)
 	Delete(context.Context, *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error)
 	List(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
+	GetPreviousSets(context.Context, *connect.Request[v1.GetPreviousSetsRequest]) (*connect.Response[v1.GetPreviousSetsResponse], error)
 }
 
 // NewExerciseServiceClient constructs a client for the api.v1.ExerciseService service. By default,
@@ -105,16 +110,23 @@ func NewExerciseServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(exerciseServiceListMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		getPreviousSets: connect.NewClient[v1.GetPreviousSetsRequest, v1.GetPreviousSetsResponse](
+			httpClient,
+			baseURL+ExerciseServiceGetPreviousSetsProcedure,
+			connect.WithSchema(exerciseServiceGetPreviousSetsMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // exerciseServiceClient implements ExerciseServiceClient.
 type exerciseServiceClient struct {
-	create *connect.Client[v1.CreateExerciseRequest, v1.CreateExerciseResponse]
-	get    *connect.Client[v1.GetExerciseRequest, v1.GetExerciseResponse]
-	update *connect.Client[v1.UpdateExerciseRequest, v1.UpdateExerciseResponse]
-	delete *connect.Client[v1.DeleteExerciseRequest, v1.DeleteExerciseResponse]
-	list   *connect.Client[v1.ListExercisesRequest, v1.ListExercisesResponse]
+	create          *connect.Client[v1.CreateExerciseRequest, v1.CreateExerciseResponse]
+	get             *connect.Client[v1.GetExerciseRequest, v1.GetExerciseResponse]
+	update          *connect.Client[v1.UpdateExerciseRequest, v1.UpdateExerciseResponse]
+	delete          *connect.Client[v1.DeleteExerciseRequest, v1.DeleteExerciseResponse]
+	list            *connect.Client[v1.ListExercisesRequest, v1.ListExercisesResponse]
+	getPreviousSets *connect.Client[v1.GetPreviousSetsRequest, v1.GetPreviousSetsResponse]
 }
 
 // Create calls api.v1.ExerciseService.Create.
@@ -142,6 +154,11 @@ func (c *exerciseServiceClient) List(ctx context.Context, req *connect.Request[v
 	return c.list.CallUnary(ctx, req)
 }
 
+// GetPreviousSets calls api.v1.ExerciseService.GetPreviousSets.
+func (c *exerciseServiceClient) GetPreviousSets(ctx context.Context, req *connect.Request[v1.GetPreviousSetsRequest]) (*connect.Response[v1.GetPreviousSetsResponse], error) {
+	return c.getPreviousSets.CallUnary(ctx, req)
+}
+
 // ExerciseServiceHandler is an implementation of the api.v1.ExerciseService service.
 type ExerciseServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error)
@@ -149,6 +166,7 @@ type ExerciseServiceHandler interface {
 	Update(context.Context, *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error)
 	Delete(context.Context, *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error)
 	List(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
+	GetPreviousSets(context.Context, *connect.Request[v1.GetPreviousSetsRequest]) (*connect.Response[v1.GetPreviousSetsResponse], error)
 }
 
 // NewExerciseServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -187,6 +205,12 @@ func NewExerciseServiceHandler(svc ExerciseServiceHandler, opts ...connect.Handl
 		connect.WithSchema(exerciseServiceListMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	exerciseServiceGetPreviousSetsHandler := connect.NewUnaryHandler(
+		ExerciseServiceGetPreviousSetsProcedure,
+		svc.GetPreviousSets,
+		connect.WithSchema(exerciseServiceGetPreviousSetsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.ExerciseService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ExerciseServiceCreateProcedure:
@@ -199,6 +223,8 @@ func NewExerciseServiceHandler(svc ExerciseServiceHandler, opts ...connect.Handl
 			exerciseServiceDeleteHandler.ServeHTTP(w, r)
 		case ExerciseServiceListProcedure:
 			exerciseServiceListHandler.ServeHTTP(w, r)
+		case ExerciseServiceGetPreviousSetsProcedure:
+			exerciseServiceGetPreviousSetsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -226,4 +252,8 @@ func (UnimplementedExerciseServiceHandler) Delete(context.Context, *connect.Requ
 
 func (UnimplementedExerciseServiceHandler) List(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.ExerciseService.List is not implemented"))
+}
+
+func (UnimplementedExerciseServiceHandler) GetPreviousSets(context.Context, *connect.Request[v1.GetPreviousSetsRequest]) (*connect.Response[v1.GetPreviousSetsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.ExerciseService.GetPreviousSets is not implemented"))
 }

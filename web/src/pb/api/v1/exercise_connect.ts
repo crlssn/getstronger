@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateExerciseRequest, CreateExerciseResponse, DeleteExerciseRequest, DeleteExerciseResponse, GetExerciseRequest, GetExerciseResponse, ListExercisesRequest, ListExercisesResponse, UpdateExerciseRequest, UpdateExerciseResponse } from "./exercise_pb.js";
+import { CreateExerciseRequest, CreateExerciseResponse, DeleteExerciseRequest, DeleteExerciseResponse, GetExerciseRequest, GetExerciseResponse, GetPreviousSetsRequest, GetPreviousSetsResponse, ListExercisesRequest, ListExercisesResponse, UpdateExerciseRequest, UpdateExerciseResponse } from "./exercise_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -55,6 +55,15 @@ export const ExerciseService = {
       name: "List",
       I: ListExercisesRequest,
       O: ListExercisesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc api.v1.ExerciseService.GetPreviousSets
+     */
+    getPreviousSets: {
+      name: "GetPreviousSets",
+      I: GetPreviousSetsRequest,
+      O: GetPreviousSetsResponse,
       kind: MethodKind.Unary,
     },
   }

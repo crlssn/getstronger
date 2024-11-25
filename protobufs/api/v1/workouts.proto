@@ -23,9 +23,6 @@ service WorkoutService {
   rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
     option (auth) = true;
   }
-  rpc GetLatestExerciseSets(GetLatestExerciseSetsRequest) returns (GetLatestExerciseSetsResponse) {
-    option (auth) = true;
-  }
 //  rpc Start(StartWorkoutRequest) returns (StartWorkoutResponse) {
 //    option (auth) = true;
 //  }
@@ -38,14 +35,6 @@ service WorkoutService {
 //  rpc RemoveExercise(RemoveExerciseRequest) returns (RemoveExerciseResponse) {
 //    option (auth) = true;
 //  }
-}
-
-message GetLatestExerciseSetsRequest {
-  repeated string exercise_ids = 1 [(buf.validate.field).repeated.items.string.uuid = true];
-}
-
-message GetLatestExerciseSetsResponse {
-  repeated ExerciseSets exercise_sets = 1;
 }
 
 message CreateWorkoutRequest {

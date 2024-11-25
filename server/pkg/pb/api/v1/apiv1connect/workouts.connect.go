@@ -42,19 +42,15 @@ const (
 	WorkoutServiceListProcedure = "/api.v1.WorkoutService/List"
 	// WorkoutServiceDeleteProcedure is the fully-qualified name of the WorkoutService's Delete RPC.
 	WorkoutServiceDeleteProcedure = "/api.v1.WorkoutService/Delete"
-	// WorkoutServiceGetLatestExerciseSetsProcedure is the fully-qualified name of the WorkoutService's
-	// GetLatestExerciseSets RPC.
-	WorkoutServiceGetLatestExerciseSetsProcedure = "/api.v1.WorkoutService/GetLatestExerciseSets"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	workoutServiceServiceDescriptor                     = v1.File_api_v1_workouts_proto.Services().ByName("WorkoutService")
-	workoutServiceCreateMethodDescriptor                = workoutServiceServiceDescriptor.Methods().ByName("Create")
-	workoutServiceGetMethodDescriptor                   = workoutServiceServiceDescriptor.Methods().ByName("Get")
-	workoutServiceListMethodDescriptor                  = workoutServiceServiceDescriptor.Methods().ByName("List")
-	workoutServiceDeleteMethodDescriptor                = workoutServiceServiceDescriptor.Methods().ByName("Delete")
-	workoutServiceGetLatestExerciseSetsMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("GetLatestExerciseSets")
+	workoutServiceServiceDescriptor      = v1.File_api_v1_workouts_proto.Services().ByName("WorkoutService")
+	workoutServiceCreateMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("Create")
+	workoutServiceGetMethodDescriptor    = workoutServiceServiceDescriptor.Methods().ByName("Get")
+	workoutServiceListMethodDescriptor   = workoutServiceServiceDescriptor.Methods().ByName("List")
+	workoutServiceDeleteMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("Delete")
 )
 
 // WorkoutServiceClient is a client for the api.v1.WorkoutService service.
@@ -63,7 +59,6 @@ type WorkoutServiceClient interface {
 	Get(context.Context, *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error)
 	List(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 	Delete(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
-	GetLatestExerciseSets(context.Context, *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error)
 }
 
 // NewWorkoutServiceClient constructs a client for the api.v1.WorkoutService service. By default, it
@@ -100,22 +95,15 @@ func NewWorkoutServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(workoutServiceDeleteMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		getLatestExerciseSets: connect.NewClient[v1.GetLatestExerciseSetsRequest, v1.GetLatestExerciseSetsResponse](
-			httpClient,
-			baseURL+WorkoutServiceGetLatestExerciseSetsProcedure,
-			connect.WithSchema(workoutServiceGetLatestExerciseSetsMethodDescriptor),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // workoutServiceClient implements WorkoutServiceClient.
 type workoutServiceClient struct {
-	create                *connect.Client[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse]
-	get                   *connect.Client[v1.GetWorkoutRequest, v1.GetWorkoutResponse]
-	list                  *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
-	delete                *connect.Client[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse]
-	getLatestExerciseSets *connect.Client[v1.GetLatestExerciseSetsRequest, v1.GetLatestExerciseSetsResponse]
+	create *connect.Client[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse]
+	get    *connect.Client[v1.GetWorkoutRequest, v1.GetWorkoutResponse]
+	list   *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
+	delete *connect.Client[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse]
 }
 
 // Create calls api.v1.WorkoutService.Create.
@@ -138,18 +126,12 @@ func (c *workoutServiceClient) Delete(ctx context.Context, req *connect.Request[
 	return c.delete.CallUnary(ctx, req)
 }
 
-// GetLatestExerciseSets calls api.v1.WorkoutService.GetLatestExerciseSets.
-func (c *workoutServiceClient) GetLatestExerciseSets(ctx context.Context, req *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error) {
-	return c.getLatestExerciseSets.CallUnary(ctx, req)
-}
-
 // WorkoutServiceHandler is an implementation of the api.v1.WorkoutService service.
 type WorkoutServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error)
 	Get(context.Context, *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error)
 	List(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 	Delete(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
-	GetLatestExerciseSets(context.Context, *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error)
 }
 
 // NewWorkoutServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -182,12 +164,6 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 		connect.WithSchema(workoutServiceDeleteMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	workoutServiceGetLatestExerciseSetsHandler := connect.NewUnaryHandler(
-		WorkoutServiceGetLatestExerciseSetsProcedure,
-		svc.GetLatestExerciseSets,
-		connect.WithSchema(workoutServiceGetLatestExerciseSetsMethodDescriptor),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/api.v1.WorkoutService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case WorkoutServiceCreateProcedure:
@@ -198,8 +174,6 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 			workoutServiceListHandler.ServeHTTP(w, r)
 		case WorkoutServiceDeleteProcedure:
 			workoutServiceDeleteHandler.ServeHTTP(w, r)
-		case WorkoutServiceGetLatestExerciseSetsProcedure:
-			workoutServiceGetLatestExerciseSetsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -223,8 +197,4 @@ func (UnimplementedWorkoutServiceHandler) List(context.Context, *connect.Request
 
 func (UnimplementedWorkoutServiceHandler) Delete(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.Delete is not implemented"))
-}
-
-func (UnimplementedWorkoutServiceHandler) GetLatestExerciseSets(context.Context, *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.GetLatestExerciseSets is not implemented"))
 }

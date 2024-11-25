@@ -23,6 +23,50 @@ type exerciseHandler struct {
 	repo *repo.Repo
 }
 
+func (h *exerciseHandler) GetPreviousSets(ctx context.Context, req *connect.Request[v1.GetPreviousSetsRequest]) (*connect.Response[v1.GetPreviousSetsResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	sets, err := h.repo.GetPreviousSets(ctx, req.Msg.GetExerciseIds())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Info("no previous sets found", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
+			return &connect.Response[v1.GetPreviousSetsResponse]{
+				Msg: &v1.GetPreviousSetsResponse{
+					ExerciseSets: nil,
+				},
+			}, nil
+		}
+
+		log.Error("failed to get latest exercise sets", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	workoutIDs := make([]string, 0, len(sets))
+	for _, set := range sets {
+		workoutIDs = append(workoutIDs, set.WorkoutID)
+	}
+
+	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
+	if err != nil {
+		log.Error("failed to get workouts", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	for _, workout := range workouts {
+		if workout.UserID != userID {
+			log.Error("workout does not belong to user")
+			return nil, connect.NewError(connect.CodePermissionDenied, nil)
+		}
+	}
+
+	return &connect.Response[v1.GetPreviousSetsResponse]{
+		Msg: &v1.GetPreviousSetsResponse{
+			ExerciseSets: parseSetSliceToExerciseSetsPB(sets),
+		},
+	}, nil
+}
+
 func NewExerciseHandler(r *repo.Repo) apiv1connect.ExerciseServiceHandler {
 	return &exerciseHandler{r}
 }
