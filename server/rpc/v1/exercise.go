@@ -23,6 +23,10 @@ type exerciseHandler struct {
 	repo *repo.Repo
 }
 
+func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error) {
+	h.repo.ListPersonalBests(ctx, repo.ListPersonalBestsWithUserID(req.Msg.GetUserId()))
+}
+
 func NewExerciseHandler(r *repo.Repo) apiv1connect.ExerciseServiceHandler {
 	return &exerciseHandler{r}
 }

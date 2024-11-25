@@ -4,4 +4,7 @@
 package orm
 
 var ViewNames = struct {
-}{}
+	PersonalBests string
+}{
+	PersonalBests: "personal_bests",
+}

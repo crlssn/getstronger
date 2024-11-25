@@ -29,6 +29,9 @@ service ExerciseService {
   rpc GetPreviousWorkoutSets(GetPreviousWorkoutSetsRequest) returns (GetPreviousWorkoutSetsResponse) {
     option (auth) = true;
   }
+  rpc GetPersonalBests(GetPersonalBestsRequest) returns (GetPersonalBestsResponse) {
+    option (auth) = true;
+  }
 }
 
 message CreateExerciseRequest {
@@ -75,6 +78,18 @@ message GetPreviousWorkoutSetsRequest {
 }
 message GetPreviousWorkoutSetsResponse {
   repeated ExerciseSets exercise_sets = 1;
+}
+
+message GetPersonalBestsRequest {
+  string user_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetPersonalBestsResponse {
+  repeated PersonalBest personal_bests = 1;
+}
+
+message PersonalBest {
+  Exercise exercise = 1 [(buf.validate.field).required = true];
+  Set set = 2 [(buf.validate.field).required = true];
 }
 
 message Exercise {
