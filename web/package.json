@@ -19,7 +19,7 @@
     "@connectrpc/connect": "^1.6.1",
     "@connectrpc/connect-web": "^1.6.0",
     "@headlessui/vue": "^1.7.23",
-    "@heroicons/vue": "^2.1.5",
+    "@heroicons/vue": "^2.2.0",
     "@vueuse/core": "^11.3.0",
     "@vueuse/head": "^2.0.0",
     "@vueuse/integrations": "^11.3.0",
