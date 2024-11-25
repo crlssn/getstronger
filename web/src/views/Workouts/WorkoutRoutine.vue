@@ -2,17 +2,18 @@
 import AppButton from '@/components/AppButton.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { GetRoutineRequest, Routine } from '@/pb/api/v1/routines_pb'
-import { RoutineClient, WorkoutClient } from '@/clients/clients'
+import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
-import { CreateWorkoutRequest, GetLatestExerciseSetsRequest } from '@/pb/api/v1/workouts_pb'
+import { CreateWorkoutRequest } from '@/pb/api/v1/workouts_pb'
 import router from '@/router/router'
 import { DateTime } from 'luxon'
 import { Timestamp } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import { ExerciseSets } from '@/pb/api/v1/shared_pb'
+import { GetPreviousWorkoutSetsRequest } from '@/pb/api/v1/exercise_pb'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -41,10 +42,10 @@ onUnmounted(() => {
 })
 
 const fetchLatestExerciseSets = async () => {
-  const req = new GetLatestExerciseSetsRequest({
+  const req = new GetPreviousWorkoutSetsRequest({
     exerciseIds: routine.value?.exercises?.map((exercise) => exercise.id) || [],
   })
-  const res = await WorkoutClient.getLatestExerciseSets(req)
+  const res = await ExerciseClient.getPreviousWorkoutSets(req)
   prevExerciseSets.value = res.exerciseSets
 }
 
