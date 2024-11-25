@@ -23,7 +23,7 @@ type exerciseHandler struct {
 	repo *repo.Repo
 }
 
-func (h *exerciseHandler) GetPreviousSets(ctx context.Context, req *connect.Request[v1.GetPreviousSetsRequest]) (*connect.Response[v1.GetPreviousSetsResponse], error) {
+func (h *exerciseHandler) GetPreviousSets(ctx context.Context, req *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -31,8 +31,8 @@ func (h *exerciseHandler) GetPreviousSets(ctx context.Context, req *connect.Requ
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Warn("no previous workout sets", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
-			return &connect.Response[v1.GetPreviousSetsResponse]{
-				Msg: &v1.GetPreviousSetsResponse{
+			return &connect.Response[v1.GetPreviousWorkoutSetsResponse]{
+				Msg: &v1.GetPreviousWorkoutSetsResponse{
 					ExerciseSets: nil,
 				},
 			}, nil
@@ -60,8 +60,8 @@ func (h *exerciseHandler) GetPreviousSets(ctx context.Context, req *connect.Requ
 		}
 	}
 
-	return &connect.Response[v1.GetPreviousSetsResponse]{
-		Msg: &v1.GetPreviousSetsResponse{
+	return &connect.Response[v1.GetPreviousWorkoutSetsResponse]{
+		Msg: &v1.GetPreviousWorkoutSetsResponse{
 			ExerciseSets: parseSetSliceToExerciseSetsPB(sets),
 		},
 	}, nil

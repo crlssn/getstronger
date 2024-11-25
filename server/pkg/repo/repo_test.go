@@ -179,7 +179,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 	}
 }
 
-func (s *repoSuite) TestGetPreviousSets() {
+func (s *repoSuite) TestGetPreviousWorkoutSets() {
 	type expected struct {
 		err  error
 		sets orm.SetSlice
