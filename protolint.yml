@@ -1,0 +1,35 @@
+# Full config: https://github.com/yoheimuta/protolint/blob/master/_example/config/.protolint.yaml.
+lint:
+  rules:
+     all_default: true
+     remove:
+       - RPC_NAMES_UPPER_CAMEL_CASE
+       - MESSAGES_HAVE_COMMENT
+       - SERVICES_HAVE_COMMENT
+       - RPCS_HAVE_COMMENT
+       - FIELDS_HAVE_COMMENT
+       - ENUMS_HAVE_COMMENT
+       - ENUM_FIELDS_HAVE_COMMENT
+       - FILE_HAS_COMMENT
+       - RPC_NAMES_CASE
+       - MAX_LINE_LENGTH
+       - FIELD_NAMES_EXCLUDE_PREPOSITIONS
+  rules_option:
+    indent:
+      style: 2
+      not_insert_newline: true
+
+    quote_consistent:
+      quote: double
+
+    enum_field_names_zero_value_end_with:
+      suffix: UNSPECIFIED
+
+    service_names_end_with:
+      text: Service
+
+    rpc_names_case:
+      convention: upper_snake_case
+
+    syntax_consistent:
+      version: proto3
