@@ -23,6 +23,7 @@ func NewFactory(db *sql.DB) *Factory {
 	}
 }
 
+// UUID generates a UUID populated exclusively by the given digit which can be useful during debugging.
 func UUID(digit int) string {
 	if digit < 0 || digit > 9 {
 		panic("digit must be between 0 and 9")
