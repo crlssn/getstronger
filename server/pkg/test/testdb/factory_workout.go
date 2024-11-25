@@ -18,7 +18,8 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 		ID:         uuid.NewString(),
 		Name:       f.faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
 		UserID:     f.NewUser().ID,
-		FinishedAt: time.Time{},
+		StartedAt:  f.faker.Date(),
+		FinishedAt: f.faker.Date(),
 		CreatedAt:  time.Time{},
 	}
 
@@ -26,9 +27,11 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 		opt(workout)
 	}
 
+	boil.DebugMode = true
 	if err := workout.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert workout: %w", err))
 	}
+	boil.DebugMode = false
 
 	return workout
 }

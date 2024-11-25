@@ -28,9 +28,11 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 		opt(m)
 	}
 
+	boil.DebugMode = true
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert exercise: %w", err))
 	}
+	boil.DebugMode = false
 
 	return m
 }

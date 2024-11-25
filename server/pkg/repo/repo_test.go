@@ -192,12 +192,14 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 		expected    expected
 	}
 
-	exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
+	exerciseIDs := []string{"00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"}
+	//exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
 	for _, exerciseID := range exerciseIDs {
 		s.testFactory.NewExercise(testdb.ExerciseID(exerciseID))
 	}
 
-	workoutIDs := []string{uuid.NewString(), uuid.NewString()}
+	workoutIDs := []string{"00000000-0000-0000-0000-000000000000", "11111111-1111-1111-1111-111111111111"}
+	//workoutIDs := []string{uuid.NewString(), uuid.NewString()}
 	for _, workoutID := range workoutIDs {
 		s.testFactory.NewWorkout(testdb.WorkoutID(workoutID))
 	}
@@ -206,20 +208,20 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 
 	tests := []test{
 		{
-			name:        "ok_latest_exercise_sets",
+			name:        "ok",
 			exerciseIDs: exerciseIDs,
 			init: func(t test) {
-				s.testFactory.NewSet()
-				s.testFactory.NewSet()
+				s.testFactory.NewSet(testdb.SetCreatedAt(now.Add(-time.Minute)))
+				s.testFactory.NewSet(testdb.SetCreatedAt(now.Add(-time.Minute)))
 
 				for _, exerciseID := range t.exerciseIDs {
 					s.testFactory.NewSet(
 						testdb.SetExerciseID(exerciseID),
-						testdb.SetCreatedAt(now.Add(-time.Minute)),
+						testdb.SetCreatedAt(now.Add(-time.Second)),
 					)
 					s.testFactory.NewSet(
 						testdb.SetExerciseID(exerciseID),
-						testdb.SetCreatedAt(now.Add(-time.Minute)),
+						testdb.SetCreatedAt(now.Add(-time.Second)),
 					)
 				}
 
@@ -248,21 +250,21 @@ func (s *repoSuite) TestGetLatestExerciseSets() {
 						ExerciseID: exerciseIDs[0],
 						Reps:       2,
 						Weight:     2,
-						CreatedAt:  now.Add(-time.Second),
+						CreatedAt:  now.Add(time.Second),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       3,
 						Weight:     3,
-						CreatedAt:  now.Add(-2 * time.Second),
+						CreatedAt:  now.Add(2 * time.Second),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       4,
 						Weight:     4,
-						CreatedAt:  now.Add(-3 * time.Second),
+						CreatedAt:  now.Add(3 * time.Second),
 					},
 				},
 			},
