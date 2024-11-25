@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
-import { ListRoutinesRequest, Routine } from '@/pb/api/v1/routines_pb'
+import { ListRoutinesRequest, Routine } from '@/proto/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())

@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { GetRoutineRequest, Routine } from '@/pb/api/v1/routines_pb'
+import { GetRoutineRequest, Routine } from '@/proto/api/v1/routines_pb'
 import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
-import { CreateWorkoutRequest } from '@/pb/api/v1/workouts_pb'
+import { CreateWorkoutRequest } from '@/proto/api/v1/workouts_pb'
 import router from '@/router/router'
 import { DateTime } from 'luxon'
 import { Timestamp } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
-import { ExerciseSets } from '@/pb/api/v1/shared_pb'
-import { GetPreviousWorkoutSetsRequest } from '@/pb/api/v1/exercise_pb'
+import { ExerciseSets } from '@/proto/api/v1/shared_pb'
+import { GetPreviousWorkoutSetsRequest } from '@/proto/api/v1/exercise_pb'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)

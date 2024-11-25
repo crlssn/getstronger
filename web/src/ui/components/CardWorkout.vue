@@ -5,12 +5,12 @@ interface Props {
 
 const props = defineProps<Props>()
 
-import DropdownButton from '@/components/DropdownButton.vue'
-import { type DropdownItem } from '@/types/dropdown'
-import AppButton from '@/components/AppButton.vue'
-import AppTextarea from '@/components/AppTextarea.vue'
-import CardWorkoutExercise from '@/components/CardWorkoutExercise.vue'
-import CardWorkoutComment from '@/components/CardWorkoutComment.vue'
+import DropdownButton from '@/ui/components/DropdownButton.vue'
+import { type DropdownItem } from '@/types/dropdown.ts'
+import AppButton from '@/ui/components/AppButton.vue'
+import AppTextarea from '@/ui/components/AppTextarea.vue'
+import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
+import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
 
 const dropdownItems: Array<DropdownItem> = [
   { title: 'Edit', href: `/workout/${props.id}/edit` },

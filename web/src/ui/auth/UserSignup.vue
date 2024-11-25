@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { SignupRequest } from '@/pb/api/v1/auth_pb'
+import { SignupRequest } from '@/proto/api/v1/auth_pb'
 import { AuthClient } from '@/clients/clients'
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { ConnectError } from '@connectrpc/connect'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const firstName = ref('')
 const lastName = ref('')

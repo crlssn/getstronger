@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
-import { GetRoutineRequest, Routine, UpdateExerciseOrderRequest } from '@/pb/api/v1/routines_pb'
+import { GetRoutineRequest, Routine, UpdateExerciseOrderRequest } from '@/proto/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import type { SortableEvent } from 'sortablejs'
 

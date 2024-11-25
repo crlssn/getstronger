@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Exercise, GetExerciseRequest, UpdateExerciseRequest } from '@/pb/api/v1/exercise_pb'
-import AppButton from '@/components/AppButton.vue'
+import { Exercise, GetExerciseRequest, UpdateExerciseRequest } from '@/proto/api/v1/exercise_pb'
+import AppButton from '@/ui/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'
