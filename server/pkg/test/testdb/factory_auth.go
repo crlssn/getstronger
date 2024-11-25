@@ -27,9 +27,11 @@ func (f *Factory) NewAuth(opts ...AuthOpt) *orm.Auth {
 		opt(m)
 	}
 
+	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert user: %w", err))
 	}
+	boil.DebugMode = false
 
 	return m
 }

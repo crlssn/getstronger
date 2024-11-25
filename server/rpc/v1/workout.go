@@ -2,11 +2,9 @@ package v1
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -138,47 +136,4 @@ func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 
 	log.Info("workout deleted")
 	return &connect.Response[v1.DeleteWorkoutResponse]{}, nil
-}
-
-func (h *workoutHandler) GetLatestExerciseSets(ctx context.Context, req *connect.Request[v1.GetLatestExerciseSetsRequest]) (*connect.Response[v1.GetLatestExerciseSetsResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	sets, err := h.repo.GetLatestExerciseSets(ctx, req.Msg.GetExerciseIds())
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Info("no latest exercise sets found", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
-			return &connect.Response[v1.GetLatestExerciseSetsResponse]{
-				Msg: &v1.GetLatestExerciseSetsResponse{
-					ExerciseSets: nil,
-				},
-			}, nil
-		}
-		log.Error("failed to get latest exercise sets", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	workoutIDs := make([]string, 0, len(sets))
-	for _, set := range sets {
-		workoutIDs = append(workoutIDs, set.WorkoutID)
-	}
-
-	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
-	if err != nil {
-		log.Error("failed to get workouts", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	for _, workout := range workouts {
-		if workout.UserID != userID {
-			log.Error("workout does not belong to user")
-			return nil, connect.NewError(connect.CodePermissionDenied, nil)
-		}
-	}
-
-	return &connect.Response[v1.GetLatestExerciseSetsResponse]{
-		Msg: &v1.GetLatestExerciseSetsResponse{
-			ExerciseSets: parseSetSliceToExerciseSetsPB(sets),
-		},
-	}, nil
 }

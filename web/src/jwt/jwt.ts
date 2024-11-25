@@ -27,10 +27,10 @@ export async function RefreshAccessTokenOrLogout(): Promise<void | NavigationFai
 export function ScheduleTokenRefresh(): number {
   const interval = 10 * 60 * 1000 // 10 minutes
   // const interval = 60 * 1000; // 1 minute
-  console.log('scheduling access token refresh every 10 minutes')
+  console.log('scheduling access token refresh every 10 minutes', new Date())
   return window.setInterval(async () => {
     try {
-      console.log('refreshing access token')
+      console.log('refreshing access token', new Date())
       await RefreshAccessTokenOrLogout()
     } catch (error) {
       console.error('failed to refresh token:', error)

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateWorkoutRequest, CreateWorkoutResponse, DeleteWorkoutRequest, DeleteWorkoutResponse, GetLatestExerciseSetsRequest, GetLatestExerciseSetsResponse, GetWorkoutRequest, GetWorkoutResponse, ListWorkoutsRequest, ListWorkoutsResponse } from "./workouts_pb.js";
+import { CreateWorkoutRequest, CreateWorkoutResponse, DeleteWorkoutRequest, DeleteWorkoutResponse, GetWorkoutRequest, GetWorkoutResponse, ListWorkoutsRequest, ListWorkoutsResponse } from "./workouts_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -46,15 +46,6 @@ export const WorkoutService = {
       name: "Delete",
       I: DeleteWorkoutRequest,
       O: DeleteWorkoutResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc api.v1.WorkoutService.GetLatestExerciseSets
-     */
-    getLatestExerciseSets: {
-      name: "GetLatestExerciseSets",
-      I: GetLatestExerciseSetsRequest,
-      O: GetLatestExerciseSetsResponse,
       kind: MethodKind.Unary,
     },
   }

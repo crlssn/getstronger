@@ -158,3 +158,47 @@ func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.List
 		NextPageToken: pagination.NextPageToken,
 	}), nil
 }
+
+func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	sets, err := h.repo.GetPreviousWorkoutSets(ctx, req.Msg.GetExerciseIds())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("no previous workout sets", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
+			return &connect.Response[v1.GetPreviousWorkoutSetsResponse]{
+				Msg: &v1.GetPreviousWorkoutSetsResponse{
+					ExerciseSets: nil,
+				},
+			}, nil
+		}
+
+		log.Error("failed to get previous workout sets", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	workoutIDs := make([]string, 0, len(sets))
+	for _, set := range sets {
+		workoutIDs = append(workoutIDs, set.WorkoutID)
+	}
+
+	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
+	if err != nil {
+		log.Error("failed to get workouts", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	for _, workout := range workouts {
+		if workout.UserID != userID {
+			log.Error("workout does not belong to user")
+			return nil, connect.NewError(connect.CodePermissionDenied, nil)
+		}
+	}
+
+	return &connect.Response[v1.GetPreviousWorkoutSetsResponse]{
+		Msg: &v1.GetPreviousWorkoutSetsResponse{
+			ExerciseSets: parseSetSliceToExerciseSetsPB(sets),
+		},
+	}, nil
+}

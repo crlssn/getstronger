@@ -4,14 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/crypto/bcrypt"
 
 	orm "github.com/crlssn/getstronger/server/pkg/orm"
@@ -712,33 +712,20 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	})
 }
 
-func (r *Repo) GetLatestExerciseSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
-	spew.Dump(exerciseIDs)
-	workoutIDs := make([]string, 0, len(exerciseIDs))
-	for _, exerciseID := range exerciseIDs {
-		// DEBT: Make this query more efficient.
-		set, err := orm.Sets(
-			qm.Select(orm.SetColumns.WorkoutID),
-			orm.SetWhere.ExerciseID.EQ(exerciseID),
-			qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
-		).One(ctx, r.executor())
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				continue
-			}
-			return nil, fmt.Errorf("sets fetch: %w", err)
-		}
+func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+	rawQuery := `
+	SELECT * FROM getstronger.sets WHERE workout_id IN (
+		SELECT DISTINCT ON (exercise_id) workout_id	
+		FROM getstronger.sets 
+		WHERE exercise_id = ANY ($1) 
+		ORDER BY exercise_id, created_at DESC
+	) ORDER BY created_at;
+`
 
-		workoutIDs = append(workoutIDs, set.WorkoutID)
+	var sets orm.SetSlice
+	if err := queries.Raw(rawQuery, types.Array(exerciseIDs)).Bind(ctx, r.executor(), &sets); err != nil {
+		return nil, fmt.Errorf("previous workout sets fetch: %w", err)
 	}
 
-	latestSets, err := orm.Sets(
-		orm.SetWhere.WorkoutID.IN(workoutIDs),
-		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
-	).All(ctx, r.executor())
-	if err != nil {
-		return nil, fmt.Errorf("sets fetch: %w", err)
-	}
-
-	return latestSets, nil
+	return sets, nil
 }

@@ -26,6 +26,9 @@ service ExerciseService {
   rpc List(ListExercisesRequest) returns (ListExercisesResponse) {
     option (auth) = true;
   }
+  rpc GetPreviousWorkoutSets(GetPreviousWorkoutSetsRequest) returns (GetPreviousWorkoutSetsResponse) {
+    option (auth) = true;
+  }
 }
 
 message CreateExerciseRequest {
@@ -65,6 +68,13 @@ message ListExercisesRequest {
 message ListExercisesResponse {
   repeated Exercise exercises = 1;
   bytes next_page_token = 2;
+}
+
+message GetPreviousWorkoutSetsRequest {
+  repeated string exercise_ids = 1 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+message GetPreviousWorkoutSetsResponse {
+  repeated ExerciseSets exercise_sets = 1;
 }
 
 message Exercise {

@@ -30,9 +30,11 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		opt(set)
 	}
 
+	boil.DebugMode = f.debug
 	if err := set.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert set: %w", err))
 	}
+	boil.DebugMode = false
 
 	return set
 }
