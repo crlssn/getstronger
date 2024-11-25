@@ -132,3 +132,23 @@ func parseSetSliceToExerciseSetsPB(setSlice orm.SetSlice) []*apiv1.ExerciseSets 
 
 	return exerciseSets
 }
+
+func parsePersonalBestSliceToPB(personalBests orm.PersonalBestSlice, exercises orm.ExerciseSlice) []*apiv1.PersonalBest {
+	mapExercises := make(map[string]*orm.Exercise, len(exercises))
+	for _, exercise := range exercises {
+		mapExercises[exercise.ID] = exercise
+	}
+
+	pbs := make([]*apiv1.PersonalBest, 0, len(personalBests))
+	for _, pb := range personalBests {
+		pbs = append(pbs, &apiv1.PersonalBest{
+			Exercise: parseExerciseToPB(mapExercises[pb.ExerciseID.String]),
+			Set: &apiv1.Set{
+				Weight: float64(pb.Weight.Float32),
+				Reps:   int32(pb.Reps.Int),
+			},
+		})
+	}
+
+	return pbs
+}

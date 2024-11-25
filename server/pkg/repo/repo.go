@@ -734,10 +734,20 @@ type ListPersonalBestsOpt func() qm.QueryMod
 
 func ListPersonalBestsWithUserID(userID string) ListPersonalBestsOpt {
 	return func() qm.QueryMod {
-		return orm.PersonalBestWhere.UserID.EQ(userID)
+		return orm.PersonalBestWhere.UserID.EQ(null.StringFrom(userID))
 	}
 }
 
-func (r *Repo) ListPersonalBests(ctx context.Context, opts ...ListPersonalBestsOpt) {
+func (r *Repo) ListPersonalBests(ctx context.Context, opts ...ListPersonalBestsOpt) (orm.PersonalBestSlice, error) {
+	var query []qm.QueryMod
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
 
+	personalBests, err := orm.PersonalBests(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("personal bests fetch: %w", err)
+	}
+
+	return personalBests, nil
 }
