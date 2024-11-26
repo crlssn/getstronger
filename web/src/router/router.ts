@@ -18,6 +18,7 @@ import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
 import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
+import UserView from '@/ui/users/UserView.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +36,13 @@ const router: Router = createRouter({
       meta: { title: 'Profile' },
       name: 'profile',
       path: '/profile',
+    },
+    {
+      beforeEnter: [auth],
+      component: UserView,
+      meta: { title: '' },
+      name: 'user-view',
+      path: '/users/:id',
     },
     {
       beforeEnter: [auth],

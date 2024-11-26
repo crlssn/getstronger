@@ -562,10 +562,10 @@ func ListWorkoutsWithSets() ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithUserID(userID string) ListWorkoutsOpt {
+func ListWorkoutsWithUserIDs(userIDs []string) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm.WorkoutWhere.UserID.EQ(userID),
+			orm.WorkoutWhere.UserID.IN(userIDs),
 		}, nil
 	}
 }
