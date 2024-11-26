@@ -124,10 +124,23 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	exerciseIDs := make([]string, 0, len(pagination.Items))
+	for _, workout := range pagination.Items {
+		for _, set := range workout.R.Sets {
+			exerciseIDs = append(exerciseIDs, set.ExerciseID)
+		}
+	}
+
+	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
+	if err != nil {
+		log.Error("failed to list exercises", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("workouts listed")
 	return &connect.Response[v1.ListWorkoutsResponse]{
 		Msg: &v1.ListWorkoutsResponse{
-			Workouts:      parseWorkoutSliceToPB(pagination.Items),
+			Workouts:      parseWorkoutSliceToPB(pagination.Items, exercises),
 			NextPageToken: pagination.NextPageToken,
 		},
 	}, nil

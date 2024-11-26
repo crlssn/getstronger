@@ -49,10 +49,10 @@ func parseRoutineToPB(routine *orm.Routine) *apiv1.Routine {
 	}
 }
 
-func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlices []orm.ExerciseSlice) []*apiv1.Workout {
+func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.ExerciseSlice) []*apiv1.Workout {
 	workouts := make([]*apiv1.Workout, 0, len(workoutSlice))
-	for i, workout := range workoutSlice {
-		workouts = append(workouts, parseWorkoutToPB(workout, exerciseSlices[i]))
+	for _, workout := range workoutSlice {
+		workouts = append(workouts, parseWorkoutToPB(workout, exerciseSlice))
 	}
 
 	return workouts
