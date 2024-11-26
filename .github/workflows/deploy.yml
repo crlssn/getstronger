@@ -8,9 +8,6 @@ on:
     types:
       - labeled
 
-permissions:
-  pull-requests: write
-
 concurrency:
   group: deploy-main
   cancel-in-progress: true
@@ -82,3 +79,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy"
+        permissions:
+          pull-requests: write
