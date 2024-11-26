@@ -1,7 +1,7 @@
-import vueTsEslintConfig from '@vue/eslint-config-typescript'
-import perfectionist from 'eslint-plugin-perfectionist'
-import pluginVitest from '@vitest/eslint-plugin'
 import pluginVue from 'eslint-plugin-vue'
+import pluginVitest from '@vitest/eslint-plugin'
+import perfectionist from 'eslint-plugin-perfectionist'
+import vueTsEslintConfig from '@vue/eslint-config-typescript'
 
 export default [
   {
@@ -14,7 +14,6 @@ export default [
     name: 'app/files-to-ignore',
   },
 
-  // perfectionist.configs['recommended-natural'],
   ...pluginVue.configs['flat/recommended'],
   ...vueTsEslintConfig(),
 
@@ -24,12 +23,17 @@ export default [
   },
 
 
-  perfectionist.configs['recommended-natural'],
   {
     plugins: {
       perfectionist,
     },
     rules: {
+      'perfectionist/sort-array-includes': ['error'],
+      'perfectionist/sort-classes': ['error'],
+      'perfectionist/sort-decorators': ['error'],
+      'perfectionist/sort-enums': ['error'],
+      'perfectionist/sort-exports': ['error'],
+      'perfectionist/sort-heritage-clauses': ['error'],
       'perfectionist/sort-imports': [
         'error',
         {
@@ -37,6 +41,19 @@ export default [
           type: 'line-length',
         },
       ],
+      'perfectionist/sort-interfaces': ['error'],
+      'perfectionist/sort-intersection-types': ['error'],
+      'perfectionist/sort-jsx-props': ['error'],
+      'perfectionist/sort-maps': ['error'],
+      'perfectionist/sort-modules': ['error'],
+      'perfectionist/sort-named-exports': ['error'],
+      'perfectionist/sort-named-imports': ['error'],
+      'perfectionist/sort-object-types': ['error'],
+      'perfectionist/sort-objects': ['error'],
+      'perfectionist/sort-sets': ['error'],
+      'perfectionist/sort-switch-case': ['error'],
+      'perfectionist/sort-union-types': ['error'],
+      'perfectionist/sort-variable-declarations': ['error'],
     },
   }
 ]
