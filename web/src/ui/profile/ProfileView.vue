@@ -46,10 +46,10 @@ const findExercise = (id: string) => {
 }
 
 const tabs = [
-  { name: 'Workouts', href: '/profile', current: true },
-  { name: 'Personal Best', href: '/profile?tab=personal-best', current: false },
-  { name: 'Follows', href: '/profile?tab=follows', current: false },
-  { name: 'Followers', href: '/profile?tab=followers', current: false },
+  { name: 'Workouts', href: '/profile' },
+  { name: 'Personal Bests', href: '/profile?tab=personal-bests' },
+  { name: 'Follows', href: '/profile?tab=follows' },
+  { name: 'Followers', href: '/profile?tab=followers' },
 ]
 
 const updateTab = (event: Event) => {
@@ -61,7 +61,6 @@ const updateTab = (event: Event) => {
 <template>
   <div>
     <div class="sm:hidden">
-      <label for="tabs" class="sr-only">Select a tab</label>
       <select
         id="tabs"
         name="tabs"
@@ -79,14 +78,13 @@ const updateTab = (event: Event) => {
             :key="tab.name"
             :to="tab.href"
             :class="[
-              tab.current
+              tab.href === route.fullPath
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
               'w-1/4 border-b-2 px-1 py-4 text-center text-sm font-medium',
-            ]"
-            :aria-current="tab.current ? 'page' : undefined"
-            >{{ tab.name }}</RouterLink
-          >
+            ]">
+            {{ tab.name }}
+          </RouterLink>
         </nav>
       </div>
     </div>
