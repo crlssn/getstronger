@@ -83,13 +83,20 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	userIDs := repo.ExtractIDs(workout.R.WorkoutComments, func(c *orm.WorkoutComment) string { return c.UserID })
-	exerciseIDs := repo.ExtractIDs(workout.R.Sets, func(s *orm.Set) string { return s.ExerciseID })
+	userIDs := make([]string, 0, len(workout.R.WorkoutComments))
+	for _, comment := range workout.R.WorkoutComments {
+		userIDs = append(userIDs, comment.UserID)
+	}
 
 	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
 	if err != nil {
 		log.Error("failed to list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	exerciseIDs := make([]string, 0, len(workout.R.Sets))
+	for _, set := range workout.R.Sets {
+		exerciseIDs = append(exerciseIDs, set.ExerciseID)
 	}
 
 	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))

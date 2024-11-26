@@ -44,12 +44,3 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 		NextPageToken: nextPageToken,
 	}, nil
 }
-
-func ExtractIDs[Item ModelItem, Slice ModelSlice[Item]](items Slice, f func(Item) string) []string {
-	ids := make([]string, 0, len(items))
-	for _, item := range items {
-		ids = append(ids, f(item))
-	}
-
-	return ids
-}
