@@ -43,18 +43,20 @@ const openSearchBar = () => {
   })
 }
 
+const closeSearchBar = () => {
+  users.value = []
+  searchBarOpen.value = false
+}
+
 const searchUsers = async () => {
-  // console.log(input.value?.value.length)
-  // const inputLength = input.value?.value?.length || 0
-  // console.log(inputLength)
-  if (input.value?.value?.length < 3) {
+  if ((input.value?.value?.length ?? 0) < 3) {
     users.value = []
     return
   }
 
   const req = create(SearchRequestSchema, {
     pagination: {
-      pageLimit: 10,
+      pageLimit: 5,
     } as PaginationRequest,
     query: input.value?.value,
   })
@@ -207,13 +209,17 @@ const searchUsers = async () => {
             ref="input"
             type="text"
             class="w-full text-sm border-none focus:ring-0"
-            placeholder="Search for users"
+            placeholder="Search users"
             @keyup="searchUsers"
           />
-          <ul>
-            <li v-for="user in users" :key="user.id">{{ user.firstName }} {{ user.lastName }}</li>
-          </ul>
         </form>
+        <ul v-if="searchBarOpen && users.length > 0" class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white">
+          <li v-for="user in users" :key="user.id" class="px-5 py-5 text-sm font-medium" @click="closeSearchBar">
+            <RouterLink :to="`/users/${user.id}`">
+              {{ user.firstName }} {{ user.lastName }}
+            </RouterLink>
+          </li>
+        </ul>
         <img
           v-if="!searchBarOpen"
           class="h-auto w-8 lg:hidden"
@@ -227,7 +233,7 @@ const searchUsers = async () => {
         <XMarkIcon
           v-if="searchBarOpen"
           class="w-8 h-6 cursor-pointer"
-          @click="searchBarOpen = false"
+          @click="closeSearchBar"
         />
         <MagnifyingGlassIcon v-else class="w-8 h-6 cursor-pointer" @click="openSearchBar" />
       </div>
@@ -240,5 +246,6 @@ const searchUsers = async () => {
     </div>
   </div>
 
-  <NavigationMobile />
+  <div v-if="searchBarOpen" class="fixed z-10 top-0 left-0 right-0 bottom-0 bg-black opacity-50" @click="closeSearchBar"></div>
+  <NavigationMobile v-else />
 </template>
