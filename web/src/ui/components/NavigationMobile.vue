@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import {
-  BellIcon,
   BookOpenIcon,
-  FolderIcon,
+  // FolderIcon,
   HomeIcon,
   RectangleStackIcon,
+  UserIcon,
+  BellIcon,
 } from '@heroicons/vue/24/outline'
 
 import {
-  BellIcon as BellSolidIcon,
   BookOpenIcon as BookOpenSolidIcon,
-  FolderIcon as FolderSolidIcon,
+  // FolderIcon as FolderSolidIcon,
   HomeIcon as HomeSolidIcon,
   RectangleStackIcon as RectangleStackSolidIcon,
+  BellIcon as BellSolidIcon,
+  UserIcon as UserSolidIcon,
 } from '@heroicons/vue/24/solid'
 
 const route = useRoute()
@@ -31,8 +33,9 @@ const navigation = [
     iconActive: RectangleStackSolidIcon,
   },
   { name: 'Exercises', href: '/exercises', icon: BookOpenIcon, iconActive: BookOpenSolidIcon },
-  { name: 'Workouts', href: '/workouts', icon: FolderIcon, iconActive: FolderSolidIcon },
   { name: 'Notifications', href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon },
+  // { name: 'Workouts', href: '/workouts', icon: FolderIcon, iconActive: FolderSolidIcon },
+  { name: 'Profile', href: '/profile', icon: UserIcon, iconActive: UserSolidIcon },
 ]
 </script>
 
@@ -46,7 +49,7 @@ const navigation = [
 
 <style scoped>
 nav {
-  @apply fixed w-full bottom-0 z-50 h-16 bg-white border-t-2 border-gray-200;
-  @apply lg:hidden flex justify-evenly items-center;
+  @apply fixed w-full bottom-0 z-50 h-16 px-8 bg-white border-t-2 border-gray-200;
+  @apply lg:hidden flex justify-between items-center;
 }
 </style>

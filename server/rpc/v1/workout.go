@@ -71,6 +71,7 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
 		repo.GetWorkoutWithExerciseSets(),
+		repo.GetWorkoutWithExerciseSets(),
 	)
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
@@ -82,10 +83,32 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
+	userIDs := make([]string, 0, len(workout.R.WorkoutComments))
+	for _, comment := range workout.R.WorkoutComments {
+		userIDs = append(userIDs, comment.UserID)
+	}
+
+	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(append(userIDs, userID)))
+	if err != nil {
+		log.Error("failed to list users", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	exerciseIDs := make([]string, 0, len(workout.R.Sets))
+	for _, set := range workout.R.Sets {
+		exerciseIDs = append(exerciseIDs, set.ExerciseID)
+	}
+
+	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
+	if err != nil {
+		log.Error("failed to list exercises", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("workout fetched")
 	return &connect.Response[v1.GetWorkoutResponse]{
 		Msg: &v1.GetWorkoutResponse{
-			Workout: parseWorkoutToPB(workout),
+			Workout: parseWorkoutToPB(workout, exercises, users),
 		},
 	}, nil
 }
@@ -96,8 +119,10 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 
 	limit := int(req.Msg.GetPageSize())
 	workouts, err := h.repo.ListWorkouts(ctx,
+		repo.ListWorkoutsWithSets(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserID(userID),
+		repo.ListWorkoutsWithComments(),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPageToken()),
 	)
 	if err != nil {
@@ -113,10 +138,33 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	var userIDs []string
+	var exerciseIDs []string
+	for _, workout := range pagination.Items {
+		for _, set := range workout.R.Sets {
+			exerciseIDs = append(exerciseIDs, set.ExerciseID)
+		}
+		for _, comment := range workout.R.WorkoutComments {
+			userIDs = append(userIDs, comment.UserID)
+		}
+	}
+
+	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
+	if err != nil {
+		log.Error("failed to list exercises", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(append(userIDs, userID)))
+	if err != nil {
+		log.Error("failed to list users", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("workouts listed")
 	return &connect.Response[v1.ListWorkoutsResponse]{
 		Msg: &v1.ListWorkoutsResponse{
-			Workouts:      parseWorkoutSliceToPB(pagination.Items),
+			Workouts:      parseWorkoutSliceToPB(pagination.Items, exercises, users),
 			NextPageToken: pagination.NextPageToken,
 		},
 	}, nil
@@ -136,4 +184,32 @@ func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 
 	log.Info("workout deleted")
 	return &connect.Response[v1.DeleteWorkoutResponse]{}, nil
+}
+
+func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	comment, err := h.repo.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
+		UserID:    userID,
+		WorkoutID: req.Msg.GetWorkoutId(),
+		Comment:   req.Msg.GetComment(),
+	})
+	if err != nil {
+		log.Error("failed to create workout comment", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(comment.UserID))
+	if err != nil {
+		log.Error("failed to get user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("workout comment posted")
+	return &connect.Response[v1.PostCommentResponse]{
+		Msg: &v1.PostCommentResponse{
+			Comment: parseWorkoutCommentToPB(comment, user),
+		},
+	}, nil
 }

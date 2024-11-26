@@ -553,6 +553,14 @@ func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
 	}
 }
 
+func ListWorkoutsWithSets() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(orm.WorkoutRels.Sets),
+		}, nil
+	}
+}
+
 func ListWorkoutsWithUserID(userID string) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
@@ -565,6 +573,14 @@ func ListWorkoutsWithLimit(size int) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
 			qm.Limit(size),
+		}, nil
+	}
+}
+
+func ListWorkoutsWithComments() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(orm.WorkoutRels.WorkoutComments),
 		}, nil
 	}
 }
@@ -836,6 +852,12 @@ func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, erro
 
 type ListUsersOpt func() qm.QueryMod
 
+func ListUsersWithIDs(ids []string) ListUsersOpt {
+	return func() qm.QueryMod {
+		return orm.UserWhere.ID.IN(ids)
+	}
+}
+
 func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
@@ -848,4 +870,24 @@ func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSli
 	}
 
 	return users, nil
+}
+
+type CreateWorkoutCommentParams struct {
+	UserID    string
+	WorkoutID string
+	Comment   string
+}
+
+func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+	comment := &orm.WorkoutComment{
+		UserID:    p.UserID,
+		WorkoutID: p.WorkoutID,
+		Comment:   p.Comment,
+	}
+
+	if err := comment.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+		return nil, fmt.Errorf("workout comment insert: %w", err)
+	}
+
+	return comment, nil
 }

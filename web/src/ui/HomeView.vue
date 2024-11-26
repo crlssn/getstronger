@@ -1,10 +1,5 @@
-<script setup lang="ts">
-import CardWorkout from '@/ui/components/CardWorkout.vue'
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <CardWorkout id="1" />
-  <CardWorkout id="2" />
-  <CardWorkout id="3" />
-  <CardWorkout id="4" />
+  <div></div>
 </template>

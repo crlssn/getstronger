@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	orm2 "github.com/crlssn/getstronger/server/pkg/orm"
+	"github.com/crlssn/getstronger/server/pkg/orm"
 )
 
 type ModelItem interface {
-	*orm2.Workout | *orm2.Exercise | *orm2.User | *orm2.Routine
+	*orm.Workout | *orm.Exercise | *orm.User | *orm.Routine | *orm.Set | *orm.WorkoutComment
 }
 
 type ModelSlice[T any] interface {

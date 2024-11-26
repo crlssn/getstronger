@@ -5,11 +5,23 @@ package api.v1;
 import "buf/validate/validate.proto";
 
 message ExerciseSets {
-  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
+  Exercise exercise = 1 [(buf.validate.field).required = true];
   repeated Set sets = 2 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message Exercise {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2;
+  string label = 3;
 }
 
 message Set {
   double weight = 1; // The weight can be less than zero.
   int32 reps = 2 [(buf.validate.field).int32 = { gte: 1 }];
+}
+
+message User {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string first_name = 2 [(buf.validate.field).string.min_len = 1];
+  string last_name = 3 [(buf.validate.field).string.min_len = 1];
 }

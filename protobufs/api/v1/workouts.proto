@@ -23,6 +23,9 @@ service WorkoutService {
   rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
     option (auth) = true;
   }
+  rpc PostComment(PostCommentRequest) returns (PostCommentResponse) {
+    option (auth) = true;
+  }
 //  rpc Start(StartWorkoutRequest) returns (StartWorkoutResponse) {
 //    option (auth) = true;
 //  }
@@ -63,6 +66,20 @@ message GetWorkoutResponse {
   Workout workout = 1;
 }
 
+message DeleteWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeleteWorkoutResponse {}
+
+message PostCommentRequest {
+  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+  string comment = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message PostCommentResponse {
+  WorkoutComment comment = 1;
+}
+
 //message StartWorkoutRequest {
 //  string routine_id = 1 [(buf.validate.field).string.uuid = true];
 //}
@@ -90,11 +107,6 @@ message GetWorkoutResponse {
 //  Workout Workout = 1;
 //}
 //
-message DeleteWorkoutRequest {
-  string id = 1 [(buf.validate.field).string.uuid = true];
-}
-message DeleteWorkoutResponse {}
-//
 //message AddExerciseRequest {
 //  string workout_id = 1 [(buf.validate.field).string.uuid = true];
 //  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
@@ -116,6 +128,15 @@ message DeleteWorkoutResponse {}
 message Workout {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
-  google.protobuf.Timestamp finished_at = 3 [(buf.validate.field).required = true];
+  User user = 3 [(buf.validate.field).required = true];
   repeated ExerciseSets exercise_sets = 4 [(buf.validate.field).repeated.min_items = 1];
+  repeated WorkoutComment comments = 5;
+  google.protobuf.Timestamp finished_at = 6 [(buf.validate.field).required = true];
+}
+
+message WorkoutComment {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  User user = 2 [(buf.validate.field).required = true];
+  string comment = 4 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 5 [(buf.validate.field).required = true];
 }
