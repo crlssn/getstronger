@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, type Router } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { AuthClient } from '@/clients/clients'
-import { LogoutRequest } from '@/proto/api/v1/auth_pb'
+import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
 import HomeView from '@/ui/HomeView.vue'
 import UserLogin from '@/ui/auth/UserLogin.vue'
 import UserSignup from '@/ui/auth/UserSignup.vue'
@@ -16,6 +16,7 @@ import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
 import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
+import { create } from '@bufbuild/protobuf'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -127,7 +128,7 @@ router.beforeEach((to, from, next) => {
 })
 
 async function logout() {
-  await AuthClient.logout(new LogoutRequest())
+  await AuthClient.logout(create(LogoutRequestSchema, {}))
   const authStore = useAuthStore()
   authStore.logout()
   return {

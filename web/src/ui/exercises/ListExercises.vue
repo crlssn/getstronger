@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Exercise, ListExercisesRequest } from '@/proto/api/v1/exercise_pb'
+import { type Exercise, ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { ExerciseClient } from '@/clients/clients'
 import { onMounted, ref } from 'vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppButton from '@/ui/components/AppButton.vue'
+import { create } from '@bufbuild/protobuf'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -15,7 +16,7 @@ onMounted(() => {
 
 const fetchExercises = async () => {
   try {
-    const request = new ListExercisesRequest({
+    const request = create(ListExercisesRequestSchema, {
       name: name.value,
       pageToken: pageToken.value,
       pageSize: 10,

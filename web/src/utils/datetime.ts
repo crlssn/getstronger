@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
+import type { Timestamp } from '@bufbuild/protobuf/wkt'
 
-export const formatToCompactDateTime = (date: Date | undefined): string => {
+export const formatToCompactDateTime = (date: Timestamp | undefined): string => {
   if (!date) return ''
-  return DateTime.fromJSDate(date).toFormat('EEE dd LLL HH:mm')
+  return DateTime.fromSeconds(Number(date.seconds)).toFormat('EEE dd LLL HH:mm')
 }

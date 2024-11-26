@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { Exercise, GetExerciseRequest, UpdateExerciseRequest } from '@/proto/api/v1/exercise_pb'
+import {
+  type Exercise,
+  GetExerciseRequestSchema,
+  UpdateExerciseRequestSchema,
+} from '@/proto/api/v1/exercise_pb'
+import type { FieldMask } from '@bufbuild/protobuf/wkt'
 import AppButton from '@/ui/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'
 import { useRoute } from 'vue-router'
-import { FieldMask } from '@bufbuild/protobuf'
+import { create } from '@bufbuild/protobuf' // import { FieldMask } from '@bufbuild/protobuf'
 
 const name = ref('')
 const label = ref('')
@@ -15,7 +20,7 @@ const resOK = ref(false)
 const route = useRoute()
 
 async function loadExercise() {
-  const request = new GetExerciseRequest({
+  const request = create(GetExerciseRequestSchema, {
     id: route.params.id as string,
   })
   try {
@@ -40,13 +45,15 @@ onMounted(() => {
 })
 
 async function updateExercise() {
-  const request = new UpdateExerciseRequest({
-    exercise: new Exercise({
+  const request = create(UpdateExerciseRequestSchema, {
+    exercise: {
       id: route.params.id as string,
       name: name.value,
       label: label.value,
-    }),
-    updateMask: new FieldMask({ paths: ['name', 'label'] }),
+    } as Exercise,
+    updateMask: {
+      paths: ['name', 'label'],
+    } as FieldMask,
   })
   try {
     await ExerciseClient.update(request)
@@ -111,8 +118,8 @@ async function updateExercise() {
       </div>
 
       <AppButton text="Create" type="submit" colour="primary" class="mt-6"
-        >Update Exercise</AppButton
-      >
+        >Update Exercise
+      </AppButton>
     </form>
   </div>
 </template>

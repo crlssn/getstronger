@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
-import { GetRoutineRequest, Routine, UpdateExerciseOrderRequest } from '@/proto/api/v1/routines_pb'
+import {
+  GetRoutineRequestSchema,
+  type Routine,
+  UpdateExerciseOrderRequestSchema,
+} from '@/proto/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import type { SortableEvent } from 'sortablejs'
+import { create } from '@bufbuild/protobuf'
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()
@@ -15,7 +20,7 @@ const pageTitleStore = usePageTitleStore()
 const el = ref<HTMLElement | null>(null)
 
 const fetchRoutine = async (id: string) => {
-  const req = new GetRoutineRequest({ id })
+  const req = create(GetRoutineRequestSchema, { id })
   const res = await RoutineClient.get(req)
   routine.value = res.routine
 }
@@ -41,7 +46,7 @@ useSortable(el, routine.value?.exercises || [], {
     exercises.splice(newIndex, 0, movedExercise)
 
     const updatedOrder = exercises.map((e) => e.id)
-    const req = new UpdateExerciseOrderRequest({
+    const req = create(UpdateExerciseOrderRequestSchema, {
       routineId: routine.value?.id,
       exerciseIds: updatedOrder,
     })

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
-import { ListWorkoutsRequest, Workout } from '@/proto/api/v1/workouts_pb'
+import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { formatToCompactDateTime } from '@/utils/datetime'
+import { create } from '@bufbuild/protobuf'
 
 const pageToken = ref(new Uint8Array(0))
 const workouts = ref(Array<Workout>())
 
 const fetchWorkouts = async () => {
-  const req = new ListWorkoutsRequest({
+  const req = create(ListWorkoutsRequestSchema, {
     pageSize: 100,
     pageToken: pageToken.value,
   })
@@ -30,7 +31,7 @@ onMounted(() => {
 
 <template>
   <div v-for="workout in workouts" :key="workout.id" class="mb-4">
-    <h6>{{ formatToCompactDateTime(workout.finishedAt?.toDate()) }}</h6>
+    <h6>{{ formatToCompactDateTime(workout.finishedAt) }}</h6>
     <ul
       role="list"
       class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
