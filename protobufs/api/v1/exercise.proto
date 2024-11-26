@@ -91,9 +91,3 @@ message PersonalBest {
   Exercise exercise = 1 [(buf.validate.field).required = true];
   Set set = 2 [(buf.validate.field).required = true];
 }
-
-message Exercise {
-  string id = 1;
-  string name = 2;
-  string label = 3;
-}

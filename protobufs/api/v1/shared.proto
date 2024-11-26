@@ -5,8 +5,14 @@ package api.v1;
 import "buf/validate/validate.proto";
 
 message ExerciseSets {
-  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
+  Exercise exercise = 1 [(buf.validate.field).required = true];
   repeated Set sets = 2 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message Exercise {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2;
+  string label = 3;
 }
 
 message Set {

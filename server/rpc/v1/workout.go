@@ -82,10 +82,21 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
+	exerciseIDs := make([]string, 0, len(workout.R.Sets))
+	for _, set := range workout.R.Sets {
+		exerciseIDs = append(exerciseIDs, set.ExerciseID)
+	}
+
+	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
+	if err != nil {
+		log.Error("failed to list exercises", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("workout fetched")
 	return &connect.Response[v1.GetWorkoutResponse]{
 		Msg: &v1.GetWorkoutResponse{
-			Workout: parseWorkoutToPB(workout),
+			Workout: parseWorkoutToPB(workout, exercises),
 		},
 	}, nil
 }

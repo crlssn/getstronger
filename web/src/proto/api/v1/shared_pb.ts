@@ -11,16 +11,16 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/shared.proto.
  */
 export const file_api_v1_shared: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiUgoMRXhlcmNpc2VTZXRzEh0KC2V4ZXJjaXNlX2lkGAEgASgJQgi6SAVyA7ABARIjCgRzZXRzGAIgAygLMgsuYXBpLnYxLlNldEIIukgFkgECCAEiLAoDU2V0Eg4KBndlaWdodBgBIAEoARIVCgRyZXBzGAIgASgFQge6SAQaAigBQowBCgpjb20uYXBpLnYxQgtTaGFyZWRQcm90b1ABWjhnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvcGtnL3BiL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_buf_validate_validate]);
+  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJIiwKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoAUKMAQoKY29tLmFwaS52MUILU2hhcmVkUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ExerciseSets
  */
 export type ExerciseSets = Message<"api.v1.ExerciseSets"> & {
   /**
-   * @generated from field: string exercise_id = 1;
+   * @generated from field: api.v1.Exercise exercise = 1;
    */
-  exerciseId: string;
+  exercise?: Exercise;
 
   /**
    * @generated from field: repeated api.v1.Set sets = 2;
@@ -34,6 +34,33 @@ export type ExerciseSets = Message<"api.v1.ExerciseSets"> & {
  */
 export const ExerciseSetsSchema: GenMessage<ExerciseSets> = /*@__PURE__*/
   messageDesc(file_api_v1_shared, 0);
+
+/**
+ * @generated from message api.v1.Exercise
+ */
+export type Exercise = Message<"api.v1.Exercise"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string label = 3;
+   */
+  label: string;
+};
+
+/**
+ * Describes the message api.v1.Exercise.
+ * Use `create(ExerciseSchema)` to create a new message.
+ */
+export const ExerciseSchema: GenMessage<Exercise> = /*@__PURE__*/
+  messageDesc(file_api_v1_shared, 1);
 
 /**
  * @generated from message api.v1.Set
@@ -57,5 +84,5 @@ export type Set = Message<"api.v1.Set"> & {
  * Use `create(SetSchema)` to create a new message.
  */
 export const SetSchema: GenMessage<Set> = /*@__PURE__*/
-  messageDesc(file_api_v1_shared, 1);
+  messageDesc(file_api_v1_shared, 2);
 
