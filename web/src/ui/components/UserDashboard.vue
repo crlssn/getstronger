@@ -67,8 +67,14 @@ const searchUsers = async () => {
 
 <template>
   <div class="pb-16">
-    <TransitionRoot as="template" :show="sidebarOpen">
-      <Dialog class="relative z-50 lg:hidden" @close="sidebarOpen = false">
+    <TransitionRoot
+      as="template"
+      :show="sidebarOpen"
+    >
+      <Dialog
+        class="relative z-50 lg:hidden"
+        @close="sidebarOpen = false"
+      >
         <TransitionChild
           as="template"
           enter="transition-opacity ease-linear duration-300"
@@ -102,8 +108,15 @@ const searchUsers = async () => {
                 leave-to="opacity-0"
               >
                 <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
-                  <button type="button" class="-m-2.5 p-2.5" @click="sidebarOpen = false">
-                    <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true" />
+                  <button
+                    type="button"
+                    class="-m-2.5 p-2.5"
+                    @click="sidebarOpen = false"
+                  >
+                    <XMarkIcon
+                      class="h-6 w-6 text-white"
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
               </TransitionChild>
@@ -113,13 +126,22 @@ const searchUsers = async () => {
                     class="h-8 w-auto"
                     src="https://tailwindui.com/plus/img/logos/mark.svg?color=white"
                     alt="Your Company"
-                  />
+                  >
                 </div>
                 <nav class="flex flex-1 flex-col">
-                  <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                  <ul
+                    role="list"
+                    class="flex flex-1 flex-col gap-y-7"
+                  >
                     <li>
-                      <ul role="list" class="-mx-2 space-y-1">
-                        <li v-for="item in navigation" :key="item.name">
+                      <ul
+                        role="list"
+                        class="-mx-2 space-y-1"
+                      >
+                        <li
+                          v-for="item in navigation"
+                          :key="item.name"
+                        >
                           <RouterLink
                             :to="item.href"
                             :class="[
@@ -163,14 +185,23 @@ const searchUsers = async () => {
             class="h-8 w-auto"
             src="https://tailwindui.com/plus/img/logos/mark.svg?color=white"
             alt="Your Company"
-          />
+          >
           <span class="ml-2 font-bold text-white">GetStronger</span>
         </div>
         <nav class="flex flex-1 flex-col">
-          <ul role="list" class="flex flex-1 flex-col gap-y-7">
+          <ul
+            role="list"
+            class="flex flex-1 flex-col gap-y-7"
+          >
             <li>
-              <ul role="list" class="-mx-2 space-y-1">
-                <li v-for="item in navigation" :key="item.name">
+              <ul
+                role="list"
+                class="-mx-2 space-y-1"
+              >
+                <li
+                  v-for="item in navigation"
+                  :key="item.name"
+                >
                   <RouterLink
                     :to="item.href"
                     :class="[
@@ -204,17 +235,28 @@ const searchUsers = async () => {
       <div
         class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8"
       >
-        <form v-if="searchBarOpen" class="w-full">
+        <form
+          v-if="searchBarOpen"
+          class="w-full"
+        >
           <input
             ref="input"
             type="text"
             class="w-full text-sm border-none focus:ring-0"
             placeholder="Search users"
             @keyup="searchUsers"
-          />
+          >
         </form>
-        <ul v-if="searchBarOpen && users.length > 0" class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white">
-          <li v-for="user in users" :key="user.id" class="px-5 py-5 text-sm font-medium" @click="closeSearchBar">
+        <ul
+          v-if="searchBarOpen && users.length > 0"
+          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white"
+        >
+          <li
+            v-for="user in users"
+            :key="user.id"
+            class="px-5 py-5 text-sm font-medium"
+            @click="closeSearchBar"
+          >
             <RouterLink :to="`/users/${user.id}`">
               {{ user.firstName }} {{ user.lastName }}
             </RouterLink>
@@ -224,8 +266,11 @@ const searchUsers = async () => {
           v-if="!searchBarOpen"
           class="h-auto w-8 lg:hidden"
           src="https://tailwindui.com/plus/img/logos/mark.svg"
-        />
-        <div v-if="!searchBarOpen" class="flex flex-1 gap-x-4 justify-center">
+        >
+        <div
+          v-if="!searchBarOpen"
+          class="flex flex-1 gap-x-4 justify-center"
+        >
           <p class="uppercase text-sm font-semibold text-gray-900 lg:hidden">
             {{ pageTitleStore.pageTitle }}
           </p>
@@ -235,7 +280,11 @@ const searchUsers = async () => {
           class="w-8 h-6 cursor-pointer"
           @click="closeSearchBar"
         />
-        <MagnifyingGlassIcon v-else class="w-8 h-6 cursor-pointer" @click="openSearchBar" />
+        <MagnifyingGlassIcon
+          v-else
+          class="w-8 h-6 cursor-pointer"
+          @click="openSearchBar"
+        />
       </div>
 
       <main class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -246,6 +295,10 @@ const searchUsers = async () => {
     </div>
   </div>
 
-  <div v-if="searchBarOpen" class="fixed z-10 top-0 left-0 right-0 bottom-0 bg-black opacity-50" @click="closeSearchBar"></div>
+  <div
+    v-if="searchBarOpen"
+    class="fixed z-10 top-0 left-0 right-0 bottom-0 bg-black opacity-50"
+    @click="closeSearchBar"
+  />
   <NavigationMobile v-else />
 </template>

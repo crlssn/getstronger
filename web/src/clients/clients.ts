@@ -1,11 +1,11 @@
 import { createClient } from '@connectrpc/connect'
 import { auth, logger } from '@/clients/interceptors'
 import { AuthService } from '@/proto/api/v1/auth_pb.ts'
+import { UserService } from '@/proto/api/v1/users_pb.ts'
 import { RoutineService } from '@/proto/api/v1/routines_pb.ts'
 import { WorkoutService } from '@/proto/api/v1/workouts_pb.ts'
 import { ExerciseService } from '@/proto/api/v1/exercise_pb.ts'
 import { createConnectTransport } from '@connectrpc/connect-web'
-import { UserService } from '@/proto/api/v1/users_pb.ts'
 
 const transport = createConnectTransport({
   baseUrl: import.meta.env.VITE_API_URL,
