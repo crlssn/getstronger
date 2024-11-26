@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-
 import type { ExerciseID, RoutineID, RoutineWorkout } from '@/types/workout'
+
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
 
 export const useWorkoutStore = defineStore(
   'workouts',
@@ -54,12 +54,12 @@ export const useWorkoutStore = defineStore(
     }
 
     return {
-      workouts,
       addEmptySetIfNone,
-      initialiseWorkout,
-      getSets,
       getAllSets,
+      getSets,
+      initialiseWorkout,
       removeWorkout,
+      workouts,
     }
   },
   {

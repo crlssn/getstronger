@@ -1,7 +1,8 @@
 import type { Interceptor } from '@connectrpc/connect'
+
 import { useAuthStore } from '@/stores/auth'
-import { Code, ConnectError } from '@connectrpc/connect'
 import { RefreshAccessTokenOrLogout } from '@/jwt/jwt'
+import { Code, ConnectError } from '@connectrpc/connect'
 
 export const logger: Interceptor = (next) => async (req) => {
   console.log(`sending message to ${req.url}`)

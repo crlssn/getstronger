@@ -21,7 +21,7 @@ export const useAuthStore = defineStore(
       accessTokenRefreshInterval.value = interval
     }
 
-    return { accessToken, setAccessToken, logout, setAccessTokenRefreshInterval }
+    return { accessToken, logout, setAccessToken, setAccessTokenRefreshInterval }
   },
   {
     persist: true,

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
-import { ExerciseClient } from '@/clients/clients'
-import { onMounted, ref } from 'vue'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+
+import { onMounted, ref } from 'vue'
+import { create } from '@bufbuild/protobuf'
+import { ExerciseClient } from '@/clients/clients'
+import AppButton from '@/ui/components/AppButton.vue'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -19,8 +20,8 @@ const fetchExercises = async () => {
   try {
     const request = create(ListExercisesRequestSchema, {
       name: name.value,
-      pageToken: pageToken.value,
       pageSize: 10,
+      pageToken: pageToken.value,
     })
 
     const response = await ExerciseClient.list(request)
@@ -37,18 +38,30 @@ const fetchExercises = async () => {
 </script>
 
 <template>
-  <AppButton type="link" to="/exercises/create" colour="primary">Create Exercise</AppButton>
+  <AppButton
+    type="link"
+    to="/exercises/create"
+    colour="primary"
+  >
+    Create Exercise
+  </AppButton>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl"
   >
-    <li v-for="exercise in exercises" :key="exercise.id">
+    <li
+      v-for="exercise in exercises"
+      :key="exercise.id"
+    >
       <RouterLink
         :to="`/exercises/${exercise.id}/edit`"
         class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-900"
       >
         {{ exercise.name }}
-        <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true" />
+        <ChevronRightIcon
+          class="size-5 flex-none text-gray-400"
+          aria-hidden="true"
+        />
       </RouterLink>
     </li>
   </ul>

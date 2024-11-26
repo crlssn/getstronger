@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
+import NavigationMobile from '@/ui/components/NavigationMobile.vue'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
   ArrowPathRoundedSquareIcon,
+  BellIcon,
   BookOpenIcon,
   HomeIcon,
-  XMarkIcon,
   UserIcon,
-  BellIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import { RouterView, useRoute } from 'vue-router'
-import NavigationMobile from '@/ui/components/NavigationMobile.vue'
-import { usePageTitleStore } from '@/stores/pageTitle.ts'
 
 const navigation = [
-  { name: 'Home', href: '/home', icon: HomeIcon },
-  { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
-  { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
-  { name: 'Notifications', href: '/notifications', icon: BellIcon },
-  { name: 'Profile', href: '/profile', icon: UserIcon },
+  { href: '/home', icon: HomeIcon, name: 'Home' },
+  { href: '/routines', icon: ArrowPathRoundedSquareIcon, name: 'Routines' },
+  { href: '/exercises', icon: BookOpenIcon, name: 'Exercises' },
+  { href: '/notifications', icon: BellIcon, name: 'Notifications' },
+  { href: '/profile', icon: UserIcon, name: 'Profile' },
 ]
 
 const sidebarOpen = ref(false)
@@ -33,8 +33,14 @@ const pageTitleStore = usePageTitleStore()
 
 <template>
   <div class="pb-16">
-    <TransitionRoot as="template" :show="sidebarOpen">
-      <Dialog class="relative z-50 lg:hidden" @close="sidebarOpen = false">
+    <TransitionRoot
+      as="template"
+      :show="sidebarOpen"
+    >
+      <Dialog
+        class="relative z-50 lg:hidden"
+        @close="sidebarOpen = false"
+      >
         <TransitionChild
           as="template"
           enter="transition-opacity ease-linear duration-300"
@@ -68,8 +74,15 @@ const pageTitleStore = usePageTitleStore()
                 leave-to="opacity-0"
               >
                 <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
-                  <button type="button" class="-m-2.5 p-2.5" @click="sidebarOpen = false">
-                    <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true" />
+                  <button
+                    type="button"
+                    class="-m-2.5 p-2.5"
+                    @click="sidebarOpen = false"
+                  >
+                    <XMarkIcon
+                      class="h-6 w-6 text-white"
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
               </TransitionChild>
@@ -80,22 +93,31 @@ const pageTitleStore = usePageTitleStore()
                     class="h-8 w-auto"
                     src="https://tailwindui.com/plus/img/logos/mark.svg?color=white"
                     alt="Your Company"
-                  />
+                  >
                 </div>
                 <nav class="flex flex-1 flex-col">
-                  <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                  <ul
+                    role="list"
+                    class="flex flex-1 flex-col gap-y-7"
+                  >
                     <li>
-                      <ul role="list" class="-mx-2 space-y-1">
-                        <li v-for="item in navigation" :key="item.name">
+                      <ul
+                        role="list"
+                        class="-mx-2 space-y-1"
+                      >
+                        <li
+                          v-for="item in navigation"
+                          :key="item.name"
+                        >
                           <RouterLink
                             :to="item.href"
-                            @click="sidebarOpen = false"
                             :class="[
                               isActive(item.href).value
                                 ? 'bg-indigo-700 text-white'
                                 : 'text-indigo-200 hover:bg-indigo-700 hover:text-white',
                               'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                             ]"
+                            @click="sidebarOpen = false"
                           >
                             <component
                               :is="item.icon"
@@ -130,14 +152,23 @@ const pageTitleStore = usePageTitleStore()
             class="h-8 w-auto"
             src="https://tailwindui.com/plus/img/logos/mark.svg?color=white"
             alt="Your Company"
-          />
+          >
           <span class="ml-2 font-bold text-white">GetStronger</span>
         </div>
         <nav class="flex flex-1 flex-col">
-          <ul role="list" class="flex flex-1 flex-col gap-y-7">
+          <ul
+            role="list"
+            class="flex flex-1 flex-col gap-y-7"
+          >
             <li>
-              <ul role="list" class="-mx-2 space-y-1">
-                <li v-for="item in navigation" :key="item.name">
+              <ul
+                role="list"
+                class="-mx-2 space-y-1"
+              >
+                <li
+                  v-for="item in navigation"
+                  :key="item.name"
+                >
                   <RouterLink
                     :to="item.href"
                     :class="[
@@ -175,7 +206,7 @@ const pageTitleStore = usePageTitleStore()
           class="h-auto w-8 lg:hidden"
           src="https://tailwindui.com/plus/img/logos/mark.svg"
           alt="Your Company"
-        />
+        >
         <!--        <button-->
         <!--          type="button"-->
         <!--          class="-m-2.5 p-2.5 text-gray-700 lg:hidden"-->

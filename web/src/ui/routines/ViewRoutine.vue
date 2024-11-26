@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+import type { SortableEvent } from 'sortablejs'
+
 import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { create } from '@bufbuild/protobuf'
+import { RoutineClient } from '@/clients/clients'
+import AppButton from '@/ui/components/AppButton.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+import { useSortable } from '@vueuse/integrations/useSortable'
 import {
   GetRoutineRequestSchema,
   type Routine,
   UpdateExerciseOrderRequestSchema,
 } from '@/proto/api/v1/routines_pb'
-import { RoutineClient } from '@/clients/clients'
-import { useRoute } from 'vue-router'
-import { useSortable } from '@vueuse/integrations/useSortable'
-import AppButton from '@/ui/components/AppButton.vue'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import type { SortableEvent } from 'sortablejs'
-import { create } from '@bufbuild/protobuf'
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()
@@ -31,9 +32,9 @@ onMounted(async () => {
 })
 
 useSortable(el, routine.value?.exercises || [], {
-  ghostClass: 'sortable-ghost', // Class name for the drop placeholder
   chosenClass: 'sortable-chosen', // Class name for the chosen item
   dragClass: 'sortable-drag', // Class name for the dragging item
+  ghostClass: 'sortable-ghost', // Class name for the drop placeholder
   onUpdate: async (event: SortableEvent) => {
     const oldIndex = event.oldIndex ?? 0
     const newIndex = event.newIndex ?? 0
@@ -47,8 +48,8 @@ useSortable(el, routine.value?.exercises || [], {
 
     const updatedOrder = exercises.map((e) => e.id)
     const req = create(UpdateExerciseOrderRequestSchema, {
-      routineId: routine.value?.id,
       exerciseIds: updatedOrder,
+      routineId: routine.value?.id,
     })
     await RoutineClient.updateExerciseOrder(req)
   },
@@ -56,7 +57,12 @@ useSortable(el, routine.value?.exercises || [], {
 </script>
 
 <template>
-  <AppButton type="link" :to="`/workouts/routine/${route.params.id}`" colour="primary" class="mb-8">
+  <AppButton
+    type="link"
+    :to="`/workouts/routine/${route.params.id}`"
+    colour="primary"
+    class="mb-8"
+  >
     Start Workout
   </AppButton>
   <ul
@@ -71,11 +77,26 @@ useSortable(el, routine.value?.exercises || [], {
       class="flex justify-between items-center px-4 py-5 text-sm text-gray-900 hover:cursor-move"
     >
       {{ exercise.name }}
-      <ChevronUpDownIcon class="size-5 flex-none text-gray-500" aria-hidden="true" />
+      <ChevronUpDownIcon
+        class="size-5 flex-none text-gray-500"
+        aria-hidden="true"
+      />
     </li>
   </ul>
-  <AppButton type="button" colour="gray" class="mt-4">Edit Routine</AppButton>
-  <AppButton type="button" colour="red" class="mt-4">Delete Routine</AppButton>
+  <AppButton
+    type="button"
+    colour="gray"
+    class="mt-4"
+  >
+    Edit Routine
+  </AppButton>
+  <AppButton
+    type="button"
+    colour="red"
+    class="mt-4"
+  >
+    Delete Routine
+  </AppButton>
 </template>
 
 <style scoped>

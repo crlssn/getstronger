@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import AppButton from '@/ui/components/AppButton.vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
-import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
-import { useRoute } from 'vue-router'
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import { useWorkoutStore } from '@/stores/workout'
-import router from '@/router/router'
-import { DateTime } from 'luxon'
 import type { Timestamp } from '@bufbuild/protobuf/wkt'
-import { ConnectError } from '@connectrpc/connect'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
-import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
+
+import { DateTime } from 'luxon'
+import router from '@/router/router'
+import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
+import { useWorkoutStore } from '@/stores/workout'
+import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/ui/components/AppButton.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
+import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
+import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -96,13 +97,13 @@ const finishWorkout = async () => {
   try {
     await WorkoutClient.create(
       create(CreateWorkoutRequestSchema, {
-        routineId: routineID,
         exerciseSets: eSetsList,
-        startedAt: {
-          seconds: BigInt(DateTime.fromISO(startDateTime.value).toSeconds()),
-        } as Timestamp,
         finishedAt: {
           seconds: BigInt(DateTime.fromISO(endDateTime.value).toSeconds()),
+        } as Timestamp,
+        routineId: routineID,
+        startedAt: {
+          seconds: BigInt(DateTime.fromISO(startDateTime.value).toSeconds()),
         } as Timestamp,
       }),
     )
@@ -133,7 +134,7 @@ const prevSetReps = (exerciseID: string, index: number) => {
   return prevSet?.reps?.toString() || 'Reps'
 }
 
-const isNumber = (value: number | undefined | string) => {
+const isNumber = (value: number | string | undefined) => {
   return typeof value === 'number' && !Number.isNaN(value)
 }
 </script>
@@ -146,14 +147,20 @@ const isNumber = (value: number | undefined | string) => {
   >
     {{ reqError }}
   </div>
-  <form class="space-y-6" @submit.prevent="finishWorkout">
+  <form
+    class="space-y-6"
+    @submit.prevent="finishWorkout"
+  >
     <div>
       <label class="block text-xs font-semibold text-gray-900 uppercase">Exercises</label>
       <ul
         class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
         role="list"
       >
-        <li v-for="exercise in routine?.exercises" :key="exercise.id">
+        <li
+          v-for="exercise in routine?.exercises"
+          :key="exercise.id"
+        >
           <RouterLink
             :to="isCurrentExercise(exercise.id) ? '' : `?exercise_id=${exercise.id}`"
             class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-800"
@@ -164,36 +171,45 @@ const isNumber = (value: number | undefined | string) => {
               v-if="isCurrentExercise(exercise.id)"
               class="size-5 flex-none text-gray-600"
             />
-            <ChevronRightIcon v-else class="size-5 flex-none text-gray-400" />
+            <ChevronRightIcon
+              v-else
+              class="size-5 flex-none text-gray-400"
+            />
           </RouterLink>
-          <div v-if="isCurrentExercise(exercise.id)" class="px-4">
-            <div v-for="(set, index) in sets" :key="index">
+          <div
+            v-if="isCurrentExercise(exercise.id)"
+            class="px-4"
+          >
+            <div
+              v-for="(set, index) in sets"
+              :key="index"
+            >
               <label>Set {{ index + 1 }}</label>
               <div class="flex items-center gap-x-4 mb-4">
                 <div class="w-full">
                   <input
+                    v-model.number="set.weight"
                     type="text"
                     inputmode="decimal"
-                    v-model.number="set.weight"
                     :placeholder="prevSetWeight(exercise.id, index)"
                     :required="isNumber(set.reps)"
                     @keyup="
                       workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
                     "
-                  />
+                  >
                 </div>
                 <span class="text-gray-900 font-medium">x</span>
                 <div class="w-full">
                   <input
+                    v-model.number="set.reps"
                     type="text"
                     inputmode="numeric"
-                    v-model.number="set.reps"
                     :placeholder="prevSetReps(exercise.id, index)"
                     :required="isNumber(set.weight)"
                     @keyup="
                       workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
                     "
-                  />
+                  >
                 </div>
               </div>
             </div>
@@ -210,7 +226,7 @@ const isNumber = (value: number | undefined | string) => {
             type="datetime-local"
             required
             class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-          />
+          >
         </div>
       </div>
       <div class="w-full">
@@ -219,15 +235,26 @@ const isNumber = (value: number | undefined | string) => {
           <input
             v-model="endDateTime"
             type="datetime-local"
-            @input="clearDateTimeInterval"
             required
             class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-          />
+            @input="clearDateTimeInterval"
+          >
         </div>
       </div>
     </div>
-    <AppButton type="submit" colour="primary" class="mt-6">Save Workout</AppButton>
-    <AppButton type="button" colour="gray" class="mt-6" @click="cancelWorkout">
+    <AppButton
+      type="submit"
+      colour="primary"
+      class="mt-6"
+    >
+      Save Workout
+    </AppButton>
+    <AppButton
+      type="button"
+      colour="gray"
+      class="mt-6"
+      @click="cancelWorkout"
+    >
       Cancel Workout
     </AppButton>
   </form>

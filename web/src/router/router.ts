@@ -1,130 +1,130 @@
-import { createRouter, createWebHistory, type Router } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import { AuthClient } from '@/clients/clients'
-import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
 import HomeView from '@/ui/HomeView.vue'
+import NotFound from '@/ui/NotFound.vue'
+import { create } from '@bufbuild/protobuf'
+import { useAuthStore } from '@/stores/auth'
+import { AuthClient } from '@/clients/clients'
 import UserLogin from '@/ui/auth/UserLogin.vue'
 import UserSignup from '@/ui/auth/UserSignup.vue'
-import NotFound from '@/ui/NotFound.vue'
-import CreateExercise from '@/ui/exercises/CreateExercise.vue'
-import ListExercises from '@/ui/exercises/ListExercises.vue'
-import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
-import ListRoutines from '@/ui/routines/ListRoutines.vue'
-import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
-import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
-import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
-import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
-import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
 import ProfileView from '@/ui/profile/ProfileView.vue'
-import { create } from '@bufbuild/protobuf'
+import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
+import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
+import ListRoutines from '@/ui/routines/ListRoutines.vue'
+import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
+import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
+import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
+import ListExercises from '@/ui/exercises/ListExercises.vue'
+import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
+import CreateExercise from '@/ui/exercises/CreateExercise.vue'
+import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
+import { createRouter, createWebHistory, type Router } from 'vue-router'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/home',
-      name: 'home',
+      beforeEnter: [auth],
       component: HomeView,
-      beforeEnter: [auth],
       meta: { title: 'Home' },
+      name: 'home',
+      path: '/home',
     },
     {
-      path: '/profile',
-      name: 'profile',
+      beforeEnter: [auth],
       component: ProfileView,
-      beforeEnter: [auth],
       meta: { title: 'Profile' },
+      name: 'profile',
+      path: '/profile',
     },
     {
-      path: '/workouts',
-      name: 'list-workouts',
+      beforeEnter: [auth],
       component: ListWorkouts,
-      beforeEnter: [auth],
       meta: { title: 'Workouts' },
+      name: 'list-workouts',
+      path: '/workouts',
     },
     {
-      path: '/workouts/:id',
-      name: 'view-workout',
+      beforeEnter: [auth],
       component: ViewWorkout,
-      beforeEnter: [auth],
       meta: { title: '' },
+      name: 'view-workout',
+      path: '/workouts/:id',
     },
     {
-      path: '/workouts/routine/:routine_id',
-      name: 'workout-routine',
+      beforeEnter: [auth],
       component: WorkoutRoutine,
-      beforeEnter: [auth],
       meta: { title: '' },
+      name: 'workout-routine',
+      path: '/workouts/routine/:routine_id',
     },
     {
-      path: '/routines',
-      name: 'routines',
+      beforeEnter: [auth],
       component: ListRoutines,
-      beforeEnter: [auth],
       meta: { title: 'Routines' },
+      name: 'routines',
+      path: '/routines',
     },
     {
-      path: '/routines/create',
-      name: 'create-routine',
+      beforeEnter: [auth],
       component: CreateRoutine,
-      beforeEnter: [auth],
       meta: { title: 'Create Routine' },
+      name: 'create-routine',
+      path: '/routines/create',
     },
     {
-      path: '/routines/:id',
-      name: 'routine',
+      beforeEnter: [auth],
       component: ViewRoutine,
-      beforeEnter: [auth],
       meta: { title: 'Routine' },
+      name: 'routine',
+      path: '/routines/:id',
     },
     {
-      path: '/exercises',
-      name: 'exercises',
+      beforeEnter: [auth],
       component: ListExercises,
-      beforeEnter: [auth],
       meta: { title: 'Exercises' },
+      name: 'exercises',
+      path: '/exercises',
     },
     {
-      path: '/exercises/create',
-      name: 'create-exercise',
+      beforeEnter: [auth],
       component: CreateExercise,
-      beforeEnter: [auth],
       meta: { title: 'Create Exercise' },
+      name: 'create-exercise',
+      path: '/exercises/create',
     },
     {
-      path: '/exercises/:id/edit',
-      name: 'update-exercise',
-      component: UpdateExercise,
       beforeEnter: [auth],
+      component: UpdateExercise,
       meta: { title: 'Update Exercise' },
+      name: 'update-exercise',
+      path: '/exercises/:id/edit',
     },
     {
-      path: '/login',
-      name: 'login',
+      beforeEnter: [guest],
       component: UserLogin,
-      beforeEnter: [guest],
       meta: { title: 'Login' },
+      name: 'login',
+      path: '/login',
     },
     {
-      path: '/signup',
-      name: 'signup',
-      component: UserSignup,
       beforeEnter: [guest],
+      component: UserSignup,
       meta: { title: 'UserSignup' },
+      name: 'signup',
+      path: '/signup',
     },
     {
-      path: '/logout',
-      name: 'logout',
       beforeEnter: [logout],
-      component: null,
       children: [],
+      component: null,
+      name: 'logout',
+      path: '/logout',
     },
     {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
       component: NotFound,
       meta: { title: 'Not Found' },
+      name: 'not-found',
+      path: '/:pathMatch(.*)*',
     },
   ],
 })
@@ -134,15 +134,6 @@ router.beforeEach((to, from, next) => {
   pageTitleStore.setPageTitle(to.meta.title as string)
   next()
 })
-
-async function logout() {
-  await AuthClient.logout(create(LogoutRequestSchema, {}))
-  const authStore = useAuthStore()
-  authStore.logout()
-  return {
-    path: '/login',
-  }
-}
 
 async function auth() {
   const authStore = useAuthStore()
@@ -159,6 +150,15 @@ async function guest() {
     return {
       path: '/home',
     }
+  }
+}
+
+async function logout() {
+  await AuthClient.logout(create(LogoutRequestSchema, {}))
+  const authStore = useAuthStore()
+  authStore.logout()
+  return {
+    path: '/login',
   }
 }
 

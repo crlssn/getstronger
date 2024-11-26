@@ -1,12 +1,13 @@
-import { AuthClient } from '@/clients/clients'
-import { RefreshTokenRequestSchema } from '@/proto/api/v1/auth_pb'
-import { useAuthStore } from '@/stores/auth'
-import { Code, ConnectError } from '@connectrpc/connect'
-import router from '@/router/router'
 import type { NavigationFailure } from 'vue-router'
-import { create } from '@bufbuild/protobuf'
 
-export async function RefreshAccessTokenOrLogout(): Promise<void | NavigationFailure | undefined> {
+import router from '@/router/router'
+import { create } from '@bufbuild/protobuf'
+import { useAuthStore } from '@/stores/auth'
+import { AuthClient } from '@/clients/clients'
+import { Code, ConnectError } from '@connectrpc/connect'
+import { RefreshTokenRequestSchema } from '@/proto/api/v1/auth_pb'
+
+export async function RefreshAccessTokenOrLogout(): Promise<NavigationFailure | undefined | void> {
   console.log('refresh access token or logout')
   try {
     const authStore = useAuthStore()

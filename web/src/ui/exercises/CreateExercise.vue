@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
-import AppButton from '@/ui/components/AppButton.vue'
 import { ref } from 'vue'
+import { create } from '@bufbuild/protobuf'
 import { ExerciseClient } from '@/clients/clients'
 import { ConnectError } from '@connectrpc/connect'
-import { create } from '@bufbuild/protobuf'
+import AppButton from '@/ui/components/AppButton.vue'
+import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
 
 const name = ref('')
 const label = ref('')
@@ -14,8 +14,8 @@ const rest = ref(0)
 
 async function createExercise() {
   const request = create(CreateExerciseRequestSchema, {
-    name: name.value,
     label: label.value,
+    name: name.value,
   })
   try {
     await ExerciseClient.create(request)
@@ -51,38 +51,54 @@ async function createExercise() {
     >
       {{ resError }}
     </div>
-    <form class="space-y-6" @submit.prevent="createExercise">
+    <form
+      class="space-y-6"
+      @submit.prevent="createExercise"
+    >
       <div>
-        <label for="name" class="block text-xs font-semibold text-gray-900 uppercase">Name</label>
+        <label
+          for="name"
+          class="block text-xs font-semibold text-gray-900 uppercase"
+        >Name</label>
         <div class="mt-2">
           <input
-            v-model="name"
             id="name"
+            v-model="name"
             type="text"
             required
             class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-          />
+          >
         </div>
       </div>
 
       <div>
         <div>
-          <label for="label" class="block text-xs font-semibold text-gray-900 uppercase">
+          <label
+            for="label"
+            class="block text-xs font-semibold text-gray-900 uppercase"
+          >
             Label
           </label>
         </div>
         <div class="mt-2">
           <input
-            v-model="label"
             id="label"
+            v-model="label"
             type="text"
             placeholder="Optional"
             class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-          />
+          >
         </div>
       </div>
 
-      <AppButton text="Create" type="submit" colour="primary" class="mt-6">Save Exercise</AppButton>
+      <AppButton
+        text="Create"
+        type="submit"
+        colour="primary"
+        class="mt-6"
+      >
+        Save Exercise
+      </AppButton>
     </form>
   </div>
 </template>

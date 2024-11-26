@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { AuthClient } from '@/clients/clients'
 import { ref } from 'vue'
+import router from '@/router/router'
+import { create } from '@bufbuild/protobuf'
+import { useAuthStore } from '@/stores/auth'
+import { AuthClient } from '@/clients/clients'
+import { ScheduleTokenRefresh } from '@/jwt/jwt'
 import { RouterLink, useRoute } from 'vue-router'
 import { ConnectError } from '@connectrpc/connect'
-import { useAuthStore } from '@/stores/auth'
-import router from '@/router/router'
-import { ScheduleTokenRefresh } from '@/jwt/jwt'
 import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
 import { LoginRequestSchema } from '@/proto/api/v1/auth_pb.ts'
 
 const email = ref('')
@@ -43,7 +43,7 @@ const login = async () => {
         class="mx-auto h-10 w-auto"
         src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
         alt="Your Company"
-      />
+      >
       <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
         Sign in to your account
       </h2>
@@ -64,50 +64,71 @@ const login = async () => {
       >
         {{ resError }}
       </div>
-      <form class="space-y-6" method="POST" @submit.prevent="login">
+      <form
+        class="space-y-6"
+        method="POST"
+        @submit.prevent="login"
+      >
         <div>
-          <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
+          <label
+            for="email"
+            class="block text-sm/6 font-medium text-gray-900"
+          >Email address</label>
           <div class="mt-2">
             <input
-              v-model="email"
               id="email"
+              v-model="email"
               name="email"
               type="email"
               autocomplete="email"
               required
-            />
+            >
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
+            <label
+              for="password"
+              class="block text-sm/6 font-medium text-gray-900"
+            >Password</label>
             <div class="text-sm">
-              <a href="#" class="font-semibold text-indigo-600 hover:text-indigo-500">
+              <a
+                href="#"
+                class="font-semibold text-indigo-600 hover:text-indigo-500"
+              >
                 Forgot password?
               </a>
             </div>
           </div>
           <div class="mt-2">
             <input
-              v-model="password"
               id="password"
+              v-model="password"
               name="password"
               type="password"
               autocomplete="current-password"
               required
-            />
+            >
           </div>
         </div>
 
         <div>
-          <AppButton type="submit" colour="primary"> Login </AppButton>
+          <AppButton
+            type="submit"
+            colour="primary"
+          >
+            Login
+          </AppButton>
         </div>
       </form>
 
       <p class="mt-10 text-center text-sm/6 text-gray-400">
         Not a member?
-        <RouterLink to="signup" class="font-semibold text-indigo-600 hover:text-indigo-500">
+        <RouterLink
+          to="signup"
+          class="font-semibold text-indigo-600 hover:text-indigo-500"
+        >
           Sign up
         </RouterLink>
       </p>

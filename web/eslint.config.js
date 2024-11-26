@@ -1,20 +1,20 @@
 import pluginVue from 'eslint-plugin-vue'
-import vueTsEslintConfig from '@vue/eslint-config-typescript'
 import pluginVitest from '@vitest/eslint-plugin'
-import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
+import perfectionist from 'eslint-plugin-perfectionist'
+import vueTsEslintConfig from '@vue/eslint-config-typescript'
 
 export default [
   {
-    name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
+    name: 'app/files-to-lint',
   },
 
   {
-    name: 'app/files-to-ignore',
     ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'src/proto/**'],
+    name: 'app/files-to-ignore',
   },
 
-  ...pluginVue.configs['flat/essential'],
+  ...pluginVue.configs['flat/recommended'],
   ...vueTsEslintConfig(),
 
   {
@@ -22,5 +22,38 @@ export default [
     files: ['src/**/__tests__/*'],
   },
 
-  skipFormatting,
+
+  {
+    plugins: {
+      perfectionist,
+    },
+    rules: {
+      'perfectionist/sort-array-includes': ['error'],
+      'perfectionist/sort-classes': ['error'],
+      'perfectionist/sort-decorators': ['error'],
+      'perfectionist/sort-enums': ['error'],
+      'perfectionist/sort-exports': ['error'],
+      'perfectionist/sort-heritage-clauses': ['error'],
+      'perfectionist/sort-imports': [
+        'error',
+        {
+          order: 'asc',
+          type: 'line-length',
+        },
+      ],
+      'perfectionist/sort-interfaces': ['error'],
+      'perfectionist/sort-intersection-types': ['error'],
+      'perfectionist/sort-jsx-props': ['error'],
+      'perfectionist/sort-maps': ['error'],
+      'perfectionist/sort-modules': ['error'],
+      'perfectionist/sort-named-exports': ['error'],
+      'perfectionist/sort-named-imports': ['error'],
+      'perfectionist/sort-object-types': ['error'],
+      'perfectionist/sort-objects': ['error'],
+      'perfectionist/sort-sets': ['error'],
+      'perfectionist/sort-switch-case': ['error'],
+      'perfectionist/sort-union-types': ['error'],
+      'perfectionist/sort-variable-declarations': ['error'],
+    },
+  }
 ]

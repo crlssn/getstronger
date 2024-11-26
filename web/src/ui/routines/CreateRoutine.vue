@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import AppButton from '@/ui/components/AppButton.vue'
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+
 import { onMounted, ref } from 'vue'
-import { ExerciseClient, RoutineClient } from '@/clients/clients'
-import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
-import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
-import { ConnectError } from '@connectrpc/connect'
 import { Switch } from '@headlessui/vue'
 import { create } from '@bufbuild/protobuf'
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/ui/components/AppButton.vue'
+import { ExerciseClient, RoutineClient } from '@/clients/clients'
+import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
+import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -28,8 +29,8 @@ const toggleExercise = (id: string) => {
 const fetchExercises = async () => {
   try {
     const req = create(ListExercisesRequestSchema, {
-      pageToken: pageToken.value,
       pageSize: 100,
+      pageToken: pageToken.value,
     })
     const res = await ExerciseClient.list(req)
     exercises.value = [...exercises.value, ...res.exercises]
@@ -51,8 +52,8 @@ const fetchExercises = async () => {
 const createRoutine = async () => {
   try {
     const req = create(CreateRoutineRequestSchema, {
-      name: name.value,
       exerciseIds: exerciseIDs.value,
+      name: name.value,
     })
     await RoutineClient.create(req)
     resOK.value = true
@@ -91,16 +92,22 @@ onMounted(() => {
     {{ resError }}
   </div>
 
-  <form class="space-y-6" @submit.prevent="createRoutine">
+  <form
+    class="space-y-6"
+    @submit.prevent="createRoutine"
+  >
     <div>
-      <label for="name" class="block text-xs font-semibold text-gray-900 uppercase">Name</label>
+      <label
+        for="name"
+        class="block text-xs font-semibold text-gray-900 uppercase"
+      >Name</label>
       <div class="mt-2">
         <input
           v-model="name"
           type="text"
           required
           class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-        />
+        >
       </div>
     </div>
 
@@ -110,17 +117,20 @@ onMounted(() => {
         role="list"
         class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
       >
-        <li v-for="exercise in exercises" :key="exercise.id">
+        <li
+          v-for="exercise in exercises"
+          :key="exercise.id"
+        >
           <div
             class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-900"
           >
             {{ exercise.name }}
             <Switch
-              @click="toggleExercise(exercise.id)"
               :class="[
                 exerciseIDs.includes(exercise.id) ? 'bg-indigo-600' : 'bg-gray-200',
                 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2',
               ]"
+              @click="toggleExercise(exercise.id)"
             >
               <span
                 :class="[
@@ -134,6 +144,12 @@ onMounted(() => {
       </ul>
     </div>
 
-    <AppButton type="submit" colour="primary" class="mt-6">Save Routine</AppButton>
+    <AppButton
+      type="submit"
+      colour="primary"
+      class="mt-6"
+    >
+      Save Routine
+    </AppButton>
   </form>
 </template>
