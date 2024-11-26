@@ -123,7 +123,7 @@ message Workout {
 
 message WorkoutComment {
   string id = 1 [(buf.validate.field).string.uuid = true];
-  string user_id = 3 [(buf.validate.field).string.uuid = true];
+  User user = 2 [(buf.validate.field).required = true];
   string comment = 4 [(buf.validate.field).string.min_len = 1];
   google.protobuf.Timestamp created_at = 5 [(buf.validate.field).required = true];
 }

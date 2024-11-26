@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/shared.proto.
  */
 export const file_api_v1_shared: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJIiwKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoAUKMAQoKY29tLmFwaS52MUILU2hhcmVkUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate]);
+  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJIiwKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoASJVCgRVc2VyEhQKAmlkGAEgASgJQgi6SAVyA7ABARIbCgpmaXJzdF9uYW1lGAIgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgDIAEoCUIHukgEcgIQAUKMAQoKY29tLmFwaS52MUILU2hhcmVkUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ExerciseSets
@@ -85,4 +85,31 @@ export type Set = Message<"api.v1.Set"> & {
  */
 export const SetSchema: GenMessage<Set> = /*@__PURE__*/
   messageDesc(file_api_v1_shared, 2);
+
+/**
+ * @generated from message api.v1.User
+ */
+export type User = Message<"api.v1.User"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string first_name = 2;
+   */
+  firstName: string;
+
+  /**
+   * @generated from field: string last_name = 3;
+   */
+  lastName: string;
+};
+
+/**
+ * Describes the message api.v1.User.
+ * Use `create(UserSchema)` to create a new message.
+ */
+export const UserSchema: GenMessage<User> = /*@__PURE__*/
+  messageDesc(file_api_v1_shared, 3);
 
