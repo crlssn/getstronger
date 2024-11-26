@@ -81,7 +81,6 @@ const pageTitleStore = usePageTitleStore()
               >
                 <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
                   <button type="button" class="-m-2.5 p-2.5" @click="sidebarOpen = false">
-                    <span class="sr-only">Close sidebar</span>
                     <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true" />
                   </button>
                 </div>
@@ -194,7 +193,6 @@ const pageTitleStore = usePageTitleStore()
         <!--          class="-m-2.5 p-2.5 text-gray-700 lg:hidden"-->
         <!--          @click="sidebarOpen = true"-->
         <!--        >-->
-        <!--          <span class="sr-only">Open sidebar</span>-->
         <!--          <Bars3Icon class="h-6 w-6" aria-hidden="true"/>-->
         <!--        </button>-->
 
@@ -208,7 +206,6 @@ const pageTitleStore = usePageTitleStore()
             </p>
           </div>
           <!--          <form class="relative flex flex-1" action="#" method="GET">-->
-          <!--            <label for="search-field" class="sr-only">Search</label>-->
           <!--            <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"-->
           <!--                                 aria-hidden="true"/>-->
           <!--            <input id="search-field"-->
@@ -217,7 +214,6 @@ const pageTitleStore = usePageTitleStore()
           <!--          </form>-->
 <!--          <div class="flex items-center gap-x-4 lg:gap-x-6">-->
             <!--            <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">-->
-            <!--              <span class="sr-only">View notifications</span>-->
             <!--              <BellIcon class="h-6 w-6" aria-hidden="true"/>-->
             <!--            </button>-->
 
@@ -227,7 +223,6 @@ const pageTitleStore = usePageTitleStore()
             <!-- Profile dropdown -->
 <!--            <Menu as="div" class="relative">-->
 <!--              <MenuButton class="-m-1.5 flex items-center p-1.5">-->
-<!--                <span class="sr-only">Open user menu</span>-->
 <!--                <img-->
 <!--                  class="h-8 w-8 rounded-full bg-gray-50"-->
 <!--                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"-->
