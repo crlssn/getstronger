@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
@@ -32,9 +32,9 @@ const isActive = (basePath: string) => computed(() => route.path.startsWith(base
 const pageTitleStore = usePageTitleStore()
 const openSearchBar = () => {
   searchBarOpen.value = true
-  setTimeout(() => {
+  nextTick(() => {
     input.value?.focus()
-  }, 0)
+  });
 }
 </script>
 
