@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'buf.gen.yaml'
+      - 'buf.yaml'
+      - 'package.json'
+
+jobs:
+  proto:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+        shell: bash
+
+      - name: Generate protos
+        run: buf generate
+        shell: bash
+
+      - name: Check for uncommitted changes
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            exit 1
+          fi
