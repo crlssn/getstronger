@@ -60,23 +60,21 @@ const updateTab = (event: Event) => {
       </select>
     </div>
     <div class="hidden sm:block">
-      <div class="border border-gray-200 bg-white rounded-md">
-        <nav class="-mb-px flex" aria-label="Tabs">
-          <RouterLink
-            v-for="tab in tabs"
-            :key="tab.name"
-            :to="tab.href"
-            :class="[
-              tab.href === route.fullPath
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-              'w-1/4 border-b-2 px-1 py-4 text-center text-sm font-medium',
-            ]"
-          >
-            {{ tab.name }}
-          </RouterLink>
-        </nav>
-      </div>
+      <nav class="flex" aria-label="Tabs">
+        <RouterLink
+          v-for="tab in tabs"
+          :key="tab.name"
+          :to="tab.href"
+          :class="[
+            tab.href === route.fullPath
+              ? 'border-gray-200 text-gray-900 bg-white'
+              : 'border-transparent text-gray-500 hover:text-gray-700',
+            'w-1/4 border border-b-8 py-3.5 text-center text-sm font-semibold rounded-md uppercase',
+          ]"
+        >
+          {{ tab.name }}
+        </RouterLink>
+      </nav>
     </div>
   </div>
   <div v-if="route.fullPath === tabs[0].href">

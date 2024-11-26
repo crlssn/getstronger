@@ -4,9 +4,10 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import {
   ArrowPathRoundedSquareIcon,
   BookOpenIcon,
-  FolderIcon,
   HomeIcon,
   XMarkIcon,
+  UserIcon,
+  BellIcon,
 } from '@heroicons/vue/24/outline'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { RouterView, useRoute } from 'vue-router'
@@ -17,7 +18,8 @@ const navigation = [
   { name: 'Home', href: '/home', icon: HomeIcon },
   { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
   { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
-  { name: 'Workouts', href: '/workouts', icon: FolderIcon },
+  { name: 'Notifications', href: '/notifications', icon: BellIcon  },
+  { name: 'Profile', href: '/profile', icon: UserIcon },
 ]
 
 const sidebarOpen = ref(false)
