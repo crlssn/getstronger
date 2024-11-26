@@ -152,3 +152,16 @@ func parsePersonalBestSliceToPB(personalBests orm.PersonalBestSlice, exercises o
 
 	return pbs
 }
+
+func parseUserSliceToPB(users orm.UserSlice) []*apiv1.User {
+	var pbUsers []*apiv1.User
+	for _, u := range users {
+		pbUsers = append(pbUsers, &apiv1.User{
+			Id:        u.ID,
+			FirstName: u.FirstName,
+			LastName:  u.LastName,
+		})
+	}
+
+	return pbUsers
+}
