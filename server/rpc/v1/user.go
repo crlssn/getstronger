@@ -22,10 +22,18 @@ type userHandler struct {
 
 func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
+
+	count, err := h.repo.CountUsers(ctx, repo.CountUsersWithNameMatching(req.Msg.GetQuery()))
+	if err != nil {
+		log.Error("failed to count users", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithName())
+	users, err := h.repo.ListUsers(ctx,
+		repo.ListUsersWithLimit(limit+1),
+		repo.ListUsersWithNameMatching(req.Msg.GetQuery()),
+	)
 	if err != nil {
 		log.Error("failed to list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -43,7 +51,7 @@ func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.Search
 		Msg: &v1.SearchResponse{
 			Users: parseUserSliceToPB(pagination.Items),
 			Pagination: &v1.PaginationResponse{
-				TotalResults:  0,
+				TotalResults:  count,
 				NextPageToken: pagination.NextPageToken,
 			},
 		},

@@ -850,18 +850,37 @@ func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, erro
 	return user, nil
 }
 
-type ListUsersOpt func() qm.QueryMod
+type ListUsersOpt func() []qm.QueryMod
 
 func ListUsersWithIDs(ids []string) ListUsersOpt {
-	return func() qm.QueryMod {
-		return orm.UserWhere.ID.IN(ids)
+	return func() []qm.QueryMod {
+		return []qm.QueryMod{
+			orm.UserWhere.ID.IN(ids),
+		}
+	}
+}
+
+func ListUsersWithNameMatching(query string) ListUsersOpt {
+	return func() []qm.QueryMod {
+		return []qm.QueryMod{
+			orm.UserWhere.FirstName.ILIKE(fmt.Sprintf("%%%s%%", query)),
+			qm.OrderBy(fmt.Sprintf("similarity(full_name_search, '%s') DESC", query)),
+		}
+	}
+}
+
+func ListUsersWithLimit(limit int) ListUsersOpt {
+	return func() []qm.QueryMod {
+		return []qm.QueryMod{
+			qm.Limit(limit),
+		}
 	}
 }
 
 func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
-		query = append(query, opt())
+		query = append(query, opt()...)
 	}
 
 	users, err := orm.Users(query...).All(ctx, r.executor())
@@ -890,4 +909,26 @@ func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentP
 	}
 
 	return comment, nil
+}
+
+type CountUsersOpt func() qm.QueryMod
+
+func CountUsersWithNameMatching(query string) CountUsersOpt {
+	return func() qm.QueryMod {
+		return orm.UserWhere.FirstName.ILIKE(fmt.Sprintf("%%%s%%", query))
+	}
+}
+
+func (r *Repo) CountUsers(ctx context.Context, opts ...CountUsersOpt) (int64, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	count, err := orm.Users(query...).Count(ctx, r.executor())
+	if err != nil {
+		return 0, fmt.Errorf("users count: %w", err)
+	}
+
+	return count, nil
 }

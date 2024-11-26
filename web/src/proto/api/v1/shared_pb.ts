@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/shared.proto.
  */
 export const file_api_v1_shared: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJIiwKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoASJVCgRVc2VyEhQKAmlkGAEgASgJQgi6SAVyA7ABARIbCgpmaXJzdF9uYW1lGAIgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgDIAEoCUIHukgEcgIQASJGChFQYWdpbmF0aW9uUmVxdWVzdBISCgpwYWdlX3Rva2VuGAEgASgMEh0KCnBhZ2VfbGltaXQYAiABKAVCCbpIBhoEGGQoASJEChJQYWdpbmF0aW9uUmVzcG9uc2USFQoNdG90YWxfcmVzdWx0cxgBIAEoBRIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAxCjAEKCmNvbS5hcGkudjFCC1NoYXJlZFByb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_buf_validate_validate]);
+  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJIiwKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoASJVCgRVc2VyEhQKAmlkGAEgASgJQgi6SAVyA7ABARIbCgpmaXJzdF9uYW1lGAIgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgDIAEoCUIHukgEcgIQASJGChFQYWdpbmF0aW9uUmVxdWVzdBIdCgpwYWdlX2xpbWl0GAEgASgFQgm6SAYaBBhkKAESEgoKcGFnZV90b2tlbhgCIAEoDCJEChJQYWdpbmF0aW9uUmVzcG9uc2USFQoNdG90YWxfcmVzdWx0cxgBIAEoAxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAxCjAEKCmNvbS5hcGkudjFCC1NoYXJlZFByb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ExerciseSets
@@ -118,14 +118,14 @@ export const UserSchema: GenMessage<User> = /*@__PURE__*/
  */
 export type PaginationRequest = Message<"api.v1.PaginationRequest"> & {
   /**
-   * @generated from field: bytes page_token = 1;
-   */
-  pageToken: Uint8Array;
-
-  /**
-   * @generated from field: int32 page_limit = 2;
+   * @generated from field: int32 page_limit = 1;
    */
   pageLimit: number;
+
+  /**
+   * @generated from field: bytes page_token = 2;
+   */
+  pageToken: Uint8Array;
 };
 
 /**
@@ -140,9 +140,9 @@ export const PaginationRequestSchema: GenMessage<PaginationRequest> = /*@__PURE_
  */
 export type PaginationResponse = Message<"api.v1.PaginationResponse"> & {
   /**
-   * @generated from field: int32 total_results = 1;
+   * @generated from field: int64 total_results = 1;
    */
-  totalResults: number;
+  totalResults: bigint;
 
   /**
    * @generated from field: bytes next_page_token = 2;
