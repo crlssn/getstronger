@@ -33,7 +33,6 @@ const navigation = [
   },
   { href: '/exercises', icon: BookOpenIcon, iconActive: BookOpenSolidIcon, name: 'Exercises' },
   { href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon, name: 'Notifications' },
-  // { name: 'Workouts', href: '/workouts', icon: FolderIcon, iconActive: FolderSolidIcon },
   { href: '/profile', icon: UserIcon, iconActive: UserSolidIcon, name: 'Profile' },
 ]
 </script>
