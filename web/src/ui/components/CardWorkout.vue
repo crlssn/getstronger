@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import type { Workout } from '@/proto/api/v1/workouts_pb.ts'
-
-interface Props {
-  workout: Workout
-}
-
-const props = defineProps<Props>()
-
-import DropdownButton from '@/ui/components/DropdownButton.vue'
+import { type Workout } from '@/proto/api/v1/workouts_pb.ts'
 import { type DropdownItem } from '@/types/dropdown.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import AppTextarea from '@/ui/components/AppTextarea.vue'
+import DropdownButton from '@/ui/components/DropdownButton.vue'
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
+import { onMounted } from 'vue'
+import { formatToRelativeDateTime } from '@/utils/datetime.ts'
+
+const props = defineProps<{
+  workout: Workout
+}>()
+
+onMounted(() => {
+  console.log(props.workout)
+})
 
 const dropdownItems: Array<DropdownItem> = [
   { title: 'Edit', href: `/workout/${props.workout.id}/edit` },
@@ -25,41 +28,23 @@ const dropdownItems: Array<DropdownItem> = [
     <div class="px-4 py-5 sm:px-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <img
-            class="h-8 w-8 rounded-full mr-4"
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-            alt=""
-          />
           <span class="font-semibold mr-2">Christian Carlsson</span>
-          <span class="text-gray-500 text-sm">4 hours ago</span>
+          <span class="text-gray-500 text-sm">{{ formatToRelativeDateTime(workout.finishedAt) }}</span>
         </div>
         <DropdownButton :items="dropdownItems" />
       </div>
     </div>
     <div class="px-4 py-5 sm:p-6">
       <CardWorkoutExercise
-        name="Latsdrag"
-        label="Matrix"
-        :sets="[
-          { weight: 47.5, reps: 10 },
-          { weight: 47.5, reps: 10 },
-          { weight: 47.5, reps: 10 },
-        ]"
-      />
-      <CardWorkoutExercise
-        name="Sittande rodd"
-        label="Matrix"
-        :sets="[
-          { weight: 47.5, reps: 10 },
-          { weight: 47.5, reps: 10 },
-          { weight: 47.5, reps: 10 },
-        ]"
+        v-for="exerciseSet in workout.exerciseSets"
+        :name="exerciseSet.exercise?.name"
+        :sets="exerciseSet.sets"
+        :key="exerciseSet.exercise?.id"
       />
     </div>
     <div class="px-4 py-4 sm:px-6">
       <div class="flex mb-4">
         <CardWorkoutComment
-          imageURL="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
           name="Barbro Lundquist"
           comment="Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
             voluptatem."
