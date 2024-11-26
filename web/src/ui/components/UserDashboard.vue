@@ -18,7 +18,7 @@ const navigation = [
   { name: 'Home', href: '/home', icon: HomeIcon },
   { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
   { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
-  { name: 'Notifications', href: '/notifications', icon: BellIcon  },
+  { name: 'Notifications', href: '/notifications', icon: BellIcon },
   { name: 'Profile', href: '/profile', icon: UserIcon },
 ]
 
