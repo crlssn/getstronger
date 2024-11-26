@@ -88,7 +88,7 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 		userIDs = append(userIDs, comment.UserID)
 	}
 
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
+	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(append(userIDs, userID)))
 	if err != nil {
 		log.Error("failed to list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -155,7 +155,7 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
+	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(append(userIDs, userID)))
 	if err != nil {
 		log.Error("failed to list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

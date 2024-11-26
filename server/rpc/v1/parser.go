@@ -88,12 +88,21 @@ func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users o
 		})
 	}
 
+	var user *apiv1.User
+	for _, u := range users {
+		if u.ID == workout.UserID {
+			user = parseUserToPB(u)
+			break
+		}
+	}
+
 	return &apiv1.Workout{
 		Id:           workout.ID,
 		Name:         workout.Name,
+		User:         user,
+		ExerciseSets: exerciseSets,
 		Comments:     parseWorkoutCommentSliceToPB(workout.R.WorkoutComments, users),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
-		ExerciseSets: exerciseSets,
 	}
 }
 
