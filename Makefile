@@ -42,7 +42,7 @@ format:
 	goimports -w .
 	protolint --fix .
 	cd web && npx sort-package-json
-	cd web && npm run format
+	cd web && npx eslint --fix "src/**/*.{js,ts,vue}"
 
 lint:
 	golangci-lint run

@@ -1,17 +1,17 @@
-import pluginVue from 'eslint-plugin-vue'
 import vueTsEslintConfig from '@vue/eslint-config-typescript'
-import pluginVitest from '@vitest/eslint-plugin'
 import perfectionist from 'eslint-plugin-perfectionist'
+import pluginVitest from '@vitest/eslint-plugin'
+import pluginVue from 'eslint-plugin-vue'
 
 export default [
   {
-    name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
+    name: 'app/files-to-lint',
   },
 
   {
-    name: 'app/files-to-ignore',
     ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'src/proto/**'],
+    name: 'app/files-to-ignore',
   },
 
   perfectionist.configs['recommended-natural'],
