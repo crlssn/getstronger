@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/workouts.proto.
  */
 export const file_api_v1_workouts: GenFile = /*@__PURE__*/
-  fileDesc("ChVhcGkvdjEvd29ya291dHMucHJvdG8SBmFwaS52MSLcAQoUQ3JlYXRlV29ya291dFJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESNQoNZXhlcmNpc2Vfc2V0cxgCIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEjYKCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNwoLZmluaXNoZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiKwoVQ3JlYXRlV29ya291dFJlc3BvbnNlEhIKCndvcmtvdXRfaWQYASABKAkiRwoTTGlzdFdvcmtvdXRzUmVxdWVzdBIcCglwYWdlX3NpemUYAiABKAVCCbpIBhoEGGQoARISCgpwYWdlX3Rva2VuGAMgASgMIlIKFExpc3RXb3Jrb3V0c1Jlc3BvbnNlEiEKCHdvcmtvdXRzGAEgAygLMg8uYXBpLnYxLldvcmtvdXQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgMIikKEUdldFdvcmtvdXRSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASI2ChJHZXRXb3Jrb3V0UmVzcG9uc2USIAoHd29ya291dBgBIAEoCzIPLmFwaS52MS5Xb3Jrb3V0IiwKFERlbGV0ZVdvcmtvdXRSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASIXChVEZWxldGVXb3Jrb3V0UmVzcG9uc2UipgEKB1dvcmtvdXQSFAoCaWQYASABKAlCCLpIBXIDsAEBEhUKBG5hbWUYAiABKAlCB7pIBHICEAESNwoLZmluaXNoZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNQoNZXhlcmNpc2Vfc2V0cxgEIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBMrcCCg5Xb3Jrb3V0U2VydmljZRJLCgZDcmVhdGUSHC5hcGkudjEuQ3JlYXRlV29ya291dFJlcXVlc3QaHS5hcGkudjEuQ3JlYXRlV29ya291dFJlc3BvbnNlIgSItRgBEkIKA0dldBIZLmFwaS52MS5HZXRXb3Jrb3V0UmVxdWVzdBoaLmFwaS52MS5HZXRXb3Jrb3V0UmVzcG9uc2UiBIi1GAESRwoETGlzdBIbLmFwaS52MS5MaXN0V29ya291dHNSZXF1ZXN0GhwuYXBpLnYxLkxpc3RXb3Jrb3V0c1Jlc3BvbnNlIgSItRgBEksKBkRlbGV0ZRIcLmFwaS52MS5EZWxldGVXb3Jrb3V0UmVxdWVzdBodLmFwaS52MS5EZWxldGVXb3Jrb3V0UmVzcG9uc2UiBIi1GAFCjgEKCmNvbS5hcGkudjFCDVdvcmtvdXRzUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_buf_validate_validate]);
+  fileDesc("ChVhcGkvdjEvd29ya291dHMucHJvdG8SBmFwaS52MSLcAQoUQ3JlYXRlV29ya291dFJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESNQoNZXhlcmNpc2Vfc2V0cxgCIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEjYKCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNwoLZmluaXNoZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiKwoVQ3JlYXRlV29ya291dFJlc3BvbnNlEhIKCndvcmtvdXRfaWQYASABKAkiRwoTTGlzdFdvcmtvdXRzUmVxdWVzdBIcCglwYWdlX3NpemUYAiABKAVCCbpIBhoEGGQoARISCgpwYWdlX3Rva2VuGAMgASgMIlIKFExpc3RXb3Jrb3V0c1Jlc3BvbnNlEiEKCHdvcmtvdXRzGAEgAygLMg8uYXBpLnYxLldvcmtvdXQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgMIikKEUdldFdvcmtvdXRSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASI2ChJHZXRXb3Jrb3V0UmVzcG9uc2USIAoHd29ya291dBgBIAEoCzIPLmFwaS52MS5Xb3Jrb3V0IiwKFERlbGV0ZVdvcmtvdXRSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASIXChVEZWxldGVXb3Jrb3V0UmVzcG9uc2Ui0AEKB1dvcmtvdXQSFAoCaWQYASABKAlCCLpIBXIDsAEBEhUKBG5hbWUYAiABKAlCB7pIBHICEAESNwoLZmluaXNoZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNQoNZXhlcmNpc2Vfc2V0cxgEIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEigKCGNvbW1lbnRzGAUgAygLMhYuYXBpLnYxLldvcmtvdXRDb21tZW50IpMBCg5Xb3Jrb3V0Q29tbWVudBIUCgJpZBgBIAEoCUIIukgFcgOwAQESGQoHdXNlcl9pZBgDIAEoCUIIukgFcgOwAQESGAoHY29tbWVudBgEIAEoCUIHukgEcgIQARI2CgpjcmVhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBMrcCCg5Xb3Jrb3V0U2VydmljZRJLCgZDcmVhdGUSHC5hcGkudjEuQ3JlYXRlV29ya291dFJlcXVlc3QaHS5hcGkudjEuQ3JlYXRlV29ya291dFJlc3BvbnNlIgSItRgBEkIKA0dldBIZLmFwaS52MS5HZXRXb3Jrb3V0UmVxdWVzdBoaLmFwaS52MS5HZXRXb3Jrb3V0UmVzcG9uc2UiBIi1GAESRwoETGlzdBIbLmFwaS52MS5MaXN0V29ya291dHNSZXF1ZXN0GhwuYXBpLnYxLkxpc3RXb3Jrb3V0c1Jlc3BvbnNlIgSItRgBEksKBkRlbGV0ZRIcLmFwaS52MS5EZWxldGVXb3Jrb3V0UmVxdWVzdBodLmFwaS52MS5EZWxldGVXb3Jrb3V0UmVzcG9uc2UiBIi1GAFCjgEKCmNvbS5hcGkudjFCDVdvcmtvdXRzUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.CreateWorkoutRequest
@@ -219,6 +219,11 @@ export type Workout = Message<"api.v1.Workout"> & {
    * @generated from field: repeated api.v1.ExerciseSets exercise_sets = 4;
    */
   exerciseSets: ExerciseSets[];
+
+  /**
+   * @generated from field: repeated api.v1.WorkoutComment comments = 5;
+   */
+  comments: WorkoutComment[];
 };
 
 /**
@@ -227,6 +232,38 @@ export type Workout = Message<"api.v1.Workout"> & {
  */
 export const WorkoutSchema: GenMessage<Workout> = /*@__PURE__*/
   messageDesc(file_api_v1_workouts, 8);
+
+/**
+ * @generated from message api.v1.WorkoutComment
+ */
+export type WorkoutComment = Message<"api.v1.WorkoutComment"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string user_id = 3;
+   */
+  userId: string;
+
+  /**
+   * @generated from field: string comment = 4;
+   */
+  comment: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 5;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message api.v1.WorkoutComment.
+ * Use `create(WorkoutCommentSchema)` to create a new message.
+ */
+export const WorkoutCommentSchema: GenMessage<WorkoutComment> = /*@__PURE__*/
+  messageDesc(file_api_v1_workouts, 9);
 
 /**
  * @generated from service api.v1.WorkoutService

@@ -118,4 +118,12 @@ message Workout {
   string name = 2 [(buf.validate.field).string.min_len = 1];
   google.protobuf.Timestamp finished_at = 3 [(buf.validate.field).required = true];
   repeated ExerciseSets exercise_sets = 4 [(buf.validate.field).repeated.min_items = 1];
+  repeated WorkoutComment comments = 5;
+}
+
+message WorkoutComment {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string user_id = 3 [(buf.validate.field).string.uuid = true];
+  string comment = 4 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 5 [(buf.validate.field).required = true];
 }
