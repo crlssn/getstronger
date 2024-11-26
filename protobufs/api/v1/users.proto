@@ -20,6 +20,9 @@ service UserService {
   rpc ListFollowees(ListFolloweesRequest) returns (ListFolloweesResponse) {
     option (auth) = true;
   }
+  rpc Search(SearchRequest) returns (SearchResponse) {
+    option (auth) = true;
+  }
 }
 
 message FollowRequest {
@@ -44,4 +47,13 @@ message ListFolloweesRequest {
 }
 message ListFolloweesResponse {
   repeated User followees = 1;
+}
+
+message SearchRequest {
+  string query = 1 [(buf.validate.field).string.min_len = 1];
+  PaginationRequest pagination = 2 [(buf.validate.field).required = true];
+}
+message SearchResponse {
+  repeated User users = 1;
+  PaginationResponse pagination = 2;
 }

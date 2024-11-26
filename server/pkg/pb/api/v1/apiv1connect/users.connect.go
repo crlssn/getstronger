@@ -44,6 +44,8 @@ const (
 	// UserServiceListFolloweesProcedure is the fully-qualified name of the UserService's ListFollowees
 	// RPC.
 	UserServiceListFolloweesProcedure = "/api.v1.UserService/ListFollowees"
+	// UserServiceSearchProcedure is the fully-qualified name of the UserService's Search RPC.
+	UserServiceSearchProcedure = "/api.v1.UserService/Search"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -53,6 +55,7 @@ var (
 	userServiceUnfollowMethodDescriptor      = userServiceServiceDescriptor.Methods().ByName("Unfollow")
 	userServiceListFollowersMethodDescriptor = userServiceServiceDescriptor.Methods().ByName("ListFollowers")
 	userServiceListFolloweesMethodDescriptor = userServiceServiceDescriptor.Methods().ByName("ListFollowees")
+	userServiceSearchMethodDescriptor        = userServiceServiceDescriptor.Methods().ByName("Search")
 )
 
 // UserServiceClient is a client for the api.v1.UserService service.
@@ -61,6 +64,7 @@ type UserServiceClient interface {
 	Unfollow(context.Context, *connect.Request[v1.UnfollowRequest]) (*connect.Response[v1.UnfollowResponse], error)
 	ListFollowers(context.Context, *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error)
 	ListFollowees(context.Context, *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error)
+	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the api.v1.UserService service. By default, it uses
@@ -97,6 +101,12 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceListFolloweesMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		search: connect.NewClient[v1.SearchRequest, v1.SearchResponse](
+			httpClient,
+			baseURL+UserServiceSearchProcedure,
+			connect.WithSchema(userServiceSearchMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -106,6 +116,7 @@ type userServiceClient struct {
 	unfollow      *connect.Client[v1.UnfollowRequest, v1.UnfollowResponse]
 	listFollowers *connect.Client[v1.ListFollowersRequest, v1.ListFollowersResponse]
 	listFollowees *connect.Client[v1.ListFolloweesRequest, v1.ListFolloweesResponse]
+	search        *connect.Client[v1.SearchRequest, v1.SearchResponse]
 }
 
 // Follow calls api.v1.UserService.Follow.
@@ -128,12 +139,18 @@ func (c *userServiceClient) ListFollowees(ctx context.Context, req *connect.Requ
 	return c.listFollowees.CallUnary(ctx, req)
 }
 
+// Search calls api.v1.UserService.Search.
+func (c *userServiceClient) Search(ctx context.Context, req *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error) {
+	return c.search.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the api.v1.UserService service.
 type UserServiceHandler interface {
 	Follow(context.Context, *connect.Request[v1.FollowRequest]) (*connect.Response[v1.FollowResponse], error)
 	Unfollow(context.Context, *connect.Request[v1.UnfollowRequest]) (*connect.Response[v1.UnfollowResponse], error)
 	ListFollowers(context.Context, *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error)
 	ListFollowees(context.Context, *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error)
+	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -166,6 +183,12 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceListFolloweesMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceSearchHandler := connect.NewUnaryHandler(
+		UserServiceSearchProcedure,
+		svc.Search,
+		connect.WithSchema(userServiceSearchMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceFollowProcedure:
@@ -176,6 +199,8 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceListFollowersHandler.ServeHTTP(w, r)
 		case UserServiceListFolloweesProcedure:
 			userServiceListFolloweesHandler.ServeHTTP(w, r)
+		case UserServiceSearchProcedure:
+			userServiceSearchHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -199,4 +224,8 @@ func (UnimplementedUserServiceHandler) ListFollowers(context.Context, *connect.R
 
 func (UnimplementedUserServiceHandler) ListFollowees(context.Context, *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.UserService.ListFollowees is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.UserService.Search is not implemented"))
 }

@@ -2,10 +2,12 @@ package v1
 
 import (
 	"context"
+	"time"
 
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
@@ -16,6 +18,36 @@ var _ apiv1connect.UserServiceHandler = (*userHandler)(nil)
 
 type userHandler struct {
 	repo *repo.Repo
+}
+
+func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	limit := int(req.Msg.GetPagination().GetPageLimit())
+	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithName())
+	if err != nil {
+		log.Error("failed to list users", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	pagination, err := repo.PaginateSlice(users, limit, func(user *orm.User) time.Time {
+		return user.CreatedAt
+	})
+	if err != nil {
+		log.Error("failed to paginate users", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return &connect.Response[v1.SearchResponse]{
+		Msg: &v1.SearchResponse{
+			Users: parseUserSliceToPB(pagination.Items),
+			Pagination: &v1.PaginationResponse{
+				TotalResults:  0,
+				NextPageToken: pagination.NextPageToken,
+			},
+		},
+	}, nil
 }
 
 func NewUserHandler(r *repo.Repo) apiv1connect.UserServiceHandler {
