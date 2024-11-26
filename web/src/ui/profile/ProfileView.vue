@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router'
 import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
@@ -34,46 +35,12 @@ const updateTab = (event: Event) => {
   const target = event.target as HTMLSelectElement
   router.push(target.value)
 }
-
-const person = {
-  name: 'Jane Cooper',
-  title: 'Paradigm Representative',
-  role: 'Admin',
-  email: 'janecooper@example.com',
-  telephone: '+1-202-555-0170',
-  imageUrl:
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60',
-}
 </script>
 
 <template>
-  <div
-    class="col-span-1 flex flex-col divide-y divide-gray-200 rounded-lg bg-white text-center shadow mb-4"
-  >
-    <div class="flex flex-1 flex-col p-8">
-      <img class="mx-auto size-32 shrink-0 rounded-full" :src="person.imageUrl" alt="" />
-      <h3 class="mt-6 text-xl text-gray-900">{{ person.name }}</h3>
-    </div>
-    <div>
-      <div class="-mt-px flex divide-x divide-gray-200">
-        <div class="-ml-px flex w-0 flex-1">
-          <RouterLink
-            to="/settings"
-            class="relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-br-lg border border-transparent py-4 text-xs font-semibold uppercase text-gray-900"
-          >
-            Settings
-          </RouterLink>
-        </div>
-        <div class="-ml-px flex w-0 flex-1">
-          <RouterLink
-            to="/logout"
-            class="relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-br-lg border border-transparent py-4 text-xs font-semibold uppercase text-gray-900"
-          >
-            Logout
-          </RouterLink>
-        </div>
-      </div>
-    </div>
+  <div>
+    <AppButton type="link" to="/settings" colour="gray">Settings</AppButton>
+    <AppButton type="link" to="/logout" colour="red">Logout</AppButton>
   </div>
   <div class="mb-4">
     <div class="sm:hidden">
