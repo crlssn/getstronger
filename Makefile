@@ -46,6 +46,7 @@ format:
 
 lint:
 	golangci-lint run
+	protolint .
 	cd web && npx eslint "src/**/*.{js,ts,vue}"
 
 vet:
