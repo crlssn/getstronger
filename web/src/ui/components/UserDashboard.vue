@@ -1,15 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  Dialog,
-  DialogPanel,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-  TransitionChild,
-  TransitionRoot,
-} from '@headlessui/vue'
+import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
   ArrowPathRoundedSquareIcon,
   BookOpenIcon,
@@ -17,7 +8,7 @@ import {
   HomeIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
+import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { RouterView, useRoute } from 'vue-router'
 import NavigationMobile from '@/ui/components/NavigationMobile.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
@@ -27,11 +18,6 @@ const navigation = [
   { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
   { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
   { name: 'Workouts', href: '/workouts', icon: FolderIcon },
-]
-
-const userNavigation = [
-  { name: 'Your profile', href: '/profile' },
-  { name: 'Sign out', href: '/logout' },
 ]
 
 const sidebarOpen = ref(false)

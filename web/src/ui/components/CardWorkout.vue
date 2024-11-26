@@ -49,7 +49,9 @@ const postComment = async () => {
     <div class="px-4 py-5 sm:px-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <span class="font-semibold mr-2">Christian Carlsson</span>
+          <RouterLink :to="`/users/${workout.user?.id}`" class="font-semibold mr-2"
+            >{{ workout.user?.firstName }} {{ workout.user?.lastName }}</RouterLink
+          >
           <span class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(workout.finishedAt) }}
           </span>
