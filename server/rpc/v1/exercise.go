@@ -196,9 +196,26 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		}
 	}
 
+	exerciseIDs := make([]string, 0, len(sets))
+	for _, set := range sets {
+		exerciseIDs = append(exerciseIDs, set.ExerciseID)
+	}
+
+	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
+	if err != nil {
+		log.Error("failed to list exercises", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	exerciseSets, err := parseSetSliceToExerciseSetsPB(sets, exercises)
+	if err != nil {
+		log.Error("failed to parse set slice to exercise sets", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	return &connect.Response[v1.GetPreviousWorkoutSetsResponse]{
 		Msg: &v1.GetPreviousWorkoutSetsResponse{
-			ExerciseSets: parseSetSliceToExerciseSetsPB(sets),
+			ExerciseSets: exerciseSets,
 		},
 	}, nil
 }
