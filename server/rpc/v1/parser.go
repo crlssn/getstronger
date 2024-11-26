@@ -49,16 +49,16 @@ func parseRoutineToPB(routine *orm.Routine) *apiv1.Routine {
 	}
 }
 
-func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.ExerciseSlice) []*apiv1.Workout {
+func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.ExerciseSlice, userSlice orm.UserSlice) []*apiv1.Workout {
 	workouts := make([]*apiv1.Workout, 0, len(workoutSlice))
 	for _, workout := range workoutSlice {
-		workouts = append(workouts, parseWorkoutToPB(workout, exerciseSlice))
+		workouts = append(workouts, parseWorkoutToPB(workout, exerciseSlice, userSlice))
 	}
 
 	return workouts
 }
 
-func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice) *apiv1.Workout {
+func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users orm.UserSlice) *apiv1.Workout {
 	var exerciseOrder []string
 	mapExerciseSets := make(map[string][]*apiv1.Set)
 
@@ -91,8 +91,40 @@ func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice) *apiv1.
 	return &apiv1.Workout{
 		Id:           workout.ID,
 		Name:         workout.Name,
+		Comments:     parseWorkoutCommentSliceToPB(workout.R.WorkoutComments, users),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
 		ExerciseSets: exerciseSets,
+	}
+}
+
+func parseWorkoutCommentSliceToPB(commentSlice orm.WorkoutCommentSlice, users orm.UserSlice) []*apiv1.WorkoutComment {
+	mapUsers := make(map[string]*orm.User, len(users))
+	for _, user := range users {
+		mapUsers[user.ID] = user
+	}
+
+	comments := make([]*apiv1.WorkoutComment, 0, len(commentSlice))
+	for _, comment := range commentSlice {
+		comments = append(comments, parseWorkoutCommentToPB(comment, mapUsers[comment.UserID]))
+	}
+
+	return comments
+}
+
+func parseWorkoutCommentToPB(comment *orm.WorkoutComment, user *orm.User) *apiv1.WorkoutComment {
+	return &apiv1.WorkoutComment{
+		Id:        comment.ID,
+		User:      parseUserToPB(user),
+		Comment:   comment.Comment,
+		CreatedAt: timestamppb.New(comment.CreatedAt),
+	}
+}
+
+func parseUserToPB(user *orm.User) *apiv1.User {
+	return &apiv1.User{
+		Id:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
 	}
 }
 

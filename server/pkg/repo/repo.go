@@ -577,6 +577,14 @@ func ListWorkoutsWithLimit(size int) ListWorkoutsOpt {
 	}
 }
 
+func ListWorkoutsWithComments() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(orm.WorkoutRels.WorkoutComments),
+		}, nil
+	}
+}
+
 func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		if token == nil {
