@@ -3,11 +3,11 @@ import router from '@/router/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
+import { useAuthStore } from '@/stores/auth.ts'
 import { WorkoutClient } from '@/clients/clients'
 import AppButton from '@/ui/components/AppButton.vue'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
-import { useAuthStore } from '@/stores/auth.ts'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()

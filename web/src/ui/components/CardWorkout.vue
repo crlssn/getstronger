@@ -72,7 +72,10 @@ const postComment = async () => {
       />
     </div>
     <div class="px-4 py-4 sm:px-6">
-      <div v-if="comments.length > 0" class="mb-4">
+      <div
+        v-if="comments.length > 0"
+        class="mb-4"
+      >
         <CardWorkoutComment
           v-for="comment in comments"
           :key="comment.id"

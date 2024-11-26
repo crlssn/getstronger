@@ -3,12 +3,12 @@ import router from '@/router/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { UserClient, WorkoutClient } from '@/clients/clients'
-import CardWorkout from '@/ui/components/CardWorkout.vue'
-import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
-import { usePageTitleStore } from '@/stores/pageTitle.ts'
-import { GetUserRequestSchema } from '@/proto/api/v1/users_pb.ts'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
+import CardWorkout from '@/ui/components/CardWorkout.vue'
+import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import { UserClient, WorkoutClient } from '@/clients/clients'
+import { GetUserRequestSchema } from '@/proto/api/v1/users_pb.ts'
+import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
@@ -72,7 +72,10 @@ const updateTab = (event: Event) => {
       </select>
     </div>
     <div class="hidden sm:block">
-      <nav class="flex" aria-label="Tabs">
+      <nav
+        class="flex"
+        aria-label="Tabs"
+      >
         <RouterLink
           v-for="tab in tabs"
           :key="tab.name"
@@ -90,7 +93,11 @@ const updateTab = (event: Event) => {
     </div>
   </div>
   <div v-if="route.fullPath === tabs[0].href">
-    <CardWorkout v-for="workout in workouts" :key="workout.id" :workout="workout" />
+    <CardWorkout
+      v-for="workout in workouts"
+      :key="workout.id"
+      :workout="workout"
+    />
   </div>
 </template>
 

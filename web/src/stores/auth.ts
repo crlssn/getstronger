@@ -1,7 +1,8 @@
+import type { AccessToken } from '@/types/auth.ts'
+
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
-import type { AccessToken } from '@/types/auth.ts'
 
 export const useAuthStore = defineStore(
   'auth',
