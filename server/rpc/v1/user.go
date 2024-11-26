@@ -56,7 +56,7 @@ func (h *userHandler) Unfollow(ctx context.Context, req *connect.Request[v1.Unfo
 	}, nil
 }
 
-func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error) {
+func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error) { //nolint:dupl
 	log := xcontext.MustExtractLogger(ctx)
 
 	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(req.Msg.GetFollowerId()))
@@ -78,7 +78,7 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1
 	}, nil
 }
 
-func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error) {
+func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error) { //nolint:dupl
 	log := xcontext.MustExtractLogger(ctx)
 
 	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(req.Msg.GetFolloweeId()))
