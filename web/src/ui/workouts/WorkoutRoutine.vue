@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import AppButton from '@/ui/components/AppButton.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { GetRoutineRequest, Routine } from '@/proto/api/v1/routines_pb'
+import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
 import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
-import { CreateWorkoutRequest } from '@/proto/api/v1/workouts_pb'
 import router from '@/router/router'
 import { DateTime } from 'luxon'
-import { Timestamp } from '@bufbuild/protobuf'
+import type { Timestamp } from '@bufbuild/protobuf/wkt'
 import { ConnectError } from '@connectrpc/connect'
-import { ExerciseSets } from '@/proto/api/v1/shared_pb'
-import { GetPreviousWorkoutSetsRequest } from '@/proto/api/v1/exercise_pb'
+import type { ExerciseSets } from '@/proto/api/v1/shared_pb'
+import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
+import { create } from '@bufbuild/protobuf'
+import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -42,7 +43,7 @@ onUnmounted(() => {
 })
 
 const fetchLatestExerciseSets = async () => {
-  const req = new GetPreviousWorkoutSetsRequest({
+  const req = create(GetPreviousWorkoutSetsRequestSchema, {
     exerciseIds: routine.value?.exercises?.map((exercise) => exercise.id) || [],
   })
   const res = await ExerciseClient.getPreviousWorkoutSets(req)
@@ -66,7 +67,7 @@ const sets = computed(() => {
 })
 
 const fetchRoutine = async (id: string) => {
-  const req = new GetRoutineRequest({ id })
+  const req = create(GetRoutineRequestSchema, { id })
   const res = await RoutineClient.get(req)
   routine.value = res.routine
 }
@@ -84,25 +85,23 @@ const finishWorkout = async () => {
       continue
     }
 
-    eSetsList.push(
-      new ExerciseSets({
-        exerciseId: exerciseID,
-        sets: definedSets,
-      }),
-    )
+    eSetsList.push({
+      exerciseId: exerciseID,
+      sets: definedSets,
+    } as ExerciseSets)
   }
 
   try {
     await WorkoutClient.create(
-      new CreateWorkoutRequest({
+      create(CreateWorkoutRequestSchema,{
         routineId: routineID,
         exerciseSets: eSetsList,
-        startedAt: new Timestamp({
+        startedAt: {
           seconds: BigInt(DateTime.fromISO(startDateTime.value).toSeconds()),
-        }),
-        finishedAt: new Timestamp({
+        } as Timestamp,
+        finishedAt: {
           seconds: BigInt(DateTime.fromISO(endDateTime.value).toSeconds()),
-        }),
+        } as Timestamp,
       }),
     )
   } catch (error) {

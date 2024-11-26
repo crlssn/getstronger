@@ -31,7 +31,7 @@ onMounted(() => {
 
 <template>
   <div v-for="workout in workouts" :key="workout.id" class="mb-4">
-    <h6>{{ formatToCompactDateTime(workout.finishedAt?.toDate()) }}</h6>
+    <h6>{{ formatToCompactDateTime(workout.finishedAt) }}</h6>
     <ul
       role="list"
       class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
