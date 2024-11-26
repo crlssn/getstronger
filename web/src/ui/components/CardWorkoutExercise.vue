@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
-  name?: string
   label?: string
+  name?: string
   sets: Array<{
     reps: number
     weight: number

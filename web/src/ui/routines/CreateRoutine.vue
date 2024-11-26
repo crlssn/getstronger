@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import AppButton from '@/ui/components/AppButton.vue'
-import { onMounted, ref } from 'vue'
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+
 import { ExerciseClient, RoutineClient } from '@/clients/clients'
-import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
 import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
+import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
+import AppButton from '@/ui/components/AppButton.vue'
+import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import { Switch } from '@headlessui/vue'
-import { create } from '@bufbuild/protobuf'
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+import { onMounted, ref } from 'vue'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -28,8 +29,8 @@ const toggleExercise = (id: string) => {
 const fetchExercises = async () => {
   try {
     const req = create(ListExercisesRequestSchema, {
-      pageToken: pageToken.value,
       pageSize: 100,
+      pageToken: pageToken.value,
     })
     const res = await ExerciseClient.list(req)
     exercises.value = [...exercises.value, ...res.exercises]
@@ -51,8 +52,8 @@ const fetchExercises = async () => {
 const createRoutine = async () => {
   try {
     const req = create(CreateRoutineRequestSchema, {
-      name: name.value,
       exerciseIds: exerciseIDs.value,
+      name: name.value,
     })
     await RoutineClient.create(req)
     resOK.value = true

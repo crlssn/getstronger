@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
-import { useRoute } from 'vue-router'
 import router from '@/router/router'
-import { create } from '@bufbuild/protobuf'
-import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppButton from '@/ui/components/AppButton.vue'
+import CardWorkout from '@/ui/components/CardWorkout.vue'
+import { create } from '@bufbuild/protobuf'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
@@ -25,10 +25,10 @@ const fetchWorkouts = async () => {
 }
 
 const tabs = [
-  { name: 'Workouts', href: '/profile' },
-  { name: 'Personal Bests', href: '/profile?tab=personal-bests' },
-  { name: 'Follows', href: '/profile?tab=follows' },
-  { name: 'Followers', href: '/profile?tab=followers' },
+  { href: '/profile', name: 'Workouts' },
+  { href: '/profile?tab=personal-bests', name: 'Personal Bests' },
+  { href: '/profile?tab=follows', name: 'Follows' },
+  { href: '/profile?tab=followers', name: 'Followers' },
 ]
 
 const updateTab = (event: Event) => {

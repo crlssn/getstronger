@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { ExerciseClient } from '@/clients/clients'
 import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
 import AppButton from '@/ui/components/AppButton.vue'
-import { ref } from 'vue'
-import { ExerciseClient } from '@/clients/clients'
-import { ConnectError } from '@connectrpc/connect'
 import { create } from '@bufbuild/protobuf'
+import { ConnectError } from '@connectrpc/connect'
+import { ref } from 'vue'
 
 const name = ref('')
 const label = ref('')
@@ -14,8 +14,8 @@ const rest = ref(0)
 
 async function createExercise() {
   const request = create(CreateExerciseRequestSchema, {
-    name: name.value,
     label: label.value,
+    name: name.value,
   })
   try {
     await ExerciseClient.create(request)

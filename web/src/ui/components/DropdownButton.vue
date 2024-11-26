@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type DropdownItem } from '@/types/dropdown.ts'
-import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid'
 
 interface Props {
   items: Array<DropdownItem>

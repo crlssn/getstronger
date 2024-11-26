@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { formatToCompactDateTime } from '@/utils/datetime'
 import { create } from '@bufbuild/protobuf'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { onMounted, ref } from 'vue'
 
 const pageToken = ref(new Uint8Array(0))
 const workouts = ref(Array<Workout>())

@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
 import {
+  BellIcon,
   BookOpenIcon,
   // FolderIcon,
   HomeIcon,
   RectangleStackIcon,
   UserIcon,
-  BellIcon,
 } from '@heroicons/vue/24/outline'
-
 import {
+  BellIcon as BellSolidIcon,
   BookOpenIcon as BookOpenSolidIcon,
   // FolderIcon as FolderSolidIcon,
   HomeIcon as HomeSolidIcon,
   RectangleStackIcon as RectangleStackSolidIcon,
-  BellIcon as BellSolidIcon,
   UserIcon as UserSolidIcon,
 } from '@heroicons/vue/24/solid'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
@@ -25,17 +24,17 @@ const isActive = (basePath: string) => {
 }
 
 const navigation = [
-  { name: 'Home', href: '/home', icon: HomeIcon, iconActive: HomeSolidIcon },
+  { href: '/home', icon: HomeIcon, iconActive: HomeSolidIcon, name: 'Home' },
   {
-    name: 'Routines',
     href: '/routines',
     icon: RectangleStackIcon,
     iconActive: RectangleStackSolidIcon,
+    name: 'Routines',
   },
-  { name: 'Exercises', href: '/exercises', icon: BookOpenIcon, iconActive: BookOpenSolidIcon },
-  { name: 'Notifications', href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon },
+  { href: '/exercises', icon: BookOpenIcon, iconActive: BookOpenSolidIcon, name: 'Exercises' },
+  { href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon, name: 'Notifications' },
   // { name: 'Workouts', href: '/workouts', icon: FolderIcon, iconActive: FolderSolidIcon },
-  { name: 'Profile', href: '/profile', icon: UserIcon, iconActive: UserSolidIcon },
+  { href: '/profile', icon: UserIcon, iconActive: UserSolidIcon, name: 'Profile' },
 ]
 </script>
 

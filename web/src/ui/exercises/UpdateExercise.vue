@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
-import type { FieldMask } from '@bufbuild/protobuf/wkt'
-import AppButton from '@/ui/components/AppButton.vue'
-import { onMounted, ref } from 'vue'
-import { ExerciseClient } from '@/clients/clients'
-import { ConnectError } from '@connectrpc/connect'
-import { useRoute } from 'vue-router'
-import { create } from '@bufbuild/protobuf'
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
+import type { FieldMask } from '@bufbuild/protobuf/wkt'
+
+import { ExerciseClient } from '@/clients/clients'
+import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
+import AppButton from '@/ui/components/AppButton.vue'
+import { create } from '@bufbuild/protobuf'
+import { ConnectError } from '@connectrpc/connect'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const name = ref('')
 const label = ref('')
@@ -45,8 +46,8 @@ async function updateExercise() {
   const request = create(UpdateExerciseRequestSchema, {
     exercise: {
       id: route.params.id as string,
-      name: name.value,
       label: label.value,
+      name: name.value,
     } as Exercise,
     updateMask: {
       paths: ['name', 'label'],

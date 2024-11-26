@@ -1,5 +1,6 @@
-import { DateTime } from 'luxon'
 import type { Timestamp } from '@bufbuild/protobuf/wkt'
+
+import { DateTime } from 'luxon'
 
 export const formatToCompactDateTime = (date: Timestamp | undefined): string => {
   if (!date) return ''

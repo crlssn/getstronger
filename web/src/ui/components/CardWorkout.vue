@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { WorkoutClient } from '@/clients/clients.ts'
 import {
   PostCommentRequestSchema,
   type Workout,
@@ -6,24 +7,24 @@ import {
 } from '@/proto/api/v1/workouts_pb.ts'
 import { type DropdownItem } from '@/types/dropdown.ts'
 import AppButton from '@/ui/components/AppButton.vue'
-import DropdownButton from '@/ui/components/DropdownButton.vue'
-import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
-import { useTextareaAutosize } from '@vueuse/core'
+import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
+import DropdownButton from '@/ui/components/DropdownButton.vue'
 import { create } from '@bufbuild/protobuf'
-import { WorkoutClient } from '@/clients/clients.ts'
+import { useTextareaAutosize } from '@vueuse/core'
 import { onMounted, ref } from 'vue'
+
 import { formatToRelativeDateTime } from '../../utils/datetime.ts'
 
-const { textarea, input } = useTextareaAutosize()
+const { input, textarea } = useTextareaAutosize()
 
 const props = defineProps<{
   workout: Workout
 }>()
 
 const dropdownItems: Array<DropdownItem> = [
-  { title: 'Edit', href: `/workout/${props.workout.id}/edit` },
-  { title: 'Delete', href: `/workout/${props.workout.id}/delete` },
+  { href: `/workout/${props.workout.id}/edit`, title: 'Edit' },
+  { href: `/workout/${props.workout.id}/delete`, title: 'Delete' },
 ]
 
 const comments = ref<Array<WorkoutComment>>([])
@@ -34,8 +35,8 @@ onMounted(() => {
 
 const postComment = async () => {
   const req = create(PostCommentRequestSchema, {
-    workoutId: props.workout.id,
     comment: input.value,
+    workoutId: props.workout.id,
   })
   const res = await WorkoutClient.postComment(req)
   if (!res.comment) return

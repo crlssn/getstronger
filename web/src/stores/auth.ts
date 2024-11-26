@@ -1,5 +1,5 @@
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -21,7 +21,7 @@ export const useAuthStore = defineStore(
       accessTokenRefreshInterval.value = interval
     }
 
-    return { accessToken, setAccessToken, logout, setAccessTokenRefreshInterval }
+    return { accessToken, logout, setAccessToken, setAccessTokenRefreshInterval }
   },
   {
     persist: true,

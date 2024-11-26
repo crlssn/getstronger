@@ -1,6 +1,7 @@
 import pluginVue from 'eslint-plugin-vue'
 import vueTsEslintConfig from '@vue/eslint-config-typescript'
 import pluginVitest from '@vitest/eslint-plugin'
+import perfectionist from 'eslint-plugin-perfectionist'
 
 export default [
   {
@@ -13,6 +14,7 @@ export default [
     ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'src/proto/**'],
   },
 
+  perfectionist.configs['recommended-natural'],
   ...pluginVue.configs['flat/recommended'],
   ...vueTsEslintConfig(),
 

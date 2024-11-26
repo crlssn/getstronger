@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
-import { onMounted, ref } from 'vue'
+import type { SortableEvent } from 'sortablejs'
+
+import { RoutineClient } from '@/clients/clients'
 import {
   GetRoutineRequestSchema,
   type Routine,
   UpdateExerciseOrderRequestSchema,
 } from '@/proto/api/v1/routines_pb'
-import { RoutineClient } from '@/clients/clients'
-import { useRoute } from 'vue-router'
-import { useSortable } from '@vueuse/integrations/useSortable'
-import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import type { SortableEvent } from 'sortablejs'
+import AppButton from '@/ui/components/AppButton.vue'
 import { create } from '@bufbuild/protobuf'
+import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+import { useSortable } from '@vueuse/integrations/useSortable'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()
@@ -31,9 +32,9 @@ onMounted(async () => {
 })
 
 useSortable(el, routine.value?.exercises || [], {
-  ghostClass: 'sortable-ghost', // Class name for the drop placeholder
   chosenClass: 'sortable-chosen', // Class name for the chosen item
   dragClass: 'sortable-drag', // Class name for the dragging item
+  ghostClass: 'sortable-ghost', // Class name for the drop placeholder
   onUpdate: async (event: SortableEvent) => {
     const oldIndex = event.oldIndex ?? 0
     const newIndex = event.newIndex ?? 0
@@ -47,8 +48,8 @@ useSortable(el, routine.value?.exercises || [], {
 
     const updatedOrder = exercises.map((e) => e.id)
     const req = create(UpdateExerciseOrderRequestSchema, {
-      routineId: routine.value?.id,
       exerciseIds: updatedOrder,
+      routineId: routine.value?.id,
     })
     await RoutineClient.updateExerciseOrder(req)
   },

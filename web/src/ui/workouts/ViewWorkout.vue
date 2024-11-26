@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
 import { WorkoutClient } from '@/clients/clients'
 import {
   DeleteWorkoutRequestSchema,
   GetWorkoutRequestSchema,
   type Workout,
 } from '@/proto/api/v1/workouts_pb'
-import AppButton from '@/ui/components/AppButton.vue'
-import { useRoute } from 'vue-router'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import { formatToCompactDateTime } from '@/utils/datetime'
 import router from '@/router/router'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import AppButton from '@/ui/components/AppButton.vue'
+import { formatToCompactDateTime } from '@/utils/datetime'
 import { create } from '@bufbuild/protobuf'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
-const workout = ref<Workout | undefined>(undefined)
+const workout = ref<undefined | Workout>(undefined)
 const route = useRoute()
 const pageTitleStore = usePageTitleStore()
 

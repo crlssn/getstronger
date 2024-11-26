@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserDashboard from '@/ui/components/UserDashboard.vue'
+import { RouterView } from 'vue-router'
 
 const authStore = useAuthStore()
 </script>

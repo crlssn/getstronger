@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { SignupRequestSchema } from '@/proto/api/v1/auth_pb'
 import { AuthClient } from '@/clients/clients'
-import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { ConnectError } from '@connectrpc/connect'
+import { SignupRequestSchema } from '@/proto/api/v1/auth_pb'
 import AppButton from '@/ui/components/AppButton.vue'
 import { create } from '@bufbuild/protobuf'
+import { ConnectError } from '@connectrpc/connect'
+import { ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 
 const firstName = ref('')
 const lastName = ref('')
@@ -18,9 +18,9 @@ const router = useRouter()
 
 const signup = async () => {
   const request = create(SignupRequestSchema, {
+    email: email.value,
     firstName: firstName.value,
     lastName: lastName.value,
-    email: email.value,
     password: password.value,
     passwordConfirmation: passwordConfirmation.value,
   })

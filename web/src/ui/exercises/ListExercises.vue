@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+
 import { ExerciseClient } from '@/clients/clients'
-import { onMounted, ref } from 'vue'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import AppButton from '@/ui/components/AppButton.vue'
 import { create } from '@bufbuild/protobuf'
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { onMounted, ref } from 'vue'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -19,8 +20,8 @@ const fetchExercises = async () => {
   try {
     const request = create(ListExercisesRequestSchema, {
       name: name.value,
-      pageToken: pageToken.value,
       pageSize: 10,
+      pageToken: pageToken.value,
     })
 
     const response = await ExerciseClient.list(request)

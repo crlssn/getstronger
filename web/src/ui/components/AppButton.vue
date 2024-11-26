@@ -2,9 +2,9 @@
 import { computed } from 'vue'
 
 const props = defineProps<{
-  type: 'button' | 'submit' | 'link'
-  colour: 'primary' | 'green' | 'red' | 'amber' | 'gray'
+  colour: 'amber' | 'gray' | 'green' | 'primary' | 'red'
   to?: string
+  type: 'button' | 'link' | 'submit'
 }>()
 
 const computedClasses = computed(() => {

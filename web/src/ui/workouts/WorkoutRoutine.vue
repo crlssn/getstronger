@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import AppButton from '@/ui/components/AppButton.vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
+import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
+import type { Timestamp } from '@bufbuild/protobuf/wkt'
+
 import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
-import { useRoute } from 'vue-router'
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
+import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
+import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
+import router from '@/router/router'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
-import router from '@/router/router'
-import { DateTime } from 'luxon'
-import type { Timestamp } from '@bufbuild/protobuf/wkt'
-import { ConnectError } from '@connectrpc/connect'
-import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
-import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
+import AppButton from '@/ui/components/AppButton.vue'
 import { create } from '@bufbuild/protobuf'
-import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
+import { ConnectError } from '@connectrpc/connect'
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { DateTime } from 'luxon'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -96,13 +97,13 @@ const finishWorkout = async () => {
   try {
     await WorkoutClient.create(
       create(CreateWorkoutRequestSchema, {
-        routineId: routineID,
         exerciseSets: eSetsList,
-        startedAt: {
-          seconds: BigInt(DateTime.fromISO(startDateTime.value).toSeconds()),
-        } as Timestamp,
         finishedAt: {
           seconds: BigInt(DateTime.fromISO(endDateTime.value).toSeconds()),
+        } as Timestamp,
+        routineId: routineID,
+        startedAt: {
+          seconds: BigInt(DateTime.fromISO(startDateTime.value).toSeconds()),
         } as Timestamp,
       }),
     )
@@ -133,7 +134,7 @@ const prevSetReps = (exerciseID: string, index: number) => {
   return prevSet?.reps?.toString() || 'Reps'
 }
 
-const isNumber = (value: number | undefined | string) => {
+const isNumber = (value: number | string | undefined) => {
   return typeof value === 'number' && !Number.isNaN(value)
 }
 </script>

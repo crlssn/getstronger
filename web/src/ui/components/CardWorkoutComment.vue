@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { type User } from '@/proto/api/v1/shared_pb.ts'
-import { type Timestamp } from '@bufbuild/protobuf/wkt'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
+import { type Timestamp } from '@bufbuild/protobuf/wkt'
 
 const props = defineProps<{
-  user?: User
-  timestamp?: Timestamp
   comment: string
+  timestamp?: Timestamp
+  user?: User
 }>()
 </script>
 

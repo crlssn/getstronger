@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import NavigationMobile from '@/ui/components/NavigationMobile.vue'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import {
   ArrowPathRoundedSquareIcon,
+  BellIcon,
   BookOpenIcon,
   HomeIcon,
-  XMarkIcon,
   UserIcon,
-  BellIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
+import { computed, ref } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
-import NavigationMobile from '@/ui/components/NavigationMobile.vue'
-import { usePageTitleStore } from '@/stores/pageTitle.ts'
 
 const navigation = [
-  { name: 'Home', href: '/home', icon: HomeIcon },
-  { name: 'Routines', href: '/routines', icon: ArrowPathRoundedSquareIcon },
-  { name: 'Exercises', href: '/exercises', icon: BookOpenIcon },
-  { name: 'Notifications', href: '/notifications', icon: BellIcon },
-  { name: 'Profile', href: '/profile', icon: UserIcon },
+  { href: '/home', icon: HomeIcon, name: 'Home' },
+  { href: '/routines', icon: ArrowPathRoundedSquareIcon, name: 'Routines' },
+  { href: '/exercises', icon: BookOpenIcon, name: 'Exercises' },
+  { href: '/notifications', icon: BellIcon, name: 'Notifications' },
+  { href: '/profile', icon: UserIcon, name: 'Profile' },
 ]
 
 const sidebarOpen = ref(false)
