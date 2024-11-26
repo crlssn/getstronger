@@ -39,7 +39,6 @@ const updateTab = (event: Event) => {
 
 <template>
   <div>
-    <AppButton type="link" to="/settings" colour="gray">Settings</AppButton>
     <AppButton type="link" to="/logout" colour="red">Logout</AppButton>
   </div>
   <div class="mb-4">

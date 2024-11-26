@@ -6,16 +6,11 @@ import AppTextarea from '@/ui/components/AppTextarea.vue'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
-import { onMounted } from 'vue'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 
 const props = defineProps<{
   workout: Workout
 }>()
-
-onMounted(() => {
-  console.log(props.workout)
-})
 
 const dropdownItems: Array<DropdownItem> = [
   { title: 'Edit', href: `/workout/${props.workout.id}/edit` },
