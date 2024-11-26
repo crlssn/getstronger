@@ -3,35 +3,47 @@ import router from '@/router/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { useAuthStore } from '@/stores/auth.ts'
-import { WorkoutClient } from '@/clients/clients'
-import AppButton from '@/ui/components/AppButton.vue'
+import { type User } from '@/proto/api/v1/shared_pb.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
+import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import { UserClient, WorkoutClient } from '@/clients/clients'
+import { GetUserRequestSchema } from '@/proto/api/v1/users_pb.ts'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
-const authStore = useAuthStore()
+const pageTitleStore = usePageTitleStore()
+const user = ref({} as undefined | User)
 
 onMounted(async () => {
   await fetchWorkouts()
+  await fetchUser()
 })
+
+const fetchUser = async () => {
+  const req = create(GetUserRequestSchema, {
+    id: route.params.id as string,
+  })
+  const res = await UserClient.get(req)
+  user.value = res.user
+  pageTitleStore.setPageTitle(`${user.value?.firstName} ${user.value?.lastName}`)
+}
 
 const fetchWorkouts = async () => {
   const req = create(ListWorkoutsRequestSchema, {
     pageSize: 100,
     pageToken: new Uint8Array(0),
-    userIds: [authStore.userID],
+    userIds: [route.params.id as string],
   })
   const res = await WorkoutClient.list(req)
   workouts.value = res.workouts
 }
 
 const tabs = [
-  { href: '/profile', name: 'Workouts' },
-  { href: '/profile?tab=personal-bests', name: 'Personal Bests' },
-  { href: '/profile?tab=follows', name: 'Follows' },
-  { href: '/profile?tab=followers', name: 'Followers' },
+  { href: `/users/${route.params.id}`, name: 'Workouts' },
+  { href: `/users/${route.params.id}?tab=personal-bests`, name: 'Personal Bests' },
+  { href: `/users/${route.params.id}?tab=follows`, name: 'Follows' },
+  { href: `/users/${route.params.id}?tab=followers`, name: 'Followers' },
 ]
 
 const updateTab = (event: Event) => {
@@ -41,15 +53,6 @@ const updateTab = (event: Event) => {
 </script>
 
 <template>
-  <div>
-    <AppButton
-      type="link"
-      to="/logout"
-      colour="red"
-    >
-      Logout
-    </AppButton>
-  </div>
   <div class="mb-4">
     <div class="sm:hidden">
       <select

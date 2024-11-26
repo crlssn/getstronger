@@ -1,27 +1,36 @@
+import type { AccessToken } from '@/types/auth.ts'
+
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { jwtDecode } from 'jwt-decode'
 
 export const useAuthStore = defineStore(
   'auth',
   () => {
+    const userID = ref('')
     const accessToken = ref('')
     const accessTokenRefreshInterval = ref(0)
 
-    function setAccessToken(token: string): void {
+    const setAccessToken = (token: string) => {
       console.log('setting access token', token)
+      if (userID.value === '') {
+        const claims = jwtDecode(token) as AccessToken
+        userID.value = claims.userId
+      }
       accessToken.value = token
     }
 
-    function logout() {
+    const logout = () => {
+      userID.value = ''
       accessToken.value = ''
       clearInterval(accessTokenRefreshInterval.value)
     }
 
-    function setAccessTokenRefreshInterval(interval: number) {
+    const setAccessTokenRefreshInterval = (interval: number) => {
       accessTokenRefreshInterval.value = interval
     }
 
-    return { accessToken, logout, setAccessToken, setAccessTokenRefreshInterval }
+    return { accessToken, logout, setAccessToken, setAccessTokenRefreshInterval, userID }
   },
   {
     persist: true,

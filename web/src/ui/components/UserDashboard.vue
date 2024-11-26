@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import type { PaginationRequest, User } from '@/proto/api/v1/shared_pb.ts'
+
+import { create } from '@bufbuild/protobuf'
+import { computed, nextTick, ref } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
+import { UserClient } from '@/clients/clients.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
+import { SearchRequestSchema } from '@/proto/api/v1/users_pb.ts'
 import NavigationMobile from '@/ui/components/NavigationMobile.vue'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
@@ -23,12 +28,41 @@ const navigation = [
 ]
 
 const sidebarOpen = ref(false)
-
+const searchBarOpen = ref(false)
+const input = ref<HTMLInputElement | null>(null)
 const route = useRoute()
+const users = ref(Array<User>())
 
 const isActive = (basePath: string) => computed(() => route.path.startsWith(basePath))
 
 const pageTitleStore = usePageTitleStore()
+const openSearchBar = () => {
+  searchBarOpen.value = true
+  nextTick(() => {
+    input.value?.focus()
+  })
+}
+
+const closeSearchBar = () => {
+  users.value = []
+  searchBarOpen.value = false
+}
+
+const searchUsers = async () => {
+  if ((input.value?.value?.length ?? 0) < 3) {
+    users.value = []
+    return
+  }
+
+  const req = create(SearchRequestSchema, {
+    pagination: {
+      pageLimit: 5,
+    } as PaginationRequest,
+    query: input.value?.value,
+  })
+  const res = await UserClient.search(req)
+  users.value = res.users
+}
 </script>
 
 <template>
@@ -86,7 +120,6 @@ const pageTitleStore = usePageTitleStore()
                   </button>
                 </div>
               </TransitionChild>
-              <!-- Sidebar component, swap this element with another sidebar if you like -->
               <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6 pb-4">
                 <div class="flex h-16 shrink-0 items-center">
                   <img
@@ -202,91 +235,58 @@ const pageTitleStore = usePageTitleStore()
       <div
         class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8"
       >
+        <form
+          v-if="searchBarOpen"
+          class="w-full"
+        >
+          <input
+            ref="input"
+            type="text"
+            class="w-full text-sm border-none focus:ring-0"
+            placeholder="Search users"
+            @keyup="searchUsers"
+          >
+        </form>
+        <ul
+          v-if="searchBarOpen && users.length > 0"
+          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white"
+        >
+          <li
+            v-for="user in users"
+            :key="user.id"
+            @click="closeSearchBar"
+          >
+            <RouterLink
+              :to="`/users/${user.id}`"
+              class="block px-5 py-5 text-sm font-medium"
+            >
+              {{ user.firstName }} {{ user.lastName }}
+            </RouterLink>
+          </li>
+        </ul>
         <img
+          v-if="!searchBarOpen"
           class="h-auto w-8 lg:hidden"
           src="https://tailwindui.com/plus/img/logos/mark.svg"
-          alt="Your Company"
         >
-        <!--        <button-->
-        <!--          type="button"-->
-        <!--          class="-m-2.5 p-2.5 text-gray-700 lg:hidden"-->
-        <!--          @click="sidebarOpen = true"-->
-        <!--        >-->
-        <!--          <Bars3Icon class="h-6 w-6" aria-hidden="true"/>-->
-        <!--        </button>-->
-
-        <!-- Separator -->
-        <!--        <div class="h-6 w-px bg-gray-900/10 lg:hidden" aria-hidden="true"/>-->
-
-        <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-          <div class="relative flex flex-1 items-center justify-center">
-            <p class="uppercase text-sm font-semibold text-gray-900 lg:hidden">
-              {{ pageTitleStore.pageTitle }}
-            </p>
-          </div>
-          <!--          <form class="relative flex flex-1" action="#" method="GET">-->
-          <!--            <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"-->
-          <!--                                 aria-hidden="true"/>-->
-          <!--            <input id="search-field"-->
-          <!--                   class="block h-full w-full border-0 py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"-->
-          <!--                   placeholder="Search..." type="search" name="search"/>-->
-          <!--          </form>-->
-          <!--          <div class="flex items-center gap-x-4 lg:gap-x-6">-->
-          <!--            <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">-->
-          <!--              <BellIcon class="h-6 w-6" aria-hidden="true"/>-->
-          <!--            </button>-->
-
-          <!-- Separator -->
-          <!--            <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10" aria-hidden="true"/>-->
-
-          <!-- Profile dropdown -->
-          <!--            <Menu as="div" class="relative">-->
-          <!--              <MenuButton class="-m-1.5 flex items-center p-1.5">-->
-          <!--                <img-->
-          <!--                  class="h-8 w-8 rounded-full bg-gray-50"-->
-          <!--                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"-->
-          <!--                  alt=""-->
-          <!--                />-->
-          <!--                <span class="hidden lg:flex lg:items-center">-->
-          <!--                  <span class="ml-4 text-sm/6 font-semibold text-gray-900" aria-hidden="true"-->
-          <!--                    >Tom Cook</span-->
-          <!--                  >-->
-          <!--                  <ChevronDownIcon class="ml-2 h-5 w-5 text-gray-400" aria-hidden="true" />-->
-          <!--                </span>-->
-          <!--              </MenuButton>-->
-          <!--              <transition-->
-          <!--                enter-active-class="transition ease-out duration-100"-->
-          <!--                enter-from-class="transform opacity-0 scale-95"-->
-          <!--                enter-to-class="transform opacity-100 scale-100"-->
-          <!--                leave-active-class="transition ease-in duration-75"-->
-          <!--                leave-from-class="transform opacity-100 scale-100"-->
-          <!--                leave-to-class="transform opacity-0 scale-95"-->
-          <!--              >-->
-          <!--                <MenuItems-->
-          <!--                  class="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none"-->
-          <!--                >-->
-          <!--                  <MenuItem-->
-          <!--                    v-for="item in userNavigation"-->
-          <!--                    :key="item.name"-->
-          <!--                    v-slot="{ active }"-->
-          <!--                    as="string"-->
-          <!--                  >-->
-          <!--                    <RouterLink-->
-          <!--                      :to="item.href"-->
-          <!--                      :class="[-->
-          <!--                        active ? 'bg-gray-50 outline-none' : '',-->
-          <!--                        'block px-3 py-1 text-sm/6 text-gray-900',-->
-          <!--                      ]"-->
-          <!--                    >-->
-          <!--                      {{ item.name }}-->
-          <!--                    </RouterLink>-->
-          <!--                  </MenuItem>-->
-          <!--                </MenuItems>-->
-          <!--              </transition>-->
-          <!--            </Menu>-->
-          <!--          </div>-->
+        <div
+          v-if="!searchBarOpen"
+          class="flex flex-1 gap-x-4 justify-center"
+        >
+          <p class="uppercase text-sm font-semibold text-gray-900 lg:hidden">
+            {{ pageTitleStore.pageTitle }}
+          </p>
         </div>
-        <MagnifyingGlassIcon class="w-6 h-6" />
+        <XMarkIcon
+          v-if="searchBarOpen"
+          class="w-8 h-6 cursor-pointer"
+          @click="closeSearchBar"
+        />
+        <MagnifyingGlassIcon
+          v-else
+          class="w-8 h-6 cursor-pointer"
+          @click="openSearchBar"
+        />
       </div>
 
       <main class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -297,5 +297,10 @@ const pageTitleStore = usePageTitleStore()
     </div>
   </div>
 
-  <NavigationMobile />
+  <div
+    v-if="searchBarOpen"
+    class="fixed z-10 top-0 left-0 right-0 bottom-0 bg-black opacity-50"
+    @click="closeSearchBar"
+  />
+  <NavigationMobile v-else />
 </template>

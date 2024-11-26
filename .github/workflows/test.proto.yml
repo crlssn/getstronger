@@ -6,6 +6,7 @@ on:
       - main
   pull_request:
     paths:
+      - 'protobufs/**'
       - 'buf.yaml'
       - 'buf.gen.yaml'
       - 'package.json'
@@ -18,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -48,3 +49,10 @@ jobs:
             git diff
             exit 1
           fi
+
+      - name: Install protolint
+        run: go install github.com/yoheimuta/protolint/cmd/protolint@latest
+
+      - name: Run protolint
+        working-directory: ./protobufs
+        run: protolint .

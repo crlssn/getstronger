@@ -115,13 +115,12 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 
 func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPageSize())
 	workouts, err := h.repo.ListWorkouts(ctx,
 		repo.ListWorkoutsWithSets(),
 		repo.ListWorkoutsWithLimit(limit+1),
-		repo.ListWorkoutsWithUserID(userID),
+		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()),
 		repo.ListWorkoutsWithComments(),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPageToken()),
 	)
@@ -155,7 +154,7 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(append(userIDs, userID)))
+	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
 	if err != nil {
 		log.Error("failed to list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

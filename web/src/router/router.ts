@@ -3,6 +3,7 @@ import NotFound from '@/ui/NotFound.vue'
 import { create } from '@bufbuild/protobuf'
 import { useAuthStore } from '@/stores/auth'
 import { AuthClient } from '@/clients/clients'
+import UserView from '@/ui/users/UserView.vue'
 import UserLogin from '@/ui/auth/UserLogin.vue'
 import UserSignup from '@/ui/auth/UserSignup.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -35,6 +36,13 @@ const router: Router = createRouter({
       meta: { title: 'Profile' },
       name: 'profile',
       path: '/profile',
+    },
+    {
+      beforeEnter: [auth],
+      component: UserView,
+      meta: { title: '' },
+      name: 'user-view',
+      path: '/users/:id',
     },
     {
       beforeEnter: [auth],

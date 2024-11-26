@@ -23,51 +23,58 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	FirstName string    `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
-	LastName  string    `boil:"last_name" json:"last_name" toml:"last_name" yaml:"last_name"`
-	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID             string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	FirstName      string    `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
+	LastName       string    `boil:"last_name" json:"last_name" toml:"last_name" yaml:"last_name"`
+	CreatedAt      time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	FullNameSearch string    `boil:"full_name_search" json:"full_name_search" toml:"full_name_search" yaml:"full_name_search"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	ID        string
-	FirstName string
-	LastName  string
-	CreatedAt string
+	ID             string
+	FirstName      string
+	LastName       string
+	CreatedAt      string
+	FullNameSearch string
 }{
-	ID:        "id",
-	FirstName: "first_name",
-	LastName:  "last_name",
-	CreatedAt: "created_at",
+	ID:             "id",
+	FirstName:      "first_name",
+	LastName:       "last_name",
+	CreatedAt:      "created_at",
+	FullNameSearch: "full_name_search",
 }
 
 var UserTableColumns = struct {
-	ID        string
-	FirstName string
-	LastName  string
-	CreatedAt string
+	ID             string
+	FirstName      string
+	LastName       string
+	CreatedAt      string
+	FullNameSearch string
 }{
-	ID:        "users.id",
-	FirstName: "users.first_name",
-	LastName:  "users.last_name",
-	CreatedAt: "users.created_at",
+	ID:             "users.id",
+	FirstName:      "users.first_name",
+	LastName:       "users.last_name",
+	CreatedAt:      "users.created_at",
+	FullNameSearch: "users.full_name_search",
 }
 
 // Generated where
 
 var UserWhere = struct {
-	ID        whereHelperstring
-	FirstName whereHelperstring
-	LastName  whereHelperstring
-	CreatedAt whereHelpertime_Time
+	ID             whereHelperstring
+	FirstName      whereHelperstring
+	LastName       whereHelperstring
+	CreatedAt      whereHelpertime_Time
+	FullNameSearch whereHelperstring
 }{
-	ID:        whereHelperstring{field: "\"getstronger\".\"users\".\"id\""},
-	FirstName: whereHelperstring{field: "\"getstronger\".\"users\".\"first_name\""},
-	LastName:  whereHelperstring{field: "\"getstronger\".\"users\".\"last_name\""},
-	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"users\".\"created_at\""},
+	ID:             whereHelperstring{field: "\"getstronger\".\"users\".\"id\""},
+	FirstName:      whereHelperstring{field: "\"getstronger\".\"users\".\"first_name\""},
+	LastName:       whereHelperstring{field: "\"getstronger\".\"users\".\"last_name\""},
+	CreatedAt:      whereHelpertime_Time{field: "\"getstronger\".\"users\".\"created_at\""},
+	FullNameSearch: whereHelperstring{field: "\"getstronger\".\"users\".\"full_name_search\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -158,11 +165,11 @@ func (r *userR) GetWorkouts() WorkoutSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "first_name", "last_name", "created_at"}
+	userAllColumns            = []string{"id", "first_name", "last_name", "created_at", "full_name_search"}
 	userColumnsWithoutDefault = []string{"id", "first_name", "last_name"}
-	userColumnsWithDefault    = []string{"created_at"}
+	userColumnsWithDefault    = []string{"created_at", "full_name_search"}
 	userPrimaryKeyColumns     = []string{"id"}
-	userGeneratedColumns      = []string{}
+	userGeneratedColumns      = []string{"full_name_search"}
 )
 
 type (
@@ -855,7 +862,7 @@ func (userL) LoadFollowerUsers(ctx context.Context, e boil.ContextExecutor, sing
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"a\".\"followee_id\""),
+		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"getstronger\".\"users\".\"full_name_search\", \"a\".\"followee_id\""),
 		qm.From("\"getstronger\".\"users\""),
 		qm.InnerJoin("\"getstronger\".\"followers\" as \"a\" on \"getstronger\".\"users\".\"id\" = \"a\".\"follower_id\""),
 		qm.WhereIn("\"a\".\"followee_id\" in ?", argsSlice...),
@@ -876,7 +883,7 @@ func (userL) LoadFollowerUsers(ctx context.Context, e boil.ContextExecutor, sing
 		one := new(User)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &localJoinCol)
+		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &one.FullNameSearch, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for users")
 		}
@@ -985,7 +992,7 @@ func (userL) LoadFolloweeUsers(ctx context.Context, e boil.ContextExecutor, sing
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"a\".\"follower_id\""),
+		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"getstronger\".\"users\".\"full_name_search\", \"a\".\"follower_id\""),
 		qm.From("\"getstronger\".\"users\""),
 		qm.InnerJoin("\"getstronger\".\"followers\" as \"a\" on \"getstronger\".\"users\".\"id\" = \"a\".\"followee_id\""),
 		qm.WhereIn("\"a\".\"follower_id\" in ?", argsSlice...),
@@ -1006,7 +1013,7 @@ func (userL) LoadFolloweeUsers(ctx context.Context, e boil.ContextExecutor, sing
 		one := new(User)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &localJoinCol)
+		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &one.FullNameSearch, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for users")
 		}
@@ -2023,6 +2030,7 @@ func (o *User) Insert(ctx context.Context, exec boil.ContextExecutor, columns bo
 			userColumnsWithoutDefault,
 			nzDefaults,
 		)
+		wl = strmangle.SetComplement(wl, userGeneratedColumns)
 
 		cache.valueMapping, err = queries.BindMapping(userType, userMapping, wl)
 		if err != nil {
@@ -2093,6 +2101,7 @@ func (o *User) Update(ctx context.Context, exec boil.ContextExecutor, columns bo
 			userAllColumns,
 			userPrimaryKeyColumns,
 		)
+		wl = strmangle.SetComplement(wl, userGeneratedColumns)
 
 		if !columns.IsWhitelist() {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
@@ -2269,6 +2278,9 @@ func (o *User) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnCo
 			userAllColumns,
 			userPrimaryKeyColumns,
 		)
+
+		insert = strmangle.SetComplement(insert, userGeneratedColumns)
+		update = strmangle.SetComplement(update, userGeneratedColumns)
 
 		if updateOnConflict && len(update) == 0 {
 			return errors.New("orm: unable to upsert users, could not build update column list")

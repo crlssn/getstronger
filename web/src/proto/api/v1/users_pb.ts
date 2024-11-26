@@ -5,7 +5,7 @@
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv1";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
 import { file_api_v1_options } from "./options_pb";
-import type { User } from "./shared_pb";
+import type { PaginationRequest, PaginationResponse, User } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -14,7 +14,41 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/users.proto.
  */
 export const file_api_v1_users: GenFile = /*@__PURE__*/
-  fileDesc("ChJhcGkvdjEvdXNlcnMucHJvdG8SBmFwaS52MSIsCg1Gb2xsb3dSZXF1ZXN0EhsKCWZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiEAoORm9sbG93UmVzcG9uc2UiMAoPVW5mb2xsb3dSZXF1ZXN0Eh0KC3VuZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASISChBVbmZvbGxvd1Jlc3BvbnNlIjUKFExpc3RGb2xsb3dlcnNSZXF1ZXN0Eh0KC2ZvbGxvd2VyX2lkGAEgASgJQgi6SAVyA7ABASI4ChVMaXN0Rm9sbG93ZXJzUmVzcG9uc2USHwoJZm9sbG93ZXJzGAEgAygLMgwuYXBpLnYxLlVzZXIiNQoUTGlzdEZvbGxvd2Vlc1JlcXVlc3QSHQoLZm9sbG93ZWVfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlZXNSZXNwb25zZRIfCglmb2xsb3dlZXMYASADKAsyDC5hcGkudjEuVXNlcjK5AgoLVXNlclNlcnZpY2USPQoGRm9sbG93EhUuYXBpLnYxLkZvbGxvd1JlcXVlc3QaFi5hcGkudjEuRm9sbG93UmVzcG9uc2UiBIi1GAESQwoIVW5mb2xsb3cSFy5hcGkudjEuVW5mb2xsb3dSZXF1ZXN0GhguYXBpLnYxLlVuZm9sbG93UmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VycxIcLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VlcxIcLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVzcG9uc2UiBIi1GAFCiwEKCmNvbS5hcGkudjFCClVzZXJzUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
+  fileDesc("ChJhcGkvdjEvdXNlcnMucHJvdG8SBmFwaS52MSImCg5HZXRVc2VyUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiLQoPR2V0VXNlclJlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlciIsCg1Gb2xsb3dSZXF1ZXN0EhsKCWZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiEAoORm9sbG93UmVzcG9uc2UiMAoPVW5mb2xsb3dSZXF1ZXN0Eh0KC3VuZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASISChBVbmZvbGxvd1Jlc3BvbnNlIjUKFExpc3RGb2xsb3dlcnNSZXF1ZXN0Eh0KC2ZvbGxvd2VyX2lkGAEgASgJQgi6SAVyA7ABASI4ChVMaXN0Rm9sbG93ZXJzUmVzcG9uc2USHwoJZm9sbG93ZXJzGAEgAygLMgwuYXBpLnYxLlVzZXIiNQoUTGlzdEZvbGxvd2Vlc1JlcXVlc3QSHQoLZm9sbG93ZWVfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlZXNSZXNwb25zZRIfCglmb2xsb3dlZXMYASADKAsyDC5hcGkudjEuVXNlciJeCg1TZWFyY2hSZXF1ZXN0EhYKBXF1ZXJ5GAEgASgJQge6SARyAhADEjUKCnBhZ2luYXRpb24YAiABKAsyGS5hcGkudjEuUGFnaW5hdGlvblJlcXVlc3RCBrpIA8gBASJdCg5TZWFyY2hSZXNwb25zZRIbCgV1c2VycxgBIAMoCzIMLmFwaS52MS5Vc2VyEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlMrYDCgtVc2VyU2VydmljZRI8CgNHZXQSFi5hcGkudjEuR2V0VXNlclJlcXVlc3QaFy5hcGkudjEuR2V0VXNlclJlc3BvbnNlIgSItRgBEj0KBkZvbGxvdxIVLmFwaS52MS5Gb2xsb3dSZXF1ZXN0GhYuYXBpLnYxLkZvbGxvd1Jlc3BvbnNlIgSItRgBEkMKCFVuZm9sbG93EhcuYXBpLnYxLlVuZm9sbG93UmVxdWVzdBoYLmFwaS52MS5VbmZvbGxvd1Jlc3BvbnNlIgSItRgBElIKDUxpc3RGb2xsb3dlcnMSHC5hcGkudjEuTGlzdEZvbGxvd2Vyc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZvbGxvd2Vyc1Jlc3BvbnNlIgSItRgBElIKDUxpc3RGb2xsb3dlZXMSHC5hcGkudjEuTGlzdEZvbGxvd2Vlc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZvbGxvd2Vlc1Jlc3BvbnNlIgSItRgBEj0KBlNlYXJjaBIVLmFwaS52MS5TZWFyY2hSZXF1ZXN0GhYuYXBpLnYxLlNlYXJjaFJlc3BvbnNlIgSItRgBQosBCgpjb20uYXBpLnYxQgpVc2Vyc1Byb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
+
+/**
+ * @generated from message api.v1.GetUserRequest
+ */
+export type GetUserRequest = Message<"api.v1.GetUserRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message api.v1.GetUserRequest.
+ * Use `create(GetUserRequestSchema)` to create a new message.
+ */
+export const GetUserRequestSchema: GenMessage<GetUserRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 0);
+
+/**
+ * @generated from message api.v1.GetUserResponse
+ */
+export type GetUserResponse = Message<"api.v1.GetUserResponse"> & {
+  /**
+   * @generated from field: api.v1.User user = 1;
+   */
+  user?: User;
+};
+
+/**
+ * Describes the message api.v1.GetUserResponse.
+ * Use `create(GetUserResponseSchema)` to create a new message.
+ */
+export const GetUserResponseSchema: GenMessage<GetUserResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 1);
 
 /**
  * @generated from message api.v1.FollowRequest
@@ -31,7 +65,7 @@ export type FollowRequest = Message<"api.v1.FollowRequest"> & {
  * Use `create(FollowRequestSchema)` to create a new message.
  */
 export const FollowRequestSchema: GenMessage<FollowRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 0);
+  messageDesc(file_api_v1_users, 2);
 
 /**
  * @generated from message api.v1.FollowResponse
@@ -44,7 +78,7 @@ export type FollowResponse = Message<"api.v1.FollowResponse"> & {
  * Use `create(FollowResponseSchema)` to create a new message.
  */
 export const FollowResponseSchema: GenMessage<FollowResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 1);
+  messageDesc(file_api_v1_users, 3);
 
 /**
  * @generated from message api.v1.UnfollowRequest
@@ -61,7 +95,7 @@ export type UnfollowRequest = Message<"api.v1.UnfollowRequest"> & {
  * Use `create(UnfollowRequestSchema)` to create a new message.
  */
 export const UnfollowRequestSchema: GenMessage<UnfollowRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 2);
+  messageDesc(file_api_v1_users, 4);
 
 /**
  * @generated from message api.v1.UnfollowResponse
@@ -74,7 +108,7 @@ export type UnfollowResponse = Message<"api.v1.UnfollowResponse"> & {
  * Use `create(UnfollowResponseSchema)` to create a new message.
  */
 export const UnfollowResponseSchema: GenMessage<UnfollowResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 3);
+  messageDesc(file_api_v1_users, 5);
 
 /**
  * @generated from message api.v1.ListFollowersRequest
@@ -91,7 +125,7 @@ export type ListFollowersRequest = Message<"api.v1.ListFollowersRequest"> & {
  * Use `create(ListFollowersRequestSchema)` to create a new message.
  */
 export const ListFollowersRequestSchema: GenMessage<ListFollowersRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 4);
+  messageDesc(file_api_v1_users, 6);
 
 /**
  * @generated from message api.v1.ListFollowersResponse
@@ -108,7 +142,7 @@ export type ListFollowersResponse = Message<"api.v1.ListFollowersResponse"> & {
  * Use `create(ListFollowersResponseSchema)` to create a new message.
  */
 export const ListFollowersResponseSchema: GenMessage<ListFollowersResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 5);
+  messageDesc(file_api_v1_users, 7);
 
 /**
  * @generated from message api.v1.ListFolloweesRequest
@@ -125,7 +159,7 @@ export type ListFolloweesRequest = Message<"api.v1.ListFolloweesRequest"> & {
  * Use `create(ListFolloweesRequestSchema)` to create a new message.
  */
 export const ListFolloweesRequestSchema: GenMessage<ListFolloweesRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 6);
+  messageDesc(file_api_v1_users, 8);
 
 /**
  * @generated from message api.v1.ListFolloweesResponse
@@ -142,12 +176,64 @@ export type ListFolloweesResponse = Message<"api.v1.ListFolloweesResponse"> & {
  * Use `create(ListFolloweesResponseSchema)` to create a new message.
  */
 export const ListFolloweesResponseSchema: GenMessage<ListFolloweesResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_users, 7);
+  messageDesc(file_api_v1_users, 9);
+
+/**
+ * @generated from message api.v1.SearchRequest
+ */
+export type SearchRequest = Message<"api.v1.SearchRequest"> & {
+  /**
+   * @generated from field: string query = 1;
+   */
+  query: string;
+
+  /**
+   * @generated from field: api.v1.PaginationRequest pagination = 2;
+   */
+  pagination?: PaginationRequest;
+};
+
+/**
+ * Describes the message api.v1.SearchRequest.
+ * Use `create(SearchRequestSchema)` to create a new message.
+ */
+export const SearchRequestSchema: GenMessage<SearchRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 10);
+
+/**
+ * @generated from message api.v1.SearchResponse
+ */
+export type SearchResponse = Message<"api.v1.SearchResponse"> & {
+  /**
+   * @generated from field: repeated api.v1.User users = 1;
+   */
+  users: User[];
+
+  /**
+   * @generated from field: api.v1.PaginationResponse pagination = 2;
+   */
+  pagination?: PaginationResponse;
+};
+
+/**
+ * Describes the message api.v1.SearchResponse.
+ * Use `create(SearchResponseSchema)` to create a new message.
+ */
+export const SearchResponseSchema: GenMessage<SearchResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 11);
 
 /**
  * @generated from service api.v1.UserService
  */
 export const UserService: GenService<{
+  /**
+   * @generated from rpc api.v1.UserService.Get
+   */
+  get: {
+    methodKind: "unary";
+    input: typeof GetUserRequestSchema;
+    output: typeof GetUserResponseSchema;
+  },
   /**
    * @generated from rpc api.v1.UserService.Follow
    */
@@ -179,6 +265,14 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof ListFolloweesRequestSchema;
     output: typeof ListFolloweesResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.UserService.Search
+   */
+  search: {
+    methodKind: "unary";
+    input: typeof SearchRequestSchema;
+    output: typeof SearchResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_users, 0);

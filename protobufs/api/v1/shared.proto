@@ -25,3 +25,13 @@ message User {
   string first_name = 2 [(buf.validate.field).string.min_len = 1];
   string last_name = 3 [(buf.validate.field).string.min_len = 1];
 }
+
+message PaginationRequest {
+  int32 page_limit = 1 [(buf.validate.field).int32 = { gte: 1, lte: 100 }];
+  bytes page_token = 2;
+}
+
+message PaginationResponse {
+  int64 total_results = 1;
+  bytes next_page_token = 2;
+}
