@@ -25,9 +25,7 @@ message LoginRequest {
   string email = 1 [(buf.validate.field).string.email = true];
   string password = 2 [(buf.validate.field).string.min_len = 1];
 }
-message LoginResponse {
-  string access_token = 1;
-}
+message LoginResponse {}
 
 message RefreshTokenRequest {}
 message RefreshTokenResponse {
