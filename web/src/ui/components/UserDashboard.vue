@@ -234,12 +234,12 @@ const openSearchBar = () => {
         </div>
         <XMarkIcon
           v-if="searchBarOpen"
-          class="w-6 h-6 cursor-pointer"
+          class="w-8 h-6 cursor-pointer"
           @click="searchBarOpen = false"
         />
         <MagnifyingGlassIcon
           v-else
-          class="w-6 h-6 cursor-pointer"
+          class="w-8 h-6 cursor-pointer"
           @click="openSearchBar"
         />
       </div>
