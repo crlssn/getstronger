@@ -13,9 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  projects: write
-  contents: write
+  contents: read
   pull-requests: write
+  checks: read
+  statuses: read
+  actions: read
+  repository-projects: read
 
 jobs:
   deploy:
