@@ -254,10 +254,9 @@ const searchUsers = async () => {
           <li
             v-for="user in users"
             :key="user.id"
-            class="px-5 py-5 text-sm font-medium"
             @click="closeSearchBar"
           >
-            <RouterLink :to="`/users/${user.id}`">
+            <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">
               {{ user.firstName }} {{ user.lastName }}
             </RouterLink>
           </li>
