@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
+
+import { create } from '@bufbuild/protobuf'
 import { computed, nextTick, ref } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
+import { UserClient } from '@/clients/clients.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
+import { SearchRequestSchema } from '@/proto/api/v1/users_pb.ts'
 import NavigationMobile from '@/ui/components/NavigationMobile.vue'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
@@ -35,6 +40,17 @@ const openSearchBar = () => {
   nextTick(() => {
     input.value?.focus()
   });
+}
+
+const searchUsers = async () => {
+  const req = create(SearchRequestSchema, {
+    pagination: {
+      pageLimit: 100,
+    } as PaginationRequest,
+    query: input.value?.value,
+  })
+  const res = await UserClient.search(req)
+  console.log(res)
 }
 </script>
 
@@ -217,6 +233,7 @@ const openSearchBar = () => {
             type="text"
             class="w-full text-sm border-none focus:ring-0"
             placeholder="Search for users"
+            @keyup="searchUsers"
           >
         </form>
         <img

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/volatiletech/null/v8"
@@ -233,7 +234,7 @@ func ListExercisesWithIDs(ids []string) ListExercisesOpt {
 func ListExercisesWithName(name string) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm.ExerciseWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
+			orm.ExerciseWhere.Title.LIKE(fmt.Sprintf("%%%s%%", name)),
 		}, nil
 	}
 }
@@ -428,7 +429,7 @@ func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 func ListRoutinesWithName(name string) ListRoutineOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm.RoutineWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
+			orm.RoutineWhere.Title.LIKE(fmt.Sprintf("%%%s%%", name)),
 		}, nil
 	}
 }
@@ -863,7 +864,7 @@ func ListUsersWithIDs(ids []string) ListUsersOpt {
 func ListUsersWithNameMatching(query string) ListUsersOpt {
 	return func() []qm.QueryMod {
 		return []qm.QueryMod{
-			orm.UserWhere.FirstName.ILIKE(fmt.Sprintf("%%%s%%", query)),
+			orm.UserWhere.FullNameSearch.LIKE(fmt.Sprintf("%%%s%%", strings.ToLower(query))),
 			qm.OrderBy(fmt.Sprintf("similarity(full_name_search, '%s') DESC", query)),
 		}
 	}
@@ -915,7 +916,7 @@ type CountUsersOpt func() qm.QueryMod
 
 func CountUsersWithNameMatching(query string) CountUsersOpt {
 	return func() qm.QueryMod {
-		return orm.UserWhere.FirstName.ILIKE(fmt.Sprintf("%%%s%%", query))
+		return orm.UserWhere.FullNameSearch.LIKE(fmt.Sprintf("%%%s%%", strings.ToLower(query)))
 	}
 }
 

@@ -5,6 +5,7 @@ import { RoutineService } from '@/proto/api/v1/routines_pb.ts'
 import { WorkoutService } from '@/proto/api/v1/workouts_pb.ts'
 import { ExerciseService } from '@/proto/api/v1/exercise_pb.ts'
 import { createConnectTransport } from '@connectrpc/connect-web'
+import { UserService } from '@/proto/api/v1/users_pb.ts'
 
 const transport = createConnectTransport({
   baseUrl: import.meta.env.VITE_API_URL,
@@ -16,6 +17,7 @@ const transport = createConnectTransport({
 })
 
 export const AuthClient = createClient(AuthService, transport)
+export const UserClient = createClient(UserService, transport)
 export const RoutineClient = createClient(RoutineService, transport)
 export const WorkoutClient = createClient(WorkoutService, transport)
 export const ExerciseClient = createClient(ExerciseService, transport)
