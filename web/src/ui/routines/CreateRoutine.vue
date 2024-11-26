@@ -2,10 +2,11 @@
 import AppButton from '@/ui/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, RoutineClient } from '@/clients/clients'
-import { CreateRoutineRequest } from '@/proto/api/v1/routines_pb'
-import { Exercise, ListExercisesRequest } from '@/proto/api/v1/exercise_pb'
+import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
+import { type Exercise, ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { ConnectError } from '@connectrpc/connect'
 import { Switch } from '@headlessui/vue'
+import { create } from '@bufbuild/protobuf'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -25,7 +26,7 @@ const toggleExercise = (id: string) => {
 
 const fetchExercises = async () => {
   try {
-    const req = new ListExercisesRequest({
+    const req = create(ListExercisesRequestSchema,{
       pageToken: pageToken.value,
       pageSize: 100,
     })
@@ -48,7 +49,7 @@ const fetchExercises = async () => {
 
 const createRoutine = async () => {
   try {
-    const req = new CreateRoutineRequest({
+    const req = create(CreateRoutineRequestSchema,{
       name: name.value,
       exerciseIds: exerciseIDs.value,
     })

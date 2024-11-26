@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
-import { ListRoutinesRequest, Routine } from '@/proto/api/v1/routines_pb'
+import { ListRoutinesRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
 import AppButton from '@/ui/components/AppButton.vue'
+import { create } from '@bufbuild/protobuf'
 
 const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())
 
 const fetchRoutines = async () => {
-  const req = new ListRoutinesRequest({
+  const req = create(ListRoutinesRequestSchema,{
     pageToken: pageToken.value,
     pageLimit: 100,
   })

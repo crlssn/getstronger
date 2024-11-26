@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { LoginRequest } from '@/proto/api/v1/auth_pb'
 import { AuthClient } from '@/clients/clients'
 import { ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -8,6 +7,8 @@ import { useAuthStore } from '@/stores/auth'
 import router from '@/router/router'
 import { ScheduleTokenRefresh } from '@/jwt/jwt'
 import AppButton from '@/ui/components/AppButton.vue'
+import {create} from "@bufbuild/protobuf";
+import {LoginRequestSchema} from "@/proto/api/v1/auth_pb.ts";
 
 const email = ref('')
 const password = ref('')
@@ -15,9 +16,10 @@ const resError = ref('')
 const authStore = useAuthStore()
 
 const login = async () => {
-  const request = new LoginRequest()
-  request.email = email.value
-  request.password = password.value
+  const request = create(LoginRequestSchema, {
+    email: email.value,
+    password: password.value,
+  })
 
   try {
     const response = await AuthClient.login(request)
