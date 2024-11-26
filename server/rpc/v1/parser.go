@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	orm "github.com/crlssn/getstronger/server/pkg/orm"
+	"github.com/crlssn/getstronger/server/pkg/orm"
 	apiv1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 )
