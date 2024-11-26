@@ -116,6 +116,8 @@ func parseExerciseSetsFromPB(exerciseSetSlice []*apiv1.ExerciseSets) []repo.Exer
 	return exerciseSets
 }
 
+var errExerciseNotFound = fmt.Errorf("exercise not found")
+
 func parseSetSliceToExerciseSetsPB(setSlice orm.SetSlice, exerciseSlice orm.ExerciseSlice) ([]*apiv1.ExerciseSets, error) {
 	mapExercises := make(map[string]*apiv1.Exercise, len(exerciseSlice))
 	for _, exercise := range exerciseSlice {
@@ -126,7 +128,7 @@ func parseSetSliceToExerciseSetsPB(setSlice orm.SetSlice, exerciseSlice orm.Exer
 	for _, set := range setSlice {
 		exerciseKey, ok := mapExercises[set.ExerciseID]
 		if !ok {
-			return nil, fmt.Errorf("exercise not found: %s", set.ExerciseID)
+			return nil, fmt.Errorf("%w: %s", errExerciseNotFound, set.ExerciseID)
 		}
 
 		if _, ok = mapExerciseSets[exerciseKey]; !ok {
