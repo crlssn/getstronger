@@ -23,6 +23,9 @@ service WorkoutService {
   rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
     option (auth) = true;
   }
+  rpc PostComment(PostCommentRequest) returns (PostCommentResponse) {
+    option (auth) = true;
+  }
 //  rpc Start(StartWorkoutRequest) returns (StartWorkoutResponse) {
 //    option (auth) = true;
 //  }
@@ -63,6 +66,20 @@ message GetWorkoutResponse {
   Workout workout = 1;
 }
 
+message DeleteWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeleteWorkoutResponse {}
+
+message PostCommentRequest {
+  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+  string comment = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message PostCommentResponse {
+  WorkoutComment comment = 1;
+}
+
 //message StartWorkoutRequest {
 //  string routine_id = 1 [(buf.validate.field).string.uuid = true];
 //}
@@ -89,11 +106,6 @@ message GetWorkoutResponse {
 //message UpdateWorkoutResponse {
 //  Workout Workout = 1;
 //}
-//
-message DeleteWorkoutRequest {
-  string id = 1 [(buf.validate.field).string.uuid = true];
-}
-message DeleteWorkoutResponse {}
 //
 //message AddExerciseRequest {
 //  string workout_id = 1 [(buf.validate.field).string.uuid = true];

@@ -185,3 +185,31 @@ func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 	log.Info("workout deleted")
 	return &connect.Response[v1.DeleteWorkoutResponse]{}, nil
 }
+
+func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	comment, err := h.repo.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
+		UserID:    userID,
+		WorkoutID: req.Msg.GetWorkoutId(),
+		Comment:   req.Msg.GetComment(),
+	})
+	if err != nil {
+		log.Error("failed to create workout comment", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(comment.UserID))
+	if err != nil {
+		log.Error("failed to get user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("workout comment posted")
+	return &connect.Response[v1.PostCommentResponse]{
+		Msg: &v1.PostCommentResponse{
+			Comment: parseWorkoutCommentToPB(comment, user),
+		},
+	}, nil
+}

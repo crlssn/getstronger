@@ -42,15 +42,19 @@ const (
 	WorkoutServiceListProcedure = "/api.v1.WorkoutService/List"
 	// WorkoutServiceDeleteProcedure is the fully-qualified name of the WorkoutService's Delete RPC.
 	WorkoutServiceDeleteProcedure = "/api.v1.WorkoutService/Delete"
+	// WorkoutServicePostCommentProcedure is the fully-qualified name of the WorkoutService's
+	// PostComment RPC.
+	WorkoutServicePostCommentProcedure = "/api.v1.WorkoutService/PostComment"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	workoutServiceServiceDescriptor      = v1.File_api_v1_workouts_proto.Services().ByName("WorkoutService")
-	workoutServiceCreateMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("Create")
-	workoutServiceGetMethodDescriptor    = workoutServiceServiceDescriptor.Methods().ByName("Get")
-	workoutServiceListMethodDescriptor   = workoutServiceServiceDescriptor.Methods().ByName("List")
-	workoutServiceDeleteMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("Delete")
+	workoutServiceServiceDescriptor           = v1.File_api_v1_workouts_proto.Services().ByName("WorkoutService")
+	workoutServiceCreateMethodDescriptor      = workoutServiceServiceDescriptor.Methods().ByName("Create")
+	workoutServiceGetMethodDescriptor         = workoutServiceServiceDescriptor.Methods().ByName("Get")
+	workoutServiceListMethodDescriptor        = workoutServiceServiceDescriptor.Methods().ByName("List")
+	workoutServiceDeleteMethodDescriptor      = workoutServiceServiceDescriptor.Methods().ByName("Delete")
+	workoutServicePostCommentMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("PostComment")
 )
 
 // WorkoutServiceClient is a client for the api.v1.WorkoutService service.
@@ -59,6 +63,7 @@ type WorkoutServiceClient interface {
 	Get(context.Context, *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error)
 	List(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 	Delete(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
+	PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error)
 }
 
 // NewWorkoutServiceClient constructs a client for the api.v1.WorkoutService service. By default, it
@@ -95,15 +100,22 @@ func NewWorkoutServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(workoutServiceDeleteMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		postComment: connect.NewClient[v1.PostCommentRequest, v1.PostCommentResponse](
+			httpClient,
+			baseURL+WorkoutServicePostCommentProcedure,
+			connect.WithSchema(workoutServicePostCommentMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // workoutServiceClient implements WorkoutServiceClient.
 type workoutServiceClient struct {
-	create *connect.Client[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse]
-	get    *connect.Client[v1.GetWorkoutRequest, v1.GetWorkoutResponse]
-	list   *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
-	delete *connect.Client[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse]
+	create      *connect.Client[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse]
+	get         *connect.Client[v1.GetWorkoutRequest, v1.GetWorkoutResponse]
+	list        *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
+	delete      *connect.Client[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse]
+	postComment *connect.Client[v1.PostCommentRequest, v1.PostCommentResponse]
 }
 
 // Create calls api.v1.WorkoutService.Create.
@@ -126,12 +138,18 @@ func (c *workoutServiceClient) Delete(ctx context.Context, req *connect.Request[
 	return c.delete.CallUnary(ctx, req)
 }
 
+// PostComment calls api.v1.WorkoutService.PostComment.
+func (c *workoutServiceClient) PostComment(ctx context.Context, req *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error) {
+	return c.postComment.CallUnary(ctx, req)
+}
+
 // WorkoutServiceHandler is an implementation of the api.v1.WorkoutService service.
 type WorkoutServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error)
 	Get(context.Context, *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error)
 	List(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 	Delete(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
+	PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error)
 }
 
 // NewWorkoutServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -164,6 +182,12 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 		connect.WithSchema(workoutServiceDeleteMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	workoutServicePostCommentHandler := connect.NewUnaryHandler(
+		WorkoutServicePostCommentProcedure,
+		svc.PostComment,
+		connect.WithSchema(workoutServicePostCommentMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.WorkoutService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case WorkoutServiceCreateProcedure:
@@ -174,6 +198,8 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 			workoutServiceListHandler.ServeHTTP(w, r)
 		case WorkoutServiceDeleteProcedure:
 			workoutServiceDeleteHandler.ServeHTTP(w, r)
+		case WorkoutServicePostCommentProcedure:
+			workoutServicePostCommentHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -197,4 +223,8 @@ func (UnimplementedWorkoutServiceHandler) List(context.Context, *connect.Request
 
 func (UnimplementedWorkoutServiceHandler) Delete(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.Delete is not implemented"))
+}
+
+func (UnimplementedWorkoutServiceHandler) PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.PostComment is not implemented"))
 }

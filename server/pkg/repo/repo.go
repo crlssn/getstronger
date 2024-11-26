@@ -871,3 +871,23 @@ func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSli
 
 	return users, nil
 }
+
+type CreateWorkoutCommentParams struct {
+	UserID    string
+	WorkoutID string
+	Comment   string
+}
+
+func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+	comment := &orm.WorkoutComment{
+		UserID:    p.UserID,
+		WorkoutID: p.WorkoutID,
+		Comment:   p.Comment,
+	}
+
+	if err := comment.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+		return nil, fmt.Errorf("workout comment insert: %w", err)
+	}
+
+	return comment, nil
+}
