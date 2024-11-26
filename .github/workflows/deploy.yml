@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types:
+      - labeled
+
+permissions:
+  contents: write
 
 concurrency:
   group: deploy-main
@@ -11,6 +17,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy')
     runs-on: ubuntu-latest
 
     steps:
@@ -68,3 +75,10 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ vars.AWS_REGION }}
           aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
+
+      - name: Remove deploy label
+        if: github.event_name == 'pull_request' && github.event.label.name == 'deploy'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy"
