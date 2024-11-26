@@ -86,17 +86,20 @@ var WorkoutWhere = struct {
 
 // WorkoutRels is where relationship names are stored.
 var WorkoutRels = struct {
-	User string
-	Sets string
+	User            string
+	Sets            string
+	WorkoutComments string
 }{
-	User: "User",
-	Sets: "Sets",
+	User:            "User",
+	Sets:            "Sets",
+	WorkoutComments: "WorkoutComments",
 }
 
 // workoutR is where relationships are stored.
 type workoutR struct {
-	User *User    `boil:"User" json:"User" toml:"User" yaml:"User"`
-	Sets SetSlice `boil:"Sets" json:"Sets" toml:"Sets" yaml:"Sets"`
+	User            *User               `boil:"User" json:"User" toml:"User" yaml:"User"`
+	Sets            SetSlice            `boil:"Sets" json:"Sets" toml:"Sets" yaml:"Sets"`
+	WorkoutComments WorkoutCommentSlice `boil:"WorkoutComments" json:"WorkoutComments" toml:"WorkoutComments" yaml:"WorkoutComments"`
 }
 
 // NewStruct creates a new relationship struct
@@ -116,6 +119,13 @@ func (r *workoutR) GetSets() SetSlice {
 		return nil
 	}
 	return r.Sets
+}
+
+func (r *workoutR) GetWorkoutComments() WorkoutCommentSlice {
+	if r == nil {
+		return nil
+	}
+	return r.WorkoutComments
 }
 
 // workoutL is where Load methods for each relationship are stored.
@@ -459,6 +469,20 @@ func (o *Workout) Sets(mods ...qm.QueryMod) setQuery {
 	return Sets(queryMods...)
 }
 
+// WorkoutComments retrieves all the workout_comment's WorkoutComments with an executor.
+func (o *Workout) WorkoutComments(mods ...qm.QueryMod) workoutCommentQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"getstronger\".\"workout_comments\".\"workout_id\"=?", o.ID),
+	)
+
+	return WorkoutComments(queryMods...)
+}
+
 // LoadUser allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (workoutL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybeWorkout interface{}, mods queries.Applicator) error {
@@ -692,6 +716,119 @@ func (workoutL) LoadSets(ctx context.Context, e boil.ContextExecutor, singular b
 	return nil
 }
 
+// LoadWorkoutComments allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (workoutL) LoadWorkoutComments(ctx context.Context, e boil.ContextExecutor, singular bool, maybeWorkout interface{}, mods queries.Applicator) error {
+	var slice []*Workout
+	var object *Workout
+
+	if singular {
+		var ok bool
+		object, ok = maybeWorkout.(*Workout)
+		if !ok {
+			object = new(Workout)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeWorkout)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeWorkout))
+			}
+		}
+	} else {
+		s, ok := maybeWorkout.(*[]*Workout)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeWorkout)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeWorkout))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &workoutR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &workoutR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`getstronger.workout_comments`),
+		qm.WhereIn(`getstronger.workout_comments.workout_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load workout_comments")
+	}
+
+	var resultSlice []*WorkoutComment
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice workout_comments")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on workout_comments")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for workout_comments")
+	}
+
+	if len(workoutCommentAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.WorkoutComments = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &workoutCommentR{}
+			}
+			foreign.R.Workout = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.WorkoutID {
+				local.R.WorkoutComments = append(local.R.WorkoutComments, foreign)
+				if foreign.R == nil {
+					foreign.R = &workoutCommentR{}
+				}
+				foreign.R.Workout = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetUser of the workout to the related item.
 // Sets o.R.User to related.
 // Adds o to related.R.Workouts.
@@ -783,6 +920,59 @@ func (o *Workout) AddSets(ctx context.Context, exec boil.ContextExecutor, insert
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &setR{
+				Workout: o,
+			}
+		} else {
+			rel.R.Workout = o
+		}
+	}
+	return nil
+}
+
+// AddWorkoutComments adds the given related objects to the existing relationships
+// of the workout, optionally inserting them as new records.
+// Appends related to o.R.WorkoutComments.
+// Sets related.R.Workout appropriately.
+func (o *Workout) AddWorkoutComments(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*WorkoutComment) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.WorkoutID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"getstronger\".\"workout_comments\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"workout_id"}),
+				strmangle.WhereClause("\"", "\"", 2, workoutCommentPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.WorkoutID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &workoutR{
+			WorkoutComments: related,
+		}
+	} else {
+		o.R.WorkoutComments = append(o.R.WorkoutComments, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &workoutCommentR{
 				Workout: o,
 			}
 		} else {
