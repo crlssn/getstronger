@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import {
-  GetExerciseRequestSchema,
-  UpdateExerciseRequestSchema,
-} from '@/proto/api/v1/exercise_pb'
+import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
 import type { FieldMask } from '@bufbuild/protobuf/wkt'
 import AppButton from '@/ui/components/AppButton.vue'
 import { onMounted, ref } from 'vue'

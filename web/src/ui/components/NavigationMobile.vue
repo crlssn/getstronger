@@ -6,7 +6,7 @@ import {
   HomeIcon,
   RectangleStackIcon,
   UserIcon,
-  BellIcon
+  BellIcon,
 } from '@heroicons/vue/24/outline'
 
 import {
