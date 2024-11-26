@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	orm2 "github.com/crlssn/getstronger/server/pkg/orm"
+	"github.com/crlssn/getstronger/server/pkg/orm"
 )
 
 type ModelItem interface {
-	*orm2.Workout | *orm2.Exercise | *orm2.User | *orm2.Routine
+	*orm.Workout | *orm.Exercise | *orm.User | *orm.Routine | *orm.Set | *orm.User | *orm.WorkoutComment
 }
 
 type ModelSlice[T any] interface {
@@ -43,4 +43,13 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 		Items:         items,
 		NextPageToken: nextPageToken,
 	}, nil
+}
+
+func ExtractIDs[Item ModelItem, Slice ModelSlice[Item]](items Slice, f func(Item) string) []string {
+	ids := make([]string, 0, len(items))
+	for _, item := range items {
+		ids = append(ids, f(item))
+	}
+
+	return ids
 }

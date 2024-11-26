@@ -852,6 +852,12 @@ func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, erro
 
 type ListUsersOpt func() qm.QueryMod
 
+func ListUsersWithIDs(ids []string) ListUsersOpt {
+	return func() qm.QueryMod {
+		return orm.UserWhere.ID.IN(ids)
+	}
+}
+
 func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
