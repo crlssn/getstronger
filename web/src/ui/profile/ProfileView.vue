@@ -1,24 +1,17 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { ExerciseClient, WorkoutClient } from '@/clients/clients'
-import { GetWorkoutRequestSchema, ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import { WorkoutClient } from '@/clients/clients'
+import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 import { useRoute } from 'vue-router'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import { type Exercise, ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
-import AppButton from '@/ui/components/AppButton.vue'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 
 const workouts = ref<Workout[]>()
-const exercises = ref<Exercise[]>()
 const route = useRoute()
-const pageTitleStore = usePageTitleStore()
 
 onMounted(async () => {
   await fetchWorkouts()
-  // await fetchExercises()
-  // pageTitleStore.setPageTitle(workouts?.value?.name as string)
 })
 
 const fetchWorkouts = async () => {
@@ -29,24 +22,6 @@ const fetchWorkouts = async () => {
   const res = await WorkoutClient.list(req)
   workouts.value = res.workouts
 }
-
-// const fetchExercises = async () => {
-//   const exerciseIDs: string[] = []
-//   workouts.value?.exerciseSets.forEach((exerciseSet) => {
-//     exerciseIDs.push(exerciseSet.exerciseId)
-//   })
-//
-//   const req = create(ListExercisesRequestSchema, {
-//     exerciseIds: exerciseIDs,
-//     pageSize: 100, // TODO: Handle workouts with more than 100 exercises.
-//   })
-//   const res = await ExerciseClient.list(req)
-//   exercises.value = res.exercises
-// }
-//
-// const findExercise = (id: string) => {
-//   return exercises.value?.find((exercise) => exercise.id === id)
-// }
 
 const tabs = [
   { name: 'Workouts', href: '/profile' },

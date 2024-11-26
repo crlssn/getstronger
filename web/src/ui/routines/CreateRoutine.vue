@@ -3,10 +3,11 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, RoutineClient } from '@/clients/clients'
 import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
-import { type Exercise, ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
+import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { ConnectError } from '@connectrpc/connect'
 import { Switch } from '@headlessui/vue'
 import { create } from '@bufbuild/protobuf'
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())

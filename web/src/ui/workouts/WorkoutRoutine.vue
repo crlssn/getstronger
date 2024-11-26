@@ -11,7 +11,7 @@ import router from '@/router/router'
 import { DateTime } from 'luxon'
 import type { Timestamp } from '@bufbuild/protobuf/wkt'
 import { ConnectError } from '@connectrpc/connect'
-import type { ExerciseSets } from '@/proto/api/v1/shared_pb'
+import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { create } from '@bufbuild/protobuf'
 import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
@@ -86,7 +86,9 @@ const finishWorkout = async () => {
     }
 
     eSetsList.push({
-      exerciseId: exerciseID,
+      exercise: {
+        id: exerciseID,
+      } as Exercise,
       sets: definedSets,
     } as ExerciseSets)
   }
@@ -122,12 +124,12 @@ const cancelWorkout = async () => {
 }
 
 const prevSetWeight = (exerciseID: string, index: number) => {
-  const prevSet = prevExerciseSets.value.find((set) => set.exerciseId === exerciseID)?.sets[index]
+  const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
   return prevSet?.weight?.toString() || 'Weight'
 }
 
 const prevSetReps = (exerciseID: string, index: number) => {
-  const prevSet = prevExerciseSets.value.find((set) => set.exerciseId === exerciseID)?.sets[index]
+  const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
   return prevSet?.reps?.toString() || 'Reps'
 }
 
