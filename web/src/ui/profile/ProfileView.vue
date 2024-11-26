@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { WorkoutClient } from '@/clients/clients'
-import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 import router from '@/router/router'
-import AppButton from '@/ui/components/AppButton.vue'
-import CardWorkout from '@/ui/components/CardWorkout.vue'
-import { create } from '@bufbuild/protobuf'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { create } from '@bufbuild/protobuf'
+import { WorkoutClient } from '@/clients/clients'
+import AppButton from '@/ui/components/AppButton.vue'
+import CardWorkout from '@/ui/components/CardWorkout.vue'
+import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
 import {
   BellIcon,
   BookOpenIcon,
@@ -15,7 +16,6 @@ import {
   RectangleStackIcon as RectangleStackSolidIcon,
   UserIcon as UserSolidIcon,
 } from '@heroicons/vue/24/solid'
-import { useRoute } from 'vue-router'
 
 const route = useRoute()
 

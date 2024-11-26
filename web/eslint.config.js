@@ -14,7 +14,7 @@ export default [
     name: 'app/files-to-ignore',
   },
 
-  perfectionist.configs['recommended-natural'],
+  // perfectionist.configs['recommended-natural'],
   ...pluginVue.configs['flat/recommended'],
   ...vueTsEslintConfig(),
 
@@ -22,4 +22,21 @@ export default [
     ...pluginVitest.configs.recommended,
     files: ['src/**/__tests__/*'],
   },
+
+
+  perfectionist.configs['recommended-natural'],
+  {
+    plugins: {
+      perfectionist,
+    },
+    rules: {
+      'perfectionist/sort-imports': [
+        'error',
+        {
+          order: 'asc',
+          type: 'line-length',
+        },
+      ],
+    },
+  }
 ]

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { AuthClient } from '@/clients/clients'
-import { SignupRequestSchema } from '@/proto/api/v1/auth_pb'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
 import { ref } from 'vue'
+import { create } from '@bufbuild/protobuf'
+import { AuthClient } from '@/clients/clients'
+import { ConnectError } from '@connectrpc/connect'
 import { RouterLink, useRouter } from 'vue-router'
+import AppButton from '@/ui/components/AppButton.vue'
+import { SignupRequestSchema } from '@/proto/api/v1/auth_pb'
 
 const firstName = ref('')
 const lastName = ref('')

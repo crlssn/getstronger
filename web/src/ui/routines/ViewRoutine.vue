@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import type { SortableEvent } from 'sortablejs'
 
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { create } from '@bufbuild/protobuf'
 import { RoutineClient } from '@/clients/clients'
+import AppButton from '@/ui/components/AppButton.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+import { useSortable } from '@vueuse/integrations/useSortable'
 import {
   GetRoutineRequestSchema,
   type Routine,
   UpdateExerciseOrderRequestSchema,
 } from '@/proto/api/v1/routines_pb'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
-import { useSortable } from '@vueuse/integrations/useSortable'
-import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()

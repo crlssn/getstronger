@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
-import { ExerciseClient } from '@/clients/clients'
-import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
+import { create } from '@bufbuild/protobuf'
+import { ExerciseClient } from '@/clients/clients'
+import AppButton from '@/ui/components/AppButton.vue'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')

@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 import type { Timestamp } from '@bufbuild/protobuf/wkt'
+import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 
+import { DateTime } from 'luxon'
+import router from '@/router/router'
+import { useRoute } from 'vue-router'
+import { create } from '@bufbuild/protobuf'
+import { useWorkoutStore } from '@/stores/workout'
+import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/ui/components/AppButton.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
 import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
-import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
-import router from '@/router/router'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import { useWorkoutStore } from '@/stores/workout'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { DateTime } from 'luxon'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)

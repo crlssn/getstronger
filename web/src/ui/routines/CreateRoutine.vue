@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
+import { onMounted, ref } from 'vue'
+import { Switch } from '@headlessui/vue'
+import { create } from '@bufbuild/protobuf'
+import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/ui/components/AppButton.vue'
 import { ExerciseClient, RoutineClient } from '@/clients/clients'
 import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
-import { Switch } from '@headlessui/vue'
-import { onMounted, ref } from 'vue'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())

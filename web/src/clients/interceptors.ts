@@ -1,7 +1,7 @@
 import type { Interceptor } from '@connectrpc/connect'
 
-import { RefreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { useAuthStore } from '@/stores/auth'
+import { RefreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { Code, ConnectError } from '@connectrpc/connect'
 
 export const logger: Interceptor = (next) => async (req) => {

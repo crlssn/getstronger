@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
 import type { FieldMask } from '@bufbuild/protobuf/wkt'
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
 
-import { ExerciseClient } from '@/clients/clients'
-import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { create } from '@bufbuild/protobuf'
+import { ExerciseClient } from '@/clients/clients'
+import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/ui/components/AppButton.vue'
+import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
 
 const name = ref('')
 const label = ref('')

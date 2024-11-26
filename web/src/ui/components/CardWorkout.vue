@@ -1,18 +1,18 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { create } from '@bufbuild/protobuf'
+import { useTextareaAutosize } from '@vueuse/core'
 import { WorkoutClient } from '@/clients/clients.ts'
+import AppButton from '@/ui/components/AppButton.vue'
+import { type DropdownItem } from '@/types/dropdown.ts'
+import DropdownButton from '@/ui/components/DropdownButton.vue'
+import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
+import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import {
   PostCommentRequestSchema,
   type Workout,
   type WorkoutComment,
 } from '@/proto/api/v1/workouts_pb.ts'
-import { type DropdownItem } from '@/types/dropdown.ts'
-import AppButton from '@/ui/components/AppButton.vue'
-import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
-import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
-import DropdownButton from '@/ui/components/DropdownButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { useTextareaAutosize } from '@vueuse/core'
-import { onMounted, ref } from 'vue'
 
 import { formatToRelativeDateTime } from '../../utils/datetime.ts'
 

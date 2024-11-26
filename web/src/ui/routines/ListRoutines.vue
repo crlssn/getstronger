@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { RoutineClient } from '@/clients/clients'
-import { ListRoutinesRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
+import { create } from '@bufbuild/protobuf'
+import { RoutineClient } from '@/clients/clients'
+import AppButton from '@/ui/components/AppButton.vue'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ListRoutinesRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
 
 const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())

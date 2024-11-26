@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ExerciseClient } from '@/clients/clients'
-import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
 import { ref } from 'vue'
+import { create } from '@bufbuild/protobuf'
+import { ExerciseClient } from '@/clients/clients'
+import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/ui/components/AppButton.vue'
+import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
 
 const name = ref('')
 const label = ref('')

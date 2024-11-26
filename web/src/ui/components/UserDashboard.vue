@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import NavigationMobile from '@/ui/components/NavigationMobile.vue'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import {
   ArrowPathRoundedSquareIcon,
   BellIcon,
@@ -11,8 +13,6 @@ import {
   UserIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import { computed, ref } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
 
 const navigation = [
   { href: '/home', icon: HomeIcon, name: 'Home' },

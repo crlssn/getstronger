@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import router from '@/router/router'
+import { create } from '@bufbuild/protobuf'
+import { useAuthStore } from '@/stores/auth'
 import { AuthClient } from '@/clients/clients'
 import { ScheduleTokenRefresh } from '@/jwt/jwt'
-import { LoginRequestSchema } from '@/proto/api/v1/auth_pb.ts'
-import router from '@/router/router'
-import { useAuthStore } from '@/stores/auth'
-import AppButton from '@/ui/components/AppButton.vue'
-import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
-import { ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { ConnectError } from '@connectrpc/connect'
+import AppButton from '@/ui/components/AppButton.vue'
+import { LoginRequestSchema } from '@/proto/api/v1/auth_pb.ts'
 
 const email = ref('')
 const password = ref('')
