@@ -11,10 +11,10 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
-	apiv1connect2 "github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
-	v2 "github.com/crlssn/getstronger/server/rpc/v1"
+	v1 "github.com/crlssn/getstronger/server/rpc/v1"
 )
 
 func Module() fx.Option {
@@ -22,10 +22,11 @@ func Module() fx.Option {
 		interceptors.Module(),
 		fx.Provide(
 			registerHandlers,
-			v2.NewAuthHandler,
-			v2.NewRoutineHandler,
-			v2.NewWorkoutHandler,
-			v2.NewExerciseHandler,
+			v1.NewAuthHandler,
+			v1.NewUserHandler,
+			v1.NewRoutineHandler,
+			v1.NewWorkoutHandler,
+			v1.NewExerciseHandler,
 			middlewares.New,
 		),
 		fx.Invoke(
@@ -37,25 +38,29 @@ func Module() fx.Option {
 type Handlers struct {
 	fx.In
 
-	Auth     apiv1connect2.AuthServiceHandler
-	Routine  apiv1connect2.RoutineServiceHandler
-	Workout  apiv1connect2.WorkoutServiceHandler
-	Exercise apiv1connect2.ExerciseServiceHandler
+	Auth     apiv1connect.AuthServiceHandler
+	User     apiv1connect.UserServiceHandler
+	Routine  apiv1connect.RoutineServiceHandler
+	Workout  apiv1connect.WorkoutServiceHandler
+	Exercise apiv1connect.ExerciseServiceHandler
 }
 
 func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
 	handlers := []func(opts ...connect.HandlerOption) (string, http.Handler){
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect2.NewAuthServiceHandler(p.Auth, opts...)
+			return apiv1connect.NewAuthServiceHandler(p.Auth, opts...)
 		},
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect2.NewRoutineServiceHandler(p.Routine, opts...)
+			return apiv1connect.NewUserServiceHandler(p.User, opts...)
 		},
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect2.NewWorkoutServiceHandler(p.Workout, opts...)
+			return apiv1connect.NewRoutineServiceHandler(p.Routine, opts...)
 		},
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
-			return apiv1connect2.NewExerciseServiceHandler(p.Exercise, opts...)
+			return apiv1connect.NewWorkoutServiceHandler(p.Workout, opts...)
+		},
+		func(opts ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewExerciseServiceHandler(p.Exercise, opts...)
 		},
 	}
 

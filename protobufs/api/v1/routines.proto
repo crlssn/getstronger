@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/options.proto";
 import "api/v1/exercise.proto";
+import "api/v1/options.proto";
 
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
 
 import "buf/validate/validate.proto";
 

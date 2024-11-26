@@ -751,3 +751,101 @@ func (r *Repo) ListPersonalBests(ctx context.Context, opts ...ListPersonalBestsO
 
 	return personalBests, nil
 }
+
+type FollowParams struct {
+	FollowerID string
+	FolloweeID string
+}
+
+func (r *Repo) Follow(ctx context.Context, p FollowParams) error {
+	user := &orm.User{ID: p.FollowerID}
+	if err := user.AddFolloweeUsers(ctx, r.executor(), false, &orm.User{ID: p.FolloweeID}); err != nil {
+		return fmt.Errorf("follow add: %w", err)
+	}
+
+	return nil
+}
+
+type UnfollowParams struct {
+	FollowerID string
+	FolloweeID string
+}
+
+func (r *Repo) Unfollow(ctx context.Context, p UnfollowParams) error {
+	user := &orm.User{ID: p.FollowerID}
+	if err := user.RemoveFolloweeUsers(ctx, r.executor(), &orm.User{ID: p.FolloweeID}); err != nil {
+		return fmt.Errorf("follow add: %w", err)
+	}
+
+	return nil
+}
+
+type ListFollowersOpt func() qm.QueryMod
+
+func (r *Repo) ListFollowers(ctx context.Context, user *orm.User, opts ...ListFollowersOpt) (orm.UserSlice, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	users, err := user.FollowerUsers(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("users fetch: %w", err)
+	}
+
+	return users, nil
+}
+
+type ListFolloweesOpt func() qm.QueryMod
+
+func (r *Repo) ListFollowees(ctx context.Context, user *orm.User, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	users, err := user.FolloweeUsers(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("users fetch: %w", err)
+	}
+
+	return users, nil
+}
+
+type GetUserOpt func() qm.QueryMod
+
+func GetUserWithID(id string) GetUserOpt {
+	return func() qm.QueryMod {
+		return orm.UserWhere.ID.EQ(id)
+	}
+}
+
+func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	user, err := orm.Users(query...).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("user fetch: %w", err)
+	}
+
+	return user, nil
+}
+
+type ListUsersOpt func() qm.QueryMod
+
+func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	users, err := orm.Users(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("users fetch: %w", err)
+	}
+
+	return users, nil
+}
