@@ -234,7 +234,7 @@ func ListExercisesWithIDs(ids []string) ListExercisesOpt {
 func ListExercisesWithName(name string) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm.ExerciseWhere.Title.LIKE(fmt.Sprintf("%%%s%%", name)),
+			orm.ExerciseWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
 		}, nil
 	}
 }
@@ -429,7 +429,7 @@ func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 func ListRoutinesWithName(name string) ListRoutineOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
-			orm.RoutineWhere.Title.LIKE(fmt.Sprintf("%%%s%%", name)),
+			orm.RoutineWhere.Title.ILIKE(fmt.Sprintf("%%%s%%", name)),
 		}, nil
 	}
 }
