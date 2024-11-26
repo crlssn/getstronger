@@ -39,15 +39,21 @@ const updateTab = (event: Event) => {
 
 <template>
   <div>
-    <AppButton type="link" to="/logout" colour="red">Logout</AppButton>
+    <AppButton
+      type="link"
+      to="/logout"
+      colour="red"
+    >
+      Logout
+    </AppButton>
   </div>
   <div class="mb-4">
     <div class="sm:hidden">
       <select
         id="tabs"
         name="tabs"
-        @change="updateTab"
         class="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 py-4 px-5 font-medium text-sm"
+        @change="updateTab"
       >
         <option
           v-for="tab in tabs"
@@ -60,7 +66,10 @@ const updateTab = (event: Event) => {
       </select>
     </div>
     <div class="hidden sm:block">
-      <nav class="flex" aria-label="Tabs">
+      <nav
+        class="flex"
+        aria-label="Tabs"
+      >
         <RouterLink
           v-for="tab in tabs"
           :key="tab.name"
@@ -78,7 +87,11 @@ const updateTab = (event: Event) => {
     </div>
   </div>
   <div v-if="route.fullPath === tabs[0].href">
-    <CardWorkout v-for="workout in workouts" :key="workout.id" :workout="workout"></CardWorkout>
+    <CardWorkout
+      v-for="workout in workouts"
+      :key="workout.id"
+      :workout="workout"
+    />
   </div>
 </template>
 

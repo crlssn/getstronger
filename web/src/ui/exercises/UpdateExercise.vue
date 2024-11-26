@@ -83,39 +83,53 @@ async function updateExercise() {
     >
       {{ resError }}
     </div>
-    <form class="space-y-6" @submit.prevent="updateExercise">
+    <form
+      class="space-y-6"
+      @submit.prevent="updateExercise"
+    >
       <div>
-        <label for="name" class="block text-xs font-semibold text-gray-900 uppercase">Name</label>
+        <label
+          for="name"
+          class="block text-xs font-semibold text-gray-900 uppercase"
+        >Name</label>
         <div class="mt-2">
           <input
-            v-model="name"
             id="name"
+            v-model="name"
             type="text"
             required
             class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-          />
+          >
         </div>
       </div>
 
       <div>
         <div>
-          <label for="label" class="block text-xs font-semibold text-gray-900 uppercase">
+          <label
+            for="label"
+            class="block text-xs font-semibold text-gray-900 uppercase"
+          >
             Label
           </label>
         </div>
         <div class="mt-2">
           <input
-            v-model="label"
             id="label"
+            v-model="label"
             type="text"
             placeholder="Optional"
             class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-          />
+          >
         </div>
       </div>
 
-      <AppButton text="Create" type="submit" colour="primary" class="mt-6"
-        >Update Exercise
+      <AppButton
+        text="Create"
+        type="submit"
+        colour="primary"
+        class="mt-6"
+      >
+        Update Exercise
       </AppButton>
     </form>
   </div>

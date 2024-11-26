@@ -45,15 +45,35 @@ const deleteWorkout = async () => {
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
     role="list"
   >
-    <li v-for="exerciseSet in workout?.exerciseSets" :key="exerciseSet.exercise?.id">
-      <p class="font-medium mb-2">{{ exerciseSet.exercise?.name }}</p>
-      <p v-for="(set, index) in exerciseSet.sets" :key="index" class="text-sm mb-1">
+    <li
+      v-for="exerciseSet in workout?.exerciseSets"
+      :key="exerciseSet.exercise?.id"
+    >
+      <p class="font-medium mb-2">
+        {{ exerciseSet.exercise?.name }}
+      </p>
+      <p
+        v-for="(set, index) in exerciseSet.sets"
+        :key="index"
+        class="text-sm mb-1"
+      >
         <span class="font-medium">Set {{ index + 1 }}:</span> {{ set.reps }} x {{ set.weight }} kg
       </p>
     </li>
   </ul>
-  <AppButton type="button" colour="gray" class="mt-6">Edit Workout</AppButton>
-  <AppButton type="button" colour="red" class="mt-6" @click="deleteWorkout">
+  <AppButton
+    type="button"
+    colour="gray"
+    class="mt-6"
+  >
+    Edit Workout
+  </AppButton>
+  <AppButton
+    type="button"
+    colour="red"
+    class="mt-6"
+    @click="deleteWorkout"
+  >
     Delete Workout
   </AppButton>
 </template>

@@ -56,7 +56,12 @@ useSortable(el, routine.value?.exercises || [], {
 </script>
 
 <template>
-  <AppButton type="link" :to="`/workouts/routine/${route.params.id}`" colour="primary" class="mb-8">
+  <AppButton
+    type="link"
+    :to="`/workouts/routine/${route.params.id}`"
+    colour="primary"
+    class="mb-8"
+  >
     Start Workout
   </AppButton>
   <ul
@@ -71,11 +76,26 @@ useSortable(el, routine.value?.exercises || [], {
       class="flex justify-between items-center px-4 py-5 text-sm text-gray-900 hover:cursor-move"
     >
       {{ exercise.name }}
-      <ChevronUpDownIcon class="size-5 flex-none text-gray-500" aria-hidden="true" />
+      <ChevronUpDownIcon
+        class="size-5 flex-none text-gray-500"
+        aria-hidden="true"
+      />
     </li>
   </ul>
-  <AppButton type="button" colour="gray" class="mt-4">Edit Routine</AppButton>
-  <AppButton type="button" colour="red" class="mt-4">Delete Routine</AppButton>
+  <AppButton
+    type="button"
+    colour="gray"
+    class="mt-4"
+  >
+    Edit Routine
+  </AppButton>
+  <AppButton
+    type="button"
+    colour="red"
+    class="mt-4"
+  >
+    Delete Routine
+  </AppButton>
 </template>
 
 <style scoped>

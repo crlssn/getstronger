@@ -37,18 +37,30 @@ const fetchExercises = async () => {
 </script>
 
 <template>
-  <AppButton type="link" to="/exercises/create" colour="primary">Create Exercise</AppButton>
+  <AppButton
+    type="link"
+    to="/exercises/create"
+    colour="primary"
+  >
+    Create Exercise
+  </AppButton>
   <ul
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl"
   >
-    <li v-for="exercise in exercises" :key="exercise.id">
+    <li
+      v-for="exercise in exercises"
+      :key="exercise.id"
+    >
       <RouterLink
         :to="`/exercises/${exercise.id}/edit`"
         class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-900"
       >
         {{ exercise.name }}
-        <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true" />
+        <ChevronRightIcon
+          class="size-5 flex-none text-gray-400"
+          aria-hidden="true"
+        />
       </RouterLink>
     </li>
   </ul>

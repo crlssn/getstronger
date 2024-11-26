@@ -30,7 +30,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-for="workout in workouts" :key="workout.id" class="mb-4">
+  <div
+    v-for="workout in workouts"
+    :key="workout.id"
+    class="mb-4"
+  >
     <h6>{{ formatToCompactDateTime(workout.finishedAt) }}</h6>
     <ul
       role="list"
@@ -42,7 +46,10 @@ onMounted(() => {
           class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-800"
         >
           {{ workout.name }}
-          <ChevronRightIcon class="size-5 flex-none text-gray-400" aria-hidden="true" />
+          <ChevronRightIcon
+            class="size-5 flex-none text-gray-400"
+            aria-hidden="true"
+          />
         </RouterLink>
       </li>
     </ul>

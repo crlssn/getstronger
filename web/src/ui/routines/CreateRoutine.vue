@@ -91,16 +91,22 @@ onMounted(() => {
     {{ resError }}
   </div>
 
-  <form class="space-y-6" @submit.prevent="createRoutine">
+  <form
+    class="space-y-6"
+    @submit.prevent="createRoutine"
+  >
     <div>
-      <label for="name" class="block text-xs font-semibold text-gray-900 uppercase">Name</label>
+      <label
+        for="name"
+        class="block text-xs font-semibold text-gray-900 uppercase"
+      >Name</label>
       <div class="mt-2">
         <input
           v-model="name"
           type="text"
           required
           class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-        />
+        >
       </div>
     </div>
 
@@ -110,17 +116,20 @@ onMounted(() => {
         role="list"
         class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
       >
-        <li v-for="exercise in exercises" :key="exercise.id">
+        <li
+          v-for="exercise in exercises"
+          :key="exercise.id"
+        >
           <div
             class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-900"
           >
             {{ exercise.name }}
             <Switch
-              @click="toggleExercise(exercise.id)"
               :class="[
                 exerciseIDs.includes(exercise.id) ? 'bg-indigo-600' : 'bg-gray-200',
                 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2',
               ]"
+              @click="toggleExercise(exercise.id)"
             >
               <span
                 :class="[
@@ -134,6 +143,12 @@ onMounted(() => {
       </ul>
     </div>
 
-    <AppButton type="submit" colour="primary" class="mt-6">Save Routine</AppButton>
+    <AppButton
+      type="submit"
+      colour="primary"
+      class="mt-6"
+    >
+      Save Routine
+    </AppButton>
   </form>
 </template>

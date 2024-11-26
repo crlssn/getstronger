@@ -11,12 +11,18 @@ const props = defineProps<Props>()
 </script>
 
 <template>
-  <Menu as="div" class="relative inline-block text-left">
+  <Menu
+    as="div"
+    class="relative inline-block text-left"
+  >
     <div>
       <MenuButton
         class="flex items-center rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
       >
-        <EllipsisVerticalIcon class="h-5 w-5" aria-hidden="true" />
+        <EllipsisVerticalIcon
+          class="h-5 w-5"
+          aria-hidden="true"
+        />
       </MenuButton>
     </div>
 
@@ -32,7 +38,11 @@ const props = defineProps<Props>()
         class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
       >
         <div class="py-1">
-          <MenuItem v-slot="{ active }" v-for="(item, index) in props.items" :key="index">
+          <MenuItem
+            v-for="(item, index) in props.items"
+            v-slot="{ active }"
+            :key="index"
+          >
             <RouterLink
               :to="item.href"
               :class="[

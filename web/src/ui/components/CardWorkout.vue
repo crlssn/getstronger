@@ -49,9 +49,12 @@ const postComment = async () => {
     <div class="px-4 py-5 sm:px-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <RouterLink :to="`/users/${workout.user?.id}`" class="font-semibold mr-2"
-            >{{ workout.user?.firstName }} {{ workout.user?.lastName }}</RouterLink
+          <RouterLink
+            :to="`/users/${workout.user?.id}`"
+            class="font-semibold mr-2"
           >
+            {{ workout.user?.firstName }} {{ workout.user?.lastName }}
+          </RouterLink>
           <span class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(workout.finishedAt) }}
           </span>
@@ -62,9 +65,9 @@ const postComment = async () => {
     <div class="px-4 py-5 sm:p-6">
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
+        :key="exerciseSet.exercise?.id"
         :name="exerciseSet.exercise?.name"
         :sets="exerciseSet.sets"
-        :key="exerciseSet.exercise?.id"
       />
     </div>
     <div class="px-4 py-4 sm:px-6">
@@ -81,9 +84,14 @@ const postComment = async () => {
           v-model="input"
           class="w-full border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm min-h-12 py-3 mb-2 resize-none overflow-hidden"
           placeholder="Write a comment..."
-        ></textarea>
+        />
         <div class="flex justify-end">
-          <AppButton type="submit" colour="primary">Comment</AppButton>
+          <AppButton
+            type="submit"
+            colour="primary"
+          >
+            Comment
+          </AppButton>
         </div>
       </form>
     </div>

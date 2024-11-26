@@ -41,8 +41,15 @@ const navigation = [
 
 <template>
   <nav>
-    <RouterLink v-for="item in navigation" :key="item.href" :to="item.href">
-      <component :is="isActive(item.href) ? item.iconActive : item.icon" class="h-6 w-6" />
+    <RouterLink
+      v-for="item in navigation"
+      :key="item.href"
+      :to="item.href"
+    >
+      <component
+        :is="isActive(item.href) ? item.iconActive : item.icon"
+        class="h-6 w-6"
+      />
     </RouterLink>
   </nav>
 </template>

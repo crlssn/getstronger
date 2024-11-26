@@ -46,8 +46,10 @@ const signup = async () => {
         class="mx-auto h-10 w-auto"
         src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
         alt="Your Company"
-      />
-      <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Sign up</h2>
+      >
+      <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
+        Sign up
+      </h2>
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -58,84 +60,116 @@ const signup = async () => {
       >
         {{ requestError }}
       </div>
-      <form class="space-y-6" method="POST" @submit.prevent="signup">
+      <form
+        class="space-y-6"
+        method="POST"
+        @submit.prevent="signup"
+      >
         <div>
-          <label for="email" class="block text-sm/6 font-medium text-gray-900">First name</label>
+          <label
+            for="email"
+            class="block text-sm/6 font-medium text-gray-900"
+          >First name</label>
           <div class="mt-2">
             <input
-              v-model="firstName"
               id="firstname"
+              v-model="firstName"
               name="firstname"
               type="text"
               required
               class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-            />
+            >
           </div>
         </div>
 
         <div>
-          <label for="email" class="block text-sm/6 font-medium text-gray-900">Last name</label>
-          <div class="mt-2">
-            <input v-model="lastName" name="lastname" type="text" required />
-          </div>
-        </div>
-
-        <div>
-          <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
+          <label
+            for="email"
+            class="block text-sm/6 font-medium text-gray-900"
+          >Last name</label>
           <div class="mt-2">
             <input
-              v-model="email"
+              v-model="lastName"
+              name="lastname"
+              type="text"
+              required
+            >
+          </div>
+        </div>
+
+        <div>
+          <label
+            for="email"
+            class="block text-sm/6 font-medium text-gray-900"
+          >Email address</label>
+          <div class="mt-2">
+            <input
               id="email"
+              v-model="email"
               name="email"
               type="email"
               autocomplete="email"
               required
-            />
+            >
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
+            <label
+              for="password"
+              class="block text-sm/6 font-medium text-gray-900"
+            >Password</label>
           </div>
           <div class="mt-2">
             <input
-              v-model="password"
               id="password"
+              v-model="password"
               name="password"
               type="password"
               autocomplete="current-password"
               required
-            />
+            >
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm/6 font-medium text-gray-900">
+            <label
+              for="password"
+              class="block text-sm/6 font-medium text-gray-900"
+            >
               Confirm Password
             </label>
           </div>
           <div class="mt-2">
             <input
-              v-model="passwordConfirmation"
               id="passwordConfirmation"
+              v-model="passwordConfirmation"
               name="passwordConfirmation"
               type="password"
               autocomplete="current-password"
               required
-            />
+            >
           </div>
         </div>
 
         <div>
-          <AppButton type="submit" colour="primary"> Sign up </AppButton>
+          <AppButton
+            type="submit"
+            colour="primary"
+          >
+            Sign up
+          </AppButton>
         </div>
       </form>
 
       <p class="mt-10 text-center text-sm/6 text-gray-400">
         Already a member?
-        <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
+        <RouterLink
+          to="/login"
+          class="font-semibold text-indigo-600 hover:text-indigo-500"
+        >
           Login
         </RouterLink>
       </p>
