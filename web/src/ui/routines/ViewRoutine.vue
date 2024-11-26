@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { onMounted, ref } from 'vue'
-import { GetRoutineRequestSchema, type Routine, UpdateExerciseOrderRequestSchema } from '@/proto/api/v1/routines_pb'
+import {
+  GetRoutineRequestSchema,
+  type Routine,
+  UpdateExerciseOrderRequestSchema,
+} from '@/proto/api/v1/routines_pb'
 import { RoutineClient } from '@/clients/clients'
 import { useRoute } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
@@ -16,7 +20,7 @@ const pageTitleStore = usePageTitleStore()
 const el = ref<HTMLElement | null>(null)
 
 const fetchRoutine = async (id: string) => {
-  const req = create(GetRoutineRequestSchema,{ id })
+  const req = create(GetRoutineRequestSchema, { id })
   const res = await RoutineClient.get(req)
   routine.value = res.routine
 }
@@ -42,7 +46,7 @@ useSortable(el, routine.value?.exercises || [], {
     exercises.splice(newIndex, 0, movedExercise)
 
     const updatedOrder = exercises.map((e) => e.id)
-    const req = create(UpdateExerciseOrderRequestSchema,{
+    const req = create(UpdateExerciseOrderRequestSchema, {
       routineId: routine.value?.id,
       exerciseIds: updatedOrder,
     })

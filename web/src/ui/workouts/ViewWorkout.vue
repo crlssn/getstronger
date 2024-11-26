@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, WorkoutClient } from '@/clients/clients'
-import { DeleteWorkoutRequestSchema, GetWorkoutRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import {
+  DeleteWorkoutRequestSchema,
+  GetWorkoutRequestSchema,
+  type Workout,
+} from '@/proto/api/v1/workouts_pb'
 import AppButton from '@/ui/components/AppButton.vue'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -22,7 +26,7 @@ onMounted(async () => {
 })
 
 const fetchWorkout = async () => {
-  const req = create(GetWorkoutRequestSchema,{
+  const req = create(GetWorkoutRequestSchema, {
     id: route.params.id as string,
   })
   const res = await WorkoutClient.get(req)
@@ -36,7 +40,7 @@ const fetchExercises = async () => {
   })
 
   console.log(exerciseIDs)
-  const req = create(ListExercisesRequestSchema,{
+  const req = create(ListExercisesRequestSchema, {
     exerciseIds: exerciseIDs,
     pageSize: 100, // TODO: Handle workouts with more than 100 exercises.
   })
@@ -49,7 +53,7 @@ const getExercise = (id: string) => {
 }
 
 const deleteWorkout = async () => {
-  const req = create(DeleteWorkoutRequestSchema,{
+  const req = create(DeleteWorkoutRequestSchema, {
     id: route.params.id as string,
   })
   await WorkoutClient.delete(req)

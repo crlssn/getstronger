@@ -5,7 +5,7 @@ import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
-import {create} from "@bufbuild/protobuf";
+import { create } from '@bufbuild/protobuf'
 
 const firstName = ref('')
 const lastName = ref('')

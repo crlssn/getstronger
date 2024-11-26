@@ -16,7 +16,7 @@ onMounted(() => {
 
 const fetchExercises = async () => {
   try {
-    const request = create(ListExercisesRequestSchema,{
+    const request = create(ListExercisesRequestSchema, {
       name: name.value,
       pageToken: pageToken.value,
       pageSize: 10,

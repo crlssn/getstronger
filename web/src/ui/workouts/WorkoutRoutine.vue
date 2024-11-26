@@ -93,7 +93,7 @@ const finishWorkout = async () => {
 
   try {
     await WorkoutClient.create(
-      create(CreateWorkoutRequestSchema,{
+      create(CreateWorkoutRequestSchema, {
         routineId: routineID,
         exerciseSets: eSetsList,
         startedAt: {

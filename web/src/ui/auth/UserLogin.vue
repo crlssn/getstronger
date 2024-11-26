@@ -7,8 +7,8 @@ import { useAuthStore } from '@/stores/auth'
 import router from '@/router/router'
 import { ScheduleTokenRefresh } from '@/jwt/jwt'
 import AppButton from '@/ui/components/AppButton.vue'
-import {create} from "@bufbuild/protobuf";
-import {LoginRequestSchema} from "@/proto/api/v1/auth_pb.ts";
+import { create } from '@bufbuild/protobuf'
+import { LoginRequestSchema } from '@/proto/api/v1/auth_pb.ts'
 
 const email = ref('')
 const password = ref('')

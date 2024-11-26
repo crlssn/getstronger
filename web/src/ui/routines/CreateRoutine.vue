@@ -26,7 +26,7 @@ const toggleExercise = (id: string) => {
 
 const fetchExercises = async () => {
   try {
-    const req = create(ListExercisesRequestSchema,{
+    const req = create(ListExercisesRequestSchema, {
       pageToken: pageToken.value,
       pageSize: 100,
     })
@@ -49,7 +49,7 @@ const fetchExercises = async () => {
 
 const createRoutine = async () => {
   try {
-    const req = create(CreateRoutineRequestSchema,{
+    const req = create(CreateRoutineRequestSchema, {
       name: name.value,
       exerciseIds: exerciseIDs.value,
     })

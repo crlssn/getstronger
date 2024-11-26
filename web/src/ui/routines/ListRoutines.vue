@@ -10,7 +10,7 @@ const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())
 
 const fetchRoutines = async () => {
-  const req = create(ListRoutinesRequestSchema,{
+  const req = create(ListRoutinesRequestSchema, {
     pageToken: pageToken.value,
     pageLimit: 100,
   })

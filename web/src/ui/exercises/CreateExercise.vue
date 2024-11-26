@@ -13,7 +13,7 @@ const resOK = ref(false)
 const rest = ref(0)
 
 async function createExercise() {
-  const request = create(CreateExerciseRequestSchema,{
+  const request = create(CreateExerciseRequestSchema, {
     name: name.value,
     label: label.value,
   })

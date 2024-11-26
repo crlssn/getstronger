@@ -10,7 +10,7 @@ const pageToken = ref(new Uint8Array(0))
 const workouts = ref(Array<Workout>())
 
 const fetchWorkouts = async () => {
-  const req = create(ListWorkoutsRequestSchema,{
+  const req = create(ListWorkoutsRequestSchema, {
     pageSize: 100,
     pageToken: pageToken.value,
   })
