@@ -9,7 +9,7 @@ on:
       - labeled
 
 permissions:
-  contents: write
+  pull-requests: write
 
 concurrency:
   group: deploy-main
