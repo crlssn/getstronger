@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { PostCommentRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb.ts'
+import {
+  PostCommentRequestSchema,
+  type Workout,
+  type WorkoutComment,
+} from '@/proto/api/v1/workouts_pb.ts'
 import { type DropdownItem } from '@/types/dropdown.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
-import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import { useTextareaAutosize } from '@vueuse/core'
 import { create } from '@bufbuild/protobuf'
 import { WorkoutClient } from '@/clients/clients.ts'
+import { onMounted, ref } from 'vue'
+import { formatToRelativeDateTime } from '../../utils/datetime.ts'
+
 const { textarea, input } = useTextareaAutosize()
 
 const props = defineProps<{
@@ -20,13 +26,21 @@ const dropdownItems: Array<DropdownItem> = [
   { title: 'Delete', href: `/workout/${props.workout.id}/delete` },
 ]
 
+const comments = ref<Array<WorkoutComment>>([])
+
+onMounted(() => {
+  comments.value = props.workout.comments
+})
+
 const postComment = async () => {
   const req = create(PostCommentRequestSchema, {
     workoutId: props.workout.id,
     comment: input.value,
   })
   const res = await WorkoutClient.postComment(req)
-  console.log(res)
+  if (!res.comment) return
+  comments.value.push(res.comment)
+  input.value = ''
 }
 </script>
 
@@ -52,14 +66,13 @@ const postComment = async () => {
       />
     </div>
     <div class="px-4 py-4 sm:px-6">
-      <div class="flex mb-4">
-        <CardWorkoutComment
-          name="Barbro Lundquist"
-          comment="Repudiandae sint consequuntur vel. Amet ut nobis explicabo numquam expedita quia omnis
-            voluptatem."
-          :timestamp="new Date()"
-        />
-      </div>
+      <CardWorkoutComment
+        v-for="comment in comments"
+        :key="comment.id"
+        :name="`${comment.user?.firstName} ${comment.user?.lastName}`"
+        :timestamp="comment.createdAt"
+        :comment="comment.comment"
+      />
       <form @submit.prevent="postComment">
         <textarea
           ref="textarea"
