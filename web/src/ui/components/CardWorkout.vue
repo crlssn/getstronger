@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { Workout } from '@/proto/api/v1/workouts_pb.ts'
+
 interface Props {
-  id: string
+  workout: Workout
 }
 
 const props = defineProps<Props>()
@@ -13,13 +15,13 @@ import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
 
 const dropdownItems: Array<DropdownItem> = [
-  { title: 'Edit', href: `/workout/${props.id}/edit` },
-  { title: 'Delete', href: `/workout/${props.id}/delete` },
+  { title: 'Edit', href: `/workout/${props.workout.id}/edit` },
+  { title: 'Delete', href: `/workout/${props.workout.id}/delete` },
 ]
 </script>
 
 <template>
-  <div class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow mb-4">
+  <div class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4">
     <div class="px-4 py-5 sm:px-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center">

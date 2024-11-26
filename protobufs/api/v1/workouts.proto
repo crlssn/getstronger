@@ -48,8 +48,9 @@ message CreateWorkoutResponse {
 }
 
 message ListWorkoutsRequest {
-  int32 page_size = 1 [(buf.validate.field).int32 = { gte: 1, lte: 100 }];
-  bytes page_token = 2;
+  repeated string user_ids = 1 [(buf.validate.field).repeated.min_items = 1];
+  int32 page_size = 2 [(buf.validate.field).int32 = { gte: 1, lte: 100 }];
+  bytes page_token = 3;
 }
 message ListWorkoutsResponse {
   repeated Workout workouts = 1;

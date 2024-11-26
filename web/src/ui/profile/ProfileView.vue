@@ -1,50 +1,52 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ExerciseClient, WorkoutClient } from '@/clients/clients'
-import { GetWorkoutRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import { GetWorkoutRequestSchema, ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { type Exercise, ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import AppButton from '@/ui/components/AppButton.vue'
+import CardWorkout from '@/ui/components/CardWorkout.vue'
 
-const workout = ref<Workout | undefined>(undefined)
+const workouts = ref<Workout[]>()
 const exercises = ref<Exercise[]>()
 const route = useRoute()
 const pageTitleStore = usePageTitleStore()
 
 onMounted(async () => {
-  await fetchWorkout()
-  await fetchExercises()
-  pageTitleStore.setPageTitle(workout?.value?.name as string)
+  await fetchWorkouts()
+  // await fetchExercises()
+  // pageTitleStore.setPageTitle(workouts?.value?.name as string)
 })
 
-const fetchWorkout = async () => {
-  const req = create(GetWorkoutRequestSchema, {
-    id: route.params.id as string,
+const fetchWorkouts = async () => {
+  const req = create(ListWorkoutsRequestSchema, {
+    pageSize: 100,
+    pageToken: new Uint8Array(0),
   })
-  const res = await WorkoutClient.get(req)
-  workout.value = res.workout
+  const res = await WorkoutClient.list(req)
+  workouts.value = res.workouts
 }
 
-const fetchExercises = async () => {
-  const exerciseIDs: string[] = []
-  workout.value?.exerciseSets.forEach((exerciseSet) => {
-    exerciseIDs.push(exerciseSet.exerciseId)
-  })
-
-  const req = create(ListExercisesRequestSchema, {
-    exerciseIds: exerciseIDs,
-    pageSize: 100, // TODO: Handle workouts with more than 100 exercises.
-  })
-  const res = await ExerciseClient.list(req)
-  exercises.value = res.exercises
-}
-
-const findExercise = (id: string) => {
-  return exercises.value?.find((exercise) => exercise.id === id)
-}
+// const fetchExercises = async () => {
+//   const exerciseIDs: string[] = []
+//   workouts.value?.exerciseSets.forEach((exerciseSet) => {
+//     exerciseIDs.push(exerciseSet.exerciseId)
+//   })
+//
+//   const req = create(ListExercisesRequestSchema, {
+//     exerciseIds: exerciseIDs,
+//     pageSize: 100, // TODO: Handle workouts with more than 100 exercises.
+//   })
+//   const res = await ExerciseClient.list(req)
+//   exercises.value = res.exercises
+// }
+//
+// const findExercise = (id: string) => {
+//   return exercises.value?.find((exercise) => exercise.id === id)
+// }
 
 const tabs = [
   { name: 'Workouts', href: '/profile' },
@@ -90,7 +92,7 @@ const person = {
       </div>
     </div>
   </div>
-  <div>
+  <div class="mb-4">
     <div class="sm:hidden">
       <select
         id="tabs"
@@ -127,6 +129,9 @@ const person = {
         </nav>
       </div>
     </div>
+  </div>
+  <div v-if="route.fullPath === tabs[0].href">
+    <CardWorkout v-for="workout in workouts" :key="workout.id" :workout="workout"></CardWorkout>
   </div>
   <!--  <div v-for="workout in workouts" :key="workout.id" class="mb-4">-->
   <!--    <h6>{{ formatToCompactDateTime(workout.finishedAt?.toDate()) }}</h6>-->
