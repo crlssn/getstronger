@@ -50,7 +50,7 @@ message ListFolloweesResponse {
 }
 
 message SearchRequest {
-  string query = 1 [(buf.validate.field).string.min_len = 1];
+  string query = 1 [(buf.validate.field).string.min_len = 3];
   PaginationRequest pagination = 2 [(buf.validate.field).required = true];
 }
 message SearchResponse {

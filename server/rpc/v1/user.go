@@ -47,6 +47,7 @@ func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.Search
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	log.Info("searched users")
 	return &connect.Response[v1.SearchResponse]{
 		Msg: &v1.SearchResponse{
 			Users: parseUserSliceToPB(pagination.Items),
