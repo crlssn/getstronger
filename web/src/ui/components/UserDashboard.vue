@@ -256,7 +256,10 @@ const searchUsers = async () => {
             :key="user.id"
             @click="closeSearchBar"
           >
-            <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">
+            <RouterLink
+              :to="`/users/${user.id}`"
+              class="block px-5 py-5 text-sm font-medium"
+            >
               {{ user.firstName }} {{ user.lastName }}
             </RouterLink>
           </li>
