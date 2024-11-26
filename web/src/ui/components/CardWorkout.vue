@@ -50,9 +50,9 @@ const postComment = async () => {
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <span class="font-semibold mr-2">Christian Carlsson</span>
-          <span class="text-gray-500 text-sm">{{
-            formatToRelativeDateTime(workout.finishedAt)
-          }}</span>
+          <span class="text-gray-500 text-sm">
+            {{ formatToRelativeDateTime(workout.finishedAt) }}
+          </span>
         </div>
         <DropdownButton :items="dropdownItems" />
       </div>
@@ -69,7 +69,7 @@ const postComment = async () => {
       <CardWorkoutComment
         v-for="comment in comments"
         :key="comment.id"
-        :name="`${comment.user?.firstName} ${comment.user?.lastName}`"
+        :user="comment.user"
         :timestamp="comment.createdAt"
         :comment="comment.comment"
       />

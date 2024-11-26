@@ -16,11 +16,11 @@ const props = defineProps<{
       {{ props.label }}
     </span>
   </p>
-  <p class="mb-2">
-    <span class="mr-2" v-for="(set, index) in props.sets" :key="index">
-      {{ set.weight }} kg x {{ set.reps }}
-    </span>
+  <div class="mb-2">
+  <p v-for="(set, index) in props.sets" :key="index">
+    {{ set.weight }} kg x {{ set.reps }}
   </p>
+  </div>
 </template>
 
 <style scoped></style>
