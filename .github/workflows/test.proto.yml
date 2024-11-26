@@ -6,8 +6,8 @@ on:
       - main
   pull_request:
     paths:
-      - 'buf.gen.yaml'
       - 'buf.yaml'
+      - 'buf.gen.yaml'
       - 'package.json'
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
         shell: bash
 
       - name: Generate protos
-        run: buf generate
+        run: npx buf generate
         shell: bash
 
       - name: Check for uncommitted changes
