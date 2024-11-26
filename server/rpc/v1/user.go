@@ -20,6 +20,22 @@ type userHandler struct {
 	repo *repo.Repo
 }
 
+func (h *userHandler) Get(ctx context.Context, req *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(req.Msg.GetId()))
+	if err != nil {
+		log.Error("failed to get user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return &connect.Response[v1.GetUserResponse]{
+		Msg: &v1.GetUserResponse{
+			User: parseUserToPB(user),
+		},
+	}, nil
+}
+
 func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 

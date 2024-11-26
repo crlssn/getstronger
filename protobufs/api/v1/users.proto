@@ -8,6 +8,9 @@ import "api/v1/shared.proto";
 import "buf/validate/validate.proto";
 
 service UserService {
+  rpc Get(GetUserRequest) returns (GetUserResponse) {
+    option (auth) = true;
+  }
   rpc Follow(FollowRequest) returns (FollowResponse) {
     option (auth) = true;
   }
@@ -23,6 +26,13 @@ service UserService {
   rpc Search(SearchRequest) returns (SearchResponse) {
     option (auth) = true;
   }
+}
+
+message GetUserRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetUserResponse {
+  User user = 1;
 }
 
 message FollowRequest {

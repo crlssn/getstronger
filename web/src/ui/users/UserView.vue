@@ -3,32 +3,47 @@ import router from '@/router/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { WorkoutClient } from '@/clients/clients'
-import AppButton from '@/ui/components/AppButton.vue'
+import { UserClient, WorkoutClient } from '@/clients/clients'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import { GetUserRequestSchema } from '@/proto/api/v1/users_pb.ts'
+import { type User } from '@/proto/api/v1/shared_pb.ts'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
+const pageTitleStore = usePageTitleStore()
+const user = ref({} as undefined | User)
 
 onMounted(async () => {
   await fetchWorkouts()
+  await fetchUser()
 })
+
+const fetchUser = async () => {
+  const req = create(GetUserRequestSchema, {
+    id: route.params.id as string,
+  })
+  const res = await UserClient.get(req)
+  user.value = res.user
+  pageTitleStore.setPageTitle(`${user.value?.firstName} ${user.value?.lastName}`)
+}
 
 const fetchWorkouts = async () => {
   const req = create(ListWorkoutsRequestSchema, {
     pageSize: 100,
     pageToken: new Uint8Array(0),
+    userIds: [route.params.id as string],
   })
   const res = await WorkoutClient.list(req)
   workouts.value = res.workouts
 }
 
 const tabs = [
-  { href: '/profile', name: 'Workouts' },
-  { href: '/profile?tab=personal-bests', name: 'Personal Bests' },
-  { href: '/profile?tab=follows', name: 'Follows' },
-  { href: '/profile?tab=followers', name: 'Followers' },
+  { href: `/users/${route.params.id}`, name: 'Workouts' },
+  { href: `/users/${route.params.id}?tab=personal-bests`, name: 'Personal Bests' },
+  { href: `/users/${route.params.id}?tab=follows`, name: 'Follows' },
+  { href: `/users/${route.params.id}?tab=followers`, name: 'Followers' },
 ]
 
 const updateTab = (event: Event) => {
@@ -57,10 +72,7 @@ const updateTab = (event: Event) => {
       </select>
     </div>
     <div class="hidden sm:block">
-      <nav
-        class="flex"
-        aria-label="Tabs"
-      >
+      <nav class="flex" aria-label="Tabs">
         <RouterLink
           v-for="tab in tabs"
           :key="tab.name"
@@ -78,11 +90,7 @@ const updateTab = (event: Event) => {
     </div>
   </div>
   <div v-if="route.fullPath === tabs[0].href">
-    <CardWorkout
-      v-for="workout in workouts"
-      :key="workout.id"
-      :workout="workout"
-    />
+    <CardWorkout v-for="workout in workouts" :key="workout.id" :workout="workout" />
   </div>
 </template>
 
