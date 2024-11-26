@@ -29,12 +29,12 @@ const computedClasses = computed(() => {
 <style scoped>
 a,
 button {
-  @apply uppercase w-full border-b-8  rounded-md shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
+  @apply uppercase w-full border-b-8 rounded-md shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
   @apply px-3.5 py-2.5 text-sm font-semibold;
 }
 
 a.link {
-  @apply block text-center mb-6 py-3;
+  @apply block text-center py-3 mb-6;
 }
 
 .primary {
