@@ -51,13 +51,13 @@ const postComment = async () => {
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <RouterLink
-            :to="`/users/${workout.user?.id}`"
+            :to="`/users/${props.workout.user?.id}`"
             class="font-semibold mr-2"
           >
-            {{ workout.user?.firstName }} {{ workout.user?.lastName }}
+            {{ props.workout.user?.firstName }} {{ props.workout.user?.lastName }}
           </RouterLink>
           <span class="text-gray-500 text-sm">
-            {{ formatToRelativeDateTime(workout.finishedAt) }}
+            {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </span>
         </div>
         <DropdownButton :items="dropdownItems" />
