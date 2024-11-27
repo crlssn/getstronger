@@ -23,7 +23,6 @@ func (rw *ResponseWriter) WriteHeader(code int) {
 type Tracer struct {
 	log *zap.Logger
 	bus *bus.Bus
-	//repo *repo.Repo
 }
 
 func NewTracer(log *zap.Logger, bus *bus.Bus) *Tracer {
@@ -35,8 +34,6 @@ type Trace struct {
 	onEnd func(duration time.Duration, statusCode int)
 }
 
-//const timeout = 5 * time.Second
-
 func (m *Tracer) Trace(uri string) *Trace {
 	return &Trace{
 		start: time.Now().UTC(),
@@ -47,18 +44,6 @@ func (m *Tracer) Trace(uri string) *Trace {
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,
 			})
-
-			//go func() {
-			//	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			//	defer cancel()
-			//	if err := m.repo.StoreTrace(ctx, repo.StoreTraceParams{
-			//		Request:    uri,
-			//		DurationMS: int(duration.Milliseconds()),
-			//		StatusCode: statusCode,
-			//	}); err != nil {
-			//		m.log.Error("trace store failed", zap.Error(err))
-			//	}
-			//}()
 		},
 	}
 }
