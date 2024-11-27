@@ -15,18 +15,14 @@ const channelCapacity = 100
 type Bus struct {
 	fx.Hook
 
-	mapEventHandlers map[events.Event]handlers.Handler
-
 	mu          sync.RWMutex
 	log         *zap.Logger
 	channels    map[string]chan any
 	subscribers map[string]handlers.Handler
 }
 
-func New(log *zap.Logger, mapEventHandlers map[events.Event]handlers.Handler) *Bus {
+func New(log *zap.Logger) *Bus {
 	return &Bus{
-		mapEventHandlers: mapEventHandlers,
-
 		log:         log,
 		channels:    make(map[string]chan any),
 		subscribers: make(map[string]handlers.Handler),
