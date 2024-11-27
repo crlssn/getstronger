@@ -6,12 +6,12 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/bus/events"
+	"github.com/crlssn/getstronger/server/bus/payloads"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 )
 
 type Handler interface {
-	HandleEvent(event any)
+	HandleEvent(payload any)
 }
 
 var _ Handler = (*RequestTraced)(nil)
@@ -27,12 +27,12 @@ func NewRequestTraced(log *zap.Logger, repo *repo.Repo) *RequestTraced {
 
 const timeout = 5 * time.Second
 
-func (h *RequestTraced) HandleEvent(event any) {
+func (h *RequestTraced) HandleEvent(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	switch t := event.(type) {
-	case *events.RequestTraced:
+	switch t := payload.(type) {
+	case *payloads.RequestTraced:
 		if err := h.repo.StoreTrace(ctx, repo.StoreTraceParams{
 			Request:    t.Request,
 			DurationMS: t.DurationMS,
@@ -41,6 +41,6 @@ func (h *RequestTraced) HandleEvent(event any) {
 			h.log.Error("trace store failed", zap.Error(err))
 		}
 	default:
-		h.log.Error("unexpected event type", zap.Any("event", event))
+		h.log.Error("unexpected event type", zap.Any("event", payload))
 	}
 }

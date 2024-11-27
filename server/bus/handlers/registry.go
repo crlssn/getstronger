@@ -7,7 +7,7 @@ import (
 )
 
 type Registry struct {
-	handlers map[events.Event]Handler
+	handlers map[string]Handler
 }
 
 type RegistryParams struct {
@@ -18,12 +18,12 @@ type RegistryParams struct {
 
 func NewRegistry(p RegistryParams) *Registry {
 	return &Registry{
-		handlers: map[events.Event]Handler{
-			new(events.RequestTraced): p.RequestTraced,
+		handlers: map[string]Handler{
+			events.RequestTraced: p.RequestTraced,
 		},
 	}
 }
 
-func (r *Registry) Handlers() map[events.Event]Handler {
+func (r *Registry) Handlers() map[string]Handler {
 	return r.handlers
 }

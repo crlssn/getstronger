@@ -6,7 +6,6 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/bus/events"
 	"github.com/crlssn/getstronger/server/bus/handlers"
 )
 
@@ -27,38 +26,38 @@ func New(log *zap.Logger) *Bus {
 	}
 }
 
-func (b *Bus) Publish(event events.Event) {
+func (b *Bus) Publish(event string, payload any) {
 	b.mu.RLock()
-	ch, found := b.channels[event.Type()]
+	ch, found := b.channels[event]
 	b.mu.RUnlock()
 
 	if !found {
-		b.log.Error("no subscribers found for event", zap.String("event", event.Type()))
+		b.log.Error("no subscribers found for event", zap.String("event", event))
 		return
 	}
 
-	ch <- event.Data()
+	ch <- payload
 }
 
 const channelCapacity = 100
 
-func (b *Bus) Subscribe(event events.Event, handler handlers.Handler) {
+func (b *Bus) Subscribe(event string, handler handlers.Handler) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if _, found := b.channels[event.Type()]; !found {
-		b.channels[event.Type()] = make(chan any, channelCapacity)
-		b.log.Info("subscribed to event", zap.String("event", event.Type()))
+	if _, found := b.channels[event]; !found {
+		b.channels[event] = make(chan any, channelCapacity)
+		b.log.Info("subscribed to event", zap.String("event", event))
 		go b.startWorker(event)
 	}
 
-	b.subscribers[event.Type()] = handler
+	b.subscribers[event] = handler
 }
 
-func (b *Bus) startWorker(event events.Event) {
-	for data := range b.channels[event.Type()] {
+func (b *Bus) startWorker(event string) {
+	for data := range b.channels[event] {
 		b.mu.RLock()
-		h := b.subscribers[event.Type()]
+		h := b.subscribers[event]
 		b.mu.RUnlock()
 
 		go func(data any) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/bus"
 	"github.com/crlssn/getstronger/server/bus/events"
+	"github.com/crlssn/getstronger/server/bus/payloads"
 )
 
 type ResponseWriter struct {
@@ -39,7 +40,7 @@ func (m *Tracer) Trace(uri string) *Trace {
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
-			m.bus.Publish(&events.RequestTraced{
+			m.bus.Publish(events.RequestTraced, &payloads.RequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,
