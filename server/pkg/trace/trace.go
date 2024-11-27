@@ -25,14 +25,14 @@ type Tracer struct {
 	repo *repo.Repo
 }
 
+func NewTracer(log *zap.Logger, repo *repo.Repo) *Tracer {
+	return &Tracer{log, repo}
+}
+
 type Trace struct {
 	uri   string
 	start time.Time
 	onEnd func(duration time.Duration, statusCode int)
-}
-
-func NewTracer(log *zap.Logger, repo *repo.Repo) *Tracer {
-	return &Tracer{log, repo}
 }
 
 func (m *Tracer) Trace(uri string) *Trace {
