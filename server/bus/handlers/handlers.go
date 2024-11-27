@@ -14,20 +14,20 @@ type Handler interface {
 	HandleEvent(event any)
 }
 
-var _ Handler = (*HandlerRequestTraced)(nil)
+var _ Handler = (*RequestTraced)(nil)
 
-type HandlerRequestTraced struct {
+type RequestTraced struct {
 	log  *zap.Logger
 	repo *repo.Repo
 }
 
-func NewHandlerRequestTraced(log *zap.Logger, repo *repo.Repo) *HandlerRequestTraced {
-	return &HandlerRequestTraced{log, repo}
+func NewRequestTraced(log *zap.Logger, repo *repo.Repo) *RequestTraced {
+	return &RequestTraced{log, repo}
 }
 
 const timeout = 5 * time.Second
 
-func (h *HandlerRequestTraced) HandleEvent(event any) {
+func (h *RequestTraced) HandleEvent(event any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

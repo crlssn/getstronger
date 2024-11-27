@@ -13,14 +13,10 @@ func Module() fx.Option {
 		fx.Provide(
 			New,
 			handlers.NewRegistry,
-			handlers.NewHandlerRequestTraced,
+			handlers.NewRequestTraced,
 		),
 		fx.Invoke(
-			func(
-				lc fx.Lifecycle,
-				bus *Bus,
-				registry *handlers.Registry,
-			) {
+			func(lc fx.Lifecycle, bus *Bus, registry *handlers.Registry) {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
 						for event, handler := range registry.Handlers() {

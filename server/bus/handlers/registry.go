@@ -13,7 +13,7 @@ type Registry struct {
 type RegistryParams struct {
 	fx.In
 
-	HandlerRequestTraced *HandlerRequestTraced
+	HandlerRequestTraced *RequestTraced
 }
 
 func NewRegistry(p RegistryParams) *Registry {
