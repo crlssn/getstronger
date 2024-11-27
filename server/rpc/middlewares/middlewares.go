@@ -13,10 +13,11 @@ import (
 
 type Middleware struct {
 	config *config.Config
+	tracer *trace.Manager
 }
 
-func New(c *config.Config) *Middleware {
-	return &Middleware{c}
+func New(c *config.Config, t *trace.Manager) *Middleware {
+	return &Middleware{c, t}
 }
 
 func (m *Middleware) Register(h http.Handler) http.Handler {
@@ -70,8 +71,11 @@ func (m *Middleware) cookies(h http.Handler) http.Handler {
 
 func (m *Middleware) trace(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t := trace.Start(r.RequestURI)
-		defer t.End()
-		h.ServeHTTP(w, r)
+		// Use a custom response writer to capture the status code.
+		rw := &trace.ResponseWriter{ResponseWriter: w}
+		t := m.tracer.Trace(r.RequestURI)
+		defer t.End(rw)
+
+		h.ServeHTTP(rw, r)
 	})
 }
