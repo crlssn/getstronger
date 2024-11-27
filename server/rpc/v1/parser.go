@@ -232,6 +232,7 @@ func parseNotificationSliceToPB(
 	users orm.UserSlice,
 	workouts orm.WorkoutSlice,
 ) []*apiv1.Notification {
+	//spew.Dump(notifications, payload, users, workouts)
 	mapWorkouts := make(map[string]*orm.Workout)
 	for _, w := range workouts {
 		mapWorkouts[w.ID] = w

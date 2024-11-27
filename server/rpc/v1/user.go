@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -195,7 +196,7 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 	var workoutIDs []string
 	payloads := make(map[string]repo.NotificationPayload)
 
-	for _, n := range notifications {
+	for _, n := range paginated.Items {
 		var payload repo.NotificationPayload
 		if err = json.Unmarshal(n.Payload, &payload); err != nil {
 			log.Error("failed to unmarshal notification payload", zap.Error(err))
@@ -203,11 +204,10 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 		}
 
 		payloads[n.ID] = payload
-
-		switch {
-		case payload.WorkoutID != "":
+		if payload.WorkoutID != "" {
 			workoutIDs = append(workoutIDs, payload.WorkoutID)
-		case payload.ActorID != "":
+		}
+		if payload.ActorID != "" {
 			userIDs = append(userIDs, payload.ActorID)
 		}
 	}
@@ -223,6 +223,9 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 		log.Error("failed to list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
+
+	spew.Dump("user_ids", userIDs)
+	spew.Dump("workout_ids", workoutIDs)
 
 	return &connect.Response[v1.ListNotificationsResponse]{
 		Msg: &v1.ListNotificationsResponse{

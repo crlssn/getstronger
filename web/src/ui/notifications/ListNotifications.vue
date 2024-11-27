@@ -20,7 +20,7 @@ const fetchUnreadNotifications = async () => {
 
   const res = await UserClient.listNotifications(req)
   notifications.value = [...notifications.value, ...res.notifications]
-  console.log(notifications.value, res.notifications)
+  console.log(res)
   pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
   if (pageToken.value.length > 0) {
     // TODO: Implement pagination.
