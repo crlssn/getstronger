@@ -3,15 +3,12 @@ package bus
 import (
 	"sync"
 
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/bus/handlers"
 )
 
 type Bus struct {
-	fx.Hook
-
 	mu          sync.RWMutex
 	log         *zap.Logger
 	channels    map[string]chan any
