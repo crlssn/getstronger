@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/bus"
-	"github.com/crlssn/getstronger/server/pkg/repo"
+	"github.com/crlssn/getstronger/server/bus/events"
 )
 
 type ResponseWriter struct {
@@ -21,13 +21,13 @@ func (rw *ResponseWriter) WriteHeader(code int) {
 }
 
 type Tracer struct {
-	log  *zap.Logger
-	bus  *bus.Bus
-	repo *repo.Repo
+	log *zap.Logger
+	bus *bus.Bus
+	//repo *repo.Repo
 }
 
-func NewTracer(log *zap.Logger, bus *bus.Bus, repo *repo.Repo) *Tracer {
-	return &Tracer{log, bus, repo}
+func NewTracer(log *zap.Logger, bus *bus.Bus) *Tracer {
+	return &Tracer{log, bus}
 }
 
 type Trace struct {
@@ -42,7 +42,7 @@ func (m *Tracer) Trace(uri string) *Trace {
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
-			m.bus.Publish(bus.EventRequestTraced, bus.EventRequestTracedData{
+			m.bus.Publish(&events.EventRequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,
