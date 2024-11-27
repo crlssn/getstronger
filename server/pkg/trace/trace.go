@@ -30,7 +30,6 @@ func NewTracer(log *zap.Logger, repo *repo.Repo) *Tracer {
 }
 
 type Trace struct {
-	uri   string
 	start time.Time
 	onEnd func(duration time.Duration, statusCode int)
 }
@@ -39,7 +38,6 @@ const timeout = 5 * time.Second
 
 func (m *Tracer) Trace(uri string) *Trace {
 	return &Trace{
-		uri:   uri,
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
