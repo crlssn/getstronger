@@ -15,7 +15,7 @@ export const useAuthStore = defineStore(
       console.log('setting access token', token)
       if (userID.value === '') {
         const claims = jwtDecode(token) as AccessToken
-        userID.value = claims.user_id
+        userID.value = claims.userId
       }
       accessToken.value = token
     }
