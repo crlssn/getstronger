@@ -35,6 +35,8 @@ type Trace struct {
 	onEnd func(duration time.Duration, statusCode int)
 }
 
+const timeout = 5 * time.Second
+
 func (m *Tracer) Trace(uri string) *Trace {
 	return &Trace{
 		uri:   uri,
@@ -42,7 +44,7 @@ func (m *Tracer) Trace(uri string) *Trace {
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
 			go func() {
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), timeout)
 				defer cancel()
 				if err := m.repo.StoreTrace(ctx, repo.CreateTraceParams{
 					Request:    uri,
