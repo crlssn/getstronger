@@ -7,6 +7,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
+	"github.com/crlssn/getstronger/server/pkg/trace"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
 
@@ -20,6 +21,7 @@ func New(c *config.Config) *Middleware {
 
 func (m *Middleware) Register(h http.Handler) http.Handler {
 	middlewares := []func(http.Handler) http.Handler{
+		m.trace,
 		m.coors,
 		m.cookies,
 	}
@@ -57,11 +59,19 @@ func (m *Middleware) coors(h http.Handler) http.Handler {
 
 func (m *Middleware) cookies(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("refreshToken")
+		cookie, err := r.Cookie("refreshToken") // TODO: Move cookie logic to own package.
 		if err == nil {
 			r = r.WithContext(xcontext.WithRefreshToken(r.Context(), cookie.Value))
 		}
 
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (m *Middleware) trace(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t := trace.Start(r.RequestURI)
+		defer t.End()
 		h.ServeHTTP(w, r)
 	})
 }
