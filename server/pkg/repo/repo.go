@@ -952,3 +952,142 @@ func (r *Repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 
 	return nil
 }
+
+type CreateNotificationParams struct {
+	Type    orm.NotificationType
+	UserID  string
+	Payload NotificationPayload
+}
+
+type NotificationPayload struct {
+	ActorID   string `json:"actorId,omitempty"`
+	WorkoutID string `json:"workoutId,omitempty"`
+}
+
+func (r *Repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {
+	payload, err := json.Marshal(p.Payload)
+	if err != nil {
+		return fmt.Errorf("payload marshal: %w", err)
+	}
+
+	n := &orm.Notification{
+		UserID:  p.UserID,
+		Type:    p.Type,
+		Payload: payload,
+	}
+	if err = n.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+		return fmt.Errorf("insert: %w", err)
+	}
+
+	return nil
+}
+
+type GetWorkoutCommentOpt func() qm.QueryMod
+
+func GetWorkoutCommentWithID(id string) GetWorkoutCommentOpt {
+	return func() qm.QueryMod {
+		return orm.WorkoutCommentWhere.ID.EQ(id)
+	}
+}
+
+func GetWorkoutCommentWithWorkout() GetWorkoutCommentOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutCommentRels.Workout)
+	}
+}
+
+func (r *Repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	comment, err := orm.WorkoutComments(query...).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("workout comment fetch: %w", err)
+	}
+
+	return comment, nil
+}
+
+type ListNotificationsOpt func() qm.QueryMod
+
+func ListNotificationsWithLimit(limit int) ListNotificationsOpt {
+	return func() qm.QueryMod {
+		return qm.Limit(limit)
+	}
+}
+
+func ListNotificationsWithUserID(userID string) ListNotificationsOpt {
+	return func() qm.QueryMod {
+		return orm.NotificationWhere.UserID.EQ(userID)
+	}
+}
+
+func ListNotificationsWithOnlyUnread(onlyUnread bool) ListNotificationsOpt {
+	return func() qm.QueryMod {
+		if !onlyUnread {
+			return nil
+		}
+
+		return orm.NotificationWhere.ReadAt.IsNull()
+	}
+}
+
+func (r *Repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		if opt() == nil {
+			continue
+		}
+		query = append(query, opt())
+	}
+
+	notifications, err := orm.Notifications(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("notifications fetch: %w", err)
+	}
+
+	return notifications, nil
+}
+
+type CountNotificationsOpt func() qm.QueryMod
+
+func CountNotificationsWithUserID(userID string) CountNotificationsOpt {
+	return func() qm.QueryMod {
+		return orm.NotificationWhere.UserID.EQ(userID)
+	}
+}
+
+func CountNotificationsWithOnlyUnread(onlyUnread bool) CountNotificationsOpt {
+	return func() qm.QueryMod {
+		if !onlyUnread {
+			return nil
+		}
+
+		return orm.NotificationWhere.ReadAt.IsNull()
+	}
+}
+
+func (r *Repo) CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		if opt() == nil {
+			continue
+		}
+		query = append(query, opt())
+	}
+
+	count, err := orm.Notifications(query...).Count(ctx, r.executor())
+	if err != nil {
+		return 0, fmt.Errorf("notifications count: %w", err)
+	}
+
+	return count, nil
+}
+
+func ListNotificationsOrderByCreatedAtDESC() ListNotificationsOpt {
+	return func() qm.QueryMod {
+		return qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt))
+	}
+}

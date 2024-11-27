@@ -4,6 +4,9 @@ package api.v1;
 
 import "api/v1/options.proto";
 import "api/v1/shared.proto";
+import "api/v1/workouts.proto";
+
+import "google/protobuf/timestamp.proto";
 
 import "buf/validate/validate.proto";
 
@@ -24,6 +27,9 @@ service UserService {
     option (auth) = true;
   }
   rpc Search(SearchRequest) returns (SearchResponse) {
+    option (auth) = true;
+  }
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {
     option (auth) = true;
   }
 }
@@ -66,4 +72,27 @@ message SearchRequest {
 message SearchResponse {
   repeated User users = 1;
   PaginationResponse pagination = 2;
+}
+
+message ListNotificationsRequest {
+  bool only_unread = 1;
+  PaginationRequest pagination = 2 [(buf.validate.field).required = true];
+}
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  PaginationResponse pagination = 2;
+}
+
+message Notification {
+  message WorkoutComment {
+    User actor = 1;
+    Workout workout = 2;
+  }
+
+  string id = 1;
+  // DEBT: This should be a timestamp but the client is not able to parse it.
+  int64 notified_at_unix = 2;
+  oneof type {
+    WorkoutComment workout_comment = 3;
+  }
 }

@@ -7,6 +7,9 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/bus"
+	"github.com/crlssn/getstronger/server/bus/events"
+	"github.com/crlssn/getstronger/server/bus/payloads"
 	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
@@ -17,11 +20,12 @@ import (
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
+	bus  *bus.Bus
 	repo *repo.Repo
 }
 
-func NewWorkoutHandler(r *repo.Repo) apiv1connect.WorkoutServiceHandler {
-	return &workoutHandler{r}
+func NewWorkoutHandler(b *bus.Bus, r *repo.Repo) apiv1connect.WorkoutServiceHandler {
+	return &workoutHandler{b, r}
 }
 
 func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
@@ -202,6 +206,13 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(comment.UserID))
 	if err != nil {
 		log.Error("failed to get user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
+		CommentID: comment.ID,
+	}); err != nil {
+		log.Error("failed to publish event", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

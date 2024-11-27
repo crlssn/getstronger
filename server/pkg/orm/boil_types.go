@@ -50,3 +50,43 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	strmangle.PutBuffer(buf)
 	return str
 }
+
+type NotificationType string
+
+// Enum values for NotificationType
+const (
+	NotificationTypeFollow         NotificationType = "Follow"
+	NotificationTypeWorkoutComment NotificationType = "WorkoutComment"
+)
+
+func AllNotificationType() []NotificationType {
+	return []NotificationType{
+		NotificationTypeFollow,
+		NotificationTypeWorkoutComment,
+	}
+}
+
+func (e NotificationType) IsValid() error {
+	switch e {
+	case NotificationTypeFollow, NotificationTypeWorkoutComment:
+		return nil
+	default:
+		return errors.New("enum is not valid")
+	}
+}
+
+func (e NotificationType) String() string {
+	return string(e)
+}
+
+func (e NotificationType) Ordinal() int {
+	switch e {
+	case NotificationTypeFollow:
+		return 0
+	case NotificationTypeWorkoutComment:
+		return 1
+
+	default:
+		panic(errors.New("enum is not valid"))
+	}
+}

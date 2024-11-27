@@ -83,6 +83,7 @@ var UserRels = struct {
 	Exercises       string
 	FollowerUsers   string
 	FolloweeUsers   string
+	Notifications   string
 	Routines        string
 	WorkoutComments string
 	Workouts        string
@@ -91,6 +92,7 @@ var UserRels = struct {
 	Exercises:       "Exercises",
 	FollowerUsers:   "FollowerUsers",
 	FolloweeUsers:   "FolloweeUsers",
+	Notifications:   "Notifications",
 	Routines:        "Routines",
 	WorkoutComments: "WorkoutComments",
 	Workouts:        "Workouts",
@@ -102,6 +104,7 @@ type userR struct {
 	Exercises       ExerciseSlice       `boil:"Exercises" json:"Exercises" toml:"Exercises" yaml:"Exercises"`
 	FollowerUsers   UserSlice           `boil:"FollowerUsers" json:"FollowerUsers" toml:"FollowerUsers" yaml:"FollowerUsers"`
 	FolloweeUsers   UserSlice           `boil:"FolloweeUsers" json:"FolloweeUsers" toml:"FolloweeUsers" yaml:"FolloweeUsers"`
+	Notifications   NotificationSlice   `boil:"Notifications" json:"Notifications" toml:"Notifications" yaml:"Notifications"`
 	Routines        RoutineSlice        `boil:"Routines" json:"Routines" toml:"Routines" yaml:"Routines"`
 	WorkoutComments WorkoutCommentSlice `boil:"WorkoutComments" json:"WorkoutComments" toml:"WorkoutComments" yaml:"WorkoutComments"`
 	Workouts        WorkoutSlice        `boil:"Workouts" json:"Workouts" toml:"Workouts" yaml:"Workouts"`
@@ -138,6 +141,13 @@ func (r *userR) GetFolloweeUsers() UserSlice {
 		return nil
 	}
 	return r.FolloweeUsers
+}
+
+func (r *userR) GetNotifications() NotificationSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Notifications
 }
 
 func (r *userR) GetRoutines() RoutineSlice {
@@ -530,6 +540,20 @@ func (o *User) FolloweeUsers(mods ...qm.QueryMod) userQuery {
 	)
 
 	return Users(queryMods...)
+}
+
+// Notifications retrieves all the notification's Notifications with an executor.
+func (o *User) Notifications(mods ...qm.QueryMod) notificationQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"getstronger\".\"notifications\".\"user_id\"=?", o.ID),
+	)
+
+	return Notifications(queryMods...)
 }
 
 // Routines retrieves all the routine's Routines with an executor.
@@ -1059,6 +1083,119 @@ func (userL) LoadFolloweeUsers(ctx context.Context, e boil.ContextExecutor, sing
 					foreign.R = &userR{}
 				}
 				foreign.R.FollowerUsers = append(foreign.R.FollowerUsers, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadNotifications allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadNotifications(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`getstronger.notifications`),
+		qm.WhereIn(`getstronger.notifications.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load notifications")
+	}
+
+	var resultSlice []*Notification
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice notifications")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on notifications")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for notifications")
+	}
+
+	if len(notificationAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Notifications = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &notificationR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.Notifications = append(local.R.Notifications, foreign)
+				if foreign.R == nil {
+					foreign.R = &notificationR{}
+				}
+				foreign.R.User = local
 				break
 			}
 		}
@@ -1794,6 +1931,59 @@ func removeFolloweeUsersFromFollowerUsersSlice(o *User, related []*User) {
 			break
 		}
 	}
+}
+
+// AddNotifications adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Notifications.
+// Sets related.R.User appropriately.
+func (o *User) AddNotifications(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Notification) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"getstronger\".\"notifications\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, notificationPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			Notifications: related,
+		}
+	} else {
+		o.R.Notifications = append(o.R.Notifications, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &notificationR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
 }
 
 // AddRoutines adds the given related objects to the existing relationships

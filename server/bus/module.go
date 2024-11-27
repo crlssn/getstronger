@@ -15,6 +15,7 @@ func Module() fx.Option {
 			New,
 			handlers.NewRegistry,
 			handlers.NewRequestTraced,
+			handlers.NewWorkoutCommentPosted,
 		),
 		fx.Invoke(
 			func(lc fx.Lifecycle, bus *Bus, registry *handlers.Registry) {

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"connectrpc.com/connect"
@@ -153,6 +154,82 @@ func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1
 	return &connect.Response[v1.ListFolloweesResponse]{
 		Msg: &v1.ListFolloweesResponse{
 			Followees: parseUserSliceToPB(followees),
+		},
+	}, nil
+}
+
+func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	total, err := h.repo.CountNotifications(ctx,
+		repo.CountNotificationsWithUserID(userID),
+		repo.CountNotificationsWithOnlyUnread(req.Msg.GetOnlyUnread()),
+	)
+	if err != nil {
+		log.Error("failed to count notifications", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	limit := int(req.Msg.GetPagination().GetPageLimit())
+	notifications, err := h.repo.ListNotifications(ctx,
+		repo.ListNotificationsWithLimit(limit+1),
+		repo.ListNotificationsWithUserID(userID),
+		repo.ListNotificationsWithOnlyUnread(req.Msg.GetOnlyUnread()),
+		repo.ListNotificationsOrderByCreatedAtDESC(),
+	)
+	if err != nil {
+		log.Error("failed to list notifications", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	paginated, err := repo.PaginateSlice(notifications, limit, func(n *orm.Notification) time.Time {
+		return n.CreatedAt
+	})
+	if err != nil {
+		log.Error("failed to paginate notifications", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	var userIDs []string
+	var workoutIDs []string
+	payloads := make(map[string]repo.NotificationPayload)
+
+	for _, n := range paginated.Items {
+		var payload repo.NotificationPayload
+		if err = json.Unmarshal(n.Payload, &payload); err != nil {
+			log.Error("failed to unmarshal notification payload", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
+
+		payloads[n.ID] = payload
+		if payload.WorkoutID != "" {
+			workoutIDs = append(workoutIDs, payload.WorkoutID)
+		}
+		if payload.ActorID != "" {
+			userIDs = append(userIDs, payload.ActorID)
+		}
+	}
+
+	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
+	if err != nil {
+		log.Error("failed to list users", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
+	if err != nil {
+		log.Error("failed to list workouts", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return &connect.Response[v1.ListNotificationsResponse]{
+		Msg: &v1.ListNotificationsResponse{
+			Notifications: parseNotificationSliceToPB(paginated.Items, payloads, users, workouts),
+			Pagination: &v1.PaginationResponse{
+				TotalResults:  total,
+				NextPageToken: paginated.NextPageToken,
+			},
 		},
 	}, nil
 }

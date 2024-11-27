@@ -5,3 +5,7 @@ type RequestTraced struct {
 	DurationMS int
 	StatusCode int
 }
+
+type WorkoutCommentPosted struct {
+	CommentID string
+}
