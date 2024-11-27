@@ -962,7 +962,7 @@ type CreateNotificationParams struct {
 }
 
 type NotificationPayload struct {
-	ActorID   string `json:"actor_d,omitempty"`
+	ActorID   string `json:"actor_id,omitempty"`
 	WorkoutID string `json:"workout_id,omitempty"`
 }
 

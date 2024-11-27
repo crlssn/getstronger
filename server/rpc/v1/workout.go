@@ -199,7 +199,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 	var comment *orm.WorkoutComment
 	if err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		commentID := uuid.NewString()
-		err := h.bus.Publish(events.WorkoutCommentPosted, payloads.WorkoutCommentPosted{
+		err := h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
 			CommentID: commentID,
 		})
 		if err != nil {
