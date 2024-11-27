@@ -11,7 +11,7 @@ import (
 )
 
 type Handler interface {
-	HandleEvent(payload any)
+	HandlePayload(payload any)
 }
 
 var _ Handler = (*RequestTraced)(nil)
@@ -27,7 +27,7 @@ func NewRequestTraced(log *zap.Logger, repo *repo.Repo) *RequestTraced {
 
 const timeout = 5 * time.Second
 
-func (h *RequestTraced) HandleEvent(payload any) {
+func (h *RequestTraced) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

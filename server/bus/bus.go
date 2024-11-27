@@ -10,31 +10,31 @@ import (
 )
 
 type Bus struct {
-	mu          sync.RWMutex
-	log         *zap.Logger
-	channels    map[string]chan any
-	subscribers map[string]handlers.Handler
+	mu       sync.RWMutex
+	log      *zap.Logger
+	channels map[string]chan any
+	handlers map[string]handlers.Handler
 }
 
 func New(log *zap.Logger) *Bus {
 	return &Bus{
-		log:         log,
-		channels:    make(map[string]chan any),
-		subscribers: make(map[string]handlers.Handler),
+		log:      log,
+		channels: make(map[string]chan any),
+		handlers: make(map[string]handlers.Handler),
 	}
 }
 
 func (b *Bus) Publish(event string, payload any) {
 	b.mu.RLock()
-	ch, found := b.channels[event]
+	channel, found := b.channels[event]
 	b.mu.RUnlock()
 
 	if !found {
-		b.log.Error("no subscribers found for event", zap.String("event", event))
+		b.log.Error("no channel found for event", zap.String("event", event))
 		return
 	}
 
-	ch <- payload
+	channel <- payload
 }
 
 const (
@@ -42,16 +42,16 @@ const (
 	channelCapacity = 50
 )
 
-var errAlreadySubscribed = fmt.Errorf("already subscribed to event")
+var errHandlerExists = fmt.Errorf("handler already exists")
 
 func (b *Bus) Subscribe(event string, handler handlers.Handler) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if _, exists := b.subscribers[event]; exists {
-		return fmt.Errorf("%w: %s", errAlreadySubscribed, event)
+	if _, exists := b.handlers[event]; exists {
+		return fmt.Errorf("%w: %s", errHandlerExists, event)
 	}
-	b.subscribers[event] = handler
+	b.handlers[event] = handler
 
 	if _, found := b.channels[event]; !found {
 		b.channels[event] = make(chan any, channelCapacity)
@@ -67,16 +67,16 @@ func (b *Bus) Subscribe(event string, handler handlers.Handler) error {
 func (b *Bus) startWorker(event string) {
 	for data := range b.channels[event] {
 		b.mu.RLock()
-		h := b.subscribers[event]
+		handler := b.handlers[event]
 		b.mu.RUnlock()
 
-		go func(data any) {
+		go func(payload any) {
 			defer func() {
 				if r := recover(); r != nil {
 					b.log.Error("handler panicked", zap.Any("recover", r))
 				}
 			}()
-			h.HandleEvent(data)
+			handler.HandlePayload(payload)
 		}(data)
 	}
 }
@@ -85,7 +85,7 @@ func (b *Bus) Stop() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	for _, ch := range b.channels {
-		close(ch)
+	for _, channel := range b.channels {
+		close(channel)
 	}
 }
