@@ -2,6 +2,7 @@ package bus
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/fx"
 
@@ -20,7 +21,9 @@ func Module() fx.Option {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
 						for event, handler := range registry.Handlers() {
-							bus.Subscribe(event, handler)
+							if err := bus.Subscribe(event, handler); err != nil {
+								return fmt.Errorf("failed to subscribe to event %s: %w", event, err)
+							}
 						}
 						return nil
 					},

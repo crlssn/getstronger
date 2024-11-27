@@ -1,6 +1,7 @@
 package bus
 
 import (
+	"fmt"
 	"sync"
 
 	"go.uber.org/zap"
@@ -36,19 +37,31 @@ func (b *Bus) Publish(event string, payload any) {
 	ch <- payload
 }
 
-const channelCapacity = 50
+const (
+	channelWorkers  = 5
+	channelCapacity = 50
+)
 
-func (b *Bus) Subscribe(event string, handler handlers.Handler) {
+var errAlreadySubscribed = fmt.Errorf("already subscribed to event")
+
+func (b *Bus) Subscribe(event string, handler handlers.Handler) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
+	if _, exists := b.subscribers[event]; exists {
+		return fmt.Errorf("%w: %s", errAlreadySubscribed, event)
+	}
+	b.subscribers[event] = handler
+
 	if _, found := b.channels[event]; !found {
 		b.channels[event] = make(chan any, channelCapacity)
+		for range channelWorkers {
+			go b.startWorker(event)
+		}
 		b.log.Info("subscribed to event", zap.String("event", event))
-		go b.startWorker(event)
 	}
 
-	b.subscribers[event] = handler
+	return nil
 }
 
 func (b *Bus) startWorker(event string) {
