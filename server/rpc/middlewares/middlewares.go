@@ -13,10 +13,10 @@ import (
 
 type Middleware struct {
 	config *config.Config
-	tracer *trace.Manager
+	tracer *trace.Tracer
 }
 
-func New(c *config.Config, t *trace.Manager) *Middleware {
+func New(c *config.Config, t *trace.Tracer) *Middleware {
 	return &Middleware{c, t}
 }
 

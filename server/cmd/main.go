@@ -34,7 +34,7 @@ func options() []fx.Option {
 			zap.NewDevelopment,
 			repo.New,
 			grpc.NewServer,
-			trace.NewManager,
+			trace.NewTracer,
 			config.New,
 			protovalidate.New,
 		),

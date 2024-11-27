@@ -20,45 +20,42 @@ func (rw *ResponseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-type Manager struct {
+type Tracer struct {
 	log  *zap.Logger
 	repo *repo.Repo
 }
 
 type Trace struct {
-	log   *zap.Logger
 	uri   string
-	repo  *repo.Repo
 	start time.Time
+	onEnd func(duration time.Duration, statusCode int)
 }
 
-func NewManager(log *zap.Logger, repo *repo.Repo) *Manager {
-	return &Manager{log, repo}
+func NewTracer(log *zap.Logger, repo *repo.Repo) *Tracer {
+	return &Tracer{log, repo}
 }
 
-func (m *Manager) Trace(uri string) *Trace {
+func (m *Tracer) Trace(uri string) *Trace {
 	return &Trace{
-		log:   m.log,
 		uri:   uri,
-		repo:  m.repo,
 		start: time.Now().UTC(),
+		onEnd: func(duration time.Duration, statusCode int) {
+			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				if err := m.repo.StoreTrace(ctx, repo.CreateTraceParams{
+					Request:    uri,
+					DurationMS: int(duration.Milliseconds()),
+					StatusCode: statusCode,
+				}); err != nil {
+					m.log.Error("trace store failed", zap.Error(err))
+				}
+			}()
+		},
 	}
 }
 
 func (t *Trace) End(rw *ResponseWriter) {
-	duration := time.Since(t.start)
-	t.log.Info("trace", zap.String("uri", t.uri), zap.Duration("duration", duration), zap.Int("status_code", rw.statusCode))
-
-	// TODO: Use event bus to store trace.
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := t.repo.StoreTrace(ctx, repo.CreateTraceParams{
-			Request:    t.uri,
-			DurationMS: int(duration.Milliseconds()),
-			StatusCode: rw.statusCode,
-		}); err != nil {
-			t.log.Error("trace store failed", zap.Error(err))
-		}
-	}()
+	t.onEnd(time.Since(t.start), rw.statusCode)
 }
