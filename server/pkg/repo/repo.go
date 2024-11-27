@@ -194,7 +194,7 @@ func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 }
 
 type PageToken struct {
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type ListExercisesOpt func() ([]qm.QueryMod, error)
@@ -893,6 +893,7 @@ func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSli
 }
 
 type CreateWorkoutCommentParams struct {
+	ID        string
 	UserID    string
 	WorkoutID string
 	Comment   string
@@ -900,6 +901,7 @@ type CreateWorkoutCommentParams struct {
 
 func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
 	comment := &orm.WorkoutComment{
+		ID:        p.ID,
 		UserID:    p.UserID,
 		WorkoutID: p.WorkoutID,
 		Comment:   p.Comment,
@@ -951,4 +953,61 @@ func (r *Repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 	}
 
 	return nil
+}
+
+type CreateNotificationParams struct {
+	Type    orm.NotificationType
+	UserID  string
+	Payload NotificationPayload
+}
+
+type NotificationPayload struct {
+	ActorID   string `json:"actor_d,omitempty"`
+	WorkoutID string `json:"workout_id,omitempty"`
+}
+
+func (r *Repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {
+	payload, err := json.Marshal(p.Payload)
+	if err != nil {
+		return fmt.Errorf("payload marshal: %w", err)
+	}
+
+	n := &orm.Notification{
+		UserID:  p.UserID,
+		Type:    p.Type,
+		Payload: payload,
+	}
+	if err = n.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+		return fmt.Errorf("insert: %w", err)
+	}
+
+	return nil
+}
+
+type GetWorkoutCommentOpt func() qm.QueryMod
+
+func GetWorkoutCommentWithID(id string) GetWorkoutCommentOpt {
+	return func() qm.QueryMod {
+		return orm.WorkoutCommentWhere.ID.EQ(id)
+	}
+}
+
+func GetWorkoutCommentWithWorkout() GetWorkoutCommentOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutCommentRels.Workout)
+	}
+}
+
+func (r *Repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	comment, err := orm.WorkoutComments(query...).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("workout comment fetch: %w", err)
+	}
+
+	return comment, nil
 }

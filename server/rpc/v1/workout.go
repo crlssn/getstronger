@@ -2,11 +2,16 @@ package v1
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/bus"
+	"github.com/crlssn/getstronger/server/bus/events"
+	"github.com/crlssn/getstronger/server/bus/payloads"
 	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
@@ -17,11 +22,12 @@ import (
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
+	bus  *bus.Bus
 	repo *repo.Repo
 }
 
-func NewWorkoutHandler(r *repo.Repo) apiv1connect.WorkoutServiceHandler {
-	return &workoutHandler{r}
+func NewWorkoutHandler(b *bus.Bus, r *repo.Repo) apiv1connect.WorkoutServiceHandler {
+	return &workoutHandler{b, r}
 }
 
 func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
@@ -189,19 +195,35 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	comment, err := h.repo.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
-		UserID:    userID,
-		WorkoutID: req.Msg.GetWorkoutId(),
-		Comment:   req.Msg.GetComment(),
-	})
-	if err != nil {
-		log.Error("failed to create workout comment", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
+	var user *orm.User
+	var comment *orm.WorkoutComment
+	if err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
+		commentID := uuid.NewString()
+		err := h.bus.Publish(events.WorkoutCommentPosted, payloads.WorkoutCommentPosted{
+			CommentID: commentID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to publish event: %w", err)
+		}
 
-	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(comment.UserID))
-	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
+		comment, err = tx.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
+			ID:        commentID,
+			UserID:    userID,
+			WorkoutID: req.Msg.GetWorkoutId(),
+			Comment:   req.Msg.GetComment(),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create workout comment: %w", err)
+		}
+
+		user, err = tx.GetUser(ctx, repo.GetUserWithID(comment.UserID))
+		if err != nil {
+			return fmt.Errorf("failed to get user: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		log.Error("failed to post workout comment", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
