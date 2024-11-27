@@ -71,7 +71,10 @@ onMounted(() => {
         :is="isActive(item.href) ? item.iconActive : item.icon"
         class="h-6 w-6"
       />
-      <span v-if="item.href === '/notifications'" class="badge">{{ unreadCount }}</span>
+      <span
+        v-if="item.href === '/notifications'"
+        class="badge"
+      >{{ unreadCount }}</span>
     </RouterLink>
   </nav>
 </template>

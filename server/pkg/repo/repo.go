@@ -893,7 +893,6 @@ func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSli
 }
 
 type CreateWorkoutCommentParams struct {
-	//ID        string
 	UserID    string
 	WorkoutID string
 	Comment   string
@@ -901,7 +900,6 @@ type CreateWorkoutCommentParams struct {
 
 func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
 	comment := &orm.WorkoutComment{
-		//ID:        p.ID,
 		UserID:    p.UserID,
 		WorkoutID: p.WorkoutID,
 		Comment:   p.Comment,

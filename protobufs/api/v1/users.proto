@@ -87,11 +87,11 @@ message Notification {
   message WorkoutComment {
     User actor = 1;
     Workout workout = 2;
-    google.protobuf.Timestamp commented_at = 3;
   }
 
   string id = 1;
+  google.protobuf.Timestamp created_at = 2;
   oneof type {
-    WorkoutComment workout_comment = 2;
+    WorkoutComment workout_comment = 3;
   }
 }

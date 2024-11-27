@@ -10,10 +10,9 @@ import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v
 const notifications = ref([] as Notification[])
 const pageToken = ref(new Uint8Array(0))
 
-const convertNotification = (notification: Notification) => {
-  if (notification.type?.value?.commentedAt) {
-    notification.type.value.commentedAt = {} as Timestamp
-  }
+const normaliseTimestamp = (notification: Notification) => {
+  // TODO: Fix this.
+  notification.createdAt = {} as Timestamp
   return notification
 }
 
@@ -27,7 +26,7 @@ const fetchUnreadNotifications = async () => {
   })
 
   const res = await UserClient.listNotifications(req)
-  notifications.value = [...notifications.value, ...res.notifications.map(convertNotification)]
+  notifications.value = [...notifications.value, ...res.notifications.map(normaliseTimestamp)]
   pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
   if (pageToken.value.length > 0) {
     // TODO: Implement pagination.
@@ -38,6 +37,7 @@ const fetchUnreadNotifications = async () => {
 onMounted(() => {
   fetchUnreadNotifications()
 })
+import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 </script>
 
 <template>
@@ -48,13 +48,9 @@ onMounted(() => {
     <li
       v-for="notification in notifications"
       :key="notification.id"
+      class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800"
     >
-      <RouterLink
-        :to="`/routines/${notification.id}`"
-        class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-800"
-      >
-        {{ notification }}
-      </RouterLink>
+      <NotificationWorkoutComment :notification="notification" />
     </li>
   </ul>
 </template>
