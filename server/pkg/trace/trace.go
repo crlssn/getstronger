@@ -9,7 +9,8 @@ type Trace struct {
 
 func (t *Trace) End() {
 	duration := time.Since(t.start)
-	println(t.uri, duration.String())
+	duration.Milliseconds()
+	//println(t.uri, duration.String())
 }
 
 func Start(uri string) *Trace {
