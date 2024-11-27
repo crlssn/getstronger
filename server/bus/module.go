@@ -24,6 +24,10 @@ func Module() fx.Option {
 						}
 						return nil
 					},
+					OnStop: func(_ context.Context) error {
+						bus.Stop()
+						return nil
+					},
 				})
 			},
 		),
