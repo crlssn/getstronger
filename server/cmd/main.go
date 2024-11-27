@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
+	"github.com/crlssn/getstronger/server/bus"
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/db"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
@@ -27,6 +28,7 @@ func main() {
 
 func options() []fx.Option {
 	return []fx.Option{
+		bus.Module(),
 		jwt.Module(),
 		rpc.Module(),
 		fx.Provide(
