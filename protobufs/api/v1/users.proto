@@ -90,7 +90,7 @@ message Notification {
   }
 
   string id = 1;
-  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp notified_at = 2;
   oneof type {
     WorkoutComment workout_comment = 3;
   }

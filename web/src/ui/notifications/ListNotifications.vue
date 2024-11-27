@@ -12,7 +12,7 @@ const pageToken = ref(new Uint8Array(0))
 
 const normaliseTimestamp = (notification: Notification) => {
   // TODO: Fix this.
-  notification.createdAt = {} as Timestamp
+  notification.notifiedAt = {} as Timestamp
   return notification
 }
 
