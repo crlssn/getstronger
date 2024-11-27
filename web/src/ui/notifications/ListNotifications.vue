@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Timestamp } from '@bufbuild/protobuf/wkt'
 import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
@@ -8,6 +9,13 @@ import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v
 
 const notifications = ref([] as Notification[])
 const pageToken = ref(new Uint8Array(0))
+
+const convertNotification = (notification: Notification) => {
+  if (notification.type?.value?.commentedAt) {
+    notification.type.value.commentedAt = {} as Timestamp
+  }
+  return notification
+}
 
 const fetchUnreadNotifications = async () => {
   const req = create(ListNotificationsRequestSchema, {
@@ -19,8 +27,7 @@ const fetchUnreadNotifications = async () => {
   })
 
   const res = await UserClient.listNotifications(req)
-  notifications.value = [...notifications.value, ...res.notifications]
-  console.log(res)
+  notifications.value = [...notifications.value, ...res.notifications.map(convertNotification)]
   pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
   if (pageToken.value.length > 0) {
     // TODO: Implement pagination.
