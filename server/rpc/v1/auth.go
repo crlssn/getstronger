@@ -128,6 +128,7 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 		AccessToken: accessToken,
 	})
 
+	// TODO: Move cookie logic to own package.
 	cookie := &http.Cookie{
 		Name:     "refreshToken",
 		Value:    refreshToken,
@@ -201,6 +202,7 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 	}
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
+	// TODO: Move cookie logic to own package.
 	cookie := &http.Cookie{
 		Name:     "refreshToken",
 		Value:    "",

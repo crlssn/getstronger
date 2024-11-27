@@ -933,3 +933,22 @@ func (r *Repo) CountUsers(ctx context.Context, opts ...CountUsersOpt) (int64, er
 
 	return count, nil
 }
+
+type StoreTraceParams struct {
+	Request    string
+	StatusCode int
+	DurationMS int
+}
+
+func (r *Repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
+	trace := &orm.Trace{
+		Request:    p.Request,
+		StatusCode: p.StatusCode,
+		DurationMS: p.DurationMS,
+	}
+	if err := trace.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+		return fmt.Errorf("trace insert: %w", err)
+	}
+
+	return nil
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/db"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
 	"github.com/crlssn/getstronger/server/pkg/repo"
+	"github.com/crlssn/getstronger/server/pkg/trace"
 	"github.com/crlssn/getstronger/server/rpc"
 )
 
@@ -33,6 +34,7 @@ func options() []fx.Option {
 			zap.NewDevelopment,
 			repo.New,
 			grpc.NewServer,
+			trace.NewTracer,
 			config.New,
 			protovalidate.New,
 		),
