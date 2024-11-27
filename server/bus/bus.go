@@ -24,17 +24,19 @@ func New(log *zap.Logger) *Bus {
 	}
 }
 
-func (b *Bus) Publish(event string, payload any) {
+var errChannelNotFound = fmt.Errorf("channel not found for event")
+
+func (b *Bus) Publish(event string, payload any) error {
 	b.mu.RLock()
 	channel, found := b.channels[event]
 	b.mu.RUnlock()
 
 	if !found {
-		b.log.Error("no channel found for event", zap.String("event", event))
-		return
+		return fmt.Errorf("%w: %s", errChannelNotFound, event)
 	}
 
 	channel <- payload
+	return nil
 }
 
 const (
@@ -65,7 +67,7 @@ func (b *Bus) Subscribe(event string, handler handlers.Handler) error {
 }
 
 func (b *Bus) startWorker(event string) {
-	for data := range b.channels[event] {
+	for payload := range b.channels[event] {
 		b.mu.RLock()
 		handler := b.handlers[event]
 		b.mu.RUnlock()
@@ -77,7 +79,7 @@ func (b *Bus) startWorker(event string) {
 				}
 			}()
 			handler.HandlePayload(payload)
-		}(data)
+		}(payload)
 	}
 }
 
