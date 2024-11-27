@@ -10,8 +10,6 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/repo"
 )
 
-const timeout = 5 * time.Second
-
 type Handler interface {
 	HandleEvent(event any)
 }
@@ -26,6 +24,8 @@ type HandlerRequestTraced struct {
 func NewHandlerRequestTraced(log *zap.Logger, repo *repo.Repo) *HandlerRequestTraced {
 	return &HandlerRequestTraced{log, repo}
 }
+
+const timeout = 5 * time.Second
 
 func (h *HandlerRequestTraced) HandleEvent(event any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
