@@ -1,20 +1,14 @@
 <script setup lang="ts">
-import type { Timestamp } from '@bufbuild/protobuf/wkt'
 import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
 import { UserClient } from '@/clients/clients.ts'
+import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v1/users_pb.ts'
 
 const notifications = ref([] as Notification[])
 const pageToken = ref(new Uint8Array(0))
-
-// const normaliseTimestamp = (notification: Notification) => {
-//   // TODO: Fix this.
-//   // notification.notifiedAt = {} as Timestamp
-//   // return notification
-// }
 
 const fetchUnreadNotifications = async () => {
   const req = create(ListNotificationsRequestSchema, {
@@ -37,7 +31,6 @@ const fetchUnreadNotifications = async () => {
 onMounted(() => {
   fetchUnreadNotifications()
 })
-import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 </script>
 
 <template>
