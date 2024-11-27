@@ -36,7 +36,7 @@ func (b *Bus) Publish(event string, payload any) {
 	ch <- payload
 }
 
-const channelCapacity = 100
+const channelCapacity = 50
 
 func (b *Bus) Subscribe(event string, handler handlers.Handler) {
 	b.mu.Lock()
