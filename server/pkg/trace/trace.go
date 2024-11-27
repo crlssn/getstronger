@@ -44,7 +44,7 @@ func (m *Tracer) Trace(uri string) *Trace {
 			go func() {
 				ctx, cancel := context.WithTimeout(context.Background(), timeout)
 				defer cancel()
-				if err := m.repo.StoreTrace(ctx, repo.CreateTraceParams{
+				if err := m.repo.StoreTrace(ctx, repo.StoreTraceParams{
 					Request:    uri,
 					DurationMS: int(duration.Milliseconds()),
 					StatusCode: statusCode,

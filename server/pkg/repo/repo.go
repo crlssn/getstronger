@@ -934,17 +934,17 @@ func (r *Repo) CountUsers(ctx context.Context, opts ...CountUsersOpt) (int64, er
 	return count, nil
 }
 
-type CreateTraceParams struct {
+type StoreTraceParams struct {
 	Request    string
-	DurationMS int
 	StatusCode int
+	DurationMS int
 }
 
-func (r *Repo) StoreTrace(ctx context.Context, p CreateTraceParams) error {
+func (r *Repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 	trace := &orm.Trace{
 		Request:    p.Request,
-		DurationMS: p.DurationMS,
 		StatusCode: p.StatusCode,
+		DurationMS: p.DurationMS,
 	}
 	if err := trace.Insert(ctx, r.executor(), boil.Infer()); err != nil {
 		return fmt.Errorf("trace insert: %w", err)
