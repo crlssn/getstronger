@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -194,31 +193,26 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	var err error
-	var user *orm.User
-	var comment *orm.WorkoutComment
-	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
-		if comment, err = tx.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
-			UserID:    userID,
-			WorkoutID: req.Msg.GetWorkoutId(),
-			Comment:   req.Msg.GetComment(),
-		}); err != nil {
-			return fmt.Errorf("failed to create workout comment: %w", err)
-		}
+	comment, err := h.repo.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
+		UserID:    userID,
+		WorkoutID: req.Msg.GetWorkoutId(),
+		Comment:   req.Msg.GetComment(),
+	})
+	if err != nil {
+		log.Error("failed to create workout comment", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
 
-		if user, err = tx.GetUser(ctx, repo.GetUserWithID(comment.UserID)); err != nil {
-			return fmt.Errorf("failed to get user: %w", err)
-		}
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(comment.UserID))
+	if err != nil {
+		log.Error("failed to get user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
 
-		if err = h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
-			CommentID: comment.ID,
-		}); err != nil {
-			return fmt.Errorf("failed to publish event: %w", err)
-		}
-
-		return nil
+	if err = h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
+		CommentID: comment.ID,
 	}); err != nil {
-		log.Error("failed to post workout comment", zap.Error(err))
+		log.Error("failed to publish event", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
