@@ -225,3 +225,68 @@ func parseUserSliceToPB(users orm.UserSlice) []*apiv1.User {
 
 	return pbUsers
 }
+
+func parseNotificationSliceToPB(
+	notifications orm.NotificationSlice,
+	payload map[string]repo.NotificationPayload,
+	users orm.UserSlice,
+	workouts orm.WorkoutSlice,
+) []*apiv1.Notification {
+	mapWorkouts := make(map[string]*orm.Workout)
+	for _, w := range workouts {
+		mapWorkouts[w.ID] = w
+	}
+
+	mapUsers := make(map[string]*orm.User)
+	for _, u := range users {
+		mapUsers[u.ID] = u
+	}
+
+	var slice []*apiv1.Notification //nolint:prealloc
+	for _, n := range notifications {
+		p, ok := payload[n.ID]
+		if !ok {
+			continue
+		}
+
+		w, ok := mapWorkouts[p.WorkoutID]
+		if !ok {
+			continue
+		}
+
+		u, ok := mapUsers[p.ActorID]
+		if !ok {
+			continue
+		}
+
+		slice = append(slice, parseNotificationToPB(n, u, w))
+	}
+
+	return slice
+}
+
+func parseNotificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.Notification {
+	switch n.Type {
+	case orm.NotificationTypeFollow:
+		return nil
+	case orm.NotificationTypeWorkoutComment:
+		return &apiv1.Notification{
+			Type: &apiv1.Notification_WorkoutComment_{
+				WorkoutComment: &apiv1.Notification_WorkoutComment{
+					Actor: &apiv1.User{
+						Id:        u.ID,
+						FirstName: u.FirstName,
+						LastName:  u.LastName,
+					},
+					Workout: &apiv1.Workout{
+						Id:   w.ID,
+						Name: w.Name,
+					},
+					CommentedAt: timestamppb.New(n.CreatedAt),
+				},
+			},
+		}
+	default:
+		return nil
+	}
+}

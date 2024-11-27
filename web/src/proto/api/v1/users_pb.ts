@@ -7,6 +7,10 @@ import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1
 import { file_api_v1_options } from "./options_pb";
 import type { PaginationRequest, PaginationResponse, User } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
+import type { Workout } from "./workouts_pb";
+import { file_api_v1_workouts } from "./workouts_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -14,7 +18,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/users.proto.
  */
 export const file_api_v1_users: GenFile = /*@__PURE__*/
-  fileDesc("ChJhcGkvdjEvdXNlcnMucHJvdG8SBmFwaS52MSImCg5HZXRVc2VyUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiLQoPR2V0VXNlclJlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlciIsCg1Gb2xsb3dSZXF1ZXN0EhsKCWZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiEAoORm9sbG93UmVzcG9uc2UiMAoPVW5mb2xsb3dSZXF1ZXN0Eh0KC3VuZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASISChBVbmZvbGxvd1Jlc3BvbnNlIjUKFExpc3RGb2xsb3dlcnNSZXF1ZXN0Eh0KC2ZvbGxvd2VyX2lkGAEgASgJQgi6SAVyA7ABASI4ChVMaXN0Rm9sbG93ZXJzUmVzcG9uc2USHwoJZm9sbG93ZXJzGAEgAygLMgwuYXBpLnYxLlVzZXIiNQoUTGlzdEZvbGxvd2Vlc1JlcXVlc3QSHQoLZm9sbG93ZWVfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlZXNSZXNwb25zZRIfCglmb2xsb3dlZXMYASADKAsyDC5hcGkudjEuVXNlciJeCg1TZWFyY2hSZXF1ZXN0EhYKBXF1ZXJ5GAEgASgJQge6SARyAhADEjUKCnBhZ2luYXRpb24YAiABKAsyGS5hcGkudjEuUGFnaW5hdGlvblJlcXVlc3RCBrpIA8gBASJdCg5TZWFyY2hSZXNwb25zZRIbCgV1c2VycxgBIAMoCzIMLmFwaS52MS5Vc2VyEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlMrYDCgtVc2VyU2VydmljZRI8CgNHZXQSFi5hcGkudjEuR2V0VXNlclJlcXVlc3QaFy5hcGkudjEuR2V0VXNlclJlc3BvbnNlIgSItRgBEj0KBkZvbGxvdxIVLmFwaS52MS5Gb2xsb3dSZXF1ZXN0GhYuYXBpLnYxLkZvbGxvd1Jlc3BvbnNlIgSItRgBEkMKCFVuZm9sbG93EhcuYXBpLnYxLlVuZm9sbG93UmVxdWVzdBoYLmFwaS52MS5VbmZvbGxvd1Jlc3BvbnNlIgSItRgBElIKDUxpc3RGb2xsb3dlcnMSHC5hcGkudjEuTGlzdEZvbGxvd2Vyc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZvbGxvd2Vyc1Jlc3BvbnNlIgSItRgBElIKDUxpc3RGb2xsb3dlZXMSHC5hcGkudjEuTGlzdEZvbGxvd2Vlc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZvbGxvd2Vlc1Jlc3BvbnNlIgSItRgBEj0KBlNlYXJjaBIVLmFwaS52MS5TZWFyY2hSZXF1ZXN0GhYuYXBpLnYxLlNlYXJjaFJlc3BvbnNlIgSItRgBQosBCgpjb20uYXBpLnYxQgpVc2Vyc1Byb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
+  fileDesc("ChJhcGkvdjEvdXNlcnMucHJvdG8SBmFwaS52MSImCg5HZXRVc2VyUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiLQoPR2V0VXNlclJlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlciIsCg1Gb2xsb3dSZXF1ZXN0EhsKCWZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiEAoORm9sbG93UmVzcG9uc2UiMAoPVW5mb2xsb3dSZXF1ZXN0Eh0KC3VuZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASISChBVbmZvbGxvd1Jlc3BvbnNlIjUKFExpc3RGb2xsb3dlcnNSZXF1ZXN0Eh0KC2ZvbGxvd2VyX2lkGAEgASgJQgi6SAVyA7ABASI4ChVMaXN0Rm9sbG93ZXJzUmVzcG9uc2USHwoJZm9sbG93ZXJzGAEgAygLMgwuYXBpLnYxLlVzZXIiNQoUTGlzdEZvbGxvd2Vlc1JlcXVlc3QSHQoLZm9sbG93ZWVfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlZXNSZXNwb25zZRIfCglmb2xsb3dlZXMYASADKAsyDC5hcGkudjEuVXNlciJeCg1TZWFyY2hSZXF1ZXN0EhYKBXF1ZXJ5GAEgASgJQge6SARyAhADEjUKCnBhZ2luYXRpb24YAiABKAsyGS5hcGkudjEuUGFnaW5hdGlvblJlcXVlc3RCBrpIA8gBASJdCg5TZWFyY2hSZXNwb25zZRIbCgV1c2VycxgBIAMoCzIMLmFwaS52MS5Vc2VyEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlImYKGExpc3ROb3RpZmljYXRpb25zUmVxdWVzdBITCgtvbmx5X3VucmVhZBgBIAEoCBI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEieAoZTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZRIrCg1ub3RpZmljYXRpb25zGAEgAygLMhQuYXBpLnYxLk5vdGlmaWNhdGlvbhIuCgpwYWdpbmF0aW9uGAIgASgLMhouYXBpLnYxLlBhZ2luYXRpb25SZXNwb25zZSLaAQoMTm90aWZpY2F0aW9uEj4KD3dvcmtvdXRfY29tbWVudBgBIAEoCzIjLmFwaS52MS5Ob3RpZmljYXRpb24uV29ya291dENvbW1lbnRIABqBAQoOV29ya291dENvbW1lbnQSGwoFYWN0b3IYASABKAsyDC5hcGkudjEuVXNlchIgCgd3b3Jrb3V0GAIgASgLMg8uYXBpLnYxLldvcmtvdXQSMAoMY29tbWVudGVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGCgR0eXBlMpYECgtVc2VyU2VydmljZRI8CgNHZXQSFi5hcGkudjEuR2V0VXNlclJlcXVlc3QaFy5hcGkudjEuR2V0VXNlclJlc3BvbnNlIgSItRgBEj0KBkZvbGxvdxIVLmFwaS52MS5Gb2xsb3dSZXF1ZXN0GhYuYXBpLnYxLkZvbGxvd1Jlc3BvbnNlIgSItRgBEkMKCFVuZm9sbG93EhcuYXBpLnYxLlVuZm9sbG93UmVxdWVzdBoYLmFwaS52MS5VbmZvbGxvd1Jlc3BvbnNlIgSItRgBElIKDUxpc3RGb2xsb3dlcnMSHC5hcGkudjEuTGlzdEZvbGxvd2Vyc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZvbGxvd2Vyc1Jlc3BvbnNlIgSItRgBElIKDUxpc3RGb2xsb3dlZXMSHC5hcGkudjEuTGlzdEZvbGxvd2Vlc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZvbGxvd2Vlc1Jlc3BvbnNlIgSItRgBEj0KBlNlYXJjaBIVLmFwaS52MS5TZWFyY2hSZXF1ZXN0GhYuYXBpLnYxLlNlYXJjaFJlc3BvbnNlIgSItRgBEl4KEUxpc3ROb3RpZmljYXRpb25zEiAuYXBpLnYxLkxpc3ROb3RpZmljYXRpb25zUmVxdWVzdBohLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1Jlc3BvbnNlIgSItRgBQosBCgpjb20uYXBpLnYxQgpVc2Vyc1Byb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_api_v1_workouts, file_google_protobuf_timestamp, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.GetUserRequest
@@ -223,6 +227,100 @@ export const SearchResponseSchema: GenMessage<SearchResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_users, 11);
 
 /**
+ * @generated from message api.v1.ListNotificationsRequest
+ */
+export type ListNotificationsRequest = Message<"api.v1.ListNotificationsRequest"> & {
+  /**
+   * @generated from field: bool only_unread = 1;
+   */
+  onlyUnread: boolean;
+
+  /**
+   * @generated from field: api.v1.PaginationRequest pagination = 2;
+   */
+  pagination?: PaginationRequest;
+};
+
+/**
+ * Describes the message api.v1.ListNotificationsRequest.
+ * Use `create(ListNotificationsRequestSchema)` to create a new message.
+ */
+export const ListNotificationsRequestSchema: GenMessage<ListNotificationsRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 12);
+
+/**
+ * @generated from message api.v1.ListNotificationsResponse
+ */
+export type ListNotificationsResponse = Message<"api.v1.ListNotificationsResponse"> & {
+  /**
+   * @generated from field: repeated api.v1.Notification notifications = 1;
+   */
+  notifications: Notification[];
+
+  /**
+   * @generated from field: api.v1.PaginationResponse pagination = 2;
+   */
+  pagination?: PaginationResponse;
+};
+
+/**
+ * Describes the message api.v1.ListNotificationsResponse.
+ * Use `create(ListNotificationsResponseSchema)` to create a new message.
+ */
+export const ListNotificationsResponseSchema: GenMessage<ListNotificationsResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 13);
+
+/**
+ * @generated from message api.v1.Notification
+ */
+export type Notification = Message<"api.v1.Notification"> & {
+  /**
+   * @generated from oneof api.v1.Notification.type
+   */
+  type: {
+    /**
+     * @generated from field: api.v1.Notification.WorkoutComment workout_comment = 1;
+     */
+    value: Notification_WorkoutComment;
+    case: "workoutComment";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message api.v1.Notification.
+ * Use `create(NotificationSchema)` to create a new message.
+ */
+export const NotificationSchema: GenMessage<Notification> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 14);
+
+/**
+ * @generated from message api.v1.Notification.WorkoutComment
+ */
+export type Notification_WorkoutComment = Message<"api.v1.Notification.WorkoutComment"> & {
+  /**
+   * @generated from field: api.v1.User actor = 1;
+   */
+  actor?: User;
+
+  /**
+   * @generated from field: api.v1.Workout workout = 2;
+   */
+  workout?: Workout;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp commented_at = 3;
+   */
+  commentedAt?: Timestamp;
+};
+
+/**
+ * Describes the message api.v1.Notification.WorkoutComment.
+ * Use `create(Notification_WorkoutCommentSchema)` to create a new message.
+ */
+export const Notification_WorkoutCommentSchema: GenMessage<Notification_WorkoutComment> = /*@__PURE__*/
+  messageDesc(file_api_v1_users, 14, 0);
+
+/**
  * @generated from service api.v1.UserService
  */
 export const UserService: GenService<{
@@ -273,6 +371,14 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof SearchRequestSchema;
     output: typeof SearchResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.UserService.ListNotifications
+   */
+  listNotifications: {
+    methodKind: "unary";
+    input: typeof ListNotificationsRequestSchema;
+    output: typeof ListNotificationsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_users, 0);

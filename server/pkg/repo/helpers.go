@@ -9,7 +9,7 @@ import (
 )
 
 type ModelItem interface {
-	*orm.Workout | *orm.Exercise | *orm.User | *orm.Routine | *orm.Set | *orm.WorkoutComment
+	*orm.Workout | *orm.Exercise | *orm.User | *orm.Routine | *orm.Set | *orm.WorkoutComment | *orm.Notification
 }
 
 type ModelSlice[T any] interface {
