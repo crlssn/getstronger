@@ -32,7 +32,7 @@ func (h *RequestTraced) HandleEvent(event any) {
 	defer cancel()
 
 	switch t := event.(type) {
-	case *events.EventRequestTraced:
+	case *events.RequestTraced:
 		if err := h.repo.StoreTrace(ctx, repo.StoreTraceParams{
 			Request:    t.Request,
 			DurationMS: t.DurationMS,

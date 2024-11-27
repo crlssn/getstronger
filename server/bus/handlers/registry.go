@@ -13,13 +13,13 @@ type Registry struct {
 type RegistryParams struct {
 	fx.In
 
-	HandlerRequestTraced *RequestTraced
+	RequestTraced *RequestTraced
 }
 
 func NewRegistry(p RegistryParams) *Registry {
 	return &Registry{
 		handlers: map[events.Event]Handler{
-			new(events.EventRequestTraced): p.HandlerRequestTraced,
+			new(events.RequestTraced): p.RequestTraced,
 		},
 	}
 }

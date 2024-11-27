@@ -5,18 +5,18 @@ type Event interface {
 	Type() string
 }
 
-var _ Event = (*EventRequestTraced)(nil)
+var _ Event = (*RequestTraced)(nil)
 
-type EventRequestTraced struct {
+type RequestTraced struct {
 	Request    string
 	DurationMS int
 	StatusCode int
 }
 
-func (e *EventRequestTraced) Type() string {
+func (e *RequestTraced) Type() string {
 	return "request:traced"
 }
 
-func (e *EventRequestTraced) Data() any {
+func (e *RequestTraced) Data() any {
 	return e
 }

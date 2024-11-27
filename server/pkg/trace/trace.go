@@ -39,7 +39,7 @@ func (m *Tracer) Trace(uri string) *Trace {
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
-			m.bus.Publish(&events.EventRequestTraced{
+			m.bus.Publish(&events.RequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,
