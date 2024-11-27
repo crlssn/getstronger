@@ -19,9 +19,3 @@ linters:
     - goimports
     - exhaustruct
     - funlen
-
-#linters-settings:
-#  tagliatelle:
-#    case:
-#      rules:
-#        json: snake
