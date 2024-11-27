@@ -10,6 +10,8 @@ import (
 	"github.com/crlssn/getstronger/server/bus/handlers"
 )
 
+const channelCapacity = 100
+
 type Bus struct {
 	fx.Hook
 
@@ -44,8 +46,6 @@ func (b *Bus) Publish(event events.Event) {
 	ch <- event.Data()
 }
 
-const channelCapacity = 100
-
 func (b *Bus) Subscribe(event events.Event, handler handlers.Handler) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -68,11 +68,3 @@ func (b *Bus) startWorker(event events.Event) {
 		go h.HandleEvent(data)
 	}
 }
-
-//func (b *Bus) OnStart(_ context.Context) error {
-//	for event, handler := range b.mapEventHandlers {
-//		b.Subscribe(event, handler)
-//	}
-//
-//	return nil
-//}

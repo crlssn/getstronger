@@ -14,16 +14,20 @@ func Module() fx.Option {
 		fx.Provide(
 			New,
 			handlers.NewHandlerRequestTraced,
-			func(handler *handlers.HandlerRequestTraced) map[string]handlers.Handler {
-				return map[string]handlers.Handler{
-					new(events.EventRequestTraced).Type(): handler,
-				}
-			},
 		),
 		fx.Invoke(
-			func(lc fx.Lifecycle, bus *Bus) {
+			func(
+				lc fx.Lifecycle,
+				bus *Bus,
+				handlerRequestTraced *handlers.HandlerRequestTraced,
+			) {
 				lc.Append(fx.Hook{
-					OnStart: func(ctx context.Context) error {
+					OnStart: func(_ context.Context) error {
+						for event, handler := range map[events.Event]handlers.Handler{
+							new(events.EventRequestTraced): handlerRequestTraced,
+						} {
+							bus.Subscribe(event, handler)
+						}
 						return nil
 					},
 				})
