@@ -10,11 +10,11 @@ import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v
 const notifications = ref([] as Notification[])
 const pageToken = ref(new Uint8Array(0))
 
-const normaliseTimestamp = (notification: Notification) => {
-  // TODO: Fix this.
-  notification.notifiedAt = {} as Timestamp
-  return notification
-}
+// const normaliseTimestamp = (notification: Notification) => {
+//   // TODO: Fix this.
+//   // notification.notifiedAt = {} as Timestamp
+//   // return notification
+// }
 
 const fetchUnreadNotifications = async () => {
   const req = create(ListNotificationsRequestSchema, {
@@ -26,7 +26,7 @@ const fetchUnreadNotifications = async () => {
   })
 
   const res = await UserClient.listNotifications(req)
-  notifications.value = [...notifications.value, ...res.notifications.map(normaliseTimestamp)]
+  notifications.value = [...notifications.value, ...res.notifications]
   pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
   if (pageToken.value.length > 0) {
     // TODO: Implement pagination.

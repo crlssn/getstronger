@@ -15,6 +15,9 @@ const props = defineProps<{
       {{ props.notification.type.value?.workout?.name }}
     </span>
     workout
+    <p class="text-xs text-gray-700 mt-1">
+      1 week ago
+    </p>
   </RouterLink>
 </template>
 

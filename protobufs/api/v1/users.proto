@@ -90,7 +90,8 @@ message Notification {
   }
 
   string id = 1;
-  google.protobuf.Timestamp notified_at = 2;
+  // DEBT: This should be a timestamp but the client is not able to parse it.
+  int64 notified_at_unix = 2;
   oneof type {
     WorkoutComment workout_comment = 3;
   }
