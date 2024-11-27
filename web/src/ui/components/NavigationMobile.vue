@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
 
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { UserClient } from '@/clients/clients.ts'
