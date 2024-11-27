@@ -194,7 +194,7 @@ func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 }
 
 type PageToken struct {
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type ListExercisesOpt func() ([]qm.QueryMod, error)
@@ -962,8 +962,8 @@ type CreateNotificationParams struct {
 }
 
 type NotificationPayload struct {
-	ActorID   string `json:"actor_id,omitempty"`
-	WorkoutID string `json:"workout_id,omitempty"`
+	ActorID   string `json:"actorId,omitempty"`
+	WorkoutID string `json:"workoutId,omitempty"`
 }
 
 func (r *Repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {

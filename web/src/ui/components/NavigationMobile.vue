@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
+
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { create } from '@bufbuild/protobuf'
+import { UserClient } from '@/clients/clients.ts'
+import { ListNotificationsRequestSchema } from '@/proto/api/v1/users_pb.ts'
 import {
   BellIcon,
   BookOpenIcon,
@@ -35,6 +41,21 @@ const navigation = [
   { href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon, name: 'Notifications' },
   { href: '/profile', icon: UserIcon, iconActive: UserSolidIcon, name: 'Profile' },
 ]
+
+const fetchUnreadNotifications = async () => {
+  const req = create(ListNotificationsRequestSchema, {
+    onlyUnread: true,
+    pagination: {
+      pageLimit: 1,
+    } as PaginationRequest
+  })
+  const res = await UserClient.listNotifications(req)
+  console.log(res.pagination?.totalResults)
+}
+
+onMounted(() => {
+  fetchUnreadNotifications()
+})
 </script>
 
 <template>

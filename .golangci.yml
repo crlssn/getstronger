@@ -20,8 +20,8 @@ linters:
     - exhaustruct
     - funlen
 
-linters-settings:
-  tagliatelle:
-    case:
-      rules:
-        json: snake
+#linters-settings:
+#  tagliatelle:
+#    case:
+#      rules:
+#        json: snake
