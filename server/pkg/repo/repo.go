@@ -940,13 +940,12 @@ type CreateTraceParams struct {
 	StatusCode int
 }
 
-func (r *Repo) CreateTrace(ctx context.Context, p CreateTraceParams) error {
+func (r *Repo) StoreTrace(ctx context.Context, p CreateTraceParams) error {
 	trace := &orm.Trace{
 		Request:    p.Request,
 		DurationMS: p.DurationMS,
 		StatusCode: p.StatusCode,
 	}
-
 	if err := trace.Insert(ctx, r.executor(), boil.Infer()); err != nil {
 		return fmt.Errorf("trace insert: %w", err)
 	}

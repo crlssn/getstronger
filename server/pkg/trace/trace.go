@@ -53,12 +53,12 @@ func (t *Trace) End(rw *ResponseWriter) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := t.repo.CreateTrace(ctx, repo.CreateTraceParams{
+		if err := t.repo.StoreTrace(ctx, repo.CreateTraceParams{
 			Request:    t.uri,
 			DurationMS: int(duration.Milliseconds()),
 			StatusCode: rw.statusCode,
 		}); err != nil {
-			t.log.Error("trace creation failed", zap.Error(err))
+			t.log.Error("trace store failed", zap.Error(err))
 		}
 	}()
 }
