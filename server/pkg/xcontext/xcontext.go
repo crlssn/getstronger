@@ -2,7 +2,6 @@ package xcontext
 
 import (
 	"context"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -10,10 +9,9 @@ import (
 type key struct{}
 
 type (
-	keyLogger         key
-	keyUserID         key
-	keyRefreshToken   key
-	keyTraceStartTime key
+	keyLogger       key
+	keyUserID       key
+	keyRefreshToken key
 )
 
 func WithLogger(ctx context.Context, logger *zap.Logger) context.Context {
@@ -54,13 +52,4 @@ func WithRefreshToken(ctx context.Context, token string) context.Context {
 func ExtractRefreshToken(ctx context.Context) (string, bool) {
 	token, ok := ctx.Value(keyRefreshToken{}).(string)
 	return token, ok
-}
-
-func WithTraceStartTime(ctx context.Context, startTime time.Time) context.Context {
-	return context.WithValue(ctx, keyTraceStartTime{}, startTime)
-}
-
-func ExtractTraceStartTime(ctx context.Context) (time.Time, bool) {
-	startTime, ok := ctx.Value(keyTraceStartTime{}).(time.Time)
-	return startTime, ok
 }
