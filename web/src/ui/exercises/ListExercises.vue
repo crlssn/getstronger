@@ -47,7 +47,7 @@ const fetchExercises = async () => {
   </AppButton>
   <ul
     role="list"
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl"
+    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
   >
     <li
       v-for="exercise in exercises"

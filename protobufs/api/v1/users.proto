@@ -90,7 +90,8 @@ message Notification {
     google.protobuf.Timestamp commented_at = 3;
   }
 
+  string id = 1;
   oneof type {
-    WorkoutComment workout_comment = 1;
+    WorkoutComment workout_comment = 2;
   }
 }

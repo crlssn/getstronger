@@ -1039,6 +1039,9 @@ func ListNotificationsWithOnlyUnread(onlyUnread bool) ListNotificationsOpt {
 func (r *Repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
+		if opt() == nil {
+			continue
+		}
 		query = append(query, opt())
 	}
 
@@ -1071,6 +1074,9 @@ func CountNotificationsWithOnlyUnread(onlyUnread bool) CountNotificationsOpt {
 func (r *Repo) CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
+		if opt() == nil {
+			continue
+		}
 		query = append(query, opt())
 	}
 
