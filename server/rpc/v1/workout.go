@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/bus"
@@ -195,30 +194,26 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
+	var err error
 	var user *orm.User
 	var comment *orm.WorkoutComment
-	if err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
-		commentID := uuid.NewString()
-		err := h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
-			CommentID: commentID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to publish event: %w", err)
-		}
-
-		comment, err = tx.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
-			ID:        commentID,
+	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
+		if comment, err = tx.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
 			UserID:    userID,
 			WorkoutID: req.Msg.GetWorkoutId(),
 			Comment:   req.Msg.GetComment(),
-		})
-		if err != nil {
+		}); err != nil {
 			return fmt.Errorf("failed to create workout comment: %w", err)
 		}
 
-		user, err = tx.GetUser(ctx, repo.GetUserWithID(comment.UserID))
-		if err != nil {
+		if user, err = tx.GetUser(ctx, repo.GetUserWithID(comment.UserID)); err != nil {
 			return fmt.Errorf("failed to get user: %w", err)
+		}
+
+		if err = h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
+			CommentID: comment.ID,
+		}); err != nil {
+			return fmt.Errorf("failed to publish event: %w", err)
 		}
 
 		return nil

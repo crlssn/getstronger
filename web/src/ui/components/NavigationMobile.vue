@@ -50,7 +50,7 @@ const fetchUnreadNotifications = async () => {
     } as PaginationRequest
   })
   const res = await UserClient.listNotifications(req)
-  console.log(res.pagination?.totalResults)
+  console.log(Number(res.pagination?.totalResults))
 }
 
 onMounted(() => {
