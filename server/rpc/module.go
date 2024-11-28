@@ -23,6 +23,7 @@ func Module() fx.Option {
 		fx.Provide(
 			registerHandlers,
 			v1.NewAuthHandler,
+			v1.NewFeedHandler,
 			v1.NewUserHandler,
 			v1.NewRoutineHandler,
 			v1.NewWorkoutHandler,
@@ -39,6 +40,7 @@ type Handlers struct {
 	fx.In
 
 	Auth     apiv1connect.AuthServiceHandler
+	Feed     apiv1connect.FeedServiceHandler
 	User     apiv1connect.UserServiceHandler
 	Routine  apiv1connect.RoutineServiceHandler
 	Workout  apiv1connect.WorkoutServiceHandler
@@ -49,6 +51,9 @@ func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Midd
 	handlers := []func(opts ...connect.HandlerOption) (string, http.Handler){
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewAuthServiceHandler(p.Auth, opts...)
+		},
+		func(opts ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewFeedServiceHandler(p.Feed, opts...)
 		},
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewUserServiceHandler(p.User, opts...)
