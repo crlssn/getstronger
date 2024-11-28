@@ -40,6 +40,7 @@ func newAuth(log *zap.Logger, m *jwt.Manager) Interceptor {
 func (a *auth) initMethods() {
 	fileDescriptors := []protoreflect.FileDescriptor{
 		apiv1.File_api_v1_auth_proto,
+		apiv1.File_api_v1_feed_proto,
 		apiv1.File_api_v1_users_proto,
 		apiv1.File_api_v1_exercise_proto,
 		apiv1.File_api_v1_routines_proto,

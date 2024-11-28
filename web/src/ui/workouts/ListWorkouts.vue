@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
+import { useAuthStore } from '@/stores/auth.ts'
 import { WorkoutClient } from '@/clients/clients'
 import { formatToCompactDateTime } from '@/utils/datetime'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 
+const authStore = useAuthStore()
 const pageToken = ref(new Uint8Array(0))
 const workouts = ref(Array<Workout>())
 
@@ -13,6 +15,7 @@ const fetchWorkouts = async () => {
   const req = create(ListWorkoutsRequestSchema, {
     pageSize: 100,
     pageToken: pageToken.value,
+    userIds: [authStore.userID],
   })
   const res = await WorkoutClient.list(req)
   workouts.value = [...workouts.value, ...res.workouts]

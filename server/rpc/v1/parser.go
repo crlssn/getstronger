@@ -3,7 +3,6 @@ package v1
 import (
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -253,8 +252,6 @@ func parseNotificationSliceToPB(
 
 		slice = append(slice, parseNotificationToPB(n, mapUsers[p.ActorID], mapWorkouts[p.WorkoutID]))
 	}
-
-	spew.Dump(slice)
 
 	return slice
 }

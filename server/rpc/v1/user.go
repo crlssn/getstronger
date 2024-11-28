@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/bus"
@@ -210,8 +209,6 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 		log.Error("failed to paginate notifications", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
-
-	spew.Dump(paginated.Items)
 
 	var userIDs []string
 	var workoutIDs []string
