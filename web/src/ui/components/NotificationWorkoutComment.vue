@@ -17,12 +17,12 @@ const props = defineProps<{
     <ChatBubbleLeftRightIcon class="w-6 h-6" />
     <div class="w-full">
       <div>
-        <span class="font-medium">
+        <span class="font-semibold">
           {{ props.notification.type.value?.actor?.firstName }}
           {{ props.notification.type.value?.actor?.lastName }}
         </span>
         commented on your
-        <span class="font-medium">
+        <span class="font-semibold">
           {{ props.notification.type.value?.workout?.name }}
         </span>
         workout
