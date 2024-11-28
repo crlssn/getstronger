@@ -3,6 +3,7 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notifications.ts'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { RefreshAccessTokenOrLogout, ScheduleTokenRefresh } from '@/jwt/jwt'
 
@@ -18,9 +19,13 @@ app.use(pinia)
 
 const init = async () => {
   const authStore = useAuthStore()
+  const notificationStore = useNotificationStore()
   if (authStore.accessToken) {
     await RefreshAccessTokenOrLogout()
     authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
+
+    await notificationStore.fetchUnreadNotifications()
+    notificationStore.setRefreshInterval()
   }
 
   app.mount('#app')

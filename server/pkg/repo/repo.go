@@ -1034,6 +1034,12 @@ func ListNotificationsWithOnlyUnread(onlyUnread bool) ListNotificationsOpt {
 	}
 }
 
+func ListNotificationsOrderByCreatedAtDESC() ListNotificationsOpt {
+	return func() qm.QueryMod {
+		return qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt))
+	}
+}
+
 func (r *Repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
@@ -1059,7 +1065,7 @@ func CountNotificationsWithUserID(userID string) CountNotificationsOpt {
 	}
 }
 
-func CountNotificationsWithOnlyUnread(onlyUnread bool) CountNotificationsOpt {
+func CountNotificationsWithUnreadOnly(onlyUnread bool) CountNotificationsOpt {
 	return func() qm.QueryMod {
 		if !onlyUnread {
 			return nil
@@ -1086,8 +1092,29 @@ func (r *Repo) CountNotifications(ctx context.Context, opts ...CountNotification
 	return count, nil
 }
 
-func ListNotificationsOrderByCreatedAtDESC() ListNotificationsOpt {
+type MarkNotificationsAsReadOpt func() qm.QueryMod
+
+func MarkNotificationsAsReadByUserID(userID string) MarkNotificationsAsReadOpt {
 	return func() qm.QueryMod {
-		return qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt))
+		return orm.NotificationWhere.UserID.EQ(userID)
 	}
+}
+
+func (r *Repo) MarkNotificationsAsRead(ctx context.Context, opts ...MarkNotificationsAsReadOpt) error {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	if query == nil {
+		return nil
+	}
+
+	if _, err := orm.Notifications(query...).UpdateAll(ctx, r.executor(), orm.M{
+		orm.NotificationColumns.ReadAt: time.Now().UTC(),
+	}); err != nil {
+		return fmt.Errorf("notifications update: %w", err)
+	}
+
+	return nil
 }
