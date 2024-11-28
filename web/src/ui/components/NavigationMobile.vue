@@ -72,7 +72,7 @@ onMounted(() => {
         class="h-6 w-6"
       />
       <span
-        v-if="item.href === '/notifications'"
+        v-if="item.href === '/notifications' && unreadCount > 0"
         class="badge"
       >{{ unreadCount }}</span>
     </RouterLink>

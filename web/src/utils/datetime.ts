@@ -13,3 +13,10 @@ export const formatToRelativeDateTime = (date: Timestamp | undefined): string =>
   if (relative === '0 seconds ago') return 'Just now'
   return relative
 }
+
+export const formatUnixToRelativeDateTime = (timestamp: bigint | undefined): string => {
+  if (!timestamp) return ''
+  const relative = DateTime.fromSeconds(Number(timestamp)).toRelative()
+  if (relative === '0 seconds ago') return 'Just now'
+  return relative
+}
