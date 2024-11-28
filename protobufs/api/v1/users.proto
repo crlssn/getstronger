@@ -85,6 +85,9 @@ message ListNotificationsResponse {
 }
 
 message Notification {
+  message UserFollowed {
+    User actor = 1;
+  }
   message WorkoutComment {
     User actor = 1;
     Workout workout = 2;
@@ -94,6 +97,7 @@ message Notification {
   // DEBT: This should be a timestamp but the client is not able to parse it.
   int64 notified_at_unix = 2;
   oneof type {
-    WorkoutComment workout_comment = 3;
+    UserFollowed user_followed = 3;
+    WorkoutComment workout_comment = 4;
   }
 }

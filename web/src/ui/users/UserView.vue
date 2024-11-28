@@ -3,12 +3,17 @@ import router from '@/router/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
+import AppButton from '@/ui/components/AppButton.vue'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { UserClient, WorkoutClient } from '@/clients/clients'
-import { GetUserRequestSchema } from '@/proto/api/v1/users_pb.ts'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import {
+  FollowRequestSchema,
+  GetUserRequestSchema,
+  UnfollowRequestSchema,
+} from '@/proto/api/v1/users_pb.ts'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
@@ -50,9 +55,43 @@ const updateTab = (event: Event) => {
   const target = event.target as HTMLSelectElement
   router.push(target.value)
 }
+
+const followUser = async () => {
+  const req = create(FollowRequestSchema, {
+    followId: route.params.id as string,
+  })
+  await UserClient.follow(req)
+  await fetchUser()
+}
+
+const unfollowUser = async () => {
+  const req = create(UnfollowRequestSchema, {
+    unfollowId: route.params.id as string,
+  })
+  await UserClient.unfollow(req)
+  await fetchUser()
+}
 </script>
 
 <template>
+  <AppButton
+    v-if="user?.followed"
+    colour="gray"
+    type="button"
+    class="mb-4"
+    @click="unfollowUser"
+  >
+    Unfollow {{ user?.firstName }}
+  </AppButton>
+  <AppButton
+    v-else
+    colour="primary"
+    type="button"
+    class="mb-4"
+    @click="followUser"
+  >
+    Follow {{ user?.firstName }}
+  </AppButton>
   <div class="mb-4">
     <div class="sm:hidden">
       <select

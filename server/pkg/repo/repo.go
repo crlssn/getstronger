@@ -1118,3 +1118,12 @@ func (r *Repo) MarkNotificationsAsRead(ctx context.Context, opts ...MarkNotifica
 
 	return nil
 }
+
+func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
+	exists, err := user.FollowerUsers(orm.UserWhere.ID.EQ(userID)).Exists(ctx, r.executor())
+	if err != nil {
+		return false, fmt.Errorf("user exists check: %w", err)
+	}
+
+	return exists, nil
+}

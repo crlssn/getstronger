@@ -5,6 +5,7 @@ import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
 import { UserClient } from '@/clients/clients.ts'
 import { useNotificationStore } from '@/stores/notifications.ts'
+import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v1/users_pb.ts'
 
@@ -40,14 +41,24 @@ onMounted(async () => {
 <template>
   <ul
     role="list"
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
+    class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-md"
   >
     <li
       v-for="notification in notifications"
       :key="notification.id"
       class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800"
     >
-      <NotificationWorkoutComment :notification="notification" />
+      <NotificationUserFollow
+        v-if="notification.type.case === 'userFollowed'"
+        :actor="notification.type.value?.actor"
+        :timestamp="notification.notifiedAtUnix"
+      />
+      <NotificationWorkoutComment
+        v-if="notification.type.case === 'workoutComment'"
+        :actor="notification.type.value?.actor"
+        :workout="notification.type.value?.workout"
+        :timestamp="notification.notifiedAtUnix"
+      />
     </li>
   </ul>
 </template>

@@ -14,6 +14,7 @@ func Module() fx.Option {
 		fx.Provide(
 			New,
 			handlers.NewRegistry,
+			handlers.NewUserFollowed,
 			handlers.NewRequestTraced,
 			handlers.NewWorkoutCommentPosted,
 		),
