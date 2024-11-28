@@ -11,11 +11,14 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/repo"
 )
 
+const timeout = 5 * time.Second
+
 type Handler interface {
 	HandlePayload(payload any)
 }
 
 var (
+	_ Handler = (*UserFollowed)(nil)
 	_ Handler = (*RequestTraced)(nil)
 	_ Handler = (*WorkoutCommentPosted)(nil)
 )
@@ -28,8 +31,6 @@ type RequestTraced struct {
 func NewRequestTraced(log *zap.Logger, repo *repo.Repo) *RequestTraced {
 	return &RequestTraced{log, repo}
 }
-
-const timeout = 5 * time.Second
 
 func (h *RequestTraced) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -85,5 +86,34 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		}
 	default:
 		w.log.Error("unexpected event type", zap.Any("event", payload))
+	}
+}
+
+type UserFollowed struct {
+	log  *zap.Logger
+	repo *repo.Repo
+}
+
+func NewUserFollowed(log *zap.Logger, repo *repo.Repo) *UserFollowed {
+	return &UserFollowed{log, repo}
+}
+
+func (u *UserFollowed) HandlePayload(payload any) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	switch t := payload.(type) {
+	case *payloads.UserFollowed:
+		if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
+			Type:   orm.NotificationTypeFollow,
+			UserID: t.FolloweeID,
+			Payload: repo.NotificationPayload{
+				ActorID: t.FollowerID,
+			},
+		}); err != nil {
+			u.log.Error("create notification", zap.Error(err))
+		}
+	default:
+		u.log.Error("unexpected event type", zap.Any("event", payload))
 	}
 }

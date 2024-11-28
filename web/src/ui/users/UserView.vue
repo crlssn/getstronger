@@ -3,17 +3,17 @@ import router from '@/router/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
+import AppButton from '@/ui/components/AppButton.vue'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { UserClient, WorkoutClient } from '@/clients/clients'
+import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 import {
   FollowRequestSchema,
   GetUserRequestSchema,
   UnfollowRequestSchema,
 } from '@/proto/api/v1/users_pb.ts'
-import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
-import AppButton from '@/ui/components/AppButton.vue'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
@@ -74,10 +74,22 @@ const unfollowUser = async () => {
 </script>
 
 <template>
-  <AppButton v-if="user?.followed" colour="gray" type="button" class="mb-4" @click="unfollowUser">
+  <AppButton
+    v-if="user?.followed"
+    colour="gray"
+    type="button"
+    class="mb-4"
+    @click="unfollowUser"
+  >
     Unfollow {{ user?.firstName }}
   </AppButton>
-  <AppButton v-else colour="primary" type="button" class="mb-4" @click="followUser">
+  <AppButton
+    v-else
+    colour="primary"
+    type="button"
+    class="mb-4"
+    @click="followUser"
+  >
     Follow {{ user?.firstName }}
   </AppButton>
   <div class="mb-4">
@@ -99,7 +111,10 @@ const unfollowUser = async () => {
       </select>
     </div>
     <div class="hidden sm:block">
-      <nav class="flex" aria-label="Tabs">
+      <nav
+        class="flex"
+        aria-label="Tabs"
+      >
         <RouterLink
           v-for="tab in tabs"
           :key="tab.name"
@@ -117,7 +132,11 @@ const unfollowUser = async () => {
     </div>
   </div>
   <div v-if="route.fullPath === tabs[0].href">
-    <CardWorkout v-for="workout in workouts" :key="workout.id" :workout="workout" />
+    <CardWorkout
+      v-for="workout in workouts"
+      :key="workout.id"
+      :workout="workout"
+    />
   </div>
 </template>
 

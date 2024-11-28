@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -250,18 +251,10 @@ func parseNotificationSliceToPB(
 			continue
 		}
 
-		w, ok := mapWorkouts[p.WorkoutID]
-		if !ok {
-			continue
-		}
-
-		u, ok := mapUsers[p.ActorID]
-		if !ok {
-			continue
-		}
-
-		slice = append(slice, parseNotificationToPB(n, u, w))
+		slice = append(slice, parseNotificationToPB(n, mapUsers[p.ActorID], mapWorkouts[p.WorkoutID]))
 	}
+
+	spew.Dump(slice)
 
 	return slice
 }
@@ -269,18 +262,22 @@ func parseNotificationSliceToPB(
 func parseNotificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.Notification {
 	switch n.Type {
 	case orm.NotificationTypeFollow:
-		return nil
+		return &apiv1.Notification{
+			Id:             n.ID,
+			NotifiedAtUnix: n.CreatedAt.Unix(),
+			Type: &apiv1.Notification_UserFollowed_{
+				UserFollowed: &apiv1.Notification_UserFollowed{
+					Actor: parseUserToPB(u, false),
+				},
+			},
+		}
 	case orm.NotificationTypeWorkoutComment:
 		return &apiv1.Notification{
 			Id:             n.ID,
 			NotifiedAtUnix: n.CreatedAt.Unix(),
 			Type: &apiv1.Notification_WorkoutComment_{
 				WorkoutComment: &apiv1.Notification_WorkoutComment{
-					Actor: &apiv1.User{
-						Id:        u.ID,
-						FirstName: u.FirstName,
-						LastName:  u.LastName,
-					},
+					Actor: parseUserToPB(u, false),
 					Workout: &apiv1.Workout{
 						Id:   w.ID,
 						Name: w.Name,

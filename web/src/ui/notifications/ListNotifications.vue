@@ -5,6 +5,7 @@ import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
 import { UserClient } from '@/clients/clients.ts'
 import { useNotificationStore } from '@/stores/notifications.ts'
+import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v1/users_pb.ts'
 
@@ -25,6 +26,7 @@ const fetchUnreadNotifications = async () => {
   const res = await UserClient.listNotifications(req)
   notifications.value = [...notifications.value, ...res.notifications]
   pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
+  console.log(notifications.value)
   if (pageToken.value.length > 0) {
     // TODO: Implement pagination.
     await fetchUnreadNotifications()
@@ -47,7 +49,14 @@ onMounted(async () => {
       :key="notification.id"
       class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800"
     >
-      <NotificationWorkoutComment :notification="notification" />
+      <NotificationWorkoutComment
+        v-if="notification.type.case === 'workoutComment'"
+        :notification="notification"
+      />
+      <NotificationUserFollow
+        v-if="notification.type.case === 'userFollowed'"
+        :notification="notification"
+      />
     </li>
   </ul>
 </template>

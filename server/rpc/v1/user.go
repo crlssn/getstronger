@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/bus"
@@ -103,7 +104,7 @@ func (h *userHandler) Follow(ctx context.Context, req *connect.Request[v1.Follow
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err := h.bus.Publish(events.UserFollowed, payloads.UserFollowed{
+	if err := h.bus.Publish(events.UserFollowed, &payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
 	}); err != nil {
@@ -210,9 +211,11 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	spew.Dump(paginated.Items)
+
 	var userIDs []string
 	var workoutIDs []string
-	payloads := make(map[string]repo.NotificationPayload)
+	nPayloads := make(map[string]repo.NotificationPayload)
 
 	for _, n := range paginated.Items {
 		var payload repo.NotificationPayload
@@ -221,12 +224,12 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
-		payloads[n.ID] = payload
-		if payload.WorkoutID != "" {
-			workoutIDs = append(workoutIDs, payload.WorkoutID)
-		}
+		nPayloads[n.ID] = payload
 		if payload.ActorID != "" {
 			userIDs = append(userIDs, payload.ActorID)
+		}
+		if payload.WorkoutID != "" {
+			workoutIDs = append(workoutIDs, payload.WorkoutID)
 		}
 	}
 
@@ -251,7 +254,7 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 
 	return &connect.Response[v1.ListNotificationsResponse]{
 		Msg: &v1.ListNotificationsResponse{
-			Notifications: parseNotificationSliceToPB(paginated.Items, payloads, users, workouts),
+			Notifications: parseNotificationSliceToPB(paginated.Items, nPayloads, users, workouts),
 			Pagination: &v1.PaginationResponse{
 				TotalResults:  total,
 				NextPageToken: paginated.NextPageToken,
