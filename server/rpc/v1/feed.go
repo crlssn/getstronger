@@ -24,7 +24,7 @@ func NewFeedHandler(r *repo.Repo) apiv1connect.FeedServiceHandler {
 	return &feedHandler{r}
 }
 
-func (h *feedHandler) ListItems(ctx context.Context, req *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error) {
+func (h *feedHandler) ListItems(ctx context.Context, req *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error) { //nolint:cyclop // TODO: Simplify this method.
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -40,15 +40,16 @@ func (h *feedHandler) ListItems(ctx context.Context, req *connect.Request[v1.Lis
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var followerIDs []string
+	followerIDs := make([]string, 0, len(followers))
 	for _, follower := range followers {
 		followerIDs = append(followerIDs, follower.ID)
 	}
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	workouts, err := h.repo.ListWorkouts(ctx,
+		repo.ListWorkoutsWithSets(),
 		repo.ListWorkoutsWithLimit(limit+1),
-		repo.ListWorkoutsWithUserIDs(followerIDs),
+		repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)),
 		repo.ListWorkoutsWithComments(),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
@@ -99,7 +100,7 @@ func (h *feedHandler) ListItems(ctx context.Context, req *connect.Request[v1.Lis
 }
 
 func parseFeedItemsToPB(workouts orm.WorkoutSlice, users orm.UserSlice, exercises orm.ExerciseSlice) []*v1.FeedItem {
-	var items []*v1.FeedItem
+	items := make([]*v1.FeedItem, 0, len(workouts))
 	for _, workout := range workouts {
 		items = append(items, &v1.FeedItem{
 			Type: &v1.FeedItem_Workout{
