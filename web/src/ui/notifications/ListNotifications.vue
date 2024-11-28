@@ -12,11 +12,12 @@ const pageToken = ref(new Uint8Array(0))
 
 const fetchUnreadNotifications = async () => {
   const req = create(ListNotificationsRequestSchema, {
-    onlyUnread: false,
+    markAsRead: true,
     pagination: {
       pageLimit: 100,
       pageToken: pageToken.value,
     } as PaginationRequest,
+    unreadOnly: false,
   })
 
   const res = await UserClient.listNotifications(req)

@@ -43,10 +43,11 @@ const navigation = [
 
 const fetchUnreadNotifications = async () => {
   const req = create(ListNotificationsRequestSchema, {
-    onlyUnread: true,
+    markAsRead: false,
     pagination: {
       pageLimit: 1,
-    } as PaginationRequest
+    } as PaginationRequest,
+    unreadOnly: true,
   })
   const res = await UserClient.listNotifications(req)
   unreadCount.value = Number(res.pagination?.totalResults)
