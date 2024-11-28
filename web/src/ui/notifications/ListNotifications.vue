@@ -41,7 +41,7 @@ onMounted(async () => {
 <template>
   <ul
     role="list"
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
+    class="divide-y divide-gray-100 overflow-hidden bg-white border border-gray-200 rounded-md"
   >
     <li
       v-for="notification in notifications"
