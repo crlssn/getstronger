@@ -50,11 +50,14 @@ onMounted(async () => {
     >
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
-        :notification="notification"
+        :actor="notification.type.value?.actor"
+        :timestamp="notification.notifiedAtUnix"
       />
       <NotificationWorkoutComment
         v-if="notification.type.case === 'workoutComment'"
-        :notification="notification"
+        :actor="notification.type.value?.actor"
+        :workout="notification.type.value?.workout"
+        :timestamp="notification.notifiedAtUnix"
       />
     </li>
   </ul>
