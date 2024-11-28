@@ -8,6 +8,9 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/bus"
+	"github.com/crlssn/getstronger/server/bus/events"
+	"github.com/crlssn/getstronger/server/bus/payloads"
 	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
@@ -18,11 +21,17 @@ import (
 var _ apiv1connect.UserServiceHandler = (*userHandler)(nil)
 
 type userHandler struct {
+	bus  *bus.Bus
 	repo *repo.Repo
+}
+
+func NewUserHandler(b *bus.Bus, r *repo.Repo) apiv1connect.UserServiceHandler {
+	return &userHandler{b, r}
 }
 
 func (h *userHandler) Get(ctx context.Context, req *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
 
 	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(req.Msg.GetId()))
 	if err != nil {
@@ -30,9 +39,15 @@ func (h *userHandler) Get(ctx context.Context, req *connect.Request[v1.GetUserRe
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	followed, err := h.repo.IsUserFollowedByUserID(ctx, user, userID)
+	if err != nil {
+		log.Error("failed to check if user is followed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	return &connect.Response[v1.GetUserResponse]{
 		Msg: &v1.GetUserResponse{
-			User: parseUserToPB(user),
+			User: parseUserToPB(user, followed),
 		},
 	}, nil
 }
@@ -76,10 +91,6 @@ func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.Search
 	}, nil
 }
 
-func NewUserHandler(r *repo.Repo) apiv1connect.UserServiceHandler {
-	return &userHandler{r}
-}
-
 func (h *userHandler) Follow(ctx context.Context, req *connect.Request[v1.FollowRequest]) (*connect.Response[v1.FollowResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
@@ -89,6 +100,14 @@ func (h *userHandler) Follow(ctx context.Context, req *connect.Request[v1.Follow
 		FolloweeID: req.Msg.GetFollowId(),
 	}); err != nil {
 		log.Error("failed to follow user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err := h.bus.Publish(events.UserFollowed, payloads.UserFollowed{
+		FollowerID: userID,
+		FolloweeID: req.Msg.GetFollowId(),
+	}); err != nil {
+		log.Error("failed to publish user followed event", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

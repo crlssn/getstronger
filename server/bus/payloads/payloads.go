@@ -9,3 +9,8 @@ type RequestTraced struct {
 type WorkoutCommentPosted struct {
 	CommentID string
 }
+
+type UserFollowed struct {
+	FollowerID string
+	FolloweeID string
+}

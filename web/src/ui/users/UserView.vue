@@ -7,8 +7,13 @@ import { type User } from '@/proto/api/v1/shared_pb.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { UserClient, WorkoutClient } from '@/clients/clients'
-import { GetUserRequestSchema } from '@/proto/api/v1/users_pb.ts'
+import {
+  FollowRequestSchema,
+  GetUserRequestSchema,
+  UnfollowRequestSchema,
+} from '@/proto/api/v1/users_pb.ts'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
@@ -50,9 +55,31 @@ const updateTab = (event: Event) => {
   const target = event.target as HTMLSelectElement
   router.push(target.value)
 }
+
+const followUser = async () => {
+  const req = create(FollowRequestSchema, {
+    followId: route.params.id as string,
+  })
+  await UserClient.follow(req)
+  await fetchUser()
+}
+
+const unfollowUser = async () => {
+  const req = create(UnfollowRequestSchema, {
+    unfollowId: route.params.id as string,
+  })
+  await UserClient.unfollow(req)
+  await fetchUser()
+}
 </script>
 
 <template>
+  <AppButton v-if="user?.followed" colour="gray" type="button" class="mb-4" @click="unfollowUser">
+    Unfollow {{ user?.firstName }}
+  </AppButton>
+  <AppButton v-else colour="primary" type="button" class="mb-4" @click="followUser">
+    Follow {{ user?.firstName }}
+  </AppButton>
   <div class="mb-4">
     <div class="sm:hidden">
       <select
@@ -72,10 +99,7 @@ const updateTab = (event: Event) => {
       </select>
     </div>
     <div class="hidden sm:block">
-      <nav
-        class="flex"
-        aria-label="Tabs"
-      >
+      <nav class="flex" aria-label="Tabs">
         <RouterLink
           v-for="tab in tabs"
           :key="tab.name"
@@ -93,11 +117,7 @@ const updateTab = (event: Event) => {
     </div>
   </div>
   <div v-if="route.fullPath === tabs[0].href">
-    <CardWorkout
-      v-for="workout in workouts"
-      :key="workout.id"
-      :workout="workout"
-    />
+    <CardWorkout v-for="workout in workouts" :key="workout.id" :workout="workout" />
   </div>
 </template>
 
