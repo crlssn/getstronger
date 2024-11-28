@@ -158,7 +158,7 @@ func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1
 	}, nil
 }
 
-func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) {
+func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) { //nolint:cyclop // TODO: Simplify this method.
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 

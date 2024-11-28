@@ -4,11 +4,13 @@ import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
 import { UserClient } from '@/clients/clients.ts'
+import { useNotificationStore } from '@/stores/notifications.ts'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v1/users_pb.ts'
 
 const notifications = ref([] as Notification[])
 const pageToken = ref(new Uint8Array(0))
+const notificationStore = useNotificationStore()
 
 const fetchUnreadNotifications = async () => {
   const req = create(ListNotificationsRequestSchema, {
@@ -29,8 +31,9 @@ const fetchUnreadNotifications = async () => {
   }
 }
 
-onMounted(() => {
-  fetchUnreadNotifications()
+onMounted(async () => {
+  await fetchUnreadNotifications()
+  await notificationStore.fetchUnreadNotifications()
 })
 </script>
 
