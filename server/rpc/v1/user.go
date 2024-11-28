@@ -164,7 +164,7 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 
 	total, err := h.repo.CountNotifications(ctx,
 		repo.CountNotificationsWithUserID(userID),
-		repo.CountNotificationsWithOnlyUnread(req.Msg.GetOnlyUnread()),
+		repo.CountNotificationsWithUnreadOnly(req.Msg.GetUnreadOnly()),
 	)
 	if err != nil {
 		log.Error("failed to count notifications", zap.Error(err))
@@ -175,7 +175,7 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 	notifications, err := h.repo.ListNotifications(ctx,
 		repo.ListNotificationsWithLimit(limit+1),
 		repo.ListNotificationsWithUserID(userID),
-		repo.ListNotificationsWithOnlyUnread(req.Msg.GetOnlyUnread()),
+		repo.ListNotificationsWithOnlyUnread(req.Msg.GetUnreadOnly()),
 		repo.ListNotificationsOrderByCreatedAtDESC(),
 	)
 	if err != nil {
@@ -221,6 +221,13 @@ func (h *userHandler) ListNotifications(ctx context.Context, req *connect.Reques
 	if err != nil {
 		log.Error("failed to list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if req.Msg.GetMarkAsRead() {
+		if err = h.repo.MarkNotificationsAsRead(ctx, repo.MarkNotificationsAsReadByUserID(userID)); err != nil {
+			log.Error("failed to mark notifications as read", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
 	}
 
 	return &connect.Response[v1.ListNotificationsResponse]{
