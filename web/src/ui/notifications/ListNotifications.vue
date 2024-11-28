@@ -48,12 +48,12 @@ onMounted(async () => {
       :key="notification.id"
       class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800"
     >
-      <NotificationWorkoutComment
-        v-if="notification.type.case === 'workoutComment'"
-        :notification="notification"
-      />
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
+        :notification="notification"
+      />
+      <NotificationWorkoutComment
+        v-if="notification.type.case === 'workoutComment'"
         :notification="notification"
       />
     </li>
