@@ -64,6 +64,7 @@ nav {
   @apply fixed w-full bottom-0 z-50 h-16 px-8 bg-white border-t-2 border-gray-200;
   @apply lg:hidden flex justify-between items-center;
 }
+
 .badge {
   @apply absolute left-3 bottom-2 bg-red-600 rounded-full flex justify-center items-center text-xs font-medium text-white scale-75 w-6 h-6;
 }

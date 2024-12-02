@@ -71,6 +71,12 @@ func (m *Middleware) cookies(h http.Handler) http.Handler {
 
 func (m *Middleware) trace(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := w.(http.Flusher); ok {
+			// Bypass tracing for streaming requests.
+			h.ServeHTTP(w, r)
+			return
+		}
+
 		// Use a custom response writer to capture the status code.
 		rw := &trace.ResponseWriter{ResponseWriter: w}
 		t := m.tracer.Trace(r.RequestURI)

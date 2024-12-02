@@ -19,15 +19,9 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/xzap"
 )
 
-type auth struct {
-	log     *zap.Logger
-	jwt     *jwt.Manager
-	methods map[string]bool
-}
+var _ connect.Interceptor = (*auth)(nil)
 
-var _ Interceptor = (*auth)(nil)
-
-func newAuth(log *zap.Logger, m *jwt.Manager) Interceptor {
+func newAuth(log *zap.Logger, m *jwt.Manager) connect.Interceptor {
 	a := &auth{
 		log:     log,
 		jwt:     m,
@@ -35,6 +29,81 @@ func newAuth(log *zap.Logger, m *jwt.Manager) Interceptor {
 	}
 	a.initMethods()
 	return a
+}
+
+type auth struct {
+	log     *zap.Logger
+	jwt     *jwt.Manager
+	methods map[string]bool
+}
+
+func (a *auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(
+		ctx context.Context,
+		req connect.AnyRequest,
+	) (connect.AnyResponse, error) {
+		log := a.log.With(xzap.FieldRPC(req.Spec().Procedure))
+		log.Info("request received")
+		ctx = xcontext.WithLogger(ctx, log)
+
+		requiresAuth := a.methods[req.Spec().Procedure]
+		if !requiresAuth {
+			log.Info("request does not require authentication")
+			return next(ctx, req)
+		}
+
+		claims, err := a.claimsFromHeader(req.Header())
+		if err != nil {
+			log.Warn("request unauthenticated", zap.Error(err))
+			return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+		}
+
+		log = log.With(xzap.FieldUserID(claims.UserID))
+		log.Info("request authenticated")
+
+		ctx = xcontext.WithLogger(ctx, log)
+		ctx = xcontext.WithUserID(ctx, claims.UserID)
+		return next(ctx, req)
+	}
+}
+
+func (a *auth) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return func(
+		ctx context.Context,
+		spec connect.Spec,
+	) connect.StreamingClientConn {
+		return next(ctx, spec)
+	}
+}
+
+func (a *auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(
+		ctx context.Context,
+		conn connect.StreamingHandlerConn,
+	) error {
+		log := a.log.With(xzap.FieldRPC(conn.Spec().Procedure))
+		log.Info("request received")
+		ctx = xcontext.WithLogger(ctx, log)
+
+		requiresAuth := a.methods[conn.Spec().Procedure]
+		if !requiresAuth {
+			log.Info("request does not require authentication")
+			return next(ctx, conn)
+		}
+
+		claims, err := a.claimsFromHeader(conn.RequestHeader())
+		if err != nil {
+			log.Warn("request unauthenticated", zap.Error(err))
+			return connect.NewError(connect.CodeUnauthenticated, nil)
+		}
+
+		log = log.With(xzap.FieldUserID(claims.UserID))
+		log.Info("request authenticated")
+
+		ctx = xcontext.WithLogger(ctx, log)
+		ctx = xcontext.WithUserID(ctx, claims.UserID)
+		return next(ctx, conn)
+	}
 }
 
 func (a *auth) initMethods() {
@@ -45,6 +114,7 @@ func (a *auth) initMethods() {
 		apiv1.File_api_v1_exercise_proto,
 		apiv1.File_api_v1_routines_proto,
 		apiv1.File_api_v1_workouts_proto,
+		apiv1.File_api_v1_notifications_proto,
 	}
 
 	for _, fileDescriptor := range fileDescriptors {
@@ -74,39 +144,6 @@ func (a *auth) initMethods() {
 				fullMethodName := fmt.Sprintf("/%s/%s", service.FullName(), method.Name())
 				a.methods[fullMethodName] = requiresAuth
 			}
-		}
-	}
-}
-
-// Unary is the unary interceptor method for authentication.
-func (a *auth) Unary() connect.UnaryInterceptorFunc {
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(
-			ctx context.Context,
-			req connect.AnyRequest,
-		) (connect.AnyResponse, error) {
-			log := a.log.With(xzap.FieldRPC(req.Spec().Procedure))
-			log.Info("request received")
-			ctx = xcontext.WithLogger(ctx, log)
-
-			requiresAuth := a.methods[req.Spec().Procedure]
-			if !requiresAuth {
-				log.Info("request does not require authentication")
-				return next(ctx, req)
-			}
-
-			claims, err := a.claimsFromHeader(req.Header())
-			if err != nil {
-				log.Warn("request unauthenticated", zap.Error(err))
-				return nil, connect.NewError(connect.CodeUnauthenticated, nil)
-			}
-
-			log = log.With(xzap.FieldUserID(claims.UserID))
-			log.Info("request authenticated")
-
-			ctx = xcontext.WithLogger(ctx, log)
-			ctx = xcontext.WithUserID(ctx, claims.UserID)
-			return next(ctx, req)
 		}
 	}
 }
