@@ -89,24 +89,18 @@ func (h *feedHandler) ListItems(ctx context.Context, req *connect.Request[v1.Lis
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	feedItems, err := parseFeedItemsToPB(paginated.Items, users, exercises)
+	if err != nil {
+		log.Error("failed to parse feed items", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	return &connect.Response[v1.ListItemsResponse]{
 		Msg: &v1.ListItemsResponse{
-			Items: parseFeedItemsToPB(paginated.Items, users, exercises),
+			Items: feedItems,
 			Pagination: &v1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},
 		},
 	}, nil
-}
-
-func parseFeedItemsToPB(workouts orm.WorkoutSlice, users orm.UserSlice, exercises orm.ExerciseSlice) []*v1.FeedItem {
-	items := make([]*v1.FeedItem, 0, len(workouts))
-	for _, workout := range workouts {
-		items = append(items, &v1.FeedItem{
-			Type: &v1.FeedItem_Workout{
-				Workout: parseWorkoutToPB(workout, exercises, users),
-			},
-		})
-	}
-	return items
 }

@@ -239,7 +239,13 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	pb, err := parsePersonalBestSliceToPB(personalBests, exercises)
+	if err != nil {
+		log.Error("failed to parse personal best slice to pb", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	return connect.NewResponse(&v1.GetPersonalBestsResponse{
-		PersonalBests: parsePersonalBestSliceToPB(personalBests, exercises),
+		PersonalBests: pb,
 	}), nil
 }
