@@ -109,10 +109,16 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	w, err := parseWorkoutToPB(workout, exercises, users)
+	if err != nil {
+		log.Error("failed to parse workout", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("workout fetched")
 	return &connect.Response[v1.GetWorkoutResponse]{
 		Msg: &v1.GetWorkoutResponse{
-			Workout: parseWorkoutToPB(workout, exercises, users),
+			Workout: w,
 		},
 	}, nil
 }
@@ -164,10 +170,16 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	w, err := parseWorkoutSliceToPB(pagination.Items, exercises, users)
+	if err != nil {
+		log.Error("failed to parse workouts", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("workouts listed")
 	return &connect.Response[v1.ListWorkoutsResponse]{
 		Msg: &v1.ListWorkoutsResponse{
-			Workouts:      parseWorkoutSliceToPB(pagination.Items, exercises, users),
+			Workouts:      w,
 			NextPageToken: pagination.NextPageToken,
 		},
 	}, nil
