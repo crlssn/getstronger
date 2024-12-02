@@ -17,7 +17,7 @@ const props = defineProps<Props>()
   >
     <div>
       <MenuButton
-        class="flex items-center rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+        class="flex items-center rounded-full text-gray-400 hover:text-gray-600 focus:outline-none"
       >
         <EllipsisVerticalIcon
           class="h-5 w-5"

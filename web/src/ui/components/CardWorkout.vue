@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
+import { useAuthStore } from '@/stores/auth.ts'
 import { useTextareaAutosize } from '@vueuse/core'
 import { WorkoutClient } from '@/clients/clients.ts'
 import AppButton from '@/ui/components/AppButton.vue'
@@ -17,6 +18,7 @@ import {
 import { formatToRelativeDateTime } from '../../utils/datetime.ts'
 
 const { input, textarea } = useTextareaAutosize()
+const authStore = useAuthStore()
 
 const props = defineProps<{
   workout: Workout
@@ -46,8 +48,8 @@ const postComment = async () => {
 </script>
 
 <template>
-  <div class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4">
-    <div class="px-4 py-5 sm:px-6">
+  <div class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4 text-sm">
+    <div class="px-4 py-5">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <RouterLink
@@ -60,10 +62,13 @@ const postComment = async () => {
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </span>
         </div>
-        <DropdownButton :items="dropdownItems" />
+        <DropdownButton
+          v-if="workout.user?.id === authStore.userID"
+          :items="dropdownItems"
+        />
       </div>
     </div>
-    <div class="px-4 py-5 sm:p-6">
+    <div class="px-4 py-5">
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
         :key="exerciseSet.exercise?.id"
@@ -71,7 +76,7 @@ const postComment = async () => {
         :sets="exerciseSet.sets"
       />
     </div>
-    <div class="px-4 py-4 sm:px-6">
+    <div class="px-4 py-5">
       <div
         v-if="comments.length > 0"
         class="mb-4"
