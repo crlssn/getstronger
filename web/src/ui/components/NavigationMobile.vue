@@ -15,7 +15,6 @@ import {
   RectangleStackIcon as RectangleStackSolidIcon,
   UserIcon as UserSolidIcon,
 } from '@heroicons/vue/24/solid'
-// import { onMounted, onUnmounted, ref } from 'vue'
 
 const route = useRoute()
 const notificationStore = useNotificationStore()
@@ -36,34 +35,6 @@ const navigation = [
   { href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon, name: 'Notifications' },
   { href: '/profile', icon: UserIcon, iconActive: UserSolidIcon, name: 'Profile' },
 ]
-
-// const unreadNotifications = ref(0)
-// let eventSource: EventSource | null = null
-//
-// const closeEventSource = () => {
-//   console.info('Closing EventSource connection')
-//   eventSource?.close()
-//   eventSource = null
-// }
-//
-// onMounted(() => {
-//   eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/sse/notifications`)
-//   eventSource.onmessage = (event) => {
-//     console.log(event.data)
-//     unreadNotifications.value = parseInt(event.data, 10)
-//   }
-//
-//   eventSource.onerror = (error) => {
-//     console.error('SSE connection error', error)
-//     closeEventSource()
-//   }
-// })
-//
-// onUnmounted(() => {
-//   if (eventSource) {
-//     closeEventSource()
-//   }
-// })
 </script>
 
 <template>
