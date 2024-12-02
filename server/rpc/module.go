@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
 	"go.uber.org/fx"
@@ -78,13 +80,27 @@ func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Midd
 	return mux
 }
 
+const (
+	readTimeout  = 10 * time.Second
+	writeTimeout = 10 * time.Second
+	idleTimeout  = 120 * time.Second
+)
+
 func startServer(lc fx.Lifecycle, c *config.Config, mux *http.ServeMux) {
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				address := fmt.Sprintf(":%s", c.Server.Port)
-				err := http.ListenAndServeTLS(address, c.Server.CertPath, c.Server.KeyPath, h2c.NewHandler(mux, &http2.Server{}))
-				if err != nil {
+				server := &http.Server{
+					Addr:         fmt.Sprintf(":%s", c.Server.Port),
+					Handler:      h2c.NewHandler(mux, &http2.Server{}),
+					ReadTimeout:  readTimeout,
+					WriteTimeout: writeTimeout,
+					IdleTimeout:  idleTimeout,
+					TLSConfig: &tls.Config{
+						MinVersion: tls.VersionTLS12,
+					},
+				}
+				if err := server.ListenAndServeTLS(c.Server.CertPath, c.Server.KeyPath); err != nil {
 					panic(fmt.Errorf("listen and serve: %w", err))
 				}
 			}()
