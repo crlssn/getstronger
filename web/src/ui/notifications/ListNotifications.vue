@@ -7,6 +7,8 @@ import { NotificationClient } from '@/clients/clients.ts'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v1/notifications_pb.ts'
+import AppList from '@/ui/components/AppList.vue'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const notifications = ref([] as Notification[])
 const pageToken = ref(new Uint8Array(0))
@@ -36,14 +38,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ul
-    role="list"
-    class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-md"
-  >
-    <li
+  <AppList>
+    <AppListItem
       v-for="notification in notifications"
       :key="notification.id"
-      class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800"
     >
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
@@ -56,8 +54,8 @@ onMounted(async () => {
         :workout="notification.type.value?.workout"
         :timestamp="notification.notifiedAtUnix"
       />
-    </li>
-  </ul>
+    </AppListItem>
+  </AppList>
 </template>
 
 <style scoped></style>

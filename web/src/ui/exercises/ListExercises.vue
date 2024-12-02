@@ -3,9 +3,11 @@ import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
+import AppList from '@/ui/components/AppList.vue'
 import { ExerciseClient } from '@/clients/clients'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 
 const exercises = ref(Array<Exercise>())
@@ -45,24 +47,14 @@ const fetchExercises = async () => {
   >
     Create Exercise
   </AppButton>
-  <ul
-    role="list"
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
-  >
-    <li
+  <AppList>
+    <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"
+      :to="`/exercises/${exercise.id}/edit`"
     >
-      <RouterLink
-        :to="`/exercises/${exercise.id}/edit`"
-        class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-900"
-      >
-        {{ exercise.name }}
-        <ChevronRightIcon
-          class="size-5 flex-none text-gray-400"
-          aria-hidden="true"
-        />
-      </RouterLink>
-    </li>
-  </ul>
+      {{ exercise.name }}
+      <ChevronRightIcon class="size-5 flex-none text-gray-400" />
+    </AppListItemLink>
+  </AppList>
 </template>
