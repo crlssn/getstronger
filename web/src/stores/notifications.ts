@@ -9,9 +9,20 @@ export const useNotificationStore = defineStore('notifications', () => {
 
   const streamUnreadNotifications = async () => {
     const req = create(UnreadNotificationsRequestSchema, {})
-    const stream = NotificationClient.unreadNotifications(req)
-    for await (const message of stream) {
-      unreadCount.value = Number(message.count)
+    while (true) {
+      try {
+        const stream = NotificationClient.unreadNotifications(req)
+        for await (const message of stream) {
+          unreadCount.value = Number(message.count)
+        }
+
+        break
+      } catch (error) {
+        console.error('Stream disconnected, retrying...', error)
+      }
+
+      // Wait before retrying.
+      await new Promise((resolve) => setTimeout(resolve, 5000))
     }
   }
 
