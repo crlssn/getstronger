@@ -12,7 +12,6 @@ import (
 
 	connect "connectrpc.com/connect"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file and the connect package are
@@ -53,7 +52,7 @@ var (
 // NotificationServiceClient is a client for the api.v1.NotificationService service.
 type NotificationServiceClient interface {
 	ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error)
-	UnreadNotifications(context.Context, *connect.Request[emptypb.Empty]) (*connect.ServerStreamForClient[v1.UnreadNotificationsResponse], error)
+	UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest]) (*connect.ServerStreamForClient[v1.UnreadNotificationsResponse], error)
 }
 
 // NewNotificationServiceClient constructs a client for the api.v1.NotificationService service. By
@@ -72,7 +71,7 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(notificationServiceListNotificationsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		unreadNotifications: connect.NewClient[emptypb.Empty, v1.UnreadNotificationsResponse](
+		unreadNotifications: connect.NewClient[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse](
 			httpClient,
 			baseURL+NotificationServiceUnreadNotificationsProcedure,
 			connect.WithSchema(notificationServiceUnreadNotificationsMethodDescriptor),
@@ -84,7 +83,7 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 // notificationServiceClient implements NotificationServiceClient.
 type notificationServiceClient struct {
 	listNotifications   *connect.Client[v1.ListNotificationsRequest, v1.ListNotificationsResponse]
-	unreadNotifications *connect.Client[emptypb.Empty, v1.UnreadNotificationsResponse]
+	unreadNotifications *connect.Client[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse]
 }
 
 // ListNotifications calls api.v1.NotificationService.ListNotifications.
@@ -93,14 +92,14 @@ func (c *notificationServiceClient) ListNotifications(ctx context.Context, req *
 }
 
 // UnreadNotifications calls api.v1.NotificationService.UnreadNotifications.
-func (c *notificationServiceClient) UnreadNotifications(ctx context.Context, req *connect.Request[emptypb.Empty]) (*connect.ServerStreamForClient[v1.UnreadNotificationsResponse], error) {
+func (c *notificationServiceClient) UnreadNotifications(ctx context.Context, req *connect.Request[v1.UnreadNotificationsRequest]) (*connect.ServerStreamForClient[v1.UnreadNotificationsResponse], error) {
 	return c.unreadNotifications.CallServerStream(ctx, req)
 }
 
 // NotificationServiceHandler is an implementation of the api.v1.NotificationService service.
 type NotificationServiceHandler interface {
 	ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error)
-	UnreadNotifications(context.Context, *connect.Request[emptypb.Empty], *connect.ServerStream[v1.UnreadNotificationsResponse]) error
+	UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest], *connect.ServerStream[v1.UnreadNotificationsResponse]) error
 }
 
 // NewNotificationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -140,6 +139,6 @@ func (UnimplementedNotificationServiceHandler) ListNotifications(context.Context
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.NotificationService.ListNotifications is not implemented"))
 }
 
-func (UnimplementedNotificationServiceHandler) UnreadNotifications(context.Context, *connect.Request[emptypb.Empty], *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
+func (UnimplementedNotificationServiceHandler) UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest], *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.NotificationService.UnreadNotifications is not implemented"))
 }

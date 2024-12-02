@@ -7,7 +7,6 @@ import (
 
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
@@ -109,7 +108,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	}, nil
 }
 
-func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[emptypb.Empty], res *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
+func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[v1.UnreadNotificationsRequest], res *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 

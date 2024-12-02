@@ -9,7 +9,6 @@ import type { PaginationRequest, PaginationResponse, User } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
 import type { Workout } from "./workouts_pb";
 import { file_api_v1_workouts } from "./workouts_pb";
-import type { EmptySchema } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -18,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/notifications.proto.
  */
 export const file_api_v1_notifications: GenFile = /*@__PURE__*/
-  fileDesc("ChphcGkvdjEvbm90aWZpY2F0aW9ucy5wcm90bxIGYXBpLnYxInwKGExpc3ROb3RpZmljYXRpb25zUmVxdWVzdBITCgt1bnJlYWRfb25seRgBIAEoCBIUCgxtYXJrX2FzX3JlYWQYAiABKAgSNQoKcGFnaW5hdGlvbhgDIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBIngKGUxpc3ROb3RpZmljYXRpb25zUmVzcG9uc2USKwoNbm90aWZpY2F0aW9ucxgBIAMoCzIULmFwaS52MS5Ob3RpZmljYXRpb24SLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UitgIKDE5vdGlmaWNhdGlvbhIKCgJpZBgBIAEoCRIYChBub3RpZmllZF9hdF91bml4GAIgASgDEjoKDXVzZXJfZm9sbG93ZWQYAyABKAsyIS5hcGkudjEuTm90aWZpY2F0aW9uLlVzZXJGb2xsb3dlZEgAEj4KD3dvcmtvdXRfY29tbWVudBgEIAEoCzIjLmFwaS52MS5Ob3RpZmljYXRpb24uV29ya291dENvbW1lbnRIABorCgxVc2VyRm9sbG93ZWQSGwoFYWN0b3IYASABKAsyDC5hcGkudjEuVXNlchpPCg5Xb3Jrb3V0Q29tbWVudBIbCgVhY3RvchgBIAEoCzIMLmFwaS52MS5Vc2VyEiAKB3dvcmtvdXQYAiABKAsyDy5hcGkudjEuV29ya291dEIGCgR0eXBlIiwKG1VucmVhZE5vdGlmaWNhdGlvbnNSZXNwb25zZRINCgVjb3VudBgBIAEoAzLRAQoTTm90aWZpY2F0aW9uU2VydmljZRJeChFMaXN0Tm90aWZpY2F0aW9ucxIgLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QaIS5hcGkudjEuTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZSIEiLUYARJaChNVbnJlYWROb3RpZmljYXRpb25zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiMuYXBpLnYxLlVucmVhZE5vdGlmaWNhdGlvbnNSZXNwb25zZSIEiLUYATABQpMBCgpjb20uYXBpLnYxQhJOb3RpZmljYXRpb25zUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_api_v1_workouts, file_google_protobuf_empty, file_buf_validate_validate]);
+  fileDesc("ChphcGkvdjEvbm90aWZpY2F0aW9ucy5wcm90bxIGYXBpLnYxInwKGExpc3ROb3RpZmljYXRpb25zUmVxdWVzdBITCgt1bnJlYWRfb25seRgBIAEoCBIUCgxtYXJrX2FzX3JlYWQYAiABKAgSNQoKcGFnaW5hdGlvbhgDIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBIngKGUxpc3ROb3RpZmljYXRpb25zUmVzcG9uc2USKwoNbm90aWZpY2F0aW9ucxgBIAMoCzIULmFwaS52MS5Ob3RpZmljYXRpb24SLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UitgIKDE5vdGlmaWNhdGlvbhIKCgJpZBgBIAEoCRIYChBub3RpZmllZF9hdF91bml4GAIgASgDEjoKDXVzZXJfZm9sbG93ZWQYAyABKAsyIS5hcGkudjEuTm90aWZpY2F0aW9uLlVzZXJGb2xsb3dlZEgAEj4KD3dvcmtvdXRfY29tbWVudBgEIAEoCzIjLmFwaS52MS5Ob3RpZmljYXRpb24uV29ya291dENvbW1lbnRIABorCgxVc2VyRm9sbG93ZWQSGwoFYWN0b3IYASABKAsyDC5hcGkudjEuVXNlchpPCg5Xb3Jrb3V0Q29tbWVudBIbCgVhY3RvchgBIAEoCzIMLmFwaS52MS5Vc2VyEiAKB3dvcmtvdXQYAiABKAsyDy5hcGkudjEuV29ya291dEIGCgR0eXBlIhwKGlVucmVhZE5vdGlmaWNhdGlvbnNSZXF1ZXN0IiwKG1VucmVhZE5vdGlmaWNhdGlvbnNSZXNwb25zZRINCgVjb3VudBgBIAEoAzLdAQoTTm90aWZpY2F0aW9uU2VydmljZRJeChFMaXN0Tm90aWZpY2F0aW9ucxIgLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QaIS5hcGkudjEuTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZSIEiLUYARJmChNVbnJlYWROb3RpZmljYXRpb25zEiIuYXBpLnYxLlVucmVhZE5vdGlmaWNhdGlvbnNSZXF1ZXN0GiMuYXBpLnYxLlVucmVhZE5vdGlmaWNhdGlvbnNSZXNwb25zZSIEiLUYATABQpMBCgpjb20uYXBpLnYxQhJOb3RpZmljYXRpb25zUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_api_v1_workouts, file_google_protobuf_empty, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ListNotificationsRequest
@@ -150,6 +149,19 @@ export const Notification_WorkoutCommentSchema: GenMessage<Notification_WorkoutC
   messageDesc(file_api_v1_notifications, 2, 1);
 
 /**
+ * @generated from message api.v1.UnreadNotificationsRequest
+ */
+export type UnreadNotificationsRequest = Message<"api.v1.UnreadNotificationsRequest"> & {
+};
+
+/**
+ * Describes the message api.v1.UnreadNotificationsRequest.
+ * Use `create(UnreadNotificationsRequestSchema)` to create a new message.
+ */
+export const UnreadNotificationsRequestSchema: GenMessage<UnreadNotificationsRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_notifications, 3);
+
+/**
  * @generated from message api.v1.UnreadNotificationsResponse
  */
 export type UnreadNotificationsResponse = Message<"api.v1.UnreadNotificationsResponse"> & {
@@ -164,7 +176,7 @@ export type UnreadNotificationsResponse = Message<"api.v1.UnreadNotificationsRes
  * Use `create(UnreadNotificationsResponseSchema)` to create a new message.
  */
 export const UnreadNotificationsResponseSchema: GenMessage<UnreadNotificationsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_notifications, 3);
+  messageDesc(file_api_v1_notifications, 4);
 
 /**
  * @generated from service api.v1.NotificationService
@@ -183,7 +195,7 @@ export const NotificationService: GenService<{
    */
   unreadNotifications: {
     methodKind: "server_streaming";
-    input: typeof EmptySchema;
+    input: typeof UnreadNotificationsRequestSchema;
     output: typeof UnreadNotificationsResponseSchema;
   },
 }> = /*@__PURE__*/

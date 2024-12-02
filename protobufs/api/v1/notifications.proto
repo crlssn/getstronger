@@ -14,7 +14,7 @@ service NotificationService {
   rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse) {
     option (auth) = true;
   }
-  rpc UnreadNotifications (google.protobuf.Empty) returns (stream UnreadNotificationsResponse) {
+  rpc UnreadNotifications (UnreadNotificationsRequest) returns (stream UnreadNotificationsResponse) {
     option (auth) = true;
   }
 }
@@ -47,6 +47,7 @@ message Notification {
   }
 }
 
+message UnreadNotificationsRequest {}
 message UnreadNotificationsResponse {
   int64 count = 1;
 }
