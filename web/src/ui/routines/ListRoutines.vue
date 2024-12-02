@@ -37,10 +37,7 @@ onMounted(async () => {
   >
     Create Routine
   </AppButton>
-  <AppList
-    role="list"
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
-  >
+  <AppList role="list">
     <AppListItemLink
       v-for="routine in routines"
       :key="routine.id"
