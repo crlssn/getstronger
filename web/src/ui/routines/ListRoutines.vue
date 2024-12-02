@@ -2,8 +2,10 @@
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
 import { RoutineClient } from '@/clients/clients'
+import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { ListRoutinesRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
 
 const pageToken = ref(new Uint8Array(0))
@@ -35,24 +37,17 @@ onMounted(async () => {
   >
     Create Routine
   </AppButton>
-  <ul
+  <AppList
     role="list"
     class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
   >
-    <li
+    <AppListItemLink
       v-for="routine in routines"
       :key="routine.id"
+      :to="`/routines/${routine.id}`"
     >
-      <RouterLink
-        :to="`/routines/${routine.id}`"
-        class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-800"
-      >
-        {{ routine.name }}
-        <ChevronRightIcon
-          class="size-5 flex-none text-gray-400"
-          aria-hidden="true"
-        />
-      </RouterLink>
-    </li>
-  </ul>
+      {{ routine.name }}
+      <ChevronRightIcon class="size-5 flex-none text-gray-400" />
+    </AppListItemLink>
+  </AppList>
 </template>

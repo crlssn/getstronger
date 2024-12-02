@@ -51,7 +51,6 @@ onMounted(() => {
           {{ workout.name }}
           <ChevronRightIcon
             class="size-5 flex-none text-gray-400"
-            aria-hidden="true"
           />
         </RouterLink>
       </li>

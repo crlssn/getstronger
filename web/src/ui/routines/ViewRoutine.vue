@@ -79,7 +79,6 @@ useSortable(el, routine.value?.exercises || [], {
       {{ exercise.name }}
       <ChevronUpDownIcon
         class="size-5 flex-none text-gray-500"
-        aria-hidden="true"
       />
     </li>
   </ul>
