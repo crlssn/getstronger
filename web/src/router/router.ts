@@ -18,6 +18,7 @@ import ListExercises from '@/ui/exercises/ListExercises.vue'
 import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
 import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
+import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
 
@@ -173,6 +174,10 @@ async function logout() {
   await AuthClient.logout(create(LogoutRequestSchema, {}))
   const authStore = useAuthStore()
   authStore.logout()
+
+  const notificationStore = useNotificationStore()
+  notificationStore.unreadCount = 0
+
   return {
     path: '/login',
   }

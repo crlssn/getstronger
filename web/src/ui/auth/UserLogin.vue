@@ -9,11 +9,14 @@ import { RouterLink, useRoute } from 'vue-router'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
 import { LoginRequestSchema } from '@/proto/api/v1/auth_pb.ts'
+import { useNotificationStore } from '@/stores/notifications.ts'
 
 const email = ref('')
 const password = ref('')
 const resError = ref('')
+
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 
 const login = async () => {
   const request = create(LoginRequestSchema, {
@@ -25,6 +28,7 @@ const login = async () => {
     const response = await AuthClient.login(request)
     authStore.setAccessToken(response.accessToken)
     authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
+    notificationStore.streamUnreadNotifications()
     await router.push('/home')
   } catch (error) {
     if (error instanceof ConnectError) {
