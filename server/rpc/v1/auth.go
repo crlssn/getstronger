@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
+	"github.com/crlssn/getstronger/server/pkg/cookies"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
@@ -19,27 +20,30 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
 
-var _ apiv1connect.AuthServiceHandler = (*auth)(nil)
+var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 
-type auth struct {
-	jwt    *jwt.Manager
-	repo   *repo.Repo
-	config *config.Config
+type authHandler struct {
+	jwt     *jwt.Manager
+	repo    *repo.Repo
+	config  *config.Config
+	cookies *cookies.Cookies
 }
 
 type AuthHandlerParams struct {
 	fx.In
 
-	JWT    *jwt.Manager
-	Repo   *repo.Repo
-	Config *config.Config
+	JWT     *jwt.Manager
+	Repo    *repo.Repo
+	Config  *config.Config
+	Cookies *cookies.Cookies
 }
 
 func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
-	return &auth{
-		jwt:    p.JWT,
-		repo:   p.Repo,
-		config: p.Config,
+	return &authHandler{
+		jwt:     p.JWT,
+		repo:    p.Repo,
+		config:  p.Config,
+		cookies: p.Cookies,
 	}
 }
 
@@ -48,7 +52,7 @@ var (
 	errPasswordsDoNotMatch = errors.New("passwords do not match")
 )
 
-func (h *auth) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
+func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	email := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
@@ -90,7 +94,7 @@ func (h *auth) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest
 
 var errInvalidCredentials = errors.New("invalid credentials")
 
-func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
+func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
@@ -124,21 +128,8 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 		}
 	}
 
-	res := connect.NewResponse(&v1.LoginResponse{
-		AccessToken: accessToken,
-	})
-
-	// TODO: Move cookie logic to own package.
-	cookie := &http.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshToken,
-		Path:     "/api.v1.AuthService",
-		Domain:   h.config.Server.CookieDomain,
-		MaxAge:   int(jwt.ExpiryTimeRefresh),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	res := connect.NewResponse(&v1.LoginResponse{AccessToken: accessToken})
+	cookie := h.cookies.RefreshToken(refreshToken)
 	res.Header().Set("Set-Cookie", cookie.String())
 
 	log.Info("logged in")
@@ -150,7 +141,7 @@ var (
 	errRefreshTokenNotFound = errors.New("refresh token not found")
 )
 
-func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
+func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if !ok {
@@ -191,7 +182,7 @@ func (h *auth) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTo
 	}), nil
 }
 
-func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
+func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if ok {
@@ -202,17 +193,7 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 	}
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
-	// TODO: Move cookie logic to own package.
-	cookie := &http.Cookie{
-		Name:     "refreshToken",
-		Value:    "",
-		Path:     "/api.v1.AuthService",
-		Domain:   h.config.Server.CookieDomain,
-		MaxAge:   -1,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	cookie := h.cookies.ExpiredRefreshToken()
 	res.Header().Set("Set-Cookie", cookie.String())
 
 	log.Info("logged out")
