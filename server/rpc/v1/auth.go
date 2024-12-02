@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
+	"github.com/crlssn/getstronger/server/pkg/cookies"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
@@ -124,21 +125,8 @@ func (h *auth) Login(ctx context.Context, req *connect.Request[v1.LoginRequest])
 		}
 	}
 
-	res := connect.NewResponse(&v1.LoginResponse{
-		AccessToken: accessToken,
-	})
-
-	// TODO: Move cookie logic to own package.
-	cookie := &http.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshToken,
-		Path:     "/api.v1.AuthService",
-		Domain:   h.config.Server.CookieDomain,
-		MaxAge:   int(jwt.ExpiryTimeRefresh),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	res := connect.NewResponse(&v1.LoginResponse{AccessToken: accessToken})
+	cookie := cookies.RefreshToken(h.config.Server.CookieDomain, refreshToken)
 	res.Header().Set("Set-Cookie", cookie.String())
 
 	log.Info("logged in")
@@ -202,17 +190,7 @@ func (h *auth) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest])
 	}
 
 	res := connect.NewResponse(&v1.LogoutResponse{})
-	// TODO: Move cookie logic to own package.
-	cookie := &http.Cookie{
-		Name:     "refreshToken",
-		Value:    "",
-		Path:     "/api.v1.AuthService",
-		Domain:   h.config.Server.CookieDomain,
-		MaxAge:   -1,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	cookie := cookies.InvalidateRefreshToken(h.config.Server.CookieDomain)
 	res.Header().Set("Set-Cookie", cookie.String())
 
 	log.Info("logged out")
