@@ -11,6 +11,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/bus"
 	"github.com/crlssn/getstronger/server/pkg/config"
+	"github.com/crlssn/getstronger/server/pkg/cookies"
 	"github.com/crlssn/getstronger/server/pkg/db"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
 	"github.com/crlssn/getstronger/server/pkg/repo"
@@ -38,6 +39,7 @@ func options() []fx.Option {
 			grpc.NewServer,
 			trace.NewTracer,
 			config.New,
+			cookies.New,
 			protovalidate.New,
 		),
 	}
