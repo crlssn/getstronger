@@ -74,8 +74,8 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
-		repo.GetWorkoutWithExerciseSets(),
-		repo.GetWorkoutWithExerciseSets(),
+		repo.GetWorkoutWithSets(),
+		repo.GetWorkoutWithComments(),
 	)
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))

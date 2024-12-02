@@ -5,8 +5,10 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { RoutineClient } from '@/clients/clients'
+import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import AppListItem from '@/ui/components/AppListItem.vue'
 import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
@@ -65,24 +67,19 @@ useSortable(el, routine.value?.exercises || [], {
   >
     Start Workout
   </AppButton>
-  <ul
-    ref="el"
-    role="list"
-    class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md mb-4"
-  >
-    <li
+  <AppList ref="el">
+    <AppListItem
       v-for="exercise in routine?.exercises"
       :key="exercise.id"
       :data-id="exercise.id"
-      class="flex justify-between items-center px-4 py-5 text-sm text-gray-900 hover:cursor-move"
+      class="hover:cursor-move"
     >
       {{ exercise.name }}
       <ChevronUpDownIcon
         class="size-5 flex-none text-gray-500"
-        aria-hidden="true"
       />
-    </li>
-  </ul>
+    </AppListItem>
+  </AppList>
   <AppButton
     type="button"
     colour="gray"

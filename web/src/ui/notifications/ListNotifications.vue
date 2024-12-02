@@ -3,7 +3,9 @@ import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
+import AppList from '@/ui/components/AppList.vue'
 import { NotificationClient } from '@/clients/clients.ts'
+import AppListItem from '@/ui/components/AppListItem.vue'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v1/notifications_pb.ts'
@@ -36,14 +38,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ul
-    role="list"
-    class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-md"
-  >
-    <li
+  <AppList>
+    <AppListItem
       v-for="notification in notifications"
       :key="notification.id"
-      class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 text-sm text-gray-800"
     >
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
@@ -56,8 +54,8 @@ onMounted(async () => {
         :workout="notification.type.value?.workout"
         :timestamp="notification.notifiedAtUnix"
       />
-    </li>
-  </ul>
+    </AppListItem>
+  </AppList>
 </template>
 
 <style scoped></style>

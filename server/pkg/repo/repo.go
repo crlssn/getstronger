@@ -669,7 +669,13 @@ func GetWorkoutWithID(id string) GetWorkoutOpt {
 	}
 }
 
-func GetWorkoutWithExerciseSets() GetWorkoutOpt {
+func GetWorkoutWithComments() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutRels.WorkoutComments)
+	}
+}
+
+func GetWorkoutWithSets() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.Sets)
 	}

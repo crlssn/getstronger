@@ -115,7 +115,6 @@ const searchUsers = async () => {
                   >
                     <XMarkIcon
                       class="h-6 w-6 text-white"
-                      aria-hidden="true"
                     />
                   </button>
                 </div>
@@ -160,7 +159,6 @@ const searchUsers = async () => {
                                   : 'text-indigo-200 group-hover:text-white',
                                 'h-6 w-6 shrink-0',
                               ]"
-                              aria-hidden="true"
                             />
                             {{ item.name }}
                           </RouterLink>
@@ -219,7 +217,6 @@ const searchUsers = async () => {
                           : 'text-indigo-200 group-hover:text-white',
                         'h-6 w-6 shrink-0',
                       ]"
-                      aria-hidden="true"
                     />
                     {{ item.name }}
                   </RouterLink>
