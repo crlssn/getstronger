@@ -27,10 +27,10 @@ func Module() fx.Option {
 	)
 }
 
-func provideHandlerOptions(i []Interceptor) []connect.HandlerOption {
-	opts := make([]connect.HandlerOption, 0, len(i))
-	for _, j := range i {
-		opts = append(opts, connect.WithInterceptors(j.Unary()))
+func provideHandlerOptions(interceptors []connect.Interceptor) []connect.HandlerOption {
+	opts := make([]connect.HandlerOption, 0, len(interceptors))
+	for _, interceptor := range interceptors {
+		opts = append(opts, connect.WithInterceptors(interceptor))
 	}
 	return opts
 }

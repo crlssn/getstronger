@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+
+import "google/protobuf/empty.proto";
+
+service NotificationService {
+  rpc UnreadNotifications (google.protobuf.Empty) returns (stream UnreadNotificationsStream) {
+    option (auth) = true;
+  }
+}
+
+message UnreadNotificationsStream {
+  int64 count = 1;
+}

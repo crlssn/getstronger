@@ -30,6 +30,7 @@ func Module() fx.Option {
 			v1.NewRoutineHandler,
 			v1.NewWorkoutHandler,
 			v1.NewExerciseHandler,
+			v1.NewNotificationHandler,
 			middlewares.New,
 		),
 		fx.Invoke(
@@ -41,12 +42,13 @@ func Module() fx.Option {
 type Handlers struct {
 	fx.In
 
-	Auth     apiv1connect.AuthServiceHandler
-	Feed     apiv1connect.FeedServiceHandler
-	User     apiv1connect.UserServiceHandler
-	Routine  apiv1connect.RoutineServiceHandler
-	Workout  apiv1connect.WorkoutServiceHandler
-	Exercise apiv1connect.ExerciseServiceHandler
+	Auth         apiv1connect.AuthServiceHandler
+	Feed         apiv1connect.FeedServiceHandler
+	User         apiv1connect.UserServiceHandler
+	Routine      apiv1connect.RoutineServiceHandler
+	Workout      apiv1connect.WorkoutServiceHandler
+	Exercise     apiv1connect.ExerciseServiceHandler
+	Notification apiv1connect.NotificationServiceHandler
 }
 
 func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
@@ -69,6 +71,9 @@ func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Midd
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewExerciseServiceHandler(p.Exercise, opts...)
 		},
+		func(opts ...connect.HandlerOption) (string, http.Handler) {
+			return apiv1connect.NewNotificationServiceHandler(p.Notification, opts...)
+		},
 	}
 
 	mux := http.NewServeMux()
@@ -81,9 +86,8 @@ func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Midd
 }
 
 const (
-	readTimeout  = 10 * time.Second
-	writeTimeout = 10 * time.Second
-	idleTimeout  = 120 * time.Second
+	readTimeout = 10 * time.Second
+	idleTimeout = 120 * time.Second
 )
 
 func startServer(lc fx.Lifecycle, c *config.Config, mux *http.ServeMux) {
@@ -94,7 +98,7 @@ func startServer(lc fx.Lifecycle, c *config.Config, mux *http.ServeMux) {
 					Addr:         fmt.Sprintf(":%s", c.Server.Port),
 					Handler:      h2c.NewHandler(mux, &http2.Server{}),
 					ReadTimeout:  readTimeout,
-					WriteTimeout: writeTimeout,
+					WriteTimeout: 0,
 					IdleTimeout:  idleTimeout,
 					TLSConfig: &tls.Config{
 						MinVersion: tls.VersionTLS12,

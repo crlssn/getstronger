@@ -23,9 +23,7 @@ const init = async () => {
   if (authStore.accessToken) {
     await RefreshAccessTokenOrLogout()
     authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
-
-    await notificationStore.fetchUnreadNotifications()
-    notificationStore.setRefreshInterval()
+    notificationStore.streamUnreadNotifications()
   }
 
   app.mount('#app')
