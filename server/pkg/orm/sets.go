@@ -26,7 +26,7 @@ type Set struct {
 	ID         string    `boil:"id" json:"id" toml:"id" yaml:"id"`
 	WorkoutID  string    `boil:"workout_id" json:"workout_id" toml:"workout_id" yaml:"workout_id"`
 	ExerciseID string    `boil:"exercise_id" json:"exercise_id" toml:"exercise_id" yaml:"exercise_id"`
-	Weight     float32   `boil:"weight" json:"weight" toml:"weight" yaml:"weight"`
+	Weight     float64   `boil:"weight" json:"weight" toml:"weight" yaml:"weight"`
 	Reps       int       `boil:"reps" json:"reps" toml:"reps" yaml:"reps"`
 	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
@@ -68,28 +68,28 @@ var SetTableColumns = struct {
 
 // Generated where
 
-type whereHelperfloat32 struct{ field string }
+type whereHelperfloat64 struct{ field string }
 
-func (w whereHelperfloat32) EQ(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperfloat32) NEQ(x float32) qm.QueryMod {
+func (w whereHelperfloat64) EQ(x float64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperfloat64) NEQ(x float64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelperfloat32) LT(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperfloat32) LTE(x float32) qm.QueryMod {
+func (w whereHelperfloat64) LT(x float64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperfloat64) LTE(x float64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelperfloat32) GT(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperfloat32) GTE(x float32) qm.QueryMod {
+func (w whereHelperfloat64) GT(x float64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperfloat64) GTE(x float64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
-func (w whereHelperfloat32) IN(slice []float32) qm.QueryMod {
+func (w whereHelperfloat64) IN(slice []float64) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
 	}
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelperfloat32) NIN(slice []float32) qm.QueryMod {
+func (w whereHelperfloat64) NIN(slice []float64) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
@@ -124,14 +124,14 @@ var SetWhere = struct {
 	ID         whereHelperstring
 	WorkoutID  whereHelperstring
 	ExerciseID whereHelperstring
-	Weight     whereHelperfloat32
+	Weight     whereHelperfloat64
 	Reps       whereHelperint
 	CreatedAt  whereHelpertime_Time
 }{
 	ID:         whereHelperstring{field: "\"getstronger\".\"sets\".\"id\""},
 	WorkoutID:  whereHelperstring{field: "\"getstronger\".\"sets\".\"workout_id\""},
 	ExerciseID: whereHelperstring{field: "\"getstronger\".\"sets\".\"exercise_id\""},
-	Weight:     whereHelperfloat32{field: "\"getstronger\".\"sets\".\"weight\""},
+	Weight:     whereHelperfloat64{field: "\"getstronger\".\"sets\".\"weight\""},
 	Reps:       whereHelperint{field: "\"getstronger\".\"sets\".\"reps\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"getstronger\".\"sets\".\"created_at\""},
 }

@@ -621,7 +621,7 @@ type ExerciseSet struct {
 
 type Set struct {
 	Reps   int
-	Weight float32
+	Weight float64
 }
 
 func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {

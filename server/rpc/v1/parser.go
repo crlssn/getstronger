@@ -80,7 +80,7 @@ func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users o
 			}
 
 			mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], &apiv1.Set{
-				Weight: float64(set.Weight),
+				Weight: set.Weight,
 				Reps:   reps,
 			})
 		}
@@ -156,7 +156,7 @@ func parseExerciseSetsFromPB(exerciseSetSlice []*apiv1.ExerciseSets) []repo.Exer
 		for _, set := range exerciseSet.GetSets() {
 			sets = append(sets, repo.Set{
 				Reps:   int(set.GetReps()),
-				Weight: float32(set.GetWeight()),
+				Weight: set.GetWeight(),
 			})
 		}
 
@@ -226,7 +226,7 @@ func parsePersonalBestSliceToPB(personalBests orm.PersonalBestSlice, exercises o
 		pbs = append(pbs, &apiv1.PersonalBest{
 			Exercise: parseExerciseToPB(mapExercises[pb.ExerciseID.String]),
 			Set: &apiv1.Set{
-				Weight: float64(pb.Weight.Float32),
+				Weight: pb.Weight.Float64,
 				Reps:   reps,
 			},
 		})
