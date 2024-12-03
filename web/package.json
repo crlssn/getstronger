@@ -41,7 +41,7 @@
     "@typescript-eslint/parser": "8.15.0",
     "@vitejs/plugin-vue": "5.2.0",
     "@vitejs/plugin-vue-jsx": "4.0.1",
-    "@vitest/eslint-plugin": "1.1.10",
+    "@vitest/eslint-plugin": "1.1.14",
     "@vue/eslint-config-prettier": "10.1.0",
     "@vue/eslint-config-typescript": "14.1.4",
     "@vue/test-utils": "2.4.6",
