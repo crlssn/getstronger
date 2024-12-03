@@ -13,6 +13,9 @@ inputs:
   aws_bucket_name:
     description: "AWS S3 Bucket Name"
     required: true
+  codecov_token:
+    description: "Codecov Token"
+    required: true
 
 runs:
   using: 'composite'
@@ -31,6 +34,7 @@ runs:
       working-directory: ./web
       run: npm run build
       shell: bash
+      CODECOV_TOKEN: ${{ inputs.codecov_token }}
 
     - name: Deploy to S3
       working-directory: ./web
