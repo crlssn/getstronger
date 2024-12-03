@@ -80,6 +80,7 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ vars.AWS_REGION }}
           aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
+          codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Remove deploy label
         if: github.event_name == 'pull_request' && github.event.label.name == 'deploy'
