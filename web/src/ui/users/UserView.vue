@@ -14,6 +14,7 @@ import {
   GetUserRequestSchema,
   UnfollowRequestSchema,
 } from '@/proto/api/v1/users_pb.ts'
+import UserProfile from '@/ui/components/UserProfile.vue'
 
 const workouts = ref<Workout[]>()
 const route = useRoute()
