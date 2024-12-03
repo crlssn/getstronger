@@ -67,27 +67,41 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 	case *payloads.WorkoutCommentPosted:
 		comment, err := w.repo.GetWorkoutComment(ctx,
 			repo.GetWorkoutCommentWithID(t.CommentID),
-			repo.GetWorkoutCommentWithWorkout(),
 		)
 		if err != nil {
 			w.log.Error("get workout comment", zap.Error(err))
 			return
 		}
 
-		if comment.UserID == comment.R.Workout.UserID {
-			// Don't notify own comments.
+		workout, err := w.repo.GetWorkout(ctx,
+			repo.GetWorkoutWithID(comment.WorkoutID),
+			repo.GetWorkoutWithComments(),
+		)
+		if err != nil {
+			w.log.Error("get workout", zap.Error(err))
 			return
 		}
 
-		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-			Type:   orm.NotificationTypeWorkoutComment,
-			UserID: comment.R.Workout.UserID,
-			Payload: repo.NotificationPayload{
-				ActorID:   comment.UserID,
-				WorkoutID: comment.WorkoutID,
-			},
-		}); err != nil {
-			w.log.Error("create notification", zap.Error(err))
+		mapUserIDs := make(map[string]struct{})
+		for _, c := range workout.R.WorkoutComments {
+			if comment.UserID == c.UserID {
+				// Don't notify own comments.
+				continue
+			}
+			mapUserIDs[c.UserID] = struct{}{}
+		}
+
+		for userID := range mapUserIDs {
+			if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
+				Type:   orm.NotificationTypeWorkoutComment,
+				UserID: userID,
+				Payload: repo.NotificationPayload{
+					ActorID:   comment.UserID,
+					WorkoutID: comment.WorkoutID,
+				},
+			}); err != nil {
+				w.log.Error("create notification", zap.Error(err))
+			}
 		}
 	default:
 		w.log.Error("unexpected event type", zap.Any("event", payload))
