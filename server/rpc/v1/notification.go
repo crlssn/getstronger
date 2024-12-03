@@ -86,7 +86,10 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
+	workouts, err := h.repo.ListWorkouts(ctx,
+		repo.ListWorkoutsWithIDs(workoutIDs),
+		repo.ListWorkoutsWithUser(),
+	)
 	if err != nil {
 		log.Error("failed to list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

@@ -299,6 +299,7 @@ func parseNotificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *ap
 					Workout: &apiv1.Workout{
 						Id:   w.ID,
 						Name: w.Name,
+						User: parseUserToPB(w.R.User, false),
 					},
 				},
 			},

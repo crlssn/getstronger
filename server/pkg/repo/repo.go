@@ -554,6 +554,14 @@ func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
 	}
 }
 
+func ListWorkoutsWithUser() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(orm.WorkoutRels.User),
+		}, nil
+	}
+}
+
 func ListWorkoutsWithSets() ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
