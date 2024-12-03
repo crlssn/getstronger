@@ -7,7 +7,6 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 
 	"github.com/crlssn/getstronger/server/bus"
 	"github.com/crlssn/getstronger/server/pkg/config"
@@ -37,8 +36,7 @@ func options() []fx.Option {
 		fx.Provide(
 			zap.NewDevelopment,
 			repo.New,
-			grpc.NewServer,
-			trace.NewTracer,
+			trace.New,
 			config.New,
 			stream.New,
 			cookies.New,

@@ -26,7 +26,7 @@ type Tracer struct {
 	bus *bus.Bus
 }
 
-func NewTracer(log *zap.Logger, bus *bus.Bus) *Tracer {
+func New(log *zap.Logger, bus *bus.Bus) *Tracer {
 	return &Tracer{log, bus}
 }
 
