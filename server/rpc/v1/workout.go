@@ -82,11 +82,6 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if workout.UserID != userID {
-		log.Error("workout does not belong to user")
-		return nil, connect.NewError(connect.CodePermissionDenied, nil)
-	}
-
 	userIDs := make([]string, 0, len(workout.R.WorkoutComments))
 	for _, comment := range workout.R.WorkoutComments {
 		userIDs = append(userIDs, comment.UserID)
