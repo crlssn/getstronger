@@ -37,7 +37,7 @@
     "@types/luxon": "3.4.2",
     "@types/node": "22.10.1",
     "@types/sortablejs": "1.15.8",
-    "@typescript-eslint/eslint-plugin": "8.15.0",
+    "@typescript-eslint/eslint-plugin": "8.17.0",
     "@typescript-eslint/parser": "8.15.0",
     "@vitejs/plugin-vue": "5.2.0",
     "@vitejs/plugin-vue-jsx": "4.0.1",
