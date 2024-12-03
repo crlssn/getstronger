@@ -39,7 +39,7 @@
     "@types/sortablejs": "1.15.8",
     "@typescript-eslint/eslint-plugin": "8.17.0",
     "@typescript-eslint/parser": "8.15.0",
-    "@vitejs/plugin-vue": "5.2.0",
+    "@vitejs/plugin-vue": "5.2.1",
     "@vitejs/plugin-vue-jsx": "4.1.1",
     "@vitest/eslint-plugin": "1.1.14",
     "@vue/eslint-config-prettier": "10.1.0",
