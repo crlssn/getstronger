@@ -74,6 +74,11 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 			return
 		}
 
+		if comment.UserID == comment.R.Workout.UserID {
+			// Don't notify own comments.
+			return
+		}
+
 		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
 			Type:   orm.NotificationTypeWorkoutComment,
 			UserID: comment.R.Workout.UserID,
