@@ -34,7 +34,8 @@ runs:
       working-directory: ./web
       run: npm run build
       shell: bash
-      CODECOV_TOKEN: ${{ inputs.codecov_token }}
+      env:
+        CODECOV_TOKEN: ${{ inputs.codecov_token }}
 
     - name: Deploy to S3
       working-directory: ./web
