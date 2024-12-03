@@ -13,7 +13,7 @@ import (
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
-	testdb2 "github.com/crlssn/getstronger/server/pkg/test/testdb"
+	"github.com/crlssn/getstronger/server/pkg/test/testdb"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
 
@@ -22,8 +22,8 @@ type exerciseSuite struct {
 
 	handler apiv1connect.ExerciseServiceHandler
 
-	testFactory   *testdb2.Factory
-	testContainer *testdb2.Container
+	testFactory   *testdb.Factory
+	testContainer *testdb.Container
 }
 
 func TestExerciseSuite(t *testing.T) {
@@ -33,8 +33,8 @@ func TestExerciseSuite(t *testing.T) {
 
 func (s *exerciseSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = testdb2.NewContainer(ctx)
-	s.testFactory = testdb2.NewFactory(s.testContainer.DB)
+	s.testContainer = testdb.NewContainer(ctx)
+	s.testFactory = testdb.NewFactory(s.testContainer.DB)
 	s.handler = NewExerciseHandler(repo.New(s.testContainer.DB))
 
 	s.T().Cleanup(func() {
@@ -57,7 +57,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 
 	tests := []test{
 		{
-			name: "valid request",
+			name: "valid_request",
 			req: &connect.Request[v1.CreateExerciseRequest]{
 				Msg: &v1.CreateExerciseRequest{
 					Name:  "Bench Press",

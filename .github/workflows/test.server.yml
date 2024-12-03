@@ -34,5 +34,14 @@ jobs:
       - name: Run golangci-lint
         run: golangci-lint run ./...
 
-      - name: Run tests
-        run: go test ./...
+      - name: Run tests with coverage
+        run: go test ./... -coverprofile=coverage.out
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          slug: crlssn/getstronger
+          files: coverage.out
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
