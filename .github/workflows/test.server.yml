@@ -37,14 +37,11 @@ jobs:
       - name: Run tests with coverage
         run: go test ./... -coverprofile=coverage.out
 
-      - name: Display coverage
-        run: go tool cover -func=coverage.out
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
+          slug: crlssn/getstronger
           files: coverage.out
-          flags: unittests
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
