@@ -4,17 +4,25 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { useAuthStore } from '@/stores/auth.ts'
-import { WorkoutClient } from '@/clients/clients'
+import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
+import { type User } from '@/proto/api/v1/shared_pb.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
+import { UserClient, WorkoutClient } from '@/clients/clients'
+import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import { ListFolloweesRequestSchema, ListFollowersRequestSchema } from '@/proto/api/v1/users_pb.ts'
 
 const workouts = ref<Workout[]>()
+const followers = ref<User[]>()
+const followees = ref<User[]>()
 const route = useRoute()
 const authStore = useAuthStore()
 
 onMounted(async () => {
   await fetchWorkouts()
+  await fetchFollowers()
+  await fetchFollowees()
 })
 
 const fetchWorkouts = async () => {
@@ -25,6 +33,22 @@ const fetchWorkouts = async () => {
   })
   const res = await WorkoutClient.list(req)
   workouts.value = res.workouts
+}
+
+const fetchFollowers = async () => {
+  const req = create(ListFollowersRequestSchema, {
+    followerId: authStore.userID,
+  })
+  const res = await UserClient.listFollowers(req)
+  followers.value = res.followers
+}
+
+const fetchFollowees = async () => {
+  const req = create(ListFolloweesRequestSchema, {
+    followeeId: authStore.userID,
+  })
+  const res = await UserClient.listFollowees(req)
+  followees.value = res.followees
 }
 
 const tabs = [
@@ -96,6 +120,24 @@ const updateTab = (event: Event) => {
       :workout="workout"
     />
   </div>
+  <AppList v-if="route.fullPath === tabs[2].href">
+    <AppListItemLink
+      v-for="followee in followees"
+      :key="followee.id"
+      :to="`/users/${followee.id}`"
+    >
+      {{ followee.firstName }} {{ followee.lastName }}
+    </AppListItemLink>
+  </AppList>
+  <AppList v-if="route.fullPath === tabs[3].href">
+    <AppListItemLink
+      v-for="follower in followers"
+      :key="follower.id"
+      :to="`/users/${follower.id}`"
+    >
+      {{ follower.firstName }} {{ follower.lastName }}
+    </AppListItemLink>
+  </AppList>
 </template>
 
 <style scoped></style>
