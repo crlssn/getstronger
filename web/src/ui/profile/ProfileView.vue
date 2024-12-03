@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import router from '@/router/router'
-import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
+import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
@@ -20,9 +20,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 onMounted(async () => {
-  await fetchWorkouts()
-  await fetchFollowers()
-  await fetchFollowees()
+  await Promise.all([fetchWorkouts(), fetchFollowers(), fetchFollowees()])
 })
 
 const fetchWorkouts = async () => {
@@ -58,6 +56,8 @@ const tabs = [
   { href: '/profile?tab=followers', name: 'Followers' },
 ]
 
+const activeTab = computed(() => route.fullPath)
+
 const updateTab = (event: Event) => {
   const target = event.target as HTMLSelectElement
   router.push(target.value)
@@ -86,7 +86,7 @@ const updateTab = (event: Event) => {
           v-for="tab in tabs"
           :key="tab.name"
           :value="tab.href"
-          :selected="tab.href === route.fullPath"
+          :selected="tab.href === activeTab"
         >
           {{ tab.name }}
         </option>
@@ -102,7 +102,7 @@ const updateTab = (event: Event) => {
           :key="tab.name"
           :to="tab.href"
           :class="[
-            tab.href === route.fullPath
+            tab.href === activeTab
               ? 'border-gray-200 text-gray-900 bg-white'
               : 'border-transparent text-gray-500 hover:text-gray-700',
             'w-1/4 border border-b-8 py-3.5 text-center text-sm font-semibold rounded-md uppercase',
@@ -113,14 +113,14 @@ const updateTab = (event: Event) => {
       </nav>
     </div>
   </div>
-  <div v-if="route.fullPath === tabs[0].href">
+  <div v-if="activeTab === tabs[0].href">
     <CardWorkout
       v-for="workout in workouts"
       :key="workout.id"
       :workout="workout"
     />
   </div>
-  <AppList v-if="route.fullPath === tabs[2].href">
+  <AppList v-if="activeTab === tabs[2].href">
     <AppListItemLink
       v-for="followee in followees"
       :key="followee.id"
@@ -129,7 +129,7 @@ const updateTab = (event: Event) => {
       {{ followee.firstName }} {{ followee.lastName }}
     </AppListItemLink>
   </AppList>
-  <AppList v-if="route.fullPath === tabs[3].href">
+  <AppList v-if="activeTab === tabs[3].href">
     <AppListItemLink
       v-for="follower in followers"
       :key="follower.id"
