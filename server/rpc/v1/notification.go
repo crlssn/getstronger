@@ -12,17 +12,19 @@ import (
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
+	"github.com/crlssn/getstronger/server/pkg/stream"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
 
 var _ apiv1connect.NotificationServiceHandler = (*notificationHandler)(nil)
 
 type notificationHandler struct {
-	repo *repo.Repo
+	repo   *repo.Repo
+	stream *stream.Conn
 }
 
-func NewNotificationHandler(r *repo.Repo) apiv1connect.NotificationServiceHandler {
-	return &notificationHandler{r}
+func NewNotificationHandler(r *repo.Repo, s *stream.Conn) apiv1connect.NotificationServiceHandler {
+	return &notificationHandler{r, s}
 }
 
 func (h *notificationHandler) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) { //nolint:cyclop // TODO: Simplify this method.
@@ -112,11 +114,14 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
+	ctx, cancelFunc := context.WithCancel(ctx)
+	h.stream.Add(userID, cancelFunc)
+	defer h.stream.Remove(userID)
+
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
 	var lastCount int64
-
 	for {
 		select {
 		case <-ctx.Done():

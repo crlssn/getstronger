@@ -3,7 +3,9 @@ package rpc
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -14,13 +16,14 @@ import (
 
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pkg/stream"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
 	v1 "github.com/crlssn/getstronger/server/rpc/v1"
 )
 
 func Module() fx.Option {
-	return fx.Options(
+	return fx.Module("rpc", fx.Options(
 		interceptors.Module(),
 		fx.Provide(
 			registerHandlers,
@@ -36,7 +39,7 @@ func Module() fx.Option {
 		fx.Invoke(
 			startServer,
 		),
-	)
+	))
 }
 
 type Handlers struct {
@@ -90,28 +93,34 @@ const (
 	idleTimeout = 120 * time.Second
 )
 
-func startServer(lc fx.Lifecycle, c *config.Config, mux *http.ServeMux) {
-	lc.Append(fx.Hook{
+func startServer(l fx.Lifecycle, c *config.Config, m *http.ServeMux, conn *stream.Conn) {
+	s := &http.Server{
+		Addr:         fmt.Sprintf(":%s", c.Server.Port),
+		Handler:      h2c.NewHandler(m, &http2.Server{}),
+		ReadTimeout:  readTimeout,
+		WriteTimeout: 0,
+		IdleTimeout:  idleTimeout,
+		TLSConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
+	}
+
+	s.RegisterOnShutdown(conn.Cancel)
+
+	l.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				server := &http.Server{
-					Addr:         fmt.Sprintf(":%s", c.Server.Port),
-					Handler:      h2c.NewHandler(mux, &http2.Server{}),
-					ReadTimeout:  readTimeout,
-					WriteTimeout: 0,
-					IdleTimeout:  idleTimeout,
-					TLSConfig: &tls.Config{
-						MinVersion: tls.VersionTLS12,
-					},
-				}
-				if err := server.ListenAndServeTLS(c.Server.CertPath, c.Server.KeyPath); err != nil {
-					panic(fmt.Errorf("listen and serve: %w", err))
+				if err := s.ListenAndServeTLS(c.Server.CertPath, c.Server.KeyPath); err != nil {
+					if errors.Is(err, http.ErrServerClosed) {
+						return
+					}
+					log.Fatalf("listen and serve: %v", err)
 				}
 			}()
 			return nil
 		},
-		OnStop: func(_ context.Context) error {
-			return nil
+		OnStop: func(ctx context.Context) error {
+			return s.Shutdown(ctx)
 		},
 	})
 }
