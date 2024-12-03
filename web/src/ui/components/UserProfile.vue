@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import router from '@/router/router'
-import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'
+import { useRoute, useRouter } from 'vue-router'
 import AppList from '@/ui/components/AppList.vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
@@ -22,6 +21,7 @@ import {
 } from '@/proto/api/v1/users_pb.ts'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const pageTitleStore = usePageTitleStore()
 
@@ -34,6 +34,12 @@ const personalBests = ref<PersonalBest[]>()
 const props = defineProps<{
   userId: string
 }>()
+
+watch(() => props.userId, async () => {
+  if (props.userId === authStore.userID) {
+    await router.push('/profile')
+  }
+})
 
 onMounted(async () => {
   await fetchUser()
@@ -95,6 +101,7 @@ const followUser = async () => {
   })
   await UserClient.follow(req)
   await fetchUser()
+  await fetchFollowers()
 }
 
 const unfollowUser = async () => {
@@ -103,14 +110,23 @@ const unfollowUser = async () => {
   })
   await UserClient.unfollow(req)
   await fetchUser()
+  await fetchFollowers()
 }
 
-const tabs = [
-  { href: '/profile', name: 'Workouts' },
-  { href: '/profile?tab=personal-bests', name: 'Personal Bests' },
-  { href: '/profile?tab=follows', name: 'Follows' },
-  { href: '/profile?tab=followers', name: 'Followers' },
-]
+const baseUrl = computed(() => {
+  if (user.value?.id !== authStore.userID) {
+    return `/users/${user.value?.id}`
+  }
+
+  return '/profile'
+})
+
+const tabs = computed(() => [
+  { href: baseUrl.value, name: 'Workouts' },
+  { href: `${baseUrl.value}?tab=personal-bests`, name: 'Personal Bests' },
+  { href: `${baseUrl.value}?tab=follows`, name: 'Follows' },
+  { href: `${baseUrl.value}?tab=followers`, name: 'Followers' },
+])
 
 const activeTab = computed(() => route.fullPath)
 
