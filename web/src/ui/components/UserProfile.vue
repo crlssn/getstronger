@@ -45,11 +45,6 @@ onMounted(async () => {
   await fetchUser()
   // DEBT: Fetch data for each tab separately.
   await Promise.all([fetchWorkouts(), fetchFollowers(), fetchFollowees(), fetchPersonalBests()])
-
-  pageTitleStore.setPageTitle('Profile')
-  if (user.value?.id !== authStore.userID) {
-    pageTitleStore.setPageTitle(`${user.value?.firstName} ${user.value?.lastName}`)
-  }
 })
 
 const fetchUser = async () => {
@@ -58,7 +53,9 @@ const fetchUser = async () => {
   })
   const res = await UserClient.get(req)
   user.value = res.user
-  pageTitleStore.setPageTitle(`${user.value?.firstName} ${user.value?.lastName}`)
+  if (user.value?.id !== authStore.userID) {
+    pageTitleStore.setPageTitle(`${user.value?.firstName} ${user.value?.lastName}`)
+  }
 }
 
 const fetchWorkouts = async () => {
