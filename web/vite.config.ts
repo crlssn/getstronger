@@ -14,7 +14,7 @@ export default defineConfig({
     vueDevTools(),
     codecovVitePlugin({
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
-      bundleName: 'crlssn/getstronger',
+      bundleName: 'crlssn/getstronger/web',
       uploadToken: process.env.CODECOV_TOKEN,
     }),
   ],
