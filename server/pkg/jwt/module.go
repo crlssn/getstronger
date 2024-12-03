@@ -7,9 +7,9 @@ import (
 )
 
 func Module() fx.Option {
-	return fx.Provide(
+	return fx.Module("jwt", fx.Provide(
 		func(c *config.Config) *Manager {
 			return NewManager([]byte(c.JWT.AccessTokenKey), []byte(c.JWT.RefreshTokenKey))
 		},
-	)
+	))
 }

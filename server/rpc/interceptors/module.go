@@ -8,7 +8,7 @@ import (
 const fxGroupInterceptors = `group:"interceptors"`
 
 func Module() fx.Option {
-	return fx.Options(
+	return fx.Module("interceptors", fx.Options(
 		fx.Provide(
 			// Annotate the interceptors to provide a slice of their interface.
 			fx.Annotate(
@@ -24,7 +24,7 @@ func Module() fx.Option {
 				fx.ParamTags(fxGroupInterceptors),
 			),
 		),
-	)
+	))
 }
 
 func provideHandlerOptions(interceptors []connect.Interceptor) []connect.HandlerOption {
