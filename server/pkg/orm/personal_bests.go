@@ -28,7 +28,7 @@ type PersonalBest struct {
 	WorkoutID  null.String  `boil:"workout_id" json:"workout_id,omitempty" toml:"workout_id" yaml:"workout_id,omitempty"`
 	ExerciseID null.String  `boil:"exercise_id" json:"exercise_id,omitempty" toml:"exercise_id" yaml:"exercise_id,omitempty"`
 	UserID     null.String  `boil:"user_id" json:"user_id,omitempty" toml:"user_id" yaml:"user_id,omitempty"`
-	Weight     null.Float32 `boil:"weight" json:"weight,omitempty" toml:"weight" yaml:"weight,omitempty"`
+	Weight     null.Float64 `boil:"weight" json:"weight,omitempty" toml:"weight" yaml:"weight,omitempty"`
 	Reps       null.Int     `boil:"reps" json:"reps,omitempty" toml:"reps" yaml:"reps,omitempty"`
 	CreatedAt  null.Time    `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 }
@@ -71,34 +71,34 @@ var PersonalBestTableColumns = struct {
 
 // Generated where
 
-type whereHelpernull_Float32 struct{ field string }
+type whereHelpernull_Float64 struct{ field string }
 
-func (w whereHelpernull_Float32) EQ(x null.Float32) qm.QueryMod {
+func (w whereHelpernull_Float64) EQ(x null.Float64) qm.QueryMod {
 	return qmhelper.WhereNullEQ(w.field, false, x)
 }
-func (w whereHelpernull_Float32) NEQ(x null.Float32) qm.QueryMod {
+func (w whereHelpernull_Float64) NEQ(x null.Float64) qm.QueryMod {
 	return qmhelper.WhereNullEQ(w.field, true, x)
 }
-func (w whereHelpernull_Float32) LT(x null.Float32) qm.QueryMod {
+func (w whereHelpernull_Float64) LT(x null.Float64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpernull_Float32) LTE(x null.Float32) qm.QueryMod {
+func (w whereHelpernull_Float64) LTE(x null.Float64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpernull_Float32) GT(x null.Float32) qm.QueryMod {
+func (w whereHelpernull_Float64) GT(x null.Float64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpernull_Float32) GTE(x null.Float32) qm.QueryMod {
+func (w whereHelpernull_Float64) GTE(x null.Float64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
-func (w whereHelpernull_Float32) IN(slice []float32) qm.QueryMod {
+func (w whereHelpernull_Float64) IN(slice []float64) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
 	}
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelpernull_Float32) NIN(slice []float32) qm.QueryMod {
+func (w whereHelpernull_Float64) NIN(slice []float64) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
@@ -106,8 +106,8 @@ func (w whereHelpernull_Float32) NIN(slice []float32) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-func (w whereHelpernull_Float32) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Float32) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+func (w whereHelpernull_Float64) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Float64) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 type whereHelpernull_Int struct{ field string }
 
@@ -152,7 +152,7 @@ var PersonalBestWhere = struct {
 	WorkoutID  whereHelpernull_String
 	ExerciseID whereHelpernull_String
 	UserID     whereHelpernull_String
-	Weight     whereHelpernull_Float32
+	Weight     whereHelpernull_Float64
 	Reps       whereHelpernull_Int
 	CreatedAt  whereHelpernull_Time
 }{
@@ -160,7 +160,7 @@ var PersonalBestWhere = struct {
 	WorkoutID:  whereHelpernull_String{field: "\"getstronger\".\"personal_bests\".\"workout_id\""},
 	ExerciseID: whereHelpernull_String{field: "\"getstronger\".\"personal_bests\".\"exercise_id\""},
 	UserID:     whereHelpernull_String{field: "\"getstronger\".\"personal_bests\".\"user_id\""},
-	Weight:     whereHelpernull_Float32{field: "\"getstronger\".\"personal_bests\".\"weight\""},
+	Weight:     whereHelpernull_Float64{field: "\"getstronger\".\"personal_bests\".\"weight\""},
 	Reps:       whereHelpernull_Int{field: "\"getstronger\".\"personal_bests\".\"reps\""},
 	CreatedAt:  whereHelpernull_Time{field: "\"getstronger\".\"personal_bests\".\"created_at\""},
 }

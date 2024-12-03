@@ -21,7 +21,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		ID:         uuid.NewString(),
 		WorkoutID:  f.NewWorkout().ID,
 		ExerciseID: f.NewExercise().ID,
-		Weight:     f.faker.Float32Range(1, float32(maxWeight)),
+		Weight:     f.faker.Float64Range(1, float64(maxWeight)),
 		Reps:       f.faker.IntRange(1, maxReps),
 		CreatedAt:  time.Time{},
 	}
@@ -57,7 +57,7 @@ func SetReps(reps int) SetOpt {
 	}
 }
 
-func SetWeight(weight float32) SetOpt {
+func SetWeight(weight float64) SetOpt {
 	return func(set *orm.Set) {
 		set.Weight = weight
 	}
