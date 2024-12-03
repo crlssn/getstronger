@@ -8,19 +8,24 @@ import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
-import { UserClient, WorkoutClient } from '@/clients/clients'
+import AppListItem from '@/ui/components/AppListItem.vue'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
+import { ExerciseClient, UserClient, WorkoutClient } from '@/clients/clients'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import { GetPersonalBestsRequestSchema, type PersonalBest } from '@/proto/api/v1/exercise_pb.ts'
 import { ListFolloweesRequestSchema, ListFollowersRequestSchema } from '@/proto/api/v1/users_pb.ts'
+
+const route = useRoute()
+const authStore = useAuthStore()
 
 const workouts = ref<Workout[]>()
 const followers = ref<User[]>()
 const followees = ref<User[]>()
-const route = useRoute()
-const authStore = useAuthStore()
+const personalBests = ref<PersonalBest[]>()
 
 onMounted(async () => {
-  await Promise.all([fetchWorkouts(), fetchFollowers(), fetchFollowees()])
+  // DEBT: Fetch data for each tab separately.
+  await Promise.all([fetchWorkouts(), fetchFollowers(), fetchFollowees(), fetchPersonalBests()])
 })
 
 const fetchWorkouts = async () => {
@@ -47,6 +52,14 @@ const fetchFollowees = async () => {
   })
   const res = await UserClient.listFollowees(req)
   followees.value = res.followees
+}
+
+const fetchPersonalBests = async () => {
+  const req = create(GetPersonalBestsRequestSchema, {
+    userId: authStore.userID,
+  })
+  const res = await ExerciseClient.getPersonalBests(req)
+  personalBests.value = res.personalBests
 }
 
 const tabs = [
@@ -120,6 +133,20 @@ const updateTab = (event: Event) => {
       :workout="workout"
     />
   </div>
+  <AppList v-if="activeTab === tabs[1].href">
+    <AppListItem
+      v-for="personalBest in personalBests"
+      :key="personalBest?.exercise?.id"
+    >
+      <p class="font-medium">
+        {{ personalBest?.exercise?.name }}
+        <small v-if="personalBest?.exercise?.label">
+          {{ personalBest.exercise.label }}
+        </small>
+      </p>
+      {{ personalBest?.set?.weight }} kg x {{ personalBest?.set?.reps }}
+    </AppListItem>
+  </AppList>
   <AppList v-if="activeTab === tabs[2].href">
     <AppListItemLink
       v-for="followee in followees"
