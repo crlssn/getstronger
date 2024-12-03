@@ -9,6 +9,6 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "gomod"
-    directory: "server"
+    directory: "/"
     schedule:
       interval: "weekly"
