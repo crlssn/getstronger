@@ -15,7 +15,7 @@ const props = defineProps<{
   workout?: Workout
 }>()
 
-const asdasd = computed(() => {
+const workoutOwnership = computed(() => {
   if (authStore.userID === props.workout?.user?.id) {
     return 'your'
   }
@@ -40,7 +40,7 @@ const asdasd = computed(() => {
           {{ actor?.firstName }}
           {{ actor?.lastName }}
         </span>
-        commented on {{ asdasd }}
+        commented on {{ workoutOwnership }}
         <span class="font-semibold">
           {{ workout?.name }}
         </span>
