@@ -406,7 +406,7 @@ func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Rout
 
 func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
 	return r.NewTx(ctx, func(tx *Repo) error {
-		routine, err := r.GetRoutine(ctx, GetRoutineWithID(id))
+		routine, err := tx.GetRoutine(ctx, GetRoutineWithID(id))
 		if err != nil {
 			return fmt.Errorf("routine fetch: %w", err)
 		}
