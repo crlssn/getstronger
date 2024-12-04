@@ -3,9 +3,11 @@ import type { FieldMask } from '@bufbuild/protobuf/wkt'
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
 
 import { onMounted, ref } from 'vue'
+import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ExerciseClient } from '@/http/clients'
+import { deleteExercise } from '@/http/requests'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
 import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
@@ -66,6 +68,11 @@ async function updateExercise() {
     console.error('create exercise failed:', error)
   }
 }
+
+const onDeleteExercise = async () => {
+  await deleteExercise(route.params.id as string)
+  await router.push('/exercises')
+}
 </script>
 
 <template>
@@ -99,7 +106,7 @@ async function updateExercise() {
             v-model="name"
             type="text"
             required
-            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
           >
         </div>
       </div>
@@ -119,18 +126,25 @@ async function updateExercise() {
             v-model="label"
             type="text"
             placeholder="Optional"
-            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
           >
         </div>
       </div>
 
       <AppButton
-        text="Create"
         type="submit"
         colour="primary"
         class="mt-6"
       >
         Update Exercise
+      </AppButton>
+      <AppButton
+        type="button"
+        colour="red"
+        class="mt-6"
+        @click="onDeleteExercise"
+      >
+        Delete Exercise
       </AppButton>
     </form>
   </div>

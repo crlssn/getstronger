@@ -219,6 +219,14 @@ func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 	}
 }
 
+func ListExercisesWithoutDeleted() ListExercisesOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.ExerciseWhere.DeletedAt.IsNull(),
+		}, nil
+	}
+}
+
 func ListExercisesWithIDs(ids []string) ListExercisesOpt {
 	return func() ([]qm.QueryMod, error) {
 		if len(ids) == 0 {

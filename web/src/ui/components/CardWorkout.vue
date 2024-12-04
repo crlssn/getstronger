@@ -20,16 +20,18 @@ import { formatToRelativeDateTime } from '../../utils/datetime.ts'
 
 const { input, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
+const exerciseDeleted = ref(false)
 
 const props = defineProps<{
   workout: Workout
 }>()
 
-const el = ref<HTMLElement | null>(null)
-
 const dropdownItems: Array<DropdownItem> = [
   { href: `/workout/${props.workout.id}/edit`, title: 'Edit' },
-  { func: () => deleteWorkout(props.workout.id).then(() => el.value?.remove()), title: 'Delete' },
+  { func: async () => {
+    await deleteWorkout(props.workout.id)
+    exerciseDeleted.value = true
+  }, title: 'Delete' },
 ]
 
 const comments = ref<Array<WorkoutComment>>([])
@@ -52,7 +54,13 @@ const postComment = async () => {
 
 <template>
   <div
-    ref="el"
+    v-if="exerciseDeleted"
+    class="border-2 border-red-400 bg-red-300 mb-4 rounded-md py-3 px-5 mb-2 text-sm text-red-800"
+  >
+    Exercise deleted.
+  </div>
+  <div
+    v-else
     class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4 text-sm"
   >
     <div class="px-4 py-5">
