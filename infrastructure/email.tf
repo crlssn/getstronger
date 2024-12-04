@@ -61,7 +61,7 @@ resource "aws_iam_access_key" "ses_user_key" {
 
 resource "aws_route53_record" "mx_record" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = ""
+  name    = "getstronger.pro"
   type    = "MX"
   ttl     = 300
   records = ["10 inbound-smtp.eu-west-2.amazonaws.com", "10 feedback-smtp.eu-west-2.amazonses.com"]
