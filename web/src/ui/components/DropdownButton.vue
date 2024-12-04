@@ -43,7 +43,8 @@ const props = defineProps<Props>()
             :key="index"
             as="div"
           >
-            <RouterLink v-if="item.href"
+            <RouterLink
+              v-if="item.href"
               :to="item.href"
               :class="[
                 active ? 'bg-gray-100 text-gray-900 outline-none' : 'text-gray-700',
@@ -52,10 +53,14 @@ const props = defineProps<Props>()
             >
               {{ item.title }}
             </RouterLink>
-            <span :class="[
+            <span
+              v-if="item.func"
+              :class="[
                 active ? 'bg-gray-100 text-gray-900 outline-none' : 'text-gray-700',
                 'block px-4 py-2 text-sm cursor-pointer',
-              ]" v-if="item.func" @click="item.func">{{ item.title }}</span>
+              ]"
+              @click="item.func"
+            >{{ item.title }}</span>
           </MenuItem>
         </div>
       </MenuItems>

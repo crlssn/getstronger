@@ -717,9 +717,11 @@ func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
 	}
 }
 
+var errDeleteWorkoutMissingOptions = fmt.Errorf("delete workout: missing options")
+
 func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
 	if len(opts) == 0 {
-		return fmt.Errorf("delete workout: missing options")
+		return errDeleteWorkoutMissingOptions
 	}
 
 	query := []qm.QueryMod{

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
-import { useAuthStore } from '@/stores/auth.ts'
 import { WorkoutClient } from '@/http/clients'
+import { useAuthStore } from '@/stores/auth.ts'
 import { formatToCompactDateTime } from '@/utils/datetime'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
