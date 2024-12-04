@@ -1,42 +1,26 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import router from '@/router/router'
-import { create } from '@bufbuild/protobuf'
-import { AuthClient } from '@/http/clients'
+import { login } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { ScheduleTokenRefresh } from '@/jwt/jwt'
 import { RouterLink, useRoute } from 'vue-router'
-import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
-import { LoginRequestSchema } from '@/proto/api/v1/auth_pb.ts'
 import { useNotificationStore } from '@/stores/notifications.ts'
 
 const email = ref('')
 const password = ref('')
-const resError = ref('')
 
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
 
-const login = async () => {
-  const request = create(LoginRequestSchema, {
-    email: email.value,
-    password: password.value,
-  })
-
-  try {
-    const response = await AuthClient.login(request)
-    authStore.setAccessToken(response.accessToken)
-    authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
-    notificationStore.streamUnreadNotifications()
-    await router.push('/home')
-  } catch (error) {
-    if (error instanceof ConnectError) {
-      resError.value = error.message
-      return
-    }
-    console.error('login failed:', error)
-  }
+const onLogin = async () => {
+  const res = await login(email.value, password.value)
+  if (!res) return
+  authStore.setAccessToken(res.accessToken)
+  authStore.setAccessTokenRefreshInterval(ScheduleTokenRefresh())
+  notificationStore.streamUnreadNotifications()
+  await router.push('/home')
 }
 </script>
 
@@ -61,17 +45,10 @@ const login = async () => {
       >
         You have successfully signed up. Please login.
       </div>
-      <div
-        v-if="resError"
-        class="bg-red-200 rounded-md py-3 px-5 mb-2 text-sm/6 text-red-800"
-        role="alert"
-      >
-        {{ resError }}
-      </div>
       <form
         class="space-y-6"
         method="POST"
-        @submit.prevent="login"
+        @submit.prevent="onLogin"
       >
         <div>
           <label
