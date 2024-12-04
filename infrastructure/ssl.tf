@@ -5,9 +5,8 @@ provider "aws" {
 
 # Obtain an SSL certificate
 resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
-  provider    = aws.us_east_1
-  domain_name = "www.getstronger.pro"
-  # subject_alternative_names = ["getstronger.pro"]
+  provider          = aws.us_east_1
+  domain_name       = "www.getstronger.pro"
   validation_method = "DNS"
 }
 
@@ -188,9 +187,9 @@ resource "null_resource" "letsencrypt_cert" {
 }
 
 resource "aws_acm_certificate" "non_www_getstronger_pro_ssl_cert" {
-  provider                  = aws.us_east_1
-  domain_name               = "getstronger.pro"
-  validation_method         = "DNS"
+  provider          = aws.us_east_1
+  domain_name       = "getstronger.pro"
+  validation_method = "DNS"
 }
 
 resource "aws_route53_record" "non_www_ssl_cert_validation" {
