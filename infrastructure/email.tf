@@ -15,19 +15,10 @@ resource "aws_ses_domain_dkim" "getstronger" {
 }
 
 resource "aws_route53_record" "dkim" {
-  for_each = toset(aws_ses_domain_dkim.getstronger.dkim_tokens)
-  zone_id  = aws_route53_zone.getstronger_pro.zone_id
-  name     = "${each.value}._domainkey.getstronger.pro"
-  type     = "CNAME"
-  ttl      = 600
-  records  = ["${each.value}.dkim.amazonses.com"]
-}
-
-resource "aws_route53_record" "spf" {
+  count   = length(aws_ses_domain_dkim.getstronger.dkim_tokens)
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "getstronger.pro"
-  type    = "TXT"
+  name    = "${aws_ses_domain_dkim.getstronger.dkim_tokens[count.index]}._domainkey.getstronger.pro"
+  type    = "CNAME"
   ttl     = 600
-  records = ["v=spf1 include:amazonses.com ~all"]
+  records = ["${aws_ses_domain_dkim.getstronger.dkim_tokens[count.index]}.dkim.amazonses.com"]
 }
-
