@@ -405,11 +405,22 @@ func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Rout
 }
 
 func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
-	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(id)).DeleteAll(ctx, r.executor()); err != nil {
-		return fmt.Errorf("routine delete: %w", err)
-	}
+	return r.NewTx(ctx, func(tx *Repo) error {
+		routine, err := r.GetRoutine(ctx, GetRoutineWithID(id))
+		if err != nil {
+			return fmt.Errorf("routine fetch: %w", err)
+		}
 
-	return nil
+		if err = routine.SetExercises(ctx, tx.executor(), false); err != nil {
+			return fmt.Errorf("routine exercises set: %w", err)
+		}
+
+		if _, err = routine.Delete(ctx, tx.executor()); err != nil {
+			return fmt.Errorf("routine delete: %w", err)
+		}
+
+		return nil
+	})
 }
 
 type ListRoutineOpt func() ([]qm.QueryMod, error)

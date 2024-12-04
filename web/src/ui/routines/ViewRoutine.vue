@@ -2,9 +2,11 @@
 import type { SortableEvent } from 'sortablejs'
 
 import { onMounted, ref } from 'vue'
+import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { RoutineClient } from '@/http/clients'
+import { deleteRoutine } from '@/http/requests'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -56,6 +58,11 @@ useSortable(el, routine.value?.exercises || [], {
     await RoutineClient.updateExerciseOrder(req)
   },
 })
+
+const onDeleteRoutine = async () => {
+  await deleteRoutine(routine.value?.id as string)
+  await router.push('/routines')
+}
 </script>
 
 <template>
@@ -91,6 +98,7 @@ useSortable(el, routine.value?.exercises || [], {
     type="button"
     colour="red"
     class="mt-4"
+    @click="onDeleteRoutine"
   >
     Delete Routine
   </AppButton>
