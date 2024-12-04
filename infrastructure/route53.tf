@@ -37,14 +37,14 @@ resource "aws_route53_record" "ssh_getstronger_pro" {
   records = [aws_eip.ec2_instance.public_ip]
 }
 
-resource "aws_route53_record" "redirect_getstronger_pro" {
-  zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "getstronger.pro"
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.redirect_distribution.domain_name
-    zone_id                = aws_cloudfront_distribution.redirect_distribution.hosted_zone_id
-    evaluate_target_health = false
-  }
-}
+# resource "aws_route53_record" "redirect_getstronger_pro" {
+#   zone_id = aws_route53_zone.getstronger_pro.zone_id
+#   name    = "getstronger.pro"
+#   type    = "A"
+#
+#   alias {
+#     name                   = aws_cloudfront_distribution.redirect_distribution.domain_name
+#     zone_id                = aws_cloudfront_distribution.redirect_distribution.hosted_zone_id
+#     evaluate_target_health = false
+#   }
+# }
