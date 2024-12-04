@@ -3,25 +3,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_acm_certificate" "getstronger_pro_ssl_cert" {
-  provider                  = aws.us_east_1
-  domain_name               = "www.getstronger.pro"
-  subject_alternative_names = ["getstronger.pro"]
-  validation_method         = "DNS"
-}
-
-resource "aws_route53_record" "getstronger_pro_ssl_cert" {
-  for_each = {
-    for dvo in aws_acm_certificate.getstronger_pro_ssl_cert.domain_validation_options : dvo.domain_name => dvo
-  }
-
-  name    = each.value.resource_record_name
-  type    = each.value.resource_record_type
-  zone_id = aws_route53_zone.getstronger_pro.zone_id
-  records = [each.value.resource_record_value]
-  ttl     = 60
-}
-
 # Obtain an SSL certificate
 resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
   provider    = aws.us_east_1
@@ -206,6 +187,30 @@ resource "null_resource" "letsencrypt_cert" {
   }
 }
 
+resource "aws_acm_certificate" "non_www_getstronger_pro_ssl_cert" {
+  provider                  = aws.us_east_1
+  domain_name               = "getstronger.pro"
+  validation_method         = "DNS"
+}
+
+resource "aws_route53_record" "non_www_ssl_cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.non_www_getstronger_pro_ssl_cert.domain_validation_options : dvo.domain_name => dvo
+  }
+
+  name    = each.value.resource_record_name
+  type    = each.value.resource_record_type
+  zone_id = aws_route53_zone.getstronger_pro.zone_id
+  records = [each.value.resource_record_value]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "non_www_cert_validation" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.non_www_getstronger_pro_ssl_cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.non_www_ssl_cert_validation : record.fqdn]
+}
+
 resource "aws_cloudfront_distribution" "redirect_distribution" {
   provider = aws.us_east_1
 
@@ -233,7 +238,7 @@ resource "aws_cloudfront_distribution" "redirect_distribution" {
   }
 
   viewer_certificate {
-    # acm_certificate_arn            = aws_acm_certificate.www_getstronger_pro_ssl_cert.arn
+    acm_certificate_arn            = aws_acm_certificate.non_www_getstronger_pro_ssl_cert.arn
     cloudfront_default_certificate = true
   }
 
