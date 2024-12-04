@@ -51,15 +51,15 @@ resource "aws_s3_bucket_public_access_block" "redirect_bucket_access" {
   ignore_public_acls      = false
   restrict_public_buckets = false
 }
-#
-# resource "aws_s3_bucket_website_configuration" "redirect_bucket" {
-#   bucket = aws_s3_bucket.redirect_getstronger_pro.id
-#
-#   redirect_all_requests_to {
-#     host_name = "www.getstronger.pro"
-#     protocol  = "https"
-#   }
-# }
+
+resource "aws_s3_bucket_website_configuration" "redirect_bucket" {
+  bucket = aws_s3_bucket.redirect_getstronger_pro.id
+
+  redirect_all_requests_to {
+    host_name = "www.getstronger.pro"
+    protocol  = "https"
+  }
+}
 #
 # resource "aws_s3_bucket_policy" "redirect_policy" {
 #   bucket = aws_s3_bucket.redirect_getstronger_pro.id
