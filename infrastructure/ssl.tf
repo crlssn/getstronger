@@ -214,6 +214,7 @@ resource "aws_cloudfront_distribution" "redirect_distribution" {
   }
 
   viewer_certificate {
+    acm_certificate_arn            = aws_acm_certificate.www_getstronger_pro_ssl_cert.arn
     cloudfront_default_certificate = true
   }
 
