@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { create } from '@bufbuild/protobuf'
-import { NotificationClient } from '@/clients/clients.ts'
+import { NotificationClient } from '@/http/clients.ts'
 import { UnreadNotificationsRequestSchema } from '@/proto/api/v1/notifications_pb.ts'
 
 export const useNotificationStore = defineStore('notifications', () => {

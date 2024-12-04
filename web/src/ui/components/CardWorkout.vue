@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useTextareaAutosize } from '@vueuse/core'
-import { WorkoutClient } from '@/clients/clients.ts'
+import { WorkoutClient } from '@/http/clients.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type DropdownItem } from '@/types/dropdown.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
@@ -16,6 +16,7 @@ import {
 } from '@/proto/api/v1/workouts_pb.ts'
 
 import { formatToRelativeDateTime } from '../../utils/datetime.ts'
+import { deleteWorkout } from '@/http/requests.ts'
 
 const { input, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
@@ -24,9 +25,11 @@ const props = defineProps<{
   workout: Workout
 }>()
 
+const el = ref<HTMLElement | null>(null)
+
 const dropdownItems: Array<DropdownItem> = [
-  { href: `/workout/${props.workout.id}/edit`, title: 'Edit' },
-  { href: `/workout/${props.workout.id}/delete`, title: 'Delete' },
+  { title: 'Edit', href: `/workout/${props.workout.id}/edit` },
+  { title: 'Delete', func: () => deleteWorkout(props.workout.id).then(() => el.value?.remove()) },
 ]
 
 const comments = ref<Array<WorkoutComment>>([])
@@ -48,7 +51,7 @@ const postComment = async () => {
 </script>
 
 <template>
-  <div class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4 text-sm">
+  <div class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4 text-sm" ref="el">
     <div class="px-4 py-5">
       <div class="flex items-center justify-between">
         <div class="flex items-center">

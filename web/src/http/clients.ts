@@ -1,5 +1,5 @@
 import { createClient } from '@connectrpc/connect'
-import { auth, logger } from '@/clients/interceptors'
+import { auth, logger } from '@/http/interceptors'
 import { AuthService } from '@/proto/api/v1/auth_pb.ts'
 import { FeedService } from '@/proto/api/v1/feed_pb.ts'
 import { UserService } from '@/proto/api/v1/users_pb.ts'

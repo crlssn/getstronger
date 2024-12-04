@@ -13,7 +13,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { ExerciseClient, RoutineClient, WorkoutClient } from '@/clients/clients'
+import { ExerciseClient, RoutineClient, WorkoutClient } from '@/http/clients'
 import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
 

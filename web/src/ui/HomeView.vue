@@ -2,7 +2,7 @@
 
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
-import { FeedClient } from '@/clients/clients.ts'
+import { FeedClient } from '@/http/clients.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type FeedItem, ListItemsRequestSchema } from '@/proto/api/v1/feed_pb.ts'
 

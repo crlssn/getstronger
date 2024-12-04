@@ -5,7 +5,7 @@ import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMas
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { ExerciseClient } from '@/clients/clients'
+import { ExerciseClient } from '@/http/clients'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
 import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'

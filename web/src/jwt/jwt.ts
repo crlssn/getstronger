@@ -3,7 +3,7 @@ import type { NavigationFailure } from 'vue-router'
 import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import { useAuthStore } from '@/stores/auth'
-import { AuthClient } from '@/clients/clients'
+import { AuthClient } from '@/http/clients'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { RefreshTokenRequestSchema } from '@/proto/api/v1/auth_pb'
 
