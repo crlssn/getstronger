@@ -5,10 +5,10 @@ provider "aws" {
 
 # Obtain an SSL certificate
 resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
-  provider                  = aws.us_east_1
-  domain_name               = "www.getstronger.pro"
-  subject_alternative_names = ["getstronger.pro"]
-  validation_method         = "DNS"
+  provider    = aws.us_east_1
+  domain_name = "www.getstronger.pro"
+  # subject_alternative_names = ["getstronger.pro"]
+  validation_method = "DNS"
 }
 
 # Validate the certificate
