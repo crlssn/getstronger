@@ -22,3 +22,11 @@ resource "aws_route53_record" "dkim" {
   ttl      = 600
   records  = ["${each.value}.dkim.amazonses.com"]
 }
+
+resource "aws_route53_record" "spf" {
+  zone_id = aws_route53_zone.getstronger_pro.zone_id
+  name    = "getstronger.pro"
+  type    = "TXT"
+  ttl     = 600
+  records = ["v=spf1 include:amazonses.com ~all"]
+}
