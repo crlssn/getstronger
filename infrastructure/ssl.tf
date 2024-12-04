@@ -3,6 +3,25 @@ provider "aws" {
   region = "us-east-1"
 }
 
+resource "aws_acm_certificate" "getstronger_pro_ssl_cert" {
+  provider                  = aws.us_east_1
+  domain_name               = "www.getstronger.pro"
+  subject_alternative_names = ["getstronger.pro"]
+  validation_method         = "DNS"
+}
+
+# resource "aws_route53_record" "getstronger_pro_ssl_cert" {
+#   for_each = {
+#     for dvo in aws_acm_certificate.getstronger_pro_ssl_cert.domain_validation_options : dvo.domain_name => dvo
+#   }
+#
+#   name    = each.value.resource_record_name
+#   type    = each.value.resource_record_type
+#   zone_id = aws_route53_zone.getstronger_pro.zone_id
+#   records = [each.value.resource_record_value]
+#   ttl     = 60
+# }
+
 # Obtain an SSL certificate
 resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
   provider    = aws.us_east_1
