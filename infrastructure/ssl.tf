@@ -10,7 +10,7 @@ resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
   validation_method = "DNS"
 }
 
-# # Validate the certificate
+# Validate the certificate
 resource "aws_route53_record" "s3_ssl_cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options : dvo.domain_name => dvo
@@ -33,7 +33,7 @@ resource "aws_acm_certificate_validation" "s3_cert_validation" {
   ]
 }
 
-# # Create CloudFront distribution for the S3 bucket
+# Create CloudFront distribution for the S3 bucket
 resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   provider = aws.us_east_1
   origin {
@@ -186,4 +186,43 @@ resource "null_resource" "letsencrypt_cert" {
   }
 }
 
+resource "aws_cloudfront_distribution" "redirect_distribution" {
+  provider = aws.us_east_1
 
+  origin {
+    domain_name = aws_s3_bucket.redirect_getstronger_pro.bucket_regional_domain_name
+    origin_id   = "RedirectBucket"
+  }
+
+  enabled         = true
+  is_ipv6_enabled = true
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "RedirectBucket"
+
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  tags = {
+    Name = "RedirectToWWW"
+  }
+}
