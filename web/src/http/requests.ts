@@ -43,6 +43,6 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T|void> => {
     try {
         return await fn()
     } catch (error) {
-        console.error(error)
+        alert(error)
     }
 }

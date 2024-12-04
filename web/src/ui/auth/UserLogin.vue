@@ -10,7 +10,6 @@ import { useNotificationStore } from '@/stores/notifications.ts'
 
 const email = ref('')
 const password = ref('')
-const resError = ref('')
 
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
@@ -45,13 +44,6 @@ const onLogin = async () => {
         role="alert"
       >
         You have successfully signed up. Please login.
-      </div>
-      <div
-        v-if="resError"
-        class="bg-red-200 rounded-md py-3 px-5 mb-2 text-sm/6 text-red-800"
-        role="alert"
-      >
-        {{ resError }}
       </div>
       <form
         class="space-y-6"
