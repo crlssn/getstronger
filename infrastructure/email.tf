@@ -46,3 +46,17 @@ resource "aws_iam_policy" "ses_send_email" {
   })
 }
 
+resource "aws_iam_user" "ses_user" {
+  name = "ses_user_getstronger_pro"
+}
+
+resource "aws_iam_user_policy_attachment" "ses_policy_attach" {
+  user       = aws_iam_user.ses_user.name
+  policy_arn = aws_iam_policy.ses_send_email.arn
+}
+
+resource "aws_iam_access_key" "ses_user_key" {
+  user = aws_iam_user.ses_user.name
+}
+
+
