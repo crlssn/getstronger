@@ -138,6 +138,7 @@ func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.List
 		repo.ListExercisesWithLimit(limit+1),
 		repo.ListExercisesWithUserID(userID),
 		repo.ListExercisesWithPageToken(req.Msg.GetPageToken()),
+		repo.ListExercisesWithoutDeleted(),
 	)
 	if err != nil {
 		log.Error("list exercises failed", zap.Error(err))
