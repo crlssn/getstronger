@@ -60,19 +60,19 @@ resource "aws_s3_bucket_website_configuration" "redirect_bucket" {
     protocol  = "https"
   }
 }
-#
-# resource "aws_s3_bucket_policy" "redirect_policy" {
-#   bucket = aws_s3_bucket.redirect_getstronger_pro.id
-#
-#   policy = jsonencode({
-#     Version = "2012-10-17",
-#     Statement = [
-#       {
-#         Effect    = "Allow"
-#         Principal = "*"
-#         Action    = ["s3:GetObject"]
-#         Resource  = ["${aws_s3_bucket.redirect_getstronger_pro.arn}/*"]
-#       }
-#     ]
-#   })
-# }
+
+resource "aws_s3_bucket_policy" "redirect_policy" {
+  bucket = aws_s3_bucket.redirect_getstronger_pro.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = ["${aws_s3_bucket.redirect_getstronger_pro.arn}/*"]
+      }
+    ]
+  })
+}
