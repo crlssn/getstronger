@@ -64,7 +64,7 @@ resource "aws_route53_record" "mx_record" {
   name    = ""
   type    = "MX"
   ttl     = 300
-  records = ["10 inbound-smtp.eu-west-2.amazonaws.com"]
+  records = ["10 inbound-smtp.eu-west-2.amazonaws.com", "10 feedback-smtp.eu-west-2.amazonses.com"]
 }
 
 
