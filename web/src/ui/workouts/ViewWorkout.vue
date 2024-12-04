@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { WorkoutClient } from '@/clients/clients'
+import { WorkoutClient } from '@/http/clients'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import {

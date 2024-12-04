@@ -1,4 +1,5 @@
 export interface DropdownItem {
-  href: string
+  func?: () => Promise<void>
+  href?: string
   title: string
 }

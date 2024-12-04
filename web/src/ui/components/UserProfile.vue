@@ -10,7 +10,7 @@ import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { ExerciseClient, UserClient, WorkoutClient } from '@/clients/clients'
+import { ExerciseClient, UserClient, WorkoutClient } from '@/http/clients'
 import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
 import { GetPersonalBestsRequestSchema, type PersonalBest } from '@/proto/api/v1/exercise_pb.ts'
 import {

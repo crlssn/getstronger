@@ -2,6 +2,8 @@ package v1
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	"connectrpc.com/connect"
@@ -188,6 +190,11 @@ func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 		repo.DeleteWorkoutWithID(req.Msg.GetId()),
 		repo.DeleteWorkoutWithUserID(userID),
 	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Error("workout not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("failed to delete workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

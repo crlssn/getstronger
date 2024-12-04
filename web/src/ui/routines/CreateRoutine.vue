@@ -6,7 +6,7 @@ import { Switch } from '@headlessui/vue'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
-import { ExerciseClient, RoutineClient } from '@/clients/clients'
+import { ExerciseClient, RoutineClient } from '@/http/clients'
 import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
 

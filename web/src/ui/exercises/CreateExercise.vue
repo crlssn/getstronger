@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
-import { ExerciseClient } from '@/clients/clients'
+import { ExerciseClient } from '@/http/clients'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
 import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'

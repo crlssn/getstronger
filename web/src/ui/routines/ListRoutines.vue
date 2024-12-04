@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
-import { RoutineClient } from '@/clients/clients'
+import { RoutineClient } from '@/http/clients'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'

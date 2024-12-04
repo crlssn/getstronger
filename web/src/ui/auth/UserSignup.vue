@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { create } from '@bufbuild/protobuf'
-import { AuthClient } from '@/clients/clients'
+import { AuthClient } from '@/http/clients'
 import { ConnectError } from '@connectrpc/connect'
 import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'

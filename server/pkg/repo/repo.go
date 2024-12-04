@@ -717,9 +717,16 @@ func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
 	}
 }
 
+var errDeleteWorkoutMissingOptions = fmt.Errorf("delete workout: missing options")
+
 func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
+	if len(opts) == 0 {
+		return errDeleteWorkoutMissingOptions
+	}
+
 	query := []qm.QueryMod{
 		qm.Load(orm.WorkoutRels.Sets),
+		qm.Load(orm.WorkoutRels.WorkoutComments),
 	}
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -733,6 +740,10 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 		if _, err = workout.R.Sets.DeleteAll(ctx, tx.executor()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
+		}
+
+		if _, err = workout.R.WorkoutComments.DeleteAll(ctx, tx.executor()); err != nil {
+			return fmt.Errorf("workout comments delete: %w", err)
 		}
 
 		if _, err = workout.Delete(ctx, tx.executor()); err != nil {
