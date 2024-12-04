@@ -40,9 +40,10 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T|void> => {
-    try {
-        return await fn()
-    } catch (error) {
-        alert(error)
-    }
+  try {
+      return await fn()
+  } catch (error) {
+    // TODO: Use custom alert component.
+    alert(error)
+  }
 }
