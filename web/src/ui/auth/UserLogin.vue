@@ -43,7 +43,7 @@ const onLogin = async () => {
         class="bg-green-200 rounded-md py-3 px-5 mb-2 text-sm/6 text-green-800"
         role="alert"
       >
-        You have successfully signed up. Please login.
+        You have successfully signed up, but you need to verify your email before you can login.
       </div>
       <form
         class="space-y-6"

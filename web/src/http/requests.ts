@@ -1,4 +1,6 @@
 import { create } from "@bufbuild/protobuf"
+import { ConnectError } from "@connectrpc/connect"
+import  { Error, ErrorDetailSchema } from "@/proto/api/v1/errors_pb"
 import { LoginRequestSchema, type LoginResponse } from "@/proto/api/v1/auth_pb"
 import { DeleteWorkoutRequestSchema, type DeleteWorkoutResponse } from "@/proto/api/v1/workouts_pb"
 import { DeleteRoutineRequestSchema, type DeleteRoutineResponse } from "@/proto/api/v1/routines_pb"
@@ -78,5 +80,16 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T|void> => {
   } catch (error) {
     // TODO: Use custom alert component.
     alert(error)
+    if (error instanceof ConnectError) {
+      for (const detail of error.findDetails(ErrorDetailSchema)) {
+        switch (detail.error) {
+          case Error.EMAIL_NOT_VERIFIED:
+            console.warn("email is not verified");
+            break;
+          default:
+            console.warn("unknown error:", detail.error);
+        }
+      }
+    }
   }
 }

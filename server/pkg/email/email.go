@@ -9,8 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/ses/types"
-
-	"github.com/crlssn/getstronger/server/pkg/orm"
 )
 
 type Email struct {
@@ -42,7 +40,13 @@ func MustNew() *Email {
 	return e
 }
 
-func (e *Email) SendVerificationEmail(ctx context.Context, to *orm.Auth) error {
+type SendVerificationEmail struct {
+	Name  string
+	Email string
+	Token string
+}
+
+func (e *Email) SendVerificationEmail(ctx context.Context, req SendVerificationEmail) error {
 	sender := "noreply@getstronger.pro"
 	subject := "[GetStronger] Verify your email"
 	body := fmt.Sprintf(`Hi %s, 
@@ -50,12 +54,12 @@ func (e *Email) SendVerificationEmail(ctx context.Context, to *orm.Auth) error {
 Please verify your email address by clicking on the link below.
 
 https://www.getstronger.pro/verify-email?token=%s
-`, to.Email, to.EmailToken)
+`, req.Name, req.Token)
 
 	if _, err := e.client.SendEmail(ctx, &ses.SendEmailInput{
 		Source: aws.String(sender),
 		Destination: &types.Destination{
-			ToAddresses: []string{to.Email},
+			ToAddresses: []string{req.Email},
 		},
 		Message: &types.Message{
 			Body: &types.Body{

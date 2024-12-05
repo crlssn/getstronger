@@ -19,6 +19,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/rpc/apperrors"
 )
 
 var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
@@ -76,21 +77,26 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 			return fmt.Errorf("create auth: %w", err)
 		}
 
-		if err = r.CreateUser(ctx, repo.CreateUserParams{
+		user, err := r.CreateUser(ctx, repo.CreateUserParams{
 			ID:        auth.ID,
 			FirstName: req.Msg.GetFirstName(),
 			LastName:  req.Msg.GetLastName(),
-		}); err != nil {
+		})
+		if err != nil {
 			return fmt.Errorf("create user: %w", err)
 		}
 
-		if err = h.email.SendVerificationEmail(ctx, auth); err != nil {
+		if err = h.email.SendVerificationEmail(ctx, email.SendVerificationEmail{
+			Name:  user.FirstName,
+			Email: auth.Email,
+			Token: auth.EmailToken,
+		}); err != nil {
 			return fmt.Errorf("send verification email: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		log.Error("transaction failed", zap.Error(err))
+		log.Error("signup failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -98,10 +104,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 	return connect.NewResponse(&v1.SignupResponse{}), nil
 }
 
-var (
-	errEmailNotVerified   = errors.New("email not verified")
-	errInvalidCredentials = errors.New("invalid credentials")
-)
+var errInvalidCredentials = errors.New("invalid credentials")
 
 func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
@@ -119,7 +122,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 
 	if !auth.EmailVerified {
 		log.Warn("email not verified")
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errEmailNotVerified)
+		return nil, apperrors.ErrEmailNotVerified
 	}
 
 	accessToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeAccess)

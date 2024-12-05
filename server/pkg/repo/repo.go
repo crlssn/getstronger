@@ -144,17 +144,17 @@ type CreateUserParams struct {
 	LastName  string
 }
 
-func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) error {
+func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
 	user := &orm.User{
 		ID:        p.ID,
 		FirstName: p.FirstName,
 		LastName:  p.LastName,
 	}
-
 	if err := user.Insert(ctx, r.executor(), boil.Infer()); err != nil {
-		return fmt.Errorf("user insert: %w", err)
+		return nil, fmt.Errorf("user insert: %w", err)
 	}
-	return nil
+
+	return user, nil
 }
 
 type CreateExerciseParams struct {

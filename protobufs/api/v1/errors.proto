@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package api.v1;
+
+enum Error {
+  ERROR_UNSPECIFIED = 0;
+  ERROR_EMAIL_NOT_VERIFIED = 1;
+}
+
+message ErrorDetail {
+  Error error = 1;
+}
