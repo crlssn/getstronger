@@ -167,10 +167,10 @@ jobs:
           AWS_BUCKET_NAME: ${{ vars.AWS_BUCKET_NAME }}
         run: |          
           # Sync the build folder to the S3 bucket
-          aws s3 sync ./dist s3://$AWS_BUCKET_NAME --delete
+          aws s3 sync ./dist "s3://$AWS_BUCKET_NAME" --delete
           
           # Make sure the S3 bucket content is accessible publicly
-          aws s3 website s3://$AWS_BUCKET_NAME/ --index-document index.html --error-document index.html
+          aws s3 website "s3://$AWS_BUCKET_NAME/" --index-document index.html --error-document index.html
 
       - name: Remove deploy label
         if: github.event_name == 'pull_request' && github.event.label.name == 'deploy'
