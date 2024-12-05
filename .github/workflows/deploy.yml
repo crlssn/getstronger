@@ -183,5 +183,6 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.label.name == 'deploy'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy"
