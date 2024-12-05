@@ -13,6 +13,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/cookies"
+	"github.com/crlssn/getstronger/server/pkg/email"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
@@ -25,6 +26,7 @@ var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 type authHandler struct {
 	jwt     *jwt.Manager
 	repo    *repo.Repo
+	email   *email.Email
 	config  *config.Config
 	cookies *cookies.Cookies
 }
@@ -34,6 +36,7 @@ type AuthHandlerParams struct {
 
 	JWT     *jwt.Manager
 	Repo    *repo.Repo
+	Email   *email.Email
 	Config  *config.Config
 	Cookies *cookies.Cookies
 }
@@ -42,6 +45,7 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 	return &authHandler{
 		jwt:     p.JWT,
 		repo:    p.Repo,
+		email:   p.Email,
 		config:  p.Config,
 		cookies: p.Cookies,
 	}
@@ -55,8 +59,8 @@ var (
 func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	email := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
-	if !strings.Contains(email, "@") {
+	emailAddress := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
+	if !strings.Contains(emailAddress, "@") {
 		log.Warn("invalid email")
 		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidEmail)
 	}
@@ -67,7 +71,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 	}
 
 	if err := h.repo.NewTx(ctx, func(r *repo.Repo) error {
-		auth, err := r.CreateAuth(ctx, email, req.Msg.GetPassword())
+		auth, err := r.CreateAuth(ctx, emailAddress, req.Msg.GetPassword())
 		if err != nil {
 			return fmt.Errorf("create auth: %w", err)
 		}
@@ -80,13 +84,15 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 			return fmt.Errorf("create user: %w", err)
 		}
 
+		if err = h.email.SendVerificationEmail(ctx, auth); err != nil {
+			return fmt.Errorf("send verification email: %w", err)
+		}
+
 		return nil
 	}); err != nil {
 		log.Error("transaction failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
-
-	// TODO: Send a confirmation email.
 
 	log.Info("user signed up")
 	return connect.NewResponse(&v1.SignupResponse{}), nil
@@ -106,6 +112,11 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 	if err != nil {
 		log.Error("fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if !auth.EmailVerified {
+		log.Warn("email not verified")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}
 
 	accessToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeAccess)

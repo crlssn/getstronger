@@ -12,6 +12,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/cookies"
 	"github.com/crlssn/getstronger/server/pkg/db"
+	"github.com/crlssn/getstronger/server/pkg/email"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/stream"
@@ -36,6 +37,7 @@ func options() []fx.Option {
 		fx.Provide(
 			zap.NewDevelopment,
 			repo.New,
+			email.New,
 			trace.New,
 			config.New,
 			stream.New,

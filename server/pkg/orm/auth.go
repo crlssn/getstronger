@@ -24,42 +24,52 @@ import (
 
 // Auth is an object representing the database table.
 type Auth struct {
-	ID           string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Email        string      `boil:"email" json:"email" toml:"email" yaml:"email"`
-	Password     []byte      `boil:"password" json:"password" toml:"password" yaml:"password"`
-	RefreshToken null.String `boil:"refresh_token" json:"refresh_token,omitempty" toml:"refresh_token" yaml:"refresh_token,omitempty"`
-	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID            string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Email         string      `boil:"email" json:"email" toml:"email" yaml:"email"`
+	Password      []byte      `boil:"password" json:"password" toml:"password" yaml:"password"`
+	RefreshToken  null.String `boil:"refresh_token" json:"refresh_token,omitempty" toml:"refresh_token" yaml:"refresh_token,omitempty"`
+	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	EmailVerified bool        `boil:"email_verified" json:"email_verified" toml:"email_verified" yaml:"email_verified"`
+	EmailToken    string      `boil:"email_token" json:"email_token" toml:"email_token" yaml:"email_token"`
 
 	R *authR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L authL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AuthColumns = struct {
-	ID           string
-	Email        string
-	Password     string
-	RefreshToken string
-	CreatedAt    string
+	ID            string
+	Email         string
+	Password      string
+	RefreshToken  string
+	CreatedAt     string
+	EmailVerified string
+	EmailToken    string
 }{
-	ID:           "id",
-	Email:        "email",
-	Password:     "password",
-	RefreshToken: "refresh_token",
-	CreatedAt:    "created_at",
+	ID:            "id",
+	Email:         "email",
+	Password:      "password",
+	RefreshToken:  "refresh_token",
+	CreatedAt:     "created_at",
+	EmailVerified: "email_verified",
+	EmailToken:    "email_token",
 }
 
 var AuthTableColumns = struct {
-	ID           string
-	Email        string
-	Password     string
-	RefreshToken string
-	CreatedAt    string
+	ID            string
+	Email         string
+	Password      string
+	RefreshToken  string
+	CreatedAt     string
+	EmailVerified string
+	EmailToken    string
 }{
-	ID:           "auth.id",
-	Email:        "auth.email",
-	Password:     "auth.password",
-	RefreshToken: "auth.refresh_token",
-	CreatedAt:    "auth.created_at",
+	ID:            "auth.id",
+	Email:         "auth.email",
+	Password:      "auth.password",
+	RefreshToken:  "auth.refresh_token",
+	CreatedAt:     "auth.created_at",
+	EmailVerified: "auth.email_verified",
+	EmailToken:    "auth.email_token",
 }
 
 // Generated where
@@ -171,18 +181,31 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelperbool struct{ field string }
+
+func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 var AuthWhere = struct {
-	ID           whereHelperstring
-	Email        whereHelperstring
-	Password     whereHelper__byte
-	RefreshToken whereHelpernull_String
-	CreatedAt    whereHelpertime_Time
+	ID            whereHelperstring
+	Email         whereHelperstring
+	Password      whereHelper__byte
+	RefreshToken  whereHelpernull_String
+	CreatedAt     whereHelpertime_Time
+	EmailVerified whereHelperbool
+	EmailToken    whereHelperstring
 }{
-	ID:           whereHelperstring{field: "\"getstronger\".\"auth\".\"id\""},
-	Email:        whereHelperstring{field: "\"getstronger\".\"auth\".\"email\""},
-	Password:     whereHelper__byte{field: "\"getstronger\".\"auth\".\"password\""},
-	RefreshToken: whereHelpernull_String{field: "\"getstronger\".\"auth\".\"refresh_token\""},
-	CreatedAt:    whereHelpertime_Time{field: "\"getstronger\".\"auth\".\"created_at\""},
+	ID:            whereHelperstring{field: "\"getstronger\".\"auth\".\"id\""},
+	Email:         whereHelperstring{field: "\"getstronger\".\"auth\".\"email\""},
+	Password:      whereHelper__byte{field: "\"getstronger\".\"auth\".\"password\""},
+	RefreshToken:  whereHelpernull_String{field: "\"getstronger\".\"auth\".\"refresh_token\""},
+	CreatedAt:     whereHelpertime_Time{field: "\"getstronger\".\"auth\".\"created_at\""},
+	EmailVerified: whereHelperbool{field: "\"getstronger\".\"auth\".\"email_verified\""},
+	EmailToken:    whereHelperstring{field: "\"getstronger\".\"auth\".\"email_token\""},
 }
 
 // AuthRels is where relationship names are stored.
@@ -213,9 +236,9 @@ func (r *authR) GetIDUser() *User {
 type authL struct{}
 
 var (
-	authAllColumns            = []string{"id", "email", "password", "refresh_token", "created_at"}
+	authAllColumns            = []string{"id", "email", "password", "refresh_token", "created_at", "email_verified", "email_token"}
 	authColumnsWithoutDefault = []string{"email", "password"}
-	authColumnsWithDefault    = []string{"id", "refresh_token", "created_at"}
+	authColumnsWithDefault    = []string{"id", "refresh_token", "created_at", "email_verified", "email_token"}
 	authPrimaryKeyColumns     = []string{"id"}
 	authGeneratedColumns      = []string{}
 )

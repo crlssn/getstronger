@@ -3,34 +3,59 @@ package email
 import (
 	"context"
 	"fmt"
-	"log"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/ses/types"
-	"github.com/davecgh/go-spew/spew"
+
+	"github.com/crlssn/getstronger/server/pkg/orm"
 )
 
-func Send(ctx context.Context, to string) {
+type Email struct {
+	client *ses.Client
+}
+
+const timeout = 5 * time.Second
+
+func New() (*Email, error) {
+	ctx, cancelFuc := context.WithTimeout(context.Background(), timeout)
+	defer cancelFuc()
+
 	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("eu-west-2"))
 	if err != nil {
-		log.Fatalf("failed to load AWS config: %v", err)
+		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
-	spew.Dump(cfg)
 
-	// Create SES client
-	sesClient := ses.NewFromConfig(cfg)
+	return &Email{
+		client: ses.NewFromConfig(cfg),
+	}, nil
+}
 
-	// Email details
+func MustNew() *Email {
+	e, err := New()
+	if err != nil {
+		panic(err)
+	}
+
+	return e
+}
+
+func (e *Email) SendVerificationEmail(ctx context.Context, to *orm.Auth) error {
 	sender := "noreply@getstronger.pro"
-	subject := "Test Email from Amazon SES"
-	body := "Hello! This is a test email sent using Amazon SES and Golang."
+	subject := "[GetStronger] Verify your email"
+	body := fmt.Sprintf(`Hi %s, 
 
-	// Build the email input
-	input := &ses.SendEmailInput{
+Please verify your email address by clicking on the link below.
+
+https://www.getstronger.pro/verify-email?token=%s
+`, to.Email, to.EmailToken)
+
+	if _, err := e.client.SendEmail(ctx, &ses.SendEmailInput{
+		Source: aws.String(sender),
 		Destination: &types.Destination{
-			ToAddresses: []string{to},
+			ToAddresses: []string{to.Email},
 		},
 		Message: &types.Message{
 			Body: &types.Body{
@@ -42,16 +67,9 @@ func Send(ctx context.Context, to string) {
 				Data: aws.String(subject),
 			},
 		},
-		Source: aws.String(sender),
+	}); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
 	}
 
-	spew.Dump(input)
-
-	// Send the email
-	output, err := sesClient.SendEmail(ctx, input)
-	if err != nil {
-		log.Fatalf("failed to send email: %v", err)
-	}
-
-	fmt.Printf("Email sent successfully! Message ID: %s\n", *output.MessageId)
+	return nil
 }
