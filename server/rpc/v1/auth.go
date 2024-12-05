@@ -98,7 +98,10 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 	return connect.NewResponse(&v1.SignupResponse{}), nil
 }
 
-var errInvalidCredentials = errors.New("invalid credentials")
+var (
+	errEmailNotVerified   = errors.New("email not verified")
+	errInvalidCredentials = errors.New("invalid credentials")
+)
 
 func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
@@ -116,7 +119,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 
 	if !auth.EmailVerified {
 		log.Warn("email not verified")
-		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errEmailNotVerified)
 	}
 
 	accessToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeAccess)
