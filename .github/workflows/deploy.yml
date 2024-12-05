@@ -173,9 +173,15 @@ jobs:
           # Make sure the S3 bucket content is accessible publicly
           aws s3 website "s3://$AWS_BUCKET_NAME/" --index-document index.html --error-document index.html
 
+  cleanup:
+    needs: [terraform, database, server, web]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
       - name: Remove deploy label
         if: github.event_name == 'pull_request' && github.event.label.name == 'deploy'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy"
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy"
