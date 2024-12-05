@@ -62,7 +62,7 @@ jobs:
           wget https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
           sudo dpkg -i migrate.linux-amd64.deb
 
-      - name: Run database migration
+      - name: Run migration
         env:
           DB_HOST: ${{ vars.DB_HOST }}
           DB_PORT: ${{ vars.DB_PORT }}
@@ -116,7 +116,7 @@ jobs:
           echo JWT_ACCESS_TOKEN_KEY=${{ secrets.JWT_ACCESS_TOKEN_KEY }} >> .env
           echo JWT_REFRESH_TOKEN_KEY=${{ secrets.JWT_REFRESH_TOKEN_KEY }} >> .env
 
-      - name: Deploy to EC2 instance
+      - name: Deploy to EC2
         uses: easingthemes/ssh-deploy@v5.1.0
         with:
           REMOTE_HOST: ${{ vars.AWS_EC2_REMOTE_HOST }}
@@ -143,14 +143,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy web to S3
-        uses: ./.github/actions/deploy/web
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ vars.AWS_REGION }}
-          aws_bucket_name: ${{ vars.AWS_BUCKET_NAME }}
-          codecov_token: ${{ secrets.CODECOV_TOKEN }}
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: ./web
+        run: npm install
+
+      - name: Build the app
+        working-directory: ./web
+        run: npm run build
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Deploy to S3
+        working-directory: ./web
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_BUCKET_NAME: ${{ vars.AWS_BUCKET_NAME }}
+        run: |
+#          # Install AWS CLI
+#          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#          unzip awscliv2.zip
+#          sudo ./aws/install --update
+          
+          # Sync the build folder to the S3 bucket
+          aws s3 sync ./dist s3://$AWS_BUCKET_NAME --delete
+          
+          # Make sure the S3 bucket content is accessible publicly
+          aws s3 website s3://$AWS_BUCKET_NAME/ --index-document index.html --error-document index.html
 
       - name: Remove deploy label
         if: github.event_name == 'pull_request' && github.event.label.name == 'deploy'
