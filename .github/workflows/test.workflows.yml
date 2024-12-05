@@ -14,13 +14,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
       - name: Install actionlint
-        run: |
-          curl -sSL https://github.com/rhysd/actionlint/releases/latest/download/actionlint_linux_amd64.tar.gz | tar xz
-          sudo mv actionlint /usr/local/bin/
+        run: go install github.com/rhysd/actionlint/cmd/actionlint@latest
 
       - name: Run actionlint
         run: actionlint
