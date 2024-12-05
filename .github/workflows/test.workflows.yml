@@ -1,0 +1,27 @@
+name: test
+
+on:
+  push:
+    paths:
+      - .github/workflows/*.yml
+  pull_request:
+    paths:
+      - .github/workflows/*.yml
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: workflows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install actionlint
+        run: |
+          curl -sSL https://github.com/rhysd/actionlint/releases/latest/download/actionlint_linux_amd64.tar.gz | tar xz
+          sudo mv actionlint /usr/local/bin/
+
+      - name: Run actionlint
+        run: actionlint
