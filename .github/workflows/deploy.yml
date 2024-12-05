@@ -102,19 +102,20 @@ jobs:
       - name: Create env file
         working-directory: ./server/bin
         run: |
-          touch .env
-          echo DB_HOST=${{ vars.DB_HOST }} >> .env
-          echo DB_PORT=${{ vars.DB_PORT }} >> .env
-          echo DB_USER=${{ vars.DB_USER }} >> .env
-          echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
-          echo DB_NAME=${{ vars.DB_NAME }} >> .env
-          echo CORS_ALLOWED_ORIGIN=${{ vars.CORS_ALLOWED_ORIGIN }} >> .env
-          echo SERVER_PORT=${{ vars.SERVER_PORT }} >> .env
-          echo SERVER_CERT_PATH=${{ vars.SERVER_CERT_PATH }} >> .env
-          echo SERVER_KEY_PATH=${{ vars.SERVER_KEY_PATH }} >> .env
-          echo COOKIE_DOMAIN=${{ vars.COOKIE_DOMAIN }} >> .env
-          echo JWT_ACCESS_TOKEN_KEY=${{ secrets.JWT_ACCESS_TOKEN_KEY }} >> .env
-          echo JWT_REFRESH_TOKEN_KEY=${{ secrets.JWT_REFRESH_TOKEN_KEY }} >> .env
+          {
+            echo DB_HOST=${{ vars.DB_HOST }}
+            echo DB_PORT=${{ vars.DB_PORT }}
+            echo DB_USER=${{ vars.DB_USER }}
+            echo DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            echo DB_NAME=${{ vars.DB_NAME }}
+            echo CORS_ALLOWED_ORIGIN=${{ vars.CORS_ALLOWED_ORIGIN }}
+            echo SERVER_PORT=${{ vars.SERVER_PORT }}
+            echo SERVER_CERT_PATH=${{ vars.SERVER_CERT_PATH }}
+            echo SERVER_KEY_PATH=${{ vars.SERVER_KEY_PATH }}
+            echo COOKIE_DOMAIN=${{ vars.COOKIE_DOMAIN }}
+            echo JWT_ACCESS_TOKEN_KEY=${{ secrets.JWT_ACCESS_TOKEN_KEY }}
+            echo JWT_REFRESH_TOKEN_KEY=${{ secrets.JWT_REFRESH_TOKEN_KEY }}
+          } >> .env
 
       - name: Deploy to EC2
         uses: easingthemes/ssh-deploy@v5.1.0
