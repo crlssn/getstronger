@@ -2,12 +2,11 @@ name: test
 
 on:
   push:
-    paths:
-      - .github/workflows/*.yml
+    branches:
+      - main
   pull_request:
     paths:
       - .github/workflows/*.yml
-  workflow_dispatch:
 
 jobs:
   lint:
