@@ -1,4 +1,5 @@
 name: Apply Terraform
+description: Apply Terraform configuration
 
 inputs:
   aws_access_key_id:

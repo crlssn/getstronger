@@ -1,4 +1,5 @@
 name: Deploy web app to S3
+description: Deploy web app to S3
 
 inputs:
   aws_access_key_id:

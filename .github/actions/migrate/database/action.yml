@@ -1,4 +1,5 @@
 name: Migrate database
+description: Run database migration
 
 inputs:
   db_host:
