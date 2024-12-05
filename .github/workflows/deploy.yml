@@ -21,8 +21,61 @@ permissions:
   repository-projects: read
 
 jobs:
-  deploy:
+  terraform:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./infrastructure
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: ./infrastructure
+        env:
+          # TF_LOG: DEBUG
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_VAR_db_username: ${{ secrets.DB_USER }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
+  database:
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install golang-migrate
+        run: |
+          wget https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
+          sudo dpkg -i migrate.linux-amd64.deb
+
+      - name: Run database migration
+        env:
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_PORT: ${{ vars.DB_PORT }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          migrate -path database/migrations/ \
+            -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}" \
+            -verbose up
+
+  server:
+    needs: database
     runs-on: ubuntu-latest
 
     steps:
@@ -35,23 +88,6 @@ jobs:
           echo "${{ secrets.AWS_EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Apply Terraform
-        uses: ./.github/actions/apply/terraform
-        with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          db_username: ${{ secrets.TF_VAR_DB_USERNAME }}
-          db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
-
-      - name: Migrate database
-        uses: ./.github/actions/migrate/database
-        with:
-          db_host: ${{ vars.DB_HOST }}
-          db_port: ${{ vars.DB_PORT }}
-          db_name: ${{ vars.DB_NAME }}
-          db_user: ${{ secrets.DB_USER }}
-          db_password: ${{ secrets.DB_PASSWORD }}
-#
       - name: Deploy backend to EC2
         uses: ./.github/actions/deploy/backend
         with:
@@ -72,6 +108,14 @@ jobs:
           cookie_domain: ${{ vars.COOKIE_DOMAIN }}
           jwt_access_token_key: ${{ secrets.JWT_ACCESS_TOKEN_KEY }}
           jwt_refresh_token_key: ${{ secrets.JWT_REFRESH_TOKEN_KEY }}
+
+  web:
+    needs: server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Deploy web to S3
         uses: ./.github/actions/deploy/web
