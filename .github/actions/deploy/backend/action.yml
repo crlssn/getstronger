@@ -1,4 +1,5 @@
 name: Deploy backend
+description: Deploy backend to EC2
 
 inputs:
   aws_access_key_id:

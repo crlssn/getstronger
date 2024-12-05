@@ -1,4 +1,5 @@
 name: Validate Terraform
+description: Validate Terraform configuration
 
 inputs:
   aws_access_key_id:
