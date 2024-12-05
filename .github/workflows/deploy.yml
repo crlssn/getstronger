@@ -88,26 +88,52 @@ jobs:
           echo "${{ secrets.AWS_EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Deploy backend to EC2
-        uses: ./.github/actions/deploy/backend
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ vars.AWS_REGION }}
-          aws_ec2_private_key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
-          aws_ec2_remote_host: ${{ vars.AWS_EC2_REMOTE_HOST }}
-          db_host: ${{ vars.DB_HOST }}
-          db_port: ${{ vars.DB_PORT }}
-          db_user: ${{ vars.DB_USER }}
-          db_password: ${{ secrets.DB_PASSWORD }}
-          db_name: ${{ vars.DB_NAME }}
-          cors_allowed_origin: ${{ vars.CORS_ALLOWED_ORIGIN }}
-          server_port: ${{ vars.SERVER_PORT }}
-          server_cert_path: ${{ vars.SERVER_CERT_PATH }}
-          server_key_path: ${{ vars.SERVER_KEY_PATH }}
-          cookie_domain: ${{ vars.COOKIE_DOMAIN }}
-          jwt_access_token_key: ${{ secrets.JWT_ACCESS_TOKEN_KEY }}
-          jwt_refresh_token_key: ${{ secrets.JWT_REFRESH_TOKEN_KEY }}
+          go-version: '1.23'
+
+      - name: Build binary
+        working-directory: ./server
+        run: |
+          go mod download
+          GOOS=linux go build -o bin/app cmd/main.go
+
+      - name: Create env file
+        working-directory: ./server/bin
+        run: |
+          touch .env
+          echo DB_HOST=${{ vars.DB_HOST }} >> .env
+          echo DB_PORT=${{ vars.DB_PORT }} >> .env
+          echo DB_USER=${{ vars.DB_USER }} >> .env
+          echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
+          echo DB_NAME=${{ vars.DB_NAME }} >> .env
+          echo CORS_ALLOWED_ORIGIN=${{ vars.CORS_ALLOWED_ORIGIN }} >> .env
+          echo SERVER_PORT=${{ vars.SERVER_PORT }} >> .env
+          echo SERVER_CERT_PATH=${{ vars.SERVER_CERT_PATH }} >> .env
+          echo SERVER_KEY_PATH=${{ vars.SERVER_KEY_PATH }} >> .env
+          echo COOKIE_DOMAIN=${{ vars.COOKIE_DOMAIN }} >> .env
+          echo JWT_ACCESS_TOKEN_KEY=${{ secrets.JWT_ACCESS_TOKEN_KEY }} >> .env
+          echo JWT_REFRESH_TOKEN_KEY=${{ secrets.JWT_REFRESH_TOKEN_KEY }} >> .env
+
+      - name: Deploy to EC2 instance
+        uses: easingthemes/ssh-deploy@v5.1.0
+        with:
+          REMOTE_HOST: ${{ vars.AWS_EC2_REMOTE_HOST }}
+          REMOTE_USER: 'ec2-user'
+          SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
+          SOURCE: 'server/bin/'
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ vars.AWS_EC2_REMOTE_HOST }}
+          username: 'ec2-user'
+          key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/ec2-user
+            sudo systemctl restart app.service   
 
   web:
     needs: server
