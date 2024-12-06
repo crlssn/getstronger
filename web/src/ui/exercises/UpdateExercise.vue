@@ -3,18 +3,12 @@ import type { FieldMask } from '@bufbuild/protobuf/wkt'
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
 
 import { onMounted, ref } from 'vue'
-import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ExerciseClient } from '@/http/clients'
-import { deleteExercise } from '@/http/requests'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
 import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
-import AppList from '../components/AppList.vue'
-import AppListItem from '../components/AppListItem.vue'
-import { ChevronRightIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
-import AppListItemLink from '../components/AppListItemLink.vue'
 
 const name = ref('')
 const label = ref('')
@@ -71,11 +65,6 @@ async function updateExercise() {
     }
     console.error('create exercise failed:', error)
   }
-}
-
-const onDeleteExercise = async () => {
-  await deleteExercise(route.params.id as string)
-  await router.push('/exercises')
 }
 </script>
 

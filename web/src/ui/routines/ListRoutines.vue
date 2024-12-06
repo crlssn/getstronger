@@ -44,7 +44,7 @@ onMounted(async () => {
       :to="`/routines/${routine.id}`"
     >
       {{ routine.name }}
-      <ChevronRightIcon/>
+      <ChevronRightIcon />
     </AppListItemLink>
   </AppList>
 </template>

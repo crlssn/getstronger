@@ -10,5 +10,5 @@ h6 {
 }
 
 li svg {
-  @apply size-5 flex-none text-gray-500
+  @apply size-5 flex-none;
 }

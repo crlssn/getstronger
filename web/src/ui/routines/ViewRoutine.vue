@@ -11,13 +11,14 @@ import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppListItem from '@/ui/components/AppListItem.vue'
-import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { useSortable } from '@vueuse/integrations/useSortable'
+import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import {
   GetRoutineRequestSchema,
   type Routine,
   UpdateExerciseOrderRequestSchema,
 } from '@/proto/api/v1/routines_pb'
+
 import AppListItemLink from '../components/AppListItemLink.vue'
 
 const routine = ref<Routine | undefined>(undefined)
@@ -67,14 +68,16 @@ const onDeleteRoutine = async () => {
 </script>
 
 <template>
-    <AppButton
+  <AppButton
     type="link"
     :to="`/workouts/routine/${route.params.id}`"
     colour="primary"
   >
     Start Workout
   </AppButton>
-  <h6 class="mt-8">Exercises</h6>
+  <h6 class="mt-8">
+    Exercises
+  </h6>
   <AppList ref="el">
     <AppListItem
       v-for="exercise in routine?.exercises"
@@ -83,18 +86,24 @@ const onDeleteRoutine = async () => {
       class="hover:cursor-move"
     >
       {{ exercise.name }}
-      <ChevronUpDownIcon/>
+      <ChevronUpDownIcon />
     </AppListItem>
   </AppList>
-  <h6 class="mt-8">Admin</h6>
+  <h6 class="mt-8">
+    Admin
+  </h6>
   <AppList>
     <AppListItemLink :to="`/routines/${route.params.id}/edit`">
       Update Routine
-      <ChevronRightIcon/>
+      <ChevronRightIcon />
     </AppListItemLink>
-    <AppListItem @click="onDeleteRoutine" class="cursor-pointer">
+    <AppListItem
+      is="danger"
+      class="cursor-pointer"
+      @click="onDeleteRoutine"
+    >
       Delete Routine
-      <TrashIcon/>
+      <TrashIcon />
     </AppListItem>
   </AppList>
 </template>

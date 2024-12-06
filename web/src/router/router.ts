@@ -15,16 +15,16 @@ import ResetPassword from '@/ui/auth/ResetPassword.vue'
 import ListRoutines from '@/ui/routines/ListRoutines.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
+import ViewExercise from '@/ui/exercises/ViewExercise.vue'
 import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
 import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
 import ListExercises from '@/ui/exercises/ListExercises.vue'
-import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
 import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
+import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
 import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
-import ViewExercise from '@/ui/exercises/ViewExercise.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
