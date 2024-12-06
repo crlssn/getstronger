@@ -6,11 +6,13 @@ import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 service AuthService {
-  rpc Signup(SignupRequest) returns (SignupResponse) {}
-  rpc Login(LoginRequest) returns (LoginResponse) {}
-  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
-  rpc Logout(LogoutRequest) returns (LogoutResponse) {}
-  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
+  rpc Signup (SignupRequest) returns (SignupResponse) {}
+  rpc Login (LoginRequest) returns (LoginResponse) {}
+  rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {}
+  rpc Logout (LogoutRequest) returns (LogoutResponse) {}
+  rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {}
+  rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse) {}
+  rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {}
 }
 
 message SignupRequest {
@@ -42,3 +44,15 @@ message VerifyEmailRequest {
   string token = 1 [(buf.validate.field).string.min_len = 1];
 }
 message VerifyEmailResponse {}
+
+message ResetPasswordRequest {
+  string email = 1 [(buf.validate.field).string.email = true];
+}
+message ResetPasswordResponse {}
+
+message UpdatePasswordRequest {
+  string token = 1 [(buf.validate.field).string.uuid = true];
+  string password = 2 [(buf.validate.field).string.min_len = 6];
+  string password_confirmation = 3;
+}
+message UpdatePasswordResponse {}

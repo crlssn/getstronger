@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
@@ -226,4 +227,57 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[v1.V
 
 	log.Info("email verified")
 	return connect.NewResponse(&v1.VerifyEmailResponse{}), nil
+}
+
+func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	auth, err := h.repo.GetAuth(ctx,
+		repo.GetAuthByEmail(req.Msg.GetEmail()),
+		repo.GetAuthWithUser(),
+	)
+	if err != nil {
+		log.Error("auth fetch failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	// TODO: Set expiration time for token.
+	token := uuid.NewString()
+	if err = h.repo.SetPasswordResetToken(ctx, auth.ID, token); err != nil {
+		log.Error("password reset token generation failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = h.email.SendPasswordResetEmail(ctx, email.SendPasswordResetEmail{
+		Name:  auth.R.IDUser.FirstName,
+		Email: auth.Email,
+		Token: token,
+	}); err != nil {
+		log.Error("password reset email failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("password reset email sent")
+	return connect.NewResponse(&v1.ResetPasswordResponse{}), nil
+}
+
+func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
+		log.Warn("passwords do not match")
+		return nil, connect.NewError(connect.CodeInvalidArgument, errPasswordsDoNotMatch)
+	}
+
+	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByPasswordResetToken(req.Msg.GetToken()))
+	if err != nil {
+		log.Error("auth fetch failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = h.repo.UpdatePassword(ctx, auth.ID, req.Msg.GetPassword()); err != nil {
+		log.Error("password update failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("password updated")
+	return connect.NewResponse(&v1.UpdatePasswordResponse{}), nil
 }

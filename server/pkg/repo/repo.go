@@ -1178,6 +1178,18 @@ func GetAuthByEmailToken(token string) GetAuthOpt {
 	}
 }
 
+func GetAuthWithUser() GetAuthOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.AuthRels.IDUser)
+	}
+}
+
+func GetAuthByPasswordResetToken(token string) GetAuthOpt {
+	return func() qm.QueryMod {
+		return orm.AuthWhere.PasswordResetToken.EQ(null.StringFrom(token))
+	}
+}
+
 func (r *Repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
@@ -1200,6 +1212,29 @@ func (r *Repo) VerifyEmail(ctx context.Context, token string) error {
 
 	auth.EmailVerified = true
 	if _, err = auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.EmailVerified)); err != nil {
+		return fmt.Errorf("auth update: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) SetPasswordResetToken(ctx context.Context, authID, token string) error {
+	auth := &orm.Auth{ID: authID, PasswordResetToken: null.StringFrom(token)}
+	if _, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.PasswordResetToken)); err != nil {
+		return fmt.Errorf("auth update: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) UpdatePassword(ctx context.Context, authID string, password string) error {
+	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("bcrypt password generation: %w", err)
+	}
+
+	auth := &orm.Auth{ID: authID, Password: bcryptPassword}
+	if _, err = auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.Password)); err != nil {
 		return fmt.Errorf("auth update: %w", err)
 	}
 
