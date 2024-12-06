@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/errors.proto.
  */
 export const file_api_v1_errors: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvZXJyb3JzLnByb3RvEgZhcGkudjEiKwoLRXJyb3JEZXRhaWwSHAoFZXJyb3IYASABKA4yDS5hcGkudjEuRXJyb3IqPAoFRXJyb3ISFQoRRVJST1JfVU5TUEVDSUZJRUQQABIcChhFUlJPUl9FTUFJTF9OT1RfVkVSSUZJRUQQAUKMAQoKY29tLmFwaS52MUILRXJyb3JzUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM");
+  fileDesc("ChNhcGkvdjEvZXJyb3JzLnByb3RvEgZhcGkudjEiKwoLRXJyb3JEZXRhaWwSHAoFZXJyb3IYASABKA4yDS5hcGkudjEuRXJyb3IqXgoFRXJyb3ISFQoRRVJST1JfVU5TUEVDSUZJRUQQABIcChhFUlJPUl9FTUFJTF9OT1RfVkVSSUZJRUQQARIgChxFUlJPUl9QQVNTV09SRFNfRE9fTk9UX01BVENIEAJCjAEKCmNvbS5hcGkudjFCC0Vycm9yc1Byb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message api.v1.ErrorDetail
@@ -42,6 +42,11 @@ export enum Error {
    * @generated from enum value: ERROR_EMAIL_NOT_VERIFIED = 1;
    */
   EMAIL_NOT_VERIFIED = 1,
+
+  /**
+   * @generated from enum value: ERROR_PASSWORDS_DO_NOT_MATCH = 2;
+   */
+  PASSWORDS_DO_NOT_MATCH = 2,
 }
 
 /**

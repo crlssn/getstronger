@@ -1233,8 +1233,8 @@ func (r *Repo) UpdatePassword(ctx context.Context, authID string, password strin
 		return fmt.Errorf("bcrypt password generation: %w", err)
 	}
 
-	auth := &orm.Auth{ID: authID, Password: bcryptPassword}
-	if _, err = auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.Password)); err != nil {
+	auth := &orm.Auth{ID: authID, Password: bcryptPassword, PasswordResetToken: null.String{}}
+	if _, err = auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.Password, orm.AuthColumns.PasswordResetToken)); err != nil {
 		return fmt.Errorf("auth update: %w", err)
 	}
 

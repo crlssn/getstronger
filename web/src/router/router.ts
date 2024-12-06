@@ -23,6 +23,7 @@ import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
+import ResetPassword from '@/ui/auth/ResetPassword.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -150,6 +151,12 @@ const router: Router = createRouter({
       component: ForgotPassword,
       name: 'forgot-password',
       path: '/forgot-password',
+    },
+    {
+      beforeEnter: [guest],
+      component: ResetPassword,
+      name: 'reset-password',
+      path: '/reset-password',
     },
     {
       component: NotFound,

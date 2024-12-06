@@ -54,10 +54,7 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 	}
 }
 
-var (
-	errInvalidEmail        = errors.New("invalid email")
-	errPasswordsDoNotMatch = errors.New("passwords do not match")
-)
+var errInvalidEmail = errors.New("invalid email")
 
 func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
@@ -70,7 +67,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 
 	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
 		log.Warn("passwords do not match")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errPasswordsDoNotMatch)
+		return nil, rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
 	if err := h.repo.NewTx(ctx, func(r *repo.Repo) error {
@@ -272,11 +269,16 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[v
 	log := xcontext.MustExtractLogger(ctx)
 	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
 		log.Warn("passwords do not match")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errPasswordsDoNotMatch)
+		return nil, rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
 	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByPasswordResetToken(req.Msg.GetToken()))
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("auth not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("auth fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
