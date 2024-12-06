@@ -81,12 +81,12 @@ const onLogin = async () => {
               class="block text-sm/6 font-medium text-gray-900"
             >Password</label>
             <div class="text-sm">
-              <a
-                href="#"
+              <RouterLink
+                to="/forgot-password"
                 class="font-semibold text-indigo-600 hover:text-indigo-500"
               >
                 Forgot password?
-              </a>
+              </RouterLink>
             </div>
           </div>
           <div class="mt-2">

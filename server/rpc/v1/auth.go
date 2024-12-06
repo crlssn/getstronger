@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -236,6 +237,12 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1
 		repo.GetAuthWithUser(),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Do not expose information about the email not existing.
+			log.Warn("auth not found")
+			return connect.NewResponse(&v1.ResetPasswordResponse{}), nil
+		}
+
 		log.Error("auth fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -248,6 +255,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1
 	}
 
 	if err = h.email.SendPasswordResetEmail(ctx, email.SendPasswordResetEmail{
+		// DEBT: Fix the auth-user relationship.
 		Name:  auth.R.IDUser.FirstName,
 		Email: auth.Email,
 		Token: token,

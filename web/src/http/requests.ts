@@ -4,7 +4,7 @@ import  { Error, ErrorDetailSchema } from "@/proto/api/v1/errors_pb"
 import { DeleteWorkoutRequestSchema, type DeleteWorkoutResponse } from "@/proto/api/v1/workouts_pb"
 import { DeleteRoutineRequestSchema, type DeleteRoutineResponse } from "@/proto/api/v1/routines_pb"
 import { DeleteExerciseRequestSchema, type DeleteExerciseResponse } from "@/proto/api/v1/exercise_pb"
-import { LoginRequestSchema, type LoginResponse, type SignupRequest, SignupRequestSchema, type SignupResponse, VerifyEmailRequestSchema, type VerifyEmailResponse } from "@/proto/api/v1/auth_pb"
+import { LoginRequestSchema, type LoginResponse, type ResetPasswordRequest, ResetPasswordRequestSchema, type ResetPasswordResponse, type SignupRequest, SignupRequestSchema, type SignupResponse, VerifyEmailRequestSchema, type VerifyEmailResponse } from "@/proto/api/v1/auth_pb"
 
 import { AuthClient, ExerciseClient, RoutineClient, WorkoutClient } from "./clients"
 
@@ -41,9 +41,9 @@ export const login = async (email: string, password: string): Promise<LoginRespo
   return tryCatch(() => AuthClient.login(req))
 }
 
-export const signup = async (req: SignupRequest): Promise<SignupResponse | void> => {
-  const r = create(SignupRequestSchema, req)
-  return tryCatch(() => AuthClient.signup(r))
+export const signup = async (request: SignupRequest): Promise<SignupResponse | void> => {
+  const req = create(SignupRequestSchema, request)
+  return tryCatch(() => AuthClient.signup(req))
 }
 
 export const verifyEmail = async (token: string): Promise<VerifyEmailResponse | void> => {
@@ -52,6 +52,11 @@ export const verifyEmail = async (token: string): Promise<VerifyEmailResponse | 
   })
   
   return tryCatch(() => AuthClient.verifyEmail(req))
+}
+
+export const resetPassword = async (request: ResetPasswordRequest): Promise<ResetPasswordResponse | void> => {
+  const req = create(ResetPasswordRequestSchema, request)
+  return tryCatch(() => AuthClient.resetPassword(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T|void> => {

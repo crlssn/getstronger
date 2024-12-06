@@ -22,6 +22,7 @@ import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
+import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -143,6 +144,12 @@ const router: Router = createRouter({
       component: VerifyEmail,
       name: 'verify-email',
       path: '/verify-email',
+    },
+    {
+      beforeEnter: [guest],
+      component: ForgotPassword,
+      name: 'forgot-password',
+      path: '/forgot-password',
     },
     {
       component: NotFound,
