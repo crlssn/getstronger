@@ -114,7 +114,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidCredentials)
 	}
 
-	auth, err := h.repo.FromEmail(ctx, req.Msg.GetEmail())
+	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByEmail(req.Msg.GetEmail()))
 	if err != nil {
 		log.Error("fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -215,4 +215,15 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRe
 
 	log.Info("logged out")
 	return res, nil
+}
+
+func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[v1.VerifyEmailRequest]) (*connect.Response[v1.VerifyEmailResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	if err := h.repo.VerifyEmail(ctx, req.Msg.GetToken()); err != nil {
+		log.Error("email verification failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("email verified")
+	return connect.NewResponse(&v1.VerifyEmailResponse{}), nil
 }

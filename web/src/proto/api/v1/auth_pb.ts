@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/auth.proto.
  */
 export const file_api_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChFhcGkvdjEvYXV0aC5wcm90bxIGYXBpLnYxIpoBCg1TaWdudXBSZXF1ZXN0EhYKBWVtYWlsGAEgASgJQge6SARyAmABEhkKCHBhc3N3b3JkGAIgASgJQge6SARyAhAGEh0KFXBhc3N3b3JkX2NvbmZpcm1hdGlvbhgDIAEoCRIbCgpmaXJzdF9uYW1lGAQgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgFIAEoCUIHukgEcgIQASIQCg5TaWdudXBSZXNwb25zZSJBCgxMb2dpblJlcXVlc3QSFgoFZW1haWwYASABKAlCB7pIBHICYAESGQoIcGFzc3dvcmQYAiABKAlCB7pIBHICEAEiJQoNTG9naW5SZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkiFQoTUmVmcmVzaFRva2VuUmVxdWVzdCIsChRSZWZyZXNoVG9rZW5SZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkiDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZTKIAgoLQXV0aFNlcnZpY2USOQoGU2lnbnVwEhUuYXBpLnYxLlNpZ251cFJlcXVlc3QaFi5hcGkudjEuU2lnbnVwUmVzcG9uc2UiABI2CgVMb2dpbhIULmFwaS52MS5Mb2dpblJlcXVlc3QaFS5hcGkudjEuTG9naW5SZXNwb25zZSIAEksKDFJlZnJlc2hUb2tlbhIbLmFwaS52MS5SZWZyZXNoVG9rZW5SZXF1ZXN0GhwuYXBpLnYxLlJlZnJlc2hUb2tlblJlc3BvbnNlIgASOQoGTG9nb3V0EhUuYXBpLnYxLkxvZ291dFJlcXVlc3QaFi5hcGkudjEuTG9nb3V0UmVzcG9uc2UiAEKKAQoKY29tLmFwaS52MUIJQXV0aFByb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp]);
+  fileDesc("ChFhcGkvdjEvYXV0aC5wcm90bxIGYXBpLnYxIpoBCg1TaWdudXBSZXF1ZXN0EhYKBWVtYWlsGAEgASgJQge6SARyAmABEhkKCHBhc3N3b3JkGAIgASgJQge6SARyAhAGEh0KFXBhc3N3b3JkX2NvbmZpcm1hdGlvbhgDIAEoCRIbCgpmaXJzdF9uYW1lGAQgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgFIAEoCUIHukgEcgIQASIQCg5TaWdudXBSZXNwb25zZSJBCgxMb2dpblJlcXVlc3QSFgoFZW1haWwYASABKAlCB7pIBHICYAESGQoIcGFzc3dvcmQYAiABKAlCB7pIBHICEAEiJQoNTG9naW5SZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkiFQoTUmVmcmVzaFRva2VuUmVxdWVzdCIsChRSZWZyZXNoVG9rZW5SZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkiDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZSIsChJWZXJpZnlFbWFpbFJlcXVlc3QSFgoFdG9rZW4YASABKAlCB7pIBHICEAEiFQoTVmVyaWZ5RW1haWxSZXNwb25zZTLSAgoLQXV0aFNlcnZpY2USOQoGU2lnbnVwEhUuYXBpLnYxLlNpZ251cFJlcXVlc3QaFi5hcGkudjEuU2lnbnVwUmVzcG9uc2UiABI2CgVMb2dpbhIULmFwaS52MS5Mb2dpblJlcXVlc3QaFS5hcGkudjEuTG9naW5SZXNwb25zZSIAEksKDFJlZnJlc2hUb2tlbhIbLmFwaS52MS5SZWZyZXNoVG9rZW5SZXF1ZXN0GhwuYXBpLnYxLlJlZnJlc2hUb2tlblJlc3BvbnNlIgASOQoGTG9nb3V0EhUuYXBpLnYxLkxvZ291dFJlcXVlc3QaFi5hcGkudjEuTG9nb3V0UmVzcG9uc2UiABJICgtWZXJpZnlFbWFpbBIaLmFwaS52MS5WZXJpZnlFbWFpbFJlcXVlc3QaGy5hcGkudjEuVmVyaWZ5RW1haWxSZXNwb25zZSIAQooBCgpjb20uYXBpLnYxQglBdXRoUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message api.v1.SignupRequest
@@ -160,6 +160,36 @@ export const LogoutResponseSchema: GenMessage<LogoutResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_auth, 7);
 
 /**
+ * @generated from message api.v1.VerifyEmailRequest
+ */
+export type VerifyEmailRequest = Message<"api.v1.VerifyEmailRequest"> & {
+  /**
+   * @generated from field: string token = 1;
+   */
+  token: string;
+};
+
+/**
+ * Describes the message api.v1.VerifyEmailRequest.
+ * Use `create(VerifyEmailRequestSchema)` to create a new message.
+ */
+export const VerifyEmailRequestSchema: GenMessage<VerifyEmailRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_auth, 8);
+
+/**
+ * @generated from message api.v1.VerifyEmailResponse
+ */
+export type VerifyEmailResponse = Message<"api.v1.VerifyEmailResponse"> & {
+};
+
+/**
+ * Describes the message api.v1.VerifyEmailResponse.
+ * Use `create(VerifyEmailResponseSchema)` to create a new message.
+ */
+export const VerifyEmailResponseSchema: GenMessage<VerifyEmailResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_auth, 9);
+
+/**
  * @generated from service api.v1.AuthService
  */
 export const AuthService: GenService<{
@@ -194,6 +224,14 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof LogoutRequestSchema;
     output: typeof LogoutResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.AuthService.VerifyEmail
+   */
+  verifyEmail: {
+    methodKind: "unary";
+    input: typeof VerifyEmailRequestSchema;
+    output: typeof VerifyEmailResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_auth, 0);
