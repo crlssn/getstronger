@@ -52,6 +52,13 @@ const onLogin = async () => {
       >
         Thank you for verifying your email. You can now login.
       </div>
+      <div
+        v-if="useRoute().query.reset === null"
+        class="bg-green-200 rounded-md py-3 px-5 mb-4 text-sm/6 text-green-800"
+        role="alert"
+      >
+        Your password has been reset. You can now login.
+      </div>
       <form
         class="space-y-6"
         method="POST"
