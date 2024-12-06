@@ -5,6 +5,7 @@ package api.v1;
 enum Error {
   ERROR_UNSPECIFIED = 0;
   ERROR_EMAIL_NOT_VERIFIED = 1;
+  ERROR_PASSWORDS_DO_NOT_MATCH = 2;
 }
 
 message ErrorDetail {

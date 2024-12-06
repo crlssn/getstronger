@@ -2,12 +2,14 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
@@ -52,10 +54,7 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 	}
 }
 
-var (
-	errInvalidEmail        = errors.New("invalid email")
-	errPasswordsDoNotMatch = errors.New("passwords do not match")
-)
+var errInvalidEmail = errors.New("invalid email")
 
 func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
@@ -68,7 +67,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 
 	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
 		log.Warn("passwords do not match")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errPasswordsDoNotMatch)
+		return nil, rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
 	if err := h.repo.NewTx(ctx, func(r *repo.Repo) error {
@@ -226,4 +225,69 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[v1.V
 
 	log.Info("email verified")
 	return connect.NewResponse(&v1.VerifyEmailResponse{}), nil
+}
+
+func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	auth, err := h.repo.GetAuth(ctx,
+		repo.GetAuthByEmail(req.Msg.GetEmail()),
+		repo.GetAuthWithUser(),
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Do not expose information about the email not existing.
+			log.Warn("auth not found")
+			return connect.NewResponse(&v1.ResetPasswordResponse{}), nil
+		}
+
+		log.Error("auth fetch failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	// TODO: Set expiration time for token.
+	token := uuid.NewString()
+	if err = h.repo.SetPasswordResetToken(ctx, auth.ID, token); err != nil {
+		log.Error("password reset token generation failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = h.email.SendPasswordResetEmail(ctx, email.SendPasswordResetEmail{
+		// DEBT: Fix the auth-user relationship.
+		Name:  auth.R.IDUser.FirstName,
+		Email: auth.Email,
+		Token: token,
+	}); err != nil {
+		log.Error("password reset email failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("password reset email sent")
+	return connect.NewResponse(&v1.ResetPasswordResponse{}), nil
+}
+
+func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
+		log.Warn("passwords do not match")
+		return nil, rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
+	}
+
+	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByPasswordResetToken(req.Msg.GetToken()))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("auth not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
+		log.Error("auth fetch failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = h.repo.UpdatePassword(ctx, auth.ID, req.Msg.GetPassword()); err != nil {
+		log.Error("password update failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("password updated")
+	return connect.NewResponse(&v1.UpdatePasswordResponse{}), nil
 }

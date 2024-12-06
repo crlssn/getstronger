@@ -52,6 +52,13 @@ const onLogin = async () => {
       >
         Thank you for verifying your email. You can now login.
       </div>
+      <div
+        v-if="useRoute().query.reset === null"
+        class="bg-green-200 rounded-md py-3 px-5 mb-4 text-sm/6 text-green-800"
+        role="alert"
+      >
+        Your password has been reset. You can now login.
+      </div>
       <form
         class="space-y-6"
         method="POST"
@@ -81,12 +88,12 @@ const onLogin = async () => {
               class="block text-sm/6 font-medium text-gray-900"
             >Password</label>
             <div class="text-sm">
-              <a
-                href="#"
+              <RouterLink
+                to="/forgot-password"
                 class="font-semibold text-indigo-600 hover:text-indigo-500"
               >
                 Forgot password?
-              </a>
+              </RouterLink>
             </div>
           </div>
           <div class="mt-2">

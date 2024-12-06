@@ -81,3 +81,41 @@ Please verify your email address by clicking on the link below.
 
 	return nil
 }
+
+type SendPasswordResetEmail struct {
+	Name  string
+	Email string
+	Token string
+}
+
+func (e *Email) SendPasswordResetEmail(ctx context.Context, req SendPasswordResetEmail) error {
+	sender := "noreply@getstronger.pro"
+	subject := "[GetStronger] Reset your password"
+	body := fmt.Sprintf(`Hi %s, 
+	
+Please click the link below to reset your password.
+
+%s/reset-password?token=%s
+`, req.Name, e.config.Server.AllowedOrigins[0], req.Token)
+
+	if _, err := e.client.SendEmail(ctx, &ses.SendEmailInput{
+		Source: aws.String(sender),
+		Destination: &types.Destination{
+			ToAddresses: []string{req.Email},
+		},
+		Message: &types.Message{
+			Body: &types.Body{
+				Text: &types.Content{
+					Data: aws.String(body),
+				},
+			},
+			Subject: &types.Content{
+				Data: aws.String(subject),
+			},
+		},
+	}); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
+}

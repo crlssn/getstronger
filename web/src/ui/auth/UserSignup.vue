@@ -1,41 +1,24 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { create } from '@bufbuild/protobuf'
-import { AuthClient } from '@/http/clients'
-import { ConnectError } from '@connectrpc/connect'
+import { signup } from '@/http/requests'
 import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
-import { SignupRequestSchema } from '@/proto/api/v1/auth_pb'
-
-const firstName = ref('')
-const lastName = ref('')
-const email = ref('')
-const password = ref('')
-const passwordConfirmation = ref('')
-const requestError = ref('')
+import { type SignupRequest } from '@/proto/api/v1/auth_pb'
 
 const router = useRouter()
+const req = ref<SignupRequest>({
+  $typeName: 'api.v1.SignupRequest',
+  email: '',
+  firstName: '',
+  lastName: '',
+  password: '',
+  passwordConfirmation: ''
+})
 
-const signup = async () => {
-  const request = create(SignupRequestSchema, {
-    email: email.value,
-    firstName: firstName.value,
-    lastName: lastName.value,
-    password: password.value,
-    passwordConfirmation: passwordConfirmation.value,
-  })
-
-  try {
-    requestError.value = ''
-    await AuthClient.signup(request)
-    await router.push('/login?success')
-  } catch (error) {
-    console.error('signup failed:', error)
-    if (error instanceof ConnectError) {
-      requestError.value = error.message
-      return
-    }
-  }
+const onSignup = async () => {
+  const res = await signup(req.value)
+  if (!res) return
+  await router.push('/login?success')
 }
 </script>
 
@@ -53,17 +36,10 @@ const signup = async () => {
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-      <div
-        v-if="requestError"
-        class="bg-red-200 rounded-md py-3 px-5 mb-2 text-sm/6 text-red-800"
-        role="alert"
-      >
-        {{ requestError }}
-      </div>
       <form
         class="space-y-6"
         method="POST"
-        @submit.prevent="signup"
+        @submit.prevent="onSignup"
       >
         <div>
           <label
@@ -73,7 +49,7 @@ const signup = async () => {
           <div class="mt-2">
             <input
               id="firstname"
-              v-model="firstName"
+              v-model="req.firstName"
               name="firstname"
               type="text"
               required
@@ -89,7 +65,7 @@ const signup = async () => {
           >Last name</label>
           <div class="mt-2">
             <input
-              v-model="lastName"
+              v-model="req.lastName"
               name="lastname"
               type="text"
               required
@@ -105,7 +81,7 @@ const signup = async () => {
           <div class="mt-2">
             <input
               id="email"
-              v-model="email"
+              v-model="req.email"
               name="email"
               type="email"
               autocomplete="email"
@@ -124,7 +100,7 @@ const signup = async () => {
           <div class="mt-2">
             <input
               id="password"
-              v-model="password"
+              v-model="req.password"
               name="password"
               type="password"
               autocomplete="current-password"
@@ -145,7 +121,7 @@ const signup = async () => {
           <div class="mt-2">
             <input
               id="passwordConfirmation"
-              v-model="passwordConfirmation"
+              v-model="req.passwordConfirmation"
               name="passwordConfirmation"
               type="password"
               autocomplete="current-password"

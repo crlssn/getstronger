@@ -11,8 +11,10 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import ProfileView from '@/ui/profile/ProfileView.vue'
 import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
 import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
+import ResetPassword from '@/ui/auth/ResetPassword.vue'
 import ListRoutines from '@/ui/routines/ListRoutines.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
+import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
 import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
 import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
 import ListExercises from '@/ui/exercises/ListExercises.vue'
@@ -143,6 +145,18 @@ const router: Router = createRouter({
       component: VerifyEmail,
       name: 'verify-email',
       path: '/verify-email',
+    },
+    {
+      beforeEnter: [guest],
+      component: ForgotPassword,
+      name: 'forgot-password',
+      path: '/forgot-password',
+    },
+    {
+      beforeEnter: [guest],
+      component: ResetPassword,
+      name: 'reset-password',
+      path: '/reset-password',
     },
     {
       component: NotFound,
