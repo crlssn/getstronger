@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import AppButton from '@/ui/components/AppButton.vue'
-import { type ResetPasswordRequest, type SignupRequest } from '@/proto/api/v1/auth_pb'
-import { resetPassword, signup } from '@/http/requests'
 import { resetRequest } from '@/utils/request'
+import { resetPassword } from '@/http/requests'
+import AppButton from '@/ui/components/AppButton.vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { type ResetPasswordRequest } from '@/proto/api/v1/auth_pb'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,7 +22,6 @@ const onSubmit = async () => {
 }
 </script>
 
-
 <template>
   <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -32,7 +31,7 @@ const onSubmit = async () => {
         role="alert"
       >
         Please check your inbox to reset your password.
-    </div>
+      </div>
       <form
         class="space-y-6"
         method="POST"

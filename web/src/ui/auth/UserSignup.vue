@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { signup } from '@/http/requests'
 import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_pb'
-import { signup } from '@/http/requests'
 
 const router = useRouter()
 const req = ref<SignupRequest>({
   $typeName: 'api.v1.SignupRequest',
   email: '',
-  password: '',
-  passwordConfirmation: '',
   firstName: '',
-  lastName: ''
+  lastName: '',
+  password: '',
+  passwordConfirmation: ''
 })
 
 const onSignup = async () => {

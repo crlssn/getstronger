@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { updatePassword } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
-import { type ResetPasswordRequest, type SignupRequest, type UpdatePasswordRequest } from '@/proto/api/v1/auth_pb'
-import { resetPassword, signup, updatePassword } from '@/http/requests'
+import { type UpdatePasswordRequest } from '@/proto/api/v1/auth_pb'
 
 const route = useRoute()
 const router = useRouter()
