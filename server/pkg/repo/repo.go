@@ -100,14 +100,6 @@ func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password stri
 	return nil
 }
 
-func (r *Repo) FromEmail(ctx context.Context, email string) (*orm.Auth, error) {
-	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
-	if err != nil {
-		return nil, fmt.Errorf("auth fetch: %w", err)
-	}
-	return auth, nil
-}
-
 func (r *Repo) UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error {
 	auth := &orm.Auth{
 		ID:           authID,
@@ -144,17 +136,17 @@ type CreateUserParams struct {
 	LastName  string
 }
 
-func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) error {
+func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
 	user := &orm.User{
 		ID:        p.ID,
 		FirstName: p.FirstName,
 		LastName:  p.LastName,
 	}
-
 	if err := user.Insert(ctx, r.executor(), boil.Infer()); err != nil {
-		return fmt.Errorf("user insert: %w", err)
+		return nil, fmt.Errorf("user insert: %w", err)
 	}
-	return nil
+
+	return user, nil
 }
 
 type CreateExerciseParams struct {
@@ -1170,4 +1162,46 @@ func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userI
 	}
 
 	return exists, nil
+}
+
+type GetAuthOpt func() qm.QueryMod
+
+func GetAuthByEmail(email string) GetAuthOpt {
+	return func() qm.QueryMod {
+		return orm.AuthWhere.Email.EQ(email)
+	}
+}
+
+func GetAuthByEmailToken(token string) GetAuthOpt {
+	return func() qm.QueryMod {
+		return orm.AuthWhere.EmailToken.EQ(token)
+	}
+}
+
+func (r *Repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
+	query := make([]qm.QueryMod, 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	auth, err := orm.Auths(query...).One(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("auth fetch: %w", err)
+	}
+
+	return auth, nil
+}
+
+func (r *Repo) VerifyEmail(ctx context.Context, token string) error {
+	auth, err := r.GetAuth(ctx, GetAuthByEmailToken(token))
+	if err != nil {
+		return fmt.Errorf("auth fetch: %w", err)
+	}
+
+	auth.EmailVerified = true
+	if _, err = auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.EmailVerified)); err != nil {
+		return fmt.Errorf("auth update: %w", err)
+	}
+
+	return nil
 }

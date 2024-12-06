@@ -13,11 +13,13 @@ import (
 
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/cookies"
+	"github.com/crlssn/getstronger/server/pkg/email"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
 	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/rpc"
 )
 
 var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
@@ -25,6 +27,7 @@ var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 type authHandler struct {
 	jwt     *jwt.Manager
 	repo    *repo.Repo
+	email   *email.Email
 	config  *config.Config
 	cookies *cookies.Cookies
 }
@@ -34,6 +37,7 @@ type AuthHandlerParams struct {
 
 	JWT     *jwt.Manager
 	Repo    *repo.Repo
+	Email   *email.Email
 	Config  *config.Config
 	Cookies *cookies.Cookies
 }
@@ -42,6 +46,7 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 	return &authHandler{
 		jwt:     p.JWT,
 		repo:    p.Repo,
+		email:   p.Email,
 		config:  p.Config,
 		cookies: p.Cookies,
 	}
@@ -55,8 +60,8 @@ var (
 func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	email := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
-	if !strings.Contains(email, "@") {
+	emailAddress := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
+	if !strings.Contains(emailAddress, "@") {
 		log.Warn("invalid email")
 		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidEmail)
 	}
@@ -67,26 +72,33 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 	}
 
 	if err := h.repo.NewTx(ctx, func(r *repo.Repo) error {
-		auth, err := r.CreateAuth(ctx, email, req.Msg.GetPassword())
+		auth, err := r.CreateAuth(ctx, emailAddress, req.Msg.GetPassword())
 		if err != nil {
 			return fmt.Errorf("create auth: %w", err)
 		}
 
-		if err = r.CreateUser(ctx, repo.CreateUserParams{
+		user, err := r.CreateUser(ctx, repo.CreateUserParams{
 			ID:        auth.ID,
 			FirstName: req.Msg.GetFirstName(),
 			LastName:  req.Msg.GetLastName(),
-		}); err != nil {
+		})
+		if err != nil {
 			return fmt.Errorf("create user: %w", err)
+		}
+
+		if err = h.email.SendVerificationEmail(ctx, email.SendVerificationEmail{
+			Name:  user.FirstName,
+			Email: auth.Email,
+			Token: auth.EmailToken,
+		}); err != nil {
+			return fmt.Errorf("send verification email: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		log.Error("transaction failed", zap.Error(err))
+		log.Error("signup failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
-
-	// TODO: Send a confirmation email.
 
 	log.Info("user signed up")
 	return connect.NewResponse(&v1.SignupResponse{}), nil
@@ -102,10 +114,15 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidCredentials)
 	}
 
-	auth, err := h.repo.FromEmail(ctx, req.Msg.GetEmail())
+	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByEmail(req.Msg.GetEmail()))
 	if err != nil {
 		log.Error("fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if !auth.EmailVerified {
+		log.Warn("email not verified")
+		return nil, rpc.Error(connect.CodeFailedPrecondition, v1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	}
 
 	accessToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeAccess)
@@ -198,4 +215,15 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRe
 
 	log.Info("logged out")
 	return res, nil
+}
+
+func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[v1.VerifyEmailRequest]) (*connect.Response[v1.VerifyEmailResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	if err := h.repo.VerifyEmail(ctx, req.Msg.GetToken()); err != nil {
+		log.Error("email verification failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("email verified")
+	return connect.NewResponse(&v1.VerifyEmailResponse{}), nil
 }

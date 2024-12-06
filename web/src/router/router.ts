@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import UserView from '@/ui/users/UserView.vue'
 import UserLogin from '@/ui/auth/UserLogin.vue'
 import UserSignup from '@/ui/auth/UserSignup.vue'
+import VerifyEmail from '@/ui/auth/VerifyEmail.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import ProfileView from '@/ui/profile/ProfileView.vue'
 import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
@@ -136,6 +137,12 @@ const router: Router = createRouter({
       component: null,
       name: 'logout',
       path: '/logout',
+    },
+    {
+      beforeEnter: [guest],
+      component: VerifyEmail,
+      name: 'verify-email',
+      path: '/verify-email',
     },
     {
       component: NotFound,

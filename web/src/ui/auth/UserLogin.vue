@@ -40,10 +40,17 @@ const onLogin = async () => {
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
       <div
         v-if="useRoute().query.success === null"
-        class="bg-green-200 rounded-md py-3 px-5 mb-2 text-sm/6 text-green-800"
+        class="bg-green-200 rounded-md py-3 px-5 mb-4 text-sm/6 text-green-800"
         role="alert"
       >
-        You have successfully signed up. Please login.
+        Please check your inbox to verify your email before you login.
+      </div>
+      <div
+        v-if="useRoute().query.verified === null"
+        class="bg-green-200 rounded-md py-3 px-5 mb-4 text-sm/6 text-green-800"
+        role="alert"
+      >
+        Thank you for verifying your email. You can now login.
       </div>
       <form
         class="space-y-6"

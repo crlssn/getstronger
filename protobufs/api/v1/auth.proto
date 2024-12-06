@@ -10,6 +10,7 @@ service AuthService {
   rpc Login(LoginRequest) returns (LoginResponse) {}
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
 }
 
 message SignupRequest {
@@ -36,3 +37,8 @@ message RefreshTokenResponse {
 
 message LogoutRequest {}
 message LogoutResponse {}
+
+message VerifyEmailRequest {
+  string token = 1 [(buf.validate.field).string.min_len = 1];
+}
+message VerifyEmailResponse {}
