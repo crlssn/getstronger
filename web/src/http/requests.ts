@@ -1,10 +1,10 @@
 import { create } from "@bufbuild/protobuf"
 import { ConnectError } from "@connectrpc/connect"
 import  { Error, ErrorDetailSchema } from "@/proto/api/v1/errors_pb"
-import { LoginRequestSchema, VerifyEmailRequestSchema, type LoginResponse, type VerifyEmailResponse } from "@/proto/api/v1/auth_pb"
 import { DeleteWorkoutRequestSchema, type DeleteWorkoutResponse } from "@/proto/api/v1/workouts_pb"
 import { DeleteRoutineRequestSchema, type DeleteRoutineResponse } from "@/proto/api/v1/routines_pb"
 import { DeleteExerciseRequestSchema, type DeleteExerciseResponse } from "@/proto/api/v1/exercise_pb"
+import { LoginRequestSchema, type LoginResponse, VerifyEmailRequestSchema, type VerifyEmailResponse } from "@/proto/api/v1/auth_pb"
 
 import { AuthClient, ExerciseClient, RoutineClient, WorkoutClient } from "./clients"
 

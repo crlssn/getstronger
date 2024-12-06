@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import UserView from '@/ui/users/UserView.vue'
 import UserLogin from '@/ui/auth/UserLogin.vue'
 import UserSignup from '@/ui/auth/UserSignup.vue'
+import VerifyEmail from '@/ui/auth/VerifyEmail.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import ProfileView from '@/ui/profile/ProfileView.vue'
 import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
@@ -21,7 +22,6 @@ import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
-import VerifyEmail from '@/ui/auth/VerifyEmail.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
