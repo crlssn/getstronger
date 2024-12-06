@@ -19,7 +19,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
-	"github.com/crlssn/getstronger/server/rpc/apperrors"
+	"github.com/crlssn/getstronger/server/rpc"
 )
 
 var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
@@ -122,7 +122,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 
 	if !auth.EmailVerified {
 		log.Warn("email not verified")
-		return nil, apperrors.ErrEmailNotVerified
+		return nil, rpc.Error(connect.CodeFailedPrecondition, v1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	}
 
 	accessToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeAccess)

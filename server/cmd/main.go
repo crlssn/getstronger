@@ -17,7 +17,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/stream"
 	"github.com/crlssn/getstronger/server/pkg/trace"
-	"github.com/crlssn/getstronger/server/rpc"
+	"github.com/crlssn/getstronger/server/rpc/server"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func options() []fx.Option {
 		db.Module(),
 		bus.Module(),
 		jwt.Module(),
-		rpc.Module(),
+		server.Module(),
 		fx.Provide(
 			zap.NewDevelopment,
 			repo.New,
