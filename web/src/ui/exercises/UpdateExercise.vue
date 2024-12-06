@@ -142,26 +142,6 @@ const onDeleteExercise = async () => {
       >
         Update Exercise
       </AppButton>
-      <AppButton
-        type="button"
-        colour="red"
-        class="mt-6"
-        @click="onDeleteExercise"
-      >
-        Delete Exercise
-      </AppButton>
     </form>
   </div>
-
-  <h6 class="mt-8">Admin</h6>
-  <AppList>
-    <AppListItemLink :to="`/exercises/${route.params.id}/edit`">
-      Update Exercise
-      <ChevronRightIcon/>
-    </AppListItemLink>
-    <AppListItem @click="onDeleteExercise" class="cursor-pointer">
-      Delete Exercise
-      <TrashIcon/>
-    </AppListItem>
-  </AppList>
 </template>

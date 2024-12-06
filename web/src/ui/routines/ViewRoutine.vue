@@ -11,13 +11,14 @@ import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppListItem from '@/ui/components/AppListItem.vue'
-import { ChevronUpDownIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
   GetRoutineRequestSchema,
   type Routine,
   UpdateExerciseOrderRequestSchema,
 } from '@/proto/api/v1/routines_pb'
+import AppListItemLink from '../components/AppListItemLink.vue'
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()
@@ -87,10 +88,10 @@ const onDeleteRoutine = async () => {
   </AppList>
   <h6 class="mt-8">Admin</h6>
   <AppList>
-    <AppListItem>
+    <AppListItemLink :to="`/routines/${route.params.id}/edit`">
       Update Routine
-      <PencilIcon/>
-    </AppListItem>
+      <ChevronRightIcon/>
+    </AppListItemLink>
     <AppListItem @click="onDeleteRoutine" class="cursor-pointer">
       Delete Routine
       <TrashIcon/>

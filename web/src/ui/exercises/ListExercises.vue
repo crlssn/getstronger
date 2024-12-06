@@ -51,10 +51,10 @@ const fetchExercises = async () => {
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"
-      :to="`/exercises/${exercise.id}/edit`"
+      :to="`/exercises/${exercise.id}`"
     >
       {{ exercise.name }}
-      <ChevronRightIcon class="size-5 flex-none text-gray-400" />
+      <ChevronRightIcon/>
     </AppListItemLink>
   </AppList>
 </template>
