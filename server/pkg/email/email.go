@@ -9,15 +9,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/ses/types"
+
+	c "github.com/crlssn/getstronger/server/pkg/config"
 )
 
 type Email struct {
 	client *ses.Client
+	config *c.Config
 }
 
 const timeout = 5 * time.Second
 
-func New() (*Email, error) {
+func New(c *c.Config) (*Email, error) {
 	ctx, cancelFuc := context.WithTimeout(context.Background(), timeout)
 	defer cancelFuc()
 
@@ -28,11 +31,12 @@ func New() (*Email, error) {
 
 	return &Email{
 		client: ses.NewFromConfig(cfg),
+		config: c,
 	}, nil
 }
 
-func MustNew() *Email {
-	e, err := New()
+func MustNew(c *c.Config) *Email {
+	e, err := New(c)
 	if err != nil {
 		panic(err)
 	}
@@ -50,11 +54,11 @@ func (e *Email) SendVerificationEmail(ctx context.Context, req SendVerificationE
 	sender := "noreply@getstronger.pro"
 	subject := "[GetStronger] Verify your email"
 	body := fmt.Sprintf(`Hi %s, 
-
+	
 Please verify your email address by clicking on the link below.
 
-https://www.getstronger.pro/verify-email?token=%s
-`, req.Name, req.Token)
+%s/verify-email?token=%s
+`, req.Name, e.config.Server.AllowedOrigins[0], req.Token)
 
 	if _, err := e.client.SendEmail(ctx, &ses.SendEmailInput{
 		Source: aws.String(sender),
