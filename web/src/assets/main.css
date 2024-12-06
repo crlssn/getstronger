@@ -2,5 +2,13 @@
 
 html,
 body {
-  touch-action: manipulation; /* Prevents pinch-zooming */
+  touch-action: manipulation;
+}
+
+h6 {
+  @apply block text-xs font-semibold text-gray-500 mb-2 uppercase;
+}
+
+li svg {
+  @apply size-5 flex-none text-gray-500
 }

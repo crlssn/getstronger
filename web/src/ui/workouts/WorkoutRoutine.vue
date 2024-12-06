@@ -152,7 +152,7 @@ const isNumber = (value: number | string | undefined) => {
     @submit.prevent="finishWorkout"
   >
     <div>
-      <label class="block text-xs font-semibold text-gray-900 uppercase">Exercises</label>
+      <h6>Exercises</h6>
       <ul
         class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
         role="list"
@@ -219,7 +219,7 @@ const isNumber = (value: number | string | undefined) => {
     </div>
     <div class="flex gap-x-6">
       <div class="w-full">
-        <label class="block text-xs font-semibold text-gray-900 uppercase">Start Date</label>
+        <h6>Start Date</h6>
         <div>
           <input
             v-model="startDateTime"
@@ -230,7 +230,7 @@ const isNumber = (value: number | string | undefined) => {
         </div>
       </div>
       <div class="w-full">
-        <label class="block text-xs font-semibold text-gray-900 uppercase">End Date</label>
+        <h6>End Date</h6>
         <div>
           <input
             v-model="endDateTime"

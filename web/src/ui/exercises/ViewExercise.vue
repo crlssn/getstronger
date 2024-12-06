@@ -11,6 +11,8 @@ import { deleteExercise } from '@/http/requests'
 import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
 import { GetExerciseRequestSchema, UpdateExerciseRequestSchema } from '@/proto/api/v1/exercise_pb'
+import AppList from '../components/AppList.vue'
+import AppListItem from '../components/AppListItem.vue'
 
 const name = ref('')
 const label = ref('')
@@ -148,4 +150,16 @@ const onDeleteExercise = async () => {
       </AppButton>
     </form>
   </div>
+
+  <h6 class="mt-8">Admin</h6>
+  <AppList>
+    <AppListItem>
+      Update Exercise
+      <PencilIcon/>
+    </AppListItem>
+    <AppListItem @click="onDeleteExercise" class="cursor-pointer">
+      Delete Exercise
+      <TrashIcon/>
+    </AppListItem>
+  </AppList>
 </template>

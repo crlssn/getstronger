@@ -11,7 +11,7 @@ import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppListItem from '@/ui/components/AppListItem.vue'
-import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+import { ChevronUpDownIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
   GetRoutineRequestSchema,
@@ -36,9 +36,9 @@ onMounted(async () => {
 })
 
 useSortable(el, routine.value?.exercises || [], {
-  chosenClass: 'sortable-chosen', // Class name for the chosen item
-  dragClass: 'sortable-drag', // Class name for the dragging item
-  ghostClass: 'sortable-ghost', // Class name for the drop placeholder
+  chosenClass: 'sortable-chosen',
+  dragClass: 'sortable-drag',
+  ghostClass: 'sortable-ghost',
   onUpdate: async (event: SortableEvent) => {
     const oldIndex = event.oldIndex ?? 0
     const newIndex = event.newIndex ?? 0
@@ -66,14 +66,14 @@ const onDeleteRoutine = async () => {
 </script>
 
 <template>
-  <AppButton
+    <AppButton
     type="link"
     :to="`/workouts/routine/${route.params.id}`"
     colour="primary"
-    class="mb-8"
   >
     Start Workout
   </AppButton>
+  <h6 class="mt-8">Exercises</h6>
   <AppList ref="el">
     <AppListItem
       v-for="exercise in routine?.exercises"
@@ -82,26 +82,20 @@ const onDeleteRoutine = async () => {
       class="hover:cursor-move"
     >
       {{ exercise.name }}
-      <ChevronUpDownIcon
-        class="size-5 flex-none text-gray-500"
-      />
+      <ChevronUpDownIcon/>
     </AppListItem>
   </AppList>
-  <AppButton
-    type="button"
-    colour="gray"
-    class="mt-4"
-  >
-    Edit Routine
-  </AppButton>
-  <AppButton
-    type="button"
-    colour="red"
-    class="mt-4"
-    @click="onDeleteRoutine"
-  >
-    Delete Routine
-  </AppButton>
+  <h6 class="mt-8">Admin</h6>
+  <AppList>
+    <AppListItem>
+      Update Routine
+      <PencilIcon/>
+    </AppListItem>
+    <AppListItem @click="onDeleteRoutine" class="cursor-pointer">
+      Delete Routine
+      <TrashIcon/>
+    </AppListItem>
+  </AppList>
 </template>
 
 <style scoped>
