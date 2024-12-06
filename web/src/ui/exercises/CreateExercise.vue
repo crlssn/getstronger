@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAlertStore } from '@/stores/alerts'
 import { createExercise } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type CreateExerciseRequest } from '@/proto/api/v1/exercise_pb'
 
 const router = useRouter()
+const alertStore = useAlertStore()
 const req = ref<CreateExerciseRequest>({
   $typeName: 'api.v1.CreateExerciseRequest',
   label: '',
@@ -15,7 +17,8 @@ const req = ref<CreateExerciseRequest>({
 const onSubmit = async () => {
   const res = await createExercise(req.value)
   if (!res) return
-  await router.push('/exercises?created')
+  alertStore.set('Exercise created successfully')
+  await router.push('/exercises')
 }
 </script>
 
