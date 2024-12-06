@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { useAlertStore } from '@/stores/alerts';
+import type { LocationQueryValue } from 'vue-router';
 
-const alertStore = useAlertStore()
+const props = defineProps<{
+  text?: LocationQueryValue | LocationQueryValue[]
+}>();
 </script>
 
 <template>
   <div
-    v-if="alertStore.alert"
+    v-if="props.text"
     class="bg-green-200 border-b-2 border-t-2 border-green-300 rounded-md py-4 px-9 text-sm text-green-700 font-medium"
     role="alert"
   >
-    {{ alertStore.alert }}
+    {{ props.text }}
   </div>
 </template>
 

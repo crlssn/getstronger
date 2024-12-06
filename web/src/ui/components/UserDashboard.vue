@@ -287,7 +287,7 @@ const searchUsers = async () => {
         />
       </div>
 
-      <AppAlert />
+      <AppAlert :text="route.query.success" />
 
       <main class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="px-4 sm:px-6 lg:px-8">
