@@ -21,7 +21,6 @@ import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
-import path from 'path'
 import VerifyEmail from '@/ui/auth/VerifyEmail.vue'
 
 const router: Router = createRouter({
