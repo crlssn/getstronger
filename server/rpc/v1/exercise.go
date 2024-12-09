@@ -273,9 +273,15 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[v1.
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	setSlice, err := parseSetSliceToPB(paginated.Items)
+	if err != nil {
+		log.Error("failed to parse set slice to pb", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("sets listed")
 	return connect.NewResponse(&v1.ListSetsResponse{
-		Sets: parseSetSliceToPB(paginated.Items),
+		Sets: setSlice,
 		Pagination: &v1.PaginationResponse{
 			NextPageToken: paginated.NextPageToken,
 		},

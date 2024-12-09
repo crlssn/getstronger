@@ -65,7 +65,7 @@ const onDeleteExercise = async () => {
     <AppListItemLink
       v-for="(set, index) in sets"
       :key="index"
-      :to="`/workouts/${set.metadata.workoutId}`"
+      :to="`/workouts/${set.metadata?.workoutId}`"
     >
       {{ set.weight }} kg x {{ set.reps }}
       <ChevronRightIcon />

@@ -53,12 +53,12 @@ const options = {
 };
 
 const data = computed(() => {
-  const labels = []
-  const weights = []
-  const reps = []
+  const labels: string[] = []
+  const weights: number[] = []
+  const reps: number[] = []
 
   props.sets.map(set => {
-      labels.push(formatToShortDateTime(set.metadata.createdAt))
+      labels.push(formatToShortDateTime(set.metadata?.createdAt))
       weights.push(set.weight)
       reps.push(set.reps)
   })
