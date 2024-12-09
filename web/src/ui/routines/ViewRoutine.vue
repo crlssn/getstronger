@@ -11,13 +11,15 @@ import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppListItem from '@/ui/components/AppListItem.vue'
-import { ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { useSortable } from '@vueuse/integrations/useSortable'
+import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import {
   GetRoutineRequestSchema,
   type Routine,
   UpdateExerciseOrderRequestSchema,
 } from '@/proto/api/v1/routines_pb'
+
+import AppListItemLink from '../components/AppListItemLink.vue'
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()
@@ -36,9 +38,9 @@ onMounted(async () => {
 })
 
 useSortable(el, routine.value?.exercises || [], {
-  chosenClass: 'sortable-chosen', // Class name for the chosen item
-  dragClass: 'sortable-drag', // Class name for the dragging item
-  ghostClass: 'sortable-ghost', // Class name for the drop placeholder
+  chosenClass: 'sortable-chosen',
+  dragClass: 'sortable-drag',
+  ghostClass: 'sortable-ghost',
   onUpdate: async (event: SortableEvent) => {
     const oldIndex = event.oldIndex ?? 0
     const newIndex = event.newIndex ?? 0
@@ -70,10 +72,12 @@ const onDeleteRoutine = async () => {
     type="link"
     :to="`/workouts/routine/${route.params.id}`"
     colour="primary"
-    class="mb-8"
   >
     Start Workout
   </AppButton>
+  <h6 class="mt-8">
+    Exercises
+  </h6>
   <AppList ref="el">
     <AppListItem
       v-for="exercise in routine?.exercises"
@@ -82,26 +86,26 @@ const onDeleteRoutine = async () => {
       class="hover:cursor-move"
     >
       {{ exercise.name }}
-      <ChevronUpDownIcon
-        class="size-5 flex-none text-gray-500"
-      />
+      <ChevronUpDownIcon />
     </AppListItem>
   </AppList>
-  <AppButton
-    type="button"
-    colour="gray"
-    class="mt-4"
-  >
-    Edit Routine
-  </AppButton>
-  <AppButton
-    type="button"
-    colour="red"
-    class="mt-4"
-    @click="onDeleteRoutine"
-  >
-    Delete Routine
-  </AppButton>
+  <h6 class="mt-8">
+    Admin
+  </h6>
+  <AppList>
+    <AppListItemLink :to="`/routines/${route.params.id}/edit`">
+      Update Routine
+      <ChevronRightIcon />
+    </AppListItemLink>
+    <AppListItem
+      is="danger"
+      class="cursor-pointer"
+      @click="onDeleteRoutine"
+    >
+      Delete Routine
+      <TrashIcon />
+    </AppListItem>
+  </AppList>
 </template>
 
 <style scoped>

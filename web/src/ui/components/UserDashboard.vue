@@ -5,6 +5,7 @@ import { create } from '@bufbuild/protobuf'
 import { computed, nextTick, ref } from 'vue'
 import { UserClient } from '@/http/clients.ts'
 import { RouterView, useRoute } from 'vue-router'
+import AppAlert from '@/ui/components/AppAlert.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { SearchRequestSchema } from '@/proto/api/v1/users_pb.ts'
@@ -285,6 +286,8 @@ const searchUsers = async () => {
           @click="openSearchBar"
         />
       </div>
+
+      <AppAlert/>
 
       <main class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="px-4 sm:px-6 lg:px-8">

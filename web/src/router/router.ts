@@ -15,11 +15,12 @@ import ResetPassword from '@/ui/auth/ResetPassword.vue'
 import ListRoutines from '@/ui/routines/ListRoutines.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
+import ViewExercise from '@/ui/exercises/ViewExercise.vue'
 import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
 import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
 import ListExercises from '@/ui/exercises/ListExercises.vue'
-import UpdateExercise from '@/ui/exercises/ViewExercise.vue'
 import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
+import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
 import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
@@ -111,6 +112,13 @@ const router: Router = createRouter({
       meta: { title: 'Create Exercise' },
       name: 'create-exercise',
       path: '/exercises/create',
+    },
+    {
+      beforeEnter: [auth],
+      component: ViewExercise,
+      meta: { title: 'View Exercise' },
+      name: 'view-exercise',
+      path: '/exercises/:id',
     },
     {
       beforeEnter: [auth],
