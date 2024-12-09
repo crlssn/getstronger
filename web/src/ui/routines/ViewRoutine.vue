@@ -7,6 +7,7 @@ import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { RoutineClient } from '@/http/clients'
 import { deleteRoutine } from '@/http/requests'
+import {useAlertStore} from "@/stores/alerts.ts";
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -24,6 +25,7 @@ import AppListItemLink from '../components/AppListItemLink.vue'
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()
 const pageTitleStore = usePageTitleStore()
+const alertStore = useAlertStore()
 const el = ref<HTMLElement | null>(null)
 
 const fetchRoutine = async (id: string) => {
@@ -62,8 +64,11 @@ useSortable(el, routine.value?.exercises || [], {
 })
 
 const onDeleteRoutine = async () => {
-  await deleteRoutine(routine.value?.id as string)
-  await router.push('/routines')
+  if (confirm('Are you sure you want to delete this routine?')) {
+    await deleteRoutine(routine.value?.id as string)
+    alertStore.setError('Routine deleted')
+    await router.push('/routines')
+  }
 }
 </script>
 

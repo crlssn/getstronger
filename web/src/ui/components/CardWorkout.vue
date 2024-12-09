@@ -33,7 +33,7 @@ const dropdownItems: Array<DropdownItem> = [
   { func: async () => {
     if (confirm('Are you sure you want to delete this workout?')) {
       await deleteWorkout(props.workout.id)
-      alertStore.setError('Workout deleted')
+      alertStore.setErrorWithoutPageRefresh('Workout deleted')
       workoutDeleted.value = true
     }
   }, title: 'Delete' },
@@ -85,6 +85,7 @@ const postComment = async () => {
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
         :key="exerciseSet.exercise?.id"
+        :exercise-id="exerciseSet.exercise?.id"
         :name="exerciseSet.exercise?.name"
         :sets="exerciseSet.sets"
       />

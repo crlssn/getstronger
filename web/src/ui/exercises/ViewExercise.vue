@@ -4,20 +4,22 @@ import type { Exercise, Set } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
+import {useAuthStore} from "@/stores/auth.ts";
 import { useAlertStore } from '@/stores/alerts'
+import AppList from '@/ui/components/AppList.vue'
 import LineChart from '@/ui/components/LineChart.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import AppListItem from '@/ui/components/AppListItem.vue'
+import {formatToRelativeDateTime} from "@/utils/datetime.ts";
+import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
-
-import AppList from '../components/AppList.vue'
-import AppListItem from '../components/AppListItem.vue'
-import AppListItemLink from '../components/AppListItemLink.vue'
 
 const exercise = ref<Exercise>()
 const sets = ref<Array<Set>>([])
 
 const route = useRoute()
+const authStore = useAuthStore()
 const pageTitle = usePageTitleStore()
 const alertStore = useAlertStore()
 
@@ -46,13 +48,25 @@ const fetchSets = async () => {
 const onDeleteExercise = async () => {
   if (confirm('Are you sure you want to delete this exercise?')) {
     await deleteExercise(route.params.id as string)
-    alertStore.setError(`Exercise ${exercise.value?.name} deleted`)
+    alertStore.setError('Exercise deleted')
     await router.push('/exercises')
   }
 }
 </script>
 
 <template>
+  <div
+    v-if="exercise?.label"
+    class="mb-8"
+  >
+    <h6>Label</h6>
+    <AppList>
+      <AppListItem>
+        {{ exercise.label }}
+      </AppListItem>
+    </AppList>
+  </div>
+
   <h6>Chart</h6>
   <div class="bg-white border border-gray-200 rounded-md px-4 py-4">
     <LineChart :sets="sets" />
@@ -62,31 +76,39 @@ const onDeleteExercise = async () => {
     Sets
   </h6>
   <AppList>
+    <AppListItem v-if="sets.length === 0">
+      No sets
+    </AppListItem>
     <AppListItemLink
       v-for="(set, index) in sets"
       :key="index"
       :to="`/workouts/${set.metadata?.workoutId}`"
     >
-      {{ set.weight }} kg x {{ set.reps }}
+      <p>
+        {{ set.weight }} kg x {{ set.reps }}
+        <small class="block mt-1">{{ formatToRelativeDateTime(set.metadata?.createdAt) }}</small>
+      </p>
       <ChevronRightIcon />
     </AppListItemLink>
   </AppList>
 
-  <h6 class="mt-8">
-    Admin
-  </h6>
-  <AppList>
-    <AppListItemLink :to="`/exercises/${route.params.id}/edit`">
-      Update Exercise
-      <ChevronRightIcon />
-    </AppListItemLink>
-    <AppListItem
-      is="danger"
-      class="cursor-pointer"
-      @click="onDeleteExercise"
-    >
-      Delete Exercise
-      <TrashIcon />
-    </AppListItem>
-  </AppList>
+  <div v-if="authStore.userID === exercise?.userId">
+    <h6 class="mt-8">
+      Admin
+    </h6>
+    <AppList>
+      <AppListItemLink :to="`/exercises/${route.params.id}/edit`">
+        Update Exercise
+        <ChevronRightIcon />
+      </AppListItemLink>
+      <AppListItem
+        is="danger"
+        class="cursor-pointer"
+        @click="onDeleteExercise"
+      >
+        Delete Exercise
+        <TrashIcon />
+      </AppListItem>
+    </AppList>
+  </div>
 </template>

@@ -52,12 +52,14 @@ const options = {
   },
 };
 
+const sets = computed(() => [...props.sets].reverse());
+
 const data = computed(() => {
   const labels: string[] = []
   const weights: number[] = []
   const reps: number[] = []
 
-  props.sets.map(set => {
+  sets.value.map(set => {
       labels.push(formatToShortDateTime(set.metadata?.createdAt))
       weights.push(set.weight)
       reps.push(set.reps)

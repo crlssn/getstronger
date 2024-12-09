@@ -17,20 +17,28 @@ export const useAlertStore = defineStore('alert', () => {
   }
 
   const setSuccess = (message: string) => {
-    set('success', message)
+    set('success', message, false)
   }
 
   const setError = (message: string) => {
-    set('error', message)
+    set('error', message, false)
   }
 
-  const set = (type: 'error'|'success', message: string) => {
+  const setSuccessWithoutPageRefresh = (message: string) => {
+    set('success', message, true)
+  }
+
+  const setErrorWithoutPageRefresh = (message: string) => {
+    set('error', message, true)
+  }
+
+  const set = (type: 'error'|'success', message: string, seen: boolean) => {
     alert.value = {
       message: message,
-      seen: false,
+      seen: seen,
       type: type,
     } as Alert
   }
 
-  return { alert, clear, markSeen, setError, setSuccess }
+  return { alert, clear, markSeen, setError, setErrorWithoutPageRefresh, setSuccess, setSuccessWithoutPageRefresh }
 })

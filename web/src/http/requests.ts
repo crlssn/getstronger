@@ -1,3 +1,4 @@
+import type {FieldMask} from "@bufbuild/protobuf/wkt";
 import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
 
 import {create} from "@bufbuild/protobuf"
@@ -13,19 +14,6 @@ import {
   type GetRoutineResponse, UpdateRoutineRequestSchema, type UpdateRoutineResponse
 } from "@/proto/api/v1/routines_pb"
 import {
-  type CreateExerciseRequest,
-  CreateExerciseRequestSchema,
-  type CreateExerciseResponse,
-  DeleteExerciseRequestSchema,
-  type DeleteExerciseResponse,
-  GetExerciseRequestSchema,
-  type GetExerciseResponse,
-  ListExercisesRequestSchema,
-  type ListExercisesResponse,
-  ListSetsRequestSchema,
-  type ListSetsResponse
-} from "@/proto/api/v1/exercise_pb"
-import {
   LoginRequestSchema,
   type LoginResponse,
   type ResetPasswordRequest,
@@ -40,6 +28,19 @@ import {
   VerifyEmailRequestSchema,
   type VerifyEmailResponse
 } from "@/proto/api/v1/auth_pb"
+import {
+  type CreateExerciseRequest,
+  CreateExerciseRequestSchema,
+  type CreateExerciseResponse,
+  DeleteExerciseRequestSchema,
+  type DeleteExerciseResponse,
+  GetExerciseRequestSchema,
+  type GetExerciseResponse,
+  ListExercisesRequestSchema,
+  type ListExercisesResponse,
+  ListSetsRequestSchema,
+  type ListSetsResponse, UpdateExerciseRequestSchema, type UpdateExerciseResponse
+} from "@/proto/api/v1/exercise_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
 
@@ -155,6 +156,20 @@ export const updateRoutine = async (id: string, name: string, exerciseIds: strin
     }
   })
   return tryCatch(() => RoutineClient.update(req))
+}
+
+export const updateExercise = async (id: string, name: string, label: string): Promise<UpdateExerciseResponse | void> => {
+  const req = create(UpdateExerciseRequestSchema, {
+    exercise: {
+      id: id,
+      label: label,
+      name: name,
+    } as Exercise,
+    updateMask: {
+      paths: ['name', 'label'],
+    } as FieldMask,
+  })
+  return tryCatch(() => ExerciseClient.update(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

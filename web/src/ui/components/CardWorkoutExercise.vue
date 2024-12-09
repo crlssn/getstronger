@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
+  exerciseId?: string
   label?: string
   name?: string
   sets: Array<{
@@ -11,7 +12,12 @@ const props = defineProps<{
 
 <template>
   <p>
-    <span class="font-semibold mr-1">{{ props.name }}</span>
+    <RouterLink
+      :to="`/exercises/${exerciseId}`"
+      class="font-semibold mr-1"
+    >
+      {{ props.name }}
+    </RouterLink>
     <span
       v-if="props.label"
       class="bg-indigo-600 text-white text-xs rounded py-0.5 px-1"
