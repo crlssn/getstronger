@@ -335,3 +335,31 @@ func parseFeedItemsToPB(workouts orm.WorkoutSlice, users orm.UserSlice, exercise
 	}
 	return items, nil
 }
+
+func parseSetSliceToPB(setSlice orm.SetSlice) ([]*apiv1.Set, error) {
+	sets := make([]*apiv1.Set, 0, len(setSlice))
+	for _, set := range setSlice {
+		s, err := parseSetToPB(set)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse set: %w", err)
+		}
+		sets = append(sets, s)
+	}
+	return sets, nil
+}
+
+func parseSetToPB(set *orm.Set) (*apiv1.Set, error) {
+	reps, err := safe.IntToInt32(set.Reps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse reps: %w", err)
+	}
+
+	return &apiv1.Set{
+		Weight: set.Weight,
+		Reps:   reps,
+		Metadata: &apiv1.MetadataSet{
+			WorkoutId: set.WorkoutID,
+			CreatedAt: timestamppb.New(set.CreatedAt),
+		},
+	}, nil
+}

@@ -250,3 +250,40 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 		PersonalBests: pb,
 	}), nil
 }
+
+func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[v1.ListSetsRequest]) (*connect.Response[v1.ListSetsResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+
+	limit := int(req.Msg.GetPagination().GetPageLimit())
+	sets, err := h.repo.ListSets(ctx,
+		repo.ListSetsWithLimit(limit+1),
+		repo.ListSetsWithExerciseID(req.Msg.GetExerciseId()),
+		repo.ListSetsWithPageToken(req.Msg.GetPagination().GetPageToken()),
+	)
+	if err != nil {
+		log.Error("list sets failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	paginated, err := repo.PaginateSlice(sets, limit, func(set *orm.Set) time.Time {
+		return set.CreatedAt
+	})
+	if err != nil {
+		log.Error("paginate sets failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	setSlice, err := parseSetSliceToPB(paginated.Items)
+	if err != nil {
+		log.Error("failed to parse set slice to pb", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("sets listed")
+	return connect.NewResponse(&v1.ListSetsResponse{
+		Sets: setSlice,
+		Pagination: &v1.PaginationResponse{
+			NextPageToken: paginated.NextPageToken,
+		},
+	}), nil
+}
