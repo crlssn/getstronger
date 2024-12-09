@@ -7,7 +7,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { type CreateExerciseRequest } from '@/proto/api/v1/exercise_pb'
 
 const router = useRouter()
-const alert = useAlertStore()
+const alertStore = useAlertStore()
 
 const req = ref<CreateExerciseRequest>({
   $typeName: 'api.v1.CreateExerciseRequest',
@@ -18,7 +18,7 @@ const req = ref<CreateExerciseRequest>({
 const onSubmit = async () => {
   const res = await createExercise(req.value)
   if (!res) return
-  alert.setSuccess(`Exercise ${req.value.name} created`)
+  alertStore.setSuccess(`Exercise ${req.value.name} created`)
   await router.push('/exercises')
 }
 </script>

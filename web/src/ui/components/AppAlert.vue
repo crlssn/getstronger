@@ -6,6 +6,7 @@ import { computed, nextTick, watch } from 'vue';
 const route = useRoute()
 const alertStore = useAlertStore()
 
+// DEBT: Doesn't properly work when there is no route change.
 watch(() => route.path, () => {
   nextTick(() => {
     if (!alertStore.alert) {

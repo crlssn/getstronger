@@ -5,20 +5,9 @@ import { defineStore } from 'pinia'
 
 export const useAlertStore = defineStore('alert', () => {
   const alert = ref<Alert | null>(null)
-  // const seen = ref(false)
-
-  const set = (type: 'error'|'success', message: string) => {
-    alert.value = {
-      message: message,
-      seen: false,
-      type: type,
-    } as Alert
-    // seen.value = false
-  }
 
   const clear = () => {
     alert.value = null
-    // seen.value = false
   }
 
   const markSeen = () => {
@@ -33,6 +22,14 @@ export const useAlertStore = defineStore('alert', () => {
 
   const setError = (message: string) => {
     set('error', message)
+  }
+
+  const set = (type: 'error'|'success', message: string) => {
+    alert.value = {
+      message: message,
+      seen: false,
+      type: type,
+    } as Alert
   }
 
   return { alert, clear, markSeen, setError, setSuccess }
