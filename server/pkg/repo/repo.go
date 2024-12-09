@@ -1279,7 +1279,7 @@ func ListSetsWithPageToken(token []byte) ListSetsOpt {
 
 func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
 	query := []qm.QueryMod{
-		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+		qm.OrderBy(fmt.Sprintf("%s ASC", orm.SetColumns.CreatedAt)),
 	}
 	for _, opt := range opts {
 		q, err := opt()

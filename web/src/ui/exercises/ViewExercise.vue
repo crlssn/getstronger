@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { Exercise, PaginationRequest, Set } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
+import type { Exercise, Set } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts'
+import LineChart from '@/ui/components/LineChart.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
-import { type ListSetsRequest } from "@/proto/api/v1/exercise_pb"
 
 import AppList from '../components/AppList.vue'
 import AppListItem from '../components/AppListItem.vue'
@@ -53,12 +53,14 @@ const onDeleteExercise = async () => {
 </script>
 
 <template>
-  <h6>Graph</h6>
-  <div>
-    Here's a graph
+  <h6>Chart</h6>
+  <div class="bg-white border border-gray-200 rounded-md px-4 py-4">
+    <LineChart :sets="sets" />
   </div>
 
-  <h6 class="mt-8">Sets</h6>
+  <h6 class="mt-8">
+    Sets
+  </h6>
   <AppList>
     <AppListItemLink
       v-for="(set, index) in sets"
