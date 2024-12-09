@@ -25,6 +25,7 @@ import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
+import EditRoutine from "@/ui/routines/EditRoutine.vue";
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -98,6 +99,13 @@ const router: Router = createRouter({
       meta: { title: 'Routine' },
       name: 'routine',
       path: '/routines/:id',
+    },
+    {
+      beforeEnter: [auth],
+      component: EditRoutine,
+      meta: { title: 'Update Routine' },
+      name: 'edit-routine',
+      path: '/routines/:id/edit',
     },
     {
       beforeEnter: [auth],

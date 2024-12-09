@@ -1,12 +1,45 @@
-import { create } from "@bufbuild/protobuf"
-import { ConnectError } from "@connectrpc/connect"
-import  { Error, ErrorDetailSchema } from "@/proto/api/v1/errors_pb"
-import { DeleteWorkoutRequestSchema, type DeleteWorkoutResponse } from "@/proto/api/v1/workouts_pb"
-import { DeleteRoutineRequestSchema, type DeleteRoutineResponse } from "@/proto/api/v1/routines_pb"
-import { type CreateExerciseRequest, CreateExerciseRequestSchema, type CreateExerciseResponse, DeleteExerciseRequestSchema, type DeleteExerciseResponse, GetExerciseRequestSchema, type GetExerciseResponse, ListSetsRequestSchema, type ListSetsResponse } from "@/proto/api/v1/exercise_pb"
-import { LoginRequestSchema, type LoginResponse, type ResetPasswordRequest, ResetPasswordRequestSchema, type ResetPasswordResponse, type SignupRequest, SignupRequestSchema, type SignupResponse, type UpdatePasswordRequest, UpdatePasswordRequestSchema, type UpdatePasswordResponse, VerifyEmailRequestSchema, type VerifyEmailResponse } from "@/proto/api/v1/auth_pb"
+import {create} from "@bufbuild/protobuf"
+import {ConnectError} from "@connectrpc/connect"
+import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
+import {DeleteWorkoutRequestSchema, type DeleteWorkoutResponse} from "@/proto/api/v1/workouts_pb"
+import {
+  CreateRoutineRequestSchema,
+  type CreateRoutineResponse,
+  DeleteRoutineRequestSchema,
+  type DeleteRoutineResponse,
+  GetRoutineRequestSchema,
+  type GetRoutineResponse
+} from "@/proto/api/v1/routines_pb"
+import {
+  type CreateExerciseRequest,
+  CreateExerciseRequestSchema,
+  type CreateExerciseResponse,
+  DeleteExerciseRequestSchema,
+  type DeleteExerciseResponse,
+  GetExerciseRequestSchema,
+  type GetExerciseResponse,
+  ListExercisesRequestSchema,
+  type ListExercisesResponse,
+  ListSetsRequestSchema,
+  type ListSetsResponse
+} from "@/proto/api/v1/exercise_pb"
+import {
+  LoginRequestSchema,
+  type LoginResponse,
+  type ResetPasswordRequest,
+  ResetPasswordRequestSchema,
+  type ResetPasswordResponse,
+  type SignupRequest,
+  SignupRequestSchema,
+  type SignupResponse,
+  type UpdatePasswordRequest,
+  UpdatePasswordRequestSchema,
+  type UpdatePasswordResponse,
+  VerifyEmailRequestSchema,
+  type VerifyEmailResponse
+} from "@/proto/api/v1/auth_pb"
 
-import { AuthClient, ExerciseClient, RoutineClient, WorkoutClient } from "./clients"
+import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -34,8 +67,8 @@ export const deleteRoutine = async (id: string): Promise<DeleteRoutineResponse |
 
 export const login = async (email: string, password: string): Promise<LoginResponse | void> => {
   const req = create(LoginRequestSchema, {
-      email: email,
-      password: password,
+    email: email,
+    password: password,
   })
 
   return tryCatch(() => AuthClient.login(req))
@@ -87,9 +120,32 @@ export const listSets = async (exerciseId: string, pageToken: Uint8Array): Promi
   return tryCatch(() => ExerciseClient.listSets(req))
 }
 
-const tryCatch = async <T>(fn: () => Promise<T>): Promise<T|void> => {
+export const getRoutine = async (id: string): Promise<GetRoutineResponse | void> => {
+  const req = create(GetRoutineRequestSchema, {
+    id: id,
+  })
+  return tryCatch(() => RoutineClient.get(req))
+}
+
+export const listExercises = async (pageToken: Uint8Array): Promise<ListExercisesResponse | void> => {
+  const req = create(ListExercisesRequestSchema, {
+    pageSize: 100,
+    pageToken: pageToken,
+  })
+  return tryCatch(() => ExerciseClient.list(req))
+}
+
+export const createRoutine = async (name: string, exerciseIds: string[]): Promise<CreateRoutineResponse | void> => {
+  const req = create(CreateRoutineRequestSchema, {
+    name: name,
+    exerciseIds: exerciseIds,
+  })
+  return tryCatch(() => RoutineClient.create(req))
+}
+
+const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
   try {
-      return await fn()
+    return await fn()
   } catch (error) {
     // TODO: Use custom alert component.
     alert(error)
