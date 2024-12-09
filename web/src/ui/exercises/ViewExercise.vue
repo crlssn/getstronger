@@ -4,6 +4,7 @@ import type { Exercise, Set } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
+import {useAuthStore} from "@/stores/auth.ts";
 import { useAlertStore } from '@/stores/alerts'
 import LineChart from '@/ui/components/LineChart.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -13,7 +14,6 @@ import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import AppList from '../components/AppList.vue'
 import AppListItem from '../components/AppListItem.vue'
 import AppListItemLink from '../components/AppListItemLink.vue'
-import {useAuthStore} from "@/stores/auth.ts";
 import {formatToRelativeDateTime} from "../../utils/datetime.ts";
 
 const exercise = ref<Exercise>()

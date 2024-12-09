@@ -12,7 +12,12 @@ const props = defineProps<{
 
 <template>
   <p>
-    <RouterLink :to="`/exercises/${exerciseId}`" class="font-semibold mr-1">{{ props.name }}</RouterLink>
+    <RouterLink
+      :to="`/exercises/${exerciseId}`"
+      class="font-semibold mr-1"
+    >
+      {{ props.name }}
+    </RouterLink>
     <span
       v-if="props.label"
       class="bg-indigo-600 text-white text-xs rounded py-0.5 px-1"

@@ -17,7 +17,6 @@ const fetchFeed = async () => {
     },
   })
   const res = await FeedClient.listItems(req)
-  console.log(res)
   feedItems.value = [...feedItems.value, ...res.items]
   pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
   if (pageToken.value.length > 0) {
