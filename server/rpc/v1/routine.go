@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -90,30 +91,58 @@ func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.Upd
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutine().GetId()))
+	routine, err := h.repo.GetRoutine(ctx,
+		repo.GetRoutineWithID(req.Msg.GetRoutine().GetId()),
+		repo.GetRoutineWithUserID(userID),
+	)
 	if err != nil {
-		log.Error("find exercise failed", zap.Error(err))
+		log.Error("get routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if routine.UserID != userID {
-		log.Error("exercise does not belong to user")
-		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	exerciseIDs := make([]string, 0, len(req.Msg.GetRoutine().GetExercises()))
+	for _, exercise := range req.Msg.GetRoutine().GetExercises() {
+		exerciseIDs = append(exerciseIDs, exercise.GetId())
 	}
 
-	var updateRoutineOpts []repo.UpdateRoutineOpt
-	for _, path := range req.Msg.GetUpdateMask().GetPaths() {
-		switch path {
-		case "name":
-			updateRoutineOpts = append(updateRoutineOpts, repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()))
-		default:
-			log.Error("invalid update mask path", zap.String("path", path))
-			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidUpdateMaskPath)
+	exercises, err := h.repo.ListExercises(ctx,
+		repo.ListExercisesWithIDs(exerciseIDs),
+		repo.ListExercisesWithUserID(userID),
+	)
+	if err != nil {
+		log.Error("list exercises failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if len(exercises) != len(exerciseIDs) {
+		log.Warn("exercise count mismatch", zap.Strings("expected", exerciseIDs), zap.Any("actual", exercises))
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
+		if err = tx.UpdateRoutine(ctx, routine.ID,
+			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
+			repo.UpdateRoutineExerciseOrder(exerciseIDs),
+		); err != nil {
+			return fmt.Errorf("routine update failed: %w", err)
 		}
+
+		if err = tx.SetRoutineExercises(ctx, routine, exercises); err != nil {
+			return fmt.Errorf("set routine exercises failed: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		log.Error("update routine failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err = h.repo.UpdateRoutine(ctx, routine.ID, updateRoutineOpts...); err != nil {
-		log.Error("update exercise failed", zap.Error(err))
+	routine, err = h.repo.GetRoutine(ctx,
+		repo.GetRoutineWithID(req.Msg.GetRoutine().GetId()),
+		repo.GetRoutineWithExercises(),
+	)
+	if err != nil {
+		log.Error("get routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
