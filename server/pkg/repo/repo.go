@@ -174,19 +174,26 @@ type SoftDeleteExerciseParams struct {
 }
 
 func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
-	if _, err := orm.Exercises(
-		orm.ExerciseWhere.ID.EQ(p.ExerciseID),
-		orm.ExerciseWhere.UserID.EQ(p.UserID),
-	).UpdateAll(ctx, r.executor(), orm.M{
-		orm.ExerciseColumns.DeletedAt: null.TimeFrom(time.Now().UTC()),
-	}); err != nil {
-		return fmt.Errorf("exercise soft delete: %w", err)
-	}
-	return nil
-}
+	return r.NewTx(ctx, func(tx *Repo) error {
+		exercise, err := orm.Exercises(
+			orm.ExerciseWhere.ID.EQ(p.ExerciseID),
+			orm.ExerciseWhere.UserID.EQ(p.UserID),
+		).One(ctx, tx.executor())
+		if err != nil {
+			return fmt.Errorf("exercise fetch: %w", err)
+		}
 
-type PageToken struct {
-	CreatedAt time.Time `json:"createdAt"`
+		if err = exercise.SetRoutines(ctx, tx.executor(), false); err != nil {
+			return fmt.Errorf("exercise routines set: %w", err)
+		}
+
+		exercise.DeletedAt = null.TimeFrom(time.Now().UTC())
+		if _, err = exercise.Update(ctx, tx.executor(), boil.Infer()); err != nil {
+			return fmt.Errorf("exercise soft delete: %w", err)
+		}
+
+		return nil
+	})
 }
 
 type ListExercisesOpt func() ([]qm.QueryMod, error)
@@ -1239,4 +1246,55 @@ func (r *Repo) UpdatePassword(ctx context.Context, authID string, password strin
 	}
 
 	return nil
+}
+
+type ListSetsOpt func() (qm.QueryMod, error)
+
+func ListSetsWithLimit(limit int) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return qm.Limit(limit), nil
+	}
+}
+
+func ListSetsWithExerciseID(exerciseID string) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return orm.SetWhere.ExerciseID.EQ(exerciseID), nil
+	}
+}
+
+func ListSetsWithPageToken(token []byte) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		if token == nil {
+			return nil, nil
+		}
+
+		var pt PageToken
+		if err := json.Unmarshal(token, &pt); err != nil {
+			return nil, fmt.Errorf("page token unmarshal: %w", err)
+		}
+
+		return orm.SetWhere.CreatedAt.LT(pt.CreatedAt), nil
+	}
+}
+
+func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+	query := []qm.QueryMod{
+		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+	}
+	for _, opt := range opts {
+		q, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("sets list opt: %w", err)
+		}
+		if q != nil {
+			query = append(query, q)
+		}
+	}
+
+	sets, err := orm.Sets(query...).All(ctx, r.executor())
+	if err != nil {
+		return nil, fmt.Errorf("sets fetch: %w", err)
+	}
+
+	return sets, nil
 }

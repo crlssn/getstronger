@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
+import type { Exercise, PaginationRequest, Set } from '@/proto/api/v1/shared_pb.ts' // import { FieldMask } from '@bufbuild/protobuf'
 
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import { deleteExercise, getExercise } from '@/http/requests'
+import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { type ListSetsRequest } from "@/proto/api/v1/exercise_pb"
 
 import AppList from '../components/AppList.vue'
 import AppListItem from '../components/AppListItem.vue'
 import AppListItemLink from '../components/AppListItemLink.vue'
 
 const exercise = ref<Exercise>()
+const sets = ref<Array<Set>>([])
 
 const route = useRoute()
 const pageTitle = usePageTitleStore()
@@ -24,7 +26,22 @@ onMounted(async () => {
   if (!res) return
   exercise.value = res.exercise
   pageTitle.setPageTitle(exercise.value?.name as string)
+  await fetchSets()
 })
+
+const pageToken = ref(new Uint8Array(0))
+
+const fetchSets = async () => {
+  const res = await listSets(route.params.id as string, pageToken.value)
+  if (!res) return
+  sets.value = [...sets.value, ...res.sets]
+
+  pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
+  if (pageToken.value.length > 0) {
+    // TODO: Implement pagination.
+    await fetchSets()
+  }
+}
 
 const onDeleteExercise = async () => {
   if (confirm('Are you sure you want to delete this exercise?')) {
@@ -40,6 +57,18 @@ const onDeleteExercise = async () => {
   <div>
     Here's a graph
   </div>
+
+  <h6 class="mt-8">Sets</h6>
+  <AppList>
+    <AppListItemLink
+      v-for="(set, index) in sets"
+      :key="index"
+      :to="`/workouts/${set.workoutId}`"
+    >
+      {{ set.weight }} kg x {{ set.reps }}
+      <ChevronRightIcon />
+    </AppListItemLink>
+  </AppList>
 
   <h6 class="mt-8">
     Admin

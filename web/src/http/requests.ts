@@ -3,7 +3,7 @@ import { ConnectError } from "@connectrpc/connect"
 import  { Error, ErrorDetailSchema } from "@/proto/api/v1/errors_pb"
 import { DeleteWorkoutRequestSchema, type DeleteWorkoutResponse } from "@/proto/api/v1/workouts_pb"
 import { DeleteRoutineRequestSchema, type DeleteRoutineResponse } from "@/proto/api/v1/routines_pb"
-import { type CreateExerciseRequest, CreateExerciseRequestSchema, type CreateExerciseResponse, DeleteExerciseRequestSchema, type DeleteExerciseResponse, GetExerciseRequestSchema, type GetExerciseResponse } from "@/proto/api/v1/exercise_pb"
+import { type CreateExerciseRequest, CreateExerciseRequestSchema, type CreateExerciseResponse, DeleteExerciseRequestSchema, type DeleteExerciseResponse, GetExerciseRequestSchema, type GetExerciseResponse, type ListSetsRequest, ListSetsRequestSchema, type ListSetsResponse } from "@/proto/api/v1/exercise_pb"
 import { LoginRequestSchema, type LoginResponse, type ResetPasswordRequest, ResetPasswordRequestSchema, type ResetPasswordResponse, type SignupRequest, SignupRequestSchema, type SignupResponse, type UpdatePasswordRequest, UpdatePasswordRequestSchema, type UpdatePasswordResponse, VerifyEmailRequestSchema, type VerifyEmailResponse } from "@/proto/api/v1/auth_pb"
 
 import { AuthClient, ExerciseClient, RoutineClient, WorkoutClient } from "./clients"
@@ -74,6 +74,17 @@ export const getExercise = async (id: string): Promise<GetExerciseResponse | voi
 export const createExercise = async (request: CreateExerciseRequest): Promise<CreateExerciseResponse | void> => {
   const req = create(CreateExerciseRequestSchema, request)
   return tryCatch(() => ExerciseClient.create(req))
+}
+
+export const listSets = async (exerciseId: string, pageToken: Uint8Array): Promise<ListSetsResponse | void> => {
+  const req = create(ListSetsRequestSchema, {
+    exerciseId: exerciseId,
+    pagination: {
+      pageLimit: 100,
+      pageToken: pageToken,
+    }
+  })
+  return tryCatch(() => ExerciseClient.listSets(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T|void> => {

@@ -44,3 +44,7 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 		NextPageToken: nextPageToken,
 	}, nil
 }
+
+type PageToken struct {
+	CreatedAt time.Time `json:"createdAt"`
+}

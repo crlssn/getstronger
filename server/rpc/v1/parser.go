@@ -335,3 +335,16 @@ func parseFeedItemsToPB(workouts orm.WorkoutSlice, users orm.UserSlice, exercise
 	}
 	return items, nil
 }
+
+func parseSetSliceToPB(setSlice orm.SetSlice) []*apiv1.Set {
+	sets := make([]*apiv1.Set, 0, len(setSlice))
+	for _, set := range setSlice {
+		sets = append(sets, &apiv1.Set{
+			Weight:    set.Weight,
+			Reps:      int32(set.Reps),
+			WorkoutId: set.WorkoutID,
+			CreatedAt: timestamppb.New(set.CreatedAt),
+		})
+	}
+	return sets
+}

@@ -50,6 +50,9 @@ const (
 	// ExerciseServiceGetPersonalBestsProcedure is the fully-qualified name of the ExerciseService's
 	// GetPersonalBests RPC.
 	ExerciseServiceGetPersonalBestsProcedure = "/api.v1.ExerciseService/GetPersonalBests"
+	// ExerciseServiceListSetsProcedure is the fully-qualified name of the ExerciseService's ListSets
+	// RPC.
+	ExerciseServiceListSetsProcedure = "/api.v1.ExerciseService/ListSets"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -62,6 +65,7 @@ var (
 	exerciseServiceListMethodDescriptor                   = exerciseServiceServiceDescriptor.Methods().ByName("List")
 	exerciseServiceGetPreviousWorkoutSetsMethodDescriptor = exerciseServiceServiceDescriptor.Methods().ByName("GetPreviousWorkoutSets")
 	exerciseServiceGetPersonalBestsMethodDescriptor       = exerciseServiceServiceDescriptor.Methods().ByName("GetPersonalBests")
+	exerciseServiceListSetsMethodDescriptor               = exerciseServiceServiceDescriptor.Methods().ByName("ListSets")
 )
 
 // ExerciseServiceClient is a client for the api.v1.ExerciseService service.
@@ -73,6 +77,7 @@ type ExerciseServiceClient interface {
 	List(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
 	GetPreviousWorkoutSets(context.Context, *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error)
 	GetPersonalBests(context.Context, *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error)
+	ListSets(context.Context, *connect.Request[v1.ListSetsRequest]) (*connect.Response[v1.ListSetsResponse], error)
 }
 
 // NewExerciseServiceClient constructs a client for the api.v1.ExerciseService service. By default,
@@ -127,6 +132,12 @@ func NewExerciseServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(exerciseServiceGetPersonalBestsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		listSets: connect.NewClient[v1.ListSetsRequest, v1.ListSetsResponse](
+			httpClient,
+			baseURL+ExerciseServiceListSetsProcedure,
+			connect.WithSchema(exerciseServiceListSetsMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -139,6 +150,7 @@ type exerciseServiceClient struct {
 	list                   *connect.Client[v1.ListExercisesRequest, v1.ListExercisesResponse]
 	getPreviousWorkoutSets *connect.Client[v1.GetPreviousWorkoutSetsRequest, v1.GetPreviousWorkoutSetsResponse]
 	getPersonalBests       *connect.Client[v1.GetPersonalBestsRequest, v1.GetPersonalBestsResponse]
+	listSets               *connect.Client[v1.ListSetsRequest, v1.ListSetsResponse]
 }
 
 // Create calls api.v1.ExerciseService.Create.
@@ -176,6 +188,11 @@ func (c *exerciseServiceClient) GetPersonalBests(ctx context.Context, req *conne
 	return c.getPersonalBests.CallUnary(ctx, req)
 }
 
+// ListSets calls api.v1.ExerciseService.ListSets.
+func (c *exerciseServiceClient) ListSets(ctx context.Context, req *connect.Request[v1.ListSetsRequest]) (*connect.Response[v1.ListSetsResponse], error) {
+	return c.listSets.CallUnary(ctx, req)
+}
+
 // ExerciseServiceHandler is an implementation of the api.v1.ExerciseService service.
 type ExerciseServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error)
@@ -185,6 +202,7 @@ type ExerciseServiceHandler interface {
 	List(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
 	GetPreviousWorkoutSets(context.Context, *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error)
 	GetPersonalBests(context.Context, *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error)
+	ListSets(context.Context, *connect.Request[v1.ListSetsRequest]) (*connect.Response[v1.ListSetsResponse], error)
 }
 
 // NewExerciseServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -235,6 +253,12 @@ func NewExerciseServiceHandler(svc ExerciseServiceHandler, opts ...connect.Handl
 		connect.WithSchema(exerciseServiceGetPersonalBestsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	exerciseServiceListSetsHandler := connect.NewUnaryHandler(
+		ExerciseServiceListSetsProcedure,
+		svc.ListSets,
+		connect.WithSchema(exerciseServiceListSetsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.ExerciseService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ExerciseServiceCreateProcedure:
@@ -251,6 +275,8 @@ func NewExerciseServiceHandler(svc ExerciseServiceHandler, opts ...connect.Handl
 			exerciseServiceGetPreviousWorkoutSetsHandler.ServeHTTP(w, r)
 		case ExerciseServiceGetPersonalBestsProcedure:
 			exerciseServiceGetPersonalBestsHandler.ServeHTTP(w, r)
+		case ExerciseServiceListSetsProcedure:
+			exerciseServiceListSetsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -286,4 +312,8 @@ func (UnimplementedExerciseServiceHandler) GetPreviousWorkoutSets(context.Contex
 
 func (UnimplementedExerciseServiceHandler) GetPersonalBests(context.Context, *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.ExerciseService.GetPersonalBests is not implemented"))
+}
+
+func (UnimplementedExerciseServiceHandler) ListSets(context.Context, *connect.Request[v1.ListSetsRequest]) (*connect.Response[v1.ListSetsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.ExerciseService.ListSets is not implemented"))
 }

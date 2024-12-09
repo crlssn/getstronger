@@ -5,13 +5,15 @@
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv1";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv1";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file api/v1/shared.proto.
  */
 export const file_api_v1_shared: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJIiwKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoASJnCgRVc2VyEhQKAmlkGAEgASgJQgi6SAVyA7ABARIbCgpmaXJzdF9uYW1lGAIgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgDIAEoCUIHukgEcgIQARIQCghmb2xsb3dlZBgEIAEoCCJGChFQYWdpbmF0aW9uUmVxdWVzdBIdCgpwYWdlX2xpbWl0GAEgASgFQgm6SAYaBBhkKAESEgoKcGFnZV90b2tlbhgCIAEoDCJEChJQYWdpbmF0aW9uUmVzcG9uc2USFQoNdG90YWxfcmVzdWx0cxgBIAEoAxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAxCjAEKCmNvbS5hcGkudjFCC1NoYXJlZFByb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_buf_validate_validate]);
+  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJInAKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoARISCgp3b3Jrb3V0X2lkGAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wImcKBFVzZXISFAoCaWQYASABKAlCCLpIBXIDsAEBEhsKCmZpcnN0X25hbWUYAiABKAlCB7pIBHICEAESGgoJbGFzdF9uYW1lGAMgASgJQge6SARyAhABEhAKCGZvbGxvd2VkGAQgASgIIkYKEVBhZ2luYXRpb25SZXF1ZXN0Eh0KCnBhZ2VfbGltaXQYASABKAVCCbpIBhoEGGQoARISCgpwYWdlX3Rva2VuGAIgASgMIkQKElBhZ2luYXRpb25SZXNwb25zZRIVCg10b3RhbF9yZXN1bHRzGAEgASgDEhcKD25leHRfcGFnZV90b2tlbhgCIAEoDEKMAQoKY29tLmFwaS52MUILU2hhcmVkUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message api.v1.ExerciseSets
@@ -77,6 +79,16 @@ export type Set = Message<"api.v1.Set"> & {
    * @generated from field: int32 reps = 2;
    */
   reps: number;
+
+  /**
+   * @generated from field: string workout_id = 3;
+   */
+  workoutId: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 4;
+   */
+  createdAt?: Timestamp;
 };
 
 /**

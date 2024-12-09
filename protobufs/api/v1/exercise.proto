@@ -32,6 +32,9 @@ service ExerciseService {
   rpc GetPersonalBests(GetPersonalBestsRequest) returns (GetPersonalBestsResponse) {
     option (auth) = true;
   }
+  rpc ListSets(ListSetsRequest) returns (ListSetsResponse) {
+    option (auth) = true;
+  }
 }
 
 message CreateExerciseRequest {
@@ -85,6 +88,15 @@ message GetPersonalBestsRequest {
 }
 message GetPersonalBestsResponse {
   repeated PersonalBest personal_bests = 1;
+}
+
+message ListSetsRequest {
+  string exercise_id = 1 [(buf.validate.field).string.uuid = true];
+  PaginationRequest pagination = 2;
+}
+message ListSetsResponse {
+  repeated Set sets = 1;
+  PaginationResponse pagination = 2;
 }
 
 message PersonalBest {
