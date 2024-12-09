@@ -1,3 +1,4 @@
+import type {FieldMask} from "@bufbuild/protobuf/wkt";
 import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
 
 import {create} from "@bufbuild/protobuf"
@@ -13,19 +14,6 @@ import {
   type GetRoutineResponse, UpdateRoutineRequestSchema, type UpdateRoutineResponse
 } from "@/proto/api/v1/routines_pb"
 import {
-  type CreateExerciseRequest,
-  CreateExerciseRequestSchema,
-  type CreateExerciseResponse,
-  DeleteExerciseRequestSchema,
-  type DeleteExerciseResponse,
-  GetExerciseRequestSchema,
-  type GetExerciseResponse,
-  ListExercisesRequestSchema,
-  type ListExercisesResponse,
-  ListSetsRequestSchema,
-  type ListSetsResponse, UpdateExerciseRequestSchema, type UpdateExerciseResponse
-} from "@/proto/api/v1/exercise_pb"
-import {
   LoginRequestSchema,
   type LoginResponse,
   type ResetPasswordRequest,
@@ -40,9 +28,21 @@ import {
   VerifyEmailRequestSchema,
   type VerifyEmailResponse
 } from "@/proto/api/v1/auth_pb"
+import {
+  type CreateExerciseRequest,
+  CreateExerciseRequestSchema,
+  type CreateExerciseResponse,
+  DeleteExerciseRequestSchema,
+  type DeleteExerciseResponse,
+  GetExerciseRequestSchema,
+  type GetExerciseResponse,
+  ListExercisesRequestSchema,
+  type ListExercisesResponse,
+  ListSetsRequestSchema,
+  type ListSetsResponse, UpdateExerciseRequestSchema, type UpdateExerciseResponse
+} from "@/proto/api/v1/exercise_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
-import type {FieldMask} from "@bufbuild/protobuf/wkt";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {

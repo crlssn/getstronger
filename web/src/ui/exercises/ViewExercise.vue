@@ -6,15 +6,14 @@ import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import {useAuthStore} from "@/stores/auth.ts";
 import { useAlertStore } from '@/stores/alerts'
+import AppList from '@/ui/components/AppList.vue'
 import LineChart from '@/ui/components/LineChart.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import AppListItem from '@/ui/components/AppListItem.vue'
+import {formatToRelativeDateTime} from "@/utils/datetime.ts";
+import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
-
-import AppList from '@/ui/components/AppList.vue'
-import AppListItem from '@/ui/components/AppListItem.vue'
-import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import {formatToRelativeDateTime} from "@/utils/datetime.ts";
 
 const exercise = ref<Exercise>()
 const sets = ref<Array<Set>>([])

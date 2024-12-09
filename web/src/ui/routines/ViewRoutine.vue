@@ -7,6 +7,7 @@ import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { RoutineClient } from '@/http/clients'
 import { deleteRoutine } from '@/http/requests'
+import {useAlertStore} from "@/stores/alerts.ts";
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -20,7 +21,6 @@ import {
 } from '@/proto/api/v1/routines_pb'
 
 import AppListItemLink from '../components/AppListItemLink.vue'
-import {useAlertStore} from "@/stores/alerts.ts";
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()

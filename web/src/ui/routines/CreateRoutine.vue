@@ -2,16 +2,11 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
+import {useRouter} from "vue-router";
 import { Switch } from '@headlessui/vue'
-import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
-import AppButton from '@/ui/components/AppButton.vue'
-import { ExerciseClient, RoutineClient } from '@/http/clients'
-import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
-import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
-import {createRoutine, listExercises} from "@/http/requests.ts";
-import {useRoute, useRouter} from "vue-router";
 import {useAlertStore} from "@/stores/alerts.ts";
+import AppButton from '@/ui/components/AppButton.vue'
+import {createRoutine, listExercises} from "@/http/requests.ts";
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())

@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
+
 import { onMounted, ref } from 'vue'
 import {useRoute, useRouter} from 'vue-router'
+import {useAlertStore} from "@/stores/alerts.ts";
 import AppButton from '@/ui/components/AppButton.vue'
 import {getExercise, updateExercise} from "@/http/requests.ts";
-import {useAlertStore} from "@/stores/alerts.ts";
-import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
 
 const route = useRoute()
 const router = useRouter()
@@ -31,9 +32,9 @@ async function onUpdateExercise() {
 
 <template>
   <form
+    v-if="exercise"
     class="space-y-6"
     @submit.prevent="onUpdateExercise"
-    v-if="exercise"
   >
     <div>
       <h6>Name</h6>
