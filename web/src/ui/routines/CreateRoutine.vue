@@ -41,7 +41,7 @@ const onCreateRoutine = async () => {
   const res = await createRoutine(name.value, exerciseIDs.value)
   if (!res) return
 
-  alertStore.setSuccess(`Routine created`)
+  alertStore.setSuccess('Routine created')
   await router.push('/routines')
 }
 

@@ -25,7 +25,7 @@ async function onUpdateExercise() {
   const res = await updateExercise(exercise.value.id, exercise.value.name, exercise.value.label)
   if (!res) return
 
-  alertStore.setSuccess(`Exercise updated`)
+  alertStore.setSuccess('Exercise updated')
   await router.push('/exercises')
 }
 </script>

@@ -48,7 +48,7 @@ const fetchSets = async () => {
 const onDeleteExercise = async () => {
   if (confirm('Are you sure you want to delete this exercise?')) {
     await deleteExercise(route.params.id as string)
-    alertStore.setError(`Exercise deleted`)
+    alertStore.setError('Exercise deleted')
     await router.push('/exercises')
   }
 }
