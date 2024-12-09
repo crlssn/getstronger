@@ -1,24 +1,39 @@
+import type { Alert } from '@/types/alert'
+
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { Alert } from '@/types/alert'
 
 export const useAlertStore = defineStore('alert', () => {
   const alert = ref<Alert | null>(null)
-  const seen = ref(false)
+  // const seen = ref(false)
 
-  const set = (a: Alert) => {
-    alert.value = a
-    seen.value = false
+  const set = (type: 'error'|'success', message: string) => {
+    alert.value = {
+      message: message,
+      seen: false,
+      type: type,
+    } as Alert
+    // seen.value = false
   }
 
   const clear = () => {
     alert.value = null
-    seen.value = false
+    // seen.value = false
   }
 
   const markSeen = () => {
-    seen.value = true
+    if (alert.value) {
+      alert.value.seen = true
+    }
   }
 
-  return { alert, seen, set, clear, markSeen }
+  const setSuccess = (message: string) => {
+    set('success', message)
+  }
+
+  const setError = (message: string) => {
+    set('error', message)
+  }
+
+  return { alert, clear, markSeen, setError, setSuccess }
 })

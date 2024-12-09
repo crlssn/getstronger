@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth.ts'
 import { WorkoutClient } from '@/http/clients.ts'
 import { useTextareaAutosize } from '@vueuse/core'
 import { deleteWorkout } from '@/http/requests.ts'
+import { useAlertStore } from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type DropdownItem } from '@/types/dropdown.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
@@ -20,6 +21,7 @@ import { formatToRelativeDateTime } from '../../utils/datetime.ts'
 
 const { input, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
+const alertStore = useAlertStore()
 const workoutDeleted = ref(false)
 
 const props = defineProps<{
@@ -29,8 +31,11 @@ const props = defineProps<{
 const dropdownItems: Array<DropdownItem> = [
   { href: `/workout/${props.workout.id}/edit`, title: 'Edit' },
   { func: async () => {
-    await deleteWorkout(props.workout.id)
-    workoutDeleted.value = true
+    if (confirm('Are you sure you want to delete this workout?')) {
+      await deleteWorkout(props.workout.id)
+      alertStore.setError('Workout deleted')
+      workoutDeleted.value = true
+    }
   }, title: 'Delete' },
 ]
 
@@ -54,13 +59,7 @@ const postComment = async () => {
 
 <template>
   <div
-    v-if="workoutDeleted"
-    class="border-2 border-red-400 bg-red-300 mb-4 rounded-md py-3 px-5 mb-2 text-sm text-red-800"
-  >
-    Workout deleted.
-  </div>
-  <div
-    v-else
+    v-if="!workoutDeleted"
     class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4 text-sm"
   >
     <div class="px-4 py-5">

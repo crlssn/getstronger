@@ -4,6 +4,7 @@ import type { Exercise } from '@/proto/api/v1/shared_pb.ts' // import { FieldMas
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
+import { useAlertStore } from '@/stores/alerts'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { deleteExercise, getExercise } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
@@ -11,7 +12,6 @@ import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import AppList from '../components/AppList.vue'
 import AppListItem from '../components/AppListItem.vue'
 import AppListItemLink from '../components/AppListItemLink.vue'
-import { useAlertStore } from '@/stores/alerts'
 
 const exercise = ref<Exercise>()
 
@@ -29,7 +29,7 @@ onMounted(async () => {
 const onDeleteExercise = async () => {
   if (confirm('Are you sure you want to delete this exercise?')) {
     await deleteExercise(route.params.id as string)
-    alertStore.set({ type: 'error', message: `Exercise ${exercise.value?.name} deleted` })
+    alertStore.setError(`Exercise ${exercise.value?.name} deleted`)
     await router.push('/exercises')
   }
 }

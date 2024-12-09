@@ -7,7 +7,6 @@ import { type CreateExerciseRequest, CreateExerciseRequestSchema, type CreateExe
 import { LoginRequestSchema, type LoginResponse, type ResetPasswordRequest, ResetPasswordRequestSchema, type ResetPasswordResponse, type SignupRequest, SignupRequestSchema, type SignupResponse, type UpdatePasswordRequest, UpdatePasswordRequestSchema, type UpdatePasswordResponse, VerifyEmailRequestSchema, type VerifyEmailResponse } from "@/proto/api/v1/auth_pb"
 
 import { AuthClient, ExerciseClient, RoutineClient, WorkoutClient } from "./clients"
-import { useAlertStore } from "@/stores/alerts"
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
