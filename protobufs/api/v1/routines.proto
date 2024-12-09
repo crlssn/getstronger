@@ -54,7 +54,6 @@ message GetRoutineResponse {
 
 message UpdateRoutineRequest {
   Routine routine = 1 [(buf.validate.field).required = true];
-  google.protobuf.FieldMask update_mask = 2;
 }
 message UpdateRoutineResponse {
   Routine routine = 1;
@@ -94,9 +93,9 @@ message UpdateExerciseOrderRequest {
 message UpdateExerciseOrderResponse {}
 
 message Routine {
-  string id = 1;
-  string name = 2;
-  repeated Exercise exercises = 3;
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  repeated Exercise exercises = 3 [(buf.validate.field).repeated.min_items = 1];
 }
 
 

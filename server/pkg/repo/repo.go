@@ -15,7 +15,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/crypto/bcrypt"
 
-	orm "github.com/crlssn/getstronger/server/pkg/orm"
+	"github.com/crlssn/getstronger/server/pkg/orm"
 )
 
 type Repo struct {
@@ -1297,4 +1297,22 @@ func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice,
 	}
 
 	return sets, nil
+}
+
+func (r *Repo) SetRoutineExercises(ctx context.Context, routineID string, exerciseIDs []string) error {
+	exercises, err := orm.Exercises(orm.ExerciseWhere.ID.IN(exerciseIDs)).All(ctx, r.executor())
+	if err != nil {
+		return fmt.Errorf("exercises fetch: %w", err)
+	}
+
+	if len(exercises) != len(exerciseIDs) {
+		return fmt.Errorf("exercise count mismatch: %d != %d", len(exercises), len(exerciseIDs))
+	}
+
+	routine := &orm.Routine{ID: routineID}
+	if err = routine.SetExercises(ctx, r.executor(), false, exercises...); err != nil {
+		return fmt.Errorf("routine exercises set: %w", err)
+	}
+
+	return nil
 }

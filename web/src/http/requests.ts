@@ -8,7 +8,7 @@ import {
   DeleteRoutineRequestSchema,
   type DeleteRoutineResponse,
   GetRoutineRequestSchema,
-  type GetRoutineResponse
+  type GetRoutineResponse, UpdateRoutineRequestSchema, type UpdateRoutineResponse
 } from "@/proto/api/v1/routines_pb"
 import {
   type CreateExerciseRequest,
@@ -40,6 +40,7 @@ import {
 } from "@/proto/api/v1/auth_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
+import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -137,10 +138,22 @@ export const listExercises = async (pageToken: Uint8Array): Promise<ListExercise
 
 export const createRoutine = async (name: string, exerciseIds: string[]): Promise<CreateRoutineResponse | void> => {
   const req = create(CreateRoutineRequestSchema, {
-    name: name,
     exerciseIds: exerciseIds,
+    name: name,
   })
   return tryCatch(() => RoutineClient.create(req))
+}
+
+export const updateRoutine = async (id: string, name: string, exerciseIds: string[]): Promise<UpdateRoutineResponse | void> => {
+  const exercises: Exercise[] = exerciseIds.map(id => ({id: id} as Exercise))
+  const req = create(UpdateRoutineRequestSchema, {
+    routine: {
+      id: id,
+      name: name,
+      exercises: exercises,
+    }
+  })
+  return tryCatch(() => RoutineClient.update(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

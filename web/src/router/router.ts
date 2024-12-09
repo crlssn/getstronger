@@ -12,6 +12,7 @@ import ProfileView from '@/ui/profile/ProfileView.vue'
 import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
 import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
 import ResetPassword from '@/ui/auth/ResetPassword.vue'
+import EditRoutine from "@/ui/routines/EditRoutine.vue";
 import ListRoutines from '@/ui/routines/ListRoutines.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
@@ -25,7 +26,6 @@ import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
-import EditRoutine from "@/ui/routines/EditRoutine.vue";
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
