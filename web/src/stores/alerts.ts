@@ -40,5 +40,5 @@ export const useAlertStore = defineStore('alert', () => {
     } as Alert
   }
 
-  return { alert, clear, markSeen, setError, setSuccess, setErrorWithoutPageRefresh, setSuccessWithoutPageRefresh }
+  return { alert, clear, markSeen, setError, setErrorWithoutPageRefresh, setSuccess, setSuccessWithoutPageRefresh }
 })
