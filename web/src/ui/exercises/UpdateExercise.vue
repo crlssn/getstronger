@@ -4,24 +4,24 @@ import {useRoute, useRouter} from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import {getExercise, updateExercise} from "@/http/requests.ts";
 import {useAlertStore} from "@/stores/alerts.ts";
-
-const name = ref('')
-const label = ref('')
+import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
 
 const route = useRoute()
 const router = useRouter()
+const exercise = ref<Exercise>()
 const alertStore = useAlertStore()
 
 onMounted(async () => {
   const res = await getExercise(route.params.id as string)
   if (!res) return
 
-  name.value = res.exercise?.name || ''
-  label.value = res.exercise?.label || ''
+  exercise.value = res.exercise
 })
 
 async function onUpdateExercise() {
-  const res = await updateExercise(route.params.id as string, name.value, label.value)
+  if (!exercise.value) return
+
+  const res = await updateExercise(exercise.value.id, exercise.value.name, exercise.value.label)
   if (!res) return
 
   alertStore.setSuccess(`Exercise updated`)
@@ -33,39 +33,26 @@ async function onUpdateExercise() {
   <form
     class="space-y-6"
     @submit.prevent="onUpdateExercise"
+    v-if="exercise"
   >
     <div>
-      <label
-        for="name"
-        class="block text-xs font-semibold text-gray-900 uppercase"
-      >Name</label>
+      <h6>Name</h6>
       <div class="mt-2">
         <input
-          id="name"
-          v-model="name"
+          v-model="exercise.name"
           type="text"
           required
-          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
         >
       </div>
     </div>
 
     <div>
-      <div>
-        <label
-          for="label"
-          class="block text-xs font-semibold text-gray-900 uppercase"
-        >
-          Label
-        </label>
-      </div>
+      <h6>Label</h6>
       <div class="mt-2">
         <input
-          id="label"
-          v-model="label"
+          v-model="exercise.label"
           type="text"
           placeholder="Optional"
-          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
         >
       </div>
     </div>
@@ -79,3 +66,9 @@ async function onUpdateExercise() {
     </AppButton>
   </form>
 </template>
+
+<style scoped>
+input {
+  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm;
+}
+</style>

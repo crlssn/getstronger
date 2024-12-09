@@ -11,10 +11,10 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
-import AppList from '../components/AppList.vue'
-import AppListItem from '../components/AppListItem.vue'
-import AppListItemLink from '../components/AppListItemLink.vue'
-import {formatToRelativeDateTime} from "../../utils/datetime.ts";
+import AppList from '@/ui/components/AppList.vue'
+import AppListItem from '@/ui/components/AppListItem.vue'
+import AppListItemLink from '@/ui/components/AppListItemLink.vue'
+import {formatToRelativeDateTime} from "@/utils/datetime.ts";
 
 const exercise = ref<Exercise>()
 const sets = ref<Array<Set>>([])
