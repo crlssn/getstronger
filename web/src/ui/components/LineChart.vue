@@ -15,7 +15,6 @@ import {
   Tooltip,
 } from "chart.js";
 
-// Register Chart.js components globally
 ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
 
 const props = defineProps<{
@@ -59,7 +58,7 @@ const data = computed(() => {
   const reps = []
 
   props.sets.map(set => {
-      labels.push(formatToShortDateTime(set.createdAt))
+      labels.push(formatToShortDateTime(set.metadata.createdAt))
       weights.push(set.weight)
       reps.push(set.reps)
   })
@@ -83,12 +82,10 @@ const data = computed(() => {
 </script>
 
 <template>
-  <div>
-    <LineChart
-      :data="data"
-      :options="options"
-    />
-  </div>
+  <LineChart
+    :data="data"
+    :options="options"
+  />
 </template>
 
 <style scoped></style>

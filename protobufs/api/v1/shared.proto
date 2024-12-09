@@ -19,8 +19,12 @@ message Exercise {
 message Set {
   double weight = 1; // The weight can be less than zero.
   int32 reps = 2 [(buf.validate.field).int32 = { gte: 1 }];
-  string workout_id = 3;
-  google.protobuf.Timestamp created_at = 4;
+  MetadataSet metadata = 3;
+}
+
+message MetadataSet {
+  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+  google.protobuf.Timestamp created_at = 2;
 }
 
 message User {

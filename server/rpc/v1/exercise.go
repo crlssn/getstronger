@@ -277,7 +277,6 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[v1.
 	return connect.NewResponse(&v1.ListSetsResponse{
 		Sets: parseSetSliceToPB(paginated.Items),
 		Pagination: &v1.PaginationResponse{
-			TotalResults:  0,
 			NextPageToken: paginated.NextPageToken,
 		},
 	}), nil

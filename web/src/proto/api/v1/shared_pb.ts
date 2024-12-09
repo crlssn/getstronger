@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/shared.proto.
  */
 export const file_api_v1_shared: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJInAKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoARISCgp3b3Jrb3V0X2lkGAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wImcKBFVzZXISFAoCaWQYASABKAlCCLpIBXIDsAEBEhsKCmZpcnN0X25hbWUYAiABKAlCB7pIBHICEAESGgoJbGFzdF9uYW1lGAMgASgJQge6SARyAhABEhAKCGZvbGxvd2VkGAQgASgIIkYKEVBhZ2luYXRpb25SZXF1ZXN0Eh0KCnBhZ2VfbGltaXQYASABKAVCCbpIBhoEGGQoARISCgpwYWdlX3Rva2VuGAIgASgMIkQKElBhZ2luYXRpb25SZXNwb25zZRIVCg10b3RhbF9yZXN1bHRzGAEgASgDEhcKD25leHRfcGFnZV90b2tlbhgCIAEoDEKMAQoKY29tLmFwaS52MUILU2hhcmVkUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp]);
+  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIj0KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg0KBWxhYmVsGAMgASgJIlMKA1NldBIOCgZ3ZWlnaHQYASABKAESFQoEcmVwcxgCIAEoBUIHukgEGgIoARIlCghtZXRhZGF0YRgDIAEoCzITLmFwaS52MS5NZXRhZGF0YVNldCJbCgtNZXRhZGF0YVNldBIcCgp3b3Jrb3V0X2lkGAEgASgJQgi6SAVyA7ABARIuCgpjcmVhdGVkX2F0GAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJnCgRVc2VyEhQKAmlkGAEgASgJQgi6SAVyA7ABARIbCgpmaXJzdF9uYW1lGAIgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgDIAEoCUIHukgEcgIQARIQCghmb2xsb3dlZBgEIAEoCCJGChFQYWdpbmF0aW9uUmVxdWVzdBIdCgpwYWdlX2xpbWl0GAEgASgFQgm6SAYaBBhkKAESEgoKcGFnZV90b2tlbhgCIAEoDCJEChJQYWdpbmF0aW9uUmVzcG9uc2USFQoNdG90YWxfcmVzdWx0cxgBIAEoAxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAxCjAEKCmNvbS5hcGkudjFCC1NoYXJlZFByb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message api.v1.ExerciseSets
@@ -81,14 +81,9 @@ export type Set = Message<"api.v1.Set"> & {
   reps: number;
 
   /**
-   * @generated from field: string workout_id = 3;
+   * @generated from field: api.v1.MetadataSet metadata = 3;
    */
-  workoutId: string;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp created_at = 4;
-   */
-  createdAt?: Timestamp;
+  metadata?: MetadataSet;
 };
 
 /**
@@ -97,6 +92,28 @@ export type Set = Message<"api.v1.Set"> & {
  */
 export const SetSchema: GenMessage<Set> = /*@__PURE__*/
   messageDesc(file_api_v1_shared, 2);
+
+/**
+ * @generated from message api.v1.MetadataSet
+ */
+export type MetadataSet = Message<"api.v1.MetadataSet"> & {
+  /**
+   * @generated from field: string workout_id = 1;
+   */
+  workoutId: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 2;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message api.v1.MetadataSet.
+ * Use `create(MetadataSetSchema)` to create a new message.
+ */
+export const MetadataSetSchema: GenMessage<MetadataSet> = /*@__PURE__*/
+  messageDesc(file_api_v1_shared, 3);
 
 /**
  * @generated from message api.v1.User
@@ -128,7 +145,7 @@ export type User = Message<"api.v1.User"> & {
  * Use `create(UserSchema)` to create a new message.
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_api_v1_shared, 3);
+  messageDesc(file_api_v1_shared, 4);
 
 /**
  * @generated from message api.v1.PaginationRequest
@@ -150,7 +167,7 @@ export type PaginationRequest = Message<"api.v1.PaginationRequest"> & {
  * Use `create(PaginationRequestSchema)` to create a new message.
  */
 export const PaginationRequestSchema: GenMessage<PaginationRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_shared, 4);
+  messageDesc(file_api_v1_shared, 5);
 
 /**
  * @generated from message api.v1.PaginationResponse
@@ -172,5 +189,5 @@ export type PaginationResponse = Message<"api.v1.PaginationResponse"> & {
  * Use `create(PaginationResponseSchema)` to create a new message.
  */
 export const PaginationResponseSchema: GenMessage<PaginationResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_shared, 5);
+  messageDesc(file_api_v1_shared, 6);
 
