@@ -22,9 +22,10 @@ func parseExerciseSliceToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
 
 func parseExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
-		Id:    exercise.ID,
-		Name:  exercise.Title,
-		Label: exercise.SubTitle.String,
+		Id:     exercise.ID,
+		UserId: exercise.UserID,
+		Name:   exercise.Title,
+		Label:  exercise.SubTitle.String,
 	}
 }
 

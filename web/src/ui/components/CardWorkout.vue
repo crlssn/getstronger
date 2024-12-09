@@ -85,6 +85,7 @@ const postComment = async () => {
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
         :key="exerciseSet.exercise?.id"
+        :exercise-id="exerciseSet.exercise?.id"
         :name="exerciseSet.exercise?.name"
         :sets="exerciseSet.sets"
       />

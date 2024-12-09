@@ -48,7 +48,6 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 
 func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
@@ -59,11 +58,6 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	if exercise.UserID != userID {
-		log.Error("exercise does not belong to user")
-		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
 	return connect.NewResponse(&v1.GetExerciseResponse{

@@ -13,11 +13,14 @@ import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import AppList from '../components/AppList.vue'
 import AppListItem from '../components/AppListItem.vue'
 import AppListItemLink from '../components/AppListItemLink.vue'
+import {useAuthStore} from "@/stores/auth.ts";
+import {formatToRelativeDateTime} from "../../utils/datetime.ts";
 
 const exercise = ref<Exercise>()
 const sets = ref<Array<Set>>([])
 
 const route = useRoute()
+const authStore = useAuthStore()
 const pageTitle = usePageTitleStore()
 const alertStore = useAlertStore()
 
@@ -67,26 +70,31 @@ const onDeleteExercise = async () => {
       :key="index"
       :to="`/workouts/${set.metadata?.workoutId}`"
     >
-      {{ set.weight }} kg x {{ set.reps }}
+      <p>
+        {{ set.weight }} kg x {{ set.reps }}
+        <small class="block mt-1">{{ formatToRelativeDateTime(set.metadata?.createdAt) }}</small>
+      </p>
       <ChevronRightIcon />
     </AppListItemLink>
   </AppList>
 
-  <h6 class="mt-8">
-    Admin
-  </h6>
-  <AppList>
-    <AppListItemLink :to="`/exercises/${route.params.id}/edit`">
-      Update Exercise
-      <ChevronRightIcon />
-    </AppListItemLink>
-    <AppListItem
-      is="danger"
-      class="cursor-pointer"
-      @click="onDeleteExercise"
-    >
-      Delete Exercise
-      <TrashIcon />
-    </AppListItem>
-  </AppList>
+  <div v-if="authStore.userID === exercise?.userId">
+    <h6 class="mt-8">
+      Admin
+    </h6>
+    <AppList>
+      <AppListItemLink :to="`/exercises/${route.params.id}/edit`">
+        Update Exercise
+        <ChevronRightIcon />
+      </AppListItemLink>
+      <AppListItem
+        is="danger"
+        class="cursor-pointer"
+        @click="onDeleteExercise"
+      >
+        Delete Exercise
+        <TrashIcon />
+      </AppListItem>
+    </AppList>
+  </div>
 </template>
