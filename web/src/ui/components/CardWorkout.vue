@@ -33,7 +33,7 @@ const dropdownItems: Array<DropdownItem> = [
   { func: async () => {
     if (confirm('Are you sure you want to delete this workout?')) {
       await deleteWorkout(props.workout.id)
-      alertStore.setError('Workout deleted')
+      alertStore.setErrorWithoutPageRefresh('Workout deleted')
       workoutDeleted.value = true
     }
   }, title: 'Delete' },
