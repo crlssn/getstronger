@@ -11,11 +11,13 @@ import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import AppList from '../components/AppList.vue'
 import AppListItem from '../components/AppListItem.vue'
 import AppListItemLink from '../components/AppListItemLink.vue'
+import { useAlertStore } from '@/stores/alerts'
 
 const exercise = ref<Exercise>()
 
 const route = useRoute()
 const pageTitle = usePageTitleStore()
+const alertStore = useAlertStore()
 
 onMounted(async () => {
   const res = await getExercise(route.params.id as string)
@@ -27,7 +29,8 @@ onMounted(async () => {
 const onDeleteExercise = async () => {
   if (confirm('Are you sure you want to delete this exercise?')) {
     await deleteExercise(route.params.id as string)
-    await router.push('/exercises?deleted')
+    alertStore.set({ type: 'error', message: `Exercise ${exercise.value?.name} deleted` })
+    await router.push('/exercises')
   }
 }
 </script>
