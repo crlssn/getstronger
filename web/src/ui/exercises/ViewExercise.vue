@@ -55,6 +55,18 @@ const onDeleteExercise = async () => {
 </script>
 
 <template>
+  <div
+    v-if="exercise?.label"
+    class="mb-8"
+  >
+    <h6>Label</h6>
+    <AppList>
+      <AppListItem>
+        {{ exercise.label }}
+      </AppListItem>
+    </AppList>
+  </div>
+
   <h6>Chart</h6>
   <div class="bg-white border border-gray-200 rounded-md px-4 py-4">
     <LineChart :sets="sets" />

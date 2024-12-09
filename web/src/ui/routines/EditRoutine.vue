@@ -53,7 +53,7 @@ const onSubmit = async () => {
   if (!res) return
 
   alertStore.setSuccess('Routine updated')
-  await router.push('/routines')
+  await router.push(`/routines/${route.params.id}`)
 }
 </script>
 

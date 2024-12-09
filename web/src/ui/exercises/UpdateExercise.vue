@@ -26,7 +26,7 @@ async function onUpdateExercise() {
   if (!res) return
 
   alertStore.setSuccess('Exercise updated')
-  await router.push('/exercises')
+  await router.push(`/exercises/${exercise.value.id}`)
 }
 </script>
 
