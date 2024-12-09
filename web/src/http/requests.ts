@@ -23,7 +23,7 @@ import {
   ListExercisesRequestSchema,
   type ListExercisesResponse,
   ListSetsRequestSchema,
-  type ListSetsResponse
+  type ListSetsResponse, UpdateExerciseRequestSchema, type UpdateExerciseResponse
 } from "@/proto/api/v1/exercise_pb"
 import {
   LoginRequestSchema,
@@ -42,6 +42,7 @@ import {
 } from "@/proto/api/v1/auth_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
+import type {FieldMask} from "@bufbuild/protobuf/wkt";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -155,6 +156,20 @@ export const updateRoutine = async (id: string, name: string, exerciseIds: strin
     }
   })
   return tryCatch(() => RoutineClient.update(req))
+}
+
+export const updateExercise = async (id: string, name: string, label: string): Promise<UpdateExerciseResponse | void> => {
+  const req = create(UpdateExerciseRequestSchema, {
+    exercise: {
+      id: id,
+      label: label,
+      name: name,
+    } as Exercise,
+    updateMask: {
+      paths: ['name', 'label'],
+    } as FieldMask,
+  })
+  return tryCatch(() => ExerciseClient.update(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

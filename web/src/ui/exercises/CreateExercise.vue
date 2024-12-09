@@ -18,7 +18,7 @@ const req = ref<CreateExerciseRequest>({
 const onSubmit = async () => {
   const res = await createExercise(req.value)
   if (!res) return
-  alertStore.setSuccess(`Exercise ${req.value.name} created`)
+  alertStore.setSuccess(`Exercise created`)
   await router.push('/exercises')
 }
 </script>

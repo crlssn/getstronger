@@ -66,7 +66,7 @@ useSortable(el, routine.value?.exercises || [], {
 const onDeleteRoutine = async () => {
   if (confirm('Are you sure you want to delete this routine?')) {
     await deleteRoutine(routine.value?.id as string)
-    alertStore.setError(`Routine ${routine.value?.name} deleted`)
+    alertStore.setError(`Routine deleted`)
     await router.push('/routines')
   }
 }

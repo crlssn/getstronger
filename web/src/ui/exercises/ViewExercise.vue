@@ -49,7 +49,7 @@ const fetchSets = async () => {
 const onDeleteExercise = async () => {
   if (confirm('Are you sure you want to delete this exercise?')) {
     await deleteExercise(route.params.id as string)
-    alertStore.setError(`Exercise ${exercise.value?.name} deleted`)
+    alertStore.setError(`Exercise deleted`)
     await router.push('/exercises')
   }
 }
@@ -65,6 +65,9 @@ const onDeleteExercise = async () => {
     Sets
   </h6>
   <AppList>
+    <AppListItem v-if="sets.length === 0">
+      No sets
+    </AppListItem>
     <AppListItemLink
       v-for="(set, index) in sets"
       :key="index"
