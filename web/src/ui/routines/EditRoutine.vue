@@ -3,18 +3,11 @@ import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
 import { Switch } from '@headlessui/vue'
-import { create } from '@bufbuild/protobuf'
 import {useRoute, useRouter} from "vue-router";
 import {useAlertStore} from "@/stores/alerts.ts";
-import { ConnectError } from '@connectrpc/connect'
 import AppButton from '@/ui/components/AppButton.vue'
-import {usePageTitleStore} from "@/stores/pageTitle.ts";
-import { ExerciseClient, RoutineClient } from '@/http/clients'
-import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
-import {CreateRoutineRequestSchema, type Routine} from '@/proto/api/v1/routines_pb'
-import {createRoutine, getExercise, getRoutine, listExercises, updateRoutine} from "@/http/requests.ts";
+import {getRoutine, listExercises, updateRoutine} from "@/http/requests.ts";
 
-const routineID = ref('')
 const name = ref('')
 const exercises = ref(Array<Exercise>())
 const exerciseIDs = ref(Array<string>())
@@ -22,7 +15,6 @@ const pageToken = ref(new Uint8Array(0))
 const route = useRoute()
 const router = useRouter()
 const alertStore = useAlertStore()
-// const routine = ref<Routine>()
 
 onMounted(async () => {
   await fetchRoutine()
@@ -33,8 +25,6 @@ const fetchRoutine = async () => {
   const res = await getRoutine(route.params.id as string)
   if (!res) return
 
-  // routine.value = res.routine
-  // routineID.value = route.params.id as string
   name.value = res.routine?.name as string
   res.routine?.exercises.forEach((e) => exerciseIDs.value.push(e.id))
 }

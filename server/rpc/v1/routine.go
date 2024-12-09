@@ -115,7 +115,7 @@ func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.Upd
 	}
 
 	if len(exercises) != len(exerciseIDs) {
-		log.Warn("exercise count mismatch")
+		log.Warn("exercise count mismatch", zap.Strings("expected", exerciseIDs), zap.Any("actual", exercises))
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
@@ -127,7 +127,7 @@ func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.Upd
 			return fmt.Errorf("routine update failed: %w", err)
 		}
 
-		if err = tx.SetRoutineExercises(ctx, routine.ID, exerciseIDs); err != nil {
+		if err = tx.SetRoutineExercises(ctx, routine, exercises); err != nil {
 			return fmt.Errorf("set routine exercises failed: %w", err)
 		}
 

@@ -1,3 +1,5 @@
+import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
+
 import {create} from "@bufbuild/protobuf"
 import {ConnectError} from "@connectrpc/connect"
 import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
@@ -40,7 +42,6 @@ import {
 } from "@/proto/api/v1/auth_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
-import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -148,9 +149,9 @@ export const updateRoutine = async (id: string, name: string, exerciseIds: strin
   const exercises: Exercise[] = exerciseIds.map(id => ({id: id} as Exercise))
   const req = create(UpdateRoutineRequestSchema, {
     routine: {
+      exercises: exercises,
       id: id,
       name: name,
-      exercises: exercises,
     }
   })
   return tryCatch(() => RoutineClient.update(req))
