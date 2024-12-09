@@ -20,10 +20,12 @@ import {
 } from '@/proto/api/v1/routines_pb'
 
 import AppListItemLink from '../components/AppListItemLink.vue'
+import {useAlertStore} from "@/stores/alerts.ts";
 
 const routine = ref<Routine | undefined>(undefined)
 const route = useRoute()
 const pageTitleStore = usePageTitleStore()
+const alertStore = useAlertStore()
 const el = ref<HTMLElement | null>(null)
 
 const fetchRoutine = async (id: string) => {
@@ -62,8 +64,11 @@ useSortable(el, routine.value?.exercises || [], {
 })
 
 const onDeleteRoutine = async () => {
-  await deleteRoutine(routine.value?.id as string)
-  await router.push('/routines')
+  if (confirm('Are you sure you want to delete this routine?')) {
+    await deleteRoutine(routine.value?.id as string)
+    alertStore.setError(`Routine ${routine.value?.name} deleted`)
+    await router.push('/routines')
+  }
 }
 </script>
 
