@@ -9,13 +9,17 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { ExerciseClient, RoutineClient } from '@/http/clients'
 import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { CreateRoutineRequestSchema } from '@/proto/api/v1/routines_pb'
+import {createRoutine, listExercises} from "@/http/requests.ts";
+import {useRoute, useRouter} from "vue-router";
+import {useAlertStore} from "@/stores/alerts.ts";
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
 const exerciseIDs = ref(Array<string>())
 const pageToken = ref(new Uint8Array(0))
-const resOK = ref(false)
-const resError = ref('')
+
+const router = useRouter()
+const alertStore = useAlertStore()
 
 const toggleExercise = (id: string) => {
   if (exerciseIDs.value.includes(id)) {
@@ -27,47 +31,23 @@ const toggleExercise = (id: string) => {
 }
 
 const fetchExercises = async () => {
-  try {
-    const req = create(ListExercisesRequestSchema, {
-      pageSize: 100,
-      pageToken: pageToken.value,
-    })
-    const res = await ExerciseClient.list(req)
-    exercises.value = [...exercises.value, ...res.exercises]
-    if (res.nextPageToken.length > 0) {
-      pageToken.value = res.nextPageToken
-      // TODO: Implement pagination.
-      await fetchExercises()
-    }
-  } catch (error) {
-    resOK.value = false
-    if (error instanceof ConnectError) {
-      resError.value = error.message
-      return
-    }
-    console.error('exercise fetch failed:', error)
+  const res = await listExercises(pageToken.value)
+  if (!res) return
+
+  exercises.value = [...exercises.value, ...res.exercises]
+  if (res.nextPageToken.length > 0) {
+    pageToken.value = res.nextPageToken
+    // TODO: Implement pagination.
+    await fetchExercises()
   }
 }
 
-const createRoutine = async () => {
-  try {
-    const req = create(CreateRoutineRequestSchema, {
-      exerciseIds: exerciseIDs.value,
-      name: name.value,
-    })
-    await RoutineClient.create(req)
-    resOK.value = true
-    resError.value = ''
-    name.value = ''
-    exerciseIDs.value = []
-  } catch (error) {
-    resOK.value = false
-    if (error instanceof ConnectError) {
-      resError.value = error.message
-      return
-    }
-    console.error('create routine failed:', error)
-  }
+const onCreateRoutine = async () => {
+  const res = await createRoutine(name.value, exerciseIDs.value)
+  if (!res) return
+
+  alertStore.setSuccess(`Routine ${name.value} created`)
+  await router.push('/routines')
 }
 
 onMounted(() => {
@@ -76,25 +56,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    v-if="resOK"
-    class="border-2 border-green-400 bg-green-300 rounded-md py-3 px-5 mb-4 text-sm text-green-800 font-medium"
-    role="alert"
-  >
-    Your new routine has been created successfully.
-  </div>
-
-  <div
-    v-if="resError"
-    class="border-2 border-red-400 bg-red-300 mb-4 rounded-md py-3 px-5 text-sm text-red-800"
-    role="alert"
-  >
-    {{ resError }}
-  </div>
-
   <form
     class="space-y-6"
-    @submit.prevent="createRoutine"
+    @submit.prevent="onCreateRoutine"
   >
     <div>
       <label
