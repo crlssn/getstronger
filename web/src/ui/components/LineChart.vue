@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import type {Set} from '@/proto/api/v1/shared_pb.ts'
+
+import {computed} from "vue";
+import {Line as LineChart} from "vue-chartjs";
+import {formatToShortDateTime} from "@/utils/datetime.ts";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -9,10 +14,6 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-import {Line as LineChart} from "vue-chartjs";
-import type {Set} from '@/proto/api/v1/shared_pb.ts'
-import {computed} from "vue";
-import {formatToShortDateTime} from "@/utils/datetime.ts";
 
 // Register Chart.js components globally
 ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
@@ -22,13 +23,13 @@ const props = defineProps<{
 }>()
 
 const options = {
-  responsive: true,
   maintainAspectRatio: false,
+  responsive: true,
   scales: {
     x: {
       grid: {
-        drawBorder: false,
         display: false,
+        drawBorder: false,
       },
       ticks: {
         display: false,
@@ -39,8 +40,8 @@ const options = {
     },
     y: {
       grid: {
-        drawBorder: false,
         display: false,
+        drawBorder: false,
       },
       ticks: {
         display: false,
@@ -64,26 +65,29 @@ const data = computed(() => {
   })
 
   return {
-    labels: labels,
     datasets: [
       {
-        label: 'Weight',
         backgroundColor: '#000000',
         data: weights,
+        label: 'Weight',
       },
       {
-        label: 'Reps',
         backgroundColor: '#4f46e5',
         data: reps,
+        label: 'Reps',
       },
-    ]
+    ],
+    labels: labels
   }
 })
 </script>
 
 <template>
   <div>
-    <LineChart :data="data" :options="options"/>
+    <LineChart
+      :data="data"
+      :options="options"
+    />
   </div>
 </template>
 
