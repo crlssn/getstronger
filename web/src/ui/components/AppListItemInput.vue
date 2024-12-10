@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 
 const props = defineProps<{
   model: string
@@ -11,13 +11,15 @@ const emits = defineEmits(['update'])
 
 const value = ref('')
 
+watch(() => props.model, (newVal) => {
+  value.value = newVal
+})
+
 onMounted(() => {
-  console.log(props.model)
   value.value = props.model
 })
 
-const onKeyup = () => {
-  console.log(value.value)
+const onChange = () => {
   emits('update', value.value)
 }
 </script>
@@ -28,7 +30,7 @@ const onKeyup = () => {
       v-model="value"
       :type="props.type"
       :required="props.required"
-      @keyup="onKeyup"
+      @change="onChange"
     >
   </li>
 </template>

@@ -98,7 +98,7 @@ const onSubmit = async () => {
     <AppButton
       type="submit"
       colour="primary"
-      container-class="p-4"
+      container-class="px-4 pb-4"
     >
       Update Routine
     </AppButton>

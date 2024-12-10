@@ -46,7 +46,7 @@ const fetchExercises = async () => {
     type="link"
     to="/exercises/create"
     colour="primary"
-    container-class="p-4"
+    container-class="px-4 pb-4"
   >
     Create Exercise
   </AppButton>

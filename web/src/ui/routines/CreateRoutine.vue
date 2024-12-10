@@ -105,7 +105,7 @@ onMounted(() => {
     <AppButton
       type="submit"
       colour="primary"
-      container-class="p-4 pt-0"
+      container-class="px-4 pb-4"
     >
       Save Routine
     </AppButton>

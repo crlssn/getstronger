@@ -39,9 +39,9 @@ onMounted(async () => {
   await fetchLatestExerciseSets()
   pageTitleStore.setPageTitle(routine.value?.name as string)
   workoutStore.initialiseWorkout(routineID)
-  routine.value?.exercises.forEach((exercise) => {
-    workoutStore.addEmptySetIfNone(routineID, exercise.id)
-  })
+  // routine.value?.exercises.forEach((exercise) => {
+  //   workoutStore.addEmptySetIfNone(routineID, exercise.id)
+  // })
   dateTimeInterval = setInterval(updateDateTime, 1000)
 })
 
@@ -131,6 +131,15 @@ const addEmptySet = (exerciseID: string) => {
 const deleteSet = (exerciseID: string, index: number) => {
   workoutStore.deleteSet(routineID, exerciseID, index)
 }
+
+const setStartDateTime = (value: string) => {
+  startDateTime.value = value
+}
+
+const setEndDateTime = (value: string) => {
+  endDateTime.value = value
+  clearDateTimeInterval()
+}
 </script>
 
 <template>
@@ -176,22 +185,22 @@ const deleteSet = (exerciseID: string, index: number) => {
 
     <AppList>
       <AppListItem is="header">Start Time</AppListItem>
-      <AppListItemInput :model="startDateTime" type="datetime-local" required @update="n => startDateTime = n" />
+      <AppListItemInput :model="startDateTime" type="datetime-local" required @update="setStartDateTime" />
       <AppListItem is="header">End Time</AppListItem>
-      <AppListItemInput :model="endDateTime" type="datetime-local" required @update="n => startDateTime = n" @input="clearDateTimeInterval" />
+      <AppListItemInput :model="endDateTime" type="datetime-local" required @update="setEndDateTime" />
     </AppList>
 
     <AppButton
       type="submit"
       colour="primary"
-      container-class="p-4"
+      container-class="px-4 pb-4"
     >
       Save Workout
     </AppButton>
     <AppButton
       type="button"
       colour="gray"
-      container-class="p-4 pt-0"
+      container-class="px-4 pb-4"
       @click="cancelWorkout"
     >
       Cancel Workout

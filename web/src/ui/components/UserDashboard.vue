@@ -67,7 +67,7 @@ const searchUsers = async () => {
 </script>
 
 <template>
-  <div class="pb-16">
+  <div class="pb-12">
     <TransitionRoot
       as="template"
       :show="sidebarOpen"
@@ -289,7 +289,7 @@ const searchUsers = async () => {
 
       <AppAlert />
 
-      <main class="mx-auto max-w-7xl">
+      <main class="mx-auto max-w-7xl bg-gray-100 py-4">
         <RouterView />
       </main>
     </div>
