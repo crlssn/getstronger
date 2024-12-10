@@ -49,7 +49,9 @@ const addEmptySet = (exerciseId: string) => {
     return
   }
 
-  workout.value.exerciseSets.find(es => es.exercise?.id === exerciseId)?.sets.push({} as Set)
+  workout.value.exerciseSets.find(es => es.exercise?.id === exerciseId)?.sets.push({
+    "$typeName": "api.v1.Set",
+  } as Set)
 }
 
 const deleteSet = (exerciseId: string, index: number) => {
@@ -111,7 +113,7 @@ const toDateTime = (timestamp: Timestamp|undefined) => {
                   type="text"
                   inputmode="decimal"
                   placeholder="Weight"
-                  :required="es.sets.length > index + 1"
+                  required
                 >
               </div>
               <span class="text-gray-500 font-medium">x</span>
@@ -121,7 +123,7 @@ const toDateTime = (timestamp: Timestamp|undefined) => {
                   type="text"
                   inputmode="numeric"
                   placeholder="Reps"
-                  :required="es.sets.length > index + 1"
+                  required
                 >
               </div>
               <MinusCircleIcon
