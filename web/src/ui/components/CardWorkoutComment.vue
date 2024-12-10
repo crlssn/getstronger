@@ -17,14 +17,14 @@ const props = defineProps<{
       <UserCircleIcon class="size-8 text-gray-900"/>
       <RouterLink
         :to="`/users/${props.user?.id}`"
-        class="font-semibold mx-2"
+        class="font-semibold text-base mx-2"
       >
         {{ props.user?.firstName }} {{ props.user?.lastName }}
       </RouterLink>
-      <span class="text-gray-500 text-xs">
+      <span class="text-gray-500 text-sm">
         {{ formatToRelativeDateTime(props.timestamp) }}
       </span>
     </div>
-    <p class="ml-10 -mt-1">{{ props.comment }}</p>
+    <p class="ml-10 -mt-1 text-base">{{ props.comment }}</p>
   </div>
 </template>

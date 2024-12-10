@@ -73,11 +73,11 @@ const formatComment = computed(() => {
           <UserCircleIcon class="size-8 text-gray-900"/>
           <RouterLink
             :to="`/users/${props.workout.user?.id}`"
-            class="font-semibold mx-2"
+            class="font-semibold text-base mx-2"
           >
             {{ props.workout.user?.firstName }} {{ props.workout.user?.lastName }}
           </RouterLink>
-          <span class="text-gray-500 text-xs">
+          <span class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </span>
         </div>
@@ -97,7 +97,7 @@ const formatComment = computed(() => {
       />
     </div>
     <div class="pl-14 pr-4 py-3">
-      <RouterLink :to="`/workouts/${workout.id}`" class="pl-1 text-xs text-gray-700 uppercase font-medium">
+      <RouterLink :to="`/workouts/${workout.id}`" class="pl-1 text-sm text-gray-700 uppercase font-medium">
         {{ workout.comments.length }} {{ formatComment }}
       </RouterLink>
     </div>
@@ -113,7 +113,7 @@ const formatComment = computed(() => {
         <textarea
           ref="textarea"
           v-model="input"
-          class="w-full border-2 border-gray-200 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm min-h-20 py-3 mb-2 mt-2 resize-none overflow-hidden"
+          class="w-full border-2 border-gray-200 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-base min-h-20 py-3 mb-2 mt-2 resize-none overflow-hidden"
           placeholder="Write a comment..."
         />
         <div class="flex justify-end">
