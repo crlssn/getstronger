@@ -14,7 +14,7 @@ import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import {PostCommentRequestSchema, type Workout, type WorkoutComment,} from '@/proto/api/v1/workouts_pb.ts'
 
-import {formatToRelativeDateTime} from '../../utils/datetime.ts'
+import {formatToRelativeDateTime} from '@/utils/datetime.ts'
 
 const {input, textarea} = useTextareaAutosize()
 const authStore = useAuthStore()
@@ -27,7 +27,7 @@ const props = defineProps<{
 }>()
 
 const dropdownItems: Array<DropdownItem> = [
-  {href: `/workout/${props.workout.id}/edit`, title: 'Edit Workout'},
+  {href: `/workouts/${props.workout.id}/edit`, title: 'Edit Workout'},
   {func: () => onDeleteWorkout(), title: 'Delete Workout'},
 ]
 

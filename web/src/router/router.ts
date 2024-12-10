@@ -26,6 +26,7 @@ import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import ListNotifications from '@/ui/notifications/ListNotifications.vue'
+import EditWorkout from "@/ui/workouts/EditWorkout.vue";
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -71,6 +72,13 @@ const router: Router = createRouter({
       meta: { title: '' },
       name: 'view-workout',
       path: '/workouts/:id',
+    },
+    {
+      beforeEnter: [auth],
+      component: EditWorkout,
+      meta: { title: 'Edit Workout' },
+      name: 'edit-workout',
+      path: '/workouts/:id/edit',
     },
     {
       beforeEnter: [auth],
