@@ -7,6 +7,8 @@ import { Switch } from '@headlessui/vue'
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppButton from '@/ui/components/AppButton.vue'
 import {createRoutine, listExercises} from "@/http/requests.ts";
+import AppList from "@/ui/components/AppList.vue";
+import AppListItem from "@/ui/components/AppListItem.vue";
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -58,30 +60,27 @@ onMounted(() => {
     <div>
       <label
         for="name"
-        class="block text-xs font-semibold text-gray-900 uppercase"
+        class="block text-sm font-semibold text-gray-500 uppercase m-4"
       >Name</label>
-      <div class="mt-2">
+      <div class="m-4">
         <input
           v-model="name"
           type="text"
           required
-          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
+          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
         >
       </div>
     </div>
 
     <div>
-      <label class="mb-2 block text-xs font-semibold text-gray-900 uppercase">Exercises</label>
-      <ul
-        role="list"
-        class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
-      >
-        <li
+      <AppList>
+        <AppListItem is="header">Exercises</AppListItem>
+        <AppListItem
           v-for="exercise in exercises"
           :key="exercise.id"
         >
           <div
-            class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-900"
+            class="flex justify-between items-center w-full"
           >
             {{ exercise.name }}
             <Switch
@@ -99,14 +98,14 @@ onMounted(() => {
               />
             </Switch>
           </div>
-        </li>
-      </ul>
+        </AppListItem>
+      </AppList>
     </div>
 
     <AppButton
       type="submit"
       colour="primary"
-      class="mt-6"
+      container-class="p-4 pt-0"
     >
       Save Routine
     </AppButton>

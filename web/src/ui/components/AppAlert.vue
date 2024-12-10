@@ -37,7 +37,7 @@ const alertStyle = computed(() => {
   <div
     v-if="alertStore.alert"
     :class="alertStyle"
-    class="border-b-2 border-t-2 py-4 px-9 text-sm font-medium"
+    class="border-b-2 py-4 px-5 font-medium"
     role="alert"
   >
     {{ alertStore.alert.message }}

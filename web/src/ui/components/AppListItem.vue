@@ -12,7 +12,7 @@ const props = defineProps<{
 
 <style scoped>
 li {
-  @apply flex justify-between items-center gap-x-6 px-4 py-5 text-gray-900;
+  @apply flex justify-between items-center gap-x-6 px-4 py-5 text-gray-900 font-semibold;
 
   &.danger {
     @apply text-red-500;
