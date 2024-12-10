@@ -18,6 +18,7 @@ const computedClasses = computed(() => {
 </script>
 
 <template>
+  <div class="p-4">
   <RouterLink
     v-if="props.type === 'link'"
     :to="props.to as string"
@@ -32,6 +33,7 @@ const computedClasses = computed(() => {
   >
     <slot />
   </button>
+  </div>
 </template>
 
 <style scoped>

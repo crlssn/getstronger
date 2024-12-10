@@ -7,6 +7,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { ListRoutinesRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
+import AppListItem from "@/ui/components/AppListItem.vue";
 
 const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())
@@ -38,6 +39,7 @@ onMounted(async () => {
     Create Routine
   </AppButton>
   <AppList role="list">
+    <AppListItem is="header">Routines</AppListItem>
     <AppListItemLink
       v-for="routine in routines"
       :key="routine.id"

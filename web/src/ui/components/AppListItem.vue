@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
-  is?: 'danger'
+  is?: 'danger' | 'header'
 }>()
 </script>
 
@@ -16,6 +16,9 @@ li {
 
   &.danger {
     @apply text-red-500;
+  }
+  &.header {
+    @apply block text-sm font-semibold text-gray-500 uppercase;
   }
 }
 </style>
