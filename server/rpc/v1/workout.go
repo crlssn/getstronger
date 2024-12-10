@@ -237,3 +237,37 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 		},
 	}, nil
 }
+
+func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if req.Msg.GetWorkout().GetCreatedAt().AsTime().After(req.Msg.GetWorkout().GetFinishedAt().AsTime()) {
+		log.Warn("workout cannot start after it finishes")
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
+	if err != nil {
+		log.Error("failed to get workout", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if workout.UserID != userID {
+		log.Error("workout does not belong to user")
+		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	if err = h.repo.UpdateWorkout(ctx, workout.ID, repo.UpdateWorkoutParams{
+		Name:         workout.Name,
+		CreatedAt:    req.Msg.GetWorkout().GetCreatedAt().AsTime(),
+		FinishedAt:   req.Msg.GetWorkout().GetFinishedAt().AsTime(),
+		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets()),
+	}); err != nil {
+		log.Error("failed to create workout", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("workout updated")
+	return &connect.Response[v1.UpdateWorkoutResponse]{}, nil
+}

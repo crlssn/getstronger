@@ -41,7 +41,7 @@ const onUpdateWorkout = async () => {
   if (!res) return
 
   alertStore.setSuccess('Workout updated')
-  await router.push('/home')
+  await router.push(`/workouts/${workout.value.id}`)
 }
 
 const addEmptySet = (exerciseId: string) => {
