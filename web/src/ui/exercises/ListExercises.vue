@@ -66,7 +66,7 @@ const fetchExercises = async () => {
       :to="`/exercises/${exercise.id}`"
     >
       {{ exercise.name }}
-      <ChevronRightIcon />
+      <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
   </AppList>
 </template>

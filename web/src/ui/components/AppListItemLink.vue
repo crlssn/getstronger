@@ -14,6 +14,6 @@ defineProps<{
 
 <style scoped>
 a {
-  @apply flex justify-between items-center gap-x-6 px-4 py-5 font-medium text-gray-900;
+  @apply flex justify-between items-center gap-x-6 px-4 py-5 font-semibold text-gray-900;
 }
 </style>
