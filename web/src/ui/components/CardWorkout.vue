@@ -26,7 +26,7 @@ const props = defineProps<{
 }>()
 
 const dropdownItems: Array<DropdownItem> = [
-  {href: `/workouts/${props.workout.id}/edit`, title: 'Edit Workout'},
+  {href: `/workouts/${props.workout.id}/edit`, title: 'Update Workout'},
   {func: () => onDeleteWorkout(), title: 'Delete Workout'},
 ]
 
