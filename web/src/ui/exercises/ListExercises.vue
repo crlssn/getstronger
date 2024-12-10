@@ -10,6 +10,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
+import AppListItem from "@/ui/components/AppListItem.vue";
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -53,10 +54,12 @@ const fetchExercises = async () => {
     type="link"
     to="/exercises/create"
     colour="primary"
+    container-class="p-4 pb-0"
   >
     Create Exercise
   </AppButton>
   <AppList>
+    <AppListItem is="header">Created</AppListItem>
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"

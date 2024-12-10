@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { create } from '@bufbuild/protobuf'
-import { RoutineClient } from '@/http/clients'
+import {onMounted, ref} from 'vue'
+import {create} from '@bufbuild/protobuf'
+import {RoutineClient} from '@/http/clients'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import {ChevronRightIcon} from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { ListRoutinesRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
+import {ListRoutinesRequestSchema, type Routine} from '@/proto/api/v1/routines_pb'
 import AppListItem from "@/ui/components/AppListItem.vue";
 
 const pageToken = ref(new Uint8Array(0))
@@ -35,11 +35,12 @@ onMounted(async () => {
     type="link"
     to="/routines/create"
     colour="primary"
+    container-class="p-4 pb-0"
   >
     Create Routine
   </AppButton>
   <AppList role="list">
-    <AppListItem is="header">Active</AppListItem>
+    <AppListItem is="header">Created</AppListItem>
     <AppListItemLink
       v-for="routine in routines"
       :key="routine.id"
@@ -49,7 +50,7 @@ onMounted(async () => {
         <p class="font-semibold text-gray-900">{{ routine.name }}</p>
         <p class="text-sm text-gray-500 font-medium">2 days ago</p>
       </div>
-      <ChevronRightIcon class="size-8 text-gray-500" />
+      <ChevronRightIcon class="size-8 text-gray-500"/>
     </AppListItemLink>
   </AppList>
 </template>

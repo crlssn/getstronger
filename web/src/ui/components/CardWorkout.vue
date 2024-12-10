@@ -13,7 +13,7 @@ import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import {PostCommentRequestSchema, type Workout, type WorkoutComment,} from '@/proto/api/v1/workouts_pb.ts'
 
 import {formatToRelativeDateTime} from '../../utils/datetime.ts'
-import {UserCircleIcon} from "@heroicons/vue/24/outline";
+import {UserCircleIcon} from "@heroicons/vue/24/solid";
 import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
 
 const {input, textarea} = useTextareaAutosize()
@@ -28,16 +28,16 @@ const props = defineProps<{
 
 const dropdownItems: Array<DropdownItem> = [
   {href: `/workout/${props.workout.id}/edit`, title: 'Edit Workout'},
-  {
-    func: async () => {
-      if (confirm('Are you sure you want to delete this workout?')) {
-        await deleteWorkout(props.workout.id)
-        alertStore.setErrorWithoutPageRefresh('Workout deleted')
-        workoutDeleted.value = true
-      }
-    }, title: 'Delete Workout'
-  },
+  {func: () => onDeleteWorkout(), title: 'Delete Workout'},
 ]
+
+const onDeleteWorkout = async () => {
+  if (confirm('Are you sure you want to delete this workout?')) {
+    await deleteWorkout(props.workout.id)
+    alertStore.setErrorWithoutPageRefresh('Workout deleted')
+    workoutDeleted.value = true
+  }
+}
 
 const comments = ref<Array<WorkoutComment>>([])
 

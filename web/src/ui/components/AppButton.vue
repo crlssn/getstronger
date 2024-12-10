@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import {computed} from 'vue'
 
 const props = defineProps<{
   colour: 'amber' | 'gray' | 'green' | 'primary' | 'red'
   to?: string
   type: 'button' | 'link' | 'submit'
+  containerClass?: string
 }>()
 
 const computedClasses = computed(() => {
@@ -18,21 +19,21 @@ const computedClasses = computed(() => {
 </script>
 
 <template>
-  <div class="p-4">
-  <RouterLink
-    v-if="props.type === 'link'"
-    :to="props.to as string"
-    :class="computedClasses"
-  >
-    <slot />
-  </RouterLink>
-  <button
-    v-else
-    :type="props.type"
-    :class="computedClasses"
-  >
-    <slot />
-  </button>
+  <div :class="containerClass">
+    <RouterLink
+      v-if="props.type === 'link'"
+      :to="props.to as string"
+      :class="computedClasses"
+    >
+      <slot/>
+    </RouterLink>
+    <button
+      v-else
+      :type="props.type"
+      :class="computedClasses"
+    >
+      <slot/>
+    </button>
   </div>
 </template>
 

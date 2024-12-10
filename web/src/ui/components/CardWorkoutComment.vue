@@ -2,7 +2,7 @@
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import { type Timestamp } from '@bufbuild/protobuf/wkt'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
-import {UserCircleIcon} from "@heroicons/vue/24/outline";
+import {UserCircleIcon} from "@heroicons/vue/24/solid";
 
 const props = defineProps<{
   comment: string
