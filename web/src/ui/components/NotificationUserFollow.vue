@@ -24,10 +24,10 @@ defineProps<{
         </span>
         followed you
       </div>
-      <p class="text-sm text-gray-700 mt-1">
-        {{ formatUnixToRelativeDateTime(timestamp) }}
-      </p>
     </div>
+    <p class="text-sm text-gray-700 mt-1">
+      {{ formatUnixToRelativeDateTime(timestamp) }}
+    </p>
   </RouterLink>
 </template>
 
