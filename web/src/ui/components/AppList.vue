@@ -8,6 +8,8 @@
 
 <style scoped>
 ul {
-  @apply divide-y divide-gray-100 bg-white border border-gray-200 rounded-md overflow-hidden;
+  @apply divide-y divide-gray-100 bg-white;
 }
 </style>
+
+<!-- border border-gray-200 rounded-md overflow-hidden -->

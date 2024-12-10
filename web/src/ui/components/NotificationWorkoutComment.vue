@@ -33,7 +33,7 @@ const workoutOwnership = computed(() => {
     :to="`/workouts/${workout?.id}`"
     class="flex w-full items-center gap-x-3"
   >
-    <ChatBubbleLeftRightIcon class="w-6 h-6" />
+    <ChatBubbleLeftRightIcon class="size-8" />
     <div class="w-full">
       <div>
         <span class="font-semibold">
@@ -46,7 +46,7 @@ const workoutOwnership = computed(() => {
         </span>
         workout
       </div>
-      <p class="text-xs text-gray-700 mt-1">
+      <p class="text-sm text-gray-700 mt-1">
         {{ formatUnixToRelativeDateTime(timestamp) }}
       </p>
     </div>
