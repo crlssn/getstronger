@@ -36,7 +36,7 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 
 	if req.Msg.GetStartedAt().AsTime().After(req.Msg.GetFinishedAt().AsTime()) {
 		log.Warn("workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
 	}
 
 	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
