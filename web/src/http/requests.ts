@@ -1,10 +1,15 @@
-import type {FieldMask} from "@bufbuild/protobuf/wkt";
-import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
+import type {FieldMask, Timestamp} from "@bufbuild/protobuf/wkt";
+import type {Exercise, ExerciseSets} from "@/proto/api/v1/shared_pb.ts";
 
 import {create} from "@bufbuild/protobuf"
 import {ConnectError} from "@connectrpc/connect"
 import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
-import {DeleteWorkoutRequestSchema, type DeleteWorkoutResponse} from "@/proto/api/v1/workouts_pb"
+import {
+  CreateWorkoutRequestSchema,
+  type CreateWorkoutResponse,
+  DeleteWorkoutRequestSchema,
+  type DeleteWorkoutResponse
+} from "@/proto/api/v1/workouts_pb"
 import {
   CreateRoutineRequestSchema,
   type CreateRoutineResponse,
@@ -43,6 +48,7 @@ import {
 } from "@/proto/api/v1/exercise_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
+import type {DateTimeMaybeValid} from "luxon/src/datetime";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -170,6 +176,20 @@ export const updateExercise = async (id: string, name: string, label: string): P
     } as FieldMask,
   })
   return tryCatch(() => ExerciseClient.update(req))
+}
+
+export const createWorkout = async (routineId: string, exerciseSets: ExerciseSets[], startedAt: DateTimeMaybeValid, finishedAt: DateTimeMaybeValid): Promise<CreateWorkoutResponse | void> => {
+  const req = create(CreateWorkoutRequestSchema, {
+    routineId: routineId,
+    exerciseSets: exerciseSets,
+    finishedAt: {
+      seconds: BigInt(finishedAt.toSeconds()),
+    } as Timestamp,
+    startedAt: {
+      seconds: BigInt(startedAt.toSeconds()),
+    } as Timestamp,
+  })
+  return tryCatch(() => WorkoutClient.create(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

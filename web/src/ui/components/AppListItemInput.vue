@@ -3,7 +3,7 @@ import {computed, onMounted, ref} from "vue";
 
 const props = defineProps<{
   model: string
-  type: 'text'
+  type: string
   required: boolean
 }>()
 

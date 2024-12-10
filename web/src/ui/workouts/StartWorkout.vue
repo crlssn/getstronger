@@ -12,16 +12,22 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ChevronDownIcon, ChevronRightIcon, TrashIcon, MinusCircleIcon, MinusIcon } from '@heroicons/vue/24/outline'
 import { ExerciseClient, RoutineClient, WorkoutClient } from '@/http/clients'
 import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
 import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
+import AppList from "@/ui/components/AppList.vue";
+import AppListItem from "@/ui/components/AppListItem.vue";
+import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import {createWorkout} from "@/http/requests.ts";
+import {useAlertStore} from "@/stores/alerts.ts";
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
 const routineID = route.params.routine_id as string
 const workoutStore = useWorkoutStore()
 const pageTitleStore = usePageTitleStore()
+const alertStore = useAlertStore()
 const startDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 const endDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 let dateTimeInterval: ReturnType<typeof setInterval>
@@ -56,16 +62,13 @@ const updateDateTime = () => {
 }
 
 const clearDateTimeInterval = () => {
+  console.log('clearing interval')
   clearInterval(dateTimeInterval)
 }
 
-const isCurrentExercise = (exerciseID: string) => {
-  return exerciseID === route.query.exercise_id
+const sets = (exerciseId: string) => {
+  return workoutStore.getSets(routineID, exerciseId)
 }
-
-const sets = computed(() => {
-  return workoutStore.getSets(routineID, route.query.exercise_id as string)
-})
 
 const fetchRoutine = async (id: string) => {
   const req = create(GetRoutineRequestSchema, { id })
@@ -73,7 +76,7 @@ const fetchRoutine = async (id: string) => {
   routine.value = res.routine
 }
 
-const finishWorkout = async () => {
+const onFinishWorkout = async () => {
   const exerciseSets = workoutStore.getAllSets(routineID)
   if (!exerciseSets) {
     throw new Error('No exercise sets found')
@@ -94,29 +97,12 @@ const finishWorkout = async () => {
     } as ExerciseSets)
   }
 
-  try {
-    await WorkoutClient.create(
-      create(CreateWorkoutRequestSchema, {
-        exerciseSets: eSetsList,
-        finishedAt: {
-          seconds: BigInt(DateTime.fromISO(endDateTime.value).toSeconds()),
-        } as Timestamp,
-        routineId: routineID,
-        startedAt: {
-          seconds: BigInt(DateTime.fromISO(startDateTime.value).toSeconds()),
-        } as Timestamp,
-      }),
-    )
-  } catch (error) {
-    if (error instanceof ConnectError) {
-      reqError.value = error.message
-      return
-    }
-    console.error(error)
-  }
+  const res = await createWorkout(routineID, eSetsList, DateTime.fromISO(startDateTime.value), DateTime.fromISO(endDateTime.value))
+  if (!res) return
 
   workoutStore.removeWorkout(routineID)
-  await router.push(`/workouts`)
+  alertStore.setSuccess('Workout saved')
+  await router.push('/home')
 }
 
 const cancelWorkout = async () => {
@@ -137,54 +123,30 @@ const prevSetReps = (exerciseID: string, index: number) => {
 const isNumber = (value: number | string | undefined) => {
   return typeof value === 'number' && !Number.isNaN(value)
 }
+
+const addEmptySet = (exerciseID: string) => {
+  workoutStore.addEmptySet(routineID, exerciseID)
+}
+
+const deleteSet = (exerciseID: string, index: number) => {
+  workoutStore.deleteSet(routineID, exerciseID, index)
+}
 </script>
 
 <template>
-  <div
-    v-if="reqError"
-    class="border-2 border-red-400 bg-red-300 mb-4 rounded-md py-3 px-5 text-sm text-red-800"
-    role="alert"
-  >
-    {{ reqError }}
-  </div>
-  <form
-    class="space-y-6"
-    @submit.prevent="finishWorkout"
-  >
-    <div>
-      <h6>Exercises</h6>
-      <ul
-        class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
-        role="list"
-      >
-        <li
-          v-for="exercise in routine?.exercises"
-          :key="exercise.id"
-        >
-          <RouterLink
-            :to="isCurrentExercise(exercise.id) ? '' : `?exercise_id=${exercise.id}`"
-            class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-800"
-            :class="isCurrentExercise(exercise.id) && 'font-semibold'"
-          >
-            {{ exercise.name }}
-            <ChevronDownIcon
-              v-if="isCurrentExercise(exercise.id)"
-              class="size-5 flex-none text-gray-600"
-            />
-            <ChevronRightIcon
-              v-else
-              class="size-5 flex-none text-gray-400"
-            />
-          </RouterLink>
+  <form @submit.prevent="onFinishWorkout">
+    <AppList
+      v-for="exercise in routine?.exercises"
+      :key="exercise.id"
+    >
+        <AppListItem is="header">{{ exercise.name }}</AppListItem>
+        <AppListItem class="flex flex-col">
           <div
-            v-if="isCurrentExercise(exercise.id)"
-            class="px-4"
+            v-for="(set, index) in sets(exercise.id)"
+            :key="index"
+            class="w-full"
           >
-            <div
-              v-for="(set, index) in sets"
-              :key="index"
-            >
-              <label>Set {{ index + 1 }}</label>
+              <h6>Set {{ index + 1 }}</h6>
               <div class="flex items-center gap-x-4 mb-4">
                 <div class="w-full">
                   <input
@@ -192,67 +154,44 @@ const isNumber = (value: number | string | undefined) => {
                     type="text"
                     inputmode="decimal"
                     :placeholder="prevSetWeight(exercise.id, index)"
-                    :required="isNumber(set.reps)"
-                    @keyup="
-                      workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
-                    "
+                    required
                   >
                 </div>
-                <span class="text-gray-900 font-medium">x</span>
+                <span class="text-gray-500 font-medium">x</span>
                 <div class="w-full">
                   <input
                     v-model.number="set.reps"
                     type="text"
                     inputmode="numeric"
                     :placeholder="prevSetReps(exercise.id, index)"
-                    :required="isNumber(set.weight)"
-                    @keyup="
-                      workoutStore.addEmptySetIfNone(routineID, route.query.exercise_id as string)
-                    "
+                    required
                   >
                 </div>
+                <MinusCircleIcon class="cursor-pointer" @click="deleteSet(exercise.id, index)"/>
               </div>
-            </div>
           </div>
-        </li>
-      </ul>
-    </div>
-    <div class="flex gap-x-6">
-      <div class="w-full">
-        <h6>Start Date</h6>
-        <div>
-          <input
-            v-model="startDateTime"
-            type="datetime-local"
-            required
-            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
-          >
-        </div>
-      </div>
-      <div class="w-full">
-        <h6>End Date</h6>
-        <div>
-          <input
-            v-model="endDateTime"
-            type="datetime-local"
-            required
-            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
-            @input="clearDateTimeInterval"
-          >
-        </div>
-      </div>
-    </div>
+          <AppButton colour="gray" type="button" @click="addEmptySet(exercise.id)" class="w-full">Add Set</AppButton>
+        </AppListItem>
+      </AppList>
+
+    <AppList>
+      <AppListItem is="header">Start Time</AppListItem>
+      <AppListItemInput :model="startDateTime" type="datetime-local" required @update="n => startDateTime = n" />
+      <AppListItem is="header">End Time</AppListItem>
+      <AppListItemInput :model="endDateTime" type="datetime-local" required @update="n => startDateTime = n" @input="clearDateTimeInterval" />
+    </AppList>
+
     <AppButton
       type="submit"
       colour="primary"
-      class="mt-6"
+      container-class="p-4"
     >
       Save Workout
     </AppButton>
     <AppButton
       type="button"
       colour="gray"
-      class="mt-6"
+      container-class="p-4 pt-0"
       @click="cancelWorkout"
     >
       Cancel Workout
@@ -262,10 +201,10 @@ const isNumber = (value: number | string | undefined) => {
 
 <style scoped>
 label {
-  @apply block text-xs font-semibold text-gray-900 uppercase mb-2;
+  @apply block text-sm font-semibold text-gray-500 uppercase mb-2;
 }
 
 input {
-  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm;
+  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 font-medium;
 }
 </style>
