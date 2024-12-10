@@ -169,7 +169,7 @@ const updateTab = (event: Event) => {
       <select
         id="tabs"
         name="tabs"
-        class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 py-4 px-5 font-medium"
+        class="block w-full border-gray-300 focus:ring-0 py-4 px-4 font-medium"
         @change="updateTab"
       >
         <option
