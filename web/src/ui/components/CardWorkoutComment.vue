@@ -14,7 +14,7 @@ const props = defineProps<{
 <template>
   <div class="mb-2">
     <div class="flex items-center">
-      <UserCircleIcon class="size-8 text-gray-900"/>
+      <UserCircleIcon class="size-10 text-gray-900"/>
       <RouterLink
         :to="`/users/${props.user?.id}`"
         class="font-semibold text-base mx-2"
@@ -25,6 +25,6 @@ const props = defineProps<{
         {{ formatToRelativeDateTime(props.timestamp) }}
       </span>
     </div>
-    <p class="ml-10 -mt-1 text-base">{{ props.comment }}</p>
+    <p class="ml-12 -mt-1 text-base">{{ props.comment }}</p>
   </div>
 </template>

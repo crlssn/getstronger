@@ -23,7 +23,7 @@ const props = defineProps<Props>()
         class="flex items-center rounded-full text-gray-400 hover:text-gray-600 focus:outline-none"
       >
         <EllipsisVerticalIcon
-          class="size-6"
+          class="size-6 text-gray-500"
         />
       </MenuButton>
     </div>

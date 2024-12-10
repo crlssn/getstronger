@@ -70,16 +70,16 @@ const formatComment = computed(() => {
     <div class="px-4 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <UserCircleIcon class="size-8 text-gray-900"/>
+          <UserCircleIcon class="size-10 text-gray-900"/>
           <RouterLink
             :to="`/users/${props.workout.user?.id}`"
             class="font-semibold text-base mx-2"
           >
             {{ props.workout.user?.firstName }} {{ props.workout.user?.lastName }}
           </RouterLink>
-          <span class="text-gray-500 text-sm">
+          <RouterLink :to="`/workouts/${workout.id}`" class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
-          </span>
+          </RouterLink>
         </div>
         <DropdownButton
           v-if="workout.user?.id === authStore.userID"
@@ -87,7 +87,7 @@ const formatComment = computed(() => {
         />
       </div>
     </div>
-    <div class="pl-14 pr-4 py-3">
+    <div class="pl-16 pr-4 py-3">
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
         :key="exerciseSet.exercise?.id"
@@ -96,7 +96,7 @@ const formatComment = computed(() => {
         :sets="exerciseSet.sets"
       />
     </div>
-    <div class="pl-14 pr-4 py-3">
+    <div class="pl-16 pr-4 py-3">
       <RouterLink :to="`/workouts/${workout.id}`" class="pl-1 text-sm text-gray-700 uppercase font-medium">
         {{ workout.comments.length }} {{ formatComment }}
       </RouterLink>
