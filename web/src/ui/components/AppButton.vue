@@ -42,7 +42,7 @@ button {
 }
 
 a.link {
-  @apply block text-center py-3 mb-6;
+  @apply block text-center py-3;
 }
 
 .primary {
@@ -62,6 +62,6 @@ a.link {
 }
 
 .gray {
-  @apply bg-gray-500 hover:bg-gray-600 border-b-gray-700 hover:border-b-gray-800 focus-visible:outline-gray-500 text-white;
+  @apply bg-gray-100 hover:bg-gray-100 border-b-0 focus-visible:outline-gray-500 text-gray-500 hover:text-gray-500;
 }
 </style>

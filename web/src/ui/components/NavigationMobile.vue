@@ -61,7 +61,7 @@ const navigation = [
 
 <style scoped>
 nav {
-  @apply fixed w-full bottom-0 z-50 h-16 px-8 bg-white border-t-2 border-gray-200;
+  @apply fixed w-full bottom-0 z-10 h-16 px-8 bg-white border-t-2 border-gray-200;
   @apply lg:hidden flex justify-between items-center;
 }
 

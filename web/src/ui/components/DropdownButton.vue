@@ -2,6 +2,7 @@
 import { type DropdownItem } from '@/types/dropdown.ts'
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import AppButton from "@/ui/components/AppButton.vue";
 
 interface Props {
   items: Array<DropdownItem>
@@ -34,33 +35,37 @@ const props = defineProps<Props>()
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+        class="shadow-2xl fixed right-0 bottom-0 left-0 w-full z-50 origin-top-right rounded-t-2xl overflow-hidden bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
       >
-        <div class="py-1">
+        <div class="py-10 px-8">
           <MenuItem
             v-for="(item, index) in props.items"
             v-slot="{ active }"
             :key="index"
             as="div"
           >
-            <RouterLink
+            <AppButton
               v-if="item.href"
+              colour="primary"
+              type="link"
               :to="item.href"
               :class="[
                 active ? 'bg-gray-100 text-gray-900 outline-none' : 'text-gray-700',
-                'block px-4 py-2 text-sm',
+                'block px-4 text-sm mb-6',
               ]"
             >
               {{ item.title }}
-            </RouterLink>
-            <span
+            </AppButton>
+            <AppButton
               v-if="item.func"
+              colour="gray"
+              type="button"
               :class="[
                 active ? 'bg-gray-100 text-gray-900 outline-none' : 'text-gray-700',
-                'block px-4 py-2 text-sm cursor-pointer',
+                'block px-4 text-sm cursor-pointer',
               ]"
               @click="item.func"
-            >{{ item.title }}</span>
+            >{{ item.title }}</AppButton>
           </MenuItem>
         </div>
       </MenuItems>
