@@ -81,8 +81,8 @@ const onDeleteRoutine = async () => {
   >
     Start Workout
   </AppButton>
+  <h6>Exercises</h6>
   <AppList ref="el">
-    <AppListItem is="header">Exercises</AppListItem>
     <AppListItem
       v-for="exercise in routine?.exercises"
       :key="exercise.id"
@@ -93,8 +93,8 @@ const onDeleteRoutine = async () => {
       <ChevronUpDownIcon class="size-8" />
     </AppListItem>
   </AppList>
+  <h6>Admin</h6>
   <AppList>
-    <AppListItem is="header">Admin</AppListItem>
     <AppListItemLink :to="`/routines/${route.params.id}/edit`">
       Update Routine
       <ChevronRightIcon class="size-6" />

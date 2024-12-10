@@ -155,7 +155,7 @@ const setEndDateTime = (value: string) => {
             :key="index"
             class="w-full"
           >
-              <h6>Set {{ index + 1 }}</h6>
+              <label>Set {{ index + 1 }}</label>
               <div class="flex items-center gap-x-4 mb-4">
                 <div class="w-full">
                   <input
@@ -182,6 +182,32 @@ const setEndDateTime = (value: string) => {
           <AppButton colour="gray" type="button" @click="addEmptySet(exercise.id)" class="w-full">Add Set</AppButton>
         </AppListItem>
       </AppList>
+
+<!--    <div class="flex gap-x-6 px-4 pb-4">-->
+<!--      <div class="w-full">-->
+<!--        <h6>Start Date</h6>-->
+<!--        <div>-->
+<!--          <input-->
+<!--            v-model="startDateTime"-->
+<!--            type="datetime-local"-->
+<!--            required-->
+<!--            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"-->
+<!--          >-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div class="w-full">-->
+<!--        <h6>End Date</h6>-->
+<!--        <div>-->
+<!--          <input-->
+<!--            v-model="endDateTime"-->
+<!--            type="datetime-local"-->
+<!--            required-->
+<!--            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"-->
+<!--            @input="clearDateTimeInterval"-->
+<!--          >-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
 
     <AppList>
       <AppListItem is="header">Start Time</AppListItem>

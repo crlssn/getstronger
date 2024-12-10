@@ -46,10 +46,11 @@ onMounted(async () => {
       :key="routine.id"
       :to="`/routines/${routine.id}`"
     >
-      <div>
-        <p class="text-gray-900">{{ routine.name }}</p>
-        <p class="text-sm text-gray-500 font-normal">2 days ago</p>
-      </div>
+      {{ routine.name }}
+<!--      <div>-->
+<!--        <p class="text-gray-900">{{ routine.name }}</p>-->
+<!--        <p class="text-sm text-gray-500 font-normal">2 days ago</p>-->
+<!--      </div>-->
       <ChevronRightIcon class="size-8 text-gray-500"/>
     </AppListItemLink>
   </AppList>

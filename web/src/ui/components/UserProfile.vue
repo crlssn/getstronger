@@ -139,6 +139,7 @@ const updateTab = (event: Event) => {
       type="link"
       to="/logout"
       colour="red"
+      container-class="px-4 pb-4"
     >
       Logout
     </AppButton>
@@ -148,7 +149,7 @@ const updateTab = (event: Event) => {
       v-if="user?.followed"
       colour="gray"
       type="button"
-      class="mb-4"
+      container-class="px-4 pb-4"
       @click="unfollowUser"
     >
       Unfollow {{ user?.firstName }}
@@ -157,7 +158,7 @@ const updateTab = (event: Event) => {
       v-else
       colour="primary"
       type="button"
-      class="mb-4"
+      container-class="px-4 pb-4"
       @click="followUser"
     >
       Follow {{ user?.firstName }}
@@ -168,7 +169,7 @@ const updateTab = (event: Event) => {
       <select
         id="tabs"
         name="tabs"
-        class="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 py-4 px-5 font-medium text-sm"
+        class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 py-4 px-5 font-medium"
         @change="updateTab"
       >
         <option
