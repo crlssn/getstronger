@@ -205,9 +205,9 @@ const updateTab = (event: Event) => {
   </div>
   <div v-if="activeTab === tabs[0].href">
     <CardWorkout
-      compact
       v-for="workout in workouts"
       :key="workout.id"
+      compact
       :workout="workout"
     />
   </div>

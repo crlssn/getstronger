@@ -5,11 +5,11 @@ import {onMounted, ref} from 'vue'
 import {Switch} from '@headlessui/vue'
 import {useRoute, useRouter} from "vue-router";
 import {useAlertStore} from "@/stores/alerts.ts";
-import AppButton from '@/ui/components/AppButton.vue'
-import {getRoutine, listExercises, updateRoutine} from "@/http/requests.ts";
 import AppList from "@/ui/components/AppList.vue";
+import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from "@/ui/components/AppListItem.vue";
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import {getRoutine, listExercises, updateRoutine} from "@/http/requests.ts";
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -64,7 +64,12 @@ const onSubmit = async () => {
   <form @submit.prevent="onSubmit">
     <h6>Name</h6>
     <AppList v-if="name">
-      <AppListItemInput :model="name" type="text" required @update="n => name = n"/>
+      <AppListItemInput
+        :model="name"
+        type="text"
+        required
+        @update="n => name = n"
+      />
     </AppList>
 
     <h6>Exercises</h6>
@@ -79,17 +84,17 @@ const onSubmit = async () => {
           {{ exercise.name }}
           <Switch
             :class="[
-                exerciseIDs.includes(exercise.id) ? 'bg-indigo-600' : 'bg-gray-200',
-                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2',
-              ]"
+              exerciseIDs.includes(exercise.id) ? 'bg-indigo-600' : 'bg-gray-200',
+              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2',
+            ]"
             @click="toggleExercise(exercise.id)"
           >
-              <span
-                :class="[
-                  exerciseIDs.includes(exercise.id) ? 'translate-x-5' : 'translate-x-0',
-                  'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                ]"
-              />
+            <span
+              :class="[
+                exerciseIDs.includes(exercise.id) ? 'translate-x-5' : 'translate-x-0',
+                'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+              ]"
+            />
           </Switch>
         </div>
       </AppListItem>

@@ -35,8 +35,9 @@ onMounted(async () => {
     v-for="item in feedItems"
     :key="item.type.value?.id"
   >
-    <CardWorkout compact
+    <CardWorkout
       v-if="item.type.case === 'workout'"
+      compact
       :workout="item.type.value"
     />
   </div>

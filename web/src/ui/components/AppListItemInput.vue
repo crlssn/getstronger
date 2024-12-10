@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
 
 const props = defineProps<{
   model: string
-  type: string
-  required?: boolean
   placeholder?: string
+  required?: boolean
+  type: string
 }>()
 
 const emits = defineEmits(['update'])

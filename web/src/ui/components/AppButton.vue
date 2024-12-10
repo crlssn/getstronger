@@ -3,9 +3,9 @@ import {computed} from 'vue'
 
 const props = defineProps<{
   colour: 'amber' | 'gray' | 'green' | 'primary' | 'red'
+  containerClass?: string
   to?: string
   type: 'button' | 'link' | 'submit'
-  containerClass?: string
 }>()
 
 const computedClasses = computed(() => {
@@ -25,14 +25,14 @@ const computedClasses = computed(() => {
       :to="props.to as string"
       :class="computedClasses"
     >
-      <slot/>
+      <slot />
     </RouterLink>
     <button
       v-else
       :type="props.type"
       :class="computedClasses"
     >
-      <slot/>
+      <slot />
     </button>
   </div>
 </template>

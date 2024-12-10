@@ -1,3 +1,4 @@
+import type {DateTimeMaybeValid} from "luxon/src/datetime";
 import type {FieldMask, Timestamp} from "@bufbuild/protobuf/wkt";
 import type {Exercise, ExerciseSets} from "@/proto/api/v1/shared_pb.ts";
 
@@ -48,7 +49,6 @@ import {
 } from "@/proto/api/v1/exercise_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
-import type {DateTimeMaybeValid} from "luxon/src/datetime";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -180,11 +180,11 @@ export const updateExercise = async (id: string, name: string, label: string): P
 
 export const createWorkout = async (routineId: string, exerciseSets: ExerciseSets[], startedAt: DateTimeMaybeValid, finishedAt: DateTimeMaybeValid): Promise<CreateWorkoutResponse | void> => {
   const req = create(CreateWorkoutRequestSchema, {
-    routineId: routineId,
     exerciseSets: exerciseSets,
     finishedAt: {
       seconds: BigInt(finishedAt.toSeconds()),
     } as Timestamp,
+    routineId: routineId,
     startedAt: {
       seconds: BigInt(startedAt.toSeconds()),
     } as Timestamp,

@@ -2,7 +2,6 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ExerciseClient } from '@/http/clients'
 import AppList from '@/ui/components/AppList.vue'
@@ -10,7 +9,6 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
-import AppListItem from "@/ui/components/AppListItem.vue";
 
 const exercises = ref(Array<Exercise>())
 const name = ref('')
@@ -51,7 +49,6 @@ const fetchExercises = async () => {
     Create Exercise
   </AppButton>
   <AppList>
-<!--    <AppListItem is="header">Created</AppListItem>-->
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"

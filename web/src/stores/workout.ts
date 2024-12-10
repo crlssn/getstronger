@@ -78,9 +78,9 @@ export const useWorkoutStore = defineStore(
     }
 
     return {
-      deleteSet,
       addEmptySet,
       addEmptySetIfNone,
+      deleteSet,
       getAllSets,
       getSets,
       initialiseWorkout,

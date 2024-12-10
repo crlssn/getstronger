@@ -1,26 +1,23 @@
 <script setup lang="ts">
-import type { Timestamp } from '@bufbuild/protobuf/wkt'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 
 import { DateTime } from 'luxon'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { useWorkoutStore } from '@/stores/workout'
-import { ConnectError } from '@connectrpc/connect'
-import AppButton from '@/ui/components/AppButton.vue'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { CreateWorkoutRequestSchema } from '@/proto/api/v1/workouts_pb.ts'
-import { ChevronDownIcon, ChevronRightIcon, TrashIcon, MinusCircleIcon, MinusIcon } from '@heroicons/vue/24/outline'
-import { ExerciseClient, RoutineClient, WorkoutClient } from '@/http/clients'
-import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
-import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
-import AppList from "@/ui/components/AppList.vue";
-import AppListItem from "@/ui/components/AppListItem.vue";
-import AppListItemInput from "@/ui/components/AppListItemInput.vue";
 import {createWorkout} from "@/http/requests.ts";
 import {useAlertStore} from "@/stores/alerts.ts";
+import AppList from "@/ui/components/AppList.vue";
+import { onMounted, onUnmounted, ref } from 'vue'
+import { useWorkoutStore } from '@/stores/workout'
+import AppButton from '@/ui/components/AppButton.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import AppListItem from "@/ui/components/AppListItem.vue";
+import { MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { ExerciseClient, RoutineClient } from '@/http/clients'
+import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
+import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -31,7 +28,6 @@ const alertStore = useAlertStore()
 const startDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 const endDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 let dateTimeInterval: ReturnType<typeof setInterval>
-const reqError = ref('')
 const prevExerciseSets = ref<ExerciseSets[]>([])
 
 onMounted(async () => {
@@ -148,72 +144,72 @@ const setEndDateTime = (value: string) => {
       v-for="exercise in routine?.exercises"
       :key="exercise.id"
     >
-        <AppListItem is="header">{{ exercise.name }}</AppListItem>
-        <AppListItem class="flex flex-col">
-          <div
-            v-for="(set, index) in sets(exercise.id)"
-            :key="index"
-            class="w-full"
-          >
-              <label>Set {{ index + 1 }}</label>
-              <div class="flex items-center gap-x-4 mb-4">
-                <div class="w-full">
-                  <input
-                    v-model.number="set.weight"
-                    type="text"
-                    inputmode="decimal"
-                    :placeholder="prevSetWeight(exercise.id, index)"
-                    required
-                  >
-                </div>
-                <span class="text-gray-500 font-medium">x</span>
-                <div class="w-full">
-                  <input
-                    v-model.number="set.reps"
-                    type="text"
-                    inputmode="numeric"
-                    :placeholder="prevSetReps(exercise.id, index)"
-                    required
-                  >
-                </div>
-                <MinusCircleIcon class="cursor-pointer" @click="deleteSet(exercise.id, index)"/>
-              </div>
+      <AppListItem is="header">
+        {{ exercise.name }}
+      </AppListItem>
+      <AppListItem class="flex flex-col">
+        <div
+          v-for="(set, index) in sets(exercise.id)"
+          :key="index"
+          class="w-full"
+        >
+          <label>Set {{ index + 1 }}</label>
+          <div class="flex items-center gap-x-4 mb-4">
+            <div class="w-full">
+              <input
+                v-model.number="set.weight"
+                type="text"
+                inputmode="decimal"
+                :placeholder="prevSetWeight(exercise.id, index)"
+                required
+              >
+            </div>
+            <span class="text-gray-500 font-medium">x</span>
+            <div class="w-full">
+              <input
+                v-model.number="set.reps"
+                type="text"
+                inputmode="numeric"
+                :placeholder="prevSetReps(exercise.id, index)"
+                required
+              >
+            </div>
+            <MinusCircleIcon
+              class="cursor-pointer"
+              @click="deleteSet(exercise.id, index)"
+            />
           </div>
-          <AppButton colour="gray" type="button" @click="addEmptySet(exercise.id)" class="w-full">Add Set</AppButton>
-        </AppListItem>
-      </AppList>
-
-<!--    <div class="flex gap-x-6 px-4 pb-4">-->
-<!--      <div class="w-full">-->
-<!--        <h6>Start Date</h6>-->
-<!--        <div>-->
-<!--          <input-->
-<!--            v-model="startDateTime"-->
-<!--            type="datetime-local"-->
-<!--            required-->
-<!--            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"-->
-<!--          >-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div class="w-full">-->
-<!--        <h6>End Date</h6>-->
-<!--        <div>-->
-<!--          <input-->
-<!--            v-model="endDateTime"-->
-<!--            type="datetime-local"-->
-<!--            required-->
-<!--            class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"-->
-<!--            @input="clearDateTimeInterval"-->
-<!--          >-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
+        </div>
+        <AppButton
+          colour="gray"
+          type="button"
+          class="w-full"
+          @click="addEmptySet(exercise.id)"
+        >
+          Add Set
+        </AppButton>
+      </AppListItem>
+    </AppList>
 
     <AppList>
-      <AppListItem is="header">Start Time</AppListItem>
-      <AppListItemInput :model="startDateTime" type="datetime-local" required @update="setStartDateTime" />
-      <AppListItem is="header">End Time</AppListItem>
-      <AppListItemInput :model="endDateTime" type="datetime-local" required @update="setEndDateTime" />
+      <AppListItem is="header">
+        Start Time
+      </AppListItem>
+      <AppListItemInput
+        :model="startDateTime"
+        type="datetime-local"
+        required
+        @update="setStartDateTime"
+      />
+      <AppListItem is="header">
+        End Time
+      </AppListItem>
+      <AppListItemInput
+        :model="endDateTime"
+        type="datetime-local"
+        required
+        @update="setEndDateTime"
+      />
     </AppList>
 
     <AppButton
