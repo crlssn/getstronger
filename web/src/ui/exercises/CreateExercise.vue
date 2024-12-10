@@ -5,6 +5,8 @@ import { useAlertStore } from '@/stores/alerts'
 import { createExercise } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type CreateExerciseRequest } from '@/proto/api/v1/exercise_pb'
+import AppList from "@/ui/components/AppList.vue";
+import AppListItemInput from "@/ui/components/AppListItemInput.vue";
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -24,51 +26,22 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <form
-    class="space-y-6"
-    @submit.prevent="onSubmit"
-  >
-    <div>
-      <label
-        for="name"
-        class="block text-xs font-semibold text-gray-900 uppercase"
-      >Name</label>
-      <div class="mt-2">
-        <input
-          id="name"
-          v-model="req.name"
-          type="text"
-          required
-          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
-        >
-      </div>
-    </div>
+  <form @submit.prevent="onSubmit">
+    <h6>Name</h6>
+    <AppList>
+      <AppListItemInput :model="req.name" type="text" @update="n => req.name = n" required/>
+    </AppList>
 
-    <div>
-      <div>
-        <label
-          for="label"
-          class="block text-xs font-semibold text-gray-900 uppercase"
-        >
-          Label
-        </label>
-      </div>
-      <div class="mt-2">
-        <input
-          id="label"
-          v-model="req.label"
-          type="text"
-          placeholder="Optional"
-          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
-        >
-      </div>
-    </div>
+    <h6>Label</h6>
+    <AppList>
+      <AppListItemInput :model="req.label" type="text" @update="n => req.label = n" placeholder="Optional"/>
+    </AppList>
 
     <AppButton
       text="Create"
       type="submit"
       colour="primary"
-      class="mt-6"
+      container-class="px-4 pb-4"
     >
       Save Exercise
     </AppButton>
