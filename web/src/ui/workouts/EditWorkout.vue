@@ -1,19 +1,20 @@
 <script setup lang="ts">
+import type {Set} from "@/proto/api/v1/shared_pb";
+import type {Timestamp} from "@bufbuild/protobuf/wkt";
+import type {Workout} from "@/proto/api/v1/workouts_pb.ts";
+
 import {DateTime} from 'luxon'
+import {onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import router from '@/router/router'
-import {onMounted, ref} from 'vue'
-import {getWorkout, updateWorkout} from "@/http/requests.ts";
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppList from "@/ui/components/AppList.vue";
 import {usePageTitleStore} from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from "@/ui/components/AppListItem.vue";
 import {MinusCircleIcon} from '@heroicons/vue/24/outline'
+import {getWorkout, updateWorkout} from "@/http/requests.ts";
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import type {Workout} from "@/proto/api/v1/workouts_pb.ts";
-import type {Set} from "@/proto/api/v1/shared_pb";
-import type {Timestamp} from "@bufbuild/protobuf/wkt";
 
 const route = useRoute()
 const workout = ref<Workout>()

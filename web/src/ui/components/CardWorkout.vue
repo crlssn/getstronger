@@ -9,12 +9,11 @@ import {useAlertStore} from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import {type DropdownItem} from '@/types/dropdown.ts'
 import {UserCircleIcon} from "@heroicons/vue/24/solid";
+import {formatToRelativeDateTime} from '@/utils/datetime.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import {PostCommentRequestSchema, type Workout, type WorkoutComment,} from '@/proto/api/v1/workouts_pb.ts'
-
-import {formatToRelativeDateTime} from '@/utils/datetime.ts'
 
 const {input, textarea} = useTextareaAutosize()
 const authStore = useAuthStore()

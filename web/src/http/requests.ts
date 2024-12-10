@@ -6,6 +6,14 @@ import {create} from "@bufbuild/protobuf"
 import {ConnectError} from "@connectrpc/connect"
 import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
 import {
+  CreateRoutineRequestSchema,
+  type CreateRoutineResponse,
+  DeleteRoutineRequestSchema,
+  type DeleteRoutineResponse,
+  GetRoutineRequestSchema,
+  type GetRoutineResponse, UpdateRoutineRequestSchema, type UpdateRoutineResponse
+} from "@/proto/api/v1/routines_pb"
+import {
   CreateWorkoutRequestSchema,
   type CreateWorkoutResponse,
   DeleteWorkoutRequestSchema,
@@ -16,14 +24,6 @@ import {
   type UpdateWorkoutResponse,
   type Workout
 } from "@/proto/api/v1/workouts_pb"
-import {
-  CreateRoutineRequestSchema,
-  type CreateRoutineResponse,
-  DeleteRoutineRequestSchema,
-  type DeleteRoutineResponse,
-  GetRoutineRequestSchema,
-  type GetRoutineResponse, UpdateRoutineRequestSchema, type UpdateRoutineResponse
-} from "@/proto/api/v1/routines_pb"
 import {
   LoginRequestSchema,
   type LoginResponse,
