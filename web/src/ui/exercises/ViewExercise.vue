@@ -68,7 +68,7 @@ const onDeleteExercise = async () => {
   </div>
 
   <h6>Chart</h6>
-  <div class="bg-white border border-gray-200 rounded-md px-4 py-4">
+  <div class="bg-white border border-gray-200 px-4 py-4">
     <LineChart :sets="sets" />
   </div>
 

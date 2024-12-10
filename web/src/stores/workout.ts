@@ -38,6 +38,13 @@ export const useWorkoutStore = defineStore(
       return workouts.value[routineID].exerciseSets
     }
 
+    const addEmptySet = (routineID: RoutineID, exerciseID: ExerciseID) => {
+      const workout = workouts.value[routineID]
+      workout.exerciseSets = workout.exerciseSets || {}
+      workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
+      workout.exerciseSets[exerciseID].push({})
+    }
+
     const addEmptySetIfNone = (routineID: RoutineID, exerciseID: ExerciseID) => {
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {}
@@ -49,12 +56,30 @@ export const useWorkoutStore = defineStore(
       }
     }
 
+    const deleteSet = (routineID: RoutineID, exerciseID: ExerciseID, setIndex: number) => {
+      if (!workouts.value[routineID]) {
+        return
+      }
+
+      if (!workouts.value[routineID].exerciseSets) {
+        return
+      }
+
+      if (!workouts.value[routineID].exerciseSets[exerciseID]) {
+        return
+      }
+
+      workouts.value[routineID].exerciseSets[exerciseID].splice(setIndex, 1)
+    }
+
     const removeWorkout = (routineID: RoutineID) => {
       delete workouts.value[routineID]
     }
 
     return {
+      addEmptySet,
       addEmptySetIfNone,
+      deleteSet,
       getAllSets,
       getSets,
       initialiseWorkout,

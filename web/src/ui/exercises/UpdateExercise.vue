@@ -4,8 +4,10 @@ import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
 import { onMounted, ref } from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAlertStore} from "@/stores/alerts.ts";
+import AppList from "@/ui/components/AppList.vue";
 import AppButton from '@/ui/components/AppButton.vue'
 import {getExercise, updateExercise} from "@/http/requests.ts";
+import AppListItemInput from "@/ui/components/AppListItemInput.vue";
 
 const route = useRoute()
 const router = useRouter()
@@ -33,35 +35,30 @@ async function onUpdateExercise() {
 <template>
   <form
     v-if="exercise"
-    class="space-y-6"
     @submit.prevent="onUpdateExercise"
   >
-    <div>
-      <h6>Name</h6>
-      <div class="mt-2">
-        <input
-          v-model="exercise.name"
-          type="text"
-          required
-        >
-      </div>
-    </div>
+    <h6>Name</h6>
+    <AppList>
+      <AppListItemInput
+        :model="exercise.name"
+        type="text"
+        required
+      />
+    </AppList>
 
-    <div>
-      <h6>Label</h6>
-      <div class="mt-2">
-        <input
-          v-model="exercise.label"
-          type="text"
-          placeholder="Optional"
-        >
-      </div>
-    </div>
+    <h6>Label</h6>
+    <AppList>
+      <AppListItemInput
+        :model="exercise.label"
+        type="text"
+        placeholder="Optional"
+      />
+    </AppList>
 
     <AppButton
       type="submit"
       colour="primary"
-      class="mt-6"
+      container-class="px-4 pb-4"
     >
       Update Exercise
     </AppButton>
@@ -70,6 +67,6 @@ async function onUpdateExercise() {
 
 <style scoped>
 input {
-  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm;
+  @apply block w-full border-0 bg-white px-4 py-5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
 }
 </style>

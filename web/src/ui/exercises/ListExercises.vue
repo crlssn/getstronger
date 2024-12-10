@@ -2,7 +2,6 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ExerciseClient } from '@/http/clients'
 import AppList from '@/ui/components/AppList.vue'
@@ -14,7 +13,6 @@ import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 const exercises = ref(Array<Exercise>())
 const name = ref('')
 const pageToken = ref(new Uint8Array(0))
-const route = useRoute()
 
 onMounted(() => {
   fetchExercises()
@@ -42,17 +40,11 @@ const fetchExercises = async () => {
 </script>
 
 <template>
-  <div
-    v-if="route.query.created === null"
-    class="bg-green-200 border-b-2 border-t-2 border-green-300 -m-6 rounded-md py-4 px-9 mb-5 text-sm text-green-700 font-medium"
-    role="alert"
-  >
-    Your exercise has been created
-  </div>
   <AppButton
     type="link"
     to="/exercises/create"
     colour="primary"
+    container-class="px-4 pb-4"
   >
     Create Exercise
   </AppButton>
@@ -63,7 +55,7 @@ const fetchExercises = async () => {
       :to="`/exercises/${exercise.id}`"
     >
       {{ exercise.name }}
-      <ChevronRightIcon />
+      <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
   </AppList>
 </template>

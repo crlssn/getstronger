@@ -37,6 +37,7 @@ onMounted(async () => {
   >
     <CardWorkout
       v-if="item.type.case === 'workout'"
+      compact
       :workout="item.type.value"
     />
   </div>

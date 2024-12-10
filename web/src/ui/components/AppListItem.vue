@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
-  is?: 'danger'
+  is?: 'danger' | 'header'
 }>()
 </script>
 
@@ -12,10 +12,13 @@ const props = defineProps<{
 
 <style scoped>
 li {
-  @apply flex justify-between items-center gap-x-6 px-4 py-5 text-sm text-gray-900;
+  @apply flex justify-between items-center gap-x-6 px-4 py-5 text-gray-900 font-medium;
 
   &.danger {
     @apply text-red-500;
+  }
+  &.header {
+    @apply block text-sm font-semibold text-gray-600 uppercase ;
   }
 }
 </style>

@@ -16,11 +16,11 @@ import EditRoutine from "@/ui/routines/EditRoutine.vue";
 import ListRoutines from '@/ui/routines/ListRoutines.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
+import StartWorkout from '@/ui/workouts/StartWorkout.vue'
 import ViewExercise from '@/ui/exercises/ViewExercise.vue'
 import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
 import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
 import ListExercises from '@/ui/exercises/ListExercises.vue'
-import WorkoutRoutine from '@/ui/workouts/WorkoutRoutine.vue'
 import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
 import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
@@ -74,7 +74,7 @@ const router: Router = createRouter({
     },
     {
       beforeEnter: [auth],
-      component: WorkoutRoutine,
+      component: StartWorkout,
       meta: { title: '' },
       name: 'workout-routine',
       path: '/workouts/routine/:routine_id',

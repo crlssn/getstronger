@@ -67,7 +67,7 @@ const searchUsers = async () => {
 </script>
 
 <template>
-  <div class="pb-16">
+  <div class="pb-12">
     <TransitionRoot
       as="template"
       :show="sidebarOpen"
@@ -231,7 +231,7 @@ const searchUsers = async () => {
 
     <div class="lg:pl-72">
       <div
-        class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8"
+        class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-x-4 border-b-2 border-gray-200 bg-white px-4 sm:gap-x-6 sm:px-6 lg:px-8"
       >
         <form
           v-if="searchBarOpen"
@@ -289,10 +289,8 @@ const searchUsers = async () => {
 
       <AppAlert />
 
-      <main class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div class="px-4 sm:px-6 lg:px-8">
-          <RouterView />
-        </div>
+      <main class="mx-auto max-w-7xl bg-gray-100 py-4">
+        <RouterView />
       </main>
     </div>
   </div>

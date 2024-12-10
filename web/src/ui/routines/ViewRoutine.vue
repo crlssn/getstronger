@@ -77,12 +77,11 @@ const onDeleteRoutine = async () => {
     type="link"
     :to="`/workouts/routine/${route.params.id}`"
     colour="primary"
+    container-class="px-4 pb-4"
   >
     Start Workout
   </AppButton>
-  <h6 class="mt-8">
-    Exercises
-  </h6>
+  <h6>Exercises</h6>
   <AppList ref="el">
     <AppListItem
       v-for="exercise in routine?.exercises"
@@ -91,16 +90,14 @@ const onDeleteRoutine = async () => {
       class="hover:cursor-move"
     >
       {{ exercise.name }}
-      <ChevronUpDownIcon />
+      <ChevronUpDownIcon class="size-8" />
     </AppListItem>
   </AppList>
-  <h6 class="mt-8">
-    Admin
-  </h6>
+  <h6>Admin</h6>
   <AppList>
     <AppListItemLink :to="`/routines/${route.params.id}/edit`">
       Update Routine
-      <ChevronRightIcon />
+      <ChevronRightIcon class="size-6" />
     </AppListItemLink>
     <AppListItem
       is="danger"
@@ -108,7 +105,7 @@ const onDeleteRoutine = async () => {
       @click="onDeleteRoutine"
     >
       Delete Routine
-      <TrashIcon />
+      <TrashIcon class="size-6" />
     </AppListItem>
   </AppList>
 </template>
