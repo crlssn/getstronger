@@ -115,15 +115,14 @@ const formatComment = computed(() => {
           v-model="input"
           class="w-full border-2 border-gray-200 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-base min-h-20 py-3 mb-2 mt-2 resize-none overflow-hidden"
           placeholder="Write a comment..."
+          required
         />
-        <div class="flex justify-end">
-          <AppButton
-            type="submit"
-            colour="primary"
-          >
-            Comment
-          </AppButton>
-        </div>
+        <AppButton
+          type="submit"
+          colour="primary"
+        >
+          Comment
+        </AppButton>
       </form>
     </div>
   </div>
