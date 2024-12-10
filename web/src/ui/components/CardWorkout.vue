@@ -18,6 +18,7 @@ import {
 } from '@/proto/api/v1/workouts_pb.ts'
 
 import { formatToRelativeDateTime } from '../../utils/datetime.ts'
+import { ChatBubbleOvalLeftEllipsisIcon, ChatBubbleLeftIcon, UserCircleIcon} from "@heroicons/vue/24/outline";
 
 const { input, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
@@ -60,18 +61,19 @@ const postComment = async () => {
 <template>
   <div
     v-if="!workoutDeleted"
-    class="divide-y divide-gray-200 overflow-hidden rounded-md bg-white shadow mb-4 text-sm"
+    class="divide-y divide-gray-200 mb-2 text-sm"
   >
-    <div class="px-4 py-5">
+    <div class="px-4 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
+          <UserCircleIcon class="size-8 text-gray-900"/>
           <RouterLink
             :to="`/users/${props.workout.user?.id}`"
-            class="font-semibold mr-2"
+            class="font-semibold mr-2 ml-2"
           >
             {{ props.workout.user?.firstName }} {{ props.workout.user?.lastName }}
           </RouterLink>
-          <span class="text-gray-500 text-sm">
+          <span class="text-gray-500 text-xs">
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </span>
         </div>
@@ -81,7 +83,7 @@ const postComment = async () => {
         />
       </div>
     </div>
-    <div class="px-4 py-5">
+    <div class="pl-14 pr-4 py-3">
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
         :key="exerciseSet.exercise?.id"
@@ -90,35 +92,8 @@ const postComment = async () => {
         :sets="exerciseSet.sets"
       />
     </div>
-    <div class="px-4 py-5">
-      <div
-        v-if="comments.length > 0"
-        class="mb-4"
-      >
-        <CardWorkoutComment
-          v-for="comment in comments"
-          :key="comment.id"
-          :user="comment.user"
-          :timestamp="comment.createdAt"
-          :comment="comment.comment"
-        />
-      </div>
-      <form @submit.prevent="postComment">
-        <textarea
-          ref="textarea"
-          v-model="input"
-          class="w-full border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm min-h-12 py-3 mb-2 resize-none overflow-hidden"
-          placeholder="Write a comment..."
-        />
-        <div class="flex justify-end">
-          <AppButton
-            type="submit"
-            colour="primary"
-          >
-            Comment
-          </AppButton>
-        </div>
-      </form>
+    <div class="pl-14 pr-4 py-3">
+      <span class="pl-1 text-xs text-gray-700 uppercase font-medium">0 Comments</span>
     </div>
   </div>
 </template>

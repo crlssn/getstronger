@@ -26,12 +26,19 @@ const props = defineProps<{
     </span>
   </p>
   <div class="mb-2">
-    <p
+    <table>
+      <tbody>
+      <tr>
+    <tr
+      class="text-gray-800"
       v-for="(set, index) in props.sets"
       :key="index"
     >
-      {{ set.weight }} kg x {{ set.reps }}
-    </p>
+      Set {{ index+1 }}: <span class="font-medium">{{ set.weight }} kg x {{ set.reps }}</span>
+    </tr>
+      </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
