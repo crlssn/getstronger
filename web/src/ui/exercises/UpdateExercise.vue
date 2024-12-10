@@ -6,6 +6,8 @@ import {useRoute, useRouter} from 'vue-router'
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppButton from '@/ui/components/AppButton.vue'
 import {getExercise, updateExercise} from "@/http/requests.ts";
+import AppList from "@/ui/components/AppList.vue";
+import AppListItemInput from "@/ui/components/AppListItemInput.vue";
 
 const route = useRoute()
 const router = useRouter()
@@ -33,30 +35,17 @@ async function onUpdateExercise() {
 <template>
   <form
     v-if="exercise"
-    class="space-y-6"
     @submit.prevent="onUpdateExercise"
   >
-    <div>
-      <h6>Name</h6>
-      <div class="mt-2">
-        <input
-          v-model="exercise.name"
-          type="text"
-          required
-        >
-      </div>
-    </div>
+    <h6>Name</h6>
+    <AppList>
+      <AppListItemInput :model="exercise.name" type="text" required/>
+    </AppList>
 
-    <div>
-      <h6>Label</h6>
-      <div class="mt-2">
-        <input
-          v-model="exercise.label"
-          type="text"
-          placeholder="Optional"
-        >
-      </div>
-    </div>
+    <h6>Label</h6>
+    <AppList>
+      <AppListItemInput :model="exercise.label" type="text" placeholder="Optional"/>
+    </AppList>
 
     <AppButton
       type="submit"

@@ -4,7 +4,8 @@ import {computed, onMounted, ref, watch} from "vue";
 const props = defineProps<{
   model: string
   type: string
-  required: boolean
+  required?: boolean
+  placeholder?: string
 }>()
 
 const emits = defineEmits(['update'])
@@ -25,11 +26,12 @@ const onChange = () => {
 </script>
 
 <template>
-  <li class="p-4">
+  <li>
     <input
       v-model="value"
       :type="props.type"
       :required="props.required"
+      :placeholder="props.placeholder"
       @change="onChange"
     >
   </li>
@@ -37,6 +39,6 @@ const onChange = () => {
 
 <style scoped>
 input {
-  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 font-medium;
+  @apply block w-full border-0 bg-white px-4 py-5 text-gray-900 focus:ring-0 placeholder:text-gray-400 font-medium;
 }
 </style>

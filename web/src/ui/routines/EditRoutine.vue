@@ -62,13 +62,13 @@ const onSubmit = async () => {
 
 <template>
   <form @submit.prevent="onSubmit">
+    <h6>Name</h6>
     <AppList v-if="name">
-      <AppListItem is="header">Name</AppListItem>
       <AppListItemInput :model="name" type="text" required @update="n => name = n"/>
     </AppList>
 
+    <h6>Exercises</h6>
     <AppList>
-      <AppListItem is="header">Exercises</AppListItem>
       <AppListItem
         v-for="exercise in exercises"
         :key="exercise.id"

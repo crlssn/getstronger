@@ -41,7 +41,7 @@ const computedClasses = computed(() => {
 a,
 button {
   @apply uppercase w-full border-b-8 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
-  @apply px-3.5 py-2.5 text-sm font-semibold;
+  @apply py-3 text-sm font-semibold;
 }
 
 a.link {
