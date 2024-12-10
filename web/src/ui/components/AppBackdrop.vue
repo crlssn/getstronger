@@ -16,7 +16,7 @@ const close = () => {
 <template>
   <div
     v-if="open"
-    class="z-10 fixed inset-0 bg-black opacity-50"
+    class="z-20 fixed inset-0 bg-black opacity-50"
     @click="close"
   />
 </template>
