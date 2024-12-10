@@ -32,6 +32,7 @@ const fetchWorkout = async () => {
   <CardWorkout
     v-if="workout"
     :workout="workout"
+    :compact="false"
   />
 </template>
 
