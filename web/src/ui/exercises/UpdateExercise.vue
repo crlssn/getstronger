@@ -61,7 +61,7 @@ async function onUpdateExercise() {
     <AppButton
       type="submit"
       colour="primary"
-      class="mt-6"
+      container-class="px-4 pb-4"
     >
       Update Exercise
     </AppButton>
@@ -70,6 +70,6 @@ async function onUpdateExercise() {
 
 <style scoped>
 input {
-  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm;
+  @apply block w-full border-0 bg-white px-4 py-5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
 }
 </style>
