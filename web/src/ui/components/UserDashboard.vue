@@ -290,9 +290,7 @@ const searchUsers = async () => {
       <AppAlert />
 
       <main class="mx-auto max-w-7xl">
-        <div class="">
-          <RouterView />
-        </div>
+        <RouterView />
       </main>
     </div>
   </div>

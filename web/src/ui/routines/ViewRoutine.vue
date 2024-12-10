@@ -77,7 +77,7 @@ const onDeleteRoutine = async () => {
     type="link"
     :to="`/workouts/routine/${route.params.id}`"
     colour="primary"
-    container-class="p-4 pb-0"
+    container-class="p-4"
   >
     Start Workout
   </AppButton>
