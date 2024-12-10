@@ -231,7 +231,7 @@ const searchUsers = async () => {
 
     <div class="lg:pl-72">
       <div
-        class="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-x-4 border-b-2 border-gray-200 bg-white px-4 sm:gap-x-6 sm:px-6 lg:px-8"
+        class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-x-4 border-b-2 border-gray-200 bg-white px-4 sm:gap-x-6 sm:px-6 lg:px-8"
       >
         <form
           v-if="searchBarOpen"
