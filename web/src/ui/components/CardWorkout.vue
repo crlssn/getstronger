@@ -1,43 +1,42 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { create } from '@bufbuild/protobuf'
-import { useAuthStore } from '@/stores/auth.ts'
-import { WorkoutClient } from '@/http/clients.ts'
-import { useTextareaAutosize } from '@vueuse/core'
-import { deleteWorkout } from '@/http/requests.ts'
-import { useAlertStore } from '@/stores/alerts.ts'
+import {computed, onMounted, ref} from 'vue'
+import {create} from '@bufbuild/protobuf'
+import {useAuthStore} from '@/stores/auth.ts'
+import {WorkoutClient} from '@/http/clients.ts'
+import {useTextareaAutosize} from '@vueuse/core'
+import {deleteWorkout} from '@/http/requests.ts'
+import {useAlertStore} from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
-import { type DropdownItem } from '@/types/dropdown.ts'
+import {type DropdownItem} from '@/types/dropdown.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
-import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
-import {
-  PostCommentRequestSchema,
-  type Workout,
-  type WorkoutComment,
-} from '@/proto/api/v1/workouts_pb.ts'
+import {PostCommentRequestSchema, type Workout, type WorkoutComment,} from '@/proto/api/v1/workouts_pb.ts'
 
-import { formatToRelativeDateTime } from '../../utils/datetime.ts'
-import { ChatBubbleOvalLeftEllipsisIcon, ChatBubbleLeftIcon, UserCircleIcon} from "@heroicons/vue/24/outline";
+import {formatToRelativeDateTime} from '../../utils/datetime.ts'
+import {UserCircleIcon} from "@heroicons/vue/24/outline";
+import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
 
-const { input, textarea } = useTextareaAutosize()
+const {input, textarea} = useTextareaAutosize()
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
 const workoutDeleted = ref(false)
 
 const props = defineProps<{
   workout: Workout
+  compact: boolean
 }>()
 
 const dropdownItems: Array<DropdownItem> = [
-  { href: `/workout/${props.workout.id}/edit`, title: 'Edit' },
-  { func: async () => {
-    if (confirm('Are you sure you want to delete this workout?')) {
-      await deleteWorkout(props.workout.id)
-      alertStore.setErrorWithoutPageRefresh('Workout deleted')
-      workoutDeleted.value = true
-    }
-  }, title: 'Delete' },
+  {href: `/workout/${props.workout.id}/edit`, title: 'Edit'},
+  {
+    func: async () => {
+      if (confirm('Are you sure you want to delete this workout?')) {
+        await deleteWorkout(props.workout.id)
+        alertStore.setErrorWithoutPageRefresh('Workout deleted')
+        workoutDeleted.value = true
+      }
+    }, title: 'Delete'
+  },
 ]
 
 const comments = ref<Array<WorkoutComment>>([])
@@ -56,6 +55,11 @@ const postComment = async () => {
   comments.value.push(res.comment)
   input.value = ''
 }
+
+const formatComment = computed(() => {
+  if (comments.value.length === 1) return 'Comment'
+  return `Comments`
+})
 </script>
 
 <template>
@@ -69,7 +73,7 @@ const postComment = async () => {
           <UserCircleIcon class="size-8 text-gray-900"/>
           <RouterLink
             :to="`/users/${props.workout.user?.id}`"
-            class="font-semibold mr-2 ml-2"
+            class="font-semibold mx-2"
           >
             {{ props.workout.user?.firstName }} {{ props.workout.user?.lastName }}
           </RouterLink>
@@ -93,7 +97,34 @@ const postComment = async () => {
       />
     </div>
     <div class="pl-14 pr-4 py-3">
-      <span class="pl-1 text-xs text-gray-700 uppercase font-medium">0 Comments</span>
+      <RouterLink :to="`/workouts/${workout.id}`" class="pl-1 text-xs text-gray-700 uppercase font-medium">
+        {{ workout.comments.length }} {{ formatComment }}
+      </RouterLink>
+    </div>
+    <div class="px-4 py-3" v-if="!compact">
+      <CardWorkoutComment
+        v-for="comment in comments"
+        :key="comment.id"
+        :user="comment.user"
+        :timestamp="comment.createdAt"
+        :comment="comment.comment"
+      />
+      <form @submit.prevent="postComment" class="ml-10">
+        <textarea
+          ref="textarea"
+          v-model="input"
+          class="w-full border-2 border-gray-200 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm min-h-20 py-3 mb-2 mt-2 resize-none overflow-hidden"
+          placeholder="Write a comment..."
+        />
+        <div class="flex justify-end">
+          <AppButton
+            type="submit"
+            colour="primary"
+          >
+            Comment
+          </AppButton>
+        </div>
+      </form>
     </div>
   </div>
 </template>
