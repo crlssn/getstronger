@@ -101,7 +101,7 @@ const formatComment = computed(() => {
     <div class="pl-16 pr-4 py-3">
       <RouterLink
         :to="`/workouts/${workout.id}`"
-        class="pl-1 text-sm text-gray-700 uppercase font-medium"
+        class="pl-1 text-sm text-gray-900 uppercase font-medium"
       >
         {{ workout.comments.length }} {{ formatComment }}
       </RouterLink>

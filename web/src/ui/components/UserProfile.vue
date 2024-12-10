@@ -42,6 +42,10 @@ watch(() => props.userId, async () => {
 })
 
 onMounted(async () => {
+  if (props.userId === authStore.userID) {
+    await router.push('/profile')
+  }
+
   await fetchUser()
   // DEBT: Fetch data for each tab separately.
   await Promise.all([fetchWorkouts(), fetchFollowers(), fetchFollowees(), fetchPersonalBests()])
