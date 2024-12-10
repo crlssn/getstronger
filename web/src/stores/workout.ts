@@ -3,10 +3,6 @@ import type { ExerciseID, RoutineID, RoutineWorkout } from '@/types/workout'
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-const isNumber = (value: number | string | undefined) => {
-  return typeof value === 'number' && !Number.isNaN(value)
-}
-
 export const useWorkoutStore = defineStore(
   'workouts',
   () => {
