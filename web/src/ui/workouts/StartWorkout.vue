@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
+import type {Exercise, ExerciseSets} from '@/proto/api/v1/shared_pb'
 
-import { DateTime } from 'luxon'
+import {DateTime} from 'luxon'
 import router from '@/router/router'
-import { useRoute } from 'vue-router'
-import { create } from '@bufbuild/protobuf'
+import {useRoute} from 'vue-router'
+import {create} from '@bufbuild/protobuf'
 import {createWorkout} from "@/http/requests.ts";
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppList from "@/ui/components/AppList.vue";
-import { onMounted, onUnmounted, ref } from 'vue'
-import { useWorkoutStore } from '@/stores/workout'
+import {onMounted, onUnmounted, ref} from 'vue'
+import {useWorkoutStore} from '@/stores/workout'
 import AppButton from '@/ui/components/AppButton.vue'
-import { usePageTitleStore } from '@/stores/pageTitle'
+import {usePageTitleStore} from '@/stores/pageTitle'
 import AppListItem from "@/ui/components/AppListItem.vue";
-import { MinusCircleIcon } from '@heroicons/vue/24/outline'
-import { ExerciseClient, RoutineClient } from '@/http/clients'
+import {MinusCircleIcon} from '@heroicons/vue/24/outline'
+import {ExerciseClient, RoutineClient} from '@/http/clients'
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import { GetPreviousWorkoutSetsRequestSchema } from '@/proto/api/v1/exercise_pb'
-import { GetRoutineRequestSchema, type Routine } from '@/proto/api/v1/routines_pb'
+import {GetPreviousWorkoutSetsRequestSchema} from '@/proto/api/v1/exercise_pb'
+import {GetRoutineRequestSchema, type Routine} from '@/proto/api/v1/routines_pb'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -35,9 +35,9 @@ onMounted(async () => {
   await fetchLatestExerciseSets()
   pageTitleStore.setPageTitle(routine.value?.name as string)
   workoutStore.initialiseWorkout(routineID)
-  // routine.value?.exercises.forEach((exercise) => {
-  //   workoutStore.addEmptySetIfNone(routineID, exercise.id)
-  // })
+  routine.value?.exercises.forEach((exercise) => {
+    workoutStore.addEmptySetIfNone(routineID, exercise.id)
+  })
   dateTimeInterval = setInterval(updateDateTime, 1000)
 })
 
@@ -67,7 +67,7 @@ const sets = (exerciseId: string) => {
 }
 
 const fetchRoutine = async (id: string) => {
-  const req = create(GetRoutineRequestSchema, { id })
+  const req = create(GetRoutineRequestSchema, {id})
   const res = await RoutineClient.get(req)
   routine.value = res.routine
 }
@@ -140,70 +140,69 @@ const setEndDateTime = (value: string) => {
 
 <template>
   <form @submit.prevent="onFinishWorkout">
-    <AppList
+    <template
       v-for="exercise in routine?.exercises"
       :key="exercise.id"
     >
-      <AppListItem is="header">
-        {{ exercise.name }}
-      </AppListItem>
-      <AppListItem class="flex flex-col">
-        <div
-          v-for="(set, index) in sets(exercise.id)"
-          :key="index"
-          class="w-full"
-        >
-          <label>Set {{ index + 1 }}</label>
-          <div class="flex items-center gap-x-4 mb-4">
-            <div class="w-full">
-              <input
-                v-model.number="set.weight"
-                type="text"
-                inputmode="decimal"
-                :placeholder="prevSetWeight(exercise.id, index)"
-                required
-              >
+      <h6>{{ exercise.name }}</h6>
+      <AppList>
+        <AppListItem class="flex flex-col">
+          <div
+            v-for="(set, index) in sets(exercise.id)"
+            :key="index"
+            class="w-full"
+          >
+            <label>Set {{ index + 1 }}</label>
+            <div class="flex items-center gap-x-4 mb-4">
+              <div class="w-full">
+                <input
+                  v-model.number="set.weight"
+                  type="text"
+                  inputmode="decimal"
+                  :placeholder="prevSetWeight(exercise.id, index)"
+                  required
+                >
+              </div>
+              <span class="text-gray-500 font-medium">x</span>
+              <div class="w-full">
+                <input
+                  v-model.number="set.reps"
+                  type="text"
+                  inputmode="numeric"
+                  :placeholder="prevSetReps(exercise.id, index)"
+                  required
+                >
+              </div>
+              <MinusCircleIcon
+                class="cursor-pointer"
+                @click="deleteSet(exercise.id, index)"
+              />
             </div>
-            <span class="text-gray-500 font-medium">x</span>
-            <div class="w-full">
-              <input
-                v-model.number="set.reps"
-                type="text"
-                inputmode="numeric"
-                :placeholder="prevSetReps(exercise.id, index)"
-                required
-              >
-            </div>
-            <MinusCircleIcon
-              class="cursor-pointer"
-              @click="deleteSet(exercise.id, index)"
-            />
           </div>
-        </div>
-        <AppButton
-          colour="gray"
-          type="button"
-          class="w-full"
-          @click="addEmptySet(exercise.id)"
-        >
-          Add Set
-        </AppButton>
-      </AppListItem>
-    </AppList>
+          <AppButton
+            colour="primary"
+            type="button"
+            class="w-full"
+            @click="addEmptySet(exercise.id)"
+          >
+            Add Set
+          </AppButton>
+        </AppListItem>
+      </AppList>
+    </template>
 
+    <h6>Start Time</h6>
     <AppList>
-      <AppListItem is="header">
-        Start Time
-      </AppListItem>
       <AppListItemInput
         :model="startDateTime"
         type="datetime-local"
         required
         @update="setStartDateTime"
       />
-      <AppListItem is="header">
-        End Time
-      </AppListItem>
+    </AppList>
+
+    <h6>End Time</h6>
+    <AppList>
       <AppListItemInput
         :model="endDateTime"
         type="datetime-local"
@@ -232,7 +231,7 @@ const setEndDateTime = (value: string) => {
 
 <style scoped>
 label {
-  @apply block text-sm font-semibold text-gray-500 uppercase mb-2;
+  @apply block text-sm font-semibold text-gray-600 uppercase mb-2;
 }
 
 input {
