@@ -102,8 +102,10 @@ const onFinishWorkout = async () => {
 }
 
 const cancelWorkout = async () => {
-  workoutStore.removeWorkout(routineID)
-  await router.push(`/routines/${routineID}`)
+  if (confirm('Are you sure you want to cancel this workout?')) {
+    workoutStore.removeWorkout(routineID)
+    await router.push(`/routines/${routineID}`)
+  }
 }
 
 const prevSetWeight = (exerciseID: string, index: number) => {
@@ -125,7 +127,9 @@ const addEmptySet = (exerciseID: string) => {
 }
 
 const deleteSet = (exerciseID: string, index: number) => {
-  workoutStore.deleteSet(routineID, exerciseID, index)
+  if (confirm('Are you sure you want to delete this set?')) {
+    workoutStore.deleteSet(routineID, exerciseID, index)
+  }
 }
 
 const setStartDateTime = (value: string) => {
@@ -216,7 +220,7 @@ const setEndDateTime = (value: string) => {
       colour="primary"
       container-class="px-4 pb-4"
     >
-      Save Workout
+      Finish Workout
     </AppButton>
     <AppButton
       type="button"
