@@ -7,6 +7,7 @@ import {DateTime} from 'luxon'
 import {onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import router from '@/router/router'
+import {useAuthStore} from "@/stores/auth.ts";
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppList from "@/ui/components/AppList.vue";
 import {usePageTitleStore} from '@/stores/pageTitle'
@@ -15,7 +16,6 @@ import AppListItem from "@/ui/components/AppListItem.vue";
 import {MinusCircleIcon} from '@heroicons/vue/24/outline'
 import {getWorkout, updateWorkout} from "@/http/requests.ts";
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import {useAuthStore} from "@/stores/auth.ts";
 
 const route = useRoute()
 const workout = ref<Workout>()
