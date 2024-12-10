@@ -36,7 +36,7 @@ onMounted(async () => {
   pageTitleStore.setPageTitle(routine.value?.name as string)
   workoutStore.initialiseWorkout(routineID)
   routine.value?.exercises.forEach((exercise) => {
-    workoutStore.addEmptySetIfNone(routineID, exercise.id)
+    addEmptySetIfNone(exercise.id)
   })
   dateTimeInterval = setInterval(updateDateTime, 1000)
 })
@@ -126,6 +126,10 @@ const addEmptySet = (exerciseID: string) => {
   workoutStore.addEmptySet(routineID, exerciseID)
 }
 
+const addEmptySetIfNone = (exerciseID: string) => {
+  workoutStore.addEmptySetIfNone(routineID, exerciseID)
+}
+
 const deleteSet = (exerciseID: string, index: number) => {
   if (confirm('Are you sure you want to delete this set?')) {
     workoutStore.deleteSet(routineID, exerciseID, index)
@@ -164,7 +168,8 @@ const setEndDateTime = (value: string) => {
                   type="text"
                   inputmode="decimal"
                   :placeholder="prevSetWeight(exercise.id, index)"
-                  required
+                  :required="sets(exercise.id).length > index + 1"
+                  @keyup="addEmptySetIfNone(exercise.id)"
                 >
               </div>
               <span class="text-gray-500 font-medium">x</span>
@@ -174,7 +179,8 @@ const setEndDateTime = (value: string) => {
                   type="text"
                   inputmode="numeric"
                   :placeholder="prevSetReps(exercise.id, index)"
-                  required
+                  :required="sets(exercise.id).length > index + 1"
+                  @keyup="addEmptySetIfNone(exercise.id)"
                 >
               </div>
               <MinusCircleIcon
