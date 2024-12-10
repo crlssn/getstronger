@@ -35,19 +35,19 @@ onMounted(async () => {
     type="link"
     to="/routines/create"
     colour="primary"
-    container-class="p-4 pb-0"
+    container-class="p-4"
   >
     Create Routine
   </AppButton>
-  <AppList role="list">
-    <AppListItem is="header">Created</AppListItem>
+  <AppList>
+<!--    <AppListItem is="header">Created</AppListItem>-->
     <AppListItemLink
       v-for="routine in routines"
       :key="routine.id"
       :to="`/routines/${routine.id}`"
     >
       <div>
-        <p class="font-semibold text-gray-900">{{ routine.name }}</p>
+        <p class="text-gray-900">{{ routine.name }}</p>
         <p class="text-sm text-gray-500 font-medium">2 days ago</p>
       </div>
       <ChevronRightIcon class="size-8 text-gray-500"/>

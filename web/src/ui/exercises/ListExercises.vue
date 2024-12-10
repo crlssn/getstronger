@@ -15,7 +15,6 @@ import AppListItem from "@/ui/components/AppListItem.vue";
 const exercises = ref(Array<Exercise>())
 const name = ref('')
 const pageToken = ref(new Uint8Array(0))
-const route = useRoute()
 
 onMounted(() => {
   fetchExercises()
@@ -43,23 +42,16 @@ const fetchExercises = async () => {
 </script>
 
 <template>
-  <div
-    v-if="route.query.created === null"
-    class="bg-green-200 border-b-2 border-t-2 border-green-300 -m-6 rounded-md py-4 px-9 mb-5 text-sm text-green-700 font-medium"
-    role="alert"
-  >
-    Your exercise has been created
-  </div>
   <AppButton
     type="link"
     to="/exercises/create"
     colour="primary"
-    container-class="p-4 pb-0"
+    container-class="p-4"
   >
     Create Exercise
   </AppButton>
   <AppList>
-    <AppListItem is="header">Created</AppListItem>
+<!--    <AppListItem is="header">Created</AppListItem>-->
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"

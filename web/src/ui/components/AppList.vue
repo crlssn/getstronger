@@ -8,7 +8,7 @@
 
 <style scoped>
 ul {
-  @apply divide-y-2 divide-gray-100 bg-white;
+  @apply divide-y divide-gray-100 bg-white;
 }
 </style>
 

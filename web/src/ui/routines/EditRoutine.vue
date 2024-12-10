@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
+import type {Exercise} from '@/proto/api/v1/shared_pb.ts'
 
-import { onMounted, ref } from 'vue'
-import { Switch } from '@headlessui/vue'
+import {onMounted, ref} from 'vue'
+import {Switch} from '@headlessui/vue'
 import {useRoute, useRouter} from "vue-router";
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppButton from '@/ui/components/AppButton.vue'
 import {getRoutine, listExercises, updateRoutine} from "@/http/requests.ts";
+import AppList from "@/ui/components/AppList.vue";
+import AppListItem from "@/ui/components/AppListItem.vue";
+import AppListItemInput from "@/ui/components/AppListItemInput.vue";
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -58,62 +61,44 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <form
-    class="space-y-6"
-    @submit.prevent="onSubmit"
-  >
-    <div>
-      <label
-        for="name"
-        class="block text-xs font-semibold text-gray-900 uppercase"
-      >Name</label>
-      <div class="mt-2">
-        <input
-          v-model="name"
-          type="text"
-          required
-          class="block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm"
-        >
-      </div>
-    </div>
+  <form @submit.prevent="onSubmit">
+    <AppList v-if="name">
+      <AppListItem is="header">Name</AppListItem>
+      <AppListItemInput :model="name" type="text" required @update="n => name = n"/>
+    </AppList>
 
-    <div>
-      <label class="mb-2 block text-xs font-semibold text-gray-900 uppercase">Exercises</label>
-      <ul
-        role="list"
-        class="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 rounded-md"
+    <AppList>
+      <AppListItem is="header">Exercises</AppListItem>
+      <AppListItem
+        v-for="exercise in exercises"
+        :key="exercise.id"
       >
-        <li
-          v-for="exercise in exercises"
-          :key="exercise.id"
+        <div
+          class="flex justify-between items-center w-full"
         >
-          <div
-            class="flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-900"
-          >
-            {{ exercise.name }}
-            <Switch
-              :class="[
+          {{ exercise.name }}
+          <Switch
+            :class="[
                 exerciseIDs.includes(exercise.id) ? 'bg-indigo-600' : 'bg-gray-200',
                 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2',
               ]"
-              @click="toggleExercise(exercise.id)"
-            >
+            @click="toggleExercise(exercise.id)"
+          >
               <span
                 :class="[
                   exerciseIDs.includes(exercise.id) ? 'translate-x-5' : 'translate-x-0',
                   'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
                 ]"
               />
-            </Switch>
-          </div>
-        </li>
-      </ul>
-    </div>
+          </Switch>
+        </div>
+      </AppListItem>
+    </AppList>
 
     <AppButton
       type="submit"
       colour="primary"
-      class="mt-6"
+      container-class="p-4"
     >
       Update Routine
     </AppButton>
