@@ -27,7 +27,7 @@ const props = defineProps<{
 }>()
 
 const dropdownItems: Array<DropdownItem> = [
-  {href: `/workout/${props.workout.id}/edit`, title: 'Edit'},
+  {href: `/workout/${props.workout.id}/edit`, title: 'Edit Workout'},
   {
     func: async () => {
       if (confirm('Are you sure you want to delete this workout?')) {
@@ -35,7 +35,7 @@ const dropdownItems: Array<DropdownItem> = [
         alertStore.setErrorWithoutPageRefresh('Workout deleted')
         workoutDeleted.value = true
       }
-    }, title: 'Delete'
+    }, title: 'Delete Workout'
   },
 ]
 

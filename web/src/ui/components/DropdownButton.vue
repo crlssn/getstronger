@@ -37,7 +37,7 @@ const props = defineProps<Props>()
       <MenuItems
         class="shadow-2xl fixed right-0 bottom-0 left-0 w-full z-50 origin-top-right rounded-t-2xl overflow-hidden bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
       >
-        <div class="py-10 px-8">
+        <div class="py-8 px-8">
           <MenuItem
             v-for="(item, index) in props.items"
             v-slot="{ active }"
@@ -51,7 +51,7 @@ const props = defineProps<Props>()
               :to="item.href"
               :class="[
                 active ? 'bg-gray-100 text-gray-900 outline-none' : 'text-gray-700',
-                'block px-4 text-sm mb-6',
+                'block px-4 text-sm mb-4',
               ]"
             >
               {{ item.title }}

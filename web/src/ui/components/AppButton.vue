@@ -62,6 +62,6 @@ a.link {
 }
 
 .gray {
-  @apply bg-gray-100 hover:bg-gray-100 border-b-0 focus-visible:outline-gray-500 text-gray-500 hover:text-gray-500;
+  @apply bg-gray-100 hover:bg-gray-100 border-b-0 py-4 focus-visible:outline-gray-500 text-gray-500 hover:text-gray-500;
 }
 </style>
