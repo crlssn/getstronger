@@ -39,14 +39,17 @@ onMounted(async () => {
     Create Routine
   </AppButton>
   <AppList role="list">
-    <AppListItem is="header">Routines</AppListItem>
+    <AppListItem is="header">Active</AppListItem>
     <AppListItemLink
       v-for="routine in routines"
       :key="routine.id"
       :to="`/routines/${routine.id}`"
     >
-      {{ routine.name }}
-      <ChevronRightIcon />
+      <div>
+        <p class="font-semibold text-gray-900">{{ routine.name }}</p>
+        <p class="text-sm text-gray-500 font-medium">2 days ago</p>
+      </div>
+      <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
   </AppList>
 </template>
