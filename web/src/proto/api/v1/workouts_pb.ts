@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/workouts.proto.
  */
 export const file_api_v1_workouts: GenFile = /*@__PURE__*/
-  fileDesc("ChVhcGkvdjEvd29ya291dHMucHJvdG8SBmFwaS52MSLcAQoUQ3JlYXRlV29ya291dFJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESNQoNZXhlcmNpc2Vfc2V0cxgCIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEjYKCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNwoLZmluaXNoZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiKwoVQ3JlYXRlV29ya291dFJlc3BvbnNlEhIKCndvcmtvdXRfaWQYASABKAkiagoTTGlzdFdvcmtvdXRzUmVxdWVzdBIhCgh1c2VyX2lkcxgBIAMoCUIPukgMkgEJCAEiBXIDsAEBEhwKCXBhZ2Vfc2l6ZRgCIAEoBUIJukgGGgQYZCgBEhIKCnBhZ2VfdG9rZW4YAyABKAwiUgoUTGlzdFdvcmtvdXRzUmVzcG9uc2USIQoId29ya291dHMYASADKAsyDy5hcGkudjEuV29ya291dBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAwiKQoRR2V0V29ya291dFJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIjYKEkdldFdvcmtvdXRSZXNwb25zZRIgCgd3b3Jrb3V0GAEgASgLMg8uYXBpLnYxLldvcmtvdXQiLAoURGVsZXRlV29ya291dFJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhcKFURlbGV0ZVdvcmtvdXRSZXNwb25zZSJMChJQb3N0Q29tbWVudFJlcXVlc3QSHAoKd29ya291dF9pZBgBIAEoCUIIukgFcgOwAQESGAoHY29tbWVudBgCIAEoCUIHukgEcgIQASI+ChNQb3N0Q29tbWVudFJlc3BvbnNlEicKB2NvbW1lbnQYASABKAsyFi5hcGkudjEuV29ya291dENvbW1lbnQi9AEKB1dvcmtvdXQSFAoCaWQYASABKAlCCLpIBXIDsAEBEhUKBG5hbWUYAiABKAlCB7pIBHICEAESIgoEdXNlchgDIAEoCzIMLmFwaS52MS5Vc2VyQga6SAPIAQESNQoNZXhlcmNpc2Vfc2V0cxgEIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEigKCGNvbW1lbnRzGAUgAygLMhYuYXBpLnYxLldvcmtvdXRDb21tZW50EjcKC2ZpbmlzaGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIpwBCg5Xb3Jrb3V0Q29tbWVudBIUCgJpZBgBIAEoCUIIukgFcgOwAQESIgoEdXNlchgCIAEoCzIMLmFwaS52MS5Vc2VyQga6SAPIAQESGAoHY29tbWVudBgEIAEoCUIHukgEcgIQARI2CgpjcmVhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBMoUDCg5Xb3Jrb3V0U2VydmljZRJLCgZDcmVhdGUSHC5hcGkudjEuQ3JlYXRlV29ya291dFJlcXVlc3QaHS5hcGkudjEuQ3JlYXRlV29ya291dFJlc3BvbnNlIgSItRgBEkIKA0dldBIZLmFwaS52MS5HZXRXb3Jrb3V0UmVxdWVzdBoaLmFwaS52MS5HZXRXb3Jrb3V0UmVzcG9uc2UiBIi1GAESRwoETGlzdBIbLmFwaS52MS5MaXN0V29ya291dHNSZXF1ZXN0GhwuYXBpLnYxLkxpc3RXb3Jrb3V0c1Jlc3BvbnNlIgSItRgBEksKBkRlbGV0ZRIcLmFwaS52MS5EZWxldGVXb3Jrb3V0UmVxdWVzdBodLmFwaS52MS5EZWxldGVXb3Jrb3V0UmVzcG9uc2UiBIi1GAESTAoLUG9zdENvbW1lbnQSGi5hcGkudjEuUG9zdENvbW1lbnRSZXF1ZXN0GhsuYXBpLnYxLlBvc3RDb21tZW50UmVzcG9uc2UiBIi1GAFCjgEKCmNvbS5hcGkudjFCDVdvcmtvdXRzUHJvdG9QAVo4Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wYi9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_buf_validate_validate]);
+  fileDesc("ChVhcGkvdjEvd29ya291dHMucHJvdG8SBmFwaS52MSLcAQoUQ3JlYXRlV29ya291dFJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESNQoNZXhlcmNpc2Vfc2V0cxgCIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEjYKCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNwoLZmluaXNoZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiKwoVQ3JlYXRlV29ya291dFJlc3BvbnNlEhIKCndvcmtvdXRfaWQYASABKAkiagoTTGlzdFdvcmtvdXRzUmVxdWVzdBIhCgh1c2VyX2lkcxgBIAMoCUIPukgMkgEJCAEiBXIDsAEBEhwKCXBhZ2Vfc2l6ZRgCIAEoBUIJukgGGgQYZCgBEhIKCnBhZ2VfdG9rZW4YAyABKAwiUgoUTGlzdFdvcmtvdXRzUmVzcG9uc2USIQoId29ya291dHMYASADKAsyDy5hcGkudjEuV29ya291dBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAwiKQoRR2V0V29ya291dFJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIjYKEkdldFdvcmtvdXRSZXNwb25zZRIgCgd3b3Jrb3V0GAEgASgLMg8uYXBpLnYxLldvcmtvdXQiLAoURGVsZXRlV29ya291dFJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhcKFURlbGV0ZVdvcmtvdXRSZXNwb25zZSJMChJQb3N0Q29tbWVudFJlcXVlc3QSHAoKd29ya291dF9pZBgBIAEoCUIIukgFcgOwAQESGAoHY29tbWVudBgCIAEoCUIHukgEcgIQASI+ChNQb3N0Q29tbWVudFJlc3BvbnNlEicKB2NvbW1lbnQYASABKAsyFi5hcGkudjEuV29ya291dENvbW1lbnQiQAoUVXBkYXRlV29ya291dFJlcXVlc3QSKAoHd29ya291dBgBIAEoCzIPLmFwaS52MS5Xb3Jrb3V0Qga6SAPIAQEiFwoVVXBkYXRlV29ya291dFJlc3BvbnNlIqQCCgdXb3Jrb3V0EhQKAmlkGAEgASgJQgi6SAVyA7ABARIVCgRuYW1lGAIgASgJQge6SARyAhABEiIKBHVzZXIYAyABKAsyDC5hcGkudjEuVXNlckIGukgDyAEBEjUKDWV4ZXJjaXNlX3NldHMYBCADKAsyFC5hcGkudjEuRXhlcmNpc2VTZXRzQgi6SAWSAQIIARIoCghjb21tZW50cxgFIAMoCzIWLmFwaS52MS5Xb3Jrb3V0Q29tbWVudBIuCgpzdGFydGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI3CgtmaW5pc2hlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASKcAQoOV29ya291dENvbW1lbnQSFAoCaWQYASABKAlCCLpIBXIDsAEBEiIKBHVzZXIYAiABKAsyDC5hcGkudjEuVXNlckIGukgDyAEBEhgKB2NvbW1lbnQYBCABKAlCB7pIBHICEAESNgoKY3JlYXRlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBATLZAwoOV29ya291dFNlcnZpY2USSwoGQ3JlYXRlEhwuYXBpLnYxLkNyZWF0ZVdvcmtvdXRSZXF1ZXN0Gh0uYXBpLnYxLkNyZWF0ZVdvcmtvdXRSZXNwb25zZSIEiLUYARJCCgNHZXQSGS5hcGkudjEuR2V0V29ya291dFJlcXVlc3QaGi5hcGkudjEuR2V0V29ya291dFJlc3BvbnNlIgSItRgBEkcKBExpc3QSGy5hcGkudjEuTGlzdFdvcmtvdXRzUmVxdWVzdBocLmFwaS52MS5MaXN0V29ya291dHNSZXNwb25zZSIEiLUYARJLCgZEZWxldGUSHC5hcGkudjEuRGVsZXRlV29ya291dFJlcXVlc3QaHS5hcGkudjEuRGVsZXRlV29ya291dFJlc3BvbnNlIgSItRgBEkwKC1Bvc3RDb21tZW50EhouYXBpLnYxLlBvc3RDb21tZW50UmVxdWVzdBobLmFwaS52MS5Qb3N0Q29tbWVudFJlc3BvbnNlIgSItRgBElIKDVVwZGF0ZVdvcmtvdXQSHC5hcGkudjEuVXBkYXRlV29ya291dFJlcXVlc3QaHS5hcGkudjEuVXBkYXRlV29ya291dFJlc3BvbnNlIgSItRgBQo4BCgpjb20uYXBpLnYxQg1Xb3Jrb3V0c1Byb3RvUAFaOGdpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcGIvYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.CreateWorkoutRequest
@@ -220,6 +220,36 @@ export const PostCommentResponseSchema: GenMessage<PostCommentResponse> = /*@__P
   messageDesc(file_api_v1_workouts, 9);
 
 /**
+ * @generated from message api.v1.UpdateWorkoutRequest
+ */
+export type UpdateWorkoutRequest = Message<"api.v1.UpdateWorkoutRequest"> & {
+  /**
+   * @generated from field: api.v1.Workout workout = 1;
+   */
+  workout?: Workout;
+};
+
+/**
+ * Describes the message api.v1.UpdateWorkoutRequest.
+ * Use `create(UpdateWorkoutRequestSchema)` to create a new message.
+ */
+export const UpdateWorkoutRequestSchema: GenMessage<UpdateWorkoutRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_workouts, 10);
+
+/**
+ * @generated from message api.v1.UpdateWorkoutResponse
+ */
+export type UpdateWorkoutResponse = Message<"api.v1.UpdateWorkoutResponse"> & {
+};
+
+/**
+ * Describes the message api.v1.UpdateWorkoutResponse.
+ * Use `create(UpdateWorkoutResponseSchema)` to create a new message.
+ */
+export const UpdateWorkoutResponseSchema: GenMessage<UpdateWorkoutResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_workouts, 11);
+
+/**
  * @generated from message api.v1.Workout
  */
 export type Workout = Message<"api.v1.Workout"> & {
@@ -249,7 +279,12 @@ export type Workout = Message<"api.v1.Workout"> & {
   comments: WorkoutComment[];
 
   /**
-   * @generated from field: google.protobuf.Timestamp finished_at = 6;
+   * @generated from field: google.protobuf.Timestamp started_at = 6;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp finished_at = 7;
    */
   finishedAt?: Timestamp;
 };
@@ -259,7 +294,7 @@ export type Workout = Message<"api.v1.Workout"> & {
  * Use `create(WorkoutSchema)` to create a new message.
  */
 export const WorkoutSchema: GenMessage<Workout> = /*@__PURE__*/
-  messageDesc(file_api_v1_workouts, 10);
+  messageDesc(file_api_v1_workouts, 12);
 
 /**
  * @generated from message api.v1.WorkoutComment
@@ -291,7 +326,7 @@ export type WorkoutComment = Message<"api.v1.WorkoutComment"> & {
  * Use `create(WorkoutCommentSchema)` to create a new message.
  */
 export const WorkoutCommentSchema: GenMessage<WorkoutComment> = /*@__PURE__*/
-  messageDesc(file_api_v1_workouts, 11);
+  messageDesc(file_api_v1_workouts, 13);
 
 /**
  * @generated from service api.v1.WorkoutService
@@ -336,6 +371,14 @@ export const WorkoutService: GenService<{
     methodKind: "unary";
     input: typeof PostCommentRequestSchema;
     output: typeof PostCommentResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.WorkoutService.UpdateWorkout
+   */
+  updateWorkout: {
+    methodKind: "unary";
+    input: typeof UpdateWorkoutRequestSchema;
+    output: typeof UpdateWorkoutResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_workouts, 0);

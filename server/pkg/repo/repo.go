@@ -1306,3 +1306,50 @@ func (r *Repo) SetRoutineExercises(ctx context.Context, routine *orm.Routine, ex
 
 	return nil
 }
+
+type UpdateWorkoutParams struct {
+	Name         string
+	StartedAt    time.Time
+	FinishedAt   time.Time
+	ExerciseSets []ExerciseSet
+}
+
+func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWorkoutParams) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
+		workout := &orm.Workout{
+			ID:         workoutID,
+			Name:       p.Name,
+			CreatedAt:  p.StartedAt,
+			FinishedAt: p.FinishedAt,
+		}
+		if _, err := workout.Update(ctx, tx.executor(), boil.Whitelist(
+			orm.WorkoutColumns.Name,
+			orm.WorkoutColumns.CreatedAt,
+			orm.WorkoutColumns.FinishedAt,
+		)); err != nil {
+			return fmt.Errorf("workout update: %w", err)
+		}
+
+		if _, err := workout.Sets().DeleteAll(ctx, tx.executor()); err != nil {
+			return fmt.Errorf("workout sets delete: %w", err)
+		}
+
+		for _, exerciseSet := range p.ExerciseSets {
+			sets := make([]*orm.Set, 0, len(exerciseSet.Sets))
+			for _, set := range exerciseSet.Sets {
+				sets = append(sets, &orm.Set{
+					WorkoutID:  workout.ID,
+					ExerciseID: exerciseSet.ExerciseID,
+					Reps:       set.Reps,
+					Weight:     set.Weight,
+				})
+			}
+
+			if err := workout.AddSets(ctx, tx.executor(), true, sets...); err != nil {
+				return fmt.Errorf("workout sets add: %w", err)
+			}
+		}
+
+		return nil
+	})
+}

@@ -9,12 +9,11 @@ import {useAlertStore} from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import {type DropdownItem} from '@/types/dropdown.ts'
 import {UserCircleIcon} from "@heroicons/vue/24/solid";
+import {formatToRelativeDateTime} from '@/utils/datetime.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import {PostCommentRequestSchema, type Workout, type WorkoutComment,} from '@/proto/api/v1/workouts_pb.ts'
-
-import {formatToRelativeDateTime} from '../../utils/datetime.ts'
 
 const {input, textarea} = useTextareaAutosize()
 const authStore = useAuthStore()
@@ -27,7 +26,7 @@ const props = defineProps<{
 }>()
 
 const dropdownItems: Array<DropdownItem> = [
-  {href: `/workout/${props.workout.id}/edit`, title: 'Edit Workout'},
+  {href: `/workouts/${props.workout.id}/edit`, title: 'Update Workout'},
   {func: () => onDeleteWorkout(), title: 'Delete Workout'},
 ]
 
@@ -102,7 +101,7 @@ const formatComment = computed(() => {
     <div class="pl-16 pr-4 py-3">
       <RouterLink
         :to="`/workouts/${workout.id}`"
-        class="pl-1 text-sm text-gray-700 uppercase font-medium"
+        class="pl-1 text-sm text-gray-900 uppercase font-medium"
       >
         {{ workout.comments.length }} {{ formatComment }}
       </RouterLink>

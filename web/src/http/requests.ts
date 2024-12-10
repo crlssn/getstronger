@@ -6,12 +6,6 @@ import {create} from "@bufbuild/protobuf"
 import {ConnectError} from "@connectrpc/connect"
 import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
 import {
-  CreateWorkoutRequestSchema,
-  type CreateWorkoutResponse,
-  DeleteWorkoutRequestSchema,
-  type DeleteWorkoutResponse
-} from "@/proto/api/v1/workouts_pb"
-import {
   CreateRoutineRequestSchema,
   type CreateRoutineResponse,
   DeleteRoutineRequestSchema,
@@ -19,6 +13,17 @@ import {
   GetRoutineRequestSchema,
   type GetRoutineResponse, UpdateRoutineRequestSchema, type UpdateRoutineResponse
 } from "@/proto/api/v1/routines_pb"
+import {
+  CreateWorkoutRequestSchema,
+  type CreateWorkoutResponse,
+  DeleteWorkoutRequestSchema,
+  type DeleteWorkoutResponse,
+  GetWorkoutRequestSchema,
+  type GetWorkoutResponse,
+  UpdateWorkoutRequestSchema,
+  type UpdateWorkoutResponse,
+  type Workout
+} from "@/proto/api/v1/workouts_pb"
 import {
   LoginRequestSchema,
   type LoginResponse,
@@ -190,6 +195,20 @@ export const createWorkout = async (routineId: string, exerciseSets: ExerciseSet
     } as Timestamp,
   })
   return tryCatch(() => WorkoutClient.create(req))
+}
+
+export const updateWorkout = async (workout: Workout): Promise<UpdateWorkoutResponse | void> => {
+  const req = create(UpdateWorkoutRequestSchema, {
+    workout: workout,
+  })
+  return tryCatch(() => WorkoutClient.updateWorkout(req))
+}
+
+export const getWorkout = async (id: string): Promise<GetWorkoutResponse | void> => {
+  const req = create(GetWorkoutRequestSchema, {
+    id: id,
+  })
+  return tryCatch(() => WorkoutClient.get(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

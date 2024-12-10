@@ -13,6 +13,7 @@ import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
 import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
 import ResetPassword from '@/ui/auth/ResetPassword.vue'
 import EditRoutine from "@/ui/routines/EditRoutine.vue";
+import EditWorkout from "@/ui/workouts/EditWorkout.vue";
 import ListRoutines from '@/ui/routines/ListRoutines.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
@@ -71,6 +72,13 @@ const router: Router = createRouter({
       meta: { title: '' },
       name: 'view-workout',
       path: '/workouts/:id',
+    },
+    {
+      beforeEnter: [auth],
+      component: EditWorkout,
+      meta: { title: 'Edit Workout' },
+      name: 'edit-workout',
+      path: '/workouts/:id/edit',
     },
     {
       beforeEnter: [auth],

@@ -44,7 +44,7 @@ button {
   @apply py-3 text-sm font-semibold;
 }
 
-a.link {
+.link {
   @apply block text-center py-3;
 }
 
