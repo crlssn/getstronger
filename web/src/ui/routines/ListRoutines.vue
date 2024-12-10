@@ -48,7 +48,7 @@ onMounted(async () => {
     >
       <div>
         <p class="text-gray-900">{{ routine.name }}</p>
-        <p class="text-sm text-gray-500 font-medium">2 days ago</p>
+        <p class="text-sm text-gray-500 font-normal">2 days ago</p>
       </div>
       <ChevronRightIcon class="size-8 text-gray-500"/>
     </AppListItemLink>

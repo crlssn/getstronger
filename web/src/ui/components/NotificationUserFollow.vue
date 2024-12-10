@@ -18,7 +18,7 @@ defineProps<{
     <UserPlusIcon class="size-8" />
     <div class="w-full">
       <div>
-        <span class="font-semibold">
+        <span class="font-medium">
           {{ actor?.firstName }}
           {{ actor?.lastName }}
         </span>
