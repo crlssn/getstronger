@@ -3,6 +3,10 @@ import type { ExerciseID, RoutineID, RoutineWorkout } from '@/types/workout'
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
+const isNumber = (value: number | string | undefined) => {
+  return typeof value === 'number' && !Number.isNaN(value)
+}
+
 export const useWorkoutStore = defineStore(
   'workouts',
   () => {
@@ -49,7 +53,6 @@ export const useWorkoutStore = defineStore(
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {}
       workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
-      workout.exerciseSets[exerciseID].push({})
 
       const noEmptySet = workout.exerciseSets[exerciseID].every((set) => set.weight && set.reps)
       if (noEmptySet) {
