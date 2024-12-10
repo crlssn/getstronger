@@ -1309,7 +1309,7 @@ func (r *Repo) SetRoutineExercises(ctx context.Context, routine *orm.Routine, ex
 
 type UpdateWorkoutParams struct {
 	Name         string
-	CreatedAt    time.Time
+	StartedAt    time.Time
 	FinishedAt   time.Time
 	ExerciseSets []ExerciseSet
 }
@@ -1319,7 +1319,7 @@ func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWork
 		workout := &orm.Workout{
 			ID:         workoutID,
 			Name:       p.Name,
-			CreatedAt:  p.CreatedAt,
+			CreatedAt:  p.StartedAt,
 			FinishedAt: p.FinishedAt,
 		}
 		if _, err := workout.Update(ctx, tx.executor(), boil.Whitelist(

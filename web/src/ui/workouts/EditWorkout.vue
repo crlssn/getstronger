@@ -15,10 +15,12 @@ import AppListItem from "@/ui/components/AppListItem.vue";
 import {MinusCircleIcon} from '@heroicons/vue/24/outline'
 import {getWorkout, updateWorkout} from "@/http/requests.ts";
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import {useAuthStore} from "@/stores/auth.ts";
 
 const route = useRoute()
 const workout = ref<Workout>()
 const alertStore = useAlertStore()
+const authStore = useAuthStore()
 const pageTitleStore = usePageTitleStore()
 
 onMounted(async () => {
@@ -29,6 +31,12 @@ onMounted(async () => {
 const fetchWorkout = async (id: string) => {
   const res = await getWorkout(id)
   if (!res) return
+
+  if (res.workout?.user?.id !== authStore.userID) {
+    alertStore.setError('You do not have permission to edit this workout')
+    await router.push('/home')
+    return
+  }
 
   workout.value = res.workout
 }
@@ -68,7 +76,7 @@ const deleteSet = (exerciseId: string, index: number) => {
 const setStartDateTime = (value: string) => {
   workout.value = {
     ...workout.value,
-    createdAt: {
+    startedAt: {
       seconds: BigInt(DateTime.fromISO(value).toSeconds())
     } as Timestamp
   } as Workout
@@ -148,7 +156,7 @@ const toDateTime = (timestamp: Timestamp|undefined) => {
     <h6>Start Time</h6>
     <AppList>
       <AppListItemInput
-        :model="toDateTime(workout?.createdAt)"
+        :model="toDateTime(workout?.startedAt)"
         type="datetime-local"
         required
         @update="setStartDateTime"

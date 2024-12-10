@@ -238,13 +238,15 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 	}, nil
 }
 
+var errWorkoutMustStartBeforeFinish = errors.New("workout must start before it finishes")
+
 func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if req.Msg.GetWorkout().GetCreatedAt().AsTime().After(req.Msg.GetWorkout().GetFinishedAt().AsTime()) {
+	if req.Msg.GetWorkout().GetStartedAt().AsTime().After(req.Msg.GetWorkout().GetFinishedAt().AsTime()) {
 		log.Warn("workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
 	}
 
 	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
@@ -260,7 +262,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 	if err = h.repo.UpdateWorkout(ctx, workout.ID, repo.UpdateWorkoutParams{
 		Name:         workout.Name,
-		CreatedAt:    req.Msg.GetWorkout().GetCreatedAt().AsTime(),
+		StartedAt:    req.Msg.GetWorkout().GetStartedAt().AsTime(),
 		FinishedAt:   req.Msg.GetWorkout().GetFinishedAt().AsTime(),
 		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets()),
 	}); err != nil {

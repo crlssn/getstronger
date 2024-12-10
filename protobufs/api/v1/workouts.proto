@@ -82,7 +82,7 @@ message Workout {
   User user = 3 [(buf.validate.field).required = true];
   repeated ExerciseSets exercise_sets = 4 [(buf.validate.field).repeated.min_items = 1];
   repeated WorkoutComment comments = 5;
-  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp started_at = 6;
   google.protobuf.Timestamp finished_at = 7 [(buf.validate.field).required = true];
 }
 
