@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import {create} from '@bufbuild/protobuf'
 import {computed, onMounted, ref} from 'vue'
 import {useAuthStore} from '@/stores/auth.ts'
-import {WorkoutClient} from '@/http/clients.ts'
 import {useTextareaAutosize} from '@vueuse/core'
-import {deleteWorkout} from '@/http/requests.ts'
+import {deleteWorkout, postWorkoutComment} from '@/http/requests.ts'
 import {useAlertStore} from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import {type DropdownItem} from '@/types/dropdown.ts'
@@ -13,7 +11,7 @@ import {formatToRelativeDateTime} from '@/utils/datetime.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
-import {PostCommentRequestSchema, type Workout, type WorkoutComment,} from '@/proto/api/v1/workouts_pb.ts'
+import {type Workout, type WorkoutComment,} from '@/proto/api/v1/workout_service_pb'
 
 const {input, textarea} = useTextareaAutosize()
 const authStore = useAuthStore()
@@ -45,12 +43,9 @@ onMounted(() => {
 })
 
 const postComment = async () => {
-  const req = create(PostCommentRequestSchema, {
-    comment: input.value,
-    workoutId: props.workout.id,
-  })
-  const res = await WorkoutClient.postComment(req)
-  if (!res.comment) return
+  const res = await postWorkoutComment(props.workout.id, input.value)
+  if (!res) return
+
   comments.value.push(res.comment)
   input.value = ''
 }

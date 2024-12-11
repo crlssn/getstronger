@@ -10,10 +10,10 @@ import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { ExerciseClient, WorkoutClient } from '@/http/clients'
-import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workout_service_pb.ts'
+import { ExerciseClient } from '@/http/clients'
+import { type Workout } from '@/proto/api/v1/workout_service_pb.ts'
 import { GetPersonalBestsRequestSchema, type PersonalBest } from '@/proto/api/v1/exercise_service_pb.ts'
-import {followUser, getUser, listFollowees, listFollowers, unfollowUser} from "@/http/requests.ts";
+import {followUser, getUser, listFollowees, listFollowers, listWorkouts, unfollowUser} from "@/http/requests.ts";
 
 const route = useRoute()
 const router = useRouter()
@@ -56,14 +56,19 @@ const fetchUser = async () => {
   }
 }
 
+const pageToken = ref(new Uint8Array(0))
+
 const fetchWorkouts = async () => {
-  const req = create(ListWorkoutsRequestSchema, {
-    pageSize: 100,
-    pageToken: new Uint8Array(0),
-    userIds: [user.value?.id || ''],
-  })
-  const res = await WorkoutClient.list(req)
-  workouts.value = res.workouts
+  const userIds = [user.value?.id as string]
+  const res = await listWorkouts(userIds, pageToken.value)
+  if (!res) return
+
+  workouts.value = [...workouts.value || [], ...res.workouts]
+  pageToken.value = res.nextPageToken
+  if (pageToken.value.length > 0) {
+    // TODO: Implement infinite scroll.
+    await fetchWorkouts()
+  }
 }
 
 const fetchFollowers = async () => {

@@ -26,6 +26,10 @@ import {
   type DeleteWorkoutResponse,
   GetWorkoutRequestSchema,
   type GetWorkoutResponse,
+  ListWorkoutsRequestSchema,
+  type ListWorkoutsResponse,
+  PostCommentRequestSchema,
+  type PostCommentResponse,
   UpdateWorkoutRequestSchema,
   type UpdateWorkoutResponse,
   type Workout
@@ -72,7 +76,7 @@ import {
   notificationClient,
   routineClient,
   userClient,
-  WorkoutClient
+  workoutClient
 } from "./clients"
 import {
   FollowUserRequestSchema,
@@ -98,7 +102,7 @@ export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse |
     id: id,
   })
 
-  return tryCatch(() => WorkoutClient.deleteWorkout(req))
+  return tryCatch(() => workoutClient.deleteWorkout(req))
 }
 
 export const deleteExercise = async (id: string): Promise<DeleteExerciseResponse | void> => {
@@ -242,21 +246,21 @@ export const createWorkout = async (routineId: string, exerciseSets: ExerciseSet
       seconds: BigInt(startedAt.toSeconds()),
     } as Timestamp,
   })
-  return tryCatch(() => WorkoutClient.createWorkout(req))
+  return tryCatch(() => workoutClient.createWorkout(req))
 }
 
 export const updateWorkout = async (workout: Workout): Promise<UpdateWorkoutResponse | void> => {
   const req = create(UpdateWorkoutRequestSchema, {
     workout: workout,
   })
-  return tryCatch(() => WorkoutClient.updateWorkout(req))
+  return tryCatch(() => workoutClient.updateWorkout(req))
 }
 
 export const getWorkout = async (id: string): Promise<GetWorkoutResponse | void> => {
   const req = create(GetWorkoutRequestSchema, {
     id: id,
   })
-  return tryCatch(() => WorkoutClient.getWorkout(req))
+  return tryCatch(() => workoutClient.getWorkout(req))
 }
 
 export const listFeedItems = async (pageToken: Uint8Array): Promise<ListFeedItemsResponse | void> => {
@@ -342,6 +346,23 @@ export const listNotifications = async (pageToken: Uint8Array): Promise<ListNoti
     }
   })
   return tryCatch(() => notificationClient.listNotifications(req))
+}
+
+export const listWorkouts = async (userIds: string[],pageToken: Uint8Array): Promise<ListWorkoutsResponse | void> => {
+  const req = create(ListWorkoutsRequestSchema, {
+    userIds: userIds,
+    pageSize: 100,
+    pageToken: pageToken,
+  })
+  return tryCatch(() => workoutClient.listWorkouts(req))
+}
+
+export const postWorkoutComment = async (workoutId: string, comment: string): Promise<PostCommentResponse|void> => {
+  const req = create(PostCommentRequestSchema, {
+    comment: comment,
+    workoutId: workoutId,
+  })
+  return tryCatch(() => workoutClient.postComment(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
