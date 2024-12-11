@@ -20,6 +20,7 @@ const fetchWorkouts = async () => {
 
   pageToken.value = res.pagination.nextPageToken
   if (pageToken.value.length > 0) {
+    // TODO: Implement pagination.
     await fetchWorkouts()
   }
 }
