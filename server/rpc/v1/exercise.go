@@ -125,13 +125,13 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	limit := int(req.Msg.GetPageSize())
+	limit := int(req.Msg.GetPagination().GetPageLimit())
 	exercises, err := h.repo.ListExercises(ctx,
 		repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()),
 		repo.ListExercisesWithName(req.Msg.GetName()),
 		repo.ListExercisesWithLimit(limit+1),
 		repo.ListExercisesWithUserID(userID),
-		repo.ListExercisesWithPageToken(req.Msg.GetPageToken()),
+		repo.ListExercisesWithPageToken(req.Msg.GetPagination().GetPageToken()),
 		repo.ListExercisesWithoutDeleted(),
 	)
 	if err != nil {
@@ -149,8 +149,10 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 
 	log.Info("exercises listed")
 	return connect.NewResponse(&v1.ListExercisesResponse{
-		Exercises:     parseExerciseSliceToPB(pagination.Items),
-		NextPageToken: pagination.NextPageToken,
+		Exercises: parseExerciseSliceToPB(pagination.Items),
+		Pagination: &v1.PaginationResponse{
+			NextPageToken: pagination.NextPageToken,
+		},
 	}), nil
 }
 

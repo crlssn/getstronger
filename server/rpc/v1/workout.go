@@ -123,13 +123,13 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[v1
 func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	limit := int(req.Msg.GetPageSize())
+	limit := int(req.Msg.GetPagination().GetPageLimit())
 	workouts, err := h.repo.ListWorkouts(ctx,
 		repo.ListWorkoutsWithSets(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()),
 		repo.ListWorkoutsWithComments(),
-		repo.ListWorkoutsWithPageToken(req.Msg.GetPageToken()),
+		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
 		log.Error("failed to list workouts", zap.Error(err))
@@ -176,8 +176,11 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	log.Info("workouts listed")
 	return &connect.Response[v1.ListWorkoutsResponse]{
 		Msg: &v1.ListWorkoutsResponse{
-			Workouts:      w,
-			NextPageToken: pagination.NextPageToken,
+			Workouts: w,
+			Pagination: &v1.PaginationResponse{
+				TotalResults:  0,
+				NextPageToken: pagination.NextPageToken,
+			},
 		},
 	}, nil
 }
