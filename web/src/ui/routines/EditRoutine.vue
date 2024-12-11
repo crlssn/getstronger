@@ -9,7 +9,6 @@ import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { getRoutine, listExercises, updateRoutine } from '@/http/requests.ts'
-import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination'
 
 const name = ref('')

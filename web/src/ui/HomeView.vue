@@ -3,29 +3,29 @@ import { onMounted, ref } from 'vue'
 import { listFeedItems } from '@/http/requests.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type FeedItem } from '@/proto/api/v1/feed_service_pb'
+import usePagination from '@/utils/usePagination'
+import { vInfiniteScroll } from '@vueuse/components'
 
-const pageToken = ref(new Uint8Array(0))
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
+
 const feedItems = ref([] as FeedItem[])
 
-const fetchFeed = async () => {
+onMounted(async () => {
+  await fetchFeedItems()
+})
+
+const fetchFeedItems = async () => {
   const res = await listFeedItems(pageToken.value)
   if (!res) return
 
   feedItems.value = [...feedItems.value, ...res.items]
-  pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
-  if (pageToken.value.length > 0) {
-    // TODO: Implement pagination.
-    await fetchFeed()
-  }
+  pageToken.value = resolvePageToken(res.pagination)
 }
-
-onMounted(async () => {
-  await fetchFeed()
-})
 </script>
 
 <template>
   <div v-for="item in feedItems" :key="item.type.value?.id">
     <CardWorkout v-if="item.type.case === 'workout'" compact :workout="item.type.value" />
   </div>
+  <div v-if="hasMorePages" v-infinite-scroll="fetchFeedItems"></div>
 </template>

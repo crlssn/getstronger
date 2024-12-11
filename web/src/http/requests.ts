@@ -313,7 +313,7 @@ export const listFeedItems = async (
 ): Promise<ListFeedItemsResponse | void> => {
   const req = create(ListFeedItemsRequestSchema, {
     pagination: {
-      pageLimit: 100,
+      pageLimit: defaultPageLimit,
       pageToken: pageToken,
     },
   })
