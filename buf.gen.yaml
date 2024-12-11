@@ -3,15 +3,15 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/crlssn/getstronger/server/pkg/pb
+      value: github.com/crlssn/getstronger/server/pkg/proto
   disable:
     - module: buf.build/bufbuild/protovalidate
 plugins:
   - remote: buf.build/protocolbuffers/go
-    out: server/pkg/pb
+    out: server/pkg/proto
     opt: paths=source_relative
   - remote: buf.build/connectrpc/go
-    out: server/pkg/pb
+    out: server/pkg/proto
     opt: paths=source_relative
   - local: protoc-gen-es
     opt: target=ts

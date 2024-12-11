@@ -10,8 +10,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
+	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )

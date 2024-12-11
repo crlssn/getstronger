@@ -7,7 +7,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
-	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/trace"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )

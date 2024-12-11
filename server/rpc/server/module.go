@@ -15,7 +15,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
-	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/stream"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
