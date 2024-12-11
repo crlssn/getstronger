@@ -37,6 +37,9 @@ const (
 	// NotificationServiceListNotificationsProcedure is the fully-qualified name of the
 	// NotificationService's ListNotifications RPC.
 	NotificationServiceListNotificationsProcedure = "/api.v1.NotificationService/ListNotifications"
+	// NotificationServiceMarkNotificationsAsReadProcedure is the fully-qualified name of the
+	// NotificationService's MarkNotificationsAsRead RPC.
+	NotificationServiceMarkNotificationsAsReadProcedure = "/api.v1.NotificationService/MarkNotificationsAsRead"
 	// NotificationServiceUnreadNotificationsProcedure is the fully-qualified name of the
 	// NotificationService's UnreadNotifications RPC.
 	NotificationServiceUnreadNotificationsProcedure = "/api.v1.NotificationService/UnreadNotifications"
@@ -44,14 +47,16 @@ const (
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	notificationServiceServiceDescriptor                   = v1.File_api_v1_notification_service_proto.Services().ByName("NotificationService")
-	notificationServiceListNotificationsMethodDescriptor   = notificationServiceServiceDescriptor.Methods().ByName("ListNotifications")
-	notificationServiceUnreadNotificationsMethodDescriptor = notificationServiceServiceDescriptor.Methods().ByName("UnreadNotifications")
+	notificationServiceServiceDescriptor                       = v1.File_api_v1_notification_service_proto.Services().ByName("NotificationService")
+	notificationServiceListNotificationsMethodDescriptor       = notificationServiceServiceDescriptor.Methods().ByName("ListNotifications")
+	notificationServiceMarkNotificationsAsReadMethodDescriptor = notificationServiceServiceDescriptor.Methods().ByName("MarkNotificationsAsRead")
+	notificationServiceUnreadNotificationsMethodDescriptor     = notificationServiceServiceDescriptor.Methods().ByName("UnreadNotifications")
 )
 
 // NotificationServiceClient is a client for the api.v1.NotificationService service.
 type NotificationServiceClient interface {
 	ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error)
+	MarkNotificationsAsRead(context.Context, *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error)
 	UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest]) (*connect.ServerStreamForClient[v1.UnreadNotificationsResponse], error)
 }
 
@@ -71,6 +76,12 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(notificationServiceListNotificationsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		markNotificationsAsRead: connect.NewClient[v1.MarkNotificationsAsReadRequest, v1.MarkNotificationsAsReadResponse](
+			httpClient,
+			baseURL+NotificationServiceMarkNotificationsAsReadProcedure,
+			connect.WithSchema(notificationServiceMarkNotificationsAsReadMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		unreadNotifications: connect.NewClient[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse](
 			httpClient,
 			baseURL+NotificationServiceUnreadNotificationsProcedure,
@@ -82,13 +93,19 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 
 // notificationServiceClient implements NotificationServiceClient.
 type notificationServiceClient struct {
-	listNotifications   *connect.Client[v1.ListNotificationsRequest, v1.ListNotificationsResponse]
-	unreadNotifications *connect.Client[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse]
+	listNotifications       *connect.Client[v1.ListNotificationsRequest, v1.ListNotificationsResponse]
+	markNotificationsAsRead *connect.Client[v1.MarkNotificationsAsReadRequest, v1.MarkNotificationsAsReadResponse]
+	unreadNotifications     *connect.Client[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse]
 }
 
 // ListNotifications calls api.v1.NotificationService.ListNotifications.
 func (c *notificationServiceClient) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) {
 	return c.listNotifications.CallUnary(ctx, req)
+}
+
+// MarkNotificationsAsRead calls api.v1.NotificationService.MarkNotificationsAsRead.
+func (c *notificationServiceClient) MarkNotificationsAsRead(ctx context.Context, req *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error) {
+	return c.markNotificationsAsRead.CallUnary(ctx, req)
 }
 
 // UnreadNotifications calls api.v1.NotificationService.UnreadNotifications.
@@ -99,6 +116,7 @@ func (c *notificationServiceClient) UnreadNotifications(ctx context.Context, req
 // NotificationServiceHandler is an implementation of the api.v1.NotificationService service.
 type NotificationServiceHandler interface {
 	ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error)
+	MarkNotificationsAsRead(context.Context, *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error)
 	UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest], *connect.ServerStream[v1.UnreadNotificationsResponse]) error
 }
 
@@ -114,6 +132,12 @@ func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...conne
 		connect.WithSchema(notificationServiceListNotificationsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	notificationServiceMarkNotificationsAsReadHandler := connect.NewUnaryHandler(
+		NotificationServiceMarkNotificationsAsReadProcedure,
+		svc.MarkNotificationsAsRead,
+		connect.WithSchema(notificationServiceMarkNotificationsAsReadMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	notificationServiceUnreadNotificationsHandler := connect.NewServerStreamHandler(
 		NotificationServiceUnreadNotificationsProcedure,
 		svc.UnreadNotifications,
@@ -124,6 +148,8 @@ func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...conne
 		switch r.URL.Path {
 		case NotificationServiceListNotificationsProcedure:
 			notificationServiceListNotificationsHandler.ServeHTTP(w, r)
+		case NotificationServiceMarkNotificationsAsReadProcedure:
+			notificationServiceMarkNotificationsAsReadHandler.ServeHTTP(w, r)
 		case NotificationServiceUnreadNotificationsProcedure:
 			notificationServiceUnreadNotificationsHandler.ServeHTTP(w, r)
 		default:
@@ -137,6 +163,10 @@ type UnimplementedNotificationServiceHandler struct{}
 
 func (UnimplementedNotificationServiceHandler) ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.NotificationService.ListNotifications is not implemented"))
+}
+
+func (UnimplementedNotificationServiceHandler) MarkNotificationsAsRead(context.Context, *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.NotificationService.MarkNotificationsAsRead is not implemented"))
 }
 
 func (UnimplementedNotificationServiceHandler) UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest], *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
