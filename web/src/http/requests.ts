@@ -13,6 +13,8 @@ import {
 import {
   ListNotificationsRequestSchema,
   type ListNotificationsResponse,
+  MarkNotificationsAsReadRequestSchema,
+  type MarkNotificationsAsReadResponse,
 } from '@/proto/api/v1/notification_service_pb.ts'
 import {
   FollowUserRequestSchema,
@@ -391,14 +393,17 @@ export const listNotifications = async (
   pageToken: Uint8Array,
 ): Promise<ListNotificationsResponse | void> => {
   const req = create(ListNotificationsRequestSchema, {
-    markAsRead: true,
     pagination: {
       pageLimit: 100,
       pageToken: pageToken,
     },
-    unreadOnly: false,
   })
   return tryCatch(() => notificationClient.listNotifications(req))
+}
+
+export const markNotificationAsRead = async (): Promise<MarkNotificationsAsReadResponse | void> => {
+  const req = create(MarkNotificationsAsReadRequestSchema, {})
+  return tryCatch(() => notificationClient.markNotificationsAsRead(req))
 }
 
 export const listWorkouts = async (
