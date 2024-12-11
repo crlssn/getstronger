@@ -42,6 +42,9 @@ import {
   type DeleteExerciseResponse,
   GetExerciseRequestSchema,
   type GetExerciseResponse,
+  GetPersonalBestsRequestSchema,
+  type GetPersonalBestsResponse, GetPreviousWorkoutSetsRequestSchema,
+  type GetPreviousWorkoutSetsResponse,
   ListExercisesRequestSchema,
   type ListExercisesResponse,
   ListSetsRequestSchema,
@@ -71,7 +74,7 @@ import {
 
 import {
   authClient,
-  ExerciseClient,
+  exerciseClient,
   feedClient,
   notificationClient,
   routineClient,
@@ -110,7 +113,7 @@ export const deleteExercise = async (id: string): Promise<DeleteExerciseResponse
     id: id,
   })
 
-  return tryCatch(() => ExerciseClient.deleteExercise(req))
+  return tryCatch(() => exerciseClient.deleteExercise(req))
 }
 
 export const deleteRoutine = async (id: string): Promise<DeleteRoutineResponse | void> => {
@@ -167,12 +170,12 @@ export const getExercise = async (id: string): Promise<GetExerciseResponse | voi
   const req = create(GetExerciseRequestSchema, {
     id: id,
   })
-  return tryCatch(() => ExerciseClient.getExercise(req))
+  return tryCatch(() => exerciseClient.getExercise(req))
 }
 
 export const createExercise = async (request: CreateExerciseRequest): Promise<CreateExerciseResponse | void> => {
   const req = create(CreateExerciseRequestSchema, request)
-  return tryCatch(() => ExerciseClient.createExercise(req))
+  return tryCatch(() => exerciseClient.createExercise(req))
 }
 
 export const listSets = async (exerciseId: string, pageToken: Uint8Array): Promise<ListSetsResponse | void> => {
@@ -183,7 +186,7 @@ export const listSets = async (exerciseId: string, pageToken: Uint8Array): Promi
       pageToken: pageToken,
     }
   })
-  return tryCatch(() => ExerciseClient.listSets(req))
+  return tryCatch(() => exerciseClient.listSets(req))
 }
 
 export const getRoutine = async (id: string): Promise<GetRoutineResponse | void> => {
@@ -195,10 +198,12 @@ export const getRoutine = async (id: string): Promise<GetRoutineResponse | void>
 
 export const listExercises = async (pageToken: Uint8Array): Promise<ListExercisesResponse | void> => {
   const req = create(ListExercisesRequestSchema, {
+    name: '',
+    exerciseIds: [],
     pageSize: 100,
     pageToken: pageToken,
   })
-  return tryCatch(() => ExerciseClient.listExercises(req))
+  return tryCatch(() => exerciseClient.listExercises(req))
 }
 
 export const createRoutine = async (name: string, exerciseIds: string[]): Promise<CreateRoutineResponse | void> => {
@@ -232,7 +237,7 @@ export const updateExercise = async (id: string, name: string, label: string): P
       paths: ['name', 'label'],
     } as FieldMask,
   })
-  return tryCatch(() => ExerciseClient.updateExercise(req))
+  return tryCatch(() => exerciseClient.updateExercise(req))
 }
 
 export const createWorkout = async (routineId: string, exerciseSets: ExerciseSets[], startedAt: DateTimeMaybeValid, finishedAt: DateTimeMaybeValid): Promise<CreateWorkoutResponse | void> => {
@@ -363,6 +368,20 @@ export const postWorkoutComment = async (workoutId: string, comment: string): Pr
     workoutId: workoutId,
   })
   return tryCatch(() => workoutClient.postComment(req))
+}
+
+export const getPersonalBests = async (userId: string): Promise<GetPersonalBestsResponse | void> => {
+  const req = create(GetPersonalBestsRequestSchema, {
+    userId: userId,
+  })
+  return tryCatch(() => exerciseClient.getPersonalBests(req))
+}
+
+export const getPreviousWorkoutSets = async (exerciseIds: string[]): Promise<GetPreviousWorkoutSetsResponse | void> => {
+  const req = create(GetPreviousWorkoutSetsRequestSchema, {
+    exerciseIds: exerciseIds,
+  })
+  return tryCatch(() => exerciseClient.getPreviousWorkoutSets(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

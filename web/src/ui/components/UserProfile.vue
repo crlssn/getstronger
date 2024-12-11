@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { create } from '@bufbuild/protobuf'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useRoute, useRouter } from 'vue-router'
 import AppList from '@/ui/components/AppList.vue'
@@ -10,10 +9,17 @@ import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { ExerciseClient } from '@/http/clients'
 import { type Workout } from '@/proto/api/v1/workout_service_pb.ts'
-import { GetPersonalBestsRequestSchema, type PersonalBest } from '@/proto/api/v1/exercise_service_pb.ts'
-import {followUser, getUser, listFollowees, listFollowers, listWorkouts, unfollowUser} from "@/http/requests.ts";
+import { type PersonalBest } from '@/proto/api/v1/exercise_service_pb.ts'
+import {
+  followUser,
+  getPersonalBests,
+  getUser,
+  listFollowees,
+  listFollowers,
+  listWorkouts,
+  unfollowUser
+} from "@/http/requests.ts";
 
 const route = useRoute()
 const router = useRouter()
@@ -72,28 +78,22 @@ const fetchWorkouts = async () => {
 }
 
 const fetchFollowers = async () => {
-  if (!user.value) return
-
-  const res = await listFollowers(user.value.id)
+  const res = await listFollowers(user.value?.id as string)
   if (!res) return
 
   followers.value = res.followers
 }
 
 const fetchFollowees = async () => {
-  if (!user.value) return
-
-  const res = await listFollowees(user.value.id)
+  const res = await listFollowees(user.value?.id as string)
   if (!res) return
 
   followees.value = res.followees
 }
 
 const fetchPersonalBests = async () => {
-  const req = create(GetPersonalBestsRequestSchema, {
-    userId: user.value?.id,
-  })
-  const res = await ExerciseClient.getPersonalBests(req)
+  const res = await getPersonalBests(user.value?.id as string)
+  if (!res) return
   personalBests.value = res.personalBests
 }
 
