@@ -5,8 +5,8 @@ import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
-import { RoutineClient } from '@/http/clients'
-import { deleteRoutine } from '@/http/requests'
+import { routineClient } from '@/http/clients'
+import {deleteRoutine, getRoutine, updateExerciseOrder} from '@/http/requests'
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
@@ -15,10 +15,9 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import {
-  GetRoutineRequestSchema,
   type Routine,
   UpdateExerciseOrderRequestSchema,
-} from '@/proto/api/v1/routines_pb'
+} from '@/proto/api/v1/routine_service_pb.ts'
 
 import AppListItemLink from '../components/AppListItemLink.vue'
 
@@ -28,16 +27,17 @@ const pageTitleStore = usePageTitleStore()
 const alertStore = useAlertStore()
 const el = ref<HTMLElement | null>(null)
 
-const fetchRoutine = async (id: string) => {
-  const req = create(GetRoutineRequestSchema, { id })
-  const res = await RoutineClient.get(req)
-  routine.value = res.routine
-}
-
 onMounted(async () => {
   await fetchRoutine(route.params.id as string)
   pageTitleStore.setPageTitle(routine.value?.name as string)
 })
+
+const fetchRoutine = async (id: string) => {
+  const res = await getRoutine(id)
+  if (!res) return
+
+  routine.value = res.routine
+}
 
 useSortable(el, routine.value?.exercises || [], {
   chosenClass: 'sortable-chosen',
@@ -53,13 +53,9 @@ useSortable(el, routine.value?.exercises || [], {
 
     const [movedExercise] = exercises.splice(oldIndex, 1)
     exercises.splice(newIndex, 0, movedExercise)
+    const exerciseIDs = exercises.map((e) => e.id)
 
-    const updatedOrder = exercises.map((e) => e.id)
-    const req = create(UpdateExerciseOrderRequestSchema, {
-      exerciseIds: updatedOrder,
-      routineId: routine.value?.id,
-    })
-    await RoutineClient.updateExerciseOrder(req)
+    await updateExerciseOrder(routine.value?.id as string, exerciseIDs)
   },
 })
 

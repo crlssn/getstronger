@@ -6,7 +6,7 @@ import {useRoute} from 'vue-router'
 import router from '@/router/router'
 import {create} from '@bufbuild/protobuf'
 import {onMounted, onUnmounted, ref} from 'vue'
-import {createWorkout} from "@/http/requests.ts";
+import {createWorkout, getRoutine} from "@/http/requests.ts";
 import {useAlertStore} from "@/stores/alerts.ts";
 import {useWorkoutStore} from '@/stores/workout'
 import AppList from "@/ui/components/AppList.vue";
@@ -14,10 +14,10 @@ import {usePageTitleStore} from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from "@/ui/components/AppListItem.vue";
 import {MinusCircleIcon} from '@heroicons/vue/24/outline'
-import {ExerciseClient, RoutineClient} from '@/http/clients'
+import {ExerciseClient} from '@/http/clients'
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import {GetPreviousWorkoutSetsRequestSchema} from '@/proto/api/v1/exercise_pb'
-import {GetRoutineRequestSchema, type Routine} from '@/proto/api/v1/routines_pb'
+import {GetPreviousWorkoutSetsRequestSchema} from '@/proto/api/v1/exercise_service_pb'
+import {type Routine} from '@/proto/api/v1/routine_service_pb'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -67,8 +67,9 @@ const sets = (exerciseId: string) => {
 }
 
 const fetchRoutine = async (id: string) => {
-  const req = create(GetRoutineRequestSchema, {id})
-  const res = await RoutineClient.get(req)
+  const res = await getRoutine(id)
+  if (!res) return
+
   routine.value = res.routine
 }
 
