@@ -414,7 +414,7 @@ export const listWorkouts = async (
 ): Promise<ListWorkoutsResponse | void> => {
   const req = create(ListWorkoutsRequestSchema, {
     pagination: {
-      pageLimit: 100,
+      pageLimit: defaultPageLimit,
       pageToken: pageToken,
     },
     userIds: userIds,

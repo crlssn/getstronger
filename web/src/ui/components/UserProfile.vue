@@ -11,6 +11,8 @@ import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { type Workout } from '@/proto/api/v1/workout_service_pb.ts'
 import { type PersonalBest } from '@/proto/api/v1/exercise_service_pb.ts'
+import { vInfiniteScroll } from '@vueuse/components'
+import usePagination from '@/utils/usePagination'
 import {
   followUser,
   getPersonalBests,
@@ -25,9 +27,10 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const pageTitleStore = usePageTitleStore()
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 const user = ref<User>()
-const workouts = ref<Workout[]>()
+const workouts = ref([] as Workout[])
 const followers = ref<User[]>()
 const followees = ref<User[]>()
 const personalBests = ref<PersonalBest[]>()
@@ -65,21 +68,13 @@ const fetchUser = async () => {
   }
 }
 
-const pageToken = ref(new Uint8Array(0))
-
 const fetchWorkouts = async () => {
   const userIds = [user.value?.id as string]
   const res = await listWorkouts(userIds, pageToken.value)
   if (!res) return
 
-  workouts.value = [...(workouts.value || []), ...res.workouts]
-  if (!res.pagination) return
-
-  pageToken.value = res.pagination.nextPageToken
-  if (pageToken.value.length > 0) {
-    // TODO: Implement pagination.
-    await fetchWorkouts()
-  }
+  workouts.value = [...workouts.value, ...res.workouts]
+  pageToken.value = resolvePageToken(res.pagination)
 }
 
 const fetchFollowers = async () => {
@@ -203,6 +198,7 @@ const updateTab = (event: Event) => {
   </div>
   <div v-if="activeTab === tabs[0].href">
     <CardWorkout v-for="workout in workouts" :key="workout.id" compact :workout="workout" />
+    <div v-if="hasMorePages" v-infinite-scroll="fetchWorkouts" />
   </div>
   <AppList v-if="activeTab === tabs[1].href">
     <AppListItem v-for="personalBest in personalBests" :key="personalBest?.exercise?.id">
