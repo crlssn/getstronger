@@ -1,12 +1,9 @@
 # For details on buf.yaml configuration, visit https://buf.build/docs/configuration/v2/buf-yaml
 version: v2
 modules:
-  - path: protobufs
+  - path: proto
 lint:
   use:
-    - DEFAULT
-breaking:
-  use:
-    - FILE
+    - STANDARD
 deps:
   - buf.build/bufbuild/protovalidate

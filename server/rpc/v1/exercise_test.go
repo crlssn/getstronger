@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
+	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/test/testdb"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
@@ -75,7 +75,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	for _, t := range tests {
-		res, err := s.handler.Create(ctx, t.req)
+		res, err := s.handler.CreateExercise(ctx, t.req)
 		if t.expected.err != nil {
 			s.Require().Nil(res)
 			s.Require().Error(err)

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { create } from '@bufbuild/protobuf'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useRoute, useRouter } from 'vue-router'
 import AppList from '@/ui/components/AppList.vue'
@@ -10,15 +9,17 @@ import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { ExerciseClient, UserClient, WorkoutClient } from '@/http/clients'
-import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
-import { GetPersonalBestsRequestSchema, type PersonalBest } from '@/proto/api/v1/exercise_pb.ts'
+import { type Workout } from '@/proto/api/v1/workout_service_pb.ts'
+import { type PersonalBest } from '@/proto/api/v1/exercise_service_pb.ts'
 import {
-  FollowRequestSchema, GetUserRequestSchema,
-  ListFolloweesRequestSchema,
-  ListFollowersRequestSchema,
-  UnfollowRequestSchema
-} from '@/proto/api/v1/users_pb.ts'
+  followUser,
+  getPersonalBests,
+  getUser,
+  listFollowees,
+  listFollowers,
+  listWorkouts,
+  unfollowUser
+} from "@/http/requests.ts";
 
 const route = useRoute()
 const router = useRouter()
@@ -52,64 +53,60 @@ onMounted(async () => {
 })
 
 const fetchUser = async () => {
-  const req = create(GetUserRequestSchema, {
-    id: props.userId,
-  })
-  const res = await UserClient.get(req)
+  const res = await getUser(props.userId)
+  if (!res) return
+
   user.value = res.user
   if (user.value?.id !== authStore.userID) {
     pageTitleStore.setPageTitle(`${user.value?.firstName} ${user.value?.lastName}`)
   }
 }
 
+const pageToken = ref(new Uint8Array(0))
+
 const fetchWorkouts = async () => {
-  const req = create(ListWorkoutsRequestSchema, {
-    pageSize: 100,
-    pageToken: new Uint8Array(0),
-    userIds: [user.value?.id || ''],
-  })
-  const res = await WorkoutClient.list(req)
-  workouts.value = res.workouts
+  const userIds = [user.value?.id as string]
+  const res = await listWorkouts(userIds, pageToken.value)
+  if (!res) return
+
+  workouts.value = [...workouts.value || [], ...res.workouts]
+  pageToken.value = res.nextPageToken
+  if (pageToken.value.length > 0) {
+    // TODO: Implement infinite scroll.
+    await fetchWorkouts()
+  }
 }
 
 const fetchFollowers = async () => {
-  const req = create(ListFollowersRequestSchema, {
-    followerId: user.value?.id,
-  })
-  const res = await UserClient.listFollowers(req)
+  const res = await listFollowers(user.value?.id as string)
+  if (!res) return
+
   followers.value = res.followers
 }
 
 const fetchFollowees = async () => {
-  const req = create(ListFolloweesRequestSchema, {
-    followeeId: user.value?.id,
-  })
-  const res = await UserClient.listFollowees(req)
+  const res = await listFollowees(user.value?.id as string)
+  if (!res) return
+
   followees.value = res.followees
 }
 
 const fetchPersonalBests = async () => {
-  const req = create(GetPersonalBestsRequestSchema, {
-    userId: user.value?.id,
-  })
-  const res = await ExerciseClient.getPersonalBests(req)
+  const res = await getPersonalBests(user.value?.id as string)
+  if (!res) return
   personalBests.value = res.personalBests
 }
 
-const followUser = async () => {
-  const req = create(FollowRequestSchema, {
-    followId: props.userId as string,
-  })
-  await UserClient.follow(req)
+const onFollowUser = async () => {
+  if (!user.value) return
+  await followUser(user.value.id)
   await fetchUser()
   await fetchFollowers()
 }
 
-const unfollowUser = async () => {
-  const req = create(UnfollowRequestSchema, {
-    unfollowId: props.userId as string,
-  })
-  await UserClient.unfollow(req)
+const onUnfollowUser = async () => {
+  if (!user.value) return
+  await unfollowUser(user.value.id)
   await fetchUser()
   await fetchFollowers()
 }
@@ -154,7 +151,7 @@ const updateTab = (event: Event) => {
       colour="gray"
       type="button"
       container-class="px-4 pb-4"
-      @click="unfollowUser"
+      @click="onUnfollowUser"
     >
       Unfollow {{ user?.firstName }}
     </AppButton>
@@ -163,7 +160,7 @@ const updateTab = (event: Event) => {
       colour="primary"
       type="button"
       container-class="px-4 pb-4"
-      @click="followUser"
+      @click="onFollowUser"
     >
       Follow {{ user?.firstName }}
     </AppButton>

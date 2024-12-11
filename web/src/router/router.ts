@@ -1,7 +1,5 @@
 import HomeView from '@/ui/HomeView.vue'
 import NotFound from '@/ui/NotFound.vue'
-import { create } from '@bufbuild/protobuf'
-import { AuthClient } from '@/http/clients'
 import { useAuthStore } from '@/stores/auth'
 import UserView from '@/ui/users/UserView.vue'
 import UserLogin from '@/ui/auth/UserLogin.vue'
@@ -19,8 +17,8 @@ import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
 import StartWorkout from '@/ui/workouts/StartWorkout.vue'
 import ViewExercise from '@/ui/exercises/ViewExercise.vue'
+import {logout as logoutRequest} from "@/http/requests.ts";
 import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
-import { LogoutRequestSchema } from '@/proto/api/v1/auth_pb'
 import ListExercises from '@/ui/exercises/ListExercises.vue'
 import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
 import CreateExercise from '@/ui/exercises/CreateExercise.vue'
@@ -216,7 +214,7 @@ async function guest() {
 }
 
 async function logout() {
-  await AuthClient.logout(create(LogoutRequestSchema, {}))
+  await logoutRequest()
   const authStore = useAuthStore()
   authStore.logout()
 

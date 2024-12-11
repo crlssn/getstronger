@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+import "api/v1/shared.proto";
+
+import "google/protobuf/timestamp.proto";
+
+import "buf/validate/validate.proto";
+
+service WorkoutService {
+  rpc CreateWorkout (CreateWorkoutRequest) returns (CreateWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc GetWorkout (GetWorkoutRequest) returns (GetWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc ListWorkouts (ListWorkoutsRequest) returns (ListWorkoutsResponse) {
+    option (auth) = true;
+  }
+  rpc DeleteWorkout (DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
+    option (auth) = true;
+  }
+  rpc PostComment (PostCommentRequest) returns (PostCommentResponse) {
+    option (auth) = true;
+  }
+  rpc UpdateWorkout (UpdateWorkoutRequest) returns (UpdateWorkoutResponse) {
+    option (auth) = true;
+  }
+}
+
+message CreateWorkoutRequest {
+  string routine_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated ExerciseSets exercise_sets = 2 [(buf.validate.field).repeated.min_items = 1];
+  google.protobuf.Timestamp started_at = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp finished_at = 4 [(buf.validate.field).required = true];
+}
+message CreateWorkoutResponse {
+  string workout_id = 1;
+}
+
+message ListWorkoutsRequest {
+  repeated string user_ids = 1 [(buf.validate.field).repeated = { min_items: 1, items: { string: { uuid: true }}}];
+  int32 page_size = 2 [(buf.validate.field).int32 = { gte: 1, lte: 100 }];
+  bytes page_token = 3;
+}
+message ListWorkoutsResponse {
+  repeated Workout workouts = 1;
+  bytes next_page_token = 2;
+}
+
+message GetWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetWorkoutResponse {
+  Workout workout = 1;
+}
+
+message DeleteWorkoutRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeleteWorkoutResponse {}
+
+message PostCommentRequest {
+  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+  string comment = 2 [(buf.validate.field).string.min_len = 1];
+}
+message PostCommentResponse {
+  WorkoutComment comment = 1;
+}
+
+message UpdateWorkoutRequest {
+  Workout workout = 1 [(buf.validate.field).required = true];
+}
+message UpdateWorkoutResponse {}
+
+message Workout {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  User user = 3 [(buf.validate.field).required = true];
+  repeated ExerciseSets exercise_sets = 4 [(buf.validate.field).repeated.min_items = 1];
+  repeated WorkoutComment comments = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp finished_at = 7 [(buf.validate.field).required = true];
+}
+
+message WorkoutComment {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  User user = 2 [(buf.validate.field).required = true];
+  string comment = 4 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 5 [(buf.validate.field).required = true];
+}

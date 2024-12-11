@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+import "api/v1/shared.proto";
+
+import "buf/validate/validate.proto";
+
+service UserService {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {
+    option (auth) = true;
+  }
+  rpc FollowUser (FollowUserRequest) returns (FollowUserResponse) {
+    option (auth) = true;
+  }
+  rpc UnfollowUser (UnfollowUserRequest) returns (UnfollowUserResponse) {
+    option (auth) = true;
+  }
+  rpc ListFollowers (ListFollowersRequest) returns (ListFollowersResponse) {
+    option (auth) = true;
+  }
+  rpc ListFollowees (ListFolloweesRequest) returns (ListFolloweesResponse) {
+    option (auth) = true;
+  }
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse) {
+    option (auth) = true;
+  }
+}
+
+message GetUserRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetUserResponse {
+  User user = 1;
+}
+
+message FollowUserRequest {
+  string follow_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message FollowUserResponse {}
+
+message UnfollowUserRequest {
+  string unfollow_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message UnfollowUserResponse {}
+
+message ListFollowersRequest {
+  string follower_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message ListFollowersResponse {
+  repeated User followers = 1;
+}
+
+message ListFolloweesRequest {
+  string followee_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message ListFolloweesResponse {
+  repeated User followees = 1;
+}
+
+message SearchUsersRequest {
+  string query = 1 [(buf.validate.field).string.min_len = 3];
+  PaginationRequest pagination = 2 [(buf.validate.field).required = true];
+}
+message SearchUsersResponse {
+  repeated User users = 1;
+  PaginationResponse pagination = 2;
+}

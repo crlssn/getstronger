@@ -4,9 +4,7 @@ import type {Exercise, ExerciseSets} from '@/proto/api/v1/shared_pb'
 import {DateTime} from 'luxon'
 import {useRoute} from 'vue-router'
 import router from '@/router/router'
-import {create} from '@bufbuild/protobuf'
 import {onMounted, onUnmounted, ref} from 'vue'
-import {createWorkout} from "@/http/requests.ts";
 import {useAlertStore} from "@/stores/alerts.ts";
 import {useWorkoutStore} from '@/stores/workout'
 import AppList from "@/ui/components/AppList.vue";
@@ -14,10 +12,9 @@ import {usePageTitleStore} from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from "@/ui/components/AppListItem.vue";
 import {MinusCircleIcon} from '@heroicons/vue/24/outline'
-import {ExerciseClient, RoutineClient} from '@/http/clients'
+import {type Routine} from '@/proto/api/v1/routine_service_pb'
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import {GetPreviousWorkoutSetsRequestSchema} from '@/proto/api/v1/exercise_pb'
-import {GetRoutineRequestSchema, type Routine} from '@/proto/api/v1/routines_pb'
+import {createWorkout, getPreviousWorkoutSets, getRoutine} from "@/http/requests.ts";
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -46,10 +43,10 @@ onUnmounted(() => {
 })
 
 const fetchLatestExerciseSets = async () => {
-  const req = create(GetPreviousWorkoutSetsRequestSchema, {
-    exerciseIds: routine.value?.exercises?.map((exercise) => exercise.id) || [],
-  })
-  const res = await ExerciseClient.getPreviousWorkoutSets(req)
+  const exerciseIds = routine.value?.exercises?.map((exercise) => exercise.id) || []
+  const res = await getPreviousWorkoutSets(exerciseIds)
+  if (!res) return
+
   prevExerciseSets.value = res.exerciseSets
 }
 
@@ -67,8 +64,9 @@ const sets = (exerciseId: string) => {
 }
 
 const fetchRoutine = async (id: string) => {
-  const req = create(GetRoutineRequestSchema, {id})
-  const res = await RoutineClient.get(req)
+  const res = await getRoutine(id)
+  if (!res) return
+
   routine.value = res.routine
 }
 

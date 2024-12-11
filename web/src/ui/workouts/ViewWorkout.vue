@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { create } from '@bufbuild/protobuf'
-import { WorkoutClient } from '@/http/clients'
+import {getWorkout} from "@/http/requests.ts";
 import { usePageTitleStore } from '@/stores/pageTitle'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import {
-  GetWorkoutRequestSchema,
   type Workout,
-} from '@/proto/api/v1/workouts_pb'
+} from '@/proto/api/v1/workout_service_pb.ts'
 
 const route = useRoute()
 const workout = ref<Workout>()
@@ -20,10 +18,9 @@ onMounted(async () => {
 })
 
 const fetchWorkout = async () => {
-  const req = create(GetWorkoutRequestSchema, {
-    id: route.params.id as string,
-  })
-  const res = await WorkoutClient.get(req)
+  const res = await getWorkout(route.params.id as string)
+  if (!res) return
+
   workout.value = res.workout
 }
 </script>

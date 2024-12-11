@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+import "api/v1/shared.proto";
+import "api/v1/workout_service.proto";
+
+import "buf/validate/validate.proto";
+
+service FeedService {
+  rpc ListFeedItems (ListFeedItemsRequest) returns (ListFeedItemsResponse) {
+    option (auth) = true;
+  }
+}
+
+message ListFeedItemsRequest {
+  PaginationRequest pagination = 1 [(buf.validate.field).required = true];
+}
+message ListFeedItemsResponse {
+  repeated FeedItem items = 1;
+  PaginationResponse pagination = 2;
+}
+
+message FeedItem {
+  oneof type {
+    Workout workout = 1;
+  }
+}

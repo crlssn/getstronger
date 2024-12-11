@@ -1,28 +1,24 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { create } from '@bufbuild/protobuf'
-import { WorkoutClient } from '@/http/clients'
 import { useAuthStore } from '@/stores/auth.ts'
+import {listWorkouts} from "@/http/requests.ts";
 import { formatToCompactDateTime } from '@/utils/datetime'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { ListWorkoutsRequestSchema, type Workout } from '@/proto/api/v1/workouts_pb'
+import { type Workout } from '@/proto/api/v1/workout_service_pb'
 
 const authStore = useAuthStore()
 const pageToken = ref(new Uint8Array(0))
 const workouts = ref(Array<Workout>())
 
 const fetchWorkouts = async () => {
-  const req = create(ListWorkoutsRequestSchema, {
-    pageSize: 100,
-    pageToken: pageToken.value,
-    userIds: [authStore.userID],
-  })
-  const res = await WorkoutClient.list(req)
-  workouts.value = [...workouts.value, ...res.workouts]
+  const userIds = [authStore.userID]
+  const res = await listWorkouts(userIds, pageToken.value)
+  if (!res) return
 
-  // TODO: Implement pagination.
-  if (res.nextPageToken.length > 0) {
-    pageToken.value = res.nextPageToken
+  workouts.value = [...workouts.value || [], ...res.workouts]
+  pageToken.value = res.nextPageToken
+  if (pageToken.value.length > 0) {
+    // TODO: Implement infinite scroll.
     await fetchWorkouts()
   }
 }

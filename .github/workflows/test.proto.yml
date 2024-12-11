@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     paths:
-      - 'protobufs/**'
+      - 'proto/**'
       - 'buf.yaml'
       - 'buf.gen.yaml'
       - 'package.json'
@@ -54,5 +54,5 @@ jobs:
         run: go install github.com/yoheimuta/protolint/cmd/protolint@latest
 
       - name: Run protolint
-        working-directory: ./protobufs
+        working-directory: ./proto
         run: protolint .

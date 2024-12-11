@@ -6,7 +6,7 @@ import { createExercise } from '@/http/requests'
 import AppList from "@/ui/components/AppList.vue";
 import AppButton from '@/ui/components/AppButton.vue'
 import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import { type CreateExerciseRequest } from '@/proto/api/v1/exercise_pb'
+import { type CreateExerciseRequest } from '@/proto/api/v1/exercise_service_pb'
 
 const router = useRouter()
 const alertStore = useAlertStore()

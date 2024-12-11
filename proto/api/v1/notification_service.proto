@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/options.proto";
+import "api/v1/shared.proto";
+import "api/v1/workout_service.proto";
+
+import "buf/validate/validate.proto";
+
+service NotificationService {
+  rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse) {
+    option (auth) = true;
+  }
+  rpc UnreadNotifications (UnreadNotificationsRequest) returns (stream UnreadNotificationsResponse) {
+    option (auth) = true;
+  }
+}
+
+message ListNotificationsRequest {
+  bool unread_only = 1;
+  bool mark_as_read = 2;
+  PaginationRequest pagination = 3 [(buf.validate.field).required = true];
+}
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  PaginationResponse pagination = 2;
+}
+
+message Notification {
+  message UserFollowed {
+    User actor = 1;
+  }
+  message WorkoutComment {
+    User actor = 1;
+    Workout workout = 2;
+  }
+
+  string id = 1;
+  // DEBT: This should be a timestamp but the client is not able to parse it.
+  int64 notified_at_unix = 2;
+  oneof type {
+    UserFollowed user_followed = 3;
+    WorkoutComment workout_comment = 4;
+  }
+}
+
+message UnreadNotificationsRequest {}
+message UnreadNotificationsResponse {
+  int64 count = 1;
+}

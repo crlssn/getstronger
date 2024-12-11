@@ -6,7 +6,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
-	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 )
 
 type Cookies struct {

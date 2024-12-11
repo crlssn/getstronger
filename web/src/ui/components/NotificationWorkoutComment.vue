@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { User } from '@/proto/api/v1/shared_pb.ts'
-import type { Workout } from '@/proto/api/v1/workouts_pb.ts'
+import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'

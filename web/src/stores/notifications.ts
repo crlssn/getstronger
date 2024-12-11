@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { create } from '@bufbuild/protobuf'
-import { NotificationClient } from '@/http/clients.ts'
-import { UnreadNotificationsRequestSchema } from '@/proto/api/v1/notifications_pb.ts'
+import { notificationClient } from '@/http/clients.ts'
+import { UnreadNotificationsRequestSchema } from '@/proto/api/v1/notification_service_pb.ts'
 
 export const useNotificationStore = defineStore('notifications', () => {
   const unreadCount = ref(0)
@@ -11,7 +11,7 @@ export const useNotificationStore = defineStore('notifications', () => {
     const req = create(UnreadNotificationsRequestSchema, {})
     while (true) {
       try {
-        const stream = NotificationClient.unreadNotifications(req)
+        const stream = notificationClient.unreadNotifications(req)
         for await (const message of stream) {
           unreadCount.value = Number(message.count)
         }

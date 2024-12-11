@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/crlssn/getstronger/server/pkg/jwt"
-	apiv1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
+	apiv1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 	"github.com/crlssn/getstronger/server/pkg/xzap"
 )
@@ -108,13 +108,13 @@ func (a *auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 
 func (a *auth) initMethods() {
 	fileDescriptors := []protoreflect.FileDescriptor{
-		apiv1.File_api_v1_auth_proto,
-		apiv1.File_api_v1_feed_proto,
-		apiv1.File_api_v1_users_proto,
-		apiv1.File_api_v1_exercise_proto,
-		apiv1.File_api_v1_routines_proto,
-		apiv1.File_api_v1_workouts_proto,
-		apiv1.File_api_v1_notifications_proto,
+		apiv1.File_api_v1_auth_service_proto,
+		apiv1.File_api_v1_feed_service_proto,
+		apiv1.File_api_v1_user_service_proto,
+		apiv1.File_api_v1_routine_service_proto,
+		apiv1.File_api_v1_workout_service_proto,
+		apiv1.File_api_v1_exercise_service_proto,
+		apiv1.File_api_v1_notification_service_proto,
 	}
 
 	for _, fileDescriptor := range fileDescriptors {

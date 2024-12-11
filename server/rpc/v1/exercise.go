@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/pb/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
+	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
+	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
@@ -27,7 +27,7 @@ func NewExerciseHandler(r *repo.Repo) apiv1connect.ExerciseServiceHandler {
 	return &exerciseHandler{r}
 }
 
-func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
+func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -46,7 +46,7 @@ func (h *exerciseHandler) Create(ctx context.Context, req *connect.Request[v1.Cr
 	}), nil
 }
 
-func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error) {
+func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
@@ -67,7 +67,7 @@ func (h *exerciseHandler) Get(ctx context.Context, req *connect.Request[v1.GetEx
 
 var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
-func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
+func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -105,7 +105,7 @@ func (h *exerciseHandler) Update(ctx context.Context, req *connect.Request[v1.Up
 	}), nil
 }
 
-func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
+func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -121,7 +121,7 @@ func (h *exerciseHandler) Delete(ctx context.Context, req *connect.Request[v1.De
 	return connect.NewResponse(&v1.DeleteExerciseResponse{}), nil
 }
 
-func (h *exerciseHandler) List(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
+func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 

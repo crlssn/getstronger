@@ -2,16 +2,13 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
-import { create } from '@bufbuild/protobuf'
-import { ExerciseClient } from '@/http/clients'
+import {listExercises} from "@/http/requests.ts";
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { ListExercisesRequestSchema } from '@/proto/api/v1/exercise_pb'
 
 const exercises = ref(Array<Exercise>())
-const name = ref('')
 const pageToken = ref(new Uint8Array(0))
 
 onMounted(() => {
@@ -19,22 +16,14 @@ onMounted(() => {
 })
 
 const fetchExercises = async () => {
-  try {
-    const request = create(ListExercisesRequestSchema, {
-      name: name.value,
-      pageSize: 10,
-      pageToken: pageToken.value,
-    })
+  const res = await listExercises(pageToken.value)
+  if (!res) return
 
-    const response = await ExerciseClient.list(request)
-    exercises.value = [...exercises.value, ...response.exercises]
-
-    if (response.nextPageToken.length > 0) {
-      pageToken.value = response.nextPageToken
-      await fetchExercises()
-    }
-  } catch (error) {
-    console.error('fetch exercises failed:', error)
+  exercises.value = [...exercises.value, ...res.exercises]
+  pageToken.value = res.nextPageToken
+  if (pageToken.value.length > 0) {
+    // TODO: Implement pagination.
+    await fetchExercises()
   }
 }
 </script>
