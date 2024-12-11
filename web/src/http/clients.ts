@@ -1,12 +1,12 @@
 import { createClient } from '@connectrpc/connect'
 import { auth, logger } from '@/http/interceptors'
-import { AuthService } from '@/proto/api/v1/auth_service_pb'
 import { FeedService } from '@/proto/api/v1/feed_pb'
+import { AuthService } from '@/proto/api/v1/auth_service_pb'
 import { UserService } from '@/proto/api/v1/user_service_pb'
+import { createConnectTransport } from '@connectrpc/connect-web'
 import { RoutineService } from '@/proto/api/v1/routine_service_pb'
 import { WorkoutService } from '@/proto/api/v1/workout_service_pb'
 import { ExerciseService } from '@/proto/api/v1/exercise_service_pb'
-import { createConnectTransport } from '@connectrpc/connect-web'
 import { NotificationService } from '@/proto/api/v1/notification_service_pb'
 
 const transport = createConnectTransport({
@@ -18,7 +18,7 @@ const transport = createConnectTransport({
   interceptors: [logger, auth],
 })
 
-export const AuthClient = createClient(AuthService, transport)
+export const authClient = createClient(AuthService, transport)
 export const FeedClient = createClient(FeedService, transport)
 export const UserClient = createClient(UserService, transport)
 export const RoutineClient = createClient(RoutineService, transport)

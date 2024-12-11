@@ -2,8 +2,9 @@ import type {DateTimeMaybeValid} from "luxon/src/datetime";
 import type {FieldMask, Timestamp} from "@bufbuild/protobuf/wkt";
 import type {Exercise, ExerciseSets} from "@/proto/api/v1/shared_pb.ts";
 
+import router from "@/router/router.ts";
 import {create} from "@bufbuild/protobuf"
-import {ConnectError} from "@connectrpc/connect"
+import {Code, ConnectError} from "@connectrpc/connect"
 import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
 import {
   CreateRoutineRequestSchema,
@@ -25,21 +26,6 @@ import {
   type Workout
 } from "@/proto/api/v1/workout_service_pb"
 import {
-  LoginRequestSchema,
-  type LoginResponse,
-  type ResetPasswordRequest,
-  ResetPasswordRequestSchema,
-  type ResetPasswordResponse,
-  type SignupRequest,
-  SignupRequestSchema,
-  type SignupResponse,
-  type UpdatePasswordRequest,
-  UpdatePasswordRequestSchema,
-  type UpdatePasswordResponse,
-  VerifyEmailRequestSchema,
-  type VerifyEmailResponse
-} from "@/proto/api/v1/auth_service_pb"
-import {
   type CreateExerciseRequest,
   CreateExerciseRequestSchema,
   type CreateExerciseResponse,
@@ -52,8 +38,23 @@ import {
   ListSetsRequestSchema,
   type ListSetsResponse, UpdateExerciseRequestSchema, type UpdateExerciseResponse
 } from "@/proto/api/v1/exercise_service_pb"
+import {
+  LoginRequestSchema,
+  type LoginResponse, LogoutRequestSchema, type LogoutResponse, RefreshTokenRequestSchema, type RefreshTokenResponse,
+  type ResetPasswordRequest,
+  ResetPasswordRequestSchema,
+  type ResetPasswordResponse,
+  type SignupRequest,
+  SignupRequestSchema,
+  type SignupResponse,
+  type UpdatePasswordRequest,
+  UpdatePasswordRequestSchema,
+  type UpdatePasswordResponse,
+  VerifyEmailRequestSchema,
+  type VerifyEmailResponse
+} from "@/proto/api/v1/auth_service_pb"
 
-import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
+import {authClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -85,12 +86,22 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     password: password,
   })
 
-  return tryCatch(() => AuthClient.login(req))
+  return tryCatch(() => authClient.login(req))
+}
+
+export const logout = async (): Promise<LogoutResponse | void> => {
+  const req = create(LogoutRequestSchema, {})
+  return tryCatch(() => authClient.logout(req))
+}
+
+export const refreshToken = async (): Promise<RefreshTokenResponse | void> => {
+  const req = create(RefreshTokenRequestSchema, {})
+  return tryCatch(() =>  authClient.refreshToken(req))
 }
 
 export const signup = async (request: SignupRequest): Promise<SignupResponse | void> => {
   const req = create(SignupRequestSchema, request)
-  return tryCatch(() => AuthClient.signup(req))
+  return tryCatch(() => authClient.signup(req))
 }
 
 export const verifyEmail = async (token: string): Promise<VerifyEmailResponse | void> => {
@@ -98,17 +109,17 @@ export const verifyEmail = async (token: string): Promise<VerifyEmailResponse | 
     token: token,
   })
 
-  return tryCatch(() => AuthClient.verifyEmail(req))
+  return tryCatch(() => authClient.verifyEmail(req))
 }
 
 export const resetPassword = async (request: ResetPasswordRequest): Promise<ResetPasswordResponse | void> => {
   const req = create(ResetPasswordRequestSchema, request)
-  return tryCatch(() => AuthClient.resetPassword(req))
+  return tryCatch(() => authClient.resetPassword(req))
 }
 
 export const updatePassword = async (request: UpdatePasswordRequest): Promise<UpdatePasswordResponse | void> => {
   const req = create(UpdatePasswordRequestSchema, request)
-  return tryCatch(() => AuthClient.updatePassword(req))
+  return tryCatch(() => authClient.updatePassword(req))
 }
 
 export const getExercise = async (id: string): Promise<GetExerciseResponse | void> => {
@@ -218,6 +229,11 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
     // TODO: Use custom alert component.
     alert(error)
     if (error instanceof ConnectError) {
+      if (error.code === Code.Unauthenticated) {
+        console.warn('user unauthenticated: logging out')
+        await router.push('/logout')
+      }
+
       for (const detail of error.findDetails(ErrorDetailSchema)) {
         switch (detail.error) {
           case Error.EMAIL_NOT_VERIFIED:

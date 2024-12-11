@@ -1,7 +1,7 @@
 import type { Interceptor } from '@connectrpc/connect'
 
 import { useAuthStore } from '@/stores/auth'
-import { RefreshAccessTokenOrLogout } from '@/jwt/jwt'
+import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { Code, ConnectError } from '@connectrpc/connect'
 
 export const logger: Interceptor = (next) => async (req) => {
@@ -26,7 +26,7 @@ export const auth: Interceptor = (next) => async (req) => {
     }
 
     console.log('refreshing access token to attempt request again')
-    await RefreshAccessTokenOrLogout()
+    await refreshAccessTokenOrLogout()
     req.header.set('Authorization', `Bearer ${authStore.accessToken}`)
     return next(req)
   }
