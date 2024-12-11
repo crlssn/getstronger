@@ -7,7 +7,7 @@ import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { vInfiniteScroll } from '@vueuse/components'
-import usePagination from '@/utils/usePagination.ts'
+import usePagination from '@/utils/usePagination'
 
 const notifications = ref([] as Notification[])
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()

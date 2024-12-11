@@ -202,7 +202,7 @@ export const listSets = async (
   const req = create(ListSetsRequestSchema, {
     exerciseId: exerciseId,
     pagination: {
-      pageLimit: 100,
+      pageLimit: defaultPageLimit,
       pageToken: pageToken,
     },
   })
