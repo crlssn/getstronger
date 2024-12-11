@@ -12,7 +12,7 @@ import {
   type DeleteRoutineResponse,
   GetRoutineRequestSchema,
   type GetRoutineResponse, UpdateRoutineRequestSchema, type UpdateRoutineResponse
-} from "@/proto/api/v1/routines_pb"
+} from "@/proto/api/v1/routine_service_pb"
 import {
   CreateWorkoutRequestSchema,
   type CreateWorkoutResponse,
@@ -23,7 +23,7 @@ import {
   UpdateWorkoutRequestSchema,
   type UpdateWorkoutResponse,
   type Workout
-} from "@/proto/api/v1/workouts_pb"
+} from "@/proto/api/v1/workout_service_pb"
 import {
   LoginRequestSchema,
   type LoginResponse,
@@ -38,7 +38,7 @@ import {
   type UpdatePasswordResponse,
   VerifyEmailRequestSchema,
   type VerifyEmailResponse
-} from "@/proto/api/v1/auth_pb"
+} from "@/proto/api/v1/auth_service_pb"
 import {
   type CreateExerciseRequest,
   CreateExerciseRequestSchema,
@@ -51,7 +51,7 @@ import {
   type ListExercisesResponse,
   ListSetsRequestSchema,
   type ListSetsResponse, UpdateExerciseRequestSchema, type UpdateExerciseResponse
-} from "@/proto/api/v1/exercise_pb"
+} from "@/proto/api/v1/exercise_service_pb"
 
 import {AuthClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
 
@@ -60,7 +60,7 @@ export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse |
     id: id,
   })
 
-  return tryCatch(() => WorkoutClient.delete(req))
+  return tryCatch(() => WorkoutClient.deleteWorkout(req))
 }
 
 export const deleteExercise = async (id: string): Promise<DeleteExerciseResponse | void> => {
@@ -68,7 +68,7 @@ export const deleteExercise = async (id: string): Promise<DeleteExerciseResponse
     id: id,
   })
 
-  return tryCatch(() => ExerciseClient.delete(req))
+  return tryCatch(() => ExerciseClient.deleteExercise(req))
 }
 
 export const deleteRoutine = async (id: string): Promise<DeleteRoutineResponse | void> => {
@@ -76,7 +76,7 @@ export const deleteRoutine = async (id: string): Promise<DeleteRoutineResponse |
     id: id,
   })
 
-  return tryCatch(() => RoutineClient.delete(req))
+  return tryCatch(() => RoutineClient.deleteRoutine(req))
 }
 
 export const login = async (email: string, password: string): Promise<LoginResponse | void> => {
@@ -115,12 +115,12 @@ export const getExercise = async (id: string): Promise<GetExerciseResponse | voi
   const req = create(GetExerciseRequestSchema, {
     id: id,
   })
-  return tryCatch(() => ExerciseClient.get(req))
+  return tryCatch(() => ExerciseClient.getExercise(req))
 }
 
 export const createExercise = async (request: CreateExerciseRequest): Promise<CreateExerciseResponse | void> => {
   const req = create(CreateExerciseRequestSchema, request)
-  return tryCatch(() => ExerciseClient.create(req))
+  return tryCatch(() => ExerciseClient.createExercise(req))
 }
 
 export const listSets = async (exerciseId: string, pageToken: Uint8Array): Promise<ListSetsResponse | void> => {
@@ -138,7 +138,7 @@ export const getRoutine = async (id: string): Promise<GetRoutineResponse | void>
   const req = create(GetRoutineRequestSchema, {
     id: id,
   })
-  return tryCatch(() => RoutineClient.get(req))
+  return tryCatch(() => RoutineClient.getRoutine(req))
 }
 
 export const listExercises = async (pageToken: Uint8Array): Promise<ListExercisesResponse | void> => {
@@ -146,7 +146,7 @@ export const listExercises = async (pageToken: Uint8Array): Promise<ListExercise
     pageSize: 100,
     pageToken: pageToken,
   })
-  return tryCatch(() => ExerciseClient.list(req))
+  return tryCatch(() => ExerciseClient.listExercises(req))
 }
 
 export const createRoutine = async (name: string, exerciseIds: string[]): Promise<CreateRoutineResponse | void> => {
@@ -154,7 +154,7 @@ export const createRoutine = async (name: string, exerciseIds: string[]): Promis
     exerciseIds: exerciseIds,
     name: name,
   })
-  return tryCatch(() => RoutineClient.create(req))
+  return tryCatch(() => RoutineClient.createRoutine(req))
 }
 
 export const updateRoutine = async (id: string, name: string, exerciseIds: string[]): Promise<UpdateRoutineResponse | void> => {
@@ -166,7 +166,7 @@ export const updateRoutine = async (id: string, name: string, exerciseIds: strin
       name: name,
     }
   })
-  return tryCatch(() => RoutineClient.update(req))
+  return tryCatch(() => RoutineClient.updateRoutine(req))
 }
 
 export const updateExercise = async (id: string, name: string, label: string): Promise<UpdateExerciseResponse | void> => {
@@ -180,7 +180,7 @@ export const updateExercise = async (id: string, name: string, label: string): P
       paths: ['name', 'label'],
     } as FieldMask,
   })
-  return tryCatch(() => ExerciseClient.update(req))
+  return tryCatch(() => ExerciseClient.updateExercise(req))
 }
 
 export const createWorkout = async (routineId: string, exerciseSets: ExerciseSets[], startedAt: DateTimeMaybeValid, finishedAt: DateTimeMaybeValid): Promise<CreateWorkoutResponse | void> => {
@@ -194,7 +194,7 @@ export const createWorkout = async (routineId: string, exerciseSets: ExerciseSet
       seconds: BigInt(startedAt.toSeconds()),
     } as Timestamp,
   })
-  return tryCatch(() => WorkoutClient.create(req))
+  return tryCatch(() => WorkoutClient.createWorkout(req))
 }
 
 export const updateWorkout = async (workout: Workout): Promise<UpdateWorkoutResponse | void> => {
@@ -208,7 +208,7 @@ export const getWorkout = async (id: string): Promise<GetWorkoutResponse | void>
   const req = create(GetWorkoutRequestSchema, {
     id: id,
   })
-  return tryCatch(() => WorkoutClient.get(req))
+  return tryCatch(() => WorkoutClient.getWorkout(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
