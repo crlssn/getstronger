@@ -4,29 +4,29 @@ package api.v1;
 
 import "api/v1/options.proto";
 import "api/v1/shared.proto";
-import "api/v1/workouts.proto";
+import "api/v1/workout_service.proto";
 
 import "google/protobuf/timestamp.proto";
 
 import "buf/validate/validate.proto";
 
 service UserService {
-  rpc Get(GetUserRequest) returns (GetUserResponse) {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {
     option (auth) = true;
   }
-  rpc Follow(FollowRequest) returns (FollowResponse) {
+  rpc FollowUser (FollowUserRequest) returns (FollowUserResponse) {
     option (auth) = true;
   }
-  rpc Unfollow(UnfollowRequest) returns (UnfollowResponse) {
+  rpc UnfollowUser (UnfollowUserRequest) returns (UnfollowUserResponse) {
     option (auth) = true;
   }
-  rpc ListFollowers(ListFollowersRequest) returns (ListFollowersResponse) {
+  rpc ListFollowers (ListFollowersRequest) returns (ListFollowersResponse) {
     option (auth) = true;
   }
-  rpc ListFollowees(ListFolloweesRequest) returns (ListFolloweesResponse) {
+  rpc ListFollowees (ListFolloweesRequest) returns (ListFolloweesResponse) {
     option (auth) = true;
   }
-  rpc Search(SearchRequest) returns (SearchResponse) {
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse) {
     option (auth) = true;
   }
 }
@@ -38,15 +38,15 @@ message GetUserResponse {
   User user = 1;
 }
 
-message FollowRequest {
+message FollowUserRequest {
   string follow_id = 1 [(buf.validate.field).string.uuid = true];
 }
-message FollowResponse {}
+message FollowUserResponse {}
 
-message UnfollowRequest {
+message UnfollowUserRequest {
   string unfollow_id = 1 [(buf.validate.field).string.uuid = true];
 }
-message UnfollowResponse {}
+message UnfollowUserResponse {}
 
 message ListFollowersRequest {
   string follower_id = 1 [(buf.validate.field).string.uuid = true];
@@ -62,11 +62,11 @@ message ListFolloweesResponse {
   repeated User followees = 1;
 }
 
-message SearchRequest {
+message SearchUsersRequest {
   string query = 1 [(buf.validate.field).string.min_len = 3];
   PaginationRequest pagination = 2 [(buf.validate.field).required = true];
 }
-message SearchResponse {
+message SearchUsersResponse {
   repeated User users = 1;
   PaginationResponse pagination = 2;
 }

@@ -11,28 +11,28 @@ import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
 service ExerciseService {
-  rpc Create(CreateExerciseRequest) returns (CreateExerciseResponse) {
+  rpc CreateExercise (CreateExerciseRequest) returns (CreateExerciseResponse) {
     option (auth) = true;
   }
-  rpc Get(GetExerciseRequest) returns (GetExerciseResponse) {
+  rpc GetExercise (GetExerciseRequest) returns (GetExerciseResponse) {
     option (auth) = true;
   }
-  rpc Update(UpdateExerciseRequest) returns (UpdateExerciseResponse) {
+  rpc UpdateExercise (UpdateExerciseRequest) returns (UpdateExerciseResponse) {
     option (auth) = true;
   }
-  rpc Delete(DeleteExerciseRequest) returns (DeleteExerciseResponse) {
+  rpc DeleteExercise (DeleteExerciseRequest) returns (DeleteExerciseResponse) {
     option (auth) = true;
   }
-  rpc List(ListExercisesRequest) returns (ListExercisesResponse) {
+  rpc ListExercises (ListExercisesRequest) returns (ListExercisesResponse) {
     option (auth) = true;
   }
   rpc GetPreviousWorkoutSets(GetPreviousWorkoutSetsRequest) returns (GetPreviousWorkoutSetsResponse) {
     option (auth) = true;
   }
-  rpc GetPersonalBests(GetPersonalBestsRequest) returns (GetPersonalBestsResponse) {
+  rpc GetPersonalBests (GetPersonalBestsRequest) returns (GetPersonalBestsResponse) {
     option (auth) = true;
   }
-  rpc ListSets(ListSetsRequest) returns (ListSetsResponse) {
+  rpc ListSets (ListSetsRequest) returns (ListSetsResponse) {
     option (auth) = true;
   }
 }

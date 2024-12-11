@@ -11,28 +11,28 @@ import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
 service RoutineService {
-  rpc Create(CreateRoutineRequest) returns (CreateRoutineResponse) {
+  rpc CreateRoutine(CreateRoutineRequest) returns (CreateRoutineResponse) {
     option (auth) = true;
   }
-  rpc Get(GetRoutineRequest) returns (GetRoutineResponse) {
+  rpc GetRoutine (GetRoutineRequest) returns (GetRoutineResponse) {
     option (auth) = true;
   }
-  rpc Update(UpdateRoutineRequest) returns (UpdateRoutineResponse) {
+  rpc UpdateRoutine (UpdateRoutineRequest) returns (UpdateRoutineResponse) {
     option (auth) = true;
   }
-  rpc Delete(DeleteRoutineRequest) returns (DeleteRoutineResponse) {
+  rpc DeleteRoutine (DeleteRoutineRequest) returns (DeleteRoutineResponse) {
     option (auth) = true;
   }
-  rpc List(ListRoutinesRequest) returns (ListRoutinesResponse) {
+  rpc ListRoutine (ListRoutinesRequest) returns (ListRoutinesResponse) {
     option (auth) = true;
   }
-  rpc AddExercise(AddExerciseRequest) returns (AddExerciseResponse) {
+  rpc AddExercise (AddExerciseRequest) returns (AddExerciseResponse) {
     option (auth) = true;
   }
-  rpc RemoveExercise(RemoveExerciseRequest) returns (RemoveExerciseResponse) {
+  rpc RemoveExercise (RemoveExerciseRequest) returns (RemoveExerciseResponse) {
     option (auth) = true;
   }
-  rpc UpdateExerciseOrder(UpdateExerciseOrderRequest) returns (UpdateExerciseOrderResponse) {
+  rpc UpdateExerciseOrder (UpdateExerciseOrderRequest) returns (UpdateExerciseOrderResponse) {
     option (auth) = true;
   }
 }
