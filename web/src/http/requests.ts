@@ -221,7 +221,7 @@ export const listExercises = async (
     exerciseIds: [],
     name: '',
     pagination: {
-      pageLimit: 100,
+      pageLimit: 25,
       pageToken: pageToken,
     },
   })
