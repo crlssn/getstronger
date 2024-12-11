@@ -67,7 +67,7 @@ message DeleteExerciseResponse {}
 message ListExercisesRequest {
   string name = 1;
   repeated string exercise_ids = 2 [(buf.validate.field).repeated.items.string.uuid = true];
-  PaginationRequest pagination = 3 [(buf.validate.field).required = true];;
+  PaginationRequest pagination = 3 [(buf.validate.field).required = true];
 }
 message ListExercisesResponse {
   repeated Exercise exercises = 1;
@@ -90,7 +90,7 @@ message GetPersonalBestsResponse {
 
 message ListSetsRequest {
   string exercise_id = 1 [(buf.validate.field).string.uuid = true];
-  PaginationRequest pagination = 2 [(buf.validate.field).required = true];;
+  PaginationRequest pagination = 2 [(buf.validate.field).required = true];
 }
 message ListSetsResponse {
   repeated Set sets = 1;
