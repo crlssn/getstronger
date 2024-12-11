@@ -26,11 +26,12 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        shell: bash
 
       - name: Generate protos
         run: npx buf generate
-        shell: bash
+
+      - name: Lint protos
+        run: npx buf lint
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -50,9 +51,3 @@ jobs:
             exit 1
           fi
 
-      - name: Install protolint
-        run: go install github.com/yoheimuta/protolint/cmd/protolint@latest
-
-      - name: Run protolint
-        working-directory: ./proto
-        run: protolint .
