@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
-
+import { type Exercise } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Switch } from '@headlessui/vue'
@@ -10,14 +9,20 @@ import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { createRoutine, listExercises } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
+import { vInfiniteScroll } from '@vueuse/components'
+import usePagination from '@/utils/usePagination.ts'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
 const exerciseIDs = ref(Array<string>())
-const pageToken = ref(new Uint8Array(0))
 
 const router = useRouter()
 const alertStore = useAlertStore()
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
+
+onMounted(async () => {
+  await fetchExercises()
+})
 
 const toggleExercise = (id: string) => {
   if (exerciseIDs.value.includes(id)) {
@@ -33,13 +38,7 @@ const fetchExercises = async () => {
   if (!res) return
 
   exercises.value = [...exercises.value, ...res.exercises]
-  if (!res.pagination) return
-
-  pageToken.value = res.pagination.nextPageToken
-  if (pageToken.value.length > 0) {
-    // TODO: Implement pagination.
-    await fetchExercises()
-  }
+  pageToken.value = resolvePageToken(res.pagination)
 }
 
 const onCreateRoutine = async () => {
@@ -49,10 +48,6 @@ const onCreateRoutine = async () => {
   alertStore.setSuccess('Routine created')
   await router.push('/routines')
 }
-
-onMounted(() => {
-  fetchExercises()
-})
 </script>
 
 <template>
@@ -85,6 +80,7 @@ onMounted(() => {
       </AppListItem>
     </AppList>
 
-    <AppButton type="submit" colour="primary" container-class="px-4 pb-4"> Save Routine </AppButton>
+    <AppButton type="submit" colour="primary" container-class="px-4 pb-4"> Save Routine</AppButton>
   </form>
+  <div v-if="hasMorePages" v-infinite-scroll="fetchExercises" />
 </template>

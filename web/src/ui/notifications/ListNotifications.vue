@@ -8,14 +8,14 @@ import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination.ts'
+
+const notifications = ref([] as Notification[])
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   await fetchNotifications()
   await markNotificationAsRead()
 })
-
-const notifications = ref([] as Notification[])
 
 const fetchNotifications = async () => {
   const res = await listNotifications(pageToken.value)

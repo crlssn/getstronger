@@ -8,9 +8,9 @@ import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination.ts'
-const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 const exercises = ref([] as Exercise[])
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   await fetchExercises()
