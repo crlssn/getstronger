@@ -18,4 +18,4 @@ plugins:
     out: web/src/proto
     include_imports: true
 inputs:
-  - directory: protobufs
+  - directory: proto
