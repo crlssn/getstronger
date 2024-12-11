@@ -9,7 +9,6 @@ import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { createRoutine, listExercises } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
-import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination.ts'
 
 const name = ref('')
@@ -58,7 +57,7 @@ const onCreateRoutine = async () => {
     </AppList>
 
     <h6>Exercises</h6>
-    <AppList>
+    <AppList :load="{ hasMorePages, fetchPage: fetchExercises }">
       <AppListItem v-for="exercise in exercises" :key="exercise.id">
         <div class="flex justify-between items-center w-full">
           {{ exercise.name }}
@@ -82,5 +81,4 @@ const onCreateRoutine = async () => {
 
     <AppButton type="submit" colour="primary" container-class="px-4 pb-4"> Save Routine</AppButton>
   </form>
-  <div v-if="hasMorePages" v-infinite-scroll="fetchExercises" />
 </template>

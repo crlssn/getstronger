@@ -13,7 +13,6 @@ import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
-import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination'
 
 const sets = ref([] as Set[])
@@ -68,8 +67,8 @@ const onDeleteExercise = async () => {
   </div>
 
   <h6 class="mt-8">Sets</h6>
-  <AppList>
-    <AppListItem v-if="sets.length === 0"> No sets </AppListItem>
+  <AppList :load="{ hasMorePages, fetchPage: fetchSets }">
+    <AppListItem v-if="sets.length === 0"> No sets</AppListItem>
     <AppListItemLink
       v-for="(set, index) in sets"
       :key="index"
@@ -82,7 +81,6 @@ const onDeleteExercise = async () => {
       <ChevronRightIcon />
     </AppListItemLink>
   </AppList>
-  <div v-if="hasMorePages" v-infinite-scroll="fetchSets" />
 
   <div v-if="authStore.userID === exercise?.userId">
     <h6 class="mt-8">Admin</h6>

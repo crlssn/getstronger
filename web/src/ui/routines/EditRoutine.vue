@@ -67,7 +67,7 @@ const onSubmit = async () => {
     </AppList>
 
     <h6>Exercises</h6>
-    <AppList>
+    <AppList :load="{ hasMorePages, fetchPage: fetchExercises }">
       <AppListItem v-for="exercise in exercises" :key="exercise.id">
         <div class="flex justify-between items-center w-full">
           {{ exercise.name }}
@@ -88,7 +88,6 @@ const onSubmit = async () => {
         </div>
       </AppListItem>
     </AppList>
-    <div v-if="hasMorePages" v-infinite-scroll="fetchExercises" />
 
     <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
       Update Routine

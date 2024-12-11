@@ -6,7 +6,6 @@ import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination.ts'
 
 const exercises = ref([] as Exercise[])
@@ -29,7 +28,7 @@ const fetchExercises = async () => {
   <AppButton type="link" to="/exercises/create" colour="primary" container-class="px-4 pb-4">
     Create Exercise
   </AppButton>
-  <AppList>
+  <AppList :load="{ hasMorePages, fetchPage: fetchExercises }">
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"
@@ -39,5 +38,4 @@ const fetchExercises = async () => {
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
   </AppList>
-  <div v-if="hasMorePages" v-infinite-scroll="fetchExercises" />
 </template>
