@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { Exercise, Set } from '@/proto/api/v1/shared_pb.ts'
-
+import { type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
@@ -14,35 +13,33 @@ import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import usePagination from '@/utils/usePagination'
 
+const sets = ref([] as Set[])
 const exercise = ref<Exercise>()
-const sets = ref<Array<Set>>([])
 
 const route = useRoute()
 const authStore = useAuthStore()
 const pageTitle = usePageTitleStore()
 const alertStore = useAlertStore()
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   const res = await getExercise(route.params.id as string)
   if (!res) return
+
   exercise.value = res.exercise
   pageTitle.setPageTitle(exercise.value?.name as string)
+
   await fetchSets()
 })
-
-const pageToken = ref(new Uint8Array(0))
 
 const fetchSets = async () => {
   const res = await listSets(route.params.id as string, pageToken.value)
   if (!res) return
-  sets.value = [...sets.value, ...res.sets]
 
-  pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
-  if (pageToken.value.length > 0) {
-    // TODO: Implement pagination.
-    await fetchSets()
-  }
+  sets.value = [...sets.value, ...res.sets]
+  pageToken.value = resolvePageToken(res.pagination)
 }
 
 const onDeleteExercise = async () => {
@@ -70,8 +67,8 @@ const onDeleteExercise = async () => {
   </div>
 
   <h6 class="mt-8">Sets</h6>
-  <AppList>
-    <AppListItem v-if="sets.length === 0"> No sets </AppListItem>
+  <AppList :load="{ hasMorePages, fetchPage: fetchSets }">
+    <AppListItem v-if="sets.length === 0"> No sets</AppListItem>
     <AppListItemLink
       v-for="(set, index) in sets"
       :key="index"

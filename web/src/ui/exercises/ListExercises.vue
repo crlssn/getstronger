@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
-
+import { type Exercise } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import { listExercises } from '@/http/requests.ts'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
+import usePagination from '@/utils/usePagination.ts'
 
-const exercises = ref(Array<Exercise>())
-const pageToken = ref(new Uint8Array(0))
+const exercises = ref([] as Exercise[])
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
-onMounted(() => {
-  fetchExercises()
+onMounted(async () => {
+  await fetchExercises()
 })
 
 const fetchExercises = async () => {
@@ -20,13 +20,7 @@ const fetchExercises = async () => {
   if (!res) return
 
   exercises.value = [...exercises.value, ...res.exercises]
-  if (!res.pagination) return
-
-  pageToken.value = res.pagination.nextPageToken
-  if (pageToken.value.length > 0) {
-    // TODO: Implement pagination.
-    await fetchExercises()
-  }
+  pageToken.value = resolvePageToken(res.pagination)
 }
 </script>
 
@@ -34,7 +28,7 @@ const fetchExercises = async () => {
   <AppButton type="link" to="/exercises/create" colour="primary" container-class="px-4 pb-4">
     Create Exercise
   </AppButton>
-  <AppList>
+  <AppList :load="{ hasMorePages, fetchPage: fetchExercises }">
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"

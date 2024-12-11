@@ -5,12 +5,11 @@ import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { Code, ConnectError } from '@connectrpc/connect'
 
 export const logger: Interceptor = (next) => async (req) => {
-  console.log(`sending message to ${req.url}`)
+  console.debug(`sending message to ${req.url}`)
   return next(req)
 }
 
 export const auth: Interceptor = (next) => async (req) => {
-  console.log('auth interceptor')
   const authStore = useAuthStore()
   try {
     req.header.set('Authorization', `Bearer ${authStore.accessToken}`)

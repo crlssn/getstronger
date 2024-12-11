@@ -6,27 +6,23 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { type Routine } from '@/proto/api/v1/routine_service_pb.ts'
+import { vInfiniteScroll } from '@vueuse/components'
+import usePagination from '@/utils/usePagination.ts'
 
-const pageToken = ref(new Uint8Array(0))
-const routines = ref(Array<Routine>())
+const routines = ref([] as Routine[])
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
+
+onMounted(async () => {
+  await fetchRoutines()
+})
 
 const fetchRoutines = async () => {
   const res = await listRoutines(pageToken.value)
   if (!res) return
 
   routines.value = [...routines.value, ...res.routines]
-  if (!res.pagination) return
-
-  pageToken.value = res.pagination.nextPageToken
-  if (pageToken.value.length > 0) {
-    // TODO: Implement pagination.
-    await fetchRoutines()
-  }
+  pageToken.value = resolvePageToken(res.pagination)
 }
-
-onMounted(async () => {
-  await fetchRoutines()
-})
 </script>
 
 <template>
@@ -39,4 +35,5 @@ onMounted(async () => {
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
   </AppList>
+  <div v-if="hasMorePages" v-infinite-scroll="fetchRoutines" />
 </template>
