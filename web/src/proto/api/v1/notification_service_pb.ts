@@ -16,28 +16,14 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/notification_service.proto.
  */
 export const file_api_v1_notification_service: GenFile = /*@__PURE__*/
-  fileDesc("CiFhcGkvdjEvbm90aWZpY2F0aW9uX3NlcnZpY2UucHJvdG8SBmFwaS52MSJ8ChhMaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QSEwoLdW5yZWFkX29ubHkYASABKAgSFAoMbWFya19hc19yZWFkGAIgASgIEjUKCnBhZ2luYXRpb24YAyABKAsyGS5hcGkudjEuUGFnaW5hdGlvblJlcXVlc3RCBrpIA8gBASJ4ChlMaXN0Tm90aWZpY2F0aW9uc1Jlc3BvbnNlEisKDW5vdGlmaWNhdGlvbnMYASADKAsyFC5hcGkudjEuTm90aWZpY2F0aW9uEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIrYCCgxOb3RpZmljYXRpb24SCgoCaWQYASABKAkSGAoQbm90aWZpZWRfYXRfdW5peBgCIAEoAxI6Cg11c2VyX2ZvbGxvd2VkGAMgASgLMiEuYXBpLnYxLk5vdGlmaWNhdGlvbi5Vc2VyRm9sbG93ZWRIABI+Cg93b3Jrb3V0X2NvbW1lbnQYBCABKAsyIy5hcGkudjEuTm90aWZpY2F0aW9uLldvcmtvdXRDb21tZW50SAAaKwoMVXNlckZvbGxvd2VkEhsKBWFjdG9yGAEgASgLMgwuYXBpLnYxLlVzZXIaTwoOV29ya291dENvbW1lbnQSGwoFYWN0b3IYASABKAsyDC5hcGkudjEuVXNlchIgCgd3b3Jrb3V0GAIgASgLMg8uYXBpLnYxLldvcmtvdXRCBgoEdHlwZSIcChpVbnJlYWROb3RpZmljYXRpb25zUmVxdWVzdCIsChtVbnJlYWROb3RpZmljYXRpb25zUmVzcG9uc2USDQoFY291bnQYASABKAMy3QEKE05vdGlmaWNhdGlvblNlcnZpY2USXgoRTGlzdE5vdGlmaWNhdGlvbnMSIC5hcGkudjEuTGlzdE5vdGlmaWNhdGlvbnNSZXF1ZXN0GiEuYXBpLnYxLkxpc3ROb3RpZmljYXRpb25zUmVzcG9uc2UiBIi1GAESZgoTVW5yZWFkTm90aWZpY2F0aW9ucxIiLmFwaS52MS5VbnJlYWROb3RpZmljYXRpb25zUmVxdWVzdBojLmFwaS52MS5VbnJlYWROb3RpZmljYXRpb25zUmVzcG9uc2UiBIi1GAEwAUKcAQoKY29tLmFwaS52MUIYTm90aWZpY2F0aW9uU2VydmljZVByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
+  fileDesc("CiFhcGkvdjEvbm90aWZpY2F0aW9uX3NlcnZpY2UucHJvdG8SBmFwaS52MSJRChhMaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QSNQoKcGFnaW5hdGlvbhgBIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBIngKGUxpc3ROb3RpZmljYXRpb25zUmVzcG9uc2USKwoNbm90aWZpY2F0aW9ucxgBIAMoCzIULmFwaS52MS5Ob3RpZmljYXRpb24SLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiIAoeTWFya05vdGlmaWNhdGlvbnNBc1JlYWRSZXF1ZXN0IiEKH01hcmtOb3RpZmljYXRpb25zQXNSZWFkUmVzcG9uc2UiHAoaVW5yZWFkTm90aWZpY2F0aW9uc1JlcXVlc3QiLAobVW5yZWFkTm90aWZpY2F0aW9uc1Jlc3BvbnNlEg0KBWNvdW50GAEgASgDIrYCCgxOb3RpZmljYXRpb24SCgoCaWQYASABKAkSGAoQbm90aWZpZWRfYXRfdW5peBgCIAEoAxI6Cg11c2VyX2ZvbGxvd2VkGAMgASgLMiEuYXBpLnYxLk5vdGlmaWNhdGlvbi5Vc2VyRm9sbG93ZWRIABI+Cg93b3Jrb3V0X2NvbW1lbnQYBCABKAsyIy5hcGkudjEuTm90aWZpY2F0aW9uLldvcmtvdXRDb21tZW50SAAaKwoMVXNlckZvbGxvd2VkEhsKBWFjdG9yGAEgASgLMgwuYXBpLnYxLlVzZXIaTwoOV29ya291dENvbW1lbnQSGwoFYWN0b3IYASABKAsyDC5hcGkudjEuVXNlchIgCgd3b3Jrb3V0GAIgASgLMg8uYXBpLnYxLldvcmtvdXRCBgoEdHlwZTLPAgoTTm90aWZpY2F0aW9uU2VydmljZRJeChFMaXN0Tm90aWZpY2F0aW9ucxIgLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QaIS5hcGkudjEuTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZSIEiLUYARJwChdNYXJrTm90aWZpY2F0aW9uc0FzUmVhZBImLmFwaS52MS5NYXJrTm90aWZpY2F0aW9uc0FzUmVhZFJlcXVlc3QaJy5hcGkudjEuTWFya05vdGlmaWNhdGlvbnNBc1JlYWRSZXNwb25zZSIEiLUYARJmChNVbnJlYWROb3RpZmljYXRpb25zEiIuYXBpLnYxLlVucmVhZE5vdGlmaWNhdGlvbnNSZXF1ZXN0GiMuYXBpLnYxLlVucmVhZE5vdGlmaWNhdGlvbnNSZXNwb25zZSIEiLUYATABQpwBCgpjb20uYXBpLnYxQhhOb3RpZmljYXRpb25TZXJ2aWNlUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ListNotificationsRequest
  */
 export type ListNotificationsRequest = Message<"api.v1.ListNotificationsRequest"> & {
   /**
-   * DEBT: Remove.
-   *
-   * @generated from field: bool unread_only = 1;
-   */
-  unreadOnly: boolean;
-
-  /**
-   * DEBT: Use a separate endpoint.
-   *
-   * @generated from field: bool mark_as_read = 2;
-   */
-  markAsRead: boolean;
-
-  /**
-   * @generated from field: api.v1.PaginationRequest pagination = 3;
+   * @generated from field: api.v1.PaginationRequest pagination = 1;
    */
   pagination?: PaginationRequest;
 };
@@ -70,6 +56,62 @@ export type ListNotificationsResponse = Message<"api.v1.ListNotificationsRespons
  */
 export const ListNotificationsResponseSchema: GenMessage<ListNotificationsResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_notification_service, 1);
+
+/**
+ * @generated from message api.v1.MarkNotificationsAsReadRequest
+ */
+export type MarkNotificationsAsReadRequest = Message<"api.v1.MarkNotificationsAsReadRequest"> & {
+};
+
+/**
+ * Describes the message api.v1.MarkNotificationsAsReadRequest.
+ * Use `create(MarkNotificationsAsReadRequestSchema)` to create a new message.
+ */
+export const MarkNotificationsAsReadRequestSchema: GenMessage<MarkNotificationsAsReadRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_notification_service, 2);
+
+/**
+ * @generated from message api.v1.MarkNotificationsAsReadResponse
+ */
+export type MarkNotificationsAsReadResponse = Message<"api.v1.MarkNotificationsAsReadResponse"> & {
+};
+
+/**
+ * Describes the message api.v1.MarkNotificationsAsReadResponse.
+ * Use `create(MarkNotificationsAsReadResponseSchema)` to create a new message.
+ */
+export const MarkNotificationsAsReadResponseSchema: GenMessage<MarkNotificationsAsReadResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_notification_service, 3);
+
+/**
+ * @generated from message api.v1.UnreadNotificationsRequest
+ */
+export type UnreadNotificationsRequest = Message<"api.v1.UnreadNotificationsRequest"> & {
+};
+
+/**
+ * Describes the message api.v1.UnreadNotificationsRequest.
+ * Use `create(UnreadNotificationsRequestSchema)` to create a new message.
+ */
+export const UnreadNotificationsRequestSchema: GenMessage<UnreadNotificationsRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_notification_service, 4);
+
+/**
+ * @generated from message api.v1.UnreadNotificationsResponse
+ */
+export type UnreadNotificationsResponse = Message<"api.v1.UnreadNotificationsResponse"> & {
+  /**
+   * @generated from field: int64 count = 1;
+   */
+  count: bigint;
+};
+
+/**
+ * Describes the message api.v1.UnreadNotificationsResponse.
+ * Use `create(UnreadNotificationsResponseSchema)` to create a new message.
+ */
+export const UnreadNotificationsResponseSchema: GenMessage<UnreadNotificationsResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_notification_service, 5);
 
 /**
  * @generated from message api.v1.Notification
@@ -110,7 +152,7 @@ export type Notification = Message<"api.v1.Notification"> & {
  * Use `create(NotificationSchema)` to create a new message.
  */
 export const NotificationSchema: GenMessage<Notification> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 2);
+  messageDesc(file_api_v1_notification_service, 6);
 
 /**
  * @generated from message api.v1.Notification.UserFollowed
@@ -127,7 +169,7 @@ export type Notification_UserFollowed = Message<"api.v1.Notification.UserFollowe
  * Use `create(Notification_UserFollowedSchema)` to create a new message.
  */
 export const Notification_UserFollowedSchema: GenMessage<Notification_UserFollowed> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 2, 0);
+  messageDesc(file_api_v1_notification_service, 6, 0);
 
 /**
  * @generated from message api.v1.Notification.WorkoutComment
@@ -149,37 +191,7 @@ export type Notification_WorkoutComment = Message<"api.v1.Notification.WorkoutCo
  * Use `create(Notification_WorkoutCommentSchema)` to create a new message.
  */
 export const Notification_WorkoutCommentSchema: GenMessage<Notification_WorkoutComment> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 2, 1);
-
-/**
- * @generated from message api.v1.UnreadNotificationsRequest
- */
-export type UnreadNotificationsRequest = Message<"api.v1.UnreadNotificationsRequest"> & {
-};
-
-/**
- * Describes the message api.v1.UnreadNotificationsRequest.
- * Use `create(UnreadNotificationsRequestSchema)` to create a new message.
- */
-export const UnreadNotificationsRequestSchema: GenMessage<UnreadNotificationsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 3);
-
-/**
- * @generated from message api.v1.UnreadNotificationsResponse
- */
-export type UnreadNotificationsResponse = Message<"api.v1.UnreadNotificationsResponse"> & {
-  /**
-   * @generated from field: int64 count = 1;
-   */
-  count: bigint;
-};
-
-/**
- * Describes the message api.v1.UnreadNotificationsResponse.
- * Use `create(UnreadNotificationsResponseSchema)` to create a new message.
- */
-export const UnreadNotificationsResponseSchema: GenMessage<UnreadNotificationsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 4);
+  messageDesc(file_api_v1_notification_service, 6, 1);
 
 /**
  * @generated from service api.v1.NotificationService
@@ -192,6 +204,14 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof ListNotificationsRequestSchema;
     output: typeof ListNotificationsResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.NotificationService.MarkNotificationsAsRead
+   */
+  markNotificationsAsRead: {
+    methodKind: "unary";
+    input: typeof MarkNotificationsAsReadRequestSchema;
+    output: typeof MarkNotificationsAsReadResponseSchema;
   },
   /**
    * @generated from rpc api.v1.NotificationService.UnreadNotifications

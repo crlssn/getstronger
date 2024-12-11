@@ -1067,16 +1067,6 @@ func ListNotificationsWithUserID(userID string) ListNotificationsOpt {
 	}
 }
 
-func ListNotificationsWithOnlyUnread(onlyUnread bool) ListNotificationsOpt {
-	return func() qm.QueryMod {
-		if !onlyUnread {
-			return nil
-		}
-
-		return orm.NotificationWhere.ReadAt.IsNull()
-	}
-}
-
 func ListNotificationsOrderByCreatedAtDESC() ListNotificationsOpt {
 	return func() qm.QueryMod {
 		return qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt))

@@ -12,19 +12,28 @@ service NotificationService {
   rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse) {
     option (auth) = true;
   }
+  rpc MarkNotificationsAsRead (MarkNotificationsAsReadRequest) returns (MarkNotificationsAsReadResponse) {
+    option (auth) = true;
+  }
   rpc UnreadNotifications (UnreadNotificationsRequest) returns (stream UnreadNotificationsResponse) {
     option (auth) = true;
   }
 }
 
 message ListNotificationsRequest {
-  bool unread_only = 1; // DEBT: Remove.
-  bool mark_as_read = 2; // DEBT: Use a separate endpoint.
-  PaginationRequest pagination = 3 [(buf.validate.field).required = true];
+  PaginationRequest pagination = 1 [(buf.validate.field).required = true];
 }
 message ListNotificationsResponse {
   repeated Notification notifications = 1;
   PaginationResponse pagination = 2;
+}
+
+message MarkNotificationsAsReadRequest {}
+message MarkNotificationsAsReadResponse {}
+
+message UnreadNotificationsRequest {}
+message UnreadNotificationsResponse {
+  int64 count = 1;
 }
 
 message Notification {
@@ -43,9 +52,4 @@ message Notification {
     UserFollowed user_followed = 3;
     WorkoutComment workout_comment = 4;
   }
-}
-
-message UnreadNotificationsRequest {}
-message UnreadNotificationsResponse {
-  int64 count = 1;
 }

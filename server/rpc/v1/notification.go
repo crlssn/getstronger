@@ -31,10 +31,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	total, err := h.repo.CountNotifications(ctx,
-		repo.CountNotificationsWithUserID(userID),
-		repo.CountNotificationsWithUnreadOnly(req.Msg.GetUnreadOnly()),
-	)
+	total, err := h.repo.CountNotifications(ctx, repo.CountNotificationsWithUserID(userID))
 	if err != nil {
 		log.Error("failed to count notifications", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -44,7 +41,6 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	notifications, err := h.repo.ListNotifications(ctx,
 		repo.ListNotificationsWithLimit(limit+1),
 		repo.ListNotificationsWithUserID(userID),
-		repo.ListNotificationsWithOnlyUnread(req.Msg.GetUnreadOnly()),
 		repo.ListNotificationsOrderByCreatedAtDESC(),
 	)
 	if err != nil {
@@ -95,13 +91,6 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if req.Msg.GetMarkAsRead() {
-		if err = h.repo.MarkNotificationsAsRead(ctx, repo.MarkNotificationsAsReadByUserID(userID)); err != nil {
-			log.Error("failed to mark notifications as read", zap.Error(err))
-			return nil, connect.NewError(connect.CodeInternal, nil)
-		}
-	}
-
 	return &connect.Response[v1.ListNotificationsResponse]{
 		Msg: &v1.ListNotificationsResponse{
 			Notifications: parseNotificationSliceToPB(paginated.Items, nPayloads, users, workouts),
@@ -111,6 +100,18 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 			},
 		},
 	}, nil
+}
+
+func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if err := h.repo.MarkNotificationsAsRead(ctx, repo.MarkNotificationsAsReadByUserID(userID)); err != nil {
+		log.Error("failed to mark notifications as read", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return &connect.Response[v1.MarkNotificationsAsReadResponse]{}, nil
 }
 
 func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[v1.UnreadNotificationsRequest], res *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
