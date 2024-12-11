@@ -105,6 +105,7 @@ import {
   userClient,
   workoutClient,
 } from './clients'
+import { useAuthStore } from '@/stores/auth.ts'
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -441,23 +442,34 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
   try {
     return await fn()
   } catch (error) {
-    // TODO: Use custom alert component.
-    alert(error)
     if (error instanceof ConnectError) {
       if (error.code === Code.Unauthenticated) {
-        console.warn('user unauthenticated: logging out')
-        await router.push('/logout')
+        try {
+          console.warn('user unauthenticated: refreshing token')
+          const req = create(RefreshTokenRequestSchema, {})
+          const res = await authClient.refreshToken(req)
+
+          const authStore = useAuthStore()
+          authStore.setAccessToken(res.accessToken)
+
+          console.log('retrying original request')
+          return await fn()
+        } catch (e) {
+          console.warn('token refresh failed: logging out', e)
+          await router.push('/logout')
+        }
       }
 
       for (const detail of error.findDetails(ErrorDetailSchema)) {
         switch (detail.error) {
           case Error.EMAIL_NOT_VERIFIED:
-            console.warn('email is not verified')
-            break
-          default:
-            console.warn('unknown error:', detail.error)
+            alert('You must verify your email before logging in')
+            return
         }
       }
     }
+
+    // TODO: Use custom alert component.
+    alert(error)
   }
 }
