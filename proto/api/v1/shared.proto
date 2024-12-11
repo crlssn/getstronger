@@ -41,6 +41,5 @@ message PaginationRequest {
 }
 
 message PaginationResponse {
-  int64 total_results = 1;
-  bytes next_page_token = 2;
+  bytes next_page_token = 1;
 }

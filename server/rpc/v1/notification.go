@@ -31,12 +31,6 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	total, err := h.repo.CountNotifications(ctx, repo.CountNotificationsWithUserID(userID))
-	if err != nil {
-		log.Error("failed to count notifications", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	notifications, err := h.repo.ListNotifications(ctx,
 		repo.ListNotificationsWithLimit(limit+1),
@@ -95,7 +89,6 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		Msg: &v1.ListNotificationsResponse{
 			Notifications: parseNotificationSliceToPB(paginated.Items, nPayloads, users, workouts),
 			Pagination: &v1.PaginationResponse{
-				TotalResults:  total,
 				NextPageToken: paginated.NextPageToken,
 			},
 		},
