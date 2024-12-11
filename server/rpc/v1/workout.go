@@ -30,7 +30,7 @@ func NewWorkoutHandler(b *bus.Bus, r *repo.Repo) apiv1connect.WorkoutServiceHand
 	return &workoutHandler{b, r}
 }
 
-func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
+func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -70,7 +70,7 @@ func (h *workoutHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	}, nil
 }
 
-func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
+func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -120,7 +120,7 @@ func (h *workoutHandler) Get(ctx context.Context, req *connect.Request[v1.GetWor
 	}, nil
 }
 
-func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
+func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPageSize())
@@ -182,7 +182,7 @@ func (h *workoutHandler) List(ctx context.Context, req *connect.Request[v1.ListW
 	}, nil
 }
 
-func (h *workoutHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error) {
+func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 

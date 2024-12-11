@@ -28,7 +28,7 @@ func NewUserHandler(b *bus.Bus, r *repo.Repo) apiv1connect.UserServiceHandler {
 	return &userHandler{b, r}
 }
 
-func (h *userHandler) Get(ctx context.Context, req *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
+func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -51,7 +51,7 @@ func (h *userHandler) Get(ctx context.Context, req *connect.Request[v1.GetUserRe
 	}, nil
 }
 
-func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error) {
+func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[v1.SearchUsersRequest]) (*connect.Response[v1.SearchUsersResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	count, err := h.repo.CountUsers(ctx, repo.CountUsersWithNameMatching(req.Msg.GetQuery()))
@@ -79,8 +79,8 @@ func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.Search
 	}
 
 	log.Info("searched users")
-	return &connect.Response[v1.SearchResponse]{
-		Msg: &v1.SearchResponse{
+	return &connect.Response[v1.SearchUsersResponse]{
+		Msg: &v1.SearchUsersResponse{
 			Users: parseUserSliceToPB(pagination.Items),
 			Pagination: &v1.PaginationResponse{
 				TotalResults:  count,
@@ -90,7 +90,7 @@ func (h *userHandler) Search(ctx context.Context, req *connect.Request[v1.Search
 	}, nil
 }
 
-func (h *userHandler) Follow(ctx context.Context, req *connect.Request[v1.FollowRequest]) (*connect.Response[v1.FollowResponse], error) {
+func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[v1.FollowUserRequest]) (*connect.Response[v1.FollowUserResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -110,12 +110,12 @@ func (h *userHandler) Follow(ctx context.Context, req *connect.Request[v1.Follow
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.FollowResponse]{
-		Msg: &v1.FollowResponse{},
+	return &connect.Response[v1.FollowUserResponse]{
+		Msg: &v1.FollowUserResponse{},
 	}, nil
 }
 
-func (h *userHandler) Unfollow(ctx context.Context, req *connect.Request[v1.UnfollowRequest]) (*connect.Response[v1.UnfollowResponse], error) {
+func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[v1.UnfollowUserRequest]) (*connect.Response[v1.UnfollowUserResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -127,8 +127,8 @@ func (h *userHandler) Unfollow(ctx context.Context, req *connect.Request[v1.Unfo
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.UnfollowResponse]{
-		Msg: &v1.UnfollowResponse{},
+	return &connect.Response[v1.UnfollowUserResponse]{
+		Msg: &v1.UnfollowUserResponse{},
 	}, nil
 }
 

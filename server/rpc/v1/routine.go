@@ -26,7 +26,7 @@ func NewRoutineHandler(r *repo.Repo) apiv1connect.RoutineServiceHandler {
 	return &routineHandler{r}
 }
 
-func (h *routineHandler) Create(ctx context.Context, req *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error) {
+func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -46,7 +46,7 @@ func (h *routineHandler) Create(ctx context.Context, req *connect.Request[v1.Cre
 	}), nil
 }
 
-func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRoutineRequest]) (*connect.Response[v1.GetRoutineResponse], error) {
+func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[v1.GetRoutineRequest]) (*connect.Response[v1.GetRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -87,7 +87,7 @@ func (h *routineHandler) Get(ctx context.Context, req *connect.Request[v1.GetRou
 	}), nil
 }
 
-func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.UpdateRoutineRequest]) (*connect.Response[v1.UpdateRoutineResponse], error) {
+func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request[v1.UpdateRoutineRequest]) (*connect.Response[v1.UpdateRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -152,7 +152,7 @@ func (h *routineHandler) Update(ctx context.Context, req *connect.Request[v1.Upd
 	}), nil
 }
 
-func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.DeleteRoutineRequest]) (*connect.Response[v1.DeleteRoutineResponse], error) {
+func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request[v1.DeleteRoutineRequest]) (*connect.Response[v1.DeleteRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -176,7 +176,7 @@ func (h *routineHandler) Delete(ctx context.Context, req *connect.Request[v1.Del
 	return connect.NewResponse(&v1.DeleteRoutineResponse{}), nil
 }
 
-func (h *routineHandler) List(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
+func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
