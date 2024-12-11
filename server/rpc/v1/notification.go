@@ -27,7 +27,7 @@ func NewNotificationHandler(r *repo.Repo, s *stream.Conn) apiv1connect.Notificat
 	return &notificationHandler{r, s}
 }
 
-func (h *notificationHandler) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) { //nolint:cyclop // TODO: Simplify this method.
+func (h *notificationHandler) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
