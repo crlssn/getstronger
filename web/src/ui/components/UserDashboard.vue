@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import type { PaginationRequest, User } from '@/proto/api/v1/shared_pb.ts'
+import type { User } from '@/proto/api/v1/shared_pb.ts'
 
-import { create } from '@bufbuild/protobuf'
 import { computed, nextTick, ref } from 'vue'
-import { UserClient } from '@/http/clients.ts'
 import { RouterView, useRoute } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import { SearchRequestSchema } from '@/proto/api/v1/users_pb.ts'
 import NavigationMobile from '@/ui/components/NavigationMobile.vue'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
@@ -19,6 +16,7 @@ import {
   UserIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
+import {searchUsers} from "@/http/requests.ts";
 
 const navigation = [
   { href: '/home', icon: HomeIcon, name: 'Home' },
@@ -49,19 +47,17 @@ const closeSearchBar = () => {
   searchBarOpen.value = false
 }
 
-const searchUsers = async () => {
-  if ((input.value?.value?.length ?? 0) < 3) {
+const onSearchUsers = async () => {
+  if (!input.value) return
+
+  if ((input.value.value?.length ?? 0) < 3) {
     users.value = []
     return
   }
 
-  const req = create(SearchRequestSchema, {
-    pagination: {
-      pageLimit: 5,
-    } as PaginationRequest,
-    query: input.value?.value,
-  })
-  const res = await UserClient.search(req)
+  const res = await searchUsers(input.value.value, new Uint8Array(0))
+  if (!res) return
+
   users.value = res.users
 }
 </script>
@@ -242,7 +238,7 @@ const searchUsers = async () => {
             type="text"
             class="w-full text-sm border-none focus:ring-0"
             placeholder="Search users"
-            @keyup="searchUsers"
+            @keyup="onSearchUsers"
           >
         </form>
         <ul

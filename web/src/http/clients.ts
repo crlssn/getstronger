@@ -20,7 +20,7 @@ const transport = createConnectTransport({
 
 export const authClient = createClient(AuthService, transport)
 export const feedClient = createClient(FeedService, transport)
-export const UserClient = createClient(UserService, transport)
+export const userClient = createClient(UserService, transport)
 export const RoutineClient = createClient(RoutineService, transport)
 export const WorkoutClient = createClient(WorkoutService, transport)
 export const ExerciseClient = createClient(ExerciseService, transport)

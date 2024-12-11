@@ -58,7 +58,19 @@ import {
   type VerifyEmailResponse
 } from "@/proto/api/v1/auth_service_pb"
 
-import {authClient, ExerciseClient, feedClient, RoutineClient, WorkoutClient} from "./clients"
+import {authClient, ExerciseClient, feedClient, RoutineClient, userClient, WorkoutClient} from "./clients"
+import {
+  FollowUserRequestSchema,
+  type FollowUserResponse,
+  GetUserRequestSchema,
+  type GetUserResponse,
+  ListFolloweesRequestSchema,
+  type ListFolloweesResponse,
+  ListFollowersRequestSchema,
+  type ListFollowersResponse,
+  SearchUsersRequestSchema,
+  type SearchUsersResponse, UnfollowUserRequestSchema, type UnfollowUserResponse
+} from "@/proto/api/v1/user_service_pb.ts";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -234,6 +246,52 @@ export const listFeedItems = async (pageToken: Uint8Array): Promise<ListFeedItem
     }
   })
   return tryCatch(() => feedClient.listFeedItems(req))
+}
+
+export const getUser = async (id: string): Promise<GetUserResponse|void> => {
+  const req = create(GetUserRequestSchema, {
+    id: id,
+  })
+  return tryCatch(() => userClient.getUser(req))
+}
+
+export const searchUsers = async (query: string, pageToken: Uint8Array): Promise<SearchUsersResponse|void> => {
+  const req = create(SearchUsersRequestSchema, {
+    query: query,
+    pagination: {
+      pageLimit: 5,
+      pageToken: pageToken,
+    },
+  })
+  return tryCatch(() => userClient.searchUsers(req))
+}
+
+export const listFollowers = async (followerId: string): Promise<ListFollowersResponse|void> => {
+  const req = create(ListFollowersRequestSchema, {
+    followerId: followerId,
+  })
+  return tryCatch(() => userClient.listFollowers(req))
+}
+
+export const listFollowees = async (followeeId: string): Promise<ListFolloweesResponse|void> => {
+  const req = create(ListFolloweesRequestSchema, {
+    followeeId: followeeId,
+  })
+  return tryCatch(() => userClient.listFollowees(req))
+}
+
+export const followUser = async (followId: string): Promise<FollowUserResponse|void> => {
+  const req = create(FollowUserRequestSchema, {
+    followId: followId,
+  })
+  return tryCatch(() => userClient.followUser(req))
+}
+
+export const unfollowUser = async (unfollowId: string): Promise<UnfollowUserResponse|void> => {
+  const req = create(UnfollowUserRequestSchema, {
+    unfollowId: unfollowId,
+  })
+  return tryCatch(() => userClient.unfollowUser(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
