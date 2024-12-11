@@ -2,11 +2,11 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
+import {listExercises} from "@/http/requests.ts";
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import {listExercises} from "@/http/requests.ts";
 
 const exercises = ref(Array<Exercise>())
 const pageToken = ref(new Uint8Array(0))

@@ -2,13 +2,13 @@
 import {computed, onMounted, ref} from 'vue'
 import {useAuthStore} from '@/stores/auth.ts'
 import {useTextareaAutosize} from '@vueuse/core'
-import {deleteWorkout, postWorkoutComment} from '@/http/requests.ts'
 import {useAlertStore} from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import {type DropdownItem} from '@/types/dropdown.ts'
 import {UserCircleIcon} from "@heroicons/vue/24/solid";
 import {formatToRelativeDateTime} from '@/utils/datetime.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
+import {deleteWorkout, postWorkoutComment} from '@/http/requests.ts'
 import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import {type Workout, type WorkoutComment,} from '@/proto/api/v1/workout_service_pb'

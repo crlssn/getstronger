@@ -2,6 +2,7 @@
 import type { User } from '@/proto/api/v1/shared_pb.ts'
 
 import { computed, nextTick, ref } from 'vue'
+import {searchUsers} from "@/http/requests.ts";
 import { RouterView, useRoute } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
@@ -16,7 +17,6 @@ import {
   UserIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import {searchUsers} from "@/http/requests.ts";
 
 const navigation = [
   { href: '/home', icon: HomeIcon, name: 'Home' },

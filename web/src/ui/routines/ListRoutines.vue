@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue'
+import {listRoutines} from "@/http/requests.ts";
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import {ChevronRightIcon} from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import {type Routine} from '@/proto/api/v1/routine_service_pb.ts'
-import {listRoutines} from "@/http/requests.ts";
 
 const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())

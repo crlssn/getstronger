@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'
+import {listWorkouts} from "@/http/requests.ts";
 import { formatToCompactDateTime } from '@/utils/datetime'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { type Workout } from '@/proto/api/v1/workout_service_pb'
-import {listWorkouts} from "@/http/requests.ts";
 
 const authStore = useAuthStore()
 const pageToken = ref(new Uint8Array(0))

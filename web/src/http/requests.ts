@@ -8,6 +8,24 @@ import {Code, ConnectError} from "@connectrpc/connect"
 import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
 import {ListFeedItemsRequestSchema, type ListFeedItemsResponse,} from "@/proto/api/v1/feed_service_pb.ts";
 import {
+  ListNotificationsRequestSchema,
+  type ListNotificationsResponse,
+} from "@/proto/api/v1/notification_service_pb.ts";
+import {
+  FollowUserRequestSchema,
+  type FollowUserResponse,
+  GetUserRequestSchema,
+  type GetUserResponse,
+  ListFolloweesRequestSchema,
+  type ListFolloweesResponse,
+  ListFollowersRequestSchema,
+  type ListFollowersResponse,
+  SearchUsersRequestSchema,
+  type SearchUsersResponse,
+  UnfollowUserRequestSchema,
+  type UnfollowUserResponse
+} from "@/proto/api/v1/user_service_pb.ts";
+import {
   CreateRoutineRequestSchema,
   type CreateRoutineResponse,
   DeleteRoutineRequestSchema,
@@ -35,24 +53,6 @@ import {
   type Workout
 } from "@/proto/api/v1/workout_service_pb"
 import {
-  type CreateExerciseRequest,
-  CreateExerciseRequestSchema,
-  type CreateExerciseResponse,
-  DeleteExerciseRequestSchema,
-  type DeleteExerciseResponse,
-  GetExerciseRequestSchema,
-  type GetExerciseResponse,
-  GetPersonalBestsRequestSchema,
-  type GetPersonalBestsResponse, GetPreviousWorkoutSetsRequestSchema,
-  type GetPreviousWorkoutSetsResponse,
-  ListExercisesRequestSchema,
-  type ListExercisesResponse,
-  ListSetsRequestSchema,
-  type ListSetsResponse,
-  UpdateExerciseRequestSchema,
-  type UpdateExerciseResponse
-} from "@/proto/api/v1/exercise_service_pb"
-import {
   LoginRequestSchema,
   type LoginResponse,
   LogoutRequestSchema,
@@ -71,6 +71,24 @@ import {
   VerifyEmailRequestSchema,
   type VerifyEmailResponse
 } from "@/proto/api/v1/auth_service_pb"
+import {
+  type CreateExerciseRequest,
+  CreateExerciseRequestSchema,
+  type CreateExerciseResponse,
+  DeleteExerciseRequestSchema,
+  type DeleteExerciseResponse,
+  GetExerciseRequestSchema,
+  type GetExerciseResponse,
+  GetPersonalBestsRequestSchema,
+  type GetPersonalBestsResponse, GetPreviousWorkoutSetsRequestSchema,
+  type GetPreviousWorkoutSetsResponse,
+  ListExercisesRequestSchema,
+  type ListExercisesResponse,
+  ListSetsRequestSchema,
+  type ListSetsResponse,
+  UpdateExerciseRequestSchema,
+  type UpdateExerciseResponse
+} from "@/proto/api/v1/exercise_service_pb"
 
 import {
   authClient,
@@ -81,24 +99,6 @@ import {
   userClient,
   workoutClient
 } from "./clients"
-import {
-  FollowUserRequestSchema,
-  type FollowUserResponse,
-  GetUserRequestSchema,
-  type GetUserResponse,
-  ListFolloweesRequestSchema,
-  type ListFolloweesResponse,
-  ListFollowersRequestSchema,
-  type ListFollowersResponse,
-  SearchUsersRequestSchema,
-  type SearchUsersResponse,
-  UnfollowUserRequestSchema,
-  type UnfollowUserResponse
-} from "@/proto/api/v1/user_service_pb.ts";
-import {
-  ListNotificationsRequestSchema,
-  type ListNotificationsResponse, UnreadNotificationsRequestSchema
-} from "@/proto/api/v1/notification_service_pb.ts";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -198,8 +198,8 @@ export const getRoutine = async (id: string): Promise<GetRoutineResponse | void>
 
 export const listExercises = async (pageToken: Uint8Array): Promise<ListExercisesResponse | void> => {
   const req = create(ListExercisesRequestSchema, {
-    name: '',
     exerciseIds: [],
+    name: '',
     pageSize: 100,
     pageToken: pageToken,
   })
@@ -287,11 +287,11 @@ export const getUser = async (id: string): Promise<GetUserResponse | void> => {
 
 export const searchUsers = async (query: string, pageToken: Uint8Array): Promise<SearchUsersResponse | void> => {
   const req = create(SearchUsersRequestSchema, {
-    query: query,
     pagination: {
       pageLimit: 5,
       pageToken: pageToken,
     },
+    query: query,
   })
   return tryCatch(() => userClient.searchUsers(req))
 }
@@ -335,8 +335,8 @@ export const listRoutines = async (pageToken: Uint8Array): Promise<ListRoutinesR
 
 export const updateExerciseOrder = async (routineId: string, exerciseIds: string[]): Promise<UpdateExerciseOrderResponse | void> => {
   const req = create(UpdateExerciseOrderRequestSchema, {
-    routineId: routineId,
     exerciseIds: exerciseIds,
+    routineId: routineId,
   })
   return tryCatch(() => routineClient.updateExerciseOrder(req))
 }
@@ -344,20 +344,20 @@ export const updateExerciseOrder = async (routineId: string, exerciseIds: string
 export const listNotifications = async (pageToken: Uint8Array): Promise<ListNotificationsResponse|void> => {
   const req = create(ListNotificationsRequestSchema, {
     markAsRead: true,
-    unreadOnly: false,
     pagination: {
       pageLimit: 100,
       pageToken: pageToken,
-    }
+    },
+    unreadOnly: false
   })
   return tryCatch(() => notificationClient.listNotifications(req))
 }
 
 export const listWorkouts = async (userIds: string[],pageToken: Uint8Array): Promise<ListWorkoutsResponse | void> => {
   const req = create(ListWorkoutsRequestSchema, {
-    userIds: userIds,
     pageSize: 100,
     pageToken: pageToken,
+    userIds: userIds,
   })
   return tryCatch(() => workoutClient.listWorkouts(req))
 }

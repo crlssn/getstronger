@@ -4,20 +4,17 @@ import type { SortableEvent } from 'sortablejs'
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
-import { create } from '@bufbuild/protobuf'
-import { routineClient } from '@/http/clients'
-import {deleteRoutine, getRoutine, updateExerciseOrder} from '@/http/requests'
 import {useAlertStore} from "@/stores/alerts.ts";
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import {
   type Routine,
-  UpdateExerciseOrderRequestSchema,
 } from '@/proto/api/v1/routine_service_pb.ts'
+import {deleteRoutine, getRoutine, updateExerciseOrder} from '@/http/requests'
+import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 import AppListItemLink from '../components/AppListItemLink.vue'
 

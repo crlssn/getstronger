@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import AppList from '@/ui/components/AppList.vue'
+import {listNotifications} from "@/http/requests.ts";
 import AppListItem from '@/ui/components/AppListItem.vue'
+import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
-import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
-import {listNotifications} from "@/http/requests.ts";
 
 onMounted(async () => {
   await fetchNotifications()
