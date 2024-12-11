@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import  { type Exercise } from '@/proto/api/v1/shared_pb.ts'
+import { type Exercise } from '@/proto/api/v1/shared_pb.ts'
 import { computed, onMounted, ref } from 'vue'
 import { listExercises } from '@/http/requests.ts'
 import AppList from '@/ui/components/AppList.vue'
