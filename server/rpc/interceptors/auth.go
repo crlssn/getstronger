@@ -109,11 +109,11 @@ func (a *auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 func (a *auth) initMethods() {
 	fileDescriptors := []protoreflect.FileDescriptor{
 		apiv1.File_api_v1_auth_service_proto,
-		apiv1.File_api_v1_feed_proto,
+		apiv1.File_api_v1_feed_service_proto,
 		apiv1.File_api_v1_user_service_proto,
-		apiv1.File_api_v1_exercise_service_proto,
 		apiv1.File_api_v1_routine_service_proto,
 		apiv1.File_api_v1_workout_service_proto,
+		apiv1.File_api_v1_exercise_service_proto,
 		apiv1.File_api_v1_notification_service_proto,
 	}
 
