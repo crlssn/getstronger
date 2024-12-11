@@ -75,7 +75,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	for _, t := range tests {
-		res, err := s.handler.Create(ctx, t.req)
+		res, err := s.handler.CreateExercise(ctx, t.req)
 		if t.expected.err != nil {
 			s.Require().Nil(res)
 			s.Require().Error(err)
