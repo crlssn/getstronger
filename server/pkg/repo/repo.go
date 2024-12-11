@@ -1053,33 +1053,53 @@ func (r *Repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentO
 	return comment, nil
 }
 
-type ListNotificationsOpt func() qm.QueryMod
+type ListNotificationsOpt func() ([]qm.QueryMod, error)
 
 func ListNotificationsWithLimit(limit int) ListNotificationsOpt {
-	return func() qm.QueryMod {
-		return qm.Limit(limit)
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Limit(limit),
+		}, nil
 	}
 }
 
 func ListNotificationsWithUserID(userID string) ListNotificationsOpt {
-	return func() qm.QueryMod {
-		return orm.NotificationWhere.UserID.EQ(userID)
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			orm.NotificationWhere.UserID.EQ(userID),
+		}, nil
 	}
 }
 
-func ListNotificationsOrderByCreatedAtDESC() ListNotificationsOpt {
-	return func() qm.QueryMod {
-		return qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt))
+func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
+	return func() ([]qm.QueryMod, error) {
+		if len(token) == 0 {
+			return []qm.QueryMod{
+				qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt)),
+			}, nil
+		}
+
+		var pt PageToken
+		if err := json.Unmarshal(token, &pt); err != nil {
+			return nil, fmt.Errorf("page token unmarshal: %w", err)
+		}
+
+		return []qm.QueryMod{
+			orm.NotificationWhere.CreatedAt.LT(pt.CreatedAt),
+			qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt)),
+		}, nil
 	}
 }
 
 func (r *Repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
-		if opt() == nil {
-			continue
+		q, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("notifications list opt: %w", err)
 		}
-		query = append(query, opt())
+
+		query = append(query, q...)
 	}
 
 	notifications, err := orm.Notifications(query...).All(ctx, r.executor())

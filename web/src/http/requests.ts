@@ -394,7 +394,7 @@ export const listNotifications = async (
 ): Promise<ListNotificationsResponse | void> => {
   const req = create(ListNotificationsRequestSchema, {
     pagination: {
-      pageLimit: 100,
+      pageLimit: 10,
       pageToken: pageToken,
     },
   })

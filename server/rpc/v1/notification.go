@@ -41,7 +41,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	notifications, err := h.repo.ListNotifications(ctx,
 		repo.ListNotificationsWithLimit(limit+1),
 		repo.ListNotificationsWithUserID(userID),
-		repo.ListNotificationsOrderByCreatedAtDESC(),
+		repo.ListNotificationsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
 		log.Error("failed to list notifications", zap.Error(err))
