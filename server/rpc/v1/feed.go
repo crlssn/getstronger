@@ -24,7 +24,7 @@ func NewFeedHandler(r *repo.Repo) apiv1connect.FeedServiceHandler {
 	return &feedHandler{r}
 }
 
-func (h *feedHandler) ListItems(ctx context.Context, req *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error) { //nolint:cyclop // TODO: Simplify this method.
+func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error) { //nolint:cyclop // TODO: Simplify this method.
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -95,8 +95,8 @@ func (h *feedHandler) ListItems(ctx context.Context, req *connect.Request[v1.Lis
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.ListItemsResponse]{
-		Msg: &v1.ListItemsResponse{
+	return &connect.Response[v1.ListFeedItemsResponse]{
+		Msg: &v1.ListFeedItemsResponse{
 			Items: feedItems,
 			Pagination: &v1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,

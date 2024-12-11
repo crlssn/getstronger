@@ -7,6 +7,10 @@ import {create} from "@bufbuild/protobuf"
 import {Code, ConnectError} from "@connectrpc/connect"
 import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
 import {
+  ListFeedItemsRequestSchema,
+  type ListFeedItemsResponse,
+} from "@/proto/api/v1/feed_service_pb.ts";
+import {
   CreateRoutineRequestSchema,
   type CreateRoutineResponse,
   DeleteRoutineRequestSchema,
@@ -54,7 +58,7 @@ import {
   type VerifyEmailResponse
 } from "@/proto/api/v1/auth_service_pb"
 
-import {authClient, ExerciseClient, RoutineClient, WorkoutClient} from "./clients"
+import {authClient, ExerciseClient, feedClient, RoutineClient, WorkoutClient} from "./clients"
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -220,6 +224,16 @@ export const getWorkout = async (id: string): Promise<GetWorkoutResponse | void>
     id: id,
   })
   return tryCatch(() => WorkoutClient.getWorkout(req))
+}
+
+export const listFeedItems = async (pageToken: Uint8Array): Promise<ListFeedItemsResponse | void> => {
+  const req = create(ListFeedItemsRequestSchema, {
+    pagination: {
+      pageLimit: 100,
+      pageToken: pageToken,
+    }
+  })
+  return tryCatch(() => feedClient.listFeedItems(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

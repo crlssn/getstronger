@@ -16,12 +16,12 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/feed_service.proto.
  */
 export const file_api_v1_feed_service: GenFile = /*@__PURE__*/
-  fileDesc("ChlhcGkvdjEvZmVlZF9zZXJ2aWNlLnByb3RvEgZhcGkudjEiSQoQTGlzdEl0ZW1zUmVxdWVzdBI1CgpwYWdpbmF0aW9uGAEgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiZAoRTGlzdEl0ZW1zUmVzcG9uc2USHwoFaXRlbXMYASADKAsyEC5hcGkudjEuRmVlZEl0ZW0SLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiNgoIRmVlZEl0ZW0SIgoHd29ya291dBgBIAEoCzIPLmFwaS52MS5Xb3Jrb3V0SABCBgoEdHlwZTJVCgtGZWVkU2VydmljZRJGCglMaXN0SXRlbXMSGC5hcGkudjEuTGlzdEl0ZW1zUmVxdWVzdBoZLmFwaS52MS5MaXN0SXRlbXNSZXNwb25zZSIEiLUYAUKUAQoKY29tLmFwaS52MUIQRmVlZFNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvcGtnL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
+  fileDesc("ChlhcGkvdjEvZmVlZF9zZXJ2aWNlLnByb3RvEgZhcGkudjEiTQoUTGlzdEZlZWRJdGVtc1JlcXVlc3QSNQoKcGFnaW5hdGlvbhgBIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImgKFUxpc3RGZWVkSXRlbXNSZXNwb25zZRIfCgVpdGVtcxgBIAMoCzIQLmFwaS52MS5GZWVkSXRlbRIuCgpwYWdpbmF0aW9uGAIgASgLMhouYXBpLnYxLlBhZ2luYXRpb25SZXNwb25zZSI2CghGZWVkSXRlbRIiCgd3b3Jrb3V0GAEgASgLMg8uYXBpLnYxLldvcmtvdXRIAEIGCgR0eXBlMmEKC0ZlZWRTZXJ2aWNlElIKDUxpc3RGZWVkSXRlbXMSHC5hcGkudjEuTGlzdEZlZWRJdGVtc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZlZWRJdGVtc1Jlc3BvbnNlIgSItRgBQpQBCgpjb20uYXBpLnYxQhBGZWVkU2VydmljZVByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
- * @generated from message api.v1.ListItemsRequest
+ * @generated from message api.v1.ListFeedItemsRequest
  */
-export type ListItemsRequest = Message<"api.v1.ListItemsRequest"> & {
+export type ListFeedItemsRequest = Message<"api.v1.ListFeedItemsRequest"> & {
   /**
    * @generated from field: api.v1.PaginationRequest pagination = 1;
    */
@@ -29,16 +29,16 @@ export type ListItemsRequest = Message<"api.v1.ListItemsRequest"> & {
 };
 
 /**
- * Describes the message api.v1.ListItemsRequest.
- * Use `create(ListItemsRequestSchema)` to create a new message.
+ * Describes the message api.v1.ListFeedItemsRequest.
+ * Use `create(ListFeedItemsRequestSchema)` to create a new message.
  */
-export const ListItemsRequestSchema: GenMessage<ListItemsRequest> = /*@__PURE__*/
+export const ListFeedItemsRequestSchema: GenMessage<ListFeedItemsRequest> = /*@__PURE__*/
   messageDesc(file_api_v1_feed_service, 0);
 
 /**
- * @generated from message api.v1.ListItemsResponse
+ * @generated from message api.v1.ListFeedItemsResponse
  */
-export type ListItemsResponse = Message<"api.v1.ListItemsResponse"> & {
+export type ListFeedItemsResponse = Message<"api.v1.ListFeedItemsResponse"> & {
   /**
    * @generated from field: repeated api.v1.FeedItem items = 1;
    */
@@ -51,10 +51,10 @@ export type ListItemsResponse = Message<"api.v1.ListItemsResponse"> & {
 };
 
 /**
- * Describes the message api.v1.ListItemsResponse.
- * Use `create(ListItemsResponseSchema)` to create a new message.
+ * Describes the message api.v1.ListFeedItemsResponse.
+ * Use `create(ListFeedItemsResponseSchema)` to create a new message.
  */
-export const ListItemsResponseSchema: GenMessage<ListItemsResponse> = /*@__PURE__*/
+export const ListFeedItemsResponseSchema: GenMessage<ListFeedItemsResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_feed_service, 1);
 
 /**
@@ -85,12 +85,12 @@ export const FeedItemSchema: GenMessage<FeedItem> = /*@__PURE__*/
  */
 export const FeedService: GenService<{
   /**
-   * @generated from rpc api.v1.FeedService.ListItems
+   * @generated from rpc api.v1.FeedService.ListFeedItems
    */
-  listItems: {
+  listFeedItems: {
     methodKind: "unary";
-    input: typeof ListItemsRequestSchema;
-    output: typeof ListItemsResponseSchema;
+    input: typeof ListFeedItemsRequestSchema;
+    output: typeof ListFeedItemsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_feed_service, 0);

@@ -1,6 +1,6 @@
 import { createClient } from '@connectrpc/connect'
 import { auth, logger } from '@/http/interceptors'
-import { FeedService } from '@/proto/api/v1/feed_pb'
+import { FeedService } from '@/proto/api/v1/feed_service_pb'
 import { AuthService } from '@/proto/api/v1/auth_service_pb'
 import { UserService } from '@/proto/api/v1/user_service_pb'
 import { createConnectTransport } from '@connectrpc/connect-web'
@@ -13,13 +13,13 @@ const transport = createConnectTransport({
   baseUrl: import.meta.env.VITE_API_URL,
   fetch: (url, options) => {
     // TODO: Include credentials only on refresh token and logout requests.
-    return fetch(url, { ...options, credentials: 'include' }) // Add credentials
+    return fetch(url, { ...options, credentials: 'include' })
   },
   interceptors: [logger, auth],
 })
 
 export const authClient = createClient(AuthService, transport)
-export const FeedClient = createClient(FeedService, transport)
+export const feedClient = createClient(FeedService, transport)
 export const UserClient = createClient(UserService, transport)
 export const RoutineClient = createClient(RoutineService, transport)
 export const WorkoutClient = createClient(WorkoutService, transport)

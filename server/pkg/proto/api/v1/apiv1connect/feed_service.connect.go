@@ -34,19 +34,20 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// FeedServiceListItemsProcedure is the fully-qualified name of the FeedService's ListItems RPC.
-	FeedServiceListItemsProcedure = "/api.v1.FeedService/ListItems"
+	// FeedServiceListFeedItemsProcedure is the fully-qualified name of the FeedService's ListFeedItems
+	// RPC.
+	FeedServiceListFeedItemsProcedure = "/api.v1.FeedService/ListFeedItems"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	feedServiceServiceDescriptor         = v1.File_api_v1_feed_service_proto.Services().ByName("FeedService")
-	feedServiceListItemsMethodDescriptor = feedServiceServiceDescriptor.Methods().ByName("ListItems")
+	feedServiceServiceDescriptor             = v1.File_api_v1_feed_service_proto.Services().ByName("FeedService")
+	feedServiceListFeedItemsMethodDescriptor = feedServiceServiceDescriptor.Methods().ByName("ListFeedItems")
 )
 
 // FeedServiceClient is a client for the api.v1.FeedService service.
 type FeedServiceClient interface {
-	ListItems(context.Context, *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error)
+	ListFeedItems(context.Context, *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error)
 }
 
 // NewFeedServiceClient constructs a client for the api.v1.FeedService service. By default, it uses
@@ -59,10 +60,10 @@ type FeedServiceClient interface {
 func NewFeedServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) FeedServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &feedServiceClient{
-		listItems: connect.NewClient[v1.ListItemsRequest, v1.ListItemsResponse](
+		listFeedItems: connect.NewClient[v1.ListFeedItemsRequest, v1.ListFeedItemsResponse](
 			httpClient,
-			baseURL+FeedServiceListItemsProcedure,
-			connect.WithSchema(feedServiceListItemsMethodDescriptor),
+			baseURL+FeedServiceListFeedItemsProcedure,
+			connect.WithSchema(feedServiceListFeedItemsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -70,17 +71,17 @@ func NewFeedServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // feedServiceClient implements FeedServiceClient.
 type feedServiceClient struct {
-	listItems *connect.Client[v1.ListItemsRequest, v1.ListItemsResponse]
+	listFeedItems *connect.Client[v1.ListFeedItemsRequest, v1.ListFeedItemsResponse]
 }
 
-// ListItems calls api.v1.FeedService.ListItems.
-func (c *feedServiceClient) ListItems(ctx context.Context, req *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error) {
-	return c.listItems.CallUnary(ctx, req)
+// ListFeedItems calls api.v1.FeedService.ListFeedItems.
+func (c *feedServiceClient) ListFeedItems(ctx context.Context, req *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error) {
+	return c.listFeedItems.CallUnary(ctx, req)
 }
 
 // FeedServiceHandler is an implementation of the api.v1.FeedService service.
 type FeedServiceHandler interface {
-	ListItems(context.Context, *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error)
+	ListFeedItems(context.Context, *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error)
 }
 
 // NewFeedServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -89,16 +90,16 @@ type FeedServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewFeedServiceHandler(svc FeedServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	feedServiceListItemsHandler := connect.NewUnaryHandler(
-		FeedServiceListItemsProcedure,
-		svc.ListItems,
-		connect.WithSchema(feedServiceListItemsMethodDescriptor),
+	feedServiceListFeedItemsHandler := connect.NewUnaryHandler(
+		FeedServiceListFeedItemsProcedure,
+		svc.ListFeedItems,
+		connect.WithSchema(feedServiceListFeedItemsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.FeedService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case FeedServiceListItemsProcedure:
-			feedServiceListItemsHandler.ServeHTTP(w, r)
+		case FeedServiceListFeedItemsProcedure:
+			feedServiceListFeedItemsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -108,6 +109,6 @@ func NewFeedServiceHandler(svc FeedServiceHandler, opts ...connect.HandlerOption
 // UnimplementedFeedServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedFeedServiceHandler struct{}
 
-func (UnimplementedFeedServiceHandler) ListItems(context.Context, *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.FeedService.ListItems is not implemented"))
+func (UnimplementedFeedServiceHandler) ListFeedItems(context.Context, *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.FeedService.ListFeedItems is not implemented"))
 }

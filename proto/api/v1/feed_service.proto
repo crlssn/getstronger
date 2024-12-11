@@ -9,15 +9,15 @@ import "api/v1/workout_service.proto";
 import "buf/validate/validate.proto";
 
 service FeedService {
-  rpc ListItems (ListItemsRequest) returns (ListItemsResponse) {
+  rpc ListFeedItems (ListFeedItemsRequest) returns (ListFeedItemsResponse) {
     option (auth) = true;
   }
 }
 
-message ListItemsRequest {
+message ListFeedItemsRequest {
   PaginationRequest pagination = 1 [(buf.validate.field).required = true];
 }
-message ListItemsResponse {
+message ListFeedItemsResponse {
   repeated FeedItem items = 1;
   PaginationResponse pagination = 2;
 }
