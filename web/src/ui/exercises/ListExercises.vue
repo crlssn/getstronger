@@ -12,8 +12,8 @@ const exercises = ref([] as Exercise[])
 const pageToken = ref(new Uint8Array(0))
 const hasMorePages = computed(() => pageToken.value.length > 0)
 
-onMounted(() => {
-  fetchExercises()
+onMounted(async () => {
+  await fetchExercises()
 })
 
 const fetchExercises = async () => {
