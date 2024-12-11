@@ -15,8 +15,11 @@ const fetchRoutines = async () => {
   if (!res) return
 
   routines.value = [...routines.value, ...res.routines]
-  if (res.nextPageToken.length > 0) {
-    pageToken.value = res.nextPageToken
+  if (!res.pagination) return
+
+  pageToken.value = res.pagination.nextPageToken
+  if (pageToken.value.length > 0) {
+    // TODO: Implement pagination.
     await fetchRoutines()
   }
 }

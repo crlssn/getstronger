@@ -23,11 +23,15 @@ export const file_api_v1_notification_service: GenFile = /*@__PURE__*/
  */
 export type ListNotificationsRequest = Message<"api.v1.ListNotificationsRequest"> & {
   /**
+   * DEBT: Remove.
+   *
    * @generated from field: bool unread_only = 1;
    */
   unreadOnly: boolean;
 
   /**
+   * DEBT: Use a separate endpoint.
+   *
    * @generated from field: bool mark_as_read = 2;
    */
   markAsRead: boolean;

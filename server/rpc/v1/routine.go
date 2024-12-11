@@ -180,12 +180,12 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	limit := int(req.Msg.GetPageLimit())
+	limit := int(req.Msg.GetPagination().GetPageLimit())
 	routines, err := h.repo.ListRoutines(ctx,
 		repo.ListRoutinesWithName(req.Msg.GetName()),
 		repo.ListRoutinesWithLimit(limit+1),
 		repo.ListRoutinesWithUserID(userID),
-		repo.ListRoutinesWithPageToken(req.Msg.GetPageToken()),
+		repo.ListRoutinesWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
 		log.Error("list routines failed", zap.Error(err))
@@ -202,8 +202,11 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 
 	log.Info("routines listed")
 	return connect.NewResponse(&v1.ListRoutinesResponse{
-		Routines:      parseRoutineSliceToPB(pagination.Items),
-		NextPageToken: pagination.NextPageToken,
+		Routines: parseRoutineSliceToPB(pagination.Items),
+		Pagination: &v1.PaginationResponse{
+			TotalResults:  0,
+			NextPageToken: pagination.NextPageToken,
+		},
 	}), nil
 }
 

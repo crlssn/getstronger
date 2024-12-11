@@ -27,8 +27,8 @@ type ListNotificationsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UnreadOnly bool               `protobuf:"varint,1,opt,name=unread_only,json=unreadOnly,proto3" json:"unread_only,omitempty"`
-	MarkAsRead bool               `protobuf:"varint,2,opt,name=mark_as_read,json=markAsRead,proto3" json:"mark_as_read,omitempty"`
+	UnreadOnly bool               `protobuf:"varint,1,opt,name=unread_only,json=unreadOnly,proto3" json:"unread_only,omitempty"`   // DEBT: Remove.
+	MarkAsRead bool               `protobuf:"varint,2,opt,name=mark_as_read,json=markAsRead,proto3" json:"mark_as_read,omitempty"` // DEBT: Use a separate endpoint.
 	Pagination *PaginationRequest `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 

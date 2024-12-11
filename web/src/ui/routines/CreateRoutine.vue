@@ -33,8 +33,10 @@ const fetchExercises = async () => {
   if (!res) return
 
   exercises.value = [...exercises.value, ...res.exercises]
-  if (res.nextPageToken.length > 0) {
-    pageToken.value = res.nextPageToken
+  if (!res.pagination) return
+
+  pageToken.value = res.pagination.nextPageToken
+  if (pageToken.value.length > 0) {
     // TODO: Implement pagination.
     await fetchExercises()
   }

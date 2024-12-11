@@ -63,12 +63,11 @@ message DeleteRoutineResponse {}
 
 message ListRoutinesRequest {
   string name = 1;
-  int32 page_limit = 2 [(buf.validate.field).int32 = { gte: 1, lte: 100 }];
-  bytes page_token = 3;
+  PaginationRequest pagination = 2 [(buf.validate.field).required = true];
 }
 message ListRoutinesResponse {
   repeated Routine routines = 1;
-  bytes next_page_token = 2;
+  PaginationResponse pagination = 2;
 }
 
 message AddExerciseRequest {
