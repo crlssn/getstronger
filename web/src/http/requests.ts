@@ -65,7 +65,15 @@ import {
   type VerifyEmailResponse
 } from "@/proto/api/v1/auth_service_pb"
 
-import {authClient, ExerciseClient, feedClient, routineClient, userClient, WorkoutClient} from "./clients"
+import {
+  authClient,
+  ExerciseClient,
+  feedClient,
+  notificationClient,
+  routineClient,
+  userClient,
+  WorkoutClient
+} from "./clients"
 import {
   FollowUserRequestSchema,
   type FollowUserResponse,
@@ -80,6 +88,10 @@ import {
   UnfollowUserRequestSchema,
   type UnfollowUserResponse
 } from "@/proto/api/v1/user_service_pb.ts";
+import {
+  ListNotificationsRequestSchema,
+  type ListNotificationsResponse, UnreadNotificationsRequestSchema
+} from "@/proto/api/v1/notification_service_pb.ts";
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -318,6 +330,18 @@ export const updateExerciseOrder = async (routineId: string, exerciseIds: string
     exerciseIds: exerciseIds,
   })
   return tryCatch(() => routineClient.updateExerciseOrder(req))
+}
+
+export const listNotifications = async (pageToken: Uint8Array): Promise<ListNotificationsResponse|void> => {
+  const req = create(ListNotificationsRequestSchema, {
+    markAsRead: true,
+    unreadOnly: false,
+    pagination: {
+      pageLimit: 100,
+      pageToken: pageToken,
+    }
+  })
+  return tryCatch(() => notificationClient.listNotifications(req))
 }
 
 const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {

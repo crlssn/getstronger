@@ -1,40 +1,32 @@
 <script setup lang="ts">
-import type { PaginationRequest } from '@/proto/api/v1/shared_pb.ts'
-
 import { onMounted, ref } from 'vue'
-import { create } from '@bufbuild/protobuf'
 import AppList from '@/ui/components/AppList.vue'
-import { NotificationClient } from '@/http/clients.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
-import { ListNotificationsRequestSchema, type Notification } from '@/proto/api/v1/notifications_pb.ts'
+import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
+import {listNotifications} from "@/http/requests.ts";
+
+onMounted(async () => {
+  await fetchNotifications()
+})
 
 const notifications = ref([] as Notification[])
 const pageToken = ref(new Uint8Array(0))
 
-const fetchUnreadNotifications = async () => {
-  const req = create(ListNotificationsRequestSchema, {
-    markAsRead: true,
-    pagination: {
-      pageLimit: 100,
-      pageToken: pageToken.value,
-    } as PaginationRequest,
-    unreadOnly: false,
-  })
+const fetchNotifications = async () => {
+  const res = await listNotifications(pageToken.value)
+  if (!res) return
 
-  const res = await NotificationClient.listNotifications(req)
   notifications.value = [...notifications.value, ...res.notifications]
-  pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
+  if (!res.pagination) return
+
+  pageToken.value = res.pagination.nextPageToken
   if (pageToken.value.length > 0) {
     // TODO: Implement pagination.
-    await fetchUnreadNotifications()
+    await fetchNotifications()
   }
 }
-
-onMounted(async () => {
-  await fetchUnreadNotifications()
-})
 </script>
 
 <template>
