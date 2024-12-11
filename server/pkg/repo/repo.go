@@ -955,28 +955,6 @@ func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentP
 	return comment, nil
 }
 
-type CountUsersOpt func() qm.QueryMod
-
-func CountUsersWithNameMatching(query string) CountUsersOpt {
-	return func() qm.QueryMod {
-		return orm.UserWhere.FullNameSearch.LIKE(fmt.Sprintf("%%%s%%", strings.ToLower(query)))
-	}
-}
-
-func (r *Repo) CountUsers(ctx context.Context, opts ...CountUsersOpt) (int64, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
-	for _, opt := range opts {
-		query = append(query, opt())
-	}
-
-	count, err := orm.Users(query...).Count(ctx, r.executor())
-	if err != nil {
-		return 0, fmt.Errorf("users count: %w", err)
-	}
-
-	return count, nil
-}
-
 type StoreTraceParams struct {
 	Request    string
 	StatusCode int

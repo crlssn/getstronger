@@ -54,12 +54,6 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[v1.GetUs
 func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[v1.SearchUsersRequest]) (*connect.Response[v1.SearchUsersResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	count, err := h.repo.CountUsers(ctx, repo.CountUsersWithNameMatching(req.Msg.GetQuery()))
-	if err != nil {
-		log.Error("failed to count users", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	users, err := h.repo.ListUsers(ctx,
 		repo.ListUsersWithLimit(limit+1),
@@ -83,7 +77,6 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[v1.S
 		Msg: &v1.SearchUsersResponse{
 			Users: parseUserSliceToPB(pagination.Items),
 			Pagination: &v1.PaginationResponse{
-				TotalResults:  count,
 				NextPageToken: pagination.NextPageToken,
 			},
 		},

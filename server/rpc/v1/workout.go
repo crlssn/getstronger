@@ -178,7 +178,6 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		Msg: &v1.ListWorkoutsResponse{
 			Workouts: w,
 			Pagination: &v1.PaginationResponse{
-				TotalResults:  0,
 				NextPageToken: pagination.NextPageToken,
 			},
 		},
