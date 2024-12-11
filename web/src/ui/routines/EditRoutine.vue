@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
-
+import { type Exercise } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import { Switch } from '@headlessui/vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -10,14 +9,17 @@ import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { getRoutine, listExercises, updateRoutine } from '@/http/requests.ts'
+import { vInfiniteScroll } from '@vueuse/components'
+import usePagination from '@/utils/usePagination'
 
 const name = ref('')
-const exercises = ref(Array<Exercise>())
-const exerciseIDs = ref(Array<string>())
-const pageToken = ref(new Uint8Array(0))
+const exercises = ref([] as Exercise[])
+const exerciseIDs = ref([] as string[])
+
 const route = useRoute()
 const router = useRouter()
 const alertStore = useAlertStore()
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   await fetchRoutine()
@@ -35,14 +37,9 @@ const fetchRoutine = async () => {
 const fetchExercises = async () => {
   const res = await listExercises(pageToken.value)
   if (!res) return
-  exercises.value = [...exercises.value, ...res.exercises]
-  if (!res.pagination) return
 
-  pageToken.value = res.pagination.nextPageToken
-  if (pageToken.value.length > 0) {
-    // TODO: Implement pagination.
-    await fetchExercises()
-  }
+  exercises.value = [...exercises.value, ...res.exercises]
+  pageToken.value = resolvePageToken(res.pagination)
 }
 
 const toggleExercise = (id: string) => {
@@ -91,6 +88,7 @@ const onSubmit = async () => {
         </div>
       </AppListItem>
     </AppList>
+    <div v-if="hasMorePages" v-infinite-scroll="fetchExercises" />
 
     <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
       Update Routine
