@@ -31,7 +31,7 @@ const onLogin = async () => {
         class="mx-auto h-10 w-auto"
         src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
         alt="Your Company"
-      >
+      />
       <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
         Sign in to your account
       </h2>
@@ -59,16 +59,9 @@ const onLogin = async () => {
       >
         Your password has been reset. You can now login.
       </div>
-      <form
-        class="space-y-6"
-        method="POST"
-        @submit.prevent="onLogin"
-      >
+      <form class="space-y-6" method="POST" @submit.prevent="onLogin">
         <div>
-          <label
-            for="email"
-            class="block text-sm/6 font-medium text-gray-900"
-          >Email address</label>
+          <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
           <div class="mt-2">
             <input
               id="email"
@@ -77,16 +70,13 @@ const onLogin = async () => {
               type="email"
               autocomplete="email"
               required
-            >
+            />
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <label
-              for="password"
-              class="block text-sm/6 font-medium text-gray-900"
-            >Password</label>
+            <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
             <div class="text-sm">
               <RouterLink
                 to="/forgot-password"
@@ -104,26 +94,18 @@ const onLogin = async () => {
               type="password"
               autocomplete="current-password"
               required
-            >
+            />
           </div>
         </div>
 
         <div>
-          <AppButton
-            type="submit"
-            colour="primary"
-          >
-            Login
-          </AppButton>
+          <AppButton type="submit" colour="primary"> Login </AppButton>
         </div>
       </form>
 
       <p class="mt-10 text-center text-sm/6 text-gray-400">
         Not a member?
-        <RouterLink
-          to="signup"
-          class="font-semibold text-indigo-600 hover:text-indigo-500"
-        >
+        <RouterLink to="signup" class="font-semibold text-indigo-600 hover:text-indigo-500">
           Sign up
         </RouterLink>
       </p>

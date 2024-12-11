@@ -18,7 +18,7 @@ li {
     @apply text-red-500;
   }
   &.header {
-    @apply block text-sm font-semibold text-gray-600 uppercase ;
+    @apply block text-sm font-semibold text-gray-600 uppercase;
   }
 }
 </style>

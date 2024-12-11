@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type {Exercise} from "@/proto/api/v1/shared_pb.ts";
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import {useAlertStore} from "@/stores/alerts.ts";
-import AppList from "@/ui/components/AppList.vue";
+import { useRoute, useRouter } from 'vue-router'
+import { useAlertStore } from '@/stores/alerts.ts'
+import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import {getExercise, updateExercise} from "@/http/requests.ts";
-import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import { getExercise, updateExercise } from '@/http/requests.ts'
+import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,33 +33,18 @@ async function onUpdateExercise() {
 </script>
 
 <template>
-  <form
-    v-if="exercise"
-    @submit.prevent="onUpdateExercise"
-  >
+  <form v-if="exercise" @submit.prevent="onUpdateExercise">
     <h6>Name</h6>
     <AppList>
-      <AppListItemInput
-        :model="exercise.name"
-        type="text"
-        required
-      />
+      <AppListItemInput :model="exercise.name" type="text" required />
     </AppList>
 
     <h6>Label</h6>
     <AppList>
-      <AppListItemInput
-        :model="exercise.label"
-        type="text"
-        placeholder="Optional"
-      />
+      <AppListItemInput :model="exercise.label" type="text" placeholder="Optional" />
     </AppList>
 
-    <AppButton
-      type="submit"
-      colour="primary"
-      container-class="px-4 pb-4"
-    >
+    <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
       Update Exercise
     </AppButton>
   </form>

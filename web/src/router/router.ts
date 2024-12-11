@@ -10,14 +10,14 @@ import ProfileView from '@/ui/profile/ProfileView.vue'
 import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
 import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
 import ResetPassword from '@/ui/auth/ResetPassword.vue'
-import EditRoutine from "@/ui/routines/EditRoutine.vue";
-import EditWorkout from "@/ui/workouts/EditWorkout.vue";
+import EditRoutine from '@/ui/routines/EditRoutine.vue'
+import EditWorkout from '@/ui/workouts/EditWorkout.vue'
 import ListRoutines from '@/ui/routines/ListRoutines.vue'
 import ListWorkouts from '@/ui/workouts/ListWorkouts.vue'
 import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
 import StartWorkout from '@/ui/workouts/StartWorkout.vue'
 import ViewExercise from '@/ui/exercises/ViewExercise.vue'
-import {logout as logoutRequest} from "@/http/requests.ts";
+import { logout as logoutRequest } from '@/http/requests.ts'
 import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
 import ListExercises from '@/ui/exercises/ListExercises.vue'
 import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'

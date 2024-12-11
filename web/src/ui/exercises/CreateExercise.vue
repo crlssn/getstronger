@@ -3,9 +3,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts'
 import { createExercise } from '@/http/requests'
-import AppList from "@/ui/components/AppList.vue";
+import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { type CreateExerciseRequest } from '@/proto/api/v1/exercise_service_pb'
 
 const router = useRouter()
@@ -29,12 +29,7 @@ const onSubmit = async () => {
   <form @submit.prevent="onSubmit">
     <h6>Name</h6>
     <AppList>
-      <AppListItemInput
-        :model="req.name"
-        type="text"
-        required
-        @update="n => req.name = n"
-      />
+      <AppListItemInput :model="req.name" type="text" required @update="(n) => (req.name = n)" />
     </AppList>
 
     <h6>Label</h6>
@@ -43,16 +38,11 @@ const onSubmit = async () => {
         :model="req.label"
         type="text"
         placeholder="Optional"
-        @update="n => req.label = n"
+        @update="(n) => (req.label = n)"
       />
     </AppList>
 
-    <AppButton
-      text="Create"
-      type="submit"
-      colour="primary"
-      container-class="px-4 pb-4"
-    >
+    <AppButton text="Create" type="submit" colour="primary" container-class="px-4 pb-4">
       Save Exercise
     </AppButton>
   </form>

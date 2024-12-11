@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
-import {useAuthStore} from '@/stores/auth.ts'
-import {useTextareaAutosize} from '@vueuse/core'
-import {useAlertStore} from '@/stores/alerts.ts'
+import { computed, onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth.ts'
+import { useTextareaAutosize } from '@vueuse/core'
+import { useAlertStore } from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
-import {type DropdownItem} from '@/types/dropdown.ts'
-import {UserCircleIcon} from "@heroicons/vue/24/solid";
-import {formatToRelativeDateTime} from '@/utils/datetime.ts'
+import { type DropdownItem } from '@/types/dropdown.ts'
+import { UserCircleIcon } from '@heroicons/vue/24/solid'
+import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
-import {deleteWorkout, postWorkoutComment} from '@/http/requests.ts'
-import CardWorkoutComment from "@/ui/components/CardWorkoutComment.vue";
+import { deleteWorkout, postWorkoutComment } from '@/http/requests.ts'
+import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
-import {type Workout, type WorkoutComment,} from '@/proto/api/v1/workout_service_pb'
+import { type Workout, type WorkoutComment } from '@/proto/api/v1/workout_service_pb'
 
-const {input, textarea} = useTextareaAutosize()
+const { input, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
 const workoutDeleted = ref(false)
@@ -24,8 +24,8 @@ const props = defineProps<{
 }>()
 
 const dropdownItems: Array<DropdownItem> = [
-  {href: `/workouts/${props.workout.id}/edit`, title: 'Update Workout'},
-  {func: () => onDeleteWorkout(), title: 'Delete Workout'},
+  { href: `/workouts/${props.workout.id}/edit`, title: 'Update Workout' },
+  { func: () => onDeleteWorkout(), title: 'Delete Workout' },
 ]
 
 const onDeleteWorkout = async () => {
@@ -66,23 +66,14 @@ const formatComment = computed(() => {
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <UserCircleIcon class="size-10 text-gray-900" />
-          <RouterLink
-            :to="`/users/${props.workout.user?.id}`"
-            class="font-semibold text-base mx-2"
-          >
+          <RouterLink :to="`/users/${props.workout.user?.id}`" class="font-semibold text-base mx-2">
             {{ props.workout.user?.firstName }} {{ props.workout.user?.lastName }}
           </RouterLink>
-          <RouterLink
-            :to="`/workouts/${workout.id}`"
-            class="text-gray-500 text-sm"
-          >
+          <RouterLink :to="`/workouts/${workout.id}`" class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </RouterLink>
         </div>
-        <DropdownButton
-          v-if="workout.user?.id === authStore.userID"
-          :items="dropdownItems"
-        />
+        <DropdownButton v-if="workout.user?.id === authStore.userID" :items="dropdownItems" />
       </div>
     </div>
     <div class="pl-16 pr-4 py-3">
@@ -102,10 +93,7 @@ const formatComment = computed(() => {
         {{ workout.comments.length }} {{ formatComment }}
       </RouterLink>
     </div>
-    <div
-      v-if="!compact"
-      class="px-4 py-3"
-    >
+    <div v-if="!compact" class="px-4 py-3">
       <CardWorkoutComment
         v-for="comment in comments"
         :key="comment.id"
@@ -113,10 +101,7 @@ const formatComment = computed(() => {
         :timestamp="comment.createdAt"
         :comment="comment.comment"
       />
-      <form
-        class="ml-10"
-        @submit.prevent="postComment"
-      >
+      <form class="ml-10" @submit.prevent="postComment">
         <textarea
           ref="textarea"
           v-model="input"
@@ -124,12 +109,7 @@ const formatComment = computed(() => {
           placeholder="Write a comment..."
           required
         />
-        <AppButton
-          type="submit"
-          colour="primary"
-        >
-          Comment
-        </AppButton>
+        <AppButton type="submit" colour="primary"> Comment </AppButton>
       </form>
     </div>
   </div>

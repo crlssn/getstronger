@@ -11,7 +11,7 @@ const router = useRouter()
 
 const req = ref<ResetPasswordRequest>({
   $typeName: 'api.v1.ResetPasswordRequest',
-  email: ''
+  email: '',
 })
 
 const onSubmit = async () => {
@@ -32,16 +32,9 @@ const onSubmit = async () => {
       >
         Please check your inbox to reset your password.
       </div>
-      <form
-        class="space-y-6"
-        method="POST"
-        @submit.prevent="onSubmit"
-      >
+      <form class="space-y-6" method="POST" @submit.prevent="onSubmit">
         <div>
-          <label
-            for="email"
-            class="block text-sm/6 font-medium text-gray-900"
-          >Email address</label>
+          <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
           <div class="mt-2">
             <input
               id="email"
@@ -50,25 +43,17 @@ const onSubmit = async () => {
               type="email"
               autocomplete="email"
               required
-            >
+            />
           </div>
         </div>
         <div>
-          <AppButton
-            type="submit"
-            colour="primary"
-          >
-            Reset Password
-          </AppButton>
+          <AppButton type="submit" colour="primary"> Reset Password </AppButton>
         </div>
       </form>
 
       <p class="mt-10 text-center text-sm/6 text-gray-400">
         Remember your password?
-        <RouterLink
-          to="/login"
-          class="font-semibold text-indigo-600 hover:text-indigo-500"
-        >
+        <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
           Login
         </RouterLink>
       </p>

@@ -1,16 +1,19 @@
-import type {DateTimeMaybeValid} from "luxon/src/datetime";
-import type {FieldMask, Timestamp} from "@bufbuild/protobuf/wkt";
-import type {Exercise, ExerciseSets} from "@/proto/api/v1/shared_pb.ts";
+import type { DateTimeMaybeValid } from 'luxon/src/datetime'
+import type { FieldMask, Timestamp } from '@bufbuild/protobuf/wkt'
+import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb.ts'
 
-import router from "@/router/router.ts";
-import {create} from "@bufbuild/protobuf"
-import {Code, ConnectError} from "@connectrpc/connect"
-import {Error, ErrorDetailSchema} from "@/proto/api/v1/errors_pb"
-import {ListFeedItemsRequestSchema, type ListFeedItemsResponse,} from "@/proto/api/v1/feed_service_pb.ts";
+import router from '@/router/router.ts'
+import { create } from '@bufbuild/protobuf'
+import { Code, ConnectError } from '@connectrpc/connect'
+import { Error, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
+import {
+  ListFeedItemsRequestSchema,
+  type ListFeedItemsResponse,
+} from '@/proto/api/v1/feed_service_pb.ts'
 import {
   ListNotificationsRequestSchema,
   type ListNotificationsResponse,
-} from "@/proto/api/v1/notification_service_pb.ts";
+} from '@/proto/api/v1/notification_service_pb.ts'
 import {
   FollowUserRequestSchema,
   type FollowUserResponse,
@@ -23,8 +26,8 @@ import {
   SearchUsersRequestSchema,
   type SearchUsersResponse,
   UnfollowUserRequestSchema,
-  type UnfollowUserResponse
-} from "@/proto/api/v1/user_service_pb.ts";
+  type UnfollowUserResponse,
+} from '@/proto/api/v1/user_service_pb.ts'
 import {
   CreateRoutineRequestSchema,
   type CreateRoutineResponse,
@@ -33,10 +36,12 @@ import {
   GetRoutineRequestSchema,
   type GetRoutineResponse,
   ListRoutinesRequestSchema,
-  type ListRoutinesResponse, UpdateExerciseOrderRequestSchema, type UpdateExerciseOrderResponse,
+  type ListRoutinesResponse,
+  UpdateExerciseOrderRequestSchema,
+  type UpdateExerciseOrderResponse,
   UpdateRoutineRequestSchema,
-  type UpdateRoutineResponse
-} from "@/proto/api/v1/routine_service_pb"
+  type UpdateRoutineResponse,
+} from '@/proto/api/v1/routine_service_pb'
 import {
   CreateWorkoutRequestSchema,
   type CreateWorkoutResponse,
@@ -50,8 +55,8 @@ import {
   type PostCommentResponse,
   UpdateWorkoutRequestSchema,
   type UpdateWorkoutResponse,
-  type Workout
-} from "@/proto/api/v1/workout_service_pb"
+  type Workout,
+} from '@/proto/api/v1/workout_service_pb'
 import {
   LoginRequestSchema,
   type LoginResponse,
@@ -69,8 +74,8 @@ import {
   UpdatePasswordRequestSchema,
   type UpdatePasswordResponse,
   VerifyEmailRequestSchema,
-  type VerifyEmailResponse
-} from "@/proto/api/v1/auth_service_pb"
+  type VerifyEmailResponse,
+} from '@/proto/api/v1/auth_service_pb'
 import {
   type CreateExerciseRequest,
   CreateExerciseRequestSchema,
@@ -80,15 +85,16 @@ import {
   GetExerciseRequestSchema,
   type GetExerciseResponse,
   GetPersonalBestsRequestSchema,
-  type GetPersonalBestsResponse, GetPreviousWorkoutSetsRequestSchema,
+  type GetPersonalBestsResponse,
+  GetPreviousWorkoutSetsRequestSchema,
   type GetPreviousWorkoutSetsResponse,
   ListExercisesRequestSchema,
   type ListExercisesResponse,
   ListSetsRequestSchema,
   type ListSetsResponse,
   UpdateExerciseRequestSchema,
-  type UpdateExerciseResponse
-} from "@/proto/api/v1/exercise_service_pb"
+  type UpdateExerciseResponse,
+} from '@/proto/api/v1/exercise_service_pb'
 
 import {
   authClient,
@@ -97,8 +103,8 @@ import {
   notificationClient,
   routineClient,
   userClient,
-  workoutClient
-} from "./clients"
+  workoutClient,
+} from './clients'
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -156,12 +162,16 @@ export const verifyEmail = async (token: string): Promise<VerifyEmailResponse | 
   return tryCatch(() => authClient.verifyEmail(req))
 }
 
-export const resetPassword = async (request: ResetPasswordRequest): Promise<ResetPasswordResponse | void> => {
+export const resetPassword = async (
+  request: ResetPasswordRequest,
+): Promise<ResetPasswordResponse | void> => {
   const req = create(ResetPasswordRequestSchema, request)
   return tryCatch(() => authClient.resetPassword(req))
 }
 
-export const updatePassword = async (request: UpdatePasswordRequest): Promise<UpdatePasswordResponse | void> => {
+export const updatePassword = async (
+  request: UpdatePasswordRequest,
+): Promise<UpdatePasswordResponse | void> => {
   const req = create(UpdatePasswordRequestSchema, request)
   return tryCatch(() => authClient.updatePassword(req))
 }
@@ -173,18 +183,23 @@ export const getExercise = async (id: string): Promise<GetExerciseResponse | voi
   return tryCatch(() => exerciseClient.getExercise(req))
 }
 
-export const createExercise = async (request: CreateExerciseRequest): Promise<CreateExerciseResponse | void> => {
+export const createExercise = async (
+  request: CreateExerciseRequest,
+): Promise<CreateExerciseResponse | void> => {
   const req = create(CreateExerciseRequestSchema, request)
   return tryCatch(() => exerciseClient.createExercise(req))
 }
 
-export const listSets = async (exerciseId: string, pageToken: Uint8Array): Promise<ListSetsResponse | void> => {
+export const listSets = async (
+  exerciseId: string,
+  pageToken: Uint8Array,
+): Promise<ListSetsResponse | void> => {
   const req = create(ListSetsRequestSchema, {
     exerciseId: exerciseId,
     pagination: {
       pageLimit: 100,
       pageToken: pageToken,
-    }
+    },
   })
   return tryCatch(() => exerciseClient.listSets(req))
 }
@@ -196,7 +211,9 @@ export const getRoutine = async (id: string): Promise<GetRoutineResponse | void>
   return tryCatch(() => routineClient.getRoutine(req))
 }
 
-export const listExercises = async (pageToken: Uint8Array): Promise<ListExercisesResponse | void> => {
+export const listExercises = async (
+  pageToken: Uint8Array,
+): Promise<ListExercisesResponse | void> => {
   const req = create(ListExercisesRequestSchema, {
     exerciseIds: [],
     name: '',
@@ -206,7 +223,10 @@ export const listExercises = async (pageToken: Uint8Array): Promise<ListExercise
   return tryCatch(() => exerciseClient.listExercises(req))
 }
 
-export const createRoutine = async (name: string, exerciseIds: string[]): Promise<CreateRoutineResponse | void> => {
+export const createRoutine = async (
+  name: string,
+  exerciseIds: string[],
+): Promise<CreateRoutineResponse | void> => {
   const req = create(CreateRoutineRequestSchema, {
     exerciseIds: exerciseIds,
     name: name,
@@ -214,19 +234,27 @@ export const createRoutine = async (name: string, exerciseIds: string[]): Promis
   return tryCatch(() => routineClient.createRoutine(req))
 }
 
-export const updateRoutine = async (id: string, name: string, exerciseIds: string[]): Promise<UpdateRoutineResponse | void> => {
-  const exercises: Exercise[] = exerciseIds.map(id => ({id: id} as Exercise))
+export const updateRoutine = async (
+  id: string,
+  name: string,
+  exerciseIds: string[],
+): Promise<UpdateRoutineResponse | void> => {
+  const exercises: Exercise[] = exerciseIds.map((id) => ({ id: id }) as Exercise)
   const req = create(UpdateRoutineRequestSchema, {
     routine: {
       exercises: exercises,
       id: id,
       name: name,
-    }
+    },
   })
   return tryCatch(() => routineClient.updateRoutine(req))
 }
 
-export const updateExercise = async (id: string, name: string, label: string): Promise<UpdateExerciseResponse | void> => {
+export const updateExercise = async (
+  id: string,
+  name: string,
+  label: string,
+): Promise<UpdateExerciseResponse | void> => {
   const req = create(UpdateExerciseRequestSchema, {
     exercise: {
       id: id,
@@ -240,7 +268,12 @@ export const updateExercise = async (id: string, name: string, label: string): P
   return tryCatch(() => exerciseClient.updateExercise(req))
 }
 
-export const createWorkout = async (routineId: string, exerciseSets: ExerciseSets[], startedAt: DateTimeMaybeValid, finishedAt: DateTimeMaybeValid): Promise<CreateWorkoutResponse | void> => {
+export const createWorkout = async (
+  routineId: string,
+  exerciseSets: ExerciseSets[],
+  startedAt: DateTimeMaybeValid,
+  finishedAt: DateTimeMaybeValid,
+): Promise<CreateWorkoutResponse | void> => {
   const req = create(CreateWorkoutRequestSchema, {
     exerciseSets: exerciseSets,
     finishedAt: {
@@ -268,12 +301,14 @@ export const getWorkout = async (id: string): Promise<GetWorkoutResponse | void>
   return tryCatch(() => workoutClient.getWorkout(req))
 }
 
-export const listFeedItems = async (pageToken: Uint8Array): Promise<ListFeedItemsResponse | void> => {
+export const listFeedItems = async (
+  pageToken: Uint8Array,
+): Promise<ListFeedItemsResponse | void> => {
   const req = create(ListFeedItemsRequestSchema, {
     pagination: {
       pageLimit: 100,
       pageToken: pageToken,
-    }
+    },
   })
   return tryCatch(() => feedClient.listFeedItems(req))
 }
@@ -285,7 +320,10 @@ export const getUser = async (id: string): Promise<GetUserResponse | void> => {
   return tryCatch(() => userClient.getUser(req))
 }
 
-export const searchUsers = async (query: string, pageToken: Uint8Array): Promise<SearchUsersResponse | void> => {
+export const searchUsers = async (
+  query: string,
+  pageToken: Uint8Array,
+): Promise<SearchUsersResponse | void> => {
   const req = create(SearchUsersRequestSchema, {
     pagination: {
       pageLimit: 5,
@@ -333,7 +371,10 @@ export const listRoutines = async (pageToken: Uint8Array): Promise<ListRoutinesR
   return tryCatch(() => routineClient.listRoutines(req))
 }
 
-export const updateExerciseOrder = async (routineId: string, exerciseIds: string[]): Promise<UpdateExerciseOrderResponse | void> => {
+export const updateExerciseOrder = async (
+  routineId: string,
+  exerciseIds: string[],
+): Promise<UpdateExerciseOrderResponse | void> => {
   const req = create(UpdateExerciseOrderRequestSchema, {
     exerciseIds: exerciseIds,
     routineId: routineId,
@@ -341,19 +382,24 @@ export const updateExerciseOrder = async (routineId: string, exerciseIds: string
   return tryCatch(() => routineClient.updateExerciseOrder(req))
 }
 
-export const listNotifications = async (pageToken: Uint8Array): Promise<ListNotificationsResponse|void> => {
+export const listNotifications = async (
+  pageToken: Uint8Array,
+): Promise<ListNotificationsResponse | void> => {
   const req = create(ListNotificationsRequestSchema, {
     markAsRead: true,
     pagination: {
       pageLimit: 100,
       pageToken: pageToken,
     },
-    unreadOnly: false
+    unreadOnly: false,
   })
   return tryCatch(() => notificationClient.listNotifications(req))
 }
 
-export const listWorkouts = async (userIds: string[],pageToken: Uint8Array): Promise<ListWorkoutsResponse | void> => {
+export const listWorkouts = async (
+  userIds: string[],
+  pageToken: Uint8Array,
+): Promise<ListWorkoutsResponse | void> => {
   const req = create(ListWorkoutsRequestSchema, {
     pageSize: 100,
     pageToken: pageToken,
@@ -362,7 +408,10 @@ export const listWorkouts = async (userIds: string[],pageToken: Uint8Array): Pro
   return tryCatch(() => workoutClient.listWorkouts(req))
 }
 
-export const postWorkoutComment = async (workoutId: string, comment: string): Promise<PostCommentResponse|void> => {
+export const postWorkoutComment = async (
+  workoutId: string,
+  comment: string,
+): Promise<PostCommentResponse | void> => {
   const req = create(PostCommentRequestSchema, {
     comment: comment,
     workoutId: workoutId,
@@ -370,14 +419,18 @@ export const postWorkoutComment = async (workoutId: string, comment: string): Pr
   return tryCatch(() => workoutClient.postComment(req))
 }
 
-export const getPersonalBests = async (userId: string): Promise<GetPersonalBestsResponse | void> => {
+export const getPersonalBests = async (
+  userId: string,
+): Promise<GetPersonalBestsResponse | void> => {
   const req = create(GetPersonalBestsRequestSchema, {
     userId: userId,
   })
   return tryCatch(() => exerciseClient.getPersonalBests(req))
 }
 
-export const getPreviousWorkoutSets = async (exerciseIds: string[]): Promise<GetPreviousWorkoutSetsResponse | void> => {
+export const getPreviousWorkoutSets = async (
+  exerciseIds: string[],
+): Promise<GetPreviousWorkoutSetsResponse | void> => {
   const req = create(GetPreviousWorkoutSetsRequestSchema, {
     exerciseIds: exerciseIds,
   })
@@ -399,10 +452,10 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
       for (const detail of error.findDetails(ErrorDetailSchema)) {
         switch (detail.error) {
           case Error.EMAIL_NOT_VERIFIED:
-            console.warn("email is not verified");
-            break;
+            console.warn('email is not verified')
+            break
           default:
-            console.warn("unknown error:", detail.error);
+            console.warn('unknown error:', detail.error)
         }
       }
     }

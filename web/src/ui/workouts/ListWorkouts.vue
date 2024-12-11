@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'
-import {listWorkouts} from "@/http/requests.ts";
+import { listWorkouts } from '@/http/requests.ts'
 import { formatToCompactDateTime } from '@/utils/datetime'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { type Workout } from '@/proto/api/v1/workout_service_pb'
@@ -15,7 +15,7 @@ const fetchWorkouts = async () => {
   const res = await listWorkouts(userIds, pageToken.value)
   if (!res) return
 
-  workouts.value = [...workouts.value || [], ...res.workouts]
+  workouts.value = [...(workouts.value || []), ...res.workouts]
   pageToken.value = res.nextPageToken
   if (pageToken.value.length > 0) {
     // TODO: Implement infinite scroll.
@@ -29,11 +29,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    v-for="workout in workouts"
-    :key="workout.id"
-    class="mb-4"
-  >
+  <div v-for="workout in workouts" :key="workout.id" class="mb-4">
     <h6>{{ formatToCompactDateTime(workout.finishedAt) }}</h6>
     <ul
       role="list"
@@ -45,9 +41,7 @@ onMounted(() => {
           class="font-medium flex justify-between items-center gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6m text-sm/6 text-gray-800"
         >
           {{ workout.name }}
-          <ChevronRightIcon
-            class="size-5 flex-none text-gray-400"
-          />
+          <ChevronRightIcon class="size-5 flex-none text-gray-400" />
         </RouterLink>
       </li>
     </ul>

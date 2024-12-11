@@ -1,26 +1,29 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { useAlertStore } from '@/stores/alerts';
-import { computed, nextTick, watch } from 'vue';
+import { useRoute } from 'vue-router'
+import { useAlertStore } from '@/stores/alerts'
+import { computed, nextTick, watch } from 'vue'
 
 const route = useRoute()
 const alertStore = useAlertStore()
 
 // DEBT: Doesn't properly work when there is no route change.
-watch(() => route.path, () => {
-  nextTick(() => {
-    if (!alertStore.alert) {
-      return
-    }
+watch(
+  () => route.path,
+  () => {
+    nextTick(() => {
+      if (!alertStore.alert) {
+        return
+      }
 
-    if (!alertStore.alert.seen) {
-      alertStore.markSeen();
-      return
-    }
+      if (!alertStore.alert.seen) {
+        alertStore.markSeen()
+        return
+      }
 
-    alertStore.clear();
-  })
-})
+      alertStore.clear()
+    })
+  },
+)
 
 const alertStyle = computed(() => {
   if (alertStore.alert?.type === 'success') {

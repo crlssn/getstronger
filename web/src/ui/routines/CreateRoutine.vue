@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type {Exercise} from '@/proto/api/v1/shared_pb.ts'
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
-import {onMounted, ref} from 'vue'
-import {useRouter} from "vue-router";
-import {Switch} from '@headlessui/vue'
-import {useAlertStore} from "@/stores/alerts.ts";
-import AppList from "@/ui/components/AppList.vue";
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Switch } from '@headlessui/vue'
+import { useAlertStore } from '@/stores/alerts.ts'
+import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import AppListItem from "@/ui/components/AppListItem.vue";
-import {createRoutine, listExercises} from "@/http/requests.ts";
-import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import AppListItem from '@/ui/components/AppListItem.vue'
+import { createRoutine, listExercises } from '@/http/requests.ts'
+import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -54,29 +54,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <form
-    @submit.prevent="onCreateRoutine"
-  >
+  <form @submit.prevent="onCreateRoutine">
     <h6>Name</h6>
     <AppList>
-      <AppListItemInput
-        :model="name"
-        type="text"
-        required
-        @update="n => name = n"
-      />
+      <AppListItemInput :model="name" type="text" required @update="(n) => (name = n)" />
     </AppList>
-
 
     <h6>Exercises</h6>
     <AppList>
-      <AppListItem
-        v-for="exercise in exercises"
-        :key="exercise.id"
-      >
-        <div
-          class="flex justify-between items-center w-full"
-        >
+      <AppListItem v-for="exercise in exercises" :key="exercise.id">
+        <div class="flex justify-between items-center w-full">
           {{ exercise.name }}
           <Switch
             :class="[
@@ -96,12 +83,6 @@ onMounted(() => {
       </AppListItem>
     </AppList>
 
-    <AppButton
-      type="submit"
-      colour="primary"
-      container-class="px-4 pb-4"
-    >
-      Save Routine
-    </AppButton>
+    <AppButton type="submit" colour="primary" container-class="px-4 pb-4"> Save Routine </AppButton>
   </form>
 </template>

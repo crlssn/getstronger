@@ -29,10 +29,7 @@ const workoutOwnership = computed(() => {
 </script>
 
 <template>
-  <RouterLink
-    :to="`/workouts/${workout?.id}`"
-    class="flex w-full items-center gap-x-3"
-  >
+  <RouterLink :to="`/workouts/${workout?.id}`" class="flex w-full items-center gap-x-3">
     <ChatBubbleLeftRightIcon class="size-8" />
     <div class="w-full font-normal">
       <div>

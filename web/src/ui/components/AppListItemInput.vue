@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from "vue";
+import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   model: string
@@ -12,9 +12,12 @@ const emits = defineEmits(['update'])
 
 const value = ref('')
 
-watch(() => props.model, (newVal) => {
-  value.value = newVal
-})
+watch(
+  () => props.model,
+  (newVal) => {
+    value.value = newVal
+  },
+)
 
 onMounted(() => {
   value.value = props.model
@@ -33,7 +36,7 @@ const onChange = () => {
       :required="props.required"
       :placeholder="props.placeholder"
       @change="onChange"
-    >
+    />
   </li>
 </template>
 

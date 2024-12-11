@@ -32,7 +32,7 @@ export const useAlertStore = defineStore('alert', () => {
     set('error', message, true)
   }
 
-  const set = (type: 'error'|'success', message: string, seen: boolean) => {
+  const set = (type: 'error' | 'success', message: string, seen: boolean) => {
     alert.value = {
       message: message,
       seen: seen,
@@ -40,5 +40,13 @@ export const useAlertStore = defineStore('alert', () => {
     } as Alert
   }
 
-  return { alert, clear, markSeen, setError, setErrorWithoutPageRefresh, setSuccess, setSuccessWithoutPageRefresh }
+  return {
+    alert,
+    clear,
+    markSeen,
+    setError,
+    setErrorWithoutPageRefresh,
+    setSuccess,
+    setSuccessWithoutPageRefresh,
+  }
 })
