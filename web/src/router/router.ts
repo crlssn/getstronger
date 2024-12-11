@@ -55,6 +55,12 @@ const router: Router = createRouter({
       meta: { title: '' },
       name: 'user-view',
       path: '/users/:id',
+      children: [
+        {
+          path: 'personal-bests',
+          component: () => import('@/ui/users/UserPersonalBests.vue'),
+        },
+      ],
     },
     {
       beforeEnter: [auth],
