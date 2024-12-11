@@ -11,19 +11,19 @@ import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
 service WorkoutService {
-  rpc Create(CreateWorkoutRequest) returns (CreateWorkoutResponse) {
+  rpc CreateWorkout (CreateWorkoutRequest) returns (CreateWorkoutResponse) {
     option (auth) = true;
   }
-  rpc Get(GetWorkoutRequest) returns (GetWorkoutResponse) {
+  rpc GetWorkout (GetWorkoutRequest) returns (GetWorkoutResponse) {
     option (auth) = true;
   }
-  rpc List(ListWorkoutsRequest) returns (ListWorkoutsResponse) {
+  rpc ListWorkouts (ListWorkoutsRequest) returns (ListWorkoutsResponse) {
     option (auth) = true;
   }
-  rpc Delete(DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
+  rpc DeleteWorkout (DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
     option (auth) = true;
   }
-  rpc PostComment(PostCommentRequest) returns (PostCommentResponse) {
+  rpc PostComment (PostCommentRequest) returns (PostCommentResponse) {
     option (auth) = true;
   }
   rpc UpdateWorkout (UpdateWorkoutRequest) returns (UpdateWorkoutResponse) {
