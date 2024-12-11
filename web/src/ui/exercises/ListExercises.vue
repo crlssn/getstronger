@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { type Exercise } from '@/proto/api/v1/shared_pb.ts'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { listExercises } from '@/http/requests.ts'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { vInfiniteScroll } from '@vueuse/components'
+import usePagination from '@/utils/usePagination.ts'
+const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 const exercises = ref([] as Exercise[])
-const pageToken = ref(new Uint8Array(0))
-const hasMorePages = computed(() => pageToken.value.length > 0)
 
 onMounted(async () => {
   await fetchExercises()
@@ -21,7 +21,7 @@ const fetchExercises = async () => {
   if (!res) return
 
   exercises.value = [...exercises.value, ...res.exercises]
-  pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
+  pageToken.value = resolvePageToken(res.pagination)
 }
 </script>
 
