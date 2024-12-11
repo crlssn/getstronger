@@ -39,16 +39,8 @@ const navigation = [
 
 <template>
   <nav>
-    <RouterLink
-      v-for="item in navigation"
-      :key="item.href"
-      :to="item.href"
-      class="relative"
-    >
-      <component
-        :is="isActive(item.href) ? item.iconActive : item.icon"
-        class="h-6 w-6"
-      />
+    <RouterLink v-for="item in navigation" :key="item.href" :to="item.href" class="relative">
+      <component :is="isActive(item.href) ? item.iconActive : item.icon" class="h-6 w-6" />
       <span
         v-if="item.href === '/notifications' && notificationStore.unreadCount > 0"
         class="badge"

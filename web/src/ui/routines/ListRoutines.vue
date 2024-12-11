@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
-import {listRoutines} from "@/http/requests.ts";
+import { onMounted, ref } from 'vue'
+import { listRoutines } from '@/http/requests.ts'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import {ChevronRightIcon} from '@heroicons/vue/20/solid'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import {type Routine} from '@/proto/api/v1/routine_service_pb.ts'
+import { type Routine } from '@/proto/api/v1/routine_service_pb.ts'
 
 const pageToken = ref(new Uint8Array(0))
 const routines = ref(Array<Routine>())
@@ -27,20 +27,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppButton
-    type="link"
-    to="/routines/create"
-    colour="primary"
-    container-class="px-4 pb-4"
-  >
+  <AppButton type="link" to="/routines/create" colour="primary" container-class="px-4 pb-4">
     Create Routine
   </AppButton>
   <AppList>
-    <AppListItemLink
-      v-for="routine in routines"
-      :key="routine.id"
-      :to="`/routines/${routine.id}`"
-    >
+    <AppListItemLink v-for="routine in routines" :key="routine.id" :to="`/routines/${routine.id}`">
       {{ routine.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>

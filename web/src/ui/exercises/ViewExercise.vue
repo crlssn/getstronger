@@ -4,13 +4,13 @@ import type { Exercise, Set } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
 import router from '@/router/router'
 import { useRoute } from 'vue-router'
-import {useAuthStore} from "@/stores/auth.ts";
+import { useAuthStore } from '@/stores/auth.ts'
 import { useAlertStore } from '@/stores/alerts'
 import AppList from '@/ui/components/AppList.vue'
 import LineChart from '@/ui/components/LineChart.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppListItem from '@/ui/components/AppListItem.vue'
-import {formatToRelativeDateTime} from "@/utils/datetime.ts";
+import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
@@ -55,10 +55,7 @@ const onDeleteExercise = async () => {
 </script>
 
 <template>
-  <div
-    v-if="exercise?.label"
-    class="mb-8"
-  >
+  <div v-if="exercise?.label" class="mb-8">
     <h6>Label</h6>
     <AppList>
       <AppListItem>
@@ -72,13 +69,9 @@ const onDeleteExercise = async () => {
     <LineChart :sets="sets" />
   </div>
 
-  <h6 class="mt-8">
-    Sets
-  </h6>
+  <h6 class="mt-8">Sets</h6>
   <AppList>
-    <AppListItem v-if="sets.length === 0">
-      No sets
-    </AppListItem>
+    <AppListItem v-if="sets.length === 0"> No sets </AppListItem>
     <AppListItemLink
       v-for="(set, index) in sets"
       :key="index"
@@ -93,19 +86,13 @@ const onDeleteExercise = async () => {
   </AppList>
 
   <div v-if="authStore.userID === exercise?.userId">
-    <h6 class="mt-8">
-      Admin
-    </h6>
+    <h6 class="mt-8">Admin</h6>
     <AppList>
       <AppListItemLink :to="`/exercises/${route.params.id}/edit`">
         Update Exercise
         <ChevronRightIcon />
       </AppListItemLink>
-      <AppListItem
-        is="danger"
-        class="cursor-pointer"
-        @click="onDeleteExercise"
-      >
+      <AppListItem is="danger" class="cursor-pointer" @click="onDeleteExercise">
         Delete Exercise
         <TrashIcon />
       </AppListItem>

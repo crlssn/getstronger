@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/auth'
-import {refreshToken} from "@/http/requests.ts";
+import { refreshToken } from '@/http/requests.ts'
 
 export async function refreshAccessTokenOrLogout(): Promise<void> {
   console.debug('refreshing access token or logging out')

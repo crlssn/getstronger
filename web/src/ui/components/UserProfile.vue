@@ -18,8 +18,8 @@ import {
   listFollowees,
   listFollowers,
   listWorkouts,
-  unfollowUser
-} from "@/http/requests.ts";
+  unfollowUser,
+} from '@/http/requests.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -36,11 +36,14 @@ const props = defineProps<{
   userId: string
 }>()
 
-watch(() => props.userId, async () => {
-  if (props.userId === authStore.userID) {
-    await router.push('/profile')
-  }
-})
+watch(
+  () => props.userId,
+  async () => {
+    if (props.userId === authStore.userID) {
+      await router.push('/profile')
+    }
+  },
+)
 
 onMounted(async () => {
   if (props.userId === authStore.userID) {
@@ -69,7 +72,7 @@ const fetchWorkouts = async () => {
   const res = await listWorkouts(userIds, pageToken.value)
   if (!res) return
 
-  workouts.value = [...workouts.value || [], ...res.workouts]
+  workouts.value = [...(workouts.value || []), ...res.workouts]
   pageToken.value = res.nextPageToken
   if (pageToken.value.length > 0) {
     // TODO: Implement infinite scroll.
@@ -136,12 +139,7 @@ const updateTab = (event: Event) => {
 
 <template>
   <div v-if="userId === authStore.userID">
-    <AppButton
-      type="link"
-      to="/logout"
-      colour="red"
-      container-class="px-4 pb-4"
-    >
+    <AppButton type="link" to="/logout" colour="red" container-class="px-4 pb-4">
       Logout
     </AppButton>
   </div>
@@ -184,10 +182,7 @@ const updateTab = (event: Event) => {
       </select>
     </div>
     <div class="hidden sm:block">
-      <nav
-        class="flex"
-        aria-label="Tabs"
-      >
+      <nav class="flex" aria-label="Tabs">
         <RouterLink
           v-for="tab in tabs"
           :key="tab.name"
@@ -205,18 +200,10 @@ const updateTab = (event: Event) => {
     </div>
   </div>
   <div v-if="activeTab === tabs[0].href">
-    <CardWorkout
-      v-for="workout in workouts"
-      :key="workout.id"
-      compact
-      :workout="workout"
-    />
+    <CardWorkout v-for="workout in workouts" :key="workout.id" compact :workout="workout" />
   </div>
   <AppList v-if="activeTab === tabs[1].href">
-    <AppListItem
-      v-for="personalBest in personalBests"
-      :key="personalBest?.exercise?.id"
-    >
+    <AppListItem v-for="personalBest in personalBests" :key="personalBest?.exercise?.id">
       <p class="font-medium">
         {{ personalBest?.exercise?.name }}
         <small v-if="personalBest?.exercise?.label">
@@ -227,20 +214,12 @@ const updateTab = (event: Event) => {
     </AppListItem>
   </AppList>
   <AppList v-if="activeTab === tabs[2].href">
-    <AppListItemLink
-      v-for="followee in followees"
-      :key="followee.id"
-      :to="`/users/${followee.id}`"
-    >
+    <AppListItemLink v-for="followee in followees" :key="followee.id" :to="`/users/${followee.id}`">
       {{ followee.firstName }} {{ followee.lastName }}
     </AppListItemLink>
   </AppList>
   <AppList v-if="activeTab === tabs[3].href">
-    <AppListItemLink
-      v-for="follower in followers"
-      :key="follower.id"
-      :to="`/users/${follower.id}`"
-    >
+    <AppListItemLink v-for="follower in followers" :key="follower.id" :to="`/users/${follower.id}`">
       {{ follower.firstName }} {{ follower.lastName }}
     </AppListItemLink>
   </AppList>

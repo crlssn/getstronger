@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import type {Timestamp} from "@bufbuild/protobuf/wkt";
-import type {Workout} from "@/proto/api/v1/workout_service_pb";
-import type {ExerciseSets, Set} from "@/proto/api/v1/shared_pb";
+import type { Timestamp } from '@bufbuild/protobuf/wkt'
+import type { Workout } from '@/proto/api/v1/workout_service_pb'
+import type { ExerciseSets, Set } from '@/proto/api/v1/shared_pb'
 
-import {DateTime} from 'luxon'
-import {onMounted, ref} from 'vue'
-import {useRoute} from 'vue-router'
+import { DateTime } from 'luxon'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import router from '@/router/router'
-import {useAuthStore} from "@/stores/auth.ts";
-import {useAlertStore} from "@/stores/alerts.ts";
-import AppList from "@/ui/components/AppList.vue";
-import {usePageTitleStore} from '@/stores/pageTitle'
+import { useAuthStore } from '@/stores/auth.ts'
+import { useAlertStore } from '@/stores/alerts.ts'
+import AppList from '@/ui/components/AppList.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
-import AppListItem from "@/ui/components/AppListItem.vue";
-import {MinusCircleIcon} from '@heroicons/vue/24/outline'
-import {getWorkout, updateWorkout} from "@/http/requests.ts";
-import AppListItemInput from "@/ui/components/AppListItemInput.vue";
+import AppListItem from '@/ui/components/AppListItem.vue'
+import { MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { getWorkout, updateWorkout } from '@/http/requests.ts'
+import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 
 const route = useRoute()
 const workout = ref<Workout>()
@@ -58,9 +58,11 @@ const addEmptySet = (exerciseId: string) => {
     return
   }
 
-  workout.value.exerciseSets.find((es: ExerciseSets) => es.exercise?.id === exerciseId)?.sets.push({
-    "$typeName": "api.v1.Set",
-  } as Set)
+  workout.value.exerciseSets
+    .find((es: ExerciseSets) => es.exercise?.id === exerciseId)
+    ?.sets.push({
+      $typeName: 'api.v1.Set',
+    } as Set)
 }
 
 const deleteSet = (exerciseId: string, index: number) => {
@@ -69,7 +71,9 @@ const deleteSet = (exerciseId: string, index: number) => {
   }
 
   if (confirm('Are you sure you want to delete this set?')) {
-    workout.value.exerciseSets.find((es: ExerciseSets)  => es.exercise?.id === exerciseId)?.sets.splice(index, 1)
+    workout.value.exerciseSets
+      .find((es: ExerciseSets) => es.exercise?.id === exerciseId)
+      ?.sets.splice(index, 1)
   }
 }
 
@@ -77,8 +81,8 @@ const setStartDateTime = (value: string) => {
   workout.value = {
     ...workout.value,
     startedAt: {
-      seconds: BigInt(DateTime.fromISO(value).toSeconds())
-    } as Timestamp
+      seconds: BigInt(DateTime.fromISO(value).toSeconds()),
+    } as Timestamp,
   } as Workout
 }
 
@@ -86,12 +90,12 @@ const setEndDateTime = (value: string) => {
   workout.value = {
     ...workout.value,
     finishedAt: {
-      seconds: BigInt(DateTime.fromISO(value).toSeconds())
-    } as Timestamp
+      seconds: BigInt(DateTime.fromISO(value).toSeconds()),
+    } as Timestamp,
   } as Workout
 }
 
-const toDateTime = (timestamp: Timestamp|undefined) => {
+const toDateTime = (timestamp: Timestamp | undefined) => {
   if (!timestamp) {
     return DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm")
   }
@@ -102,18 +106,11 @@ const toDateTime = (timestamp: Timestamp|undefined) => {
 
 <template>
   <form @submit.prevent="onUpdateWorkout">
-    <template
-      v-for="es in workout?.exerciseSets"
-      :key="es.exercise?.id"
-    >
+    <template v-for="es in workout?.exerciseSets" :key="es.exercise?.id">
       <h6>{{ es.exercise?.name }}</h6>
       <AppList>
         <AppListItem class="flex flex-col">
-          <div
-            v-for="(set, index) in es.sets"
-            :key="index"
-            class="w-full"
-          >
+          <div v-for="(set, index) in es.sets" :key="index" class="w-full">
             <label>Set {{ index + 1 }}</label>
             <div class="flex items-center gap-x-4 mb-4">
               <div class="w-full">
@@ -123,7 +120,7 @@ const toDateTime = (timestamp: Timestamp|undefined) => {
                   inputmode="decimal"
                   placeholder="Weight"
                   required
-                >
+                />
               </div>
               <span class="text-gray-500 font-medium">x</span>
               <div class="w-full">
@@ -133,7 +130,7 @@ const toDateTime = (timestamp: Timestamp|undefined) => {
                   inputmode="numeric"
                   placeholder="Reps"
                   required
-                >
+                />
               </div>
               <MinusCircleIcon
                 class="cursor-pointer"
@@ -173,11 +170,7 @@ const toDateTime = (timestamp: Timestamp|undefined) => {
       />
     </AppList>
 
-    <AppButton
-      type="submit"
-      colour="primary"
-      container-class="px-4 pb-4"
-    >
+    <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
       Update Workout
     </AppButton>
     <AppButton

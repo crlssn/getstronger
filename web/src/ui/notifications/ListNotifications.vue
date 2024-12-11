@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import AppList from '@/ui/components/AppList.vue'
-import {listNotifications} from "@/http/requests.ts";
+import { listNotifications } from '@/http/requests.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
@@ -31,10 +31,7 @@ const fetchNotifications = async () => {
 
 <template>
   <AppList>
-    <AppListItem
-      v-for="notification in notifications"
-      :key="notification.id"
-    >
+    <AppListItem v-for="notification in notifications" :key="notification.id">
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
         :actor="notification.type.value?.actor"

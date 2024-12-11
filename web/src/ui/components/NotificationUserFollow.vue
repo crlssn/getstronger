@@ -11,10 +11,7 @@ defineProps<{
 </script>
 
 <template>
-  <RouterLink
-    :to="`/users/${actor?.id}`"
-    class="flex w-full items-center gap-x-3"
-  >
+  <RouterLink :to="`/users/${actor?.id}`" class="flex w-full items-center gap-x-3">
     <UserPlusIcon class="size-8" />
     <div class="w-full">
       <div>

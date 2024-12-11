@@ -12,7 +12,7 @@ const req = ref<UpdatePasswordRequest>({
   $typeName: 'api.v1.UpdatePasswordRequest',
   password: '',
   passwordConfirmation: '',
-  token: route.query.token as string
+  token: route.query.token as string,
 })
 
 const onSignup = async () => {
@@ -25,17 +25,10 @@ const onSignup = async () => {
 <template>
   <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-      <form
-        class="space-y-6"
-        method="POST"
-        @submit.prevent="onSignup"
-      >
+      <form class="space-y-6" method="POST" @submit.prevent="onSignup">
         <div>
           <div class="flex items-center justify-between">
-            <label
-              for="password"
-              class="block text-sm/6 font-medium text-gray-900"
-            >Password</label>
+            <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
           </div>
           <div class="mt-2">
             <input
@@ -45,16 +38,13 @@ const onSignup = async () => {
               type="password"
               autocomplete="current-password"
               required
-            >
+            />
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <label
-              for="password"
-              class="block text-sm/6 font-medium text-gray-900"
-            >
+            <label for="password" class="block text-sm/6 font-medium text-gray-900">
               Confirm Password
             </label>
           </div>
@@ -66,17 +56,12 @@ const onSignup = async () => {
               type="password"
               autocomplete="current-password"
               required
-            >
+            />
           </div>
         </div>
 
         <div>
-          <AppButton
-            type="submit"
-            colour="primary"
-          >
-            Update Password
-          </AppButton>
+          <AppButton type="submit" colour="primary"> Update Password </AppButton>
         </div>
       </form>
     </div>

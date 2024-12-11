@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type {Exercise, ExerciseSets} from '@/proto/api/v1/shared_pb'
+import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 
-import {DateTime} from 'luxon'
-import {useRoute} from 'vue-router'
+import { DateTime } from 'luxon'
+import { useRoute } from 'vue-router'
 import router from '@/router/router'
-import {onMounted, onUnmounted, ref} from 'vue'
-import {useAlertStore} from "@/stores/alerts.ts";
-import {useWorkoutStore} from '@/stores/workout'
-import AppList from "@/ui/components/AppList.vue";
-import {usePageTitleStore} from '@/stores/pageTitle'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { useAlertStore } from '@/stores/alerts.ts'
+import { useWorkoutStore } from '@/stores/workout'
+import AppList from '@/ui/components/AppList.vue'
+import { usePageTitleStore } from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
-import AppListItem from "@/ui/components/AppListItem.vue";
-import {MinusCircleIcon} from '@heroicons/vue/24/outline'
-import {type Routine} from '@/proto/api/v1/routine_service_pb'
-import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import {createWorkout, getPreviousWorkoutSets, getRoutine} from "@/http/requests.ts";
+import AppListItem from '@/ui/components/AppListItem.vue'
+import { MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { type Routine } from '@/proto/api/v1/routine_service_pb'
+import AppListItemInput from '@/ui/components/AppListItemInput.vue'
+import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests.ts'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -91,7 +91,12 @@ const onFinishWorkout = async () => {
     } as ExerciseSets)
   }
 
-  const res = await createWorkout(routineID, eSetsList, DateTime.fromISO(startDateTime.value), DateTime.fromISO(endDateTime.value))
+  const res = await createWorkout(
+    routineID,
+    eSetsList,
+    DateTime.fromISO(startDateTime.value),
+    DateTime.fromISO(endDateTime.value),
+  )
   if (!res) return
 
   workoutStore.removeWorkout(routineID)
@@ -146,18 +151,11 @@ const setEndDateTime = (value: string) => {
 
 <template>
   <form @submit.prevent="onFinishWorkout">
-    <template
-      v-for="exercise in routine?.exercises"
-      :key="exercise.id"
-    >
+    <template v-for="exercise in routine?.exercises" :key="exercise.id">
       <h6>{{ exercise.name }}</h6>
       <AppList>
         <AppListItem class="flex flex-col">
-          <div
-            v-for="(set, index) in sets(exercise.id)"
-            :key="index"
-            class="w-full"
-          >
+          <div v-for="(set, index) in sets(exercise.id)" :key="index" class="w-full">
             <label>Set {{ index + 1 }}</label>
             <div class="flex items-center gap-x-4 mb-4">
               <div class="w-full">
@@ -168,7 +166,7 @@ const setEndDateTime = (value: string) => {
                   :placeholder="prevSetWeight(exercise.id, index)"
                   :required="sets(exercise.id).length > index + 1"
                   @keyup="addEmptySetIfNone(exercise.id)"
-                >
+                />
               </div>
               <span class="text-gray-500 font-medium">x</span>
               <div class="w-full">
@@ -179,12 +177,9 @@ const setEndDateTime = (value: string) => {
                   :placeholder="prevSetReps(exercise.id, index)"
                   :required="sets(exercise.id).length > index + 1"
                   @keyup="addEmptySetIfNone(exercise.id)"
-                >
+                />
               </div>
-              <MinusCircleIcon
-                class="cursor-pointer"
-                @click="deleteSet(exercise.id, index)"
-              />
+              <MinusCircleIcon class="cursor-pointer" @click="deleteSet(exercise.id, index)" />
             </div>
           </div>
           <AppButton
@@ -219,19 +214,10 @@ const setEndDateTime = (value: string) => {
       />
     </AppList>
 
-    <AppButton
-      type="submit"
-      colour="primary"
-      container-class="px-4 pb-4"
-    >
+    <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
       Finish Workout
     </AppButton>
-    <AppButton
-      type="button"
-      colour="gray"
-      container-class="px-4 pb-4"
-      @click="cancelWorkout"
-    >
+    <AppButton type="button" colour="gray" container-class="px-4 pb-4" @click="cancelWorkout">
       Cancel Workout
     </AppButton>
   </form>

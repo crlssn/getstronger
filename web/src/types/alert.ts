@@ -1,5 +1,5 @@
 export interface Alert {
-    message: string
-    seen: boolean
-    type: 'error' | 'success'
+  message: string
+  seen: boolean
+  type: 'error' | 'success'
 }

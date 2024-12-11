@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type {Exercise} from '@/proto/api/v1/shared_pb.ts'
+import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
-import {onMounted, ref} from 'vue'
-import {Switch} from '@headlessui/vue'
-import {useRoute, useRouter} from "vue-router";
-import {useAlertStore} from "@/stores/alerts.ts";
-import AppList from "@/ui/components/AppList.vue";
+import { onMounted, ref } from 'vue'
+import { Switch } from '@headlessui/vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAlertStore } from '@/stores/alerts.ts'
+import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import AppListItem from "@/ui/components/AppListItem.vue";
-import AppListItemInput from "@/ui/components/AppListItemInput.vue";
-import {getRoutine, listExercises, updateRoutine} from "@/http/requests.ts";
+import AppListItem from '@/ui/components/AppListItem.vue'
+import AppListItemInput from '@/ui/components/AppListItemInput.vue'
+import { getRoutine, listExercises, updateRoutine } from '@/http/requests.ts'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -64,23 +64,13 @@ const onSubmit = async () => {
   <form @submit.prevent="onSubmit">
     <h6>Name</h6>
     <AppList v-if="name">
-      <AppListItemInput
-        :model="name"
-        type="text"
-        required
-        @update="n => name = n"
-      />
+      <AppListItemInput :model="name" type="text" required @update="(n) => (name = n)" />
     </AppList>
 
     <h6>Exercises</h6>
     <AppList>
-      <AppListItem
-        v-for="exercise in exercises"
-        :key="exercise.id"
-      >
-        <div
-          class="flex justify-between items-center w-full"
-        >
+      <AppListItem v-for="exercise in exercises" :key="exercise.id">
+        <div class="flex justify-between items-center w-full">
           {{ exercise.name }}
           <Switch
             :class="[
@@ -100,11 +90,7 @@ const onSubmit = async () => {
       </AppListItem>
     </AppList>
 
-    <AppButton
-      type="submit"
-      colour="primary"
-      container-class="px-4 pb-4"
-    >
+    <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
       Update Routine
     </AppButton>
   </form>
