@@ -4,7 +4,7 @@ import { resetRequest } from '@/utils/request'
 import { resetPassword } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { type ResetPasswordRequest } from '@/proto/api/v1/auth_pb'
+import { type ResetPasswordRequest } from '@/proto/api/v1/auth_service_pb'
 
 const route = useRoute()
 const router = useRouter()

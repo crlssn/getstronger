@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { updatePassword } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
-import { type UpdatePasswordRequest } from '@/proto/api/v1/auth_pb'
+import { type UpdatePasswordRequest } from '@/proto/api/v1/auth_service_pb'
 
 const route = useRoute()
 const router = useRouter()

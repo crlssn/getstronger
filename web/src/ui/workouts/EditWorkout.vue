@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type {Set} from "@/proto/api/v1/shared_pb";
+import type {ExerciseSets, Set} from "@/proto/api/v1/shared_pb";
 import type {Timestamp} from "@bufbuild/protobuf/wkt";
-import type {Workout} from "@/proto/api/v1/workouts_pb.ts";
+import type {Workout} from "@/proto/api/v1/workout_service_pb";
 
 import {DateTime} from 'luxon'
 import {onMounted, ref} from 'vue'
@@ -58,7 +58,7 @@ const addEmptySet = (exerciseId: string) => {
     return
   }
 
-  workout.value.exerciseSets.find(es => es.exercise?.id === exerciseId)?.sets.push({
+  workout.value.exerciseSets.find((es: ExerciseSets) => es.exercise?.id === exerciseId)?.sets.push({
     "$typeName": "api.v1.Set",
   } as Set)
 }
@@ -69,7 +69,7 @@ const deleteSet = (exerciseId: string, index: number) => {
   }
 
   if (confirm('Are you sure you want to delete this set?')) {
-    workout.value.exerciseSets.find(es => es.exercise?.id === exerciseId)?.sets.splice(index, 1)
+    workout.value.exerciseSets.find((es: ExerciseSets)  => es.exercise?.id === exerciseId)?.sets.splice(index, 1)
   }
 }
 

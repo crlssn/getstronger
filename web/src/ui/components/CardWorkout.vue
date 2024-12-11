@@ -45,6 +45,7 @@ onMounted(() => {
 const postComment = async () => {
   const res = await postWorkoutComment(props.workout.id, input.value)
   if (!res) return
+  if (!res.comment) return
 
   comments.value.push(res.comment)
   input.value = ''
