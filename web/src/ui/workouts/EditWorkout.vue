@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type {ExerciseSets, Set} from "@/proto/api/v1/shared_pb";
 import type {Timestamp} from "@bufbuild/protobuf/wkt";
 import type {Workout} from "@/proto/api/v1/workout_service_pb";
+import type {ExerciseSets, Set} from "@/proto/api/v1/shared_pb";
 
 import {DateTime} from 'luxon'
 import {onMounted, ref} from 'vue'
