@@ -109,6 +109,8 @@ import {
 } from './clients'
 import { useAuthStore } from '@/stores/auth.ts'
 
+const defaultPageLimit = 25
+
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
     id: id,
@@ -221,7 +223,7 @@ export const listExercises = async (
     exerciseIds: [],
     name: '',
     pagination: {
-      pageLimit: 25,
+      pageLimit: defaultPageLimit,
       pageToken: pageToken,
     },
   })
@@ -371,7 +373,7 @@ export const listRoutines = async (pageToken: Uint8Array): Promise<ListRoutinesR
   const req = create(ListRoutinesRequestSchema, {
     name: '',
     pagination: {
-      pageLimit: 100,
+      pageLimit: defaultPageLimit,
       pageToken: pageToken,
     },
   })
@@ -394,7 +396,7 @@ export const listNotifications = async (
 ): Promise<ListNotificationsResponse | void> => {
   const req = create(ListNotificationsRequestSchema, {
     pagination: {
-      pageLimit: 25,
+      pageLimit: defaultPageLimit,
       pageToken: pageToken,
     },
   })
