@@ -7,6 +7,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
+	"github.com/crlssn/getstronger/server/pkg/pb/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/trace"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
 )
@@ -71,8 +72,8 @@ func (m *Middleware) cookies(h http.Handler) http.Handler {
 
 func (m *Middleware) trace(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, ok := w.(http.Flusher); ok {
-			// Bypass tracing for streaming requests.
+		// DEBT: Hacky workaround to bypass tracing for streaming endpoints.
+		if r.RequestURI == apiv1connect.NotificationServiceUnreadNotificationsProcedure {
 			h.ServeHTTP(w, r)
 			return
 		}
