@@ -1079,13 +1079,13 @@ func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 			}, nil
 		}
 
-		var pt PageToken
-		if err := json.Unmarshal(token, &pt); err != nil {
+		var pageToken PageToken
+		if err := json.Unmarshal(token, &pageToken); err != nil {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
 		return []qm.QueryMod{
-			orm.NotificationWhere.CreatedAt.LT(pt.CreatedAt),
+			orm.NotificationWhere.CreatedAt.LT(pageToken.CreatedAt),
 			qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt)),
 		}, nil
 	}
