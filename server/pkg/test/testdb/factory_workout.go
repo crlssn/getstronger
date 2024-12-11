@@ -14,30 +14,40 @@ import (
 type WorkoutOpt func(workout *orm.Workout)
 
 func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
-	workout := &orm.Workout{
+	m := &orm.Workout{
 		ID:         uuid.NewString(),
 		Name:       f.faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
-		UserID:     f.NewUser().ID,
+		UserID:     "",
 		StartedAt:  f.faker.Date(),
 		FinishedAt: f.faker.Date(),
 		CreatedAt:  time.Time{},
 	}
 
 	for _, opt := range opts {
-		opt(workout)
+		opt(m)
+	}
+
+	if m.UserID == "" {
+		m.UserID = f.NewUser().ID
 	}
 
 	boil.DebugMode = f.debug
-	if err := workout.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert workout: %w", err))
 	}
 	boil.DebugMode = false
 
-	return workout
+	return m
 }
 
 func WorkoutID(workoutID string) WorkoutOpt {
 	return func(workout *orm.Workout) {
 		workout.ID = workoutID
+	}
+}
+
+func WorkoutUserID(userID string) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.UserID = userID
 	}
 }

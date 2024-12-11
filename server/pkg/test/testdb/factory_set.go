@@ -17,26 +17,33 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 	maxWeight := 100
 	maxReps := 10
 
-	set := &orm.Set{
+	m := &orm.Set{
 		ID:         uuid.NewString(),
-		WorkoutID:  f.NewWorkout().ID,
-		ExerciseID: f.NewExercise().ID,
+		WorkoutID:  "",
+		ExerciseID: "",
 		Weight:     f.faker.Float64Range(1, float64(maxWeight)),
 		Reps:       f.faker.IntRange(1, maxReps),
 		CreatedAt:  time.Time{},
 	}
 
 	for _, opt := range opts {
-		opt(set)
+		opt(m)
+	}
+
+	if m.WorkoutID == "" {
+		m.WorkoutID = f.NewWorkout().ID
+	}
+	if m.ExerciseID == "" {
+		m.ExerciseID = f.NewExercise().ID
 	}
 
 	boil.DebugMode = f.debug
-	if err := set.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert set: %w", err))
 	}
 	boil.DebugMode = false
 
-	return set
+	return m
 }
 
 func SetExerciseID(exerciseID string) SetOpt {
