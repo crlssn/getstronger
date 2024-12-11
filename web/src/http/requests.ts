@@ -218,8 +218,10 @@ export const listExercises = async (
   const req = create(ListExercisesRequestSchema, {
     exerciseIds: [],
     name: '',
-    pageSize: 100,
-    pageToken: pageToken,
+    pagination: {
+      pageLimit: 100,
+      pageToken: pageToken,
+    },
   })
   return tryCatch(() => exerciseClient.listExercises(req))
 }
@@ -366,8 +368,10 @@ export const unfollowUser = async (unfollowId: string): Promise<UnfollowUserResp
 export const listRoutines = async (pageToken: Uint8Array): Promise<ListRoutinesResponse | void> => {
   const req = create(ListRoutinesRequestSchema, {
     name: '',
-    pageLimit: 100,
-    pageToken: pageToken,
+    pagination: {
+      pageLimit: 100,
+      pageToken: pageToken,
+    },
   })
   return tryCatch(() => routineClient.listRoutines(req))
 }
@@ -402,8 +406,10 @@ export const listWorkouts = async (
   pageToken: Uint8Array,
 ): Promise<ListWorkoutsResponse | void> => {
   const req = create(ListWorkoutsRequestSchema, {
-    pageSize: 100,
-    pageToken: pageToken,
+    pagination: {
+      pageLimit: 100,
+      pageToken: pageToken,
+    },
     userIds: userIds,
   })
   return tryCatch(() => workoutClient.listWorkouts(req))

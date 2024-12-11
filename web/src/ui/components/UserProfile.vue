@@ -73,7 +73,9 @@ const fetchWorkouts = async () => {
   if (!res) return
 
   workouts.value = [...(workouts.value || []), ...res.workouts]
-  pageToken.value = res.nextPageToken
+  if (!res.pagination) return
+
+  pageToken.value = res.pagination.nextPageToken
   if (pageToken.value.length > 0) {
     // TODO: Implement infinite scroll.
     await fetchWorkouts()
