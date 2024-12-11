@@ -6,8 +6,6 @@ import "api/v1/options.proto";
 import "api/v1/shared.proto";
 import "api/v1/workout_service.proto";
 
-import "google/protobuf/empty.proto";
-
 import "buf/validate/validate.proto";
 
 service NotificationService {

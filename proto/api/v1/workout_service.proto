@@ -5,7 +5,6 @@ package api.v1;
 import "api/v1/options.proto";
 import "api/v1/shared.proto";
 
-import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 import "buf/validate/validate.proto";

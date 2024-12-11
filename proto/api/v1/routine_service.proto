@@ -5,9 +5,6 @@ package api.v1;
 import "api/v1/options.proto";
 import "api/v1/shared.proto";
 
-import "google/protobuf/field_mask.proto";
-import "google/protobuf/timestamp.proto";
-
 import "buf/validate/validate.proto";
 
 service RoutineService {
@@ -23,7 +20,7 @@ service RoutineService {
   rpc DeleteRoutine (DeleteRoutineRequest) returns (DeleteRoutineResponse) {
     option (auth) = true;
   }
-  rpc ListRoutine (ListRoutinesRequest) returns (ListRoutinesResponse) {
+  rpc ListRoutines (ListRoutinesRequest) returns (ListRoutinesResponse) {
     option (auth) = true;
   }
   rpc AddExercise (AddExerciseRequest) returns (AddExerciseResponse) {

@@ -46,9 +46,9 @@ const (
 	// RoutineServiceDeleteRoutineProcedure is the fully-qualified name of the RoutineService's
 	// DeleteRoutine RPC.
 	RoutineServiceDeleteRoutineProcedure = "/api.v1.RoutineService/DeleteRoutine"
-	// RoutineServiceListRoutineProcedure is the fully-qualified name of the RoutineService's
-	// ListRoutine RPC.
-	RoutineServiceListRoutineProcedure = "/api.v1.RoutineService/ListRoutine"
+	// RoutineServiceListRoutinesProcedure is the fully-qualified name of the RoutineService's
+	// ListRoutines RPC.
+	RoutineServiceListRoutinesProcedure = "/api.v1.RoutineService/ListRoutines"
 	// RoutineServiceAddExerciseProcedure is the fully-qualified name of the RoutineService's
 	// AddExercise RPC.
 	RoutineServiceAddExerciseProcedure = "/api.v1.RoutineService/AddExercise"
@@ -67,7 +67,7 @@ var (
 	routineServiceGetRoutineMethodDescriptor          = routineServiceServiceDescriptor.Methods().ByName("GetRoutine")
 	routineServiceUpdateRoutineMethodDescriptor       = routineServiceServiceDescriptor.Methods().ByName("UpdateRoutine")
 	routineServiceDeleteRoutineMethodDescriptor       = routineServiceServiceDescriptor.Methods().ByName("DeleteRoutine")
-	routineServiceListRoutineMethodDescriptor         = routineServiceServiceDescriptor.Methods().ByName("ListRoutine")
+	routineServiceListRoutinesMethodDescriptor        = routineServiceServiceDescriptor.Methods().ByName("ListRoutines")
 	routineServiceAddExerciseMethodDescriptor         = routineServiceServiceDescriptor.Methods().ByName("AddExercise")
 	routineServiceRemoveExerciseMethodDescriptor      = routineServiceServiceDescriptor.Methods().ByName("RemoveExercise")
 	routineServiceUpdateExerciseOrderMethodDescriptor = routineServiceServiceDescriptor.Methods().ByName("UpdateExerciseOrder")
@@ -79,7 +79,7 @@ type RoutineServiceClient interface {
 	GetRoutine(context.Context, *connect.Request[v1.GetRoutineRequest]) (*connect.Response[v1.GetRoutineResponse], error)
 	UpdateRoutine(context.Context, *connect.Request[v1.UpdateRoutineRequest]) (*connect.Response[v1.UpdateRoutineResponse], error)
 	DeleteRoutine(context.Context, *connect.Request[v1.DeleteRoutineRequest]) (*connect.Response[v1.DeleteRoutineResponse], error)
-	ListRoutine(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error)
+	ListRoutines(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error)
 	AddExercise(context.Context, *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error)
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
 	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
@@ -119,10 +119,10 @@ func NewRoutineServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(routineServiceDeleteRoutineMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		listRoutine: connect.NewClient[v1.ListRoutinesRequest, v1.ListRoutinesResponse](
+		listRoutines: connect.NewClient[v1.ListRoutinesRequest, v1.ListRoutinesResponse](
 			httpClient,
-			baseURL+RoutineServiceListRoutineProcedure,
-			connect.WithSchema(routineServiceListRoutineMethodDescriptor),
+			baseURL+RoutineServiceListRoutinesProcedure,
+			connect.WithSchema(routineServiceListRoutinesMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		addExercise: connect.NewClient[v1.AddExerciseRequest, v1.AddExerciseResponse](
@@ -152,7 +152,7 @@ type routineServiceClient struct {
 	getRoutine          *connect.Client[v1.GetRoutineRequest, v1.GetRoutineResponse]
 	updateRoutine       *connect.Client[v1.UpdateRoutineRequest, v1.UpdateRoutineResponse]
 	deleteRoutine       *connect.Client[v1.DeleteRoutineRequest, v1.DeleteRoutineResponse]
-	listRoutine         *connect.Client[v1.ListRoutinesRequest, v1.ListRoutinesResponse]
+	listRoutines        *connect.Client[v1.ListRoutinesRequest, v1.ListRoutinesResponse]
 	addExercise         *connect.Client[v1.AddExerciseRequest, v1.AddExerciseResponse]
 	removeExercise      *connect.Client[v1.RemoveExerciseRequest, v1.RemoveExerciseResponse]
 	updateExerciseOrder *connect.Client[v1.UpdateExerciseOrderRequest, v1.UpdateExerciseOrderResponse]
@@ -178,9 +178,9 @@ func (c *routineServiceClient) DeleteRoutine(ctx context.Context, req *connect.R
 	return c.deleteRoutine.CallUnary(ctx, req)
 }
 
-// ListRoutine calls api.v1.RoutineService.ListRoutine.
-func (c *routineServiceClient) ListRoutine(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
-	return c.listRoutine.CallUnary(ctx, req)
+// ListRoutines calls api.v1.RoutineService.ListRoutines.
+func (c *routineServiceClient) ListRoutines(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
+	return c.listRoutines.CallUnary(ctx, req)
 }
 
 // AddExercise calls api.v1.RoutineService.AddExercise.
@@ -204,7 +204,7 @@ type RoutineServiceHandler interface {
 	GetRoutine(context.Context, *connect.Request[v1.GetRoutineRequest]) (*connect.Response[v1.GetRoutineResponse], error)
 	UpdateRoutine(context.Context, *connect.Request[v1.UpdateRoutineRequest]) (*connect.Response[v1.UpdateRoutineResponse], error)
 	DeleteRoutine(context.Context, *connect.Request[v1.DeleteRoutineRequest]) (*connect.Response[v1.DeleteRoutineResponse], error)
-	ListRoutine(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error)
+	ListRoutines(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error)
 	AddExercise(context.Context, *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error)
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
 	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
@@ -240,10 +240,10 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 		connect.WithSchema(routineServiceDeleteRoutineMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	routineServiceListRoutineHandler := connect.NewUnaryHandler(
-		RoutineServiceListRoutineProcedure,
-		svc.ListRoutine,
-		connect.WithSchema(routineServiceListRoutineMethodDescriptor),
+	routineServiceListRoutinesHandler := connect.NewUnaryHandler(
+		RoutineServiceListRoutinesProcedure,
+		svc.ListRoutines,
+		connect.WithSchema(routineServiceListRoutinesMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceAddExerciseHandler := connect.NewUnaryHandler(
@@ -274,8 +274,8 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 			routineServiceUpdateRoutineHandler.ServeHTTP(w, r)
 		case RoutineServiceDeleteRoutineProcedure:
 			routineServiceDeleteRoutineHandler.ServeHTTP(w, r)
-		case RoutineServiceListRoutineProcedure:
-			routineServiceListRoutineHandler.ServeHTTP(w, r)
+		case RoutineServiceListRoutinesProcedure:
+			routineServiceListRoutinesHandler.ServeHTTP(w, r)
 		case RoutineServiceAddExerciseProcedure:
 			routineServiceAddExerciseHandler.ServeHTTP(w, r)
 		case RoutineServiceRemoveExerciseProcedure:
@@ -307,8 +307,8 @@ func (UnimplementedRoutineServiceHandler) DeleteRoutine(context.Context, *connec
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.DeleteRoutine is not implemented"))
 }
 
-func (UnimplementedRoutineServiceHandler) ListRoutine(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.ListRoutine is not implemented"))
+func (UnimplementedRoutineServiceHandler) ListRoutines(context.Context, *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.ListRoutines is not implemented"))
 }
 
 func (UnimplementedRoutineServiceHandler) AddExercise(context.Context, *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error) {

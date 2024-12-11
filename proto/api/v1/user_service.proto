@@ -4,9 +4,6 @@ package api.v1;
 
 import "api/v1/options.proto";
 import "api/v1/shared.proto";
-import "api/v1/workout_service.proto";
-
-import "google/protobuf/timestamp.proto";
 
 import "buf/validate/validate.proto";
 

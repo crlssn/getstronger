@@ -9,7 +9,6 @@ import type { PaginationRequest, PaginationResponse } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
 import type { Workout } from "./workout_service_pb";
 import { file_api_v1_workout_service } from "./workout_service_pb";
-import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -17,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/feed.proto.
  */
 export const file_api_v1_feed: GenFile = /*@__PURE__*/
-  fileDesc("ChFhcGkvdjEvZmVlZC5wcm90bxIGYXBpLnYxIkkKEExpc3RJdGVtc1JlcXVlc3QSNQoKcGFnaW5hdGlvbhgBIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImQKEUxpc3RJdGVtc1Jlc3BvbnNlEh8KBWl0ZW1zGAEgAygLMhAuYXBpLnYxLkZlZWRJdGVtEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIjYKCEZlZWRJdGVtEiIKB3dvcmtvdXQYASABKAsyDy5hcGkudjEuV29ya291dEgAQgYKBHR5cGUyVQoLRmVlZFNlcnZpY2USRgoJTGlzdEl0ZW1zEhguYXBpLnYxLkxpc3RJdGVtc1JlcXVlc3QaGS5hcGkudjEuTGlzdEl0ZW1zUmVzcG9uc2UiBIi1GAFCjQEKCmNvbS5hcGkudjFCCUZlZWRQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvcGtnL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_google_protobuf_timestamp, file_buf_validate_validate]);
+  fileDesc("ChFhcGkvdjEvZmVlZC5wcm90bxIGYXBpLnYxIkkKEExpc3RJdGVtc1JlcXVlc3QSNQoKcGFnaW5hdGlvbhgBIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImQKEUxpc3RJdGVtc1Jlc3BvbnNlEh8KBWl0ZW1zGAEgAygLMhAuYXBpLnYxLkZlZWRJdGVtEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIjYKCEZlZWRJdGVtEiIKB3dvcmtvdXQYASABKAsyDy5hcGkudjEuV29ya291dEgAQgYKBHR5cGUyVQoLRmVlZFNlcnZpY2USRgoJTGlzdEl0ZW1zEhguYXBpLnYxLkxpc3RJdGVtc1JlcXVlc3QaGS5hcGkudjEuTGlzdEl0ZW1zUmVzcG9uc2UiBIi1GAFCjQEKCmNvbS5hcGkudjFCCUZlZWRQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvcGtnL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ListItemsRequest

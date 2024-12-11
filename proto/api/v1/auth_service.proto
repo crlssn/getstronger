@@ -3,7 +3,6 @@ syntax = "proto3";
 package api.v1;
 
 import "buf/validate/validate.proto";
-import "google/protobuf/timestamp.proto";
 
 service AuthService {
   rpc Signup (SignupRequest) returns (SignupResponse) {}
