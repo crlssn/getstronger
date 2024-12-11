@@ -15,6 +15,6 @@ export default () => {
   return {
     pageToken,
     hasMorePages,
-    resolvePageToken
+    resolvePageToken,
   }
 }
