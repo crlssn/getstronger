@@ -174,6 +174,14 @@ const router: Router = createRouter({
       path: '/reset-password',
     },
     {
+      // TODO: Create a landing page.
+      beforeEnter: [landing],
+      children: [],
+      component: null,
+      name: 'landing',
+      path: '/',
+    },
+    {
       component: () => import('@/ui/NotFound.vue'),
       meta: { title: 'Not Found' },
       name: 'not-found',
@@ -217,6 +225,12 @@ async function logout() {
   return {
     path: '/login',
   }
+}
+
+async function landing() {
+  const authStore = useAuthStore()
+  if (authStore.accessToken) return { path: '/home' }
+  return { path: '/login' }
 }
 
 export default router
