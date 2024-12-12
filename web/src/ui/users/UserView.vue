@@ -40,7 +40,7 @@ const fetchUser = async () => {
   const res = await getUser(route.params.id as string)
   if (!res) return
 
-  user.value = res.user
+  user.value = res.user as User
 }
 
 const onFollowUser = async () => {
