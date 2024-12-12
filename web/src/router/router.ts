@@ -1,57 +1,36 @@
-import HomeView from '@/ui/HomeView.vue'
-import NotFound from '@/ui/NotFound.vue'
 import { useAuthStore } from '@/stores/auth'
-import UserView from '@/ui/users/UserView.vue'
-import UserLogin from '@/ui/auth/UserLogin.vue'
-import UserSignup from '@/ui/auth/UserSignup.vue'
-import VerifyEmail from '@/ui/auth/VerifyEmail.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import ProfileView from '@/ui/profile/ProfileView.vue'
-import ViewRoutine from '@/ui/routines/ViewRoutine.vue'
-import ViewWorkout from '@/ui/workouts/ViewWorkout.vue'
-import ResetPassword from '@/ui/auth/ResetPassword.vue'
-import EditRoutine from '@/ui/routines/EditRoutine.vue'
-import EditWorkout from '@/ui/workouts/EditWorkout.vue'
-import ListRoutines from '@/ui/routines/ListRoutines.vue'
-import ForgotPassword from '@/ui/auth/ForgotPassword.vue'
-import StartWorkout from '@/ui/workouts/StartWorkout.vue'
-import ViewExercise from '@/ui/exercises/ViewExercise.vue'
 import { logout as logoutRequest } from '@/http/requests.ts'
-import CreateRoutine from '@/ui/routines/CreateRoutine.vue'
-import ListExercises from '@/ui/exercises/ListExercises.vue'
-import UpdateExercise from '@/ui/exercises/UpdateExercise.vue'
-import CreateExercise from '@/ui/exercises/CreateExercise.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
-import ListNotifications from '@/ui/notifications/ListNotifications.vue'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       beforeEnter: [auth],
-      component: HomeView,
+      component: import('@/ui/HomeView.vue'),
       meta: { title: 'Home' },
       name: 'home',
       path: '/home',
     },
     {
       beforeEnter: [auth],
-      component: ListNotifications,
+      component: import('@/ui/notifications/ListNotifications.vue'),
       meta: { title: 'Notifications' },
       name: 'list-notifications',
       path: '/notifications',
     },
     {
       beforeEnter: [auth],
-      component: ProfileView,
+      component: import('@/ui/profile/ProfileView.vue'),
       meta: { title: 'Profile' },
       name: 'profile',
       path: '/profile',
     },
     {
       beforeEnter: [auth],
-      component: UserView,
+      component: import('@/ui/users/UserView.vue'),
       meta: { title: '' },
       name: 'user-view',
       path: '/users/:id',
@@ -80,91 +59,91 @@ const router: Router = createRouter({
     },
     {
       beforeEnter: [auth],
-      component: ViewWorkout,
+      component: import('@/ui/workouts/ViewWorkout.vue'),
       meta: { title: '' },
       name: 'view-workout',
       path: '/workouts/:id',
     },
     {
       beforeEnter: [auth],
-      component: EditWorkout,
+      component: import('@/ui/workouts/EditWorkout.vue'),
       meta: { title: 'Edit Workout' },
       name: 'edit-workout',
       path: '/workouts/:id/edit',
     },
     {
       beforeEnter: [auth],
-      component: StartWorkout,
+      component: import('@/ui/workouts/StartWorkout.vue'),
       meta: { title: '' },
       name: 'workout-routine',
       path: '/workouts/routine/:routine_id',
     },
     {
       beforeEnter: [auth],
-      component: ListRoutines,
+      component: import('@/ui/routines/ListRoutines.vue'),
       meta: { title: 'Routines' },
       name: 'routines',
       path: '/routines',
     },
     {
       beforeEnter: [auth],
-      component: CreateRoutine,
+      component: import('@/ui/routines/CreateRoutine.vue'),
       meta: { title: 'Create Routine' },
       name: 'create-routine',
       path: '/routines/create',
     },
     {
       beforeEnter: [auth],
-      component: ViewRoutine,
+      component: import('@/ui/routines/ViewRoutine.vue'),
       meta: { title: 'Routine' },
       name: 'routine',
       path: '/routines/:id',
     },
     {
       beforeEnter: [auth],
-      component: EditRoutine,
+      component: import('@/ui/routines/EditRoutine.vue'),
       meta: { title: 'Update Routine' },
       name: 'edit-routine',
       path: '/routines/:id/edit',
     },
     {
       beforeEnter: [auth],
-      component: ListExercises,
+      component: import('@/ui/exercises/ListExercises.vue'),
       meta: { title: 'Exercises' },
       name: 'exercises',
       path: '/exercises',
     },
     {
       beforeEnter: [auth],
-      component: CreateExercise,
+      component: import('@/ui/exercises/CreateExercise.vue'),
       meta: { title: 'Create Exercise' },
       name: 'create-exercise',
       path: '/exercises/create',
     },
     {
       beforeEnter: [auth],
-      component: ViewExercise,
+      component: import('@/ui/exercises/ViewExercise.vue'),
       meta: { title: 'View Exercise' },
       name: 'view-exercise',
       path: '/exercises/:id',
     },
     {
       beforeEnter: [auth],
-      component: UpdateExercise,
+      component: import('@/ui/exercises/UpdateExercise.vue'),
       meta: { title: 'Update Exercise' },
       name: 'update-exercise',
       path: '/exercises/:id/edit',
     },
     {
       beforeEnter: [guest],
-      component: UserLogin,
+      component: import('@/ui/auth/UserLogin.vue'),
       meta: { title: 'Login' },
       name: 'login',
       path: '/login',
     },
     {
       beforeEnter: [guest],
-      component: UserSignup,
+      component: import('@/ui/auth/UserSignup.vue'),
       meta: { title: 'UserSignup' },
       name: 'signup',
       path: '/signup',
@@ -178,24 +157,24 @@ const router: Router = createRouter({
     },
     {
       beforeEnter: [guest],
-      component: VerifyEmail,
+      component: import('@/ui/auth/VerifyEmail.vue'),
       name: 'verify-email',
       path: '/verify-email',
     },
     {
       beforeEnter: [guest],
-      component: ForgotPassword,
+      component: import('@/ui/auth/ForgotPassword.vue'),
       name: 'forgot-password',
       path: '/forgot-password',
     },
     {
       beforeEnter: [guest],
-      component: ResetPassword,
+      component: import('@/ui/auth/ResetPassword.vue'),
       name: 'reset-password',
       path: '/reset-password',
     },
     {
-      component: NotFound,
+      component: import('@/ui/NotFound.vue'),
       meta: { title: 'Not Found' },
       name: 'not-found',
       path: '/:pathMatch(.*)*',
