@@ -106,11 +106,7 @@ const onSearchUsers = async () => {
               </TransitionChild>
               <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6 pb-4">
                 <div class="flex h-16 shrink-0 items-center">
-                  <img
-                    class="h-8 w-auto"
-                    src="https://tailwindui.com/plus/img/logos/mark.svg?color=white"
-                    alt="Your Company"
-                  />
+                  <img class="h-8 w-auto" src="/favicon.png" alt="GetStronger" />
                 </div>
                 <nav class="flex flex-1 flex-col">
                   <ul role="list" class="flex flex-1 flex-col gap-y-7">
@@ -155,11 +151,7 @@ const onSearchUsers = async () => {
       <!-- Sidebar component, swap this element with another sidebar if you like -->
       <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6 pb-4">
         <div class="flex h-16 shrink-0 items-center">
-          <img
-            class="h-8 w-auto"
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=white"
-            alt="Your Company"
-          />
+          <img class="h-8 w-auto" src="/favicon.png" alt="GetStronger" />
           <span class="ml-2 font-bold text-white">GetStronger</span>
         </div>
         <nav class="flex flex-1 flex-col">
@@ -218,11 +210,7 @@ const onSearchUsers = async () => {
             </RouterLink>
           </li>
         </ul>
-        <img
-          v-if="!searchBarOpen"
-          class="h-auto w-8 lg:hidden"
-          src="https://tailwindui.com/plus/img/logos/mark.svg"
-        />
+        <img v-if="!searchBarOpen" class="h-auto w-8 lg:hidden" src="/favicon.png" />
         <div v-if="!searchBarOpen" class="flex flex-1 gap-x-4 justify-center">
           <p class="uppercase text-sm font-semibold text-gray-900 lg:hidden">
             {{ pageTitleStore.pageTitle }}
