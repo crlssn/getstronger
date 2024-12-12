@@ -802,10 +802,10 @@ func (r *Repo) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlic
 	}
 
 	rawQuery := `
-	SELECT DISTINCT ON (exercise_id) MAX(sets.weight) AS weight, exercise_id
+	SELECT DISTINCT ON (exercise_id) exercise_id, weight, reps
 	FROM getstronger.sets
 	WHERE workout_id = ANY ($1)
-	GROUP BY exercise_id;
+	ORDER BY exercise_id, weight DESC, reps DESC;
 `
 
 	var sets orm.SetSlice
