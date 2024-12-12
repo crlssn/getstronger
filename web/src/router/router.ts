@@ -12,21 +12,21 @@ const router: Router = createRouter({
       component: import('@/ui/HomeView.vue'),
       meta: { title: 'Home' },
       name: 'home',
-      path: '/home'
+      path: '/home',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/notifications/ListNotifications.vue'),
       meta: { title: 'Notifications' },
       name: 'list-notifications',
-      path: '/notifications'
+      path: '/notifications',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/profile/ProfileView.vue'),
       meta: { title: 'Profile' },
       name: 'profile',
-      path: '/profile'
+      path: '/profile',
     },
     {
       beforeEnter: [auth],
@@ -38,148 +38,148 @@ const router: Router = createRouter({
         {
           path: '/users/:id',
           props: true,
-          component: () => import('@/ui/users/UserWorkouts.vue')
+          component: () => import('@/ui/users/UserWorkouts.vue'),
         },
         {
           path: 'follows',
           props: true,
-          component: () => import('@/ui/users/UserFollowees.vue')
+          component: () => import('@/ui/users/UserFollowees.vue'),
         },
         {
           path: 'followers',
           props: true,
-          component: () => import('@/ui/users/UserFollowers.vue')
+          component: () => import('@/ui/users/UserFollowers.vue'),
         },
         {
           path: 'personal-bests',
           props: true,
-          component: () => import('@/ui/users/UserPersonalBests.vue')
-        }
-      ]
+          component: () => import('@/ui/users/UserPersonalBests.vue'),
+        },
+      ],
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/workouts/ViewWorkout.vue'),
       meta: { title: '' },
       name: 'view-workout',
-      path: '/workouts/:id'
+      path: '/workouts/:id',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/workouts/EditWorkout.vue'),
       meta: { title: 'Edit Workout' },
       name: 'edit-workout',
-      path: '/workouts/:id/edit'
+      path: '/workouts/:id/edit',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/workouts/StartWorkout.vue'),
       meta: { title: '' },
       name: 'workout-routine',
-      path: '/workouts/routine/:routine_id'
+      path: '/workouts/routine/:routine_id',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/routines/ListRoutines.vue'),
       meta: { title: 'Routines' },
       name: 'routines',
-      path: '/routines'
+      path: '/routines',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/routines/CreateRoutine.vue'),
       meta: { title: 'Create Routine' },
       name: 'create-routine',
-      path: '/routines/create'
+      path: '/routines/create',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/routines/ViewRoutine.vue'),
       meta: { title: 'Routine' },
       name: 'routine',
-      path: '/routines/:id'
+      path: '/routines/:id',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/routines/EditRoutine.vue'),
       meta: { title: 'Update Routine' },
       name: 'edit-routine',
-      path: '/routines/:id/edit'
+      path: '/routines/:id/edit',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/exercises/ListExercises.vue'),
       meta: { title: 'Exercises' },
       name: 'exercises',
-      path: '/exercises'
+      path: '/exercises',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/exercises/CreateExercise.vue'),
       meta: { title: 'Create Exercise' },
       name: 'create-exercise',
-      path: '/exercises/create'
+      path: '/exercises/create',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/exercises/ViewExercise.vue'),
       meta: { title: 'View Exercise' },
       name: 'view-exercise',
-      path: '/exercises/:id'
+      path: '/exercises/:id',
     },
     {
       beforeEnter: [auth],
       component: import('@/ui/exercises/UpdateExercise.vue'),
       meta: { title: 'Update Exercise' },
       name: 'update-exercise',
-      path: '/exercises/:id/edit'
+      path: '/exercises/:id/edit',
     },
     {
       beforeEnter: [guest],
       component: import('@/ui/auth/UserLogin.vue'),
       meta: { title: 'Login' },
       name: 'login',
-      path: '/login'
+      path: '/login',
     },
     {
       beforeEnter: [guest],
       component: import('@/ui/auth/UserSignup.vue'),
       meta: { title: 'UserSignup' },
       name: 'signup',
-      path: '/signup'
+      path: '/signup',
     },
     {
       beforeEnter: [logout],
       children: [],
       component: null,
       name: 'logout',
-      path: '/logout'
+      path: '/logout',
     },
     {
       beforeEnter: [guest],
       component: import('@/ui/auth/VerifyEmail.vue'),
       name: 'verify-email',
-      path: '/verify-email'
+      path: '/verify-email',
     },
     {
       beforeEnter: [guest],
       component: import('@/ui/auth/ForgotPassword.vue'),
       name: 'forgot-password',
-      path: '/forgot-password'
+      path: '/forgot-password',
     },
     {
       beforeEnter: [guest],
       component: import('@/ui/auth/ResetPassword.vue'),
       name: 'reset-password',
-      path: '/reset-password'
+      path: '/reset-password',
     },
     {
       component: import('@/ui/NotFound.vue'),
       meta: { title: 'Not Found' },
       name: 'not-found',
-      path: '/:pathMatch(.*)*'
-    }
-  ]
+      path: '/:pathMatch(.*)*',
+    },
+  ],
 })
 
 router.beforeEach((to, from, next) => {
@@ -192,7 +192,7 @@ async function auth() {
   const authStore = useAuthStore()
   if (!authStore.accessToken) {
     return {
-      path: '/login'
+      path: '/login',
     }
   }
 }
@@ -201,7 +201,7 @@ async function guest() {
   const authStore = useAuthStore()
   if (authStore.accessToken) {
     return {
-      path: '/home'
+      path: '/home',
     }
   }
 }
@@ -215,7 +215,7 @@ async function logout() {
   notificationStore.unreadCount = 0
 
   return {
-    path: '/login'
+    path: '/login',
   }
 }
 
