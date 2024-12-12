@@ -28,7 +28,7 @@ const fetchExercises = async () => {
   <AppButton type="link" to="/exercises/create" colour="primary" container-class="px-4 pb-4">
     Create Exercise
   </AppButton>
-  <AppList :load="{ hasMorePages, fetchPage: fetchExercises }">
+  <AppList :can-fetch="hasMorePages" @fetch="fetchExercises">
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"

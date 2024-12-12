@@ -1,23 +1,33 @@
 <script setup lang="ts">
 import { vInfiniteScroll } from '@vueuse/components'
+import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 
-const props = defineProps<{
-  load?: {
-    hasMorePages: boolean
-    fetchPage: () => Promise<void>
-  }
+defineProps<{
+  canFetch?: boolean
 }>()
+
+const emits = defineEmits(['fetch'])
+
+const onFetch = async () => {
+  emits('fetch')
+}
 </script>
 
 <template>
   <ul role="list">
     <slot />
-    <li v-if="props.load?.hasMorePages" v-infinite-scroll="props.load?.fetchPage" />
+    <li v-if="canFetch" v-infinite-scroll="onFetch" class="fetching">
+      <ArrowPathIcon class="size-7 animate-spin" />
+    </li>
   </ul>
 </template>
 
 <style scoped>
 ul {
   @apply divide-y divide-gray-100 bg-white border-t border-b border-gray-200 mb-4;
+
+  li.fetching {
+    @apply h-16 flex justify-center items-center text-gray-800;
+  }
 }
 </style>

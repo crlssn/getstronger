@@ -66,7 +66,7 @@ const onSubmit = async () => {
     </AppList>
 
     <h6>Exercises</h6>
-    <AppList :load="{ hasMorePages, fetchPage: fetchExercises }">
+    <AppList :can-fetch="hasMorePages" @fetch="fetchExercises">
       <AppListItem v-for="exercise in exercises" :key="exercise.id">
         <div class="flex justify-between items-center w-full">
           {{ exercise.name }}

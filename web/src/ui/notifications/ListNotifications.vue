@@ -26,7 +26,7 @@ const fetchNotifications = async () => {
 </script>
 
 <template>
-  <AppList :load="{ hasMorePages, fetchPage: fetchNotifications }">
+  <AppList :can-fetch="hasMorePages" @fetch="fetchNotifications">
     <AppListItem v-for="notification in notifications" :key="notification.id">
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
