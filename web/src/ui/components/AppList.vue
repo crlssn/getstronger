@@ -28,6 +28,6 @@ ul {
 }
 
 .fetching {
-  @apply h-16 bg-white flex justify-center items-center text-gray-800 font-medium;
+  @apply h-16 flex justify-center items-center text-gray-800 font-medium;
 }
 </style>
