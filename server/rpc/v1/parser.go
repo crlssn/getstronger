@@ -230,6 +230,10 @@ func parsePersonalBestSliceToPB(personalBests orm.SetSlice, exercises orm.Exerci
 			Set: &apiv1.Set{
 				Weight: pb.Weight,
 				Reps:   reps,
+				Metadata: &apiv1.MetadataSet{
+					WorkoutId: pb.WorkoutID,
+					CreatedAt: timestamppb.New(pb.CreatedAt),
+				},
 			},
 		})
 	}

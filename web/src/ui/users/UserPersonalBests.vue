@@ -7,6 +7,7 @@ import { getPersonalBests } from '@/http/requests.ts'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
+import { formatToRelativeDateTime, formatUnixToRelativeDateTime } from '@/utils/datetime.ts'
 
 const props = defineProps<{
   id: string
@@ -32,13 +33,20 @@ const fetchPersonalBests = async () => {
 
 <template>
   <AppList>
-    <AppListItemLink v-for="pb in personalBests" :key="pb.exercise?.id" :to="`/exercises/${pb.exercise?.id}`">
-      <p class="font-medium">
+    <AppListItemLink
+      v-for="pb in personalBests"
+      :key="pb.exercise?.id"
+      :to="`/exercises/${pb.exercise?.id}`"
+    >
+      <div class="font-semibold">
         {{ pb.exercise?.name }}
         <small v-if="pb.exercise?.label">
           {{ pb.exercise.label }}
         </small>
-      </p>
+        <p class="text-sm text-gray-700 mt-1 font-normal">
+          {{ formatToRelativeDateTime(pb.set?.metadata?.createdAt) }}
+        </p>
+      </div>
       {{ pb.set?.weight }} kg x {{ pb.set?.reps }}
     </AppListItemLink>
   </AppList>
