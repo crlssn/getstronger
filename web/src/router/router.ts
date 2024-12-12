@@ -55,6 +55,28 @@ const router: Router = createRouter({
       meta: { title: '' },
       name: 'user-view',
       path: '/users/:id',
+      children: [
+        {
+          path: '/users/:id',
+          props: true,
+          component: () => import('@/ui/users/UserWorkouts.vue'),
+        },
+        {
+          path: 'follows',
+          props: true,
+          component: () => import('@/ui/users/UserFollowees.vue'),
+        },
+        {
+          path: 'followers',
+          props: true,
+          component: () => import('@/ui/users/UserFollowers.vue'),
+        },
+        {
+          path: 'personal-bests',
+          props: true,
+          component: () => import('@/ui/users/UserPersonalBests.vue'),
+        },
+      ],
     },
     {
       beforeEnter: [auth],

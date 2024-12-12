@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/auth.ts'
-import UserProfile from '@/ui/components/UserProfile.vue'
-
-const authStore = useAuthStore()
+import AppButton from '@/ui/components/AppButton.vue'
 </script>
 
 <template>
-  <UserProfile :user-id="authStore.userID" />
+  <AppButton type="link" to="/logout" colour="red" container-class="px-4 pb-4"> Logout </AppButton>
 </template>
 
 <style scoped></style>
