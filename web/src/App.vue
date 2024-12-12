@@ -7,7 +7,6 @@ const authStore = useAuthStore()
 </script>
 
 <template>
-  asdasd
   <UserDashboard v-if="authStore.accessToken" />
   <RouterView v-else />
 </template>
