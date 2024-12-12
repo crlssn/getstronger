@@ -13,10 +13,8 @@ const props = defineProps<{
 <template>
   <ul role="list">
     <slot />
+    <li v-if="props.load?.hasMorePages" v-infinite-scroll="props.load?.fetchPage" />
   </ul>
-  <template v-if="props.load">
-    <div v-if="props.load.hasMorePages" v-infinite-scroll="props.load.fetchPage" />
-  </template>
 </template>
 
 <style scoped>
