@@ -67,7 +67,7 @@ const onDeleteExercise = async () => {
   </div>
 
   <h6 class="mt-8">Sets</h6>
-  <AppList :load="{ hasMorePages, fetchPage: fetchSets }">
+  <AppList :can-fetch="hasMorePages" @fetch="fetchSets">
     <AppListItem v-if="sets.length === 0"> No sets</AppListItem>
     <AppListItemLink
       v-for="(set, index) in sets"
