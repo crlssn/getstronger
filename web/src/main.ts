@@ -26,7 +26,10 @@ const init = async () => {
     notificationStore.streamUnreadNotifications()
   }
 
+  console.log('App initialized')
   app.mount('#app')
 }
 
-init()
+init().catch((error) => {
+  console.error(error)
+})
