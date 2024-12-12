@@ -588,7 +588,7 @@ func ListWorkoutsWithSets() ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithUserIDs(userIDs []string) ListWorkoutsOpt {
+func ListWorkoutsWithUserIDs(userIDs ...string) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
 			orm.WorkoutWhere.UserID.IN(userIDs),
@@ -790,26 +790,30 @@ func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string)
 	return sets, nil
 }
 
-type ListPersonalBestsOpt func() qm.QueryMod
-
-func ListPersonalBestsWithUserID(userID string) ListPersonalBestsOpt {
-	return func() qm.QueryMod {
-		return orm.PersonalBestWhere.UserID.EQ(null.StringFrom(userID))
-	}
-}
-
-func (r *Repo) ListPersonalBests(ctx context.Context, opts ...ListPersonalBestsOpt) (orm.PersonalBestSlice, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
-	for _, opt := range opts {
-		query = append(query, opt())
-	}
-
-	personalBests, err := orm.PersonalBests(query...).All(ctx, r.executor())
+func (r *Repo) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
+	workouts, err := r.ListWorkouts(ctx, ListWorkoutsWithUserIDs(userID))
 	if err != nil {
-		return nil, fmt.Errorf("personal bests fetch: %w", err)
+		return nil, fmt.Errorf("workouts fetch: %w", err)
 	}
 
-	return personalBests, nil
+	workoutIDs := make([]string, 0, len(workouts))
+	for _, workout := range workouts {
+		workoutIDs = append(workoutIDs, workout.ID)
+	}
+
+	rawQuery := `
+	SELECT DISTINCT ON (exercise_id) MAX(sets.weight) AS weight, exercise_id
+	FROM getstronger.sets
+	WHERE workout_id = ANY ($1)
+	GROUP BY exercise_id;
+`
+
+	var sets orm.SetSlice
+	if err = queries.Raw(rawQuery, types.Array(workoutIDs)).Bind(ctx, r.executor(), &sets); err != nil {
+		return nil, fmt.Errorf("sets fetch: %w", err)
+	}
+
+	return sets, nil
 }
 
 type FollowParams struct {
