@@ -27,13 +27,6 @@ onMounted(async () => {
   pageTitleStore.setPageTitle(routine.value?.name as string)
 })
 
-const fetchRoutine = async (id: string) => {
-  const res = await getRoutine(id)
-  if (!res) return
-
-  routine.value = res.routine
-}
-
 useSortable(el, routine.value?.exercises || [], {
   chosenClass: 'sortable-chosen',
   dragClass: 'sortable-drag',
@@ -53,6 +46,13 @@ useSortable(el, routine.value?.exercises || [], {
     await updateExerciseOrder(routine.value?.id as string, exerciseIDs)
   },
 })
+
+const fetchRoutine = async (id: string) => {
+  const res = await getRoutine(id)
+  if (!res) return
+
+  routine.value = res.routine
+}
 
 const onDeleteRoutine = async () => {
   if (confirm('Are you sure you want to delete this routine?')) {
