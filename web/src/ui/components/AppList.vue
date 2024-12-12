@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { vInfiniteScroll } from '@vueuse/components'
-import {ArrowPathIcon} from '@heroicons/vue/24/outline'
+import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 
 defineProps<{
   canFetch?: boolean
