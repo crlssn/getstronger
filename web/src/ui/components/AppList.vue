@@ -25,9 +25,9 @@ const onFetch = async () => {
 <style scoped>
 ul {
   @apply divide-y divide-gray-100 bg-white border-t border-b border-gray-200 mb-4;
-}
 
-.fetching {
-  @apply h-16 flex justify-center items-center text-gray-800 font-medium;
+  li.fetching {
+    @apply h-16 flex justify-center items-center text-gray-800;
+  }
 }
 </style>
