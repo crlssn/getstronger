@@ -219,7 +219,8 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 
 func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	personalBests, err := h.repo.ListPersonalBests(ctx, repo.ListPersonalBestsWithUserID(req.Msg.GetUserId()))
+
+	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserId())
 	if err != nil {
 		log.Error("list personal bests failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -227,7 +228,7 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 
 	exerciseIDs := make([]string, 0, len(personalBests))
 	for _, pb := range personalBests {
-		exerciseIDs = append(exerciseIDs, pb.ExerciseID.String)
+		exerciseIDs = append(exerciseIDs, pb.ExerciseID)
 	}
 
 	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))

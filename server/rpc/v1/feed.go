@@ -49,7 +49,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1
 	workouts, err := h.repo.ListWorkouts(ctx,
 		repo.ListWorkoutsWithSets(),
 		repo.ListWorkoutsWithLimit(limit+1),
-		repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)),
+		repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)...),
 		repo.ListWorkoutsWithComments(),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
