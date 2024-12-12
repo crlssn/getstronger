@@ -2,18 +2,21 @@
 import { defineProps } from 'vue'
 import { vInfiniteScroll } from '@vueuse/components'
 
-const props = defineProps<{
-  load?: {
-    hasMorePages: boolean
-    fetchPage: () => Promise<void>
-  }
+defineProps<{
+  canFetch?: boolean
 }>()
+
+const emits = defineEmits(['fetch'])
+
+const onFetch = async () => {
+  emits('fetch')
+}
 </script>
 
 <template>
   <ul role="list">
     <slot />
-    <li v-if="props.load?.hasMorePages" v-infinite-scroll="props.load?.fetchPage" />
+    <li v-if="canFetch" v-infinite-scroll="onFetch" />
   </ul>
 </template>
 
