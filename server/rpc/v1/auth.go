@@ -138,7 +138,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
-		if err = h.repo.UpdateRefreshToken(ctx, auth.ID, refreshToken); err != nil {
+		if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthRefreshToken(refreshToken)); err != nil {
 			log.Error("refresh token update failed", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
@@ -202,7 +202,13 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRe
 	log := xcontext.MustExtractLogger(ctx)
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if ok {
-		if err := h.repo.DeleteRefreshToken(ctx, refreshToken); err != nil {
+		auth, err := h.repo.GetAuth(ctx, repo.GetAuthByRefreshToken(refreshToken))
+		if err != nil {
+			log.Error("auth fetch failed", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
+
+		if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthDeleteRefreshToken()); err != nil {
 			log.Error("refresh token deletion failed", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
@@ -218,7 +224,19 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRe
 
 func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[v1.VerifyEmailRequest]) (*connect.Response[v1.VerifyEmailResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	if err := h.repo.VerifyEmail(ctx, req.Msg.GetToken()); err != nil {
+
+	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByEmailToken(req.Msg.GetToken()))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("auth not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
+		log.Error("auth fetch failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthEmailVerified()); err != nil {
 		log.Error("email verification failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -246,8 +264,8 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1
 
 	// TODO: Set expiration time for token.
 	token := uuid.NewString()
-	if err = h.repo.SetPasswordResetToken(ctx, auth.ID, token); err != nil {
-		log.Error("password reset token generation failed", zap.Error(err))
+	if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthPasswordResetToken(token)); err != nil {
+		log.Error("password reset token update failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -282,7 +300,7 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[v
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err = h.repo.UpdatePassword(ctx, auth.ID, req.Msg.GetPassword()); err != nil {
+	if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthPassword(req.Msg.GetPassword())); err != nil {
 		log.Error("password update failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

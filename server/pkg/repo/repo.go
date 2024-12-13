@@ -98,9 +98,59 @@ func (r *repo) CreateAuth(ctx context.Context, email, password string) (*orm.Aut
 
 type UpdateAuthOpt func() (orm.M, error)
 
+func UpdateAuthPassword(password string) UpdateAuthOpt {
+	return func() (orm.M, error) {
+		bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, fmt.Errorf("bcrypt password generation: %w", err)
+		}
+
+		return orm.M{orm.AuthColumns.Password: bcryptPassword}, nil
+	}
+}
+
+func UpdateAuthEmailVerified() UpdateAuthOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.AuthColumns.EmailVerified: true}, nil
+	}
+}
+
+func UpdateAuthDeleteRefreshToken() UpdateAuthOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.AuthColumns.RefreshToken: nil}, nil
+	}
+}
+
+func UpdateAuthRefreshToken(refreshToken string) UpdateAuthOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.AuthColumns.RefreshToken: null.StringFrom(refreshToken)}, nil
+	}
+}
+
+func UpdateAuthPasswordResetToken(token string) UpdateAuthOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.AuthColumns.PasswordResetToken: null.StringFrom(token)}, nil
+	}
+}
+
 func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error {
-	//TODO implement me
-	panic("implement me")
+	columns, err := updateColumnsFromOpts(opts)
+	if err != nil {
+		return fmt.Errorf("auth update columns: %w", err)
+	}
+
+	return r.NewTx(ctx, func(tx Tx) error {
+		rows, rowsErr := orm.Auths(orm.AuthWhere.ID.EQ(authID)).UpdateAll(ctx, tx.GetTx(), columns)
+		if rowsErr != nil {
+			return fmt.Errorf("auth update: %w", err)
+		}
+
+		if rows > 1 {
+			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
+		}
+
+		return nil
+	})
 }
 
 func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
@@ -113,28 +163,6 @@ func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password stri
 		return fmt.Errorf("hash and password comparison: %w", err)
 	}
 
-	return nil
-}
-
-func (r *repo) UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error {
-	auth := &orm.Auth{
-		ID:           authID,
-		RefreshToken: null.StringFrom(refreshToken),
-	}
-	if _, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.RefreshToken)); err != nil {
-		return fmt.Errorf("refresh token update: %w", err)
-	}
-	return nil
-}
-
-func (r *repo) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
-	if _, err := orm.Auths(
-		orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken)),
-	).UpdateAll(ctx, r.executor(), orm.M{
-		orm.AuthColumns.RefreshToken: nil,
-	}); err != nil {
-		return fmt.Errorf("refresh token delete: %w", err)
-	}
 	return nil
 }
 
@@ -1238,43 +1266,6 @@ func (r *repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, erro
 	return auth, nil
 }
 
-func (r *repo) VerifyEmail(ctx context.Context, token string) error {
-	auth, err := r.GetAuth(ctx, GetAuthByEmailToken(token))
-	if err != nil {
-		return fmt.Errorf("auth fetch: %w", err)
-	}
-
-	auth.EmailVerified = true
-	if _, err = auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.EmailVerified)); err != nil {
-		return fmt.Errorf("auth update: %w", err)
-	}
-
-	return nil
-}
-
-func (r *repo) SetPasswordResetToken(ctx context.Context, authID, token string) error {
-	auth := &orm.Auth{ID: authID, PasswordResetToken: null.StringFrom(token)}
-	if _, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.PasswordResetToken)); err != nil {
-		return fmt.Errorf("auth update: %w", err)
-	}
-
-	return nil
-}
-
-func (r *repo) UpdatePassword(ctx context.Context, authID string, password string) error {
-	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("bcrypt password generation: %w", err)
-	}
-
-	auth := &orm.Auth{ID: authID, Password: bcryptPassword, PasswordResetToken: null.String{}}
-	if _, err = auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.Password, orm.AuthColumns.PasswordResetToken)); err != nil {
-		return fmt.Errorf("auth update: %w", err)
-	}
-
-	return nil
-}
-
 type ListSetsOpt func() (qm.QueryMod, error)
 
 func ListSetsWithLimit(limit int) ListSetsOpt {
@@ -1379,4 +1370,10 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWork
 
 		return nil
 	})
+}
+
+func GetAuthByRefreshToken(token string) GetAuthOpt {
+	return func() qm.QueryMod {
+		return orm.AuthWhere.RefreshToken.EQ(null.StringFrom(token))
+	}
 }
