@@ -82,7 +82,7 @@ type exerciseMethods interface {
 	GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error)
 	ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error)
 	CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error)
-	UpdateExercise(ctx context.Context, exerciseID string, p UpdateExerciseParams) error
+	UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error
 	SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error
 }
 

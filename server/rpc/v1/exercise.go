@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/volatiletech/null/v8"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -66,6 +65,8 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 	}), nil
 }
 
+var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
+
 func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx).
 		With(xzap.FieldExerciseID(req.Msg.GetExercise().GetId()))
@@ -85,11 +86,27 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err = h.repo.UpdateExercise(ctx, exercise.ID, repo.UpdateExerciseParams{
-		Title:    req.Msg.GetExercise().GetName(),
-		SubTitle: null.NewString(req.Msg.GetExercise().GetLabel(), req.Msg.GetExercise().GetLabel() != ""),
-	}); err != nil {
+	var opts []repo.UpdateExerciseOpt
+	for _, path := range req.Msg.GetUpdateMask().GetPaths() {
+		switch path {
+		case "name":
+			opts = append(opts, repo.UpdateExerciseTitle(req.Msg.GetExercise().GetName()))
+		case "label":
+			opts = append(opts, repo.UpdateExerciseSubTitle(req.Msg.GetExercise().GetLabel()))
+		default:
+			log.Error("invalid update mask path", zap.String("path", path))
+			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidUpdateMaskPath)
+		}
+	}
+
+	if err = h.repo.UpdateExercise(ctx, exercise.ID, opts...); err != nil {
 		log.Error("update exercise failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	exercise, err = h.repo.GetExercise(ctx, repo.GetExerciseWithID(exercise.ID))
+	if err != nil {
+		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

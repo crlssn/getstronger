@@ -351,25 +351,38 @@ func (r *repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Ex
 	return exercise, nil
 }
 
-type UpdateExerciseParams struct {
-	Title    string
-	SubTitle null.String
+type UpdateExerciseOpt func() (orm.M, error)
+
+func UpdateExerciseTitle(title string) UpdateExerciseOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.ExerciseColumns.Title: title}, nil
+	}
 }
 
-func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, p UpdateExerciseParams) error {
-	exercise := &orm.Exercise{
-		ID:       exerciseID,
-		Title:    p.Title,
-		SubTitle: p.SubTitle,
+func UpdateExerciseSubTitle(subTitle string) UpdateExerciseOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.ExerciseColumns.SubTitle: null.StringFrom(subTitle)}, nil
 	}
-	if _, err := exercise.Update(ctx, r.executor(), boil.Whitelist(
-		orm.ExerciseColumns.Title,
-		orm.ExerciseColumns.SubTitle,
-	)); err != nil {
-		return fmt.Errorf("exercise update: %w", err)
+}
+
+func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error {
+	columns, err := updateColumnsFromOpts(opts)
+	if err != nil {
+		return fmt.Errorf("exercise update columns: %w", err)
 	}
 
-	return nil
+	return r.NewTx(ctx, func(tx Tx) error {
+		rows, rowsErr := orm.Exercises(orm.ExerciseWhere.ID.EQ(exerciseID)).UpdateAll(ctx, tx.GetTx(), columns)
+		if rowsErr != nil {
+			return fmt.Errorf("exercise update: %w", err)
+		}
+
+		if rows > 1 {
+			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
+		}
+
+		return nil
+	})
 }
 
 type CreateRoutineParams struct {

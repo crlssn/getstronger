@@ -50,15 +50,20 @@ type PageToken struct {
 }
 
 type updateOpt interface {
-	UpdateRoutineOpt | UpdateAuthOpt
+	UpdateRoutineOpt | UpdateAuthOpt | UpdateExerciseOpt
 }
 
 var (
+	errUpdateNoColumns       = fmt.Errorf("update opt: no columns")
 	errUpdateRowsAffected    = fmt.Errorf("update opt: rows affected")
 	errUpdateDuplicateColumn = fmt.Errorf("update opt: duplicate column")
 )
 
 func updateColumnsFromOpts[T updateOpt](opts []T) (orm.M, error) {
+	if len(opts) == 0 {
+		return nil, errUpdateNoColumns
+	}
+
 	columns := make(orm.M, len(opts))
 	for _, opt := range opts {
 		column, err := opt()
