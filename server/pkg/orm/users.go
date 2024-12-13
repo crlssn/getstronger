@@ -28,6 +28,7 @@ type User struct {
 	LastName       string    `boil:"last_name" json:"last_name" toml:"last_name" yaml:"last_name"`
 	CreatedAt      time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	FullNameSearch string    `boil:"full_name_search" json:"full_name_search" toml:"full_name_search" yaml:"full_name_search"`
+	AuthID         string    `boil:"auth_id" json:"auth_id" toml:"auth_id" yaml:"auth_id"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,12 +40,14 @@ var UserColumns = struct {
 	LastName       string
 	CreatedAt      string
 	FullNameSearch string
+	AuthID         string
 }{
 	ID:             "id",
 	FirstName:      "first_name",
 	LastName:       "last_name",
 	CreatedAt:      "created_at",
 	FullNameSearch: "full_name_search",
+	AuthID:         "auth_id",
 }
 
 var UserTableColumns = struct {
@@ -53,12 +56,14 @@ var UserTableColumns = struct {
 	LastName       string
 	CreatedAt      string
 	FullNameSearch string
+	AuthID         string
 }{
 	ID:             "users.id",
 	FirstName:      "users.first_name",
 	LastName:       "users.last_name",
 	CreatedAt:      "users.created_at",
 	FullNameSearch: "users.full_name_search",
+	AuthID:         "users.auth_id",
 }
 
 // Generated where
@@ -69,17 +74,19 @@ var UserWhere = struct {
 	LastName       whereHelperstring
 	CreatedAt      whereHelpertime_Time
 	FullNameSearch whereHelperstring
+	AuthID         whereHelperstring
 }{
 	ID:             whereHelperstring{field: "\"getstronger\".\"users\".\"id\""},
 	FirstName:      whereHelperstring{field: "\"getstronger\".\"users\".\"first_name\""},
 	LastName:       whereHelperstring{field: "\"getstronger\".\"users\".\"last_name\""},
 	CreatedAt:      whereHelpertime_Time{field: "\"getstronger\".\"users\".\"created_at\""},
 	FullNameSearch: whereHelperstring{field: "\"getstronger\".\"users\".\"full_name_search\""},
+	AuthID:         whereHelperstring{field: "\"getstronger\".\"users\".\"auth_id\""},
 }
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-	IDAuth          string
+	Auth            string
 	Exercises       string
 	FollowerUsers   string
 	FolloweeUsers   string
@@ -88,7 +95,7 @@ var UserRels = struct {
 	WorkoutComments string
 	Workouts        string
 }{
-	IDAuth:          "IDAuth",
+	Auth:            "Auth",
 	Exercises:       "Exercises",
 	FollowerUsers:   "FollowerUsers",
 	FolloweeUsers:   "FolloweeUsers",
@@ -100,7 +107,7 @@ var UserRels = struct {
 
 // userR is where relationships are stored.
 type userR struct {
-	IDAuth          *Auth               `boil:"IDAuth" json:"IDAuth" toml:"IDAuth" yaml:"IDAuth"`
+	Auth            *Auth               `boil:"Auth" json:"Auth" toml:"Auth" yaml:"Auth"`
 	Exercises       ExerciseSlice       `boil:"Exercises" json:"Exercises" toml:"Exercises" yaml:"Exercises"`
 	FollowerUsers   UserSlice           `boil:"FollowerUsers" json:"FollowerUsers" toml:"FollowerUsers" yaml:"FollowerUsers"`
 	FolloweeUsers   UserSlice           `boil:"FolloweeUsers" json:"FolloweeUsers" toml:"FolloweeUsers" yaml:"FolloweeUsers"`
@@ -115,11 +122,11 @@ func (*userR) NewStruct() *userR {
 	return &userR{}
 }
 
-func (r *userR) GetIDAuth() *Auth {
+func (r *userR) GetAuth() *Auth {
 	if r == nil {
 		return nil
 	}
-	return r.IDAuth
+	return r.Auth
 }
 
 func (r *userR) GetExercises() ExerciseSlice {
@@ -175,9 +182,9 @@ func (r *userR) GetWorkouts() WorkoutSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "first_name", "last_name", "created_at", "full_name_search"}
-	userColumnsWithoutDefault = []string{"id", "first_name", "last_name"}
-	userColumnsWithDefault    = []string{"created_at", "full_name_search"}
+	userAllColumns            = []string{"id", "first_name", "last_name", "created_at", "full_name_search", "auth_id"}
+	userColumnsWithoutDefault = []string{"first_name", "last_name", "auth_id"}
+	userColumnsWithDefault    = []string{"id", "created_at", "full_name_search"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{"full_name_search"}
 )
@@ -487,10 +494,10 @@ func (q userQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
-// IDAuth pointed to by the foreign key.
-func (o *User) IDAuth(mods ...qm.QueryMod) authQuery {
+// Auth pointed to by the foreign key.
+func (o *User) Auth(mods ...qm.QueryMod) authQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.ID),
+		qm.Where("\"id\" = ?", o.AuthID),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -598,9 +605,9 @@ func (o *User) Workouts(mods ...qm.QueryMod) workoutQuery {
 	return Workouts(queryMods...)
 }
 
-// LoadIDAuth allows an eager lookup of values, cached into the
+// LoadAuth allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (userL) LoadIDAuth(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+func (userL) LoadAuth(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
 	var slice []*User
 	var object *User
 
@@ -631,7 +638,7 @@ func (userL) LoadIDAuth(ctx context.Context, e boil.ContextExecutor, singular bo
 		if object.R == nil {
 			object.R = &userR{}
 		}
-		args[object.ID] = struct{}{}
+		args[object.AuthID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -639,7 +646,7 @@ func (userL) LoadIDAuth(ctx context.Context, e boil.ContextExecutor, singular bo
 				obj.R = &userR{}
 			}
 
-			args[obj.ID] = struct{}{}
+			args[obj.AuthID] = struct{}{}
 
 		}
 	}
@@ -694,22 +701,22 @@ func (userL) LoadIDAuth(ctx context.Context, e boil.ContextExecutor, singular bo
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.IDAuth = foreign
+		object.R.Auth = foreign
 		if foreign.R == nil {
 			foreign.R = &authR{}
 		}
-		foreign.R.IDUser = object
+		foreign.R.User = object
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.ID == foreign.ID {
-				local.R.IDAuth = foreign
+			if local.AuthID == foreign.ID {
+				local.R.Auth = foreign
 				if foreign.R == nil {
 					foreign.R = &authR{}
 				}
-				foreign.R.IDUser = local
+				foreign.R.User = local
 				break
 			}
 		}
@@ -886,7 +893,7 @@ func (userL) LoadFollowerUsers(ctx context.Context, e boil.ContextExecutor, sing
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"getstronger\".\"users\".\"full_name_search\", \"a\".\"followee_id\""),
+		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"getstronger\".\"users\".\"full_name_search\", \"getstronger\".\"users\".\"auth_id\", \"a\".\"followee_id\""),
 		qm.From("\"getstronger\".\"users\""),
 		qm.InnerJoin("\"getstronger\".\"followers\" as \"a\" on \"getstronger\".\"users\".\"id\" = \"a\".\"follower_id\""),
 		qm.WhereIn("\"a\".\"followee_id\" in ?", argsSlice...),
@@ -907,7 +914,7 @@ func (userL) LoadFollowerUsers(ctx context.Context, e boil.ContextExecutor, sing
 		one := new(User)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &one.FullNameSearch, &localJoinCol)
+		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &one.FullNameSearch, &one.AuthID, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for users")
 		}
@@ -1016,7 +1023,7 @@ func (userL) LoadFolloweeUsers(ctx context.Context, e boil.ContextExecutor, sing
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"getstronger\".\"users\".\"full_name_search\", \"a\".\"follower_id\""),
+		qm.Select("\"getstronger\".\"users\".\"id\", \"getstronger\".\"users\".\"first_name\", \"getstronger\".\"users\".\"last_name\", \"getstronger\".\"users\".\"created_at\", \"getstronger\".\"users\".\"full_name_search\", \"getstronger\".\"users\".\"auth_id\", \"a\".\"follower_id\""),
 		qm.From("\"getstronger\".\"users\""),
 		qm.InnerJoin("\"getstronger\".\"followers\" as \"a\" on \"getstronger\".\"users\".\"id\" = \"a\".\"followee_id\""),
 		qm.WhereIn("\"a\".\"follower_id\" in ?", argsSlice...),
@@ -1037,7 +1044,7 @@ func (userL) LoadFolloweeUsers(ctx context.Context, e boil.ContextExecutor, sing
 		one := new(User)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &one.FullNameSearch, &localJoinCol)
+		err = results.Scan(&one.ID, &one.FirstName, &one.LastName, &one.CreatedAt, &one.FullNameSearch, &one.AuthID, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for users")
 		}
@@ -1543,10 +1550,10 @@ func (userL) LoadWorkouts(ctx context.Context, e boil.ContextExecutor, singular 
 	return nil
 }
 
-// SetIDAuth of the user to the related item.
-// Sets o.R.IDAuth to related.
-// Adds o to related.R.IDUser.
-func (o *User) SetIDAuth(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Auth) error {
+// SetAuth of the user to the related item.
+// Sets o.R.Auth to related.
+// Adds o to related.R.User.
+func (o *User) SetAuth(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Auth) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -1556,7 +1563,7 @@ func (o *User) SetIDAuth(ctx context.Context, exec boil.ContextExecutor, insert 
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"getstronger\".\"users\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"auth_id"}),
 		strmangle.WhereClause("\"", "\"", 2, userPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -1570,21 +1577,21 @@ func (o *User) SetIDAuth(ctx context.Context, exec boil.ContextExecutor, insert 
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.ID = related.ID
+	o.AuthID = related.ID
 	if o.R == nil {
 		o.R = &userR{
-			IDAuth: related,
+			Auth: related,
 		}
 	} else {
-		o.R.IDAuth = related
+		o.R.Auth = related
 	}
 
 	if related.R == nil {
 		related.R = &authR{
-			IDUser: o,
+			User: o,
 		}
 	} else {
-		related.R.IDUser = o
+		related.R.User = o
 	}
 
 	return nil

@@ -32,15 +32,12 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[v1.GetUs
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(req.Msg.GetId()))
+	user, err := h.repo.GetUser(ctx,
+		repo.GetUserWithID(req.Msg.GetId()),
+		repo.GetUserLoadAuth(),
+	)
 	if err != nil {
 		log.Error("failed to get user", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByID(user.ID))
-	if err != nil {
-		log.Error("failed to get auth", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -50,13 +47,9 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[v1.GetUs
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	// DEBT: Move email to user model.
-	u := parseUserToPB(user, followed)
-	u.Email = auth.Email
-
 	return &connect.Response[v1.GetUserResponse]{
 		Msg: &v1.GetUserResponse{
-			User: u,
+			User: parseUserToPB(user, followed),
 		},
 	}, nil
 }

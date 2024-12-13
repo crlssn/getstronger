@@ -131,14 +131,14 @@ func (r *Repo) RefreshTokenExists(ctx context.Context, refreshToken string) (boo
 }
 
 type CreateUserParams struct {
-	ID        string
+	AuthID    string
 	FirstName string
 	LastName  string
 }
 
 func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
 	user := &orm.User{
-		ID:        p.ID,
+		AuthID:    p.AuthID,
 		FirstName: p.FirstName,
 		LastName:  p.LastName,
 	}
@@ -884,6 +884,12 @@ func GetUserWithID(id string) GetUserOpt {
 	}
 }
 
+func GetUserLoadAuth() GetUserOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.UserRels.Auth)
+	}
+}
+
 func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
@@ -1185,7 +1191,7 @@ func GetAuthByEmailToken(token string) GetAuthOpt {
 
 func GetAuthWithUser() GetAuthOpt {
 	return func() qm.QueryMod {
-		return qm.Load(orm.AuthRels.IDUser)
+		return qm.Load(orm.AuthRels.User)
 	}
 }
 
