@@ -28,13 +28,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(userID))
-	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	followers, err := h.repo.ListFollowers(ctx, user)
+	followers, err := h.repo.ListFollowers(ctx, userID)
 	if err != nil {
 		log.Error("failed to list followers", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

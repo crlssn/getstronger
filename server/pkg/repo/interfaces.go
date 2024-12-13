@@ -52,8 +52,8 @@ type userMethods interface {
 	Unfollow(ctx context.Context, p UnfollowParams) error
 	ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error)
 	CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error)
-	ListFollowers(ctx context.Context, user *orm.User, opts ...ListFollowersOpt) (orm.UserSlice, error)
-	ListFollowees(ctx context.Context, user *orm.User, opts ...ListFolloweesOpt) (orm.UserSlice, error)
+	ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (orm.UserSlice, error)
+	ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (orm.UserSlice, error)
 	IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error)
 }
 

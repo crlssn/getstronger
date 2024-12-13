@@ -855,12 +855,13 @@ func (r *repo) Unfollow(ctx context.Context, p UnfollowParams) error {
 
 type ListFollowersOpt func() qm.QueryMod
 
-func (r *repo) ListFollowers(ctx context.Context, user *orm.User, opts ...ListFollowersOpt) (orm.UserSlice, error) {
+func (r *repo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
+	user := &orm.User{ID: userID}
 	users, err := user.FollowerUsers(query...).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("users fetch: %w", err)
@@ -871,12 +872,13 @@ func (r *repo) ListFollowers(ctx context.Context, user *orm.User, opts ...ListFo
 
 type ListFolloweesOpt func() qm.QueryMod
 
-func (r *repo) ListFollowees(ctx context.Context, user *orm.User, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
+func (r *repo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
+	user := &orm.User{ID: userID}
 	users, err := user.FolloweeUsers(query...).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("users fetch: %w", err)
