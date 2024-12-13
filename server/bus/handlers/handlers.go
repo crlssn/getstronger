@@ -25,10 +25,10 @@ var (
 
 type RequestTraced struct {
 	log  *zap.Logger
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewRequestTraced(log *zap.Logger, repo *repo.Repo) *RequestTraced {
+func NewRequestTraced(log *zap.Logger, repo repo.Repo) *RequestTraced {
 	return &RequestTraced{log, repo}
 }
 
@@ -52,10 +52,10 @@ func (h *RequestTraced) HandlePayload(payload any) {
 
 type WorkoutCommentPosted struct {
 	log  *zap.Logger
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewWorkoutCommentPosted(log *zap.Logger, repo *repo.Repo) *WorkoutCommentPosted {
+func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo) *WorkoutCommentPosted {
 	return &WorkoutCommentPosted{log, repo}
 }
 
@@ -110,10 +110,10 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 
 type UserFollowed struct {
 	log  *zap.Logger
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewUserFollowed(log *zap.Logger, repo *repo.Repo) *UserFollowed {
+func NewUserFollowed(log *zap.Logger, repo repo.Repo) *UserFollowed {
 	return &UserFollowed{log, repo}
 }
 

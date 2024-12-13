@@ -18,18 +18,103 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/orm"
 )
 
-type Repo struct {
+type Repo interface {
+	methods
+	NewTx(ctx context.Context, f func(tx Tx) error) error
+}
+
+type Tx interface {
+	methods
+	GetTx() *sql.Tx
+}
+
+type methods interface {
+	// Auth
+	CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error)
+	CompareEmailAndPassword(ctx context.Context, email, password string) error
+	UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error
+	DeleteRefreshToken(ctx context.Context, refreshToken string) error
+	RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error)
+	GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error)
+	VerifyEmail(ctx context.Context, token string) error
+	SetPasswordResetToken(ctx context.Context, authID, token string) error
+	UpdatePassword(ctx context.Context, authID string, password string) error
+
+	// User
+	CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error)
+	Follow(ctx context.Context, p FollowParams) error
+	Unfollow(ctx context.Context, p UnfollowParams) error
+	ListFollowers(ctx context.Context, user *orm.User, opts ...ListFollowersOpt) (orm.UserSlice, error)
+	ListFollowees(ctx context.Context, user *orm.User, opts ...ListFolloweesOpt) (orm.UserSlice, error)
+	GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error)
+	ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error)
+	IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error)
+
+	// Exercise
+	CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error)
+	SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error
+	ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error)
+	GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error)
+	UpdateExercise(ctx context.Context, exercise *orm.Exercise) error
+
+	//
+	// Routine methods
+	//
+
+	CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error)
+	GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error)
+	DeleteRoutine(ctx context.Context, id string) error
+	ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error)
+	UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error
+	AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error
+	RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error
+	SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error
+
+	// Workout
+	ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error)
+	CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error)
+	GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error)
+	DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error
+	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error)
+	GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error)
+	UpdateWorkout(ctx context.Context, workoutID string, p UpdateWorkoutParams) error
+
+	// Set
+	GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error)
+	ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error)
+	GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error)
+
+	// Trace
+	StoreTrace(ctx context.Context, p StoreTraceParams) error
+
+	// Notification
+	CreateNotification(ctx context.Context, p CreateNotificationParams) error
+	ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error)
+	CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error)
+	MarkNotificationsAsRead(ctx context.Context, opts ...MarkNotificationsAsReadOpt) error
+}
+
+var (
+	_ Tx   = (*repo)(nil)
+	_ Repo = (*repo)(nil)
+)
+
+type repo struct {
 	db *sql.DB
 	tx *sql.Tx
 }
 
-func New(db *sql.DB) *Repo {
-	return &Repo{db, nil}
+func (r *repo) GetTx() *sql.Tx {
+	return r.tx
+}
+
+func New(db *sql.DB) Repo {
+	return &repo{db, nil}
 }
 
 var ErrAuthEmailExists = fmt.Errorf("email already exists")
 
-func (r *Repo) NewTx(ctx context.Context, f func(*Repo) error) error {
+func (r *repo) NewTx(ctx context.Context, f func(tx Tx) error) error {
 	if r.tx != nil {
 		return f(r)
 	}
@@ -39,7 +124,7 @@ func (r *Repo) NewTx(ctx context.Context, f func(*Repo) error) error {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 
-	if err = f(&Repo{nil, tx}); err != nil {
+	if err = f(&repo{nil, tx}); err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
 			return fmt.Errorf("rollback tx: %w", errRollback)
 		}
@@ -53,7 +138,7 @@ func (r *Repo) NewTx(ctx context.Context, f func(*Repo) error) error {
 	return nil
 }
 
-func (r *Repo) executor() boil.ContextExecutor {
+func (r *repo) executor() boil.ContextExecutor {
 	if r.tx != nil {
 		return r.tx
 	}
@@ -61,7 +146,7 @@ func (r *Repo) executor() boil.ContextExecutor {
 	return r.db
 }
 
-func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
+func (r *repo) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
 	exists, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).Exists(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("email exists check: %w", err)
@@ -87,7 +172,7 @@ func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*orm.Aut
 	return auth, nil
 }
 
-func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
+func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
 	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
 	if err != nil {
 		return fmt.Errorf("auth fetch: %w", err)
@@ -100,7 +185,7 @@ func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password stri
 	return nil
 }
 
-func (r *Repo) UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error {
+func (r *repo) UpdateRefreshToken(ctx context.Context, authID string, refreshToken string) error {
 	auth := &orm.Auth{
 		ID:           authID,
 		RefreshToken: null.StringFrom(refreshToken),
@@ -111,7 +196,7 @@ func (r *Repo) UpdateRefreshToken(ctx context.Context, authID string, refreshTok
 	return nil
 }
 
-func (r *Repo) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
+func (r *repo) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
 	if _, err := orm.Auths(
 		orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken)),
 	).UpdateAll(ctx, r.executor(), orm.M{
@@ -122,7 +207,7 @@ func (r *Repo) DeleteRefreshToken(ctx context.Context, refreshToken string) erro
 	return nil
 }
 
-func (r *Repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
+func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
 	exists, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor())
 	if err != nil {
 		return false, fmt.Errorf("refresh token exists check: %w", err)
@@ -136,7 +221,7 @@ type CreateUserParams struct {
 	LastName  string
 }
 
-func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
+func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
 	user := &orm.User{
 		AuthID:    p.AuthID,
 		FirstName: p.FirstName,
@@ -155,7 +240,7 @@ type CreateExerciseParams struct {
 	Label  string
 }
 
-func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
+func (r *repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
 	exercise := &orm.Exercise{
 		UserID:   p.UserID,
 		Title:    p.Name,
@@ -173,22 +258,22 @@ type SoftDeleteExerciseParams struct {
 	ExerciseID string
 }
 
-func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
-	return r.NewTx(ctx, func(tx *Repo) error {
+func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
+	return r.NewTx(ctx, func(tx Tx) error {
 		exercise, err := orm.Exercises(
 			orm.ExerciseWhere.ID.EQ(p.ExerciseID),
 			orm.ExerciseWhere.UserID.EQ(p.UserID),
-		).One(ctx, tx.executor())
+		).One(ctx, tx.GetTx())
 		if err != nil {
 			return fmt.Errorf("exercise fetch: %w", err)
 		}
 
-		if err = exercise.SetRoutines(ctx, tx.executor(), false); err != nil {
+		if err = exercise.SetRoutines(ctx, tx.GetTx(), false); err != nil {
 			return fmt.Errorf("exercise routines set: %w", err)
 		}
 
 		exercise.DeletedAt = null.TimeFrom(time.Now().UTC())
-		if _, err = exercise.Update(ctx, tx.executor(), boil.Infer()); err != nil {
+		if _, err = exercise.Update(ctx, tx.GetTx(), boil.Infer()); err != nil {
 			return fmt.Errorf("exercise soft delete: %w", err)
 		}
 
@@ -262,7 +347,7 @@ func ListExercisesWithLimit(limit int) ListExercisesOpt {
 	}
 }
 
-func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
+func (r *repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
 	var queries []qm.QueryMod
 	for _, opt := range opts {
 		query, err := opt()
@@ -294,7 +379,7 @@ func GetExerciseWithUserID(userID string) GetExerciseOpt {
 	}
 }
 
-func (r *Repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
+func (r *repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -307,7 +392,7 @@ func (r *Repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Ex
 	return exercise, nil
 }
 
-func (r *Repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error {
+func (r *repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error {
 	_, err := exercise.Update(ctx, r.executor(), boil.Whitelist(
 		orm.ExerciseColumns.Title,
 		orm.ExerciseColumns.SubTitle,
@@ -329,7 +414,7 @@ var (
 	ErrRoutineExerciseDeleted              = fmt.Errorf("exercise is deleted")
 )
 
-func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
+func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
 	exercises, err := orm.Exercises(orm.ExerciseWhere.ID.IN(p.ExerciseIDs)).All(ctx, r.executor())
 	if err != nil {
 		return nil, fmt.Errorf("exercises fetch: %w", err)
@@ -349,12 +434,12 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.R
 		Title:  p.Name,
 	}
 
-	if err = r.NewTx(ctx, func(tx *Repo) error {
-		if err = routine.Insert(ctx, tx.executor(), boil.Infer()); err != nil {
+	if err = r.NewTx(ctx, func(tx Tx) error {
+		if err = routine.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
 			return fmt.Errorf("routine insert: %w", err)
 		}
 
-		if err = routine.SetExercises(ctx, tx.executor(), false, exercises...); err != nil {
+		if err = routine.SetExercises(ctx, tx.GetTx(), false, exercises...); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
@@ -389,7 +474,7 @@ func GetRoutineWithExercises() GetRoutineOpt {
 	}
 }
 
-func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
+func (r *repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -403,18 +488,18 @@ func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Rout
 	return routine, nil
 }
 
-func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
-	return r.NewTx(ctx, func(tx *Repo) error {
+func (r *repo) DeleteRoutine(ctx context.Context, id string) error {
+	return r.NewTx(ctx, func(tx Tx) error {
 		routine, err := tx.GetRoutine(ctx, GetRoutineWithID(id))
 		if err != nil {
 			return fmt.Errorf("routine fetch: %w", err)
 		}
 
-		if err = routine.SetExercises(ctx, tx.executor(), false); err != nil {
+		if err = routine.SetExercises(ctx, tx.GetTx(), false); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
-		if _, err = routine.Delete(ctx, tx.executor()); err != nil {
+		if _, err = routine.Delete(ctx, tx.GetTx()); err != nil {
 			return fmt.Errorf("routine delete: %w", err)
 		}
 
@@ -468,7 +553,7 @@ func ListRoutinesWithLimit(limit int) ListRoutineOpt {
 	}
 }
 
-func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
+func (r *repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
 	var query []qm.QueryMod
 	for _, opt := range opts {
 		q, err := opt()
@@ -507,7 +592,7 @@ func UpdateRoutineExerciseOrder(exerciseIDs []string) UpdateRoutineOpt {
 
 var errDuplicateColumn = fmt.Errorf("duplicate column")
 
-func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
+func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	columns := orm.M{}
 	for _, opt := range opts {
 		column, err := opt()
@@ -530,14 +615,14 @@ func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 	return nil
 }
 
-func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (r *repo) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
 	if err := routine.AddExercises(ctx, r.executor(), false, exercise); err != nil {
 		return fmt.Errorf("routine exercises add: %w", err)
 	}
 	return nil
 }
 
-func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (r *repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
 	if err := routine.RemoveExercises(ctx, r.executor(), exercise); err != nil {
 		return fmt.Errorf("routine exercises remove: %w", err)
 	}
@@ -546,7 +631,7 @@ func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exer
 
 type ListWorkoutsOpt func() ([]qm.QueryMod, error)
 
-func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
+func (r *repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
 	var query []qm.QueryMod
 	for _, opt := range opts {
 		q, err := opt()
@@ -650,7 +735,7 @@ type Set struct {
 	Weight float64
 }
 
-func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
 	workout := &orm.Workout{
 		Name:       p.Name,
 		UserID:     p.UserID,
@@ -658,8 +743,8 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 		FinishedAt: p.FinishedAt.Truncate(time.Minute).UTC(),
 	}
 
-	if err := r.NewTx(ctx, func(tx *Repo) error {
-		if err := workout.Insert(ctx, tx.executor(), boil.Infer()); err != nil {
+	if err := r.NewTx(ctx, func(tx Tx) error {
+		if err := workout.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
 			return fmt.Errorf("workout insert: %w", err)
 		}
 
@@ -674,7 +759,7 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 				})
 			}
 
-			if err := workout.AddSets(ctx, tx.executor(), true, sets...); err != nil {
+			if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
 				return fmt.Errorf("workout sets add: %w", err)
 			}
 		}
@@ -707,7 +792,7 @@ func GetWorkoutWithSets() GetWorkoutOpt {
 	}
 }
 
-func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
+func (r *repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -737,7 +822,7 @@ func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
 
 var errDeleteWorkoutMissingOptions = fmt.Errorf("delete workout: missing options")
 
-func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
+func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
 	if len(opts) == 0 {
 		return errDeleteWorkoutMissingOptions
 	}
@@ -750,21 +835,21 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 		query = append(query, opt())
 	}
 
-	return r.NewTx(ctx, func(tx *Repo) error {
-		workout, err := orm.Workouts(query...).One(ctx, tx.executor())
+	return r.NewTx(ctx, func(tx Tx) error {
+		workout, err := orm.Workouts(query...).One(ctx, tx.GetTx())
 		if err != nil {
 			return fmt.Errorf("workout fetch: %w", err)
 		}
 
-		if _, err = workout.R.Sets.DeleteAll(ctx, tx.executor()); err != nil {
+		if _, err = workout.R.Sets.DeleteAll(ctx, tx.GetTx()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
 		}
 
-		if _, err = workout.R.WorkoutComments.DeleteAll(ctx, tx.executor()); err != nil {
+		if _, err = workout.R.WorkoutComments.DeleteAll(ctx, tx.GetTx()); err != nil {
 			return fmt.Errorf("workout comments delete: %w", err)
 		}
 
-		if _, err = workout.Delete(ctx, tx.executor()); err != nil {
+		if _, err = workout.Delete(ctx, tx.GetTx()); err != nil {
 			return fmt.Errorf("workout delete: %w", err)
 		}
 
@@ -772,7 +857,7 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	})
 }
 
-func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+func (r *repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
 	rawQuery := `
 	SELECT * FROM getstronger.sets WHERE workout_id IN (
 		SELECT DISTINCT ON (exercise_id) workout_id	
@@ -790,7 +875,7 @@ func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string)
 	return sets, nil
 }
 
-func (r *Repo) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
+func (r *repo) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
 	workouts, err := r.ListWorkouts(ctx, ListWorkoutsWithUserIDs(userID))
 	if err != nil {
 		return nil, fmt.Errorf("workouts fetch: %w", err)
@@ -821,7 +906,7 @@ type FollowParams struct {
 	FolloweeID string
 }
 
-func (r *Repo) Follow(ctx context.Context, p FollowParams) error {
+func (r *repo) Follow(ctx context.Context, p FollowParams) error {
 	user := &orm.User{ID: p.FollowerID}
 	if err := user.AddFolloweeUsers(ctx, r.executor(), false, &orm.User{ID: p.FolloweeID}); err != nil {
 		return fmt.Errorf("follow add: %w", err)
@@ -835,7 +920,7 @@ type UnfollowParams struct {
 	FolloweeID string
 }
 
-func (r *Repo) Unfollow(ctx context.Context, p UnfollowParams) error {
+func (r *repo) Unfollow(ctx context.Context, p UnfollowParams) error {
 	user := &orm.User{ID: p.FollowerID}
 	if err := user.RemoveFolloweeUsers(ctx, r.executor(), &orm.User{ID: p.FolloweeID}); err != nil {
 		return fmt.Errorf("follow add: %w", err)
@@ -846,7 +931,7 @@ func (r *Repo) Unfollow(ctx context.Context, p UnfollowParams) error {
 
 type ListFollowersOpt func() qm.QueryMod
 
-func (r *Repo) ListFollowers(ctx context.Context, user *orm.User, opts ...ListFollowersOpt) (orm.UserSlice, error) {
+func (r *repo) ListFollowers(ctx context.Context, user *orm.User, opts ...ListFollowersOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -862,7 +947,7 @@ func (r *Repo) ListFollowers(ctx context.Context, user *orm.User, opts ...ListFo
 
 type ListFolloweesOpt func() qm.QueryMod
 
-func (r *Repo) ListFollowees(ctx context.Context, user *orm.User, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
+func (r *repo) ListFollowees(ctx context.Context, user *orm.User, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -890,7 +975,7 @@ func GetUserLoadAuth() GetUserOpt {
 	}
 }
 
-func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
+func (r *repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -931,7 +1016,7 @@ func ListUsersWithLimit(limit int) ListUsersOpt {
 	}
 }
 
-func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
+func (r *repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt()...)
@@ -951,7 +1036,7 @@ type CreateWorkoutCommentParams struct {
 	Comment   string
 }
 
-func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
 	comment := &orm.WorkoutComment{
 		UserID:    p.UserID,
 		WorkoutID: p.WorkoutID,
@@ -971,7 +1056,7 @@ type StoreTraceParams struct {
 	DurationMS int
 }
 
-func (r *Repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
+func (r *repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 	trace := &orm.Trace{
 		Request:    p.Request,
 		StatusCode: p.StatusCode,
@@ -995,7 +1080,7 @@ type NotificationPayload struct {
 	WorkoutID string `json:"workoutId,omitempty"`
 }
 
-func (r *Repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {
+func (r *repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {
 	payload, err := json.Marshal(p.Payload)
 	if err != nil {
 		return fmt.Errorf("payload marshal: %w", err)
@@ -1027,7 +1112,7 @@ func GetWorkoutCommentWithWorkout() GetWorkoutCommentOpt {
 	}
 }
 
-func (r *Repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
+func (r *repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -1079,7 +1164,7 @@ func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 	}
 }
 
-func (r *Repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
+func (r *repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		q, err := opt()
@@ -1116,7 +1201,7 @@ func CountNotificationsWithUnreadOnly(onlyUnread bool) CountNotificationsOpt {
 	}
 }
 
-func (r *Repo) CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error) {
+func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		if opt() == nil {
@@ -1141,7 +1226,7 @@ func MarkNotificationsAsReadByUserID(userID string) MarkNotificationsAsReadOpt {
 	}
 }
 
-func (r *Repo) MarkNotificationsAsRead(ctx context.Context, opts ...MarkNotificationsAsReadOpt) error {
+func (r *repo) MarkNotificationsAsRead(ctx context.Context, opts ...MarkNotificationsAsReadOpt) error {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -1160,7 +1245,7 @@ func (r *Repo) MarkNotificationsAsRead(ctx context.Context, opts ...MarkNotifica
 	return nil
 }
 
-func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
+func (r *repo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
 	exists, err := user.FollowerUsers(orm.UserWhere.ID.EQ(userID)).Exists(ctx, r.executor())
 	if err != nil {
 		return false, fmt.Errorf("user exists check: %w", err)
@@ -1201,7 +1286,7 @@ func GetAuthByPasswordResetToken(token string) GetAuthOpt {
 	}
 }
 
-func (r *Repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
+func (r *repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -1215,7 +1300,7 @@ func (r *Repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, erro
 	return auth, nil
 }
 
-func (r *Repo) VerifyEmail(ctx context.Context, token string) error {
+func (r *repo) VerifyEmail(ctx context.Context, token string) error {
 	auth, err := r.GetAuth(ctx, GetAuthByEmailToken(token))
 	if err != nil {
 		return fmt.Errorf("auth fetch: %w", err)
@@ -1229,7 +1314,7 @@ func (r *Repo) VerifyEmail(ctx context.Context, token string) error {
 	return nil
 }
 
-func (r *Repo) SetPasswordResetToken(ctx context.Context, authID, token string) error {
+func (r *repo) SetPasswordResetToken(ctx context.Context, authID, token string) error {
 	auth := &orm.Auth{ID: authID, PasswordResetToken: null.StringFrom(token)}
 	if _, err := auth.Update(ctx, r.executor(), boil.Whitelist(orm.AuthColumns.PasswordResetToken)); err != nil {
 		return fmt.Errorf("auth update: %w", err)
@@ -1238,7 +1323,7 @@ func (r *Repo) SetPasswordResetToken(ctx context.Context, authID, token string) 
 	return nil
 }
 
-func (r *Repo) UpdatePassword(ctx context.Context, authID string, password string) error {
+func (r *repo) UpdatePassword(ctx context.Context, authID string, password string) error {
 	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("bcrypt password generation: %w", err)
@@ -1281,7 +1366,7 @@ func ListSetsWithPageToken(token []byte) ListSetsOpt {
 	}
 }
 
-func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+func (r *repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
 	query := []qm.QueryMod{
 		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
 	}
@@ -1303,7 +1388,7 @@ func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice,
 	return sets, nil
 }
 
-func (r *Repo) SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error {
+func (r *repo) SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error {
 	if err := routine.SetExercises(ctx, r.executor(), false, exercises...); err != nil {
 		return fmt.Errorf("routine exercises set: %w", err)
 	}
@@ -1318,15 +1403,15 @@ type UpdateWorkoutParams struct {
 	ExerciseSets []ExerciseSet
 }
 
-func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWorkoutParams) error {
-	return r.NewTx(ctx, func(tx *Repo) error {
+func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWorkoutParams) error {
+	return r.NewTx(ctx, func(tx Tx) error {
 		workout := &orm.Workout{
 			ID:         workoutID,
 			Name:       p.Name,
 			CreatedAt:  p.StartedAt,
 			FinishedAt: p.FinishedAt,
 		}
-		if _, err := workout.Update(ctx, tx.executor(), boil.Whitelist(
+		if _, err := workout.Update(ctx, tx.GetTx(), boil.Whitelist(
 			orm.WorkoutColumns.Name,
 			orm.WorkoutColumns.CreatedAt,
 			orm.WorkoutColumns.FinishedAt,
@@ -1334,7 +1419,7 @@ func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWork
 			return fmt.Errorf("workout update: %w", err)
 		}
 
-		if _, err := workout.Sets().DeleteAll(ctx, tx.executor()); err != nil {
+		if _, err := workout.Sets().DeleteAll(ctx, tx.GetTx()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
 		}
 
@@ -1349,7 +1434,7 @@ func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWork
 				})
 			}
 
-			if err := workout.AddSets(ctx, tx.executor(), true, sets...); err != nil {
+			if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
 				return fmt.Errorf("workout sets add: %w", err)
 			}
 		}
