@@ -143,8 +143,14 @@ func parseWorkoutCommentToPB(comment *orm.WorkoutComment, user *orm.User) *apiv1
 }
 
 func parseUserToPB(user *orm.User, followed bool) *apiv1.User {
+	var email string
+	if user.R != nil && user.R.Auth != nil {
+		email = user.R.Auth.Email
+	}
+
 	return &apiv1.User{
 		Id:        user.ID,
+		Email:     email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Followed:  followed,

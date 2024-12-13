@@ -77,7 +77,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 		}
 
 		user, err := r.CreateUser(ctx, repo.CreateUserParams{
-			ID:        auth.ID,
+			AuthID:    auth.ID,
 			FirstName: req.Msg.GetFirstName(),
 			LastName:  req.Msg.GetLastName(),
 		})
@@ -252,8 +252,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1
 	}
 
 	if err = h.email.SendPasswordResetEmail(ctx, email.SendPasswordResetEmail{
-		// DEBT: Fix the auth-user relationship.
-		Name:  auth.R.IDUser.FirstName,
+		Name:  auth.R.Users[0].FirstName,
 		Email: auth.Email,
 		Token: token,
 	}); err != nil {
