@@ -16,7 +16,7 @@ import (
 type repoSuite struct {
 	suite.Suite
 
-	repo *Repo
+	repo Repo
 
 	testContainer *testdb.Container
 	testFactory   *testdb.Factory

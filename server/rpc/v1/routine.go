@@ -119,7 +119,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
-	if err = h.repo.NewTx(ctx, func(tx repo.Repo) error {
+	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		if err = tx.UpdateRoutine(ctx, routine.ID,
 			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
 			repo.UpdateRoutineExerciseOrder(exerciseIDs),
