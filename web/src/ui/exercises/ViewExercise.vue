@@ -82,7 +82,7 @@ const onDeleteExercise = async () => {
     </AppListItemLink>
   </AppList>
 
-  <div v-if="authStore.userID === exercise?.userId">
+  <div v-if="authStore.userId === exercise?.userId">
     <h6 class="mt-8">Admin</h6>
     <AppList>
       <AppListItemLink :to="`/exercises/${route.params.id}/edit`">

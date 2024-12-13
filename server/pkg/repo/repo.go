@@ -1165,6 +1165,12 @@ func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userI
 
 type GetAuthOpt func() qm.QueryMod
 
+func GetAuthByID(id string) GetAuthOpt {
+	return func() qm.QueryMod {
+		return orm.AuthWhere.ID.EQ(id)
+	}
+}
+
 func GetAuthByEmail(email string) GetAuthOpt {
 	return func() qm.QueryMod {
 		return orm.AuthWhere.Email.EQ(email)

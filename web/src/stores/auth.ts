@@ -7,21 +7,21 @@ import { jwtDecode } from 'jwt-decode'
 export const useAuthStore = defineStore(
   'auth',
   () => {
-    const userID = ref('')
+    const userId = ref('')
     const accessToken = ref('')
     const accessTokenRefreshInterval = ref(0)
 
     const setAccessToken = (token: string) => {
       console.log('setting access token', token)
-      if (userID.value === '') {
+      if (userId.value === '') {
         const claims = jwtDecode(token) as AccessToken
-        userID.value = claims.userId
+        userId.value = claims.userId
       }
       accessToken.value = token
     }
 
     const logout = () => {
-      userID.value = ''
+      userId.value = ''
       accessToken.value = ''
       clearInterval(accessTokenRefreshInterval.value)
     }
@@ -30,7 +30,7 @@ export const useAuthStore = defineStore(
       accessTokenRefreshInterval.value = interval
     }
 
-    return { accessToken, logout, setAccessToken, setAccessTokenRefreshInterval, userID }
+    return { accessToken, logout, setAccessToken, setAccessTokenRefreshInterval, userId }
   },
   {
     persist: true,

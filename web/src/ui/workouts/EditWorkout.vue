@@ -32,7 +32,7 @@ const fetchWorkout = async (id: string) => {
   const res = await getWorkout(id)
   if (!res) return
 
-  if (res.workout?.user?.id !== authStore.userID) {
+  if (res.workout?.user?.id !== authStore.userId) {
     alertStore.setError('You do not have permission to edit this workout')
     await router.push('/home')
     return

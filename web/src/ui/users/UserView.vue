@@ -60,7 +60,7 @@ const updateTab = (event: Event) => {
 </script>
 
 <template>
-  <div v-if="user.id !== authStore.userID">
+  <div v-if="user.id !== authStore.userId">
     <AppButton
       v-if="user.followed"
       colour="gray"
