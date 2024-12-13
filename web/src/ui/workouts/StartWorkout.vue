@@ -247,7 +247,7 @@ table {
   @apply w-full mb-4;
 
   th {
-    @apply text-left font-medium text-gray-900 px-1 pb-1;
+    @apply text-left font-medium text-gray-900 px-1 pb-2;
   }
 
   td {
