@@ -28,7 +28,7 @@ type Tx interface {
 	GetTx() *sql.Tx
 }
 
-type methods interface {
+type methods interface { //nolint:interfacebloat
 	// Auth
 	CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error)
 	CompareEmailAndPassword(ctx context.Context, email, password string) error
@@ -57,10 +57,7 @@ type methods interface {
 	GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error)
 	UpdateExercise(ctx context.Context, exercise *orm.Exercise) error
 
-	//
-	// Routine methods
-	//
-
+	// Routine
 	CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error)
 	GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error)
 	DeleteRoutine(ctx context.Context, id string) error
