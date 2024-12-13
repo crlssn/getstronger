@@ -43,5 +43,6 @@ const onChange = () => {
 <style scoped>
 input {
   @apply block w-full border-0 bg-white px-4 py-5 text-gray-900 focus:ring-0 placeholder:text-gray-400 font-medium;
+  @apply lg:rounded-md;
 }
 </style>
