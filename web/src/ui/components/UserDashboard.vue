@@ -1,94 +1,23 @@
 <script setup lang="ts">
-import { type User } from '@/proto/api/v1/shared_pb.ts'
-import { nextTick, ref } from 'vue'
-import { searchUsers } from '@/http/requests.ts'
 import { RouterView } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
-import { usePageTitleStore } from '@/stores/pageTitle.ts'
-import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import NavigationBar from '@/ui/components/NavigationBar.vue'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
-
-const searchBarOpen = ref(false)
-const input = ref<HTMLInputElement | null>(null)
-const users = ref(Array<User>())
-
-const pageTitleStore = usePageTitleStore()
-const openSearchBar = () => {
-  searchBarOpen.value = true
-  nextTick(() => {
-    input.value?.focus()
-  })
-}
-
-const closeSearchBar = () => {
-  users.value = []
-  searchBarOpen.value = false
-}
-
-const onSearchUsers = async () => {
-  if (!input.value) return
-
-  if ((input.value.value?.length ?? 0) < 3) {
-    users.value = []
-    return
-  }
-
-  const res = await searchUsers(input.value.value, new Uint8Array(0))
-  if (!res) return
-
-  users.value = res.users
-}
+import AppNavBottom from '@/ui/components/NavigationBottom.vue'
+import AppNavTop from '@/ui/components/NavigationTop.vue'
 </script>
 
 <template>
   <div class="pb-12">
-    <div
-      class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-x-4 border-b-2 border-gray-200 bg-white px-4"
-    >
-      <template v-if="searchBarOpen">
-        <form class="w-full">
-          <input
-            ref="input"
-            type="text"
-            class="w-full text-sm border-none focus:ring-0"
-            placeholder="Search users"
-            @keyup="onSearchUsers"
-          />
-        </form>
-        <ul
-          v-if="users.length > 0"
-          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white"
-        >
-          <li v-for="user in users" :key="user.id" @click="closeSearchBar">
-            <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">
-              {{ user.firstName }} {{ user.lastName }}
-            </RouterLink>
-          </li>
-        </ul>
-        <XMarkIcon class="w-8 h-6 cursor-pointer" @click="closeSearchBar" />
-      </template>
-      <template v-else>
-        <img class="h-auto w-8" src="/favicon.png" />
-        <div class="flex flex-1 gap-x-4 justify-center">
-          <p class="uppercase text-sm font-semibold text-gray-900">
-            {{ pageTitleStore.pageTitle }}
-          </p>
-        </div>
-        <MagnifyingGlassIcon class="w-8 h-6 cursor-pointer" @click="openSearchBar" />
-      </template>
-    </div>
-
+    <AppNavTop />
     <AppAlert />
-
-    <main class="mx-auto max-w-7xl bg-gray-100 py-4">
+    <main>
       <RouterView />
     </main>
-    <div
-      v-if="searchBarOpen"
-      class="fixed z-10 top-0 left-0 right-0 bottom-0 bg-black opacity-50"
-      @click="closeSearchBar"
-    />
-    <NavigationBar v-else />
+    <AppNavBottom />
   </div>
 </template>
+
+<style scoped>
+main {
+  @apply mx-auto max-w-7xl bg-gray-100 py-4;
+}
+</style>
