@@ -316,14 +316,24 @@ func (r *repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Ex
 	return exercise, nil
 }
 
-func (r *repo) UpdateExercise(ctx context.Context, exercise *orm.Exercise) error {
-	_, err := exercise.Update(ctx, r.executor(), boil.Whitelist(
+type UpdateExerciseParams struct {
+	Title    string
+	SubTitle null.String
+}
+
+func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, p UpdateExerciseParams) error {
+	exercise := &orm.Exercise{
+		ID:       exerciseID,
+		Title:    p.Title,
+		SubTitle: p.SubTitle,
+	}
+	if _, err := exercise.Update(ctx, r.executor(), boil.Whitelist(
 		orm.ExerciseColumns.Title,
 		orm.ExerciseColumns.SubTitle,
-	))
-	if err != nil {
+	)); err != nil {
 		return fmt.Errorf("exercise update: %w", err)
 	}
+
 	return nil
 }
 
