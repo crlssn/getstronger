@@ -37,6 +37,7 @@ type setMethods interface {
 type authMethods interface {
 	GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error)
 	CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error)
+	UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error
 	VerifyEmail(ctx context.Context, token string) error
 	UpdatePassword(ctx context.Context, authID string, password string) error
 	DeleteRefreshToken(ctx context.Context, refreshToken string) error

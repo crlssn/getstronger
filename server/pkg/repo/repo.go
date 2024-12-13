@@ -96,6 +96,13 @@ func (r *repo) CreateAuth(ctx context.Context, email, password string) (*orm.Aut
 	return auth, nil
 }
 
+type UpdateAuthOpt func() (orm.M, error)
+
+func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
 	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
 	if err != nil {
@@ -524,29 +531,24 @@ func UpdateRoutineExerciseOrder(exerciseIDs []string) UpdateRoutineOpt {
 	}
 }
 
-var errDuplicateColumn = fmt.Errorf("duplicate column")
-
 func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
-	columns := orm.M{}
-	for _, opt := range opts {
-		column, err := opt()
-		if err != nil {
-			return fmt.Errorf("routine update opt: %w", err)
-		}
-
-		for key, value := range column {
-			if columns[key] != nil {
-				return fmt.Errorf("%w: %s", errDuplicateColumn, key)
-			}
-			columns[key] = value
-		}
+	columns, err := updateColumnsFromOpts(opts)
+	if err != nil {
+		return fmt.Errorf("routine update columns: %w", err)
 	}
 
-	if _, err := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, r.executor(), columns); err != nil {
-		return fmt.Errorf("routine update: %w", err)
-	}
+	return r.NewTx(ctx, func(tx Tx) error {
+		rows, rowsErr := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, tx.GetTx(), columns)
+		if rowsErr != nil {
+			return fmt.Errorf("routine update: %w", err)
+		}
 
-	return nil
+		if rows > 1 {
+			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
+		}
+
+		return nil
+	})
 }
 
 func (r *repo) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
