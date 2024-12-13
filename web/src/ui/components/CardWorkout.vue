@@ -60,7 +60,7 @@ const formatComment = computed(() => {
 <template>
   <div
     v-if="!workoutDeleted"
-    class="divide-y divide-gray-100 bg-white mb-4 border-t border-b border-gray-200"
+    class="divide-y divide-gray-100 bg-white mb-4 border-t border-b border-gray-200 lg:rounded-md lg:border-x"
   >
     <div class="px-4 py-3">
       <div class="flex items-center justify-between">

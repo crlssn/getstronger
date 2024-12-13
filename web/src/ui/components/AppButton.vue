@@ -19,7 +19,7 @@ const computedClasses = computed(() => {
 </script>
 
 <template>
-  <div :class="containerClass">
+  <div :class="containerClass" class="lg:px-0">
     <RouterLink v-if="props.type === 'link'" :to="props.to as string" :class="computedClasses">
       <slot />
     </RouterLink>
