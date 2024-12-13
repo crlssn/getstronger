@@ -39,22 +39,27 @@ const navigation = [
 
 <template>
   <nav>
-    <RouterLink v-for="item in navigation" :key="item.href" :to="item.href" class="relative">
-      <component :is="isActive(item.href) ? item.iconActive : item.icon" class="h-6 w-6" />
-      <span
-        v-if="item.href === '/notifications' && notificationStore.unreadCount > 0"
-        class="badge"
-      >
-        {{ notificationStore.unreadCount }}
-      </span>
-    </RouterLink>
+    <div class="container">
+      <RouterLink v-for="item in navigation" :key="item.href" :to="item.href" class="relative">
+        <component :is="isActive(item.href) ? item.iconActive : item.icon" class="h-6 w-6" />
+        <span
+          v-if="item.href === '/notifications' && notificationStore.unreadCount > 0"
+          class="badge"
+        >
+          {{ notificationStore.unreadCount }}
+        </span>
+      </RouterLink>
+    </div>
   </nav>
 </template>
 
 <style scoped>
 nav {
-  @apply fixed w-full bottom-0 z-10 h-16 px-8 bg-white border-t-2 border-gray-200;
-  @apply lg:hidden flex justify-between items-center;
+  @apply fixed w-full bottom-0 z-10 bg-white border-t-2 border-gray-200;
+
+  .container {
+    @apply flex justify-between items-center max-w-7xl h-16 px-8 mx-auto;
+  }
 }
 
 .badge {
