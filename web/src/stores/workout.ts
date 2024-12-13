@@ -56,7 +56,7 @@ export const useWorkoutStore = defineStore(
       }
     }
 
-    const deleteSet = (routineID: RoutineID, exerciseID: ExerciseID, setIndex: number) => {
+    const deleteSet = (routineID: RoutineID, exerciseID: ExerciseID, index: number) => {
       if (!workouts.value[routineID]) {
         return
       }
@@ -69,7 +69,7 @@ export const useWorkoutStore = defineStore(
         return
       }
 
-      workouts.value[routineID].exerciseSets[exerciseID].splice(setIndex, 1)
+      workouts.value[routineID].exerciseSets[exerciseID].splice(index, 1)
     }
 
     const removeWorkout = (routineID: RoutineID) => {

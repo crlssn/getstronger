@@ -10,7 +10,6 @@ import { useWorkoutStore } from '@/stores/workout'
 import AppList from '@/ui/components/AppList.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
-import AppListItem from '@/ui/components/AppListItem.vue'
 import { MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { type Routine } from '@/proto/api/v1/routine_service_pb'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
@@ -113,12 +112,12 @@ const cancelWorkout = async () => {
 
 const prevSetWeight = (exerciseID: string, index: number) => {
   const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
-  return prevSet?.weight?.toString() || 'Weight'
+  return prevSet?.weight?.toString()
 }
 
 const prevSetReps = (exerciseID: string, index: number) => {
   const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
-  return prevSet?.reps?.toString() || 'Reps'
+  return prevSet?.reps?.toString()
 }
 
 const isNumber = (value: number | string | undefined) => {
@@ -151,48 +150,63 @@ const setEndDateTime = (value: string) => {
 
 <template>
   <form @submit.prevent="onFinishWorkout">
-    <template v-for="exercise in routine?.exercises" :key="exercise.id">
+    <div v-for="exercise in routine?.exercises" :key="exercise.id">
       <h6>{{ exercise.name }}</h6>
-      <AppList>
-        <AppListItem class="flex flex-col">
-          <div v-for="(set, index) in sets(exercise.id)" :key="index" class="w-full">
-            <label>Set {{ index + 1 }}</label>
-            <div class="flex items-center gap-x-4 mb-4">
-              <div class="w-full">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Set</th>
+              <th>Previous</th>
+              <th>Weight</th>
+              <th></th>
+              <th>Reps</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(set, index) in sets(exercise.id)" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td>
+                <template
+                  v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)"
+                >
+                  {{ prevSetWeight(exercise.id, index) }} kg x {{ prevSetReps(exercise.id, index) }}
+                </template>
+              </td>
+              <td class="w-1/4">
                 <input
                   v-model.number="set.weight"
                   type="text"
                   inputmode="decimal"
-                  :placeholder="prevSetWeight(exercise.id, index)"
                   :required="sets(exercise.id).length > index + 1"
                   @keyup="addEmptySetIfNone(exercise.id)"
                 />
-              </div>
-              <span class="text-gray-500 font-medium">x</span>
-              <div class="w-full">
+              </td>
+              <td class="text-center">x</td>
+              <td class="w-1/4">
                 <input
                   v-model.number="set.reps"
                   type="text"
                   inputmode="numeric"
-                  :placeholder="prevSetReps(exercise.id, index)"
                   :required="sets(exercise.id).length > index + 1"
                   @keyup="addEmptySetIfNone(exercise.id)"
                 />
-              </div>
-              <MinusCircleIcon class="cursor-pointer" @click="deleteSet(exercise.id, index)" />
-            </div>
-          </div>
-          <AppButton
-            colour="primary"
-            type="button"
-            class="w-full"
-            @click="addEmptySet(exercise.id)"
-          >
-            Add Set
-          </AppButton>
-        </AppListItem>
-      </AppList>
-    </template>
+              </td>
+              <td>
+                <MinusCircleIcon
+                  class="cursor-pointer size-6 text-gray-900"
+                  @click="deleteSet(exercise.id, index)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <AppButton colour="primary" type="button" class="w-full" @click="addEmptySet(exercise.id)">
+          Add Set
+        </AppButton>
+      </div>
+    </div>
 
     <h6>Start Time</h6>
     <AppList>
@@ -224,8 +238,21 @@ const setEndDateTime = (value: string) => {
 </template>
 
 <style scoped>
-label {
-  @apply block text-sm font-semibold text-gray-600 uppercase mb-2;
+.table-container {
+  @apply bg-white px-3 py-4  mb-4 border-t border-b border-gray-200;
+  @apply lg:rounded-md lg:border-x;
+}
+
+table {
+  @apply w-full mb-4;
+
+  th {
+    @apply text-left font-medium text-gray-900 px-1 pb-1;
+  }
+
+  td {
+    @apply text-nowrap px-1;
+  }
 }
 
 input {
