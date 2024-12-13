@@ -252,7 +252,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1
 	}
 
 	if err = h.email.SendPasswordResetEmail(ctx, email.SendPasswordResetEmail{
-		Name:  auth.R.Users[0].FirstName,
+		Name:  auth.R.User.FirstName,
 		Email: auth.Email,
 		Token: token,
 	}); err != nil {

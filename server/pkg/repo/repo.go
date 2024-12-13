@@ -1191,7 +1191,7 @@ func GetAuthByEmailToken(token string) GetAuthOpt {
 
 func GetAuthWithUser() GetAuthOpt {
 	return func() qm.QueryMod {
-		return qm.Load(orm.AuthRels.Users, qm.Limit(1))
+		return qm.Load(orm.AuthRels.User)
 	}
 }
 

@@ -183,8 +183,8 @@ type userL struct{}
 
 var (
 	userAllColumns            = []string{"id", "first_name", "last_name", "created_at", "full_name_search", "auth_id"}
-	userColumnsWithoutDefault = []string{"id", "first_name", "last_name", "auth_id"}
-	userColumnsWithDefault    = []string{"created_at", "full_name_search"}
+	userColumnsWithoutDefault = []string{"first_name", "last_name", "auth_id"}
+	userColumnsWithDefault    = []string{"id", "created_at", "full_name_search"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{"full_name_search"}
 )
@@ -705,7 +705,7 @@ func (userL) LoadAuth(ctx context.Context, e boil.ContextExecutor, singular bool
 		if foreign.R == nil {
 			foreign.R = &authR{}
 		}
-		foreign.R.Users = append(foreign.R.Users, object)
+		foreign.R.User = object
 		return nil
 	}
 
@@ -716,7 +716,7 @@ func (userL) LoadAuth(ctx context.Context, e boil.ContextExecutor, singular bool
 				if foreign.R == nil {
 					foreign.R = &authR{}
 				}
-				foreign.R.Users = append(foreign.R.Users, local)
+				foreign.R.User = local
 				break
 			}
 		}
@@ -1552,7 +1552,7 @@ func (userL) LoadWorkouts(ctx context.Context, e boil.ContextExecutor, singular 
 
 // SetAuth of the user to the related item.
 // Sets o.R.Auth to related.
-// Adds o to related.R.Users.
+// Adds o to related.R.User.
 func (o *User) SetAuth(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Auth) error {
 	var err error
 	if insert {
@@ -1588,10 +1588,10 @@ func (o *User) SetAuth(ctx context.Context, exec boil.ContextExecutor, insert bo
 
 	if related.R == nil {
 		related.R = &authR{
-			Users: UserSlice{o},
+			User: o,
 		}
 	} else {
-		related.R.Users = append(related.R.Users, o)
+		related.R.User = o
 	}
 
 	return nil
