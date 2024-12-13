@@ -32,7 +32,8 @@ message User {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string first_name = 2 [(buf.validate.field).string.min_len = 1];
   string last_name = 3 [(buf.validate.field).string.min_len = 1];
-  bool followed = 4;
+  string email = 4;
+  bool followed = 5;
 }
 
 message PaginationRequest {

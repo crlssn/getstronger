@@ -38,15 +38,25 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[v1.GetUs
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByID(user.ID))
+	if err != nil {
+		log.Error("failed to get auth", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	followed, err := h.repo.IsUserFollowedByUserID(ctx, user, userID)
 	if err != nil {
 		log.Error("failed to check if user is followed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	// DEBT: Move email to user model.
+	u := parseUserToPB(user, followed)
+	u.Email = auth.Email
+
 	return &connect.Response[v1.GetUserResponse]{
 		Msg: &v1.GetUserResponse{
-			User: parseUserToPB(user, followed),
+			User: u,
 		},
 	}, nil
 }
