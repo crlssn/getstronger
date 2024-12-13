@@ -1197,25 +1197,10 @@ func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotification
 	return count, nil
 }
 
-type MarkNotificationsAsReadOpt func() qm.QueryMod
-
-func MarkNotificationsAsReadByUserID(userID string) MarkNotificationsAsReadOpt {
-	return func() qm.QueryMod {
-		return orm.NotificationWhere.UserID.EQ(userID)
-	}
-}
-
-func (r *repo) MarkNotificationsAsRead(ctx context.Context, opts ...MarkNotificationsAsReadOpt) error {
-	query := make([]qm.QueryMod, 0, len(opts))
-	for _, opt := range opts {
-		query = append(query, opt())
-	}
-
-	if query == nil {
-		return nil
-	}
-
-	if _, err := orm.Notifications(query...).UpdateAll(ctx, r.executor(), orm.M{
+func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID string) error {
+	if _, err := orm.Notifications(
+		orm.NotificationWhere.UserID.EQ(userID),
+	).UpdateAll(ctx, r.executor(), orm.M{
 		orm.NotificationColumns.ReadAt: time.Now().UTC(),
 	}); err != nil {
 		return fmt.Errorf("notifications update: %w", err)
