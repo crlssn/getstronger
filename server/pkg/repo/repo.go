@@ -36,8 +36,6 @@ func New(db *sql.DB) Repo {
 	return &repo{db, nil}
 }
 
-var ErrAuthEmailExists = fmt.Errorf("email already exists")
-
 func (r *repo) NewTx(ctx context.Context, f func(tx Tx) error) error {
 	if r.tx != nil {
 		return f(r)
@@ -69,6 +67,8 @@ func (r *repo) executor() boil.ContextExecutor {
 
 	return r.db
 }
+
+var ErrAuthEmailExists = fmt.Errorf("email already exists")
 
 func (r *repo) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
 	exists, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).Exists(ctx, r.executor())
