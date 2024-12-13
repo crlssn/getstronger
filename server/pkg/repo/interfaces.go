@@ -65,7 +65,7 @@ type routineMethods interface {
 	GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error)
 	ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error)
 	CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error)
-	DeleteRoutine(ctx context.Context, id string) error
+	DeleteRoutine(ctx context.Context, routineID string) error
 	UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error
 	SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error
 	AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error
