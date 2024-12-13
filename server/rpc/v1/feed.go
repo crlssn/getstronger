@@ -17,10 +17,10 @@ import (
 var _ apiv1connect.FeedServiceHandler = (*feedHandler)(nil)
 
 type feedHandler struct {
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewFeedHandler(r *repo.Repo) apiv1connect.FeedServiceHandler {
+func NewFeedHandler(r repo.Repo) apiv1connect.FeedServiceHandler {
 	return &feedHandler{r}
 }
 

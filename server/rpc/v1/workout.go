@@ -23,10 +23,10 @@ var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
 	bus  *bus.Bus
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewWorkoutHandler(b *bus.Bus, r *repo.Repo) apiv1connect.WorkoutServiceHandler {
+func NewWorkoutHandler(b *bus.Bus, r repo.Repo) apiv1connect.WorkoutServiceHandler {
 	return &workoutHandler{b, r}
 }
 

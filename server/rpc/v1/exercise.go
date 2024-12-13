@@ -20,10 +20,10 @@ import (
 var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
 
 type exerciseHandler struct {
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewExerciseHandler(r *repo.Repo) apiv1connect.ExerciseServiceHandler {
+func NewExerciseHandler(r repo.Repo) apiv1connect.ExerciseServiceHandler {
 	return &exerciseHandler{r}
 }
 

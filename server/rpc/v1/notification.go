@@ -19,11 +19,11 @@ import (
 var _ apiv1connect.NotificationServiceHandler = (*notificationHandler)(nil)
 
 type notificationHandler struct {
-	repo   *repo.Repo
+	repo   repo.Repo
 	stream *stream.Conn
 }
 
-func NewNotificationHandler(r *repo.Repo, s *stream.Conn) apiv1connect.NotificationServiceHandler {
+func NewNotificationHandler(r repo.Repo, s *stream.Conn) apiv1connect.NotificationServiceHandler {
 	return &notificationHandler{r, s}
 }
 

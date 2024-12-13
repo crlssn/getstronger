@@ -21,10 +21,10 @@ var _ apiv1connect.UserServiceHandler = (*userHandler)(nil)
 
 type userHandler struct {
 	bus  *bus.Bus
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewUserHandler(b *bus.Bus, r *repo.Repo) apiv1connect.UserServiceHandler {
+func NewUserHandler(b *bus.Bus, r repo.Repo) apiv1connect.UserServiceHandler {
 	return &userHandler{b, r}
 }
 

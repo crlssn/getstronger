@@ -28,7 +28,7 @@ var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 
 type authHandler struct {
 	jwt     *jwt.Manager
-	repo    *repo.Repo
+	repo    repo.Repo
 	email   *email.Email
 	config  *config.Config
 	cookies *cookies.Cookies
@@ -38,7 +38,7 @@ type AuthHandlerParams struct {
 	fx.In
 
 	JWT     *jwt.Manager
-	Repo    *repo.Repo
+	Repo    repo.Repo
 	Email   *email.Email
 	Config  *config.Config
 	Cookies *cookies.Cookies
@@ -70,13 +70,13 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 		return nil, rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
-	if err := h.repo.NewTx(ctx, func(r *repo.Repo) error {
-		auth, err := r.CreateAuth(ctx, emailAddress, req.Msg.GetPassword())
+	if err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
+		auth, err := tx.CreateAuth(ctx, emailAddress, req.Msg.GetPassword())
 		if err != nil {
 			return fmt.Errorf("create auth: %w", err)
 		}
 
-		user, err := r.CreateUser(ctx, repo.CreateUserParams{
+		user, err := tx.CreateUser(ctx, repo.CreateUserParams{
 			AuthID:    auth.ID,
 			FirstName: req.Msg.GetFirstName(),
 			LastName:  req.Msg.GetLastName(),
