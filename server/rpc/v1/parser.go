@@ -157,6 +157,26 @@ func parseUserToPB(user *orm.User, followed bool) *apiv1.User {
 	}
 }
 
+//func parseExerciseSetsFromPB(exerciseSetSlice []*apiv1.ExerciseSets) []repo.ExerciseSet {
+//	exerciseSets := make([]repo.ExerciseSet, 0, len(exerciseSetSlice))
+//	for _, exerciseSet := range exerciseSetSlice {
+//		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
+//		for _, set := range exerciseSet.GetSets() {
+//			sets = append(sets, repo.Set{
+//				Reps:   int(set.GetReps()),
+//				Weight: set.GetWeight(),
+//			})
+//		}
+//
+//		exerciseSets = append(exerciseSets, repo.ExerciseSet{
+//			ExerciseID: exerciseSet.GetExercise().GetId(),
+//			Sets:       sets,
+//		})
+//	}
+//
+//	return exerciseSets
+//}
+
 func parseExerciseSetsFromPB(exerciseSetSlice []*apiv1.ExerciseSets) []repo.ExerciseSet {
 	exerciseSets := make([]repo.ExerciseSet, 0, len(exerciseSetSlice))
 	for _, exerciseSet := range exerciseSetSlice {

@@ -1265,6 +1265,12 @@ func GetAuthByPasswordResetToken(token string) GetAuthOpt {
 	}
 }
 
+func GetAuthByRefreshToken(token string) GetAuthOpt {
+	return func() qm.QueryMod {
+		return orm.AuthWhere.RefreshToken.EQ(null.StringFrom(token))
+	}
+}
+
 func (r *repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {
@@ -1338,55 +1344,57 @@ func (r *repo) SetRoutineExercises(ctx context.Context, routine *orm.Routine, ex
 	return nil
 }
 
-type UpdateWorkoutParams struct {
-	Name         string
-	StartedAt    time.Time
-	FinishedAt   time.Time
-	ExerciseSets []ExerciseSet
+type UpdateWorkoutOpt func() (orm.M, error)
+
+func UpdateWorkoutName(name string) UpdateWorkoutOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.WorkoutColumns.Name: name}, nil
+	}
 }
 
-func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, p UpdateWorkoutParams) error {
+func UpdateWorkoutStartedAt(startedAt time.Time) UpdateWorkoutOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.WorkoutColumns.StartedAt: startedAt}, nil
+	}
+}
+
+func UpdateWorkoutFinishedAt(finishedAt time.Time) UpdateWorkoutOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.WorkoutColumns.FinishedAt: finishedAt}, nil
+	}
+}
+
+func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
+	columns, err := updateColumnsFromOpts(opts)
+	if err != nil {
+		return fmt.Errorf("workout update columns: %w", err)
+	}
+
 	return r.NewTx(ctx, func(tx Tx) error {
-		workout := &orm.Workout{
-			ID:         workoutID,
-			Name:       p.Name,
-			CreatedAt:  p.StartedAt,
-			FinishedAt: p.FinishedAt,
-		}
-		if _, err := workout.Update(ctx, tx.GetTx(), boil.Whitelist(
-			orm.WorkoutColumns.Name,
-			orm.WorkoutColumns.CreatedAt,
-			orm.WorkoutColumns.FinishedAt,
-		)); err != nil {
+		rows, rowsErr := orm.Workouts(orm.WorkoutWhere.ID.EQ(workoutID)).UpdateAll(ctx, tx.GetTx(), columns)
+		if rowsErr != nil {
 			return fmt.Errorf("workout update: %w", err)
 		}
 
-		if _, err := workout.Sets().DeleteAll(ctx, tx.GetTx()); err != nil {
-			return fmt.Errorf("workout sets delete: %w", err)
-		}
-
-		for _, exerciseSet := range p.ExerciseSets {
-			sets := make([]*orm.Set, 0, len(exerciseSet.Sets))
-			for _, set := range exerciseSet.Sets {
-				sets = append(sets, &orm.Set{
-					WorkoutID:  workout.ID,
-					ExerciseID: exerciseSet.ExerciseID,
-					Reps:       set.Reps,
-					Weight:     set.Weight,
-				})
-			}
-
-			if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
-				return fmt.Errorf("workout sets add: %w", err)
-			}
+		if rows > 1 {
+			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
 		}
 
 		return nil
 	})
 }
 
-func GetAuthByRefreshToken(token string) GetAuthOpt {
-	return func() qm.QueryMod {
-		return orm.AuthWhere.RefreshToken.EQ(null.StringFrom(token))
-	}
+func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, sets orm.SetSlice) error {
+	return r.NewTx(ctx, func(tx Tx) error {
+		workout := &orm.Workout{ID: workoutID}
+		if _, err := workout.Sets().DeleteAll(ctx, tx.GetTx()); err != nil {
+			return fmt.Errorf("workout sets delete: %w", err)
+		}
+
+		if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
+			return fmt.Errorf("workout sets add: %w", err)
+		}
+
+		return nil
+	})
 }

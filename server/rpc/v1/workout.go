@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -260,6 +261,25 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 	if workout.UserID != userID {
 		log.Error("workout does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
+		if err = tx.UpdateWorkout(ctx, workout.ID,
+			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
+			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
+			repo.UpdateWorkoutFinishedAt(req.Msg.GetWorkout().GetFinishedAt().AsTime()),
+		); err != nil {
+			return fmt.Errorf("failed to update workout: %w", err)
+		}
+
+		if err = tx.UpdateWorkoutSets(ctx, workout.ID, parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())); err != nil {
+			return fmt.Errorf("failed to update workout sets: %w", err
+		}
+
+		return nil
+	}); err != nil {
+		log.Error("failed to update workout", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if err = h.repo.UpdateWorkout(ctx, workout.ID, repo.UpdateWorkoutParams{

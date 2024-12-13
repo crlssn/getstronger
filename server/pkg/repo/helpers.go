@@ -50,7 +50,7 @@ type PageToken struct {
 }
 
 type updateOpt interface {
-	UpdateRoutineOpt | UpdateAuthOpt | UpdateExerciseOpt
+	UpdateRoutineOpt | UpdateAuthOpt | UpdateExerciseOpt | UpdateWorkoutOpt
 }
 
 var (
