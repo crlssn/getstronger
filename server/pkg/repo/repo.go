@@ -1384,11 +1384,23 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 	})
 }
 
-func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, sets orm.SetSlice) error {
+func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
 	return r.NewTx(ctx, func(tx Tx) error {
 		workout := &orm.Workout{ID: workoutID}
 		if _, err := workout.Sets().DeleteAll(ctx, tx.GetTx()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
+		}
+
+		var sets orm.SetSlice
+		for _, exerciseSet := range exerciseSets {
+			for _, set := range exerciseSet.Sets {
+				sets = append(sets, &orm.Set{
+					WorkoutID:  workoutID,
+					ExerciseID: exerciseSet.ExerciseID,
+					Reps:       set.Reps,
+					Weight:     set.Weight,
+				})
+			}
 		}
 
 		if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {

@@ -75,7 +75,7 @@ type workoutMethods interface {
 	DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error
 	UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error
 	GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error)
-	UpdateWorkoutSets(ctx context.Context, workoutID string, sets orm.SetSlice) error
+	UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error
 	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error)
 }
 

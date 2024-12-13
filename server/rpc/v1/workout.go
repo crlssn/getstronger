@@ -272,23 +272,14 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			return fmt.Errorf("failed to update workout: %w", err)
 		}
 
-		if err = tx.UpdateWorkoutSets(ctx, workout.ID, parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())); err != nil {
-			return fmt.Errorf("failed to update workout sets: %w", err
+		exerciseSets := parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
+		if err = tx.UpdateWorkoutSets(ctx, workout.ID, exerciseSets); err != nil {
+			return fmt.Errorf("failed to update workout sets: %w", err)
 		}
 
 		return nil
 	}); err != nil {
 		log.Error("failed to update workout", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	if err = h.repo.UpdateWorkout(ctx, workout.ID, repo.UpdateWorkoutParams{
-		Name:         workout.Name,
-		StartedAt:    req.Msg.GetWorkout().GetStartedAt().AsTime(),
-		FinishedAt:   req.Msg.GetWorkout().GetFinishedAt().AsTime(),
-		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets()),
-	}); err != nil {
-		log.Error("failed to create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
