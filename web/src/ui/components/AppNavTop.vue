@@ -53,7 +53,7 @@ const onSearchUsers = async () => {
         </form>
         <ul
           v-if="users.length > 0"
-          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white"
+          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white max-w-7xl mx-auto lg:rounded-b-md"
         >
           <li v-for="user in users" :key="user.id" @click="closeSearchBar">
             <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">
@@ -64,7 +64,9 @@ const onSearchUsers = async () => {
         <XMarkIcon class="w-8 h-6 cursor-pointer" @click="closeSearchBar" />
       </template>
       <template v-else>
-        <img class="h-auto w-8" src="/favicon.png" />
+        <RouterLink to="/">
+          <img class="h-auto w-8" src="/favicon.png" />
+        </RouterLink>
         <div class="flex flex-1 gap-x-4 justify-center">
           <p class="uppercase text-sm font-semibold text-gray-900">
             {{ pageTitleStore.pageTitle }}

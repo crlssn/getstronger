@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
-import AppNavBottom from '@/ui/components/NavigationBottom.vue'
-import AppNavTop from '@/ui/components/NavigationTop.vue'
+import AppNavBottom from '@/ui/components/AppNavBottom.vue'
+import AppNavTop from '@/ui/components/AppNavTop.vue'
 </script>
 
 <template>
