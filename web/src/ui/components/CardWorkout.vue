@@ -73,7 +73,7 @@ const formatComment = computed(() => {
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </RouterLink>
         </div>
-        <DropdownButton v-if="workout.user?.id === authStore.userID" :items="dropdownItems" />
+        <DropdownButton v-if="workout.user?.id === authStore.userId" :items="dropdownItems" />
       </div>
     </div>
     <div class="pl-16 pr-4 py-4">

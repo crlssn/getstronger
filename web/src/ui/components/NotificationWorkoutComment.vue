@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 const workoutOwnership = computed(() => {
-  if (authStore.userID === props.workout?.user?.id) {
+  if (authStore.userId === props.workout?.user?.id) {
     return 'your'
   }
 
