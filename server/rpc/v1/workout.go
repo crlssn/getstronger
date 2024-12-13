@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -23,10 +24,10 @@ var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
 	bus  *bus.Bus
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewWorkoutHandler(b *bus.Bus, r *repo.Repo) apiv1connect.WorkoutServiceHandler {
+func NewWorkoutHandler(b *bus.Bus, r repo.Repo) apiv1connect.WorkoutServiceHandler {
 	return &workoutHandler{b, r}
 }
 
@@ -262,13 +263,23 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	if err = h.repo.UpdateWorkout(ctx, workout.ID, repo.UpdateWorkoutParams{
-		Name:         workout.Name,
-		StartedAt:    req.Msg.GetWorkout().GetStartedAt().AsTime(),
-		FinishedAt:   req.Msg.GetWorkout().GetFinishedAt().AsTime(),
-		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets()),
+	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
+		if err = tx.UpdateWorkout(ctx, workout.ID,
+			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
+			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
+			repo.UpdateWorkoutFinishedAt(req.Msg.GetWorkout().GetFinishedAt().AsTime()),
+		); err != nil {
+			return fmt.Errorf("failed to update workout: %w", err)
+		}
+
+		exerciseSets := parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
+		if err = tx.UpdateWorkoutSets(ctx, workout.ID, exerciseSets); err != nil {
+			return fmt.Errorf("failed to update workout sets: %w", err)
+		}
+
+		return nil
 	}); err != nil {
-		log.Error("failed to create workout", zap.Error(err))
+		log.Error("failed to update workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

@@ -48,3 +48,37 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 type PageToken struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type updateOpt interface {
+	UpdateRoutineOpt | UpdateAuthOpt | UpdateExerciseOpt | UpdateWorkoutOpt
+}
+
+var (
+	errUpdateNoColumns       = fmt.Errorf("update opt: no columns")
+	errUpdateRowsAffected    = fmt.Errorf("update opt: rows affected")
+	errUpdateDuplicateColumn = fmt.Errorf("update opt: duplicate column")
+)
+
+func updateColumnsFromOpts[T updateOpt](opts []T) (orm.M, error) {
+	if len(opts) == 0 {
+		return nil, errUpdateNoColumns
+	}
+
+	columns := make(orm.M, len(opts))
+	for _, opt := range opts {
+		column, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("update opt: %w", err)
+		}
+
+		for key, value := range column {
+			if columns[key] != nil {
+				return nil, fmt.Errorf("%w: %s", errUpdateDuplicateColumn, key)
+			}
+
+			columns[key] = value
+		}
+	}
+
+	return columns, nil
+}

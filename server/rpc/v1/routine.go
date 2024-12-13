@@ -19,10 +19,10 @@ import (
 var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
 
 type routineHandler struct {
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewRoutineHandler(r *repo.Repo) apiv1connect.RoutineServiceHandler {
+func NewRoutineHandler(r repo.Repo) apiv1connect.RoutineServiceHandler {
 	return &routineHandler{r}
 }
 
@@ -119,7 +119,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
-	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
+	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		if err = tx.UpdateRoutine(ctx, routine.ID,
 			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
 			repo.UpdateRoutineExerciseOrder(exerciseIDs),

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/volatiletech/null/v8"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -15,15 +14,16 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/pkg/xzap"
 )
 
 var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
 
 type exerciseHandler struct {
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewExerciseHandler(r *repo.Repo) apiv1connect.ExerciseServiceHandler {
+func NewExerciseHandler(r repo.Repo) apiv1connect.ExerciseServiceHandler {
 	return &exerciseHandler{r}
 }
 
@@ -68,46 +68,71 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
 func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx).
+		With(xzap.FieldExerciseID(req.Msg.GetExercise().GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
 
-	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetExercise().GetId()))
+	exercise, err := h.repo.GetExercise(ctx,
+		repo.GetExerciseWithID(req.Msg.GetExercise().GetId()),
+		repo.GetExerciseWithUserID(userID),
+	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("exercise not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if exercise.UserID != userID {
-		log.Error("exercise does not belong to user")
-		return nil, connect.NewError(connect.CodePermissionDenied, nil)
-	}
-
+	var opts []repo.UpdateExerciseOpt
 	for _, path := range req.Msg.GetUpdateMask().GetPaths() {
 		switch path {
 		case "name":
-			exercise.Title = req.Msg.GetExercise().GetName()
+			opts = append(opts, repo.UpdateExerciseTitle(req.Msg.GetExercise().GetName()))
 		case "label":
-			exercise.SubTitle = null.NewString(req.Msg.GetExercise().GetLabel(), req.Msg.GetExercise().GetLabel() != "")
+			opts = append(opts, repo.UpdateExerciseSubTitle(req.Msg.GetExercise().GetLabel()))
 		default:
 			log.Error("invalid update mask path", zap.String("path", path))
 			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidUpdateMaskPath)
 		}
 	}
 
-	log.Info("updating exercise", zap.Any("exercise", exercise))
-	if err = h.repo.UpdateExercise(ctx, exercise); err != nil {
+	if err = h.repo.UpdateExercise(ctx, exercise.ID, opts...); err != nil {
 		log.Error("update exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	exercise, err = h.repo.GetExercise(ctx, repo.GetExerciseWithID(exercise.ID))
+	if err != nil {
+		log.Error("find exercise failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("exercise updated")
 	return connect.NewResponse(&v1.UpdateExerciseResponse{
 		Exercise: parseExerciseToPB(exercise),
 	}), nil
 }
 
 func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx).
+		With(xzap.FieldExerciseID(req.Msg.GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
+
+	if _, err := h.repo.GetExercise(ctx,
+		repo.GetExerciseWithID(req.Msg.GetId()),
+		repo.GetExerciseWithUserID(userID),
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("exercise not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
+		log.Error("find exercise failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
 
 	if err := h.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
 		UserID:     userID,

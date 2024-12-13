@@ -21,10 +21,10 @@ var _ apiv1connect.UserServiceHandler = (*userHandler)(nil)
 
 type userHandler struct {
 	bus  *bus.Bus
-	repo *repo.Repo
+	repo repo.Repo
 }
 
-func NewUserHandler(b *bus.Bus, r *repo.Repo) apiv1connect.UserServiceHandler {
+func NewUserHandler(b *bus.Bus, r repo.Repo) apiv1connect.UserServiceHandler {
 	return &userHandler{b, r}
 }
 
@@ -128,16 +128,10 @@ func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[v1.
 	}, nil
 }
 
-func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error) { //nolint:dupl
+func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(req.Msg.GetFollowerId()))
-	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	followers, err := h.repo.ListFollowers(ctx, user)
+	followers, err := h.repo.ListFollowers(ctx, req.Msg.GetFollowerId())
 	if err != nil {
 		log.Error("failed to get followers", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -150,16 +144,10 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1
 	}, nil
 }
 
-func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error) { //nolint:dupl
+func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(req.Msg.GetFolloweeId()))
-	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	followees, err := h.repo.ListFollowees(ctx, user)
+	followees, err := h.repo.ListFollowees(ctx, req.Msg.GetFolloweeId())
 	if err != nil {
 		log.Error("failed to get followees", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
