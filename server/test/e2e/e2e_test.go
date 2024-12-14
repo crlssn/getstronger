@@ -10,7 +10,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/bufbuild/protovalidate-go"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -76,7 +75,7 @@ func TestE2E(t *testing.T) {
 	password := gofakeit.Password(true, true, true, true, true, 6)
 
 	authClient := apiv1connect.NewAuthServiceClient(http.DefaultClient, baseURL)
-	resSignup, err := authClient.Signup(ctx, &connect.Request[v1.SignupRequest]{
+	_, err := authClient.Signup(ctx, &connect.Request[v1.SignupRequest]{
 		Msg: &v1.SignupRequest{
 			Email:                email,
 			Password:             password,
@@ -86,7 +85,6 @@ func TestE2E(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	spew.Dump(resSignup)
 
 	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, db)
 	require.NoError(t, err)
@@ -102,20 +100,27 @@ func TestE2E(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	spew.Dump(resLogin)
 
 	client := &http.Client{
 		Transport: &authTransport{
-			underlyingTransport: http.DefaultTransport,
-			accessToken:         resLogin.Msg.AccessToken,
+			accessToken:  resLogin.Msg.AccessToken,
+			roundTripper: http.DefaultTransport,
 		},
 	}
 
 	exerciseClient := apiv1connect.NewExerciseServiceClient(client, baseURL)
+	resCreateExercise, err := exerciseClient.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
+		Msg: &v1.CreateExerciseRequest{
+			Name:  gofakeit.RandomString([]string{"Bench Press", "Deadlifts", "Squats"}),
+			Label: "",
+		},
+	})
+	require.NoError(t, err)
+
 	resListExercises, err := exerciseClient.ListExercises(ctx, &connect.Request[v1.ListExercisesRequest]{
 		Msg: &v1.ListExercisesRequest{
 			Name:        "",
-			ExerciseIds: nil,
+			ExerciseIds: []string{resCreateExercise.Msg.GetId()},
 			Pagination: &v1.PaginationRequest{
 				PageLimit: 100,
 				PageToken: nil,
@@ -123,7 +128,7 @@ func TestE2E(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	spew.Dump(resListExercises)
+	require.Len(t, resListExercises.Msg.GetExercises(), 1)
 
 	if err = app.Stop(ctx); err != nil {
 		panic(err)
@@ -131,13 +136,13 @@ func TestE2E(t *testing.T) {
 }
 
 type authTransport struct {
-	underlyingTransport http.RoundTripper
-	accessToken         string
+	accessToken  string
+	roundTripper http.RoundTripper
 }
 
 func (a *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	clonedReq := req.Clone(req.Context())
 	clonedReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", a.accessToken))
 
-	return a.underlyingTransport.RoundTrip(clonedReq)
+	return a.roundTripper.RoundTrip(clonedReq)
 }

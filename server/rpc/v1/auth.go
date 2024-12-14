@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -84,6 +85,8 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 		if err != nil {
 			return fmt.Errorf("create user: %w", err)
 		}
+
+		spew.Dump(user)
 
 		if err = h.email.SendVerificationEmail(ctx, email.SendVerificationEmail{
 			Name:  user.FirstName,
