@@ -17,14 +17,14 @@ const actionButton = useActionButton()
 onMounted(() => {
   actionButton.set({
     icon: CheckIcon,
-    action: onSubmit
+    action: onSubmit,
   })
 })
 
 const req = ref<CreateExerciseRequest>({
   $typeName: 'api.v1.CreateExerciseRequest',
   label: '',
-  name: ''
+  name: '',
 })
 
 const onSubmit = async () => {
@@ -52,8 +52,6 @@ const onSubmit = async () => {
       />
     </AppList>
 
-    <AppButton text="Create" type="submit" colour="primary">
-      Save Exercise
-    </AppButton>
+    <AppButton text="Create" type="submit" colour="primary"> Save Exercise </AppButton>
   </form>
 </template>

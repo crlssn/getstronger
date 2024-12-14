@@ -33,7 +33,14 @@ export const useAuthStore = defineStore(
       return accessToken.value !== ''
     }
 
-    return { accessToken, logout, setAccessToken, setAccessTokenRefreshInterval, userId, authorised }
+    return {
+      accessToken,
+      logout,
+      setAccessToken,
+      setAccessTokenRefreshInterval,
+      userId,
+      authorised,
+    }
   },
   {
     persist: true,

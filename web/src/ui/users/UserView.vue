@@ -61,20 +61,10 @@ const updateTab = (event: Event) => {
 
 <template>
   <div v-if="user.id !== authStore.userId" class="mb-4">
-    <AppButton
-      v-if="user.followed"
-      colour="gray"
-      type="button"
-      @click="onUnfollowUser"
-    >
+    <AppButton v-if="user.followed" colour="gray" type="button" @click="onUnfollowUser">
       Unfollow {{ user.firstName }}
     </AppButton>
-    <AppButton
-      v-else
-      colour="primary"
-      type="button"
-      @click="onFollowUser"
-    >
+    <AppButton v-else colour="primary" type="button" @click="onFollowUser">
       Follow {{ user.firstName }}
     </AppButton>
   </div>

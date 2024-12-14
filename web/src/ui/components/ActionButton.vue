@@ -16,9 +16,7 @@ const onClick = async () => {
 </script>
 
 <template>
-  <component :is="props.icon" class="size-6  cursor-pointer" @click="onClick"/>
+  <component :is="props.icon" class="size-6 cursor-pointer" @click="onClick" />
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

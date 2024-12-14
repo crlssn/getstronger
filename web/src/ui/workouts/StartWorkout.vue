@@ -228,12 +228,8 @@ const setEndDateTime = (value: string) => {
       />
     </AppList>
 
-    <AppButton type="submit" colour="primary" class="mb-4">
-      Finish Workout
-    </AppButton>
-    <AppButton type="button" colour="gray" @click="cancelWorkout">
-      Cancel Workout
-    </AppButton>
+    <AppButton type="submit" colour="primary" class="mb-4"> Finish Workout </AppButton>
+    <AppButton type="button" colour="gray" @click="cancelWorkout"> Cancel Workout </AppButton>
   </form>
 </template>
 
