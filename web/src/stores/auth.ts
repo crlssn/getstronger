@@ -12,7 +12,6 @@ export const useAuthStore = defineStore(
     const accessTokenRefreshInterval = ref(0)
 
     const setAccessToken = (token: string) => {
-      console.log('setting access token', token)
       if (userId.value === '') {
         const claims = jwtDecode(token) as AccessToken
         userId.value = claims.userId
