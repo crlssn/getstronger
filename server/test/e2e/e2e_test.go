@@ -1,4 +1,4 @@
-package main_test
+package e2e
 
 import (
 	"context"
@@ -68,6 +68,13 @@ func TestE2E(t *testing.T) {
 	if err := app.Start(ctx); err != nil {
 		panic(err)
 	}
+
+	saga := newSaga(db, cfg)
+	saga.
+		Signup(ctx, func(res *v1.SignupResponse) {}).
+		Login(ctx, func(res *v1.LoginResponse) {
+			require.NotEmpty(t, res.AccessToken)
+		})
 
 	baseURL := fmt.Sprintf("https://localhost:%s", cfg.Server.Port)
 
