@@ -8,7 +8,8 @@ const props = defineProps<{
 
 const emits = defineEmits(['onClick'])
 
-const onClick = () => {
+const onClick = async () => {
+  console.log('onClick', props.action)
   props.action()
   emits('onClick')
 }
