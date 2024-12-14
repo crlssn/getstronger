@@ -18,6 +18,6 @@ import AppNavTop from '@/ui/components/AppNavTop.vue'
 
 <style scoped>
 main {
-  @apply mx-auto max-w-7xl bg-gray-100 py-4;
+  @apply mx-auto max-w-7xl bg-gray-100 py-4 px-2;
 }
 </style>
