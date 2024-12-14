@@ -3,7 +3,7 @@ import type { FunctionalComponent } from 'vue'
 
 const props = defineProps<{
   action: () => void
-  icon: FunctionalComponent
+  icon?: FunctionalComponent
 }>()
 
 const emits = defineEmits(['onClick'])

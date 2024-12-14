@@ -76,7 +76,8 @@ const onSearchUsers = async () => {
             {{ pageTitleStore.pageTitle }}
           </p>
         </div>
-        <ActionButton :action="openSearchBar" :icon="MagnifyingGlassIcon"/>
+        <ActionButton v-if="actionButton.active" :action="actionButton.action" :icon="actionButton.icon" />
+        <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
       </template>
     </div>
   </nav>

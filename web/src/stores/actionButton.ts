@@ -1,13 +1,19 @@
-import { type FunctionalComponent, ref } from 'vue'
+import { computed, type FunctionalComponent, ref } from 'vue'
 import { defineStore } from 'pinia'
+
+interface Button {
+  action: () => void
+  icon: FunctionalComponent
+}
 
 export const useActionButton = defineStore('actionButton', () => {
   const a = ref(() => {})
   const i = ref<FunctionalComponent>()
 
-  const set = (action: () => {}, icon: FunctionalComponent) => {
-    a.value = action
-    i.value = icon
+  const set = (button: Button) => {
+    // action: () => {}, icon: FunctionalComponent
+    a.value = button.action
+    i.value = button.icon
   }
 
   const reset = () => {
@@ -15,9 +21,9 @@ export const useActionButton = defineStore('actionButton', () => {
     i.value = undefined
   }
 
-  const active = () => {
+  const active = computed(() => {
     return a.value !== (() => {}) && i.value !== undefined
-  }
+  })
 
-  return { action: a, icon: i }
+  return { action: a, icon: i, set, reset, active }
 })
