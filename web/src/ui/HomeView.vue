@@ -24,8 +24,8 @@ const fetchFeedItems = async () => {
 </script>
 
 <template>
-  <div v-for="item in feedItems" :key="item.type.value?.id">
+  <template v-for="item in feedItems" :key="item.type.value?.id">
     <CardWorkout v-if="item.type.case === 'workout'" compact :workout="item.type.value" />
-  </div>
+  </template>
   <div v-if="hasMorePages" v-infinite-scroll="fetchFeedItems"></div>
 </template>

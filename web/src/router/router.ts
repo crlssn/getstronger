@@ -3,6 +3,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { logout as logoutRequest } from '@/http/requests.ts'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
+import { useActionButton } from '@/stores/actionButton.ts'
 
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -191,8 +192,12 @@ const router: Router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  const actionButton = useActionButton()
+  actionButton.reset()
+
   const pageTitleStore = usePageTitleStore()
   pageTitleStore.setPageTitle(to.meta.title as string)
+
   next()
 })
 

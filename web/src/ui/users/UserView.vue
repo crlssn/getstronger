@@ -60,23 +60,11 @@ const updateTab = (event: Event) => {
 </script>
 
 <template>
-  <div v-if="user.id !== authStore.userId">
-    <AppButton
-      v-if="user.followed"
-      colour="gray"
-      type="button"
-      container-class="px-4 pb-4"
-      @click="onUnfollowUser"
-    >
+  <div v-if="user.id !== authStore.userId" class="mb-4">
+    <AppButton v-if="user.followed" colour="gray" type="button" @click="onUnfollowUser">
       Unfollow {{ user.firstName }}
     </AppButton>
-    <AppButton
-      v-else
-      colour="primary"
-      type="button"
-      container-class="px-4 pb-4"
-      @click="onFollowUser"
-    >
+    <AppButton v-else colour="primary" type="button" @click="onFollowUser">
       Follow {{ user.firstName }}
     </AppButton>
   </div>
@@ -85,7 +73,7 @@ const updateTab = (event: Event) => {
     <select
       id="tabs"
       name="tabs"
-      class="block w-full border-gray-300 focus:ring-0 py-4 px-4 font-medium"
+      class="block w-full border-gray-200 rounded-md py-4 px-4 font-medium"
       @change="updateTab"
     >
       <option

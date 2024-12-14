@@ -5,12 +5,16 @@ import { searchUsers } from '@/http/requests.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import ActionButton from '@/ui/components/ActionButton.vue'
+import { useActionButton } from '@/stores/actionButton.ts'
 
-const searchBarOpen = ref(false)
 const input = ref<HTMLInputElement | null>(null)
 const users = ref(Array<User>())
+const searchBarOpen = ref(false)
 
+const actionButton = useActionButton()
 const pageTitleStore = usePageTitleStore()
+
 const openSearchBar = () => {
   searchBarOpen.value = true
   nextTick(() => {
@@ -72,7 +76,12 @@ const onSearchUsers = async () => {
             {{ pageTitleStore.pageTitle }}
           </p>
         </div>
-        <MagnifyingGlassIcon class="w-8 h-6 cursor-pointer" @click="openSearchBar" />
+        <ActionButton
+          v-if="actionButton.active"
+          :action="actionButton.action"
+          :icon="actionButton.icon"
+        />
+        <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
       </template>
     </div>
   </nav>
