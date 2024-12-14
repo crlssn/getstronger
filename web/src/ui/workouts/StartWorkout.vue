@@ -228,10 +228,10 @@ const setEndDateTime = (value: string) => {
       />
     </AppList>
 
-    <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
+    <AppButton type="submit" colour="primary" class="mb-4">
       Finish Workout
     </AppButton>
-    <AppButton type="button" colour="gray" container-class="px-4 pb-4" @click="cancelWorkout">
+    <AppButton type="button" colour="gray" @click="cancelWorkout">
       Cancel Workout
     </AppButton>
   </form>
@@ -239,8 +239,7 @@ const setEndDateTime = (value: string) => {
 
 <style scoped>
 .table-container {
-  @apply bg-white px-3 py-4  mb-4 border-t border-b border-gray-200;
-  @apply lg:rounded-md lg:border-x;
+  @apply bg-white px-3 py-4  mb-4 border border-gray-200 rounded-md;
 }
 
 table {

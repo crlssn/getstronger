@@ -6,22 +6,14 @@ import AppList from '@/ui/components/AppList.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import usePagination from '@/utils/usePagination.ts'
-import { useActionButton } from '@/stores/actionButton.ts'
-import { PlusIcon } from '@heroicons/vue/24/outline'
-import { useRouter } from 'vue-router'
+import AppButton from '@/ui/components/AppButton.vue'
 
 const exercises = ref([] as Exercise[])
 
-const router = useRouter()
-const actionButton = useActionButton()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   await fetchExercises()
-  actionButton.set({
-    icon: PlusIcon,
-    action: () => router.push('/exercises/create')
-  })
 })
 
 const fetchExercises = async () => {
@@ -34,6 +26,9 @@ const fetchExercises = async () => {
 </script>
 
 <template>
+  <AppButton type="link" to="/exercises/create" colour="primary" class="mb-4">
+    Create Exercise
+  </AppButton>
   <AppList :can-fetch="hasMorePages" @fetch="fetchExercises">
     <AppListItemLink
       v-for="exercise in exercises"

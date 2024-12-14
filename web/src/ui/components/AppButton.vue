@@ -19,14 +19,12 @@ const computedClasses = computed(() => {
 </script>
 
 <template>
-  <div :class="containerClass" class="lg:px-0">
-    <RouterLink v-if="props.type === 'link'" :to="props.to as string" :class="computedClasses">
-      <slot />
-    </RouterLink>
-    <button v-else :type="props.type" :class="computedClasses">
-      <slot />
-    </button>
-  </div>
+  <RouterLink v-if="props.type === 'link'" :to="props.to as string" :class="computedClasses">
+    <slot />
+  </RouterLink>
+  <button v-else :type="props.type" :class="computedClasses">
+    <slot />
+  </button>
 </template>
 
 <style scoped>

@@ -26,7 +26,7 @@ const fetchRoutines = async () => {
 </script>
 
 <template>
-  <AppButton type="link" to="/routines/create" colour="primary" container-class="pb-4">
+  <AppButton type="link" to="/routines/create" colour="primary" class="mb-4">
     Create Routine
   </AppButton>
   <AppList>
