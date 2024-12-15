@@ -3,7 +3,6 @@ package e2e
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"testing"
 
 	"github.com/bufbuild/protovalidate-go"
@@ -46,7 +45,7 @@ func options() []fx.Option {
 
 func TestE2E(t *testing.T) {
 	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("failed to load .env file: %w", err))
+		require.NoError(t, err)
 	}
 
 	var db *sql.DB
@@ -60,7 +59,7 @@ func TestE2E(t *testing.T) {
 
 	ctx := context.Background()
 	if err := app.Start(ctx); err != nil {
-		panic(err)
+		require.NoError(t, err)
 	}
 
 	saga := newSaga(db, cfg)
@@ -74,9 +73,12 @@ func TestE2E(t *testing.T) {
 		}).
 		ListExercises(ctx, func(res *v1.ListExercisesResponse) {
 			require.Len(t, res.Exercises, 1)
+		}).
+		Error(func(err error) {
+			require.NoError(t, err)
 		})
 
 	if err := app.Stop(ctx); err != nil {
-		panic(err)
+		require.NoError(t, err)
 	}
 }

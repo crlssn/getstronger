@@ -8,7 +8,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
@@ -19,6 +18,7 @@ import (
 
 type Saga struct {
 	db      *sql.DB
+	err     error
 	auth    *auth
 	baseURL string
 }
@@ -77,25 +77,13 @@ func (s *Saga) Signup(ctx context.Context, f func(res *v1.SignupResponse)) *Saga
 		},
 	})
 	if err != nil {
-		panic(err)
+		s.err = fmt.Errorf("signup failed: %w", err)
+		return s
 	}
 
-	a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
-	if err != nil {
-		panic(err)
-	}
-
-	a.EmailVerified = true
-	if _, err = a.Update(ctx, s.db, boil.Whitelist(orm.AuthColumns.EmailVerified)); err != nil {
-		panic(err)
-	}
-
-	exists, err := a.User().Exists(ctx, s.db)
-	if err != nil {
-		panic(err)
-	}
-	if !exists {
-		panic("user does not exist")
+	if err = s.verifyEmail(ctx); err != nil {
+		s.err = fmt.Errorf("verify email failed: %w", err)
+		return s
 	}
 
 	f(res.Msg)
@@ -103,9 +91,20 @@ func (s *Saga) Signup(ctx context.Context, f func(res *v1.SignupResponse)) *Saga
 	return s
 }
 
+func (s *Saga) verifyEmail(ctx context.Context) error {
+	a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
+	if err != nil {
+		return fmt.Errorf("failed to find auth: %w", err)
+	}
+
+	a.EmailVerified = true
+	if _, err = a.Update(ctx, s.db, boil.Whitelist(orm.AuthColumns.EmailVerified)); err != nil {
+		return fmt.Errorf("failed to update auth: %w", err)
+	}
+	return nil
+}
+
 func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
-	spew.Dump("login")
-	spew.Dump(orm.Users().All(ctx, s.db))
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	res, err := client.Login(ctx, &connect.Request[v1.LoginRequest]{
 		Msg: &v1.LoginRequest{
@@ -114,7 +113,8 @@ func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
 		},
 	})
 	if err != nil {
-		panic(err)
+		s.err = fmt.Errorf("login failed: %w", err)
+		return s
 	}
 
 	s.auth.accessToken = res.Msg.AccessToken
@@ -125,9 +125,6 @@ func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
 }
 
 func (s *Saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExerciseResponse)) *Saga {
-	spew.Dump("CreateExercise")
-	spew.Dump(s.auth.accessToken)
-	spew.Dump(orm.Users().All(ctx, s.db))
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
 	res, err := client.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
 		Msg: &v1.CreateExerciseRequest{
@@ -136,7 +133,8 @@ func (s *Saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExercise
 		},
 	})
 	if err != nil {
-		panic(err)
+		s.err = fmt.Errorf("create exercise failed: %w", err)
+		return s
 	}
 
 	f(res.Msg)
@@ -157,10 +155,15 @@ func (s *Saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesRe
 		},
 	})
 	if err != nil {
-		panic(err)
+		s.err = fmt.Errorf("list exercises failed: %w", err)
+		return s
 	}
 
 	f(res.Msg)
 
 	return s
+}
+
+func (s *Saga) Error(f func(err error)) {
+	f(s.err)
 }
