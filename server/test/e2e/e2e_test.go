@@ -47,9 +47,11 @@ func TestE2E(t *testing.T) {
 	saga := newSaga(db, cfg)
 	saga.
 		Signup(ctx, func(_ *v1.SignupResponse) {}).
+		VerifyEmail(ctx, func(_ *v1.VerifyEmailResponse) {}).
 		Login(ctx, func(res *v1.LoginResponse) {
 			require.NotEmpty(t, res.GetAccessToken())
 		}).
+		RefreshToken(ctx, func(res *v1.RefreshTokenResponse) {}).
 		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
 			require.NotEmpty(t, res.GetId())
 		}).

@@ -8,7 +8,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -81,27 +80,31 @@ func (s *Saga) Signup(ctx context.Context, f func(res *v1.SignupResponse)) *Saga
 		return s
 	}
 
-	if err = s.verifyEmail(ctx); err != nil {
-		s.err = fmt.Errorf("verify email failed: %w", err)
-		return s
-	}
-
 	f(res.Msg)
 
 	return s
 }
 
-func (s *Saga) verifyEmail(ctx context.Context) error {
+func (s *Saga) VerifyEmail(ctx context.Context, f func(_ *v1.VerifyEmailResponse)) *Saga {
 	a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
 	if err != nil {
-		return fmt.Errorf("failed to find auth: %w", err)
+		s.err = fmt.Errorf("failed to find auth: %w", err)
+		return s
 	}
 
-	a.EmailVerified = true
-	if _, err = a.Update(ctx, s.db, boil.Whitelist(orm.AuthColumns.EmailVerified)); err != nil {
-		return fmt.Errorf("failed to update auth: %w", err)
+	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
+	res, err := client.VerifyEmail(ctx, &connect.Request[v1.VerifyEmailRequest]{
+		Msg: &v1.VerifyEmailRequest{
+			Token: a.EmailToken,
+		},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("verify email failed: %w", err)
+		return s
 	}
-	return nil
+
+	f(res.Msg)
+	return s
 }
 
 func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
@@ -179,5 +182,25 @@ func (s *Saga) Logout(ctx context.Context, f func(res *v1.LogoutResponse)) *Saga
 	}
 
 	f(res.Msg)
+	return s
+}
+
+func (s *Saga) RefreshToken(ctx context.Context, f func(res *v1.RefreshTokenResponse)) *Saga {
+	//a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
+	//if err != nil {
+	//	s.err = fmt.Errorf("failed to find auth: %w", err)
+	//	return s
+	//}
+	//
+	//client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
+	//res, err := client.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
+	//	Msg: &v1.RefreshTokenRequest{},
+	//})
+	//if err != nil {
+	//	s.err = fmt.Errorf("refresh token failed: %w", err)
+	//	return s
+	//}
+	//
+	//f(res.Msg)
 	return s
 }
