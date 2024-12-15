@@ -761,6 +761,12 @@ func GetWorkoutWithSets() GetWorkoutOpt {
 	}
 }
 
+func GetWorkoutWithUser() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutRels.User)
+	}
+}
+
 func (r *repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
 	query := make([]qm.QueryMod, 0, len(opts))
 	for _, opt := range opts {

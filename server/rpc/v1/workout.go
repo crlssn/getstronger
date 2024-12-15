@@ -78,6 +78,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[v1
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
 		repo.GetWorkoutWithSets(),
+		repo.GetWorkoutWithUser(),
 		repo.GetWorkoutWithComments(),
 	)
 	if err != nil {
