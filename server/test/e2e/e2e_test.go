@@ -74,7 +74,7 @@ func TestE2E(t *testing.T) {
 		ListExercises(ctx, func(res *v1.ListExercisesResponse) {
 			require.Len(t, res.Exercises, 1)
 		}).
-		Logout(ctx, func(res *v1.LogoutResponse) {}).
+		Logout(ctx, func(_ *v1.LogoutResponse) {}).
 		Error(func(err error) {
 			require.NoError(t, err)
 		})
