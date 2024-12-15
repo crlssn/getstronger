@@ -24,27 +24,8 @@ import (
 	"github.com/crlssn/getstronger/server/rpc/server"
 )
 
-func options() []fx.Option {
-	return []fx.Option{
-		testdb.Module(),
-		bus.Module(),
-		jwt.Module(),
-		server.Module(),
-		fx.Provide(
-			zap.NewDevelopment,
-			repo.New,
-			email.New,
-			trace.New,
-			config.New,
-			stream.New,
-			cookies.New,
-			protovalidate.New,
-		),
-	}
-}
-
 func TestE2E(t *testing.T) {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load("../../../.env"); err != nil {
 		require.NoError(t, err)
 	}
 
@@ -81,5 +62,24 @@ func TestE2E(t *testing.T) {
 
 	if err := app.Stop(ctx); err != nil {
 		require.NoError(t, err)
+	}
+}
+
+func options() []fx.Option {
+	return []fx.Option{
+		testdb.Module(),
+		bus.Module(),
+		jwt.Module(),
+		server.Module(),
+		fx.Provide(
+			zap.NewDevelopment,
+			repo.New,
+			email.New,
+			trace.New,
+			config.New,
+			stream.New,
+			cookies.New,
+			protovalidate.New,
+		),
 	}
 }
