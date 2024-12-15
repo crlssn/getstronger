@@ -5,6 +5,7 @@ import { resetPassword } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { type ResetPasswordRequest } from '@/proto/api/v1/auth_service_pb'
+import AppAlert from '@/ui/components/AppAlert.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,13 +24,7 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <div
-    v-if="route.query.success === null"
-    class="bg-green-200 rounded-md py-3 px-5 mb-4  text-green-800"
-    role="alert"
-  >
-    Please check your inbox to reset your password.
-  </div>
+  <AppAlert v-if="useRoute().query.success === null" type="success" message="Please check your inbox to reset your password" />
   <form class="space-y-6" method="POST" @submit.prevent="onSubmit">
     <div>
       <label for="email" class="block  font-medium text-gray-900">Email address</label>
