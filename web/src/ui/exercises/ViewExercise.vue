@@ -14,6 +14,7 @@ import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import usePagination from '@/utils/usePagination'
+import AppCard from '@/ui/components/AppCard.vue'
 
 const sets = ref([] as Set[])
 const exercise = ref<Exercise>()
@@ -62,9 +63,9 @@ const onDeleteExercise = async () => {
   </div>
 
   <h6>Chart</h6>
-  <div class="bg-white border border-gray-200 px-4 py-4 lg:rounded-md">
+  <AppCard class="p-2">
     <LineChart :sets="sets" />
-  </div>
+  </AppCard>
 
   <h6 class="mt-8">Sets</h6>
   <AppList :can-fetch="hasMorePages" @fetch="fetchSets">

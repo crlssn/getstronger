@@ -7,49 +7,50 @@ import { formatToShortDateTime } from '@/utils/datetime.ts'
 import {
   CategoryScale,
   Chart as ChartJS,
+  Filler,
   Legend,
   LinearScale,
   LineElement,
   PointElement,
   Title,
-  Tooltip,
+  Tooltip
 } from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement)
+ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, Filler, PointElement)
 
 const props = defineProps<{
   sets: Set[]
 }>()
 
 const options = {
-  maintainAspectRatio: false,
+  maintainAspectRatio: true,
   responsive: true,
   scales: {
     x: {
       grid: {
         display: false,
-        drawBorder: false,
+        drawBorder: true
       },
       ticks: {
-        display: false,
+        display: false
       },
       title: {
-        display: false,
-      },
+        display: false
+      }
     },
     y: {
       grid: {
         display: false,
-        drawBorder: false,
+        drawBorder: false
       },
       ticks: {
-        display: false,
+        display: true
       },
       title: {
-        display: false,
-      },
-    },
-  },
+        display: false
+      }
+    }
+  }
 }
 
 const sets = computed(() => [...props.sets].reverse())
@@ -68,17 +69,25 @@ const data = computed(() => {
   return {
     datasets: [
       {
-        backgroundColor: '#000000',
+        borderColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
         data: weights,
         label: 'Weight',
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true
       },
       {
-        backgroundColor: '#4f46e5',
+        borderColor: 'rgba(79,70,229,0.8)',
+        backgroundColor: 'rgba(79,70,229,0.2)',
         data: reps,
         label: 'Reps',
-      },
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true
+      }
     ],
-    labels: labels,
+    labels: labels
   }
 })
 </script>

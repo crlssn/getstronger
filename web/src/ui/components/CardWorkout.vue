@@ -12,6 +12,7 @@ import { deleteWorkout, postWorkoutComment } from '@/http/requests.ts'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import { type Workout, type WorkoutComment } from '@/proto/api/v1/workout_service_pb'
+import AppCard from '@/ui/components/AppCard.vue'
 
 const { input, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
@@ -58,9 +59,9 @@ const formatComment = computed(() => {
 </script>
 
 <template>
-  <div
+  <AppCard
     v-if="!workoutDeleted"
-    class="divide-y divide-gray-100 bg-white rounded-md border border-gray-200 mb-4"
+    class="divide-y divide-gray-100"
   >
     <div class="px-4 py-4">
       <div class="flex items-center justify-between">
@@ -112,5 +113,5 @@ const formatComment = computed(() => {
         <AppButton type="submit" colour="primary"> Comment </AppButton>
       </form>
     </div>
-  </div>
+  </AppCard>
 </template>
