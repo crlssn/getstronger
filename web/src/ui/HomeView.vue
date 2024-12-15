@@ -5,13 +5,19 @@ import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type FeedItem } from '@/proto/api/v1/feed_service_pb'
 import usePagination from '@/utils/usePagination'
 import { vInfiniteScroll } from '@vueuse/components'
+import { useNavTabs } from '@/stores/navTabs.ts'
 
+const navTabs = useNavTabs()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 const feedItems = ref([] as FeedItem[])
 
 onMounted(async () => {
   await fetchFeedItems()
+  navTabs.set([
+    { name: 'Following', href: '/home' },
+    { name: 'Explore', href: '/home?explore' },
+  ])
 })
 
 const fetchFeedItems = async () => {

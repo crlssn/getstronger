@@ -3,11 +3,13 @@ import { RouterView } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
 import AppNavBottom from '@/ui/components/AppNavBottom.vue'
 import AppNavTop from '@/ui/components/AppNavTop.vue'
+import AppNavTabs from '@/ui/components/AppNavTabs.vue'
 </script>
 
 <template>
   <div class="pb-12">
     <AppNavTop />
+    <AppNavTabs />
     <AppAlert />
     <main>
       <RouterView />
