@@ -127,6 +127,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	workouts, err := h.repo.ListWorkouts(ctx,
 		repo.ListWorkoutsWithSets(),
+		repo.ListWorkoutsWithUser(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()...),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
