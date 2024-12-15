@@ -119,10 +119,6 @@ func (s *saga) Login(ctx context.Context, f func(*connect.Response[v1.LoginRespo
 		},
 	}))
 
-	//f(res.Msg)
-	//s.auth.accessToken = res.Msg.GetAccessToken()
-	//s.auth.refreshTokenCookie = res.Header().Get("Set-Cookie")
-
 	return s
 }
 
