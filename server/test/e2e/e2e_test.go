@@ -61,37 +61,46 @@ func TestE2E(t *testing.T) {
 			require.NotEmpty(t, c.Msg.GetAccessToken())
 			s.SetAccessToken(c.Msg.GetAccessToken())
 		}).
-		SearchUsers(ctx, func(res *v1.SearchUsersResponse) {
-			require.Len(t, res.GetUsers(), 1)
-			require.Empty(t, res.GetPagination().GetNextPageToken())
+		SearchUsers(ctx, func(c *connect.Response[v1.SearchUsersResponse], err error) {
+			require.NoError(t, err)
+			require.Len(t, c.Msg.GetUsers(), 1)
+			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
-		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
-			require.NotEmpty(t, res.GetId())
+		CreateExercise(ctx, func(c *connect.Response[v1.CreateExerciseResponse], err error) {
+			require.NoError(t, err)
+			require.NotEmpty(t, c.Msg.GetId())
 		}).
-		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
-			require.NotEmpty(t, res.GetId())
+		CreateExercise(ctx, func(c *connect.Response[v1.CreateExerciseResponse], err error) {
+			require.NoError(t, err)
+			require.NotEmpty(t, c.Msg.GetId())
 		}).
 		ListExercises(ctx, func(res *v1.ListExercisesResponse) {
-			require.Len(t, res.GetExercises(), 2)
-			require.Empty(t, res.GetPagination().GetNextPageToken())
+			require.NoError(t, err)
+			require.Len(t, c.Msg.GetExercises(), 2)
+			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
 		CreateRoutine(ctx, func(res *v1.CreateRoutineResponse) {
-			require.NotEmpty(t, res.GetId())
+			require.NoError(t, err)
+			require.NotEmpty(t, c.Msg.GetId())
 		}).
 		ListRoutines(ctx, func(res *v1.ListRoutinesResponse) {
-			require.Len(t, res.GetRoutines(), 1)
-			require.Empty(t, res.GetPagination().GetNextPageToken())
+			require.NoError(t, err)
+			require.Len(t, c.Msg.GetRoutines(), 1)
+			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
 		CreateWorkout(ctx, func(res *v1.CreateWorkoutResponse) {
-			require.NotEmpty(t, res.GetWorkoutId())
+			require.NoError(t, err)
+			require.NotEmpty(t, c.Msg.GetWorkoutId())
 		}).
 		ListWorkouts(ctx, func(res *v1.ListWorkoutsResponse) {
-			require.Len(t, res.GetWorkouts(), 1)
-			require.Empty(t, res.GetPagination().GetNextPageToken())
+			require.NoError(t, err)
+			require.Len(t, c.Msg.GetWorkouts(), 1)
+			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
 		ListFeedItems(ctx, func(res *v1.ListFeedItemsResponse) {
-			require.Len(t, res.GetItems(), 1)
-			require.Empty(t, res.GetPagination().GetNextPageToken())
+			require.NoError(t, err)
+			require.Len(t, c.Msg.GetItems(), 1)
+			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
 		Logout(ctx, func(_ *connect.Response[v1.LogoutResponse], err error) {
 			require.NoError(t, err)

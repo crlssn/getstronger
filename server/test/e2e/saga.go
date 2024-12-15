@@ -126,20 +126,14 @@ func (s *saga) Login(ctx context.Context, f func(*connect.Response[v1.LoginRespo
 	return s
 }
 
-func (s *saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExerciseResponse)) *saga {
+func (s *saga) CreateExercise(ctx context.Context, f func(*connect.Response[v1.CreateExerciseResponse], error)) *saga {
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
-	res, err := client.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
+	f(client.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
 		Msg: &v1.CreateExerciseRequest{
 			Name:  gofakeit.RandomString([]string{"Bench Press", "Deadlifts", "Squats"}),
 			Label: "",
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("create exercise failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }
@@ -300,15 +294,15 @@ func (s *saga) ListWorkouts(ctx context.Context, f func(res *v1.ListWorkoutsResp
 	return s
 }
 
-func (s *saga) SearchUsers(ctx context.Context, f func(res *v1.SearchUsersResponse)) *saga {
+func (s *saga) SearchUsers(ctx context.Context, f func(*connect.Response[v1.SearchUsersResponse], error)) *saga {
 	user, err := orm.Users().One(ctx, s.db)
 	if err != nil {
-		s.err = fmt.Errorf("failed to load user: %w", err)
+		f(nil, fmt.Errorf("failed to load user: %w", err))
 		return s
 	}
 
 	client := apiv1connect.NewUserServiceClient(s.client(), s.baseURL)
-	res, err := client.SearchUsers(ctx, &connect.Request[v1.SearchUsersRequest]{
+	f(client.SearchUsers(ctx, &connect.Request[v1.SearchUsersRequest]{
 		Msg: &v1.SearchUsersRequest{
 			Query: user.FirstName,
 			Pagination: &v1.PaginationRequest{
@@ -316,13 +310,7 @@ func (s *saga) SearchUsers(ctx context.Context, f func(res *v1.SearchUsersRespon
 				PageToken: nil,
 			},
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("search users failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }
