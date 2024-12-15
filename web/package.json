@@ -11,7 +11,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint",
-    "format": "prettier --write src"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.2.3",
@@ -53,8 +53,6 @@
     "autoprefixer": "10.4.20",
     "eslint": "9.16.0",
     "eslint-plugin-import": "2.31.0",
-    "eslint-plugin-perfectionist": "4.3.0",
-    "eslint-plugin-vue": "9.32.0",
     "jsdom": "25.0.1",
     "npm-run-all2": "7.0.1",
     "postcss": "8.4.49",
