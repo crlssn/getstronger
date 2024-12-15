@@ -115,10 +115,10 @@ func TestE2E(t *testing.T) {
 
 func options() []fx.Option {
 	return []fx.Option{
-		testdb.Module(),
 		bus.Module(),
 		jwt.Module(),
 		server.Module(),
+		testdb.Module(),
 		fx.Provide(
 			zap.NewDevelopment,
 			repo.New,
