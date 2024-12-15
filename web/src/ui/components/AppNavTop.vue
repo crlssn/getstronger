@@ -8,6 +8,7 @@ import { XMarkIcon } from '@heroicons/vue/24/outline'
 import ActionButton from '@/ui/components/ActionButton.vue'
 import { useActionButton } from '@/stores/actionButton.ts'
 import { useNavTabs } from '@/stores/navTabs.ts'
+import AppNavTabs from '@/ui/components/AppNavTabs.vue'
 
 const input = ref<HTMLInputElement | null>(null)
 const users = ref(Array<User>())
@@ -86,6 +87,7 @@ const onSearchUsers = async () => {
         <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
       </template>
     </div>
+    <AppNavTabs />
   </nav>
   <div
     v-if="searchBarOpen"
