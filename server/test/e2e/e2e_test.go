@@ -25,6 +25,7 @@ import (
 )
 
 func TestE2E(t *testing.T) {
+	t.Parallel()
 	if err := godotenv.Load("../../../.env"); err != nil {
 		require.NoError(t, err)
 	}
@@ -47,13 +48,13 @@ func TestE2E(t *testing.T) {
 	saga.
 		Signup(ctx, func(_ *v1.SignupResponse) {}).
 		Login(ctx, func(res *v1.LoginResponse) {
-			require.NotEmpty(t, res.AccessToken)
+			require.NotEmpty(t, res.GetAccessToken())
 		}).
 		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
-			require.NotEmpty(t, res.Id)
+			require.NotEmpty(t, res.GetId())
 		}).
 		ListExercises(ctx, func(res *v1.ListExercisesResponse) {
-			require.Len(t, res.Exercises, 1)
+			require.Len(t, res.GetExercises(), 1)
 		}).
 		Logout(ctx, func(_ *v1.LogoutResponse) {}).
 		Error(func(err error) {

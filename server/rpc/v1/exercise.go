@@ -31,14 +31,6 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	//spew.Dump(repo.CreateExerciseParams{
-	//	UserID: userID,
-	//	Name:   req.Msg.GetName(),
-	//	Label:  req.Msg.GetLabel(),
-	//})
-	//
-	//spew.Dump(h.repo.GetUser(ctx, repo.GetUserWithID(userID)))
-
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
 		UserID: userID,
 		Name:   req.Msg.GetName(),

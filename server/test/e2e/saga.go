@@ -35,7 +35,7 @@ func newSaga(db *sql.DB, config *config.Config) *Saga {
 		baseURL: fmt.Sprintf("https://localhost:%s", config.Server.Port),
 		auth: &auth{
 			email:    gofakeit.Email(),
-			password: gofakeit.Password(true, true, true, true, true, 6),
+			password: "password",
 		},
 	}
 }
@@ -62,7 +62,7 @@ func (a *clientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	r := req.Clone(req.Context())
 	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", a.auth.accessToken))
 
-	return a.roundTripper.RoundTrip(r)
+	return a.roundTripper.RoundTrip(r) //nolint:wrapcheck
 }
 
 func (s *Saga) Signup(ctx context.Context, f func(res *v1.SignupResponse)) *Saga {
@@ -117,7 +117,7 @@ func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
 		return s
 	}
 
-	s.auth.accessToken = res.Msg.AccessToken
+	s.auth.accessToken = res.Msg.GetAccessToken()
 
 	f(res.Msg)
 
@@ -149,7 +149,7 @@ func (s *Saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesRe
 			Name:        "",
 			ExerciseIds: nil,
 			Pagination: &v1.PaginationRequest{
-				PageLimit: 100,
+				PageLimit: 100, //nolint:mnd
 				PageToken: nil,
 			},
 		},

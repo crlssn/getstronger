@@ -59,10 +59,8 @@ func NewContainer(ctx context.Context) *Container {
 func Module() fx.Option {
 	return fx.Module("testdb", fx.Options(
 		fx.Provide(
-			func() context.Context {
-				return context.Background()
-			},
 			NewContainer,
+			context.Background,
 			func(c *Container) *sql.DB {
 				return c.DB
 			},

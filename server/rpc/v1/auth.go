@@ -85,8 +85,6 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 			return fmt.Errorf("create user: %w", err)
 		}
 
-		//spew.Dump(user)
-
 		if err = h.email.SendVerificationEmail(ctx, email.SendVerificationEmail{
 			Name:  user.FirstName,
 			Email: auth.Email,
