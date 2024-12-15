@@ -62,17 +62,27 @@ const options = {
   },
 }
 
+const calc1RM = (weight: number, reps: number): number => {
+  if (reps === 1) {
+    return weight
+  }
+
+  return weight * (1 + reps / 30);
+}
+
 const sets = computed(() => [...props.sets].reverse())
 
 const data = computed(() => {
   const labels: string[] = []
   const weights: number[] = []
   const reps: number[] = []
+  const oneRM: number[] = []
 
   sets.value.map((set) => {
     labels.push(formatToShortDateTime(set.metadata?.createdAt))
     weights.push(set.weight)
     reps.push(set.reps)
+    oneRM.push(calc1RM(set.weight, set.reps))
   })
 
   return {
@@ -88,11 +98,21 @@ const data = computed(() => {
         fill: true,
       },
       {
-        borderColor: 'rgba(79,70,229,0.3)',
+        borderColor: 'rgba(0, 123, 255, 0.3)',
         borderWidth: 1,
-        backgroundColor: 'rgba(79,70,229,0.2)',
+        backgroundColor: 'rgba(0, 123, 255, 0.2)',
         data: reps,
         label: 'Reps',
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true,
+      },
+      {
+        borderColor: 'rgba(255, 99, 132, 0.3)',
+        borderWidth: 1,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        data: oneRM,
+        label: '1RM',
         tension: 0.4,
         pointRadius: 0,
         fill: true,
