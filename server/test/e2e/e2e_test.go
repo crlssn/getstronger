@@ -82,13 +82,9 @@ func options() []fx.Option {
 			protovalidate.New,
 			func() *config.Config {
 				return &config.Config{
-					DB:  config.DB{},
-					JWT: config.JWT{},
-					Server: config.Server{
-						Port:           "8081",
-						AllowedOrigins: []string{"http://localhost"},
-						CookieDomain:   ".localhost",
-					},
+					DB:     config.DB{},
+					JWT:    config.JWT{},
+					Server: config.Server{Port: "8081"},
 				}
 			},
 		),
