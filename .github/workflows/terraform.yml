@@ -25,7 +25,6 @@ jobs:
       - name: Terraform Init
         run: terraform init
         working-directory: ./infrastructure
-        shell: bash
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -33,7 +32,6 @@ jobs:
       - name: Terraform Plan
         run: terraform plan
         working-directory: ./infrastructure
-        shell: bash
         env:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
