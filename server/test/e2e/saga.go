@@ -167,3 +167,17 @@ func (s *Saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesRe
 func (s *Saga) Error(f func(err error)) {
 	f(s.err)
 }
+
+func (s *Saga) Logout(ctx context.Context, f func(res *v1.LogoutResponse)) *Saga {
+	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
+	res, err := client.Logout(ctx, &connect.Request[v1.LogoutRequest]{
+		Msg: &v1.LogoutRequest{},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("logout failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
+	return s
+}
