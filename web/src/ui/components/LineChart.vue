@@ -7,6 +7,7 @@ import { formatToShortDateTime } from '@/utils/datetime.ts'
 import {
   CategoryScale,
   Chart as ChartJS,
+  Filler,
   Legend,
   LinearScale,
   LineElement,
@@ -15,20 +16,29 @@ import {
   Tooltip,
 } from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement)
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  Filler,
+  PointElement,
+)
 
 const props = defineProps<{
   sets: Set[]
 }>()
 
 const options = {
-  maintainAspectRatio: false,
+  maintainAspectRatio: true,
   responsive: true,
   scales: {
     x: {
       grid: {
         display: false,
-        drawBorder: false,
+        drawBorder: true,
       },
       ticks: {
         display: false,
@@ -43,7 +53,7 @@ const options = {
         drawBorder: false,
       },
       ticks: {
-        display: false,
+        display: true,
       },
       title: {
         display: false,
@@ -52,30 +62,60 @@ const options = {
   },
 }
 
+const calc1RM = (weight: number, reps: number): number => {
+  if (reps === 1) {
+    return weight
+  }
+
+  return weight * (1 + reps / 30)
+}
+
 const sets = computed(() => [...props.sets].reverse())
 
 const data = computed(() => {
   const labels: string[] = []
   const weights: number[] = []
   const reps: number[] = []
+  const oneRM: number[] = []
 
   sets.value.map((set) => {
     labels.push(formatToShortDateTime(set.metadata?.createdAt))
     weights.push(set.weight)
     reps.push(set.reps)
+    oneRM.push(calc1RM(set.weight, set.reps))
   })
 
   return {
     datasets: [
       {
-        backgroundColor: '#000000',
-        data: weights,
-        label: 'Weight',
-      },
-      {
-        backgroundColor: '#4f46e5',
+        borderColor: '#818cf8',
+        borderWidth: 1,
+        backgroundColor: '#818cf8',
         data: reps,
         label: 'Reps',
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true,
+      },
+      {
+        borderColor: '#6366f1',
+        borderWidth: 1,
+        backgroundColor: '#6366f1',
+        data: weights,
+        label: 'Weight',
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true,
+      },
+      {
+        borderColor: '#4f46e5',
+        borderWidth: 1,
+        backgroundColor: '#4f46e5',
+        data: oneRM,
+        label: '1RM',
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true,
       },
     ],
     labels: labels,
