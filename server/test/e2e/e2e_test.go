@@ -94,6 +94,10 @@ func TestE2E(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, c.Msg.GetWorkoutId())
 		}).
+		GetWorkout(ctx, func(c *connect.Response[v1.GetWorkoutResponse], err error) {
+			require.NoError(t, err)
+			require.NotEmpty(t, c.Msg.GetWorkout().GetId())
+		}).
 		ListWorkouts(ctx, func(c *connect.Response[v1.ListWorkoutsResponse], err error) {
 			require.NoError(t, err)
 			require.Len(t, c.Msg.GetWorkouts(), 1)
