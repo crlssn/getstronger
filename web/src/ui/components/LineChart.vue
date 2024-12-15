@@ -88,19 +88,9 @@ const data = computed(() => {
   return {
     datasets: [
       {
-        borderColor: 'rgba(0, 0, 0, 0.3)',
+        borderColor: '#818cf8',
         borderWidth: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-        data: weights,
-        label: 'Weight',
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true,
-      },
-      {
-        borderColor: 'rgba(0, 123, 255, 0.3)',
-        borderWidth: 1,
-        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+        backgroundColor: '#818cf8',
         data: reps,
         label: 'Reps',
         tension: 0.4,
@@ -108,9 +98,19 @@ const data = computed(() => {
         fill: true,
       },
       {
-        borderColor: 'rgba(255, 99, 132, 0.3)',
+        borderColor: '#6366f1',
         borderWidth: 1,
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        backgroundColor: '#6366f1',
+        data: weights,
+        label: 'Weight',
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true,
+      },
+      {
+        borderColor: '#4f46e5',
+        borderWidth: 1,
+        backgroundColor: '#4f46e5',
         data: oneRM,
         label: '1RM',
         tension: 0.4,
