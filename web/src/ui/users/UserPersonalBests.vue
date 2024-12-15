@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AppListItem from '@/ui/components/AppListItem.vue'
 import AppList from '@/ui/components/AppList.vue'
 import { onMounted, ref } from 'vue'
 import type { PersonalBest } from '@/proto/api/v1/exercise_service_pb.ts'
@@ -7,7 +6,7 @@ import { getPersonalBests } from '@/http/requests.ts'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
-import { formatToRelativeDateTime, formatUnixToRelativeDateTime } from '@/utils/datetime.ts'
+import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 
 const props = defineProps<{
   id: string
