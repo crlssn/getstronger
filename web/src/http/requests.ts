@@ -310,8 +310,10 @@ export const getWorkout = async (id: string): Promise<GetWorkoutResponse | void>
 
 export const listFeedItems = async (
   pageToken: Uint8Array,
+  followedOnly: boolean,
 ): Promise<ListFeedItemsResponse | void> => {
   const req = create(ListFeedItemsRequestSchema, {
+    followedOnly,
     pagination: {
       pageLimit: defaultPageLimit,
       pageToken: pageToken,

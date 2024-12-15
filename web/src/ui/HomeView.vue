@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { listFeedItems } from '@/http/requests.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type FeedItem } from '@/proto/api/v1/feed_service_pb'
@@ -22,14 +22,14 @@ onMounted(async () => {
   ])
 })
 
-const explore = () => computed(() => route.query.explore === null)
-
 watch(() => route.query.explore, () => {
+  feedItems.value = []
   fetchFeedItems()
 })
 
 const fetchFeedItems = async () => {
-  const res = await listFeedItems(pageToken.value, explore)
+  const followedOnly = route.query.explore !== null
+  const res = await listFeedItems(pageToken.value, followedOnly)
   if (!res) return
 
   feedItems.value = [...feedItems.value, ...res.items]
