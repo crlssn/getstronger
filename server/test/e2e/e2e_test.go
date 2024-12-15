@@ -36,6 +36,8 @@ func TestE2E(t *testing.T) {
 		},
 	))...)
 
+	require.NoError(t, fx.ValidateApp(options()...))
+
 	ctx := context.Background()
 	if err := app.Start(ctx); err != nil {
 		require.NoError(t, err)
