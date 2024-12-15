@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"connectrpc.com/connect"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
@@ -42,13 +43,23 @@ func TestE2E(t *testing.T) {
 
 	s := newSaga(db, cfg)
 	s.
-		Signup(ctx).
-		VerifyEmail(ctx).
-		Login(ctx, func(res *v1.LoginResponse) {
-			require.NotEmpty(t, res.GetAccessToken())
+		Signup(ctx, func(_ *connect.Response[v1.SignupResponse], err error) {
+			require.NoError(t, err)
 		}).
-		RefreshToken(ctx, func(res *v1.RefreshTokenResponse) {
-			require.NotEmpty(t, res.GetAccessToken())
+		VerifyEmail(ctx, func(_ *connect.Response[v1.VerifyEmailResponse], err error) {
+			require.NoError(t, err)
+		}).
+		Login(ctx, func(c *connect.Response[v1.LoginResponse], err error) {
+			require.NoError(t, err)
+			require.NotEmpty(t, c.Msg.GetAccessToken())
+			require.NotEmpty(t, c.Header().Get("Set-Cookie"))
+			s.SetAccessToken(c.Msg.GetAccessToken())
+			s.SetRefreshTokenCookie(c.Header().Get("Set-Cookie"))
+		}).
+		RefreshToken(ctx, func(c *connect.Response[v1.RefreshTokenResponse], err error) {
+			require.NoError(t, err)
+			require.NotEmpty(t, c.Msg.GetAccessToken())
+			s.SetAccessToken(c.Msg.GetAccessToken())
 		}).
 		SearchUsers(ctx, func(res *v1.SearchUsersResponse) {
 			require.Len(t, res.GetUsers(), 1)
@@ -82,8 +93,7 @@ func TestE2E(t *testing.T) {
 			require.Len(t, res.GetItems(), 1)
 			require.Empty(t, res.GetPagination().GetNextPageToken())
 		}).
-		Logout(ctx).
-		Error(func(err error) {
+		Logout(ctx, func(_ *connect.Response[v1.LogoutResponse], err error) {
 			require.NoError(t, err)
 		})
 
