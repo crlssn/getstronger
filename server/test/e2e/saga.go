@@ -399,3 +399,27 @@ func (s *saga) SearchUsers(ctx context.Context, f func(res *v1.SearchUsersRespon
 
 	return s
 }
+
+func (s *saga) ListFeedItems(ctx context.Context, f func(res *v1.ListFeedItemsResponse)) *saga {
+	if s.err != nil {
+		return s
+	}
+
+	client := apiv1connect.NewFeedServiceClient(s.client(), s.baseURL)
+	res, err := client.ListFeedItems(ctx, &connect.Request[v1.ListFeedItemsRequest]{
+		Msg: &v1.ListFeedItemsRequest{
+			Pagination: &v1.PaginationRequest{
+				PageLimit: 100, //nolint:mnd
+				PageToken: nil,
+			},
+		},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("list feed items failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
+
+	return s
+}

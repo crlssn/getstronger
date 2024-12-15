@@ -78,6 +78,10 @@ func TestE2E(t *testing.T) {
 			require.Len(t, res.GetWorkouts(), 1)
 			require.Empty(t, res.GetPagination().GetNextPageToken())
 		}).
+		ListFeedItems(ctx, func(res *v1.ListFeedItemsResponse) {
+			require.Len(t, res.GetItems(), 1)
+			require.Empty(t, res.GetPagination().GetNextPageToken())
+		}).
 		Logout(ctx).
 		Error(func(err error) {
 			require.NoError(t, err)
