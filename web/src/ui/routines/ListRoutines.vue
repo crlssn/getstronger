@@ -9,6 +9,8 @@ import { type Routine } from '@/proto/api/v1/routine_service_pb.ts'
 import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination.ts'
 import AppAlert from '@/ui/components/AppAlert.vue'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const routines = ref([] as Routine[])
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
@@ -30,11 +32,13 @@ const fetchRoutines = async () => {
   <AppButton type="link" to="/routines/create" colour="primary" class="mb-4">
     Create Routine
   </AppButton>
-  <AppList v-if="routines.length > 0" :can-fetch="hasMorePages" @fetch="fetchRoutines">
+  <AppList :can-fetch="hasMorePages" @fetch="fetchRoutines">
     <AppListItemLink v-for="routine in routines" :key="routine.id" :to="`/routines/${routine.id}`">
       {{ routine.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
+    <AppListItem v-if="routines.length === 0">
+      Your routines will appear here
+    </AppListItem>
   </AppList>
-  <AppAlert v-if="routines.length === 0" type="info" message="Nothing here yet..."/>
 </template>

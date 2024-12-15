@@ -8,6 +8,8 @@ import { vInfiniteScroll } from '@vueuse/components'
 import { useNavTabs } from '@/stores/navTabs.ts'
 import { useRoute } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
+import AppList from '@/ui/components/AppList.vue'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const route = useRoute()
 const navTabs = useNavTabs()
@@ -42,9 +44,11 @@ const fetchFeedItems = async () => {
 </script>
 
 <template>
+  <AppList v-if="feedItems.length === 0">
+    <AppListItem>Your workouts and your followers' workouts will appear here</AppListItem>
+  </AppList>
   <template v-for="item in feedItems" :key="item.type.value?.id">
     <CardWorkout v-if="item.type.case === 'workout'" compact :workout="item.type.value" />
   </template>
-  <AppAlert v-if="feedItems.length === 0" type="info" message="Nothing here yet..."/>
   <div v-if="hasMorePages" v-infinite-scroll="fetchFeedItems"></div>
 </template>
