@@ -51,7 +51,9 @@ func TestE2E(t *testing.T) {
 		Login(ctx, func(res *v1.LoginResponse) {
 			require.NotEmpty(t, res.GetAccessToken())
 		}).
-		RefreshToken(ctx, func(res *v1.RefreshTokenResponse) {}).
+		RefreshToken(ctx, func(res *v1.RefreshTokenResponse) {
+			require.NotEmpty(t, res.GetAccessToken())
+		}).
 		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
 			require.NotEmpty(t, res.GetId())
 		}).

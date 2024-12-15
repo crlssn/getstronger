@@ -23,9 +23,10 @@ type Saga struct {
 }
 
 type auth struct {
-	email       string
-	password    string
-	accessToken string
+	email              string
+	password           string
+	accessToken        string
+	refreshTokenCookie string
 }
 
 func newSaga(db *sql.DB, config *config.Config) *Saga {
@@ -59,7 +60,18 @@ type clientTransport struct {
 
 func (a *clientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	r := req.Clone(req.Context())
-	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", a.auth.accessToken))
+
+	if a.auth.accessToken != "" {
+		r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", a.auth.accessToken))
+	}
+
+	if a.auth.refreshTokenCookie != "" {
+		cookie, err := http.ParseSetCookie(a.auth.refreshTokenCookie)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse cookie: %w", err)
+		}
+		r.AddCookie(cookie)
+	}
 
 	return a.roundTripper.RoundTrip(r) //nolint:wrapcheck
 }
@@ -104,6 +116,7 @@ func (s *Saga) VerifyEmail(ctx context.Context, f func(_ *v1.VerifyEmailResponse
 	}
 
 	f(res.Msg)
+
 	return s
 }
 
@@ -120,9 +133,9 @@ func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
 		return s
 	}
 
-	s.auth.accessToken = res.Msg.GetAccessToken()
-
 	f(res.Msg)
+	s.auth.accessToken = res.Msg.GetAccessToken()
+	s.auth.refreshTokenCookie = res.Header().Get("Set-Cookie")
 
 	return s
 }
@@ -182,25 +195,22 @@ func (s *Saga) Logout(ctx context.Context, f func(res *v1.LogoutResponse)) *Saga
 	}
 
 	f(res.Msg)
+
 	return s
 }
 
 func (s *Saga) RefreshToken(ctx context.Context, f func(res *v1.RefreshTokenResponse)) *Saga {
-	//a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
-	//if err != nil {
-	//	s.err = fmt.Errorf("failed to find auth: %w", err)
-	//	return s
-	//}
-	//
-	//client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
-	//res, err := client.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
-	//	Msg: &v1.RefreshTokenRequest{},
-	//})
-	//if err != nil {
-	//	s.err = fmt.Errorf("refresh token failed: %w", err)
-	//	return s
-	//}
-	//
-	//f(res.Msg)
+	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
+	res, err := client.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
+		Msg: &v1.RefreshTokenRequest{},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("refresh token failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
+	s.auth.accessToken = res.Msg.GetAccessToken()
+
 	return s
 }
