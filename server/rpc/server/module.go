@@ -110,7 +110,7 @@ func startServer(l fx.Lifecycle, c *config.Config, m *http.ServeMux, conn *strea
 	l.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go func() {
-				if err := s.ListenAndServeTLS(c.Server.CertPath, c.Server.KeyPath); err != nil {
+				if err := listenAndServe(s, c.Server.CertPath, c.Server.KeyPath); err != nil {
 					if errors.Is(err, http.ErrServerClosed) {
 						return
 					}
@@ -123,4 +123,12 @@ func startServer(l fx.Lifecycle, c *config.Config, m *http.ServeMux, conn *strea
 			return s.Shutdown(ctx)
 		},
 	})
+}
+
+func listenAndServe(s *http.Server, certPath, keyPath string) error {
+	if certPath == "" || keyPath == "" {
+		return s.ListenAndServe()
+	}
+
+	return s.ListenAndServeTLS(certPath, keyPath)
 }

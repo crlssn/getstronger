@@ -32,7 +32,7 @@ type auth struct {
 func newSaga(db *sql.DB, config *config.Config) *Saga {
 	return &Saga{
 		db:      db,
-		baseURL: fmt.Sprintf("https://localhost:%s", config.Server.Port),
+		baseURL: fmt.Sprintf("http://localhost:%s", config.Server.Port),
 		auth: &auth{
 			email:    gofakeit.Email(),
 			password: "password",
