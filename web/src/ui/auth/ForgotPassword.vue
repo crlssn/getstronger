@@ -7,12 +7,11 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { type ResetPasswordRequest } from '@/proto/api/v1/auth_service_pb'
 import AppAlert from '@/ui/components/AppAlert.vue'
 
-const route = useRoute()
 const router = useRouter()
 
 const req = ref<ResetPasswordRequest>({
   $typeName: 'api.v1.ResetPasswordRequest',
-  email: ''
+  email: '',
 })
 
 const onSubmit = async () => {
@@ -24,10 +23,14 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <AppAlert v-if="useRoute().query.success === null" type="success" message="Please check your inbox to reset your password" />
+  <AppAlert
+    v-if="useRoute().query.success === null"
+    type="success"
+    message="Please check your inbox to reset your password"
+  />
   <form class="space-y-6" method="POST" @submit.prevent="onSubmit">
     <div>
-      <label for="email" class="block  font-medium text-gray-900">Email address</label>
+      <label for="email" class="block font-medium text-gray-900">Email address</label>
       <div class="mt-2">
         <input
           id="email"
@@ -44,7 +47,7 @@ const onSubmit = async () => {
     </div>
   </form>
 
-  <p class="mt-6 text-center  text-gray-400">
+  <p class="mt-6 text-center text-gray-400">
     Remember your password?
     <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
       Login
@@ -54,6 +57,6 @@ const onSubmit = async () => {
 
 <style scoped>
 input {
-  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 ;
+  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
 }
 </style>

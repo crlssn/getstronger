@@ -50,7 +50,7 @@ const fetchPersonalBests = async () => {
       {{ pb.set?.weight }} kg x {{ pb.set?.reps }}
     </AppListItemLink>
   </AppList>
-  <AppAlert v-if="personalBests.length === 0" type="info" message="Nothing here yet..."/>
+  <AppAlert v-if="personalBests.length === 0" type="info" message="Nothing here yet..." />
 </template>
 
 <style scoped></style>

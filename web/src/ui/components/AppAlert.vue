@@ -53,10 +53,13 @@ const alertStyle = computed(() => {
   >
     {{ alertStore.alert.message }}
   </div>
-  <div v-if="props.message" class="border-2 py-4 px-5 font-medium rounded-md mb-4" :class="alertStyle">
+  <div
+    v-if="props.message"
+    class="border-2 py-4 px-5 font-medium rounded-md mb-4"
+    :class="alertStyle"
+  >
     {{ props.message }}
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

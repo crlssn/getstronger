@@ -34,7 +34,7 @@ const fetchFollowees = async () => {
       {{ followee.firstName }} {{ followee.lastName }}
     </AppListItemLink>
   </AppList>
-  <AppAlert v-if="followees.length === 0" type="info" message="Nothing here yet..."/>
+  <AppAlert v-if="followees.length === 0" type="info" message="Nothing here yet..." />
 </template>
 
 <style scoped></style>

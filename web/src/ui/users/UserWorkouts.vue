@@ -35,7 +35,7 @@ const fetchWorkouts = async () => {
 <template>
   <CardWorkout v-for="workout in workouts" :key="workout.id" compact :workout="workout" />
   <div v-if="hasMorePages" v-infinite-scroll="fetchWorkouts" />
-  <AppAlert v-if="workouts.length === 0" type="info" message="Nothing here yet..."/>
+  <AppAlert v-if="workouts.length === 0" type="info" message="Nothing here yet..." />
 </template>
 
 <style scoped></style>

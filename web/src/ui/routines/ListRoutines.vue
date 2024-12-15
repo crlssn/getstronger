@@ -6,10 +6,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { type Routine } from '@/proto/api/v1/routine_service_pb.ts'
-import { vInfiniteScroll } from '@vueuse/components'
 import usePagination from '@/utils/usePagination.ts'
-import AppAlert from '@/ui/components/AppAlert.vue'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import AppListItem from '@/ui/components/AppListItem.vue'
 
 const routines = ref([] as Routine[])
@@ -37,8 +34,6 @@ const fetchRoutines = async () => {
       {{ routine.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
-    <AppListItem v-if="routines.length === 0">
-      Your routines will appear here
-    </AppListItem>
+    <AppListItem v-if="routines.length === 0"> Your routines will appear here </AppListItem>
   </AppList>
 </template>

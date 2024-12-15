@@ -12,7 +12,7 @@ const req = ref<SignupRequest>({
   firstName: '',
   lastName: '',
   password: '',
-  passwordConfirmation: ''
+  passwordConfirmation: '',
 })
 
 const onSignup = async () => {
@@ -25,7 +25,7 @@ const onSignup = async () => {
 <template>
   <form class="space-y-6" method="POST" @submit.prevent="onSignup">
     <div>
-      <label for="email" class="block  font-medium text-gray-900">First name</label>
+      <label for="email" class="block font-medium text-gray-900">First name</label>
       <div class="mt-2">
         <input
           id="firstname"
@@ -33,20 +33,20 @@ const onSignup = async () => {
           name="firstname"
           type="text"
           required
-          class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
+          class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
         />
       </div>
     </div>
 
     <div>
-      <label for="email" class="block  font-medium text-gray-900">Last name</label>
+      <label for="email" class="block font-medium text-gray-900">Last name</label>
       <div class="mt-2">
         <input v-model="req.lastName" name="lastname" type="text" required />
       </div>
     </div>
 
     <div>
-      <label for="email" class="block  font-medium text-gray-900">Email address</label>
+      <label for="email" class="block font-medium text-gray-900">Email address</label>
       <div class="mt-2">
         <input
           id="email"
@@ -61,7 +61,7 @@ const onSignup = async () => {
 
     <div>
       <div class="flex items-center justify-between">
-        <label for="password" class="block  font-medium text-gray-900">Password</label>
+        <label for="password" class="block font-medium text-gray-900">Password</label>
       </div>
       <div class="mt-2">
         <input
@@ -77,9 +77,7 @@ const onSignup = async () => {
 
     <div>
       <div class="flex items-center justify-between">
-        <label for="password" class="block  font-medium text-gray-900">
-          Confirm Password
-        </label>
+        <label for="password" class="block font-medium text-gray-900"> Confirm Password </label>
       </div>
       <div class="mt-2">
         <input
@@ -98,7 +96,7 @@ const onSignup = async () => {
     </div>
   </form>
 
-  <p class="mt-6 text-center  text-gray-400">
+  <p class="mt-6 text-center text-gray-400">
     Already a member?
     <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
       Login
@@ -108,6 +106,6 @@ const onSignup = async () => {
 
 <style scoped>
 input {
-  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 ;
+  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
 }
 </style>

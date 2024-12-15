@@ -26,21 +26,26 @@ const onLogin = async () => {
 </script>
 
 <template>
-  <AppAlert v-if="useRoute().query.success === null" type="success" message="Please check your inbox to verify your email" />
-  <AppAlert v-if="useRoute().query.verified === null" type="success" message="Thank you for verifying your email" />
-  <AppAlert v-if="useRoute().query.reset === null" type="success" message="Your password has been reset" />
+  <AppAlert
+    v-if="useRoute().query.success === null"
+    type="success"
+    message="Please check your inbox to verify your email"
+  />
+  <AppAlert
+    v-if="useRoute().query.verified === null"
+    type="success"
+    message="Thank you for verifying your email"
+  />
+  <AppAlert
+    v-if="useRoute().query.reset === null"
+    type="success"
+    message="Your password has been reset"
+  />
   <form class="space-y-6" method="POST" @submit.prevent="onLogin">
     <div>
       <label for="email" class="block /6 font-medium text-gray-900">Email address</label>
       <div class="mt-2">
-        <input
-          id="email"
-          v-model="email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          required
-        />
+        <input id="email" v-model="email" name="email" type="email" autocomplete="email" required />
       </div>
     </div>
 

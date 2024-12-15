@@ -12,7 +12,7 @@ const req = ref<UpdatePasswordRequest>({
   $typeName: 'api.v1.UpdatePasswordRequest',
   password: '',
   passwordConfirmation: '',
-  token: route.query.token as string
+  token: route.query.token as string,
 })
 
 const onSignup = async () => {
@@ -26,7 +26,7 @@ const onSignup = async () => {
   <form class="space-y-6" method="POST" @submit.prevent="onSignup">
     <div>
       <div class="flex items-center justify-between">
-        <label for="password" class="block  font-medium text-gray-900">Password</label>
+        <label for="password" class="block font-medium text-gray-900">Password</label>
       </div>
       <div class="mt-2">
         <input
@@ -42,9 +42,7 @@ const onSignup = async () => {
 
     <div>
       <div class="flex items-center justify-between">
-        <label for="password" class="block  font-medium text-gray-900">
-          Confirm Password
-        </label>
+        <label for="password" class="block font-medium text-gray-900"> Confirm Password </label>
       </div>
       <div class="mt-2">
         <input
@@ -66,6 +64,6 @@ const onSignup = async () => {
 
 <style scoped>
 input {
-  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 ;
+  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
 }
 </style>

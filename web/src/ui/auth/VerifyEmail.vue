@@ -14,9 +14,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <p class="text-pretty text-lg font-medium text-gray-500">
-    Sorry, we couldn't verify your email.
-  </p>
+  <p class="text-pretty text-lg font-medium text-gray-500">Sorry, we couldn't verify your email.</p>
 </template>
 
 <style scoped></style>
