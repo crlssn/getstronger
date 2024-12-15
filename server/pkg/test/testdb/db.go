@@ -13,6 +13,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"go.uber.org/fx"
 )
 
 type Container struct {
@@ -53,6 +54,23 @@ func NewContainer(ctx context.Context) *Container {
 		DB:        db,
 		Terminate: container.Terminate,
 	}
+}
+
+func Module() fx.Option {
+	return fx.Module("testdb", fx.Options(
+		fx.Provide(
+			NewContainer,
+			context.Background,
+			func(c *Container) *sql.DB {
+				return c.DB
+			},
+		),
+		fx.Invoke(func(l fx.Lifecycle, c *Container) {
+			l.Append(fx.Hook{
+				OnStop: c.Terminate,
+			})
+		}),
+	))
 }
 
 func migrationFiles() []string {

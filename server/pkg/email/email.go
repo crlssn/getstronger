@@ -13,14 +13,21 @@ import (
 	c "github.com/crlssn/getstronger/server/pkg/config"
 )
 
-type Email struct {
+type Email interface {
+	SendVerificationEmail(ctx context.Context, req SendVerificationEmail) error
+	SendPasswordResetEmail(ctx context.Context, req SendPasswordResetEmail) error
+}
+
+type email struct {
 	client *ses.Client
 	config *c.Config
 }
 
+var _ Email = (*email)(nil)
+
 const timeout = 5 * time.Second
 
-func New(c *c.Config) (*Email, error) {
+func New(c *c.Config) (Email, error) {
 	ctx, cancelFuc := context.WithTimeout(context.Background(), timeout)
 	defer cancelFuc()
 
@@ -29,13 +36,13 @@ func New(c *c.Config) (*Email, error) {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	return &Email{
+	return &email{
 		client: ses.NewFromConfig(cfg),
 		config: c,
 	}, nil
 }
 
-func MustNew(c *c.Config) *Email {
+func MustNew(c *c.Config) Email {
 	e, err := New(c)
 	if err != nil {
 		panic(err)
@@ -50,7 +57,7 @@ type SendVerificationEmail struct {
 	Token string
 }
 
-func (e *Email) SendVerificationEmail(ctx context.Context, req SendVerificationEmail) error {
+func (e *email) SendVerificationEmail(ctx context.Context, req SendVerificationEmail) error {
 	sender := "noreply@getstronger.pro"
 	subject := "[GetStronger] Verify your email"
 	body := fmt.Sprintf(`Hi %s, 
@@ -88,7 +95,7 @@ type SendPasswordResetEmail struct {
 	Token string
 }
 
-func (e *Email) SendPasswordResetEmail(ctx context.Context, req SendPasswordResetEmail) error {
+func (e *email) SendPasswordResetEmail(ctx context.Context, req SendPasswordResetEmail) error {
 	sender := "noreply@getstronger.pro"
 	subject := "[GetStronger] Reset your password"
 	body := fmt.Sprintf(`Hi %s, 

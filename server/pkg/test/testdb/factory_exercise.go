@@ -17,7 +17,7 @@ type ExerciseOpt func(event *orm.Exercise)
 func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 	m := &orm.Exercise{
 		ID:        uuid.NewString(),
-		UserID:    f.NewUser().ID,
+		UserID:    "",
 		Title:     f.faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"}),
 		SubTitle:  null.String{},
 		CreatedAt: time.Time{},
@@ -26,6 +26,10 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 
 	for _, opt := range opts {
 		opt(m)
+	}
+
+	if m.UserID == "" {
+		m.UserID = f.NewUser().ID
 	}
 
 	boil.DebugMode = f.debug

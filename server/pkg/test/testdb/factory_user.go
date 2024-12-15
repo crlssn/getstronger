@@ -14,7 +14,7 @@ type UserOpt func(event *orm.User)
 
 func (f *Factory) NewUser(opts ...UserOpt) *orm.User {
 	m := &orm.User{
-		AuthID:    f.NewAuth().ID,
+		AuthID:    "",
 		FirstName: f.faker.FirstName(),
 		LastName:  f.faker.LastName(),
 		CreatedAt: time.Time{},
@@ -22,6 +22,10 @@ func (f *Factory) NewUser(opts ...UserOpt) *orm.User {
 
 	for _, opt := range opts {
 		opt(m)
+	}
+
+	if m.AuthID == "" {
+		m.AuthID = f.NewAuth().ID
 	}
 
 	boil.DebugMode = f.debug
@@ -36,5 +40,11 @@ func (f *Factory) NewUser(opts ...UserOpt) *orm.User {
 func UserID(id string) UserOpt {
 	return func(m *orm.User) {
 		m.ID = id
+	}
+}
+
+func UserAuthID(authID string) UserOpt {
+	return func(m *orm.User) {
+		m.AuthID = authID
 	}
 }

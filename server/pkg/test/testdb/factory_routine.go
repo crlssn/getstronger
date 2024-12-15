@@ -18,7 +18,7 @@ type RoutineOpt func(event *orm.Routine)
 func (f *Factory) NewRoutine(opts ...RoutineOpt) *orm.Routine {
 	m := &orm.Routine{
 		ID:            uuid.NewString(),
-		UserID:        f.NewUser().ID,
+		UserID:        "",
 		Title:         f.faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
 		CreatedAt:     time.Time{},
 		DeletedAt:     null.Time{},
@@ -27,6 +27,10 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *orm.Routine {
 
 	for _, opt := range opts {
 		opt(m)
+	}
+
+	if m.UserID == "" {
+		m.UserID = f.NewUser().ID
 	}
 
 	boil.DebugMode = f.debug
