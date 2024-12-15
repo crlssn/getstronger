@@ -14,11 +14,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex justify-center items-center h-full w-full">
-    <p class="text-pretty text-lg font-medium text-gray-500">
-      Sorry, we couldn't verify your email.
-    </p>
-  </div>
+  <p class="text-pretty text-lg font-medium text-gray-500">
+    Sorry, we couldn't verify your email.
+  </p>
 </template>
 
 <style scoped></style>

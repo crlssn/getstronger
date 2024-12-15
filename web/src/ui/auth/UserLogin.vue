@@ -26,61 +26,59 @@ const onLogin = async () => {
 </script>
 
 <template>
-  <div class="flex min-h-full flex-col justify-center px-6 py-12">
-    <AppAlert v-if="useRoute().query.success === null" type="success" message="Please check your inbox to verify your email" />
-    <AppAlert v-if="useRoute().query.verified === null" type="success" message="Thank you for verifying your email" />
-    <AppAlert v-if="useRoute().query.reset === null" type="success" message="Your password has been reset" />
-    <form class="space-y-6" method="POST" @submit.prevent="onLogin">
-      <div>
-        <label for="email" class="block /6 font-medium text-gray-900">Email address</label>
-        <div class="mt-2">
-          <input
-            id="email"
-            v-model="email"
-            name="email"
-            type="email"
-            autocomplete="email"
-            required
-          />
+  <AppAlert v-if="useRoute().query.success === null" type="success" message="Please check your inbox to verify your email" />
+  <AppAlert v-if="useRoute().query.verified === null" type="success" message="Thank you for verifying your email" />
+  <AppAlert v-if="useRoute().query.reset === null" type="success" message="Your password has been reset" />
+  <form class="space-y-6" method="POST" @submit.prevent="onLogin">
+    <div>
+      <label for="email" class="block /6 font-medium text-gray-900">Email address</label>
+      <div class="mt-2">
+        <input
+          id="email"
+          v-model="email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          required
+        />
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between">
+        <label for="password" class="block font-medium text-gray-900">Password</label>
+        <div class="">
+          <RouterLink
+            to="/forgot-password"
+            class="font-semibold text-indigo-600 hover:text-indigo-500"
+          >
+            Forgot password?
+          </RouterLink>
         </div>
       </div>
-
-      <div>
-        <div class="flex items-center justify-between">
-          <label for="password" class="block font-medium text-gray-900">Password</label>
-          <div class="">
-            <RouterLink
-              to="/forgot-password"
-              class="font-semibold text-indigo-600 hover:text-indigo-500"
-            >
-              Forgot password?
-            </RouterLink>
-          </div>
-        </div>
-        <div class="mt-2">
-          <input
-            id="password"
-            v-model="password"
-            name="password"
-            type="password"
-            autocomplete="current-password"
-            required
-          />
-        </div>
+      <div class="mt-2">
+        <input
+          id="password"
+          v-model="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
       </div>
+    </div>
 
-      <div>
-        <AppButton type="submit" colour="primary"> Login</AppButton>
-      </div>
-    </form>
+    <div>
+      <AppButton type="submit" colour="primary"> Login</AppButton>
+    </div>
+  </form>
 
-    <p class="mt-6 text-center text-gray-400">
-      Not a member?
-      <RouterLink to="signup" class="font-semibold text-indigo-600 hover:text-indigo-500">
-        Sign up
-      </RouterLink>
-    </p>
-  </div>
+  <p class="mt-6 text-center text-gray-400">
+    Not a member?
+    <RouterLink to="signup" class="font-semibold text-indigo-600 hover:text-indigo-500">
+      Sign up
+    </RouterLink>
+  </p>
 </template>
 
 <style scoped>
