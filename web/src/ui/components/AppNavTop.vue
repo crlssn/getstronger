@@ -60,7 +60,7 @@ const onSearchUsers = async () => {
         </form>
         <ul
           v-if="users.length > 0"
-          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white max-w-7xl mx-auto lg:rounded-b-md"
+          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white max-w-4xl mx-auto lg:rounded-b-md"
         >
           <li v-for="user in users" :key="user.id" @click="closeSearchBar">
             <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">
@@ -87,7 +87,7 @@ const onSearchUsers = async () => {
         <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
       </template>
     </div>
-    <AppNavTabs />
+    <AppNavTabs v-if="navTabs.active" />
   </nav>
   <div
     v-if="searchBarOpen"
@@ -101,7 +101,7 @@ nav {
   @apply sticky top-0 z-30  border-gray-200 bg-white;
 
   .container {
-    @apply flex items-center justify-between max-w-7xl mx-auto  gap-x-4  px-4 h-16;
+    @apply flex items-center justify-between max-w-4xl mx-auto  gap-x-4  px-4 h-16;
   }
 }
 </style>

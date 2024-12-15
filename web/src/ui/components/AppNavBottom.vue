@@ -58,7 +58,7 @@ nav {
   @apply fixed w-full bottom-0 z-10 bg-white border-t-2 border-gray-200;
 
   .container {
-    @apply flex justify-between items-center max-w-7xl h-16 px-8 mx-auto;
+    @apply flex justify-between items-center max-w-4xl h-16 px-8 mx-auto;
   }
 }
 
