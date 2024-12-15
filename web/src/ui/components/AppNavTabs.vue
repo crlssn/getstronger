@@ -26,14 +26,14 @@ nav {
   @apply bg-white w-full border-b-2 border-gray-200;
 
   .container {
-    @apply flex max-w-4xl mx-auto;
+    @apply flex max-w-4xl mx-auto lg:px-2;
     margin-bottom: -2px;
   }
 }
 
 a {
   @apply w-full border-b-2 pb-4 text-center text-xs font-bold uppercase;
-  @apply border-b-2 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700;
+  @apply border-b-2 border-gray-200 text-gray-500 hover:text-gray-700;
 
   &.active {
     @apply border-indigo-500 text-indigo-600;

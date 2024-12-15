@@ -87,7 +87,7 @@ const onSearchUsers = async () => {
         <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
       </template>
     </div>
-    <AppNavTabs />
+    <AppNavTabs v-if="navTabs.active" />
   </nav>
   <div
     v-if="searchBarOpen"
