@@ -46,6 +46,7 @@ format:
 lint:
 	golangci-lint run
 	buf lint
+	cd web && npm run lint
 
 vet:
 	go vet ./...

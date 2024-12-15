@@ -24,12 +24,14 @@ jobs:
       - name: Install dependencies
         working-directory: ./web
         run: npm install
-        shell: bash
+
+      - name: Run linter
+        working-directory: ./web
+        run: npm run lint
 
       - name: Run formatter
         working-directory: ./web
         run: npm run format
-        shell: bash
 
       - name: Check for uncommitted changes
         run: |
@@ -41,4 +43,3 @@ jobs:
       - name: Build the app
         working-directory: ./web
         run: npm run build
-        shell: bash
