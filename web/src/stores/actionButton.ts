@@ -11,7 +11,6 @@ export const useActionButton = defineStore('actionButton', () => {
   const i = ref<FunctionalComponent>()
 
   const set = (button: Button) => {
-    // action: () => {}, icon: FunctionalComponent
     a.value = button.action
     i.value = button.icon
   }

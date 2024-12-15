@@ -666,14 +666,6 @@ func ListWorkoutsWithLimit(size int) ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithComments() ListWorkoutsOpt {
-	return func() ([]qm.QueryMod, error) {
-		return []qm.QueryMod{
-			qm.Load(orm.WorkoutRels.WorkoutComments),
-		}, nil
-	}
-}
-
 func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		if token == nil {
@@ -766,6 +758,12 @@ func GetWorkoutWithComments() GetWorkoutOpt {
 func GetWorkoutWithSets() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.Sets)
+	}
+}
+
+func GetWorkoutWithUser() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutRels.User)
 	}
 }
 

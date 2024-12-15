@@ -15,7 +15,8 @@ service FeedService {
 }
 
 message ListFeedItemsRequest {
-  PaginationRequest pagination = 1 [(buf.validate.field).required = true];
+  bool followed_only = 1;
+  PaginationRequest pagination = 2 [(buf.validate.field).required = true];
 }
 message ListFeedItemsResponse {
   repeated FeedItem items = 1;

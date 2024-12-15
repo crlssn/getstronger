@@ -1,21 +1,38 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { listFeedItems } from '@/http/requests.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type FeedItem } from '@/proto/api/v1/feed_service_pb'
 import usePagination from '@/utils/usePagination'
 import { vInfiniteScroll } from '@vueuse/components'
+import { useNavTabs } from '@/stores/navTabs.ts'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
+const navTabs = useNavTabs()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 const feedItems = ref([] as FeedItem[])
 
 onMounted(async () => {
   await fetchFeedItems()
+  navTabs.set([
+    { name: 'Following', href: '/home' },
+    { name: 'Explore', href: '/home?explore' },
+  ])
 })
 
+watch(
+  () => route.query.explore,
+  () => {
+    feedItems.value = []
+    fetchFeedItems()
+  },
+)
+
 const fetchFeedItems = async () => {
-  const res = await listFeedItems(pageToken.value)
+  const followedOnly = route.query.explore !== null
+  const res = await listFeedItems(pageToken.value, followedOnly)
   if (!res) return
 
   feedItems.value = [...feedItems.value, ...res.items]

@@ -302,3 +302,20 @@ func (s *saga) SetAccessToken(token string) {
 func (s *saga) SetRefreshTokenCookie(cookie string) {
 	s.auth.refreshTokenCookie = cookie
 }
+
+func (s *saga) GetWorkout(ctx context.Context, f func(*connect.Response[v1.GetWorkoutResponse], error)) *saga {
+	workout, err := orm.Workouts().One(ctx, s.db)
+	if err != nil {
+		f(nil, fmt.Errorf("failed to load workout: %w", err))
+		return s
+	}
+
+	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
+	f(client.GetWorkout(ctx, &connect.Request[v1.GetWorkoutRequest]{
+		Msg: &v1.GetWorkoutRequest{
+			Id: workout.ID,
+		},
+	}))
+
+	return s
+}

@@ -78,6 +78,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[v1
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
 		repo.GetWorkoutWithSets(),
+		repo.GetWorkoutWithUser(),
 		repo.GetWorkoutWithComments(),
 	)
 	if err != nil {
@@ -127,9 +128,9 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	workouts, err := h.repo.ListWorkouts(ctx,
 		repo.ListWorkoutsWithSets(),
+		repo.ListWorkoutsWithUser(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()...),
-		repo.ListWorkoutsWithComments(),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {

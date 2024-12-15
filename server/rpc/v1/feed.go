@@ -24,29 +24,34 @@ func NewFeedHandler(r repo.Repo) apiv1connect.FeedServiceHandler {
 	return &feedHandler{r}
 }
 
-func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error) { //nolint:cyclop // TODO: Simplify this method.
+func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	followers, err := h.repo.ListFollowers(ctx, userID)
-	if err != nil {
-		log.Error("failed to list followers", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	followerIDs := make([]string, 0, len(followers))
-	for _, follower := range followers {
-		followerIDs = append(followerIDs, follower.ID)
-	}
-
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	workouts, err := h.repo.ListWorkouts(ctx,
+	opts := []repo.ListWorkoutsOpt{
 		repo.ListWorkoutsWithSets(),
-		repo.ListWorkoutsWithLimit(limit+1),
-		repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)...),
-		repo.ListWorkoutsWithComments(),
+		repo.ListWorkoutsWithUser(),
+		repo.ListWorkoutsWithLimit(limit + 1),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
-	)
+	}
+
+	if req.Msg.GetFollowedOnly() {
+		followers, err := h.repo.ListFollowers(ctx, userID)
+		if err != nil {
+			log.Error("failed to list followers", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
+
+		followerIDs := make([]string, 0, len(followers))
+		for _, follower := range followers {
+			followerIDs = append(followerIDs, follower.ID)
+		}
+
+		opts = append(opts, repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)...))
+	}
+
+	workouts, err := h.repo.ListWorkouts(ctx, opts...)
 	if err != nil {
 		log.Error("failed to list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -60,21 +65,11 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var userIDs []string
 	var exerciseIDs []string
 	for _, workout := range paginated.Items {
 		for _, set := range workout.R.Sets {
 			exerciseIDs = append(exerciseIDs, set.ExerciseID)
 		}
-		for _, comment := range workout.R.WorkoutComments {
-			userIDs = append(userIDs, comment.UserID)
-		}
-	}
-
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
-	if err != nil {
-		log.Error("failed to list users", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
@@ -83,7 +78,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	feedItems, err := parseFeedItemsToPB(paginated.Items, users, exercises)
+	feedItems, err := parseFeedItemsToPB(paginated.Items, exercises)
 	if err != nil {
 		log.Error("failed to parse feed items", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

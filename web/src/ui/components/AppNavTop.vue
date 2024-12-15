@@ -7,11 +7,14 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import ActionButton from '@/ui/components/ActionButton.vue'
 import { useActionButton } from '@/stores/actionButton.ts'
+import { useNavTabs } from '@/stores/navTabs.ts'
+import AppNavTabs from '@/ui/components/AppNavTabs.vue'
 
 const input = ref<HTMLInputElement | null>(null)
 const users = ref(Array<User>())
 const searchBarOpen = ref(false)
 
+const navTabs = useNavTabs()
 const actionButton = useActionButton()
 const pageTitleStore = usePageTitleStore()
 
@@ -43,7 +46,7 @@ const onSearchUsers = async () => {
 </script>
 
 <template>
-  <nav>
+  <nav :class="navTabs.active ? 'border-b-0' : 'border-b-2'">
     <div class="container">
       <template v-if="searchBarOpen">
         <form class="w-full">
@@ -84,6 +87,7 @@ const onSearchUsers = async () => {
         <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
       </template>
     </div>
+    <AppNavTabs />
   </nav>
   <div
     v-if="searchBarOpen"
@@ -94,7 +98,7 @@ const onSearchUsers = async () => {
 
 <style scoped>
 nav {
-  @apply sticky top-0 z-30  border-b-2 border-gray-200 bg-white;
+  @apply sticky top-0 z-30  border-gray-200 bg-white;
 
   .container {
     @apply flex items-center justify-between max-w-7xl mx-auto  gap-x-4  px-4 h-16;
