@@ -67,7 +67,7 @@ const calc1RM = (weight: number, reps: number): number => {
     return weight
   }
 
-  return weight * (1 + reps / 30);
+  return weight * (1 + reps / 30)
 }
 
 const sets = computed(() => [...props.sets].reverse())
