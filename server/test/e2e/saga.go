@@ -138,9 +138,9 @@ func (s *saga) CreateExercise(ctx context.Context, f func(*connect.Response[v1.C
 	return s
 }
 
-func (s *saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesResponse)) *saga {
+func (s *saga) ListExercises(ctx context.Context, f func(*connect.Response[v1.ListExercisesResponse], error)) *saga {
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
-	res, err := client.ListExercises(ctx, &connect.Request[v1.ListExercisesRequest]{
+	f(client.ListExercises(ctx, &connect.Request[v1.ListExercisesRequest]{
 		Msg: &v1.ListExercisesRequest{
 			Name:        "",
 			ExerciseIds: nil,
@@ -149,13 +149,7 @@ func (s *saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesRe
 				PageToken: nil,
 			},
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("list exercises failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }
@@ -178,10 +172,10 @@ func (s *saga) RefreshToken(ctx context.Context, f func(*connect.Response[v1.Ref
 	return s
 }
 
-func (s *saga) CreateRoutine(ctx context.Context, f func(res *v1.CreateRoutineResponse)) *saga {
+func (s *saga) CreateRoutine(ctx context.Context, f func(*connect.Response[v1.CreateRoutineResponse], error)) *saga {
 	exercises, err := orm.Exercises().All(ctx, s.db)
 	if err != nil {
-		s.err = fmt.Errorf("failed to load exercises: %w", err)
+		f(nil, fmt.Errorf("failed to load exercises: %w", err))
 		return s
 	}
 
@@ -191,26 +185,20 @@ func (s *saga) CreateRoutine(ctx context.Context, f func(res *v1.CreateRoutineRe
 	}
 
 	client := apiv1connect.NewRoutineServiceClient(s.client(), s.baseURL)
-	res, err := client.CreateRoutine(ctx, &connect.Request[v1.CreateRoutineRequest]{
+	f(client.CreateRoutine(ctx, &connect.Request[v1.CreateRoutineRequest]{
 		Msg: &v1.CreateRoutineRequest{
 			Name:        gofakeit.RandomString([]string{"Upper Body", "Lower Body", "Full Body"}),
 			ExerciseIds: exerciseIDs,
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("create routine failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }
 
-func (s *saga) CreateWorkout(ctx context.Context, f func(res *v1.CreateWorkoutResponse)) *saga {
+func (s *saga) CreateWorkout(ctx context.Context, f func(*connect.Response[v1.CreateWorkoutResponse], error)) *saga {
 	routine, err := orm.Routines(qm.Load(orm.RoutineRels.Exercises)).One(ctx, s.db)
 	if err != nil {
-		s.err = fmt.Errorf("failed to load routines: %w", err)
+		f(nil, fmt.Errorf("failed to load routines: %w", err))
 		return s
 	}
 
@@ -228,27 +216,21 @@ func (s *saga) CreateWorkout(ctx context.Context, f func(res *v1.CreateWorkoutRe
 	}
 
 	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
-	res, err := client.CreateWorkout(ctx, &connect.Request[v1.CreateWorkoutRequest]{
+	f(client.CreateWorkout(ctx, &connect.Request[v1.CreateWorkoutRequest]{
 		Msg: &v1.CreateWorkoutRequest{
 			RoutineId:    routine.ID,
 			ExerciseSets: exerciseSets,
 			StartedAt:    timestamppb.New(time.Now().Add(-time.Hour).UTC()),
 			FinishedAt:   timestamppb.New(time.Now().UTC()),
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("create workout failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }
 
-func (s *saga) ListRoutines(ctx context.Context, f func(res *v1.ListRoutinesResponse)) *saga {
+func (s *saga) ListRoutines(ctx context.Context, f func(*connect.Response[v1.ListRoutinesResponse], error)) *saga {
 	client := apiv1connect.NewRoutineServiceClient(s.client(), s.baseURL)
-	res, err := client.ListRoutines(ctx, &connect.Request[v1.ListRoutinesRequest]{
+	f(client.ListRoutines(ctx, &connect.Request[v1.ListRoutinesRequest]{
 		Msg: &v1.ListRoutinesRequest{
 			Name: "",
 			Pagination: &v1.PaginationRequest{
@@ -256,26 +238,20 @@ func (s *saga) ListRoutines(ctx context.Context, f func(res *v1.ListRoutinesResp
 				PageToken: nil,
 			},
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("list routines failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }
 
-func (s *saga) ListWorkouts(ctx context.Context, f func(res *v1.ListWorkoutsResponse)) *saga {
+func (s *saga) ListWorkouts(ctx context.Context, f func(*connect.Response[v1.ListWorkoutsResponse], error)) *saga {
 	user, err := orm.Users().One(ctx, s.db)
 	if err != nil {
-		s.err = fmt.Errorf("failed to load user: %w", err)
+		f(nil, fmt.Errorf("failed to load user: %w", err))
 		return s
 	}
 
 	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
-	res, err := client.ListWorkouts(ctx, &connect.Request[v1.ListWorkoutsRequest]{
+	f(client.ListWorkouts(ctx, &connect.Request[v1.ListWorkoutsRequest]{
 		Msg: &v1.ListWorkoutsRequest{
 			UserIds: []string{user.ID},
 			Pagination: &v1.PaginationRequest{
@@ -283,13 +259,7 @@ func (s *saga) ListWorkouts(ctx context.Context, f func(res *v1.ListWorkoutsResp
 				PageToken: nil,
 			},
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("list workouts failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }
@@ -315,22 +285,16 @@ func (s *saga) SearchUsers(ctx context.Context, f func(*connect.Response[v1.Sear
 	return s
 }
 
-func (s *saga) ListFeedItems(ctx context.Context, f func(res *v1.ListFeedItemsResponse)) *saga {
+func (s *saga) ListFeedItems(ctx context.Context, f func(*connect.Response[v1.ListFeedItemsResponse], error)) *saga {
 	client := apiv1connect.NewFeedServiceClient(s.client(), s.baseURL)
-	res, err := client.ListFeedItems(ctx, &connect.Request[v1.ListFeedItemsRequest]{
+	f(client.ListFeedItems(ctx, &connect.Request[v1.ListFeedItemsRequest]{
 		Msg: &v1.ListFeedItemsRequest{
 			Pagination: &v1.PaginationRequest{
 				PageLimit: 100, //nolint:mnd
 				PageToken: nil,
 			},
 		},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("list feed items failed: %w", err)
-		return s
-	}
-
-	f(res.Msg)
+	}))
 
 	return s
 }

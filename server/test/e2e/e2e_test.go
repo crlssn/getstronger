@@ -74,30 +74,30 @@ func TestE2E(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, c.Msg.GetId())
 		}).
-		ListExercises(ctx, func(res *v1.ListExercisesResponse) {
+		ListExercises(ctx, func(c *connect.Response[v1.ListExercisesResponse], err error) {
 			require.NoError(t, err)
 			require.Len(t, c.Msg.GetExercises(), 2)
 			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
-		CreateRoutine(ctx, func(res *v1.CreateRoutineResponse) {
+		CreateRoutine(ctx, func(c *connect.Response[v1.CreateRoutineResponse], err error) {
 			require.NoError(t, err)
 			require.NotEmpty(t, c.Msg.GetId())
 		}).
-		ListRoutines(ctx, func(res *v1.ListRoutinesResponse) {
+		ListRoutines(ctx, func(c *connect.Response[v1.ListRoutinesResponse], err error) {
 			require.NoError(t, err)
 			require.Len(t, c.Msg.GetRoutines(), 1)
 			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
-		CreateWorkout(ctx, func(res *v1.CreateWorkoutResponse) {
+		CreateWorkout(ctx, func(c *connect.Response[v1.CreateWorkoutResponse], err error) {
 			require.NoError(t, err)
 			require.NotEmpty(t, c.Msg.GetWorkoutId())
 		}).
-		ListWorkouts(ctx, func(res *v1.ListWorkoutsResponse) {
+		ListWorkouts(ctx, func(c *connect.Response[v1.ListWorkoutsResponse], err error) {
 			require.NoError(t, err)
 			require.Len(t, c.Msg.GetWorkouts(), 1)
 			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
-		ListFeedItems(ctx, func(res *v1.ListFeedItemsResponse) {
+		ListFeedItems(ctx, func(c *connect.Response[v1.ListFeedItemsResponse], err error) {
 			require.NoError(t, err)
 			require.Len(t, c.Msg.GetItems(), 1)
 			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
