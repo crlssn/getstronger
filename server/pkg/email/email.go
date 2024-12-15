@@ -23,6 +23,8 @@ type email struct {
 	config *c.Config
 }
 
+var _ Email = (*email)(nil)
+
 const timeout = 5 * time.Second
 
 func New(c *c.Config) (Email, error) {
