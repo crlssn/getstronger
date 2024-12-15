@@ -52,14 +52,14 @@ const onDeleteExercise = async () => {
 }
 
 const downSample = (data: Set[], sampleSize: number): Set[] => {
-  const sampled: Set[] = [];
-  const step = Math.ceil(data.length / sampleSize);
+  const sampled: Set[] = []
+  const step = Math.ceil(data.length / sampleSize)
 
   for (let i = 0; i < data.length; i += step) {
-    sampled.push(data[i]);
+    sampled.push(data[i])
   }
 
-  return sampled;
+  return sampled
 }
 </script>
 

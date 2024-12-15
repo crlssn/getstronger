@@ -59,10 +59,7 @@ const formatComment = computed(() => {
 </script>
 
 <template>
-  <AppCard
-    v-if="!workoutDeleted"
-    class="divide-y divide-gray-100"
-  >
+  <AppCard v-if="!workoutDeleted" class="divide-y divide-gray-100">
     <div class="px-4 py-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center">

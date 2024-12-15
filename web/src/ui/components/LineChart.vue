@@ -13,10 +13,19 @@ import {
   LineElement,
   PointElement,
   Title,
-  Tooltip
+  Tooltip,
 } from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, Filler, PointElement)
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  Filler,
+  PointElement,
+)
 
 const props = defineProps<{
   sets: Set[]
@@ -29,28 +38,28 @@ const options = {
     x: {
       grid: {
         display: false,
-        drawBorder: true
+        drawBorder: true,
       },
       ticks: {
-        display: false
+        display: false,
       },
       title: {
-        display: false
-      }
+        display: false,
+      },
     },
     y: {
       grid: {
         display: false,
-        drawBorder: false
+        drawBorder: false,
       },
       ticks: {
-        display: true
+        display: true,
       },
       title: {
-        display: false
-      }
-    }
-  }
+        display: false,
+      },
+    },
+  },
 }
 
 const sets = computed(() => [...props.sets].reverse())
@@ -76,7 +85,7 @@ const data = computed(() => {
         label: 'Weight',
         tension: 0.4,
         pointRadius: 0,
-        fill: true
+        fill: true,
       },
       {
         borderColor: 'rgba(79,70,229,0.3)',
@@ -86,10 +95,10 @@ const data = computed(() => {
         label: 'Reps',
         tension: 0.4,
         pointRadius: 0,
-        fill: true
-      }
+        fill: true,
+      },
     ],
-    labels: labels
+    labels: labels,
   }
 })
 </script>
