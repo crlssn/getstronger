@@ -11,3 +11,4 @@
 /.env
 /web/.env
 /database/seed/*.sql
+/server/test/e2e/.env
