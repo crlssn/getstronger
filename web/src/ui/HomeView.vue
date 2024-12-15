@@ -7,6 +7,7 @@ import usePagination from '@/utils/usePagination'
 import { vInfiniteScroll } from '@vueuse/components'
 import { useNavTabs } from '@/stores/navTabs.ts'
 import { useRoute } from 'vue-router'
+import AppAlert from '@/ui/components/AppAlert.vue'
 
 const route = useRoute()
 const navTabs = useNavTabs()
@@ -44,5 +45,6 @@ const fetchFeedItems = async () => {
   <template v-for="item in feedItems" :key="item.type.value?.id">
     <CardWorkout v-if="item.type.case === 'workout'" compact :workout="item.type.value" />
   </template>
+  <AppAlert v-if="feedItems.length === 0" type="info" message="Nothing here yet..."/>
   <div v-if="hasMorePages" v-infinite-scroll="fetchFeedItems"></div>
 </template>

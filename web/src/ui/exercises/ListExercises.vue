@@ -7,6 +7,7 @@ import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import usePagination from '@/utils/usePagination.ts'
 import AppButton from '@/ui/components/AppButton.vue'
+import AppAlert from '@/ui/components/AppAlert.vue'
 
 const exercises = ref([] as Exercise[])
 
@@ -29,7 +30,7 @@ const fetchExercises = async () => {
   <AppButton type="link" to="/exercises/create" colour="primary" class="mb-4">
     Create Exercise
   </AppButton>
-  <AppList :can-fetch="hasMorePages" @fetch="fetchExercises">
+  <AppList v-if="exercises.length > 0" :can-fetch="hasMorePages" @fetch="fetchExercises">
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"
@@ -39,4 +40,5 @@ const fetchExercises = async () => {
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
   </AppList>
+  <AppAlert v-if="exercises.length === 0" type="info" message="Nothing here yet..."/>
 </template>

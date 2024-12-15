@@ -7,6 +7,7 @@ import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import usePagination from '@/utils/usePagination'
+import AppAlert from '@/ui/components/AppAlert.vue'
 
 const notifications = ref([] as Notification[])
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
@@ -26,7 +27,7 @@ const fetchNotifications = async () => {
 </script>
 
 <template>
-  <AppList :can-fetch="hasMorePages" @fetch="fetchNotifications">
+  <AppList v-if="notifications.length > 0" :can-fetch="hasMorePages" @fetch="fetchNotifications">
     <AppListItem v-for="notification in notifications" :key="notification.id">
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
@@ -41,6 +42,7 @@ const fetchNotifications = async () => {
       />
     </AppListItem>
   </AppList>
+  <AppAlert v-if="notifications.length === 0" type="info" message="Nothing here yet..."/>
 </template>
 
 <style scoped></style>

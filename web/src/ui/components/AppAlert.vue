@@ -7,7 +7,7 @@ const route = useRoute()
 const alertStore = useAlertStore()
 
 const props = defineProps<{
-  type: 'success' | 'error'
+  type: 'success' | 'error' | 'info'
   message: string
 }>()
 
@@ -37,6 +37,9 @@ const alertStyle = computed(() => {
   }
   if (alert.value?.type === 'error') {
     return 'bg-red-200 border-red-300 text-red-700'
+  }
+  if (alert.value?.type === 'info') {
+    return 'bg-gray-200 border-gray-300 text-gray-700'
   }
   return ''
 })

@@ -10,6 +10,7 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 import { createRoutine, listExercises } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import usePagination from '@/utils/usePagination.ts'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 const name = ref('')
 const exercises = ref(Array<Exercise>())
@@ -76,6 +77,10 @@ const onCreateRoutine = async () => {
             />
           </Switch>
         </div>
+      </AppListItem>
+      <AppListItem v-if="exercises.length === 0">
+        <p class="text-red-600">No exercises found</p>
+        <ExclamationTriangleIcon class="size-8 text-red-600" />
       </AppListItem>
     </AppList>
 
