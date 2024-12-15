@@ -50,6 +50,17 @@ const onDeleteExercise = async () => {
     await router.push('/exercises')
   }
 }
+
+const downSample = (data: Set[], sampleSize: number): Set[] => {
+  const sampled: Set[] = [];
+  const step = Math.ceil(data.length / sampleSize);
+
+  for (let i = 0; i < data.length; i += step) {
+    sampled.push(data[i]);
+  }
+
+  return sampled;
+}
 </script>
 
 <template>
@@ -64,7 +75,7 @@ const onDeleteExercise = async () => {
 
   <h6>Chart</h6>
   <AppCard class="p-2">
-    <LineChart :sets="sets" />
+    <LineChart :sets="downSample(sets, 50)" />
   </AppCard>
 
   <h6 class="mt-8">Sets</h6>

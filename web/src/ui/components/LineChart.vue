@@ -69,7 +69,8 @@ const data = computed(() => {
   return {
     datasets: [
       {
-        borderColor: 'rgba(0, 0, 0, 0.8)',
+        borderColor: 'rgba(0, 0, 0, 0.3)',
+        borderWidth: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.2)',
         data: weights,
         label: 'Weight',
@@ -78,7 +79,8 @@ const data = computed(() => {
         fill: true
       },
       {
-        borderColor: 'rgba(79,70,229,0.8)',
+        borderColor: 'rgba(79,70,229,0.3)',
+        borderWidth: 1,
         backgroundColor: 'rgba(79,70,229,0.2)',
         data: reps,
         label: 'Reps',
