@@ -127,8 +127,8 @@ func startServer(l fx.Lifecycle, c *config.Config, m *http.ServeMux, conn *strea
 
 func listenAndServe(s *http.Server, certPath, keyPath string) error {
 	if certPath == "" || keyPath == "" {
-		return s.ListenAndServe()
+		return s.ListenAndServe() //nolint:wrapcheck
 	}
 
-	return s.ListenAndServeTLS(certPath, keyPath)
+	return s.ListenAndServeTLS(certPath, keyPath) //nolint:wrapcheck
 }
