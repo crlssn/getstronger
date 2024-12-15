@@ -76,9 +76,13 @@ func (a *clientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return a.roundTripper.RoundTrip(r) //nolint:wrapcheck
 }
 
-func (s *Saga) Signup(ctx context.Context, f func(res *v1.SignupResponse)) *Saga {
+func (s *Saga) Signup(ctx context.Context) *Saga {
+	if s.err != nil {
+		return s
+	}
+
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
-	res, err := client.Signup(ctx, &connect.Request[v1.SignupRequest]{
+	if _, err := client.Signup(ctx, &connect.Request[v1.SignupRequest]{
 		Msg: &v1.SignupRequest{
 			Email:                s.auth.email,
 			Password:             s.auth.password,
@@ -86,18 +90,19 @@ func (s *Saga) Signup(ctx context.Context, f func(res *v1.SignupResponse)) *Saga
 			FirstName:            gofakeit.FirstName(),
 			LastName:             gofakeit.LastName(),
 		},
-	})
-	if err != nil {
+	}); err != nil {
 		s.err = fmt.Errorf("signup failed: %w", err)
 		return s
 	}
 
-	f(res.Msg)
-
 	return s
 }
 
-func (s *Saga) VerifyEmail(ctx context.Context, f func(_ *v1.VerifyEmailResponse)) *Saga {
+func (s *Saga) VerifyEmail(ctx context.Context) *Saga {
+	if s.err != nil {
+		return s
+	}
+
 	a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
 	if err != nil {
 		s.err = fmt.Errorf("failed to find auth: %w", err)
@@ -105,22 +110,23 @@ func (s *Saga) VerifyEmail(ctx context.Context, f func(_ *v1.VerifyEmailResponse
 	}
 
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
-	res, err := client.VerifyEmail(ctx, &connect.Request[v1.VerifyEmailRequest]{
+	if _, err = client.VerifyEmail(ctx, &connect.Request[v1.VerifyEmailRequest]{
 		Msg: &v1.VerifyEmailRequest{
 			Token: a.EmailToken,
 		},
-	})
-	if err != nil {
+	}); err != nil {
 		s.err = fmt.Errorf("verify email failed: %w", err)
 		return s
 	}
-
-	f(res.Msg)
 
 	return s
 }
 
 func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	res, err := client.Login(ctx, &connect.Request[v1.LoginRequest]{
 		Msg: &v1.LoginRequest{
@@ -141,6 +147,10 @@ func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
 }
 
 func (s *Saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExerciseResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
 	res, err := client.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
 		Msg: &v1.CreateExerciseRequest{
@@ -159,6 +169,10 @@ func (s *Saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExercise
 }
 
 func (s *Saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
 	res, err := client.ListExercises(ctx, &connect.Request[v1.ListExercisesRequest]{
 		Msg: &v1.ListExercisesRequest{
@@ -184,22 +198,27 @@ func (s *Saga) Error(f func(err error)) {
 	f(s.err)
 }
 
-func (s *Saga) Logout(ctx context.Context, f func(res *v1.LogoutResponse)) *Saga {
-	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
-	res, err := client.Logout(ctx, &connect.Request[v1.LogoutRequest]{
-		Msg: &v1.LogoutRequest{},
-	})
-	if err != nil {
-		s.err = fmt.Errorf("logout failed: %w", err)
+func (s *Saga) Logout(ctx context.Context) *Saga {
+	if s.err != nil {
 		return s
 	}
 
-	f(res.Msg)
+	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
+	if _, err := client.Logout(ctx, &connect.Request[v1.LogoutRequest]{
+		Msg: &v1.LogoutRequest{},
+	}); err != nil {
+		s.err = fmt.Errorf("logout failed: %w", err)
+		return s
+	}
 
 	return s
 }
 
 func (s *Saga) RefreshToken(ctx context.Context, f func(res *v1.RefreshTokenResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	res, err := client.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
 		Msg: &v1.RefreshTokenRequest{},
@@ -211,6 +230,39 @@ func (s *Saga) RefreshToken(ctx context.Context, f func(res *v1.RefreshTokenResp
 
 	f(res.Msg)
 	s.auth.accessToken = res.Msg.GetAccessToken()
+
+	return s
+}
+
+func (s *Saga) CreateRoutine(ctx context.Context, f func(res *v1.CreateRoutineResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
+	exercises, err := orm.Exercises().All(ctx, s.db)
+	if err != nil {
+		s.err = fmt.Errorf("failed to load exercises: %w", err)
+		return s
+	}
+
+	exerciseIDs := make([]string, 0, len(exercises))
+	for _, e := range exercises {
+		exerciseIDs = append(exerciseIDs, e.ID)
+	}
+
+	client := apiv1connect.NewRoutineServiceClient(s.client(), s.baseURL)
+	res, err := client.CreateRoutine(ctx, &connect.Request[v1.CreateRoutineRequest]{
+		Msg: &v1.CreateRoutineRequest{
+			Name:        gofakeit.RandomString([]string{"Upper Body", "Lower Body", "Full Body"}),
+			ExerciseIds: exerciseIDs,
+		},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("create routine failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
 
 	return s
 }

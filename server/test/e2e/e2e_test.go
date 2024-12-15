@@ -42,8 +42,8 @@ func TestE2E(t *testing.T) {
 
 	saga := newSaga(db, cfg)
 	saga.
-		Signup(ctx, func(_ *v1.SignupResponse) {}).
-		VerifyEmail(ctx, func(_ *v1.VerifyEmailResponse) {}).
+		Signup(ctx).
+		VerifyEmail(ctx).
 		Login(ctx, func(res *v1.LoginResponse) {
 			require.NotEmpty(t, res.GetAccessToken())
 		}).
@@ -53,10 +53,17 @@ func TestE2E(t *testing.T) {
 		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
 			require.NotEmpty(t, res.GetId())
 		}).
-		ListExercises(ctx, func(res *v1.ListExercisesResponse) {
-			require.Len(t, res.GetExercises(), 1)
+		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
+			require.NotEmpty(t, res.GetId())
 		}).
-		Logout(ctx, func(_ *v1.LogoutResponse) {}).
+		ListExercises(ctx, func(res *v1.ListExercisesResponse) {
+			require.Len(t, res.GetExercises(), 2)
+			require.Empty(t, res.GetPagination().GetNextPageToken())
+		}).
+		CreateRoutine(ctx, func(res *v1.CreateRoutineResponse) {
+			require.NotEmpty(t, res.GetId())
+		}).
+		Logout(ctx).
 		Error(func(err error) {
 			require.NoError(t, err)
 		})
