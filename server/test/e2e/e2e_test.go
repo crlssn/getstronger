@@ -26,7 +26,7 @@ import (
 
 func TestE2E(t *testing.T) {
 	t.Parallel()
-	if err := godotenv.Load("../../../.env"); err != nil {
+	if err := godotenv.Load(); err != nil {
 		require.NoError(t, err)
 	}
 
