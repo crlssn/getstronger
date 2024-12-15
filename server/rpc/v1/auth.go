@@ -115,7 +115,10 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidCredentials)
 	}
 
-	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByEmail(req.Msg.GetEmail()))
+	auth, err := h.repo.GetAuth(ctx,
+		repo.GetAuthByEmail(req.Msg.GetEmail()),
+		repo.GetAuthWithUser(),
+	)
 	if err != nil {
 		log.Error("fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -126,7 +129,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 		return nil, rpc.Error(connect.CodeFailedPrecondition, v1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	}
 
-	accessToken, err := h.jwt.CreateToken(auth.ID, jwt.TokenTypeAccess)
+	accessToken, err := h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeAccess)
 	if err != nil {
 		log.Error("token generation failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -134,7 +137,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 
 	refreshToken := auth.RefreshToken.String
 	if !auth.RefreshToken.Valid {
-		refreshToken, err = h.jwt.CreateToken(auth.ID, jwt.TokenTypeRefresh)
+		refreshToken, err = h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeRefresh)
 		if err != nil {
 			log.Error("token generation failed", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)

@@ -104,6 +104,8 @@ func (s *Saga) Signup(ctx context.Context, f func(res *v1.SignupResponse)) *Saga
 }
 
 func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
+	spew.Dump("login")
+	spew.Dump(orm.Users().All(ctx, s.db))
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	res, err := client.Login(ctx, &connect.Request[v1.LoginRequest]{
 		Msg: &v1.LoginRequest{
@@ -123,7 +125,9 @@ func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
 }
 
 func (s *Saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExerciseResponse)) *Saga {
+	spew.Dump("CreateExercise")
 	spew.Dump(s.auth.accessToken)
+	spew.Dump(orm.Users().All(ctx, s.db))
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
 	res, err := client.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
 		Msg: &v1.CreateExerciseRequest{
