@@ -7,18 +7,16 @@ const navTabs = useNavTabs()
 </script>
 
 <template>
-  <div class="bg-white">
-    <nav class="flex">
-      <RouterLink
-        v-for="tab in navTabs.tabs"
-        :key="tab.name"
-        :to="tab.href"
-        :class="route.fullPath === tab.href ? 'active' : ''"
-      >
-        {{ tab.name }}
-      </RouterLink>
-    </nav>
-  </div>
+  <nav class="flex bg-white">
+    <RouterLink
+      v-for="tab in navTabs.tabs"
+      :key="tab.name"
+      :to="tab.href"
+      :class="route.fullPath === tab.href ? 'active' : ''"
+    >
+      {{ tab.name }}
+    </RouterLink>
+  </nav>
 </template>
 
 <style scoped>
