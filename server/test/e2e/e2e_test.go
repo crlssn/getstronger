@@ -79,7 +79,7 @@ func options() []fx.Option {
 		fx.Provide(
 			zap.NewDevelopment,
 			repo.New,
-			email.New,
+			email.NewNoop,
 			trace.New,
 			config.New,
 			stream.New,

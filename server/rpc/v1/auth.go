@@ -29,7 +29,7 @@ var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 type authHandler struct {
 	jwt     *jwt.Manager
 	repo    repo.Repo
-	email   *email.Email
+	email   email.Email
 	config  *config.Config
 	cookies *cookies.Cookies
 }
@@ -39,7 +39,7 @@ type AuthHandlerParams struct {
 
 	JWT     *jwt.Manager
 	Repo    repo.Repo
-	Email   *email.Email
+	Email   email.Email
 	Config  *config.Config
 	Cookies *cookies.Cookies
 }
