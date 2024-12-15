@@ -11,6 +11,3 @@
 /.env
 /web/.env
 /database/seed/*.sql
-/pprof/
-/server/test/e2e/.env
-*.prof
