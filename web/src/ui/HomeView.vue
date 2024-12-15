@@ -18,14 +18,17 @@ onMounted(async () => {
   await fetchFeedItems()
   navTabs.set([
     { name: 'Following', href: '/home' },
-    { name: 'Explore', href: '/home?explore' }
+    { name: 'Explore', href: '/home?explore' },
   ])
 })
 
-watch(() => route.query.explore, () => {
-  feedItems.value = []
-  fetchFeedItems()
-})
+watch(
+  () => route.query.explore,
+  () => {
+    feedItems.value = []
+    fetchFeedItems()
+  },
+)
 
 const fetchFeedItems = async () => {
   const followedOnly = route.query.explore !== null

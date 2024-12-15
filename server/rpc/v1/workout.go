@@ -129,7 +129,6 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		repo.ListWorkoutsWithSets(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()...),
-		repo.ListWorkoutsWithComments(),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {

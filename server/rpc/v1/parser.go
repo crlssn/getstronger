@@ -65,7 +65,7 @@ func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.Exer
 	return workouts, nil
 }
 
-func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users orm.UserSlice) (*apiv1.Workout, error) {
+func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, commentUsers orm.UserSlice) (*apiv1.Workout, error) {
 	var exerciseOrder []string
 	mapExerciseSets := make(map[string][]*apiv1.Set)
 
@@ -100,20 +100,12 @@ func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users o
 		})
 	}
 
-	var user *apiv1.User
-	for _, u := range users {
-		if u.ID == workout.UserID {
-			user = parseUserToPB(u, false)
-			break
-		}
-	}
-
 	return &apiv1.Workout{
 		Id:           workout.ID,
 		Name:         workout.Name,
-		User:         user,
+		User:         parseUserToPB(workout.R.User, false),
 		ExerciseSets: exerciseSets,
-		Comments:     parseWorkoutCommentSliceToPB(workout.R.WorkoutComments, users),
+		Comments:     parseWorkoutCommentSliceToPB(workout.R.WorkoutComments, commentUsers),
 		StartedAt:    timestamppb.New(workout.CreatedAt),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
 	}, nil
@@ -331,10 +323,10 @@ func parseNotificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *ap
 	}
 }
 
-func parseFeedItemsToPB(workouts orm.WorkoutSlice, users orm.UserSlice, exercises orm.ExerciseSlice) ([]*apiv1.FeedItem, error) {
+func parseFeedItemsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice) ([]*apiv1.FeedItem, error) {
 	items := make([]*apiv1.FeedItem, 0, len(workouts))
 	for _, workout := range workouts {
-		w, err := parseWorkoutToPB(workout, exercises, users)
+		w, err := parseWorkoutToPB(workout, exercises, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse workout: %w", err)
 		}
