@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/bufbuild/protovalidate-go"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -26,9 +25,6 @@ import (
 
 func TestE2E(t *testing.T) {
 	t.Parallel()
-	if err := godotenv.Load(); err != nil {
-		require.NoError(t, err)
-	}
 
 	var db *sql.DB
 	var cfg *config.Config
@@ -81,10 +77,20 @@ func options() []fx.Option {
 			repo.New,
 			email.NewNoop,
 			trace.New,
-			config.New,
 			stream.New,
 			cookies.New,
 			protovalidate.New,
+			func() *config.Config {
+				return &config.Config{
+					DB:  config.DB{},
+					JWT: config.JWT{},
+					Server: config.Server{
+						Port:           "8081",
+						AllowedOrigins: []string{"http://localhost"},
+						CookieDomain:   ".localhost",
+					},
+				}
+			},
 		),
 	}
 }

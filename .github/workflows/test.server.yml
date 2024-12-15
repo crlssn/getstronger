@@ -34,15 +34,6 @@ jobs:
       - name: Run golangci-lint
         run: golangci-lint run ./...
 
-      - name: Create env file
-        working-directory: ./server/test/e2e
-        run: |
-          {
-            echo CORS_ALLOWED_ORIGIN=http://localhost
-            echo SERVER_PORT=8081
-            echo COOKIE_DOMAIN=.localhost
-          } >> .env
-
       - name: Run tests with coverage
         run: go test ./... -coverprofile=coverage.out
 
