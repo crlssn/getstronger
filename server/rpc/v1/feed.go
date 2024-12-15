@@ -28,25 +28,30 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	followers, err := h.repo.ListFollowers(ctx, userID)
-	if err != nil {
-		log.Error("failed to list followers", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	followerIDs := make([]string, 0, len(followers))
-	for _, follower := range followers {
-		followerIDs = append(followerIDs, follower.ID)
-	}
-
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	workouts, err := h.repo.ListWorkouts(ctx,
+	opts := []repo.ListWorkoutsOpt{
 		repo.ListWorkoutsWithSets(),
-		repo.ListWorkoutsWithLimit(limit+1),
-		repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)...),
+		repo.ListWorkoutsWithLimit(limit + 1),
 		repo.ListWorkoutsWithComments(),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
-	)
+	}
+
+	if req.Msg.GetFollowedOnly() {
+		followers, err := h.repo.ListFollowers(ctx, userID)
+		if err != nil {
+			log.Error("failed to list followers", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
+
+		followerIDs := make([]string, 0, len(followers))
+		for _, follower := range followers {
+			followerIDs = append(followerIDs, follower.ID)
+		}
+
+		opts = append(opts, repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)...))
+	}
+
+	workouts, err := h.repo.ListWorkouts(ctx, opts...)
 	if err != nil {
 		log.Error("failed to list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

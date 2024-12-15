@@ -15,7 +15,7 @@ service FeedService {
 }
 
 message ListFeedItemsRequest {
-  bool all = 1;
+  bool followed_only = 1;
   PaginationRequest pagination = 2 [(buf.validate.field).required = true];
 }
 message ListFeedItemsResponse {

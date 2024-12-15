@@ -16,14 +16,19 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/feed_service.proto.
  */
 export const file_api_v1_feed_service: GenFile = /*@__PURE__*/
-  fileDesc("ChlhcGkvdjEvZmVlZF9zZXJ2aWNlLnByb3RvEgZhcGkudjEiTQoUTGlzdEZlZWRJdGVtc1JlcXVlc3QSNQoKcGFnaW5hdGlvbhgBIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImgKFUxpc3RGZWVkSXRlbXNSZXNwb25zZRIfCgVpdGVtcxgBIAMoCzIQLmFwaS52MS5GZWVkSXRlbRIuCgpwYWdpbmF0aW9uGAIgASgLMhouYXBpLnYxLlBhZ2luYXRpb25SZXNwb25zZSI2CghGZWVkSXRlbRIiCgd3b3Jrb3V0GAEgASgLMg8uYXBpLnYxLldvcmtvdXRIAEIGCgR0eXBlMmEKC0ZlZWRTZXJ2aWNlElIKDUxpc3RGZWVkSXRlbXMSHC5hcGkudjEuTGlzdEZlZWRJdGVtc1JlcXVlc3QaHS5hcGkudjEuTGlzdEZlZWRJdGVtc1Jlc3BvbnNlIgSItRgBQpQBCgpjb20uYXBpLnYxQhBGZWVkU2VydmljZVByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9wa2cvcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
+  fileDesc("ChlhcGkvdjEvZmVlZF9zZXJ2aWNlLnByb3RvEgZhcGkudjEiZAoUTGlzdEZlZWRJdGVtc1JlcXVlc3QSFQoNZm9sbG93ZWRfb25seRgBIAEoCBI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiaAoVTGlzdEZlZWRJdGVtc1Jlc3BvbnNlEh8KBWl0ZW1zGAEgAygLMhAuYXBpLnYxLkZlZWRJdGVtEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIjYKCEZlZWRJdGVtEiIKB3dvcmtvdXQYASABKAsyDy5hcGkudjEuV29ya291dEgAQgYKBHR5cGUyYQoLRmVlZFNlcnZpY2USUgoNTGlzdEZlZWRJdGVtcxIcLmFwaS52MS5MaXN0RmVlZEl0ZW1zUmVxdWVzdBodLmFwaS52MS5MaXN0RmVlZEl0ZW1zUmVzcG9uc2UiBIi1GAFClAEKCmNvbS5hcGkudjFCEEZlZWRTZXJ2aWNlUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL3BrZy9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ListFeedItemsRequest
  */
 export type ListFeedItemsRequest = Message<"api.v1.ListFeedItemsRequest"> & {
   /**
-   * @generated from field: api.v1.PaginationRequest pagination = 1;
+   * @generated from field: bool followed_only = 1;
+   */
+  followedOnly: boolean;
+
+  /**
+   * @generated from field: api.v1.PaginationRequest pagination = 2;
    */
   pagination?: PaginationRequest;
 };
