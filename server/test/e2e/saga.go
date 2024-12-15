@@ -18,7 +18,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 )
 
-type Saga struct {
+type saga struct {
 	db      *sql.DB
 	err     error
 	auth    *auth
@@ -32,8 +32,8 @@ type auth struct {
 	refreshTokenCookie string
 }
 
-func newSaga(db *sql.DB, config *config.Config) *Saga {
-	return &Saga{
+func newSaga(db *sql.DB, config *config.Config) *saga {
+	return &saga{
 		db:      db,
 		baseURL: fmt.Sprintf("http://localhost:%s", config.Server.Port),
 		auth: &auth{
@@ -43,7 +43,7 @@ func newSaga(db *sql.DB, config *config.Config) *Saga {
 	}
 }
 
-func (s *Saga) client() *http.Client {
+func (s *saga) client() *http.Client {
 	if s.auth.accessToken == "" {
 		return http.DefaultClient
 	}
@@ -79,7 +79,7 @@ func (a *clientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return a.roundTripper.RoundTrip(r) //nolint:wrapcheck
 }
 
-func (s *Saga) Signup(ctx context.Context) *Saga {
+func (s *saga) Signup(ctx context.Context) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -101,7 +101,7 @@ func (s *Saga) Signup(ctx context.Context) *Saga {
 	return s
 }
 
-func (s *Saga) VerifyEmail(ctx context.Context) *Saga {
+func (s *saga) VerifyEmail(ctx context.Context) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -125,7 +125,7 @@ func (s *Saga) VerifyEmail(ctx context.Context) *Saga {
 	return s
 }
 
-func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
+func (s *saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -149,7 +149,7 @@ func (s *Saga) Login(ctx context.Context, f func(res *v1.LoginResponse)) *Saga {
 	return s
 }
 
-func (s *Saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExerciseResponse)) *Saga {
+func (s *saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExerciseResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -171,7 +171,7 @@ func (s *Saga) CreateExercise(ctx context.Context, f func(res *v1.CreateExercise
 	return s
 }
 
-func (s *Saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesResponse)) *Saga {
+func (s *saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -197,11 +197,11 @@ func (s *Saga) ListExercises(ctx context.Context, f func(res *v1.ListExercisesRe
 	return s
 }
 
-func (s *Saga) Error(f func(err error)) {
+func (s *saga) Error(f func(err error)) {
 	f(s.err)
 }
 
-func (s *Saga) Logout(ctx context.Context) *Saga {
+func (s *saga) Logout(ctx context.Context) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -217,7 +217,7 @@ func (s *Saga) Logout(ctx context.Context) *Saga {
 	return s
 }
 
-func (s *Saga) RefreshToken(ctx context.Context, f func(res *v1.RefreshTokenResponse)) *Saga {
+func (s *saga) RefreshToken(ctx context.Context, f func(res *v1.RefreshTokenResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -237,7 +237,7 @@ func (s *Saga) RefreshToken(ctx context.Context, f func(res *v1.RefreshTokenResp
 	return s
 }
 
-func (s *Saga) CreateRoutine(ctx context.Context, f func(res *v1.CreateRoutineResponse)) *Saga {
+func (s *saga) CreateRoutine(ctx context.Context, f func(res *v1.CreateRoutineResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -270,7 +270,7 @@ func (s *Saga) CreateRoutine(ctx context.Context, f func(res *v1.CreateRoutineRe
 	return s
 }
 
-func (s *Saga) CreateWorkout(ctx context.Context, f func(res *v1.CreateWorkoutResponse)) *Saga {
+func (s *saga) CreateWorkout(ctx context.Context, f func(res *v1.CreateWorkoutResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -313,7 +313,7 @@ func (s *Saga) CreateWorkout(ctx context.Context, f func(res *v1.CreateWorkoutRe
 	return s
 }
 
-func (s *Saga) ListRoutines(ctx context.Context, f func(res *v1.ListRoutinesResponse)) *Saga {
+func (s *saga) ListRoutines(ctx context.Context, f func(res *v1.ListRoutinesResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -338,7 +338,7 @@ func (s *Saga) ListRoutines(ctx context.Context, f func(res *v1.ListRoutinesResp
 	return s
 }
 
-func (s *Saga) ListWorkouts(ctx context.Context, f func(res *v1.ListWorkoutsResponse)) *Saga {
+func (s *saga) ListWorkouts(ctx context.Context, f func(res *v1.ListWorkoutsResponse)) *saga {
 	if s.err != nil {
 		return s
 	}
@@ -369,15 +369,21 @@ func (s *Saga) ListWorkouts(ctx context.Context, f func(res *v1.ListWorkoutsResp
 	return s
 }
 
-func (s *Saga) SearchUsers(ctx context.Context, f func(res *v1.SearchUsersResponse)) *Saga {
+func (s *saga) SearchUsers(ctx context.Context, f func(res *v1.SearchUsersResponse)) *saga {
 	if s.err != nil {
+		return s
+	}
+
+	user, err := orm.Users().One(ctx, s.db)
+	if err != nil {
+		s.err = fmt.Errorf("failed to load user: %w", err)
 		return s
 	}
 
 	client := apiv1connect.NewUserServiceClient(s.client(), s.baseURL)
 	res, err := client.SearchUsers(ctx, &connect.Request[v1.SearchUsersRequest]{
 		Msg: &v1.SearchUsersRequest{
-			Query: "",
+			Query: user.FirstName,
 			Pagination: &v1.PaginationRequest{
 				PageLimit: 100, //nolint:mnd
 				PageToken: nil,

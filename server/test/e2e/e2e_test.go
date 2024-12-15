@@ -40,8 +40,8 @@ func TestE2E(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	saga := newSaga(db, cfg)
-	saga.
+	s := newSaga(db, cfg)
+	s.
 		Signup(ctx).
 		VerifyEmail(ctx).
 		Login(ctx, func(res *v1.LoginResponse) {
