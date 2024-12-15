@@ -5,9 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/crlssn/getstronger/server/pkg/config"
 	"github.com/crlssn/getstronger/server/pkg/orm"
@@ -259,6 +262,130 @@ func (s *Saga) CreateRoutine(ctx context.Context, f func(res *v1.CreateRoutineRe
 	})
 	if err != nil {
 		s.err = fmt.Errorf("create routine failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
+
+	return s
+}
+
+func (s *Saga) CreateWorkout(ctx context.Context, f func(res *v1.CreateWorkoutResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
+	routine, err := orm.Routines(qm.Load(orm.RoutineRels.Exercises)).One(ctx, s.db)
+	if err != nil {
+		s.err = fmt.Errorf("failed to load routines: %w", err)
+		return s
+	}
+
+	exerciseSets := make([]*v1.ExerciseSets, 0, len(routine.R.Exercises))
+	for _, e := range routine.R.Exercises {
+		exerciseSets = append(exerciseSets, &v1.ExerciseSets{
+			Exercise: &v1.Exercise{Id: e.ID},
+			Sets: []*v1.Set{
+				{
+					Reps:   10,  //nolint:mnd
+					Weight: 100, //nolint:mnd
+				},
+			},
+		})
+	}
+
+	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
+	res, err := client.CreateWorkout(ctx, &connect.Request[v1.CreateWorkoutRequest]{
+		Msg: &v1.CreateWorkoutRequest{
+			RoutineId:    routine.ID,
+			ExerciseSets: exerciseSets,
+			StartedAt:    timestamppb.New(time.Now().Add(-time.Hour).UTC()),
+			FinishedAt:   timestamppb.New(time.Now().UTC()),
+		},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("create workout failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
+
+	return s
+}
+
+func (s *Saga) ListRoutines(ctx context.Context, f func(res *v1.ListRoutinesResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
+	client := apiv1connect.NewRoutineServiceClient(s.client(), s.baseURL)
+	res, err := client.ListRoutines(ctx, &connect.Request[v1.ListRoutinesRequest]{
+		Msg: &v1.ListRoutinesRequest{
+			Name: "",
+			Pagination: &v1.PaginationRequest{
+				PageLimit: 100, //nolint:mnd
+				PageToken: nil,
+			},
+		},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("list routines failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
+
+	return s
+}
+
+func (s *Saga) ListWorkouts(ctx context.Context, f func(res *v1.ListWorkoutsResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
+	user, err := orm.Users().One(ctx, s.db)
+	if err != nil {
+		s.err = fmt.Errorf("failed to load user: %w", err)
+		return s
+	}
+
+	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
+	res, err := client.ListWorkouts(ctx, &connect.Request[v1.ListWorkoutsRequest]{
+		Msg: &v1.ListWorkoutsRequest{
+			UserIds: []string{user.ID},
+			Pagination: &v1.PaginationRequest{
+				PageLimit: 100, //nolint:mnd
+				PageToken: nil,
+			},
+		},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("list workouts failed: %w", err)
+		return s
+	}
+
+	f(res.Msg)
+
+	return s
+}
+
+func (s *Saga) SearchUsers(ctx context.Context, f func(res *v1.SearchUsersResponse)) *Saga {
+	if s.err != nil {
+		return s
+	}
+
+	client := apiv1connect.NewUserServiceClient(s.client(), s.baseURL)
+	res, err := client.SearchUsers(ctx, &connect.Request[v1.SearchUsersRequest]{
+		Msg: &v1.SearchUsersRequest{
+			Query: "",
+			Pagination: &v1.PaginationRequest{
+				PageLimit: 100, //nolint:mnd
+				PageToken: nil,
+			},
+		},
+	})
+	if err != nil {
+		s.err = fmt.Errorf("search users failed: %w", err)
 		return s
 	}
 

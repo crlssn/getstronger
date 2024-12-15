@@ -50,6 +50,10 @@ func TestE2E(t *testing.T) {
 		RefreshToken(ctx, func(res *v1.RefreshTokenResponse) {
 			require.NotEmpty(t, res.GetAccessToken())
 		}).
+		SearchUsers(ctx, func(res *v1.SearchUsersResponse) {
+			require.Len(t, res.GetUsers(), 1)
+			require.Empty(t, res.GetPagination().GetNextPageToken())
+		}).
 		CreateExercise(ctx, func(res *v1.CreateExerciseResponse) {
 			require.NotEmpty(t, res.GetId())
 		}).
@@ -62,6 +66,17 @@ func TestE2E(t *testing.T) {
 		}).
 		CreateRoutine(ctx, func(res *v1.CreateRoutineResponse) {
 			require.NotEmpty(t, res.GetId())
+		}).
+		ListRoutines(ctx, func(res *v1.ListRoutinesResponse) {
+			require.Len(t, res.GetRoutines(), 1)
+			require.Empty(t, res.GetPagination().GetNextPageToken())
+		}).
+		CreateWorkout(ctx, func(res *v1.CreateWorkoutResponse) {
+			require.NotEmpty(t, res.GetWorkoutId())
+		}).
+		ListWorkouts(ctx, func(res *v1.ListWorkoutsResponse) {
+			require.Len(t, res.GetWorkouts(), 1)
+			require.Empty(t, res.GetPagination().GetNextPageToken())
 		}).
 		Logout(ctx).
 		Error(func(err error) {
