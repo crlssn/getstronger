@@ -227,12 +227,9 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err = h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
+	h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
 		CommentID: comment.ID,
-	}); err != nil {
-		log.Error("failed to publish event", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
+	})
 
 	log.Info("workout comment posted")
 	return &connect.Response[v1.PostCommentResponse]{
