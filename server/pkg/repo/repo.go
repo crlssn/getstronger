@@ -824,6 +824,12 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 			return fmt.Errorf("workout comments delete: %w", err)
 		}
 
+		if _, err = orm.Notifications(
+			qm.Where("payload ->> 'workoutId' = ?", workout.ID),
+		).DeleteAll(ctx, tx.GetTx()); err != nil {
+			return fmt.Errorf("notifications delete: %w", err)
+		}
+
 		if _, err = workout.Delete(ctx, tx.GetTx()); err != nil {
 			return fmt.Errorf("workout delete: %w", err)
 		}
