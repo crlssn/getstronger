@@ -13,11 +13,13 @@ const props = defineProps<{
 }>()
 
 const followers = ref([] as User[])
+const isMounted = ref(false)
 const pageTitleStore = usePageTitleStore()
 
 onMounted(async () => {
   await fetchFollowers()
   pageTitleStore.setPageTitle(props.pageTitle)
+  isMounted.value = true
 })
 
 const fetchFollowers = async () => {
@@ -29,11 +31,11 @@ const fetchFollowers = async () => {
 </script>
 
 <template>
-  <AppList>
+  <AppList v-if="isMounted">
+    <AppListItem v-if="followers.length === 0">Nothing here yet...</AppListItem>
     <AppListItemLink v-for="follower in followers" :key="follower.id" :to="`/users/${follower.id}`">
       {{ follower.firstName }} {{ follower.lastName }}
     </AppListItemLink>
-    <AppListItem v-if="followers.length === 0"> Nothing here yet... </AppListItem>
   </AppList>
 </template>
 

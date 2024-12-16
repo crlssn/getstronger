@@ -15,12 +15,14 @@ const props = defineProps<{
 }>()
 
 const route = useRoute()
+const isMounted = ref(false)
 const pageTitleStore = usePageTitleStore()
 const personalBests = ref([] as PersonalBest[])
 
 onMounted(async () => {
   await fetchPersonalBests()
   pageTitleStore.setPageTitle(props.pageTitle)
+  isMounted.value = true
 })
 
 const fetchPersonalBests = async () => {
@@ -32,7 +34,8 @@ const fetchPersonalBests = async () => {
 </script>
 
 <template>
-  <AppList>
+  <AppList v-if="isMounted">
+    <AppListItem v-if="personalBests.length === 0">Nothing here yet...</AppListItem>
     <AppListItemLink
       v-for="pb in personalBests"
       :key="pb.exercise?.id"
@@ -49,7 +52,6 @@ const fetchPersonalBests = async () => {
       </div>
       {{ pb.set?.weight }} kg x {{ pb.set?.reps }}
     </AppListItemLink>
-    <AppListItem v-if="personalBests.length === 0"> Nothing here yet...</AppListItem>
   </AppList>
 </template>
 

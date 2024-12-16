@@ -15,12 +15,14 @@ const props = defineProps<{
 }>()
 
 const workouts = ref([] as Workout[])
+const isMounted = ref(false)
 const pageTitleStore = usePageTitleStore()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   await fetchWorkouts()
   pageTitleStore.setPageTitle(props.pageTitle)
+  isMounted.value = true
 })
 
 const fetchWorkouts = async () => {
@@ -36,7 +38,7 @@ const fetchWorkouts = async () => {
 <template>
   <CardWorkout v-for="workout in workouts" :key="workout.id" compact :workout="workout" />
   <div v-if="hasMorePages" v-infinite-scroll="fetchWorkouts" />
-  <AppList v-if="workouts.length === 0">
+  <AppList v-if="isMounted && workouts.length === 0">
     <AppListItem> Nothing here yet...</AppListItem>
   </AppList>
 </template>

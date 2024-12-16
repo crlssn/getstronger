@@ -88,8 +88,6 @@ const onSubmit = async () => {
       </AppListItem>
     </AppList>
 
-    <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
-      Update Routine
-    </AppButton>
+    <AppButton type="submit" colour="primary" class="mb-4">Update Routine</AppButton>
   </form>
 </template>

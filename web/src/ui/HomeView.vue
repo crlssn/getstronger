@@ -15,6 +15,7 @@ const navTabs = useNavTabs()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 const feedItems = ref([] as FeedItem[])
+const isMounted = ref(false)
 
 onMounted(async () => {
   await fetchFeedItems()
@@ -22,13 +23,16 @@ onMounted(async () => {
     { name: 'Following', href: '/home' },
     { name: 'Explore', href: '/home?explore' },
   ])
+  isMounted.value = true
 })
 
 watch(
   () => route.query.explore,
-  () => {
+  async () => {
+    isMounted.value = false
     feedItems.value = []
-    fetchFeedItems()
+    await fetchFeedItems()
+    isMounted.value = true
   },
 )
 
@@ -43,7 +47,7 @@ const fetchFeedItems = async () => {
 </script>
 
 <template>
-  <AppList v-if="feedItems.length === 0">
+  <AppList v-if="isMounted && feedItems.length === 0">
     <AppListItem>Your workouts and the workouts of those you follow will appear here</AppListItem>
   </AppList>
   <template v-for="item in feedItems" :key="item.type.value?.id">
