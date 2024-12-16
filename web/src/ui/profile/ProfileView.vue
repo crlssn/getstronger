@@ -13,7 +13,6 @@ onMounted(async () => {
 })
 
 const fetchUser = async () => {
-  console.log('profile: fetching user')
   const res = await getUser(useAuthStore().userId)
   if (!res) return
 
