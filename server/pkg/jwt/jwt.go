@@ -68,7 +68,7 @@ func (tt TokenType) String() string {
 func (tt TokenType) ExpiryTime() time.Duration {
 	switch tt {
 	case TokenTypeAccess:
-		return expiryTimeAccess
+		return ExpiryTimeAccess
 	case TokenTypeRefresh:
 		return ExpiryTimeRefresh
 	default:
@@ -82,7 +82,7 @@ const (
 )
 
 const (
-	expiryTimeAccess  = 15 * time.Minute
+	ExpiryTimeAccess  = 15 * time.Minute
 	ExpiryTimeRefresh = 30 * 24 * time.Hour
 )
 
