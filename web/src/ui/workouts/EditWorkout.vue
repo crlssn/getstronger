@@ -170,14 +170,13 @@ const toDateTime = (timestamp: Timestamp | undefined) => {
       />
     </AppList>
 
-    <AppButton type="submit" colour="primary" container-class="px-4 pb-4">
+    <AppButton type="submit" colour="primary">
       Update Workout
     </AppButton>
     <AppButton
       type="link"
       :to="`/workouts/${workout?.id}`"
       colour="gray"
-      container-class="px-4 pb-4"
     >
       Cancel Update
     </AppButton>

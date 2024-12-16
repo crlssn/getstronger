@@ -84,6 +84,6 @@ const onCreateRoutine = async () => {
       </AppListItem>
     </AppList>
 
-    <AppButton type="submit" colour="primary" container-class="px-4 pb-4"> Save Routine</AppButton>
+    <AppButton type="submit" colour="primary">Save Routine</AppButton>
   </form>
 </template>

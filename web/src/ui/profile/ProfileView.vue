@@ -26,7 +26,7 @@ const fetchUser = async () => {
     <h1>{{ user?.firstName }} {{ user?.lastName }}</h1>
     <p>{{ user?.email }}</p>
   </div>
-  <AppButton type="link" to="/logout" colour="red" container-class="px-4 pb-4"> Logout </AppButton>
+  <AppButton type="link" to="/logout" colour="red">Logout</AppButton>
 </template>
 
 <style scoped>
