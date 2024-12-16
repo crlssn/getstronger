@@ -97,14 +97,15 @@ func (s *notificationSuite) TestListNotifications() {
 				},
 			},
 			init: func(test test) {
-				//workout := s.testFactory.NewWorkout(testdb.WorkoutUserID(user.ID))
-				//s.testFactory.NewWorkoutComment(testdb.WorkoutCommentWorkoutID(workout.ID))
-
 				for _, n := range test.expected.res.Msg.GetNotifications() {
 					workout := s.testFactory.NewWorkout(
 						testdb.WorkoutID(n.GetWorkoutComment().GetWorkout().GetId()),
 						testdb.WorkoutName(n.GetWorkoutComment().GetWorkout().GetName()),
-						testdb.WorkoutUserID(user.ID),
+						testdb.WorkoutUserID(s.testFactory.NewUser(
+							testdb.UserID(n.GetWorkoutComment().GetWorkout().GetUser().GetId()),
+							testdb.UserLastName(n.GetWorkoutComment().GetWorkout().GetUser().GetLastName()),
+							testdb.UserFirstName(n.GetWorkoutComment().GetWorkout().GetUser().GetFirstName()),
+						).ID),
 					)
 					comment := s.testFactory.NewWorkoutComment(
 						testdb.WorkoutCommentUserID(s.testFactory.NewUser(
@@ -196,7 +197,7 @@ func (s *notificationSuite) TestListNotifications() {
 
 			s.Require().Equal(expectedComment.GetWorkout().GetId(), actualComment.GetWorkout().GetId())
 			s.Require().Equal(expectedComment.GetWorkout().GetName(), actualComment.GetWorkout().GetName())
-			//s.Require().Equal(expectedComment.GetWorkout().GetUser().GetId(), actualComment.GetWorkout().GetUser().GetId())
+			s.Require().Equal(expectedComment.GetWorkout().GetUser().GetId(), actualComment.GetWorkout().GetUser().GetId())
 			//s.Require().Equal(expectedComment.GetWorkout().GetUser().GetLastName(), actualComment.GetWorkout().GetUser().GetLastName())
 			//s.Require().Equal(expectedComment.GetWorkout().GetUser().GetFirstName(), actualComment.GetWorkout().GetUser().GetFirstName())
 		}
