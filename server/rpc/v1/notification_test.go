@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"context"
@@ -18,6 +18,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/test/testdb"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	rpc "github.com/crlssn/getstronger/server/rpc/v1"
 )
 
 type notificationSuite struct {
@@ -38,7 +39,7 @@ func (s *notificationSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = testdb.NewContainer(ctx)
 	s.testFactory = testdb.NewFactory(s.testContainer.DB)
-	s.handler = NewNotificationHandler(repo.New(s.testContainer.DB), nil)
+	s.handler = rpc.NewNotificationHandler(repo.New(s.testContainer.DB), nil)
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
