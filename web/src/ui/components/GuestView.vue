@@ -9,7 +9,7 @@ import AppAlert from '@/ui/components/AppAlert.vue'
       <p><span class="font-semibold">Get</span><span class="font-bold">Stronger</span></p>
     </div>
   </nav>
-  <AppAlert class="fixed top-16 left-0 right-0" />
+  <AppAlert fixed />
   <main>
     <RouterView />
   </main>
