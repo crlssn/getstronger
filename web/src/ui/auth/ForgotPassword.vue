@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { resetRequest } from '@/utils/request'
 import { resetPassword } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { type ResetPasswordRequest } from '@/proto/api/v1/auth_service_pb'
 import { useAlertStore } from '@/stores/alerts.ts'
 
