@@ -21,19 +21,15 @@ const fetchUser = async () => {
 </script>
 
 <template>
-  <div class="container" v-if="user">
+  <div class="text-center" v-if="user">
     <UserCircleIcon class="size-48 mx-auto text-gray-900" />
     <h1>{{ user.firstName }} {{ user.lastName }}</h1>
     <p>{{ user.email }}</p>
+    <AppButton type="link" to="/logout" colour="red" class="mt-4">Logout</AppButton>
   </div>
-  <AppButton type="link" to="/logout" colour="red">Logout</AppButton>
 </template>
 
 <style scoped>
-.container {
-  @apply text-center mb-4;
-}
-
 h1 {
   @apply text-xl font-medium;
 }

@@ -4,8 +4,10 @@ import { signup } from '@/http/requests'
 import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
+import { useAlertStore } from '@/stores/alerts.ts'
 
 const router = useRouter()
+const alertStore = useAlertStore()
 const req = ref<SignupRequest>({
   $typeName: 'api.v1.SignupRequest',
   email: '',
@@ -18,7 +20,8 @@ const req = ref<SignupRequest>({
 const onSignup = async () => {
   const res = await signup(req.value)
   if (!res) return
-  await router.push('/login?success')
+  alertStore.setSuccess('Please check your inbox to verify your email')
+  await router.push('/login')
 }
 </script>
 
@@ -92,7 +95,7 @@ const onSignup = async () => {
     </div>
 
     <div>
-      <AppButton type="submit" colour="primary"> Sign up</AppButton>
+      <AppButton type="submit" colour="primary">Sign up</AppButton>
     </div>
   </form>
 

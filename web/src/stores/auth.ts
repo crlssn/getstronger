@@ -1,6 +1,6 @@
 import type { AccessToken } from '@/types/auth.ts'
 
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
 
@@ -29,9 +29,9 @@ export const useAuthStore = defineStore(
       accessTokenRefreshInterval.value = interval
     }
 
-    const authorised = () => {
+    const authorised = computed(() => {
       return userId.value !== '' && accessToken.value !== ''
-    }
+    })
 
     return {
       accessToken,

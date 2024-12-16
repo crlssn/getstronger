@@ -3,11 +3,11 @@ import { ref } from 'vue'
 import { resetRequest } from '@/utils/request'
 import { resetPassword } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { type ResetPasswordRequest } from '@/proto/api/v1/auth_service_pb'
-import AppAlert from '@/ui/components/AppAlert.vue'
+import { useAlertStore } from '@/stores/alerts.ts'
 
-const router = useRouter()
+const alertStore = useAlertStore()
 
 const req = ref<ResetPasswordRequest>({
   $typeName: 'api.v1.ResetPasswordRequest',
@@ -18,16 +18,11 @@ const onSubmit = async () => {
   const res = await resetPassword(req.value)
   if (!res) return
   resetRequest(req)
-  await router.push('?success')
+  alertStore.setSuccessWithoutPageRefresh('Please check your inbox to reset your password')
 }
 </script>
 
 <template>
-  <AppAlert
-    v-if="useRoute().query.success === null"
-    type="success"
-    message="Please check your inbox to reset your password"
-  />
   <form class="space-y-6" method="POST" @submit.prevent="onSubmit">
     <div>
       <label for="email" class="block font-medium text-gray-900">Email address</label>
@@ -43,7 +38,7 @@ const onSubmit = async () => {
       </div>
     </div>
     <div>
-      <AppButton type="submit" colour="primary"> Reset Password</AppButton>
+      <AppButton type="submit" colour="primary">Reset Password</AppButton>
     </div>
   </form>
 
