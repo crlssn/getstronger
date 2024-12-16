@@ -109,9 +109,6 @@ func (s *notificationSuite) TestListNotifications() {
 					comment := s.testFactory.NewWorkoutComment(
 						testdb.WorkoutCommentUserID(s.testFactory.NewUser(
 							testdb.UserID(n.GetWorkoutComment().GetActor().GetId()),
-							testdb.UserAuthID(s.testFactory.NewAuth(
-								testdb.AuthEmail(n.GetWorkoutComment().GetActor().GetEmail()),
-							).ID),
 							testdb.UserLastName(n.GetWorkoutComment().GetActor().GetLastName()),
 							testdb.UserFirstName(n.GetWorkoutComment().GetActor().GetFirstName()),
 						).ID),
@@ -143,8 +140,6 @@ func (s *notificationSuite) TestListNotifications() {
 											Id:        uuid.NewString(),
 											FirstName: gofakeit.FirstName(),
 											LastName:  gofakeit.LastName(),
-											Email:     gofakeit.Email(),
-											Followed:  false,
 										},
 										Workout: &v1.Workout{
 											Id:   uuid.NewString(),
@@ -153,8 +148,6 @@ func (s *notificationSuite) TestListNotifications() {
 												Id:        uuid.NewString(),
 												FirstName: gofakeit.FirstName(),
 												LastName:  gofakeit.LastName(),
-												Email:     gofakeit.Email(),
-												Followed:  false,
 											},
 										},
 									},
@@ -189,29 +182,23 @@ func (s *notificationSuite) TestListNotifications() {
 
 			expectedActor := expectedNotification.GetUserFollowed().GetActor()
 			actualActor := actualNotification.GetUserFollowed().GetActor()
-			//
+
 			s.Require().Equal(expectedActor.GetId(), actualActor.GetId())
-			s.Require().Equal(expectedActor.GetEmail(), actualActor.GetEmail())
-			s.Require().Equal(expectedActor.GetFollowed(), actualActor.GetFollowed())
 			s.Require().Equal(expectedActor.GetLastName(), actualActor.GetLastName())
 			s.Require().Equal(expectedActor.GetFirstName(), actualActor.GetFirstName())
-			//
-			//expectedComment := expectedNotification.GetWorkoutComment()
-			//actualComment := actualNotification.GetWorkoutComment()
-			//
-			//s.Equal(expectedComment.GetActor().GetId(), actualComment.GetActor().GetId())
-			//s.Equal(expectedComment.GetActor().GetEmail(), actualComment.GetActor().GetEmail())
-			//s.Equal(expectedComment.GetActor().GetFollowed(), actualComment.GetActor().GetFollowed())
-			//s.Equal(expectedComment.GetActor().GetLastName(), actualComment.GetActor().GetLastName())
-			//s.Equal(expectedComment.GetActor().GetFirstName(), actualComment.GetActor().GetFirstName())
-			//
-			//s.Equal(expectedComment.GetWorkout().GetId(), actualComment.GetWorkout().GetId())
-			//s.Equal(expectedComment.GetWorkout().GetName(), actualComment.GetWorkout().GetName())
-			//s.Equal(expectedComment.GetWorkout().GetUser().GetId(), actualComment.GetWorkout().GetUser().GetId())
-			//s.Equal(expectedComment.GetWorkout().GetUser().GetEmail(), actualComment.GetWorkout().GetUser().GetEmail())
-			//s.Equal(expectedComment.GetWorkout().GetUser().GetFollowed(), actualComment.GetWorkout().GetUser().GetFollowed())
-			//s.Equal(expectedComment.GetWorkout().GetUser().GetLastName(), actualComment.GetWorkout().GetUser().GetLastName())
-			//s.Equal(expectedComment.GetWorkout().GetUser().GetFirstName(), actualComment.GetWorkout().GetUser().GetFirstName())
+
+			expectedComment := expectedNotification.GetWorkoutComment()
+			actualComment := actualNotification.GetWorkoutComment()
+
+			s.Require().Equal(expectedComment.GetActor().GetId(), actualComment.GetActor().GetId())
+			s.Require().Equal(expectedComment.GetActor().GetLastName(), actualComment.GetActor().GetLastName())
+			s.Require().Equal(expectedComment.GetActor().GetFirstName(), actualComment.GetActor().GetFirstName())
+
+			s.Require().Equal(expectedComment.GetWorkout().GetId(), actualComment.GetWorkout().GetId())
+			s.Require().Equal(expectedComment.GetWorkout().GetName(), actualComment.GetWorkout().GetName())
+			//s.Require().Equal(expectedComment.GetWorkout().GetUser().GetId(), actualComment.GetWorkout().GetUser().GetId())
+			//s.Require().Equal(expectedComment.GetWorkout().GetUser().GetLastName(), actualComment.GetWorkout().GetUser().GetLastName())
+			//s.Require().Equal(expectedComment.GetWorkout().GetUser().GetFirstName(), actualComment.GetWorkout().GetUser().GetFirstName())
 		}
 	}
 }
