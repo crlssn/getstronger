@@ -98,13 +98,10 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[v1.Fo
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err := h.bus.Publish(events.UserFollowed, &payloads.UserFollowed{
+	h.bus.Publish(events.UserFollowed, &payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
-	}); err != nil {
-		log.Error("failed to publish user followed event", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
+	})
 
 	return &connect.Response[v1.FollowUserResponse]{
 		Msg: &v1.FollowUserResponse{},

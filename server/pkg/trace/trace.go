@@ -40,13 +40,11 @@ func (m *Tracer) Trace(uri string) *Trace {
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
-			if err := m.bus.Publish(events.RequestTraced, &payloads.RequestTraced{
+			m.bus.Publish(events.RequestTraced, &payloads.RequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,
-			}); err != nil {
-				m.log.Error("publishing trace event failed", zap.Error(err))
-			}
+			})
 		},
 	}
 }

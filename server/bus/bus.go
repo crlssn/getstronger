@@ -24,20 +24,17 @@ func New(log *zap.Logger) *Bus {
 	}
 }
 
-var errChannelNotFound = fmt.Errorf("channel not found for event")
-
-func (b *Bus) Publish(event string, payload any) error {
+func (b *Bus) Publish(event string, payload any) {
 	b.mu.RLock()
 	channel, found := b.channels[event]
 	b.mu.RUnlock()
 
 	if !found {
-		// TODO: Log error and return.
-		return fmt.Errorf("%w: %s", errChannelNotFound, event)
+		b.log.Error("channel not found", zap.String("event", event))
+		return
 	}
 
 	channel <- payload
-	return nil
 }
 
 const (
