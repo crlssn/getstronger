@@ -10,10 +10,12 @@ import usePagination from '@/utils/usePagination.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
 
 const routines = ref([] as Routine[])
+const isMounted = ref(false)
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   await fetchRoutines()
+  isMounted.value = true
 })
 
 const fetchRoutines = async () => {
@@ -29,7 +31,7 @@ const fetchRoutines = async () => {
   <AppButton type="link" to="/routines/create" colour="primary" class="mb-4">
     Create Routine
   </AppButton>
-  <AppList :can-fetch="hasMorePages" @fetch="fetchRoutines">
+  <AppList :can-fetch="hasMorePages" @fetch="fetchRoutines" v-if="isMounted">
     <AppListItemLink v-for="routine in routines" :key="routine.id" :to="`/routines/${routine.id}`">
       {{ routine.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
