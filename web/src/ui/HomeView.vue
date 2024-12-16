@@ -21,7 +21,7 @@ onMounted(async () => {
   await fetchFeedItems()
   navTabs.set([
     { name: 'Following', href: '/home' },
-    { name: 'Explore', href: '/home?explore' }
+    { name: 'Explore', href: '/home?explore' },
   ])
   isMounted.value = true
 })
@@ -33,7 +33,7 @@ watch(
     feedItems.value = []
     await fetchFeedItems()
     isMounted.value = true
-  }
+  },
 )
 
 const fetchFeedItems = async () => {

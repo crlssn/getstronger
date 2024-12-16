@@ -44,9 +44,7 @@ async function onUpdateExercise() {
       <AppListItemInput :model="exercise.label" type="text" placeholder="Optional" />
     </AppList>
 
-    <AppButton type="submit" colour="primary">
-      Update Exercise
-    </AppButton>
+    <AppButton type="submit" colour="primary">Update Exercise</AppButton>
   </form>
 </template>
 
