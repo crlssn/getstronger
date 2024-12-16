@@ -56,13 +56,9 @@ func (s *notificationSuite) TestListNotifications() {
 	type test struct {
 		name     string
 		req      *connect.Request[v1.ListNotificationsRequest]
-		init     func(test)
+		init     func(test test, userID string)
 		expected expected
 	}
-
-	user := s.testFactory.NewUser()
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
-	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	tests := []test{
 		{
@@ -75,7 +71,7 @@ func (s *notificationSuite) TestListNotifications() {
 					},
 				},
 			},
-			init: func(_ test) {},
+			init: func(_ test, _ string) {},
 			expected: expected{
 				err: nil,
 				res: &connect.Response[v1.ListNotificationsResponse]{
@@ -96,7 +92,7 @@ func (s *notificationSuite) TestListNotifications() {
 					},
 				},
 			},
-			init: func(test test) {
+			init: func(test test, userID string) {
 				for _, n := range test.expected.res.Msg.GetNotifications() {
 					workout := s.testFactory.NewWorkout(
 						testdb.WorkoutID(n.GetWorkoutComment().GetWorkout().GetId()),
@@ -118,7 +114,7 @@ func (s *notificationSuite) TestListNotifications() {
 					s.testFactory.NewNotification(
 						testdb.NotificationID(n.GetId()),
 						testdb.NotificationType(orm.NotificationTypeWorkoutComment),
-						testdb.NotificationUserID(user.ID),
+						testdb.NotificationUserID(userID),
 						testdb.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						testdb.NotificationPayload(repo.NotificationPayload{
 							ActorID:   comment.UserID,
@@ -212,7 +208,11 @@ func (s *notificationSuite) TestListNotifications() {
 	}
 
 	for _, t := range tests {
-		t.init(t)
+		user := s.testFactory.NewUser()
+		ctx := xcontext.WithUserID(context.Background(), user.ID)
+		ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+		t.init(t, user.ID)
 		res, err := s.handler.ListNotifications(ctx, t.req)
 		if t.expected.err != nil {
 			s.Require().Nil(res)
