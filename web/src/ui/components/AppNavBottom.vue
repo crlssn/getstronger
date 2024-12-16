@@ -3,17 +3,17 @@ import { useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import {
   BellIcon,
-  BookOpenIcon,
+  BoltIcon,
+  ClipboardDocumentListIcon,
   HomeIcon,
-  RectangleStackIcon,
   UserIcon,
 } from '@heroicons/vue/24/outline'
 import {
-  BellIcon as BellSolidIcon,
-  BookOpenIcon as BookOpenSolidIcon,
-  HomeIcon as HomeSolidIcon,
-  RectangleStackIcon as RectangleStackSolidIcon,
-  UserIcon as UserSolidIcon,
+  BellIcon as BellIconSolid,
+  BoltIcon as BoltIconSolid,
+  ClipboardDocumentListIcon as ClipboardDocumentListIconSolid,
+  HomeIcon as HomeIconSolid,
+  UserIcon as UserIconSolid,
 } from '@heroicons/vue/24/solid'
 
 const route = useRoute()
@@ -24,16 +24,16 @@ const isActive = (basePath: string) => {
 }
 
 const navigation = [
-  { href: '/home', icon: HomeIcon, iconActive: HomeSolidIcon, name: 'Home' },
+  { href: '/home', icon: HomeIcon, iconActive: HomeIconSolid, name: 'Home' },
   {
     href: '/routines',
-    icon: RectangleStackIcon,
-    iconActive: RectangleStackSolidIcon,
+    icon: ClipboardDocumentListIcon,
+    iconActive: ClipboardDocumentListIconSolid,
     name: 'Routines',
   },
-  { href: '/exercises', icon: BookOpenIcon, iconActive: BookOpenSolidIcon, name: 'Exercises' },
-  { href: '/notifications', icon: BellIcon, iconActive: BellSolidIcon, name: 'Notifications' },
-  { href: '/profile', icon: UserIcon, iconActive: UserSolidIcon, name: 'Profile' },
+  { href: '/exercises', icon: BoltIcon, iconActive: BoltIconSolid, name: 'Exercises' },
+  { href: '/notifications', icon: BellIcon, iconActive: BellIconSolid, name: 'Notifications' },
+  { href: '/profile', icon: UserIcon, iconActive: UserIconSolid, name: 'Profile' },
 ]
 </script>
 
