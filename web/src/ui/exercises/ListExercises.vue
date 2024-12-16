@@ -41,6 +41,6 @@ const fetchExercises = async () => {
       {{ exercise.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
-    <AppListItem v-if="exercises.length === 0"> Your exercises will appear here</AppListItem>
+    <AppListItem v-if="exercises.length === 0">Your exercises will appear here</AppListItem>
   </AppList>
 </template>
