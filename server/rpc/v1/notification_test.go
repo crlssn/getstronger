@@ -125,7 +125,6 @@ func (s *notificationSuite) TestListNotifications() {
 						}),
 					)
 				}
-
 			},
 			expected: expected{
 				err: nil,
