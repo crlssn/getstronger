@@ -37,18 +37,18 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1
 	}
 
 	if req.Msg.GetFollowedOnly() {
-		followers, err := h.repo.ListFollowers(ctx, userID)
+		followees, err := h.repo.ListFollowees(ctx, userID)
 		if err != nil {
-			log.Error("failed to list followers", zap.Error(err))
+			log.Error("failed to list followees", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
-		followerIDs := make([]string, 0, len(followers))
-		for _, follower := range followers {
-			followerIDs = append(followerIDs, follower.ID)
+		followeeIDs := make([]string, 0, len(followees))
+		for _, follower := range followees {
+			followeeIDs = append(followeeIDs, follower.ID)
 		}
 
-		opts = append(opts, repo.ListWorkoutsWithUserIDs(append(followerIDs, userID)...))
+		opts = append(opts, repo.ListWorkoutsWithUserIDs(append(followeeIDs, userID)...))
 	}
 
 	workouts, err := h.repo.ListWorkouts(ctx, opts...)
