@@ -205,6 +205,35 @@ func (s *notificationSuite) TestListNotifications() {
 				},
 			},
 		},
+		{
+			name: "ok_workout_comment_deleted_workout",
+			req: &connect.Request[v1.ListNotificationsRequest]{
+				Msg: &v1.ListNotificationsRequest{
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 100,
+						PageToken: nil,
+					},
+				},
+			},
+			init: func(test test, userID string) {
+				s.testFactory.NewNotification(
+					testdb.NotificationType(orm.NotificationTypeWorkoutComment),
+					testdb.NotificationUserID(userID),
+					testdb.NotificationPayload(repo.NotificationPayload{
+						ActorID:   s.testFactory.NewUser().ID,
+						WorkoutID: uuid.NewString(),
+					}),
+				)
+			},
+			expected: expected{
+				err: nil,
+				res: &connect.Response[v1.ListNotificationsResponse]{
+					Msg: &v1.ListNotificationsResponse{
+						Notifications: nil,
+					},
+				},
+			},
+		},
 	}
 
 	for _, t := range tests {
