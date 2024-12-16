@@ -40,6 +40,9 @@ const fetchNotifications = async () => {
         :timestamp="notification.notifiedAtUnix"
       />
     </AppListItem>
+    <AppListItem v-if="notifications.length === 0">
+      Your notifications will appear here
+    </AppListItem>
   </AppList>
 </template>
 

@@ -8,5 +8,13 @@ const authStore = useAuthStore()
 
 <template>
   <AppDashboard v-if="authStore.authorised()" />
-  <RouterView v-else />
+  <main v-else>
+    <RouterView />
+  </main>
 </template>
+
+<style scoped>
+main {
+  @apply flex min-h-full flex-col justify-center px-4 max-w-4xl mx-auto;
+}
+</style>

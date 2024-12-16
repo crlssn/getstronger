@@ -5,6 +5,7 @@ import { listFollowees } from '@/http/requests.ts'
 import { onMounted, ref } from 'vue'
 import type { User } from '@/proto/api/v1/shared_pb.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const props = defineProps<{
   id: string
@@ -32,6 +33,7 @@ const fetchFollowees = async () => {
     <AppListItemLink v-for="followee in followees" :key="followee.id" :to="`/users/${followee.id}`">
       {{ followee.firstName }} {{ followee.lastName }}
     </AppListItemLink>
+    <AppListItem v-if="followees.length === 0"> Nothing here yet... </AppListItem>
   </AppList>
 </template>
 

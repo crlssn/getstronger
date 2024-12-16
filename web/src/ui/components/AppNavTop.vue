@@ -60,7 +60,7 @@ const onSearchUsers = async () => {
         </form>
         <ul
           v-if="users.length > 0"
-          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white max-w-4xl mx-auto lg:rounded-b-md"
+          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white max-w-4xl mx-auto lg:rounded-b-md z-50"
         >
           <li v-for="user in users" :key="user.id" @click="closeSearchBar">
             <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">

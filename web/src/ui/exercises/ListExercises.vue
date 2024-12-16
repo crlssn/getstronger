@@ -7,6 +7,7 @@ import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import usePagination from '@/utils/usePagination.ts'
 import AppButton from '@/ui/components/AppButton.vue'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const exercises = ref([] as Exercise[])
 
@@ -38,5 +39,6 @@ const fetchExercises = async () => {
       {{ exercise.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
+    <AppListItem v-if="exercises.length === 0"> Your exercises will appear here </AppListItem>
   </AppList>
 </template>
