@@ -275,7 +275,12 @@ func parseNotificationSliceToPB(
 			continue
 		}
 
-		slice = append(slice, parseNotificationToPB(n, mapUsers[p.ActorID], mapWorkouts[p.WorkoutID]))
+		notification := parseNotificationToPB(n, mapUsers[p.ActorID], mapWorkouts[p.WorkoutID])
+		if notification == nil {
+			continue
+		}
+
+		slice = append(slice, notification)
 	}
 
 	return slice
@@ -294,6 +299,10 @@ func parseNotificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *ap
 			},
 		}
 	case orm.NotificationTypeWorkoutComment:
+		if w == nil {
+			// The workout has been deleted.
+			return nil
+		}
 		return &apiv1.Notification{
 			Id:             n.ID,
 			NotifiedAtUnix: n.CreatedAt.Unix(),
