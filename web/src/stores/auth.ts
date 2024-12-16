@@ -30,7 +30,7 @@ export const useAuthStore = defineStore(
     }
 
     const authorised = () => {
-      return accessToken.value !== ''
+      return userId.value !== '' && accessToken.value !== ''
     }
 
     return {
