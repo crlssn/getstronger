@@ -117,8 +117,9 @@ func (s *notificationSuite) TestListNotifications() {
 					)
 					s.testFactory.NewNotification(
 						testdb.NotificationID(n.GetId()),
-						testdb.NotificationUserID(user.ID),
 						testdb.NotificationType(orm.NotificationTypeWorkoutComment),
+						testdb.NotificationUserID(user.ID),
+						testdb.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						testdb.NotificationPayload(repo.NotificationPayload{
 							ActorID:   comment.UserID,
 							WorkoutID: workout.ID,
@@ -158,6 +159,56 @@ func (s *notificationSuite) TestListNotifications() {
 				},
 			},
 		},
+		//{
+		//	name: "ok_user_followed",
+		//	req: &connect.Request[v1.ListNotificationsRequest]{
+		//		Msg: &v1.ListNotificationsRequest{
+		//			Pagination: &v1.PaginationRequest{
+		//				PageLimit: 100,
+		//				PageToken: nil,
+		//			},
+		//		},
+		//	},
+		//	init: func(test test) {
+		//		for _, n := range test.expected.res.Msg.GetNotifications() {
+		//			s.testFactory.NewNotification(
+		//				testdb.NotificationID(n.GetId()),
+		//				testdb.NotificationType(orm.NotificationTypeFollow),
+		//				testdb.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
+		//				testdb.NotificationUserID(user.ID),
+		//				testdb.NotificationPayload(repo.NotificationPayload{
+		//					ActorID: s.testFactory.NewUser(
+		//						testdb.UserID(n.GetUserFollowed().GetActor().GetId()),
+		//						testdb.UserLastName(n.GetUserFollowed().GetActor().GetLastName()),
+		//						testdb.UserFirstName(n.GetUserFollowed().GetActor().GetFirstName()),
+		//					).ID,
+		//				}),
+		//			)
+		//		}
+		//	},
+		//	expected: expected{
+		//		err: nil,
+		//		res: &connect.Response[v1.ListNotificationsResponse]{
+		//			Msg: &v1.ListNotificationsResponse{
+		//				Notifications: []*v1.Notification{
+		//					{
+		//						Id:             uuid.NewString(),
+		//						NotifiedAtUnix: time.Now().UTC().Unix(),
+		//						Type: &v1.Notification_UserFollowed_{
+		//							UserFollowed: &v1.Notification_UserFollowed{
+		//								Actor: &v1.User{
+		//									Id:        uuid.NewString(),
+		//									FirstName: gofakeit.FirstName(),
+		//									LastName:  gofakeit.LastName(),
+		//								},
+		//							},
+		//						},
+		//					},
+		//				},
+		//			},
+		//		},
+		//	},
+		//},
 	}
 
 	for _, t := range tests {

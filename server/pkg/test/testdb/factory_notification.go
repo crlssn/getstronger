@@ -83,3 +83,9 @@ func NotificationID(id string) NotificationOpt {
 		notification.ID = id
 	}
 }
+
+func NotificationCreatedAt(t time.Time) NotificationOpt {
+	return func(notification *orm.Notification) {
+		notification.CreatedAt = t
+	}
+}
