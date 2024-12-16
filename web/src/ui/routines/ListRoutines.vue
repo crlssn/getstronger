@@ -32,10 +32,10 @@ const fetchRoutines = async () => {
     Create Routine
   </AppButton>
   <AppList :can-fetch="hasMorePages" @fetch="fetchRoutines" v-if="isMounted">
+    <AppListItem v-if="routines.length === 0">Your routines will appear here</AppListItem>
     <AppListItemLink v-for="routine in routines" :key="routine.id" :to="`/routines/${routine.id}`">
       {{ routine.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
-    <AppListItem v-if="routines.length === 0"> Your routines will appear here </AppListItem>
   </AppList>
 </template>
