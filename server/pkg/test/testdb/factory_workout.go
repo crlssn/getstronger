@@ -51,3 +51,53 @@ func WorkoutUserID(userID string) WorkoutOpt {
 		workout.UserID = userID
 	}
 }
+
+type WorkoutCommentOpt func(comment *orm.WorkoutComment)
+
+func WorkoutCommentUserID(userID string) WorkoutCommentOpt {
+	return func(comment *orm.WorkoutComment) {
+		comment.UserID = userID
+	}
+}
+
+func WorkoutCommentWorkoutID(workoutID string) WorkoutCommentOpt {
+	return func(comment *orm.WorkoutComment) {
+		comment.WorkoutID = workoutID
+	}
+}
+
+func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComment {
+	m := &orm.WorkoutComment{
+		ID:        uuid.NewString(),
+		UserID:    "",
+		WorkoutID: "",
+		Comment:   f.faker.Sentence(5),
+		CreatedAt: time.Time{},
+	}
+
+	for _, opt := range opts {
+		opt(m)
+	}
+
+	if m.WorkoutID == "" {
+		m.WorkoutID = f.NewWorkout().ID
+	}
+
+	if m.UserID == "" {
+		m.UserID = f.NewUser().ID
+	}
+
+	boil.DebugMode = f.debug
+	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+		panic(fmt.Errorf("failed to insert workout comment: %w", err))
+	}
+	boil.DebugMode = false
+
+	return m
+}
+
+func WorkoutName(name string) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.Name = name
+	}
+}

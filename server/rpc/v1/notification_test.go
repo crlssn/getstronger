@@ -4,11 +4,15 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/pkg/orm"
 	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
 	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pkg/repo"
@@ -52,8 +56,13 @@ func (s *notificationSuite) TestListNotifications() {
 	type test struct {
 		name     string
 		req      *connect.Request[v1.ListNotificationsRequest]
+		init     func(test)
 		expected expected
 	}
+
+	user := s.testFactory.NewUser()
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	tests := []test{
 		{
@@ -66,6 +75,7 @@ func (s *notificationSuite) TestListNotifications() {
 					},
 				},
 			},
+			init: func(_ test) {},
 			expected: expected{
 				err: nil,
 				res: &connect.Response[v1.ListNotificationsResponse]{
@@ -76,13 +86,89 @@ func (s *notificationSuite) TestListNotifications() {
 				},
 			},
 		},
+		{
+			name: "ok_workout_comment",
+			req: &connect.Request[v1.ListNotificationsRequest]{
+				Msg: &v1.ListNotificationsRequest{
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 100,
+						PageToken: nil,
+					},
+				},
+			},
+			init: func(test test) {
+				//workout := s.testFactory.NewWorkout(testdb.WorkoutUserID(user.ID))
+				//s.testFactory.NewWorkoutComment(testdb.WorkoutCommentWorkoutID(workout.ID))
+
+				for _, n := range test.expected.res.Msg.GetNotifications() {
+					workout := s.testFactory.NewWorkout(
+						testdb.WorkoutID(n.GetWorkoutComment().GetWorkout().GetId()),
+						testdb.WorkoutName(n.GetWorkoutComment().GetWorkout().GetName()),
+						testdb.WorkoutUserID(user.ID),
+					)
+					comment := s.testFactory.NewWorkoutComment(
+						testdb.WorkoutCommentUserID(s.testFactory.NewUser(
+							testdb.UserID(n.GetWorkoutComment().GetActor().GetId()),
+							testdb.UserAuthID(s.testFactory.NewAuth(
+								testdb.AuthEmail(n.GetWorkoutComment().GetActor().GetEmail()),
+							).ID),
+							testdb.UserLastName(n.GetWorkoutComment().GetActor().GetLastName()),
+							testdb.UserFirstName(n.GetWorkoutComment().GetActor().GetFirstName()),
+						).ID),
+						testdb.WorkoutCommentWorkoutID(workout.ID),
+					)
+					s.testFactory.NewNotification(
+						testdb.NotificationID(n.GetId()),
+						testdb.NotificationUserID(user.ID),
+						testdb.NotificationType(orm.NotificationTypeWorkoutComment),
+						testdb.NotificationPayload(repo.NotificationPayload{
+							ActorID:   comment.UserID,
+							WorkoutID: workout.ID,
+						}),
+					)
+				}
+
+			},
+			expected: expected{
+				err: nil,
+				res: &connect.Response[v1.ListNotificationsResponse]{
+					Msg: &v1.ListNotificationsResponse{
+						Notifications: []*v1.Notification{
+							{
+								Id:             uuid.NewString(),
+								NotifiedAtUnix: time.Now().UTC().Unix(),
+								Type: &v1.Notification_WorkoutComment_{
+									WorkoutComment: &v1.Notification_WorkoutComment{
+										Actor: &v1.User{
+											Id:        uuid.NewString(),
+											FirstName: gofakeit.FirstName(),
+											LastName:  gofakeit.LastName(),
+											Email:     gofakeit.Email(),
+											Followed:  false,
+										},
+										Workout: &v1.Workout{
+											Id:   uuid.NewString(),
+											Name: gofakeit.Name(),
+											User: &v1.User{
+												Id:        uuid.NewString(),
+												FirstName: gofakeit.FirstName(),
+												LastName:  gofakeit.LastName(),
+												Email:     gofakeit.Email(),
+												Followed:  false,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
-	user := s.testFactory.NewUser()
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
-	ctx = xcontext.WithLogger(ctx, zap.NewExample())
-
 	for _, t := range tests {
+		t.init(t)
 		res, err := s.handler.ListNotifications(ctx, t.req)
 		if t.expected.err != nil {
 			s.Require().Nil(res)
@@ -95,11 +181,37 @@ func (s *notificationSuite) TestListNotifications() {
 		s.Require().NotNil(res)
 		s.Equal(t.expected.res.Msg.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
 		s.Len(t.expected.res.Msg.GetNotifications(), len(res.Msg.GetNotifications()))
-		for i, n := range res.Msg.GetNotifications() {
-			s.Equal(t.expected.res.Msg.GetNotifications()[i].GetId(), n.GetId())
-			s.Equal(t.expected.res.Msg.GetNotifications()[i].GetId(), n.GetType())
-			s.Equal(t.expected.res.Msg.GetNotifications()[i].GetWorkoutComment(), n.GetWorkoutComment())
-			s.Equal(t.expected.res.Msg.GetNotifications()[i].GetUserFollowed(), n.GetUserFollowed())
+		for i, actualNotification := range res.Msg.GetNotifications() {
+			expectedNotification := t.expected.res.Msg.GetNotifications()[i]
+
+			s.Require().Equal(expectedNotification.GetId(), actualNotification.GetId())
+			s.Require().Equal(expectedNotification.GetNotifiedAtUnix(), actualNotification.GetNotifiedAtUnix())
+
+			expectedActor := expectedNotification.GetUserFollowed().GetActor()
+			actualActor := actualNotification.GetUserFollowed().GetActor()
+			//
+			s.Require().Equal(expectedActor.GetId(), actualActor.GetId())
+			s.Require().Equal(expectedActor.GetEmail(), actualActor.GetEmail())
+			s.Require().Equal(expectedActor.GetFollowed(), actualActor.GetFollowed())
+			s.Require().Equal(expectedActor.GetLastName(), actualActor.GetLastName())
+			s.Require().Equal(expectedActor.GetFirstName(), actualActor.GetFirstName())
+			//
+			//expectedComment := expectedNotification.GetWorkoutComment()
+			//actualComment := actualNotification.GetWorkoutComment()
+			//
+			//s.Equal(expectedComment.GetActor().GetId(), actualComment.GetActor().GetId())
+			//s.Equal(expectedComment.GetActor().GetEmail(), actualComment.GetActor().GetEmail())
+			//s.Equal(expectedComment.GetActor().GetFollowed(), actualComment.GetActor().GetFollowed())
+			//s.Equal(expectedComment.GetActor().GetLastName(), actualComment.GetActor().GetLastName())
+			//s.Equal(expectedComment.GetActor().GetFirstName(), actualComment.GetActor().GetFirstName())
+			//
+			//s.Equal(expectedComment.GetWorkout().GetId(), actualComment.GetWorkout().GetId())
+			//s.Equal(expectedComment.GetWorkout().GetName(), actualComment.GetWorkout().GetName())
+			//s.Equal(expectedComment.GetWorkout().GetUser().GetId(), actualComment.GetWorkout().GetUser().GetId())
+			//s.Equal(expectedComment.GetWorkout().GetUser().GetEmail(), actualComment.GetWorkout().GetUser().GetEmail())
+			//s.Equal(expectedComment.GetWorkout().GetUser().GetFollowed(), actualComment.GetWorkout().GetUser().GetFollowed())
+			//s.Equal(expectedComment.GetWorkout().GetUser().GetLastName(), actualComment.GetWorkout().GetUser().GetLastName())
+			//s.Equal(expectedComment.GetWorkout().GetUser().GetFirstName(), actualComment.GetWorkout().GetUser().GetFirstName())
 		}
 	}
 }

@@ -48,3 +48,15 @@ func UserAuthID(authID string) UserOpt {
 		m.AuthID = authID
 	}
 }
+
+func UserLastName(lastName string) UserOpt {
+	return func(m *orm.User) {
+		m.LastName = lastName
+	}
+}
+
+func UserFirstName(firstName string) UserOpt {
+	return func(m *orm.User) {
+		m.FirstName = firstName
+	}
+}
