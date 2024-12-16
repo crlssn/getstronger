@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type Exercise } from '@/proto/api/v1/shared_pb.ts'
-import { nextTick, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { listExercises } from '@/http/requests.ts'
 import AppList from '@/ui/components/AppList.vue'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
@@ -41,6 +41,6 @@ const fetchExercises = async () => {
       {{ exercise.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
-    <AppListItem v-if="exercises.length === 0"> Your exercises will appear here </AppListItem>
+    <AppListItem v-if="exercises.length === 0"> Your exercises will appear here</AppListItem>
   </AppList>
 </template>

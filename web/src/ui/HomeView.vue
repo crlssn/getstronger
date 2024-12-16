@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { listFeedItems } from '@/http/requests.ts'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type FeedItem } from '@/proto/api/v1/feed_service_pb'
@@ -21,7 +21,7 @@ onMounted(async () => {
   await fetchFeedItems()
   navTabs.set([
     { name: 'Following', href: '/home' },
-    { name: 'Explore', href: '/home?explore' },
+    { name: 'Explore', href: '/home?explore' }
   ])
   isMounted.value = true
 })
@@ -33,7 +33,7 @@ watch(
     feedItems.value = []
     await fetchFeedItems()
     isMounted.value = true
-  },
+  }
 )
 
 const fetchFeedItems = async () => {
