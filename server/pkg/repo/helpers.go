@@ -56,7 +56,7 @@ type updateOpt interface {
 var (
 	errUpdateNoColumns       = fmt.Errorf("update opt: no columns")
 	errUpdateRowsAffected    = fmt.Errorf("update opt: rows affected")
-	errUpdateDuplicateColumn = fmt.Errorf("update opt: duplicate column")
+	ErrUpdateDuplicateColumn = fmt.Errorf("update opt: duplicate column")
 )
 
 func updateColumnsFromOpts[T updateOpt](opts []T) (orm.M, error) {
@@ -73,7 +73,7 @@ func updateColumnsFromOpts[T updateOpt](opts []T) (orm.M, error) {
 
 		for key, value := range column {
 			if columns[key] != nil {
-				return nil, fmt.Errorf("%w: %s", errUpdateDuplicateColumn, key)
+				return nil, fmt.Errorf("%w: %s", ErrUpdateDuplicateColumn, key)
 			}
 
 			columns[key] = value

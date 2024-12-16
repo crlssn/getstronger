@@ -215,7 +215,7 @@ func (s *notificationSuite) TestListNotifications() {
 					},
 				},
 			},
-			init: func(test test, userID string) {
+			init: func(_ test, userID string) {
 				s.testFactory.NewNotification(
 					testdb.NotificationType(orm.NotificationTypeWorkoutComment),
 					testdb.NotificationUserID(userID),

@@ -71,7 +71,7 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 		ID:        uuid.NewString(),
 		UserID:    "",
 		WorkoutID: "",
-		Comment:   f.faker.Sentence(5),
+		Comment:   f.faker.Sentence(5), //nolint:mnd
 		CreatedAt: time.Time{},
 	}
 
