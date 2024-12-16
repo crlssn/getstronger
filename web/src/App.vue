@@ -7,7 +7,7 @@ const authStore = useAuthStore()
 </script>
 
 <template>
-  <AppDashboard v-if="authStore.authorised()" />
+  <AppDashboard v-if="authStore.authorised" />
   <main v-else>
     <RouterView />
   </main>
