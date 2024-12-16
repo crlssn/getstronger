@@ -275,17 +275,7 @@ func parseNotificationSliceToPB(
 			continue
 		}
 
-		a, ok := mapUsers[p.ActorID]
-		if !ok {
-			continue
-		}
-
-		w, ok := mapWorkouts[p.WorkoutID]
-		if !ok {
-			continue
-		}
-
-		slice = append(slice, parseNotificationToPB(n, a, w))
+		slice = append(slice, parseNotificationToPB(n, mapUsers[p.ActorID], mapWorkouts[p.WorkoutID]))
 	}
 
 	return slice
