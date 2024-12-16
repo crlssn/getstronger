@@ -1,4 +1,4 @@
-package repo
+package repo_test
 
 import (
 	"context"
@@ -10,13 +10,14 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/crlssn/getstronger/server/pkg/orm"
-	testdb "github.com/crlssn/getstronger/server/pkg/test/testdb"
+	"github.com/crlssn/getstronger/server/pkg/repo"
+	"github.com/crlssn/getstronger/server/pkg/test/testdb"
 )
 
 type repoSuite struct {
 	suite.Suite
 
-	repo Repo
+	repo repo.Repo
 
 	testContainer *testdb.Container
 	testFactory   *testdb.Factory
@@ -31,7 +32,7 @@ func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = testdb.NewContainer(ctx)
 	s.testFactory = testdb.NewFactory(s.testContainer.DB)
-	s.repo = New(s.testContainer.DB)
+	s.repo = repo.New(s.testContainer.DB)
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
 			log.Fatalf("failed to clean container: %s", err)
@@ -48,7 +49,7 @@ func (s *repoSuite) TestListExercises() {
 
 	type test struct {
 		name     string
-		opts     []ListExercisesOpt
+		opts     []repo.ListExercisesOpt
 		init     func(test)
 		expected expected
 	}
@@ -58,9 +59,9 @@ func (s *repoSuite) TestListExercises() {
 	tests := []test{
 		{
 			name: "ok_valid_access_token",
-			opts: []ListExercisesOpt{
-				ListExercisesWithUserID(user.ID),
-				ListExercisesWithLimit(2),
+			opts: []repo.ListExercisesOpt{
+				repo.ListExercisesWithUserID(user.ID),
+				repo.ListExercisesWithLimit(2),
 			},
 			init: func(_ test) {
 				s.testFactory.NewExercise(testdb.ExerciseUserID(user.ID))
@@ -100,7 +101,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 	type test struct {
 		name      string
 		routineID string
-		opts      []UpdateRoutineOpt
+		opts      []repo.UpdateRoutineOpt
 		init      func(test)
 		expected  expected
 	}
@@ -109,8 +110,8 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "ok_update_routine_name",
 			routineID: uuid.NewString(),
-			opts: []UpdateRoutineOpt{
-				UpdateRoutineName("new"),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineName("new"),
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
@@ -125,8 +126,8 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "ok_update_exercise_order",
 			routineID: uuid.NewString(),
-			opts: []UpdateRoutineOpt{
-				UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
@@ -141,9 +142,9 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "ok_update_name_and_exercise_order",
 			routineID: uuid.NewString(),
-			opts: []UpdateRoutineOpt{
-				UpdateRoutineName("new"),
-				UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineName("new"),
+				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
@@ -159,13 +160,13 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "err_duplicate_column_update",
 			routineID: uuid.NewString(),
-			opts: []UpdateRoutineOpt{
-				UpdateRoutineName("new"),
-				UpdateRoutineName("newer"),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineName("new"),
+				repo.UpdateRoutineName("newer"),
 			},
 			init: func(_ test) {},
 			expected: expected{
-				err: errUpdateDuplicateColumn,
+				err: repo.ErrUpdateDuplicateColumn,
 			},
 		},
 	}

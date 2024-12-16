@@ -32,6 +32,7 @@ func (b *Bus) Publish(event string, payload any) error {
 	b.mu.RUnlock()
 
 	if !found {
+		// TODO: Log error and return.
 		return fmt.Errorf("%w: %s", errChannelNotFound, event)
 	}
 
