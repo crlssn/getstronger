@@ -1,4 +1,4 @@
-package interceptors
+package interceptors_test
 
 import (
 	"fmt"
@@ -10,13 +10,14 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pkg/jwt"
+	"github.com/crlssn/getstronger/server/rpc/interceptors"
 )
 
 type authSuite struct {
 	suite.Suite
 
 	jwt         *jwt.Manager
-	interceptor *auth
+	interceptor *interceptors.Auth
 }
 
 func TestAuthSuite(t *testing.T) {
@@ -27,7 +28,7 @@ func TestAuthSuite(t *testing.T) {
 func (s *authSuite) SetupSuite() {
 	s.jwt = jwt.NewManager([]byte("access-token"), []byte("refresh-token"))
 
-	interceptor, ok := newAuth(zap.NewExample(), s.jwt).(*auth)
+	interceptor, ok := interceptors.NewAuth(zap.NewExample(), s.jwt).(*interceptors.Auth)
 	s.Require().True(ok)
 
 	s.interceptor = interceptor
@@ -66,7 +67,7 @@ func (s *authSuite) TestClaimsFromHeader() {
 			name:   "err_missing_authorization_token",
 			header: map[string][]string{},
 			expected: expected{
-				err:    errMissingAuthorizationToken,
+				err:    interceptors.ErrMissingAuthorizationToken,
 				claims: nil,
 			},
 		},
@@ -76,7 +77,7 @@ func (s *authSuite) TestClaimsFromHeader() {
 				"Authorization": {accessToken},
 			},
 			expected: expected{
-				err:    errInvalidAuthorizationToken,
+				err:    interceptors.ErrInvalidAuthorizationToken,
 				claims: nil,
 			},
 		},
@@ -84,7 +85,7 @@ func (s *authSuite) TestClaimsFromHeader() {
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			claims, err := s.interceptor.claimsFromHeader(t.header)
+			claims, err := s.interceptor.ClaimsFromHeader(t.header)
 			if t.expected.err != nil {
 				s.Require().Nil(claims)
 				s.Require().Error(err)

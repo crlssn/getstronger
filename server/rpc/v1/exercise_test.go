@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"context"
@@ -15,6 +15,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/test/testdb"
 	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	rpc "github.com/crlssn/getstronger/server/rpc/v1"
 )
 
 type exerciseSuite struct {
@@ -35,7 +36,7 @@ func (s *exerciseSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = testdb.NewContainer(ctx)
 	s.testFactory = testdb.NewFactory(s.testContainer.DB)
-	s.handler = NewExerciseHandler(repo.New(s.testContainer.DB))
+	s.handler = rpc.NewExerciseHandler(repo.New(s.testContainer.DB))
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {

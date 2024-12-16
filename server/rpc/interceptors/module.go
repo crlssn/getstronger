@@ -12,7 +12,7 @@ func Module() fx.Option {
 		fx.Provide(
 			// Annotate the interceptors to provide a slice of their interface.
 			fx.Annotate(
-				newAuth,
+				NewAuth,
 				fx.ResultTags(fxGroupInterceptors),
 			),
 			fx.Annotate(

@@ -19,10 +19,10 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/xzap"
 )
 
-var _ connect.Interceptor = (*auth)(nil)
+var _ connect.Interceptor = (*Auth)(nil)
 
-func newAuth(log *zap.Logger, m *jwt.Manager) connect.Interceptor {
-	a := &auth{
+func NewAuth(log *zap.Logger, m *jwt.Manager) connect.Interceptor {
+	a := &Auth{
 		log:     log,
 		jwt:     m,
 		methods: make(map[string]bool),
@@ -31,13 +31,13 @@ func newAuth(log *zap.Logger, m *jwt.Manager) connect.Interceptor {
 	return a
 }
 
-type auth struct {
+type Auth struct {
 	log     *zap.Logger
 	jwt     *jwt.Manager
 	methods map[string]bool
 }
 
-func (a *auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+func (a *Auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(
 		ctx context.Context,
 		req connect.AnyRequest,
@@ -52,7 +52,7 @@ func (a *auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 			return next(ctx, req)
 		}
 
-		claims, err := a.claimsFromHeader(req.Header())
+		claims, err := a.ClaimsFromHeader(req.Header())
 		if err != nil {
 			log.Warn("request unauthenticated", zap.Error(err))
 			return nil, connect.NewError(connect.CodeUnauthenticated, nil)
@@ -67,7 +67,7 @@ func (a *auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	}
 }
 
-func (a *auth) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+func (a *Auth) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return func(
 		ctx context.Context,
 		spec connect.Spec,
@@ -76,7 +76,7 @@ func (a *auth) WrapStreamingClient(next connect.StreamingClientFunc) connect.Str
 	}
 }
 
-func (a *auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+func (a *Auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(
 		ctx context.Context,
 		conn connect.StreamingHandlerConn,
@@ -91,7 +91,7 @@ func (a *auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 			return next(ctx, conn)
 		}
 
-		claims, err := a.claimsFromHeader(conn.RequestHeader())
+		claims, err := a.ClaimsFromHeader(conn.RequestHeader())
 		if err != nil {
 			log.Warn("request unauthenticated", zap.Error(err))
 			return connect.NewError(connect.CodeUnauthenticated, nil)
@@ -106,7 +106,7 @@ func (a *auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 	}
 }
 
-func (a *auth) initMethods() {
+func (a *Auth) initMethods() {
 	fileDescriptors := []protoreflect.FileDescriptor{
 		apiv1.File_api_v1_auth_service_proto,
 		apiv1.File_api_v1_feed_service_proto,
@@ -149,19 +149,19 @@ func (a *auth) initMethods() {
 }
 
 var (
-	errMissingAuthorizationToken = errors.New("authorization token is missing")
-	errInvalidAuthorizationToken = errors.New("invalid authorization header format")
+	ErrMissingAuthorizationToken = errors.New("authorization token is missing")
+	ErrInvalidAuthorizationToken = errors.New("invalid authorization header format")
 )
 
-func (a *auth) claimsFromHeader(header http.Header) (*jwt.Claims, error) {
+func (a *Auth) ClaimsFromHeader(header http.Header) (*jwt.Claims, error) {
 	authHeader := header.Get("Authorization")
 	if authHeader == "" {
-		return nil, errMissingAuthorizationToken
+		return nil, ErrMissingAuthorizationToken
 	}
 
 	const bearerPrefix = "Bearer "
 	if !strings.HasPrefix(authHeader, bearerPrefix) {
-		return nil, errInvalidAuthorizationToken
+		return nil, ErrInvalidAuthorizationToken
 	}
 
 	token := strings.TrimPrefix(authHeader, bearerPrefix)

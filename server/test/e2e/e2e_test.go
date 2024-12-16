@@ -1,4 +1,4 @@
-package e2e
+package e2e_test
 
 import (
 	"context"
@@ -22,6 +22,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/test/testdb"
 	"github.com/crlssn/getstronger/server/pkg/trace"
 	"github.com/crlssn/getstronger/server/rpc/server"
+	"github.com/crlssn/getstronger/server/test/e2e"
 )
 
 func TestE2E(t *testing.T) {
@@ -43,8 +44,8 @@ func TestE2E(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	s := newSaga(db, cfg)
-	s.
+	saga := e2e.NewSaga(db, cfg)
+	saga.
 		Signup(ctx, func(_ *connect.Response[v1.SignupResponse], err error) {
 			require.NoError(t, err)
 		}).
@@ -55,13 +56,13 @@ func TestE2E(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, c.Msg.GetAccessToken())
 			require.NotEmpty(t, c.Header().Get("Set-Cookie"))
-			s.SetAccessToken(c.Msg.GetAccessToken())
-			s.SetRefreshTokenCookie(c.Header().Get("Set-Cookie"))
+			saga.SetAccessToken(c.Msg.GetAccessToken())
+			saga.SetRefreshTokenCookie(c.Header().Get("Set-Cookie"))
 		}).
 		RefreshToken(ctx, func(c *connect.Response[v1.RefreshTokenResponse], err error) {
 			require.NoError(t, err)
 			require.NotEmpty(t, c.Msg.GetAccessToken())
-			s.SetAccessToken(c.Msg.GetAccessToken())
+			saga.SetAccessToken(c.Msg.GetAccessToken())
 		}).
 		SearchUsers(ctx, func(c *connect.Response[v1.SearchUsersResponse], err error) {
 			require.NoError(t, err)

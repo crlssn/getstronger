@@ -10,7 +10,6 @@ linters:
     - exportloopref
     - depguard
     - gci
-    - testpackage
     - nlreturn
     - ireturn
     - varnamelen

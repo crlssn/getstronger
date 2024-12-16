@@ -18,7 +18,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
 )
 
-type saga struct {
+type Saga struct {
 	db      *sql.DB
 	auth    *auth
 	baseURL string
@@ -31,8 +31,8 @@ type auth struct {
 	refreshTokenCookie string
 }
 
-func newSaga(db *sql.DB, config *config.Config) *saga {
-	return &saga{
+func NewSaga(db *sql.DB, config *config.Config) *Saga {
+	return &Saga{
 		db:      db,
 		baseURL: fmt.Sprintf("http://localhost:%s", config.Server.Port),
 		auth: &auth{
@@ -42,7 +42,7 @@ func newSaga(db *sql.DB, config *config.Config) *saga {
 	}
 }
 
-func (s *saga) client() *http.Client {
+func (s *Saga) client() *http.Client {
 	if s.auth.accessToken == "" {
 		return http.DefaultClient
 	}
@@ -78,7 +78,7 @@ func (a *clientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return a.roundTripper.RoundTrip(r) //nolint:wrapcheck
 }
 
-func (s *saga) Signup(ctx context.Context, f func(*connect.Response[v1.SignupResponse], error)) *saga {
+func (s *Saga) Signup(ctx context.Context, f func(*connect.Response[v1.SignupResponse], error)) *Saga {
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	f(client.Signup(ctx, &connect.Request[v1.SignupRequest]{
 		Msg: &v1.SignupRequest{
@@ -93,7 +93,7 @@ func (s *saga) Signup(ctx context.Context, f func(*connect.Response[v1.SignupRes
 	return s
 }
 
-func (s *saga) VerifyEmail(ctx context.Context, f func(*connect.Response[v1.VerifyEmailResponse], error)) *saga {
+func (s *Saga) VerifyEmail(ctx context.Context, f func(*connect.Response[v1.VerifyEmailResponse], error)) *Saga {
 	a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load auth: %w", err))
@@ -110,7 +110,7 @@ func (s *saga) VerifyEmail(ctx context.Context, f func(*connect.Response[v1.Veri
 	return s
 }
 
-func (s *saga) Login(ctx context.Context, f func(*connect.Response[v1.LoginResponse], error)) *saga {
+func (s *Saga) Login(ctx context.Context, f func(*connect.Response[v1.LoginResponse], error)) *Saga {
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	f(client.Login(ctx, &connect.Request[v1.LoginRequest]{
 		Msg: &v1.LoginRequest{
@@ -122,7 +122,7 @@ func (s *saga) Login(ctx context.Context, f func(*connect.Response[v1.LoginRespo
 	return s
 }
 
-func (s *saga) CreateExercise(ctx context.Context, f func(*connect.Response[v1.CreateExerciseResponse], error)) *saga {
+func (s *Saga) CreateExercise(ctx context.Context, f func(*connect.Response[v1.CreateExerciseResponse], error)) *Saga {
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
 	f(client.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
 		Msg: &v1.CreateExerciseRequest{
@@ -134,7 +134,7 @@ func (s *saga) CreateExercise(ctx context.Context, f func(*connect.Response[v1.C
 	return s
 }
 
-func (s *saga) ListExercises(ctx context.Context, f func(*connect.Response[v1.ListExercisesResponse], error)) *saga {
+func (s *Saga) ListExercises(ctx context.Context, f func(*connect.Response[v1.ListExercisesResponse], error)) *Saga {
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
 	f(client.ListExercises(ctx, &connect.Request[v1.ListExercisesRequest]{
 		Msg: &v1.ListExercisesRequest{
@@ -150,7 +150,7 @@ func (s *saga) ListExercises(ctx context.Context, f func(*connect.Response[v1.Li
 	return s
 }
 
-func (s *saga) Logout(ctx context.Context, f func(*connect.Response[v1.LogoutResponse], error)) *saga {
+func (s *Saga) Logout(ctx context.Context, f func(*connect.Response[v1.LogoutResponse], error)) *Saga {
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	f(client.Logout(ctx, &connect.Request[v1.LogoutRequest]{
 		Msg: &v1.LogoutRequest{},
@@ -159,7 +159,7 @@ func (s *saga) Logout(ctx context.Context, f func(*connect.Response[v1.LogoutRes
 	return s
 }
 
-func (s *saga) RefreshToken(ctx context.Context, f func(*connect.Response[v1.RefreshTokenResponse], error)) *saga {
+func (s *Saga) RefreshToken(ctx context.Context, f func(*connect.Response[v1.RefreshTokenResponse], error)) *Saga {
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	f(client.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
 		Msg: &v1.RefreshTokenRequest{},
@@ -168,7 +168,7 @@ func (s *saga) RefreshToken(ctx context.Context, f func(*connect.Response[v1.Ref
 	return s
 }
 
-func (s *saga) CreateRoutine(ctx context.Context, f func(*connect.Response[v1.CreateRoutineResponse], error)) *saga {
+func (s *Saga) CreateRoutine(ctx context.Context, f func(*connect.Response[v1.CreateRoutineResponse], error)) *Saga {
 	exercises, err := orm.Exercises().All(ctx, s.db)
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load exercises: %w", err))
@@ -191,7 +191,7 @@ func (s *saga) CreateRoutine(ctx context.Context, f func(*connect.Response[v1.Cr
 	return s
 }
 
-func (s *saga) CreateWorkout(ctx context.Context, f func(*connect.Response[v1.CreateWorkoutResponse], error)) *saga {
+func (s *Saga) CreateWorkout(ctx context.Context, f func(*connect.Response[v1.CreateWorkoutResponse], error)) *Saga {
 	routine, err := orm.Routines(qm.Load(orm.RoutineRels.Exercises)).One(ctx, s.db)
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load routines: %w", err))
@@ -224,7 +224,7 @@ func (s *saga) CreateWorkout(ctx context.Context, f func(*connect.Response[v1.Cr
 	return s
 }
 
-func (s *saga) ListRoutines(ctx context.Context, f func(*connect.Response[v1.ListRoutinesResponse], error)) *saga {
+func (s *Saga) ListRoutines(ctx context.Context, f func(*connect.Response[v1.ListRoutinesResponse], error)) *Saga {
 	client := apiv1connect.NewRoutineServiceClient(s.client(), s.baseURL)
 	f(client.ListRoutines(ctx, &connect.Request[v1.ListRoutinesRequest]{
 		Msg: &v1.ListRoutinesRequest{
@@ -239,7 +239,7 @@ func (s *saga) ListRoutines(ctx context.Context, f func(*connect.Response[v1.Lis
 	return s
 }
 
-func (s *saga) ListWorkouts(ctx context.Context, f func(*connect.Response[v1.ListWorkoutsResponse], error)) *saga {
+func (s *Saga) ListWorkouts(ctx context.Context, f func(*connect.Response[v1.ListWorkoutsResponse], error)) *Saga {
 	user, err := orm.Users().One(ctx, s.db)
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load user: %w", err))
@@ -260,7 +260,7 @@ func (s *saga) ListWorkouts(ctx context.Context, f func(*connect.Response[v1.Lis
 	return s
 }
 
-func (s *saga) SearchUsers(ctx context.Context, f func(*connect.Response[v1.SearchUsersResponse], error)) *saga {
+func (s *Saga) SearchUsers(ctx context.Context, f func(*connect.Response[v1.SearchUsersResponse], error)) *Saga {
 	user, err := orm.Users().One(ctx, s.db)
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load user: %w", err))
@@ -281,7 +281,7 @@ func (s *saga) SearchUsers(ctx context.Context, f func(*connect.Response[v1.Sear
 	return s
 }
 
-func (s *saga) ListFeedItems(ctx context.Context, f func(*connect.Response[v1.ListFeedItemsResponse], error)) *saga {
+func (s *Saga) ListFeedItems(ctx context.Context, f func(*connect.Response[v1.ListFeedItemsResponse], error)) *Saga {
 	client := apiv1connect.NewFeedServiceClient(s.client(), s.baseURL)
 	f(client.ListFeedItems(ctx, &connect.Request[v1.ListFeedItemsRequest]{
 		Msg: &v1.ListFeedItemsRequest{
@@ -295,15 +295,15 @@ func (s *saga) ListFeedItems(ctx context.Context, f func(*connect.Response[v1.Li
 	return s
 }
 
-func (s *saga) SetAccessToken(token string) {
+func (s *Saga) SetAccessToken(token string) {
 	s.auth.accessToken = token
 }
 
-func (s *saga) SetRefreshTokenCookie(cookie string) {
+func (s *Saga) SetRefreshTokenCookie(cookie string) {
 	s.auth.refreshTokenCookie = cookie
 }
 
-func (s *saga) GetWorkout(ctx context.Context, f func(*connect.Response[v1.GetWorkoutResponse], error)) *saga {
+func (s *Saga) GetWorkout(ctx context.Context, f func(*connect.Response[v1.GetWorkoutResponse], error)) *Saga {
 	workout, err := orm.Workouts().One(ctx, s.db)
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load workout: %w", err))
