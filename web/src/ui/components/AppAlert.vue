@@ -9,6 +9,7 @@ const alertStore = useAlertStore()
 const props = defineProps<{
   type?: 'success' | 'error'
   message?: string
+  class?: string
 }>()
 
 watch(
@@ -45,7 +46,7 @@ const alertStyle = computed(() => {
 <template>
   <div
     v-if="alertStore.alert"
-    :class="alertStyle"
+    :class="[alertStyle, props.class]"
     class="border-b-2 border-t-2 py-4 px-5 font-medium"
   >
     {{ alertStore.alert.message }}
@@ -53,7 +54,7 @@ const alertStyle = computed(() => {
   <div
     v-if="props.message"
     class="border-2 py-4 px-5 font-medium rounded-md mb-4"
-    :class="alertStyle"
+    :class="[alertStyle, props.class]"
   >
     {{ props.message }}
   </div>

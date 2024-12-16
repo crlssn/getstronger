@@ -8,7 +8,7 @@ const authStore = useAuthStore()
 
 <template>
   <AppDashboard v-if="authStore.authorised" />
-  <GuestView v-else/>
+  <GuestView v-else />
 </template>
 
 <style scoped></style>

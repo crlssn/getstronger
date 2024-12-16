@@ -2,14 +2,17 @@
 import { onMounted } from 'vue'
 import { verifyEmail } from '@/http/requests'
 import { useRoute, useRouter } from 'vue-router'
+import { useAlertStore } from '@/stores/alerts.ts'
 
 const route = useRoute()
 const router = useRouter()
+const alertStore = useAlertStore()
 
 onMounted(async () => {
   const res = await verifyEmail(route.query.token as string)
   if (!res) return
-  await router.push('/login?verified')
+  alertStore.setSuccess('Thank you for verifying your email')
+  await router.push('/login')
 })
 </script>
 

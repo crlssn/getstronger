@@ -4,9 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { updatePassword } from '@/http/requests'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type UpdatePasswordRequest } from '@/proto/api/v1/auth_service_pb'
+import { useAlertStore } from '@/stores/alerts.ts'
 
 const route = useRoute()
 const router = useRouter()
+const alertStore = useAlertStore()
 
 const req = ref<UpdatePasswordRequest>({
   $typeName: 'api.v1.UpdatePasswordRequest',
@@ -18,7 +20,8 @@ const req = ref<UpdatePasswordRequest>({
 const onSignup = async () => {
   const res = await updatePassword(req.value)
   if (!res) return
-  await router.push('/login?reset')
+  alertStore.setSuccess('Your password has been reset')
+  await router.push('/login')
 }
 </script>
 
@@ -42,7 +45,7 @@ const onSignup = async () => {
 
     <div>
       <div class="flex items-center justify-between">
-        <label for="password" class="block font-medium text-gray-900"> Confirm Password </label>
+        <label for="password" class="block font-medium text-gray-900">Confirm Password </label>
       </div>
       <div class="mt-2">
         <input
@@ -57,7 +60,7 @@ const onSignup = async () => {
     </div>
 
     <div>
-      <AppButton type="submit" colour="primary"> Update Password</AppButton>
+      <AppButton type="submit" colour="primary">Update Password</AppButton>
     </div>
   </form>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import AppAlert from '@/ui/components/AppAlert.vue'
 </script>
 
 <template>
@@ -8,6 +9,7 @@ import { RouterView } from 'vue-router'
       <p><span class="font-semibold">Get</span><span class="font-bold">Stronger</span></p>
     </div>
   </nav>
+  <AppAlert class="fixed top-16 left-0 right-0" />
   <main>
     <RouterView />
   </main>
@@ -15,7 +17,7 @@ import { RouterView } from 'vue-router'
 
 <style scoped>
 nav {
-  @apply fixed w-full top-0 z-30  border-gray-200 bg-white h-16;
+  @apply fixed w-full top-0 z-10  border-gray-200 bg-white h-16;
 
   .container {
     @apply flex items-center justify-center max-w-4xl mx-auto px-4 h-16 border-b-2 border-gray-200;

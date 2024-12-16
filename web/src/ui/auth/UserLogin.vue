@@ -4,10 +4,9 @@ import router from '@/router/router'
 import { login } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { scheduleTokenRefresh } from '@/jwt/jwt'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
-import AppAlert from '@/ui/components/AppAlert.vue'
 
 const email = ref('')
 const password = ref('')
@@ -26,21 +25,6 @@ const onLogin = async () => {
 </script>
 
 <template>
-  <AppAlert
-    v-if="useRoute().query.success === null"
-    type="success"
-    message="Please check your inbox to verify your email"
-  />
-  <AppAlert
-    v-if="useRoute().query.verified === null"
-    type="success"
-    message="Thank you for verifying your email"
-  />
-  <AppAlert
-    v-if="useRoute().query.reset === null"
-    type="success"
-    message="Your password has been reset"
-  />
   <form class="space-y-6" method="POST" @submit.prevent="onLogin">
     <div>
       <label for="email" class="block /6 font-medium text-gray-900">Email address</label>
@@ -74,7 +58,7 @@ const onLogin = async () => {
     </div>
 
     <div>
-      <AppButton type="submit" colour="primary"> Login</AppButton>
+      <AppButton type="submit" colour="primary">Login</AppButton>
     </div>
   </form>
 
