@@ -8,6 +8,8 @@ import (
 	"github.com/bufbuild/protovalidate-go"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/crlssn/getstronger/server/pkg/xzap"
 )
 
 var _ connect.Interceptor = (*validator)(nil)
@@ -38,7 +40,7 @@ func (v *validator) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		}
 
 		if err := v.validator.Validate(msg); err != nil {
-			v.log.Warn("invalid request", zap.Error(err))
+			v.log.Warn("invalid request", zap.Error(err), xzap.FieldRPC(req.Spec().Procedure))
 			return nil, connect.NewError(connect.CodeInvalidArgument, err)
 		}
 

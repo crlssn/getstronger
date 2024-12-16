@@ -13,6 +13,7 @@ onMounted(async () => {
 })
 
 const fetchUser = async () => {
+  console.log('profile: fetching user')
   const res = await getUser(useAuthStore().userId)
   if (!res) return
 
@@ -21,10 +22,10 @@ const fetchUser = async () => {
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" v-if="user">
     <UserCircleIcon class="size-48 mx-auto text-gray-900" />
-    <h1>{{ user?.firstName }} {{ user?.lastName }}</h1>
-    <p>{{ user?.email }}</p>
+    <h1>{{ user.firstName }} {{ user.lastName }}</h1>
+    <p>{{ user.email }}</p>
   </div>
   <AppButton type="link" to="/logout" colour="red">Logout</AppButton>
 </template>

@@ -1,7 +1,5 @@
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import { logout as logoutRequest } from '@/http/requests.ts'
-import { useNotificationStore } from '@/stores/notifications.ts'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import { useActionButton } from '@/stores/actionButton.ts'
 import { useNavTabs } from '@/stores/navTabs.ts'
@@ -151,9 +149,8 @@ const router: Router = createRouter({
       path: '/signup',
     },
     {
-      beforeEnter: [logout],
-      children: [],
-      component: null,
+      beforeEnter: [auth],
+      component: () => import('@/ui/auth/UserLogout.vue'),
       name: 'logout',
       path: '/logout',
     },
@@ -222,19 +219,6 @@ async function guest() {
     return {
       path: '/home',
     }
-  }
-}
-
-async function logout() {
-  await logoutRequest()
-  const authStore = useAuthStore()
-  authStore.logout()
-
-  const notificationStore = useNotificationStore()
-  notificationStore.unreadCount = 0
-
-  return {
-    path: '/login',
   }
 }
 
