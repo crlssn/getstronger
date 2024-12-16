@@ -33,6 +33,7 @@ const fetchExercises = async () => {
     Create Exercise
   </AppButton>
   <AppList :can-fetch="hasMorePages" @fetch="fetchExercises" v-if="isMounted">
+    <AppListItem v-if="exercises.length === 0">Your exercises will appear here</AppListItem>
     <AppListItemLink
       v-for="exercise in exercises"
       :key="exercise.id"
@@ -41,6 +42,5 @@ const fetchExercises = async () => {
       {{ exercise.name }}
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
-    <AppListItem v-if="exercises.length === 0">Your exercises will appear here</AppListItem>
   </AppList>
 </template>
