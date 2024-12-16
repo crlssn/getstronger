@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import { listFollowers } from '@/http/requests.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
-import AppAlert from '@/ui/components/AppAlert.vue'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const props = defineProps<{
   id: string
@@ -29,12 +29,12 @@ const fetchFollowers = async () => {
 </script>
 
 <template>
-  <AppList v-if="followers.length > 0">
+  <AppList>
     <AppListItemLink v-for="follower in followers" :key="follower.id" :to="`/users/${follower.id}`">
       {{ follower.firstName }} {{ follower.lastName }}
     </AppListItemLink>
+    <AppListItem v-if="followers.length === 0"> Nothing here yet... </AppListItem>
   </AppList>
-  <AppAlert v-if="followers.length === 0" type="info" message="Nothing here yet..." />
 </template>
 
 <style scoped></style>

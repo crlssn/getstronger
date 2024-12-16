@@ -6,7 +6,8 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 import usePagination from '@/utils/usePagination.ts'
 import { vInfiniteScroll } from '@vueuse/components'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
-import AppAlert from '@/ui/components/AppAlert.vue'
+import AppList from '@/ui/components/AppList.vue'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const props = defineProps<{
   id: string
@@ -35,7 +36,9 @@ const fetchWorkouts = async () => {
 <template>
   <CardWorkout v-for="workout in workouts" :key="workout.id" compact :workout="workout" />
   <div v-if="hasMorePages" v-infinite-scroll="fetchWorkouts" />
-  <AppAlert v-if="workouts.length === 0" type="info" message="Nothing here yet..." />
+  <AppList v-if="workouts.length === 0">
+    <AppListItem> Nothing here yet...</AppListItem>
+  </AppList>
 </template>
 
 <style scoped></style>

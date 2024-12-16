@@ -7,7 +7,7 @@ import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
-import AppAlert from '@/ui/components/AppAlert.vue'
+import AppListItem from '@/ui/components/AppListItem.vue'
 
 const props = defineProps<{
   id: string
@@ -32,7 +32,7 @@ const fetchPersonalBests = async () => {
 </script>
 
 <template>
-  <AppList v-if="personalBests.length > 0">
+  <AppList>
     <AppListItemLink
       v-for="pb in personalBests"
       :key="pb.exercise?.id"
@@ -49,8 +49,8 @@ const fetchPersonalBests = async () => {
       </div>
       {{ pb.set?.weight }} kg x {{ pb.set?.reps }}
     </AppListItemLink>
+    <AppListItem v-if="personalBests.length === 0"> Nothing here yet...</AppListItem>
   </AppList>
-  <AppAlert v-if="personalBests.length === 0" type="info" message="Nothing here yet..." />
 </template>
 
 <style scoped></style>
