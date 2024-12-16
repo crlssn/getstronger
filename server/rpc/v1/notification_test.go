@@ -221,10 +221,11 @@ func (s *notificationSuite) TestListNotifications() {
 			return
 		}
 
-		s.Require().NoError(err)
 		s.Require().NotNil(res)
-		s.Equal(t.expected.res.Msg.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
-		s.Len(t.expected.res.Msg.GetNotifications(), len(res.Msg.GetNotifications()))
+		s.Require().NoError(err)
+		s.Require().Len(t.expected.res.Msg.GetNotifications(), len(res.Msg.GetNotifications()))
+		s.Require().Equal(t.expected.res.Msg.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
+
 		for i, actualNotification := range res.Msg.GetNotifications() {
 			expectedNotification := t.expected.res.Msg.GetNotifications()[i]
 
