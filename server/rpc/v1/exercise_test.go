@@ -75,18 +75,20 @@ func (s *exerciseSuite) TestCreateExercise() {
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	for _, t := range tests {
-		res, err := s.handler.CreateExercise(ctx, t.req)
-		if t.expected.err != nil {
-			s.Require().Nil(res)
-			s.Require().Error(err)
-			s.Require().ErrorIs(err, t.expected.err)
+		s.Run(t.name, func() {
+			res, err := s.handler.CreateExercise(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
 
-			return
-		}
+				return
+			}
 
-		s.Require().NoError(err)
-		s.Require().NotNil(res)
-		_, err = uuid.Parse(res.Msg.GetId())
-		s.Require().NoError(err)
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+			_, err = uuid.Parse(res.Msg.GetId())
+			s.Require().NoError(err)
+		})
 	}
 }
