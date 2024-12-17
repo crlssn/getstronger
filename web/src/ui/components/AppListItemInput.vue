@@ -6,7 +6,7 @@ const props = defineProps<{
   placeholder?: string
   required?: boolean
   type: string
-  capitalize?: boolean
+  capitalise?: boolean
 }>()
 
 const emits = defineEmits(['update'])
@@ -29,7 +29,7 @@ const onChange = () => {
 }
 
 const onKeyup = () => {
-  if (props.capitalize) {
+  if (props.capitalise) {
     value.value = value.value.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
   }
 }
