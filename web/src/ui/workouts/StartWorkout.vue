@@ -32,9 +32,7 @@ onMounted(async () => {
   await fetchLatestExerciseSets()
   pageTitleStore.setPageTitle(routine.value?.name as string)
   workoutStore.initialiseWorkout(routineID)
-  routine.value?.exercises.forEach((exercise) => {
-    addEmptySetIfNone(exercise.id)
-  })
+  addEmptySetsFromPrevSession()
   dateTimeInterval = setInterval(updateDateTime, 1000)
 })
 
@@ -48,6 +46,19 @@ const fetchLatestExerciseSets = async () => {
   if (!res) return
 
   prevExerciseSets.value = res.exerciseSets
+}
+
+const addEmptySetsFromPrevSession = () => {
+  prevExerciseSets.value.forEach((es) => {
+    if (!es.exercise) return
+
+    const fill = es.sets.length - workoutStore.getSets(routineID, es.exercise.id).length
+    if (fill < 1) return
+
+    for (let i = 0; i < fill; i++) {
+      addEmptySet(es.exercise.id)
+    }
+  })
 }
 
 const updateDateTime = () => {
