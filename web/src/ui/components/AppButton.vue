@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 const props = defineProps<{
-  colour: 'amber' | 'gray' | 'green' | 'primary' | 'red'
+  colour: 'amber' | 'gray' | 'green' | 'primary' | 'red' | 'black'
   containerClass?: string
   to?: string
   type: 'button' | 'link' | 'submit'
@@ -56,5 +56,9 @@ button {
 
 .gray {
   @apply bg-gray-200 border-b-0 py-4 focus-visible:outline-gray-500 text-gray-500;
+}
+
+.black {
+  @apply bg-gray-800 border-b-black text-white;
 }
 </style>

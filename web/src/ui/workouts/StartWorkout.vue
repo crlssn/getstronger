@@ -4,13 +4,13 @@ import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 import { DateTime } from 'luxon'
 import { useRoute } from 'vue-router'
 import router from '@/router/router'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useAlertStore } from '@/stores/alerts.ts'
 import { useWorkoutStore } from '@/stores/workout'
 import AppList from '@/ui/components/AppList.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
-import { MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { type Routine } from '@/proto/api/v1/routine_service_pb'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests.ts'
@@ -21,8 +21,8 @@ const routineID = route.params.routine_id as string
 const workoutStore = useWorkoutStore()
 const pageTitleStore = usePageTitleStore()
 const alertStore = useAlertStore()
-const startDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
-const endDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
+const startDateTime = ref(DateTime.now().toFormat('yyyy-MM-dd\'T\'HH:mm'))
+const endDateTime = ref(DateTime.now().toFormat('yyyy-MM-dd\'T\'HH:mm'))
 let dateTimeInterval: ReturnType<typeof setInterval>
 const prevExerciseSets = ref<ExerciseSets[]>([])
 
@@ -50,7 +50,7 @@ const fetchLatestExerciseSets = async () => {
 }
 
 const updateDateTime = () => {
-  endDateTime.value = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm")
+  endDateTime.value = DateTime.now().toFormat('yyyy-MM-dd\'T\'HH:mm')
 }
 
 const clearDateTimeInterval = () => {
@@ -84,9 +84,9 @@ const onFinishWorkout = async () => {
 
     eSetsList.push({
       exercise: {
-        id: exerciseID,
+        id: exerciseID
       } as Exercise,
-      sets: definedSets,
+      sets: definedSets
     } as ExerciseSets)
   }
 
@@ -94,7 +94,7 @@ const onFinishWorkout = async () => {
     routineID,
     eSetsList,
     DateTime.fromISO(startDateTime.value),
-    DateTime.fromISO(endDateTime.value),
+    DateTime.fromISO(endDateTime.value)
   )
   if (!res) return
 
@@ -146,60 +146,88 @@ const setEndDateTime = (value: string) => {
   endDateTime.value = value
   clearDateTimeInterval()
 }
+
+const moveUp = (index: number) => {
+  swapExercises(routine.value?.exercises, index, index - 1)
+}
+
+const moveDown = (index: number) => {
+  swapExercises(routine.value?.exercises, index, index + 1)
+}
+
+const swapExercises = (exercises: Exercise[] | undefined, index1: number, index2: number) => {
+  if (!exercises) return
+  if (index1 < 0 || index2 < 0) return
+  if (index1 > exercises.length - 1 || index2 > exercises.length - 1) return
+
+  [exercises[index1], exercises[index2]] = [exercises[index2], exercises[index1]]
+}
+
+const maxExerciseIndex = computed(() => {
+  if (!routine.value?.exercises) return 0
+  return routine.value.exercises.length - 1 || 0
+})
 </script>
 
 <template>
   <form @submit.prevent="onFinishWorkout">
-    <div v-for="exercise in routine?.exercises" :key="exercise.id">
-      <h6>{{ exercise.name }}</h6>
+    <div v-for="(exercise, index) in routine?.exercises" :key="exercise.id">
+      <div class="flex justify-between pr-4">
+        <h6>{{ exercise.name }}</h6>
+        <div class="flex gap-x-1">
+          <ChevronUpIcon class="size-5 text-gray-500 cursor-pointer" @click="moveUp(index)" v-if="index !== 0" />
+          <ChevronDownIcon class="size-5  text-gray-500  cursor-pointer" @click="moveDown(index)" v-if="index !== maxExerciseIndex" />
+        </div>
+      </div>
+
       <div class="table-container">
         <table>
           <thead>
-            <tr>
-              <th>Set</th>
-              <th>Previous</th>
-              <th>Weight</th>
-              <th></th>
-              <th>Reps</th>
-              <th></th>
-            </tr>
+          <tr>
+            <th>Set</th>
+            <th>Previous</th>
+            <th>Weight</th>
+            <th></th>
+            <th>Reps</th>
+            <th></th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="(set, index) in sets(exercise.id)" :key="index">
-              <td>{{ index + 1 }}</td>
-              <td>
-                <template
-                  v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)"
-                >
-                  {{ prevSetWeight(exercise.id, index) }} kg x {{ prevSetReps(exercise.id, index) }}
-                </template>
-              </td>
-              <td class="w-1/4">
-                <input
-                  v-model.number="set.weight"
-                  type="text"
-                  inputmode="decimal"
-                  :required="sets(exercise.id).length > index + 1"
-                  @keyup="addEmptySetIfNone(exercise.id)"
-                />
-              </td>
-              <td class="text-center">x</td>
-              <td class="w-1/4">
-                <input
-                  v-model.number="set.reps"
-                  type="text"
-                  inputmode="numeric"
-                  :required="sets(exercise.id).length > index + 1"
-                  @keyup="addEmptySetIfNone(exercise.id)"
-                />
-              </td>
-              <td>
-                <MinusCircleIcon
-                  class="cursor-pointer size-6 text-gray-900"
-                  @click="deleteSet(exercise.id, index)"
-                />
-              </td>
-            </tr>
+          <tr v-for="(set, index) in sets(exercise.id)" :key="index">
+            <td>{{ index + 1 }}</td>
+            <td>
+              <template
+                v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)"
+              >
+                {{ prevSetWeight(exercise.id, index) }} kg x {{ prevSetReps(exercise.id, index) }}
+              </template>
+            </td>
+            <td class="w-1/4">
+              <input
+                v-model.number="set.weight"
+                type="text"
+                inputmode="decimal"
+                :required="sets(exercise.id).length > index + 1"
+                @keyup="addEmptySetIfNone(exercise.id)"
+              />
+            </td>
+            <td class="text-center">x</td>
+            <td class="w-1/4">
+              <input
+                v-model.number="set.reps"
+                type="text"
+                inputmode="numeric"
+                :required="sets(exercise.id).length > index + 1"
+                @keyup="addEmptySetIfNone(exercise.id)"
+              />
+            </td>
+            <td>
+              <MinusCircleIcon
+                class="cursor-pointer size-6 text-gray-900"
+                @click="deleteSet(exercise.id, index)"
+              />
+            </td>
+          </tr>
           </tbody>
         </table>
         <AppButton colour="primary" type="button" class="w-full" @click="addEmptySet(exercise.id)">
@@ -228,8 +256,8 @@ const setEndDateTime = (value: string) => {
       />
     </AppList>
 
-    <AppButton type="submit" colour="primary" class="mb-4"> Finish Workout </AppButton>
-    <AppButton type="button" colour="gray" @click="cancelWorkout"> Cancel Workout </AppButton>
+    <AppButton type="submit" colour="primary" class="mb-4"> Finish Workout</AppButton>
+    <AppButton type="button" colour="black" @click="cancelWorkout"> Cancel Workout</AppButton>
   </form>
 </template>
 
