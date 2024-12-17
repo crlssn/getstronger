@@ -6,6 +6,7 @@ const props = defineProps<{
   placeholder?: string
   required?: boolean
   type: string
+  capitalise?: boolean
 }>()
 
 const emits = defineEmits(['update'])
@@ -26,6 +27,12 @@ onMounted(() => {
 const onChange = () => {
   emits('update', value.value)
 }
+
+const onKeyup = () => {
+  if (props.capitalise) {
+    value.value = value.value.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+}
 </script>
 
 <template>
@@ -36,6 +43,7 @@ const onChange = () => {
       :required="props.required"
       :placeholder="props.placeholder"
       @change="onChange"
+      @keyup="onKeyup"
     />
   </li>
 </template>
