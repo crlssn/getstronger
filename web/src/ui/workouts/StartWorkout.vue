@@ -274,9 +274,6 @@ const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index:
           </tr>
           </tbody>
         </table>
-        <AppButton colour="primary" type="button" class="w-full" @click="addEmptySet(exercise.id)">
-          Add Set
-        </AppButton>
       </div>
     </div>
 
