@@ -68,22 +68,6 @@ export const useWorkoutStore = defineStore(
       delete workouts.value[routineID]
     }
 
-    const swapExercises = (routineID: RoutineID, index1: number, index2: number) => {
-      const workout = workouts.value[routineID]
-      if (!workout) return
-      if (!workout.exerciseSets) return
-
-      [workout.exerciseSets[index1], workout.exerciseSets[index2]] = [workout.exerciseSets[index2], workout.exerciseSets[index1]]
-
-      // workout.exerciseSets = workout.exerciseSets || {}
-      // workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
-      // const exerciseSets = workout.exerciseSets[exerciseID]
-      // const oldIndex = exerciseSets.findIndex((set) => set.id === exerciseID)
-      // if (oldIndex === -1) return
-      // const [removed] = exerciseSets.splice(oldIndex, 1)
-      // exerciseSets.splice(newIndex, 0, removed)
-    }
-
     return {
       addEmptySet,
       addEmptySetIfNone,
@@ -93,7 +77,6 @@ export const useWorkoutStore = defineStore(
       initialiseWorkout,
       removeWorkout,
       workouts,
-      swapExercises,
     }
   },
   {

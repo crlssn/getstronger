@@ -14,6 +14,7 @@ import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/
 import { type Routine } from '@/proto/api/v1/routine_service_pb'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests.ts'
+import type{Set} from '@/types/workout'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -167,6 +168,36 @@ const maxExerciseIndex = computed(() => {
   if (!routine.value?.exercises) return 0
   return routine.value.exercises.length - 1 || 0
 })
+
+const setPrevSetWeightIfEmpty = (event: Event, exerciseId: string, set: Set, index: number) => {
+  if (isNumber(set.weight)) {
+    return
+  }
+  const prevSet = workoutStore.getSets(routineID, exerciseId)[index-1]
+  if (prevSet == undefined) {
+    return
+  }
+
+  set.weight = prevSet.weight
+  const target = event.target as HTMLInputElement
+  target.select()
+  addEmptySetIfNone(exerciseId)
+}
+
+const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index: number) => {
+  if (isNumber(set.reps)) {
+    return
+  }
+  const prevSet = workoutStore.getSets(routineID, exerciseId)[index-1]
+  if (prevSet == undefined) {
+    return
+  }
+
+  set.reps = prevSet.reps
+  const target = event.target as HTMLInputElement
+  target.select()
+  addEmptySetIfNone(exerciseId)
+}
 </script>
 
 <template>
@@ -208,7 +239,8 @@ const maxExerciseIndex = computed(() => {
                 type="text"
                 inputmode="decimal"
                 :required="sets(exercise.id).length > index + 1"
-                @keyup="addEmptySetIfNone(exercise.id)"
+                @input="addEmptySetIfNone(exercise.id)"
+                @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, index)"
               />
             </td>
             <td class="text-center">x</td>
@@ -218,7 +250,8 @@ const maxExerciseIndex = computed(() => {
                 type="text"
                 inputmode="numeric"
                 :required="sets(exercise.id).length > index + 1"
-                @keyup="addEmptySetIfNone(exercise.id)"
+                @input="addEmptySetIfNone(exercise.id)"
+                @focus="setPrevSetRepIfEmpty($event, exercise.id, set, index)"
               />
             </td>
             <td>
