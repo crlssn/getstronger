@@ -8,7 +8,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
-	repo2 "github.com/crlssn/getstronger/server/repo"
+	repo "github.com/crlssn/getstronger/server/repo"
 )
 
 const timeout = 5 * time.Second
@@ -25,10 +25,10 @@ var (
 
 type RequestTraced struct {
 	log  *zap.Logger
-	repo repo2.Repo
+	repo repo.Repo
 }
 
-func NewRequestTraced(log *zap.Logger, repo repo2.Repo) *RequestTraced {
+func NewRequestTraced(log *zap.Logger, repo repo.Repo) *RequestTraced {
 	return &RequestTraced{log, repo}
 }
 
@@ -38,7 +38,7 @@ func (h *RequestTraced) HandlePayload(payload any) {
 
 	switch t := payload.(type) {
 	case *payloads.RequestTraced:
-		if err := h.repo.StoreTrace(ctx, repo2.StoreTraceParams{
+		if err := h.repo.StoreTrace(ctx, repo.StoreTraceParams{
 			Request:    t.Request,
 			DurationMS: t.DurationMS,
 			StatusCode: t.StatusCode,
@@ -52,10 +52,10 @@ func (h *RequestTraced) HandlePayload(payload any) {
 
 type WorkoutCommentPosted struct {
 	log  *zap.Logger
-	repo repo2.Repo
+	repo repo.Repo
 }
 
-func NewWorkoutCommentPosted(log *zap.Logger, repo repo2.Repo) *WorkoutCommentPosted {
+func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo) *WorkoutCommentPosted {
 	return &WorkoutCommentPosted{log, repo}
 }
 
@@ -66,7 +66,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 	switch t := payload.(type) {
 	case *payloads.WorkoutCommentPosted:
 		comment, err := w.repo.GetWorkoutComment(ctx,
-			repo2.GetWorkoutCommentWithID(t.CommentID),
+			repo.GetWorkoutCommentWithID(t.CommentID),
 		)
 		if err != nil {
 			w.log.Error("get workout comment", zap.Error(err))
@@ -74,8 +74,8 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		}
 
 		workout, err := w.repo.GetWorkout(ctx,
-			repo2.GetWorkoutWithID(comment.WorkoutID),
-			repo2.GetWorkoutWithComments(),
+			repo.GetWorkoutWithID(comment.WorkoutID),
+			repo.GetWorkoutWithComments(),
 		)
 		if err != nil {
 			w.log.Error("get workout", zap.Error(err))
@@ -92,10 +92,10 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		}
 
 		for userID := range mapUserIDs {
-			if err = w.repo.CreateNotification(ctx, repo2.CreateNotificationParams{
+			if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
 				Type:   orm.NotificationTypeWorkoutComment,
 				UserID: userID,
-				Payload: repo2.NotificationPayload{
+				Payload: repo.NotificationPayload{
 					ActorID:   comment.UserID,
 					WorkoutID: comment.WorkoutID,
 				},
@@ -110,10 +110,10 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 
 type UserFollowed struct {
 	log  *zap.Logger
-	repo repo2.Repo
+	repo repo.Repo
 }
 
-func NewUserFollowed(log *zap.Logger, repo repo2.Repo) *UserFollowed {
+func NewUserFollowed(log *zap.Logger, repo repo.Repo) *UserFollowed {
 	return &UserFollowed{log, repo}
 }
 
@@ -123,10 +123,10 @@ func (u *UserFollowed) HandlePayload(payload any) {
 
 	switch t := payload.(type) {
 	case *payloads.UserFollowed:
-		if err := u.repo.CreateNotification(ctx, repo2.CreateNotificationParams{
+		if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
 			Type:   orm.NotificationTypeFollow,
 			UserID: t.FolloweeID,
-			Payload: repo2.NotificationPayload{
+			Payload: repo.NotificationPayload{
 				ActorID: t.FollowerID,
 			},
 		}); err != nil {

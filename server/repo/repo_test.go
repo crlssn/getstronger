@@ -11,18 +11,18 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
-	repo2 "github.com/crlssn/getstronger/server/repo"
+	repo "github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
-	factory2 "github.com/crlssn/getstronger/server/testing/factory"
+	factory "github.com/crlssn/getstronger/server/testing/factory"
 )
 
 type repoSuite struct {
 	suite.Suite
 
-	repo repo2.Repo
+	repo repo.Repo
 
 	testContainer *container.Container
-	testFactory   *factory2.Factory
+	testFactory   *factory.Factory
 }
 
 func TestRepoSuite(t *testing.T) {
@@ -33,8 +33,8 @@ func TestRepoSuite(t *testing.T) {
 func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = container.NewContainer(ctx)
-	s.testFactory = factory2.NewFactory(s.testContainer.DB)
-	s.repo = repo2.New(s.testContainer.DB)
+	s.testFactory = factory.NewFactory(s.testContainer.DB)
+	s.repo = repo.New(s.testContainer.DB)
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
 			log.Fatalf("failed to clean container: %s", err)
@@ -51,7 +51,7 @@ func (s *repoSuite) TestListExercises() {
 
 	type test struct {
 		name     string
-		opts     []repo2.ListExercisesOpt
+		opts     []repo.ListExercisesOpt
 		init     func(test)
 		expected expected
 	}
@@ -61,14 +61,14 @@ func (s *repoSuite) TestListExercises() {
 	tests := []test{
 		{
 			name: "ok_valid_access_token",
-			opts: []repo2.ListExercisesOpt{
-				repo2.ListExercisesWithUserID(user.ID),
-				repo2.ListExercisesWithLimit(2),
+			opts: []repo.ListExercisesOpt{
+				repo.ListExercisesWithUserID(user.ID),
+				repo.ListExercisesWithLimit(2),
 			},
 			init: func(_ test) {
-				s.testFactory.NewExercise(factory2.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(factory2.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(factory2.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(factory.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(factory.ExerciseUserID(user.ID))
+				s.testFactory.NewExercise(factory.ExerciseUserID(user.ID))
 			},
 			expected: expected{
 				err:           nil,
@@ -103,7 +103,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 	type test struct {
 		name      string
 		routineID string
-		opts      []repo2.UpdateRoutineOpt
+		opts      []repo.UpdateRoutineOpt
 		init      func(test)
 		expected  expected
 	}
@@ -112,13 +112,13 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "ok_update_routine_name",
 			routineID: uuid.NewString(),
-			opts: []repo2.UpdateRoutineOpt{
-				repo2.UpdateRoutineName("new"),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineName("new"),
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
-					factory2.RoutineID(t.routineID),
-					factory2.RoutineName("old"),
+					factory.RoutineID(t.routineID),
+					factory.RoutineName("old"),
 				)
 			},
 			expected: expected{
@@ -128,13 +128,13 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "ok_update_exercise_order",
 			routineID: uuid.NewString(),
-			opts: []repo2.UpdateRoutineOpt{
-				repo2.UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
-					factory2.RoutineID(t.routineID),
-					factory2.RoutineExerciseOrder([]string{"2", "1"}),
+					factory.RoutineID(t.routineID),
+					factory.RoutineExerciseOrder([]string{"2", "1"}),
 				)
 			},
 			expected: expected{
@@ -144,15 +144,15 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "ok_update_name_and_exercise_order",
 			routineID: uuid.NewString(),
-			opts: []repo2.UpdateRoutineOpt{
-				repo2.UpdateRoutineName("new"),
-				repo2.UpdateRoutineExerciseOrder([]string{"1", "2"}),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineName("new"),
+				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
 			},
 			init: func(t test) {
 				s.testFactory.NewRoutine(
-					factory2.RoutineID(t.routineID),
-					factory2.RoutineName("old"),
-					factory2.RoutineExerciseOrder([]string{"2", "1"}),
+					factory.RoutineID(t.routineID),
+					factory.RoutineName("old"),
+					factory.RoutineExerciseOrder([]string{"2", "1"}),
 				)
 			},
 			expected: expected{
@@ -162,13 +162,13 @@ func (s *repoSuite) TestUpdateRoutine() {
 		{
 			name:      "err_duplicate_column_update",
 			routineID: uuid.NewString(),
-			opts: []repo2.UpdateRoutineOpt{
-				repo2.UpdateRoutineName("new"),
-				repo2.UpdateRoutineName("newer"),
+			opts: []repo.UpdateRoutineOpt{
+				repo.UpdateRoutineName("new"),
+				repo.UpdateRoutineName("newer"),
 			},
 			init: func(_ test) {},
 			expected: expected{
-				err: repo2.ErrUpdateDuplicateColumn,
+				err: repo.ErrUpdateDuplicateColumn,
 			},
 		},
 	}
@@ -197,12 +197,12 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 
 	exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
 	for _, exerciseID := range exerciseIDs {
-		s.testFactory.NewExercise(factory2.ExerciseID(exerciseID))
+		s.testFactory.NewExercise(factory.ExerciseID(exerciseID))
 	}
 
 	workoutIDs := []string{uuid.NewString(), uuid.NewString()}
 	for _, workoutID := range workoutIDs {
-		s.testFactory.NewWorkout(factory2.WorkoutID(workoutID))
+		s.testFactory.NewWorkout(factory.WorkoutID(workoutID))
 	}
 
 	now := time.Now().UTC()
@@ -212,27 +212,27 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 			name:        "ok",
 			exerciseIDs: exerciseIDs,
 			init: func(t test) {
-				s.testFactory.NewSet(factory2.SetCreatedAt(now.Add(-time.Minute)))
-				s.testFactory.NewSet(factory2.SetCreatedAt(now.Add(-time.Minute)))
+				s.testFactory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
+				s.testFactory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
 
 				for _, exerciseID := range t.exerciseIDs {
 					s.testFactory.NewSet(
-						factory2.SetExerciseID(exerciseID),
-						factory2.SetCreatedAt(now.Add(-time.Second)),
+						factory.SetExerciseID(exerciseID),
+						factory.SetCreatedAt(now.Add(-time.Second)),
 					)
 					s.testFactory.NewSet(
-						factory2.SetExerciseID(exerciseID),
-						factory2.SetCreatedAt(now.Add(-time.Second)),
+						factory.SetExerciseID(exerciseID),
+						factory.SetCreatedAt(now.Add(-time.Second)),
 					)
 				}
 
 				for _, set := range t.expected.sets {
 					s.testFactory.NewSet(
-						factory2.SetWorkoutID(set.WorkoutID),
-						factory2.SetExerciseID(set.ExerciseID),
-						factory2.SetReps(set.Reps),
-						factory2.SetWeight(set.Weight),
-						factory2.SetCreatedAt(set.CreatedAt),
+						factory.SetWorkoutID(set.WorkoutID),
+						factory.SetExerciseID(set.ExerciseID),
+						factory.SetReps(set.Reps),
+						factory.SetWeight(set.Weight),
+						factory.SetCreatedAt(set.CreatedAt),
 					)
 				}
 			},
@@ -303,7 +303,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 
 	type test struct {
 		name     string
-		opts     []repo2.DeleteWorkoutOpt
+		opts     []repo.DeleteWorkoutOpt
 		init     func(test) *orm.Workout
 		expected expected
 	}
@@ -314,14 +314,14 @@ func (s *repoSuite) TestDeleteWorkout() {
 	tests := []test{
 		{
 			name: "ok_with_workout_id",
-			opts: []repo2.DeleteWorkoutOpt{
-				repo2.DeleteWorkoutWithID(workoutID),
+			opts: []repo.DeleteWorkoutOpt{
+				repo.DeleteWorkoutWithID(workoutID),
 			},
 			init: func(_ test) *orm.Workout {
-				workout := s.testFactory.NewWorkout(factory2.WorkoutID(workoutID))
-				s.testFactory.NewSet(factory2.SetWorkoutID(workoutID))
-				s.testFactory.NewWorkoutComment(factory2.WorkoutCommentWorkoutID(workoutID))
-				s.testFactory.NewNotification(factory2.NotificationPayload(repo2.NotificationPayload{
+				workout := s.testFactory.NewWorkout(factory.WorkoutID(workoutID))
+				s.testFactory.NewSet(factory.SetWorkoutID(workoutID))
+				s.testFactory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workoutID))
+				s.testFactory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
 					WorkoutID: workoutID,
 				}))
 
@@ -333,15 +333,15 @@ func (s *repoSuite) TestDeleteWorkout() {
 		},
 		{
 			name: "ok_with_user_id",
-			opts: []repo2.DeleteWorkoutOpt{
-				repo2.DeleteWorkoutWithUserID(userID),
+			opts: []repo.DeleteWorkoutOpt{
+				repo.DeleteWorkoutWithUserID(userID),
 			},
 			init: func(_ test) *orm.Workout {
-				user := s.testFactory.NewUser(factory2.UserID(userID))
-				workout := s.testFactory.NewWorkout(factory2.WorkoutUserID(user.ID))
-				s.testFactory.NewSet(factory2.SetWorkoutID(workout.ID))
-				s.testFactory.NewWorkoutComment(factory2.WorkoutCommentWorkoutID(workout.ID))
-				s.testFactory.NewNotification(factory2.NotificationPayload(repo2.NotificationPayload{
+				user := s.testFactory.NewUser(factory.UserID(userID))
+				workout := s.testFactory.NewWorkout(factory.WorkoutUserID(user.ID))
+				s.testFactory.NewSet(factory.SetWorkoutID(workout.ID))
+				s.testFactory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID))
+				s.testFactory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
 					WorkoutID: workout.ID,
 				}))
 
