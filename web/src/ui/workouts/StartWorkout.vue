@@ -43,7 +43,7 @@ onUnmounted(() => clearDateTimeUpdater())
 const maxExerciseIndex = computed(() => {
   if (!routine.value?.exercises) return 0
 
-  return routine.value.exercises.length
+  return routine.value.exercises.length - 1
 })
 
 const initializeRoutine = async () => {
@@ -182,8 +182,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
   if (!exercises) return
 
   const newIndex = direction === 'up' ? index - 1 : index + 1
-  if (newIndex < 0 || newIndex >= exercises.length) return
-
+  if (newIndex < 0 || newIndex >= exercises.length - 1) return
   ;[exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
 }
 </script>
