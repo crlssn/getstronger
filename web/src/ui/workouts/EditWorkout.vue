@@ -16,6 +16,7 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 import { MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { getWorkout, updateWorkout } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
+import { isNumber } from '@/utils/numbers.ts'
 
 const route = useRoute()
 const workout = ref<Workout>()
@@ -46,6 +47,15 @@ const onUpdateWorkout = async () => {
     return
   }
 
+  workout.value.exerciseSets = workout.value.exerciseSets
+    .map((exerciseSet) => {
+      const sets = exerciseSet.sets.filter((set) => isNumber(set.reps) && isNumber(set.weight))
+      if (!sets.length) return null
+      exerciseSet.sets = sets
+      return exerciseSet
+    })
+    .filter(Boolean) as ExerciseSets[]
+
   const res = await updateWorkout(workout.value)
   if (!res) return
 
@@ -70,11 +80,9 @@ const deleteSet = (exerciseId: string, index: number) => {
     return
   }
 
-  if (confirm('Are you sure you want to delete this set?')) {
-    workout.value.exerciseSets
-      .find((es: ExerciseSets) => es.exercise?.id === exerciseId)
-      ?.sets.splice(index, 1)
-  }
+  workout.value.exerciseSets
+    .find((es: ExerciseSets) => es.exercise?.id === exerciseId)
+    ?.sets.splice(index, 1)
 }
 
 const setStartDateTime = (value: string) => {
@@ -119,7 +127,7 @@ const toDateTime = (timestamp: Timestamp | undefined) => {
                   type="text"
                   inputmode="decimal"
                   placeholder="Weight"
-                  required
+                  :required="isNumber(set.reps)"
                 />
               </div>
               <span class="text-gray-500 font-medium">x</span>
@@ -129,7 +137,7 @@ const toDateTime = (timestamp: Timestamp | undefined) => {
                   type="text"
                   inputmode="numeric"
                   placeholder="Reps"
-                  required
+                  :required="isNumber(set.weight)"
                 />
               </div>
               <MinusCircleIcon
@@ -170,8 +178,8 @@ const toDateTime = (timestamp: Timestamp | undefined) => {
       />
     </AppList>
 
-    <AppButton type="submit" colour="primary">Update Workout</AppButton>
-    <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
+    <AppButton type="submit" colour="primary" class="mb-2">Update Workout</AppButton>
+    <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="black">
       Cancel Update
     </AppButton>
   </form>
