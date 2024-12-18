@@ -18,6 +18,7 @@ import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 
 import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests'
+import { isNumber } from '@/utils/numbers.ts'
 
 const route = useRoute()
 const routineID = route.params.routine_id as string
@@ -170,10 +171,6 @@ const cancelWorkout = async () => {
     workoutStore.removeWorkout(routineID)
     await router.push(`/routines/${routineID}`)
   }
-}
-
-const isNumber = (value: number | string | undefined): boolean => {
-  return typeof value === 'number' && !Number.isNaN(value)
 }
 
 const addEmptySet = (exerciseID: string) => {
