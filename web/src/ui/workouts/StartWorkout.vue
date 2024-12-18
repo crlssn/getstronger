@@ -65,14 +65,16 @@ const fetchPreviousExerciseSets = async () => {
 }
 
 const addEmptySetsFromPreviousSession = () => {
-  routine.value?.exercises.forEach((exercise) => addEmptySetIfNone(exercise.id))
+  routine.value?.exercises.forEach((exercise) => workoutStore.addEmptySetIfNone(routineID, exercise.id))
 
   prevExerciseSets.value.forEach((es) => {
     if (!es.exercise) return
 
     const missingSets = es.sets.length - workoutStore.getSets(routineID, es.exercise.id).length
+    if (missingSets <= 0) return
+
     for (let i = 0; i < missingSets; i++) {
-      addEmptySet(es.exercise.id)
+      workoutStore.addEmptySet(routineID, es.exercise.id)
     }
   })
 }
@@ -85,10 +87,6 @@ const startDateTimeUpdater = () => {
 
 const clearDateTimeUpdater = () => clearInterval(dateTimeInterval)
 
-const sets = (exerciseId: string) => {
-  return workoutStore.getSets(routineID, exerciseId)
-}
-
 const prevSetWeight = (exerciseID: string, index: number) => {
   const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
   return prevSet?.weight?.toString()
@@ -97,10 +95,6 @@ const prevSetWeight = (exerciseID: string, index: number) => {
 const prevSetReps = (exerciseID: string, index: number) => {
   const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
   return prevSet?.reps?.toString()
-}
-
-const addEmptySetIfNone = (exerciseID: string) => {
-  workoutStore.addEmptySetIfNone(routineID, exerciseID)
 }
 
 const setPrevSetWeightIfEmpty = (event: Event, exerciseId: string, set: Set, index: number) => {
@@ -115,7 +109,7 @@ const setPrevSetWeightIfEmpty = (event: Event, exerciseId: string, set: Set, ind
   set.weight = prevSet.weight
   const target = event.target as HTMLInputElement
   target.select()
-  addEmptySetIfNone(exerciseId)
+  workoutStore.addEmptySetIfNone(routineID, exerciseId)
 }
 
 const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index: number) => {
@@ -130,11 +124,7 @@ const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index:
   set.reps = prevSet.reps
   const target = event.target as HTMLInputElement
   target.select()
-  addEmptySetIfNone(exerciseId)
-}
-
-const deleteSet = (exerciseID: string, index: number) => {
-  workoutStore.deleteSet(routineID, exerciseID, index)
+  workoutStore.addEmptySetIfNone(routineID, exerciseId)
 }
 
 const onFinishWorkout = async () => {
@@ -172,10 +162,6 @@ const cancelWorkout = async () => {
     workoutStore.removeWorkout(routineID)
     await router.push(`/routines/${routineID}`)
   }
-}
-
-const addEmptySet = (exerciseID: string) => {
-  workoutStore.addEmptySet(routineID, exerciseID)
 }
 
 const moveExercise = (index: number, direction: 'up' | 'down') => {
@@ -220,14 +206,14 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
             </tr>
           </thead>
           <tbody>
-            <tr v-if="sets(exercise.id).length === 0">
+            <tr v-if="workoutStore.getSets(routineID, exercise.id).length === 0">
               <td colspan="6">
-                <AppButton colour="primary" type="button" @click="addEmptySet(exercise.id)">
+                <AppButton colour="primary" type="button" @click="workoutStore.addEmptySet(routineID, exercise.id)">
                   Add Set
                 </AppButton>
               </td>
             </tr>
-            <tr v-for="(set, index) in sets(exercise.id)" :key="index">
+            <tr v-for="(set, index) in workoutStore.getSets(routineID, exercise.id)" :key="index">
               <td>{{ index + 1 }}</td>
               <td>
                 <template
@@ -242,7 +228,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                   type="text"
                   inputmode="decimal"
                   :required="isNumber(set.reps)"
-                  @input="addEmptySetIfNone(exercise.id)"
+                  @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
                   @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, index)"
                 />
               </td>
@@ -253,7 +239,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                   type="text"
                   inputmode="numeric"
                   :required="isNumber(set.weight)"
-                  @input="addEmptySetIfNone(exercise.id)"
+                  @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
                   @focus="setPrevSetRepIfEmpty($event, exercise.id, set, index)"
                 />
               </td>
@@ -261,7 +247,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                 <div class="flex justify-center">
                   <MinusCircleIcon
                     class="cursor-pointer size-6 text-gray-900"
-                    @click="deleteSet(exercise.id, index)"
+                    @click="workoutStore.deleteSet(routineID, exercise.id, index)"
                   />
                 </div>
               </td>
