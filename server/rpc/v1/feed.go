@@ -7,11 +7,11 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 var _ apiv1connect.FeedServiceHandler = (*feedHandler)(nil)
@@ -24,7 +24,7 @@ func NewFeedHandler(r repo.Repo) apiv1connect.FeedServiceHandler {
 	return &feedHandler{r}
 }
 
-func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error) {
+func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[apiv1.ListFeedItemsRequest]) (*connect.Response[apiv1.ListFeedItemsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -84,10 +84,10 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[v1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.ListFeedItemsResponse]{
-		Msg: &v1.ListFeedItemsResponse{
+	return &connect.Response[apiv1.ListFeedItemsResponse]{
+		Msg: &apiv1.ListFeedItemsResponse{
 			Items: feedItems,
-			Pagination: &v1.PaginationResponse{
+			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},
 		},

@@ -9,11 +9,11 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
@@ -26,7 +26,7 @@ func NewRoutineHandler(r repo.Repo) apiv1connect.RoutineServiceHandler {
 	return &routineHandler{r}
 }
 
-func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error) {
+func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request[apiv1.CreateRoutineRequest]) (*connect.Response[apiv1.CreateRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -41,12 +41,12 @@ func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request
 	}
 
 	log.Info("routine created")
-	return connect.NewResponse(&v1.CreateRoutineResponse{
+	return connect.NewResponse(&apiv1.CreateRoutineResponse{
 		Id: routine.ID,
 	}), nil
 }
 
-func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[v1.GetRoutineRequest]) (*connect.Response[v1.GetRoutineResponse], error) {
+func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[apiv1.GetRoutineRequest]) (*connect.Response[apiv1.GetRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -82,12 +82,12 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[v1
 	}
 
 	log.Info("routine returned")
-	return connect.NewResponse(&v1.GetRoutineResponse{
+	return connect.NewResponse(&apiv1.GetRoutineResponse{
 		Routine: parseRoutineToPB(routine),
 	}), nil
 }
 
-func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request[v1.UpdateRoutineRequest]) (*connect.Response[v1.UpdateRoutineResponse], error) {
+func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request[apiv1.UpdateRoutineRequest]) (*connect.Response[apiv1.UpdateRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -147,12 +147,12 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 	}
 
 	log.Info("routine updated")
-	return connect.NewResponse(&v1.UpdateRoutineResponse{
+	return connect.NewResponse(&apiv1.UpdateRoutineResponse{
 		Routine: parseRoutineToPB(routine),
 	}), nil
 }
 
-func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request[v1.DeleteRoutineRequest]) (*connect.Response[v1.DeleteRoutineResponse], error) {
+func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request[apiv1.DeleteRoutineRequest]) (*connect.Response[apiv1.DeleteRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -173,10 +173,10 @@ func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request
 	}
 
 	log.Info("routine deleted")
-	return connect.NewResponse(&v1.DeleteRoutineResponse{}), nil
+	return connect.NewResponse(&apiv1.DeleteRoutineResponse{}), nil
 }
 
-func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[v1.ListRoutinesRequest]) (*connect.Response[v1.ListRoutinesResponse], error) {
+func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[apiv1.ListRoutinesRequest]) (*connect.Response[apiv1.ListRoutinesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -201,15 +201,15 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 	}
 
 	log.Info("routines listed")
-	return connect.NewResponse(&v1.ListRoutinesResponse{
+	return connect.NewResponse(&apiv1.ListRoutinesResponse{
 		Routines: parseRoutineSliceToPB(pagination.Items),
-		Pagination: &v1.PaginationResponse{
+		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: pagination.NextPageToken,
 		},
 	}), nil
 }
 
-func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error) { //nolint:dupl
+func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -237,10 +237,10 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[v
 	}
 
 	log.Info("exercise added to routine")
-	return connect.NewResponse(&v1.AddExerciseResponse{}), nil
+	return connect.NewResponse(&apiv1.AddExerciseResponse{}), nil
 }
 
-func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error) { //nolint:dupl
+func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Request[apiv1.RemoveExerciseRequest]) (*connect.Response[apiv1.RemoveExerciseResponse], error) { //nolint:dupl
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -268,10 +268,10 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 	}
 
 	log.Info("exercise removed from routine")
-	return connect.NewResponse(&v1.RemoveExerciseResponse{}), nil
+	return connect.NewResponse(&apiv1.RemoveExerciseResponse{}), nil
 }
 
-func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error) {
+func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseOrderRequest]) (*connect.Response[apiv1.UpdateExerciseOrderResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -312,5 +312,5 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 	}
 
 	log.Info("exercise order updated")
-	return connect.NewResponse(&v1.UpdateExerciseOrderResponse{}), nil
+	return connect.NewResponse(&apiv1.UpdateExerciseOrderResponse{}), nil
 }

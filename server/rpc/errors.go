@@ -3,7 +3,7 @@ package rpc
 import (
 	"connectrpc.com/connect"
 
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
+	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 )
 
 func Error(code connect.Code, err v1.Error) *connect.Error {

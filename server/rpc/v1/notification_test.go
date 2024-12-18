@@ -12,13 +12,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/test/testdb"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
 	rpc "github.com/crlssn/getstronger/server/rpc/v1"
+	"github.com/crlssn/getstronger/server/testing/db"
+	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 type notificationSuite struct {
@@ -26,8 +27,8 @@ type notificationSuite struct {
 
 	handler apiv1connect.NotificationServiceHandler
 
-	testFactory   *testdb.Factory
-	testContainer *testdb.Container
+	testFactory   *factory.Factory
+	testContainer *db.Container
 }
 
 func TestNotificationSuite(t *testing.T) {
@@ -37,8 +38,8 @@ func TestNotificationSuite(t *testing.T) {
 
 func (s *notificationSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = testdb.NewContainer(ctx)
-	s.testFactory = testdb.NewFactory(s.testContainer.DB)
+	s.testContainer = db.NewContainer(ctx)
+	s.testFactory = factory.NewFactory(s.testContainer.DB)
 	s.handler = rpc.NewNotificationHandler(repo.New(s.testContainer.DB), nil)
 
 	s.T().Cleanup(func() {
@@ -51,12 +52,12 @@ func (s *notificationSuite) SetupSuite() {
 func (s *notificationSuite) TestListNotifications() {
 	type expected struct {
 		err error
-		res *connect.Response[v1.ListNotificationsResponse]
+		res *connect.Response[apiv1.ListNotificationsResponse]
 	}
 
 	type test struct {
 		name     string
-		req      *connect.Request[v1.ListNotificationsRequest]
+		req      *connect.Request[apiv1.ListNotificationsRequest]
 		init     func(test test, userID string)
 		expected expected
 	}
@@ -64,9 +65,9 @@ func (s *notificationSuite) TestListNotifications() {
 	tests := []test{
 		{
 			name: "ok_empty_response",
-			req: &connect.Request[v1.ListNotificationsRequest]{
-				Msg: &v1.ListNotificationsRequest{
-					Pagination: &v1.PaginationRequest{
+			req: &connect.Request[apiv1.ListNotificationsRequest]{
+				Msg: &apiv1.ListNotificationsRequest{
+					Pagination: &apiv1.PaginationRequest{
 						PageLimit: 100,
 						PageToken: nil,
 					},
@@ -75,8 +76,8 @@ func (s *notificationSuite) TestListNotifications() {
 			init: func(_ test, _ string) {},
 			expected: expected{
 				err: nil,
-				res: &connect.Response[v1.ListNotificationsResponse]{
-					Msg: &v1.ListNotificationsResponse{
+				res: &connect.Response[apiv1.ListNotificationsResponse]{
+					Msg: &apiv1.ListNotificationsResponse{
 						Notifications: nil,
 						Pagination:    nil,
 					},
@@ -85,9 +86,9 @@ func (s *notificationSuite) TestListNotifications() {
 		},
 		{
 			name: "ok_workout_comment",
-			req: &connect.Request[v1.ListNotificationsRequest]{
-				Msg: &v1.ListNotificationsRequest{
-					Pagination: &v1.PaginationRequest{
+			req: &connect.Request[apiv1.ListNotificationsRequest]{
+				Msg: &apiv1.ListNotificationsRequest{
+					Pagination: &apiv1.PaginationRequest{
 						PageLimit: 100,
 						PageToken: nil,
 					},
@@ -96,28 +97,28 @@ func (s *notificationSuite) TestListNotifications() {
 			init: func(test test, userID string) {
 				for _, n := range test.expected.res.Msg.GetNotifications() {
 					workout := s.testFactory.NewWorkout(
-						testdb.WorkoutID(n.GetWorkoutComment().GetWorkout().GetId()),
-						testdb.WorkoutName(n.GetWorkoutComment().GetWorkout().GetName()),
-						testdb.WorkoutUserID(s.testFactory.NewUser(
-							testdb.UserID(n.GetWorkoutComment().GetWorkout().GetUser().GetId()),
-							testdb.UserLastName(n.GetWorkoutComment().GetWorkout().GetUser().GetLastName()),
-							testdb.UserFirstName(n.GetWorkoutComment().GetWorkout().GetUser().GetFirstName()),
+						factory.WorkoutID(n.GetWorkoutComment().GetWorkout().GetId()),
+						factory.WorkoutName(n.GetWorkoutComment().GetWorkout().GetName()),
+						factory.WorkoutUserID(s.testFactory.NewUser(
+							factory.UserID(n.GetWorkoutComment().GetWorkout().GetUser().GetId()),
+							factory.UserLastName(n.GetWorkoutComment().GetWorkout().GetUser().GetLastName()),
+							factory.UserFirstName(n.GetWorkoutComment().GetWorkout().GetUser().GetFirstName()),
 						).ID),
 					)
 					comment := s.testFactory.NewWorkoutComment(
-						testdb.WorkoutCommentUserID(s.testFactory.NewUser(
-							testdb.UserID(n.GetWorkoutComment().GetActor().GetId()),
-							testdb.UserLastName(n.GetWorkoutComment().GetActor().GetLastName()),
-							testdb.UserFirstName(n.GetWorkoutComment().GetActor().GetFirstName()),
+						factory.WorkoutCommentUserID(s.testFactory.NewUser(
+							factory.UserID(n.GetWorkoutComment().GetActor().GetId()),
+							factory.UserLastName(n.GetWorkoutComment().GetActor().GetLastName()),
+							factory.UserFirstName(n.GetWorkoutComment().GetActor().GetFirstName()),
 						).ID),
-						testdb.WorkoutCommentWorkoutID(workout.ID),
+						factory.WorkoutCommentWorkoutID(workout.ID),
 					)
 					s.testFactory.NewNotification(
-						testdb.NotificationID(n.GetId()),
-						testdb.NotificationType(orm.NotificationTypeWorkoutComment),
-						testdb.NotificationUserID(userID),
-						testdb.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
-						testdb.NotificationPayload(repo.NotificationPayload{
+						factory.NotificationID(n.GetId()),
+						factory.NotificationType(orm.NotificationTypeWorkoutComment),
+						factory.NotificationUserID(userID),
+						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
+						factory.NotificationPayload(repo.NotificationPayload{
 							ActorID:   comment.UserID,
 							WorkoutID: workout.ID,
 						}),
@@ -126,23 +127,23 @@ func (s *notificationSuite) TestListNotifications() {
 			},
 			expected: expected{
 				err: nil,
-				res: &connect.Response[v1.ListNotificationsResponse]{
-					Msg: &v1.ListNotificationsResponse{
-						Notifications: []*v1.Notification{
+				res: &connect.Response[apiv1.ListNotificationsResponse]{
+					Msg: &apiv1.ListNotificationsResponse{
+						Notifications: []*apiv1.Notification{
 							{
 								Id:             uuid.NewString(),
 								NotifiedAtUnix: time.Now().UTC().Unix(),
-								Type: &v1.Notification_WorkoutComment_{
-									WorkoutComment: &v1.Notification_WorkoutComment{
-										Actor: &v1.User{
+								Type: &apiv1.Notification_WorkoutComment_{
+									WorkoutComment: &apiv1.Notification_WorkoutComment{
+										Actor: &apiv1.User{
 											Id:        uuid.NewString(),
 											FirstName: gofakeit.FirstName(),
 											LastName:  gofakeit.LastName(),
 										},
-										Workout: &v1.Workout{
+										Workout: &apiv1.Workout{
 											Id:   uuid.NewString(),
 											Name: gofakeit.Name(),
-											User: &v1.User{
+											User: &apiv1.User{
 												Id:        uuid.NewString(),
 												FirstName: gofakeit.FirstName(),
 												LastName:  gofakeit.LastName(),
@@ -158,9 +159,9 @@ func (s *notificationSuite) TestListNotifications() {
 		},
 		{
 			name: "ok_user_followed",
-			req: &connect.Request[v1.ListNotificationsRequest]{
-				Msg: &v1.ListNotificationsRequest{
-					Pagination: &v1.PaginationRequest{
+			req: &connect.Request[apiv1.ListNotificationsRequest]{
+				Msg: &apiv1.ListNotificationsRequest{
+					Pagination: &apiv1.PaginationRequest{
 						PageLimit: 100,
 						PageToken: nil,
 					},
@@ -169,15 +170,15 @@ func (s *notificationSuite) TestListNotifications() {
 			init: func(test test, userID string) {
 				for _, n := range test.expected.res.Msg.GetNotifications() {
 					s.testFactory.NewNotification(
-						testdb.NotificationID(n.GetId()),
-						testdb.NotificationType(orm.NotificationTypeFollow),
-						testdb.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
-						testdb.NotificationUserID(userID),
-						testdb.NotificationPayload(repo.NotificationPayload{
+						factory.NotificationID(n.GetId()),
+						factory.NotificationType(orm.NotificationTypeFollow),
+						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
+						factory.NotificationUserID(userID),
+						factory.NotificationPayload(repo.NotificationPayload{
 							ActorID: s.testFactory.NewUser(
-								testdb.UserID(n.GetUserFollowed().GetActor().GetId()),
-								testdb.UserLastName(n.GetUserFollowed().GetActor().GetLastName()),
-								testdb.UserFirstName(n.GetUserFollowed().GetActor().GetFirstName()),
+								factory.UserID(n.GetUserFollowed().GetActor().GetId()),
+								factory.UserLastName(n.GetUserFollowed().GetActor().GetLastName()),
+								factory.UserFirstName(n.GetUserFollowed().GetActor().GetFirstName()),
 							).ID,
 						}),
 					)
@@ -185,15 +186,15 @@ func (s *notificationSuite) TestListNotifications() {
 			},
 			expected: expected{
 				err: nil,
-				res: &connect.Response[v1.ListNotificationsResponse]{
-					Msg: &v1.ListNotificationsResponse{
-						Notifications: []*v1.Notification{
+				res: &connect.Response[apiv1.ListNotificationsResponse]{
+					Msg: &apiv1.ListNotificationsResponse{
+						Notifications: []*apiv1.Notification{
 							{
 								Id:             uuid.NewString(),
 								NotifiedAtUnix: time.Now().UTC().Unix(),
-								Type: &v1.Notification_UserFollowed_{
-									UserFollowed: &v1.Notification_UserFollowed{
-										Actor: &v1.User{
+								Type: &apiv1.Notification_UserFollowed_{
+									UserFollowed: &apiv1.Notification_UserFollowed{
+										Actor: &apiv1.User{
 											Id:        uuid.NewString(),
 											FirstName: gofakeit.FirstName(),
 											LastName:  gofakeit.LastName(),
@@ -208,9 +209,9 @@ func (s *notificationSuite) TestListNotifications() {
 		},
 		{
 			name: "ok_workout_comment_deleted_workout",
-			req: &connect.Request[v1.ListNotificationsRequest]{
-				Msg: &v1.ListNotificationsRequest{
-					Pagination: &v1.PaginationRequest{
+			req: &connect.Request[apiv1.ListNotificationsRequest]{
+				Msg: &apiv1.ListNotificationsRequest{
+					Pagination: &apiv1.PaginationRequest{
 						PageLimit: 100,
 						PageToken: nil,
 					},
@@ -218,9 +219,9 @@ func (s *notificationSuite) TestListNotifications() {
 			},
 			init: func(_ test, userID string) {
 				s.testFactory.NewNotification(
-					testdb.NotificationType(orm.NotificationTypeWorkoutComment),
-					testdb.NotificationUserID(userID),
-					testdb.NotificationPayload(repo.NotificationPayload{
+					factory.NotificationType(orm.NotificationTypeWorkoutComment),
+					factory.NotificationUserID(userID),
+					factory.NotificationPayload(repo.NotificationPayload{
 						ActorID:   s.testFactory.NewUser().ID,
 						WorkoutID: uuid.NewString(),
 					}),
@@ -228,8 +229,8 @@ func (s *notificationSuite) TestListNotifications() {
 			},
 			expected: expected{
 				err: nil,
-				res: &connect.Response[v1.ListNotificationsResponse]{
-					Msg: &v1.ListNotificationsResponse{
+				res: &connect.Response[apiv1.ListNotificationsResponse]{
+					Msg: &apiv1.ListNotificationsResponse{
 						Notifications: nil,
 					},
 				},

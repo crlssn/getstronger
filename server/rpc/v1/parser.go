@@ -5,10 +5,10 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	apiv1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/safe"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/safe"
 )
 
 func parseExerciseSliceToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {

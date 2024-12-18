@@ -10,28 +10,28 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/bus"
-	"github.com/crlssn/getstronger/server/bus/events"
-	"github.com/crlssn/getstronger/server/bus/payloads"
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pubsub"
+	"github.com/crlssn/getstronger/server/pubsub/events"
+	"github.com/crlssn/getstronger/server/pubsub/payloads"
+	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
-	bus  *bus.Bus
+	bus  *pubsub.Bus
 	repo repo.Repo
 }
 
-func NewWorkoutHandler(b *bus.Bus, r repo.Repo) apiv1connect.WorkoutServiceHandler {
+func NewWorkoutHandler(b *pubsub.Bus, r repo.Repo) apiv1connect.WorkoutServiceHandler {
 	return &workoutHandler{b, r}
 }
 
-func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error) {
+func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request[apiv1.CreateWorkoutRequest]) (*connect.Response[apiv1.CreateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -64,14 +64,14 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	}
 
 	log.Info("workout finished")
-	return &connect.Response[v1.CreateWorkoutResponse]{
-		Msg: &v1.CreateWorkoutResponse{
+	return &connect.Response[apiv1.CreateWorkoutResponse]{
+		Msg: &apiv1.CreateWorkoutResponse{
 			WorkoutId: workout.ID,
 		},
 	}, nil
 }
 
-func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[v1.GetWorkoutRequest]) (*connect.Response[v1.GetWorkoutResponse], error) {
+func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[apiv1.GetWorkoutRequest]) (*connect.Response[apiv1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -115,14 +115,14 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[v1
 	}
 
 	log.Info("workout fetched")
-	return &connect.Response[v1.GetWorkoutResponse]{
-		Msg: &v1.GetWorkoutResponse{
+	return &connect.Response[apiv1.GetWorkoutResponse]{
+		Msg: &apiv1.GetWorkoutResponse{
 			Workout: w,
 		},
 	}, nil
 }
 
-func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error) {
+func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[apiv1.ListWorkoutsRequest]) (*connect.Response[apiv1.ListWorkoutsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
@@ -176,17 +176,17 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	}
 
 	log.Info("workouts listed")
-	return &connect.Response[v1.ListWorkoutsResponse]{
-		Msg: &v1.ListWorkoutsResponse{
+	return &connect.Response[apiv1.ListWorkoutsResponse]{
+		Msg: &apiv1.ListWorkoutsResponse{
 			Workouts: w,
-			Pagination: &v1.PaginationResponse{
+			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: pagination.NextPageToken,
 			},
 		},
 	}, nil
 }
 
-func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error) {
+func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request[apiv1.DeleteWorkoutRequest]) (*connect.Response[apiv1.DeleteWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -204,10 +204,10 @@ func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request
 	}
 
 	log.Info("workout deleted")
-	return &connect.Response[v1.DeleteWorkoutResponse]{}, nil
+	return &connect.Response[apiv1.DeleteWorkoutResponse]{}, nil
 }
 
-func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error) {
+func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[apiv1.PostCommentRequest]) (*connect.Response[apiv1.PostCommentResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -232,8 +232,8 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 	})
 
 	log.Info("workout comment posted")
-	return &connect.Response[v1.PostCommentResponse]{
-		Msg: &v1.PostCommentResponse{
+	return &connect.Response[apiv1.PostCommentResponse]{
+		Msg: &apiv1.PostCommentResponse{
 			Comment: parseWorkoutCommentToPB(comment, user),
 		},
 	}, nil
@@ -241,7 +241,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[v
 
 var errWorkoutMustStartBeforeFinish = errors.New("workout must start before it finishes")
 
-func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error) {
+func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[apiv1.UpdateWorkoutRequest]) (*connect.Response[apiv1.UpdateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -282,5 +282,5 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 	}
 
 	log.Info("workout updated")
-	return &connect.Response[v1.UpdateWorkoutResponse]{}, nil
+	return &connect.Response[apiv1.UpdateWorkoutResponse]{}, nil
 }

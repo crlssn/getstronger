@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pkg/jwt"
+	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 )
 

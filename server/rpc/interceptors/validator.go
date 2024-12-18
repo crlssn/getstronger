@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/crlssn/getstronger/server/pkg/xzap"
+	"github.com/crlssn/getstronger/server/xzap"
 )
 
 var _ connect.Interceptor = (*validator)(nil)
