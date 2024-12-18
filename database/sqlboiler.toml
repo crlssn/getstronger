@@ -1,4 +1,4 @@
-output = "server/pkg/orm"
+output = "server/gen/orm"
 pkgname = "orm"
 wipe = true
 no-tests = true
