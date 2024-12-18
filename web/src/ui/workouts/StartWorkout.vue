@@ -65,7 +65,9 @@ const fetchPreviousExerciseSets = async () => {
 }
 
 const addEmptySetsFromPreviousSession = () => {
-  routine.value?.exercises.forEach((exercise) => workoutStore.addEmptySetIfNone(routineID, exercise.id))
+  routine.value?.exercises.forEach((exercise) =>
+    workoutStore.addEmptySetIfNone(routineID, exercise.id),
+  )
 
   prevExerciseSets.value.forEach((es) => {
     if (!es.exercise) return
@@ -208,7 +210,11 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
           <tbody>
             <tr v-if="workoutStore.getSets(routineID, exercise.id).length === 0">
               <td colspan="6">
-                <AppButton colour="primary" type="button" @click="workoutStore.addEmptySet(routineID, exercise.id)">
+                <AppButton
+                  colour="primary"
+                  type="button"
+                  @click="workoutStore.addEmptySet(routineID, exercise.id)"
+                >
                   Add Set
                 </AppButton>
               </td>
