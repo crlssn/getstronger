@@ -7,17 +7,17 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 
-	"github.com/crlssn/getstronger/server/bus"
-	"github.com/crlssn/getstronger/server/pkg/config"
-	"github.com/crlssn/getstronger/server/pkg/cookies"
-	"github.com/crlssn/getstronger/server/pkg/db"
-	"github.com/crlssn/getstronger/server/pkg/email"
-	"github.com/crlssn/getstronger/server/pkg/jwt"
-	"github.com/crlssn/getstronger/server/pkg/logger"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/stream"
-	"github.com/crlssn/getstronger/server/pkg/trace"
+	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/cookies"
+	"github.com/crlssn/getstronger/server/db"
+	"github.com/crlssn/getstronger/server/email"
+	"github.com/crlssn/getstronger/server/jwt"
+	"github.com/crlssn/getstronger/server/logger"
+	"github.com/crlssn/getstronger/server/pubsub"
+	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/server"
+	"github.com/crlssn/getstronger/server/stream"
+	"github.com/crlssn/getstronger/server/trace"
 )
 
 func main() {
@@ -31,9 +31,9 @@ func main() {
 func options() []fx.Option {
 	return []fx.Option{
 		db.Module(),
-		bus.Module(),
 		jwt.Module(),
 		logger.Module(),
+		pubsub.Module(),
 		server.Module(),
 		fx.Provide(
 			repo.New,

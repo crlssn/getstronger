@@ -6,10 +6,10 @@ import (
 	connectcors "connectrpc.com/cors"
 	"github.com/rs/cors"
 
-	"github.com/crlssn/getstronger/server/pkg/config"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/trace"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/trace"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 type Middleware struct {

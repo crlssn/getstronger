@@ -13,10 +13,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	"github.com/crlssn/getstronger/server/pkg/jwt"
-	apiv1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
-	"github.com/crlssn/getstronger/server/pkg/xzap"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/jwt"
+	"github.com/crlssn/getstronger/server/xcontext"
+	"github.com/crlssn/getstronger/server/xzap"
 )
 
 var _ connect.Interceptor = (*Auth)(nil)

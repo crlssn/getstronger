@@ -8,12 +8,12 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/stream"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/stream"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 var _ apiv1connect.NotificationServiceHandler = (*notificationHandler)(nil)
@@ -27,7 +27,7 @@ func NewNotificationHandler(r repo.Repo, s *stream.Conn) apiv1connect.Notificati
 	return &notificationHandler{r, s}
 }
 
-func (h *notificationHandler) ListNotifications(ctx context.Context, req *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error) {
+func (h *notificationHandler) ListNotifications(ctx context.Context, req *connect.Request[apiv1.ListNotificationsRequest]) (*connect.Response[apiv1.ListNotificationsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -85,17 +85,17 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.ListNotificationsResponse]{
-		Msg: &v1.ListNotificationsResponse{
+	return &connect.Response[apiv1.ListNotificationsResponse]{
+		Msg: &apiv1.ListNotificationsResponse{
 			Notifications: parseNotificationSliceToPB(paginated.Items, nPayloads, users, workouts),
-			Pagination: &v1.PaginationResponse{
+			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},
 		},
 	}, nil
 }
 
-func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error) {
+func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *connect.Request[apiv1.MarkNotificationsAsReadRequest]) (*connect.Response[apiv1.MarkNotificationsAsReadResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -104,10 +104,10 @@ func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *co
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.MarkNotificationsAsReadResponse]{}, nil
+	return &connect.Response[apiv1.MarkNotificationsAsReadResponse]{}, nil
 }
 
-func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[v1.UnreadNotificationsRequest], res *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
+func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[apiv1.UnreadNotificationsRequest], res *connect.ServerStream[apiv1.UnreadNotificationsResponse]) error {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -139,7 +139,7 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 			}
 			lastCount = count
 
-			if err = res.Send(&v1.UnreadNotificationsResponse{
+			if err = res.Send(&apiv1.UnreadNotificationsResponse{
 				Count: count,
 			}); err != nil {
 				log.Error("failed to send unread notifications", zap.Error(err))

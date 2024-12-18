@@ -10,12 +10,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/test/testdb"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
 	rpc "github.com/crlssn/getstronger/server/rpc/v1"
+	"github.com/crlssn/getstronger/server/testing/container"
+	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 type exerciseSuite struct {
@@ -23,8 +24,8 @@ type exerciseSuite struct {
 
 	handler apiv1connect.ExerciseServiceHandler
 
-	testFactory   *testdb.Factory
-	testContainer *testdb.Container
+	testFactory   *factory.Factory
+	testContainer *container.Container
 }
 
 func TestExerciseSuite(t *testing.T) {
@@ -34,8 +35,8 @@ func TestExerciseSuite(t *testing.T) {
 
 func (s *exerciseSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = testdb.NewContainer(ctx)
-	s.testFactory = testdb.NewFactory(s.testContainer.DB)
+	s.testContainer = container.NewContainer(ctx)
+	s.testFactory = factory.NewFactory(s.testContainer.DB)
 	s.handler = rpc.NewExerciseHandler(repo.New(s.testContainer.DB))
 
 	s.T().Cleanup(func() {

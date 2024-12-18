@@ -9,12 +9,12 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
-	"github.com/crlssn/getstronger/server/pkg/xzap"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/xcontext"
+	"github.com/crlssn/getstronger/server/xzap"
 )
 
 var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
@@ -27,7 +27,7 @@ func NewExerciseHandler(r repo.Repo) apiv1connect.ExerciseServiceHandler {
 	return &exerciseHandler{r}
 }
 
-func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error) {
+func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Request[apiv1.CreateExerciseRequest]) (*connect.Response[apiv1.CreateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -41,12 +41,12 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return connect.NewResponse(&v1.CreateExerciseResponse{
+	return connect.NewResponse(&apiv1.CreateExerciseResponse{
 		Id: exercise.ID,
 	}), nil
 }
 
-func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error) {
+func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[apiv1.GetExerciseRequest]) (*connect.Response[apiv1.GetExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
@@ -60,14 +60,14 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return connect.NewResponse(&v1.GetExerciseResponse{
+	return connect.NewResponse(&apiv1.GetExerciseResponse{
 		Exercise: parseExerciseToPB(exercise),
 	}), nil
 }
 
 var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
-func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error) {
+func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseRequest]) (*connect.Response[apiv1.UpdateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx).
 		With(xzap.FieldExerciseID(req.Msg.GetExercise().GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
@@ -111,12 +111,12 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 	}
 
 	log.Info("exercise updated")
-	return connect.NewResponse(&v1.UpdateExerciseResponse{
+	return connect.NewResponse(&apiv1.UpdateExerciseResponse{
 		Exercise: parseExerciseToPB(exercise),
 	}), nil
 }
 
-func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error) {
+func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Request[apiv1.DeleteExerciseRequest]) (*connect.Response[apiv1.DeleteExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx).
 		With(xzap.FieldExerciseID(req.Msg.GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
@@ -143,10 +143,10 @@ func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Reque
 	}
 
 	log.Info("exercise deleted")
-	return connect.NewResponse(&v1.DeleteExerciseResponse{}), nil
+	return connect.NewResponse(&apiv1.DeleteExerciseResponse{}), nil
 }
 
-func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error) {
+func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Request[apiv1.ListExercisesRequest]) (*connect.Response[apiv1.ListExercisesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -173,15 +173,15 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 	}
 
 	log.Info("exercises listed")
-	return connect.NewResponse(&v1.ListExercisesResponse{
+	return connect.NewResponse(&apiv1.ListExercisesResponse{
 		Exercises: parseExerciseSliceToPB(pagination.Items),
-		Pagination: &v1.PaginationResponse{
+		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: pagination.NextPageToken,
 		},
 	}), nil
 }
 
-func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error) {
+func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *connect.Request[apiv1.GetPreviousWorkoutSetsRequest]) (*connect.Response[apiv1.GetPreviousWorkoutSetsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -189,8 +189,8 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Warn("no previous workout sets", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
-			return &connect.Response[v1.GetPreviousWorkoutSetsResponse]{
-				Msg: &v1.GetPreviousWorkoutSetsResponse{
+			return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
+				Msg: &apiv1.GetPreviousWorkoutSetsResponse{
 					ExerciseSets: nil,
 				},
 			}, nil
@@ -235,14 +235,14 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.GetPreviousWorkoutSetsResponse]{
-		Msg: &v1.GetPreviousWorkoutSetsResponse{
+	return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
+		Msg: &apiv1.GetPreviousWorkoutSetsResponse{
 			ExerciseSets: exerciseSets,
 		},
 	}, nil
 }
 
-func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Request[v1.GetPersonalBestsRequest]) (*connect.Response[v1.GetPersonalBestsResponse], error) {
+func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Request[apiv1.GetPersonalBestsRequest]) (*connect.Response[apiv1.GetPersonalBestsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserId())
@@ -268,12 +268,12 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return connect.NewResponse(&v1.GetPersonalBestsResponse{
+	return connect.NewResponse(&apiv1.GetPersonalBestsResponse{
 		PersonalBests: pb,
 	}), nil
 }
 
-func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[v1.ListSetsRequest]) (*connect.Response[v1.ListSetsResponse], error) {
+func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[apiv1.ListSetsRequest]) (*connect.Response[apiv1.ListSetsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
@@ -302,9 +302,9 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[v1.
 	}
 
 	log.Info("sets listed")
-	return connect.NewResponse(&v1.ListSetsResponse{
+	return connect.NewResponse(&apiv1.ListSetsResponse{
 		Sets: setSlice,
-		Pagination: &v1.PaginationResponse{
+		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: paginated.NextPageToken,
 		},
 	}), nil

@@ -13,15 +13,15 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pkg/config"
-	"github.com/crlssn/getstronger/server/pkg/cookies"
-	"github.com/crlssn/getstronger/server/pkg/email"
-	"github.com/crlssn/getstronger/server/pkg/jwt"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/cookies"
+	"github.com/crlssn/getstronger/server/email"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/jwt"
+	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
@@ -56,7 +56,7 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 
 var errInvalidEmail = errors.New("invalid email")
 
-func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error) {
+func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.SignupRequest]) (*connect.Response[apiv1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	emailAddress := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
@@ -67,7 +67,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 
 	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
 		log.Warn("passwords do not match")
-		return nil, rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
+		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
 	if err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
@@ -100,12 +100,12 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[v1.Signup
 	}
 
 	log.Info("user signed up")
-	return connect.NewResponse(&v1.SignupResponse{}), nil
+	return connect.NewResponse(&apiv1.SignupResponse{}), nil
 }
 
 var errInvalidCredentials = errors.New("invalid credentials")
 
-func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRequest]) (*connect.Response[v1.LoginResponse], error) {
+func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.LoginRequest]) (*connect.Response[apiv1.LoginResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
@@ -124,7 +124,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 
 	if !auth.EmailVerified {
 		log.Warn("email not verified")
-		return nil, rpc.Error(connect.CodeFailedPrecondition, v1.Error_ERROR_EMAIL_NOT_VERIFIED)
+		return nil, rpc.Error(connect.CodeFailedPrecondition, apiv1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	}
 
 	accessToken, err := h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeAccess)
@@ -147,7 +147,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[v1.LoginRe
 		}
 	}
 
-	res := connect.NewResponse(&v1.LoginResponse{AccessToken: accessToken})
+	res := connect.NewResponse(&apiv1.LoginResponse{AccessToken: accessToken})
 	cookie := h.cookies.RefreshToken(refreshToken)
 	res.Header().Set("Set-Cookie", cookie.String())
 
@@ -160,7 +160,7 @@ var (
 	errRefreshTokenNotFound = errors.New("refresh token not found")
 )
 
-func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
+func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1.RefreshTokenRequest]) (*connect.Response[apiv1.RefreshTokenResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if !ok {
@@ -196,12 +196,12 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[v1.Re
 	}
 
 	log.Info("token refreshed")
-	return connect.NewResponse(&v1.RefreshTokenResponse{
+	return connect.NewResponse(&apiv1.RefreshTokenResponse{
 		AccessToken: accessToken,
 	}), nil
 }
 
-func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
+func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if ok {
@@ -217,7 +217,7 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRe
 		}
 	}
 
-	res := connect.NewResponse(&v1.LogoutResponse{})
+	res := connect.NewResponse(&apiv1.LogoutResponse{})
 	cookie := h.cookies.ExpiredRefreshToken()
 	res.Header().Set("Set-Cookie", cookie.String())
 
@@ -225,7 +225,7 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[v1.LogoutRe
 	return res, nil
 }
 
-func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[v1.VerifyEmailRequest]) (*connect.Response[v1.VerifyEmailResponse], error) {
+func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv1.VerifyEmailRequest]) (*connect.Response[apiv1.VerifyEmailResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByEmailToken(req.Msg.GetToken()))
@@ -245,10 +245,10 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[v1.V
 	}
 
 	log.Info("email verified")
-	return connect.NewResponse(&v1.VerifyEmailResponse{}), nil
+	return connect.NewResponse(&apiv1.VerifyEmailResponse{}), nil
 }
 
-func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error) {
+func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[apiv1.ResetPasswordRequest]) (*connect.Response[apiv1.ResetPasswordResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	auth, err := h.repo.GetAuth(ctx,
 		repo.GetAuthByEmail(req.Msg.GetEmail()),
@@ -258,7 +258,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1
 		if errors.Is(err, sql.ErrNoRows) {
 			// Do not expose information about the email not existing.
 			log.Warn("auth not found")
-			return connect.NewResponse(&v1.ResetPasswordResponse{}), nil
+			return connect.NewResponse(&apiv1.ResetPasswordResponse{}), nil
 		}
 
 		log.Error("auth fetch failed", zap.Error(err))
@@ -282,14 +282,14 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[v1
 	}
 
 	log.Info("password reset email sent")
-	return connect.NewResponse(&v1.ResetPasswordResponse{}), nil
+	return connect.NewResponse(&apiv1.ResetPasswordResponse{}), nil
 }
 
-func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error) {
+func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[apiv1.UpdatePasswordRequest]) (*connect.Response[apiv1.UpdatePasswordResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
 		log.Warn("passwords do not match")
-		return nil, rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
+		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
 	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByPasswordResetToken(req.Msg.GetToken()))
@@ -309,5 +309,5 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[v
 	}
 
 	log.Info("password updated")
-	return connect.NewResponse(&v1.UpdatePasswordResponse{}), nil
+	return connect.NewResponse(&apiv1.UpdatePasswordResponse{}), nil
 }

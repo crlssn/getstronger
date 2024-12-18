@@ -14,12 +14,12 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/crlssn/getstronger/server/pkg/config"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/stream"
+	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
 	v1 "github.com/crlssn/getstronger/server/rpc/v1"
+	"github.com/crlssn/getstronger/server/stream"
 )
 
 func Module() fx.Option {

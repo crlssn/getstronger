@@ -7,28 +7,28 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/bus"
-	"github.com/crlssn/getstronger/server/bus/events"
-	"github.com/crlssn/getstronger/server/bus/payloads"
-	"github.com/crlssn/getstronger/server/pkg/orm"
-	v1 "github.com/crlssn/getstronger/server/pkg/proto/api/v1"
-	"github.com/crlssn/getstronger/server/pkg/proto/api/v1/apiv1connect"
-	"github.com/crlssn/getstronger/server/pkg/repo"
-	"github.com/crlssn/getstronger/server/pkg/xcontext"
+	"github.com/crlssn/getstronger/server/gen/orm"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pubsub"
+	"github.com/crlssn/getstronger/server/pubsub/events"
+	"github.com/crlssn/getstronger/server/pubsub/payloads"
+	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 var _ apiv1connect.UserServiceHandler = (*userHandler)(nil)
 
 type userHandler struct {
-	bus  *bus.Bus
-	repo repo.Repo
+	repo   repo.Repo
+	pubSub *pubsub.PubSub
 }
 
-func NewUserHandler(b *bus.Bus, r repo.Repo) apiv1connect.UserServiceHandler {
-	return &userHandler{b, r}
+func NewUserHandler(r repo.Repo, ps *pubsub.PubSub) apiv1connect.UserServiceHandler {
+	return &userHandler{r, ps}
 }
 
-func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
+func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.GetUserRequest]) (*connect.Response[apiv1.GetUserResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -47,14 +47,14 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[v1.GetUs
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.GetUserResponse]{
-		Msg: &v1.GetUserResponse{
+	return &connect.Response[apiv1.GetUserResponse]{
+		Msg: &apiv1.GetUserResponse{
 			User: parseUserToPB(user, followed),
 		},
 	}, nil
 }
 
-func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[v1.SearchUsersRequest]) (*connect.Response[v1.SearchUsersResponse], error) {
+func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv1.SearchUsersRequest]) (*connect.Response[apiv1.SearchUsersResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
@@ -76,17 +76,17 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[v1.S
 	}
 
 	log.Info("searched users")
-	return &connect.Response[v1.SearchUsersResponse]{
-		Msg: &v1.SearchUsersResponse{
+	return &connect.Response[apiv1.SearchUsersResponse]{
+		Msg: &apiv1.SearchUsersResponse{
 			Users: parseUserSliceToPB(pagination.Items),
-			Pagination: &v1.PaginationResponse{
+			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: pagination.NextPageToken,
 			},
 		},
 	}, nil
 }
 
-func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[v1.FollowUserRequest]) (*connect.Response[v1.FollowUserResponse], error) {
+func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1.FollowUserRequest]) (*connect.Response[apiv1.FollowUserResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -98,17 +98,17 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[v1.Fo
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.bus.Publish(events.UserFollowed, &payloads.UserFollowed{
+	h.pubSub.Publish(events.UserFollowed, &payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
 	})
 
-	return &connect.Response[v1.FollowUserResponse]{
-		Msg: &v1.FollowUserResponse{},
+	return &connect.Response[apiv1.FollowUserResponse]{
+		Msg: &apiv1.FollowUserResponse{},
 	}, nil
 }
 
-func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[v1.UnfollowUserRequest]) (*connect.Response[v1.UnfollowUserResponse], error) {
+func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[apiv1.UnfollowUserRequest]) (*connect.Response[apiv1.UnfollowUserResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -120,12 +120,12 @@ func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[v1.
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.UnfollowUserResponse]{
-		Msg: &v1.UnfollowUserResponse{},
+	return &connect.Response[apiv1.UnfollowUserResponse]{
+		Msg: &apiv1.UnfollowUserResponse{},
 	}, nil
 }
 
-func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error) {
+func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[apiv1.ListFollowersRequest]) (*connect.Response[apiv1.ListFollowersResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	followers, err := h.repo.ListFollowers(ctx, req.Msg.GetFollowerId())
@@ -134,14 +134,14 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[v1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.ListFollowersResponse]{
-		Msg: &v1.ListFollowersResponse{
+	return &connect.Response[apiv1.ListFollowersResponse]{
+		Msg: &apiv1.ListFollowersResponse{
 			Followers: parseUserSliceToPB(followers),
 		},
 	}, nil
 }
 
-func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error) {
+func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[apiv1.ListFolloweesRequest]) (*connect.Response[apiv1.ListFolloweesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	followees, err := h.repo.ListFollowees(ctx, req.Msg.GetFolloweeId())
@@ -150,8 +150,8 @@ func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[v1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return &connect.Response[v1.ListFolloweesResponse]{
-		Msg: &v1.ListFolloweesResponse{
+	return &connect.Response[apiv1.ListFolloweesResponse]{
+		Msg: &apiv1.ListFolloweesResponse{
 			Followees: parseUserSliceToPB(followees),
 		},
 	}, nil
