@@ -230,11 +230,11 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                 </AppButton>
               </td>
             </tr>
-            <tr v-for="(set, idx) in sets(exercise.id)" :key="idx">
-              <td>{{ idx + 1 }}</td>
+            <tr v-for="(set, index) in sets(exercise.id)" :key="index">
+              <td>{{ index + 1 }}</td>
               <td>
-                <template v-if="prevSetWeight(exercise.id, idx) && prevSetReps(exercise.id, idx)">
-                  {{ prevSetWeight(exercise.id, idx) }} kg x {{ prevSetReps(exercise.id, idx) }}
+                <template v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)">
+                  {{ prevSetWeight(exercise.id, index) }} kg x {{ prevSetReps(exercise.id, index) }}
                 </template>
               </td>
               <td class="w-1/4">
@@ -244,7 +244,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                   inputmode="decimal"
                   :required="isNumber(set.reps)"
                   @input="addEmptySetIfNone(exercise.id)"
-                  @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, idx)"
+                  @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, index)"
                 />
               </td>
               <td class="text-center">x</td>
@@ -255,13 +255,13 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                   inputmode="numeric"
                   :required="isNumber(set.weight)"
                   @input="addEmptySetIfNone(exercise.id)"
-                  @focus="setPrevSetRepIfEmpty($event, exercise.id, set, idx)"
+                  @focus="setPrevSetRepIfEmpty($event, exercise.id, set, index)"
                 />
               </td>
               <td>
                 <MinusCircleIcon
                   class="cursor-pointer size-6 text-gray-900"
-                  @click="deleteSet(exercise.id, idx)"
+                  @click="deleteSet(exercise.id, index)"
                 />
               </td>
             </tr>
