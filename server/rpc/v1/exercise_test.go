@@ -14,7 +14,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
 	rpc "github.com/crlssn/getstronger/server/rpc/v1"
-	"github.com/crlssn/getstronger/server/testing/db"
+	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -25,7 +25,7 @@ type exerciseSuite struct {
 	handler apiv1connect.ExerciseServiceHandler
 
 	testFactory   *factory.Factory
-	testContainer *db.Container
+	testContainer *container.Container
 }
 
 func TestExerciseSuite(t *testing.T) {
@@ -35,7 +35,7 @@ func TestExerciseSuite(t *testing.T) {
 
 func (s *exerciseSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = db.NewContainer(ctx)
+	s.testContainer = container.NewContainer(ctx)
 	s.testFactory = factory.NewFactory(s.testContainer.DB)
 	s.handler = rpc.NewExerciseHandler(repo.New(s.testContainer.DB))
 

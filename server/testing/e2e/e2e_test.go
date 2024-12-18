@@ -20,7 +20,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/server"
 	"github.com/crlssn/getstronger/server/stream"
-	"github.com/crlssn/getstronger/server/testing/db"
+	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/e2e"
 	"github.com/crlssn/getstronger/server/trace"
 )
@@ -123,7 +123,7 @@ func options() []fx.Option {
 		pubsub.Module(),
 		jwt.Module(),
 		server.Module(),
-		db.Module(),
+		container.Module(),
 		fx.Provide(
 			zap.NewDevelopment,
 			repo.New,

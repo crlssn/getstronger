@@ -12,7 +12,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	repo2 "github.com/crlssn/getstronger/server/repo"
-	"github.com/crlssn/getstronger/server/testing/db"
+	"github.com/crlssn/getstronger/server/testing/container"
 	factory2 "github.com/crlssn/getstronger/server/testing/factory"
 )
 
@@ -21,7 +21,7 @@ type repoSuite struct {
 
 	repo repo2.Repo
 
-	testContainer *db.Container
+	testContainer *container.Container
 	testFactory   *factory2.Factory
 }
 
@@ -32,7 +32,7 @@ func TestRepoSuite(t *testing.T) {
 
 func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = db.NewContainer(ctx)
+	s.testContainer = container.NewContainer(ctx)
 	s.testFactory = factory2.NewFactory(s.testContainer.DB)
 	s.repo = repo2.New(s.testContainer.DB)
 	s.T().Cleanup(func() {
