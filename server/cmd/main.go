@@ -6,7 +6,6 @@ import (
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/joho/godotenv"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/bus"
 	"github.com/crlssn/getstronger/server/pkg/config"
@@ -14,6 +13,7 @@ import (
 	"github.com/crlssn/getstronger/server/pkg/db"
 	"github.com/crlssn/getstronger/server/pkg/email"
 	"github.com/crlssn/getstronger/server/pkg/jwt"
+	"github.com/crlssn/getstronger/server/pkg/logger"
 	"github.com/crlssn/getstronger/server/pkg/repo"
 	"github.com/crlssn/getstronger/server/pkg/stream"
 	"github.com/crlssn/getstronger/server/pkg/trace"
@@ -33,9 +33,9 @@ func options() []fx.Option {
 		db.Module(),
 		bus.Module(),
 		jwt.Module(),
+		logger.Module(),
 		server.Module(),
 		fx.Provide(
-			zap.NewDevelopment,
 			repo.New,
 			email.New,
 			trace.New,
