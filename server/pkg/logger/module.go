@@ -13,8 +13,8 @@ func Module() fx.Option {
 					Level:       zap.NewAtomicLevelAt(zap.InfoLevel),
 					Development: false,
 					Sampling: &zap.SamplingConfig{
-						Initial:    100,
-						Thereafter: 100,
+						Initial:    100, //nolint:mnd
+						Thereafter: 100, //nolint:mnd
 					},
 					Encoding:         "json",
 					EncoderConfig:    zap.NewProductionEncoderConfig(),
