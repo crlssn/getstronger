@@ -42,7 +42,6 @@ onUnmounted(() => clearDateTimeUpdater())
 
 const maxExerciseIndex = computed(() => {
   if (!routine.value?.exercises) return 0
-
   return routine.value.exercises.length - 1
 })
 
