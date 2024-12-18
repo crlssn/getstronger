@@ -1,194 +1,194 @@
 <script setup lang="ts">
-import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb';
-import type { Routine } from '@/proto/api/v1/routine_service_pb';
-import type { Set } from '@/types/workout';
+import type { ExerciseSets } from '@/proto/api/v1/shared_pb'
+import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import type { Set } from '@/types/workout'
 
-import { DateTime } from 'luxon';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import router from '@/router/router';
+import { DateTime } from 'luxon'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import router from '@/router/router'
 
-import { useAlertStore } from '@/stores/alerts';
-import { useWorkoutStore } from '@/stores/workout';
-import { usePageTitleStore } from '@/stores/pageTitle';
+import { useAlertStore } from '@/stores/alerts'
+import { useWorkoutStore } from '@/stores/workout'
+import { usePageTitleStore } from '@/stores/pageTitle'
 
-import AppList from '@/ui/components/AppList.vue';
-import AppButton from '@/ui/components/AppButton.vue';
-import AppListItemInput from '@/ui/components/AppListItemInput.vue';
-import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline';
+import AppList from '@/ui/components/AppList.vue'
+import AppButton from '@/ui/components/AppButton.vue'
+import AppListItemInput from '@/ui/components/AppListItemInput.vue'
+import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 
-import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests';
+import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests'
 
-const route = useRoute();
-const routineID = route.params.routine_id as string;
-const routine = ref<Routine | undefined>(undefined);
-const prevExerciseSets = ref<ExerciseSets[]>([]);
-const startDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"));
-const endDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"));
+const route = useRoute()
+const routineID = route.params.routine_id as string
+const routine = ref<Routine | undefined>(undefined)
+const prevExerciseSets = ref<ExerciseSets[]>([])
+const startDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
+const endDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 
-const workoutStore = useWorkoutStore();
-const alertStore = useAlertStore();
-const pageTitleStore = usePageTitleStore();
+const workoutStore = useWorkoutStore()
+const alertStore = useAlertStore()
+const pageTitleStore = usePageTitleStore()
 
-let dateTimeInterval: ReturnType<typeof setInterval>;
+let dateTimeInterval: ReturnType<typeof setInterval>
 
 onMounted(async () => {
-  await initializeRoutine();
-  startDateTimeUpdater();
-});
+  await initializeRoutine()
+  startDateTimeUpdater()
+})
 
-onUnmounted(() => clearDateTimeUpdater());
+onUnmounted(() => clearDateTimeUpdater())
 
 const maxExerciseIndex = computed(() => {
   if (!routine.value?.exercises) return 0
 
   return routine.value.exercises.length
-});
+})
 
 const initializeRoutine = async () => {
-  await fetchRoutine(routineID);
-  await fetchLatestExerciseSets();
-  pageTitleStore.setPageTitle(routine.value?.name || 'Workout');
-  workoutStore.initialiseWorkout(routineID);
-  addEmptySetsFromPreviousSession();
-};
+  await fetchRoutine(routineID)
+  await fetchLatestExerciseSets()
+  pageTitleStore.setPageTitle(routine.value?.name || 'Workout')
+  workoutStore.initialiseWorkout(routineID)
+  addEmptySetsFromPreviousSession()
+}
 
 const fetchRoutine = async (id: string) => {
-  const res = await getRoutine(id);
-  if (res) routine.value = res.routine;
-};
+  const res = await getRoutine(id)
+  if (res) routine.value = res.routine
+}
 
 const fetchLatestExerciseSets = async () => {
-  const exerciseIds = routine.value?.exercises?.map(e => e.id) || [];
-  const res = await getPreviousWorkoutSets(exerciseIds);
-  if (res) prevExerciseSets.value = res.exerciseSets;
-};
+  const exerciseIds = routine.value?.exercises?.map((e) => e.id) || []
+  const res = await getPreviousWorkoutSets(exerciseIds)
+  if (res) prevExerciseSets.value = res.exerciseSets
+}
 
 const addEmptySetsFromPreviousSession = () => {
   prevExerciseSets.value.forEach((es) => {
-    if (!es.exercise) return;
+    if (!es.exercise) return
 
-    const missingSets = es.sets.length - workoutStore.getSets(routineID, es.exercise.id).length;
+    const missingSets = es.sets.length - workoutStore.getSets(routineID, es.exercise.id).length
     for (let i = 0; i < missingSets; i++) {
-      addEmptySet(es.exercise.id);
+      addEmptySet(es.exercise.id)
     }
-  });
-};
+  })
+}
 
 const startDateTimeUpdater = () => {
   dateTimeInterval = setInterval(() => {
-    endDateTime.value = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm");
-  }, 1000);
-};
+    endDateTime.value = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm")
+  }, 1000)
+}
 
-const clearDateTimeUpdater = () => clearInterval(dateTimeInterval);
+const clearDateTimeUpdater = () => clearInterval(dateTimeInterval)
 
 const sets = (exerciseId: string) => {
-  return workoutStore.getSets(routineID, exerciseId);
-};
+  return workoutStore.getSets(routineID, exerciseId)
+}
 
 const prevSetWeight = (exerciseID: string, index: number) => {
-  const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index];
-  return prevSet?.weight?.toString();
-};
+  const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
+  return prevSet?.weight?.toString()
+}
 
 const prevSetReps = (exerciseID: string, index: number) => {
-  const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index];
-  return prevSet?.reps?.toString();
-};
+  const prevSet = prevExerciseSets.value.find((set) => set.exercise?.id === exerciseID)?.sets[index]
+  return prevSet?.reps?.toString()
+}
 
 const addEmptySetIfNone = (exerciseID: string) => {
-  workoutStore.addEmptySetIfNone(routineID, exerciseID);
-};
+  workoutStore.addEmptySetIfNone(routineID, exerciseID)
+}
 
 const setPrevSetWeightIfEmpty = (event: Event, exerciseId: string, set: Set, index: number) => {
   if (isNumber(set.weight)) {
-    return;
+    return
   }
-  const prevSet = workoutStore.getSets(routineID, exerciseId)[index - 1];
+  const prevSet = workoutStore.getSets(routineID, exerciseId)[index - 1]
   if (prevSet == undefined) {
-    return;
+    return
   }
 
-  set.weight = prevSet.weight;
-  const target = event.target as HTMLInputElement;
-  target.select();
-  addEmptySetIfNone(exerciseId);
-};
+  set.weight = prevSet.weight
+  const target = event.target as HTMLInputElement
+  target.select()
+  addEmptySetIfNone(exerciseId)
+}
 
 const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index: number) => {
   if (isNumber(set.reps)) {
-    return;
+    return
   }
-  const prevSet = workoutStore.getSets(routineID, exerciseId)[index - 1];
+  const prevSet = workoutStore.getSets(routineID, exerciseId)[index - 1]
   if (prevSet == undefined) {
-    return;
+    return
   }
 
-  set.reps = prevSet.reps;
-  const target = event.target as HTMLInputElement;
-  target.select();
-  addEmptySetIfNone(exerciseId);
-};
+  set.reps = prevSet.reps
+  const target = event.target as HTMLInputElement
+  target.select()
+  addEmptySetIfNone(exerciseId)
+}
 
 const deleteSet = (exerciseID: string, index: number) => {
-  workoutStore.deleteSet(routineID, exerciseID, index);
-};
+  workoutStore.deleteSet(routineID, exerciseID, index)
+}
 
 const onFinishWorkout = async () => {
-  const exerciseSets = buildWorkoutSets();
-  if (!exerciseSets) return;
+  const exerciseSets = buildWorkoutSets()
+  if (!exerciseSets) return
 
   const res = await createWorkout(
     routineID,
     exerciseSets,
     DateTime.fromISO(startDateTime.value),
-    DateTime.fromISO(endDateTime.value)
-  );
+    DateTime.fromISO(endDateTime.value),
+  )
 
   if (res) {
-    workoutStore.removeWorkout(routineID);
-    alertStore.setSuccess('Workout saved');
-    await router.push('/home');
+    workoutStore.removeWorkout(routineID)
+    alertStore.setSuccess('Workout saved')
+    await router.push('/home')
   }
-};
+}
 
 const buildWorkoutSets = () => {
-  const allSets = workoutStore.getAllSets(routineID);
-  if (!allSets) throw new Error('No exercise sets found');
+  const allSets = workoutStore.getAllSets(routineID)
+  if (!allSets) throw new Error('No exercise sets found')
 
   return routine.value?.exercises
     .map((exercise) => {
-      const sets = allSets[exercise.id]?.filter(set => isNumber(set.reps) && isNumber(set.weight));
-      return sets?.length ? { exercise: { id: exercise.id }, sets } as ExerciseSets : null;
+      const sets = allSets[exercise.id]?.filter((set) => isNumber(set.reps) && isNumber(set.weight))
+      return sets?.length ? ({ exercise: { id: exercise.id }, sets } as ExerciseSets) : null
     })
-    .filter(Boolean) as ExerciseSets[];
-};
+    .filter(Boolean) as ExerciseSets[]
+}
 
 const cancelWorkout = async () => {
   if (confirm('Are you sure you want to cancel this workout?')) {
-    workoutStore.removeWorkout(routineID);
-    await router.push(`/routines/${routineID}`);
+    workoutStore.removeWorkout(routineID)
+    await router.push(`/routines/${routineID}`)
   }
-};
+}
 
 const isNumber = (value: number | string | undefined): boolean => {
-  return typeof value === 'number' && !Number.isNaN(value);
-};
+  return typeof value === 'number' && !Number.isNaN(value)
+}
 
 const addEmptySet = (exerciseID: string) => {
-  workoutStore.addEmptySet(routineID, exerciseID);
-};
+  workoutStore.addEmptySet(routineID, exerciseID)
+}
 
 const moveExercise = (index: number, direction: 'up' | 'down') => {
-  const exercises = routine.value?.exercises;
-  if (!exercises) return;
+  const exercises = routine.value?.exercises
+  if (!exercises) return
 
-  const newIndex = direction === 'up' ? index - 1 : index + 1;
-  if (newIndex < 0 || newIndex >= exercises.length) return;
+  const newIndex = direction === 'up' ? index - 1 : index + 1
+  if (newIndex < 0 || newIndex >= exercises.length) return
 
-  [exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]];
-};
+  ;[exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
+}
 </script>
 
 <template>
@@ -213,58 +213,58 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       <div class="table-container">
         <table>
           <thead>
-          <tr>
-            <th>Set</th>
-            <th>Previous</th>
-            <th>Weight</th>
-            <th></th>
-            <th>Reps</th>
-            <th></th>
-          </tr>
+            <tr>
+              <th>Set</th>
+              <th>Previous</th>
+              <th>Weight</th>
+              <th></th>
+              <th>Reps</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-if="sets(exercise.id).length === 0">
-            <td colspan="6">
-              <AppButton colour="primary" type="button" @click="addEmptySet(exercise.id)">
-                Add Set
-              </AppButton>
-            </td>
-          </tr>
-          <tr v-for="(set, idx) in sets(exercise.id)" :key="idx">
-            <td>{{ idx + 1 }}</td>
-            <td>
-              <template v-if="prevSetWeight(exercise.id, idx) && prevSetReps(exercise.id, idx)">
-                {{ prevSetWeight(exercise.id, idx) }} kg x {{ prevSetReps(exercise.id, idx) }}
-              </template>
-            </td>
-            <td class="w-1/4">
-              <input
-                v-model.number="set.weight"
-                type="text"
-                inputmode="decimal"
-                :required="isNumber(set.reps)"
-                @input="addEmptySetIfNone(exercise.id)"
-                @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, idx)"
-              />
-            </td>
-            <td class="text-center">x</td>
-            <td class="w-1/4">
-              <input
-                v-model.number="set.reps"
-                type="text"
-                inputmode="numeric"
-                :required="isNumber(set.weight)"
-                @input="addEmptySetIfNone(exercise.id)"
-                @focus="setPrevSetRepIfEmpty($event, exercise.id, set, idx)"
-              />
-            </td>
-            <td>
-              <MinusCircleIcon
-                class="cursor-pointer size-6 text-gray-900"
-                @click="deleteSet(exercise.id, idx)"
-              />
-            </td>
-          </tr>
+            <tr v-if="sets(exercise.id).length === 0">
+              <td colspan="6">
+                <AppButton colour="primary" type="button" @click="addEmptySet(exercise.id)">
+                  Add Set
+                </AppButton>
+              </td>
+            </tr>
+            <tr v-for="(set, idx) in sets(exercise.id)" :key="idx">
+              <td>{{ idx + 1 }}</td>
+              <td>
+                <template v-if="prevSetWeight(exercise.id, idx) && prevSetReps(exercise.id, idx)">
+                  {{ prevSetWeight(exercise.id, idx) }} kg x {{ prevSetReps(exercise.id, idx) }}
+                </template>
+              </td>
+              <td class="w-1/4">
+                <input
+                  v-model.number="set.weight"
+                  type="text"
+                  inputmode="decimal"
+                  :required="isNumber(set.reps)"
+                  @input="addEmptySetIfNone(exercise.id)"
+                  @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, idx)"
+                />
+              </td>
+              <td class="text-center">x</td>
+              <td class="w-1/4">
+                <input
+                  v-model.number="set.reps"
+                  type="text"
+                  inputmode="numeric"
+                  :required="isNumber(set.weight)"
+                  @input="addEmptySetIfNone(exercise.id)"
+                  @focus="setPrevSetRepIfEmpty($event, exercise.id, set, idx)"
+                />
+              </td>
+              <td>
+                <MinusCircleIcon
+                  class="cursor-pointer size-6 text-gray-900"
+                  @click="deleteSet(exercise.id, idx)"
+                />
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -276,7 +276,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
         :model="startDateTime"
         type="datetime-local"
         required
-        @update="value => (startDateTime = value)"
+        @update="(value) => (startDateTime = value)"
       />
     </AppList>
 
@@ -286,7 +286,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
         :model="endDateTime"
         type="datetime-local"
         required
-        @update="value => (endDateTime = value)"
+        @update="(value) => (endDateTime = value)"
       />
     </AppList>
 
