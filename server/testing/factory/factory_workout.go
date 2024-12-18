@@ -101,3 +101,9 @@ func WorkoutName(name string) WorkoutOpt {
 		workout.Name = name
 	}
 }
+
+func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.CreatedAt = createdAt
+	}
+}
