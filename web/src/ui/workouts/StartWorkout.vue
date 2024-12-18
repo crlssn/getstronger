@@ -47,7 +47,7 @@ const maxExerciseIndex = computed(() => {
 
 const initializeRoutine = async () => {
   await fetchRoutine(routineID)
-  await fetchLatestExerciseSets()
+  await fetchPreviousExerciseSets()
   pageTitleStore.setPageTitle(routine.value?.name || 'Workout')
   workoutStore.initialiseWorkout(routineID)
   addEmptySetsFromPreviousSession()
@@ -58,13 +58,15 @@ const fetchRoutine = async (id: string) => {
   if (res) routine.value = res.routine
 }
 
-const fetchLatestExerciseSets = async () => {
+const fetchPreviousExerciseSets = async () => {
   const exerciseIds = routine.value?.exercises?.map((e) => e.id) || []
   const res = await getPreviousWorkoutSets(exerciseIds)
   if (res) prevExerciseSets.value = res.exerciseSets
 }
 
 const addEmptySetsFromPreviousSession = () => {
+  routine.value?.exercises.forEach((exercise) => addEmptySetIfNone(exercise.id))
+
   prevExerciseSets.value.forEach((es) => {
     if (!es.exercise) return
 
@@ -256,10 +258,12 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                 />
               </td>
               <td>
-                <MinusCircleIcon
-                  class="cursor-pointer size-6 text-gray-900"
-                  @click="deleteSet(exercise.id, index)"
-                />
+                <div class="flex justify-center">
+                  <MinusCircleIcon
+                    class="cursor-pointer size-6 text-gray-900"
+                    @click="deleteSet(exercise.id, index)"
+                  />
+                </div>
               </td>
             </tr>
           </tbody>
