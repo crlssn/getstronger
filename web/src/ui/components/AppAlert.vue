@@ -50,9 +50,11 @@ const alertStyle = computed(() => {
   <div
     v-if="alertStore.alert"
     :class="alertStyle"
-    class="border-b-2 border-t-2 py-4 px-5 font-medium"
+    class="border-b-2 border-t-2 font-medium"
   >
+    <div class="max-w-4xl mx-auto py-4 px-5">
     {{ alertStore.alert.message }}
+    </div>
   </div>
 </template>
 
