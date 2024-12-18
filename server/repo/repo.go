@@ -843,9 +843,9 @@ func (r *repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string)
 SELECT * FROM getstronger.sets WHERE (exercise_id, workout_id) IN (
 	SELECT exercise_id, workout_id FROM (
 		SELECT DISTINCT ON (exercise_id) exercise_id, workout_id
-        FROM getstronger.sets
-        WHERE exercise_id = ANY($1)
-        ORDER BY exercise_id, created_at DESC
+		FROM getstronger.sets
+		WHERE exercise_id = ANY($1)
+		ORDER BY exercise_id, created_at DESC
 	) as previous_sets
 )
 ORDER BY created_at;
