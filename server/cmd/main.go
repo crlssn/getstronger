@@ -31,9 +31,9 @@ func main() {
 func options() []fx.Option {
 	return []fx.Option{
 		db.Module(),
-		pubsub.Module(),
 		jwt.Module(),
 		logger.Module(),
+		pubsub.Module(),
 		server.Module(),
 		fx.Provide(
 			repo.New,

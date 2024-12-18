@@ -120,8 +120,8 @@ func TestE2E(t *testing.T) {
 
 func options() []fx.Option {
 	return []fx.Option{
-		pubsub.Module(),
 		jwt.Module(),
+		pubsub.Module(),
 		server.Module(),
 		container.Module(),
 		fx.Provide(
