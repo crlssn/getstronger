@@ -184,7 +184,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= exercises.length) return
 
-  [exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
+  ;[exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
 }
 </script>
 
@@ -230,7 +230,9 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
             <tr v-for="(set, index) in sets(exercise.id)" :key="index">
               <td>{{ index + 1 }}</td>
               <td>
-                <template v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)">
+                <template
+                  v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)"
+                >
                   {{ prevSetWeight(exercise.id, index) }} kg x {{ prevSetReps(exercise.id, index) }}
                 </template>
               </td>
