@@ -300,6 +300,10 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
   @apply bg-white px-3 py-4 mb-4 border border-gray-200 rounded-md;
 }
 
+table {
+  @apply w-full;
+}
+
 th {
   @apply text-left font-medium text-gray-900 px-1 pb-2;
 }
