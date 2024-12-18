@@ -22,7 +22,7 @@ func Module() fx.Option {
 					ErrorOutputPaths: []string{"stderr"},
 				}
 			},
-			func(config *zap.Config) (*zap.Logger, error) {
+			func(config zap.Config) (*zap.Logger, error) {
 				return config.Build()
 			},
 		),
