@@ -6,8 +6,9 @@ on:
       - main
   pull_request:
     paths:
-      - 'server/**'
       - 'go.mod'
+      - 'server/**'
+      - 'database/migrations/**'
 
 jobs:
   server:
