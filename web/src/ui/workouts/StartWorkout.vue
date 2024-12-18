@@ -182,7 +182,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
   if (!exercises) return
 
   const newIndex = direction === 'up' ? index - 1 : index + 1
-  if (newIndex < 0 || newIndex >= exercises.length - 1) return
+  if (newIndex < 0 || newIndex >= exercises.length) return
   ;[exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
 }
 </script>
