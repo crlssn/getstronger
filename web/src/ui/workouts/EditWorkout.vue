@@ -4,7 +4,7 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import type { ExerciseSets, Set } from '@/proto/api/v1/shared_pb'
 
 import { DateTime } from 'luxon'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router/router'
 import { useAuthStore } from '@/stores/auth.ts'
@@ -13,7 +13,7 @@ import AppList from '@/ui/components/AppList.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
-import { MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { getWorkout, updateWorkout } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { isNumber } from '@/utils/numbers.ts'
@@ -110,12 +110,41 @@ const toDateTime = (timestamp: Timestamp | undefined) => {
 
   return DateTime.fromSeconds(Number(timestamp.seconds)).toFormat("yyyy-MM-dd'T'HH:mm")
 }
+
+const maxExerciseIndex = computed(() => {
+  if (!workout.value?.exerciseSets) return 0
+  return workout.value.exerciseSets.length - 1
+})
+
+const moveExercise = (index: number, direction: 'up' | 'down') => {
+  const exercises = workout.value?.exerciseSets
+  if (!exercises) return
+
+  const newIndex = direction === 'up' ? index - 1 : index + 1
+  if (newIndex < 0 || newIndex >= exercises.length) return
+  ;[exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
+}
 </script>
 
 <template>
   <form @submit.prevent="onUpdateWorkout">
-    <template v-for="es in workout?.exerciseSets" :key="es.exercise?.id">
-      <h6>{{ es.exercise?.name }}</h6>
+    <template v-for="(es, index) in workout?.exerciseSets" :key="es.exercise?.id">
+      <div class="flex justify-between pr-4">
+        <h6>{{ es.exercise?.name }}</h6>
+        <div class="flex gap-x-1">
+          <ChevronUpIcon
+            v-if="index > 0"
+            class="size-5 text-gray-500 cursor-pointer"
+            @click="moveExercise(index, 'up')"
+          />
+          <ChevronDownIcon
+            v-if="index < maxExerciseIndex"
+            class="size-5 text-gray-500 cursor-pointer"
+            @click="moveExercise(index, 'down')"
+          />
+        </div>
+      </div>
+
       <AppList>
         <AppListItem class="flex flex-col">
           <div v-for="(set, index) in es.sets" :key="index" class="w-full">

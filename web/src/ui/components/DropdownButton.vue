@@ -32,7 +32,7 @@ const props = defineProps<Props>()
       leave-to-class="transform translate-y-full"
     >
       <MenuItems
-        class="shadow-2xl fixed right-0 bottom-0 left-0 w-full z-50 origin-top-right rounded-t-2xl overflow-hidden bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+        class="max-w-4xl mx-auto shadow-2xl fixed right-0 bottom-0 left-0 w-full z-50 origin-top-right rounded-t-2xl overflow-hidden bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
       >
         <div class="py-8 px-8">
           <MenuItem v-for="(item, index) in props.items" :key="index" as="div">
