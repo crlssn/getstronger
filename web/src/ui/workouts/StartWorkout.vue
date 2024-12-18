@@ -14,7 +14,7 @@ import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/
 import { type Routine } from '@/proto/api/v1/routine_service_pb'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests.ts'
-import type{Set} from '@/types/workout'
+import type { Set } from '@/types/workout'
 
 const route = useRoute()
 const routine = ref<Routine | undefined>(undefined)
@@ -149,9 +149,7 @@ const addEmptySetIfNone = (exerciseID: string) => {
 }
 
 const deleteSet = (exerciseID: string, index: number) => {
-  if (confirm('Are you sure you want to delete this set?')) {
-    workoutStore.deleteSet(routineID, exerciseID, index)
-  }
+  workoutStore.deleteSet(routineID, exerciseID, index)
 }
 
 const setStartDateTime = (value: string) => {
@@ -188,7 +186,7 @@ const setPrevSetWeightIfEmpty = (event: Event, exerciseId: string, set: Set, ind
   if (isNumber(set.weight)) {
     return
   }
-  const prevSet = workoutStore.getSets(routineID, exerciseId)[index-1]
+  const prevSet = workoutStore.getSets(routineID, exerciseId)[index - 1]
   if (prevSet == undefined) {
     return
   }
@@ -203,7 +201,7 @@ const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index:
   if (isNumber(set.reps)) {
     return
   }
-  const prevSet = workoutStore.getSets(routineID, exerciseId)[index-1]
+  const prevSet = workoutStore.getSets(routineID, exerciseId)[index - 1]
   if (prevSet == undefined) {
     return
   }
@@ -239,6 +237,11 @@ const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index:
           </tr>
           </thead>
           <tbody>
+          <tr v-if="sets(exercise.id).length === 0">
+            <td colspan="6">
+              <AppButton colour="primary" type="button" @click="addEmptySet(exercise.id)">Add Set</AppButton>
+            </td>
+          </tr>
           <tr v-for="(set, index) in sets(exercise.id)" :key="index">
             <td>{{ index + 1 }}</td>
             <td>
@@ -253,7 +256,7 @@ const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index:
                 v-model.number="set.weight"
                 type="text"
                 inputmode="decimal"
-                :required="sets(exercise.id).length > index + 1"
+                :required="isNumber(set.reps)"
                 @input="addEmptySetIfNone(exercise.id)"
                 @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, index)"
               />
@@ -264,7 +267,7 @@ const setPrevSetRepIfEmpty = (event: Event, exerciseId: string, set: Set, index:
                 v-model.number="set.reps"
                 type="text"
                 inputmode="numeric"
-                :required="sets(exercise.id).length > index + 1"
+                :required="isNumber(set.weight)"
                 @input="addEmptySetIfNone(exercise.id)"
                 @focus="setPrevSetRepIfEmpty($event, exercise.id, set, index)"
               />
