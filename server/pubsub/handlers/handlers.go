@@ -8,7 +8,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
-	repo "github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/repo"
 )
 
 const timeout = 5 * time.Second

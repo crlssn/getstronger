@@ -11,9 +11,9 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
-	repo "github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
-	factory "github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/factory"
 )
 
 type repoSuite struct {
