@@ -106,7 +106,7 @@ func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, comment
 		User:         parseUserToPB(workout.R.User, false),
 		ExerciseSets: exerciseSets,
 		Comments:     parseWorkoutCommentSliceToPB(workout.R.WorkoutComments, commentUsers),
-		StartedAt:    timestamppb.New(workout.CreatedAt),
+		StartedAt:    timestamppb.New(workout.StartedAt),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
 	}, nil
 }
