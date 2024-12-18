@@ -22,12 +22,12 @@ func (rw *ResponseWriter) WriteHeader(code int) {
 }
 
 type Tracer struct {
-	log *zap.Logger
-	bus *pubsub.Bus
+	log    *zap.Logger
+	pubSub *pubsub.PubSub
 }
 
-func New(log *zap.Logger, bus *pubsub.Bus) *Tracer {
-	return &Tracer{log, bus}
+func New(log *zap.Logger, ps *pubsub.PubSub) *Tracer {
+	return &Tracer{log, ps}
 }
 
 type Trace struct {
@@ -40,7 +40,7 @@ func (m *Tracer) Trace(uri string) *Trace {
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
-			m.bus.Publish(events.RequestTraced, &payloads.RequestTraced{
+			m.pubSub.Publish(events.RequestTraced, &payloads.RequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,

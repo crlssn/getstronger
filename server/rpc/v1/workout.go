@@ -23,12 +23,12 @@ import (
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
-	bus  *pubsub.Bus
-	repo repo.Repo
+	repo   repo.Repo
+	pubSub *pubsub.PubSub
 }
 
-func NewWorkoutHandler(b *pubsub.Bus, r repo.Repo) apiv1connect.WorkoutServiceHandler {
-	return &workoutHandler{b, r}
+func NewWorkoutHandler(r repo.Repo, ps *pubsub.PubSub) apiv1connect.WorkoutServiceHandler {
+	return &workoutHandler{r, ps}
 }
 
 func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request[apiv1.CreateWorkoutRequest]) (*connect.Response[apiv1.CreateWorkoutResponse], error) {
@@ -227,7 +227,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.bus.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
+	h.pubSub.Publish(events.WorkoutCommentPosted, &payloads.WorkoutCommentPosted{
 		CommentID: comment.ID,
 	})
 

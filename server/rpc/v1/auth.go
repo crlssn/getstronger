@@ -16,7 +16,7 @@ import (
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/cookies"
 	"github.com/crlssn/getstronger/server/email"
-	"github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/repo"

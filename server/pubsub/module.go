@@ -19,18 +19,18 @@ func Module() fx.Option {
 			handlers.NewWorkoutCommentPosted,
 		),
 		fx.Invoke(
-			func(lc fx.Lifecycle, bus *Bus, registry *handlers.Registry) {
+			func(lc fx.Lifecycle, pubSub *PubSub, registry *handlers.Registry) {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
 						for event, handler := range registry.Handlers() {
-							if err := bus.Subscribe(event, handler); err != nil {
+							if err := pubSub.Subscribe(event, handler); err != nil {
 								return fmt.Errorf("failed to subscribe to event %s: %w", event, err)
 							}
 						}
 						return nil
 					},
 					OnStop: func(_ context.Context) error {
-						bus.Stop()
+						pubSub.Stop()
 						return nil
 					},
 				})

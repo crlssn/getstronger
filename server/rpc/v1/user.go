@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
-	"github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/events"
@@ -20,12 +20,12 @@ import (
 var _ apiv1connect.UserServiceHandler = (*userHandler)(nil)
 
 type userHandler struct {
-	bus  *pubsub.Bus
-	repo repo.Repo
+	repo   repo.Repo
+	pubSub *pubsub.PubSub
 }
 
-func NewUserHandler(b *pubsub.Bus, r repo.Repo) apiv1connect.UserServiceHandler {
-	return &userHandler{b, r}
+func NewUserHandler(r repo.Repo, ps *pubsub.PubSub) apiv1connect.UserServiceHandler {
+	return &userHandler{r, ps}
 }
 
 func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.GetUserRequest]) (*connect.Response[apiv1.GetUserResponse], error) {
@@ -98,7 +98,7 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.bus.Publish(events.UserFollowed, &payloads.UserFollowed{
+	h.pubSub.Publish(events.UserFollowed, &payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
 	})
