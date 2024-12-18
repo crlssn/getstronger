@@ -88,19 +88,23 @@ const onFinishWorkout = async () => {
   }
 
   const eSetsList: ExerciseSets[] = []
-  for (const [exerciseID, sets] of Object.entries(exerciseSets)) {
-    const definedSets = sets.filter((set) => isNumber(set.reps) && isNumber(set.weight))
+  routine.value?.exercises.forEach((exercise: Exercise) => {
+    if (exerciseSets[exercise.id].length === 0) {
+      return
+    }
+
+    const definedSets = exerciseSets[exercise.id].filter((set) => isNumber(set.reps) && isNumber(set.weight))
     if (definedSets.length === 0) {
-      continue
+      return
     }
 
     eSetsList.push({
       exercise: {
-        id: exerciseID
+        id: exercise.id
       } as Exercise,
       sets: definedSets
     } as ExerciseSets)
-  }
+  })
 
   const res = await createWorkout(
     routineID,
