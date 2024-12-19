@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
@@ -54,14 +56,14 @@ type updateOpt interface {
 }
 
 var (
-	errUpdateNoColumns       = fmt.Errorf("update opt: no columns")
-	errUpdateRowsAffected    = fmt.Errorf("update opt: rows affected")
+	ErrUpdateNoColumns       = fmt.Errorf("update opt: no columns")
+	ErrUpdateRowsAffected    = fmt.Errorf("update opt: rows affected")
 	ErrUpdateDuplicateColumn = fmt.Errorf("update opt: duplicate column")
 )
 
 func updateColumnsFromOpts[T updateOpt](opts []T) (orm.M, error) {
 	if len(opts) == 0 {
-		return nil, errUpdateNoColumns
+		return nil, ErrUpdateNoColumns
 	}
 
 	columns := make(orm.M, len(opts))
@@ -81,4 +83,22 @@ func updateColumnsFromOpts[T updateOpt](opts []T) (orm.M, error) {
 	}
 
 	return columns, nil
+}
+
+func hashPassword(password string) ([]byte, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	return hash, nil
+}
+
+func MustHashPassword(password string) []byte {
+	hash, err := hashPassword(password)
+	if err != nil {
+		panic(err)
+	}
+
+	return hash
 }

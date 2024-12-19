@@ -2,13 +2,17 @@ package repo_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"testing"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
@@ -40,6 +44,282 @@ func (s *repoSuite) SetupSuite() {
 			log.Fatalf("failed to clean container: %s", err)
 		}
 	})
+}
+
+var errTxError = errors.New("error")
+
+func (s *repoSuite) TestNewTx() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		tx       func(tx repo.Tx) error
+		expected expected
+	}
+
+	emailCreated := gofakeit.Email()
+	emailNotCreated := gofakeit.Email()
+
+	tests := []test{
+		{
+			name: "ok_transaction_committed",
+			tx: func(tx repo.Tx) error {
+				_, err := tx.CreateAuth(context.Background(), emailCreated, "password")
+				s.Require().NoError(err)
+				return nil
+			},
+			expected: expected{err: nil},
+		},
+		{
+			name: "err_transaction_not_committed",
+			tx: func(tx repo.Tx) error {
+				_, err := tx.CreateAuth(context.Background(), emailNotCreated, "password")
+				s.Require().NoError(err)
+				return errTxError
+			},
+			expected: expected{err: errTxError},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			err := s.repo.NewTx(context.Background(), t.tx)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				exists, existsErr := orm.Auths(orm.AuthWhere.Email.EQ(emailNotCreated)).Exists(context.Background(), s.testContainer.DB)
+				s.Require().NoError(existsErr)
+				s.Require().False(exists)
+				return
+			}
+			s.Require().NoError(err)
+			exists, err := orm.Auths(orm.AuthWhere.Email.EQ(emailCreated)).Exists(context.Background(), s.testContainer.DB)
+			s.Require().NoError(err)
+			s.Require().True(exists)
+		})
+	}
+}
+
+func (s *repoSuite) TestCreateAuth() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		email    string
+		password string
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:     "ok_auth_created",
+			email:    gofakeit.Email(),
+			password: "password",
+			init:     func(_ test) {},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:     "err_email_already_exists",
+			email:    gofakeit.Email(),
+			password: "password",
+			init: func(t test) {
+				s.testFactory.NewAuth(factory.AuthEmail(t.email))
+			},
+			expected: expected{
+				err: repo.ErrAuthEmailExists,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			auth, err := s.repo.CreateAuth(context.Background(), t.email, t.password)
+			if t.expected.err != nil {
+				s.Require().Nil(auth)
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+			s.Require().NotNil(auth)
+			s.Require().Equal(t.email, auth.Email)
+			s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.password)))
+		})
+	}
+}
+
+func (s *repoSuite) TestUpdateAuth() {
+	type expected struct {
+		err      error
+		auth     *orm.Auth
+		password string
+	}
+
+	type test struct {
+		name     string
+		init     func(*test)
+		expected expected
+		authID   string
+		opts     []repo.UpdateAuthOpt
+	}
+
+	tests := []test{
+		{
+			name:   "ok_update_auth_password",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthPassword("new_password"),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+			},
+			expected: expected{
+				err:      nil,
+				password: "new_password",
+			},
+		},
+		{
+			name:   "ok_update_auth_email_verified",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthEmailVerified(),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth.EmailVerified = true
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "ok_update_auth_password_reset_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthPasswordResetToken(factory.UUID(0)),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth.PasswordResetToken = null.StringFrom(factory.UUID(0))
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "ok_update_auth_delete_password_reset_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthDeletePasswordResetToken(),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(
+					factory.AuthID(t.authID),
+					factory.AuthPasswordResetToken(uuid.NewString()),
+				)
+				t.expected.auth.PasswordResetToken = null.String{}
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "ok_update_auth_refresh_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthRefreshToken("refresh_token"),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth.RefreshToken = null.StringFrom("refresh_token")
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "ok_update_auth_delete_refresh_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthDeleteRefreshToken(),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(
+					factory.AuthID(t.authID),
+					factory.AuthRefreshToken("refresh_token"),
+				)
+				t.expected.auth.RefreshToken = null.String{}
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "err_auth_does_not_exist",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthEmailVerified(),
+			},
+			init: func(_ *test) {},
+			expected: expected{
+				err: repo.ErrUpdateRowsAffected,
+			},
+		},
+		{
+			name:   "err_duplicate_options",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthEmailVerified(),
+				repo.UpdateAuthEmailVerified(),
+			},
+			init: func(_ *test) {},
+			expected: expected{
+				err: repo.ErrUpdateDuplicateColumn,
+			},
+		},
+		{
+			name:   "err_missing_options",
+			authID: uuid.NewString(),
+			opts:   nil,
+			init:   func(_ *test) {},
+			expected: expected{
+				err: repo.ErrUpdateNoColumns,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(&t)
+			err := s.repo.UpdateAuth(context.Background(), t.authID, t.opts...)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+
+			auth, err := orm.FindAuth(context.Background(), s.testContainer.DB, t.authID)
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.auth.Email, auth.Email)
+			s.Require().Equal(t.expected.auth.EmailVerified, auth.EmailVerified)
+			s.Require().Equal(t.expected.auth.RefreshToken.Valid, auth.RefreshToken.Valid)
+			s.Require().Equal(t.expected.auth.RefreshToken.String, auth.RefreshToken.String)
+			s.Require().Equal(t.expected.auth.PasswordResetToken.Valid, auth.PasswordResetToken.Valid)
+			s.Require().Equal(t.expected.auth.PasswordResetToken.String, auth.PasswordResetToken.String)
+			if t.expected.password != "" {
+				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
+			}
+		})
+	}
 }
 
 func (s *repoSuite) TestListExercises() {
