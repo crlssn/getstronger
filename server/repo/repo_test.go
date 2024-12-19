@@ -1,8 +1,12 @@
+//nolint:all
 package repo_test
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -317,6 +321,409 @@ func (s *repoSuite) TestUpdateAuth() {
 			s.Require().Equal(t.expected.auth.PasswordResetToken.String, auth.PasswordResetToken.String)
 			if t.expected.password != "" {
 				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
+			}
+		})
+	}
+}
+
+func (s *repoSuite) TestCompareEmailAndPassword() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		email    string
+		password string
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:     "ok_valid_email_and_password",
+			email:    gofakeit.Email(),
+			password: "valid_password",
+			init: func(t test) {
+				s.testFactory.NewAuth(
+					factory.AuthEmail(t.email),
+					factory.AuthPassword(t.password),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:     "err_invalid_email",
+			email:    gofakeit.Email(),
+			password: "valid_password",
+			init:     func(_ test) {},
+			expected: expected{
+				err: sql.ErrNoRows,
+			},
+		},
+		{
+			name:     "err_invalid_password",
+			email:    gofakeit.Email(),
+			password: "wrong_password",
+			init: func(t test) {
+				s.testFactory.NewAuth(
+					factory.AuthEmail(t.email),
+					factory.AuthPassword("actual_password"),
+				)
+			},
+			expected: expected{
+				err: bcrypt.ErrMismatchedHashAndPassword,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			err := s.repo.CompareEmailAndPassword(context.Background(), t.email, t.password)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+		})
+	}
+}
+
+func (s *repoSuite) TestRefreshTokenExists() {
+	type expected struct {
+		exists bool
+		err    error
+	}
+
+	type test struct {
+		name         string
+		refreshToken string
+		init         func(test)
+		expected     expected
+	}
+
+	tests := []test{
+		{
+			name:         "ok_token_exists",
+			refreshToken: "valid_refresh_token",
+			init: func(t test) {
+				s.testFactory.NewAuth(factory.AuthRefreshToken(t.refreshToken))
+			},
+			expected: expected{
+				exists: true,
+				err:    nil,
+			},
+		},
+		{
+			name:         "ok_token_does_not_exist",
+			refreshToken: "nonexistent_refresh_token",
+			init:         func(_ test) {},
+			expected: expected{
+				exists: false,
+				err:    nil,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			exists, err := s.repo.RefreshTokenExists(context.Background(), t.refreshToken)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				s.Require().False(exists)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.exists, exists)
+		})
+	}
+}
+
+func (s *repoSuite) TestCreateUser() {
+	type expected struct {
+		user *orm.User
+		err  error
+	}
+
+	type test struct {
+		name     string
+		params   repo.CreateUserParams
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_user_created",
+			params: repo.CreateUserParams{
+				AuthID:    s.testFactory.NewAuth().ID,
+				FirstName: "John",
+				LastName:  "Doe",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				user: &orm.User{
+					FirstName: "John",
+					LastName:  "Doe",
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "err_auth_id_missing",
+			params: repo.CreateUserParams{
+				AuthID:    "",
+				FirstName: "John",
+				LastName:  "Doe",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				user: nil,
+				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: invalid input syntax for type uuid: \"\" (SQLSTATE 22P02)"),
+			},
+		},
+		{
+			name: "err_unknown_auth_id",
+			params: repo.CreateUserParams{
+				AuthID:    uuid.NewString(),
+				FirstName: "Jane",
+				LastName:  "Doe",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				user: nil,
+				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: insert or update on table \"users\" violates foreign key constraint \"users_auth_id_fkey\" (SQLSTATE 23503)"),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			user, err := s.repo.CreateUser(context.Background(), t.params)
+
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, t.expected.err.Error())
+				s.Require().Nil(user)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(user)
+			s.Require().Equal(t.params.AuthID, user.AuthID)
+			s.Require().Equal(t.expected.user.FirstName, user.FirstName)
+			s.Require().Equal(t.expected.user.LastName, user.LastName)
+		})
+	}
+}
+
+func (s *repoSuite) TestCreateExercise() {
+	type expected struct {
+		exercise *orm.Exercise
+		err      error
+	}
+
+	type test struct {
+		name     string
+		params   repo.CreateExerciseParams
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_exercise_created_with_label",
+			params: repo.CreateExerciseParams{
+				UserID: s.testFactory.NewUser().ID,
+				Name:   "Bench Press",
+				Label:  "Chest",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				exercise: &orm.Exercise{
+					Title:    "Bench Press",
+					SubTitle: null.NewString("Chest", true),
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "ok_exercise_created_without_label",
+			params: repo.CreateExerciseParams{
+				UserID: s.testFactory.NewUser().ID,
+				Name:   "Squat",
+				Label:  "",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				exercise: &orm.Exercise{
+					Title:    "Squat",
+					SubTitle: null.NewString("", false),
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "err_unknown_user_id",
+			params: repo.CreateExerciseParams{
+				UserID: uuid.NewString(),
+				Name:   "Deadlift",
+				Label:  "Back",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				exercise: nil,
+				err:      fmt.Errorf("exercise insert"),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			exercise, err := s.repo.CreateExercise(context.Background(), t.params)
+
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, t.expected.err.Error())
+				s.Require().Nil(exercise)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(exercise)
+			s.Require().Equal(t.params.UserID, exercise.UserID)
+			s.Require().Equal(t.expected.exercise.Title, exercise.Title)
+			s.Require().Equal(t.expected.exercise.SubTitle, exercise.SubTitle)
+		})
+	}
+}
+
+func (s *repoSuite) TestSoftDeleteExercise() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		params   repo.SoftDeleteExerciseParams
+		init     func(test) orm.RoutineSlice
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_soft_delete_exercise_with_routines",
+			params: repo.SoftDeleteExerciseParams{
+				UserID:     s.testFactory.NewUser().ID,
+				ExerciseID: uuid.NewString(),
+			},
+			init: func(t test) orm.RoutineSlice {
+				exercises := orm.ExerciseSlice{
+					s.testFactory.NewExercise(
+						factory.ExerciseID(t.params.ExerciseID),
+						factory.ExerciseUserID(t.params.UserID),
+					),
+					s.testFactory.NewExercise(
+						factory.ExerciseUserID(t.params.UserID),
+					),
+				}
+
+				routines := orm.RoutineSlice{
+					s.testFactory.NewRoutine(
+						factory.RoutineExerciseOrder([]string{
+							exercises[0].ID, exercises[1].ID,
+						}),
+					),
+					s.testFactory.NewRoutine(
+						factory.RoutineExerciseOrder([]string{
+							exercises[0].ID, exercises[1].ID,
+						}),
+					),
+				}
+
+				s.testFactory.AddRoutineExercise(routines[0], exercises...)
+				s.testFactory.AddRoutineExercise(routines[1], exercises...)
+
+				return routines
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "ok_soft_delete_exercise_without_routines",
+			params: repo.SoftDeleteExerciseParams{
+				UserID:     s.testFactory.NewUser().ID,
+				ExerciseID: uuid.NewString(),
+			},
+			init: func(t test) orm.RoutineSlice {
+				s.testFactory.NewExercise(
+					factory.ExerciseID(t.params.ExerciseID),
+					factory.ExerciseUserID(t.params.UserID),
+				)
+				return nil
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "err_exercise_not_found",
+			params: repo.SoftDeleteExerciseParams{
+				UserID:     s.testFactory.NewUser().ID,
+				ExerciseID: uuid.NewString(),
+			},
+			expected: expected{
+				err: sql.ErrNoRows,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			var routines orm.RoutineSlice
+			if t.init != nil {
+				routines = t.init(t)
+			}
+
+			err := s.repo.SoftDeleteExercise(context.Background(), t.params)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+
+			exists, err := orm.Exercises(
+				orm.ExerciseWhere.ID.EQ(t.params.ExerciseID),
+				orm.ExerciseWhere.DeletedAt.IsNull(),
+			).Exists(context.Background(), s.testContainer.DB)
+			s.Require().NoError(err)
+			s.Require().False(exists)
+
+			s.Require().NoError(routines.ReloadAll(context.Background(), s.testContainer.DB))
+			for _, routine := range routines {
+				exercises, exercisesErr := routine.Exercises().All(context.Background(), s.testContainer.DB)
+				s.Require().NoError(exercisesErr)
+
+				for _, exercise := range exercises {
+					s.Require().NotEqual(t.params.ExerciseID, exercise.ID, "Exercise should have been removed from the routine")
+				}
+
+				var exerciseIDs []string
+				s.Require().NoError(json.Unmarshal(routine.ExerciseOrder, &exerciseIDs))
+				for _, id := range exerciseIDs {
+					s.Require().NotEqual(t.params.ExerciseID, id, "Exercise should have been removed from the routine's exercise order")
+				}
 			}
 		})
 	}

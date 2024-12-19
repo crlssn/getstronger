@@ -228,9 +228,29 @@ func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 		exercise, err := orm.Exercises(
 			orm.ExerciseWhere.ID.EQ(p.ExerciseID),
 			orm.ExerciseWhere.UserID.EQ(p.UserID),
+			qm.Load(orm.ExerciseRels.Routines),
 		).One(ctx, tx.GetTx())
 		if err != nil {
 			return fmt.Errorf("exercise fetch: %w", err)
+		}
+
+		for _, routine := range exercise.R.Routines {
+			var exerciseIDs []string
+			if err = json.Unmarshal(routine.ExerciseOrder, &exerciseIDs); err != nil {
+				return fmt.Errorf("exercise order unmarshal: %w", err)
+			}
+
+			exerciseOrder := make([]string, 0, len(exerciseIDs)-1)
+			for _, exerciseID := range exerciseIDs {
+				if exerciseID == exercise.ID {
+					continue
+				}
+				exerciseOrder = append(exerciseOrder, exerciseID)
+			}
+
+			if err = tx.UpdateRoutine(ctx, routine.ID, UpdateRoutineExerciseOrder(exerciseOrder)); err != nil {
+				return fmt.Errorf("routine update: %w", err)
+			}
 		}
 
 		if err = exercise.SetRoutines(ctx, tx.GetTx(), false); err != nil {

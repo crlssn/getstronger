@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/repo"
 )
 
 type AuthOpt func(event *orm.Auth)
@@ -72,5 +73,11 @@ func AuthRefreshToken(token string) AuthOpt {
 func AuthPasswordResetToken(token string) AuthOpt {
 	return func(m *orm.Auth) {
 		m.PasswordResetToken = null.StringFrom(token)
+	}
+}
+
+func AuthPassword(password string) AuthOpt {
+	return func(m *orm.Auth) {
+		m.Password = repo.MustHashPassword(password)
 	}
 }
