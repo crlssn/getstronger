@@ -16,7 +16,7 @@ import (
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
-	rpc "github.com/crlssn/getstronger/server/rpc/v1"
+	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 	"github.com/crlssn/getstronger/server/xcontext"
@@ -40,7 +40,7 @@ func (s *notificationSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = container.NewContainer(ctx)
 	s.testFactory = factory.NewFactory(s.testContainer.DB)
-	s.handler = rpc.NewNotificationHandler(repo.New(s.testContainer.DB), nil)
+	s.handler = handlers.NewNotificationHandler(repo.New(s.testContainer.DB), nil)
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {

@@ -73,6 +73,10 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 	if err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		auth, err := tx.CreateAuth(ctx, emailAddress, req.Msg.GetPassword())
 		if err != nil {
+			if errors.Is(err, repo.ErrAuthEmailExists) {
+				log.Warn("email exists")
+				return nil
+			}
 			return fmt.Errorf("create auth: %w", err)
 		}
 
