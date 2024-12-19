@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -439,6 +440,85 @@ func (s *repoSuite) TestRefreshTokenExists() {
 
 			s.Require().NoError(err)
 			s.Require().Equal(t.expected.exists, exists)
+		})
+	}
+}
+
+func (s *repoSuite) TestCreateUser() {
+	type expected struct {
+		user *orm.User
+		err  error
+	}
+
+	type test struct {
+		name     string
+		params   repo.CreateUserParams
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_user_created",
+			params: repo.CreateUserParams{
+				AuthID:    s.testFactory.NewAuth().ID,
+				FirstName: "John",
+				LastName:  "Doe",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				user: &orm.User{
+					FirstName: "John",
+					LastName:  "Doe",
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "err_auth_id_missing",
+			params: repo.CreateUserParams{
+				AuthID:    "",
+				FirstName: "John",
+				LastName:  "Doe",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				user: nil,
+				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: invalid input syntax for type uuid: \"\" (SQLSTATE 22P02)"),
+			},
+		},
+		{
+			name: "err_unknown_auth_id",
+			params: repo.CreateUserParams{
+				AuthID:    uuid.NewString(),
+				FirstName: "Jane",
+				LastName:  "Doe",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				user: nil,
+				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: insert or update on table \"users\" violates foreign key constraint \"users_auth_id_fkey\" (SQLSTATE 23503)"),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			user, err := s.repo.CreateUser(context.Background(), t.params)
+
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, t.expected.err.Error())
+				s.Require().Nil(user)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(user)
+			s.Require().Equal(t.params.AuthID, user.AuthID)
+			s.Require().Equal(t.expected.user.FirstName, user.FirstName)
+			s.Require().Equal(t.expected.user.LastName, user.LastName)
 		})
 	}
 }
