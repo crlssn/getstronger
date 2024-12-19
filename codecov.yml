@@ -1,3 +1,2 @@
 ignore:
-  - "server/pkg/pb"
-  - "server/pkg/orm"
+  - "server/gen"
