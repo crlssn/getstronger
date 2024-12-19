@@ -69,3 +69,11 @@ func RoutineExerciseOrder(exerciseIDs []string) RoutineOpt {
 		m.ExerciseOrder = bytes
 	}
 }
+
+func (f *Factory) AddRoutineExercise(routine *orm.Routine, exercises ...*orm.Exercise) {
+	boil.DebugMode = f.debug
+	if err := routine.AddExercises(context.Background(), f.db, false, exercises...); err != nil {
+		panic(fmt.Errorf("failed to add exercises to routine: %w", err))
+	}
+	boil.DebugMode = false
+}

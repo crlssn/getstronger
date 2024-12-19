@@ -3,6 +3,7 @@ package repo_test
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -601,6 +602,128 @@ func (s *repoSuite) TestCreateExercise() {
 			s.Require().Equal(t.params.UserID, exercise.UserID)
 			s.Require().Equal(t.expected.exercise.Title, exercise.Title)
 			s.Require().Equal(t.expected.exercise.SubTitle, exercise.SubTitle)
+		})
+	}
+}
+
+func (s *repoSuite) TestSoftDeleteExercise() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		params   repo.SoftDeleteExerciseParams
+		init     func(test) orm.RoutineSlice
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_soft_delete_exercise_with_routines",
+			params: repo.SoftDeleteExerciseParams{
+				UserID:     s.testFactory.NewUser().ID,
+				ExerciseID: uuid.NewString(),
+			},
+			init: func(t test) orm.RoutineSlice {
+				exercises := orm.ExerciseSlice{
+					s.testFactory.NewExercise(
+						factory.ExerciseID(t.params.ExerciseID),
+						factory.ExerciseUserID(t.params.UserID),
+					),
+					s.testFactory.NewExercise(
+						factory.ExerciseUserID(t.params.UserID),
+					),
+				}
+
+				routines := orm.RoutineSlice{
+					s.testFactory.NewRoutine(
+						factory.RoutineExerciseOrder([]string{
+							exercises[0].ID, exercises[1].ID,
+						}),
+					),
+					s.testFactory.NewRoutine(
+						factory.RoutineExerciseOrder([]string{
+							exercises[0].ID, exercises[1].ID,
+						}),
+					),
+				}
+
+				s.testFactory.AddRoutineExercise(routines[0], exercises...)
+				s.testFactory.AddRoutineExercise(routines[1], exercises...)
+
+				return routines
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "ok_soft_delete_exercise_without_routines",
+			params: repo.SoftDeleteExerciseParams{
+				UserID:     s.testFactory.NewUser().ID,
+				ExerciseID: uuid.NewString(),
+			},
+			init: func(t test) orm.RoutineSlice {
+				s.testFactory.NewExercise(
+					factory.ExerciseID(t.params.ExerciseID),
+					factory.ExerciseUserID(t.params.UserID),
+				)
+				return nil
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "err_exercise_not_found",
+			params: repo.SoftDeleteExerciseParams{
+				UserID:     s.testFactory.NewUser().ID,
+				ExerciseID: uuid.NewString(),
+			},
+			expected: expected{
+				err: sql.ErrNoRows,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			var routines orm.RoutineSlice
+			if t.init != nil {
+				routines = t.init(t)
+			}
+
+			err := s.repo.SoftDeleteExercise(context.Background(), t.params)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+
+			exists, err := orm.Exercises(
+				orm.ExerciseWhere.ID.EQ(t.params.ExerciseID),
+				orm.ExerciseWhere.DeletedAt.IsNotNull(),
+			).Exists(context.Background(), s.testContainer.DB)
+			s.Require().NoError(err)
+			s.Require().True(exists)
+
+			s.Require().NoError(routines.ReloadAll(context.Background(), s.testContainer.DB))
+			for _, routine := range routines {
+				exercises, exercisesErr := routine.Exercises().All(context.Background(), s.testContainer.DB)
+				s.Require().NoError(exercisesErr)
+
+				for _, exercise := range exercises {
+					s.Require().NotEqual(t.params.ExerciseID, exercise.ID, "Exercise should have been removed from the routine")
+				}
+
+				var exerciseIDs []string
+				s.Require().NoError(json.Unmarshal(routine.ExerciseOrder, &exerciseIDs))
+				for _, id := range exerciseIDs {
+					s.Require().NotEqual(t.params.ExerciseID, id, "Exercise should have been removed from the routine's exercise order")
+				}
+			}
 		})
 	}
 }
