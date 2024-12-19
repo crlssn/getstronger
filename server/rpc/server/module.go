@@ -16,7 +16,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
-	v1 "github.com/crlssn/getstronger/server/rpc/handlers/v1"
+	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
 	"github.com/crlssn/getstronger/server/stream"
@@ -27,13 +27,13 @@ func Module() fx.Option {
 		interceptors.Module(),
 		fx.Provide(
 			registerHandlers,
-			v1.NewAuthHandler,
-			v1.NewFeedHandler,
-			v1.NewUserHandler,
-			v1.NewRoutineHandler,
-			v1.NewWorkoutHandler,
-			v1.NewExerciseHandler,
-			v1.NewNotificationHandler,
+			handlers.NewAuthHandler,
+			handlers.NewFeedHandler,
+			handlers.NewUserHandler,
+			handlers.NewRoutineHandler,
+			handlers.NewWorkoutHandler,
+			handlers.NewExerciseHandler,
+			handlers.NewNotificationHandler,
 			middlewares.New,
 		),
 		fx.Invoke(
