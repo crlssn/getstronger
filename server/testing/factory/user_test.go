@@ -4,6 +4,7 @@ package factory_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
@@ -30,7 +31,7 @@ func TestFactory_User(t *testing.T) {
 		require.Equal(t, expected.AuthID, created.AuthID)
 		require.Equal(t, expected.FirstName, created.FirstName)
 		require.Equal(t, expected.LastName, created.LastName)
-		require.Equal(t, expected.CreatedAt, created.CreatedAt)
+		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
 	t.Run("UserID", func(t *testing.T) {

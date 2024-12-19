@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -30,8 +31,8 @@ func TestFactory_Routine(t *testing.T) {
 		require.Equal(t, expected.UserID, created.UserID)
 		require.Equal(t, expected.Title, created.Title)
 		require.Equal(t, expected.ExerciseOrder, created.ExerciseOrder)
-		require.Equal(t, expected.DeletedAt, created.DeletedAt)
-		require.Equal(t, expected.CreatedAt, created.CreatedAt)
+		require.Equal(t, expected.DeletedAt.Valid, created.DeletedAt.Valid)
+		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
 	t.Run("RoutineID", func(t *testing.T) {

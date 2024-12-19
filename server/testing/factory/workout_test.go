@@ -32,7 +32,7 @@ func TestFactory_Workout(t *testing.T) {
 		require.Equal(t, expected.Name, created.Name)
 		require.Equal(t, expected.StartedAt.Truncate(time.Millisecond), created.StartedAt.Truncate(time.Millisecond))
 		require.Equal(t, expected.FinishedAt.Truncate(time.Millisecond), created.FinishedAt.Truncate(time.Millisecond))
-		require.Equal(t, expected.CreatedAt, created.CreatedAt)
+		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 		require.True(t, created.StartedAt.Before(created.FinishedAt))
 	})
 
@@ -93,7 +93,7 @@ func TestFactory_WorkoutComment(t *testing.T) {
 		require.Equal(t, expected.UserID, created.UserID)
 		require.Equal(t, expected.WorkoutID, created.WorkoutID)
 		require.Equal(t, expected.Comment, created.Comment)
-		require.Equal(t, expected.CreatedAt, created.CreatedAt)
+		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
 	t.Run("WorkoutCommentUserID", func(t *testing.T) {

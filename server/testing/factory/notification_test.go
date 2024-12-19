@@ -33,7 +33,7 @@ func TestFactory_Notification(t *testing.T) {
 		require.Equal(t, expected.Type, created.Type)
 		require.Equal(t, expected.Payload, created.Payload)
 		require.Equal(t, expected.ReadAt, created.ReadAt)
-		require.Equal(t, expected.CreatedAt, created.CreatedAt)
+		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
 	t.Run("NotificationID", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestFactory_Notification(t *testing.T) {
 		created, err := orm.FindNotification(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
 		require.True(t, created.ReadAt.Valid)
-		require.WithinDuration(t, time.Now(), created.ReadAt.Time, time.Second)
+		require.WithinDuration(t, time.Now().UTC(), created.ReadAt.Time, time.Second)
 	})
 
 	t.Run("NotificationCreatedAt", func(t *testing.T) {

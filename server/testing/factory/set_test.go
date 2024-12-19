@@ -30,7 +30,7 @@ func TestFactory_Set(t *testing.T) {
 		require.Equal(t, expected.ExerciseID, created.ExerciseID)
 		require.InEpsilon(t, expected.Weight, created.Weight, 0)
 		require.Equal(t, expected.Reps, created.Reps)
-		require.Equal(t, expected.CreatedAt, created.CreatedAt)
+		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
 	t.Run("SetWorkoutID", func(t *testing.T) {

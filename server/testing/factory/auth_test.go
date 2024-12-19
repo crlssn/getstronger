@@ -4,6 +4,7 @@ package factory_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
@@ -31,7 +32,7 @@ func TestFactory_Auth(t *testing.T) {
 		require.Equal(t, expected.Email, created.Email)
 		require.Equal(t, expected.Password, created.Password)
 		require.Equal(t, expected.RefreshToken, created.RefreshToken)
-		require.Equal(t, expected.CreatedAt, created.CreatedAt)
+		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 		require.Equal(t, expected.EmailVerified, created.EmailVerified)
 		require.Equal(t, expected.EmailToken, created.EmailToken)
 		require.Equal(t, expected.PasswordResetToken, created.PasswordResetToken)

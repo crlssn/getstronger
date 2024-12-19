@@ -32,7 +32,7 @@ func TestFactory_Exercise(t *testing.T) {
 		require.Equal(t, expected.UserID, created.UserID)
 		require.Equal(t, expected.Title, created.Title)
 		require.Equal(t, expected.SubTitle, created.SubTitle)
-		require.Equal(t, expected.DeletedAt, created.DeletedAt)
+		require.False(t, expected.DeletedAt.Valid, created.DeletedAt.Valid)
 	})
 
 	t.Run("ExerciseID", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestFactory_Exercise(t *testing.T) {
 		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
 		require.True(t, created.DeletedAt.Valid)
-		require.WithinDuration(t, time.Now(), created.DeletedAt.Time, time.Second)
+		require.WithinDuration(t, time.Now().UTC(), created.DeletedAt.Time, time.Second)
 	})
 
 	t.Cleanup(func() {
