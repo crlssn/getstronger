@@ -62,7 +62,7 @@ func (s *repoSuite) TestCreateAuth() {
 			name:     "ok_auth_created",
 			email:    gofakeit.Email(),
 			password: "password",
-			init:     func(t test) {},
+			init:     func(_ test) {},
 			expected: expected{
 				err: nil,
 			},
