@@ -158,6 +158,23 @@ func (s *repoSuite) TestUpdateAuth() {
 			},
 		},
 		{
+			name:   "ok_update_auth_delete_password_reset_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthDeletePasswordResetToken(),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(
+					factory.AuthID(t.authID),
+					factory.AuthPasswordResetToken(uuid.NewString()),
+				)
+				t.expected.auth.PasswordResetToken = null.String{}
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
 			name:   "ok_update_auth_refresh_token",
 			authID: uuid.NewString(),
 			opts: []repo.UpdateAuthOpt{
@@ -239,6 +256,8 @@ func (s *repoSuite) TestUpdateAuth() {
 			s.Require().Equal(t.expected.auth.EmailVerified, auth.EmailVerified)
 			s.Require().Equal(t.expected.auth.RefreshToken.Valid, auth.RefreshToken.Valid)
 			s.Require().Equal(t.expected.auth.RefreshToken.String, auth.RefreshToken.String)
+			s.Require().Equal(t.expected.auth.PasswordResetToken.Valid, auth.PasswordResetToken.Valid)
+			s.Require().Equal(t.expected.auth.PasswordResetToken.String, auth.PasswordResetToken.String)
 			if t.expected.password != "" {
 				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
 			}

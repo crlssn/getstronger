@@ -303,7 +303,10 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthPassword(req.Msg.GetPassword())); err != nil {
+	if err = h.repo.UpdateAuth(ctx, auth.ID,
+		repo.UpdateAuthPassword(req.Msg.GetPassword()),
+		repo.UpdateAuthDeletePasswordResetToken(),
+	); err != nil {
 		log.Error("password update failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

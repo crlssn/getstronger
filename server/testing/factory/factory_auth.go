@@ -68,3 +68,9 @@ func AuthRefreshToken(token string) AuthOpt {
 		m.RefreshToken = null.StringFrom(token)
 	}
 }
+
+func AuthPasswordResetToken(token string) AuthOpt {
+	return func(m *orm.Auth) {
+		m.PasswordResetToken = null.StringFrom(token)
+	}
+}
