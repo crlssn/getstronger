@@ -2,6 +2,7 @@ package repo_test
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"log"
 	"testing"
@@ -318,6 +319,126 @@ func (s *repoSuite) TestUpdateAuth() {
 			if t.expected.password != "" {
 				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
 			}
+		})
+	}
+}
+
+func (s *repoSuite) TestCompareEmailAndPassword() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		email    string
+		password string
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:     "ok_valid_email_and_password",
+			email:    gofakeit.Email(),
+			password: "valid_password",
+			init: func(t test) {
+				s.testFactory.NewAuth(
+					factory.AuthEmail(t.email),
+					factory.AuthPassword(t.password),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:     "err_invalid_email",
+			email:    gofakeit.Email(),
+			password: "valid_password",
+			init:     func(_ test) {},
+			expected: expected{
+				err: sql.ErrNoRows,
+			},
+		},
+		{
+			name:     "err_invalid_password",
+			email:    gofakeit.Email(),
+			password: "wrong_password",
+			init: func(t test) {
+				s.testFactory.NewAuth(
+					factory.AuthEmail(t.email),
+					factory.AuthPassword("actual_password"),
+				)
+			},
+			expected: expected{
+				err: bcrypt.ErrMismatchedHashAndPassword,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			err := s.repo.CompareEmailAndPassword(context.Background(), t.email, t.password)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+		})
+	}
+}
+
+func (s *repoSuite) TestRefreshTokenExists() {
+	type expected struct {
+		exists bool
+		err    error
+	}
+
+	type test struct {
+		name         string
+		refreshToken string
+		init         func(test)
+		expected     expected
+	}
+
+	tests := []test{
+		{
+			name:         "ok_token_exists",
+			refreshToken: "valid_refresh_token",
+			init: func(t test) {
+				s.testFactory.NewAuth(factory.AuthRefreshToken(t.refreshToken))
+			},
+			expected: expected{
+				exists: true,
+				err:    nil,
+			},
+		},
+		{
+			name:         "ok_token_does_not_exist",
+			refreshToken: "nonexistent_refresh_token",
+			init:         func(_ test) {},
+			expected: expected{
+				exists: false,
+				err:    nil,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			exists, err := s.repo.RefreshTokenExists(context.Background(), t.refreshToken)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				s.Require().False(exists)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.exists, exists)
 		})
 	}
 }
