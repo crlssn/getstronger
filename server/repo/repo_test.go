@@ -2,6 +2,7 @@ package repo_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"testing"
 	"time"
@@ -43,6 +44,61 @@ func (s *repoSuite) SetupSuite() {
 			log.Fatalf("failed to clean container: %s", err)
 		}
 	})
+}
+
+func (s *repoSuite) TestNewTx() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		tx       func(tx repo.Tx) error
+		expected expected
+	}
+
+	emailCreated := gofakeit.Email()
+	emailNotCreated := gofakeit.Email()
+	var errTxError = errors.New("error")
+
+	tests := []test{
+		{
+			name: "ok_transaction_commited",
+			tx: func(tx repo.Tx) error {
+				_, err := tx.CreateAuth(context.Background(), emailCreated, "password")
+				s.Require().NoError(err)
+				return nil
+			},
+			expected: expected{err: nil},
+		},
+		{
+			name: "err_transaction_not_commited",
+			tx: func(tx repo.Tx) error {
+				_, err := tx.CreateAuth(context.Background(), emailNotCreated, "password")
+				s.Require().NoError(err)
+				return errTxError
+			},
+			expected: expected{err: errTxError},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			err := s.repo.NewTx(context.Background(), t.tx)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				exists, existsErr := orm.Auths(orm.AuthWhere.Email.EQ(emailNotCreated)).Exists(context.Background(), s.testContainer.DB)
+				s.Require().NoError(existsErr)
+				s.Require().False(exists)
+				return
+			}
+			s.Require().NoError(err)
+			exists, err := orm.Auths(orm.AuthWhere.Email.EQ(emailCreated)).Exists(context.Background(), s.testContainer.DB)
+			s.Require().NoError(err)
+			s.Require().True(exists)
+		})
+	}
 }
 
 func (s *repoSuite) TestCreateAuth() {
