@@ -15,6 +15,44 @@ import (
 
 type NotificationOpt func(notification *orm.Notification)
 
+func (f *Factory) NewNotification(opts ...NotificationOpt) *orm.Notification {
+	m := &orm.Notification{
+		ID:        "",
+		UserID:    "",
+		Type:      "",
+		Payload:   nil,
+		ReadAt:    null.Time{},
+		CreatedAt: time.Time{},
+	}
+
+	for _, opt := range opts {
+		opt(m)
+	}
+
+	if m.UserID == "" {
+		m.UserID = f.NewUser().ID
+	}
+
+	if m.Type == "" {
+		m.Type = orm.NotificationType(f.faker.RandomString([]string{
+			orm.NotificationTypeFollow.String(),
+			orm.NotificationTypeWorkoutComment.String(),
+		}))
+	}
+
+	if m.Payload == nil {
+		m.Payload = []byte("{}")
+	}
+
+	boil.DebugMode = f.debug
+	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+		panic(fmt.Errorf("failed to insert notification: %w", err))
+	}
+	boil.DebugMode = false
+
+	return m
+}
+
 func NotificationUserID(userID string) NotificationOpt {
 	return func(notification *orm.Notification) {
 		notification.UserID = userID
@@ -42,40 +80,6 @@ func NotificationRead() NotificationOpt {
 	return func(notification *orm.Notification) {
 		notification.ReadAt = null.TimeFrom(time.Now())
 	}
-}
-
-func (f *Factory) NewNotification(opts ...NotificationOpt) *orm.Notification {
-	m := &orm.Notification{
-		ID:        "",
-		UserID:    "",
-		Type:      "",
-		Payload:   nil,
-		ReadAt:    null.Time{},
-		CreatedAt: time.Time{},
-	}
-
-	for _, opt := range opts {
-		opt(m)
-	}
-
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
-	}
-
-	if m.Type == "" {
-		m.Type = orm.NotificationType(f.faker.RandomString([]string{
-			orm.NotificationTypeFollow.String(),
-			orm.NotificationTypeWorkoutComment.String(),
-		}))
-	}
-
-	boil.DebugMode = f.debug
-	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
-		panic(fmt.Errorf("failed to insert notification: %w", err))
-	}
-	boil.DebugMode = false
-
-	return m
 }
 
 func NotificationID(id string) NotificationOpt {
