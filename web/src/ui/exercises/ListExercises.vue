@@ -39,7 +39,10 @@ const fetchExercises = async () => {
       :key="exercise.id"
       :to="`/exercises/${exercise.id}`"
     >
-      {{ exercise.name }}
+      <p>
+        {{ exercise.name }}
+        <small v-if="exercise.label" class="text-sm text-gray-500">{{ exercise.label }}</small>
+      </p>
       <ChevronRightIcon class="size-8 text-gray-500" />
     </AppListItemLink>
   </AppList>
