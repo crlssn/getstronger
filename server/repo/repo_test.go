@@ -1,3 +1,4 @@
+//nolint:all
 package repo_test
 
 import (
