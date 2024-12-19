@@ -16,9 +16,9 @@ import (
 
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	v1 "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
-	v1 "github.com/crlssn/getstronger/server/rpc/v1"
 	"github.com/crlssn/getstronger/server/stream"
 )
 
