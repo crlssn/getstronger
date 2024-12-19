@@ -22,6 +22,7 @@ func TestFactory_Auth(t *testing.T) {
 	f := factory.NewFactory(c.DB)
 
 	t.Run("Default", func(t *testing.T) {
+		t.Parallel()
 		expected := f.NewAuth()
 		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
@@ -36,6 +37,7 @@ func TestFactory_Auth(t *testing.T) {
 	})
 
 	t.Run("AuthID", func(t *testing.T) {
+		t.Parallel()
 		id := uuid.NewString()
 		expected := f.NewAuth(factory.AuthID(id))
 		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
@@ -44,6 +46,7 @@ func TestFactory_Auth(t *testing.T) {
 	})
 
 	t.Run("AuthEmail", func(t *testing.T) {
+		t.Parallel()
 		email := gofakeit.Email()
 		expected := f.NewAuth(factory.AuthEmail(email))
 		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
@@ -52,6 +55,7 @@ func TestFactory_Auth(t *testing.T) {
 	})
 
 	t.Run("AuthPassword", func(t *testing.T) {
+		t.Parallel()
 		refreshToken := uuid.NewString()
 		expected := f.NewAuth(factory.AuthRefreshToken(refreshToken))
 		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
@@ -60,6 +64,7 @@ func TestFactory_Auth(t *testing.T) {
 	})
 
 	t.Run("AuthEmailVerified", func(t *testing.T) {
+		t.Parallel()
 		passwordResetToken := uuid.NewString()
 		expected := f.NewAuth(factory.AuthPasswordResetToken(passwordResetToken))
 		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
@@ -68,6 +73,7 @@ func TestFactory_Auth(t *testing.T) {
 	})
 
 	t.Run("AuthRefreshToken", func(t *testing.T) {
+		t.Parallel()
 		password := uuid.NewString()
 		expected := f.NewAuth(factory.AuthPassword(password))
 		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
@@ -76,6 +82,7 @@ func TestFactory_Auth(t *testing.T) {
 	})
 
 	t.Run("AuthEmailVerified", func(t *testing.T) {
+		t.Parallel()
 		expected := f.NewAuth(factory.AuthEmailVerified())
 		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
