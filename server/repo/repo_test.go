@@ -523,6 +523,88 @@ func (s *repoSuite) TestCreateUser() {
 	}
 }
 
+func (s *repoSuite) TestCreateExercise() {
+	type expected struct {
+		exercise *orm.Exercise
+		err      error
+	}
+
+	type test struct {
+		name     string
+		params   repo.CreateExerciseParams
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_exercise_created_with_label",
+			params: repo.CreateExerciseParams{
+				UserID: s.testFactory.NewUser().ID,
+				Name:   "Bench Press",
+				Label:  "Chest",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				exercise: &orm.Exercise{
+					Title:    "Bench Press",
+					SubTitle: null.NewString("Chest", true),
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "ok_exercise_created_without_label",
+			params: repo.CreateExerciseParams{
+				UserID: s.testFactory.NewUser().ID,
+				Name:   "Squat",
+				Label:  "",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				exercise: &orm.Exercise{
+					Title:    "Squat",
+					SubTitle: null.NewString("", false),
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "err_unknown_user_id",
+			params: repo.CreateExerciseParams{
+				UserID: uuid.NewString(),
+				Name:   "Deadlift",
+				Label:  "Back",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				exercise: nil,
+				err:      fmt.Errorf("exercise insert"),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			exercise, err := s.repo.CreateExercise(context.Background(), t.params)
+
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, t.expected.err.Error())
+				s.Require().Nil(exercise)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(exercise)
+			s.Require().Equal(t.params.UserID, exercise.UserID)
+			s.Require().Equal(t.expected.exercise.Title, exercise.Title)
+			s.Require().Equal(t.expected.exercise.SubTitle, exercise.SubTitle)
+		})
+	}
+}
+
 func (s *repoSuite) TestListExercises() {
 	type expected struct {
 		err           error
