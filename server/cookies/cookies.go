@@ -17,11 +17,11 @@ func New(c *config.Config) *Cookies {
 	return &Cookies{c}
 }
 
-const cookieNameRefreshToken = "refreshToken"
+const CookieNameRefreshToken = "refreshToken"
 
 func (c *Cookies) RefreshToken(value string) *http.Cookie {
 	return &http.Cookie{
-		Name:     cookieNameRefreshToken,
+		Name:     CookieNameRefreshToken,
 		Value:    value,
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   c.config.Server.CookieDomain,
@@ -34,7 +34,7 @@ func (c *Cookies) RefreshToken(value string) *http.Cookie {
 
 func (c *Cookies) ExpiredRefreshToken() *http.Cookie {
 	return &http.Cookie{
-		Name:     cookieNameRefreshToken,
+		Name:     CookieNameRefreshToken,
 		Value:    "",
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   c.config.Server.CookieDomain,
