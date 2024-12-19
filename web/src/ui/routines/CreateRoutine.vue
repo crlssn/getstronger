@@ -61,7 +61,10 @@ const onCreateRoutine = async () => {
     <AppList :can-fetch="hasMorePages" @fetch="fetchExercises">
       <AppListItem v-for="exercise in exercises" :key="exercise.id">
         <div class="flex justify-between items-center w-full">
-          {{ exercise.name }}
+          <div>
+            {{ exercise.name }}
+            <small v-if="exercise.label" class="text-sm text-gray-500">{{ exercise.label }}</small>
+          </div>
           <Switch
             :class="[
               exerciseIDs.includes(exercise.id) ? 'bg-indigo-600' : 'bg-gray-200',
