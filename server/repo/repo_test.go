@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
@@ -40,6 +42,60 @@ func (s *repoSuite) SetupSuite() {
 			log.Fatalf("failed to clean container: %s", err)
 		}
 	})
+}
+
+func (s *repoSuite) TestCreateAuth() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		email    string
+		password string
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:     "ok_auth_created",
+			email:    gofakeit.Email(),
+			password: "password",
+			init:     func(t test) {},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:     "err_email_already_exists",
+			email:    gofakeit.Email(),
+			password: "password",
+			init: func(t test) {
+				s.testFactory.NewAuth(factory.AuthEmail(t.email))
+			},
+			expected: expected{
+				err: repo.ErrAuthEmailExists,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			auth, err := s.repo.CreateAuth(context.Background(), t.email, t.password)
+			if t.expected.err != nil {
+				s.Require().Nil(auth)
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+			s.Require().NotNil(auth)
+			s.Require().Equal(t.email, auth.Email)
+			s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.password)))
+		})
+	}
 }
 
 func (s *repoSuite) TestListExercises() {
