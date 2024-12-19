@@ -1,3 +1,4 @@
+//nolint:contextcheck
 package factory_test
 
 import (
@@ -27,7 +28,7 @@ func TestFactory_Set(t *testing.T) {
 		require.Equal(t, expected.ID, created.ID)
 		require.Equal(t, expected.WorkoutID, created.WorkoutID)
 		require.Equal(t, expected.ExerciseID, created.ExerciseID)
-		require.Equal(t, expected.Weight, created.Weight)
+		require.InEpsilon(t, expected.Weight, created.Weight, 0)
 		require.Equal(t, expected.Reps, created.Reps)
 		require.Equal(t, expected.CreatedAt, created.CreatedAt)
 	})
@@ -65,7 +66,7 @@ func TestFactory_Set(t *testing.T) {
 		expected := f.NewSet(factory.SetWeight(weight))
 		created, err := orm.FindSet(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, weight, created.Weight)
+		require.InEpsilon(t, weight, created.Weight, 0)
 	})
 
 	t.Run("SetCreatedAt", func(t *testing.T) {
