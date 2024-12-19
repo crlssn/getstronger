@@ -46,6 +46,8 @@ func (s *repoSuite) SetupSuite() {
 	})
 }
 
+var errTxError = errors.New("error")
+
 func (s *repoSuite) TestNewTx() {
 	type expected struct {
 		err error
@@ -59,11 +61,10 @@ func (s *repoSuite) TestNewTx() {
 
 	emailCreated := gofakeit.Email()
 	emailNotCreated := gofakeit.Email()
-	var errTxError = errors.New("error")
 
 	tests := []test{
 		{
-			name: "ok_transaction_commited",
+			name: "ok_transaction_committed",
 			tx: func(tx repo.Tx) error {
 				_, err := tx.CreateAuth(context.Background(), emailCreated, "password")
 				s.Require().NoError(err)
@@ -72,7 +73,7 @@ func (s *repoSuite) TestNewTx() {
 			expected: expected{err: nil},
 		},
 		{
-			name: "err_transaction_not_commited",
+			name: "err_transaction_not_committed",
 			tx: func(tx repo.Tx) error {
 				_, err := tx.CreateAuth(context.Background(), emailNotCreated, "password")
 				s.Require().NoError(err)
