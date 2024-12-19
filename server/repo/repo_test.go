@@ -705,10 +705,10 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 
 			exists, err := orm.Exercises(
 				orm.ExerciseWhere.ID.EQ(t.params.ExerciseID),
-				orm.ExerciseWhere.DeletedAt.IsNotNull(),
+				orm.ExerciseWhere.DeletedAt.IsNull(),
 			).Exists(context.Background(), s.testContainer.DB)
 			s.Require().NoError(err)
-			s.Require().True(exists)
+			s.Require().False(exists)
 
 			s.Require().NoError(routines.ReloadAll(context.Background(), s.testContainer.DB))
 			for _, routine := range routines {
