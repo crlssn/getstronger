@@ -62,3 +62,9 @@ func AuthEmailVerified() AuthOpt {
 		m.EmailVerified = true
 	}
 }
+
+func AuthRefreshToken(token string) AuthOpt {
+	return func(m *orm.Auth) {
+		m.RefreshToken = null.StringFrom(token)
+	}
+}

@@ -100,12 +100,12 @@ type UpdateAuthOpt func() (orm.M, error)
 
 func UpdateAuthPassword(password string) UpdateAuthOpt {
 	return func() (orm.M, error) {
-		bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		passwordHash, err := hashPassword(password)
 		if err != nil {
-			return nil, fmt.Errorf("bcrypt password generation: %w", err)
+			return nil, fmt.Errorf("password hash: %w", err)
 		}
 
-		return orm.M{orm.AuthColumns.Password: bcryptPassword}, nil
+		return orm.M{orm.AuthColumns.Password: passwordHash}, nil
 	}
 }
 
@@ -133,6 +133,12 @@ func UpdateAuthPasswordResetToken(token string) UpdateAuthOpt {
 	}
 }
 
+func UpdateAuthDeletePasswordResetToken() UpdateAuthOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.AuthColumns.PasswordResetToken: nil}, nil
+	}
+}
+
 func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error {
 	columns, err := updateColumnsFromOpts(opts)
 	if err != nil {
@@ -142,11 +148,11 @@ func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 	return r.NewTx(ctx, func(tx Tx) error {
 		rows, rowsErr := orm.Auths(orm.AuthWhere.ID.EQ(authID)).UpdateAll(ctx, tx.GetTx(), columns)
 		if rowsErr != nil {
-			return fmt.Errorf("auth update: %w", err)
+			return fmt.Errorf("auth update: %w", rowsErr)
 		}
 
-		if rows > 1 {
-			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
+		if rows != 1 {
+			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
 		}
 
 		return nil
@@ -378,7 +384,7 @@ func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...Up
 		}
 
 		if rows > 1 {
-			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
+			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
 		}
 
 		return nil
@@ -585,7 +591,7 @@ func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 		}
 
 		if rows > 1 {
-			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
+			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
 		}
 
 		return nil
@@ -1366,7 +1372,7 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 		}
 
 		if rows > 1 {
-			return fmt.Errorf("%w: expected 1, got %d", errUpdateRowsAffected, rows)
+			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
 		}
 
 		return nil

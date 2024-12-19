@@ -9,6 +9,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/crypto/bcrypt"
 
@@ -94,6 +95,153 @@ func (s *repoSuite) TestCreateAuth() {
 			s.Require().NotNil(auth)
 			s.Require().Equal(t.email, auth.Email)
 			s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.password)))
+		})
+	}
+}
+
+func (s *repoSuite) TestUpdateAuth() {
+	type expected struct {
+		err      error
+		auth     *orm.Auth
+		password string
+	}
+
+	type test struct {
+		name     string
+		init     func(*test)
+		expected expected
+		authID   string
+		opts     []repo.UpdateAuthOpt
+	}
+
+	tests := []test{
+		{
+			name:   "ok_update_auth_password",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthPassword("new_password"),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+			},
+			expected: expected{
+				err:      nil,
+				password: "new_password",
+			},
+		},
+		{
+			name:   "ok_update_auth_email_verified",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthEmailVerified(),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth.EmailVerified = true
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "ok_update_auth_password_reset_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthPasswordResetToken(factory.UUID(0)),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth.PasswordResetToken = null.StringFrom(factory.UUID(0))
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "ok_update_auth_refresh_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthRefreshToken("refresh_token"),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth.RefreshToken = null.StringFrom("refresh_token")
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "ok_update_auth_delete_refresh_token",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthDeleteRefreshToken(),
+			},
+			init: func(t *test) {
+				t.expected.auth = s.testFactory.NewAuth(
+					factory.AuthID(t.authID),
+					factory.AuthRefreshToken("refresh_token"),
+				)
+				t.expected.auth.RefreshToken = null.String{}
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:   "err_auth_does_not_exist",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthEmailVerified(),
+			},
+			init: func(_ *test) {},
+			expected: expected{
+				err: repo.ErrUpdateRowsAffected,
+			},
+		},
+		{
+			name:   "err_duplicate_options",
+			authID: uuid.NewString(),
+			opts: []repo.UpdateAuthOpt{
+				repo.UpdateAuthEmailVerified(),
+				repo.UpdateAuthEmailVerified(),
+			},
+			init: func(_ *test) {},
+			expected: expected{
+				err: repo.ErrUpdateDuplicateColumn,
+			},
+		},
+		{
+			name:   "err_missing_options",
+			authID: uuid.NewString(),
+			opts:   nil,
+			init:   func(_ *test) {},
+			expected: expected{
+				err: repo.ErrUpdateNoColumns,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(&t)
+			err := s.repo.UpdateAuth(context.Background(), t.authID, t.opts...)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+
+			auth, err := orm.FindAuth(context.Background(), s.testContainer.DB, t.authID)
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.auth.Email, auth.Email)
+			s.Require().Equal(t.expected.auth.EmailVerified, auth.EmailVerified)
+			s.Require().Equal(t.expected.auth.RefreshToken.Valid, auth.RefreshToken.Valid)
+			s.Require().Equal(t.expected.auth.RefreshToken.String, auth.RefreshToken.String)
+			if t.expected.password != "" {
+				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
+			}
 		})
 	}
 }
