@@ -89,5 +89,7 @@ func TestFactory_Auth(t *testing.T) {
 		require.True(t, created.EmailVerified)
 	})
 
-	require.NoError(t, c.Terminate(ctx))
+	t.Cleanup(func() {
+		require.NoError(t, c.Terminate(ctx))
+	})
 }
