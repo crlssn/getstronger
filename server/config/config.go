@@ -14,6 +14,7 @@ func New() *Config {
 			User:     os.Getenv("DB_USER"),
 			Password: os.Getenv("DB_PASSWORD"),
 		},
+		Env: os.Getenv("ENV"),
 		JWT: JWT{
 			AccessTokenKey:  os.Getenv("JWT_ACCESS_TOKEN_KEY"),
 			RefreshTokenKey: os.Getenv("JWT_REFRESH_TOKEN_KEY"),
@@ -30,6 +31,7 @@ func New() *Config {
 
 type Config struct {
 	DB     DB
+	Env    string
 	JWT    JWT
 	Server Server
 }
