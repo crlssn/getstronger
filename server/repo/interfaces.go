@@ -22,6 +22,7 @@ type methods interface {
 	authMethods
 	userMethods
 	traceMethods
+	pubSubMethods
 	routineMethods
 	workoutMethods
 	exerciseMethods

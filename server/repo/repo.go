@@ -1425,3 +1425,21 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exercise
 		return nil
 	})
 }
+
+func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
+	return r.NewTx(ctx, func(tx Tx) error {
+		event := &orm.Event{
+			Topic:   topic,
+			Payload: payload,
+		}
+		if err := event.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
+			return fmt.Errorf("event insert: %w", err)
+		}
+
+		if _, err := tx.GetTx().Exec("SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
+			return fmt.Errorf("pg_notify: %w", err)
+		}
+
+		return nil
+	})
+}

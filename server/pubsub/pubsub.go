@@ -12,12 +12,14 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
+	"github.com/crlssn/getstronger/server/repo"
 )
 
 type PubSub struct {
 	mu       sync.RWMutex
 	db       *sql.DB
 	log      *zap.Logger
+	repo     repo.Repo
 	listener *pq.Listener
 	handlers map[orm.EventTopic]handlers.Handler
 }
@@ -27,6 +29,7 @@ type Params struct {
 
 	DB       *sql.DB
 	Log      *zap.Logger
+	Repo     repo.Repo
 	Listener *pq.Listener
 }
 
