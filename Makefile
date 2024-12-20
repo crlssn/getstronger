@@ -39,7 +39,6 @@ run_web:
 	cd web && npm run dev
 
 format:
-	go generate ./...
 	goimports -w .
 	gofumpt -l -w .
 	cd web && npx sort-package-json
@@ -49,6 +48,9 @@ lint:
 	golangci-lint run
 	buf lint
 	cd web && npm run lint
+
+gen:
+	go generate ./...
 
 vet:
 	go vet ./...
