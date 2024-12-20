@@ -12,6 +12,7 @@ import (
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/stream"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -87,7 +88,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 
 	return &connect.Response[apiv1.ListNotificationsResponse]{
 		Msg: &apiv1.ListNotificationsResponse{
-			Notifications: parseNotificationSliceToPB(paginated.Items, nPayloads, users, workouts),
+			Notifications: parser.NotificationsToPB(paginated.Items, nPayloads, users, workouts),
 			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},

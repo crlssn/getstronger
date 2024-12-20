@@ -13,6 +13,7 @@ import (
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -83,7 +84,7 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 
 	log.Info("routine returned")
 	return connect.NewResponse(&apiv1.GetRoutineResponse{
-		Routine: parseRoutineToPB(routine),
+		Routine: parser.RoutineToPB(routine),
 	}), nil
 }
 
@@ -148,7 +149,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 
 	log.Info("routine updated")
 	return connect.NewResponse(&apiv1.UpdateRoutineResponse{
-		Routine: parseRoutineToPB(routine),
+		Routine: parser.RoutineToPB(routine),
 	}), nil
 }
 
@@ -202,7 +203,7 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 
 	log.Info("routines listed")
 	return connect.NewResponse(&apiv1.ListRoutinesResponse{
-		Routines: parseRoutineSliceToPB(pagination.Items),
+		Routines: parser.RoutinesToPB(pagination.Items),
 		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: pagination.NextPageToken,
 		},
