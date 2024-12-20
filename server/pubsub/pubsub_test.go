@@ -48,7 +48,7 @@ func (s *pubSubSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.T().Cleanup(func() {
-		if err := c.Terminate(ctx); err != nil {
+		if err = c.Terminate(ctx); err != nil {
 			s.T().Fatalf("failed to clean container: %s", err)
 		}
 	})
