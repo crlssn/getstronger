@@ -112,6 +112,11 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 		require.False(t, exists)
 	})
 
+	t.Run("ok_invalid_payload", func(t *testing.T) {
+		t.Parallel()
+		handler.HandlePayload("invalid_payload")
+	})
+
 	t.Cleanup(func() {
 		if err := c.Terminate(ctx); err != nil {
 			t.Fatal(fmt.Errorf("failed to terminate container: %w", err))
