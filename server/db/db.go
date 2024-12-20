@@ -11,9 +11,13 @@ import (
 )
 
 func New(c *config.Config) (*sql.DB, error) {
-	db, err := sql.Open("pgx", fmt.Sprintf("postgresql://%s:%s@%s/%s", c.DB.User, c.DB.Password, net.JoinHostPort(c.DB.Host, c.DB.Port), c.DB.Name))
+	db, err := sql.Open("pgx", ConnectionString(c))
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 	return db, nil
+}
+
+func ConnectionString(c *config.Config) string {
+	return fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=disable", c.DB.User, c.DB.Password, net.JoinHostPort(c.DB.Host, c.DB.Port), c.DB.Name)
 }

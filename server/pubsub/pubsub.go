@@ -1,92 +1,128 @@
 package pubsub
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/lib/pq"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/db"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 )
 
 type PubSub struct {
 	mu       sync.RWMutex
+	db       *sql.DB
 	log      *zap.Logger
-	channels map[orm.EventTopic]chan any
+	listener *pq.Listener
 	handlers map[orm.EventTopic]handlers.Handler
 }
 
-func New(log *zap.Logger) *PubSub {
+type Params struct {
+	fx.In
+
+	Log    *zap.Logger
+	DB     *sql.DB
+	Config *config.Config
+}
+
+func New(p Params) *PubSub {
+	spew.Dump(db.ConnectionString(p.Config))
 	return &PubSub{
-		log:      log,
-		channels: make(map[orm.EventTopic]chan any),
+		log:      p.Log,
+		db:       p.DB,
+		listener: pq.NewListener(db.ConnectionString(p.Config), time.Second, time.Minute, nil),
 		handlers: make(map[orm.EventTopic]handlers.Handler),
 	}
 }
 
-func (ps *PubSub) Publish(event orm.EventTopic, payload any) {
-	ps.mu.RLock()
-	channel, found := ps.channels[event]
-	ps.mu.RUnlock()
-
-	if !found {
-		ps.log.Error("channel not found", zap.Any("event", event))
+func (ps *PubSub) Publish(topic orm.EventTopic, payload any) {
+	p, err := json.Marshal(payload)
+	if err != nil {
+		ps.log.Error("failed to marshal payload", zap.Error(err))
 		return
 	}
 
-	channel <- payload
+	if _, err = ps.db.Exec("SELECT pg_notify($1, $2)", topic.String(), p); err != nil {
+		ps.log.Error("failed to publish event", zap.Error(err))
+		return
+	}
 }
 
-const (
-	channelWorkers  = 5
-	channelCapacity = 50
-)
+const topicWorkers = 5
 
-var errHandlerExists = fmt.Errorf("handler already exists")
+//var errHandlerExists = fmt.Errorf("handler already exists")
 
-func (ps *PubSub) Subscribe(event orm.EventTopic, handler handlers.Handler) error {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	if _, exists := ps.handlers[event]; exists {
-		return fmt.Errorf("%w: %s", errHandlerExists, event)
-	}
-	ps.handlers[event] = handler
-
-	if _, found := ps.channels[event]; !found {
-		ps.channels[event] = make(chan any, channelCapacity)
-		for range channelWorkers {
-			go ps.startWorker(event)
+func (ps *PubSub) Subscribe(handlers map[orm.EventTopic]handlers.Handler) error {
+	var totalWorkers int
+	for topic, handler := range handlers {
+		totalWorkers += topicWorkers
+		ps.handlers[topic] = handler
+		if err := ps.listener.Listen(topic.String()); err != nil {
+			return fmt.Errorf("failed to listen to event: %w", err)
 		}
-		ps.log.Info("subscribed to event", zap.Any("event", event))
+		ps.log.Info("subscribed to topic", zap.String("topic", topic.String()))
 	}
+
+	for range totalWorkers {
+		go ps.startWorker()
+	}
+
+	//ps.mu.Lock()
+	//defer ps.mu.Unlock()
+	//
+	//if _, exists := ps.handlers[topic]; exists {
+	//	return fmt.Errorf("%w: %s", errHandlerExists, topic)
+	//}
+	//ps.handlers[topic] = handler
+
+	//if _, found := ps.channels[event]; !found {
+	//	ps.channels[event] = make(chan any, channelCapacity)
+	//	for range channelWorkers {
+	//		go ps.startWorker(event)
+	//	}
+	//	ps.log.Info("subscribed to event", zap.Any("event", event))
+	//}
 
 	return nil
 }
 
-func (ps *PubSub) startWorker(event orm.EventTopic) {
-	for payload := range ps.channels[event] {
-		ps.mu.RLock()
-		handler := ps.handlers[event]
-		ps.mu.RUnlock()
+func (ps *PubSub) startWorker() {
+	for {
+		select {
+		case event := <-ps.listener.Notify:
+			if event == nil {
+				ps.log.Error("listener disconnected")
+				return
+			}
 
-		go func(payload any) {
-			defer func() {
-				if r := recover(); r != nil {
-					ps.log.Error("handler panicked", zap.Any("recover", r))
-				}
-			}()
-			handler.HandlePayload(payload)
-		}(payload)
+			log := ps.log.With(zap.String("topic", event.Channel))
+			log.Info("received event")
+
+			ps.mu.RLock()
+			handler, ok := ps.handlers[orm.EventTopic(event.Channel)]
+			ps.mu.RUnlock()
+
+			if !ok {
+				log.Error("handler not found")
+				continue
+			}
+
+			go handler.HandlePayload(event.Extra)
+		}
 	}
 }
 
 func (ps *PubSub) Stop() {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	for _, channel := range ps.channels {
-		close(channel)
+	if err := ps.listener.Close(); err != nil {
+		ps.log.Error("failed to close listener", zap.Error(err))
 	}
 }

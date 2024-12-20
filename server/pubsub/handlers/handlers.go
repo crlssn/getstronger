@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"go.uber.org/zap"
@@ -14,7 +15,7 @@ import (
 const timeout = 5 * time.Second
 
 type Handler interface {
-	HandlePayload(payload any)
+	HandlePayload(payload string)
 }
 
 var (
@@ -32,21 +33,22 @@ func NewRequestTraced(log *zap.Logger, repo repo.Repo) *RequestTraced {
 	return &RequestTraced{log, repo}
 }
 
-func (h *RequestTraced) HandlePayload(payload any) {
+func (h *RequestTraced) HandlePayload(payload string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	switch t := payload.(type) {
-	case *payloads.RequestTraced:
-		if err := h.repo.StoreTrace(ctx, repo.StoreTraceParams{
-			Request:    t.Request,
-			DurationMS: t.DurationMS,
-			StatusCode: t.StatusCode,
-		}); err != nil {
-			h.log.Error("trace store failed", zap.Error(err))
-		}
-	default:
-		h.log.Error("unexpected event type", zap.Any("event", payload))
+	var p payloads.RequestTraced
+	if err := json.Unmarshal([]byte(payload), &p); err != nil {
+		h.log.Error("unmarshal payload", zap.Error(err))
+		return
+	}
+
+	if err := h.repo.StoreTrace(ctx, repo.StoreTraceParams{
+		Request:    p.Request,
+		DurationMS: p.DurationMS,
+		StatusCode: p.StatusCode,
+	}); err != nil {
+		h.log.Error("trace store failed", zap.Error(err))
 	}
 }
 
@@ -59,52 +61,53 @@ func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo) *WorkoutCommentPos
 	return &WorkoutCommentPosted{log, repo}
 }
 
-func (w *WorkoutCommentPosted) HandlePayload(payload any) {
+func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	switch t := payload.(type) {
-	case *payloads.WorkoutCommentPosted:
-		comment, err := w.repo.GetWorkoutComment(ctx,
-			repo.GetWorkoutCommentWithID(t.CommentID),
-		)
-		if err != nil {
-			w.log.Error("get workout comment", zap.Error(err))
-			return
-		}
+	var p payloads.WorkoutCommentPosted
+	if err := json.Unmarshal([]byte(payload), &p); err != nil {
+		w.log.Error("unmarshal payload", zap.Error(err))
+		return
+	}
 
-		workout, err := w.repo.GetWorkout(ctx,
-			repo.GetWorkoutWithID(comment.WorkoutID),
-			repo.GetWorkoutWithComments(),
-		)
-		if err != nil {
-			w.log.Error("get workout", zap.Error(err))
-			return
-		}
+	comment, err := w.repo.GetWorkoutComment(ctx,
+		repo.GetWorkoutCommentWithID(p.CommentID),
+	)
+	if err != nil {
+		w.log.Error("get workout comment", zap.Error(err))
+		return
+	}
 
-		mapUserIDs := make(map[string]struct{})
-		for _, c := range workout.R.WorkoutComments {
-			if comment.UserID == c.UserID {
-				// Don't notify own comments.
-				continue
-			}
-			mapUserIDs[c.UserID] = struct{}{}
-		}
+	workout, err := w.repo.GetWorkout(ctx,
+		repo.GetWorkoutWithID(comment.WorkoutID),
+		repo.GetWorkoutWithComments(),
+	)
+	if err != nil {
+		w.log.Error("get workout", zap.Error(err))
+		return
+	}
 
-		for userID := range mapUserIDs {
-			if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-				Type:   orm.NotificationTypeWorkoutComment,
-				UserID: userID,
-				Payload: repo.NotificationPayload{
-					ActorID:   comment.UserID,
-					WorkoutID: comment.WorkoutID,
-				},
-			}); err != nil {
-				w.log.Error("create notification", zap.Error(err))
-			}
+	mapUserIDs := make(map[string]struct{})
+	for _, c := range workout.R.WorkoutComments {
+		if comment.UserID == c.UserID {
+			// Don't notify own comments.
+			continue
 		}
-	default:
-		w.log.Error("unexpected event type", zap.Any("event", payload))
+		mapUserIDs[c.UserID] = struct{}{}
+	}
+
+	for userID := range mapUserIDs {
+		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
+			Type:   orm.NotificationTypeWorkoutComment,
+			UserID: userID,
+			Payload: repo.NotificationPayload{
+				ActorID:   comment.UserID,
+				WorkoutID: comment.WorkoutID,
+			},
+		}); err != nil {
+			w.log.Error("create notification", zap.Error(err))
+		}
 	}
 }
 
@@ -117,22 +120,23 @@ func NewUserFollowed(log *zap.Logger, repo repo.Repo) *UserFollowed {
 	return &UserFollowed{log, repo}
 }
 
-func (u *UserFollowed) HandlePayload(payload any) {
+func (u *UserFollowed) HandlePayload(payload string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	switch t := payload.(type) {
-	case *payloads.UserFollowed:
-		if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-			Type:   orm.NotificationTypeFollow,
-			UserID: t.FolloweeID,
-			Payload: repo.NotificationPayload{
-				ActorID: t.FollowerID,
-			},
-		}); err != nil {
-			u.log.Error("create notification", zap.Error(err))
-		}
-	default:
-		u.log.Error("unexpected event type", zap.Any("event", payload))
+	var p payloads.UserFollowed
+	if err := json.Unmarshal([]byte(payload), &p); err != nil {
+		u.log.Error("unmarshal payload", zap.Error(err))
+		return
+	}
+
+	if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
+		Type:   orm.NotificationTypeFollow,
+		UserID: p.FolloweeID,
+		Payload: repo.NotificationPayload{
+			ActorID: p.FollowerID,
+		},
+	}); err != nil {
+		u.log.Error("create notification", zap.Error(err))
 	}
 }

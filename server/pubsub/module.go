@@ -22,10 +22,8 @@ func Module() fx.Option {
 			func(lc fx.Lifecycle, pubSub *PubSub, registry *handlers.Registry) {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
-						for event, handler := range registry.Handlers() {
-							if err := pubSub.Subscribe(event, handler); err != nil {
-								return fmt.Errorf("failed to subscribe to event %s: %w", event, err)
-							}
+						if err := pubSub.Subscribe(registry.Handlers()); err != nil {
+							return fmt.Errorf("pubsub subscription: %w", err)
 						}
 						return nil
 					},
