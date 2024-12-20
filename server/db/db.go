@@ -11,14 +11,14 @@ import (
 )
 
 func New(c *config.Config) (*sql.DB, error) {
-	db, err := sql.Open("pgx", ConnectionString(c))
+	db, err := sql.Open("pgx", connection(c))
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 	return db, nil
 }
 
-func ConnectionString(c *config.Config) string {
+func connection(c *config.Config) string {
 	sslMode := ""
 	if c.Environment == "local" {
 		sslMode = "?sslmode=disable"
