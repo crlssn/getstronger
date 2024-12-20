@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 
 message ExerciseSet {
   Exercise exercise = 1 [(buf.validate.field).required = true];
-  Set set = 2 [(buf.validate.field).repeated.min_items = 1];
+  Set set = 2 [(buf.validate.field).required = true];
 }
 
 message ExerciseSets {
