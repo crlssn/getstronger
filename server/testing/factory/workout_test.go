@@ -96,6 +96,15 @@ func TestFactory_WorkoutComment(t *testing.T) {
 		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
+	t.Run("WorkoutCommentID", func(t *testing.T) {
+		t.Parallel()
+		id := uuid.NewString()
+		expected := f.NewWorkoutComment(factory.WorkoutCommentID(id))
+		created, err := orm.FindWorkoutComment(ctx, c.DB, expected.ID)
+		require.NoError(t, err)
+		require.Equal(t, id, created.ID)
+	})
+
 	t.Run("WorkoutCommentUserID", func(t *testing.T) {
 		t.Parallel()
 		userID := f.NewUser().ID

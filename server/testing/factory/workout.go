@@ -53,19 +53,19 @@ func WorkoutUserID(userID string) WorkoutOpt {
 	}
 }
 
+func WorkoutName(name string) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.Name = name
+	}
+}
+
+func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.CreatedAt = createdAt
+	}
+}
+
 type WorkoutCommentOpt func(comment *orm.WorkoutComment)
-
-func WorkoutCommentUserID(userID string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.UserID = userID
-	}
-}
-
-func WorkoutCommentWorkoutID(workoutID string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.WorkoutID = workoutID
-	}
-}
 
 func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComment {
 	m := &orm.WorkoutComment{
@@ -97,14 +97,20 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 	return m
 }
 
-func WorkoutName(name string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.Name = name
+func WorkoutCommentID(id string) WorkoutCommentOpt {
+	return func(comment *orm.WorkoutComment) {
+		comment.ID = id
 	}
 }
 
-func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.CreatedAt = createdAt
+func WorkoutCommentUserID(userID string) WorkoutCommentOpt {
+	return func(comment *orm.WorkoutComment) {
+		comment.UserID = userID
+	}
+}
+
+func WorkoutCommentWorkoutID(workoutID string) WorkoutCommentOpt {
+	return func(comment *orm.WorkoutComment) {
+		comment.WorkoutID = workoutID
 	}
 }
