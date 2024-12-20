@@ -30,7 +30,7 @@ const props = defineProps<{
             {{ set.reps }}
           </td>
           <td v-if="set.metadata?.personalBest">
-            <TrophyIcon class="size-5 text-yellow-400" />
+            <TrophyIcon class="size-5 text-yellow-500" />
           </td>
         </tr>
       </tbody>
