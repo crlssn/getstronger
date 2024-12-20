@@ -6,6 +6,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        gold: '#FFD700',
         primary: '#228B22',
       },
     },
