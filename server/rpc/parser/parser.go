@@ -71,7 +71,23 @@ func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
 
 type WorkoutToPBOpt func(w *apiv1.Workout) error
 
-func WorkoutToPBWorkout(workout *orm.Workout, exercises orm.ExerciseSlice, mapPersonalBests map[string]struct{}) WorkoutToPBOpt {
+type ModelItem interface {
+	*orm.Exercise
+}
+
+type ModelSlice[T any] interface {
+	~[]T
+}
+
+func MapIDs[Item ModelItem, Slice ModelSlice[Item]](slice Slice) map[string]Item {
+	m := make(map[string]Item, len(slice))
+	for _, item := range slice {
+		m[item.ID] = item
+	}
+	return m
+}
+
+func WorkoutToPBWorkout(workout *orm.Workout, exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutToPBOpt {
 	return func(w *apiv1.Workout) error {
 		if workout == nil {
 			return fmt.Errorf("workout is nil")
@@ -92,6 +108,11 @@ func WorkoutToPBWorkout(workout *orm.Workout, exercises orm.ExerciseSlice, mapPe
 
 		for _, exercise := range exercises {
 			mapExercises[exercise.ID] = ExerciseToPB(exercise)
+		}
+
+		mapPersonalBests := make(map[string]*orm.Set, len(sets))
+		for _, set := range sets {
+			mapPersonalBests[set.ID] = set
 		}
 
 		for _, set := range workout.R.Sets {
@@ -387,7 +408,7 @@ func SetsToPB(sets orm.SetSlice, mapPersonalBests map[string]struct{}) ([]*apiv1
 	return sSlice, nil
 }
 
-func setToPB(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, error) {
+func setToPB(set *orm.Set, mapPersonalBests map[string]*orm.Set) (*apiv1.Set, error) {
 	reps, err := safe.IntToInt32(set.Reps)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse reps: %w", err)
