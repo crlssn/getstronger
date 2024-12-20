@@ -16,7 +16,6 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
-	mock_repo "github.com/crlssn/getstronger/server/repo/mocks"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -24,7 +23,7 @@ import (
 func TestRequestTraced_HandlePayload(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
-	repoMock := mock_repo.NewMockRepo(controller)
+	repoMock := repo.NewMockRepo(controller)
 	handler := handlers.NewRequestTraced(zap.NewExample(), repoMock)
 
 	t.Run("ok_request_traced", func(t *testing.T) {
@@ -130,7 +129,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	t.Parallel()
 
 	controller := gomock.NewController(t)
-	repoMock := mock_repo.NewMockRepo(controller)
+	repoMock := repo.NewMockRepo(controller)
 	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock)
 
 	t.Run("ok_user_followed", func(t *testing.T) {

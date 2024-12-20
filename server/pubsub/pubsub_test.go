@@ -16,7 +16,6 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
-	mock_handlers "github.com/crlssn/getstronger/server/pubsub/handlers/mocks"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -28,7 +27,7 @@ type pubSubSuite struct {
 	pubSub *pubsub.PubSub
 
 	mocks struct {
-		handler    *mock_handlers.MockHandler
+		handler    *handlers.MockHandler
 		controller *gomock.Controller
 	}
 }
@@ -49,7 +48,7 @@ func (s *pubSubSuite) SetupSuite() {
 	})
 
 	s.mocks.controller = gomock.NewController(s.T())
-	s.mocks.handler = mock_handlers.NewMockHandler(s.mocks.controller)
+	s.mocks.handler = handlers.NewMockHandler(s.mocks.controller)
 
 	err := s.pubSub.Subscribe(map[orm.EventTopic]handlers.Handler{
 		orm.EventTopicFollowedUser: s.mocks.handler,
