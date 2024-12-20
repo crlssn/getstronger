@@ -24,10 +24,10 @@ import (
 
 // Event is an object representing the database table.
 type Event struct {
-	ID        string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Topic     EventTopics `boil:"topic" json:"topic" toml:"topic" yaml:"topic"`
-	Payload   types.JSON  `boil:"payload" json:"payload" toml:"payload" yaml:"payload"`
-	CreatedAt time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID        string     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Topic     EventTopic `boil:"topic" json:"topic" toml:"topic" yaml:"topic"`
+	Payload   types.JSON `boil:"payload" json:"payload" toml:"payload" yaml:"payload"`
+	CreatedAt time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *eventR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L eventL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -59,34 +59,34 @@ var EventTableColumns = struct {
 
 // Generated where
 
-type whereHelperEventTopics struct{ field string }
+type whereHelperEventTopic struct{ field string }
 
-func (w whereHelperEventTopics) EQ(x EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) EQ(x EventTopic) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.EQ, x)
 }
-func (w whereHelperEventTopics) NEQ(x EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) NEQ(x EventTopic) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelperEventTopics) LT(x EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) LT(x EventTopic) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelperEventTopics) LTE(x EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) LTE(x EventTopic) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelperEventTopics) GT(x EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) GT(x EventTopic) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelperEventTopics) GTE(x EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) GTE(x EventTopic) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
-func (w whereHelperEventTopics) IN(slice []EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) IN(slice []EventTopic) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
 	}
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelperEventTopics) NIN(slice []EventTopics) qm.QueryMod {
+func (w whereHelperEventTopic) NIN(slice []EventTopic) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
@@ -117,12 +117,12 @@ func (w whereHelpertypes_JSON) GTE(x types.JSON) qm.QueryMod {
 
 var EventWhere = struct {
 	ID        whereHelperstring
-	Topic     whereHelperEventTopics
+	Topic     whereHelperEventTopic
 	Payload   whereHelpertypes_JSON
 	CreatedAt whereHelpertime_Time
 }{
 	ID:        whereHelperstring{field: "\"getstronger\".\"events\".\"id\""},
-	Topic:     whereHelperEventTopics{field: "\"getstronger\".\"events\".\"topic\""},
+	Topic:     whereHelperEventTopic{field: "\"getstronger\".\"events\".\"topic\""},
 	Payload:   whereHelpertypes_JSON{field: "\"getstronger\".\"events\".\"payload\""},
 	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"events\".\"created_at\""},
 }

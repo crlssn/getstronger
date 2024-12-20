@@ -51,71 +51,71 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
-type EventTopics string
+type EventTopic string
 
-// Enum values for EventTopics
+// Enum values for EventTopic
 const (
-	EventTopicsUserSignedUp             EventTopics = "UserSignedUp"
-	EventTopicsUserLoggedIn             EventTopics = "UserLoggedIn"
-	EventTopicsUserLoggedOut            EventTopics = "UserLoggedOut"
-	EventTopicsUserRefreshedAccessToken EventTopics = "UserRefreshedAccessToken"
-	EventTopicsFollowedUser             EventTopics = "FollowedUser"
-	EventTopicsRequestTraced            EventTopics = "RequestTraced"
-	EventTopicsWorkoutCreated           EventTopics = "WorkoutCreated"
-	EventTopicsWorkoutUpdated           EventTopics = "WorkoutUpdated"
-	EventTopicsWorkoutDeleted           EventTopics = "WorkoutDeleted"
-	EventTopicsWorkoutCommentPosted     EventTopics = "WorkoutCommentPosted"
+	EventTopicUserSignedUp             EventTopic = "UserSignedUp"
+	EventTopicUserLoggedIn             EventTopic = "UserLoggedIn"
+	EventTopicUserLoggedOut            EventTopic = "UserLoggedOut"
+	EventTopicUserRefreshedAccessToken EventTopic = "UserRefreshedAccessToken"
+	EventTopicFollowedUser             EventTopic = "FollowedUser"
+	EventTopicRequestTraced            EventTopic = "RequestTraced"
+	EventTopicWorkoutCreated           EventTopic = "WorkoutCreated"
+	EventTopicWorkoutUpdated           EventTopic = "WorkoutUpdated"
+	EventTopicWorkoutDeleted           EventTopic = "WorkoutDeleted"
+	EventTopicWorkoutCommentPosted     EventTopic = "WorkoutCommentPosted"
 )
 
-func AllEventTopics() []EventTopics {
-	return []EventTopics{
-		EventTopicsUserSignedUp,
-		EventTopicsUserLoggedIn,
-		EventTopicsUserLoggedOut,
-		EventTopicsUserRefreshedAccessToken,
-		EventTopicsFollowedUser,
-		EventTopicsRequestTraced,
-		EventTopicsWorkoutCreated,
-		EventTopicsWorkoutUpdated,
-		EventTopicsWorkoutDeleted,
-		EventTopicsWorkoutCommentPosted,
+func AllEventTopic() []EventTopic {
+	return []EventTopic{
+		EventTopicUserSignedUp,
+		EventTopicUserLoggedIn,
+		EventTopicUserLoggedOut,
+		EventTopicUserRefreshedAccessToken,
+		EventTopicFollowedUser,
+		EventTopicRequestTraced,
+		EventTopicWorkoutCreated,
+		EventTopicWorkoutUpdated,
+		EventTopicWorkoutDeleted,
+		EventTopicWorkoutCommentPosted,
 	}
 }
 
-func (e EventTopics) IsValid() error {
+func (e EventTopic) IsValid() error {
 	switch e {
-	case EventTopicsUserSignedUp, EventTopicsUserLoggedIn, EventTopicsUserLoggedOut, EventTopicsUserRefreshedAccessToken, EventTopicsFollowedUser, EventTopicsRequestTraced, EventTopicsWorkoutCreated, EventTopicsWorkoutUpdated, EventTopicsWorkoutDeleted, EventTopicsWorkoutCommentPosted:
+	case EventTopicUserSignedUp, EventTopicUserLoggedIn, EventTopicUserLoggedOut, EventTopicUserRefreshedAccessToken, EventTopicFollowedUser, EventTopicRequestTraced, EventTopicWorkoutCreated, EventTopicWorkoutUpdated, EventTopicWorkoutDeleted, EventTopicWorkoutCommentPosted:
 		return nil
 	default:
 		return errors.New("enum is not valid")
 	}
 }
 
-func (e EventTopics) String() string {
+func (e EventTopic) String() string {
 	return string(e)
 }
 
-func (e EventTopics) Ordinal() int {
+func (e EventTopic) Ordinal() int {
 	switch e {
-	case EventTopicsUserSignedUp:
+	case EventTopicUserSignedUp:
 		return 0
-	case EventTopicsUserLoggedIn:
+	case EventTopicUserLoggedIn:
 		return 1
-	case EventTopicsUserLoggedOut:
+	case EventTopicUserLoggedOut:
 		return 2
-	case EventTopicsUserRefreshedAccessToken:
+	case EventTopicUserRefreshedAccessToken:
 		return 3
-	case EventTopicsFollowedUser:
+	case EventTopicFollowedUser:
 		return 4
-	case EventTopicsRequestTraced:
+	case EventTopicRequestTraced:
 		return 5
-	case EventTopicsWorkoutCreated:
+	case EventTopicWorkoutCreated:
 		return 6
-	case EventTopicsWorkoutUpdated:
+	case EventTopicWorkoutUpdated:
 		return 7
-	case EventTopicsWorkoutDeleted:
+	case EventTopicWorkoutDeleted:
 		return 8
-	case EventTopicsWorkoutCommentPosted:
+	case EventTopicWorkoutCommentPosted:
 		return 9
 
 	default:
