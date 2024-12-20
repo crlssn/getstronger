@@ -6,31 +6,32 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 )
 
 type PubSub struct {
 	mu       sync.RWMutex
 	log      *zap.Logger
-	channels map[string]chan any
-	handlers map[string]handlers.Handler
+	channels map[orm.EventTopic]chan any
+	handlers map[orm.EventTopic]handlers.Handler
 }
 
 func New(log *zap.Logger) *PubSub {
 	return &PubSub{
 		log:      log,
-		channels: make(map[string]chan any),
-		handlers: make(map[string]handlers.Handler),
+		channels: make(map[orm.EventTopic]chan any),
+		handlers: make(map[orm.EventTopic]handlers.Handler),
 	}
 }
 
-func (ps *PubSub) Publish(event string, payload any) {
+func (ps *PubSub) Publish(event orm.EventTopic, payload any) {
 	ps.mu.RLock()
 	channel, found := ps.channels[event]
 	ps.mu.RUnlock()
 
 	if !found {
-		ps.log.Error("channel not found", zap.String("event", event))
+		ps.log.Error("channel not found", zap.Any("event", event))
 		return
 	}
 
@@ -44,7 +45,7 @@ const (
 
 var errHandlerExists = fmt.Errorf("handler already exists")
 
-func (ps *PubSub) Subscribe(event string, handler handlers.Handler) error {
+func (ps *PubSub) Subscribe(event orm.EventTopic, handler handlers.Handler) error {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
@@ -58,13 +59,13 @@ func (ps *PubSub) Subscribe(event string, handler handlers.Handler) error {
 		for range channelWorkers {
 			go ps.startWorker(event)
 		}
-		ps.log.Info("subscribed to event", zap.String("event", event))
+		ps.log.Info("subscribed to event", zap.Any("event", event))
 	}
 
 	return nil
 }
 
-func (ps *PubSub) startWorker(event string) {
+func (ps *PubSub) startWorker(event orm.EventTopic) {
 	for payload := range ps.channels[event] {
 		ps.mu.RLock()
 		handler := ps.handlers[event]
