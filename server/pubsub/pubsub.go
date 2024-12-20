@@ -76,28 +76,25 @@ func (ps *PubSub) Subscribe(handlers map[orm.EventTopic]handlers.Handler) error 
 }
 
 func (ps *PubSub) startWorker() {
-	for {
-		select {
-		case event := <-ps.listener.Notify:
-			if event == nil {
-				ps.log.Warn("listener disconnected")
-				return
-			}
-
-			log := ps.log.With(zap.String("topic", event.Channel))
-			log.Info("received event")
-
-			ps.mu.RLock()
-			handler, ok := ps.handlers[orm.EventTopic(event.Channel)]
-			ps.mu.RUnlock()
-
-			if !ok {
-				log.Error("handler not found")
-				continue
-			}
-
-			go handler.HandlePayload(event.Extra)
+	for event := range ps.listener.Notify {
+		if event == nil {
+			ps.log.Warn("listener disconnected")
+			return
 		}
+
+		log := ps.log.With(zap.String("topic", event.Channel))
+		log.Info("received event")
+
+		ps.mu.RLock()
+		handler, ok := ps.handlers[orm.EventTopic(event.Channel)]
+		ps.mu.RUnlock()
+
+		if !ok {
+			log.Error("handler not found")
+			continue
+		}
+
+		go handler.HandlePayload(event.Extra)
 	}
 }
 
