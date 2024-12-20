@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"context"
-	"fmt"
 
 	"go.uber.org/fx"
 
@@ -22,14 +21,10 @@ func Module() fx.Option {
 			func(lc fx.Lifecycle, pubSub *PubSub, registry *handlers.Registry) {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
-						if err := pubSub.Subscribe(registry.Handlers()); err != nil {
-							return fmt.Errorf("pubsub subscription: %w", err)
-						}
-						return nil
+						return pubSub.Subscribe(registry.Handlers())
 					},
 					OnStop: func(_ context.Context) error {
-						pubSub.Stop()
-						return nil
+						return pubSub.Stop()
 					},
 				})
 			},

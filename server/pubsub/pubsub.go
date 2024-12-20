@@ -98,8 +98,9 @@ func (ps *PubSub) startWorker() {
 	}
 }
 
-func (ps *PubSub) Stop() {
+func (ps *PubSub) Stop() error {
 	if err := ps.listener.Close(); err != nil {
-		ps.log.Error("failed to close listener", zap.Error(err))
+		return fmt.Errorf("failed to close listener: %w", err)
 	}
+	return nil
 }
