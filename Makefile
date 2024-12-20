@@ -39,6 +39,7 @@ run_web:
 	cd web && npm run dev
 
 format:
+	gofumpt -l -w .
 	goimports -w .
 	cd web && npx sort-package-json
 	cd web && npm run format
