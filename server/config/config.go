@@ -31,9 +31,9 @@ func New() *Config {
 
 type Config struct {
 	DB          DB
-	Environment string
 	JWT         JWT
 	Server      Server
+	Environment string
 }
 
 type DB struct {
