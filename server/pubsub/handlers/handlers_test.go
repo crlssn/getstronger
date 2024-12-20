@@ -1,3 +1,4 @@
+//nolint:contextcheck
 package handlers_test
 
 import (
@@ -66,6 +67,7 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 	handler := handlers.NewWorkoutCommentPosted(zap.NewExample(), repo.New(c.DB))
 
 	t.Run("ok_workout_comment_posted", func(t *testing.T) {
+		t.Parallel()
 		payload := payloads.WorkoutCommentPosted{
 			CommentID: uuid.NewString(),
 		}
@@ -132,6 +134,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock)
 
 	t.Run("ok_user_followed", func(t *testing.T) {
+		t.Parallel()
 		payload := payloads.UserFollowed{
 			FollowerID: "follower_id",
 			FolloweeID: "followee_id",
