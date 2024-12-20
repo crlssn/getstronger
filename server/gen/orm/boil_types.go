@@ -55,36 +55,22 @@ type EventTopic string
 
 // Enum values for EventTopic
 const (
-	EventTopicUserSignedUp             EventTopic = "UserSignedUp"
-	EventTopicUserLoggedIn             EventTopic = "UserLoggedIn"
-	EventTopicUserLoggedOut            EventTopic = "UserLoggedOut"
-	EventTopicUserRefreshedAccessToken EventTopic = "UserRefreshedAccessToken"
-	EventTopicFollowedUser             EventTopic = "FollowedUser"
-	EventTopicRequestTraced            EventTopic = "RequestTraced"
-	EventTopicWorkoutCreated           EventTopic = "WorkoutCreated"
-	EventTopicWorkoutUpdated           EventTopic = "WorkoutUpdated"
-	EventTopicWorkoutDeleted           EventTopic = "WorkoutDeleted"
-	EventTopicWorkoutCommentPosted     EventTopic = "WorkoutCommentPosted"
+	EventTopicFollowedUser         EventTopic = "FollowedUser"
+	EventTopicRequestTraced        EventTopic = "RequestTraced"
+	EventTopicWorkoutCommentPosted EventTopic = "WorkoutCommentPosted"
 )
 
 func AllEventTopic() []EventTopic {
 	return []EventTopic{
-		EventTopicUserSignedUp,
-		EventTopicUserLoggedIn,
-		EventTopicUserLoggedOut,
-		EventTopicUserRefreshedAccessToken,
 		EventTopicFollowedUser,
 		EventTopicRequestTraced,
-		EventTopicWorkoutCreated,
-		EventTopicWorkoutUpdated,
-		EventTopicWorkoutDeleted,
 		EventTopicWorkoutCommentPosted,
 	}
 }
 
 func (e EventTopic) IsValid() error {
 	switch e {
-	case EventTopicUserSignedUp, EventTopicUserLoggedIn, EventTopicUserLoggedOut, EventTopicUserRefreshedAccessToken, EventTopicFollowedUser, EventTopicRequestTraced, EventTopicWorkoutCreated, EventTopicWorkoutUpdated, EventTopicWorkoutDeleted, EventTopicWorkoutCommentPosted:
+	case EventTopicFollowedUser, EventTopicRequestTraced, EventTopicWorkoutCommentPosted:
 		return nil
 	default:
 		return errors.New("enum is not valid")
@@ -97,26 +83,12 @@ func (e EventTopic) String() string {
 
 func (e EventTopic) Ordinal() int {
 	switch e {
-	case EventTopicUserSignedUp:
-		return 0
-	case EventTopicUserLoggedIn:
-		return 1
-	case EventTopicUserLoggedOut:
-		return 2
-	case EventTopicUserRefreshedAccessToken:
-		return 3
 	case EventTopicFollowedUser:
-		return 4
+		return 0
 	case EventTopicRequestTraced:
-		return 5
-	case EventTopicWorkoutCreated:
-		return 6
-	case EventTopicWorkoutUpdated:
-		return 7
-	case EventTopicWorkoutDeleted:
-		return 8
+		return 1
 	case EventTopicWorkoutCommentPosted:
-		return 9
+		return 2
 
 	default:
 		panic(errors.New("enum is not valid"))

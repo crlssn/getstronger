@@ -1,15 +1,8 @@
 CREATE TYPE getstronger.event_topic AS ENUM (
-    'UserSignedUp',
-    'UserLoggedIn',
-    'UserLoggedOut',
-    'UserRefreshedAccessToken',
     'FollowedUser',
     'RequestTraced',
-    'WorkoutCreated',
-    'WorkoutUpdated',
-    'WorkoutDeleted',
     'WorkoutCommentPosted'
-    );
+);
 
 CREATE TABLE getstronger.events
 (
