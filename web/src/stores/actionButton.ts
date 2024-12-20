@@ -21,7 +21,7 @@ export const useActionButton = defineStore('actionButton', () => {
   }
 
   const active = computed(() => {
-    return a.value !== (() => {}) && i.value !== undefined
+    return typeof a.value === 'function' && i.value !== undefined
   })
 
   return { action: a, icon: i, set, reset, active }
