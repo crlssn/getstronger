@@ -5,14 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/lib/pq"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/config"
-	"github.com/crlssn/getstronger/server/db"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 )
@@ -28,16 +25,16 @@ type PubSub struct {
 type Params struct {
 	fx.In
 
-	DB     *sql.DB
-	Log    *zap.Logger
-	Config *config.Config
+	DB       *sql.DB
+	Log      *zap.Logger
+	Listener *pq.Listener
 }
 
 func New(p Params) *PubSub {
 	return &PubSub{
 		db:       p.DB,
 		log:      p.Log,
-		listener: pq.NewListener(db.ConnectionString(p.Config), time.Second, time.Minute, nil),
+		listener: p.Listener,
 		handlers: make(map[orm.EventTopic]handlers.Handler),
 	}
 }
