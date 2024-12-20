@@ -24,7 +24,7 @@ func NewFeedHandler(r repo.Repo) apiv1connect.FeedServiceHandler {
 	return &feedHandler{r}
 }
 
-func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[apiv1.ListFeedItemsRequest]) (*connect.Response[apiv1.ListFeedItemsResponse], error) {
+func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[apiv1.ListFeedItemsRequest]) (*connect.Response[apiv1.ListFeedItemsResponse], error) { //nolint:cyclop // TODO: Make less complex
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
