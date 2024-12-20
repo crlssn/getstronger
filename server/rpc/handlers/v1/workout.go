@@ -114,8 +114,8 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	}
 
 	mapPersonalBests := make(map[string]struct{})
-	for _, pb := range personalBests {
-		mapPersonalBests[pb.ID] = struct{}{}
+	for _, set := range personalBests {
+		mapPersonalBests[set.ID] = struct{}{}
 	}
 
 	w, err := parseWorkoutToPB(workout, exercises, users, mapPersonalBests)
