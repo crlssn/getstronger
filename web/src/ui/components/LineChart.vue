@@ -48,6 +48,7 @@ const options = {
       },
     },
     y: {
+      position: 'left',
       grid: {
         display: false,
         drawBorder: false,
@@ -57,6 +58,18 @@ const options = {
       },
       title: {
         display: false,
+      },
+    },
+    yWeight: {
+      position: "right",
+      grid: {
+        display: false,
+        drawBorder: false,
+      },
+      afterBuildTicks: (axis) => {
+        axis.ticks = [...axis.chart.scales.y.ticks];
+        axis.min = axis.chart.scales.y.min;
+        axis.max = axis.chart.scales.y.max;
       },
     },
   },
