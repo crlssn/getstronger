@@ -71,22 +71,6 @@ func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
 
 type WorkoutToPBOpt func(w *apiv1.Workout) error
 
-type ModelItem interface {
-	*orm.Exercise
-}
-
-type ModelSlice[T any] interface {
-	~[]T
-}
-
-func MapIDs[Item ModelItem, Slice ModelSlice[Item]](slice Slice) map[string]Item {
-	m := make(map[string]Item, len(slice))
-	for _, item := range slice {
-		m[item.ID] = item
-	}
-	return m
-}
-
 func Workout(workout *orm.Workout, exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutToPBOpt {
 	return func(w *apiv1.Workout) error {
 		if workout == nil {
