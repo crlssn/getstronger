@@ -341,10 +341,10 @@ func setToPB(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, er
 	}, nil
 }
 
-func mapSlice[T any, R any](input []T, fn func(T) R) []R {
-	output := make([]R, len(input))
+func mapSlice[Input any, Output any](input []Input, f func(Input) Output) []Output {
+	output := make([]Output, len(input))
 	for i, item := range input {
-		output[i] = fn(item)
+		output[i] = f(item)
 	}
 	return output
 }
