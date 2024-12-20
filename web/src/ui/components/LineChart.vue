@@ -9,7 +9,7 @@ import {
   LineElement,
   PointElement,
   Title,
-  Tooltip
+  Tooltip,
 } from 'chart.js'
 
 import { computed } from 'vue'
@@ -25,7 +25,7 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   Filler,
-  PointElement
+  PointElement,
 )
 
 const props = defineProps<{
@@ -39,40 +39,40 @@ const options = {
     x: {
       grid: {
         display: false,
-        drawBorder: true
+        drawBorder: true,
       },
       ticks: {
-        display: false
+        display: false,
       },
       title: {
-        display: false
-      }
+        display: false,
+      },
     },
     y: {
       grid: {
         display: false,
-        drawBorder: false
+        drawBorder: false,
       },
       ticks: {
-        display: true
+        display: true,
       },
       title: {
-        display: false
-      }
+        display: false,
+      },
     },
     yWeight: {
       position: 'right',
       grid: {
         display: false,
-        drawBorder: false
+        drawBorder: false,
       },
       afterBuildTicks: (axis: Chart) => {
         axis.ticks = [...axis.chart.scales.y.ticks]
         axis.min = axis.chart.scales.y.min
         axis.max = axis.chart.scales.y.max
-      }
-    }
-  }
+      },
+    },
+  },
 }
 
 const calc1RM = (weight: number, reps: number): number => {
@@ -108,7 +108,7 @@ const data = computed(() => {
         label: 'Reps',
         tension: 0.4,
         pointRadius: 0,
-        fill: true
+        fill: true,
       },
       {
         borderColor: '#6366f1',
@@ -118,7 +118,7 @@ const data = computed(() => {
         label: 'Weight',
         tension: 0.4,
         pointRadius: 0,
-        fill: true
+        fill: true,
       },
       {
         borderColor: '#4f46e5',
@@ -128,10 +128,10 @@ const data = computed(() => {
         label: '1RM',
         tension: 0.4,
         pointRadius: 0,
-        fill: true
-      }
+        fill: true,
+      },
     ],
-    labels: labels
+    labels: labels,
   }
 })
 </script>
