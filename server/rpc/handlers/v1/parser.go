@@ -3,7 +3,6 @@ package v1
 import (
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -345,7 +344,6 @@ func parseSetToPB(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Se
 		return nil, fmt.Errorf("failed to parse reps: %w", err)
 	}
 
-	spew.Dump(mapPersonalBests, set.ID)
 	_, personalBest := mapPersonalBests[set.ID]
 
 	return &apiv1.Set{
