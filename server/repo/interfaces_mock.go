@@ -22,6 +22,7 @@ import (
 type MockRepo struct {
 	ctrl     *gomock.Controller
 	recorder *MockRepoMockRecorder
+	isgomock struct{}
 }
 
 // MockRepoMockRecorder is the mock recorder for MockRepo.
@@ -39,11 +40,6 @@ func NewMockRepo(ctrl *gomock.Controller) *MockRepo {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRepo) EXPECT() *MockRepoMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockRepo) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // AddExerciseToRoutine mocks base method.
@@ -791,6 +787,7 @@ func (mr *MockRepoMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets a
 type MockTx struct {
 	ctrl     *gomock.Controller
 	recorder *MockTxMockRecorder
+	isgomock struct{}
 }
 
 // MockTxMockRecorder is the mock recorder for MockTx.
@@ -808,11 +805,6 @@ func NewMockTx(ctrl *gomock.Controller) *MockTx {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTx) EXPECT() *MockTxMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockTx) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // AddExerciseToRoutine mocks base method.
@@ -1560,6 +1552,7 @@ func (mr *MockTxMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets any
 type Mockmethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockmethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockmethodsMockRecorder is the mock recorder for Mockmethods.
@@ -1577,11 +1570,6 @@ func NewMockmethods(ctrl *gomock.Controller) *Mockmethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *Mockmethods) EXPECT() *MockmethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *Mockmethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // AddExerciseToRoutine mocks base method.
@@ -2315,6 +2303,7 @@ func (mr *MockmethodsMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSet
 type MocksetMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MocksetMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MocksetMethodsMockRecorder is the mock recorder for MocksetMethods.
@@ -2332,11 +2321,6 @@ func NewMocksetMethods(ctrl *gomock.Controller) *MocksetMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MocksetMethods) EXPECT() *MocksetMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MocksetMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // GetPersonalBests mocks base method.
@@ -2393,6 +2377,7 @@ func (mr *MocksetMethodsMockRecorder) ListSets(ctx any, opts ...any) *gomock.Cal
 type MockauthMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockauthMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockauthMethodsMockRecorder is the mock recorder for MockauthMethods.
@@ -2410,11 +2395,6 @@ func NewMockauthMethods(ctrl *gomock.Controller) *MockauthMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockauthMethods) EXPECT() *MockauthMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockauthMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // CompareEmailAndPassword mocks base method.
@@ -2504,6 +2484,7 @@ func (mr *MockauthMethodsMockRecorder) UpdateAuth(ctx, authID any, opts ...any) 
 type MockuserMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockuserMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockuserMethodsMockRecorder is the mock recorder for MockuserMethods.
@@ -2521,11 +2502,6 @@ func NewMockuserMethods(ctrl *gomock.Controller) *MockuserMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockuserMethods) EXPECT() *MockuserMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockuserMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // CreateUser mocks base method.
@@ -2670,6 +2646,7 @@ func (mr *MockuserMethodsMockRecorder) Unfollow(ctx, p any) *gomock.Call {
 type MocktraceMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MocktraceMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MocktraceMethodsMockRecorder is the mock recorder for MocktraceMethods.
@@ -2687,11 +2664,6 @@ func NewMocktraceMethods(ctrl *gomock.Controller) *MocktraceMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MocktraceMethods) EXPECT() *MocktraceMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MocktraceMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // StoreTrace mocks base method.
@@ -2712,6 +2684,7 @@ func (mr *MocktraceMethodsMockRecorder) StoreTrace(ctx, p any) *gomock.Call {
 type MockroutineMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockroutineMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockroutineMethodsMockRecorder is the mock recorder for MockroutineMethods.
@@ -2729,11 +2702,6 @@ func NewMockroutineMethods(ctrl *gomock.Controller) *MockroutineMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockroutineMethods) EXPECT() *MockroutineMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockroutineMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // AddExerciseToRoutine mocks base method.
@@ -2870,6 +2838,7 @@ func (mr *MockroutineMethodsMockRecorder) UpdateRoutine(ctx, routineID any, opts
 type MockworkoutMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockworkoutMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockworkoutMethodsMockRecorder is the mock recorder for MockworkoutMethods.
@@ -2887,11 +2856,6 @@ func NewMockworkoutMethods(ctrl *gomock.Controller) *MockworkoutMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockworkoutMethods) EXPECT() *MockworkoutMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockworkoutMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // CreateWorkout mocks base method.
@@ -3040,6 +3004,7 @@ func (mr *MockworkoutMethodsMockRecorder) UpdateWorkoutSets(ctx, workoutID, exer
 type MockexerciseMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockexerciseMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockexerciseMethodsMockRecorder is the mock recorder for MockexerciseMethods.
@@ -3057,11 +3022,6 @@ func NewMockexerciseMethods(ctrl *gomock.Controller) *MockexerciseMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockexerciseMethods) EXPECT() *MockexerciseMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockexerciseMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // CreateExercise mocks base method.
@@ -3156,6 +3116,7 @@ func (mr *MockexerciseMethodsMockRecorder) UpdateExercise(ctx, exerciseID any, o
 type MocknotificationMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MocknotificationMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MocknotificationMethodsMockRecorder is the mock recorder for MocknotificationMethods.
@@ -3173,11 +3134,6 @@ func NewMocknotificationMethods(ctrl *gomock.Controller) *MocknotificationMethod
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MocknotificationMethods) EXPECT() *MocknotificationMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MocknotificationMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // CountNotifications mocks base method.
@@ -3252,6 +3208,7 @@ func (mr *MocknotificationMethodsMockRecorder) MarkNotificationsAsRead(ctx, user
 type MockpubSubMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockpubSubMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockpubSubMethodsMockRecorder is the mock recorder for MockpubSubMethods.
@@ -3269,11 +3226,6 @@ func NewMockpubSubMethods(ctrl *gomock.Controller) *MockpubSubMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockpubSubMethods) EXPECT() *MockpubSubMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockpubSubMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // PublishEvent mocks base method.
