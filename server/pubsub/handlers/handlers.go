@@ -14,7 +14,7 @@ import (
 
 const timeout = 5 * time.Second
 
-//go:generate mockgen -package mockhandlers -source=handlers.go -destination=mocks/mock_handler.go Handler
+//go:generate mockgen -package handlers -source=handlers.go -destination=handlers_mock.go Handler
 type Handler interface {
 	HandlePayload(payload string)
 }

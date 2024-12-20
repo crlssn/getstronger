@@ -7,7 +7,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
-//go:generate mockgen -package mockrepo -source=interfaces.go -destination=mocks/mock_repo.go Repo
+//go:generate mockgen -package repo -source=interfaces.go -destination=interfaces_mock.go Repo
 type Repo interface {
 	methods
 	NewTx(ctx context.Context, f func(tx Tx) error) error
