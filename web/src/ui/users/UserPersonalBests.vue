@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppList from '@/ui/components/AppList.vue'
 import { onMounted, ref } from 'vue'
-import type { PersonalBest } from '@/proto/api/v1/exercise_service_pb.ts'
+import type { ExerciseSet } from '@/proto/api/v1/shared_pb.ts'
 import { getPersonalBests } from '@/http/requests.ts'
 import { useRoute } from 'vue-router'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
@@ -17,7 +17,7 @@ const props = defineProps<{
 const route = useRoute()
 const isMounted = ref(false)
 const pageTitleStore = usePageTitleStore()
-const personalBests = ref([] as PersonalBest[])
+const personalBests = ref([] as ExerciseSet[])
 
 onMounted(async () => {
   await fetchPersonalBests()
