@@ -53,10 +53,15 @@ func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
 		return nil
 	}
 
+	var exercises []*apiv1.Exercise
+	if routine.R != nil {
+		exercises = ExercisesToPB(routine.R.Exercises)
+	}
+
 	return &apiv1.Routine{
 		Id:        routine.ID,
 		Name:      routine.Title,
-		Exercises: ExercisesToPB(routine.R.Exercises),
+		Exercises: exercises,
 	}
 }
 
