@@ -11,15 +11,6 @@ import (
 	"github.com/crlssn/getstronger/server/safe"
 )
 
-func ExerciseSliceToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	pbExercises := make([]*apiv1.Exercise, 0, len(exercises))
-	for _, exercise := range exercises {
-		pbExercises = append(pbExercises, ExerciseToPB(exercise))
-	}
-
-	return pbExercises
-}
-
 func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
 		Id:     exercise.ID,
@@ -29,13 +20,13 @@ func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 	}
 }
 
-func RoutineSliceToPB(routines orm.RoutineSlice) []*apiv1.Routine {
-	pbRoutines := make([]*apiv1.Routine, 0, len(routines))
-	for _, routine := range routines {
-		pbRoutines = append(pbRoutines, RoutineToPB(routine))
+func ExerciseSliceToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
+	pbExercises := make([]*apiv1.Exercise, 0, len(exercises))
+	for _, exercise := range exercises {
+		pbExercises = append(pbExercises, ExerciseToPB(exercise))
 	}
 
-	return pbRoutines
+	return pbExercises
 }
 
 func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
@@ -51,18 +42,13 @@ func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
 	}
 }
 
-func WorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.ExerciseSlice, userSlice orm.UserSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Workout, error) {
-	workouts := make([]*apiv1.Workout, 0, len(workoutSlice))
-	for _, workout := range workoutSlice {
-		w, err := WorkoutToPB(workout, exerciseSlice, userSlice, mapPersonalBests)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse workout: %w", err)
-		}
-
-		workouts = append(workouts, w)
+func RoutineSliceToPB(routines orm.RoutineSlice) []*apiv1.Routine {
+	pbRoutines := make([]*apiv1.Routine, 0, len(routines))
+	for _, routine := range routines {
+		pbRoutines = append(pbRoutines, RoutineToPB(routine))
 	}
 
-	return workouts, nil
+	return pbRoutines
 }
 
 func WorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, commentUsers orm.UserSlice, mapPersonalBests map[string]struct{}) (*apiv1.Workout, error) {
@@ -120,6 +106,20 @@ func parseWorkoutCommentSliceToPB(commentSlice orm.WorkoutCommentSlice, users or
 	}
 
 	return comments
+}
+
+func WorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.ExerciseSlice, userSlice orm.UserSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Workout, error) {
+	workouts := make([]*apiv1.Workout, 0, len(workoutSlice))
+	for _, workout := range workoutSlice {
+		w, err := WorkoutToPB(workout, exerciseSlice, userSlice, mapPersonalBests)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse workout: %w", err)
+		}
+
+		workouts = append(workouts, w)
+	}
+
+	return workouts, nil
 }
 
 func WorkoutCommentToPB(comment *orm.WorkoutComment, user *orm.User) *apiv1.WorkoutComment {
