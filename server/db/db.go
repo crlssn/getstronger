@@ -19,10 +19,5 @@ func New(c *config.Config) (*sql.DB, error) {
 }
 
 func ConnectionString(c *config.Config) string {
-	sslMode := "prefer"
-	if c.Env == "development" {
-		sslMode = "disable"
-	}
-
-	return fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s", c.DB.User, c.DB.Password, net.JoinHostPort(c.DB.Host, c.DB.Port), c.DB.Name, sslMode)
+	return fmt.Sprintf("postgresql://%s:%s@%s/%s", c.DB.User, c.DB.Password, net.JoinHostPort(c.DB.Host, c.DB.Port), c.DB.Name)
 }
