@@ -137,7 +137,7 @@ const data = computed(() => {
 </script>
 
 <template>
-  <LineChart :data="data" :options="options" />
+  <LineChart :data="data" :options="options as any" />
 </template>
 
 <style scoped></style>
