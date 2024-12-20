@@ -52,9 +52,7 @@ func (s *pubSubSuite) SetupSuite() {
 	s.mocks.handler = mock_handlers.NewMockHandler(s.mocks.controller)
 
 	err := s.pubSub.Subscribe(map[orm.EventTopic]handlers.Handler{
-		orm.EventTopicFollowedUser:         s.mocks.handler,
-		orm.EventTopicRequestTraced:        s.mocks.handler,
-		orm.EventTopicWorkoutCommentPosted: s.mocks.handler,
+		orm.EventTopicFollowedUser: s.mocks.handler,
 	})
 	s.Require().NoError(err)
 
@@ -67,21 +65,58 @@ func (s *pubSubSuite) SetupSuite() {
 }
 
 func (s *pubSubSuite) TestPublish() {
-	payload := payloads.UserFollowed{
-		FollowerID: uuid.NewString(),
-		FolloweeID: uuid.NewString(),
+	type expected struct {
 	}
 
-	marshal, err := json.Marshal(payload)
-	s.Require().NoError(err)
+	type test struct {
+		name    string
+		topic   orm.EventTopic
+		payload any
+		init    func(test)
+	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
-	s.mocks.handler.EXPECT().HandlePayload(string(marshal)).Do(func(_ string) {
-		wg.Done()
-	})
-	s.pubSub.Publish(context.Background(), orm.EventTopicFollowedUser, payload)
+	tests := []test{
+		{
+			name:  "ok_topic_found",
+			topic: orm.EventTopicFollowedUser,
+			payload: payloads.UserFollowed{
+				FollowerID: uuid.NewString(),
+				FolloweeID: uuid.NewString(),
+			},
+			init: func(t test) {
+				payload, err := json.Marshal(t.payload)
+				s.Require().NoError(err)
 
-	wg.Wait()
+				wg.Add(1)
+				s.mocks.handler.EXPECT().HandlePayload(string(payload)).Do(func(_ string) {
+					wg.Done()
+				})
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			s.pubSub.Publish(context.Background(), t.topic, t.payload)
+			wg.Wait()
+		})
+	}
+
+	//payload := payloads.UserFollowed{
+	//	FollowerID: uuid.NewString(),
+	//	FolloweeID: uuid.NewString(),
+	//}
+	//bytes, err := json.Marshal(payload)
+	//s.Require().NoError(err)
+	//
+	//var wg sync.WaitGroup
+	//wg.Add(1)
+	//
+	//s.mocks.handler.EXPECT().HandlePayload(string(bytes)).Do(func(_ string) { wg.Done() })
+	//s.pubSub.Publish(context.Background(), orm.EventTopicFollowedUser, payload)
+	//
+	//wg.Wait()
 }
