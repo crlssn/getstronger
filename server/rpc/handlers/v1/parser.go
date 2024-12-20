@@ -204,26 +204,26 @@ func parseSetSliceToExerciseSetsPB(setSlice orm.SetSlice, exerciseSlice orm.Exer
 	return exerciseSets, nil
 }
 
-func parsePersonalBestSliceToPB(personalBests orm.SetSlice, exercises orm.ExerciseSlice) ([]*apiv1.PersonalBest, error) {
+func parseExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.ExerciseSet, error) {
 	mapExercises := make(map[string]*orm.Exercise, len(exercises))
 	for _, exercise := range exercises {
 		mapExercises[exercise.ID] = exercise
 	}
 
-	pbs := make([]*apiv1.PersonalBest, 0, len(personalBests))
-	for _, pb := range personalBests {
+	exerciseSets := make([]*apiv1.ExerciseSet, 0, len(sets))
+	for _, pb := range sets {
 		set, err := parseSetToPB(pb, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
 
-		pbs = append(pbs, &apiv1.PersonalBest{
+		exerciseSets = append(exerciseSets, &apiv1.ExerciseSet{
 			Exercise: parseExerciseToPB(mapExercises[pb.ExerciseID]),
 			Set:      set,
 		})
 	}
 
-	return pbs, nil
+	return exerciseSets, nil
 }
 
 func parseUserSliceToPB(users orm.UserSlice) []*apiv1.User {

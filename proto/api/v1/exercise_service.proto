@@ -85,10 +85,7 @@ message GetPersonalBestsRequest {
   string user_id = 1 [(buf.validate.field).string.uuid = true];
 }
 message GetPersonalBestsResponse {
-  repeated PersonalBest personal_bests = 1;
-  // TODO: Use Exercise and Set instead:
-  // Exercise exercise = 1 [(buf.validate.field).required = true];
-  // Set set = 2 [(buf.validate.field).required = true];
+  repeated ExerciseSet personal_bests = 1;
 }
 
 message ListSetsRequest {
@@ -98,9 +95,4 @@ message ListSetsRequest {
 message ListSetsResponse {
   repeated Set sets = 1;
   PaginationResponse pagination = 2;
-}
-
-message PersonalBest {
-  Exercise exercise = 1 [(buf.validate.field).required = true];
-  Set set = 2 [(buf.validate.field).required = true];
 }
