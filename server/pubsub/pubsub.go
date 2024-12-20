@@ -55,12 +55,12 @@ func (ps *PubSub) Publish(topic orm.EventTopic, payload any) {
 	}
 }
 
-const topicWorkers = 5
+const workersPerTopic = 5
 
 func (ps *PubSub) Subscribe(handlers map[orm.EventTopic]handlers.Handler) error {
 	var totalWorkers int
 	for topic, handler := range handlers {
-		totalWorkers += topicWorkers
+		totalWorkers += workersPerTopic
 		ps.handlers[topic] = handler
 		if err := ps.listener.Listen(topic.String()); err != nil {
 			return fmt.Errorf("failed to listen to event: %w", err)
