@@ -95,6 +95,9 @@ func (ps *PubSub) startWorker() {
 }
 
 func (ps *PubSub) Stop() error {
+	if err := ps.listener.UnlistenAll(); err != nil {
+		return fmt.Errorf("failed to unlisten: %w", err)
+	}
 	if err := ps.listener.Close(); err != nil {
 		return fmt.Errorf("failed to close listener: %w", err)
 	}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -1065,6 +1066,70 @@ func (s *repoSuite) TestDeleteWorkout() {
 				Exists(context.Background(), s.testContainer.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
+		})
+	}
+}
+
+func (s *repoSuite) TestPublishEvent() {
+	type expected struct {
+		err       error
+		notifyMsg string
+	}
+
+	type test struct {
+		name     string
+		topic    orm.EventTopic
+		payload  []byte
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:    "ok_publish_event_with_notify",
+			topic:   orm.EventTopicWorkoutCommentPosted,
+			payload: []byte("payload"),
+			expected: expected{
+				err:       nil,
+				notifyMsg: "payload",
+			},
+		},
+		{
+			name:    "err_invalid_topic",
+			topic:   orm.EventTopic(""),
+			payload: nil,
+			expected: expected{
+				err: fmt.Errorf("invalid topic"),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := context.Background()
+
+			listener := pq.NewListener(s.testContainer.Connection, time.Second, time.Minute, nil)
+			if t.topic.IsValid() == nil {
+				s.Require().NoError(listener.Listen(t.topic.String()))
+			}
+
+			err := s.repo.PublishEvent(ctx, t.topic, t.payload)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), t.expected.err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+
+			event := <-listener.Notify
+			s.Require().Equal(t.topic.String(), event.Channel)
+
+			//select {
+			//case notifyMsg := <-notificationChan:
+			//	s.Require().Equal(t.expected.notifyMsg, notifyMsg)
+			//case <-time.After(5 * time.Second):
+			//	s.Fail("pg_notify did not trigger within the expected time")
+			//}
 		})
 	}
 }

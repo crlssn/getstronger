@@ -16,7 +16,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
-	"github.com/crlssn/getstronger/server/pubsub/handlers/mocks"
+	mock_handlers "github.com/crlssn/getstronger/server/pubsub/handlers/mocks"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"

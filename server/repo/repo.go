@@ -1427,6 +1427,10 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exercise
 }
 
 func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
+	if err := topic.IsValid(); err != nil {
+		return fmt.Errorf("invalid topic: %s: %w", topic, err)
+	}
+
 	return r.NewTx(ctx, func(tx Tx) error {
 		event := &orm.Event{
 			Topic:   topic,
