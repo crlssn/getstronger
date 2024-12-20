@@ -87,7 +87,7 @@ func MapIDs[Item ModelItem, Slice ModelSlice[Item]](slice Slice) map[string]Item
 	return m
 }
 
-func WorkoutToPBWorkout(workout *orm.Workout, exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutToPBOpt {
+func Workout(workout *orm.Workout, exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutToPBOpt {
 	return func(w *apiv1.Workout) error {
 		if workout == nil {
 			return fmt.Errorf("workout is nil")
