@@ -78,7 +78,18 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	feedItems, err := parseFeedItemsToPB(paginated.Items, exercises)
+	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
+	if err != nil {
+		log.Error("failed to get personal bests", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	mapPersonalBests := make(map[string]struct{})
+	for _, pb := range personalBests {
+		mapPersonalBests[pb.ID] = struct{}{}
+	}
+
+	feedItems, err := parseFeedItemsToPB(paginated.Items, exercises, mapPersonalBests)
 	if err != nil {
 		log.Error("failed to parse feed items", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

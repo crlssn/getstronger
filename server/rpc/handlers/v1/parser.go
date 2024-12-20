@@ -51,10 +51,10 @@ func parseRoutineToPB(routine *orm.Routine) *apiv1.Routine {
 	}
 }
 
-func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.ExerciseSlice, userSlice orm.UserSlice) ([]*apiv1.Workout, error) {
+func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.ExerciseSlice, userSlice orm.UserSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Workout, error) {
 	workouts := make([]*apiv1.Workout, 0, len(workoutSlice))
 	for _, workout := range workoutSlice {
-		w, err := parseWorkoutToPB(workout, exerciseSlice, userSlice)
+		w, err := parseWorkoutToPB(workout, exerciseSlice, userSlice, mapPersonalBests)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse workout: %w", err)
 		}
@@ -65,7 +65,7 @@ func parseWorkoutSliceToPB(workoutSlice orm.WorkoutSlice, exerciseSlice orm.Exer
 	return workouts, nil
 }
 
-func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, commentUsers orm.UserSlice) (*apiv1.Workout, error) {
+func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, commentUsers orm.UserSlice, mapPersonalBests map[string]struct{}) (*apiv1.Workout, error) {
 	var exerciseOrder []string
 	mapExerciseSets := make(map[string][]*apiv1.Set)
 
@@ -75,7 +75,7 @@ func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, comment
 				exerciseOrder = append(exerciseOrder, set.ExerciseID)
 			}
 
-			s, err := parseSetToPB(set)
+			s, err := parseSetToPB(set, mapPersonalBests)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse set: %w", err)
 			}
@@ -185,7 +185,7 @@ func parseSetSliceToExerciseSetsPB(setSlice orm.SetSlice, exerciseSlice orm.Exer
 			mapExerciseSets[exerciseKey] = make([]*apiv1.Set, 0)
 		}
 
-		s, err := parseSetToPB(set)
+		s, err := parseSetToPB(set, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
@@ -212,7 +212,7 @@ func parsePersonalBestSliceToPB(personalBests orm.SetSlice, exercises orm.Exerci
 
 	pbs := make([]*apiv1.PersonalBest, 0, len(personalBests))
 	for _, pb := range personalBests {
-		set, err := parseSetToPB(pb)
+		set, err := parseSetToPB(pb, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
@@ -309,10 +309,10 @@ func parseNotificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *ap
 	}
 }
 
-func parseFeedItemsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice) ([]*apiv1.FeedItem, error) {
+func parseFeedItemsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.FeedItem, error) {
 	items := make([]*apiv1.FeedItem, 0, len(workouts))
 	for _, workout := range workouts {
-		w, err := parseWorkoutToPB(workout, exercises, nil)
+		w, err := parseWorkoutToPB(workout, exercises, nil, mapPersonalBests)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse workout: %w", err)
 		}
@@ -326,10 +326,10 @@ func parseFeedItemsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice) 
 	return items, nil
 }
 
-func parseSetSliceToPB(setSlice orm.SetSlice) ([]*apiv1.Set, error) {
+func parseSetSliceToPB(setSlice orm.SetSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Set, error) {
 	sets := make([]*apiv1.Set, 0, len(setSlice))
 	for _, set := range setSlice {
-		s, err := parseSetToPB(set)
+		s, err := parseSetToPB(set, mapPersonalBests)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
@@ -338,11 +338,13 @@ func parseSetSliceToPB(setSlice orm.SetSlice) ([]*apiv1.Set, error) {
 	return sets, nil
 }
 
-func parseSetToPB(set *orm.Set) (*apiv1.Set, error) {
+func parseSetToPB(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, error) {
 	reps, err := safe.IntToInt32(set.Reps)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse reps: %w", err)
 	}
+
+	_, personalBest := mapPersonalBests[set.ID]
 
 	return &apiv1.Set{
 		Weight: set.Weight,
@@ -350,7 +352,7 @@ func parseSetToPB(set *orm.Set) (*apiv1.Set, error) {
 		Metadata: &apiv1.MetadataSet{
 			WorkoutId:    set.WorkoutID,
 			CreatedAt:    timestamppb.New(set.CreatedAt),
-			PersonalBest: true,
+			PersonalBest: personalBest,
 		},
 	}, nil
 }
