@@ -65,9 +65,6 @@ func (s *pubSubSuite) SetupSuite() {
 }
 
 func (s *pubSubSuite) TestPublish() {
-	type expected struct {
-	}
-
 	type test struct {
 		name    string
 		topic   orm.EventTopic
@@ -79,7 +76,7 @@ func (s *pubSubSuite) TestPublish() {
 
 	tests := []test{
 		{
-			name:  "ok_topic_found",
+			name:  "ok_handler_found",
 			topic: orm.EventTopicFollowedUser,
 			payload: payloads.UserFollowed{
 				FollowerID: uuid.NewString(),
@@ -95,6 +92,19 @@ func (s *pubSubSuite) TestPublish() {
 				})
 			},
 		},
+		{
+			name:  "ok_handler_not_found",
+			topic: orm.EventTopicRequestTraced,
+			payload: payloads.WorkoutCommentPosted{
+				CommentID: uuid.NewString(),
+			},
+			init: func(t test) {
+				payload, err := json.Marshal(t.payload)
+				s.Require().NoError(err)
+
+				s.mocks.handler.EXPECT().HandlePayload(string(payload)).Times(0)
+			},
+		},
 	}
 
 	for _, t := range tests {
@@ -104,19 +114,4 @@ func (s *pubSubSuite) TestPublish() {
 			wg.Wait()
 		})
 	}
-
-	//payload := payloads.UserFollowed{
-	//	FollowerID: uuid.NewString(),
-	//	FolloweeID: uuid.NewString(),
-	//}
-	//bytes, err := json.Marshal(payload)
-	//s.Require().NoError(err)
-	//
-	//var wg sync.WaitGroup
-	//wg.Add(1)
-	//
-	//s.mocks.handler.EXPECT().HandlePayload(string(bytes)).Do(func(_ string) { wg.Done() })
-	//s.pubSub.Publish(context.Background(), orm.EventTopicFollowedUser, payload)
-	//
-	//wg.Wait()
 }
