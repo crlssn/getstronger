@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/lib/pq"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -29,16 +28,15 @@ type PubSub struct {
 type Params struct {
 	fx.In
 
-	Log    *zap.Logger
 	DB     *sql.DB
+	Log    *zap.Logger
 	Config *config.Config
 }
 
 func New(p Params) *PubSub {
-	spew.Dump(db.ConnectionString(p.Config))
 	return &PubSub{
-		log:      p.Log,
 		db:       p.DB,
+		log:      p.Log,
 		listener: pq.NewListener(db.ConnectionString(p.Config), time.Second, time.Minute, nil),
 		handlers: make(map[orm.EventTopic]handlers.Handler),
 	}
@@ -59,8 +57,6 @@ func (ps *PubSub) Publish(topic orm.EventTopic, payload any) {
 
 const topicWorkers = 5
 
-//var errHandlerExists = fmt.Errorf("handler already exists")
-
 func (ps *PubSub) Subscribe(handlers map[orm.EventTopic]handlers.Handler) error {
 	var totalWorkers int
 	for topic, handler := range handlers {
@@ -76,22 +72,6 @@ func (ps *PubSub) Subscribe(handlers map[orm.EventTopic]handlers.Handler) error 
 		go ps.startWorker()
 	}
 
-	//ps.mu.Lock()
-	//defer ps.mu.Unlock()
-	//
-	//if _, exists := ps.handlers[topic]; exists {
-	//	return fmt.Errorf("%w: %s", errHandlerExists, topic)
-	//}
-	//ps.handlers[topic] = handler
-
-	//if _, found := ps.channels[event]; !found {
-	//	ps.channels[event] = make(chan any, channelCapacity)
-	//	for range channelWorkers {
-	//		go ps.startWorker(event)
-	//	}
-	//	ps.log.Info("subscribed to event", zap.Any("event", event))
-	//}
-
 	return nil
 }
 
@@ -100,7 +80,7 @@ func (ps *PubSub) startWorker() {
 		select {
 		case event := <-ps.listener.Notify:
 			if event == nil {
-				ps.log.Error("listener disconnected")
+				ps.log.Warn("listener disconnected")
 				return
 			}
 
