@@ -21,12 +21,12 @@ func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 }
 
 func ExercisesToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	pbExercises := make([]*apiv1.Exercise, 0, len(exercises))
+	eSlice := make([]*apiv1.Exercise, 0, len(exercises))
 	for _, exercise := range exercises {
-		pbExercises = append(pbExercises, ExerciseToPB(exercise))
+		eSlice = append(eSlice, ExerciseToPB(exercise))
 	}
 
-	return pbExercises
+	return eSlice
 }
 
 func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
@@ -43,12 +43,12 @@ func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
 }
 
 func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
-	pbRoutines := make([]*apiv1.Routine, 0, len(routines))
+	rSlice := make([]*apiv1.Routine, 0, len(routines))
 	for _, routine := range routines {
-		pbRoutines = append(pbRoutines, RoutineToPB(routine))
+		rSlice = append(rSlice, RoutineToPB(routine))
 	}
 
-	return pbRoutines
+	return rSlice
 }
 
 func WorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, commentUsers orm.UserSlice, mapPersonalBests map[string]struct{}) (*apiv1.Workout, error) {
@@ -227,16 +227,16 @@ func ExerciseSetSliceToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*ap
 }
 
 func UsersToPB(users orm.UserSlice) []*apiv1.User {
-	pbUsers := make([]*apiv1.User, 0, len(users))
+	uSlice := make([]*apiv1.User, 0, len(users))
 	for _, u := range users {
-		pbUsers = append(pbUsers, &apiv1.User{
+		uSlice = append(uSlice, &apiv1.User{
 			Id:        u.ID,
 			FirstName: u.FirstName,
 			LastName:  u.LastName,
 		})
 	}
 
-	return pbUsers
+	return uSlice
 }
 
 func NotificationsToPB(
@@ -255,7 +255,7 @@ func NotificationsToPB(
 		mapUsers[u.ID] = u
 	}
 
-	var slice []*apiv1.Notification //nolint:prealloc
+	var nSlice []*apiv1.Notification //nolint:prealloc
 	for _, n := range notifications {
 		p, ok := payload[n.ID]
 		if !ok {
@@ -267,10 +267,10 @@ func NotificationsToPB(
 			continue
 		}
 
-		slice = append(slice, notification)
+		nSlice = append(nSlice, notification)
 	}
 
-	return slice
+	return nSlice
 }
 
 func notificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.Notification {
