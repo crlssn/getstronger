@@ -282,18 +282,23 @@ func (mr *MockRepoMockRecorder) GetExercise(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetPersonalBests mocks base method.
-func (m *MockRepo) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
+func (m *MockRepo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPersonalBests", ctx, userID)
+	varargs := []any{ctx}
+	for _, a := range userIDs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
 	ret0, _ := ret[0].(orm.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPersonalBests indicates an expected call of GetPersonalBests.
-func (mr *MockRepoMockRecorder) GetPersonalBests(ctx, userID any) *gomock.Call {
+func (mr *MockRepoMockRecorder) GetPersonalBests(ctx any, userIDs ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*MockRepo)(nil).GetPersonalBests), ctx, userID)
+	varargs := append([]any{ctx}, userIDs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*MockRepo)(nil).GetPersonalBests), varargs...)
 }
 
 // GetPreviousWorkoutSets mocks base method.
@@ -1047,18 +1052,23 @@ func (mr *MockTxMockRecorder) GetExercise(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetPersonalBests mocks base method.
-func (m *MockTx) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
+func (m *MockTx) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPersonalBests", ctx, userID)
+	varargs := []any{ctx}
+	for _, a := range userIDs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
 	ret0, _ := ret[0].(orm.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPersonalBests indicates an expected call of GetPersonalBests.
-func (mr *MockTxMockRecorder) GetPersonalBests(ctx, userID any) *gomock.Call {
+func (mr *MockTxMockRecorder) GetPersonalBests(ctx any, userIDs ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*MockTx)(nil).GetPersonalBests), ctx, userID)
+	varargs := append([]any{ctx}, userIDs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*MockTx)(nil).GetPersonalBests), varargs...)
 }
 
 // GetPreviousWorkoutSets mocks base method.
@@ -1812,18 +1822,23 @@ func (mr *MockmethodsMockRecorder) GetExercise(ctx any, opts ...any) *gomock.Cal
 }
 
 // GetPersonalBests mocks base method.
-func (m *Mockmethods) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
+func (m *Mockmethods) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPersonalBests", ctx, userID)
+	varargs := []any{ctx}
+	for _, a := range userIDs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
 	ret0, _ := ret[0].(orm.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPersonalBests indicates an expected call of GetPersonalBests.
-func (mr *MockmethodsMockRecorder) GetPersonalBests(ctx, userID any) *gomock.Call {
+func (mr *MockmethodsMockRecorder) GetPersonalBests(ctx any, userIDs ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*Mockmethods)(nil).GetPersonalBests), ctx, userID)
+	varargs := append([]any{ctx}, userIDs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*Mockmethods)(nil).GetPersonalBests), varargs...)
 }
 
 // GetPreviousWorkoutSets mocks base method.
@@ -2324,18 +2339,23 @@ func (m *MocksetMethods) EXPECT() *MocksetMethodsMockRecorder {
 }
 
 // GetPersonalBests mocks base method.
-func (m *MocksetMethods) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
+func (m *MocksetMethods) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPersonalBests", ctx, userID)
+	varargs := []any{ctx}
+	for _, a := range userIDs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
 	ret0, _ := ret[0].(orm.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPersonalBests indicates an expected call of GetPersonalBests.
-func (mr *MocksetMethodsMockRecorder) GetPersonalBests(ctx, userID any) *gomock.Call {
+func (mr *MocksetMethodsMockRecorder) GetPersonalBests(ctx any, userIDs ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*MocksetMethods)(nil).GetPersonalBests), ctx, userID)
+	varargs := append([]any{ctx}, userIDs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonalBests", reflect.TypeOf((*MocksetMethods)(nil).GetPersonalBests), varargs...)
 }
 
 // GetPreviousWorkoutSets mocks base method.
