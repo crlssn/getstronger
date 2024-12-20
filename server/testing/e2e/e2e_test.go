@@ -136,7 +136,7 @@ func options() []fx.Option {
 				return &config.Config{
 					DB:     config.DB{},
 					JWT:    config.JWT{},
-					Server: config.Server{Port: "8081"},
+					Server: config.Server{Port: "65432"},
 				}
 			},
 		),
