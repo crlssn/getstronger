@@ -10,12 +10,12 @@ import {
   PointElement,
   Title,
   Tooltip,
+  Scale,
 } from 'chart.js'
 
 import { computed } from 'vue'
 import { Line as LineChart } from 'vue-chartjs'
 import { formatToShortDateTime } from '@/utils/datetime.ts'
-import type { Chart } from 'chart.js/dist/core/core.scale'
 
 ChartJS.register(
   Title,
@@ -66,7 +66,7 @@ const options = {
         display: false,
         drawBorder: false,
       },
-      afterBuildTicks: (axis: Chart) => {
+      afterBuildTicks: (axis: Scale) => {
         axis.ticks = [...axis.chart.scales.y.ticks]
         axis.min = axis.chart.scales.y.min
         axis.max = axis.chart.scales.y.max
