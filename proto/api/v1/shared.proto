@@ -26,6 +26,7 @@ message Set {
 message MetadataSet {
   string workout_id = 1 [(buf.validate.field).string.uuid = true];
   google.protobuf.Timestamp created_at = 2;
+  bool personal_best = 3;
 }
 
 message User {

@@ -75,15 +75,12 @@ func parseWorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, comment
 				exerciseOrder = append(exerciseOrder, set.ExerciseID)
 			}
 
-			reps, err := safe.IntToInt32(set.Reps)
+			s, err := parseSetToPB(set)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse reps: %w", err)
+				return nil, fmt.Errorf("failed to parse set: %w", err)
 			}
 
-			mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], &apiv1.Set{
-				Weight: set.Weight,
-				Reps:   reps,
-			})
+			mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], s)
 		}
 	}
 
@@ -188,15 +185,12 @@ func parseSetSliceToExerciseSetsPB(setSlice orm.SetSlice, exerciseSlice orm.Exer
 			mapExerciseSets[exerciseKey] = make([]*apiv1.Set, 0)
 		}
 
-		reps, err := safe.IntToInt32(set.Reps)
+		s, err := parseSetToPB(set)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse reps: %w", err)
+			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
 
-		mapExerciseSets[exerciseKey] = append(mapExerciseSets[exerciseKey], &apiv1.Set{
-			Weight: float64(set.Weight),
-			Reps:   reps,
-		})
+		mapExerciseSets[exerciseKey] = append(mapExerciseSets[exerciseKey], s)
 	}
 
 	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
@@ -218,21 +212,14 @@ func parsePersonalBestSliceToPB(personalBests orm.SetSlice, exercises orm.Exerci
 
 	pbs := make([]*apiv1.PersonalBest, 0, len(personalBests))
 	for _, pb := range personalBests {
-		reps, err := safe.IntToInt32(pb.Reps)
+		set, err := parseSetToPB(pb)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse reps: %w", err)
+			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
 
 		pbs = append(pbs, &apiv1.PersonalBest{
 			Exercise: parseExerciseToPB(mapExercises[pb.ExerciseID]),
-			Set: &apiv1.Set{
-				Weight: pb.Weight,
-				Reps:   reps,
-				Metadata: &apiv1.MetadataSet{
-					WorkoutId: pb.WorkoutID,
-					CreatedAt: timestamppb.New(pb.CreatedAt),
-				},
-			},
+			Set:      set,
 		})
 	}
 
@@ -361,8 +348,9 @@ func parseSetToPB(set *orm.Set) (*apiv1.Set, error) {
 		Weight: set.Weight,
 		Reps:   reps,
 		Metadata: &apiv1.MetadataSet{
-			WorkoutId: set.WorkoutID,
-			CreatedAt: timestamppb.New(set.CreatedAt),
+			WorkoutId:    set.WorkoutID,
+			CreatedAt:    timestamppb.New(set.CreatedAt),
+			PersonalBest: true,
 		},
 	}, nil
 }

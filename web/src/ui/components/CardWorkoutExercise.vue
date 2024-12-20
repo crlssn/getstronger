@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import type { Set } from '@/proto/api/v1/shared_pb.ts'
+import { TrophyIcon } from '@heroicons/vue/24/outline'
+
 const props = defineProps<{
   exerciseId?: string
   label?: string
   name?: string
-  sets: Array<{
-    reps: number
-    weight: number
-  }>
+  sets: Set[]
 }>()
 </script>
 
@@ -28,6 +28,9 @@ const props = defineProps<{
           <td class="font-medium">x</td>
           <td class="font-medium">
             {{ set.reps }}
+          </td>
+          <td v-if="set.metadata?.personalBest">
+            <TrophyIcon class="size-6 text-yellow-500" />
           </td>
         </tr>
       </tbody>
