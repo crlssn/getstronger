@@ -16,7 +16,7 @@ func Module() fx.Option {
 		fx.Provide(
 			New,
 			func(c *config.Config) *pq.Listener {
-				return pq.NewListener(ConnectionString(c), time.Second, time.Minute, nil)
+				return pq.NewListener(connection(c), time.Second, time.Minute, nil)
 			},
 		),
 		fx.Invoke(func(l fx.Lifecycle, db *sql.DB) {

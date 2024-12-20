@@ -882,8 +882,8 @@ SELECT * FROM getstronger.sets WHERE (exercise_id, workout_id) IN (
 	return sets, nil
 }
 
-func (r *repo) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error) {
-	workouts, err := r.ListWorkouts(ctx, ListWorkoutsWithUserIDs(userID))
+func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
+	workouts, err := r.ListWorkouts(ctx, ListWorkoutsWithUserIDs(userIDs...))
 	if err != nil {
 		return nil, fmt.Errorf("workouts fetch: %w", err)
 	}
@@ -894,7 +894,7 @@ func (r *repo) GetPersonalBests(ctx context.Context, userID string) (orm.SetSlic
 	}
 
 	rawQuery := `
-	SELECT DISTINCT ON (exercise_id) exercise_id, weight, reps, workout_id, created_at
+	SELECT DISTINCT ON (exercise_id) exercise_id, weight, reps, id, workout_id, created_at
 	FROM getstronger.sets
 	WHERE workout_id = ANY ($1)
 	ORDER BY exercise_id, weight DESC, reps DESC;

@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import type { Set } from '@/proto/api/v1/shared_pb.ts'
+import { TrophyIcon } from '@heroicons/vue/24/solid'
+
 const props = defineProps<{
   exerciseId?: string
   label?: string
   name?: string
-  sets: Array<{
-    reps: number
-    weight: number
-  }>
+  sets: Set[]
 }>()
 </script>
 
@@ -23,11 +23,14 @@ const props = defineProps<{
     <table>
       <tbody>
         <tr v-for="(set, index) in props.sets" :key="index" class="text-gray-800 text-base">
-          <td class="">Set {{ index + 1 }}:</td>
+          <td>Set {{ index + 1 }}:</td>
           <td class="font-medium text-right">{{ set.weight }} kg</td>
           <td class="font-medium">x</td>
           <td class="font-medium">
             {{ set.reps }}
+          </td>
+          <td v-if="set.metadata?.personalBest">
+            <TrophyIcon class="size-5 text-yellow-500" />
           </td>
         </tr>
       </tbody>
@@ -35,4 +38,8 @@ const props = defineProps<{
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+td {
+  @apply pr-1;
+}
+</style>

@@ -86,6 +86,9 @@ message GetPersonalBestsRequest {
 }
 message GetPersonalBestsResponse {
   repeated PersonalBest personal_bests = 1;
+  // TODO: Use Exercise and Set instead:
+  // Exercise exercise = 1 [(buf.validate.field).required = true];
+  // Set set = 2 [(buf.validate.field).required = true];
 }
 
 message ListSetsRequest {

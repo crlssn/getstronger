@@ -32,7 +32,7 @@ type methods interface {
 
 type setMethods interface {
 	ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error)
-	GetPersonalBests(ctx context.Context, userID string) (orm.SetSlice, error)
+	GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error)
 	GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error)
 }
 

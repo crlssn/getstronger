@@ -295,7 +295,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	setSlice, err := parseSetSliceToPB(paginated.Items)
+	setSlice, err := parseSetSliceToPB(paginated.Items, nil)
 	if err != nil {
 		log.Error("failed to parse set slice to pb", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

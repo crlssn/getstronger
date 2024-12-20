@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -107,7 +108,18 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	w, err := parseWorkoutToPB(workout, exercises, users)
+	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
+	if err != nil {
+		log.Error("failed to get personal bests", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	mapPersonalBests := make(map[string]struct{})
+	for _, set := range personalBests {
+		mapPersonalBests[set.ID] = struct{}{}
+	}
+
+	w, err := parseWorkoutToPB(workout, exercises, users, mapPersonalBests)
 	if err != nil {
 		log.Error("failed to parse workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -121,7 +133,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	}, nil
 }
 
-func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[apiv1.ListWorkoutsRequest]) (*connect.Response[apiv1.ListWorkoutsResponse], error) {
+func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[apiv1.ListWorkoutsRequest]) (*connect.Response[apiv1.ListWorkoutsResponse], error) { //nolint:cyclop // TODO: Make less complex
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
@@ -168,13 +180,25 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	w, err := parseWorkoutSliceToPB(pagination.Items, exercises, users)
+	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserIds()...)
+	if err != nil {
+		log.Error("failed to get personal bests", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	mapPersonalBests := make(map[string]struct{})
+	for _, pb := range personalBests {
+		mapPersonalBests[pb.ID] = struct{}{}
+	}
+
+	w, err := parseWorkoutSliceToPB(pagination.Items, exercises, users, mapPersonalBests)
 	if err != nil {
 		log.Error("failed to parse workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("workouts listed")
+	spew.Dump(w)
 	return &connect.Response[apiv1.ListWorkoutsResponse]{
 		Msg: &apiv1.ListWorkoutsResponse{
 			Workouts: w,

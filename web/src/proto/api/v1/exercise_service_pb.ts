@@ -265,6 +265,10 @@ export const GetPersonalBestsRequestSchema: GenMessage<GetPersonalBestsRequest> 
  */
 export type GetPersonalBestsResponse = Message<"api.v1.GetPersonalBestsResponse"> & {
   /**
+   * TODO: Use Exercise and Set instead:
+   * Exercise exercise = 1 [(buf.validate.field).required = true];
+   * Set set = 2 [(buf.validate.field).required = true];
+   *
    * @generated from field: repeated api.v1.PersonalBest personal_bests = 1;
    */
   personalBests: PersonalBest[];

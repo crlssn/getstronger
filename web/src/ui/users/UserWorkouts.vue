@@ -39,7 +39,7 @@ const fetchWorkouts = async () => {
   <CardWorkout v-for="workout in workouts" :key="workout.id" compact :workout="workout" />
   <div v-if="hasMorePages" v-infinite-scroll="fetchWorkouts" />
   <AppList v-if="isMounted && workouts.length === 0">
-    <AppListItem> Nothing here yet...</AppListItem>
+    <AppListItem>Nothing here yet...</AppListItem>
   </AppList>
 </template>
 
