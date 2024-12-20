@@ -18,6 +18,7 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/pubsub/handlers/mocks"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
+	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 )
 
@@ -42,8 +43,8 @@ func (s *pubSubSuite) SetupSuite() {
 	c := container.NewContainer(ctx)
 
 	s.pubSub = pubsub.New(pubsub.Params{
-		DB:       c.DB,
 		Log:      zap.NewExample(),
+		Repo:     repo.New(c.DB),
 		Listener: pq.NewListener(c.Connection, time.Second, time.Minute, nil),
 	})
 
@@ -80,7 +81,7 @@ func (s *pubSubSuite) TestPublish() {
 	s.mocks.handler.EXPECT().HandlePayload(string(marshal)).Do(func(_ string) {
 		wg.Done()
 	})
-	s.pubSub.Publish(orm.EventTopicFollowedUser, payload)
+	s.pubSub.Publish(context.Background(), orm.EventTopicFollowedUser, payload)
 
 	wg.Wait()
 }

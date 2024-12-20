@@ -97,7 +97,7 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.pubSub.Publish(orm.EventTopicFollowedUser, &payloads.UserFollowed{
+	h.pubSub.Publish(ctx, orm.EventTopicFollowedUser, payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
 	})

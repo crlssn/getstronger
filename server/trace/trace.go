@@ -1,6 +1,7 @@
 package trace
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -35,12 +36,12 @@ type Trace struct {
 	onEnd func(duration time.Duration, statusCode int)
 }
 
-func (m *Tracer) Trace(uri string) *Trace {
+func (m *Tracer) Trace(ctx context.Context, uri string) *Trace {
 	return &Trace{
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
-			m.pubSub.Publish(orm.EventTopicRequestTraced, &payloads.RequestTraced{
+			m.pubSub.Publish(ctx, orm.EventTopicRequestTraced, payloads.RequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,

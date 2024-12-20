@@ -1,7 +1,7 @@
 package pubsub
 
 import (
-	"database/sql"
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -17,7 +17,6 @@ import (
 
 type PubSub struct {
 	mu       sync.RWMutex
-	db       *sql.DB
 	log      *zap.Logger
 	repo     repo.Repo
 	listener *pq.Listener
@@ -27,7 +26,6 @@ type PubSub struct {
 type Params struct {
 	fx.In
 
-	DB       *sql.DB
 	Log      *zap.Logger
 	Repo     repo.Repo
 	Listener *pq.Listener
@@ -35,21 +33,21 @@ type Params struct {
 
 func New(p Params) *PubSub {
 	return &PubSub{
-		db:       p.DB,
 		log:      p.Log,
+		repo:     p.Repo,
 		listener: p.Listener,
 		handlers: make(map[orm.EventTopic]handlers.Handler),
 	}
 }
 
-func (ps *PubSub) Publish(topic orm.EventTopic, payload any) {
+func (ps *PubSub) Publish(ctx context.Context, topic orm.EventTopic, payload any) {
 	p, err := json.Marshal(payload)
 	if err != nil {
 		ps.log.Error("failed to marshal payload", zap.Error(err))
 		return
 	}
 
-	if _, err = ps.db.Exec("SELECT pg_notify($1, $2)", topic.String(), p); err != nil {
+	if err = ps.repo.PublishEvent(ctx, topic, p); err != nil {
 		ps.log.Error("failed to publish event", zap.Error(err))
 		return
 	}
