@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -179,7 +180,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, userIDs...)
+	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserIds()...)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -197,6 +198,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	}
 
 	log.Info("workouts listed")
+	spew.Dump(w)
 	return &connect.Response[apiv1.ListWorkoutsResponse]{
 		Msg: &apiv1.ListWorkoutsResponse{
 			Workouts: w,
