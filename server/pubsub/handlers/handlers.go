@@ -19,7 +19,7 @@ type Handler interface {
 }
 
 var (
-	_ Handler = (*UserFollowed)(nil)
+	_ Handler = (*FollowedUser)(nil)
 	_ Handler = (*RequestTraced)(nil)
 	_ Handler = (*WorkoutCommentPosted)(nil)
 )
@@ -89,6 +89,9 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 	}
 
 	mapUserIDs := make(map[string]struct{})
+	if comment.UserID != workout.UserID {
+		mapUserIDs[workout.UserID] = struct{}{}
+	}
 	for _, c := range workout.R.WorkoutComments {
 		if comment.UserID == c.UserID {
 			// Don't notify own comments.
@@ -111,16 +114,16 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 	}
 }
 
-type UserFollowed struct {
+type FollowedUser struct {
 	log  *zap.Logger
 	repo repo.Repo
 }
 
-func NewUserFollowed(log *zap.Logger, repo repo.Repo) *UserFollowed {
-	return &UserFollowed{log, repo}
+func NewFollowedUser(log *zap.Logger, repo repo.Repo) *FollowedUser {
+	return &FollowedUser{log, repo}
 }
 
-func (u *UserFollowed) HandlePayload(payload string) {
+func (u *FollowedUser) HandlePayload(payload string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

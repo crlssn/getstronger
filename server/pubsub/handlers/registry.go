@@ -13,7 +13,7 @@ type Registry struct {
 type RegistryParams struct {
 	fx.In
 
-	UserFollowed         *UserFollowed
+	FollowedUser         *FollowedUser
 	RequestTraced        *RequestTraced
 	WorkoutCommentPosted *WorkoutCommentPosted
 }
@@ -21,7 +21,7 @@ type RegistryParams struct {
 func NewRegistry(p RegistryParams) *Registry {
 	return &Registry{
 		handlers: map[orm.EventTopic]Handler{
-			orm.EventTopicFollowedUser:         p.UserFollowed,
+			orm.EventTopicFollowedUser:         p.FollowedUser,
 			orm.EventTopicRequestTraced:        p.RequestTraced,
 			orm.EventTopicWorkoutCommentPosted: p.WorkoutCommentPosted,
 		},
