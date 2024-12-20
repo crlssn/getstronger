@@ -51,6 +51,78 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+type EventTopics string
+
+// Enum values for EventTopics
+const (
+	EventTopicsUserSignedUp             EventTopics = "UserSignedUp"
+	EventTopicsUserLoggedIn             EventTopics = "UserLoggedIn"
+	EventTopicsUserLoggedOut            EventTopics = "UserLoggedOut"
+	EventTopicsUserRefreshedAccessToken EventTopics = "UserRefreshedAccessToken"
+	EventTopicsFollowedUser             EventTopics = "FollowedUser"
+	EventTopicsRequestTraced            EventTopics = "RequestTraced"
+	EventTopicsWorkoutCreated           EventTopics = "WorkoutCreated"
+	EventTopicsWorkoutUpdated           EventTopics = "WorkoutUpdated"
+	EventTopicsWorkoutDeleted           EventTopics = "WorkoutDeleted"
+	EventTopicsWorkoutCommentPosted     EventTopics = "WorkoutCommentPosted"
+)
+
+func AllEventTopics() []EventTopics {
+	return []EventTopics{
+		EventTopicsUserSignedUp,
+		EventTopicsUserLoggedIn,
+		EventTopicsUserLoggedOut,
+		EventTopicsUserRefreshedAccessToken,
+		EventTopicsFollowedUser,
+		EventTopicsRequestTraced,
+		EventTopicsWorkoutCreated,
+		EventTopicsWorkoutUpdated,
+		EventTopicsWorkoutDeleted,
+		EventTopicsWorkoutCommentPosted,
+	}
+}
+
+func (e EventTopics) IsValid() error {
+	switch e {
+	case EventTopicsUserSignedUp, EventTopicsUserLoggedIn, EventTopicsUserLoggedOut, EventTopicsUserRefreshedAccessToken, EventTopicsFollowedUser, EventTopicsRequestTraced, EventTopicsWorkoutCreated, EventTopicsWorkoutUpdated, EventTopicsWorkoutDeleted, EventTopicsWorkoutCommentPosted:
+		return nil
+	default:
+		return errors.New("enum is not valid")
+	}
+}
+
+func (e EventTopics) String() string {
+	return string(e)
+}
+
+func (e EventTopics) Ordinal() int {
+	switch e {
+	case EventTopicsUserSignedUp:
+		return 0
+	case EventTopicsUserLoggedIn:
+		return 1
+	case EventTopicsUserLoggedOut:
+		return 2
+	case EventTopicsUserRefreshedAccessToken:
+		return 3
+	case EventTopicsFollowedUser:
+		return 4
+	case EventTopicsRequestTraced:
+		return 5
+	case EventTopicsWorkoutCreated:
+		return 6
+	case EventTopicsWorkoutUpdated:
+		return 7
+	case EventTopicsWorkoutDeleted:
+		return 8
+	case EventTopicsWorkoutCommentPosted:
+		return 9
+
+	default:
+		panic(errors.New("enum is not valid"))
+	}
+}
+
 type NotificationType string
 
 // Enum values for NotificationType
