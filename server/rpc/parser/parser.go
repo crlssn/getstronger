@@ -328,15 +328,16 @@ func setToPB(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, er
 		return nil, fmt.Errorf("failed to parse reps: %w", err)
 	}
 
-	_, personalBest := mapPersonalBests[set.ID]
-
 	return &apiv1.Set{
 		Weight: set.Weight,
 		Reps:   reps,
 		Metadata: &apiv1.MetadataSet{
-			WorkoutId:    set.WorkoutID,
-			CreatedAt:    timestamppb.New(set.CreatedAt),
-			PersonalBest: personalBest,
+			WorkoutId: set.WorkoutID,
+			CreatedAt: timestamppb.New(set.CreatedAt),
+			PersonalBest: func() bool {
+				_, personalBest := mapPersonalBests[set.ID]
+				return personalBest
+			}(),
 		},
 	}, nil
 }
