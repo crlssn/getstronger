@@ -1,4 +1,5 @@
 ignore:
-  - "server/gen"
   - "*_mock.go"
   - "*_test.go"
+  - "server/gen"
+  - "web/src/proto"
