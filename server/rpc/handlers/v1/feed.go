@@ -11,6 +11,7 @@ import (
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -89,7 +90,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		mapPersonalBests[pb.ID] = struct{}{}
 	}
 
-	feedItems, err := parseFeedItemsToPB(paginated.Items, exercises, mapPersonalBests)
+	feedItems, err := parser.FeedItemsToPB(paginated.Items, exercises, mapPersonalBests)
 	if err != nil {
 		log.Error("failed to parse feed items", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

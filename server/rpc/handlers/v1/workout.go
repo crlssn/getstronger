@@ -17,6 +17,7 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -56,7 +57,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		UserID:       userID,
 		StartedAt:    req.Msg.GetStartedAt().AsTime(),
 		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
-		ExerciseSets: parseExerciseSetsFromPB(req.Msg.GetExerciseSets()),
+		ExerciseSets: parser.ExerciseSetsFromPB(req.Msg.GetExerciseSets()),
 	})
 	if err != nil {
 		log.Error("failed to create workout", zap.Error(err))
@@ -119,7 +120,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		mapPersonalBests[set.ID] = struct{}{}
 	}
 
-	w, err := parseWorkoutToPB(workout, exercises, users, mapPersonalBests)
+	w, err := parser.WorkoutToPB(workout, exercises, users, mapPersonalBests)
 	if err != nil {
 		log.Error("failed to parse workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -191,7 +192,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		mapPersonalBests[pb.ID] = struct{}{}
 	}
 
-	w, err := parseWorkoutSliceToPB(pagination.Items, exercises, users, mapPersonalBests)
+	w, err := parser.WorkoutSliceToPB(pagination.Items, exercises, users, mapPersonalBests)
 	if err != nil {
 		log.Error("failed to parse workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -257,7 +258,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	log.Info("workout comment posted")
 	return &connect.Response[apiv1.PostCommentResponse]{
 		Msg: &apiv1.PostCommentResponse{
-			Comment: parseWorkoutCommentToPB(comment, user),
+			Comment: parser.WorkoutCommentToPB(comment, user),
 		},
 	}, nil
 }
@@ -293,7 +294,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			return fmt.Errorf("failed to update workout: %w", err)
 		}
 
-		exerciseSets := parseExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
+		exerciseSets := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
 		if err = tx.UpdateWorkoutSets(ctx, workout.ID, exerciseSets); err != nil {
 			return fmt.Errorf("failed to update workout sets: %w", err)
 		}
