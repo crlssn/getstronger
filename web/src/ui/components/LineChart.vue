@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Set } from '@/proto/api/v1/shared_pb.ts'
-
 import { computed } from 'vue'
 import { Line as LineChart } from 'vue-chartjs'
 import { formatToShortDateTime } from '@/utils/datetime.ts'
@@ -14,6 +13,7 @@ import {
   PointElement,
   Title,
   Tooltip,
+  Scale,
 } from 'chart.js'
 
 ChartJS.register(
@@ -57,6 +57,18 @@ const options = {
       },
       title: {
         display: false,
+      },
+    },
+    yWeight: {
+      position: 'right',
+      grid: {
+        display: false,
+        drawBorder: false,
+      },
+      afterBuildTicks: (axis: Scale) => {
+        axis.ticks = [...axis.chart.scales.y.ticks]
+        axis.min = axis.chart.scales.y.min
+        axis.max = axis.chart.scales.y.max
       },
     },
   },
@@ -124,7 +136,7 @@ const data = computed(() => {
 </script>
 
 <template>
-  <LineChart :data="data" :options="options" />
+  <LineChart :data="data" :options="options as any" />
 </template>
 
 <style scoped></style>
