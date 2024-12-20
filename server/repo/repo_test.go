@@ -1072,8 +1072,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 
 func (s *repoSuite) TestPublishEvent() {
 	type expected struct {
-		err       error
-		notifyMsg string
+		err error
 	}
 
 	type test struct {
@@ -1087,49 +1086,55 @@ func (s *repoSuite) TestPublishEvent() {
 		{
 			name:    "ok_publish_event_with_notify",
 			topic:   orm.EventTopicWorkoutCommentPosted,
-			payload: []byte("payload"),
+			payload: []byte("{}"),
 			expected: expected{
-				err:       nil,
-				notifyMsg: "payload",
+				err: nil,
 			},
 		},
 		{
 			name:    "err_invalid_topic",
-			topic:   orm.EventTopic(""),
+			topic:   orm.EventTopic("not_found"),
 			payload: nil,
 			expected: expected{
-				err: fmt.Errorf("invalid topic"),
+				err: repo.ErrInvalidTopic,
+			},
+		},
+		{
+			name:    "err_empty_payload",
+			topic:   orm.EventTopicWorkoutCommentPosted,
+			payload: nil,
+			expected: expected{
+				err: repo.ErrEmptyPayload,
 			},
 		},
 	}
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			ctx := context.Background()
-
-			listener := pq.NewListener(s.testContainer.Connection, time.Second, time.Minute, nil)
+			var listener *pq.Listener
 			if t.topic.IsValid() == nil {
+				listener = pq.NewListener(s.testContainer.Connection, time.Second, time.Minute, nil)
 				s.Require().NoError(listener.Listen(t.topic.String()))
 			}
 
-			err := s.repo.PublishEvent(ctx, t.topic, t.payload)
+			err := s.repo.PublishEvent(context.Background(), t.topic, t.payload)
 			if t.expected.err != nil {
 				s.Require().Error(err)
-				s.Require().Contains(err.Error(), t.expected.err.Error())
+				s.Require().ErrorIs(err, t.expected.err)
 				return
 			}
-
 			s.Require().NoError(err)
 
-			event := <-listener.Notify
-			s.Require().Equal(t.topic.String(), event.Channel)
+			notification := <-listener.Notify
+			s.Require().Equal(t.topic.String(), notification.Channel)
+			s.Require().Equal(string(t.payload), notification.Extra)
 
-			//select {
-			//case notifyMsg := <-notificationChan:
-			//	s.Require().Equal(t.expected.notifyMsg, notifyMsg)
-			//case <-time.After(5 * time.Second):
-			//	s.Fail("pg_notify did not trigger within the expected time")
-			//}
+			exists, err := orm.Events(
+				orm.EventWhere.Topic.EQ(t.topic),
+				orm.EventWhere.Payload.EQ(t.payload),
+			).Exists(context.Background(), s.testContainer.DB)
+			s.Require().NoError(err)
+			s.Require().True(exists)
 		})
 	}
 }

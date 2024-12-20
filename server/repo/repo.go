@@ -1426,9 +1426,18 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exercise
 	})
 }
 
+var (
+	ErrEmptyPayload = fmt.Errorf("empty payload")
+	ErrInvalidTopic = fmt.Errorf("invalid topic")
+)
+
 func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
-	if err := topic.IsValid(); err != nil {
-		return fmt.Errorf("invalid topic: %s: %w", topic, err)
+	if topic.IsValid() != nil {
+		return fmt.Errorf("%w: %s", ErrInvalidTopic, topic)
+	}
+
+	if len(payload) == 0 {
+		return ErrEmptyPayload
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
