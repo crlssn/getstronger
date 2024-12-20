@@ -93,3 +93,7 @@ type notificationMethods interface {
 	CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error)
 	MarkNotificationsAsRead(ctx context.Context, userID string) error
 }
+
+type pubSubMethods interface {
+	PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error
+}

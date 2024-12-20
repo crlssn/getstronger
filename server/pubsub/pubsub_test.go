@@ -2,8 +2,12 @@ package pubsub_test
 
 import (
 	"context"
+	"encoding/json"
+	"sync"
+	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
@@ -13,6 +17,7 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/pubsub/handlers/mocks"
+	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/testing/container"
 )
 
@@ -25,6 +30,11 @@ type pubSubSuite struct {
 		handler    *mock_handlers.MockHandler
 		controller *gomock.Controller
 	}
+}
+
+func TestPubSubSuite(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, new(pubSubSuite))
 }
 
 func (s *pubSubSuite) SetupSuite() {
@@ -48,8 +58,29 @@ func (s *pubSubSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.T().Cleanup(func() {
+		s.mocks.controller.Finish()
 		if err = c.Terminate(ctx); err != nil {
 			s.T().Fatalf("failed to clean container: %s", err)
 		}
 	})
+}
+
+func (s *pubSubSuite) TestPublish() {
+	payload := payloads.UserFollowed{
+		FollowerID: uuid.NewString(),
+		FolloweeID: uuid.NewString(),
+	}
+
+	marshal, err := json.Marshal(payload)
+	s.Require().NoError(err)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	s.mocks.handler.EXPECT().HandlePayload(string(marshal)).Do(func(_ string) {
+		wg.Done()
+	})
+	s.pubSub.Publish(orm.EventTopicFollowedUser, payload)
+
+	wg.Wait()
 }

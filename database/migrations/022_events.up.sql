@@ -18,18 +18,3 @@ CREATE TABLE getstronger.events
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP               NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
 );
-
-CREATE FUNCTION notify_event_func()
-    RETURNS trigger AS
-$$
-BEGIN
-    PERFORM pg_notify(NEW.topic::TEXT, NEW.payload::TEXT);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER notify_event_trigger
-    AFTER INSERT
-    ON getstronger.events
-    FOR EACH ROW
-EXECUTE FUNCTION notify_event_func();
