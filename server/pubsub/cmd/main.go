@@ -32,24 +32,42 @@ func main() {
 	}
 
 	log.Println("Listening for notifications on 'test_topic'...")
+
+	go func() {
+		for {
+			sendNotification(db, "test_topic", Payload{
+				ActorID:   uuid.NewString(),
+				WorkoutID: uuid.NewString(),
+			})
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	go worker(listener, 1)
+	go worker(listener, 2)
+	go worker(listener, 3)
+	go worker(listener, 4)
+	go worker(listener, 5)
+
+	select {}
+}
+
+func worker(listener *pq.Listener, id int) {
+	log.Println("Listener started")
 	for {
-		sendNotification(db, "test_topic", Payload{
-			ActorID:   uuid.NewString(),
-			WorkoutID: uuid.NewString(),
-		})
 		select {
 		case notification := <-listener.Notify:
 			if notification == nil {
-				log.Println("Listener disconnected")
+				log.Printf("Listener %d disconnected", id)
 				return
 			}
 
 			var payload Payload
-			if err = json.Unmarshal([]byte(notification.Extra), &payload); err != nil {
+			if err := json.Unmarshal([]byte(notification.Extra), &payload); err != nil {
 				log.Fatal(fmt.Errorf("failed to unmarshal payload: %w", err))
 			}
 
-			log.Printf("Received notification: %s - %+v", notification.Channel, payload)
+			log.Printf("Listener %d received notification: %s - %+v", id, notification.Channel, payload)
 		}
 	}
 }
