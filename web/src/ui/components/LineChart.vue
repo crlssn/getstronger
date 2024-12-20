@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { Set } from '@/proto/api/v1/shared_pb.ts'
+import { computed } from 'vue'
+import { Line as LineChart } from 'vue-chartjs'
+import { formatToShortDateTime } from '@/utils/datetime.ts'
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -12,10 +15,6 @@ import {
   Tooltip,
   Scale,
 } from 'chart.js'
-
-import { computed } from 'vue'
-import { Line as LineChart } from 'vue-chartjs'
-import { formatToShortDateTime } from '@/utils/datetime.ts'
 
 ChartJS.register(
   Title,
