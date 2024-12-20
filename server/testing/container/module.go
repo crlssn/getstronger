@@ -3,7 +3,9 @@ package container
 import (
 	"context"
 	"database/sql"
+	"time"
 
+	"github.com/lib/pq"
 	"go.uber.org/fx"
 )
 
@@ -14,6 +16,9 @@ func Module() fx.Option {
 			context.Background,
 			func(c *Container) *sql.DB {
 				return c.DB
+			},
+			func(c *Container) *pq.Listener {
+				return pq.NewListener(c.Connection, time.Second, time.Minute, nil)
 			},
 		),
 		fx.Invoke(func(l fx.Lifecycle, c *Container) {

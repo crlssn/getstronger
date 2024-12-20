@@ -80,7 +80,7 @@ func (m *Middleware) trace(h http.Handler) http.Handler {
 
 		// Use a custom response writer to capture the status code.
 		rw := &trace.ResponseWriter{ResponseWriter: w}
-		t := m.tracer.Trace(r.RequestURI)
+		t := m.tracer.Trace(r.Context(), r.RequestURI)
 		defer t.End(rw)
 
 		h.ServeHTTP(rw, r)

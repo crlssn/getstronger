@@ -51,6 +51,50 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+type EventTopic string
+
+// Enum values for EventTopic
+const (
+	EventTopicFollowedUser         EventTopic = "FollowedUser"
+	EventTopicRequestTraced        EventTopic = "RequestTraced"
+	EventTopicWorkoutCommentPosted EventTopic = "WorkoutCommentPosted"
+)
+
+func AllEventTopic() []EventTopic {
+	return []EventTopic{
+		EventTopicFollowedUser,
+		EventTopicRequestTraced,
+		EventTopicWorkoutCommentPosted,
+	}
+}
+
+func (e EventTopic) IsValid() error {
+	switch e {
+	case EventTopicFollowedUser, EventTopicRequestTraced, EventTopicWorkoutCommentPosted:
+		return nil
+	default:
+		return errors.New("enum is not valid")
+	}
+}
+
+func (e EventTopic) String() string {
+	return string(e)
+}
+
+func (e EventTopic) Ordinal() int {
+	switch e {
+	case EventTopicFollowedUser:
+		return 0
+	case EventTopicRequestTraced:
+		return 1
+	case EventTopicWorkoutCommentPosted:
+		return 2
+
+	default:
+		panic(errors.New("enum is not valid"))
+	}
+}
+
 type NotificationType string
 
 // Enum values for NotificationType

@@ -16,8 +16,9 @@ import (
 )
 
 type Container struct {
-	DB        *sql.DB
-	Terminate func(ctx context.Context) error
+	DB         *sql.DB
+	Terminate  func(ctx context.Context) error
+	Connection string
 }
 
 const (
@@ -50,8 +51,9 @@ func NewContainer(ctx context.Context) *Container {
 	}
 
 	return &Container{
-		DB:        db,
-		Terminate: container.Terminate,
+		DB:         db,
+		Terminate:  container.Terminate,
+		Connection: connection,
 	}
 }
 

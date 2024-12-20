@@ -5,6 +5,7 @@ package orm
 
 var TableNames = struct {
 	Auth              string
+	Events            string
 	Exercises         string
 	ExercisesRoutines string
 	Followers         string
@@ -17,6 +18,7 @@ var TableNames = struct {
 	Workouts          string
 }{
 	Auth:              "auth",
+	Events:            "events",
 	Exercises:         "exercises",
 	ExercisesRoutines: "exercises_routines",
 	Followers:         "followers",

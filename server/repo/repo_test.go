@@ -13,6 +13,7 @@ import (
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -1065,6 +1066,75 @@ func (s *repoSuite) TestDeleteWorkout() {
 				Exists(context.Background(), s.testContainer.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
+		})
+	}
+}
+
+func (s *repoSuite) TestPublishEvent() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		topic    orm.EventTopic
+		payload  []byte
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:    "ok_publish_event_with_notify",
+			topic:   orm.EventTopicWorkoutCommentPosted,
+			payload: []byte("{}"),
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:    "err_invalid_topic",
+			topic:   orm.EventTopic("not_found"),
+			payload: nil,
+			expected: expected{
+				err: repo.ErrInvalidTopic,
+			},
+		},
+		{
+			name:    "err_empty_payload",
+			topic:   orm.EventTopicWorkoutCommentPosted,
+			payload: nil,
+			expected: expected{
+				err: repo.ErrEmptyPayload,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			var listener *pq.Listener
+			if t.topic.IsValid() == nil {
+				listener = pq.NewListener(s.testContainer.Connection, time.Second, time.Minute, nil)
+				s.Require().NoError(listener.Listen(t.topic.String()))
+			}
+
+			err := s.repo.PublishEvent(context.Background(), t.topic, t.payload)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+
+			notification := <-listener.Notify
+			s.Require().Equal(t.topic.String(), notification.Channel)
+			s.Require().Equal(string(t.payload), notification.Extra)
+
+			exists, err := orm.Events(
+				orm.EventWhere.Topic.EQ(t.topic),
+				orm.EventWhere.Payload.EQ(t.payload),
+			).Exists(context.Background(), s.testContainer.DB)
+			s.Require().NoError(err)
+			s.Require().True(exists)
 		})
 	}
 }

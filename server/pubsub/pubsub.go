@@ -1,91 +1,105 @@
 package pubsub
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 
+	"github.com/lib/pq"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
+	"github.com/crlssn/getstronger/server/repo"
 )
 
 type PubSub struct {
 	mu       sync.RWMutex
 	log      *zap.Logger
-	channels map[string]chan any
-	handlers map[string]handlers.Handler
+	repo     repo.Repo
+	listener *pq.Listener
+	handlers map[orm.EventTopic]handlers.Handler
 }
 
-func New(log *zap.Logger) *PubSub {
+type Params struct {
+	fx.In
+
+	Log      *zap.Logger
+	Repo     repo.Repo
+	Listener *pq.Listener
+}
+
+func New(p Params) *PubSub {
 	return &PubSub{
-		log:      log,
-		channels: make(map[string]chan any),
-		handlers: make(map[string]handlers.Handler),
+		log:      p.Log,
+		repo:     p.Repo,
+		listener: p.Listener,
+		handlers: make(map[orm.EventTopic]handlers.Handler),
 	}
 }
 
-func (ps *PubSub) Publish(event string, payload any) {
-	ps.mu.RLock()
-	channel, found := ps.channels[event]
-	ps.mu.RUnlock()
-
-	if !found {
-		ps.log.Error("channel not found", zap.String("event", event))
+func (ps *PubSub) Publish(ctx context.Context, topic orm.EventTopic, payload any) {
+	p, err := json.Marshal(payload)
+	if err != nil {
+		ps.log.Error("failed to marshal payload", zap.Error(err))
 		return
 	}
 
-	channel <- payload
+	if err = ps.repo.PublishEvent(ctx, topic, p); err != nil {
+		ps.log.Error("failed to publish event", zap.Error(err))
+		return
+	}
 }
 
-const (
-	channelWorkers  = 5
-	channelCapacity = 50
-)
+const workers = 10
 
-var errHandlerExists = fmt.Errorf("handler already exists")
-
-func (ps *PubSub) Subscribe(event string, handler handlers.Handler) error {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	if _, exists := ps.handlers[event]; exists {
-		return fmt.Errorf("%w: %s", errHandlerExists, event)
-	}
-	ps.handlers[event] = handler
-
-	if _, found := ps.channels[event]; !found {
-		ps.channels[event] = make(chan any, channelCapacity)
-		for range channelWorkers {
-			go ps.startWorker(event)
+func (ps *PubSub) Subscribe(handlers map[orm.EventTopic]handlers.Handler) error {
+	for topic, handler := range handlers {
+		ps.handlers[topic] = handler
+		if err := ps.listener.Listen(topic.String()); err != nil {
+			return fmt.Errorf("failed to listen to event: %w", err)
 		}
-		ps.log.Info("subscribed to event", zap.String("event", event))
+		ps.log.Info("subscribed to topic", zap.String("topic", topic.String()))
+	}
+
+	for range workers {
+		go ps.startWorker()
 	}
 
 	return nil
 }
 
-func (ps *PubSub) startWorker(event string) {
-	for payload := range ps.channels[event] {
+func (ps *PubSub) startWorker() {
+	for event := range ps.listener.Notify {
+		if event == nil {
+			ps.log.Warn("listener disconnected")
+			return
+		}
+
+		log := ps.log.With(zap.String("topic", event.Channel))
+		log.Info("received event")
+
 		ps.mu.RLock()
-		handler := ps.handlers[event]
+		handler, ok := ps.handlers[orm.EventTopic(event.Channel)]
 		ps.mu.RUnlock()
 
-		go func(payload any) {
-			defer func() {
-				if r := recover(); r != nil {
-					ps.log.Error("handler panicked", zap.Any("recover", r))
-				}
-			}()
-			handler.HandlePayload(payload)
-		}(payload)
+		if !ok {
+			log.Error("handler not found")
+			continue
+		}
+
+		go handler.HandlePayload(event.Extra)
 	}
 }
 
-func (ps *PubSub) Stop() {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	for _, channel := range ps.channels {
-		close(channel)
+func (ps *PubSub) Stop() error {
+	if err := ps.listener.UnlistenAll(); err != nil {
+		return fmt.Errorf("failed to unlisten: %w", err)
 	}
+	if err := ps.listener.Close(); err != nil {
+		return fmt.Errorf("failed to close listener: %w", err)
+	}
+	return nil
 }

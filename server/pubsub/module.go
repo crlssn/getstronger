@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"context"
-	"fmt"
 
 	"go.uber.org/fx"
 
@@ -14,7 +13,7 @@ func Module() fx.Option {
 		fx.Provide(
 			New,
 			handlers.NewRegistry,
-			handlers.NewUserFollowed,
+			handlers.NewFollowedUser,
 			handlers.NewRequestTraced,
 			handlers.NewWorkoutCommentPosted,
 		),
@@ -22,16 +21,10 @@ func Module() fx.Option {
 			func(lc fx.Lifecycle, pubSub *PubSub, registry *handlers.Registry) {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
-						for event, handler := range registry.Handlers() {
-							if err := pubSub.Subscribe(event, handler); err != nil {
-								return fmt.Errorf("failed to subscribe to event %s: %w", event, err)
-							}
-						}
-						return nil
+						return pubSub.Subscribe(registry.Handlers())
 					},
 					OnStop: func(_ context.Context) error {
-						pubSub.Stop()
-						return nil
+						return pubSub.Stop()
 					},
 				})
 			},

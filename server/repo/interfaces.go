@@ -7,6 +7,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
+//go:generate mockgen -package mock_repo -source=interfaces.go -destination=mocks/mock_repo.go Repo
 type Repo interface {
 	methods
 	NewTx(ctx context.Context, f func(tx Tx) error) error
@@ -22,6 +23,7 @@ type methods interface {
 	authMethods
 	userMethods
 	traceMethods
+	pubSubMethods
 	routineMethods
 	workoutMethods
 	exerciseMethods
@@ -92,4 +94,8 @@ type notificationMethods interface {
 	CreateNotification(ctx context.Context, p CreateNotificationParams) error
 	CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error)
 	MarkNotificationsAsRead(ctx context.Context, userID string) error
+}
+
+type pubSubMethods interface {
+	PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error
 }
