@@ -375,10 +375,24 @@ func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice
 			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
 		}
 
-		nSlice = append(nSlice, Notification(n,
-			NotificationActor(n.Type, mapActors[p.ActorID]),
-			NotificationWorkout(n.Type, mapWorkouts[p.WorkoutID]),
-		))
+		actor, actorExists := mapActors[p.ActorID]
+		workout, workoutExists := mapWorkouts[p.WorkoutID]
+
+		switch n.Type {
+		case orm.NotificationTypeFollow:
+			if actorExists {
+				nSlice = append(nSlice, Notification(n,
+					NotificationActor(n.Type, actor),
+				))
+			}
+		case orm.NotificationTypeWorkoutComment:
+			if actorExists && workoutExists {
+				nSlice = append(nSlice, Notification(n,
+					NotificationActor(n.Type, actor),
+					NotificationWorkout(n.Type, workout),
+				))
+			}
+		}
 	}
 
 	return nSlice, nil
