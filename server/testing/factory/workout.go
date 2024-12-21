@@ -38,7 +38,14 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 	}
 	boil.DebugMode = false
 
-	f.SetUser(m.User().One, m.SetUser)
+	user, err := m.User().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	}
+
+	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
+		panic(fmt.Errorf("failed to set user: %w", err))
+	}
 
 	return m
 }

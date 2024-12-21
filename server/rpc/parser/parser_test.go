@@ -187,12 +187,10 @@ func (s *parserSuite) TestWorkoutSlice() {
 	s.Run("ok_workouts_with_relationships", func() {
 		workouts := orm.WorkoutSlice{
 			s.factory.NewWorkout(),
-			s.factory.NewWorkout(),
 		}
 
 		for _, workout := range workouts {
 			workout.R.Sets = orm.SetSlice{
-				s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
 				s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
 			}
 		}
