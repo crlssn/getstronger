@@ -29,6 +29,7 @@ type Set struct {
 	Weight     float64   `boil:"weight" json:"weight" toml:"weight" yaml:"weight"`
 	Reps       int       `boil:"reps" json:"reps" toml:"reps" yaml:"reps"`
 	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UserID     string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 
 	R *setR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L setL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,6 +42,7 @@ var SetColumns = struct {
 	Weight     string
 	Reps       string
 	CreatedAt  string
+	UserID     string
 }{
 	ID:         "id",
 	WorkoutID:  "workout_id",
@@ -48,6 +50,7 @@ var SetColumns = struct {
 	Weight:     "weight",
 	Reps:       "reps",
 	CreatedAt:  "created_at",
+	UserID:     "user_id",
 }
 
 var SetTableColumns = struct {
@@ -57,6 +60,7 @@ var SetTableColumns = struct {
 	Weight     string
 	Reps       string
 	CreatedAt  string
+	UserID     string
 }{
 	ID:         "sets.id",
 	WorkoutID:  "sets.workout_id",
@@ -64,6 +68,7 @@ var SetTableColumns = struct {
 	Weight:     "sets.weight",
 	Reps:       "sets.reps",
 	CreatedAt:  "sets.created_at",
+	UserID:     "sets.user_id",
 }
 
 // Generated where
@@ -127,6 +132,7 @@ var SetWhere = struct {
 	Weight     whereHelperfloat64
 	Reps       whereHelperint
 	CreatedAt  whereHelpertime_Time
+	UserID     whereHelperstring
 }{
 	ID:         whereHelperstring{field: "\"getstronger\".\"sets\".\"id\""},
 	WorkoutID:  whereHelperstring{field: "\"getstronger\".\"sets\".\"workout_id\""},
@@ -134,6 +140,7 @@ var SetWhere = struct {
 	Weight:     whereHelperfloat64{field: "\"getstronger\".\"sets\".\"weight\""},
 	Reps:       whereHelperint{field: "\"getstronger\".\"sets\".\"reps\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"getstronger\".\"sets\".\"created_at\""},
+	UserID:     whereHelperstring{field: "\"getstronger\".\"sets\".\"user_id\""},
 }
 
 // SetRels is where relationship names are stored.
@@ -174,8 +181,8 @@ func (r *setR) GetWorkout() *Workout {
 type setL struct{}
 
 var (
-	setAllColumns            = []string{"id", "workout_id", "exercise_id", "weight", "reps", "created_at"}
-	setColumnsWithoutDefault = []string{"workout_id", "exercise_id", "weight", "reps"}
+	setAllColumns            = []string{"id", "workout_id", "exercise_id", "weight", "reps", "created_at", "user_id"}
+	setColumnsWithoutDefault = []string{"workout_id", "exercise_id", "weight", "reps", "user_id"}
 	setColumnsWithDefault    = []string{"id", "created_at"}
 	setPrimaryKeyColumns     = []string{"id"}
 	setGeneratedColumns      = []string{}

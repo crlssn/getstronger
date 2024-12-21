@@ -566,7 +566,7 @@ func (s *parserSuite) TestFeedItemSlice() {
 
 func (s *parserSuite) TestSet() {
 	set := s.factory.NewSet()
-	parsed := parser.Set(set)
+	parsed := parser.Set(set, nil)
 
 	s.Require().Equal(set.ID, parsed.GetId())
 	s.Require().InEpsilon(set.Weight, parsed.GetWeight(), 0)

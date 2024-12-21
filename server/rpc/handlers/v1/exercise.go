@@ -243,9 +243,20 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	userIDs := make([]string, 0, len(paginated.Items))
+	for _, set := range paginated.Items {
+		userIDs = append(userIDs, set.UserID)
+	}
+
+	personalBests, err := h.repo.GetPersonalBests(ctx, userIDs...)
+	if err != nil {
+		log.Error("list personal bests failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("sets listed")
 	return connect.NewResponse(&apiv1.ListSetsResponse{
-		Sets: parser.SetSlice(paginated.Items),
+		Sets: parser.SetSlice(paginated.Items, personalBests),
 		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: paginated.NextPageToken,
 		},

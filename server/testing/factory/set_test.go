@@ -42,6 +42,15 @@ func TestFactory_Set(t *testing.T) {
 		require.Equal(t, workoutID, created.WorkoutID)
 	})
 
+	t.Run("SetUserID", func(t *testing.T) {
+		t.Parallel()
+		userID := f.NewUser().ID
+		expected := f.NewSet(factory.SetUserID(userID))
+		created, err := orm.FindSet(ctx, c.DB, expected.ID)
+		require.NoError(t, err)
+		require.Equal(t, userID, created.UserID)
+	})
+
 	t.Run("SetExerciseID", func(t *testing.T) {
 		t.Parallel()
 		exerciseID := f.NewExercise().ID
