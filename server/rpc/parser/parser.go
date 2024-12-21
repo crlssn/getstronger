@@ -248,19 +248,22 @@ func ExerciseSetsPersonalBests(personalBests orm.SetSlice) ExerciseSetsSliceOpt 
 }
 
 func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1.ExerciseSets {
-	mapExerciseSets := make(map[*apiv1.Exercise][]*apiv1.Set)
+	mapExerciseSetsSlice := make(map[string]*apiv1.ExerciseSets)
 	for _, set := range sets {
-		exercise := Exercise(set.R.GetExercise())
-		mapExerciseSets[exercise] = append(mapExerciseSets[exercise], Set(set))
-	}
-
-	exerciseSetsSlice := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
-	for exercise, setSlice := range mapExerciseSets {
-		exerciseSets := &apiv1.ExerciseSets{
-			Exercise: exercise,
-			Sets:     setSlice,
+		exercise := set.R.GetExercise()
+		if _, ok := mapExerciseSetsSlice[exercise.ID]; !ok {
+			mapExerciseSetsSlice[exercise.ID] = &apiv1.ExerciseSets{
+				Exercise: Exercise(exercise),
+				Sets:     []*apiv1.Set{Set(set)},
+			}
+			continue
 		}
 
+		mapExerciseSetsSlice[exercise.ID].Sets = append(mapExerciseSetsSlice[exercise.ID].Sets, Set(set))
+	}
+
+	exerciseSetsSlice := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSetsSlice))
+	for _, exerciseSets := range mapExerciseSetsSlice {
 		for _, opt := range opts {
 			opt(exerciseSets)
 		}
