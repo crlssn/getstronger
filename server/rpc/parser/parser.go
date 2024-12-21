@@ -116,7 +116,7 @@ func WorkoutUser(user *orm.User) WorkoutOpt {
 func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
 		for _, comment := range comments {
-			w.Comments = append(w.Comments, WorkoutComment(comment, WorkoutCommentUser(comment.R.GetUser())))
+			w.Comments = append(w.Comments, WorkoutComment(comment))
 		}
 	}
 }
@@ -189,31 +189,20 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 	return workoutSlice, nil
 }
 
-type WorkoutCommentOpt func(*apiv1.WorkoutComment)
-
-func WorkoutCommentUser(user *orm.User) WorkoutCommentOpt {
-	return func(c *apiv1.WorkoutComment) {
-		c.User = User(user)
-	}
-}
-
-func WorkoutComment(comment *orm.WorkoutComment, opts ...WorkoutCommentOpt) *apiv1.WorkoutComment {
+func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
 	c := &apiv1.WorkoutComment{
 		Id:        comment.ID,
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
-		// Relationships. Load them with WorkoutOpt.
-		User: nil,
+		User:      nil,
 	}
 
-	if comment.R != nil {
-		if comment.R.User != nil {
-			c.User = User(comment.R.GetUser())
-		}
+	if comment.R == nil {
+		return c
 	}
 
-	for _, opt := range opts {
-		opt(c)
+	if comment.R.User != nil {
+		c.User = User(comment.R.GetUser())
 	}
 
 	return c
