@@ -1131,7 +1131,7 @@ func (mr *MockTxMockRecorder) GetRoutine(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetTx mocks base method.
-func (m *MockTx) GetTx() *sql.Tx {
+func (m *MockTx) exec() *sql.Tx {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTx")
 	ret0, _ := ret[0].(*sql.Tx)
@@ -1141,7 +1141,7 @@ func (m *MockTx) GetTx() *sql.Tx {
 // GetTx indicates an expected call of GetTx.
 func (mr *MockTxMockRecorder) GetTx() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTx", reflect.TypeOf((*MockTx)(nil).GetTx))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTx", reflect.TypeOf((*MockTx)(nil).exec))
 }
 
 // GetUser mocks base method.

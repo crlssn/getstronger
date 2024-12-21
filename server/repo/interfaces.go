@@ -15,7 +15,7 @@ type Repo interface {
 
 type Tx interface {
 	methods
-	GetTx() *sql.Tx
+	exec() *sql.Tx
 }
 
 type methods interface {

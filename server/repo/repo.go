@@ -35,7 +35,7 @@ type repo struct {
 	tx *sql.Tx
 }
 
-func (r *repo) GetTx() *sql.Tx {
+func (r *repo) exec() *sql.Tx {
 	return r.tx
 }
 
@@ -153,7 +153,7 @@ func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Auths(orm.AuthWhere.ID.EQ(authID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Auths(orm.AuthWhere.ID.EQ(authID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("auth update: %w", rowsErr)
 		}
@@ -236,7 +236,7 @@ func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 			orm.ExerciseWhere.ID.EQ(p.ExerciseID),
 			orm.ExerciseWhere.UserID.EQ(p.UserID),
 			qm.Load(orm.ExerciseRels.Routines),
-		).One(ctx, tx.GetTx())
+		).One(ctx, tx.exec())
 		if err != nil {
 			return fmt.Errorf("exercise fetch: %w", err)
 		}
@@ -260,12 +260,12 @@ func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 			}
 		}
 
-		if err = exercise.SetRoutines(ctx, tx.GetTx(), false); err != nil {
+		if err = exercise.SetRoutines(ctx, tx.exec(), false); err != nil {
 			return fmt.Errorf("exercise routines set: %w", err)
 		}
 
 		exercise.DeletedAt = null.TimeFrom(time.Now().UTC())
-		if _, err = exercise.Update(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if _, err = exercise.Update(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("exercise soft delete: %w", err)
 		}
 
@@ -405,7 +405,7 @@ func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...Up
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Exercises(orm.ExerciseWhere.ID.EQ(exerciseID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Exercises(orm.ExerciseWhere.ID.EQ(exerciseID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("exercise update: %w", err)
 		}
@@ -450,11 +450,11 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.R
 	}
 
 	if err = r.NewTx(ctx, func(tx Tx) error {
-		if err = routine.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if err = routine.Insert(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("routine insert: %w", err)
 		}
 
-		if err = routine.SetExercises(ctx, tx.GetTx(), false, exercises...); err != nil {
+		if err = routine.SetExercises(ctx, tx.exec(), false, exercises...); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
@@ -510,11 +510,11 @@ func (r *repo) DeleteRoutine(ctx context.Context, id string) error {
 			return fmt.Errorf("routine fetch: %w", err)
 		}
 
-		if err = routine.SetExercises(ctx, tx.GetTx(), false); err != nil {
+		if err = routine.SetExercises(ctx, tx.exec(), false); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
-		if _, err = routine.Delete(ctx, tx.GetTx()); err != nil {
+		if _, err = routine.Delete(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("routine delete: %w", err)
 		}
 
@@ -612,7 +612,7 @@ func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("routine update: %w", err)
 		}
@@ -755,7 +755,7 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 	}
 
 	if err := r.NewTx(ctx, func(tx Tx) error {
-		if err := workout.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if err := workout.Insert(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("workout insert: %w", err)
 		}
 
@@ -770,7 +770,7 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 				})
 			}
 
-			if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
+			if err := workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
 				return fmt.Errorf("workout sets add: %w", err)
 			}
 		}
@@ -865,26 +865,26 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		workout, err := orm.Workouts(query...).One(ctx, tx.GetTx())
+		workout, err := orm.Workouts(query...).One(ctx, tx.exec())
 		if err != nil {
 			return fmt.Errorf("workout fetch: %w", err)
 		}
 
-		if _, err = workout.R.Sets.DeleteAll(ctx, tx.GetTx()); err != nil {
+		if _, err = workout.R.Sets.DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
 		}
 
-		if _, err = workout.R.WorkoutComments.DeleteAll(ctx, tx.GetTx()); err != nil {
+		if _, err = workout.R.WorkoutComments.DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout comments delete: %w", err)
 		}
 
 		if _, err = orm.Notifications(
 			qm.Where("payload ->> 'workoutId' = ?", workout.ID),
-		).DeleteAll(ctx, tx.GetTx()); err != nil {
+		).DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("notifications delete: %w", err)
 		}
 
-		if _, err = workout.Delete(ctx, tx.GetTx()); err != nil {
+		if _, err = workout.Delete(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout delete: %w", err)
 		}
 
@@ -1473,7 +1473,7 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Workouts(orm.WorkoutWhere.ID.EQ(workoutID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Workouts(orm.WorkoutWhere.ID.EQ(workoutID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("workout update: %w", err)
 		}
@@ -1489,7 +1489,7 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
 	return r.NewTx(ctx, func(tx Tx) error {
 		workout := &orm.Workout{ID: workoutID}
-		if _, err := workout.Sets().DeleteAll(ctx, tx.GetTx()); err != nil {
+		if _, err := workout.Sets().DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
 		}
 
@@ -1505,7 +1505,7 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exercise
 			}
 		}
 
-		if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
+		if err := workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
 			return fmt.Errorf("workout sets add: %w", err)
 		}
 
@@ -1532,11 +1532,11 @@ func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload [
 			Topic:   topic,
 			Payload: payload,
 		}
-		if err := event.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if err := event.Insert(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("event insert: %w", err)
 		}
 
-		if _, err := tx.GetTx().Exec("SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
+		if _, err := tx.exec().Exec("SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
 			return fmt.Errorf("pg_notify: %w", err)
 		}
 
