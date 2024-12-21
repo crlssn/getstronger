@@ -169,7 +169,7 @@ func WorkoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) Work
 
 func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
 	return func(w *apiv1.Workout) error {
-		exerciseSets, err := ExerciseSetsSlice(sets, personalBests)
+		exerciseSets, err := ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
 		if err != nil {
 			return fmt.Errorf("failed to parse exercise sets: %w", err)
 		}
@@ -231,16 +231,30 @@ func workoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) []*a
 	return cSlice
 }
 
-func ExerciseSetsSlice(sets orm.SetSlice, personalBests orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
-	mapPersonalBests := make(map[string]struct{}, len(personalBests))
-	for _, set := range personalBests {
-		mapPersonalBests[set.ID] = struct{}{}
-	}
+type ExerciseSetsSliceOpt func(*apiv1.ExerciseSets)
 
+func ExerciseSetsPersonalBests(personalBests orm.SetSlice) ExerciseSetsSliceOpt {
+	return func(s *apiv1.ExerciseSets) {
+		mapPersonalBests := make(map[string]struct{}, len(personalBests))
+		for _, set := range personalBests {
+			mapPersonalBests[set.ID] = struct{}{}
+		}
+
+		for _, set := range s.GetSets() {
+			_, yes := mapPersonalBests[set.GetId()]
+			if set.GetMetadata() == nil {
+				set.Metadata = &apiv1.MetadataSet{}
+			}
+
+			set.Metadata.PersonalBest = yes
+		}
+	}
+}
+
+func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) ([]*apiv1.ExerciseSets, error) {
 	mapExerciseSets := make(map[*apiv1.Exercise][]*apiv1.Set)
 	for _, set := range sets {
-		_, yes := mapPersonalBests[set.ID]
-		s, err := Set(set, SetPersonalBest(yes))
+		s, err := Set(set)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
@@ -249,15 +263,21 @@ func ExerciseSetsSlice(sets orm.SetSlice, personalBests orm.SetSlice) ([]*apiv1.
 		mapExerciseSets[exercise] = append(mapExerciseSets[exercise], s)
 	}
 
-	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
+	exerciseSetsSlice := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
 	for exercise, setSlice := range mapExerciseSets {
-		exerciseSets = append(exerciseSets, &apiv1.ExerciseSets{
+		exerciseSets := &apiv1.ExerciseSets{
 			Exercise: exercise,
 			Sets:     setSlice,
-		})
+		}
+
+		for _, opt := range opts {
+			opt(exerciseSets)
+		}
+
+		exerciseSetsSlice = append(exerciseSetsSlice, exerciseSets)
 	}
 
-	return exerciseSets, nil
+	return exerciseSetsSlice, nil
 }
 
 func ExerciseSetSlice(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.ExerciseSet, error) {
@@ -416,6 +436,7 @@ func Set(set *orm.Set, opts ...SetOpt) (*apiv1.Set, error) {
 	}
 
 	s := &apiv1.Set{
+		Id:     set.ID,
 		Weight: set.Weight,
 		Reps:   reps,
 		Metadata: &apiv1.MetadataSet{

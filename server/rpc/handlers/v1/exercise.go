@@ -184,7 +184,6 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 
 func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *connect.Request[apiv1.GetPreviousWorkoutSetsRequest]) (*connect.Response[apiv1.GetPreviousWorkoutSetsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
 
 	sets, err := h.repo.GetPreviousWorkoutSets(ctx, req.Msg.GetExerciseIds())
 	if err != nil {
@@ -201,28 +200,7 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workoutIDs := make([]string, 0, len(sets))
-	for _, set := range sets {
-		workoutIDs = append(workoutIDs, set.WorkoutID)
-	}
-
-	workouts, err := h.repo.ListWorkouts(ctx,
-		repo.ListWorkoutsWithIDs(workoutIDs),
-		repo.ListWorkoutsLoadExercises(),
-	)
-	if err != nil {
-		log.Error("failed to get workouts", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	for _, workout := range workouts {
-		if workout.UserID != userID {
-			log.Error("workout does not belong to user")
-			return nil, connect.NewError(connect.CodePermissionDenied, nil)
-		}
-	}
-
-	exerciseSets, err := parser.ExerciseSetsSlice(sets, nil)
+	exerciseSets, err := parser.ExerciseSetsSlice(sets)
 	if err != nil {
 		log.Error("failed to parse set slice to exercise sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

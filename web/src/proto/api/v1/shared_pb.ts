@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/shared.proto.
  */
 export const file_api_v1_shared: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiWwoLRXhlcmNpc2VTZXQSKgoIZXhlcmNpc2UYASABKAsyEC5hcGkudjEuRXhlcmNpc2VCBrpIA8gBARIgCgNzZXQYAiABKAsyCy5hcGkudjEuU2V0Qga6SAPIAQEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIk4KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIPCgd1c2VyX2lkGAIgASgJEgwKBG5hbWUYAyABKAkSDQoFbGFiZWwYBCABKAkiUwoDU2V0Eg4KBndlaWdodBgBIAEoARIVCgRyZXBzGAIgASgFQge6SAQaAigBEiUKCG1ldGFkYXRhGAMgASgLMhMuYXBpLnYxLk1ldGFkYXRhU2V0InIKC01ldGFkYXRhU2V0EhwKCndvcmtvdXRfaWQYASABKAlCCLpIBXIDsAEBEi4KCmNyZWF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhUKDXBlcnNvbmFsX2Jlc3QYAyABKAgidgoEVXNlchIUCgJpZBgBIAEoCUIIukgFcgOwAQESGwoKZmlyc3RfbmFtZRgCIAEoCUIHukgEcgIQARIaCglsYXN0X25hbWUYAyABKAlCB7pIBHICEAESDQoFZW1haWwYBCABKAkSEAoIZm9sbG93ZWQYBSABKAgiRgoRUGFnaW5hdGlvblJlcXVlc3QSHQoKcGFnZV9saW1pdBgBIAEoBUIJukgGGgQYZCgBEhIKCnBhZ2VfdG9rZW4YAiABKAwiLQoSUGFnaW5hdGlvblJlc3BvbnNlEhcKD25leHRfcGFnZV90b2tlbhgBIAEoDEKPAQoKY29tLmFwaS52MUILU2hhcmVkUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp]);
+  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiWwoLRXhlcmNpc2VTZXQSKgoIZXhlcmNpc2UYASABKAsyEC5hcGkudjEuRXhlcmNpc2VCBrpIA8gBARIgCgNzZXQYAiABKAsyCy5hcGkudjEuU2V0Qga6SAPIAQEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIk4KCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIPCgd1c2VyX2lkGAIgASgJEgwKBG5hbWUYAyABKAkSDQoFbGFiZWwYBCABKAkiXwoDU2V0EgoKAmlkGAEgASgJEg4KBndlaWdodBgCIAEoARIVCgRyZXBzGAMgASgFQge6SAQaAigBEiUKCG1ldGFkYXRhGAQgASgLMhMuYXBpLnYxLk1ldGFkYXRhU2V0InIKC01ldGFkYXRhU2V0EhwKCndvcmtvdXRfaWQYASABKAlCCLpIBXIDsAEBEi4KCmNyZWF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhUKDXBlcnNvbmFsX2Jlc3QYAyABKAgidgoEVXNlchIUCgJpZBgBIAEoCUIIukgFcgOwAQESGwoKZmlyc3RfbmFtZRgCIAEoCUIHukgEcgIQARIaCglsYXN0X25hbWUYAyABKAlCB7pIBHICEAESDQoFZW1haWwYBCABKAkSEAoIZm9sbG93ZWQYBSABKAgiRgoRUGFnaW5hdGlvblJlcXVlc3QSHQoKcGFnZV9saW1pdBgBIAEoBUIJukgGGgQYZCgBEhIKCnBhZ2VfdG9rZW4YAiABKAwiLQoSUGFnaW5hdGlvblJlc3BvbnNlEhcKD25leHRfcGFnZV90b2tlbhgBIAEoDEKPAQoKY29tLmFwaS52MUILU2hhcmVkUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message api.v1.ExerciseSet
@@ -96,19 +96,24 @@ export const ExerciseSchema: GenMessage<Exercise> = /*@__PURE__*/
  */
 export type Set = Message<"api.v1.Set"> & {
   /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
    * The weight can be less than zero.
    *
-   * @generated from field: double weight = 1;
+   * @generated from field: double weight = 2;
    */
   weight: number;
 
   /**
-   * @generated from field: int32 reps = 2;
+   * @generated from field: int32 reps = 3;
    */
   reps: number;
 
   /**
-   * @generated from field: api.v1.MetadataSet metadata = 3;
+   * @generated from field: api.v1.MetadataSet metadata = 4;
    */
   metadata?: MetadataSet;
 };
