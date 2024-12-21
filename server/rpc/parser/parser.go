@@ -14,6 +14,10 @@ import (
 type ExerciseOpt func(*apiv1.Exercise)
 
 func Exercise(exercise *orm.Exercise, opts ...ExerciseOpt) *apiv1.Exercise {
+	if exercise == nil {
+		return nil
+	}
+
 	e := &apiv1.Exercise{
 		Id:     exercise.ID,
 		UserId: exercise.UserID,
