@@ -396,20 +396,8 @@ func SetSlice(sets orm.SetSlice) []*apiv1.Set {
 	return sSlice
 }
 
-type SetOpt func(*apiv1.Set)
-
-func SetPersonalBest(personalBest bool) SetOpt {
-	return func(set *apiv1.Set) {
-		if set.GetMetadata() == nil {
-			set.Metadata = &apiv1.MetadataSet{}
-		}
-
-		set.Metadata.PersonalBest = personalBest
-	}
-}
-
-func Set(set *orm.Set, opts ...SetOpt) *apiv1.Set {
-	s := &apiv1.Set{
+func Set(set *orm.Set) *apiv1.Set {
+	return &apiv1.Set{
 		Id:     set.ID,
 		Weight: set.Weight,
 		Reps:   int32(set.Reps), //nolint:gosec
@@ -419,12 +407,6 @@ func Set(set *orm.Set, opts ...SetOpt) *apiv1.Set {
 			PersonalBest: false,
 		},
 	}
-
-	for _, opt := range opts {
-		opt(s)
-	}
-
-	return s
 }
 
 func slice[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
