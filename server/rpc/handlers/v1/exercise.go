@@ -188,7 +188,6 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 	sets, err := h.repo.GetPreviousWorkoutSets(ctx, req.Msg.GetExerciseIds())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("no previous workout sets", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
 			return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
 				Msg: &apiv1.GetPreviousWorkoutSetsResponse{
 					ExerciseSets: nil,
@@ -200,15 +199,9 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exerciseSets, err := parser.ExerciseSetsSlice(sets)
-	if err != nil {
-		log.Error("failed to parse set slice to exercise sets", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
 		Msg: &apiv1.GetPreviousWorkoutSetsResponse{
-			ExerciseSets: exerciseSets,
+			ExerciseSets: parser.ExerciseSetsSlice(sets),
 		},
 	}, nil
 }
@@ -233,14 +226,8 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBestSlice, err := parser.ExerciseSetSlice(exercises, personalBests)
-	if err != nil {
-		log.Error("failed to parse personal best slice to pb", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	return connect.NewResponse(&apiv1.GetPersonalBestsResponse{
-		PersonalBests: personalBestSlice,
+		PersonalBests: parser.ExerciseSetSlice(exercises, personalBests),
 	}), nil
 }
 
@@ -266,15 +253,9 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	setSlice, err := parser.SetSlice(paginated.Items, nil)
-	if err != nil {
-		log.Error("failed to parse set slice to pb", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	log.Info("sets listed")
 	return connect.NewResponse(&apiv1.ListSetsResponse{
-		Sets: setSlice,
+		Sets: parser.SetSlice(paginated.Items),
 		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: paginated.NextPageToken,
 		},

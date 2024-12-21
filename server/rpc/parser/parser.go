@@ -8,7 +8,6 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
-	"github.com/crlssn/getstronger/server/safe"
 )
 
 type ExerciseOpt func(*apiv1.Exercise)
@@ -173,12 +172,7 @@ func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutRelOpt {
 
 func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
 	return func(w *apiv1.Workout) error {
-		exerciseSets, err := ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
-		if err != nil {
-			return fmt.Errorf("failed to parse exercise sets: %w", err)
-		}
-
-		w.ExerciseSets = exerciseSets
+		w.ExerciseSets = ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
 		return nil
 	}
 }
@@ -253,16 +247,11 @@ func ExerciseSetsPersonalBests(personalBests orm.SetSlice) ExerciseSetsSliceOpt 
 	}
 }
 
-func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) ([]*apiv1.ExerciseSets, error) {
+func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1.ExerciseSets {
 	mapExerciseSets := make(map[*apiv1.Exercise][]*apiv1.Set)
 	for _, set := range sets {
-		s, err := Set(set)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse set: %w", err)
-		}
-
 		exercise := Exercise(set.R.GetExercise())
-		mapExerciseSets[exercise] = append(mapExerciseSets[exercise], s)
+		mapExerciseSets[exercise] = append(mapExerciseSets[exercise], Set(set))
 	}
 
 	exerciseSetsSlice := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
@@ -279,10 +268,10 @@ func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) ([]*apiv
 		exerciseSetsSlice = append(exerciseSetsSlice, exerciseSets)
 	}
 
-	return exerciseSetsSlice, nil
+	return exerciseSetsSlice
 }
 
-func ExerciseSetSlice(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.ExerciseSet, error) {
+func ExerciseSetSlice(exercises orm.ExerciseSlice, sets orm.SetSlice) []*apiv1.ExerciseSet {
 	mapExercises := make(map[string]*orm.Exercise, len(exercises))
 	for _, exercise := range exercises {
 		mapExercises[exercise.ID] = exercise
@@ -290,18 +279,13 @@ func ExerciseSetSlice(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.
 
 	exerciseSets := make([]*apiv1.ExerciseSet, 0, len(sets))
 	for _, set := range sets {
-		s, err := Set(set)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse set: %w", err)
-		}
-
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSet{
 			Exercise: Exercise(mapExercises[set.ExerciseID]),
-			Set:      s,
+			Set:      Set(set),
 		})
 	}
 
-	return exerciseSets, nil
+	return exerciseSets
 }
 
 func NotificationSlice(notifications orm.NotificationSlice, payload map[string]repo.NotificationPayload, users orm.UserSlice, workouts orm.WorkoutSlice) []*apiv1.Notification {
@@ -406,17 +390,12 @@ func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*ap
 	return items, nil
 }
 
-func SetSlice(sets orm.SetSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Set, error) {
+func SetSlice(sets orm.SetSlice) []*apiv1.Set {
 	sSlice := make([]*apiv1.Set, 0, len(sets))
 	for _, set := range sets {
-		_, yes := mapPersonalBests[set.ID]
-		s, err := Set(set, SetPersonalBest(yes))
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse set: %w", err)
-		}
-		sSlice = append(sSlice, s)
+		sSlice = append(sSlice, Set(set))
 	}
-	return sSlice, nil
+	return sSlice
 }
 
 type SetOpt func(*apiv1.Set)
@@ -431,16 +410,11 @@ func SetPersonalBest(personalBest bool) SetOpt {
 	}
 }
 
-func Set(set *orm.Set, opts ...SetOpt) (*apiv1.Set, error) {
-	reps, err := safe.IntToInt32(set.Reps)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse reps: %w", err)
-	}
-
+func Set(set *orm.Set, opts ...SetOpt) *apiv1.Set {
 	s := &apiv1.Set{
 		Id:     set.ID,
 		Weight: set.Weight,
-		Reps:   reps,
+		Reps:   int32(set.Reps), //nolint:gosec
 		Metadata: &apiv1.MetadataSet{
 			WorkoutId:    set.WorkoutID,
 			CreatedAt:    timestamppb.New(set.CreatedAt),
@@ -452,7 +426,7 @@ func Set(set *orm.Set, opts ...SetOpt) (*apiv1.Set, error) {
 		opt(s)
 	}
 
-	return s, nil
+	return s
 }
 
 func slice[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
