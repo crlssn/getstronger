@@ -255,7 +255,8 @@ func ExerciseSetsSlice(exercises orm.ExerciseSlice, sets orm.SetSlice, personalB
 			mapExerciseSets[exercise] = make([]*apiv1.Set, 0)
 		}
 
-		s, err := Set(set, mapPersonalBests)
+		_, yes := mapPersonalBests[set.ID]
+		s, err := Set(set, SetPersonalBest(yes))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
@@ -282,7 +283,7 @@ func ExerciseSetSlice(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.
 
 	exerciseSets := make([]*apiv1.ExerciseSet, 0, len(sets))
 	for _, set := range sets {
-		s, err := Set(set, nil)
+		s, err := Set(set)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
@@ -401,7 +402,8 @@ func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*ap
 func SetSlice(sets orm.SetSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Set, error) {
 	sSlice := make([]*apiv1.Set, 0, len(sets))
 	for _, set := range sets {
-		s, err := Set(set, mapPersonalBests)
+		_, yes := mapPersonalBests[set.ID]
+		s, err := Set(set, SetPersonalBest(yes))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
@@ -410,24 +412,39 @@ func SetSlice(sets orm.SetSlice, mapPersonalBests map[string]struct{}) ([]*apiv1
 	return sSlice, nil
 }
 
-func Set(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, error) {
+type SetOpt func(*apiv1.Set)
+
+func SetPersonalBest(personalBest bool) SetOpt {
+	return func(set *apiv1.Set) {
+		if set.Metadata == nil {
+			set.Metadata = &apiv1.MetadataSet{}
+		}
+
+		set.Metadata.PersonalBest = personalBest
+	}
+}
+
+func Set(set *orm.Set, opts ...SetOpt) (*apiv1.Set, error) {
 	reps, err := safe.IntToInt32(set.Reps)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse reps: %w", err)
 	}
 
-	return &apiv1.Set{
+	s := &apiv1.Set{
 		Weight: set.Weight,
 		Reps:   reps,
 		Metadata: &apiv1.MetadataSet{
-			WorkoutId: set.WorkoutID,
-			CreatedAt: timestamppb.New(set.CreatedAt),
-			PersonalBest: func() bool {
-				_, yes := mapPersonalBests[set.ID]
-				return yes
-			}(),
+			WorkoutId:    set.WorkoutID,
+			CreatedAt:    timestamppb.New(set.CreatedAt),
+			PersonalBest: false,
 		},
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s, nil
 }
 
 func slice[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
