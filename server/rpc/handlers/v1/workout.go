@@ -74,7 +74,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 
 func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[apiv1.GetWorkoutRequest]) (*connect.Response[apiv1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
+	//userID := xcontext.MustExtractUserID(ctx)
 
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
@@ -99,15 +99,15 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		exercises = append(exercises, set.R.GetExercise())
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
-	if err != nil {
-		log.Error("failed to get personal bests", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
+	//personalBests, err := h.repo.GetPersonalBests(ctx, userID)
+	//if err != nil {
+	//	log.Error("failed to get personal bests", zap.Error(err))
+	//	return nil, connect.NewError(connect.CodeInternal, nil)
+	//}
 
 	w, err := parser.Workout(workout,
 		parser.WorkoutComments(workout.R.GetWorkoutComments(), commentUsers),
-		parser.WorkoutExerciseSets(exercises, personalBests),
+		//parser.WorkoutExerciseSets(exercises, personalBests),
 	)
 	if err != nil {
 		log.Error("failed to parse workout", zap.Error(err))
