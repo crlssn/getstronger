@@ -37,8 +37,7 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Followed:  false,
-		// Relationships. Load them with UserOpt.
-		Email: "",
+		Email:     "",
 	}
 
 	if user.R != nil {
@@ -60,9 +59,8 @@ func UserSlice(users orm.UserSlice) []*apiv1.User {
 
 func Routine(routine *orm.Routine) *apiv1.Routine {
 	r := &apiv1.Routine{
-		Id:   routine.ID,
-		Name: routine.Title,
-		// Relationships. Load them with RoutineOpt.
+		Id:        routine.ID,
+		Name:      routine.Title,
 		Exercises: nil,
 	}
 
