@@ -882,15 +882,14 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 func (r *repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
 	rawQuery := `
-SELECT * FROM getstronger.sets 
-INNER JOIN getstronger.exercises e on e.id = sets.exercise_id 
+SELECT id FROM getstronger.sets 
 WHERE (exercise_id, workout_id) IN (
 	SELECT DISTINCT ON (exercise_id) exercise_id, workout_id	
 	FROM getstronger.sets
 	WHERE exercise_id = ANY($1)
 	ORDER BY exercise_id, created_at DESC
 )
-ORDER BY sets.created_at;
+ORDER BY created_at;
 `
 
 	var sets orm.SetSlice
@@ -898,7 +897,15 @@ ORDER BY sets.created_at;
 		return nil, fmt.Errorf("previous workout sets fetch: %w", err)
 	}
 
-	return sets, nil
+	setIDs := make([]string, 0, len(sets))
+	for _, set := range sets {
+		setIDs = append(setIDs, set.ID)
+	}
+
+	return r.ListSets(ctx,
+		ListSetsWithID(setIDs...),
+		ListSetsLoadExercise(),
+	)
 }
 
 func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
@@ -1368,6 +1375,18 @@ func ListSetsWithPageToken(token []byte) ListSetsOpt {
 		}
 
 		return orm.SetWhere.CreatedAt.LT(pt.CreatedAt), nil
+	}
+}
+
+func ListSetsWithID(id ...string) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return orm.SetWhere.ID.IN(id), nil
+	}
+}
+
+func ListSetsLoadExercise() ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return qm.Load(orm.SetRels.Exercise), nil
 	}
 }
 

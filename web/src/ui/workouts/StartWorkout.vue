@@ -62,6 +62,7 @@ const fetchPreviousExerciseSets = async () => {
   const exerciseIds = routine.value?.exercises?.map((e) => e.id) || []
   const res = await getPreviousWorkoutSets(exerciseIds)
   if (res) prevExerciseSets.value = res.exerciseSets
+  console.log(prevExerciseSets.value)
 }
 
 const addEmptySetsFromPreviousSession = () => {

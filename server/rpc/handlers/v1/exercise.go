@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -199,6 +200,10 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	spew.Dump(parser.ExerciseSetsSlice(sets))
+	for _, set := range sets {
+		spew.Dump(set.R.GetExercise())
+	}
 	return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
 		Msg: &apiv1.GetPreviousWorkoutSetsResponse{
 			ExerciseSets: parser.ExerciseSetsSlice(sets),
