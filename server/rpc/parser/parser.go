@@ -403,20 +403,22 @@ func notificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.N
 	}
 }
 
-func FeedItemsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.FeedItem, error) {
+func FeedItems(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.FeedItem, error) {
 	items := make([]*apiv1.FeedItem, 0, len(workouts))
-	for _, workout := range workouts {
-		parsedWorkout, err := WorkoutToPB(workout, exercises, nil, mapPersonalBests)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse workout: %w", err)
-		}
 
+	workoutSlice, err := Workouts(workouts, personalBests)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse workouts: %w", err)
+	}
+
+	for _, workout := range workoutSlice {
 		items = append(items, &apiv1.FeedItem{
 			Type: &apiv1.FeedItem_Workout{
-				Workout: parsedWorkout,
+				Workout: workout,
 			},
 		})
 	}
+
 	return items, nil
 }
 
