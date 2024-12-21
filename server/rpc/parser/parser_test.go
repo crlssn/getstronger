@@ -462,6 +462,13 @@ func (s *parserSuite) TestNotificationSlice() {
 			s.Require().Empty(notification.GetWorkoutComment().GetActor().GetEmail())
 			s.Require().False(notification.GetWorkoutComment().GetActor().GetFollowed())
 			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout())
+			s.Require().Equal(workouts[0].ID, notification.GetWorkoutComment().GetWorkout().GetId())
+			s.Require().Equal(workouts[0].Name, notification.GetWorkoutComment().GetWorkout().GetName())
+			s.Require().True(workouts[0].StartedAt.Equal(notification.GetWorkoutComment().GetWorkout().GetStartedAt().AsTime()))
+			s.Require().True(workouts[0].FinishedAt.Equal(notification.GetWorkoutComment().GetWorkout().GetFinishedAt().AsTime()))
+			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetUser())
+			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetComments())
+			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetExerciseSets())
 		default:
 			s.FailNow("unexpected notification index: %d", i)
 		}
