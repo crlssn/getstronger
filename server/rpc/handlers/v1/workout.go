@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -148,24 +147,11 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var userIDs []string
-	for _, workout := range pagination.Items {
-		for _, comment := range workout.R.WorkoutComments {
-			userIDs = append(userIDs, comment.UserID)
-		}
-	}
-
 	var exercises orm.ExerciseSlice
 	for _, workout := range pagination.Items {
 		for _, set := range workout.R.GetSets() {
 			exercises = append(exercises, set.R.Exercise)
 		}
-	}
-
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
-	if err != nil {
-		log.Error("failed to list users", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserIds()...)
@@ -179,14 +165,13 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		mapPersonalBests[pb.ID] = struct{}{}
 	}
 
-	w, err := parser.WorkoutsToPB(pagination.Items, exercises, users, mapPersonalBests)
+	w, err := parser.WorkoutsToPB(pagination.Items, exercises, nil, mapPersonalBests)
 	if err != nil {
 		log.Error("failed to parse workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("workouts listed")
-	spew.Dump(w)
 	return &connect.Response[apiv1.ListWorkoutsResponse]{
 		Msg: &apiv1.ListWorkoutsResponse{
 			Workouts: w,
