@@ -271,30 +271,31 @@ func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
 	return exerciseSets
 }
 
-func NotificationSlice(notifications orm.NotificationSlice, payload map[string]repo.NotificationPayload, users orm.UserSlice, workouts orm.WorkoutSlice) []*apiv1.Notification {
+func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
+	mapActors := make(map[string]*orm.User)
+	for _, a := range actors {
+		mapActors[a.ID] = a
+	}
+
 	mapWorkouts := make(map[string]*orm.Workout)
 	for _, w := range workouts {
 		mapWorkouts[w.ID] = w
 	}
 
-	mapUsers := make(map[string]*orm.User)
-	for _, u := range users {
-		mapUsers[u.ID] = u
-	}
-
 	nSlice := make([]*apiv1.Notification, 0, len(notifications))
 	for _, n := range notifications {
-		p, ok := payload[n.ID]
-		if !ok {
-			continue
+		var p repo.NotificationPayload
+		if err := n.Payload.Unmarshal(&p); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
 		}
 
 		nSlice = append(nSlice, Notification(n,
-			NotificationActor(n.Type, mapUsers[p.ActorID]),
+			NotificationActor(n.Type, mapActors[p.ActorID]),
 			NotificationWorkout(n.Type, mapWorkouts[p.WorkoutID]),
 		))
 	}
-	return nSlice
+
+	return nSlice, nil
 }
 
 func ExerciseSliceFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {

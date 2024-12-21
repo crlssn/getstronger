@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"connectrpc.com/connect"
@@ -51,27 +50,26 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var userIDs []string
+	var actorIDs []string
 	var workoutIDs []string
-	nPayloads := make(map[string]repo.NotificationPayload)
+	//nPayloads := make(map[string]repo.NotificationPayload)
 
 	for _, n := range paginated.Items {
 		var payload repo.NotificationPayload
-		if err = json.Unmarshal(n.Payload, &payload); err != nil {
+		if err = n.Payload.Unmarshal(&payload); err != nil {
 			log.Error("failed to unmarshal notification payload", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
-		nPayloads[n.ID] = payload
 		if payload.ActorID != "" {
-			userIDs = append(userIDs, payload.ActorID)
+			actorIDs = append(actorIDs, payload.ActorID)
 		}
 		if payload.WorkoutID != "" {
 			workoutIDs = append(workoutIDs, payload.WorkoutID)
 		}
 	}
 
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
+	actors, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(actorIDs))
 	if err != nil {
 		log.Error("failed to list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -86,9 +84,15 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	notificationSlice, err := parser.NotificationSlice(paginated.Items, actors, workouts)
+	if err != nil {
+		log.Error("failed to parse notifications", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	return &connect.Response[apiv1.ListNotificationsResponse]{
 		Msg: &apiv1.ListNotificationsResponse{
-			Notifications: parser.NotificationSlice(paginated.Items, nPayloads, users, workouts),
+			Notifications: notificationSlice,
 			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},
