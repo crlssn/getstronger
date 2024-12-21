@@ -116,19 +116,19 @@ type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
 func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
 	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
 	for _, workout := range workouts {
-		if workout.R == nil {
-			w, err := Workout(workout)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse workout: %w", err)
-			}
+		w, err := Workout(workout)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse workout: %w", err)
+		}
 
+		if workout.R == nil {
 			workoutSlice = append(workoutSlice, w)
 			continue
 		}
 
 		var workoutOpts []WorkoutRelOpt
 		if workout.R.User != nil {
-			workoutOpts = append(workoutOpts, WorkoutUser(workout.R.User))
+			workoutOpts = append(workoutOpts, WorkoutUser(workout.R.GetUser()))
 		}
 
 		var exercises orm.ExerciseSlice
@@ -140,7 +140,7 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 			workoutOpts = append(workoutOpts, WorkoutExerciseSets(exercises, workout.R.GetSets(), personalBests))
 		}
 
-		w, err := Workout(workout, workoutOpts...)
+		w, err = Workout(workout, workoutOpts...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse workout: %w", err)
 		}
