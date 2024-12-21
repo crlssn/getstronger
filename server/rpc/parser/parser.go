@@ -12,10 +12,6 @@ import (
 )
 
 func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
-	if exercise == nil {
-		return nil
-	}
-
 	return &apiv1.Exercise{
 		Id:     exercise.ID,
 		UserId: exercise.UserID,
@@ -64,10 +60,6 @@ func Users(users orm.UserSlice) []*apiv1.User {
 }
 
 func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
-	if routine == nil {
-		return nil
-	}
-
 	var exercises []*apiv1.Exercise
 	if routine.R != nil {
 		exercises = Exercises(routine.R.Exercises)
