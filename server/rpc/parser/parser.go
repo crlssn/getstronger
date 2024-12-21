@@ -69,21 +69,52 @@ func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
 	return slice(routines, RoutineToPB)
 }
 
-type WorkoutOpt func(w *orm.Workout) (*apiv1.Workout, error)
+type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
 
-func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, error) {
-	w := workoutToPB(workout)
-	if workout.R == nil {
-		return w, nil
+func WorkoutUsers(users orm.UserSlice) WorkoutsRelOpt {
+	return func(w orm.WorkoutSlice) ([]*apiv1.Workout, error) {
+		UsersToPB(users)
+
+		return nil, nil
 	}
+}
 
-	for _, relOpt := range relOpts {
-		if err := relOpt(w); err != nil {
-			return nil, fmt.Errorf("failed to apply workout rel opt: %w", err)
+func Workouts(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
+	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
+	for _, workout := range workouts {
+		if workout.R == nil {
+			w, err := Workout(workout)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse workout: %w", err)
+			}
+
+			workoutSlice = append(workoutSlice, w)
+			continue
 		}
+
+		var workoutOpts []WorkoutRelOpt
+		if workout.R.User != nil {
+			workoutOpts = append(workoutOpts, WorkoutUser(workout.R.User))
+		}
+
+		var exercises orm.ExerciseSlice
+		for _, set := range workout.R.GetSets() {
+			exercises = append(exercises, set.R.GetExercise())
+		}
+
+		if exercises != nil {
+			workoutOpts = append(workoutOpts, WorkoutExerciseSets(exercises, workout.R.GetSets(), personalBests))
+		}
+
+		w, err := Workout(workout, workoutOpts...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse workout: %w", err)
+		}
+
+		workoutSlice = append(workoutSlice, w)
 	}
 
-	return w, nil
+	return workoutSlice, nil
 }
 
 type WorkoutRelOpt func(*apiv1.Workout) error
@@ -112,6 +143,21 @@ func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice, persona
 		w.ExerciseSets = exerciseSets
 		return nil
 	}
+}
+
+func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, error) {
+	w := workoutToPB(workout)
+	if workout.R == nil {
+		return w, nil
+	}
+
+	for _, relOpt := range relOpts {
+		if err := relOpt(w); err != nil {
+			return nil, fmt.Errorf("failed to apply workout rel opt: %w", err)
+		}
+	}
+
+	return w, nil
 }
 
 func WorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users orm.UserSlice, mapPersonalBests map[string]struct{}) (*apiv1.Workout, error) {

@@ -147,25 +147,13 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var exercises orm.ExerciseSlice
-	for _, workout := range pagination.Items {
-		for _, set := range workout.R.GetSets() {
-			exercises = append(exercises, set.R.Exercise)
-		}
-	}
-
 	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserIds()...)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	mapPersonalBests := make(map[string]struct{})
-	for _, pb := range personalBests {
-		mapPersonalBests[pb.ID] = struct{}{}
-	}
-
-	w, err := parser.WorkoutsToPB(pagination.Items, exercises, nil, mapPersonalBests)
+	w, err := parser.Workouts(pagination.Items, personalBests)
 	if err != nil {
 		log.Error("failed to parse workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
