@@ -31,12 +31,6 @@ func UserFollowed(followed bool) UserOpt {
 	}
 }
 
-func UserEmail(auth *orm.Auth) UserOpt {
-	return func(user *apiv1.User) {
-		user.Email = auth.Email
-	}
-}
-
 func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
 		Id:        user.ID,
@@ -45,6 +39,12 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 		Followed:  false,
 		// Relationships. Load them with UserOpt.
 		Email: "",
+	}
+
+	if user.R != nil {
+		if user.R.Auth != nil {
+			u.Email = user.R.GetAuth().Email
+		}
 	}
 
 	for _, opt := range opts {
@@ -58,15 +58,7 @@ func UserSlice(users orm.UserSlice) []*apiv1.User {
 	return parseWithEmptyOpts(users, User)
 }
 
-type RoutineOpt func(*apiv1.Routine)
-
-func RoutineExercises(exercises orm.ExerciseSlice) RoutineOpt {
-	return func(routine *apiv1.Routine) {
-		routine.Exercises = parseWithoutOpts(exercises, Exercise)
-	}
-}
-
-func Routine(routine *orm.Routine, opts ...RoutineOpt) *apiv1.Routine {
+func Routine(routine *orm.Routine) *apiv1.Routine {
 	r := &apiv1.Routine{
 		Id:   routine.ID,
 		Name: routine.Title,
@@ -74,19 +66,17 @@ func Routine(routine *orm.Routine, opts ...RoutineOpt) *apiv1.Routine {
 		Exercises: nil,
 	}
 
-	if routine.R == nil {
-		return r
-	}
-
-	for _, opt := range opts {
-		opt(r)
+	if routine.R != nil {
+		if routine.R.Exercises != nil {
+			r.Exercises = parseWithoutOpts(routine.R.GetExercises(), Exercise)
+		}
 	}
 
 	return r
 }
 
 func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
-	return parseWithEmptyOpts(routines, Routine)
+	return parseWithoutOpts(routines, Routine)
 }
 
 type WorkoutOpt func(*apiv1.Workout)
