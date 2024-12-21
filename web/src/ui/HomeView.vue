@@ -12,7 +12,7 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 
 const route = useRoute()
 const navTabs = useNavTabs()
-const { hasMorePages, pageToken, resolvePageToken } = usePagination()
+const { hasMorePages, pageToken, emptyPageToken, resolvePageToken } = usePagination()
 
 const feedItems = ref([] as FeedItem[])
 const isMounted = ref(false)
@@ -29,8 +29,9 @@ onMounted(async () => {
 watch(
   () => route.query.explore,
   async () => {
-    isMounted.value = false
     feedItems.value = []
+    isMounted.value = false
+    pageToken.value = emptyPageToken
     await fetchFeedItems()
     isMounted.value = true
   },

@@ -21,7 +21,10 @@ const tabs = computed(() => [
 ])
 
 const activeTab = computed(() => route.fullPath)
-const pageTitle = computed(() => `${user.value.firstName} ${user.value.lastName}`)
+const pageTitle = computed(() => {
+  if (user.value.id === authStore.userId) return 'Me'
+  return `${user.value.firstName} ${user.value.lastName}`
+})
 
 watch(
   () => route.params.id,
