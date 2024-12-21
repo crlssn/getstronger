@@ -109,36 +109,6 @@ func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
 	return parseWithEmptyOpts(routines, Routine)
 }
 
-type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
-
-func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
-	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
-	for _, workout := range workouts {
-		if workout.R == nil {
-			workoutSlice = append(workoutSlice, Workout(workout))
-			continue
-		}
-
-		var workoutOpts []WorkoutOpt
-		if workout.R.User != nil {
-			workoutOpts = append(workoutOpts, WorkoutUser(workout.R.GetUser()))
-		}
-
-		var exercises orm.ExerciseSlice
-		for _, set := range workout.R.GetSets() {
-			exercises = append(exercises, set.R.GetExercise())
-		}
-
-		if exercises != nil {
-			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
-		}
-
-		workoutSlice = append(workoutSlice, Workout(workout, workoutOpts...))
-	}
-
-	return workoutSlice, nil
-}
-
 type WorkoutOpt func(*apiv1.Workout)
 
 func WorkoutUser(user *orm.User) WorkoutOpt {
@@ -182,6 +152,36 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	}
 
 	return w
+}
+
+type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
+
+func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
+	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
+	for _, workout := range workouts {
+		if workout.R == nil {
+			workoutSlice = append(workoutSlice, Workout(workout))
+			continue
+		}
+
+		var workoutOpts []WorkoutOpt
+		if workout.R.User != nil {
+			workoutOpts = append(workoutOpts, WorkoutUser(workout.R.GetUser()))
+		}
+
+		var exercises orm.ExerciseSlice
+		for _, set := range workout.R.GetSets() {
+			exercises = append(exercises, set.R.GetExercise())
+		}
+
+		if exercises != nil {
+			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
+		}
+
+		workoutSlice = append(workoutSlice, Workout(workout, workoutOpts...))
+	}
+
+	return workoutSlice, nil
 }
 
 type WorkoutCommentOpt func(*apiv1.WorkoutComment)

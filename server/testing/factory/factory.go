@@ -2,11 +2,13 @@
 package factory
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type Factory struct {
@@ -20,6 +22,16 @@ func NewFactory(db *sql.DB) *Factory {
 		db:    db,
 		faker: gofakeit.New(0),
 		debug: false,
+	}
+}
+
+type Reload interface {
+	Reload(context.Context, boil.ContextExecutor) error
+}
+
+func (f *Factory) Reload(r Reload) {
+	if err := r.Reload(context.Background(), f.db); err != nil {
+		panic(fmt.Errorf("failed to reload: %w", err))
 	}
 }
 

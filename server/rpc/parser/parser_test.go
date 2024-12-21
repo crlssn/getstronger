@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 
@@ -16,6 +17,7 @@ import (
 type parserSuite struct {
 	suite.Suite
 
+	db      *sql.DB
 	factory *factory.Factory
 }
 
@@ -27,7 +29,8 @@ func TestParserSuite(t *testing.T) {
 func (s *parserSuite) SetupSuite() {
 	ctx := context.Background()
 	c := container.NewContainer(ctx)
-	s.factory = factory.NewFactory(c.DB)
+	s.db = c.DB
+	s.factory = factory.NewFactory(s.db)
 
 	s.T().Cleanup(func() {
 		if err := c.Terminate(ctx); err != nil {
@@ -121,5 +124,60 @@ func (s *parserSuite) TestRoutineSlice() {
 		s.Require().Equal(routine.ID, parsed[i].GetId())
 		s.Require().Equal(routine.Title, parsed[i].GetName())
 		s.Require().Nil(parsed[i].GetExercises())
+	}
+}
+
+func (s *parserSuite) TestWorkout() {
+	workout := s.factory.NewWorkout()
+	parsed := parser.Workout(workout)
+
+	s.Require().Equal(workout.ID, parsed.GetId())
+	s.Require().Equal(workout.Name, parsed.GetName())
+	s.Require().True(workout.StartedAt.Equal(parsed.GetStartedAt().AsTime()))
+	s.Require().True(workout.FinishedAt.Equal(parsed.GetFinishedAt().AsTime()))
+
+	workout = s.factory.NewWorkout()
+	user := s.factory.NewUser()
+	parsed = parser.Workout(workout, parser.WorkoutUser(user))
+
+	s.Require().Equal(user.ID, parsed.GetUser().GetId())
+	s.Require().Equal(user.FirstName, parsed.GetUser().GetFirstName())
+	s.Require().Equal(user.LastName, parsed.GetUser().GetLastName())
+	s.Require().False(parsed.GetUser().GetFollowed())
+	s.Require().Empty(parsed.GetUser().GetEmail())
+
+	workout = s.factory.NewWorkout()
+	comments := orm.WorkoutCommentSlice{
+		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
+		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
+	}
+
+	parsed = parser.Workout(workout, parser.WorkoutComments(comments))
+	s.Require().Len(parsed.GetComments(), 2)
+	for i, comment := range comments {
+		s.Require().Equal(comment.ID, parsed.GetComments()[i].GetId())
+		s.Require().Equal(comment.UserID, parsed.GetComments()[i].GetUser().GetId())
+		s.Require().Equal(comment.Comment, parsed.GetComments()[i].GetComment())
+	}
+
+	workout = s.factory.NewWorkout()
+	sets := orm.SetSlice{
+		s.factory.NewSet(),
+		s.factory.NewSet(),
+	}
+	personalBests := orm.SetSlice{sets[0]}
+
+	parsed = parser.Workout(workout, parser.WorkoutExerciseSets(sets, personalBests))
+	s.Require().Len(parsed.GetExerciseSets(), 2)
+	for i, exerciseSet := range parsed.GetExerciseSets() {
+		s.Require().Equal(sets[i].ExerciseID, exerciseSet.GetExercise().GetId())
+		for _, set := range exerciseSet.GetSets() {
+			s.Require().Equal(sets[i].ID, set.GetId())
+			s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
+			s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+			s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
+			s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
+			s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())
+		}
 	}
 }

@@ -38,6 +38,15 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 	}
 	boil.DebugMode = false
 
+	user, err := m.User().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	}
+
+	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
+		panic(fmt.Errorf("failed to set user: %w", err))
+	}
+
 	return m
 }
 
@@ -80,12 +89,12 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 		opt(m)
 	}
 
-	if m.WorkoutID == "" {
-		m.WorkoutID = f.NewWorkout().ID
-	}
-
 	if m.UserID == "" {
 		m.UserID = f.NewUser().ID
+	}
+
+	if m.WorkoutID == "" {
+		m.WorkoutID = f.NewWorkout().ID
 	}
 
 	boil.DebugMode = f.debug
@@ -93,6 +102,24 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 		panic(fmt.Errorf("failed to insert workout comment: %w", err))
 	}
 	boil.DebugMode = false
+
+	user, err := m.User().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	}
+
+	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
+		panic(fmt.Errorf("failed to set user: %w", err))
+	}
+
+	workout, err := m.Workout().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	}
+
+	if err = m.SetWorkout(context.Background(), f.db, false, workout); err != nil {
+		panic(fmt.Errorf("failed to set user: %w", err))
+	}
 
 	return m
 }
