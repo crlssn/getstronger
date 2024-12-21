@@ -882,12 +882,15 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 func (r *repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
 	rawQuery := `
-SELECT * FROM getstronger.sets WHERE (exercise_id, workout_id) IN (
+SELECT * FROM getstronger.sets 
+INNER JOIN getstronger.exercises e on e.id = sets.exercise_id 
+WHERE (exercise_id, workout_id) IN (
 	SELECT DISTINCT ON (exercise_id) exercise_id, workout_id	
 	FROM getstronger.sets
 	WHERE exercise_id = ANY($1)
 	ORDER BY exercise_id, created_at DESC
-) ORDER BY created_at;
+)
+ORDER BY sets.created_at;
 `
 
 	var sets orm.SetSlice
