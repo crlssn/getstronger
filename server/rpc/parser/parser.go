@@ -136,7 +136,6 @@ func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice) Workout
 		}
 
 		w.ExerciseSets = exerciseSets
-
 		return nil
 	}
 }
