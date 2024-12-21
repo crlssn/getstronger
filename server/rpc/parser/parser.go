@@ -389,11 +389,11 @@ func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*ap
 }
 
 func SetSlice(sets orm.SetSlice) []*apiv1.Set {
-	sSlice := make([]*apiv1.Set, 0, len(sets))
+	setSlice := make([]*apiv1.Set, 0, len(sets))
 	for _, set := range sets {
-		sSlice = append(sSlice, Set(set))
+		setSlice = append(setSlice, Set(set))
 	}
-	return sSlice
+	return setSlice
 }
 
 func Set(set *orm.Set) *apiv1.Set {
