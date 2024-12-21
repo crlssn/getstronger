@@ -475,6 +475,36 @@ func (s *parserSuite) TestNotificationSlice() {
 	}
 }
 
+func (s *parserSuite) TestFeedItemSlice() {
+	workouts := orm.WorkoutSlice{
+		s.factory.NewWorkout(),
+	}
+	for _, workout := range workouts {
+		workout.R.Sets = orm.SetSlice{
+			s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
+		}
+	}
+
+	parsed, err := parser.FeedItemSlice(workouts, nil)
+	s.Require().NoError(err)
+	s.Require().Len(parsed, len(workouts))
+	for i, feedItem := range parsed {
+		switch i {
+		case 0:
+			s.Require().NotNil(feedItem.GetWorkout())
+			s.Require().Equal(workouts[i].ID, feedItem.GetWorkout().GetId())
+			s.Require().Equal(workouts[i].Name, feedItem.GetWorkout().GetName())
+			s.Require().True(workouts[i].StartedAt.Equal(feedItem.GetWorkout().GetStartedAt().AsTime()))
+			s.Require().True(workouts[i].FinishedAt.Equal(feedItem.GetWorkout().GetFinishedAt().AsTime()))
+			s.Require().NotNil(feedItem.GetWorkout().GetUser())
+			s.Require().NotNil(feedItem.GetWorkout().GetExerciseSets())
+			s.Require().Nil(feedItem.GetWorkout().GetComments())
+		default:
+			s.FailNow("unexpected feed item index: %d", i)
+		}
+	}
+}
+
 func (s *parserSuite) TestSet() {
 	set := s.factory.NewSet()
 	parsed := parser.Set(set)
