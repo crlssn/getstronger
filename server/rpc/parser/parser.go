@@ -205,16 +205,19 @@ func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, er
 }
 
 func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
-	if comment == nil {
-		return nil
-	}
-
-	return &apiv1.WorkoutComment{
+	c := &apiv1.WorkoutComment{
 		Id:        comment.ID,
-		User:      User(comment.R.GetUser()),
+		User:      nil,
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
 	}
+
+	if comment.R == nil {
+		return c
+	}
+
+	c.User = User(comment.R.GetUser())
+	return c
 }
 
 func workoutComments(comments orm.WorkoutCommentSlice) []*apiv1.WorkoutComment {
