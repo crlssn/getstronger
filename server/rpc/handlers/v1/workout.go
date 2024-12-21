@@ -94,20 +94,14 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	w, err := parser.Workout(workout,
-		parser.WorkoutUser(workout.R.GetUser()),
-		parser.WorkoutComments(workout.R.GetWorkoutComments()),
-		parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
-	)
-	if err != nil {
-		log.Error("failed to parse workout", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	log.Info("workout fetched")
 	return &connect.Response[apiv1.GetWorkoutResponse]{
 		Msg: &apiv1.GetWorkoutResponse{
-			Workout: w,
+			Workout: parser.Workout(workout,
+				parser.WorkoutUser(workout.R.GetUser()),
+				parser.WorkoutComments(workout.R.GetWorkoutComments()),
+				parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
+			),
 		},
 	}, nil
 }

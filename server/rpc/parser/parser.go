@@ -119,13 +119,8 @@ type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
 func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
 	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
 	for _, workout := range workouts {
-		w, err := Workout(workout)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse workout: %w", err)
-		}
-
 		if workout.R == nil {
-			workoutSlice = append(workoutSlice, w)
+			workoutSlice = append(workoutSlice, Workout(workout))
 			continue
 		}
 
@@ -143,41 +138,33 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
 		}
 
-		w, err = Workout(workout, workoutOpts...)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse workout: %w", err)
-		}
-
-		workoutSlice = append(workoutSlice, w)
+		workoutSlice = append(workoutSlice, Workout(workout, workoutOpts...))
 	}
 
 	return workoutSlice, nil
 }
 
-type WorkoutRelOpt func(*apiv1.Workout) error
+type WorkoutRelOpt func(*apiv1.Workout)
 
 func WorkoutUser(user *orm.User) WorkoutRelOpt {
-	return func(w *apiv1.Workout) error {
+	return func(w *apiv1.Workout) {
 		w.User = User(user)
-		return nil
 	}
 }
 
 func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutRelOpt {
-	return func(w *apiv1.Workout) error {
+	return func(w *apiv1.Workout) {
 		w.Comments = workoutComments(comments)
-		return nil
 	}
 }
 
 func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
-	return func(w *apiv1.Workout) error {
+	return func(w *apiv1.Workout) {
 		w.ExerciseSets = ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
-		return nil
 	}
 }
 
-func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, error) {
+func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) *apiv1.Workout {
 	w := &apiv1.Workout{
 		Id:         workout.ID,
 		Name:       workout.Name,
@@ -190,16 +177,14 @@ func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, er
 	}
 
 	if workout.R == nil {
-		return w, nil
+		return w
 	}
 
 	for _, relOpt := range relOpts {
-		if err := relOpt(w); err != nil {
-			return nil, fmt.Errorf("failed to apply workout rel opt: %w", err)
-		}
+		relOpt(w)
 	}
 
-	return w, nil
+	return w
 }
 
 func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
@@ -304,12 +289,10 @@ func NotificationSlice(notifications orm.NotificationSlice, payload map[string]r
 			continue
 		}
 
-		notification := Notification(n, mapUsers[p.ActorID], mapWorkouts[p.WorkoutID])
-		if notification == nil {
-			continue
-		}
-
-		nSlice = append(nSlice, notification)
+		nSlice = append(nSlice, Notification(n,
+			NotificationActor(n.Type, mapUsers[p.ActorID]),
+			NotificationWorkout(n.Type, mapWorkouts[p.WorkoutID]),
+		))
 	}
 	return nSlice
 }
@@ -334,39 +317,66 @@ func ExerciseSliceFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet 
 	return s
 }
 
-func Notification(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.Notification {
-	switch n.Type {
-	case orm.NotificationTypeFollow:
-		return &apiv1.Notification{
-			Id:             n.ID,
-			NotifiedAtUnix: n.CreatedAt.Unix(),
-			Type: &apiv1.Notification_UserFollowed_{
-				UserFollowed: &apiv1.Notification_UserFollowed{
-					Actor: User(u),
-				},
-			},
+type NotificationOpt func(*apiv1.Notification)
+
+func NotificationActor(nType orm.NotificationType, actor *orm.User) NotificationOpt {
+	return func(n *apiv1.Notification) {
+		if actor == nil {
+			return
 		}
-	case orm.NotificationTypeWorkoutComment:
-		if w == nil {
-			return nil
+
+		switch nType {
+		case orm.NotificationTypeFollow:
+			if _, ok := n.Type.(*apiv1.Notification_UserFollowed_); !ok {
+				n.Type = &apiv1.Notification_UserFollowed_{
+					UserFollowed: &apiv1.Notification_UserFollowed{Actor: nil},
+				}
+			}
+			n.Type.(*apiv1.Notification_UserFollowed_).UserFollowed.Actor = User(actor)
+		case orm.NotificationTypeWorkoutComment:
+			if _, ok := n.Type.(*apiv1.Notification_WorkoutComment_); !ok {
+				n.Type = &apiv1.Notification_WorkoutComment_{
+					WorkoutComment: &apiv1.Notification_WorkoutComment{Actor: nil},
+				}
+			}
+			n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Actor = User(actor)
 		}
-		return &apiv1.Notification{
-			Id:             n.ID,
-			NotifiedAtUnix: n.CreatedAt.Unix(),
-			Type: &apiv1.Notification_WorkoutComment_{
-				WorkoutComment: &apiv1.Notification_WorkoutComment{
-					Actor: User(u),
-					Workout: &apiv1.Workout{
-						Id:   w.ID,
-						Name: w.Name,
-						User: User(w.R.GetUser()),
-					},
-				},
-			},
-		}
-	default:
-		return nil
 	}
+}
+
+func NotificationWorkout(notificationType orm.NotificationType, workout *orm.Workout) NotificationOpt {
+	return func(n *apiv1.Notification) {
+		if workout == nil {
+			return
+		}
+
+		switch notificationType {
+		case orm.NotificationTypeWorkoutComment:
+			if _, ok := n.Type.(*apiv1.Notification_WorkoutComment_); !ok {
+				n.Type = &apiv1.Notification_WorkoutComment_{
+					WorkoutComment: &apiv1.Notification_WorkoutComment{Actor: nil},
+				}
+			}
+			n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Workout = Workout(workout)
+		case orm.NotificationTypeFollow:
+			// Do nothing.
+		}
+	}
+}
+
+func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv1.Notification {
+	n := &apiv1.Notification{
+		Id:             notification.ID,
+		NotifiedAtUnix: notification.CreatedAt.Unix(),
+		// Relationships. Load them with NotificationOpt.
+		Type: nil,
+	}
+
+	for _, opt := range opts {
+		opt(n)
+	}
+
+	return n
 }
 
 func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.FeedItem, error) {
