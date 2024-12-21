@@ -496,8 +496,24 @@ func (s *parserSuite) TestFeedItemSlice() {
 			s.Require().Equal(workouts[i].Name, feedItem.GetWorkout().GetName())
 			s.Require().True(workouts[i].StartedAt.Equal(feedItem.GetWorkout().GetStartedAt().AsTime()))
 			s.Require().True(workouts[i].FinishedAt.Equal(feedItem.GetWorkout().GetFinishedAt().AsTime()))
+
 			s.Require().NotNil(feedItem.GetWorkout().GetUser())
+			s.Require().Equal(workouts[i].R.User.ID, feedItem.GetWorkout().GetUser().GetId())
+			s.Require().Equal(workouts[i].R.User.FirstName, feedItem.GetWorkout().GetUser().GetFirstName())
+			s.Require().Equal(workouts[i].R.User.LastName, feedItem.GetWorkout().GetUser().GetLastName())
+			s.Require().False(feedItem.GetWorkout().GetUser().GetFollowed())
+			s.Require().Empty(feedItem.GetWorkout().GetUser().GetEmail())
+
 			s.Require().NotNil(feedItem.GetWorkout().GetExerciseSets())
+			s.Require().Len(feedItem.GetWorkout().GetExerciseSets(), len(workouts[i].R.Sets))
+			for j, exerciseSet := range feedItem.GetWorkout().GetExerciseSets() {
+				s.Require().Len(exerciseSet.GetSets(), len(workouts[i].R.Sets))
+				s.Require().Equal(workouts[i].R.Sets[j].ExerciseID, exerciseSet.GetExercise().GetId())
+				s.Require().Equal(workouts[i].R.Sets[j].ID, exerciseSet.GetSets()[j].GetId())
+				s.Require().InEpsilon(workouts[i].R.Sets[j].Weight, exerciseSet.GetSets()[j].GetWeight(), 0)
+				s.Require().Equal(workouts[i].R.Sets[j].Reps, int(exerciseSet.GetSets()[j].GetReps()))
+			}
+
 			s.Require().Nil(feedItem.GetWorkout().GetComments())
 		default:
 			s.FailNow("unexpected feed item index: %d", i)
