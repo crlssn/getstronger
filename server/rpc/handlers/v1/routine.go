@@ -84,7 +84,7 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 
 	log.Info("routine returned")
 	return connect.NewResponse(&apiv1.GetRoutineResponse{
-		Routine: parser.RoutineToPB(routine),
+		Routine: parser.Routine(routine),
 	}), nil
 }
 
@@ -149,7 +149,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 
 	log.Info("routine updated")
 	return connect.NewResponse(&apiv1.UpdateRoutineResponse{
-		Routine: parser.RoutineToPB(routine),
+		Routine: parser.Routine(routine),
 	}), nil
 }
 

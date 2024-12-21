@@ -41,9 +41,15 @@ func UserEmail(auth *orm.Auth) UserOpt {
 func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
 		Id:        user.ID,
-		Email:     safeGetEmail(user),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
+		Followed:  false,
+		// Relationships. Load them with UserOpt.
+		Email: "",
+	}
+
+	if user.R != nil {
+		return u
 	}
 
 	for _, opt := range opts {
@@ -59,21 +65,45 @@ func Users(users orm.UserSlice) []*apiv1.User {
 	})
 }
 
-func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
-	var exercises []*apiv1.Exercise
-	if routine.R != nil {
-		exercises = Exercises(routine.R.Exercises)
-	}
+type RoutineOpt func(*apiv1.Routine)
 
-	return &apiv1.Routine{
-		Id:        routine.ID,
-		Name:      routine.Title,
-		Exercises: exercises,
+func RoutineExercises(exercises orm.ExerciseSlice) RoutineOpt {
+	return func(routine *apiv1.Routine) {
+		exerciseSlice := make([]*apiv1.Exercise, 0, len(exercises))
+		for _, exercise := range exercises {
+			exerciseSlice = append(exerciseSlice, Exercise(exercise))
+		}
+
+		routine.Exercises = exerciseSlice
 	}
 }
 
+func Routine(routine *orm.Routine, opts ...RoutineOpt) *apiv1.Routine {
+	r := &apiv1.Routine{
+		Id:   routine.ID,
+		Name: routine.Title,
+		// Relationships. Load them with RoutineOpt.
+		Exercises: nil,
+	}
+
+	if routine.R == nil {
+		return r
+	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	return r
+}
+
 func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
-	return slice(routines, RoutineToPB)
+	r := make([]*apiv1.Routine, 0, len(routines))
+	for _, routine := range routines {
+		r = append(r, Routine(routine))
+	}
+
+	return r
 }
 
 type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
@@ -145,7 +175,17 @@ func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice, persona
 }
 
 func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, error) {
-	w := workoutToPB(workout)
+	w := &apiv1.Workout{
+		Id:         workout.ID,
+		Name:       workout.Name,
+		StartedAt:  timestamppb.New(workout.StartedAt),
+		FinishedAt: timestamppb.New(workout.FinishedAt),
+		// Relationships. Load them with WorkoutRelOpt.
+		User:         nil,
+		Comments:     nil,
+		ExerciseSets: nil,
+	}
+
 	if workout.R == nil {
 		return w, nil
 	}
@@ -157,20 +197,6 @@ func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, er
 	}
 
 	return w, nil
-}
-
-func workoutToPB(workout *orm.Workout) *apiv1.Workout {
-	return &apiv1.Workout{
-		Id:         workout.ID,
-		Name:       workout.Name,
-		StartedAt:  timestamppb.New(workout.StartedAt),
-		FinishedAt: timestamppb.New(workout.FinishedAt),
-
-		// Relationships. Load them with WorkoutRelOpt.
-		User:         nil,
-		Comments:     nil,
-		ExerciseSets: nil,
-	}
 }
 
 func WorkoutCommentToPB(comment *orm.WorkoutComment, user *orm.User) *apiv1.WorkoutComment {
@@ -199,6 +225,8 @@ func workoutCommentsToPB(comments orm.WorkoutCommentSlice, users orm.UserSlice) 
 
 	return cSlice
 }
+
+var errExerciseNotFound = fmt.Errorf("exercise not found")
 
 func ExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice, personalBests orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
 	mapExercises := make(map[string]*apiv1.Exercise, len(exercises))
@@ -403,12 +431,3 @@ func slice[Input any, Output any](input []Input, f func(Input) Output) []Output 
 	}
 	return output
 }
-
-func safeGetEmail(user *orm.User) string {
-	if user.R != nil && user.R.Auth != nil {
-		return user.R.Auth.Email
-	}
-	return ""
-}
-
-var errExerciseNotFound = fmt.Errorf("exercise not found")
