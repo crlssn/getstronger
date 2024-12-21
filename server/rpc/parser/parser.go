@@ -71,25 +71,6 @@ func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
 
 type WorkoutOpt func(w *orm.Workout) (*apiv1.Workout, error)
 
-//func WorkoutToPBNew(w *orm.Workout) WorkoutOpt {
-//	return func(w *orm.Workout) (*apiv1.Workout, error) {
-//		return &apiv1.Workout{
-//			Id:           w.ID,
-//			Name:         w.Name,
-//			User:         UserToPB(w.R.User, false),
-//			ExerciseSets: nil, // TODO: Somehow.
-//			Comments:     nil, // TODO: Somehow.
-//			StartedAt:    timestamppb.New(w.StartedAt),
-//			FinishedAt:   timestamppb.New(w.FinishedAt),
-//		}, nil
-//	}
-//}
-
-//type (
-//MapWorkoutSets      func(e orm.SetSlice) map[string]*apiv1.Set
-//MapWorkoutExercises func(e orm.ExerciseSlice) map[string]*apiv1.Exercise
-//)
-
 func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, error) {
 	w := workoutToPB(workout)
 	if workout.R == nil {
@@ -132,74 +113,6 @@ func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice, persona
 		return nil
 	}
 }
-
-//func Workout2(workout *orm.Workout, exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutOpt {
-//	return func(w *apiv1.Workout) error {
-//		if workout == nil {
-//			return fmt.Errorf("workout is nil")
-//		}
-//
-//		w.Name = workout.Name
-//		w.User = UserToPB(workout.R.User, false)
-//		w.StartedAt = timestamppb.New(workout.StartedAt)
-//		w.FinishedAt = timestamppb.New(workout.FinishedAt)
-//
-//		if workout.R == nil {
-//			return nil
-//		}
-//
-//		mapExercises := make(map[string]*apiv1.Exercise, len(exercises))
-//		exerciseOrder := make([]string, 0, len(workout.R.Sets))
-//		mapExerciseSets := make(map[string][]*apiv1.Set)
-//
-//		for _, exercise := range exercises {
-//			mapExercises[exercise.ID] = ExerciseToPB(exercise)
-//		}
-//
-//		mapPersonalBests := make(map[string]*orm.Set, len(sets))
-//		for _, set := range sets {
-//			mapPersonalBests[set.ID] = set
-//		}
-//
-//		for _, set := range workout.R.Sets {
-//			if _, exists := mapExerciseSets[set.ExerciseID]; !exists {
-//				exerciseOrder = append(exerciseOrder, set.ExerciseID)
-//			}
-//
-//			s, err := setToPB(set, mapPersonalBests)
-//			if err != nil {
-//				return fmt.Errorf("failed to parse set: %w", err)
-//			}
-//
-//			mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], s)
-//		}
-//
-//		for _, exerciseID := range exerciseOrder {
-//			exercise, ok := mapExercises[exerciseID]
-//			if !ok {
-//				continue
-//			}
-//
-//			w.ExerciseSets = append(w.ExerciseSets, &apiv1.ExerciseSets{
-//				Exercise: exercise,
-//				Sets:     mapExerciseSets[exerciseID],
-//			})
-//		}
-//
-//		return nil
-//	}
-//}
-//
-//func WorkoutToPBOpts(opts ...WorkoutToPBOpt) (*apiv1.Workout, error) {
-//	workout := new(apiv1.Workout)
-//	for _, opt := range opts {
-//		if err := opt(workout); err != nil {
-//			return nil, fmt.Errorf("failed to apply option: %w", err)
-//		}
-//	}
-//
-//	return workout, nil
-//}
 
 func WorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users orm.UserSlice, mapPersonalBests map[string]struct{}) (*apiv1.Workout, error) {
 	var exerciseOrder []string
