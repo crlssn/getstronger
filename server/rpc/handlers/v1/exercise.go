@@ -230,7 +230,7 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exerciseSets, err := parser.ExerciseSetSlicesToPB(exercises, sets)
+	exerciseSets, err := parser.ExerciseSetSlicesToPB(exercises, sets, nil)
 	if err != nil {
 		log.Error("failed to parse set slice to exercise sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

@@ -107,9 +107,9 @@ func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, er
 
 type WorkoutRelOpt func(*apiv1.Workout) error
 
-func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutRelOpt {
+func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
 	return func(w *apiv1.Workout) error {
-		exerciseSets, err := ExerciseSetSlicesToPB(exercises, sets)
+		exerciseSets, err := ExerciseSetSlicesToPB(exercises, sets, personalBests)
 		if err != nil {
 			return fmt.Errorf("failed to parse exercise sets: %w", err)
 		}
@@ -290,10 +290,15 @@ func workoutCommentsToPB(comments orm.WorkoutCommentSlice, users orm.UserSlice) 
 	return cSlice
 }
 
-func ExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
+func ExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice, personalBests orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
 	mapExercises := make(map[string]*apiv1.Exercise, len(exercises))
 	for _, exercise := range exercises {
 		mapExercises[exercise.ID] = ExerciseToPB(exercise)
+	}
+
+	mapPersonalBests := make(map[string]struct{}, len(personalBests))
+	for _, personalBest := range personalBests {
+		mapPersonalBests[personalBest.ID] = struct{}{}
 	}
 
 	mapExerciseSets := make(map[*apiv1.Exercise][]*apiv1.Set)
@@ -307,7 +312,7 @@ func ExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*a
 			mapExerciseSets[exerciseKey] = make([]*apiv1.Set, 0)
 		}
 
-		s, err := setToPB(set, nil)
+		s, err := setToPB(set, mapPersonalBests)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
