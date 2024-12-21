@@ -1099,7 +1099,7 @@ type CreateWorkoutCommentParams struct {
 
 type CreateWorkoutCommentOpts func(comment *orm.WorkoutComment) error
 
-func CreateWorkoutCommentLoadUser(ctx context.Context, exec boil.ContextExecutor) CreateWorkoutCommentOpts {
+func PostCreateWorkoutCommentLoadUser(ctx context.Context, exec boil.ContextExecutor) CreateWorkoutCommentOpts {
 	return func(comment *orm.WorkoutComment) error {
 		user, err := comment.User().One(ctx, exec)
 		if err != nil {

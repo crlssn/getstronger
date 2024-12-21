@@ -181,7 +181,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		UserID:    userID,
 		WorkoutID: req.Msg.GetWorkoutId(),
 		Comment:   req.Msg.GetComment(),
-	}, repo.CreateWorkoutCommentLoadUser(ctx, h.repo.GetDB()))
+	}, repo.PostCreateWorkoutCommentLoadUser(ctx, h.repo.GetDB()))
 	if err != nil {
 		log.Error("failed to create workout comment", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
