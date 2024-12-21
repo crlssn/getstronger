@@ -523,7 +523,6 @@ func (s *parserSuite) TestFeedItemSlice() {
 	for _, workout := range workouts {
 		workout.R.Sets = orm.SetSlice{
 			s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
-			s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
 		}
 	}
 
