@@ -246,13 +246,13 @@ func ExerciseSetsSlice(exercises orm.ExerciseSlice, sets orm.SetSlice, personalB
 
 	mapExerciseSets := make(map[*apiv1.Exercise][]*apiv1.Set)
 	for _, set := range sets {
-		exerciseKey, ok := mapExercises[set.ExerciseID]
+		exercise, ok := mapExercises[set.ExerciseID]
 		if !ok {
 			return nil, fmt.Errorf("%w: %s", errExerciseNotFound, set.ExerciseID)
 		}
 
-		if _, ok = mapExerciseSets[exerciseKey]; !ok {
-			mapExerciseSets[exerciseKey] = make([]*apiv1.Set, 0)
+		if _, ok = mapExerciseSets[exercise]; !ok {
+			mapExerciseSets[exercise] = make([]*apiv1.Set, 0)
 		}
 
 		s, err := Set(set, mapPersonalBests)
@@ -260,7 +260,7 @@ func ExerciseSetsSlice(exercises orm.ExerciseSlice, sets orm.SetSlice, personalB
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
 
-		mapExerciseSets[exerciseKey] = append(mapExerciseSets[exerciseKey], s)
+		mapExerciseSets[exercise] = append(mapExerciseSets[exercise], s)
 	}
 
 	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
