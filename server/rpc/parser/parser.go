@@ -36,7 +36,7 @@ func Exercise(exercise *orm.Exercise, opts ...ExerciseOpt) *apiv1.Exercise {
 }
 
 func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	return parseWithOpts(exercises, Exercise)
+	return parseWithEmptyOpts(exercises, Exercise)
 }
 
 type UserOpt func(*apiv1.User)
@@ -75,14 +75,14 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 }
 
 func UserSlice(users orm.UserSlice) []*apiv1.User {
-	return parseWithOpts(users, User)
+	return parseWithEmptyOpts(users, User)
 }
 
 type RoutineOpt func(*apiv1.Routine)
 
 func RoutineExercises(exercises orm.ExerciseSlice) RoutineOpt {
 	return func(routine *apiv1.Routine) {
-		routine.Exercises = parseWithOpts(exercises, Exercise)
+		routine.Exercises = parseWithEmptyOpts(exercises, Exercise)
 	}
 }
 
@@ -106,7 +106,7 @@ func Routine(routine *orm.Routine, opts ...RoutineOpt) *apiv1.Routine {
 }
 
 func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
-	return parseWithOpts(routines, Routine)
+	return parseWithEmptyOpts(routines, Routine)
 }
 
 type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
@@ -401,7 +401,7 @@ func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*ap
 }
 
 func SetSlice(sets orm.SetSlice) []*apiv1.Set {
-	return parse(sets, Set)
+	return parseWithoutOpts(sets, Set)
 }
 
 func Set(set *orm.Set) *apiv1.Set {
@@ -417,7 +417,7 @@ func Set(set *orm.Set) *apiv1.Set {
 	}
 }
 
-func parse[Input any, Output any](input []Input, f func(Input) Output) []Output {
+func parseWithoutOpts[Input any, Output any](input []Input, f func(Input) Output) []Output {
 	output := make([]Output, len(input))
 	for i, item := range input {
 		output[i] = f(item)
@@ -425,7 +425,7 @@ func parse[Input any, Output any](input []Input, f func(Input) Output) []Output 
 	return output
 }
 
-func parseWithOpts[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
+func parseWithEmptyOpts[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
 	output := make([]Output, len(input))
 	for i, item := range input {
 		output[i] = f(item)
