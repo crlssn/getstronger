@@ -123,13 +123,8 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 			continue
 		}
 
-		var exercises orm.ExerciseSlice
-		for _, set := range workout.R.GetSets() {
-			exercises = append(exercises, set.R.GetExercise())
-		}
-
 		var workoutOpts []WorkoutOpt
-		if exercises != nil {
+		if workout.R.GetSets() != nil {
 			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
 		}
 
