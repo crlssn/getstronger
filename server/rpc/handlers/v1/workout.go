@@ -56,7 +56,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		UserID:       userID,
 		StartedAt:    req.Msg.GetStartedAt().AsTime(),
 		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
-		ExerciseSets: parser.ExercisesFromPB(req.Msg.GetExerciseSets()),
+		ExerciseSets: parser.ExerciseSliceFromPB(req.Msg.GetExerciseSets()),
 	})
 	if err != nil {
 		log.Error("failed to create workout", zap.Error(err))
@@ -153,7 +153,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	w, err := parser.Workouts(pagination.Items, personalBests)
+	w, err := parser.WorkoutSlice(pagination.Items, personalBests)
 	if err != nil {
 		log.Error("failed to parse workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -218,7 +218,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	log.Info("workout comment posted")
 	return &connect.Response[apiv1.PostCommentResponse]{
 		Msg: &apiv1.PostCommentResponse{
-			Comment: parser.WorkoutCommentToPB(comment, user),
+			Comment: parser.WorkoutComment(comment, user),
 		},
 	}, nil
 }
@@ -254,7 +254,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			return fmt.Errorf("failed to update workout: %w", err)
 		}
 
-		exerciseSets := parser.ExercisesFromPB(req.Msg.GetWorkout().GetExerciseSets())
+		exerciseSets := parser.ExerciseSliceFromPB(req.Msg.GetWorkout().GetExerciseSets())
 		if err = tx.UpdateWorkoutSets(ctx, workout.ID, exerciseSets); err != nil {
 			return fmt.Errorf("failed to update workout sets: %w", err)
 		}

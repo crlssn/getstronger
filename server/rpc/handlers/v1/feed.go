@@ -73,7 +73,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	feedItems, err := parser.FeedItems(paginated.Items, personalBests)
+	feedItems, err := parser.FeedItemSlice(paginated.Items, personalBests)
 	if err != nil {
 		log.Error("failed to parse feed items", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
