@@ -1,3 +1,4 @@
+//nolint:cyclop
 package factory
 
 import (
