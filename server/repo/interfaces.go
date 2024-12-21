@@ -11,6 +11,7 @@ import (
 type Repo interface {
 	methods
 	NewTx(ctx context.Context, f func(tx Tx) error) error
+	GetDB() *sql.DB
 }
 
 type Tx interface {
@@ -78,7 +79,7 @@ type workoutMethods interface {
 	UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error
 	GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error)
 	UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error
-	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error)
+	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error)
 }
 
 type exerciseMethods interface {

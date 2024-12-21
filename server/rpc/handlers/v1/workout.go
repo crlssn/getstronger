@@ -88,11 +88,6 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var commentUsers orm.UserSlice
-	for _, comment := range workout.R.GetWorkoutComments() {
-		commentUsers = append(commentUsers, comment.R.GetUser())
-	}
-
 	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
@@ -101,7 +96,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 
 	w, err := parser.Workout(workout,
 		parser.WorkoutUser(workout.R.GetUser()),
-		parser.WorkoutComments(workout.R.GetWorkoutComments(), commentUsers),
+		parser.WorkoutComments(workout.R.GetWorkoutComments()),
 		parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
 	)
 	if err != nil {
@@ -194,15 +189,9 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		UserID:    userID,
 		WorkoutID: req.Msg.GetWorkoutId(),
 		Comment:   req.Msg.GetComment(),
-	})
+	}, repo.CreateWorkoutCommentLoadUser(ctx, h.repo.GetDB()))
 	if err != nil {
 		log.Error("failed to create workout comment", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(comment.UserID))
-	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -213,7 +202,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	log.Info("workout comment posted")
 	return &connect.Response[apiv1.PostCommentResponse]{
 		Msg: &apiv1.PostCommentResponse{
-			Comment: parser.WorkoutComment(comment, user),
+			Comment: parser.WorkoutComment(comment),
 		},
 	}, nil
 }

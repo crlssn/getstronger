@@ -160,9 +160,9 @@ func WorkoutUser(user *orm.User) WorkoutRelOpt {
 	}
 }
 
-func WorkoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) WorkoutRelOpt {
+func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutRelOpt {
 	return func(w *apiv1.Workout) error {
-		w.Comments = workoutComments(comments, users)
+		w.Comments = workoutComments(comments)
 		return nil
 	}
 }
@@ -204,28 +204,23 @@ func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, er
 	return w, nil
 }
 
-func WorkoutComment(comment *orm.WorkoutComment, user *orm.User) *apiv1.WorkoutComment {
+func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
 	if comment == nil {
 		return nil
 	}
 
 	return &apiv1.WorkoutComment{
 		Id:        comment.ID,
-		User:      User(user),
+		User:      User(comment.R.GetUser()),
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
 	}
 }
 
-func workoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) []*apiv1.WorkoutComment {
-	mapUsers := make(map[string]*orm.User, len(users))
-	for _, user := range users {
-		mapUsers[user.ID] = user
-	}
-
+func workoutComments(comments orm.WorkoutCommentSlice) []*apiv1.WorkoutComment {
 	cSlice := make([]*apiv1.WorkoutComment, 0, len(comments))
 	for _, comment := range comments {
-		cSlice = append(cSlice, WorkoutComment(comment, mapUsers[comment.UserID]))
+		cSlice = append(cSlice, WorkoutComment(comment))
 	}
 
 	return cSlice

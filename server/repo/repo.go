@@ -28,6 +28,10 @@ type repo struct {
 	tx *sql.Tx
 }
 
+func (r *repo) GetDB() *sql.DB {
+	return r.db
+}
+
 func (r *repo) GetTx() *sql.Tx {
 	return r.tx
 }
@@ -1057,7 +1061,24 @@ type CreateWorkoutCommentParams struct {
 	Comment   string
 }
 
-func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+type CreateWorkoutCommentOpts func(comment *orm.WorkoutComment) error
+
+func CreateWorkoutCommentLoadUser(ctx context.Context, exec boil.ContextExecutor) CreateWorkoutCommentOpts {
+	return func(comment *orm.WorkoutComment) error {
+		user, err := comment.User().One(ctx, exec)
+		if err != nil {
+			return fmt.Errorf("user fetch: %w", err)
+		}
+
+		if err = comment.SetUser(ctx, exec, false, user); err != nil {
+			return fmt.Errorf("comment user set: %w", err)
+		}
+
+		return nil
+	}
+}
+
+func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	comment := &orm.WorkoutComment{
 		UserID:    p.UserID,
 		WorkoutID: p.WorkoutID,
@@ -1066,6 +1087,12 @@ func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentP
 
 	if err := comment.Insert(ctx, r.executor(), boil.Infer()); err != nil {
 		return nil, fmt.Errorf("workout comment insert: %w", err)
+	}
+
+	for _, opt := range opts {
+		if err := opt(comment); err != nil {
+			return nil, fmt.Errorf("workout comment opt: %w", err)
+		}
 	}
 
 	return comment, nil

@@ -180,18 +180,23 @@ func (mr *MockRepoMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockRepo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *MockRepo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockRepoMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockRepoMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockRepo)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockRepo)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteRoutine mocks base method.
@@ -259,6 +264,20 @@ func (mr *MockRepoMockRecorder) GetAuth(ctx any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuth", reflect.TypeOf((*MockRepo)(nil).GetAuth), varargs...)
+}
+
+// GetDB mocks base method.
+func (m *MockRepo) GetDB() *sql.DB {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDB")
+	ret0, _ := ret[0].(*sql.DB)
+	return ret0
+}
+
+// GetDB indicates an expected call of GetDB.
+func (mr *MockRepoMockRecorder) GetDB() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDB", reflect.TypeOf((*MockRepo)(nil).GetDB))
 }
 
 // GetExercise mocks base method.
@@ -950,18 +969,23 @@ func (mr *MockTxMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockTx) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *MockTx) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockTxMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockTxMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockTx)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockTx)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteRoutine mocks base method.
@@ -1720,18 +1744,23 @@ func (mr *MockmethodsMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *Mockmethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *Mockmethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockmethodsMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockmethodsMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*Mockmethods)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*Mockmethods)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteRoutine mocks base method.
@@ -2894,18 +2923,23 @@ func (mr *MockworkoutMethodsMockRecorder) CreateWorkout(ctx, p any) *gomock.Call
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockworkoutMethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *MockworkoutMethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockworkoutMethodsMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockworkoutMethodsMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockworkoutMethods)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockworkoutMethods)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteWorkout mocks base method.
