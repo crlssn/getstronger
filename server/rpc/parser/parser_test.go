@@ -479,7 +479,7 @@ func (s *parserSuite) TestNotificationSlice() {
 			s.Require().Equal(actors[0].ID, notification.GetUserFollowed().GetActor().GetId())
 			s.Require().Equal(actors[0].FirstName, notification.GetUserFollowed().GetActor().GetFirstName())
 			s.Require().Equal(actors[0].LastName, notification.GetUserFollowed().GetActor().GetLastName())
-			s.Require().Empty(notification.GetUserFollowed().GetActor().GetEmail())
+			s.Require().Equal(actors[0].R.Auth.Email, notification.GetUserFollowed().GetActor().GetEmail())
 			s.Require().False(notification.GetUserFollowed().GetActor().GetFollowed())
 
 			s.Require().Nil(notification.GetWorkoutComment())
@@ -490,7 +490,7 @@ func (s *parserSuite) TestNotificationSlice() {
 			s.Require().Equal(actors[1].ID, notification.GetWorkoutComment().GetActor().GetId())
 			s.Require().Equal(actors[1].LastName, notification.GetWorkoutComment().GetActor().GetLastName())
 			s.Require().Equal(actors[1].FirstName, notification.GetWorkoutComment().GetActor().GetFirstName())
-			s.Require().Empty(notification.GetWorkoutComment().GetActor().GetEmail())
+			s.Require().Equal(actors[1].R.Auth.Email, notification.GetWorkoutComment().GetActor().GetEmail())
 			s.Require().False(notification.GetWorkoutComment().GetActor().GetFollowed())
 
 			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout())
