@@ -147,14 +147,14 @@ func (s *parserSuite) TestWorkout() {
 	s.Require().Empty(parsed.GetUser().GetEmail())
 
 	workout = s.factory.NewWorkout()
-	comments := orm.WorkoutCommentSlice{
+	workout.R.WorkoutComments = orm.WorkoutCommentSlice{
 		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
 		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
 	}
 
 	parsed = parser.Workout(workout)
 	s.Require().Len(parsed.GetComments(), 2)
-	for i, comment := range comments {
+	for i, comment := range workout.R.WorkoutComments {
 		s.Require().Equal(comment.ID, parsed.GetComments()[i].GetId())
 		s.Require().Equal(comment.UserID, parsed.GetComments()[i].GetUser().GetId())
 		s.Require().Equal(comment.Comment, parsed.GetComments()[i].GetComment())
