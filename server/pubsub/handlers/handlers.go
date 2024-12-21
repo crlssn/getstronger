@@ -81,8 +81,8 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 	}
 
 	workout, err := w.repo.GetWorkout(ctx,
-		repo.GetWorkoutWithID(comment.WorkoutID),
-		repo.GetWorkoutWithComments(),
+		repo.GetWorkoutByID(comment.WorkoutID),
+		repo.GetWorkoutLoadComments(),
 	)
 	if err != nil {
 		w.log.Error("get workout", zap.Error(err))

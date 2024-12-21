@@ -769,37 +769,37 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 
 type GetWorkoutOpt func() qm.QueryMod
 
-func GetWorkoutWithID(id string) GetWorkoutOpt {
+func GetWorkoutByID(id string) GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return orm.WorkoutWhere.ID.EQ(id)
 	}
 }
 
-func GetWorkoutWithComments() GetWorkoutOpt {
+func GetWorkoutLoadComments() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.WorkoutComments)
 	}
 }
 
-func GetWorkoutWithCommenters() GetWorkoutOpt {
+func GetWorkoutLoadCommentUsers() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.WorkoutComments, orm.WorkoutCommentRels.User))
 	}
 }
 
-func GetWorkoutWithExercises() GetWorkoutOpt {
+func GetWorkoutLoadExercises() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.Sets, orm.SetRels.Exercise))
 	}
 }
 
-func GetWorkoutWithSets() GetWorkoutOpt {
+func GetWorkoutLoadSets() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.Sets)
 	}
 }
 
-func GetWorkoutWithUser() GetWorkoutOpt {
+func GetWorkoutLoadUser() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.User)
 	}

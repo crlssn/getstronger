@@ -74,24 +74,19 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 
 func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[apiv1.GetWorkoutRequest]) (*connect.Response[apiv1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
 
+	// TODO: Investigate query performance.
 	workout, err := h.repo.GetWorkout(ctx,
-		repo.GetWorkoutWithID(req.Msg.GetId()),
-		repo.GetWorkoutWithSets(),
-		repo.GetWorkoutWithUser(),
-		repo.GetWorkoutWithComments(),
-		repo.GetWorkoutWithExercises(),
-		repo.GetWorkoutWithCommenters(),
+		repo.GetWorkoutByID(req.Msg.GetId()),
+		repo.GetWorkoutLoadSets(),
+		repo.GetWorkoutLoadUser(),
+		repo.GetWorkoutLoadComments(),
+		repo.GetWorkoutLoadExercises(),
+		repo.GetWorkoutLoadCommentUsers(),
 	)
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	var commentUsers orm.UserSlice
-	for _, comment := range workout.R.GetWorkoutComments() {
-		commentUsers = append(commentUsers, comment.R.GetUser())
 	}
 
 	var exercises orm.ExerciseSlice
@@ -99,7 +94,12 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		exercises = append(exercises, set.R.GetExercise())
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
+	var commentUsers orm.UserSlice
+	for _, comment := range workout.R.GetWorkoutComments() {
+		commentUsers = append(commentUsers, comment.R.GetUser())
+	}
+
+	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -262,7 +262,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
 	}
 
-	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
+	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutByID(req.Msg.GetWorkout().GetId()))
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
