@@ -139,8 +139,18 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 		ExerciseSets: nil,
 	}
 
-	if workout.R == nil {
-		return w
+	if workout.R != nil {
+		if workout.R.User != nil {
+			w.User = User(workout.R.GetUser())
+		}
+
+		if workout.R.WorkoutComments != nil {
+			w.Comments = parseWithEmptyOpts(workout.R.GetWorkoutComments(), WorkoutComment)
+		}
+
+		if workout.R.Sets != nil {
+			w.ExerciseSets = ExerciseSetsSlice(workout.R.GetSets())
+		}
 	}
 
 	for _, opt := range opts {
