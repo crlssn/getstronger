@@ -230,7 +230,7 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exerciseSets, err := parser.ExerciseSetSlicesToPB(exercises, sets, nil)
+	exerciseSets, err := parser.ExerciseSetSlices(exercises, sets, nil)
 	if err != nil {
 		log.Error("failed to parse set slice to exercise sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -263,7 +263,7 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBestSlice, err := parser.ExerciseSetSliceToPB(exercises, personalBests)
+	personalBestSlice, err := parser.ExerciseSets(exercises, personalBests)
 	if err != nil {
 		log.Error("failed to parse personal best slice to pb", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -296,7 +296,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	setSlice, err := parser.SetsToPB(paginated.Items, nil)
+	setSlice, err := parser.Sets(paginated.Items, nil)
 	if err != nil {
 		log.Error("failed to parse set slice to pb", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

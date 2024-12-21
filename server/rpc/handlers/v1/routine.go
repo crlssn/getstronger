@@ -84,7 +84,7 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 
 	log.Info("routine returned")
 	return connect.NewResponse(&apiv1.GetRoutineResponse{
-		Routine: parser.Routine(routine),
+		Routine: parser.Routine(routine, parser.RoutineExercises(routine.R.Exercises)),
 	}), nil
 }
 
@@ -203,7 +203,7 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 
 	log.Info("routines listed")
 	return connect.NewResponse(&apiv1.ListRoutinesResponse{
-		Routines: parser.RoutinesToPB(pagination.Items),
+		Routines: parser.Routines(pagination.Items),
 		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: pagination.NextPageToken,
 		},
