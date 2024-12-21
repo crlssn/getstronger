@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -398,4 +399,46 @@ func (s *parserSuite) TestNotification() {
 	s.Require().Empty(parsed.GetUserFollowed().GetActor().GetEmail())
 	s.Require().False(parsed.GetUserFollowed().GetActor().GetFollowed())
 	s.Require().Nil(parsed.GetWorkoutComment())
+}
+
+func (s *parserSuite) TestNotificationSlice() {
+	actors := orm.UserSlice{
+		s.factory.NewUser(),
+		s.factory.NewUser(),
+	}
+	workouts := orm.WorkoutSlice{
+		s.factory.NewWorkout(),
+	}
+	notifications := orm.NotificationSlice{
+		s.factory.NewNotification(
+			factory.NotificationType(orm.NotificationTypeFollow),
+			factory.NotificationPayload(repo.NotificationPayload{
+				ActorID: actors[0].ID,
+			}),
+		),
+		s.factory.NewNotification(
+			factory.NotificationType(orm.NotificationTypeWorkoutComment),
+			factory.NotificationPayload(repo.NotificationPayload{
+				ActorID:   actors[1].ID,
+				WorkoutID: workouts[0].ID,
+			}),
+		),
+	}
+
+	parsed, err := parser.NotificationSlice(notifications, actors, workouts)
+	s.Require().NoError(err)
+	s.Require().Len(parsed, len(notifications))
+	for i, notification := range parsed {
+		s.Require().NotNil(notification.GetId())
+		s.Require().NotNil(notification.GetType())
+		s.Require().NotNil(notification.GetNotifiedAtUnix())
+		switch i {
+		case 0:
+			s.Require().Nil(notification.GetWorkoutComment())
+			s.Require().NotNil(notification.GetUserFollowed())
+		case 1:
+			s.Require().Nil(notification.GetUserFollowed())
+			s.Require().NotNil(notification.GetWorkoutComment())
+		}
+	}
 }
