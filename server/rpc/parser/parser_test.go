@@ -241,4 +241,20 @@ func (s *parserSuite) TestWorkoutSlice() {
 		s.Require().Empty(parsed[0].GetExerciseSets())
 	})
 }
-outs
+
+func (s *parserSuite) TestWorkoutComment() {
+	comment := s.factory.NewWorkoutComment()
+	parsed := parser.WorkoutComment(comment)
+
+	s.Require().Equal(comment.ID, parsed.GetId())
+	s.Require().Equal("", parsed.GetUser().GetId())
+	s.Require().Equal(comment.Comment, parsed.GetComment())
+	s.Require().True(comment.CreatedAt.Equal(parsed.GetCreatedAt().AsTime()))
+
+	parsed = parser.WorkoutComment(comment, parser.WorkoutCommentUser(comment.R.User))
+	s.Require().Equal(comment.R.User.ID, parsed.GetUser().GetId())
+	s.Require().Equal(comment.R.User.FirstName, parsed.GetUser().GetFirstName())
+	s.Require().Equal(comment.R.User.LastName, parsed.GetUser().GetLastName())
+	s.Require().Equal("", parsed.GetUser().GetEmail())
+	s.Require().False(parsed.GetUser().GetFollowed())
+}
