@@ -106,6 +106,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	}
 
 	w, err := parser.Workout(workout,
+		parser.WorkoutUser(workout.R.GetUser()),
 		parser.WorkoutComments(workout.R.GetWorkoutComments(), commentUsers),
 		parser.WorkoutExerciseSets(exercises, workout.R.GetSets(), personalBests),
 	)

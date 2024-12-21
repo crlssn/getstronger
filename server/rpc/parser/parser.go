@@ -107,6 +107,20 @@ func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, er
 
 type WorkoutRelOpt func(*apiv1.Workout) error
 
+func WorkoutUser(user *orm.User) WorkoutRelOpt {
+	return func(w *apiv1.Workout) error {
+		w.User = UserToPB(user, false)
+		return nil
+	}
+}
+
+func WorkoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) WorkoutRelOpt {
+	return func(w *apiv1.Workout) error {
+		w.Comments = workoutCommentsToPB(comments, users)
+		return nil
+	}
+}
+
 func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
 	return func(w *apiv1.Workout) error {
 		exerciseSets, err := ExerciseSetSlicesToPB(exercises, sets, personalBests)
@@ -115,13 +129,6 @@ func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice, persona
 		}
 
 		w.ExerciseSets = exerciseSets
-		return nil
-	}
-}
-
-func WorkoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) WorkoutRelOpt {
-	return func(w *apiv1.Workout) error {
-		w.Comments = workoutCommentsToPB(comments, users)
 		return nil
 	}
 }
@@ -239,13 +246,15 @@ func WorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users orm.Us
 
 func workoutToPB(workout *orm.Workout) *apiv1.Workout {
 	return &apiv1.Workout{
-		Id:           workout.ID,
-		Name:         workout.Name,
-		User:         UserToPB(workout.R.User, false),
-		ExerciseSets: nil,
+		Id:         workout.ID,
+		Name:       workout.Name,
+		StartedAt:  timestamppb.New(workout.StartedAt),
+		FinishedAt: timestamppb.New(workout.FinishedAt),
+
+		// Relationships.
+		User:         nil,
 		Comments:     nil,
-		StartedAt:    timestamppb.New(workout.StartedAt),
-		FinishedAt:   timestamppb.New(workout.FinishedAt),
+		ExerciseSets: nil,
 	}
 }
 
