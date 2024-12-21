@@ -180,13 +180,13 @@ func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1
 			exerciseOrder = append(exerciseOrder, exercise.ID)
 			mapExerciseSets[exercise.ID] = &apiv1.ExerciseSets{
 				Exercise: Exercise(exercise),
-				Sets:     []*apiv1.Set{Set(set)},
+				Sets:     []*apiv1.Set{Set(set, nil)},
 			}
 
 			continue
 		}
 
-		mapExerciseSets[exercise.ID].Sets = append(mapExerciseSets[exercise.ID].Sets, Set(set))
+		mapExerciseSets[exercise.ID].Sets = append(mapExerciseSets[exercise.ID].Sets, Set(set, nil))
 	}
 
 	sliceExerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
@@ -207,7 +207,7 @@ func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
 	for _, set := range sets {
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSet{
 			Exercise: Exercise(set.R.GetExercise()),
-			Set:      Set(set),
+			Set:      Set(set, nil),
 		})
 	}
 
@@ -362,19 +362,32 @@ func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*ap
 	return items, nil
 }
 
-func SetSlice(sets orm.SetSlice) []*apiv1.Set {
-	return parseWithoutOpts(sets, Set)
+func SetSlice(sets orm.SetSlice, personalBests orm.SetSlice) []*apiv1.Set {
+	mapPersonalBests := make(map[string]struct{}, len(personalBests))
+	for _, set := range personalBests {
+		mapPersonalBests[set.ID] = struct{}{}
+	}
+
+	slice := make([]*apiv1.Set, 0, len(sets))
+	for _, set := range sets {
+		slice = append(slice, Set(set, mapPersonalBests))
+	}
+
+	return slice
 }
 
-func Set(set *orm.Set) *apiv1.Set {
+func Set(set *orm.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 	return &apiv1.Set{
 		Id:     set.ID,
 		Weight: set.Weight,
 		Reps:   int32(set.Reps), //nolint:gosec
 		Metadata: &apiv1.MetadataSet{
-			WorkoutId:    set.WorkoutID,
-			CreatedAt:    timestamppb.New(set.CreatedAt),
-			PersonalBest: false,
+			WorkoutId: set.WorkoutID,
+			CreatedAt: timestamppb.New(set.CreatedAt),
+			PersonalBest: func() bool {
+				_, yes := mapPersonalBests[set.ID]
+				return yes
+			}(),
 		},
 	}
 }

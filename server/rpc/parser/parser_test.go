@@ -566,7 +566,7 @@ func (s *parserSuite) TestFeedItemSlice() {
 
 func (s *parserSuite) TestSet() {
 	set := s.factory.NewSet()
-	parsed := parser.Set(set)
+	parsed := parser.Set(set, nil)
 
 	s.Require().Equal(set.ID, parsed.GetId())
 	s.Require().InEpsilon(set.Weight, parsed.GetWeight(), 0)
@@ -574,4 +574,35 @@ func (s *parserSuite) TestSet() {
 	s.Require().Equal(set.WorkoutID, parsed.GetMetadata().GetWorkoutId())
 	s.Require().True(set.CreatedAt.Equal(parsed.GetMetadata().GetCreatedAt().AsTime()))
 	s.Require().False(parsed.GetMetadata().GetPersonalBest())
+
+	mapPersonalBests := map[string]struct{}{set.ID: {}}
+	parsed = parser.Set(set, mapPersonalBests)
+	s.Require().True(parsed.GetMetadata().GetPersonalBest())
+}
+
+func (s *parserSuite) TestSetSlice() {
+	sets := orm.SetSlice{s.factory.NewSet(), s.factory.NewSet()}
+	parsed := parser.SetSlice(sets, nil)
+
+	s.Require().Len(parsed, len(sets))
+	for i, set := range parsed {
+		s.Require().Equal(sets[i].ID, set.GetId())
+		s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
+		s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+		s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
+		s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
+		s.Require().False(set.GetMetadata().GetPersonalBest())
+	}
+
+	personalBests := orm.SetSlice{sets[0]}
+	parsed = parser.SetSlice(sets, personalBests)
+	s.Require().Len(parsed, len(sets))
+	for i, set := range parsed {
+		s.Require().Equal(sets[i].ID, set.GetId())
+		s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
+		s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+		s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
+		s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
+		s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())
+	}
 }

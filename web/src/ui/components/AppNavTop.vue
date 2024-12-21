@@ -71,7 +71,7 @@ const onSearchUsers = async () => {
         <XMarkIcon class="w-8 h-6 cursor-pointer" @click="closeSearchBar" />
       </template>
       <template v-else>
-        <RouterLink to="/">
+        <RouterLink to="/home">
           <img class="h-auto w-8" src="/favicon.png" />
         </RouterLink>
         <div class="flex flex-1 gap-x-4 justify-center">

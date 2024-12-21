@@ -763,10 +763,11 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 			sets := make([]*orm.Set, 0, len(exerciseSet.Sets))
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &orm.Set{
-					WorkoutID:  workout.ID,
-					ExerciseID: exerciseSet.ExerciseID,
 					Reps:       set.Reps,
 					Weight:     set.Weight,
+					UserID:     p.UserID,
+					WorkoutID:  workout.ID,
+					ExerciseID: exerciseSet.ExerciseID,
 				})
 			}
 

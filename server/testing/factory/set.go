@@ -1,3 +1,4 @@
+//nolint:cyclop
 package factory
 
 import (
@@ -19,6 +20,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 
 	m := &orm.Set{
 		ID:         "",
+		UserID:     "",
 		WorkoutID:  "",
 		ExerciseID: "",
 		Reps:       f.faker.IntRange(1, maxReps),
@@ -32,6 +34,10 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 
 	if m.ID == "" {
 		m.ID = uuid.NewString()
+	}
+
+	if m.UserID == "" {
+		m.UserID = f.NewUser().ID
 	}
 
 	if m.WorkoutID == "" {
@@ -69,6 +75,18 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 	return m
 }
 
+func SetID(id string) SetOpt {
+	return func(set *orm.Set) {
+		set.ID = id
+	}
+}
+
+func SetUserID(userID string) SetOpt {
+	return func(set *orm.Set) {
+		set.UserID = userID
+	}
+}
+
 func SetExerciseID(exerciseID string) SetOpt {
 	return func(set *orm.Set) {
 		set.ExerciseID = exerciseID
@@ -96,11 +114,5 @@ func SetWeight(weight float64) SetOpt {
 func SetCreatedAt(createdAt time.Time) SetOpt {
 	return func(set *orm.Set) {
 		set.CreatedAt = createdAt
-	}
-}
-
-func SetID(id string) SetOpt {
-	return func(set *orm.Set) {
-		set.ID = id
 	}
 }

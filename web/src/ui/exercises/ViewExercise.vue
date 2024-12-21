@@ -15,6 +15,7 @@ import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import usePagination from '@/utils/usePagination'
 import AppCard from '@/ui/components/AppCard.vue'
+import { TrophyIcon } from '@heroicons/vue/24/solid'
 
 const sets = ref([] as Set[])
 const exercise = ref<Exercise>()
@@ -86,10 +87,16 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
       :key="index"
       :to="`/workouts/${set.metadata?.workoutId}`"
     >
-      <p>
-        {{ set.weight }} kg x {{ set.reps }}
-        <small class="block mt-1">{{ formatToRelativeDateTime(set.metadata?.createdAt) }}</small>
-      </p>
+      <div class="w-full flex flex-col">
+        <p>
+          {{ set.weight }} kg x {{ set.reps }}
+          <TrophyIcon
+            v-if="set.metadata?.personalBest"
+            class="size-5 text-yellow-500 inline ml-1"
+          />
+        </p>
+        <small class="mt-1">{{ formatToRelativeDateTime(set.metadata?.createdAt) }}</small>
+      </div>
       <ChevronRightIcon />
     </AppListItemLink>
   </AppList>
