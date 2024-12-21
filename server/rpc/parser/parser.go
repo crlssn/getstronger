@@ -95,15 +95,11 @@ func WorkoutToPBNew(w *orm.Workout) WorkoutOpt {
 	}
 }
 
-type MapWorkoutSets func(e orm.SetSlice) map[string]*apiv1.Exercise
-type MapWorkoutExercises func(e orm.ExerciseSlice) map[string]*apiv1.Set
+type MapWorkoutSets func(e orm.SetSlice) map[string]*apiv1.Set
+type MapWorkoutExercises func(e orm.ExerciseSlice) map[string]*apiv1.Exercise
 
-func Workout(workoutOpt WorkoutOpt, workoutSetsOpt MapWorkoutSets, workoutExercisesOpt MapWorkoutExercises) WorkoutOpt {
+func Workout(workoutOpt WorkoutOpt, workoutExercisesOpt MapWorkoutExercises) WorkoutOpt {
 	return func(w *orm.Workout) (*apiv1.Workout, error) {
-		if w == nil {
-			return nil, fmt.Errorf("workout is nil")
-		}
-
 		workout, err := workoutOpt(w)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply workout opt: %w", err)
@@ -113,18 +109,25 @@ func Workout(workoutOpt WorkoutOpt, workoutSetsOpt MapWorkoutSets, workoutExerci
 			return workout, nil
 		}
 
-		//mapSets := s(w.R.Sets)
-		mapExercises := workoutSetsOpt(w.R.Sets)
+		mapExercise := workoutExercisesOpt(nil)
+		for _, set := range w.R.Sets {
+			sets, setsErr := SetsToPB(w.R.Sets, nil)
+			if setsErr != nil {
+				return nil, fmt.Errorf("failed to parse sets: %w", setsErr)
+			}
 
-		workoutExercisesOpt()
-
-		for _, exerciseSet := range workout.ExerciseSets {
-			//exerciseSet.Sets = mapSets[exerciseSet.Exercise.Id]
-			exerciseSet.Exercise = mapExercises[exerciseSet.Exercise.Id]
+			workout.ExerciseSets = append(workout.ExerciseSets, &apiv1.ExerciseSets{
+				Exercise: mapExercise[set.ExerciseID],
+				Sets:     sets,
+			})
 		}
 
 		return workout, nil
 	}
+}
+
+func WorkoutExerciseSets() WorkoutOpt {
+
 }
 
 func Workout2(workout *orm.Workout, exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutOpt {
