@@ -34,6 +34,15 @@ func (f *Factory) NewUser(opts ...UserOpt) *orm.User {
 	}
 	boil.DebugMode = false
 
+	auth, err := m.Auth().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve auth: %w", err))
+	}
+
+	if err = m.SetAuth(context.Background(), f.db, false, auth); err != nil {
+		panic(fmt.Errorf("failed to set auth: %w", err))
+	}
+
 	return m
 }
 

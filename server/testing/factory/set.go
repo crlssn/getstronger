@@ -14,15 +14,15 @@ import (
 type SetOpt func(set *orm.Set)
 
 func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
-	maxWeight := 100
 	maxReps := 10
+	maxWeight := 100
 
 	m := &orm.Set{
 		ID:         "",
 		WorkoutID:  "",
 		ExerciseID: "",
-		Weight:     f.faker.Float64Range(1, float64(maxWeight)),
 		Reps:       f.faker.IntRange(1, maxReps),
+		Weight:     f.faker.Float64Range(1, float64(maxWeight)),
 		CreatedAt:  time.Time{},
 	}
 
