@@ -75,7 +75,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[apiv1.GetWorkoutRequest]) (*connect.Response[apiv1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	// TODO: Investigate query performance.
+	// TODO: Analyse query performance.
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutByID(req.Msg.GetId()),
 		repo.GetWorkoutLoadSets(),
