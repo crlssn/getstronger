@@ -35,10 +35,6 @@ type repo struct {
 	tx *sql.Tx
 }
 
-func (r *repo) GetDB() *sql.DB {
-	return r.db
-}
-
 func (r *repo) GetTx() *sql.Tx {
 	return r.tx
 }

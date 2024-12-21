@@ -11,7 +11,6 @@ import (
 type Repo interface {
 	methods
 	NewTx(ctx context.Context, f func(tx Tx) error) error
-	GetDB() *sql.DB
 }
 
 type Tx interface {

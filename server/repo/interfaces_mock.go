@@ -266,20 +266,6 @@ func (mr *MockRepoMockRecorder) GetAuth(ctx any, opts ...any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuth", reflect.TypeOf((*MockRepo)(nil).GetAuth), varargs...)
 }
 
-// GetDB mocks base method.
-func (m *MockRepo) GetDB() *sql.DB {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDB")
-	ret0, _ := ret[0].(*sql.DB)
-	return ret0
-}
-
-// GetDB indicates an expected call of GetDB.
-func (mr *MockRepoMockRecorder) GetDB() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDB", reflect.TypeOf((*MockRepo)(nil).GetDB))
-}
-
 // GetExercise mocks base method.
 func (m *MockRepo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
 	m.ctrl.T.Helper()
