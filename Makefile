@@ -31,7 +31,7 @@ generate-cert:
 	printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")'
 
 test:
-	go test ./...
+	go test ./... --count=1
 
 run_backend:
 	go run ./server/cmd/main.go

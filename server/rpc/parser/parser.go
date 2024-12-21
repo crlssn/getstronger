@@ -8,14 +8,9 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
-	"github.com/crlssn/getstronger/server/safe"
 )
 
-func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
-	if exercise == nil {
-		return nil
-	}
-
+func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
 		Id:     exercise.ID,
 		UserId: exercise.UserID,
@@ -24,325 +19,364 @@ func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 	}
 }
 
-func ExercisesToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	return mapSlice(exercises, ExerciseToPB)
+func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
+	return parseWithoutOpts(exercises, Exercise)
 }
 
-func UserToPB(user *orm.User, followed bool) *apiv1.User {
-	if user == nil {
-		return nil
-	}
+type UserOpt func(*apiv1.User)
 
-	return &apiv1.User{
+func UserFollowed(followed bool) UserOpt {
+	return func(user *apiv1.User) {
+		user.Followed = followed
+	}
+}
+
+func User(user *orm.User, opts ...UserOpt) *apiv1.User {
+	u := &apiv1.User{
 		Id:        user.ID,
-		Email:     safeGetEmail(user),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
-		Followed:  followed,
+		Followed:  false,
+		Email:     "",
 	}
+
+	if user.R != nil {
+		if user.R.Auth != nil {
+			u.Email = user.R.GetAuth().Email
+		}
+	}
+
+	for _, opt := range opts {
+		opt(u)
+	}
+
+	return u
 }
 
-func UsersToPB(users orm.UserSlice) []*apiv1.User {
-	return mapSlice(users, func(user *orm.User) *apiv1.User {
-		return UserToPB(user, false)
-	})
+func UserSlice(users orm.UserSlice) []*apiv1.User {
+	return parseWithEmptyOpts(users, User)
 }
 
-func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
-	if routine == nil {
-		return nil
-	}
-
-	var exercises []*apiv1.Exercise
-	if routine.R != nil {
-		exercises = ExercisesToPB(routine.R.Exercises)
-	}
-
-	return &apiv1.Routine{
+func Routine(routine *orm.Routine) *apiv1.Routine {
+	r := &apiv1.Routine{
 		Id:        routine.ID,
 		Name:      routine.Title,
-		Exercises: exercises,
+		Exercises: nil,
 	}
-}
 
-func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
-	return mapSlice(routines, RoutineToPB)
-}
-
-func WorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users orm.UserSlice, mapPersonalBests map[string]struct{}) (*apiv1.Workout, error) {
-	var exerciseOrder []string
-	mapExerciseSets := make(map[string][]*apiv1.Set)
-
-	if workout.R != nil {
-		for _, set := range workout.R.Sets {
-			if _, ok := mapExerciseSets[set.ExerciseID]; !ok {
-				exerciseOrder = append(exerciseOrder, set.ExerciseID)
-			}
-
-			s, err := setToPB(set, mapPersonalBests)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse set: %w", err)
-			}
-
-			mapExerciseSets[set.ExerciseID] = append(mapExerciseSets[set.ExerciseID], s)
+	if routine.R != nil {
+		if routine.R.Exercises != nil {
+			r.Exercises = parseWithoutOpts(routine.R.GetExercises(), Exercise)
 		}
 	}
 
-	mapExercises := make(map[string]*apiv1.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		mapExercises[exercise.ID] = ExerciseToPB(exercise)
-	}
+	return r
+}
 
-	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(exerciseOrder))
-	for _, exerciseID := range exerciseOrder {
-		exerciseSets = append(exerciseSets, &apiv1.ExerciseSets{
-			Exercise: mapExercises[exerciseID],
-			Sets:     mapExerciseSets[exerciseID],
-		})
-	}
+func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
+	return parseWithoutOpts(routines, Routine)
+}
 
-	return &apiv1.Workout{
+type WorkoutOpt func(*apiv1.Workout)
+
+func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutOpt {
+	return func(w *apiv1.Workout) {
+		w.ExerciseSets = ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
+	}
+}
+
+func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
+	w := &apiv1.Workout{
 		Id:           workout.ID,
 		Name:         workout.Name,
-		User:         UserToPB(workout.R.User, false),
-		ExerciseSets: exerciseSets,
-		Comments:     workoutCommentsToPB(workout.R.WorkoutComments, users),
 		StartedAt:    timestamppb.New(workout.StartedAt),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
-	}, nil
-}
+		User:         nil,
+		Comments:     nil,
+		ExerciseSets: nil,
+	}
 
-func WorkoutsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice, users orm.UserSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Workout, error) {
-	wSlice := make([]*apiv1.Workout, 0, len(workouts))
-	for _, workout := range workouts {
-		w, err := WorkoutToPB(workout, exercises, users, mapPersonalBests)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse workout: %w", err)
+	if workout.R != nil {
+		if workout.R.User != nil {
+			w.User = User(workout.R.GetUser())
 		}
 
-		wSlice = append(wSlice, w)
+		for _, comment := range workout.R.GetWorkoutComments() {
+			w.Comments = append(w.Comments, WorkoutComment(comment))
+		}
 	}
 
-	return wSlice, nil
+	for _, opt := range opts {
+		opt(w)
+	}
+
+	return w
 }
 
-func WorkoutCommentToPB(comment *orm.WorkoutComment, user *orm.User) *apiv1.WorkoutComment {
-	if comment == nil {
-		return nil
+func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
+	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
+	for _, workout := range workouts {
+		if workout.R == nil {
+			workoutSlice = append(workoutSlice, Workout(workout))
+			continue
+		}
+
+		var workoutOpts []WorkoutOpt
+		if workout.R.GetSets() != nil {
+			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
+		}
+
+		workoutSlice = append(workoutSlice, Workout(workout, workoutOpts...))
 	}
 
-	return &apiv1.WorkoutComment{
+	return workoutSlice, nil
+}
+
+func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
+	c := &apiv1.WorkoutComment{
 		Id:        comment.ID,
-		User:      UserToPB(user, false),
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
+		User:      nil,
+	}
+
+	if comment.R == nil {
+		return c
+	}
+
+	if comment.R.User != nil {
+		c.User = User(comment.R.GetUser())
+	}
+
+	return c
+}
+
+type ExerciseSetsSliceOpt func(*apiv1.ExerciseSets)
+
+func ExerciseSetsPersonalBests(personalBests orm.SetSlice) ExerciseSetsSliceOpt {
+	return func(s *apiv1.ExerciseSets) {
+		mapPersonalBests := make(map[string]struct{}, len(personalBests))
+		for _, set := range personalBests {
+			mapPersonalBests[set.ID] = struct{}{}
+		}
+
+		for _, set := range s.GetSets() {
+			_, yes := mapPersonalBests[set.GetId()]
+			if set.GetMetadata() == nil {
+				set.Metadata = &apiv1.MetadataSet{}
+			}
+
+			set.Metadata.PersonalBest = yes
+		}
 	}
 }
 
-func workoutCommentsToPB(comments orm.WorkoutCommentSlice, users orm.UserSlice) []*apiv1.WorkoutComment {
-	mapUsers := make(map[string]*orm.User, len(users))
-	for _, user := range users {
-		mapUsers[user.ID] = user
-	}
-
-	cSlice := make([]*apiv1.WorkoutComment, 0, len(comments))
-	for _, comment := range comments {
-		cSlice = append(cSlice, WorkoutCommentToPB(comment, mapUsers[comment.UserID]))
-	}
-
-	return cSlice
-}
-
-func ExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
-	mapExercises := make(map[string]*apiv1.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		mapExercises[exercise.ID] = ExerciseToPB(exercise)
-	}
-
-	mapExerciseSets := make(map[*apiv1.Exercise][]*apiv1.Set)
+func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1.ExerciseSets {
+	mapExerciseSets := make(map[string]*apiv1.ExerciseSets)
 	for _, set := range sets {
-		exerciseKey, ok := mapExercises[set.ExerciseID]
-		if !ok {
-			return nil, fmt.Errorf("%w: %s", errExerciseNotFound, set.ExerciseID)
+		exercise := set.R.GetExercise()
+		if _, ok := mapExerciseSets[exercise.ID]; !ok {
+			mapExerciseSets[exercise.ID] = &apiv1.ExerciseSets{
+				Exercise: Exercise(exercise),
+				Sets:     []*apiv1.Set{Set(set)},
+			}
+
+			continue
 		}
 
-		if _, ok = mapExerciseSets[exerciseKey]; !ok {
-			mapExerciseSets[exerciseKey] = make([]*apiv1.Set, 0)
-		}
-
-		s, err := setToPB(set, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse set: %w", err)
-		}
-
-		mapExerciseSets[exerciseKey] = append(mapExerciseSets[exerciseKey], s)
+		mapExerciseSets[exercise.ID].Sets = append(mapExerciseSets[exercise.ID].Sets, Set(set))
 	}
 
-	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
-	for exerciseID, sets := range mapExerciseSets {
-		exerciseSets = append(exerciseSets, &apiv1.ExerciseSets{
-			Exercise: exerciseID,
-			Sets:     sets,
-		})
+	sliceExerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
+	for _, exerciseSets := range mapExerciseSets {
+		for _, opt := range opts {
+			opt(exerciseSets)
+		}
+
+		sliceExerciseSets = append(sliceExerciseSets, exerciseSets)
 	}
 
-	return exerciseSets, nil
+	return sliceExerciseSets
 }
 
-func ExerciseSetSliceToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*apiv1.ExerciseSet, error) {
-	mapExercises := make(map[string]*orm.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		mapExercises[exercise.ID] = exercise
-	}
-
+func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
 	exerciseSets := make([]*apiv1.ExerciseSet, 0, len(sets))
-	for _, pb := range sets {
-		set, err := setToPB(pb, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse set: %w", err)
-		}
-
+	for _, set := range sets {
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSet{
-			Exercise: ExerciseToPB(mapExercises[pb.ExerciseID]),
-			Set:      set,
+			Exercise: Exercise(set.R.GetExercise()),
+			Set:      Set(set),
 		})
 	}
-	return exerciseSets, nil
+
+	return exerciseSets
 }
 
-func NotificationsToPB(notifications orm.NotificationSlice, payload map[string]repo.NotificationPayload, users orm.UserSlice, workouts orm.WorkoutSlice) []*apiv1.Notification {
-	mapWorkouts := make(map[string]*orm.Workout)
-	for _, w := range workouts {
-		mapWorkouts[w.ID] = w
-	}
-
-	mapUsers := make(map[string]*orm.User)
-	for _, u := range users {
-		mapUsers[u.ID] = u
-	}
-
-	nSlice := make([]*apiv1.Notification, 0, len(notifications))
-	for _, n := range notifications {
-		p, ok := payload[n.ID]
-		if !ok {
-			continue
-		}
-
-		notification := notificationToPB(n, mapUsers[p.ActorID], mapWorkouts[p.WorkoutID])
-		if notification == nil {
-			continue
-		}
-
-		nSlice = append(nSlice, notification)
-	}
-	return nSlice
-}
-
-func ExercisesFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
-	slice := make([]repo.ExerciseSet, 0, len(exerciseSets))
+func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
+	exerciseSetSlice := make([]repo.ExerciseSet, 0, len(exerciseSets))
 	for _, exerciseSet := range exerciseSets {
 		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
 		for _, set := range exerciseSet.GetSets() {
 			sets = append(sets, repo.Set{
+				ID:     set.GetId(),
 				Reps:   int(set.GetReps()),
 				Weight: set.GetWeight(),
 			})
 		}
 
-		slice = append(slice, repo.ExerciseSet{
+		exerciseSetSlice = append(exerciseSetSlice, repo.ExerciseSet{
 			ExerciseID: exerciseSet.GetExercise().GetId(),
 			Sets:       sets,
 		})
 	}
 
-	return slice
+	return exerciseSetSlice
 }
 
-func notificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.Notification {
-	switch n.Type {
-	case orm.NotificationTypeFollow:
-		return &apiv1.Notification{
-			Id:             n.ID,
-			NotifiedAtUnix: n.CreatedAt.Unix(),
-			Type: &apiv1.Notification_UserFollowed_{
-				UserFollowed: &apiv1.Notification_UserFollowed{
-					Actor: UserToPB(u, false),
-				},
-			},
+type NotificationOpt func(*apiv1.Notification)
+
+func NotificationActor(nType orm.NotificationType, actor *orm.User) NotificationOpt {
+	return func(n *apiv1.Notification) {
+		if actor == nil {
+			return
 		}
-	case orm.NotificationTypeWorkoutComment:
-		if w == nil {
-			return nil
-		}
-		return &apiv1.Notification{
-			Id:             n.ID,
-			NotifiedAtUnix: n.CreatedAt.Unix(),
-			Type: &apiv1.Notification_WorkoutComment_{
-				WorkoutComment: &apiv1.Notification_WorkoutComment{
-					Actor: UserToPB(u, false),
-					Workout: &apiv1.Workout{
-						Id:   w.ID,
-						Name: w.Name,
-						User: UserToPB(w.R.User, false),
+
+		switch nType {
+		case orm.NotificationTypeFollow:
+			if _, ok := n.GetType().(*apiv1.Notification_UserFollowed_); !ok {
+				n.Type = &apiv1.Notification_UserFollowed_{
+					UserFollowed: &apiv1.Notification_UserFollowed{
+						Actor: nil,
 					},
-				},
-			},
+				}
+			}
+
+			n.GetType().(*apiv1.Notification_UserFollowed_).UserFollowed.Actor = User(actor) //nolint:forcetypeassert
+		case orm.NotificationTypeWorkoutComment:
+			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
+				n.Type = &apiv1.Notification_WorkoutComment_{
+					WorkoutComment: &apiv1.Notification_WorkoutComment{
+						Actor:   nil,
+						Workout: nil,
+					},
+				}
+			}
+
+			n.GetType().(*apiv1.Notification_WorkoutComment_).WorkoutComment.Actor = User(actor) //nolint:forcetypeassert
 		}
-	default:
-		return nil
 	}
 }
 
-func FeedItemsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.FeedItem, error) {
-	items := make([]*apiv1.FeedItem, 0, len(workouts))
-	for _, workout := range workouts {
-		parsedWorkout, err := WorkoutToPB(workout, exercises, nil, mapPersonalBests)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse workout: %w", err)
+func NotificationWorkout(nType orm.NotificationType, workout *orm.Workout) NotificationOpt {
+	return func(n *apiv1.Notification) {
+		if nType != orm.NotificationTypeWorkoutComment || workout == nil {
+			return
 		}
 
+		if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
+			n.Type = &apiv1.Notification_WorkoutComment_{
+				WorkoutComment: &apiv1.Notification_WorkoutComment{
+					Actor:   nil,
+					Workout: nil,
+				},
+			}
+		}
+
+		n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Workout = Workout(workout) //nolint:forcetypeassert
+	}
+}
+
+func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv1.Notification {
+	n := &apiv1.Notification{
+		Id:             notification.ID,
+		NotifiedAtUnix: notification.CreatedAt.Unix(),
+		Type:           nil,
+	}
+
+	for _, opt := range opts {
+		opt(n)
+	}
+
+	return n
+}
+
+func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
+	mapActors := make(map[string]*orm.User)
+	for _, a := range actors {
+		mapActors[a.ID] = a
+	}
+
+	mapWorkouts := make(map[string]*orm.Workout)
+	for _, w := range workouts {
+		mapWorkouts[w.ID] = w
+	}
+
+	nSlice := make([]*apiv1.Notification, 0, len(notifications))
+	for _, n := range notifications {
+		var p repo.NotificationPayload
+		if err := n.Payload.Unmarshal(&p); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
+		}
+
+		actor, actorExists := mapActors[p.ActorID]
+		workout, workoutExists := mapWorkouts[p.WorkoutID]
+
+		switch n.Type {
+		case orm.NotificationTypeFollow:
+			if actorExists {
+				nSlice = append(nSlice, Notification(n,
+					NotificationActor(n.Type, actor),
+				))
+			}
+		case orm.NotificationTypeWorkoutComment:
+			if actorExists && workoutExists {
+				nSlice = append(nSlice, Notification(n,
+					NotificationActor(n.Type, actor),
+					NotificationWorkout(n.Type, workout),
+				))
+			}
+		}
+	}
+
+	return nSlice, nil
+}
+
+func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.FeedItem, error) {
+	items := make([]*apiv1.FeedItem, 0, len(workouts))
+
+	workoutSlice, err := WorkoutSlice(workouts, personalBests)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse workouts: %w", err)
+	}
+
+	for _, workout := range workoutSlice {
 		items = append(items, &apiv1.FeedItem{
 			Type: &apiv1.FeedItem_Workout{
-				Workout: parsedWorkout,
+				Workout: workout,
 			},
 		})
 	}
+
 	return items, nil
 }
 
-func SetsToPB(sets orm.SetSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Set, error) {
-	sSlice := make([]*apiv1.Set, 0, len(sets))
-	for _, set := range sets {
-		s, err := setToPB(set, mapPersonalBests)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse set: %w", err)
-		}
-		sSlice = append(sSlice, s)
-	}
-	return sSlice, nil
+func SetSlice(sets orm.SetSlice) []*apiv1.Set {
+	return parseWithoutOpts(sets, Set)
 }
 
-func setToPB(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, error) {
-	reps, err := safe.IntToInt32(set.Reps)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse reps: %w", err)
-	}
-
+func Set(set *orm.Set) *apiv1.Set {
 	return &apiv1.Set{
+		Id:     set.ID,
 		Weight: set.Weight,
-		Reps:   reps,
+		Reps:   int32(set.Reps), //nolint:gosec
 		Metadata: &apiv1.MetadataSet{
-			WorkoutId: set.WorkoutID,
-			CreatedAt: timestamppb.New(set.CreatedAt),
-			PersonalBest: func() bool {
-				_, personalBest := mapPersonalBests[set.ID]
-				return personalBest
-			}(),
+			WorkoutId:    set.WorkoutID,
+			CreatedAt:    timestamppb.New(set.CreatedAt),
+			PersonalBest: false,
 		},
-	}, nil
+	}
 }
 
-func mapSlice[Input any, Output any](input []Input, f func(Input) Output) []Output {
+func parseWithoutOpts[Input any, Output any](input []Input, f func(Input) Output) []Output {
 	output := make([]Output, len(input))
 	for i, item := range input {
 		output[i] = f(item)
@@ -350,11 +384,10 @@ func mapSlice[Input any, Output any](input []Input, f func(Input) Output) []Outp
 	return output
 }
 
-func safeGetEmail(user *orm.User) string {
-	if user.R != nil && user.R.Auth != nil {
-		return user.R.Auth.Email
+func parseWithEmptyOpts[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
+	output := make([]Output, len(input))
+	for i, item := range input {
+		output[i] = f(item)
 	}
-	return ""
+	return output
 }
-
-var errExerciseNotFound = fmt.Errorf("exercise not found")

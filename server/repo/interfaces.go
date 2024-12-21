@@ -15,7 +15,7 @@ type Repo interface {
 
 type Tx interface {
 	methods
-	GetTx() *sql.Tx
+	exec() *sql.Tx
 }
 
 type methods interface {
@@ -78,7 +78,8 @@ type workoutMethods interface {
 	UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error
 	GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error)
 	UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error
-	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error)
+	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error)
+	PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts
 }
 
 type exerciseMethods interface {

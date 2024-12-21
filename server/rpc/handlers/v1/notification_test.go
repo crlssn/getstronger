@@ -280,6 +280,7 @@ func (s *notificationSuite) TestListNotifications() {
 
 				s.Require().Equal(expectedComment.GetWorkout().GetId(), actualComment.GetWorkout().GetId())
 				s.Require().Equal(expectedComment.GetWorkout().GetName(), actualComment.GetWorkout().GetName())
+
 				s.Require().Equal(expectedComment.GetWorkout().GetUser().GetId(), actualComment.GetWorkout().GetUser().GetId())
 				s.Require().Equal(expectedComment.GetWorkout().GetUser().GetLastName(), actualComment.GetWorkout().GetUser().GetLastName())
 				s.Require().Equal(expectedComment.GetWorkout().GetUser().GetFirstName(), actualComment.GetWorkout().GetUser().GetFirstName())

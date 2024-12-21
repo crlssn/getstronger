@@ -180,18 +180,23 @@ func (mr *MockRepoMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockRepo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *MockRepo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockRepoMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockRepoMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockRepo)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockRepo)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteRoutine mocks base method.
@@ -599,6 +604,20 @@ func (mr *MockRepoMockRecorder) NewTx(ctx, f any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewTx", reflect.TypeOf((*MockRepo)(nil).NewTx), ctx, f)
 }
 
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *MockRepo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockRepoMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*MockRepo)(nil).PostCreateWorkoutCommentLoadUser), ctx)
+}
+
 // PublishEvent mocks base method.
 func (m *MockRepo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
@@ -950,18 +969,23 @@ func (mr *MockTxMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockTx) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *MockTx) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockTxMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockTxMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockTx)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockTx)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteRoutine mocks base method.
@@ -1104,20 +1128,6 @@ func (mr *MockTxMockRecorder) GetRoutine(ctx any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoutine", reflect.TypeOf((*MockTx)(nil).GetRoutine), varargs...)
-}
-
-// GetTx mocks base method.
-func (m *MockTx) GetTx() *sql.Tx {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTx")
-	ret0, _ := ret[0].(*sql.Tx)
-	return ret0
-}
-
-// GetTx indicates an expected call of GetTx.
-func (mr *MockTxMockRecorder) GetTx() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTx", reflect.TypeOf((*MockTx)(nil).GetTx))
 }
 
 // GetUser mocks base method.
@@ -1369,6 +1379,20 @@ func (mr *MockTxMockRecorder) MarkNotificationsAsRead(ctx, userID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationsAsRead", reflect.TypeOf((*MockTx)(nil).MarkNotificationsAsRead), ctx, userID)
 }
 
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *MockTx) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockTxMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*MockTx)(nil).PostCreateWorkoutCommentLoadUser), ctx)
+}
+
 // PublishEvent mocks base method.
 func (m *MockTx) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
@@ -1558,6 +1582,20 @@ func (mr *MockTxMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockTx)(nil).UpdateWorkoutSets), ctx, workoutID, exerciseSets)
 }
 
+// exec mocks base method.
+func (m *MockTx) exec() *sql.Tx {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "exec")
+	ret0, _ := ret[0].(*sql.Tx)
+	return ret0
+}
+
+// exec indicates an expected call of exec.
+func (mr *MockTxMockRecorder) exec() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "exec", reflect.TypeOf((*MockTx)(nil).exec))
+}
+
 // Mockmethods is a mock of methods interface.
 type Mockmethods struct {
 	ctrl     *gomock.Controller
@@ -1720,18 +1758,23 @@ func (mr *MockmethodsMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *Mockmethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *Mockmethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockmethodsMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockmethodsMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*Mockmethods)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*Mockmethods)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteRoutine mocks base method.
@@ -2123,6 +2166,20 @@ func (m *Mockmethods) MarkNotificationsAsRead(ctx context.Context, userID string
 func (mr *MockmethodsMockRecorder) MarkNotificationsAsRead(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationsAsRead", reflect.TypeOf((*Mockmethods)(nil).MarkNotificationsAsRead), ctx, userID)
+}
+
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *Mockmethods) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockmethodsMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*Mockmethods)(nil).PostCreateWorkoutCommentLoadUser), ctx)
 }
 
 // PublishEvent mocks base method.
@@ -2894,18 +2951,23 @@ func (mr *MockworkoutMethodsMockRecorder) CreateWorkout(ctx, p any) *gomock.Call
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockworkoutMethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+func (m *MockworkoutMethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkoutComment", ctx, p)
+	varargs := []any{ctx, p}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
 	ret0, _ := ret[0].(*orm.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkoutComment indicates an expected call of CreateWorkoutComment.
-func (mr *MockworkoutMethodsMockRecorder) CreateWorkoutComment(ctx, p any) *gomock.Call {
+func (mr *MockworkoutMethodsMockRecorder) CreateWorkoutComment(ctx, p any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockworkoutMethods)(nil).CreateWorkoutComment), ctx, p)
+	varargs := append([]any{ctx, p}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkoutComment", reflect.TypeOf((*MockworkoutMethods)(nil).CreateWorkoutComment), varargs...)
 }
 
 // DeleteWorkout mocks base method.
@@ -2985,6 +3047,20 @@ func (mr *MockworkoutMethodsMockRecorder) ListWorkouts(ctx any, opts ...any) *go
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkouts", reflect.TypeOf((*MockworkoutMethods)(nil).ListWorkouts), varargs...)
+}
+
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *MockworkoutMethods) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockworkoutMethodsMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*MockworkoutMethods)(nil).PostCreateWorkoutCommentLoadUser), ctx)
 }
 
 // UpdateWorkout mocks base method.

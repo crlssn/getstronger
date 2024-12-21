@@ -50,6 +50,15 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *orm.Notification {
 	}
 	boil.DebugMode = false
 
+	user, err := m.User().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	}
+
+	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
+		panic(fmt.Errorf("failed to set user: %w", err))
+	}
+
 	return m
 }
 

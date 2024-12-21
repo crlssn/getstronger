@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -57,7 +56,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		UserID:       userID,
 		StartedAt:    req.Msg.GetStartedAt().AsTime(),
 		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
-		ExerciseSets: parser.ExercisesFromPB(req.Msg.GetExerciseSets()),
+		ExerciseSets: parser.ExerciseSetsFromPB(req.Msg.GetExerciseSets()),
 	})
 	if err != nil {
 		log.Error("failed to create workout", zap.Error(err))
@@ -74,73 +73,45 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 
 func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[apiv1.GetWorkoutRequest]) (*connect.Response[apiv1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
 
+	// TODO: Analyse query performance.
 	workout, err := h.repo.GetWorkout(ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
-		repo.GetWorkoutWithSets(),
-		repo.GetWorkoutWithUser(),
-		repo.GetWorkoutWithComments(),
+		repo.GetWorkoutLoadSets(),
+		repo.GetWorkoutLoadUser(),
+		repo.GetWorkoutLoadComments(),
+		repo.GetWorkoutLoadExercises(),
+		repo.GetWorkoutLoadCommentUsers(),
 	)
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	userIDs := make([]string, 0, len(workout.R.WorkoutComments))
-	for _, comment := range workout.R.WorkoutComments {
-		userIDs = append(userIDs, comment.UserID)
-	}
-
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(append(userIDs, userID)))
-	if err != nil {
-		log.Error("failed to list users", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	exerciseIDs := make([]string, 0, len(workout.R.Sets))
-	for _, set := range workout.R.Sets {
-		exerciseIDs = append(exerciseIDs, set.ExerciseID)
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("failed to list exercises", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
+	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	mapPersonalBests := make(map[string]struct{})
-	for _, set := range personalBests {
-		mapPersonalBests[set.ID] = struct{}{}
-	}
-
-	w, err := parser.WorkoutToPB(workout, exercises, users, mapPersonalBests)
-	if err != nil {
-		log.Error("failed to parse workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("workout fetched")
 	return &connect.Response[apiv1.GetWorkoutResponse]{
 		Msg: &apiv1.GetWorkoutResponse{
-			Workout: w,
+			Workout: parser.Workout(workout,
+				parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
+			),
 		},
 	}, nil
 }
 
-func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[apiv1.ListWorkoutsRequest]) (*connect.Response[apiv1.ListWorkoutsResponse], error) { //nolint:cyclop // TODO: Make less complex
+func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[apiv1.ListWorkoutsRequest]) (*connect.Response[apiv1.ListWorkoutsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	workouts, err := h.repo.ListWorkouts(ctx,
-		repo.ListWorkoutsWithSets(),
-		repo.ListWorkoutsWithUser(),
+		repo.ListWorkoutsLoadSets(),
+		repo.ListWorkoutsLoadUser(),
+		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()...),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
@@ -158,48 +129,19 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var userIDs []string
-	var exerciseIDs []string
-	for _, workout := range pagination.Items {
-		for _, set := range workout.R.Sets {
-			exerciseIDs = append(exerciseIDs, set.ExerciseID)
-		}
-		for _, comment := range workout.R.WorkoutComments {
-			userIDs = append(userIDs, comment.UserID)
-		}
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("failed to list exercises", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
-	if err != nil {
-		log.Error("failed to list users", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserIds()...)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	mapPersonalBests := make(map[string]struct{})
-	for _, pb := range personalBests {
-		mapPersonalBests[pb.ID] = struct{}{}
-	}
-
-	w, err := parser.WorkoutsToPB(pagination.Items, exercises, users, mapPersonalBests)
+	w, err := parser.WorkoutSlice(pagination.Items, personalBests)
 	if err != nil {
 		log.Error("failed to parse workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	log.Info("workouts listed")
-	spew.Dump(w)
 	return &connect.Response[apiv1.ListWorkoutsResponse]{
 		Msg: &apiv1.ListWorkoutsResponse{
 			Workouts: w,
@@ -239,15 +181,9 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		UserID:    userID,
 		WorkoutID: req.Msg.GetWorkoutId(),
 		Comment:   req.Msg.GetComment(),
-	})
+	}, h.repo.PostCreateWorkoutCommentLoadUser(ctx))
 	if err != nil {
 		log.Error("failed to create workout comment", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(comment.UserID))
-	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -258,7 +194,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	log.Info("workout comment posted")
 	return &connect.Response[apiv1.PostCommentResponse]{
 		Msg: &apiv1.PostCommentResponse{
-			Comment: parser.WorkoutCommentToPB(comment, user),
+			Comment: parser.WorkoutComment(comment),
 		},
 	}, nil
 }
@@ -294,7 +230,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			return fmt.Errorf("failed to update workout: %w", err)
 		}
 
-		exerciseSets := parser.ExercisesFromPB(req.Msg.GetWorkout().GetExerciseSets())
+		exerciseSets := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
 		if err = tx.UpdateWorkoutSets(ctx, workout.ID, exerciseSets); err != nil {
 			return fmt.Errorf("failed to update workout sets: %w", err)
 		}

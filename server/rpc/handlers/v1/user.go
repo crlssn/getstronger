@@ -49,7 +49,7 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 
 	return &connect.Response[apiv1.GetUserResponse]{
 		Msg: &apiv1.GetUserResponse{
-			User: parser.UserToPB(user, followed),
+			User: parser.User(user, parser.UserFollowed(followed)),
 		},
 	}, nil
 }
@@ -78,7 +78,7 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 	log.Info("searched users")
 	return &connect.Response[apiv1.SearchUsersResponse]{
 		Msg: &apiv1.SearchUsersResponse{
-			Users: parser.UsersToPB(pagination.Items),
+			Users: parser.UserSlice(pagination.Items),
 			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: pagination.NextPageToken,
 			},
@@ -136,7 +136,7 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[ap
 
 	return &connect.Response[apiv1.ListFollowersResponse]{
 		Msg: &apiv1.ListFollowersResponse{
-			Followers: parser.UsersToPB(followers),
+			Followers: parser.UserSlice(followers),
 		},
 	}, nil
 }
@@ -152,7 +152,7 @@ func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[ap
 
 	return &connect.Response[apiv1.ListFolloweesResponse]{
 		Msg: &apiv1.ListFolloweesResponse{
-			Followees: parser.UsersToPB(followees),
+			Followees: parser.UserSlice(followees),
 		},
 	}, nil
 }

@@ -62,7 +62,7 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 	}
 
 	return connect.NewResponse(&apiv1.GetExerciseResponse{
-		Exercise: parser.ExerciseToPB(exercise),
+		Exercise: parser.Exercise(exercise),
 	}), nil
 }
 
@@ -113,7 +113,7 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 
 	log.Info("exercise updated")
 	return connect.NewResponse(&apiv1.UpdateExerciseResponse{
-		Exercise: parser.ExerciseToPB(exercise),
+		Exercise: parser.Exercise(exercise),
 	}), nil
 }
 
@@ -175,7 +175,7 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 
 	log.Info("exercises listed")
 	return connect.NewResponse(&apiv1.ListExercisesResponse{
-		Exercises: parser.ExercisesToPB(pagination.Items),
+		Exercises: parser.ExerciseSlice(pagination.Items),
 		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: pagination.NextPageToken,
 		},
@@ -184,12 +184,10 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 
 func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *connect.Request[apiv1.GetPreviousWorkoutSetsRequest]) (*connect.Response[apiv1.GetPreviousWorkoutSetsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
 
 	sets, err := h.repo.GetPreviousWorkoutSets(ctx, req.Msg.GetExerciseIds())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("no previous workout sets", zap.Any("exercise_ids", req.Msg.GetExerciseIds()))
 			return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
 				Msg: &apiv1.GetPreviousWorkoutSetsResponse{
 					ExerciseSets: nil,
@@ -201,44 +199,9 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workoutIDs := make([]string, 0, len(sets))
-	for _, set := range sets {
-		workoutIDs = append(workoutIDs, set.WorkoutID)
-	}
-
-	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
-	if err != nil {
-		log.Error("failed to get workouts", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	for _, workout := range workouts {
-		if workout.UserID != userID {
-			log.Error("workout does not belong to user")
-			return nil, connect.NewError(connect.CodePermissionDenied, nil)
-		}
-	}
-
-	exerciseIDs := make([]string, 0, len(sets))
-	for _, set := range sets {
-		exerciseIDs = append(exerciseIDs, set.ExerciseID)
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("failed to list exercises", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	exerciseSets, err := parser.ExerciseSetSlicesToPB(exercises, sets)
-	if err != nil {
-		log.Error("failed to parse set slice to exercise sets", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
 		Msg: &apiv1.GetPreviousWorkoutSetsResponse{
-			ExerciseSets: exerciseSets,
+			ExerciseSets: parser.ExerciseSetsSlice(sets),
 		},
 	}, nil
 }
@@ -252,25 +215,8 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exerciseIDs := make([]string, 0, len(personalBests))
-	for _, pb := range personalBests {
-		exerciseIDs = append(exerciseIDs, pb.ExerciseID)
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("list exercises failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	personalBestSlice, err := parser.ExerciseSetSliceToPB(exercises, personalBests)
-	if err != nil {
-		log.Error("failed to parse personal best slice to pb", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	return connect.NewResponse(&apiv1.GetPersonalBestsResponse{
-		PersonalBests: personalBestSlice,
+		PersonalBests: parser.ExerciseSetSlice(personalBests),
 	}), nil
 }
 
@@ -282,6 +228,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		repo.ListSetsWithLimit(limit+1),
 		repo.ListSetsWithExerciseID(req.Msg.GetExerciseId()),
 		repo.ListSetsWithPageToken(req.Msg.GetPagination().GetPageToken()),
+		repo.ListSetsOrderByCreatedAt(repo.DESC),
 	)
 	if err != nil {
 		log.Error("list sets failed", zap.Error(err))
@@ -296,15 +243,9 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	setSlice, err := parser.SetsToPB(paginated.Items, nil)
-	if err != nil {
-		log.Error("failed to parse set slice to pb", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	log.Info("sets listed")
 	return connect.NewResponse(&apiv1.ListSetsResponse{
-		Sets: setSlice,
+		Sets: parser.SetSlice(paginated.Items),
 		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: paginated.NextPageToken,
 		},

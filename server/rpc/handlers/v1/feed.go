@@ -25,14 +25,16 @@ func NewFeedHandler(r repo.Repo) apiv1connect.FeedServiceHandler {
 	return &feedHandler{r}
 }
 
-func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[apiv1.ListFeedItemsRequest]) (*connect.Response[apiv1.ListFeedItemsResponse], error) { //nolint:cyclop // TODO: Make less complex
+func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[apiv1.ListFeedItemsRequest]) (*connect.Response[apiv1.ListFeedItemsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	opts := []repo.ListWorkoutsOpt{
-		repo.ListWorkoutsWithSets(),
-		repo.ListWorkoutsWithUser(),
+		repo.ListWorkoutsLoadSets(),
+		repo.ListWorkoutsLoadUser(),
+		repo.ListWorkoutsLoadComments(),
+		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit + 1),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	}
@@ -66,31 +68,13 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var exerciseIDs []string
-	for _, workout := range paginated.Items {
-		for _, set := range workout.R.Sets {
-			exerciseIDs = append(exerciseIDs, set.ExerciseID)
-		}
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("failed to list exercises", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	mapPersonalBests := make(map[string]struct{})
-	for _, pb := range personalBests {
-		mapPersonalBests[pb.ID] = struct{}{}
-	}
-
-	feedItems, err := parser.FeedItemsToPB(paginated.Items, exercises, mapPersonalBests)
+	feedItems, err := parser.FeedItemSlice(paginated.Items, personalBests)
 	if err != nil {
 		log.Error("failed to parse feed items", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

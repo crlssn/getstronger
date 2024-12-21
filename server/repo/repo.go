@@ -18,6 +18,13 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
+type order string
+
+const (
+	ASC  order = "ASC"
+	DESC order = "DESC"
+)
+
 var (
 	_ Tx   = (*repo)(nil)
 	_ Repo = (*repo)(nil)
@@ -28,7 +35,7 @@ type repo struct {
 	tx *sql.Tx
 }
 
-func (r *repo) GetTx() *sql.Tx {
+func (r *repo) exec() *sql.Tx {
 	return r.tx
 }
 
@@ -146,7 +153,7 @@ func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Auths(orm.AuthWhere.ID.EQ(authID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Auths(orm.AuthWhere.ID.EQ(authID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("auth update: %w", rowsErr)
 		}
@@ -229,7 +236,7 @@ func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 			orm.ExerciseWhere.ID.EQ(p.ExerciseID),
 			orm.ExerciseWhere.UserID.EQ(p.UserID),
 			qm.Load(orm.ExerciseRels.Routines),
-		).One(ctx, tx.GetTx())
+		).One(ctx, tx.exec())
 		if err != nil {
 			return fmt.Errorf("exercise fetch: %w", err)
 		}
@@ -253,12 +260,12 @@ func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 			}
 		}
 
-		if err = exercise.SetRoutines(ctx, tx.GetTx(), false); err != nil {
+		if err = exercise.SetRoutines(ctx, tx.exec(), false); err != nil {
 			return fmt.Errorf("exercise routines set: %w", err)
 		}
 
 		exercise.DeletedAt = null.TimeFrom(time.Now().UTC())
-		if _, err = exercise.Update(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if _, err = exercise.Update(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("exercise soft delete: %w", err)
 		}
 
@@ -398,7 +405,7 @@ func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...Up
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Exercises(orm.ExerciseWhere.ID.EQ(exerciseID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Exercises(orm.ExerciseWhere.ID.EQ(exerciseID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("exercise update: %w", err)
 		}
@@ -443,11 +450,11 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.R
 	}
 
 	if err = r.NewTx(ctx, func(tx Tx) error {
-		if err = routine.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if err = routine.Insert(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("routine insert: %w", err)
 		}
 
-		if err = routine.SetExercises(ctx, tx.GetTx(), false, exercises...); err != nil {
+		if err = routine.SetExercises(ctx, tx.exec(), false, exercises...); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
@@ -503,11 +510,11 @@ func (r *repo) DeleteRoutine(ctx context.Context, id string) error {
 			return fmt.Errorf("routine fetch: %w", err)
 		}
 
-		if err = routine.SetExercises(ctx, tx.GetTx(), false); err != nil {
+		if err = routine.SetExercises(ctx, tx.exec(), false); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 
-		if _, err = routine.Delete(ctx, tx.GetTx()); err != nil {
+		if _, err = routine.Delete(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("routine delete: %w", err)
 		}
 
@@ -605,7 +612,7 @@ func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("routine update: %w", err)
 		}
@@ -660,7 +667,7 @@ func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithUser() ListWorkoutsOpt {
+func ListWorkoutsLoadUser() ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
 			qm.Load(orm.WorkoutRels.User),
@@ -668,7 +675,15 @@ func ListWorkoutsWithUser() ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithSets() ListWorkoutsOpt {
+func ListWorkoutsLoadComments() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(orm.WorkoutRels.WorkoutComments),
+		}, nil
+	}
+}
+
+func ListWorkoutsLoadSets() ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
 			qm.Load(orm.WorkoutRels.Sets),
@@ -726,6 +741,7 @@ type ExerciseSet struct {
 }
 
 type Set struct {
+	ID     string
 	Reps   int
 	Weight float64
 }
@@ -739,7 +755,7 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 	}
 
 	if err := r.NewTx(ctx, func(tx Tx) error {
-		if err := workout.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if err := workout.Insert(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("workout insert: %w", err)
 		}
 
@@ -754,7 +770,7 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 				})
 			}
 
-			if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
+			if err := workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
 				return fmt.Errorf("workout sets add: %w", err)
 			}
 		}
@@ -775,21 +791,33 @@ func GetWorkoutWithID(id string) GetWorkoutOpt {
 	}
 }
 
-func GetWorkoutWithComments() GetWorkoutOpt {
-	return func() qm.QueryMod {
-		return qm.Load(orm.WorkoutRels.WorkoutComments)
-	}
-}
-
-func GetWorkoutWithSets() GetWorkoutOpt {
+func GetWorkoutLoadSets() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.Sets)
 	}
 }
 
-func GetWorkoutWithUser() GetWorkoutOpt {
+func GetWorkoutLoadUser() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.User)
+	}
+}
+
+func GetWorkoutLoadComments() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutRels.WorkoutComments)
+	}
+}
+
+func GetWorkoutLoadExercises() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.Sets, orm.SetRels.Exercise))
+	}
+}
+
+func GetWorkoutLoadCommentUsers() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.WorkoutComments, orm.WorkoutCommentRels.User))
 	}
 }
 
@@ -837,26 +865,26 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		workout, err := orm.Workouts(query...).One(ctx, tx.GetTx())
+		workout, err := orm.Workouts(query...).One(ctx, tx.exec())
 		if err != nil {
 			return fmt.Errorf("workout fetch: %w", err)
 		}
 
-		if _, err = workout.R.Sets.DeleteAll(ctx, tx.GetTx()); err != nil {
+		if _, err = workout.R.Sets.DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
 		}
 
-		if _, err = workout.R.WorkoutComments.DeleteAll(ctx, tx.GetTx()); err != nil {
+		if _, err = workout.R.WorkoutComments.DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout comments delete: %w", err)
 		}
 
 		if _, err = orm.Notifications(
 			qm.Where("payload ->> 'workoutId' = ?", workout.ID),
-		).DeleteAll(ctx, tx.GetTx()); err != nil {
+		).DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("notifications delete: %w", err)
 		}
 
-		if _, err = workout.Delete(ctx, tx.GetTx()); err != nil {
+		if _, err = workout.Delete(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout delete: %w", err)
 		}
 
@@ -866,12 +894,14 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 func (r *repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
 	rawQuery := `
-SELECT * FROM getstronger.sets WHERE (exercise_id, workout_id) IN (
+SELECT id FROM getstronger.sets 
+WHERE (exercise_id, workout_id) IN (
 	SELECT DISTINCT ON (exercise_id) exercise_id, workout_id	
 	FROM getstronger.sets
 	WHERE exercise_id = ANY($1)
 	ORDER BY exercise_id, created_at DESC
-) ORDER BY created_at;
+)
+ORDER BY created_at;
 `
 
 	var sets orm.SetSlice
@@ -879,7 +909,16 @@ SELECT * FROM getstronger.sets WHERE (exercise_id, workout_id) IN (
 		return nil, fmt.Errorf("previous workout sets fetch: %w", err)
 	}
 
-	return sets, nil
+	setIDs := make([]string, 0, len(sets))
+	for _, set := range sets {
+		setIDs = append(setIDs, set.ID)
+	}
+
+	return r.ListSets(ctx,
+		ListSetsWithID(setIDs...),
+		ListSetsLoadExercise(),
+		ListSetsOrderByCreatedAt(ASC),
+	)
 }
 
 func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
@@ -894,7 +933,7 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 	}
 
 	rawQuery := `
-	SELECT DISTINCT ON (exercise_id) exercise_id, weight, reps, id, workout_id, created_at
+	SELECT DISTINCT ON (exercise_id) exercise_id, id
 	FROM getstronger.sets
 	WHERE workout_id = ANY ($1)
 	ORDER BY exercise_id, weight DESC, reps DESC;
@@ -905,7 +944,16 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 		return nil, fmt.Errorf("sets fetch: %w", err)
 	}
 
-	return sets, nil
+	setIDs := make([]string, 0, len(sets))
+	for _, set := range sets {
+		setIDs = append(setIDs, set.ID)
+	}
+
+	return r.ListSets(ctx,
+		ListSetsWithID(setIDs...),
+		ListSetsLoadExercise(),
+		ListSetsOrderByCreatedAt(DESC),
+	)
 }
 
 type FollowParams struct {
@@ -1045,7 +1093,24 @@ type CreateWorkoutCommentParams struct {
 	Comment   string
 }
 
-func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams) (*orm.WorkoutComment, error) {
+type CreateWorkoutCommentOpts func(comment *orm.WorkoutComment) error
+
+func (r *repo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	return func(comment *orm.WorkoutComment) error {
+		user, err := comment.User().One(ctx, r.executor())
+		if err != nil {
+			return fmt.Errorf("user fetch: %w", err)
+		}
+
+		if err = comment.SetUser(ctx, r.executor(), false, user); err != nil {
+			return fmt.Errorf("comment user set: %w", err)
+		}
+
+		return nil
+	}
+}
+
+func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
 	comment := &orm.WorkoutComment{
 		UserID:    p.UserID,
 		WorkoutID: p.WorkoutID,
@@ -1054,6 +1119,12 @@ func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentP
 
 	if err := comment.Insert(ctx, r.executor(), boil.Infer()); err != nil {
 		return nil, fmt.Errorf("workout comment insert: %w", err)
+	}
+
+	for _, opt := range opts {
+		if err := opt(comment); err != nil {
+			return nil, fmt.Errorf("workout comment opt: %w", err)
+		}
 	}
 
 	return comment, nil
@@ -1329,10 +1400,26 @@ func ListSetsWithPageToken(token []byte) ListSetsOpt {
 	}
 }
 
-func (r *repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
-	query := []qm.QueryMod{
-		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+func ListSetsWithID(id ...string) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return orm.SetWhere.ID.IN(id), nil
 	}
+}
+
+func ListSetsLoadExercise() ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return qm.Load(orm.SetRels.Exercise), nil
+	}
+}
+
+func ListSetsOrderByCreatedAt(order order) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return qm.OrderBy(fmt.Sprintf("%s %s", orm.SetColumns.CreatedAt, order)), nil
+	}
+}
+
+func (r *repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+	var query []qm.QueryMod
 	for _, opt := range opts {
 		q, err := opt()
 		if err != nil {
@@ -1386,7 +1473,7 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Workouts(orm.WorkoutWhere.ID.EQ(workoutID)).UpdateAll(ctx, tx.GetTx(), columns)
+		rows, rowsErr := orm.Workouts(orm.WorkoutWhere.ID.EQ(workoutID)).UpdateAll(ctx, tx.exec(), columns)
 		if rowsErr != nil {
 			return fmt.Errorf("workout update: %w", err)
 		}
@@ -1402,7 +1489,7 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
 	return r.NewTx(ctx, func(tx Tx) error {
 		workout := &orm.Workout{ID: workoutID}
-		if _, err := workout.Sets().DeleteAll(ctx, tx.GetTx()); err != nil {
+		if _, err := workout.Sets().DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
 		}
 
@@ -1418,7 +1505,7 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exercise
 			}
 		}
 
-		if err := workout.AddSets(ctx, tx.GetTx(), true, sets...); err != nil {
+		if err := workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
 			return fmt.Errorf("workout sets add: %w", err)
 		}
 
@@ -1445,14 +1532,22 @@ func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload [
 			Topic:   topic,
 			Payload: payload,
 		}
-		if err := event.Insert(ctx, tx.GetTx(), boil.Infer()); err != nil {
+		if err := event.Insert(ctx, tx.exec(), boil.Infer()); err != nil {
 			return fmt.Errorf("event insert: %w", err)
 		}
 
-		if _, err := tx.GetTx().Exec("SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
+		if _, err := tx.exec().Exec("SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
 			return fmt.Errorf("pg_notify: %w", err)
 		}
 
 		return nil
 	})
+}
+
+func ListWorkoutsLoadExercises() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.Sets, orm.SetRels.Exercise)),
+		}, nil
+	}
 }

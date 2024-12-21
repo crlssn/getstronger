@@ -23,9 +23,10 @@ message Exercise {
 }
 
 message Set {
-  double weight = 1; // The weight can be less than zero.
-  int32 reps = 2 [(buf.validate.field).int32 = { gte: 1 }];
-  MetadataSet metadata = 3;
+  string id = 1;
+  double weight = 2; // The weight can be less than zero.
+  int32 reps = 3 [(buf.validate.field).int32 = { gte: 1 }];
+  MetadataSet metadata = 4;
 }
 
 message MetadataSet {

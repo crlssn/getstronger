@@ -14,15 +14,15 @@ import (
 type SetOpt func(set *orm.Set)
 
 func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
-	maxWeight := 100
 	maxReps := 10
+	maxWeight := 100
 
 	m := &orm.Set{
-		ID:         uuid.NewString(),
+		ID:         "",
 		WorkoutID:  "",
 		ExerciseID: "",
-		Weight:     f.faker.Float64Range(1, float64(maxWeight)),
 		Reps:       f.faker.IntRange(1, maxReps),
+		Weight:     f.faker.Float64Range(1, float64(maxWeight)),
 		CreatedAt:  time.Time{},
 	}
 
@@ -30,9 +30,14 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		opt(m)
 	}
 
+	if m.ID == "" {
+		m.ID = uuid.NewString()
+	}
+
 	if m.WorkoutID == "" {
 		m.WorkoutID = f.NewWorkout().ID
 	}
+
 	if m.ExerciseID == "" {
 		m.ExerciseID = f.NewExercise().ID
 	}
@@ -42,6 +47,24 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		panic(fmt.Errorf("failed to insert set: %w", err))
 	}
 	boil.DebugMode = false
+
+	workout, err := m.Workout().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve workout: %w", err))
+	}
+
+	if err = m.SetWorkout(context.Background(), f.db, false, workout); err != nil {
+		panic(fmt.Errorf("failed to set workout: %w", err))
+	}
+
+	exercise, err := m.Exercise().One(context.Background(), f.db)
+	if err != nil {
+		panic(fmt.Errorf("failed to retrieve exercise: %w", err))
+	}
+
+	if err = m.SetExercise(context.Background(), f.db, false, exercise); err != nil {
+		panic(fmt.Errorf("failed to set exercise: %w", err))
+	}
 
 	return m
 }
@@ -73,5 +96,11 @@ func SetWeight(weight float64) SetOpt {
 func SetCreatedAt(createdAt time.Time) SetOpt {
 	return func(set *orm.Set) {
 		set.CreatedAt = createdAt
+	}
+}
+
+func SetID(id string) SetOpt {
+	return func(set *orm.Set) {
+		set.ID = id
 	}
 }
