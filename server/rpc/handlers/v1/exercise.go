@@ -215,19 +215,8 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exerciseIDs := make([]string, 0, len(personalBests))
-	for _, pb := range personalBests {
-		exerciseIDs = append(exerciseIDs, pb.ExerciseID)
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("list exercises failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	return connect.NewResponse(&apiv1.GetPersonalBestsResponse{
-		PersonalBests: parser.ExerciseSetSlice(exercises, personalBests),
+		PersonalBests: parser.ExerciseSetSlice(personalBests),
 	}), nil
 }
 

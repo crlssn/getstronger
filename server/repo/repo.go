@@ -920,7 +920,7 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 	}
 
 	rawQuery := `
-	SELECT DISTINCT ON (exercise_id) exercise_id, weight, reps, id, workout_id, created_at
+	SELECT DISTINCT ON (exercise_id) exercise_id, id
 	FROM getstronger.sets
 	WHERE workout_id = ANY ($1)
 	ORDER BY exercise_id, weight DESC, reps DESC;
@@ -931,7 +931,15 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 		return nil, fmt.Errorf("sets fetch: %w", err)
 	}
 
-	return sets, nil
+	setIDs := make([]string, 0, len(sets))
+	for _, set := range sets {
+		setIDs = append(setIDs, set.ID)
+	}
+
+	return r.ListSets(ctx,
+		ListSetsWithID(setIDs...),
+		ListSetsLoadExercise(),
+	)
 }
 
 type FollowParams struct {

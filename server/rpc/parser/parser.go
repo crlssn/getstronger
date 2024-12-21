@@ -274,16 +274,11 @@ func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1
 	return exerciseSetsSlice
 }
 
-func ExerciseSetSlice(exercises orm.ExerciseSlice, sets orm.SetSlice) []*apiv1.ExerciseSet {
-	mapExercises := make(map[string]*orm.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		mapExercises[exercise.ID] = exercise
-	}
-
+func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
 	exerciseSets := make([]*apiv1.ExerciseSet, 0, len(sets))
 	for _, set := range sets {
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSet{
-			Exercise: Exercise(mapExercises[set.ExerciseID]),
+			Exercise: Exercise(set.R.GetExercise()),
 			Set:      Set(set),
 		})
 	}
