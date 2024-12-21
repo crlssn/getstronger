@@ -8,7 +8,7 @@ require (
 	connectrpc.com/cors v0.1.0
 	github.com/aws/aws-sdk-go-v2 v1.32.7
 	github.com/aws/aws-sdk-go-v2/config v1.28.7
-	github.com/aws/aws-sdk-go-v2/service/ses v1.29.1
+	github.com/aws/aws-sdk-go-v2/service/ses v1.29.2
 	github.com/brianvoe/gofakeit/v7 v7.1.2
 	github.com/bufbuild/protovalidate-go v0.8.0
 	github.com/friendsofgo/errors v0.9.2
