@@ -25,7 +25,7 @@ func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 }
 
 func ExercisesToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	return toSlice(exercises, ExerciseToPB)
+	return slice(exercises, ExerciseToPB)
 }
 
 func UserToPB(user *orm.User, followed bool) *apiv1.User {
@@ -43,7 +43,7 @@ func UserToPB(user *orm.User, followed bool) *apiv1.User {
 }
 
 func UsersToPB(users orm.UserSlice) []*apiv1.User {
-	return toSlice(users, func(user *orm.User) *apiv1.User {
+	return slice(users, func(user *orm.User) *apiv1.User {
 		return UserToPB(user, false)
 	})
 }
@@ -66,7 +66,7 @@ func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
 }
 
 func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
-	return toSlice(routines, RoutineToPB)
+	return slice(routines, RoutineToPB)
 }
 
 type WorkoutOpt func(w *orm.Workout) (*apiv1.Workout, error)
@@ -406,7 +406,7 @@ func setToPB(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, er
 	}, nil
 }
 
-func toSlice[Input any, Output any](input []Input, f func(Input) Output) []Output {
+func slice[Input any, Output any](input []Input, f func(Input) Output) []Output {
 	output := make([]Output, len(input))
 	for i, item := range input {
 		output[i] = f(item)
