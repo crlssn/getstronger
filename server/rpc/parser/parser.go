@@ -36,7 +36,7 @@ func Exercise(exercise *orm.Exercise, opts ...ExerciseOpt) *apiv1.Exercise {
 }
 
 func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	return parse(exercises, Exercise)
+	return parseWithOpts(exercises, Exercise)
 }
 
 type UserOpt func(*apiv1.User)
@@ -75,14 +75,14 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 }
 
 func UserSlice(users orm.UserSlice) []*apiv1.User {
-	return parse(users, User)
+	return parseWithOpts(users, User)
 }
 
 type RoutineOpt func(*apiv1.Routine)
 
 func RoutineExercises(exercises orm.ExerciseSlice) RoutineOpt {
 	return func(routine *apiv1.Routine) {
-		routine.Exercises = parse(exercises, Exercise)
+		routine.Exercises = parseWithOpts(exercises, Exercise)
 	}
 }
 
@@ -106,7 +106,7 @@ func Routine(routine *orm.Routine, opts ...RoutineOpt) *apiv1.Routine {
 }
 
 func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
-	return parse(routines, Routine)
+	return parseWithOpts(routines, Routine)
 }
 
 type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
@@ -401,11 +401,7 @@ func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*ap
 }
 
 func SetSlice(sets orm.SetSlice) []*apiv1.Set {
-	setSlice := make([]*apiv1.Set, 0, len(sets))
-	for _, set := range sets {
-		setSlice = append(setSlice, Set(set))
-	}
-	return setSlice
+	return parse(sets, Set)
 }
 
 func Set(set *orm.Set) *apiv1.Set {
@@ -421,7 +417,15 @@ func Set(set *orm.Set) *apiv1.Set {
 	}
 }
 
-func parse[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
+func parse[Input any, Output any](input []Input, f func(Input) Output) []Output {
+	output := make([]Output, len(input))
+	for i, item := range input {
+		output[i] = f(item)
+	}
+	return output
+}
+
+func parseWithOpts[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
 	output := make([]Output, len(input))
 	for i, item := range input {
 		output[i] = f(item)
