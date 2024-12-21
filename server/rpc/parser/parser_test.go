@@ -181,3 +181,64 @@ func (s *parserSuite) TestWorkout() {
 		}
 	}
 }
+
+func (s *parserSuite) TestWorkoutSlice() {
+	s.Run("ok_workouts_with_relationships", func() {
+		workouts := orm.WorkoutSlice{
+			s.factory.NewWorkout(),
+			s.factory.NewWorkout(),
+		}
+
+		for _, workout := range workouts {
+			workout.R.Sets = orm.SetSlice{
+				s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
+				s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
+			}
+		}
+
+		personalBests := orm.SetSlice{
+			workouts[0].R.Sets[0],
+		}
+
+		parsed, err := parser.WorkoutSlice(workouts, personalBests)
+		s.Require().NoError(err)
+		s.Require().Len(parsed, len(workouts))
+
+		for i, workout := range workouts {
+			s.Require().Equal(workout.ID, parsed[i].GetId())
+			s.Require().Equal(workout.Name, parsed[i].GetName())
+			s.Require().True(workout.StartedAt.Equal(parsed[i].GetStartedAt().AsTime()))
+			s.Require().True(workout.FinishedAt.Equal(parsed[i].GetFinishedAt().AsTime()))
+
+			s.Require().NotNil(workout.R.User)
+			s.Require().Equal(workout.R.User.ID, parsed[i].GetUser().GetId())
+			s.Require().Equal(workout.R.User.FirstName, parsed[i].GetUser().GetFirstName())
+			s.Require().Equal(workout.R.User.LastName, parsed[i].GetUser().GetLastName())
+
+			for j, exerciseSet := range parsed[i].GetExerciseSets() {
+				s.Require().Equal(workout.R.Sets[j].ExerciseID, exerciseSet.GetExercise().GetId())
+				for _, set := range exerciseSet.GetSets() {
+					s.Require().Equal(workout.R.Sets[j].ID, set.GetId())
+					s.Require().InEpsilon(workout.R.Sets[j].Weight, set.GetWeight(), 0)
+					s.Require().Equal(workout.R.Sets[j].Reps, int(set.GetReps()))
+					s.Require().Equal(workout.R.Sets[j].WorkoutID, set.GetMetadata().GetWorkoutId())
+					s.Require().True(workout.R.Sets[j].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
+					s.Require().Equal(i == 0 && j == 0, set.GetMetadata().GetPersonalBest())
+				}
+			}
+		}
+	})
+
+	s.Run("ok_workout_without_relationship", func() {
+		workout := s.factory.NewWorkout()
+		workout.R = nil
+
+		parsed, err := parser.WorkoutSlice(orm.WorkoutSlice{workout}, nil)
+		s.Require().NoError(err)
+		s.Require().Len(parsed, 1)
+		s.Require().Equal(workout.ID, parsed[0].GetId())
+		s.Require().Nil(parsed[0].GetUser())
+		s.Require().Empty(parsed[0].GetExerciseSets())
+	})
+}
+outs

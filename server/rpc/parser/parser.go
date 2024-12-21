@@ -154,8 +154,6 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	return w
 }
 
-type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
-
 func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
 	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
 	for _, workout := range workouts {
