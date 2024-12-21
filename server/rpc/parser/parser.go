@@ -36,7 +36,7 @@ func Exercise(exercise *orm.Exercise, opts ...ExerciseOpt) *apiv1.Exercise {
 }
 
 func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	return slice(exercises, Exercise)
+	return parse(exercises, Exercise)
 }
 
 type UserOpt func(*apiv1.User)
@@ -75,19 +75,14 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 }
 
 func UserSlice(users orm.UserSlice) []*apiv1.User {
-	return slice(users, User)
+	return parse(users, User)
 }
 
 type RoutineOpt func(*apiv1.Routine)
 
 func RoutineExercises(exercises orm.ExerciseSlice) RoutineOpt {
 	return func(routine *apiv1.Routine) {
-		exerciseSlice := make([]*apiv1.Exercise, 0, len(exercises))
-		for _, exercise := range exercises {
-			exerciseSlice = append(exerciseSlice, Exercise(exercise))
-		}
-
-		routine.Exercises = exerciseSlice
+		routine.Exercises = parse(exercises, Exercise)
 	}
 }
 
@@ -111,7 +106,7 @@ func Routine(routine *orm.Routine, opts ...RoutineOpt) *apiv1.Routine {
 }
 
 func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
-	return slice(routines, Routine)
+	return parse(routines, Routine)
 }
 
 type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
@@ -124,7 +119,7 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 			continue
 		}
 
-		var workoutOpts []WorkoutRelOpt
+		var workoutOpts []WorkoutOpt
 		if workout.R.User != nil {
 			workoutOpts = append(workoutOpts, WorkoutUser(workout.R.GetUser()))
 		}
@@ -144,33 +139,35 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 	return workoutSlice, nil
 }
 
-type WorkoutRelOpt func(*apiv1.Workout)
+type WorkoutOpt func(*apiv1.Workout)
 
-func WorkoutUser(user *orm.User) WorkoutRelOpt {
+func WorkoutUser(user *orm.User) WorkoutOpt {
 	return func(w *apiv1.Workout) {
 		w.User = User(user)
 	}
 }
 
-func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutRelOpt {
+func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
-		w.Comments = workoutComments(comments)
+		for _, comment := range comments {
+			w.Comments = append(w.Comments, WorkoutComment(comment, WorkoutCommentUser(comment.R.GetUser())))
+		}
 	}
 }
 
-func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
+func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
 		w.ExerciseSets = ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
 	}
 }
 
-func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) *apiv1.Workout {
+func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	w := &apiv1.Workout{
 		Id:         workout.ID,
 		Name:       workout.Name,
 		StartedAt:  timestamppb.New(workout.StartedAt),
 		FinishedAt: timestamppb.New(workout.FinishedAt),
-		// Relationships. Load them with WorkoutRelOpt.
+		// Relationships. Load them with WorkoutOpt.
 		User:         nil,
 		Comments:     nil,
 		ExerciseSets: nil,
@@ -180,36 +177,39 @@ func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) *apiv1.Workout {
 		return w
 	}
 
-	for _, relOpt := range relOpts {
-		relOpt(w)
+	for _, opt := range opts {
+		opt(w)
 	}
 
 	return w
 }
 
-func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
+type WorkoutCommentOpt func(*apiv1.WorkoutComment)
+
+func WorkoutCommentUser(user *orm.User) WorkoutCommentOpt {
+	return func(c *apiv1.WorkoutComment) {
+		c.User = User(user)
+	}
+}
+
+func WorkoutComment(comment *orm.WorkoutComment, opts ...WorkoutCommentOpt) *apiv1.WorkoutComment {
 	c := &apiv1.WorkoutComment{
 		Id:        comment.ID,
-		User:      nil,
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
+		// Relationships. Load them with WorkoutOpt.
+		User: nil,
 	}
 
 	if comment.R == nil {
 		return c
 	}
 
-	c.User = User(comment.R.GetUser())
-	return c
-}
-
-func workoutComments(comments orm.WorkoutCommentSlice) []*apiv1.WorkoutComment {
-	cSlice := make([]*apiv1.WorkoutComment, 0, len(comments))
-	for _, comment := range comments {
-		cSlice = append(cSlice, WorkoutComment(comment))
+	for _, opt := range opts {
+		opt(c)
 	}
 
-	return cSlice
+	return c
 }
 
 type ExerciseSetsSliceOpt func(*apiv1.ExerciseSets)
@@ -233,30 +233,31 @@ func ExerciseSetsPersonalBests(personalBests orm.SetSlice) ExerciseSetsSliceOpt 
 }
 
 func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1.ExerciseSets {
-	mapExerciseSetsSlice := make(map[string]*apiv1.ExerciseSets)
+	mapExerciseSets := make(map[string]*apiv1.ExerciseSets)
 	for _, set := range sets {
 		exercise := set.R.GetExercise()
-		if _, ok := mapExerciseSetsSlice[exercise.ID]; !ok {
-			mapExerciseSetsSlice[exercise.ID] = &apiv1.ExerciseSets{
+		if _, ok := mapExerciseSets[exercise.ID]; !ok {
+			mapExerciseSets[exercise.ID] = &apiv1.ExerciseSets{
 				Exercise: Exercise(exercise),
 				Sets:     []*apiv1.Set{Set(set)},
 			}
+
 			continue
 		}
 
-		mapExerciseSetsSlice[exercise.ID].Sets = append(mapExerciseSetsSlice[exercise.ID].Sets, Set(set))
+		mapExerciseSets[exercise.ID].Sets = append(mapExerciseSets[exercise.ID].Sets, Set(set))
 	}
 
-	exerciseSetsSlice := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSetsSlice))
-	for _, exerciseSets := range mapExerciseSetsSlice {
+	sliceExerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
+	for _, exerciseSets := range mapExerciseSets {
 		for _, opt := range opts {
 			opt(exerciseSets)
 		}
 
-		exerciseSetsSlice = append(exerciseSetsSlice, exerciseSets)
+		sliceExerciseSets = append(sliceExerciseSets, exerciseSets)
 	}
 
-	return exerciseSetsSlice
+	return sliceExerciseSets
 }
 
 func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
@@ -420,7 +421,7 @@ func Set(set *orm.Set) *apiv1.Set {
 	}
 }
 
-func slice[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
+func parse[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
 	output := make([]Output, len(input))
 	for i, item := range input {
 		output[i] = f(item)

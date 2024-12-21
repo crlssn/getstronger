@@ -196,7 +196,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	log.Info("workout comment posted")
 	return &connect.Response[apiv1.PostCommentResponse]{
 		Msg: &apiv1.PostCommentResponse{
-			Comment: parser.WorkoutComment(comment),
+			Comment: parser.WorkoutComment(comment, parser.WorkoutCommentUser(comment.R.GetUser())),
 		},
 	}, nil
 }
