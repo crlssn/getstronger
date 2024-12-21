@@ -258,3 +258,44 @@ func (s *parserSuite) TestWorkoutComment() {
 	s.Require().Empty(parsed.GetUser().GetEmail())
 	s.Require().False(parsed.GetUser().GetFollowed())
 }
+
+func (s *parserSuite) TestExerciseSetsSlice() {
+	sets := orm.SetSlice{s.factory.NewSet(), s.factory.NewSet()}
+	parsed := parser.ExerciseSetsSlice(sets)
+
+	s.Require().Len(parsed, len(sets))
+	for i, exerciseSets := range parsed {
+		s.Require().Equal(sets[i].ExerciseID, exerciseSets.GetExercise().GetId())
+		s.Require().Empty(exerciseSets.GetExercise().GetLabel())
+		s.Require().NotEmpty(exerciseSets.GetExercise().GetName())
+		s.Require().NotEmpty(exerciseSets.GetExercise().GetUserId())
+
+		for _, set := range exerciseSets.GetSets() {
+			s.Require().Equal(sets[i].ID, set.GetId())
+			s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
+			s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+			s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
+			s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
+			s.Require().False(set.GetMetadata().GetPersonalBest())
+		}
+	}
+
+	personalBests := orm.SetSlice{sets[0]}
+	parsed = parser.ExerciseSetsSlice(sets, parser.ExerciseSetsPersonalBests(personalBests))
+	s.Require().Len(parsed, len(sets))
+	for i, exerciseSets := range parsed {
+		s.Require().Equal(sets[i].ExerciseID, exerciseSets.GetExercise().GetId())
+		s.Require().Empty(exerciseSets.GetExercise().GetLabel())
+		s.Require().NotEmpty(exerciseSets.GetExercise().GetName())
+		s.Require().NotEmpty(exerciseSets.GetExercise().GetUserId())
+
+		for _, set := range exerciseSets.GetSets() {
+			s.Require().Equal(sets[i].ID, set.GetId())
+			s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
+			s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+			s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
+			s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
+			s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())
+		}
+	}
+}
