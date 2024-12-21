@@ -1130,20 +1130,6 @@ func (mr *MockTxMockRecorder) GetRoutine(ctx any, opts ...any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoutine", reflect.TypeOf((*MockTx)(nil).GetRoutine), varargs...)
 }
 
-// GetTx mocks base method.
-func (m *MockTx) exec() *sql.Tx {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTx")
-	ret0, _ := ret[0].(*sql.Tx)
-	return ret0
-}
-
-// GetTx indicates an expected call of GetTx.
-func (mr *MockTxMockRecorder) GetTx() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTx", reflect.TypeOf((*MockTx)(nil).exec))
-}
-
 // GetUser mocks base method.
 func (m *MockTx) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
 	m.ctrl.T.Helper()
@@ -1594,6 +1580,20 @@ func (m *MockTx) UpdateWorkoutSets(ctx context.Context, workoutID string, exerci
 func (mr *MockTxMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockTx)(nil).UpdateWorkoutSets), ctx, workoutID, exerciseSets)
+}
+
+// exec mocks base method.
+func (m *MockTx) exec() *sql.Tx {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "exec")
+	ret0, _ := ret[0].(*sql.Tx)
+	return ret0
+}
+
+// exec indicates an expected call of exec.
+func (mr *MockTxMockRecorder) exec() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "exec", reflect.TypeOf((*MockTx)(nil).exec))
 }
 
 // Mockmethods is a mock of methods interface.
