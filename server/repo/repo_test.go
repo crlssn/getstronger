@@ -883,12 +883,12 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 		expected    expected
 	}
 
-	exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
+	exerciseIDs := []string{factory.UUID(0), factory.UUID(1)}
 	for _, exerciseID := range exerciseIDs {
 		s.testFactory.NewExercise(factory.ExerciseID(exerciseID))
 	}
 
-	workoutIDs := []string{uuid.NewString(), uuid.NewString()}
+	workoutIDs := []string{factory.UUID(0), factory.UUID(1)}
 	for _, workoutID := range workoutIDs {
 		s.testFactory.NewWorkout(factory.WorkoutID(workoutID))
 	}

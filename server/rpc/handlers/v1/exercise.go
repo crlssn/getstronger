@@ -228,6 +228,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		repo.ListSetsWithLimit(limit+1),
 		repo.ListSetsWithExerciseID(req.Msg.GetExerciseId()),
 		repo.ListSetsWithPageToken(req.Msg.GetPagination().GetPageToken()),
+		repo.ListSetsOrderByCreatedAt(repo.DESC),
 	)
 	if err != nil {
 		log.Error("list sets failed", zap.Error(err))

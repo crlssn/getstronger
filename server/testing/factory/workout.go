@@ -14,7 +14,7 @@ import (
 type WorkoutOpt func(workout *orm.Workout)
 
 func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
-	startedAt := f.faker.Date()
+	startedAt := time.Now().UTC()
 	m := &orm.Workout{
 		ID:         uuid.NewString(),
 		Name:       f.faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),

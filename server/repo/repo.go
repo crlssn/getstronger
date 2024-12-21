@@ -18,6 +18,13 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
+type order string
+
+const (
+	ASC  order = "ASC"
+	DESC order = "DESC"
+)
+
 var (
 	_ Tx   = (*repo)(nil)
 	_ Repo = (*repo)(nil)
@@ -906,6 +913,7 @@ ORDER BY created_at;
 	return r.ListSets(ctx,
 		ListSetsWithID(setIDs...),
 		ListSetsLoadExercise(),
+		ListSetsOrderByCreatedAt(ASC),
 	)
 }
 
@@ -940,6 +948,7 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 	return r.ListSets(ctx,
 		ListSetsWithID(setIDs...),
 		ListSetsLoadExercise(),
+		ListSetsOrderByCreatedAt(DESC),
 	)
 }
 
@@ -1399,10 +1408,14 @@ func ListSetsLoadExercise() ListSetsOpt {
 	}
 }
 
-func (r *repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
-	query := []qm.QueryMod{
-		qm.OrderBy(fmt.Sprintf("%s DESC", orm.SetColumns.CreatedAt)),
+func ListSetsOrderByCreatedAt(order order) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		return qm.OrderBy(fmt.Sprintf("%s %s", orm.SetColumns.CreatedAt, order)), nil
 	}
+}
+
+func (r *repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+	var query []qm.QueryMod
 	for _, opt := range opts {
 		q, err := opt()
 		if err != nil {
