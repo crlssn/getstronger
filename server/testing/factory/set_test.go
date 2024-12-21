@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -40,6 +41,15 @@ func TestFactory_Set(t *testing.T) {
 		created, err := orm.FindSet(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, workoutID, created.WorkoutID)
+	})
+
+	t.Run("SetID", func(t *testing.T) {
+		t.Parallel()
+		id := uuid.NewString()
+		expected := f.NewSet(factory.SetID(id))
+		created, err := orm.FindSet(ctx, c.DB, expected.ID)
+		require.NoError(t, err)
+		require.Equal(t, id, created.ID)
 	})
 
 	t.Run("SetUserID", func(t *testing.T) {

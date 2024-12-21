@@ -574,4 +574,7 @@ func (s *parserSuite) TestSet() {
 	s.Require().Equal(set.WorkoutID, parsed.GetMetadata().GetWorkoutId())
 	s.Require().True(set.CreatedAt.Equal(parsed.GetMetadata().GetCreatedAt().AsTime()))
 	s.Require().False(parsed.GetMetadata().GetPersonalBest())
+
+	parsed = parser.Set(set, map[string]struct{}{set.ID: {}})
+	s.Require().True(parsed.GetMetadata().GetPersonalBest())
 }
