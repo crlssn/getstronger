@@ -81,32 +81,22 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		repo.GetWorkoutWithSets(),
 		repo.GetWorkoutWithUser(),
 		repo.GetWorkoutWithComments(),
+		repo.GetWorkoutWithExercises(),
+		repo.GetWorkoutWithCommenters(),
 	)
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	userIDs := make([]string, 0, len(workout.R.WorkoutComments))
-	for _, comment := range workout.R.WorkoutComments {
-		userIDs = append(userIDs, comment.UserID)
+	var commentUsers orm.UserSlice
+	for _, comment := range workout.R.GetWorkoutComments() {
+		commentUsers = append(commentUsers, comment.R.GetUser())
 	}
 
-	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(append(userIDs, userID)))
-	if err != nil {
-		log.Error("failed to list users", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	exerciseIDs := make([]string, 0, len(workout.R.Sets))
+	var exercises orm.ExerciseSlice
 	for _, set := range workout.R.Sets {
-		exerciseIDs = append(exerciseIDs, set.ExerciseID)
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("failed to list exercises", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
+		exercises = append(exercises, set.R.GetExercise())
 	}
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
@@ -115,12 +105,10 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	mapPersonalBests := make(map[string]struct{})
-	for _, set := range personalBests {
-		mapPersonalBests[set.ID] = struct{}{}
-	}
-
-	w, err := parser.WorkoutToPB(workout, exercises, users, mapPersonalBests)
+	w, err := parser.Workout(workout,
+		parser.WorkoutComments(workout.R.GetWorkoutComments(), commentUsers),
+		parser.WorkoutExerciseSets(exercises, personalBests),
+	)
 	if err != nil {
 		log.Error("failed to parse workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

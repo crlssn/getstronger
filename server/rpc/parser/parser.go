@@ -90,25 +90,19 @@ type WorkoutOpt func(w *orm.Workout) (*apiv1.Workout, error)
 //MapWorkoutExercises func(e orm.ExerciseSlice) map[string]*apiv1.Exercise
 //)
 
-func Workout(workoutOpt WorkoutOpt, relOpts ...WorkoutRelOpt) WorkoutOpt {
-	return func(w *orm.Workout) (*apiv1.Workout, error) {
-		workout, err := workoutOpt(w)
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply workout opt: %w", err)
-		}
-
-		if w.R == nil {
-			return workout, nil
-		}
-
-		for _, relOpt := range relOpts {
-			if err = relOpt(workout); err != nil {
-				return nil, fmt.Errorf("failed to apply workout rel opt: %w", err)
-			}
-		}
-
-		return workout, nil
+func Workout(workout *orm.Workout, relOpts ...WorkoutRelOpt) (*apiv1.Workout, error) {
+	w := workoutToPB(workout)
+	if workout.R == nil {
+		return w, nil
 	}
+
+	for _, relOpt := range relOpts {
+		if err := relOpt(w); err != nil {
+			return nil, fmt.Errorf("failed to apply workout rel opt: %w", err)
+		}
+	}
+
+	return w, nil
 }
 
 type WorkoutRelOpt func(*apiv1.Workout) error
@@ -241,6 +235,18 @@ func WorkoutToPB(workout *orm.Workout, exercises orm.ExerciseSlice, users orm.Us
 		StartedAt:    timestamppb.New(workout.StartedAt),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
 	}, nil
+}
+
+func workoutToPB(workout *orm.Workout) *apiv1.Workout {
+	return &apiv1.Workout{
+		Id:           workout.ID,
+		Name:         workout.Name,
+		User:         UserToPB(workout.R.User, false),
+		ExerciseSets: nil,
+		Comments:     nil,
+		StartedAt:    timestamppb.New(workout.StartedAt),
+		FinishedAt:   timestamppb.New(workout.FinishedAt),
+	}
 }
 
 func WorkoutsToPB(workouts orm.WorkoutSlice, exercises orm.ExerciseSlice, users orm.UserSlice, mapPersonalBests map[string]struct{}) ([]*apiv1.Workout, error) {

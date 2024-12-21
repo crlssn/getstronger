@@ -781,6 +781,18 @@ func GetWorkoutWithComments() GetWorkoutOpt {
 	}
 }
 
+func GetWorkoutWithCommenters() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.WorkoutComments, orm.WorkoutCommentRels.User))
+	}
+}
+
+func GetWorkoutWithExercises() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.Sets, orm.SetRels.Exercise))
+	}
+}
+
 func GetWorkoutWithSets() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.Sets)
