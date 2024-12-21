@@ -482,6 +482,7 @@ func (s *parserSuite) TestFeedItemSlice() {
 	for _, workout := range workouts {
 		workout.R.Sets = orm.SetSlice{
 			s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
+			s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
 		}
 	}
 
@@ -507,11 +508,14 @@ func (s *parserSuite) TestFeedItemSlice() {
 			s.Require().NotNil(feedItem.GetWorkout().GetExerciseSets())
 			s.Require().Len(feedItem.GetWorkout().GetExerciseSets(), len(workouts[i].R.Sets))
 			for j, exerciseSet := range feedItem.GetWorkout().GetExerciseSets() {
-				s.Require().Len(exerciseSet.GetSets(), len(workouts[i].R.Sets))
-				s.Require().Equal(workouts[i].R.Sets[j].ExerciseID, exerciseSet.GetExercise().GetId())
-				s.Require().Equal(workouts[i].R.Sets[j].ID, exerciseSet.GetSets()[j].GetId())
-				s.Require().InEpsilon(workouts[i].R.Sets[j].Weight, exerciseSet.GetSets()[j].GetWeight(), 0)
-				s.Require().Equal(workouts[i].R.Sets[j].Reps, int(exerciseSet.GetSets()[j].GetReps()))
+				for _, set := range exerciseSet.GetSets() {
+					s.Require().Equal(workouts[i].R.Sets[j].ID, set.GetId())
+					s.Require().InEpsilon(workouts[i].R.Sets[j].Weight, set.GetWeight(), 0)
+					s.Require().Equal(workouts[i].R.Sets[j].Reps, int(set.GetReps()))
+					s.Require().Equal(workouts[i].R.Sets[j].WorkoutID, set.GetMetadata().GetWorkoutId())
+					s.Require().True(workouts[i].R.Sets[j].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
+					s.Require().False(set.GetMetadata().GetPersonalBest())
+				}
 			}
 
 			s.Require().Nil(feedItem.GetWorkout().GetComments())
