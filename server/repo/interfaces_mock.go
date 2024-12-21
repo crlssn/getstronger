@@ -618,6 +618,20 @@ func (mr *MockRepoMockRecorder) NewTx(ctx, f any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewTx", reflect.TypeOf((*MockRepo)(nil).NewTx), ctx, f)
 }
 
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *MockRepo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockRepoMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*MockRepo)(nil).PostCreateWorkoutCommentLoadUser), ctx)
+}
+
 // PublishEvent mocks base method.
 func (m *MockRepo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
@@ -1393,6 +1407,20 @@ func (mr *MockTxMockRecorder) MarkNotificationsAsRead(ctx, userID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationsAsRead", reflect.TypeOf((*MockTx)(nil).MarkNotificationsAsRead), ctx, userID)
 }
 
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *MockTx) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockTxMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*MockTx)(nil).PostCreateWorkoutCommentLoadUser), ctx)
+}
+
 // PublishEvent mocks base method.
 func (m *MockTx) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
@@ -2152,6 +2180,20 @@ func (m *Mockmethods) MarkNotificationsAsRead(ctx context.Context, userID string
 func (mr *MockmethodsMockRecorder) MarkNotificationsAsRead(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationsAsRead", reflect.TypeOf((*Mockmethods)(nil).MarkNotificationsAsRead), ctx, userID)
+}
+
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *Mockmethods) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockmethodsMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*Mockmethods)(nil).PostCreateWorkoutCommentLoadUser), ctx)
 }
 
 // PublishEvent mocks base method.
@@ -3019,6 +3061,20 @@ func (mr *MockworkoutMethodsMockRecorder) ListWorkouts(ctx any, opts ...any) *go
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkouts", reflect.TypeOf((*MockworkoutMethods)(nil).ListWorkouts), varargs...)
+}
+
+// PostCreateWorkoutCommentLoadUser mocks base method.
+func (m *MockworkoutMethods) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostCreateWorkoutCommentLoadUser", ctx)
+	ret0, _ := ret[0].(CreateWorkoutCommentOpts)
+	return ret0
+}
+
+// PostCreateWorkoutCommentLoadUser indicates an expected call of PostCreateWorkoutCommentLoadUser.
+func (mr *MockworkoutMethodsMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostCreateWorkoutCommentLoadUser", reflect.TypeOf((*MockworkoutMethods)(nil).PostCreateWorkoutCommentLoadUser), ctx)
 }
 
 // UpdateWorkout mocks base method.

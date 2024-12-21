@@ -80,6 +80,7 @@ type workoutMethods interface {
 	GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error)
 	UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error
 	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error)
+	PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts
 }
 
 type exerciseMethods interface {

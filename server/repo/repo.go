@@ -1099,14 +1099,14 @@ type CreateWorkoutCommentParams struct {
 
 type CreateWorkoutCommentOpts func(comment *orm.WorkoutComment) error
 
-func PostCreateWorkoutCommentLoadUser(ctx context.Context, exec boil.ContextExecutor) CreateWorkoutCommentOpts {
+func (r *repo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
 	return func(comment *orm.WorkoutComment) error {
-		user, err := comment.User().One(ctx, exec)
+		user, err := comment.User().One(ctx, r.executor())
 		if err != nil {
 			return fmt.Errorf("user fetch: %w", err)
 		}
 
-		if err = comment.SetUser(ctx, exec, false, user); err != nil {
+		if err = comment.SetUser(ctx, r.executor(), false, user); err != nil {
 			return fmt.Errorf("comment user set: %w", err)
 		}
 
