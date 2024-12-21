@@ -134,7 +134,16 @@ func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice) Workout
 		if err != nil {
 			return fmt.Errorf("failed to parse exercise sets: %w", err)
 		}
+
 		w.ExerciseSets = exerciseSets
+
+		return nil
+	}
+}
+
+func WorkoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) WorkoutExerciseSetsOpts {
+	return func(w *apiv1.Workout) error {
+		w.Comments = workoutCommentsToPB(comments, users)
 		return nil
 	}
 }
