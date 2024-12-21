@@ -10,33 +10,17 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 )
 
-type ExerciseOpt func(*apiv1.Exercise)
-
-func Exercise(exercise *orm.Exercise, opts ...ExerciseOpt) *apiv1.Exercise {
-	if exercise == nil {
-		return nil
-	}
-
-	e := &apiv1.Exercise{
+func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
+	return &apiv1.Exercise{
 		Id:     exercise.ID,
 		UserId: exercise.UserID,
 		Name:   exercise.Title,
 		Label:  exercise.SubTitle.String,
 	}
-
-	if exercise.R != nil {
-		return e
-	}
-
-	for _, opt := range opts {
-		opt(e)
-	}
-
-	return e
 }
 
 func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	return parseWithEmptyOpts(exercises, Exercise)
+	return parseWithoutOpts(exercises, Exercise)
 }
 
 type UserOpt func(*apiv1.User)
@@ -78,7 +62,7 @@ type RoutineOpt func(*apiv1.Routine)
 
 func RoutineExercises(exercises orm.ExerciseSlice) RoutineOpt {
 	return func(routine *apiv1.Routine) {
-		routine.Exercises = parseWithEmptyOpts(exercises, Exercise)
+		routine.Exercises = parseWithoutOpts(exercises, Exercise)
 	}
 }
 
