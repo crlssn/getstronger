@@ -303,14 +303,19 @@ func NotificationActor(nType orm.NotificationType, actor *orm.User) Notification
 		case orm.NotificationTypeFollow:
 			if _, ok := n.GetType().(*apiv1.Notification_UserFollowed_); !ok {
 				n.Type = &apiv1.Notification_UserFollowed_{
-					UserFollowed: &apiv1.Notification_UserFollowed{Actor: nil},
+					UserFollowed: &apiv1.Notification_UserFollowed{
+						Actor: nil,
+					},
 				}
 			}
 			n.GetType().(*apiv1.Notification_UserFollowed_).UserFollowed.Actor = User(actor) //nolint:forcetypeassert
 		case orm.NotificationTypeWorkoutComment:
 			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
 				n.Type = &apiv1.Notification_WorkoutComment_{
-					WorkoutComment: &apiv1.Notification_WorkoutComment{Actor: nil},
+					WorkoutComment: &apiv1.Notification_WorkoutComment{
+						Actor:   nil,
+						Workout: nil,
+					},
 				}
 			}
 			n.GetType().(*apiv1.Notification_WorkoutComment_).WorkoutComment.Actor = User(actor) //nolint:forcetypeassert
@@ -328,7 +333,10 @@ func NotificationWorkout(notificationType orm.NotificationType, workout *orm.Wor
 		case orm.NotificationTypeWorkoutComment:
 			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
 				n.Type = &apiv1.Notification_WorkoutComment_{
-					WorkoutComment: &apiv1.Notification_WorkoutComment{Actor: nil},
+					WorkoutComment: &apiv1.Notification_WorkoutComment{
+						Actor:   nil,
+						Workout: nil,
+					},
 				}
 			}
 			n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Workout = Workout(workout) //nolint:forcetypeassert
