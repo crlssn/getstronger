@@ -11,7 +11,7 @@ import (
 	"github.com/crlssn/getstronger/server/safe"
 )
 
-func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
+func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
 	if exercise == nil {
 		return nil
 	}
@@ -24,8 +24,8 @@ func ExerciseToPB(exercise *orm.Exercise) *apiv1.Exercise {
 	}
 }
 
-func ExercisesToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
-	return slice(exercises, ExerciseToPB)
+func Exercises(exercises orm.ExerciseSlice) []*apiv1.Exercise {
+	return slice(exercises, Exercise)
 }
 
 type UserOpt func(*apiv1.User)
@@ -57,7 +57,7 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 	return u
 }
 
-func UsersToPB(users orm.UserSlice) []*apiv1.User {
+func Users(users orm.UserSlice) []*apiv1.User {
 	return slice(users, func(user *orm.User) *apiv1.User {
 		return User(user)
 	})
@@ -70,7 +70,7 @@ func RoutineToPB(routine *orm.Routine) *apiv1.Routine {
 
 	var exercises []*apiv1.Exercise
 	if routine.R != nil {
-		exercises = ExercisesToPB(routine.R.Exercises)
+		exercises = Exercises(routine.R.Exercises)
 	}
 
 	return &apiv1.Routine{
@@ -211,7 +211,7 @@ func workoutCommentsToPB(comments orm.WorkoutCommentSlice, users orm.UserSlice) 
 func ExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice, personalBests orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
 	mapExercises := make(map[string]*apiv1.Exercise, len(exercises))
 	for _, exercise := range exercises {
-		mapExercises[exercise.ID] = ExerciseToPB(exercise)
+		mapExercises[exercise.ID] = Exercise(exercise)
 	}
 
 	mapPersonalBests := make(map[string]struct{}, len(personalBests))
@@ -263,7 +263,7 @@ func ExerciseSetSliceToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*ap
 		}
 
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSet{
-			Exercise: ExerciseToPB(mapExercises[pb.ExerciseID]),
+			Exercise: Exercise(mapExercises[pb.ExerciseID]),
 			Set:      set,
 		})
 	}

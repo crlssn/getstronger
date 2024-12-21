@@ -62,7 +62,7 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 	}
 
 	return connect.NewResponse(&apiv1.GetExerciseResponse{
-		Exercise: parser.ExerciseToPB(exercise),
+		Exercise: parser.Exercise(exercise),
 	}), nil
 }
 
@@ -113,7 +113,7 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 
 	log.Info("exercise updated")
 	return connect.NewResponse(&apiv1.UpdateExerciseResponse{
-		Exercise: parser.ExerciseToPB(exercise),
+		Exercise: parser.Exercise(exercise),
 	}), nil
 }
 
@@ -175,7 +175,7 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 
 	log.Info("exercises listed")
 	return connect.NewResponse(&apiv1.ListExercisesResponse{
-		Exercises: parser.ExercisesToPB(pagination.Items),
+		Exercises: parser.Exercises(pagination.Items),
 		Pagination: &apiv1.PaginationResponse{
 			NextPageToken: pagination.NextPageToken,
 		},
