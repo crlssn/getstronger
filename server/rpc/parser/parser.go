@@ -69,15 +69,11 @@ func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
 	return toSlice(routines, RoutineToPB)
 }
 
-type WorkoutOpt func(w *orm.Workout) (*apiv1.Workout, error)
+type WorkoutOpt func(w *orm.Workout) *apiv1.Workout
 
 func WorkoutToPBNew(w *orm.Workout) WorkoutOpt {
-	return func(w *orm.Workout) (*apiv1.Workout, error) {
-		if w == nil {
-			return nil, fmt.Errorf("workout is nil")
-		}
-
-		workout := &apiv1.Workout{
+	return func(w *orm.Workout) *apiv1.Workout {
+		return &apiv1.Workout{
 			Id:           w.ID,
 			Name:         w.Name,
 			User:         UserToPB(w.R.User, false),
@@ -86,12 +82,6 @@ func WorkoutToPBNew(w *orm.Workout) WorkoutOpt {
 			StartedAt:    timestamppb.New(w.StartedAt),
 			FinishedAt:   timestamppb.New(w.FinishedAt),
 		}
-
-		if w.R == nil {
-			return workout, nil
-		}
-
-		return workout, nil
 	}
 }
 
