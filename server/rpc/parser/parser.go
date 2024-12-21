@@ -270,33 +270,6 @@ func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
 	return exerciseSets
 }
 
-func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
-	mapActors := make(map[string]*orm.User)
-	for _, a := range actors {
-		mapActors[a.ID] = a
-	}
-
-	mapWorkouts := make(map[string]*orm.Workout)
-	for _, w := range workouts {
-		mapWorkouts[w.ID] = w
-	}
-
-	nSlice := make([]*apiv1.Notification, 0, len(notifications))
-	for _, n := range notifications {
-		var p repo.NotificationPayload
-		if err := n.Payload.Unmarshal(&p); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
-		}
-
-		nSlice = append(nSlice, Notification(n,
-			NotificationActor(n.Type, mapActors[p.ActorID]),
-			NotificationWorkout(n.Type, mapWorkouts[p.WorkoutID]),
-		))
-	}
-
-	return nSlice, nil
-}
-
 func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 	s := make([]repo.ExerciseSet, 0, len(exerciseSets))
 	for _, exerciseSet := range exerciseSets {
@@ -377,6 +350,33 @@ func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv
 	}
 
 	return n
+}
+
+func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
+	mapActors := make(map[string]*orm.User)
+	for _, a := range actors {
+		mapActors[a.ID] = a
+	}
+
+	mapWorkouts := make(map[string]*orm.Workout)
+	for _, w := range workouts {
+		mapWorkouts[w.ID] = w
+	}
+
+	nSlice := make([]*apiv1.Notification, 0, len(notifications))
+	for _, n := range notifications {
+		var p repo.NotificationPayload
+		if err := n.Payload.Unmarshal(&p); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
+		}
+
+		nSlice = append(nSlice, Notification(n,
+			NotificationActor(n.Type, mapActors[p.ActorID]),
+			NotificationWorkout(n.Type, mapWorkouts[p.WorkoutID]),
+		))
+	}
+
+	return nSlice, nil
 }
 
 func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.FeedItem, error) {
