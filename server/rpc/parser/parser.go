@@ -164,7 +164,7 @@ func workoutToPB(workout *orm.Workout) *apiv1.Workout {
 		StartedAt:  timestamppb.New(workout.StartedAt),
 		FinishedAt: timestamppb.New(workout.FinishedAt),
 
-		// Relationships.
+		// Relationships. Load them with WorkoutRelOpt.
 		User:         nil,
 		Comments:     nil,
 		ExerciseSets: nil,
