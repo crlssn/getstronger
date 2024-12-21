@@ -429,16 +429,30 @@ func (s *parserSuite) TestNotificationSlice() {
 	s.Require().NoError(err)
 	s.Require().Len(parsed, len(notifications))
 	for i, notification := range parsed {
-		s.Require().NotNil(notification.GetId())
-		s.Require().NotNil(notification.GetType())
-		s.Require().NotNil(notification.GetNotifiedAtUnix())
+		s.Require().Equal(notifications[i].ID, notification.GetId())
+		s.Require().Equal(notifications[i].CreatedAt.Unix(), notification.GetNotifiedAtUnix())
+
+		switch notifications[i].Type {
+		case orm.NotificationTypeFollow:
+			s.Require().NotNil(notification.GetUserFollowed())
+		case orm.NotificationTypeWorkoutComment:
+			s.Require().NotNil(notification.GetWorkoutComment())
+		default:
+			s.FailNow("unexpected notification type: %v", notifications[i].Type)
+		}
+
 		switch i {
 		case 0:
 			s.Require().Nil(notification.GetWorkoutComment())
 			s.Require().NotNil(notification.GetUserFollowed())
+			s.Require().NotNil(notification.GetUserFollowed().GetActor())
 		case 1:
 			s.Require().Nil(notification.GetUserFollowed())
 			s.Require().NotNil(notification.GetWorkoutComment())
+			s.Require().NotNil(notification.GetWorkoutComment().GetActor())
+			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout())
+		default:
+			s.FailNow("unexpected notification index: %d", i)
 		}
 	}
 }
