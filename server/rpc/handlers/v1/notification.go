@@ -52,7 +52,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 
 	var actorIDs []string
 	var workoutIDs []string
-	//nPayloads := make(map[string]repo.NotificationPayload)
+	// nPayloads := make(map[string]repo.NotificationPayload)
 
 	for _, n := range paginated.Items {
 		var payload repo.NotificationPayload
