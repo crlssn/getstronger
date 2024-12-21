@@ -299,7 +299,7 @@ func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice
 	return nSlice, nil
 }
 
-func ExerciseSliceFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
+func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 	s := make([]repo.ExerciseSet, 0, len(exerciseSets))
 	for _, exerciseSet := range exerciseSets {
 		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
