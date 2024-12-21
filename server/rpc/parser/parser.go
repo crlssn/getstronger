@@ -107,34 +107,18 @@ func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
 
 type WorkoutOpt func(*apiv1.Workout)
 
-func WorkoutUser(user *orm.User) WorkoutOpt {
-	return func(w *apiv1.Workout) {
-		w.User = User(user)
-	}
-}
-
-func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutOpt {
-	return func(w *apiv1.Workout) {
-		for _, comment := range comments {
-			w.Comments = append(w.Comments, WorkoutComment(comment))
-		}
-	}
-}
-
 func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
-		w.ExerciseSets = nil
 		w.ExerciseSets = ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
 	}
 }
 
 func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	w := &apiv1.Workout{
-		Id:         workout.ID,
-		Name:       workout.Name,
-		StartedAt:  timestamppb.New(workout.StartedAt),
-		FinishedAt: timestamppb.New(workout.FinishedAt),
-		// Relationships. Load them with WorkoutOpt.
+		Id:           workout.ID,
+		Name:         workout.Name,
+		StartedAt:    timestamppb.New(workout.StartedAt),
+		FinishedAt:   timestamppb.New(workout.FinishedAt),
 		User:         nil,
 		Comments:     nil,
 		ExerciseSets: nil,
@@ -147,10 +131,6 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 
 		for _, comment := range workout.R.GetWorkoutComments() {
 			w.Comments = append(w.Comments, WorkoutComment(comment))
-		}
-
-		if workout.R.Sets != nil {
-			w.ExerciseSets = ExerciseSetsSlice(workout.R.GetSets())
 		}
 	}
 
@@ -169,16 +149,12 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 			continue
 		}
 
-		var workoutOpts []WorkoutOpt
-		if workout.R.User != nil {
-			workoutOpts = append(workoutOpts, WorkoutUser(workout.R.GetUser()))
-		}
-
 		var exercises orm.ExerciseSlice
 		for _, set := range workout.R.GetSets() {
 			exercises = append(exercises, set.R.GetExercise())
 		}
 
+		var workoutOpts []WorkoutOpt
 		if exercises != nil {
 			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
 		}

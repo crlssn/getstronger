@@ -138,12 +138,11 @@ func (s *parserSuite) TestWorkout() {
 	s.Require().True(workout.FinishedAt.Equal(parsed.GetFinishedAt().AsTime()))
 
 	workout = s.factory.NewWorkout()
-	user := s.factory.NewUser()
-	parsed = parser.Workout(workout, parser.WorkoutUser(user))
+	parsed = parser.Workout(workout)
 
-	s.Require().Equal(user.ID, parsed.GetUser().GetId())
-	s.Require().Equal(user.FirstName, parsed.GetUser().GetFirstName())
-	s.Require().Equal(user.LastName, parsed.GetUser().GetLastName())
+	s.Require().Equal(workout.R.User.ID, parsed.GetUser().GetId())
+	s.Require().Equal(workout.R.User.FirstName, parsed.GetUser().GetFirstName())
+	s.Require().Equal(workout.R.User.LastName, parsed.GetUser().GetLastName())
 	s.Require().False(parsed.GetUser().GetFollowed())
 	s.Require().Empty(parsed.GetUser().GetEmail())
 
@@ -153,7 +152,7 @@ func (s *parserSuite) TestWorkout() {
 		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
 	}
 
-	parsed = parser.Workout(workout, parser.WorkoutComments(comments))
+	parsed = parser.Workout(workout)
 	s.Require().Len(parsed.GetComments(), 2)
 	for i, comment := range comments {
 		s.Require().Equal(comment.ID, parsed.GetComments()[i].GetId())
