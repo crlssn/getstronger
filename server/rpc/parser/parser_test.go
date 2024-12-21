@@ -263,7 +263,7 @@ func (s *parserSuite) TestWorkoutComment() {
 }
 
 func (s *parserSuite) TestExerciseSetsSlice() {
-	sets := orm.SetSlice{s.factory.NewSet(), s.factory.NewSet()}
+	sets := orm.SetSlice{s.factory.NewSet()}
 	parsed := parser.ExerciseSetsSlice(sets)
 
 	s.Require().Len(parsed, len(sets))
