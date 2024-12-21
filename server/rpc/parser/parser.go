@@ -276,6 +276,7 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
 		for _, set := range exerciseSet.GetSets() {
 			sets = append(sets, repo.Set{
+				ID:     set.GetId(),
 				Reps:   int(set.GetReps()),
 				Weight: set.GetWeight(),
 			})

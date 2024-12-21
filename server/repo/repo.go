@@ -730,6 +730,7 @@ type ExerciseSet struct {
 }
 
 type Set struct {
+	ID     string
 	Reps   int
 	Weight float64
 }
