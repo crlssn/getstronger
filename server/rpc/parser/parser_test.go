@@ -40,10 +40,10 @@ func (s *parserSuite) TestExercise() {
 	exercise := s.factory.NewExercise()
 	parsed := parser.Exercise(exercise)
 
-	s.Require().Equal(exercise.ID, parsed.Id)
-	s.Require().Equal(exercise.UserID, parsed.UserId)
-	s.Require().Equal(exercise.Title, parsed.Name)
-	s.Require().Equal(exercise.SubTitle.String, parsed.Label)
+	s.Require().Equal(exercise.ID, parsed.GetId())
+	s.Require().Equal(exercise.UserID, parsed.GetUserId())
+	s.Require().Equal(exercise.Title, parsed.GetName())
+	s.Require().Equal(exercise.SubTitle.String, parsed.GetLabel())
 }
 
 func (s *parserSuite) TestExerciseSlice() {
@@ -52,10 +52,10 @@ func (s *parserSuite) TestExerciseSlice() {
 
 	s.Require().Len(parsed, len(exercises))
 	for i, exercise := range exercises {
-		s.Require().Equal(exercise.ID, parsed[i].Id)
-		s.Require().Equal(exercise.UserID, parsed[i].UserId)
-		s.Require().Equal(exercise.Title, parsed[i].Name)
-		s.Require().Equal(exercise.SubTitle.String, parsed[i].Label)
+		s.Require().Equal(exercise.ID, parsed[i].GetId())
+		s.Require().Equal(exercise.UserID, parsed[i].GetUserId())
+		s.Require().Equal(exercise.Title, parsed[i].GetName())
+		s.Require().Equal(exercise.SubTitle.String, parsed[i].GetLabel())
 	}
 }
 
@@ -63,18 +63,18 @@ func (s *parserSuite) TestUser() {
 	user := s.factory.NewUser()
 	parsed := parser.User(user)
 
-	s.Require().Equal(user.ID, parsed.Id)
-	s.Require().Equal(user.FirstName, parsed.FirstName)
-	s.Require().Equal(user.LastName, parsed.LastName)
-	s.Require().False(parsed.Followed)
-	s.Require().Empty(parsed.Email)
+	s.Require().Equal(user.ID, parsed.GetId())
+	s.Require().Equal(user.FirstName, parsed.GetFirstName())
+	s.Require().Equal(user.LastName, parsed.GetLastName())
+	s.Require().False(parsed.GetFollowed())
+	s.Require().Empty(parsed.GetEmail())
 
 	auth := s.factory.NewAuth()
 	parsed = parser.User(user, parser.UserEmail(auth))
-	s.Require().Equal(auth.Email, parsed.Email)
+	s.Require().Equal(auth.Email, parsed.GetEmail())
 
 	parsed = parser.User(user, parser.UserFollowed(true))
-	s.Require().True(parsed.Followed)
+	s.Require().True(parsed.GetFollowed())
 }
 
 func (s *parserSuite) TestUserSlice() {
@@ -83,10 +83,10 @@ func (s *parserSuite) TestUserSlice() {
 
 	s.Require().Len(parsed, len(users))
 	for i, user := range users {
-		s.Require().Equal(user.ID, parsed[i].Id)
-		s.Require().Equal(user.FirstName, parsed[i].FirstName)
-		s.Require().Equal(user.LastName, parsed[i].LastName)
-		s.Require().False(parsed[i].Followed)
-		s.Require().Empty(parsed[i].Email)
+		s.Require().Equal(user.ID, parsed[i].GetId())
+		s.Require().Equal(user.FirstName, parsed[i].GetFirstName())
+		s.Require().Equal(user.LastName, parsed[i].GetLastName())
+		s.Require().False(parsed[i].GetFollowed())
+		s.Require().Empty(parsed[i].GetEmail())
 	}
 }
