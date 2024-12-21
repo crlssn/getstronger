@@ -71,14 +71,6 @@ func RoutinesToPB(routines orm.RoutineSlice) []*apiv1.Routine {
 
 type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
 
-func WorkoutUsers(users orm.UserSlice) WorkoutsRelOpt {
-	return func(w orm.WorkoutSlice) ([]*apiv1.Workout, error) {
-		UsersToPB(users)
-
-		return nil, nil
-	}
-}
-
 func Workouts(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
 	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
 	for _, workout := range workouts {
