@@ -775,24 +775,6 @@ func GetWorkoutByID(id string) GetWorkoutOpt {
 	}
 }
 
-func GetWorkoutLoadComments() GetWorkoutOpt {
-	return func() qm.QueryMod {
-		return qm.Load(orm.WorkoutRels.WorkoutComments)
-	}
-}
-
-func GetWorkoutLoadCommentUsers() GetWorkoutOpt {
-	return func() qm.QueryMod {
-		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.WorkoutComments, orm.WorkoutCommentRels.User))
-	}
-}
-
-func GetWorkoutLoadExercises() GetWorkoutOpt {
-	return func() qm.QueryMod {
-		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.Sets, orm.SetRels.Exercise))
-	}
-}
-
 func GetWorkoutLoadSets() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.Sets)
@@ -802,6 +784,24 @@ func GetWorkoutLoadSets() GetWorkoutOpt {
 func GetWorkoutLoadUser() GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return qm.Load(orm.WorkoutRels.User)
+	}
+}
+
+func GetWorkoutLoadComments() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(orm.WorkoutRels.WorkoutComments)
+	}
+}
+
+func GetWorkoutLoadExercises() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.Sets, orm.SetRels.Exercise))
+	}
+}
+
+func GetWorkoutLoadCommentUsers() GetWorkoutOpt {
+	return func() qm.QueryMod {
+		return qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.WorkoutComments, orm.WorkoutCommentRels.User))
 	}
 }
 
