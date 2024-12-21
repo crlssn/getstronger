@@ -22,7 +22,7 @@ type Container struct {
 }
 
 const (
-	startTimeout = 5 * time.Second
+	startTimeout = 10 * time.Second
 	occurrence   = 2
 )
 
