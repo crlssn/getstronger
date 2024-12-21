@@ -299,3 +299,18 @@ func (s *parserSuite) TestExerciseSetsSlice() {
 		}
 	}
 }
+
+func (s *parserSuite) TestExerciseSetSlice() {
+	sets := orm.SetSlice{s.factory.NewSet(), s.factory.NewSet()}
+	parsed := parser.ExerciseSetSlice(sets)
+
+	s.Require().Len(parsed, len(sets))
+	for i, exerciseSet := range parsed {
+		s.Require().Equal(sets[i].ID, exerciseSet.GetSet().GetId())
+		s.Require().InEpsilon(sets[i].Weight, exerciseSet.GetSet().GetWeight(), 0)
+		s.Require().Equal(sets[i].Reps, int(exerciseSet.GetSet().GetReps()))
+		s.Require().Equal(sets[i].WorkoutID, exerciseSet.GetSet().GetMetadata().GetWorkoutId())
+		s.Require().True(sets[i].CreatedAt.Equal(exerciseSet.GetSet().GetMetadata().GetCreatedAt().AsTime()))
+		s.Require().False(exerciseSet.GetSet().GetMetadata().GetPersonalBest())
+	}
+}
