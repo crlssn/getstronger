@@ -316,10 +316,10 @@ func ExerciseSetSlicesToPB(exercises orm.ExerciseSlice, sets orm.SetSlice) ([]*a
 	}
 
 	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
-	for exerciseID, sets := range mapExerciseSets {
+	for exerciseID, setSlice := range mapExerciseSets {
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSets{
 			Exercise: exerciseID,
-			Sets:     sets,
+			Sets:     setSlice,
 		})
 	}
 

@@ -104,10 +104,12 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	//	log.Error("failed to get personal bests", zap.Error(err))
 	//	return nil, connect.NewError(connect.CodeInternal, nil)
 	//}
+	//
+	//spew.Dump(exercises, personalBests)
 
 	w, err := parser.Workout(workout,
 		parser.WorkoutComments(workout.R.GetWorkoutComments(), commentUsers),
-		//parser.WorkoutExerciseSets(exercises, personalBests),
+		parser.WorkoutExerciseSets(exercises, workout.R.GetSets()),
 	)
 	if err != nil {
 		log.Error("failed to parse workout", zap.Error(err))
