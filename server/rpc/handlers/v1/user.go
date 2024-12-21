@@ -49,7 +49,10 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 
 	return &connect.Response[apiv1.GetUserResponse]{
 		Msg: &apiv1.GetUserResponse{
-			User: parser.UserToPB(user, followed),
+			User: parser.User(user,
+				parser.UserEmail(user.R.GetAuth()),
+				parser.UserFollowed(followed),
+			),
 		},
 	}, nil
 }

@@ -28,23 +28,38 @@ func ExercisesToPB(exercises orm.ExerciseSlice) []*apiv1.Exercise {
 	return slice(exercises, ExerciseToPB)
 }
 
-func UserToPB(user *orm.User, followed bool) *apiv1.User {
-	if user == nil {
-		return nil
-	}
+type UserOpt func(*apiv1.User)
 
-	return &apiv1.User{
+func UserFollowed(followed bool) UserOpt {
+	return func(user *apiv1.User) {
+		user.Followed = followed
+	}
+}
+
+func UserEmail(auth *orm.Auth) UserOpt {
+	return func(user *apiv1.User) {
+		user.Email = auth.Email
+	}
+}
+
+func User(user *orm.User, opts ...UserOpt) *apiv1.User {
+	u := &apiv1.User{
 		Id:        user.ID,
 		Email:     safeGetEmail(user),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
-		Followed:  followed,
 	}
+
+	for _, opt := range opts {
+		opt(u)
+	}
+
+	return u
 }
 
 func UsersToPB(users orm.UserSlice) []*apiv1.User {
 	return slice(users, func(user *orm.User) *apiv1.User {
-		return UserToPB(user, false)
+		return User(user)
 	})
 }
 
@@ -113,7 +128,7 @@ type WorkoutRelOpt func(*apiv1.Workout) error
 
 func WorkoutUser(user *orm.User) WorkoutRelOpt {
 	return func(w *apiv1.Workout) error {
-		w.User = UserToPB(user, false)
+		w.User = User(user)
 		return nil
 	}
 }
@@ -173,7 +188,7 @@ func WorkoutCommentToPB(comment *orm.WorkoutComment, user *orm.User) *apiv1.Work
 
 	return &apiv1.WorkoutComment{
 		Id:        comment.ID,
-		User:      UserToPB(user, false),
+		User:      User(user),
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
 	}
@@ -311,7 +326,7 @@ func notificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.N
 			NotifiedAtUnix: n.CreatedAt.Unix(),
 			Type: &apiv1.Notification_UserFollowed_{
 				UserFollowed: &apiv1.Notification_UserFollowed{
-					Actor: UserToPB(u, false),
+					Actor: User(u),
 				},
 			},
 		}
@@ -324,11 +339,11 @@ func notificationToPB(n *orm.Notification, u *orm.User, w *orm.Workout) *apiv1.N
 			NotifiedAtUnix: n.CreatedAt.Unix(),
 			Type: &apiv1.Notification_WorkoutComment_{
 				WorkoutComment: &apiv1.Notification_WorkoutComment{
-					Actor: UserToPB(u, false),
+					Actor: User(u),
 					Workout: &apiv1.Workout{
 						Id:   w.ID,
 						Name: w.Name,
-						User: UserToPB(w.R.User, false),
+						User: User(w.R.GetUser()),
 					},
 				},
 			},
