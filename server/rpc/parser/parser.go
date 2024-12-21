@@ -63,7 +63,7 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 		Email: "",
 	}
 
-	if user.R != nil {
+	if user.R == nil {
 		return u
 	}
 
