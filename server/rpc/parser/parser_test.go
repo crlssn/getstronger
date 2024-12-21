@@ -337,6 +337,7 @@ func (s *parserSuite) TestNotification() {
 		factory.NotificationType(orm.NotificationTypeWorkoutComment),
 	)
 	parsed := parser.Notification(notification)
+
 	s.Require().Equal(notification.ID, parsed.GetId())
 	s.Require().Equal(notification.CreatedAt.Unix(), parsed.GetNotifiedAtUnix())
 	s.Require().Nil(parsed.GetUserFollowed())
@@ -345,22 +346,34 @@ func (s *parserSuite) TestNotification() {
 
 	actor := s.factory.NewUser()
 	parsed = parser.Notification(notification, parser.NotificationActor(notification.Type, actor))
+
+	s.Require().NotNil(parsed.GetWorkoutComment().GetActor())
 	s.Require().Equal(actor.ID, parsed.GetWorkoutComment().GetActor().GetId())
 	s.Require().Equal(actor.FirstName, parsed.GetWorkoutComment().GetActor().GetFirstName())
 	s.Require().Equal(actor.LastName, parsed.GetWorkoutComment().GetActor().GetLastName())
 	s.Require().Empty(parsed.GetWorkoutComment().GetActor().GetEmail())
 	s.Require().False(parsed.GetWorkoutComment().GetActor().GetFollowed())
+
 	s.Require().Nil(parsed.GetUserFollowed())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout())
 
 	workout := s.factory.NewWorkout()
 	parsed = parser.Notification(notification, parser.NotificationWorkout(notification.Type, workout))
+
+	s.Require().NotNil(parsed.GetWorkoutComment().GetWorkout())
 	s.Require().Equal(workout.ID, parsed.GetWorkoutComment().GetWorkout().GetId())
 	s.Require().Equal(workout.Name, parsed.GetWorkoutComment().GetWorkout().GetName())
 	s.Require().True(workout.StartedAt.Equal(parsed.GetWorkoutComment().GetWorkout().GetStartedAt().AsTime()))
 	s.Require().True(workout.FinishedAt.Equal(parsed.GetWorkoutComment().GetWorkout().GetFinishedAt().AsTime()))
+
+	s.Require().NotNil(parsed.GetWorkoutComment().GetWorkout().GetUser())
+	s.Require().Equal(workout.R.User.ID, parsed.GetWorkoutComment().GetWorkout().GetUser().GetId())
+	s.Require().Equal(workout.R.User.FirstName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetFirstName())
+	s.Require().Equal(workout.R.User.LastName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetLastName())
+	s.Require().Empty(parsed.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
+	s.Require().False(parsed.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
+
 	s.Require().Nil(parsed.GetUserFollowed())
-	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetUser())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetComments())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetExerciseSets())
 
@@ -368,17 +381,28 @@ func (s *parserSuite) TestNotification() {
 		parser.NotificationActor(notification.Type, actor),
 		parser.NotificationWorkout(notification.Type, workout),
 	)
+
+	s.Require().NotNil(actor.ID, parsed.GetWorkoutComment().GetActor())
 	s.Require().Equal(actor.ID, parsed.GetWorkoutComment().GetActor().GetId())
 	s.Require().Equal(actor.FirstName, parsed.GetWorkoutComment().GetActor().GetFirstName())
 	s.Require().Equal(actor.LastName, parsed.GetWorkoutComment().GetActor().GetLastName())
 	s.Require().Empty(parsed.GetWorkoutComment().GetActor().GetEmail())
 	s.Require().False(parsed.GetWorkoutComment().GetActor().GetFollowed())
+
+	s.Require().NotNil(parsed.GetWorkoutComment().GetWorkout())
 	s.Require().Equal(workout.ID, parsed.GetWorkoutComment().GetWorkout().GetId())
 	s.Require().Equal(workout.Name, parsed.GetWorkoutComment().GetWorkout().GetName())
 	s.Require().True(workout.StartedAt.Equal(parsed.GetWorkoutComment().GetWorkout().GetStartedAt().AsTime()))
 	s.Require().True(workout.FinishedAt.Equal(parsed.GetWorkoutComment().GetWorkout().GetFinishedAt().AsTime()))
+
+	s.Require().NotNil(parsed.GetWorkoutComment().GetWorkout().GetUser())
+	s.Require().Equal(workout.R.User.ID, parsed.GetWorkoutComment().GetWorkout().GetUser().GetId())
+	s.Require().Equal(workout.R.User.FirstName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetFirstName())
+	s.Require().Equal(workout.R.User.LastName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetLastName())
+	s.Require().Empty(parsed.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
+	s.Require().False(parsed.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
+
 	s.Require().Nil(parsed.GetUserFollowed())
-	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetUser())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetComments())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetExerciseSets())
 
@@ -386,18 +410,22 @@ func (s *parserSuite) TestNotification() {
 		factory.NotificationType(orm.NotificationTypeFollow),
 	)
 	parsed = parser.Notification(notification)
+
 	s.Require().Equal(notification.ID, parsed.GetId())
 	s.Require().Equal(notification.CreatedAt.Unix(), parsed.GetNotifiedAtUnix())
+
 	s.Require().Nil(parsed.GetWorkoutComment())
 	s.Require().Nil(parsed.GetUserFollowed().GetActor())
 
 	actor = s.factory.NewUser()
 	parsed = parser.Notification(notification, parser.NotificationActor(notification.Type, actor))
+
 	s.Require().Equal(actor.ID, parsed.GetUserFollowed().GetActor().GetId())
 	s.Require().Equal(actor.FirstName, parsed.GetUserFollowed().GetActor().GetFirstName())
 	s.Require().Equal(actor.LastName, parsed.GetUserFollowed().GetActor().GetLastName())
 	s.Require().Empty(parsed.GetUserFollowed().GetActor().GetEmail())
 	s.Require().False(parsed.GetUserFollowed().GetActor().GetFollowed())
+
 	s.Require().Nil(parsed.GetWorkoutComment())
 }
 
