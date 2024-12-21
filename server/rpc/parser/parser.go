@@ -214,7 +214,7 @@ func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
 }
 
 func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
-	s := make([]repo.ExerciseSet, 0, len(exerciseSets))
+	exerciseSetSlice := make([]repo.ExerciseSet, 0, len(exerciseSets))
 	for _, exerciseSet := range exerciseSets {
 		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
 		for _, set := range exerciseSet.GetSets() {
@@ -225,13 +225,13 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 			})
 		}
 
-		s = append(s, repo.ExerciseSet{
+		exerciseSetSlice = append(exerciseSetSlice, repo.ExerciseSet{
 			ExerciseID: exerciseSet.GetExercise().GetId(),
 			Sets:       sets,
 		})
 	}
 
-	return s
+	return exerciseSetSlice
 }
 
 type NotificationOpt func(*apiv1.Notification)
@@ -251,6 +251,7 @@ func NotificationActor(nType orm.NotificationType, actor *orm.User) Notification
 					},
 				}
 			}
+
 			n.GetType().(*apiv1.Notification_UserFollowed_).UserFollowed.Actor = User(actor) //nolint:forcetypeassert
 		case orm.NotificationTypeWorkoutComment:
 			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
@@ -261,31 +262,28 @@ func NotificationActor(nType orm.NotificationType, actor *orm.User) Notification
 					},
 				}
 			}
+
 			n.GetType().(*apiv1.Notification_WorkoutComment_).WorkoutComment.Actor = User(actor) //nolint:forcetypeassert
 		}
 	}
 }
 
-func NotificationWorkout(notificationType orm.NotificationType, workout *orm.Workout) NotificationOpt {
+func NotificationWorkout(nType orm.NotificationType, workout *orm.Workout) NotificationOpt {
 	return func(n *apiv1.Notification) {
-		if workout == nil {
+		if nType != orm.NotificationTypeWorkoutComment || workout == nil {
 			return
 		}
 
-		switch notificationType {
-		case orm.NotificationTypeWorkoutComment:
-			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
-				n.Type = &apiv1.Notification_WorkoutComment_{
-					WorkoutComment: &apiv1.Notification_WorkoutComment{
-						Actor:   nil,
-						Workout: nil,
-					},
-				}
+		if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
+			n.Type = &apiv1.Notification_WorkoutComment_{
+				WorkoutComment: &apiv1.Notification_WorkoutComment{
+					Actor:   nil,
+					Workout: nil,
+				},
 			}
-			n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Workout = Workout(workout) //nolint:forcetypeassert
-		case orm.NotificationTypeFollow:
-			// Do nothing.
 		}
+
+		n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Workout = Workout(workout) //nolint:forcetypeassert
 	}
 }
 
@@ -293,8 +291,7 @@ func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv
 	n := &apiv1.Notification{
 		Id:             notification.ID,
 		NotifiedAtUnix: notification.CreatedAt.Unix(),
-		// Relationships. Load them with NotificationOpt.
-		Type: nil,
+		Type:           nil,
 	}
 
 	for _, opt := range opts {
