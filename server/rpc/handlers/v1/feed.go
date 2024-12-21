@@ -31,8 +31,8 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	opts := []repo.ListWorkoutsOpt{
-		repo.ListWorkoutsWithSets(),
-		repo.ListWorkoutsWithUser(),
+		repo.ListWorkoutsLoadSets(),
+		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsWithLimit(limit + 1),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	}

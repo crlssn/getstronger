@@ -660,7 +660,7 @@ func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithUser() ListWorkoutsOpt {
+func ListWorkoutsLoadUser() ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
 			qm.Load(orm.WorkoutRels.User),
@@ -668,7 +668,7 @@ func ListWorkoutsWithUser() ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithSets() ListWorkoutsOpt {
+func ListWorkoutsLoadSets() ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
 			qm.Load(orm.WorkoutRels.Sets),
@@ -769,7 +769,7 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 
 type GetWorkoutOpt func() qm.QueryMod
 
-func GetWorkoutByID(id string) GetWorkoutOpt {
+func GetWorkoutWithID(id string) GetWorkoutOpt {
 	return func() qm.QueryMod {
 		return orm.WorkoutWhere.ID.EQ(id)
 	}
@@ -1467,4 +1467,12 @@ func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload [
 
 		return nil
 	})
+}
+
+func ListWorkoutsLoadExercises() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(fmt.Sprintf("%s.%s", orm.WorkoutRels.Sets, orm.SetRels.Exercise)),
+		}, nil
+	}
 }

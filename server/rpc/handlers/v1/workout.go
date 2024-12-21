@@ -77,7 +77,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 
 	// TODO: Analyse query performance.
 	workout, err := h.repo.GetWorkout(ctx,
-		repo.GetWorkoutByID(req.Msg.GetId()),
+		repo.GetWorkoutWithID(req.Msg.GetId()),
 		repo.GetWorkoutLoadSets(),
 		repo.GetWorkoutLoadUser(),
 		repo.GetWorkoutLoadComments(),
@@ -128,8 +128,9 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	workouts, err := h.repo.ListWorkouts(ctx,
-		repo.ListWorkoutsWithSets(),
-		repo.ListWorkoutsWithUser(),
+		repo.ListWorkoutsLoadSets(),
+		repo.ListWorkoutsLoadUser(),
+		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()...),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
@@ -148,20 +149,17 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	}
 
 	var userIDs []string
-	var exerciseIDs []string
 	for _, workout := range pagination.Items {
-		for _, set := range workout.R.Sets {
-			exerciseIDs = append(exerciseIDs, set.ExerciseID)
-		}
 		for _, comment := range workout.R.WorkoutComments {
 			userIDs = append(userIDs, comment.UserID)
 		}
 	}
 
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("failed to list exercises", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
+	var exercises orm.ExerciseSlice
+	for _, workout := range pagination.Items {
+		for _, set := range workout.R.GetSets() {
+			exercises = append(exercises, set.R.Exercise)
+		}
 	}
 
 	users, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(userIDs))
@@ -263,7 +261,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
 	}
 
-	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutByID(req.Msg.GetWorkout().GetId()))
+	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
 	if err != nil {
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
