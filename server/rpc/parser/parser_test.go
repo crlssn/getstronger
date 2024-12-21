@@ -90,3 +90,36 @@ func (s *parserSuite) TestUserSlice() {
 		s.Require().Empty(parsed[i].GetEmail())
 	}
 }
+
+func (s *parserSuite) TestRoutine() {
+	routine := s.factory.NewRoutine()
+	parsed := parser.Routine(routine)
+
+	s.Require().Equal(routine.ID, parsed.GetId())
+	s.Require().Equal(routine.Title, parsed.GetName())
+	s.Require().Nil(parsed.GetExercises())
+
+	routine = s.factory.NewRoutine()
+	s.factory.AddRoutineExercise(routine, s.factory.NewExercise(), s.factory.NewExercise())
+	parsed = parser.Routine(routine, parser.RoutineExercises(routine.R.Exercises))
+
+	s.Require().Len(parsed.GetExercises(), 2)
+	for i, exercise := range routine.R.Exercises {
+		s.Require().Equal(exercise.ID, parsed.GetExercises()[i].GetId())
+		s.Require().Equal(exercise.UserID, parsed.GetExercises()[i].GetUserId())
+		s.Require().Equal(exercise.Title, parsed.GetExercises()[i].GetName())
+		s.Require().Equal(exercise.SubTitle.String, parsed.GetExercises()[i].GetLabel())
+	}
+}
+
+func (s *parserSuite) TestRoutineSlice() {
+	routines := orm.RoutineSlice{s.factory.NewRoutine(), s.factory.NewRoutine()}
+	parsed := parser.RoutineSlice(routines)
+
+	s.Require().Len(parsed, len(routines))
+	for i, routine := range routines {
+		s.Require().Equal(routine.ID, parsed[i].GetId())
+		s.Require().Equal(routine.Title, parsed[i].GetName())
+		s.Require().Nil(parsed[i].GetExercises())
+	}
+}
