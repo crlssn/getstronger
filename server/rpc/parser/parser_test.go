@@ -247,7 +247,7 @@ func (s *parserSuite) TestWorkoutComment() {
 	parsed := parser.WorkoutComment(comment)
 
 	s.Require().Equal(comment.ID, parsed.GetId())
-	s.Require().Equal("", parsed.GetUser().GetId())
+	s.Require().Empty(parsed.GetUser().GetId())
 	s.Require().Equal(comment.Comment, parsed.GetComment())
 	s.Require().True(comment.CreatedAt.Equal(parsed.GetCreatedAt().AsTime()))
 
@@ -255,6 +255,6 @@ func (s *parserSuite) TestWorkoutComment() {
 	s.Require().Equal(comment.R.User.ID, parsed.GetUser().GetId())
 	s.Require().Equal(comment.R.User.FirstName, parsed.GetUser().GetFirstName())
 	s.Require().Equal(comment.R.User.LastName, parsed.GetUser().GetLastName())
-	s.Require().Equal("", parsed.GetUser().GetEmail())
+	s.Require().Empty(parsed.GetUser().GetEmail())
 	s.Require().False(parsed.GetUser().GetFollowed())
 }
