@@ -123,6 +123,7 @@ func WorkoutComments(comments orm.WorkoutCommentSlice) WorkoutOpt {
 
 func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
+		w.ExerciseSets = nil
 		w.ExerciseSets = ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
 	}
 }
@@ -144,8 +145,8 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 			w.User = User(workout.R.GetUser())
 		}
 
-		if workout.R.WorkoutComments != nil {
-			w.Comments = parseWithEmptyOpts(workout.R.GetWorkoutComments(), WorkoutComment)
+		for _, comment := range workout.R.GetWorkoutComments() {
+			w.Comments = append(w.Comments, WorkoutComment(comment))
 		}
 
 		if workout.R.Sets != nil {
@@ -205,8 +206,10 @@ func WorkoutComment(comment *orm.WorkoutComment, opts ...WorkoutCommentOpt) *api
 		User: nil,
 	}
 
-	if comment.R == nil {
-		return c
+	if comment.R != nil {
+		if comment.R.User != nil {
+			c.User = User(comment.R.GetUser())
+		}
 	}
 
 	for _, opt := range opts {

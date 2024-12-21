@@ -33,6 +33,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 	opts := []repo.ListWorkoutsOpt{
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
+		repo.ListWorkoutsLoadComments(),
 		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit + 1),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),

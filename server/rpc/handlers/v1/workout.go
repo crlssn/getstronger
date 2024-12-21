@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -94,14 +95,15 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	w := parser.Workout(workout,
+		parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
+	)
+	spew.Dump(w.Comments)
+
 	log.Info("workout fetched")
 	return &connect.Response[apiv1.GetWorkoutResponse]{
 		Msg: &apiv1.GetWorkoutResponse{
-			Workout: parser.Workout(workout,
-				parser.WorkoutUser(workout.R.GetUser()),
-				parser.WorkoutComments(workout.R.GetWorkoutComments()),
-				parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
-			),
+			Workout: w,
 		},
 	}, nil
 }
@@ -196,7 +198,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	log.Info("workout comment posted")
 	return &connect.Response[apiv1.PostCommentResponse]{
 		Msg: &apiv1.PostCommentResponse{
-			Comment: parser.WorkoutComment(comment, parser.WorkoutCommentUser(comment.R.GetUser())),
+			Comment: parser.WorkoutComment(comment),
 		},
 	}, nil
 }

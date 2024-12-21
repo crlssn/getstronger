@@ -679,6 +679,14 @@ func ListWorkoutsLoadUser() ListWorkoutsOpt {
 	}
 }
 
+func ListWorkoutsLoadComments() ListWorkoutsOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(orm.WorkoutRels.WorkoutComments),
+		}, nil
+	}
+}
+
 func ListWorkoutsLoadSets() ListWorkoutsOpt {
 	return func() ([]qm.QueryMod, error) {
 		return []qm.QueryMod{
