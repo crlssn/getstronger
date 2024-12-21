@@ -89,8 +89,8 @@ func (s *parserSuite) TestUserSlice() {
 		s.Require().Equal(user.ID, parsed[i].GetId())
 		s.Require().Equal(user.FirstName, parsed[i].GetFirstName())
 		s.Require().Equal(user.LastName, parsed[i].GetLastName())
+		s.Require().Equal(user.R.Auth.Email, parsed[i].GetEmail())
 		s.Require().False(parsed[i].GetFollowed())
-		s.Require().Empty(parsed[i].GetEmail())
 	}
 }
 
