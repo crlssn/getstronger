@@ -471,8 +471,8 @@ func (s *parserSuite) TestNotificationSlice() {
 
 		switch i {
 		case 0:
-			s.Require().Nil(notification.GetWorkoutComment())
 			s.Require().NotNil(notification.GetUserFollowed())
+
 			s.Require().NotNil(notification.GetUserFollowed().GetActor())
 			s.Require().Equal(actors[0].ID, notification.GetUserFollowed().GetActor().GetId())
 			s.Require().Equal(actors[0].FirstName, notification.GetUserFollowed().GetActor().GetFirstName())
@@ -480,21 +480,31 @@ func (s *parserSuite) TestNotificationSlice() {
 			s.Require().Empty(notification.GetUserFollowed().GetActor().GetEmail())
 			s.Require().False(notification.GetUserFollowed().GetActor().GetFollowed())
 
+			s.Require().Nil(notification.GetWorkoutComment())
 		case 1:
-			s.Require().Nil(notification.GetUserFollowed())
 			s.Require().NotNil(notification.GetWorkoutComment())
+
 			s.Require().NotNil(notification.GetWorkoutComment().GetActor())
 			s.Require().Equal(actors[1].ID, notification.GetWorkoutComment().GetActor().GetId())
 			s.Require().Equal(actors[1].LastName, notification.GetWorkoutComment().GetActor().GetLastName())
 			s.Require().Equal(actors[1].FirstName, notification.GetWorkoutComment().GetActor().GetFirstName())
 			s.Require().Empty(notification.GetWorkoutComment().GetActor().GetEmail())
 			s.Require().False(notification.GetWorkoutComment().GetActor().GetFollowed())
+
 			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout())
 			s.Require().Equal(workouts[0].ID, notification.GetWorkoutComment().GetWorkout().GetId())
 			s.Require().Equal(workouts[0].Name, notification.GetWorkoutComment().GetWorkout().GetName())
 			s.Require().True(workouts[0].StartedAt.Equal(notification.GetWorkoutComment().GetWorkout().GetStartedAt().AsTime()))
 			s.Require().True(workouts[0].FinishedAt.Equal(notification.GetWorkoutComment().GetWorkout().GetFinishedAt().AsTime()))
-			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetUser())
+
+			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout().GetUser())
+			s.Require().Equal(workouts[0].R.User.ID, notification.GetWorkoutComment().GetWorkout().GetUser().GetId())
+			s.Require().Equal(workouts[0].R.User.FirstName, notification.GetWorkoutComment().GetWorkout().GetUser().GetFirstName())
+			s.Require().Equal(workouts[0].R.User.LastName, notification.GetWorkoutComment().GetWorkout().GetUser().GetLastName())
+			s.Require().False(notification.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
+			s.Require().Empty(notification.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
+
+			s.Require().Nil(notification.GetUserFollowed())
 			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetComments())
 			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetExerciseSets())
 		default:
