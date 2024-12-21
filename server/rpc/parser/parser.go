@@ -126,8 +126,17 @@ func Workout(workoutOpt WorkoutOpt, workoutExercisesOpt MapWorkoutExercises) Wor
 	}
 }
 
-func WorkoutExerciseSets() WorkoutOpt {
+type WorkoutExerciseSetsOpts func(*apiv1.Workout) error
 
+func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutExerciseSetsOpts {
+	return func(w *apiv1.Workout) error {
+		exerciseSets, err := ExerciseSetSlicesToPB(exercises, sets)
+		if err != nil {
+			return fmt.Errorf("failed to parse exercise sets: %w", err)
+		}
+		w.ExerciseSets = exerciseSets
+		return nil
+	}
 }
 
 func Workout2(workout *orm.Workout, exercises orm.ExerciseSlice, sets orm.SetSlice) WorkoutOpt {
