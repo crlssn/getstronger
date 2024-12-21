@@ -11,13 +11,25 @@ import (
 	"github.com/crlssn/getstronger/server/safe"
 )
 
-func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
-	return &apiv1.Exercise{
+type ExerciseOpt func(*apiv1.Exercise)
+
+func Exercise(exercise *orm.Exercise, opts ...ExerciseOpt) *apiv1.Exercise {
+	e := &apiv1.Exercise{
 		Id:     exercise.ID,
 		UserId: exercise.UserID,
 		Name:   exercise.Title,
 		Label:  exercise.SubTitle.String,
 	}
+
+	if exercise.R != nil {
+		return e
+	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e
 }
 
 func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
@@ -60,9 +72,7 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 }
 
 func UserSlice(users orm.UserSlice) []*apiv1.User {
-	return slice(users, func(user *orm.User) *apiv1.User {
-		return User(user)
-	})
+	return slice(users, User)
 }
 
 type RoutineOpt func(*apiv1.Routine)
@@ -98,12 +108,7 @@ func Routine(routine *orm.Routine, opts ...RoutineOpt) *apiv1.Routine {
 }
 
 func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
-	r := make([]*apiv1.Routine, 0, len(routines))
-	for _, routine := range routines {
-		r = append(r, Routine(routine))
-	}
-
-	return r
+	return slice(routines, Routine)
 }
 
 type WorkoutsRelOpt func(w orm.WorkoutSlice) ([]*apiv1.Workout, error)
@@ -424,7 +429,7 @@ func Set(set *orm.Set, mapPersonalBests map[string]struct{}) (*apiv1.Set, error)
 	}, nil
 }
 
-func slice[Input any, Output any](input []Input, f func(Input) Output) []Output {
+func slice[Input any, Output any, Opts any](input []Input, f func(Input, ...Opts) Output) []Output {
 	output := make([]Output, len(input))
 	for i, item := range input {
 		output[i] = f(item)
