@@ -88,11 +88,6 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var exercises orm.ExerciseSlice
-	for _, set := range workout.R.Sets {
-		exercises = append(exercises, set.R.GetExercise())
-	}
-
 	var commentUsers orm.UserSlice
 	for _, comment := range workout.R.GetWorkoutComments() {
 		commentUsers = append(commentUsers, comment.R.GetUser())
@@ -107,7 +102,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	w, err := parser.Workout(workout,
 		parser.WorkoutUser(workout.R.GetUser()),
 		parser.WorkoutComments(workout.R.GetWorkoutComments(), commentUsers),
-		parser.WorkoutExerciseSets(exercises, workout.R.GetSets(), personalBests),
+		parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
 	)
 	if err != nil {
 		log.Error("failed to parse workout", zap.Error(err))

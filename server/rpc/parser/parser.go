@@ -137,7 +137,7 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 		}
 
 		if exercises != nil {
-			workoutOpts = append(workoutOpts, WorkoutExerciseSets(exercises, workout.R.GetSets(), personalBests))
+			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
 		}
 
 		w, err = Workout(workout, workoutOpts...)
@@ -167,9 +167,9 @@ func WorkoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) Work
 	}
 }
 
-func WorkoutExerciseSets(exercises orm.ExerciseSlice, sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
+func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutRelOpt {
 	return func(w *apiv1.Workout) error {
-		exerciseSets, err := ExerciseSetsSlice(exercises, sets, personalBests)
+		exerciseSets, err := ExerciseSetsSlice(sets, personalBests)
 		if err != nil {
 			return fmt.Errorf("failed to parse exercise sets: %w", err)
 		}
@@ -231,43 +231,28 @@ func workoutComments(comments orm.WorkoutCommentSlice, users orm.UserSlice) []*a
 	return cSlice
 }
 
-var errExerciseNotFound = fmt.Errorf("exercise not found")
-
-func ExerciseSetsSlice(exercises orm.ExerciseSlice, sets orm.SetSlice, personalBests orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
-	mapExercises := make(map[string]*apiv1.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		mapExercises[exercise.ID] = Exercise(exercise)
-	}
-
+func ExerciseSetsSlice(sets orm.SetSlice, personalBests orm.SetSlice) ([]*apiv1.ExerciseSets, error) {
 	mapPersonalBests := make(map[string]struct{}, len(personalBests))
-	for _, personalBest := range personalBests {
-		mapPersonalBests[personalBest.ID] = struct{}{}
+	for _, set := range personalBests {
+		mapPersonalBests[set.ID] = struct{}{}
 	}
 
 	mapExerciseSets := make(map[*apiv1.Exercise][]*apiv1.Set)
 	for _, set := range sets {
-		exercise, ok := mapExercises[set.ExerciseID]
-		if !ok {
-			return nil, fmt.Errorf("%w: %s", errExerciseNotFound, set.ExerciseID)
-		}
-
-		if _, ok = mapExerciseSets[exercise]; !ok {
-			mapExerciseSets[exercise] = make([]*apiv1.Set, 0)
-		}
-
 		_, yes := mapPersonalBests[set.ID]
 		s, err := Set(set, SetPersonalBest(yes))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse set: %w", err)
 		}
 
+		exercise := Exercise(set.R.GetExercise())
 		mapExerciseSets[exercise] = append(mapExerciseSets[exercise], s)
 	}
 
 	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
-	for exerciseID, setSlice := range mapExerciseSets {
+	for exercise, setSlice := range mapExerciseSets {
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSets{
-			Exercise: exerciseID,
+			Exercise: exercise,
 			Sets:     setSlice,
 		})
 	}
@@ -416,7 +401,7 @@ type SetOpt func(*apiv1.Set)
 
 func SetPersonalBest(personalBest bool) SetOpt {
 	return func(set *apiv1.Set) {
-		if set.Metadata == nil {
+		if set.GetMetadata() == nil {
 			set.Metadata = &apiv1.MetadataSet{}
 		}
 

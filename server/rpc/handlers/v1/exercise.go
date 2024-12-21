@@ -206,7 +206,10 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		workoutIDs = append(workoutIDs, set.WorkoutID)
 	}
 
-	workouts, err := h.repo.ListWorkouts(ctx, repo.ListWorkoutsWithIDs(workoutIDs))
+	workouts, err := h.repo.ListWorkouts(ctx,
+		repo.ListWorkoutsWithIDs(workoutIDs),
+		repo.ListWorkoutsLoadExercises(),
+	)
 	if err != nil {
 		log.Error("failed to get workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -219,18 +222,7 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		}
 	}
 
-	exerciseIDs := make([]string, 0, len(sets))
-	for _, set := range sets {
-		exerciseIDs = append(exerciseIDs, set.ExerciseID)
-	}
-
-	exercises, err := h.repo.ListExercises(ctx, repo.ListExercisesWithIDs(exerciseIDs))
-	if err != nil {
-		log.Error("failed to list exercises", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	exerciseSets, err := parser.ExerciseSetsSlice(exercises, sets, nil)
+	exerciseSets, err := parser.ExerciseSetsSlice(sets, nil)
 	if err != nil {
 		log.Error("failed to parse set slice to exercise sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
