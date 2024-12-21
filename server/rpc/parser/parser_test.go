@@ -474,3 +474,15 @@ func (s *parserSuite) TestNotificationSlice() {
 		}
 	}
 }
+
+func (s *parserSuite) TestSet() {
+	set := s.factory.NewSet()
+	parsed := parser.Set(set)
+
+	s.Require().Equal(set.ID, parsed.GetId())
+	s.Require().InEpsilon(set.Weight, parsed.GetWeight(), 0)
+	s.Require().Equal(set.Reps, int(parsed.GetReps()))
+	s.Require().Equal(set.WorkoutID, parsed.GetMetadata().GetWorkoutId())
+	s.Require().True(set.CreatedAt.Equal(parsed.GetMetadata().GetCreatedAt().AsTime()))
+	s.Require().False(parsed.GetMetadata().GetPersonalBest())
+}
