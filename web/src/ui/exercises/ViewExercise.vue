@@ -65,6 +65,13 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 </script>
 
 <template>
+  <div v-if="sets.length" class="mb-8">
+    <h6>Progression</h6>
+    <AppCard class="p-2">
+      <ExerciseChart :sets="downSample(sets, 50)" />
+    </AppCard>
+  </div>
+
   <div v-if="exercise?.label" class="mb-8">
     <h6>Label</h6>
     <AppList>
@@ -72,13 +79,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
         {{ exercise.label }}
       </AppListItem>
     </AppList>
-  </div>
-
-  <div v-if="sets.length" class="mb-8">
-    <h6>Progression</h6>
-    <AppCard class="p-2">
-      <ExerciseChart :sets="downSample(sets, 50)" />
-    </AppCard>
   </div>
 
   <h6>Sets</h6>
