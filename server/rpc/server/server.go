@@ -28,7 +28,7 @@ type Server struct {
 	certPath string
 }
 
-type ServerParams struct {
+type Params struct {
 	fx.In
 
 	Log    *zap.Logger
@@ -37,7 +37,7 @@ type ServerParams struct {
 	Config *config.Config
 }
 
-func NewServer(p ServerParams) *Server {
+func NewServer(p Params) *Server {
 	return &Server{
 		conn:     p.Conn,
 		keyPath:  p.Config.Server.KeyPath,
