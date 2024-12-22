@@ -98,6 +98,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	return &connect.Response[apiv1.GetWorkoutResponse]{
 		Msg: &apiv1.GetWorkoutResponse{
 			Workout: parser.Workout(workout,
+				parser.WorkoutIntensity(workout.R.GetSets()),
 				parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
 			),
 		},

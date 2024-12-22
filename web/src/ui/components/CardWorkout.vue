@@ -5,7 +5,7 @@ import { useTextareaAutosize } from '@vueuse/core'
 import { useAlertStore } from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type DropdownItem } from '@/types/dropdown.ts'
-import { UserCircleIcon } from '@heroicons/vue/24/solid'
+import { FireIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import { deleteWorkout, postWorkoutComment } from '@/http/requests.ts'
@@ -26,7 +26,7 @@ const props = defineProps<{
 
 const dropdownItems: Array<DropdownItem> = [
   { href: `/workouts/${props.workout.id}/edit`, title: 'Update Workout' },
-  { func: () => onDeleteWorkout(), title: 'Delete Workout' },
+  { func: () => onDeleteWorkout(), title: 'Delete Workout' }
 ]
 
 const onDeleteWorkout = async () => {
@@ -62,14 +62,18 @@ const formatComment = computed(() => {
   <AppCard v-if="!workoutDeleted" class="divide-y divide-gray-100">
     <div class="px-4 py-4">
       <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <UserCircleIcon class="size-10 text-gray-900" />
+        <UserCircleIcon class="size-10 text-gray-900" />
+        <div class="w-full">
           <RouterLink :to="`/users/${props.workout.user?.id}`" class="font-semibold text-base mx-2">
             {{ props.workout.user?.firstName }} {{ props.workout.user?.lastName }}
           </RouterLink>
           <RouterLink :to="`/workouts/${workout.id}`" class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </RouterLink>
+          <div class="flex pl-2 items-center font-semibold">
+            {{ workout.intensity }}
+            <FireIcon class="size-5 text-red-500" />
+          </div>
         </div>
         <DropdownButton v-if="workout.user?.id === authStore.userId" :items="dropdownItems" />
       </div>
@@ -107,7 +111,7 @@ const formatComment = computed(() => {
           placeholder="Write a comment..."
           required
         />
-        <AppButton type="submit" colour="primary"> Comment </AppButton>
+        <AppButton type="submit" colour="primary"> Comment</AppButton>
       </form>
     </div>
   </AppCard>
