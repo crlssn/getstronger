@@ -40,7 +40,7 @@ watch(
 onMounted(async () => {
   await fetchUser()
   pageTitleStore.setPageTitle(pageTitle.value)
-  const res = await listSets([user.value.id], [], new Uint8Array(0))
+  const res = await listSets([user.value.id], [], new Uint8Array(0), 100)
   if (res) sets.value = res.sets
 })
 

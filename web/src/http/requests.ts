@@ -199,12 +199,13 @@ export const listSets = async (
   userIds: string[],
   exerciseIds: string[],
   pageToken: Uint8Array,
+  pageLimit: number = defaultPageLimit,
 ): Promise<ListSetsResponse | void> => {
   const req = create(ListSetsRequestSchema, {
     userIds: userIds,
     exerciseIds: exerciseIds,
     pagination: {
-      pageLimit: defaultPageLimit,
+      pageLimit: pageLimit,
       pageToken: pageToken,
     },
   })
