@@ -12,6 +12,15 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
+func (f *Factory) NewSetSlice(count int) orm.SetSlice {
+	var slice orm.SetSlice
+	for range count {
+		slice = append(slice, f.NewSet())
+	}
+
+	return slice
+}
+
 type SetOpt func(set *orm.Set)
 
 func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {

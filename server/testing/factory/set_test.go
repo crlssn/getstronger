@@ -21,6 +21,12 @@ func TestFactory_Set(t *testing.T) {
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
 
+	t.Run("Slice", func(t *testing.T) {
+		t.Parallel()
+		slice := f.NewSetSlice(3)
+		require.Len(t, slice, 3)
+	})
+
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewSet()

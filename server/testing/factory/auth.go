@@ -14,6 +14,15 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 )
 
+func (f *Factory) NewAuthSlice(count int) orm.AuthSlice {
+	var slice orm.AuthSlice
+	for range count {
+		slice = append(slice, f.NewAuth())
+	}
+
+	return slice
+}
+
 type AuthOpt func(event *orm.Auth)
 
 func (f *Factory) NewAuth(opts ...AuthOpt) *orm.Auth {

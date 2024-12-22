@@ -12,6 +12,15 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
+func (f *Factory) NewExerciseSlice(count int) orm.ExerciseSlice {
+	var slice orm.ExerciseSlice
+	for range count {
+		slice = append(slice, f.NewExercise())
+	}
+
+	return slice
+}
+
 type ExerciseOpt func(event *orm.Exercise)
 
 func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
