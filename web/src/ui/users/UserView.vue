@@ -63,6 +63,7 @@ const updateTab = (event: Event) => {
 </script>
 
 <template>
+<!-- Fetch latest sets and display graph of workout intensity  -->
   <div v-if="user.id !== authStore.userId" class="mb-4">
     <AppButton v-if="user.followed" colour="gray" type="button" @click="onUnfollowUser">
       Unfollow {{ user.firstName }}
