@@ -25,7 +25,7 @@ func Module() fx.Option {
 	)
 }
 
-type BuildHandlersOpts struct {
+type BuildHandlersParams struct {
 	fx.In
 
 	Auth         apiv1connect.AuthServiceHandler
@@ -39,7 +39,7 @@ type BuildHandlersOpts struct {
 
 type HandlerFunc func(opts ...connect.HandlerOption) (string, http.Handler)
 
-func BuildHandlers(p BuildHandlersOpts) []HandlerFunc {
+func BuildHandlers(p BuildHandlersParams) []HandlerFunc {
 	return []HandlerFunc{
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewAuthServiceHandler(p.Auth, opts...)
