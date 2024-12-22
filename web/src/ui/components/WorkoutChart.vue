@@ -36,6 +36,9 @@ const options = {
   responsive: true,
   scales: {
     x: {
+      legend: {
+        display: false,
+      },
       grid: {
         display: false,
         drawBorder: true,
@@ -48,6 +51,9 @@ const options = {
       },
     },
     y: {
+      legend: {
+        display: false,
+      },
       grid: {
         display: false,
         drawBorder: false,
@@ -60,6 +66,9 @@ const options = {
       },
     },
     yWeight: {
+      legend: {
+        display: false,
+      },
       position: 'right',
       grid: {
         display: false,
