@@ -23,6 +23,12 @@ func TestFactory_Notification(t *testing.T) {
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
 
+	t.Run("Slice", func(t *testing.T) {
+		t.Parallel()
+		slice := f.NewNotificationSlice(3)
+		require.Len(t, slice, 3)
+	})
+
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewNotification()

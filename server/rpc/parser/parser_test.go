@@ -51,7 +51,7 @@ func (s *parserSuite) TestExercise() {
 }
 
 func (s *parserSuite) TestExerciseSlice() {
-	exercises := orm.ExerciseSlice{s.factory.NewExercise(), s.factory.NewExercise()}
+	exercises := s.factory.NewExerciseSlice(2)
 	parsed := parser.ExerciseSlice(exercises)
 
 	s.Require().Len(parsed, len(exercises))
@@ -81,7 +81,7 @@ func (s *parserSuite) TestUser() {
 }
 
 func (s *parserSuite) TestUserSlice() {
-	users := orm.UserSlice{s.factory.NewUser(), s.factory.NewUser()}
+	users := s.factory.NewUserSlice(2)
 	parsed := parser.UserSlice(users)
 
 	s.Require().Len(parsed, len(users))
@@ -103,10 +103,7 @@ func (s *parserSuite) TestRoutine() {
 	s.Require().Nil(parsed.GetExercises())
 
 	routine = s.factory.NewRoutine()
-	routine.R.Exercises = orm.ExerciseSlice{
-		s.factory.NewExercise(),
-		s.factory.NewExercise(),
-	}
+	routine.R.Exercises = s.factory.NewExerciseSlice(2)
 	parsed = parser.Routine(routine)
 
 	s.Require().Len(parsed.GetExercises(), 2)
@@ -119,7 +116,7 @@ func (s *parserSuite) TestRoutine() {
 }
 
 func (s *parserSuite) TestRoutineSlice() {
-	routines := orm.RoutineSlice{s.factory.NewRoutine(), s.factory.NewRoutine()}
+	routines := s.factory.NewRoutineSlice(2)
 	parsed := parser.RoutineSlice(routines)
 
 	s.Require().Len(parsed, len(routines))
@@ -169,10 +166,7 @@ func (s *parserSuite) TestWorkout() {
 	}
 
 	workout = s.factory.NewWorkout()
-	sets := orm.SetSlice{
-		s.factory.NewSet(),
-		s.factory.NewSet(),
-	}
+	sets := s.factory.NewSetSlice(2)
 	personalBests := orm.SetSlice{sets[0]}
 	parsed = parser.Workout(workout, parser.WorkoutExerciseSets(sets, personalBests))
 	s.Require().Len(parsed.GetExerciseSets(), 2)
@@ -268,7 +262,7 @@ func (s *parserSuite) TestWorkoutComment() {
 }
 
 func (s *parserSuite) TestExerciseSetsSlice() {
-	sets := orm.SetSlice{s.factory.NewSet()}
+	sets := s.factory.NewSetSlice(1)
 	parsed := parser.ExerciseSetsSlice(sets)
 
 	s.Require().Len(parsed, len(sets))
@@ -309,7 +303,7 @@ func (s *parserSuite) TestExerciseSetsSlice() {
 }
 
 func (s *parserSuite) TestExerciseSetSlice() {
-	sets := orm.SetSlice{s.factory.NewSet(), s.factory.NewSet()}
+	sets := s.factory.NewSetSlice(2)
 	parsed := parser.ExerciseSetSlice(sets)
 
 	s.Require().Len(parsed, len(sets))
@@ -324,7 +318,7 @@ func (s *parserSuite) TestExerciseSetSlice() {
 }
 
 func (s *parserSuite) TestExerciseSetsFromPB() {
-	sets := parser.ExerciseSetsSlice(orm.SetSlice{s.factory.NewSet(), s.factory.NewSet()})
+	sets := parser.ExerciseSetsSlice(s.factory.NewSetSlice(2))
 	parsed := parser.ExerciseSetsFromPB(sets)
 
 	s.Require().Len(parsed, len(sets))
@@ -437,13 +431,8 @@ func (s *parserSuite) TestNotification() {
 }
 
 func (s *parserSuite) TestNotificationSlice() {
-	actors := orm.UserSlice{
-		s.factory.NewUser(),
-		s.factory.NewUser(),
-	}
-	workouts := orm.WorkoutSlice{
-		s.factory.NewWorkout(),
-	}
+	actors := s.factory.NewUserSlice(2)
+	workouts := s.factory.NewWorkoutSlice(1)
 	notifications := orm.NotificationSlice{
 		s.factory.NewNotification(
 			factory.NotificationType(orm.NotificationTypeFollow),
@@ -521,13 +510,9 @@ func (s *parserSuite) TestNotificationSlice() {
 }
 
 func (s *parserSuite) TestFeedItemSlice() {
-	workouts := orm.WorkoutSlice{
-		s.factory.NewWorkout(),
-	}
+	workouts := s.factory.NewWorkoutSlice(1)
 	for _, workout := range workouts {
-		workout.R.Sets = orm.SetSlice{
-			s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
-		}
+		workout.R.Sets = s.factory.NewSetSlice(1, factory.SetWorkoutID(workout.ID))
 	}
 
 	parsed, err := parser.FeedItemSlice(workouts, nil)
@@ -586,7 +571,7 @@ func (s *parserSuite) TestSet() {
 }
 
 func (s *parserSuite) TestSetSlice() {
-	sets := orm.SetSlice{s.factory.NewSet(), s.factory.NewSet()}
+	sets := s.factory.NewSetSlice(2)
 	parsed := parser.SetSlice(sets, nil)
 
 	s.Require().Len(parsed, len(sets))

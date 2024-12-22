@@ -13,6 +13,15 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
+func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) orm.RoutineSlice {
+	var slice orm.RoutineSlice
+	for range count {
+		slice = append(slice, f.NewRoutine(opts...))
+	}
+
+	return slice
+}
+
 type RoutineOpt func(event *orm.Routine)
 
 func (f *Factory) NewRoutine(opts ...RoutineOpt) *orm.Routine {

@@ -10,6 +10,15 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
+func (f *Factory) NewUserSlice(count int, opts ...UserOpt) orm.UserSlice {
+	var slice orm.UserSlice
+	for range count {
+		slice = append(slice, f.NewUser(opts...))
+	}
+
+	return slice
+}
+
 type UserOpt func(event *orm.User)
 
 func (f *Factory) NewUser(opts ...UserOpt) *orm.User {

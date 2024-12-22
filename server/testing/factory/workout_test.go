@@ -22,6 +22,12 @@ func TestFactory_Workout(t *testing.T) {
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
 
+	t.Run("Slice", func(t *testing.T) {
+		t.Parallel()
+		slice := f.NewWorkoutSlice(3)
+		require.Len(t, slice, 3)
+	})
+
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewWorkout()
@@ -83,6 +89,12 @@ func TestFactory_WorkoutComment(t *testing.T) {
 	ctx := context.Background()
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
+
+	t.Run("Slice", func(t *testing.T) {
+		t.Parallel()
+		slice := f.NewWorkoutCommentSlice(3)
+		require.Len(t, slice, 3)
+	})
 
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
