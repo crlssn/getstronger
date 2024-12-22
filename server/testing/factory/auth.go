@@ -14,10 +14,10 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 )
 
-func (f *Factory) NewAuthSlice(count int) orm.AuthSlice {
+func (f *Factory) NewAuthSlice(count int, opts ...AuthOpt) orm.AuthSlice {
 	var slice orm.AuthSlice
 	for range count {
-		slice = append(slice, f.NewAuth())
+		slice = append(slice, f.NewAuth(opts...))
 	}
 
 	return slice

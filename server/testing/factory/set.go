@@ -12,10 +12,10 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
-func (f *Factory) NewSetSlice(count int) orm.SetSlice {
+func (f *Factory) NewSetSlice(count int, opts ...SetOpt) orm.SetSlice {
 	var slice orm.SetSlice
 	for range count {
-		slice = append(slice, f.NewSet())
+		slice = append(slice, f.NewSet(opts...))
 	}
 
 	return slice

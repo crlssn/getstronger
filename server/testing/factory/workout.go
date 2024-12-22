@@ -11,10 +11,10 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
-func (f *Factory) NewWorkoutSlice(count int) orm.WorkoutSlice {
+func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) orm.WorkoutSlice {
 	var slice orm.WorkoutSlice
 	for range count {
-		slice = append(slice, f.NewWorkout())
+		slice = append(slice, f.NewWorkout(opts...))
 	}
 
 	return slice
@@ -83,10 +83,10 @@ func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
 	}
 }
 
-func (f *Factory) NewWorkoutCommentSlice(count int) orm.WorkoutCommentSlice {
+func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) orm.WorkoutCommentSlice {
 	var slice orm.WorkoutCommentSlice
 	for range count {
-		slice = append(slice, f.NewWorkoutComment())
+		slice = append(slice, f.NewWorkoutComment(opts...))
 	}
 
 	return slice

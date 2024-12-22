@@ -13,10 +13,10 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 )
 
-func (f *Factory) NewNotificationSlice(count int) orm.NotificationSlice {
+func (f *Factory) NewNotificationSlice(count int, opts ...NotificationOpt) orm.NotificationSlice {
 	var slice orm.NotificationSlice
 	for range count {
-		slice = append(slice, f.NewNotification())
+		slice = append(slice, f.NewNotification(opts...))
 	}
 
 	return slice

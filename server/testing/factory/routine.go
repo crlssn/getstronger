@@ -13,10 +13,10 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
-func (f *Factory) NewRoutineSlice(count int) orm.RoutineSlice {
+func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) orm.RoutineSlice {
 	var slice orm.RoutineSlice
 	for range count {
-		slice = append(slice, f.NewRoutine())
+		slice = append(slice, f.NewRoutine(opts...))
 	}
 
 	return slice
