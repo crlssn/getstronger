@@ -74,10 +74,12 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
     </AppList>
   </div>
 
-  <h6>Progression</h6>
-  <AppCard class="p-2">
-    <ExerciseChart :sets="downSample(sets, 50)" />
-  </AppCard>
+  <div v-if="sets.length">
+    <h6>Progression</h6>
+    <AppCard class="p-2">
+      <ExerciseChart :sets="downSample(sets, 50)" />
+    </AppCard>
+  </div>
 
   <h6 class="mt-8">Sets</h6>
   <AppList :can-fetch="hasMorePages" @fetch="fetchSets">
