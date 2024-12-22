@@ -78,7 +78,7 @@ const formatComment = computed(() => {
         <DropdownButton v-if="workout.user?.id === authStore.userId" :items="dropdownItems" />
       </div>
     </div>
-    <div class="pl-16 pr-4 py-4">
+    <div class="px-4 py-4">
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
         :key="exerciseSet.exercise?.id"
@@ -87,7 +87,7 @@ const formatComment = computed(() => {
         :sets="exerciseSet.sets"
       />
     </div>
-    <div class="pl-16 pr-4 py-4">
+    <div class="px-4 pr-4 py-4">
       <RouterLink
         :to="`/workouts/${workout.id}`"
         class="pl-1 text-sm text-gray-900 uppercase font-medium"
@@ -103,7 +103,7 @@ const formatComment = computed(() => {
         :timestamp="comment.createdAt"
         :comment="comment.comment"
       />
-      <form class="ml-10" @submit.prevent="postComment">
+      <form @submit.prevent="postComment">
         <textarea
           ref="textarea"
           v-model="input"
