@@ -13,7 +13,7 @@ import (
 func Module() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			buildHandlers,
+			BuildHandlers,
 			handlers.NewAuthHandler,
 			handlers.NewFeedHandler,
 			handlers.NewUserHandler,
@@ -39,7 +39,7 @@ type BuildHandlersOpts struct {
 
 type HandlerFunc func(opts ...connect.HandlerOption) (string, http.Handler)
 
-func buildHandlers(p BuildHandlersOpts) []HandlerFunc {
+func BuildHandlers(p BuildHandlersOpts) []HandlerFunc {
 	return []HandlerFunc{
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
 			return apiv1connect.NewAuthServiceHandler(p.Auth, opts...)
