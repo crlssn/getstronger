@@ -19,6 +19,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
+	"github.com/crlssn/getstronger/server/stream"
 )
 
 func Module() fx.Option {
@@ -51,13 +52,15 @@ const (
 )
 
 type Server struct {
+	conn     *stream.Conn
+	server   *http.Server
 	keyPath  string
 	certPath string
-	server   *http.Server
 }
 
-func newServer(config *config.Config, mux *http.ServeMux) *Server {
+func newServer(config *config.Config, mux *http.ServeMux, conn *stream.Conn) *Server {
 	return &Server{
+		conn:     conn,
 		keyPath:  config.Server.KeyPath,
 		certPath: config.Server.CertPath,
 		server: &http.Server{
@@ -86,6 +89,8 @@ func (s *Server) ListenAndServe(_ context.Context) error {
 }
 
 func (s *Server) listenAndServe() error {
+	s.server.RegisterOnShutdown(s.conn.Cancel)
+
 	if s.certPath == "" && s.keyPath == "" {
 		return s.server.ListenAndServe() //nolint:wrapcheck
 	}
