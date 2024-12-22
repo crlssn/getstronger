@@ -72,7 +72,7 @@ const followed = computed(() => user.value.followed)
 
 <template>
   <div v-if="sets.length">
-    <h6>Historically</h6>
+    <h6>Trend</h6>
     <AppCard class="p-2">
       <WorkoutChart :sets="sets" />
     </AppCard>

@@ -114,7 +114,7 @@ const data = computed(() => {
         borderWidth: 1,
         backgroundColor: '#4f46e5',
         data: intensity,
-        label: 'Energy',
+        label: 'Weight Lifted',
         tension: 0.4,
         pointRadius: 0,
         fill: true,
