@@ -5,8 +5,7 @@ import { useTextareaAutosize } from '@vueuse/core'
 import { useAlertStore } from '@/stores/alerts.ts'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type DropdownItem } from '@/types/dropdown.ts'
-import { FireIcon, UserCircleIcon, ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid'
-// import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/outline'
+import { FireIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import { deleteWorkout, postWorkoutComment } from '@/http/requests.ts'
@@ -27,7 +26,7 @@ const props = defineProps<{
 
 const dropdownItems: Array<DropdownItem> = [
   { href: `/workouts/${props.workout.id}/edit`, title: 'Update Workout' },
-  { func: () => onDeleteWorkout(), title: 'Delete Workout' }
+  { func: () => onDeleteWorkout(), title: 'Delete Workout' },
 ]
 
 const onDeleteWorkout = async () => {
@@ -90,9 +89,7 @@ const formatComment = computed(() => {
         <FireIcon class="size-4 text-orange-500 ml-1" />
       </div>
       <div class="flex items-center">
-        <RouterLink
-          :to="`/workouts/${workout.id}`"
-        >
+        <RouterLink :to="`/workouts/${workout.id}`">
           {{ workout.comments.length }} {{ formatComment }}
         </RouterLink>
       </div>
