@@ -3,11 +3,14 @@ import { useAuthStore } from '@/stores/auth.ts'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, ref, watch } from 'vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import { type User } from '@/proto/api/v1/shared_pb.ts'
-import { followUser, getUser, unfollowUser } from '@/http/requests.ts'
+import { type Set, type User } from '@/proto/api/v1/shared_pb.ts'
+import { followUser, getUser, listSets, unfollowUser } from '@/http/requests.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
+import WorkoutChart from '@/ui/components/WorkoutChart.vue'
+import AppCard from '@/ui/components/AppCard.vue'
 
 const user = ref({} as User)
+const sets = ref([] as Set[])
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -37,6 +40,8 @@ watch(
 onMounted(async () => {
   await fetchUser()
   pageTitleStore.setPageTitle(pageTitle.value)
+  const res = await listSets([user.value.id], [], new Uint8Array(0), 100)
+  if (res) sets.value = res.sets
 })
 
 const fetchUser = async () => {
@@ -63,6 +68,10 @@ const updateTab = (event: Event) => {
 </script>
 
 <template>
+  <h6>Energy</h6>
+  <AppCard class="p-2">
+    <WorkoutChart :sets="sets" />
+  </AppCard>
   <div v-if="user.id !== authStore.userId" class="mb-4">
     <AppButton v-if="user.followed" colour="gray" type="button" @click="onUnfollowUser">
       Unfollow {{ user.firstName }}

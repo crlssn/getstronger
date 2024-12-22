@@ -82,6 +82,7 @@ message Workout {
   repeated WorkoutComment comments = 5;
   google.protobuf.Timestamp started_at = 6;
   google.protobuf.Timestamp finished_at = 7 [(buf.validate.field).required = true];
+  int32 intensity = 8; // intensity = (kg * reps) * sets
 }
 
 message WorkoutComment {

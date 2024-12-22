@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useAlertStore } from '@/stores/alerts'
 import AppList from '@/ui/components/AppList.vue'
-import LineChart from '@/ui/components/LineChart.vue'
+import ExerciseChart from '@/ui/components/ExerciseChart.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
@@ -37,7 +37,7 @@ onMounted(async () => {
 })
 
 const fetchSets = async () => {
-  const res = await listSets(route.params.id as string, pageToken.value)
+  const res = await listSets([], [route.params.id as string], pageToken.value)
   if (!res) return
 
   sets.value = [...sets.value, ...res.sets]
@@ -74,9 +74,9 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
     </AppList>
   </div>
 
-  <h6>Chart</h6>
+  <h6>Progression</h6>
   <AppCard class="p-2">
-    <LineChart :sets="downSample(sets, 50)" />
+    <ExerciseChart :sets="downSample(sets, 50)" />
   </AppCard>
 
   <h6 class="mt-8">Sets</h6>
