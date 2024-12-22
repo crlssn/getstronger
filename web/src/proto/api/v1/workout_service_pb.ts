@@ -284,7 +284,7 @@ export type Workout = Message<"api.v1.Workout"> & {
   finishedAt?: Timestamp;
 
   /**
-   * intensity = kg * reps
+   * intensity = (kg * reps) * sets
    *
    * @generated from field: int32 intensity = 8;
    */

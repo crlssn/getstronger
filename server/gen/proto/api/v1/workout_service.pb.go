@@ -592,7 +592,7 @@ type Workout struct {
 	Comments      []*WorkoutComment      `protobuf:"bytes,5,rep,name=comments,proto3" json:"comments,omitempty"`
 	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Intensity     int32                  `protobuf:"varint,8,opt,name=intensity,proto3" json:"intensity,omitempty"` // intensity = kg * reps
+	Intensity     int32                  `protobuf:"varint,8,opt,name=intensity,proto3" json:"intensity,omitempty"` // intensity = (kg * reps) * sets
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
