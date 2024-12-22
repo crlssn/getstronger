@@ -46,11 +46,6 @@ func Module() fx.Option {
 	))
 }
 
-const (
-	readTimeout = 10 * time.Second
-	idleTimeout = 120 * time.Second
-)
-
 type Server struct {
 	conn     *stream.Conn
 	server   *http.Server
@@ -66,9 +61,9 @@ func newServer(config *config.Config, mux *http.ServeMux, conn *stream.Conn) *Se
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%s", config.Server.Port),
 			Handler:      h2c.NewHandler(mux, &http2.Server{}),
-			ReadTimeout:  readTimeout,
+			ReadTimeout:  10 * time.Second, //nolint:mnd
 			WriteTimeout: 0,
-			IdleTimeout:  idleTimeout,
+			IdleTimeout:  120 * time.Second, //nolint:mnd
 			TLSConfig: &tls.Config{
 				MinVersion: tls.VersionTLS12,
 			},
