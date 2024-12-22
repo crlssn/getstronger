@@ -57,11 +57,9 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		m.ExerciseID = f.NewExercise().ID
 	}
 
-	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert set: %w", err))
 	}
-	boil.DebugMode = false
 
 	workout, err := m.Workout().One(context.Background(), f.db)
 	if err != nil {

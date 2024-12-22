@@ -12,14 +12,12 @@ import (
 type Factory struct {
 	db    *sql.DB
 	faker *gofakeit.Faker
-	debug bool
 }
 
 func NewFactory(db *sql.DB) *Factory {
 	return &Factory{
 		db:    db,
 		faker: gofakeit.New(0),
-		debug: false,
 	}
 }
 

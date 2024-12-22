@@ -42,11 +42,9 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *orm.Routine {
 		m.UserID = f.NewUser().ID
 	}
 
-	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert routine: %w", err))
 	}
-	boil.DebugMode = false
 
 	user, err := m.User().One(context.Background(), f.db)
 	if err != nil {
@@ -89,9 +87,7 @@ func RoutineExerciseOrder(exerciseIDs []string) RoutineOpt {
 }
 
 func (f *Factory) AddRoutineExercise(routine *orm.Routine, exercises ...*orm.Exercise) {
-	boil.DebugMode = f.debug
 	if err := routine.AddExercises(context.Background(), f.db, false, exercises...); err != nil {
 		panic(fmt.Errorf("failed to add exercises to routine: %w", err))
 	}
-	boil.DebugMode = false
 }
