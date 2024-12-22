@@ -8,6 +8,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/safe"
 )
 
 func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
@@ -85,6 +86,17 @@ func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutO
 	}
 }
 
+func WorkoutIntensity(sets orm.SetSlice) WorkoutOpt {
+	return func(w *apiv1.Workout) {
+		var intensity float64
+		for _, set := range sets {
+			intensity += set.Weight * float64(set.Reps)
+		}
+
+		w.Intensity = safe.Int32FromFloat64(intensity)
+	}
+}
+
 func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	w := &apiv1.Workout{
 		Id:           workout.ID,
@@ -94,6 +106,7 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 		User:         nil,
 		Comments:     nil,
 		ExerciseSets: nil,
+		Intensity:    0,
 	}
 
 	if workout.R != nil {
