@@ -136,7 +136,10 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 
 		var workoutOpts []WorkoutOpt
 		if workout.R.GetSets() != nil {
-			workoutOpts = append(workoutOpts, WorkoutExerciseSets(workout.R.GetSets(), personalBests))
+			workoutOpts = append(workoutOpts,
+				WorkoutIntensity(workout.R.GetSets()),
+				WorkoutExerciseSets(workout.R.GetSets(), personalBests),
+			)
 		}
 
 		workoutSlice = append(workoutSlice, Workout(workout, workoutOpts...))
