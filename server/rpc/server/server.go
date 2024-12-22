@@ -5,11 +5,12 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	"connectrpc.com/connect"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -20,20 +21,30 @@ import (
 )
 
 type Server struct {
+	log      *zap.Logger
 	conn     *stream.Conn
 	server   *http.Server
 	keyPath  string
 	certPath string
 }
 
-func NewServer(config *config.Config, mux *http.ServeMux, conn *stream.Conn) *Server {
+type ServerParams struct {
+	fx.In
+
+	Log    *zap.Logger
+	Mux    *http.ServeMux
+	Conn   *stream.Conn
+	Config *config.Config
+}
+
+func NewServer(p ServerParams) *Server {
 	return &Server{
-		conn:     conn,
-		keyPath:  config.Server.KeyPath,
-		certPath: config.Server.CertPath,
+		conn:     p.Conn,
+		keyPath:  p.Config.Server.KeyPath,
+		certPath: p.Config.Server.CertPath,
 		server: &http.Server{
-			Addr:         fmt.Sprintf(":%s", config.Server.Port),
-			Handler:      h2c.NewHandler(mux, &http2.Server{}),
+			Addr:         fmt.Sprintf(":%s", p.Config.Server.Port),
+			Handler:      h2c.NewHandler(p.Mux, &http2.Server{}),
 			ReadTimeout:  10 * time.Second, //nolint:mnd
 			WriteTimeout: 0,
 			IdleTimeout:  120 * time.Second, //nolint:mnd
@@ -50,9 +61,11 @@ func (s *Server) ListenAndServe(_ context.Context) error {
 			if errors.Is(err, http.ErrServerClosed) {
 				return
 			}
-			log.Fatalf("listen and serve: %v", err)
+
+			s.log.Fatal("server: listen and serve", zap.Error(err))
 		}
 	}()
+
 	return nil
 }
 
