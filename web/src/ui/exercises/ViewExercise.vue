@@ -37,7 +37,7 @@ onMounted(async () => {
 })
 
 const fetchSets = async () => {
-  const res = await listSets(route.params.id as string, pageToken.value)
+  const res = await listSets([], [route.params.id as string], pageToken.value)
   if (!res) return
 
   sets.value = [...sets.value, ...res.sets]

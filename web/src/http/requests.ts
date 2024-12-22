@@ -196,11 +196,13 @@ export const createExercise = async (
 }
 
 export const listSets = async (
-  exerciseId: string,
+  userIds: string[],
+  exerciseIds: string[],
   pageToken: Uint8Array,
 ): Promise<ListSetsResponse | void> => {
   const req = create(ListSetsRequestSchema, {
-    exerciseId: exerciseId,
+    userIds: userIds,
+    exerciseIds: exerciseIds,
     pagination: {
       pageLimit: defaultPageLimit,
       pageToken: pageToken,
