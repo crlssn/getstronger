@@ -94,7 +94,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
           {{ set.weight }} kg x {{ set.reps }}
           <TrophyIcon
             v-if="set.metadata?.personalBest"
-            class="size-5 text-yellow-500 inline ml-1"
+            class="size-4 text-yellow-500 inline ml-1"
           />
         </p>
         <small class="mt-1">{{ formatToRelativeDateTime(set.metadata?.createdAt) }}</small>

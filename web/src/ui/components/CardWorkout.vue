@@ -72,7 +72,7 @@ const formatComment = computed(() => {
           </RouterLink>
           <div class="flex pl-2 items-center font-bold text-sm">
             {{ workout.intensity.toLocaleString() }}
-            <FireIcon class="size-4 text-orange-600 ml-1" />
+            <FireIcon class="size-4 text-orange-500 ml-1" />
           </div>
         </div>
         <DropdownButton v-if="workout.user?.id === authStore.userId" :items="dropdownItems" />
