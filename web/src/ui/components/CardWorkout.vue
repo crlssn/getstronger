@@ -70,10 +70,6 @@ const formatComment = computed(() => {
           <RouterLink :to="`/workouts/${workout.id}`" class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </RouterLink>
-          <div class="flex pl-2 items-center font-bold text-sm">
-            {{ workout.intensity.toLocaleString() }}
-            <FireIcon class="size-4 text-orange-500 ml-1" />
-          </div>
         </div>
         <DropdownButton v-if="workout.user?.id === authStore.userId" :items="dropdownItems" />
       </div>
@@ -87,13 +83,16 @@ const formatComment = computed(() => {
         :sets="exerciseSet.sets"
       />
     </div>
-    <div class="p-4">
-      <RouterLink
-        :to="`/workouts/${workout.id}`"
-        class="pl-1 text-sm text-gray-900 uppercase font-medium"
-      >
-        {{ workout.comments.length }} {{ formatComment }}
-      </RouterLink>
+    <div class="p-4 flex gap-x-1 font-medium text-sm uppercase">
+      <div class="flex items-center">
+        {{ workout.intensity.toLocaleString() }}
+        <FireIcon class="size-4 text-orange-500 ml-1" />
+      </div>
+      <div class="flex items-center">
+        <RouterLink :to="`/workouts/${workout.id}`">
+          {{ workout.comments.length }} {{ formatComment }}
+        </RouterLink>
+      </div>
     </div>
     <div v-if="!compact" class="p-4">
       <CardWorkoutComment
