@@ -3,8 +3,8 @@
 <table>
   <tr>
     <td><img src="https://github.com/user-attachments/assets/f6ee3471-a98f-4db6-864e-4bff35327805"/></td>
-    <td><img src="https://github.com/user-attachments/assets/eed071e8-4968-40e1-aa38-72ea0e546501"/></td>
-    <td><img src="https://github.com/user-attachments/assets/cbd8377d-bde8-4e90-84e6-f5812364eb6b"/></td>
+    <td><img src="https://github.com/user-attachments/assets/2722f99c-611b-45d4-aeaf-008138e75531"/></td>
+    <td><img src="https://github.com/user-attachments/assets/798fdbec-d2ca-4538-a65f-fd393cb9b000"/></td>
   </tr>
   <tr>
     <td><img src="https://github.com/user-attachments/assets/cba930ad-955c-44b5-a0e1-dc7c7222ce95"/></td>
