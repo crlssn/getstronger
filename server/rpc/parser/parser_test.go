@@ -132,8 +132,9 @@ func (s *parserSuite) TestRoutineSlice() {
 
 func (s *parserSuite) TestWorkout() {
 	workout := s.factory.NewWorkout()
+	workout.R.User = nil
 	parsed := parser.Workout(workout)
-
+	s.Require().Nil(parsed.GetUser())
 	s.Require().Equal(workout.ID, parsed.GetId())
 	s.Require().Equal(workout.Name, parsed.GetName())
 	s.Require().True(workout.StartedAt.Equal(parsed.GetStartedAt().AsTime()))
@@ -141,7 +142,6 @@ func (s *parserSuite) TestWorkout() {
 
 	workout = s.factory.NewWorkout()
 	parsed = parser.Workout(workout)
-
 	s.Require().Equal(workout.R.User.ID, parsed.GetUser().GetId())
 	s.Require().Equal(workout.R.User.FirstName, parsed.GetUser().GetFirstName())
 	s.Require().Equal(workout.R.User.LastName, parsed.GetUser().GetLastName())
@@ -149,11 +149,17 @@ func (s *parserSuite) TestWorkout() {
 	s.Require().Empty(parsed.GetUser().GetEmail())
 
 	workout = s.factory.NewWorkout()
+	parsed = parser.Workout(workout, parser.WorkoutIntensity(orm.SetSlice{
+		s.factory.NewSet(factory.SetReps(2), factory.SetWeight(5)),
+		s.factory.NewSet(factory.SetReps(1), factory.SetWeight(10)),
+	}))
+	s.Require().Equal(20, int(parsed.GetIntensity()))
+
+	workout = s.factory.NewWorkout()
 	workout.R.WorkoutComments = orm.WorkoutCommentSlice{
 		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
 		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
 	}
-
 	parsed = parser.Workout(workout)
 	s.Require().Len(parsed.GetComments(), 2)
 	for i, comment := range workout.R.WorkoutComments {
@@ -168,7 +174,6 @@ func (s *parserSuite) TestWorkout() {
 		s.factory.NewSet(),
 	}
 	personalBests := orm.SetSlice{sets[0]}
-
 	parsed = parser.Workout(workout, parser.WorkoutExerciseSets(sets, personalBests))
 	s.Require().Len(parsed.GetExerciseSets(), 2)
 	for i, exerciseSet := range parsed.GetExerciseSets() {
