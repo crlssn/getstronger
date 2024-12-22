@@ -39,7 +39,7 @@ func Module() fx.Option {
 		fx.Invoke(func(lc fx.Lifecycle, s *Server) {
 			lc.Append(fx.Hook{
 				OnStart: s.ListenAndServe,
-				OnStop:  s.Shutdown,
+				OnStop:  s.server.Shutdown,
 			})
 		}),
 	))
@@ -91,10 +91,6 @@ func (s *Server) listenAndServe() error {
 	}
 
 	return s.server.ListenAndServeTLS(s.certPath, s.keyPath) //nolint:wrapcheck
-}
-
-func (s *Server) Shutdown(ctx context.Context) error {
-	return s.server.Shutdown(ctx) //nolint:wrapcheck
 }
 
 type Handlers struct {
