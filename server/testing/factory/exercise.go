@@ -41,11 +41,9 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 		m.UserID = f.NewUser().ID
 	}
 
-	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert exercise: %w", err))
 	}
-	boil.DebugMode = false
 
 	user, err := m.User().One(context.Background(), f.db)
 	if err != nil {

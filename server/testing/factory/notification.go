@@ -53,11 +53,9 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *orm.Notification {
 		m.Payload = []byte("{}")
 	}
 
-	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert notification: %w", err))
 	}
-	boil.DebugMode = false
 
 	user, err := m.User().One(context.Background(), f.db)
 	if err != nil {

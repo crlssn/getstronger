@@ -41,11 +41,9 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 		m.UserID = f.NewUser().ID
 	}
 
-	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert workout: %w", err))
 	}
-	boil.DebugMode = false
 
 	user, err := m.User().One(context.Background(), f.db)
 	if err != nil {
@@ -115,11 +113,9 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 		m.WorkoutID = f.NewWorkout().ID
 	}
 
-	boil.DebugMode = f.debug
 	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert workout comment: %w", err))
 	}
-	boil.DebugMode = false
 
 	user, err := m.User().One(context.Background(), f.db)
 	if err != nil {
