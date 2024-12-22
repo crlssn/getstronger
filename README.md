@@ -1,3 +1,4 @@
+[![codecov](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW)](https://codecov.io/gh/crlssn/getstronger)
 
 ## Screenshots
 <table>
