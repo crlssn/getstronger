@@ -9,7 +9,6 @@ export const useAuthStore = defineStore(
   () => {
     const userId = ref('')
     const accessToken = ref('')
-    const accessTokenRefreshInterval = ref(0)
 
     const setAccessToken = (token: string) => {
       if (userId.value === '') {
@@ -22,11 +21,6 @@ export const useAuthStore = defineStore(
     const logout = () => {
       userId.value = ''
       accessToken.value = ''
-      clearInterval(accessTokenRefreshInterval.value)
-    }
-
-    const setAccessTokenRefreshInterval = (interval: number) => {
-      accessTokenRefreshInterval.value = interval
     }
 
     const authorised = computed(() => {
@@ -37,7 +31,6 @@ export const useAuthStore = defineStore(
       accessToken,
       logout,
       setAccessToken,
-      setAccessTokenRefreshInterval,
       userId,
       authorised,
     }

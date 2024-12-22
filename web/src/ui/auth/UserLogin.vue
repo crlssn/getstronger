@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import router from '@/router/router'
 import { login } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
-import { scheduleTokenRefresh } from '@/jwt/jwt'
 import { RouterLink } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
@@ -18,7 +17,6 @@ const onLogin = async () => {
   const res = await login(email.value, password.value)
   if (!res) return
   authStore.setAccessToken(res.accessToken)
-  authStore.setAccessTokenRefreshInterval(scheduleTokenRefresh())
   notificationStore.streamUnreadNotifications()
   await router.push('/home')
 }

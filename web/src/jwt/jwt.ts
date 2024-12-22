@@ -9,9 +9,3 @@ export async function refreshAccessTokenOrLogout(): Promise<void> {
   const authStore = useAuthStore()
   authStore.setAccessToken(res.accessToken)
 }
-
-export function scheduleTokenRefresh(): number {
-  console.debug('scheduling access token refresh every 10 minutes')
-  const interval = 10 * 60 * 1000 // 10 minutes
-  return window.setInterval(refreshAccessTokenOrLogout, interval)
-}
