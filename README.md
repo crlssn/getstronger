@@ -17,7 +17,3 @@
     <td><img src="https://github.com/user-attachments/assets/61c8574f-be29-4a60-99c1-573f3bfd6b83"/></td>
   </tr>
 </table>
-
-![Screen Shot 2024-12-22 at 06 03 44]()
-
-![Screen Shot 2024-12-22 at 06 03 50]()
