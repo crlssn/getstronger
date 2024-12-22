@@ -66,9 +66,9 @@ func (s *Server) listenAndServe() error {
 	return s.server.ListenAndServeTLS(s.certPath, s.keyPath) //nolint:wrapcheck
 }
 
-func NewMultiplexer(handlers []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
+func NewMultiplexer(f []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
 	mux := http.NewServeMux()
-	for _, h := range handlers {
+	for _, h := range f {
 		path, handler := h(o...)
 		mux.Handle(path, m.Register(handler))
 	}
