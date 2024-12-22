@@ -9,10 +9,13 @@ import (
 	"net/http"
 	"time"
 
+	"connectrpc.com/connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/rpc/handlers"
+	"github.com/crlssn/getstronger/server/rpc/middlewares"
 	"github.com/crlssn/getstronger/server/stream"
 )
 
@@ -23,7 +26,7 @@ type Server struct {
 	certPath string
 }
 
-func New(config *config.Config, mux *http.ServeMux, conn *stream.Conn) *Server {
+func NewServer(config *config.Config, mux *http.ServeMux, conn *stream.Conn) *Server {
 	return &Server{
 		conn:     conn,
 		keyPath:  config.Server.KeyPath,
@@ -61,4 +64,14 @@ func (s *Server) listenAndServe() error {
 	}
 
 	return s.server.ListenAndServeTLS(s.certPath, s.keyPath) //nolint:wrapcheck
+}
+
+func NewMultiplexer(handlers []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
+	mux := http.NewServeMux()
+	for _, h := range handlers {
+		path, handler := h(o...)
+		mux.Handle(path, m.Register(handler))
+	}
+
+	return mux
 }

@@ -1,9 +1,6 @@
 package server
 
 import (
-	"net/http"
-
-	"connectrpc.com/connect"
 	"go.uber.org/fx"
 
 	"github.com/crlssn/getstronger/server/rpc/handlers"
@@ -14,7 +11,7 @@ import (
 func Module() fx.Option {
 	return fx.Module("rpc", fx.Options(
 		fx.Provide(
-			New,
+			NewServer,
 			NewMultiplexer,
 			middlewares.New,
 		),
@@ -27,14 +24,4 @@ func Module() fx.Option {
 			})
 		}),
 	))
-}
-
-func NewMultiplexer(handlers []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
-	mux := http.NewServeMux()
-	for _, h := range handlers {
-		path, handler := h(o...)
-		mux.Handle(path, m.Register(handler))
-	}
-
-	return mux
 }
