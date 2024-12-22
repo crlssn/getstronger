@@ -1,4 +1,9 @@
-[![codecov](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW)](https://codecov.io/gh/crlssn/getstronger) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/75e3f5a2db734f71871daaf8aadb3e5e)](https://app.codacy.com/gh/crlssn/getstronger/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+<div align="center">
+
+  [![codecov](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW)](https://codecov.io/gh/crlssn/getstronger) 
+  [![Codacy Badge](https://app.codacy.com/project/badge/Grade/75e3f5a2db734f71871daaf8aadb3e5e)](https://app.codacy.com/gh/crlssn/getstronger/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
+</div>
 
 ## Screenshots
 <table>
