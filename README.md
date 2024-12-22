@@ -12,6 +12,8 @@
     <td><img src="https://github.com/user-attachments/assets/e0352822-b965-41ca-a1f2-a05d32c8402c"/></td>
   </tr>
   <tr>
+    <td><img src="https://github.com/user-attachments/assets/47d68a98-789d-4a72-b9e3-219847f26114"/></td>
+    <td><img src="https://github.com/user-attachments/assets/483ead04-fc81-457a-b40e-81aeb64ab787"/></td>
     <td><img src="https://github.com/user-attachments/assets/61c8574f-be29-4a60-99c1-573f3bfd6b83"/></td>
   </tr>
 </table>
