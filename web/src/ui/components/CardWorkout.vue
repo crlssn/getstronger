@@ -70,9 +70,9 @@ const formatComment = computed(() => {
           <RouterLink :to="`/workouts/${workout.id}`" class="text-gray-500 text-sm">
             {{ formatToRelativeDateTime(props.workout.finishedAt) }}
           </RouterLink>
-          <div class="flex pl-2 items-center font-semibold">
+          <div class="flex pl-2 items-center font-bold text-sm">
             {{ workout.intensity }}
-            <FireIcon class="size-5 text-red-500" />
+            <FireIcon class="size-4 text-orange-600" />
           </div>
         </div>
         <DropdownButton v-if="workout.user?.id === authStore.userId" :items="dropdownItems" />
