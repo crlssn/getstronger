@@ -59,8 +59,8 @@ var errInvalidEmail = errors.New("invalid email")
 func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.SignupRequest]) (*connect.Response[apiv1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	emailAddress := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
-	if !strings.Contains(emailAddress, "@") {
+	req.Msg.Email = strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
+	if !strings.Contains(req.Msg.GetEmail(), "@") {
 		log.Warn("invalid email")
 		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidEmail)
 	}
@@ -71,7 +71,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 	}
 
 	if err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
-		auth, err := tx.CreateAuth(ctx, emailAddress, req.Msg.GetPassword())
+		auth, err := tx.CreateAuth(ctx, req.Msg.GetEmail(), req.Msg.GetPassword())
 		if err != nil {
 			if errors.Is(err, repo.ErrAuthEmailExists) {
 				log.Warn("email exists")
