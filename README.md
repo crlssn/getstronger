@@ -2,8 +2,8 @@
 ## Screenshots
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/ba8b5f58-d37e-41bc-bd15-a35e6db9787d"/></td>
-    <td><img src="https://github.com/user-attachments/assets/08637c78-5033-43ab-865a-4aa703432081"/></td>
+    <td><img src="https://github.com/user-attachments/assets/f6ee3471-a98f-4db6-864e-4bff35327805"/></td>
+    <td><img src="https://github.com/user-attachments/assets/597d4e66-9e79-453b-aaab-7e8ae5cd67ed"/></td>
     <td><img src="https://github.com/user-attachments/assets/cba930ad-955c-44b5-a0e1-dc7c7222ce95"/></td>
   </tr>
   <tr>
@@ -17,3 +17,7 @@
     <td><img src="https://github.com/user-attachments/assets/61c8574f-be29-4a60-99c1-573f3bfd6b83"/></td>
   </tr>
 </table>
+
+![Screen Shot 2024-12-22 at 06 03 44]()
+
+![Screen Shot 2024-12-22 at 06 03 50]()
