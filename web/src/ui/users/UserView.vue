@@ -65,6 +65,9 @@ const updateTab = (event: Event) => {
   const target = event.target as HTMLSelectElement
   router.push(target.value)
 }
+
+const notMe = computed(() => user.value.id !== authStore.userId)
+const followed = computed(() => user.value.followed)
 </script>
 
 <template>
@@ -75,8 +78,8 @@ const updateTab = (event: Event) => {
     </AppCard>
   </div>
 
-  <div v-if="user.id !== authStore.userId" class="mb-4">
-    <AppButton v-if="user.followed" colour="gray" type="button" @click="onUnfollowUser">
+  <div v-if="notMe" class="mb-4">
+    <AppButton v-if="followed" colour="gray" type="button" @click="onUnfollowUser">
       Unfollow {{ user.firstName }}
     </AppButton>
     <AppButton v-else colour="primary" type="button" @click="onFollowUser">
