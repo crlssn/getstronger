@@ -1,5 +1,6 @@
-ignore:
-  - "*_mock.go"
-  - "*_test.go"
-  - "server/gen"
-  - "web/src/proto"
+---
+exclude_paths:
+  - "**_mock.go"
+  - "**_test.go"
+  - "server/gen/**"
+  - "web/src/proto/**"
