@@ -23,7 +23,7 @@ type Server struct {
 	certPath string
 }
 
-func newServer(config *config.Config, mux *http.ServeMux, conn *stream.Conn) *Server {
+func NewServer(config *config.Config, mux *http.ServeMux, conn *stream.Conn) *Server {
 	return &Server{
 		conn:     conn,
 		keyPath:  config.Server.KeyPath,

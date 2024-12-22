@@ -16,7 +16,7 @@ func Module() fx.Option {
 	return fx.Module("rpc", fx.Options(
 		interceptors.Module(),
 		fx.Provide(
-			newServer,
+			NewServer,
 			registerHandlers,
 			handlers.NewAuthHandler,
 			handlers.NewFeedHandler,
