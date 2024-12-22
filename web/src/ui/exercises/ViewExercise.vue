@@ -66,7 +66,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 
 <template>
   <div v-if="sets.length" class="mb-8">
-    <h6>Historically</h6>
+    <h6>Trend</h6>
     <AppCard class="p-2">
       <ExerciseChart :sets="downSample(sets, 50)" />
     </AppCard>
