@@ -89,8 +89,8 @@ message GetPersonalBestsResponse {
 }
 
 message ListSetsRequest {
-  repeated string user_id = 1;
-  repeated string exercise_id = 2;
+  repeated string user_ids = 1;
+  repeated string exercise_ids = 2;
   PaginationRequest pagination = 3 [(buf.validate.field).required = true];
 }
 message ListSetsResponse {
