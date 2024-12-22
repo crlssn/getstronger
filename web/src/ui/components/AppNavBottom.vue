@@ -25,13 +25,13 @@ const isActive = (basePath: string) => {
 
 const navigation = [
   { href: '/home', icon: HomeIcon, iconActive: HomeIconSolid, name: 'Home' },
+  { href: '/exercises', icon: BoltIcon, iconActive: BoltIconSolid, name: 'Exercises' },
   {
     href: '/routines',
     icon: ClipboardDocumentListIcon,
     iconActive: ClipboardDocumentListIconSolid,
     name: 'Routines',
   },
-  { href: '/exercises', icon: BoltIcon, iconActive: BoltIconSolid, name: 'Exercises' },
   { href: '/notifications', icon: BellIcon, iconActive: BellIconSolid, name: 'Notifications' },
   { href: '/profile', icon: UserIcon, iconActive: UserIconSolid, name: 'Profile' },
 ]
