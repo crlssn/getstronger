@@ -19,13 +19,13 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
-	"github.com/crlssn/getstronger/server/stream"
 )
 
 func Module() fx.Option {
 	return fx.Module("rpc", fx.Options(
 		interceptors.Module(),
 		fx.Provide(
+			newServer,
 			registerHandlers,
 			handlers.NewAuthHandler,
 			handlers.NewFeedHandler,
@@ -36,10 +36,65 @@ func Module() fx.Option {
 			handlers.NewNotificationHandler,
 			middlewares.New,
 		),
-		fx.Invoke(
-			startServer,
-		),
+		fx.Invoke(func(lc fx.Lifecycle, s *Server) {
+			lc.Append(fx.Hook{
+				OnStart: s.ListenAndServe,
+				OnStop:  s.Shutdown,
+			})
+		}),
 	))
+}
+
+const (
+	readTimeout = 10 * time.Second
+	idleTimeout = 120 * time.Second
+)
+
+type Server struct {
+	keyPath  string
+	certPath string
+	server   *http.Server
+}
+
+func newServer(config *config.Config, mux *http.ServeMux) *Server {
+	return &Server{
+		keyPath:  config.Server.KeyPath,
+		certPath: config.Server.CertPath,
+		server: &http.Server{
+			Addr:         fmt.Sprintf(":%s", config.Server.Port),
+			Handler:      h2c.NewHandler(mux, &http2.Server{}),
+			ReadTimeout:  readTimeout,
+			WriteTimeout: 0,
+			IdleTimeout:  idleTimeout,
+			TLSConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		},
+	}
+}
+
+func (s *Server) ListenAndServe(_ context.Context) error {
+	go func() {
+		if err := s.listenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return
+			}
+			log.Fatalf("listen and serve: %v", err)
+		}
+	}()
+	return nil
+}
+
+func (s *Server) listenAndServe() error {
+	if s.certPath == "" && s.keyPath == "" {
+		return s.server.ListenAndServe() //nolint:wrapcheck
+	}
+
+	return s.server.ListenAndServeTLS(s.certPath, s.keyPath) //nolint:wrapcheck
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.server.Shutdown(ctx) //nolint:wrapcheck
 }
 
 type Handlers struct {
@@ -86,49 +141,4 @@ func registerHandlers(p Handlers, o []connect.HandlerOption, m *middlewares.Midd
 	}
 
 	return mux
-}
-
-const (
-	readTimeout = 10 * time.Second
-	idleTimeout = 120 * time.Second
-)
-
-func startServer(l fx.Lifecycle, c *config.Config, m *http.ServeMux, conn *stream.Conn) {
-	s := &http.Server{
-		Addr:         fmt.Sprintf(":%s", c.Server.Port),
-		Handler:      h2c.NewHandler(m, &http2.Server{}),
-		ReadTimeout:  readTimeout,
-		WriteTimeout: 0,
-		IdleTimeout:  idleTimeout,
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		},
-	}
-
-	s.RegisterOnShutdown(conn.Cancel)
-
-	l.Append(fx.Hook{
-		OnStart: func(_ context.Context) error {
-			go func() {
-				if err := listenAndServe(s, c.Server.CertPath, c.Server.KeyPath); err != nil {
-					if errors.Is(err, http.ErrServerClosed) {
-						return
-					}
-					log.Fatalf("listen and serve: %v", err)
-				}
-			}()
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			return s.Shutdown(ctx)
-		},
-	})
-}
-
-func listenAndServe(s *http.Server, certPath, keyPath string) error {
-	if certPath == "" && keyPath == "" {
-		return s.ListenAndServe() //nolint:wrapcheck
-	}
-
-	return s.ListenAndServeTLS(certPath, keyPath) //nolint:wrapcheck
 }
