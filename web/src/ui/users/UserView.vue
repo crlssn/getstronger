@@ -68,10 +68,13 @@ const updateTab = (event: Event) => {
 </script>
 
 <template>
-  <h6>Energy</h6>
-  <AppCard class="p-2">
-    <WorkoutChart :sets="sets" />
-  </AppCard>
+  <div v-if="sets.length">
+    <h6>Energy</h6>
+    <AppCard class="p-2">
+      <WorkoutChart :sets="sets" />
+    </AppCard>
+  </div>
+
   <div v-if="user.id !== authStore.userId" class="mb-4">
     <AppButton v-if="user.followed" colour="gray" type="button" @click="onUnfollowUser">
       Unfollow {{ user.firstName }}
