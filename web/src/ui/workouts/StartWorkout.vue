@@ -284,7 +284,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
     </AppList>
 
     <AppButton type="submit" colour="primary" class="mb-4">Finish Workout</AppButton>
-    <AppButton type="button" colour="black" @click="cancelWorkout">Cancel Workout</AppButton>
+    <AppButton type="button" colour="gray" @click="cancelWorkout">Cancel Workout</AppButton>
   </form>
 </template>
 
