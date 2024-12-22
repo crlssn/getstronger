@@ -60,7 +60,7 @@ const formatComment = computed(() => {
 
 <template>
   <AppCard v-if="!workoutDeleted" class="divide-y divide-gray-100">
-    <div class="px-4 py-4">
+    <div class="p-4">
       <div class="flex items-center justify-between">
         <UserCircleIcon class="size-10 text-gray-900" />
         <div class="w-full">
@@ -78,7 +78,7 @@ const formatComment = computed(() => {
         <DropdownButton v-if="workout.user?.id === authStore.userId" :items="dropdownItems" />
       </div>
     </div>
-    <div class="px-4 py-4">
+    <div class="p-4">
       <CardWorkoutExercise
         v-for="exerciseSet in workout.exerciseSets"
         :key="exerciseSet.exercise?.id"
@@ -87,7 +87,7 @@ const formatComment = computed(() => {
         :sets="exerciseSet.sets"
       />
     </div>
-    <div class="px-4 pr-4 py-4">
+    <div class="p-4">
       <RouterLink
         :to="`/workouts/${workout.id}`"
         class="pl-1 text-sm text-gray-900 uppercase font-medium"
@@ -95,7 +95,7 @@ const formatComment = computed(() => {
         {{ workout.comments.length }} {{ formatComment }}
       </RouterLink>
     </div>
-    <div v-if="!compact" class="px-4 py-4">
+    <div v-if="!compact" class="p-4">
       <CardWorkoutComment
         v-for="comment in comments"
         :key="comment.id"
