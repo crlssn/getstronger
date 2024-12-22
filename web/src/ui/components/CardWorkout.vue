@@ -111,7 +111,7 @@ const formatComment = computed(() => {
           placeholder="Write a comment..."
           required
         />
-        <AppButton type="submit" colour="primary"> Comment</AppButton>
+        <AppButton type="submit" colour="primary">Comment</AppButton>
       </form>
     </div>
   </AppCard>
