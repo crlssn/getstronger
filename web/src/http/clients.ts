@@ -1,4 +1,4 @@
-import { createClient } from '@connectrpc/connect'
+import { type Client, createClient } from '@connectrpc/connect'
 import { auth, logger } from '@/http/interceptors'
 import { FeedService } from '@/proto/api/v1/feed_service_pb'
 import { AuthService } from '@/proto/api/v1/auth_service_pb'
@@ -18,10 +18,16 @@ const transport = createConnectTransport({
   interceptors: [logger, auth],
 })
 
-export const authClient = createClient(AuthService, transport)
-export const feedClient = createClient(FeedService, transport)
-export const userClient = createClient(UserService, transport)
-export const routineClient = createClient(RoutineService, transport)
-export const workoutClient = createClient(WorkoutService, transport)
-export const exerciseClient = createClient(ExerciseService, transport)
-export const notificationClient = createClient(NotificationService, transport)
+export const authClient: Client<typeof AuthService> = createClient(AuthService, transport)
+export const feedClient: Client<typeof FeedService> = createClient(FeedService, transport)
+export const userClient: Client<typeof UserService> = createClient(UserService, transport)
+export const routineClient: Client<typeof RoutineService> = createClient(RoutineService, transport)
+export const workoutClient: Client<typeof WorkoutService> = createClient(WorkoutService, transport)
+export const exerciseClient: Client<typeof ExerciseService> = createClient(
+  ExerciseService,
+  transport,
+)
+export const notificationClient: Client<typeof NotificationService> = createClient(
+  NotificationService,
+  transport,
+)
