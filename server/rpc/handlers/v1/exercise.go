@@ -226,6 +226,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	sets, err := h.repo.ListSets(ctx,
 		repo.ListSetsWithLimit(limit+1),
+		repo.ListSetsWithUserId(req.Msg.GetUserIds()...),
 		repo.ListSetsWithExerciseID(req.Msg.GetExerciseIds()...),
 		repo.ListSetsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 		repo.ListSetsOrderByCreatedAt(repo.DESC),

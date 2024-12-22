@@ -1380,8 +1380,22 @@ func ListSetsWithLimit(limit int) ListSetsOpt {
 	}
 }
 
+func ListSetsWithUserId(userID ...string) ListSetsOpt {
+	return func() (qm.QueryMod, error) {
+		if userID == nil {
+			return nil, nil
+		}
+
+		return orm.SetWhere.UserID.IN(userID), nil
+	}
+}
+
 func ListSetsWithExerciseID(exerciseID ...string) ListSetsOpt {
 	return func() (qm.QueryMod, error) {
+		if exerciseID == nil {
+			return nil, nil
+		}
+
 		return orm.SetWhere.ExerciseID.IN(exerciseID), nil
 	}
 }
