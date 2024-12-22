@@ -488,6 +488,6 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
     }
 
     // TODO: Use custom alert component.
-    alert(error)
+    console.error('request', error)
   }
 }
