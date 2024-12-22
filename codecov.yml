@@ -1,4 +1,5 @@
-ignore:
+---
+exclude_paths:
   - "*_mock.go"
   - "*_test.go"
   - "server/gen"
