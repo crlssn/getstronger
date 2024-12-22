@@ -20,7 +20,7 @@ const tabs = computed(() => [
   { href: `/users/${user.value.id}`, name: 'Workouts' },
   { href: `/users/${user.value.id}/personal-bests`, name: 'Personal Bests' },
   { href: `/users/${user.value.id}/follows`, name: 'Follows' },
-  { href: `/users/${user.value.id}/followers`, name: 'Followers' }
+  { href: `/users/${user.value.id}/followers`, name: 'Followers' },
 ])
 
 const activeTab = computed(() => route.fullPath)
@@ -34,7 +34,7 @@ watch(
   async () => {
     await fetchUser()
     pageTitleStore.setPageTitle(pageTitle.value)
-  }
+  },
 )
 
 onMounted(async () => {

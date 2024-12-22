@@ -91,16 +91,16 @@ const data = computed(() => {
   const intensityByWorkout: Record<string, number> = {}
 
   sets.value.map((set) => {
-    const workoutId = set.metadata?.workoutId;
+    const workoutId = set.metadata?.workoutId
 
     if (!workoutId) {
-      return;
+      return
     }
 
     if (intensityByWorkout[workoutId]) {
-      intensityByWorkout[workoutId] += set.reps * set.weight;
+      intensityByWorkout[workoutId] += set.reps * set.weight
     } else {
-      intensityByWorkout[workoutId] = set.reps * set.weight;
+      intensityByWorkout[workoutId] = set.reps * set.weight
     }
 
     labels.push(formatToShortDateTime(set.metadata?.createdAt))

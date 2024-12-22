@@ -1380,7 +1380,7 @@ func ListSetsWithLimit(limit int) ListSetsOpt {
 	}
 }
 
-func ListSetsWithUserId(userID ...string) ListSetsOpt {
+func ListSetsWithUserID(userID ...string) ListSetsOpt {
 	return func() (qm.QueryMod, error) {
 		if userID == nil {
 			return nil, nil
