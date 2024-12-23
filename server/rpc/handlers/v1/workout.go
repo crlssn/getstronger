@@ -84,6 +84,11 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		repo.GetWorkoutLoadCommentUsers(),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("workout not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -213,6 +218,11 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("workout not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("failed to get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

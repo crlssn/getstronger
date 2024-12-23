@@ -2,7 +2,9 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
+	"github.com/crlssn/getstronger/server/xzap"
 )
 
 var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
@@ -48,7 +51,8 @@ func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request
 }
 
 func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[apiv1.GetRoutineRequest]) (*connect.Response[apiv1.GetRoutineResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx).
+		With(xzap.FiledRoutineID(req.Msg.GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
 
 	routine, err := h.repo.GetRoutine(ctx,
@@ -57,6 +61,11 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 		repo.GetRoutineWithExercises(),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Error("routine not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+
 		log.Error("get routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -159,6 +168,11 @@ func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request
 
 	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetId()))
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("exercise not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("find routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -219,6 +233,11 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[a
 		repo.GetRoutineWithUserID(userID),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("routine not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("find routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -228,6 +247,11 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[a
 		repo.GetExerciseWithUserID(userID),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("exercise not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -250,6 +274,11 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 		repo.GetRoutineWithUserID(userID),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("routine not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("find routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -259,6 +288,11 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 		repo.GetExerciseWithUserID(userID),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("exercise not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -281,6 +315,11 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		repo.GetRoutineWithExercises(),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("routine not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("find routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
