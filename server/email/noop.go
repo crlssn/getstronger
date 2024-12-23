@@ -8,11 +8,11 @@ func NewNoop() Email {
 	return &noop{}
 }
 
-func (n *noop) SendVerificationEmail(_ context.Context, _ SendVerificationEmail) error {
+func (n *noop) SendVerification(_ context.Context, _ SendVerification) error {
 	return nil
 }
 
-func (n *noop) SendPasswordResetEmail(_ context.Context, _ SendPasswordResetEmail) error {
+func (n *noop) SendPasswordReset(_ context.Context, _ SendPasswordReset) error {
 	return nil
 }
 

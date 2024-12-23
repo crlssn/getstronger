@@ -89,7 +89,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 			return fmt.Errorf("create user: %w", err)
 		}
 
-		if err = h.email.SendVerificationEmail(ctx, email.SendVerificationEmail{
+		if err = h.email.SendVerification(ctx, email.SendVerification{
 			Name:  user.FirstName,
 			Email: auth.Email,
 			Token: auth.EmailToken,
@@ -276,7 +276,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err = h.email.SendPasswordResetEmail(ctx, email.SendPasswordResetEmail{
+	if err = h.email.SendPasswordReset(ctx, email.SendPasswordReset{
 		Name:  auth.R.User.FirstName,
 		Email: auth.Email,
 		Token: token,

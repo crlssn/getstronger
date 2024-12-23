@@ -17,7 +17,7 @@ func TestSendEmail(t *testing.T) {
 	t.Parallel()
 	email := MustNew(&config.Config{})
 
-	err := email.SendVerificationEmail(context.Background(), SendVerificationEmail{
+	err := email.SendVerification(context.Background(), SendVerification{
 		Name:  "John Doe",
 		Email: os.Getenv("GET_STRONGER_EMAIL_ADDRESS"),
 		Token: "1234",

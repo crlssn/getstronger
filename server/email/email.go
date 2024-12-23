@@ -14,8 +14,8 @@ import (
 )
 
 type Email interface {
-	SendVerificationEmail(ctx context.Context, req SendVerificationEmail) error
-	SendPasswordResetEmail(ctx context.Context, req SendPasswordResetEmail) error
+	SendVerification(ctx context.Context, req SendVerification) error
+	SendPasswordReset(ctx context.Context, req SendPasswordReset) error
 }
 
 type email struct {
@@ -51,13 +51,13 @@ func MustNew(c *c.Config) Email {
 	return e
 }
 
-type SendVerificationEmail struct {
+type SendVerification struct {
 	Name  string
 	Email string
 	Token string
 }
 
-func (e *email) SendVerificationEmail(ctx context.Context, req SendVerificationEmail) error {
+func (e *email) SendVerification(ctx context.Context, req SendVerification) error {
 	sender := "noreply@getstronger.pro"
 	subject := "[GetStronger] Verify your email"
 	body := fmt.Sprintf(`Hi %s, 
@@ -89,13 +89,13 @@ Please verify your email address by clicking on the link below.
 	return nil
 }
 
-type SendPasswordResetEmail struct {
+type SendPasswordReset struct {
 	Name  string
 	Email string
 	Token string
 }
 
-func (e *email) SendPasswordResetEmail(ctx context.Context, req SendPasswordResetEmail) error {
+func (e *email) SendPasswordReset(ctx context.Context, req SendPasswordReset) error {
 	sender := "noreply@getstronger.pro"
 	subject := "[GetStronger] Reset your password"
 	body := fmt.Sprintf(`Hi %s, 
