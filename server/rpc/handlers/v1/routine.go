@@ -106,6 +106,11 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		repo.GetRoutineWithUserID(userID),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("routine not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("get routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
