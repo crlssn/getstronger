@@ -77,6 +77,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 				log.Warn("email exists")
 				return nil
 			}
+
 			return fmt.Errorf("create auth: %w", err)
 		}
 
@@ -122,6 +123,11 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 		repo.GetAuthWithUser(),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("auth not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

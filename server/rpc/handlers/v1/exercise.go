@@ -48,12 +48,12 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 }
 
 func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[apiv1.GetExerciseRequest]) (*connect.Response[apiv1.GetExerciseResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
+	log := xcontext.MustExtractLogger(ctx).With(xzap.FieldExerciseID(req.Msg.GetId()))
 
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Error("exercise not found", zap.String("id", req.Msg.GetId()))
+			log.Error("exercise not found")
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 

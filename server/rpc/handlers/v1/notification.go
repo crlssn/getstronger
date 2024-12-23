@@ -126,7 +126,8 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info("client disconnected")
+			log.Warn("client disconnected")
+			h.stream.Remove(userID)
 			return nil
 		case <-ticker.C:
 			count, err := h.repo.CountNotifications(ctx,

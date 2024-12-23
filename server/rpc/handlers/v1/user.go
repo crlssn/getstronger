@@ -2,6 +2,8 @@ package v1
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	"connectrpc.com/connect"
@@ -37,6 +39,11 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 		repo.GetUserLoadAuth(),
 	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("user not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+
 		log.Error("failed to get user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
