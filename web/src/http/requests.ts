@@ -486,13 +486,14 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
         }
       }
 
-      if (error.code === Code.InvalidArgument) {
-        alert(error)
-        return
-      }
+      // if (error.code === Code.InvalidArgument) {
+      //   alert(error)
+      //   return
+      // }
     }
 
     // TODO: Use custom alert component.
-    console.error('request', error)
+    // console.error('request', error)
+    alert(error)
   }
 }
