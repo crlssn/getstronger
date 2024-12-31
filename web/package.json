@@ -34,7 +34,7 @@
     "vue-router": "4.5.0"
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "1.6.0",
+    "@codecov/vite-plugin": "1.7.0",
     "@tailwindcss/forms": "0.5.9",
     "@tsconfig/node20": "20.1.4",
     "@types/jsdom": "21.1.7",
