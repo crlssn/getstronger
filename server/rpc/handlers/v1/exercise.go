@@ -38,7 +38,7 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 		Label:  req.Msg.GetLabel(),
 	})
 	if err != nil {
-		log.Error("create exercise failed", zap.Error(err))
+		log.Error("create exercise failed")
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -53,7 +53,7 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("exercise not found", zap.Error(err))
+			log.Warn("exercise not found")
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 

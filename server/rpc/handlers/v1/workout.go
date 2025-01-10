@@ -85,7 +85,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("workout not found", zap.Error(err))
+			log.Warn("workout not found")
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 

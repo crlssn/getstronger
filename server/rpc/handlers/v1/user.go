@@ -40,7 +40,7 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("user not found", zap.Error(err))
+			log.Warn("user not found")
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
