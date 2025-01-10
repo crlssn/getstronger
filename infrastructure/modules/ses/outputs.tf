@@ -12,7 +12,7 @@ output "secret_access_key" {
 
 output "dkim_records" {
   description = "DKIM validation records for SES"
-  value       = aws_route53_record.dkim[*].fqdn
+  value       = aws_route53_record.dkim.fqdn
 }
 
 output "spf_record" {
