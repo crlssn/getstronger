@@ -16,6 +16,16 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
 
+      - name: Format code
+        run: terraform fmt -recursive
+
+      - name: Check for uncommitted changes
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            exit 1
+          fi
+
       - name: Create SSH key file
         run: |
           mkdir ~/.ssh

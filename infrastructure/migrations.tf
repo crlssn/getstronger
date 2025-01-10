@@ -22,3 +22,13 @@ moved {
   from = aws_iam_instance_profile.ec2_instance_profile
   to   = module.cloudwatch.aws_iam_instance_profile.instance_profile
 }
+
+moved {
+  from = aws_db_instance.postgres
+  to   = module.db.aws_db_instance.db_instance
+}
+
+moved {
+  from = aws_security_group.db_access
+  to   = module.db.aws_security_group.db_access
+}
