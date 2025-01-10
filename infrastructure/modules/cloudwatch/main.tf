@@ -10,7 +10,7 @@ resource "aws_iam_role" "role" {
 
 resource "aws_iam_policy" "log_policy" {
   name        = var.policy_name
-  description = "Policy for pushing logs to CloudWatch"
+  description = "Policy to push logs to CloudWatch"
 
   policy = jsonencode({
     Version = "2012-10-17",
