@@ -36,7 +36,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Set up terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
 
       - name: Terraform Init
         run: terraform init
@@ -118,7 +118,7 @@ jobs:
           } >> .env
 
       - name: Deploy to EC2
-        uses: easingthemes/ssh-deploy@v5.1.0
+        uses: easingthemes/ssh-deploy@ece05a22752e524363164bfb2f69a5ba4f8ded0d # v5.1.0
         with:
           REMOTE_HOST: ${{ vars.AWS_EC2_REMOTE_HOST }}
           REMOTE_USER: 'ec2-user'
@@ -126,7 +126,7 @@ jobs:
           SOURCE: 'server/bin/'
 
       - name: Export AWS credentials
-        uses: appleboy/ssh-action@v1.1.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ vars.AWS_EC2_REMOTE_HOST }}
           username: 'ec2-user'
@@ -137,7 +137,7 @@ jobs:
             echo "export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}"
 
       - name: Restart service
-        uses: appleboy/ssh-action@v1.1.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ vars.AWS_EC2_REMOTE_HOST }}
           username: 'ec2-user'
