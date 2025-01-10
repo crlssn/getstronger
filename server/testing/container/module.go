@@ -23,7 +23,9 @@ func Module() fx.Option {
 		),
 		fx.Invoke(func(l fx.Lifecycle, c *Container) {
 			l.Append(fx.Hook{
-				OnStop: c.Terminate,
+				OnStop: func(ctx context.Context) error {
+					return c.Terminate(ctx)
+				},
 			})
 		}),
 	))
