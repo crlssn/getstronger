@@ -67,7 +67,7 @@ resource "aws_iam_user_policy_attachment" "ses_policy_attach" {
   policy_arn = aws_iam_policy.ses_send_email.arn
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch" {
+resource "aws_iam_role_policy_attachment" "ses_policy_cloudwatch" {
   role       = var.cloudwatch_role_name
   policy_arn = aws_iam_policy.ses_send_email.arn
 }
