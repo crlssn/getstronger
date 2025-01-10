@@ -18,7 +18,7 @@ resource "aws_route53_record" "s3_ssl_cert_validation" {
 
   name    = each.value.resource_record_name
   type    = each.value.resource_record_type
-  zone_id = aws_route53_zone.getstronger_pro.zone_id
+  zone_id = module.route53.hosted_zone_id
   records = [each.value.resource_record_value]
   ttl     = 60
 }
@@ -101,7 +101,7 @@ resource "aws_route53_record" "api_getstronger_pro_ssl_cert_validation" {
 
   name    = each.value.resource_record_name
   type    = each.value.resource_record_type
-  zone_id = aws_route53_zone.getstronger_pro.zone_id
+  zone_id = module.route53.hosted_zone_id
   records = [each.value.resource_record_value]
   ttl     = 60
 }
@@ -185,5 +185,3 @@ resource "null_resource" "letsencrypt_cert" {
     ]
   }
 }
-
-

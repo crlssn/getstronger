@@ -64,12 +64,12 @@ module "ses" {
 module "route53" {
   source = "./modules/route53"
 
-  domain                          = "getstronger.pro"
-  api_record_ip                   = aws_eip.ec2_instance.public_ip
-  api_record_ttl                  = 300
-  cloudfront_alias_name           = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
-  cloudfront_alias_zone_id        = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
+  domain                            = "getstronger.pro"
+  api_record_ip                     = aws_eip.ec2_instance.public_ip
+  api_record_ttl                    = 300
+  cloudfront_alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
+  cloudfront_alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
   cloudfront_evaluate_target_health = false
-  ssh_record_ip                   = aws_eip.ec2_instance.public_ip
-  ssh_record_ttl                  = 300
+  ssh_record_ip                     = aws_eip.ec2_instance.public_ip
+  ssh_record_ttl                    = 300
 }
