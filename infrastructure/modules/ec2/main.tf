@@ -1,7 +1,7 @@
 resource "aws_instance" "ec2_instance" {
   ami                  = var.ami
   instance_type        = var.instance_type
-  security_group_names = [aws_security_group.ssh_access.name, aws_security_group.api_access.name]
+  security_groups      = [aws_security_group.ssh_access.name, aws_security_group.api_access.name]
   key_name             = aws_key_pair.ec2_key.key_name
   iam_instance_profile = var.iam_instance_profile
 
