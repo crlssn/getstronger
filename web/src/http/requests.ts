@@ -483,7 +483,17 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
           case Error.EMAIL_NOT_VERIFIED:
             alert('You must verify your email before logging in')
             return
+          case Error.PASSWORDS_DO_NOT_MATCH:
+            alert('Passwords do not match')
+            return
         }
+      }
+
+      // DEBT: Filter out some error codes to alert the user until we have a better way to handle them.
+      const ignoredCodes: Code[] = [Code.Unauthenticated, Code.Unavailable, Code.Canceled]
+      if (!ignoredCodes.includes(error.code)) {
+        alert(`${error.code}: ${error.message}`)
+        return
       }
     }
 
