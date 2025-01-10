@@ -45,6 +45,6 @@ variable "ssh_record_ttl" {
 }
 
 variable "ec2_instance_id" {
-    description = "The ID of the EC2 instance"
-    type        = string
+  description = "The ID of the EC2 instance"
+  type        = string
 }
