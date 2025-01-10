@@ -60,19 +60,6 @@ const (
 	ExerciseServiceListSetsProcedure = "/api.v1.ExerciseService/ListSets"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	exerciseServiceServiceDescriptor                      = v1.File_api_v1_exercise_service_proto.Services().ByName("ExerciseService")
-	exerciseServiceCreateExerciseMethodDescriptor         = exerciseServiceServiceDescriptor.Methods().ByName("CreateExercise")
-	exerciseServiceGetExerciseMethodDescriptor            = exerciseServiceServiceDescriptor.Methods().ByName("GetExercise")
-	exerciseServiceUpdateExerciseMethodDescriptor         = exerciseServiceServiceDescriptor.Methods().ByName("UpdateExercise")
-	exerciseServiceDeleteExerciseMethodDescriptor         = exerciseServiceServiceDescriptor.Methods().ByName("DeleteExercise")
-	exerciseServiceListExercisesMethodDescriptor          = exerciseServiceServiceDescriptor.Methods().ByName("ListExercises")
-	exerciseServiceGetPreviousWorkoutSetsMethodDescriptor = exerciseServiceServiceDescriptor.Methods().ByName("GetPreviousWorkoutSets")
-	exerciseServiceGetPersonalBestsMethodDescriptor       = exerciseServiceServiceDescriptor.Methods().ByName("GetPersonalBests")
-	exerciseServiceListSetsMethodDescriptor               = exerciseServiceServiceDescriptor.Methods().ByName("ListSets")
-)
-
 // ExerciseServiceClient is a client for the api.v1.ExerciseService service.
 type ExerciseServiceClient interface {
 	CreateExercise(context.Context, *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error)
@@ -94,53 +81,54 @@ type ExerciseServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewExerciseServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ExerciseServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	exerciseServiceMethods := v1.File_api_v1_exercise_service_proto.Services().ByName("ExerciseService").Methods()
 	return &exerciseServiceClient{
 		createExercise: connect.NewClient[v1.CreateExerciseRequest, v1.CreateExerciseResponse](
 			httpClient,
 			baseURL+ExerciseServiceCreateExerciseProcedure,
-			connect.WithSchema(exerciseServiceCreateExerciseMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("CreateExercise")),
 			connect.WithClientOptions(opts...),
 		),
 		getExercise: connect.NewClient[v1.GetExerciseRequest, v1.GetExerciseResponse](
 			httpClient,
 			baseURL+ExerciseServiceGetExerciseProcedure,
-			connect.WithSchema(exerciseServiceGetExerciseMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("GetExercise")),
 			connect.WithClientOptions(opts...),
 		),
 		updateExercise: connect.NewClient[v1.UpdateExerciseRequest, v1.UpdateExerciseResponse](
 			httpClient,
 			baseURL+ExerciseServiceUpdateExerciseProcedure,
-			connect.WithSchema(exerciseServiceUpdateExerciseMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("UpdateExercise")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteExercise: connect.NewClient[v1.DeleteExerciseRequest, v1.DeleteExerciseResponse](
 			httpClient,
 			baseURL+ExerciseServiceDeleteExerciseProcedure,
-			connect.WithSchema(exerciseServiceDeleteExerciseMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("DeleteExercise")),
 			connect.WithClientOptions(opts...),
 		),
 		listExercises: connect.NewClient[v1.ListExercisesRequest, v1.ListExercisesResponse](
 			httpClient,
 			baseURL+ExerciseServiceListExercisesProcedure,
-			connect.WithSchema(exerciseServiceListExercisesMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("ListExercises")),
 			connect.WithClientOptions(opts...),
 		),
 		getPreviousWorkoutSets: connect.NewClient[v1.GetPreviousWorkoutSetsRequest, v1.GetPreviousWorkoutSetsResponse](
 			httpClient,
 			baseURL+ExerciseServiceGetPreviousWorkoutSetsProcedure,
-			connect.WithSchema(exerciseServiceGetPreviousWorkoutSetsMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("GetPreviousWorkoutSets")),
 			connect.WithClientOptions(opts...),
 		),
 		getPersonalBests: connect.NewClient[v1.GetPersonalBestsRequest, v1.GetPersonalBestsResponse](
 			httpClient,
 			baseURL+ExerciseServiceGetPersonalBestsProcedure,
-			connect.WithSchema(exerciseServiceGetPersonalBestsMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("GetPersonalBests")),
 			connect.WithClientOptions(opts...),
 		),
 		listSets: connect.NewClient[v1.ListSetsRequest, v1.ListSetsResponse](
 			httpClient,
 			baseURL+ExerciseServiceListSetsProcedure,
-			connect.WithSchema(exerciseServiceListSetsMethodDescriptor),
+			connect.WithSchema(exerciseServiceMethods.ByName("ListSets")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -216,52 +204,53 @@ type ExerciseServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewExerciseServiceHandler(svc ExerciseServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	exerciseServiceMethods := v1.File_api_v1_exercise_service_proto.Services().ByName("ExerciseService").Methods()
 	exerciseServiceCreateExerciseHandler := connect.NewUnaryHandler(
 		ExerciseServiceCreateExerciseProcedure,
 		svc.CreateExercise,
-		connect.WithSchema(exerciseServiceCreateExerciseMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("CreateExercise")),
 		connect.WithHandlerOptions(opts...),
 	)
 	exerciseServiceGetExerciseHandler := connect.NewUnaryHandler(
 		ExerciseServiceGetExerciseProcedure,
 		svc.GetExercise,
-		connect.WithSchema(exerciseServiceGetExerciseMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("GetExercise")),
 		connect.WithHandlerOptions(opts...),
 	)
 	exerciseServiceUpdateExerciseHandler := connect.NewUnaryHandler(
 		ExerciseServiceUpdateExerciseProcedure,
 		svc.UpdateExercise,
-		connect.WithSchema(exerciseServiceUpdateExerciseMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("UpdateExercise")),
 		connect.WithHandlerOptions(opts...),
 	)
 	exerciseServiceDeleteExerciseHandler := connect.NewUnaryHandler(
 		ExerciseServiceDeleteExerciseProcedure,
 		svc.DeleteExercise,
-		connect.WithSchema(exerciseServiceDeleteExerciseMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("DeleteExercise")),
 		connect.WithHandlerOptions(opts...),
 	)
 	exerciseServiceListExercisesHandler := connect.NewUnaryHandler(
 		ExerciseServiceListExercisesProcedure,
 		svc.ListExercises,
-		connect.WithSchema(exerciseServiceListExercisesMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("ListExercises")),
 		connect.WithHandlerOptions(opts...),
 	)
 	exerciseServiceGetPreviousWorkoutSetsHandler := connect.NewUnaryHandler(
 		ExerciseServiceGetPreviousWorkoutSetsProcedure,
 		svc.GetPreviousWorkoutSets,
-		connect.WithSchema(exerciseServiceGetPreviousWorkoutSetsMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("GetPreviousWorkoutSets")),
 		connect.WithHandlerOptions(opts...),
 	)
 	exerciseServiceGetPersonalBestsHandler := connect.NewUnaryHandler(
 		ExerciseServiceGetPersonalBestsProcedure,
 		svc.GetPersonalBests,
-		connect.WithSchema(exerciseServiceGetPersonalBestsMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("GetPersonalBests")),
 		connect.WithHandlerOptions(opts...),
 	)
 	exerciseServiceListSetsHandler := connect.NewUnaryHandler(
 		ExerciseServiceListSetsProcedure,
 		svc.ListSets,
-		connect.WithSchema(exerciseServiceListSetsMethodDescriptor),
+		connect.WithSchema(exerciseServiceMethods.ByName("ListSets")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.ExerciseService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -51,17 +51,6 @@ const (
 	UserServiceSearchUsersProcedure = "/api.v1.UserService/SearchUsers"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	userServiceServiceDescriptor             = v1.File_api_v1_user_service_proto.Services().ByName("UserService")
-	userServiceGetUserMethodDescriptor       = userServiceServiceDescriptor.Methods().ByName("GetUser")
-	userServiceFollowUserMethodDescriptor    = userServiceServiceDescriptor.Methods().ByName("FollowUser")
-	userServiceUnfollowUserMethodDescriptor  = userServiceServiceDescriptor.Methods().ByName("UnfollowUser")
-	userServiceListFollowersMethodDescriptor = userServiceServiceDescriptor.Methods().ByName("ListFollowers")
-	userServiceListFolloweesMethodDescriptor = userServiceServiceDescriptor.Methods().ByName("ListFollowees")
-	userServiceSearchUsersMethodDescriptor   = userServiceServiceDescriptor.Methods().ByName("SearchUsers")
-)
-
 // UserServiceClient is a client for the api.v1.UserService service.
 type UserServiceClient interface {
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
@@ -81,41 +70,42 @@ type UserServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) UserServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	userServiceMethods := v1.File_api_v1_user_service_proto.Services().ByName("UserService").Methods()
 	return &userServiceClient{
 		getUser: connect.NewClient[v1.GetUserRequest, v1.GetUserResponse](
 			httpClient,
 			baseURL+UserServiceGetUserProcedure,
-			connect.WithSchema(userServiceGetUserMethodDescriptor),
+			connect.WithSchema(userServiceMethods.ByName("GetUser")),
 			connect.WithClientOptions(opts...),
 		),
 		followUser: connect.NewClient[v1.FollowUserRequest, v1.FollowUserResponse](
 			httpClient,
 			baseURL+UserServiceFollowUserProcedure,
-			connect.WithSchema(userServiceFollowUserMethodDescriptor),
+			connect.WithSchema(userServiceMethods.ByName("FollowUser")),
 			connect.WithClientOptions(opts...),
 		),
 		unfollowUser: connect.NewClient[v1.UnfollowUserRequest, v1.UnfollowUserResponse](
 			httpClient,
 			baseURL+UserServiceUnfollowUserProcedure,
-			connect.WithSchema(userServiceUnfollowUserMethodDescriptor),
+			connect.WithSchema(userServiceMethods.ByName("UnfollowUser")),
 			connect.WithClientOptions(opts...),
 		),
 		listFollowers: connect.NewClient[v1.ListFollowersRequest, v1.ListFollowersResponse](
 			httpClient,
 			baseURL+UserServiceListFollowersProcedure,
-			connect.WithSchema(userServiceListFollowersMethodDescriptor),
+			connect.WithSchema(userServiceMethods.ByName("ListFollowers")),
 			connect.WithClientOptions(opts...),
 		),
 		listFollowees: connect.NewClient[v1.ListFolloweesRequest, v1.ListFolloweesResponse](
 			httpClient,
 			baseURL+UserServiceListFolloweesProcedure,
-			connect.WithSchema(userServiceListFolloweesMethodDescriptor),
+			connect.WithSchema(userServiceMethods.ByName("ListFollowees")),
 			connect.WithClientOptions(opts...),
 		),
 		searchUsers: connect.NewClient[v1.SearchUsersRequest, v1.SearchUsersResponse](
 			httpClient,
 			baseURL+UserServiceSearchUsersProcedure,
-			connect.WithSchema(userServiceSearchUsersMethodDescriptor),
+			connect.WithSchema(userServiceMethods.ByName("SearchUsers")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -177,40 +167,41 @@ type UserServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	userServiceMethods := v1.File_api_v1_user_service_proto.Services().ByName("UserService").Methods()
 	userServiceGetUserHandler := connect.NewUnaryHandler(
 		UserServiceGetUserProcedure,
 		svc.GetUser,
-		connect.WithSchema(userServiceGetUserMethodDescriptor),
+		connect.WithSchema(userServiceMethods.ByName("GetUser")),
 		connect.WithHandlerOptions(opts...),
 	)
 	userServiceFollowUserHandler := connect.NewUnaryHandler(
 		UserServiceFollowUserProcedure,
 		svc.FollowUser,
-		connect.WithSchema(userServiceFollowUserMethodDescriptor),
+		connect.WithSchema(userServiceMethods.ByName("FollowUser")),
 		connect.WithHandlerOptions(opts...),
 	)
 	userServiceUnfollowUserHandler := connect.NewUnaryHandler(
 		UserServiceUnfollowUserProcedure,
 		svc.UnfollowUser,
-		connect.WithSchema(userServiceUnfollowUserMethodDescriptor),
+		connect.WithSchema(userServiceMethods.ByName("UnfollowUser")),
 		connect.WithHandlerOptions(opts...),
 	)
 	userServiceListFollowersHandler := connect.NewUnaryHandler(
 		UserServiceListFollowersProcedure,
 		svc.ListFollowers,
-		connect.WithSchema(userServiceListFollowersMethodDescriptor),
+		connect.WithSchema(userServiceMethods.ByName("ListFollowers")),
 		connect.WithHandlerOptions(opts...),
 	)
 	userServiceListFolloweesHandler := connect.NewUnaryHandler(
 		UserServiceListFolloweesProcedure,
 		svc.ListFollowees,
-		connect.WithSchema(userServiceListFolloweesMethodDescriptor),
+		connect.WithSchema(userServiceMethods.ByName("ListFollowees")),
 		connect.WithHandlerOptions(opts...),
 	)
 	userServiceSearchUsersHandler := connect.NewUnaryHandler(
 		UserServiceSearchUsersProcedure,
 		svc.SearchUsers,
-		connect.WithSchema(userServiceSearchUsersMethodDescriptor),
+		connect.WithSchema(userServiceMethods.ByName("SearchUsers")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

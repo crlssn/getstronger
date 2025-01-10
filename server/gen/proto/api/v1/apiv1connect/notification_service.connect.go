@@ -45,14 +45,6 @@ const (
 	NotificationServiceUnreadNotificationsProcedure = "/api.v1.NotificationService/UnreadNotifications"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	notificationServiceServiceDescriptor                       = v1.File_api_v1_notification_service_proto.Services().ByName("NotificationService")
-	notificationServiceListNotificationsMethodDescriptor       = notificationServiceServiceDescriptor.Methods().ByName("ListNotifications")
-	notificationServiceMarkNotificationsAsReadMethodDescriptor = notificationServiceServiceDescriptor.Methods().ByName("MarkNotificationsAsRead")
-	notificationServiceUnreadNotificationsMethodDescriptor     = notificationServiceServiceDescriptor.Methods().ByName("UnreadNotifications")
-)
-
 // NotificationServiceClient is a client for the api.v1.NotificationService service.
 type NotificationServiceClient interface {
 	ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error)
@@ -69,23 +61,24 @@ type NotificationServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) NotificationServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	notificationServiceMethods := v1.File_api_v1_notification_service_proto.Services().ByName("NotificationService").Methods()
 	return &notificationServiceClient{
 		listNotifications: connect.NewClient[v1.ListNotificationsRequest, v1.ListNotificationsResponse](
 			httpClient,
 			baseURL+NotificationServiceListNotificationsProcedure,
-			connect.WithSchema(notificationServiceListNotificationsMethodDescriptor),
+			connect.WithSchema(notificationServiceMethods.ByName("ListNotifications")),
 			connect.WithClientOptions(opts...),
 		),
 		markNotificationsAsRead: connect.NewClient[v1.MarkNotificationsAsReadRequest, v1.MarkNotificationsAsReadResponse](
 			httpClient,
 			baseURL+NotificationServiceMarkNotificationsAsReadProcedure,
-			connect.WithSchema(notificationServiceMarkNotificationsAsReadMethodDescriptor),
+			connect.WithSchema(notificationServiceMethods.ByName("MarkNotificationsAsRead")),
 			connect.WithClientOptions(opts...),
 		),
 		unreadNotifications: connect.NewClient[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse](
 			httpClient,
 			baseURL+NotificationServiceUnreadNotificationsProcedure,
-			connect.WithSchema(notificationServiceUnreadNotificationsMethodDescriptor),
+			connect.WithSchema(notificationServiceMethods.ByName("UnreadNotifications")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -126,22 +119,23 @@ type NotificationServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	notificationServiceMethods := v1.File_api_v1_notification_service_proto.Services().ByName("NotificationService").Methods()
 	notificationServiceListNotificationsHandler := connect.NewUnaryHandler(
 		NotificationServiceListNotificationsProcedure,
 		svc.ListNotifications,
-		connect.WithSchema(notificationServiceListNotificationsMethodDescriptor),
+		connect.WithSchema(notificationServiceMethods.ByName("ListNotifications")),
 		connect.WithHandlerOptions(opts...),
 	)
 	notificationServiceMarkNotificationsAsReadHandler := connect.NewUnaryHandler(
 		NotificationServiceMarkNotificationsAsReadProcedure,
 		svc.MarkNotificationsAsRead,
-		connect.WithSchema(notificationServiceMarkNotificationsAsReadMethodDescriptor),
+		connect.WithSchema(notificationServiceMethods.ByName("MarkNotificationsAsRead")),
 		connect.WithHandlerOptions(opts...),
 	)
 	notificationServiceUnreadNotificationsHandler := connect.NewServerStreamHandler(
 		NotificationServiceUnreadNotificationsProcedure,
 		svc.UnreadNotifications,
-		connect.WithSchema(notificationServiceUnreadNotificationsMethodDescriptor),
+		connect.WithSchema(notificationServiceMethods.ByName("UnreadNotifications")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.NotificationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
