@@ -29,13 +29,7 @@ const onSubmit = async () => {
   <form @submit.prevent="onSubmit">
     <h6>Name</h6>
     <AppList>
-      <AppListItemInput
-        :model="req.name"
-        type="text"
-        required
-        @update="(n) => (req.name = n)"
-        capitalise
-      />
+      <AppListItemInput :model="req.name" type="text" required @update="(n) => (req.name = n)" />
     </AppList>
 
     <h6>Label</h6>
