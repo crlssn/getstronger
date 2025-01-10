@@ -32,4 +32,3 @@ moved {
   from = aws_security_group.db_access
   to   = module.db.aws_security_group.db_access
 }
-
