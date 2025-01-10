@@ -53,7 +53,7 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("exercise not found")
+			log.Warn("exercise not found", zap.Error(err))
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
