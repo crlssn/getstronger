@@ -61,6 +61,7 @@ module "route53" {
   cloudfront_evaluate_target_health = false
   ssh_record_ip                     = module.ec2.public_ip
   ssh_record_ttl                    = 300
+  ec2_instance_id                   = module.ec2.instance_id
 }
 
 module "ses" {

@@ -29,3 +29,7 @@ resource "aws_route53_record" "ssh_record" {
   ttl     = var.ssh_record_ttl
   records = [var.ssh_record_ip]
 }
+
+resource "aws_eip" "ec2_instance" {
+  instance = var.ec2_instance_id
+}
