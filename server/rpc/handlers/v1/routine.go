@@ -62,7 +62,7 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Error("routine not found", zap.Error(err))
+			log.Warn("routine not found")
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
