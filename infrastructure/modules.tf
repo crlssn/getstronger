@@ -46,7 +46,6 @@ module "ec2" {
 
   api_security_group_name        = "allow_api_access"
   api_security_group_description = "Allow inbound traffic to API"
-  api_http_port                  = 8080
   api_https_port                 = 443
   api_ingress_cidr_blocks        = ["0.0.0.0/0"]
 }

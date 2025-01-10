@@ -58,12 +58,6 @@ variable "api_security_group_description" {
   default     = "Allow inbound traffic to API"
 }
 
-variable "api_http_port" {
-  description = "The HTTP port for API access"
-  type        = number
-  default     = 8080
-}
-
 variable "api_https_port" {
   description = "The HTTPS port for API access"
   type        = number

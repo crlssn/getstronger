@@ -38,14 +38,6 @@ resource "aws_security_group" "api_access" {
   description = var.api_security_group_description
 
   ingress {
-    description = "Allow HTTP traffic"
-    from_port   = var.api_http_port
-    to_port     = var.api_http_port
-    protocol    = "tcp"
-    cidr_blocks = var.api_ingress_cidr_blocks
-  }
-
-  ingress {
     description = "Allow HTTPS traffic"
     from_port   = var.api_https_port
     to_port     = var.api_https_port
