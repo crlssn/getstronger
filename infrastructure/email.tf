@@ -56,7 +56,7 @@ resource "aws_iam_user_policy_attachment" "ses_policy_attach" {
 }
 
 resource "aws_iam_role_policy_attachment" "ses_policy_cloudwatch" {
-  role       = "i-003e129cf93efcaa8"
+  role       = "arn:aws:iam::205930632120:instance-profile/ec2-cloudwatch-instance-profile"
   policy_arn = aws_iam_policy.ses_send_email.arn
 }
 
