@@ -10,11 +10,6 @@ output "secret_access_key" {
   sensitive   = true
 }
 
-output "dkim_records" {
-  description = "DKIM validation records for SES"
-  value       = aws_route53_record.dkim.records
-}
-
 output "spf_record" {
   description = "SPF record for SES"
   value       = aws_route53_record.spf.name
