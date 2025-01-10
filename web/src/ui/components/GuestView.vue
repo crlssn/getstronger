@@ -17,10 +17,10 @@ import AppAlert from '@/ui/components/AppAlert.vue'
 
 <style scoped>
 nav {
-  @apply fixed w-full top-0 z-10  border-gray-200 bg-white h-16;
+  @apply fixed w-full top-0 z-10  border-b-2 border-gray-200 bg-white h-16;
 
   .container {
-    @apply flex items-center justify-center max-w-4xl mx-auto px-4 h-16 border-b-2 border-gray-200;
+    @apply flex items-center justify-center max-w-4xl mx-auto px-4 h-16;
     p {
       @apply text-2xl;
     }
