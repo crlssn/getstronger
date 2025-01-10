@@ -30,7 +30,9 @@ const onChange = () => {
 
 const onKeyup = () => {
   if (props.capitalise) {
-    value.value = value.value.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
+    value.value = value.value
+      .toLowerCase()
+      .replace(/(^\w|(?<=([ /]))\w)/g, (char) => char.toUpperCase())
   }
 }
 </script>
