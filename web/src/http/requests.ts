@@ -483,6 +483,9 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
           case Error.EMAIL_NOT_VERIFIED:
             alert('You must verify your email before logging in')
             return
+          case Error.PASSWORDS_DO_NOT_MATCH:
+            alert('Passwords do not match')
+            return
         }
       }
 
