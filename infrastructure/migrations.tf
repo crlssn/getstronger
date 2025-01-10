@@ -104,6 +104,6 @@ moved {
 }
 
 moved {
-    from = aws_iam_role_policy_attachment.ses_policy_cloudwatch
-    to   = module.ses.aws_iam_role_policy_attachment.cloudwatch
+  from = aws_iam_role_policy_attachment.ses_policy_cloudwatch
+  to   = module.ses.aws_iam_role_policy_attachment.cloudwatch
 }
