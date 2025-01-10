@@ -34,7 +34,6 @@ const onSubmit = async () => {
         type="text"
         required
         @update="(n) => (req.name = n)"
-        capitalise
       />
     </AppList>
 

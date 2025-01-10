@@ -36,7 +36,7 @@ async function onUpdateExercise() {
   <form v-if="exercise" @submit.prevent="onUpdateExercise">
     <h6>Name</h6>
     <AppList>
-      <AppListItemInput :model="exercise.name" type="text" required capitalise />
+      <AppListItemInput :model="exercise.name" type="text" required />
     </AppList>
 
     <h6>Label</h6>
