@@ -26,5 +26,5 @@ module "db" {
   security_group_name        = "db-access"
   security_group_description = "Allow public access to RDS instance"
   db_port                    = 5432
-  ingress_cidr_blocks        = ["0.0.0.0/0"] # Replace for security
+  ingress_cidr_blocks        = ["0.0.0.0/0"] # DEBT: Replace for better security.
 }
