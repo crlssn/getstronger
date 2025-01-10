@@ -52,3 +52,58 @@ moved {
   from = aws_security_group.api_access
   to   = module.ec2.aws_security_group.api_access
 }
+
+moved {
+  from = aws_ses_domain_identity.getstronger
+  to   = module.ses.aws_ses_domain_identity.ses_domain
+}
+
+moved {
+  from = aws_route53_record.ses_verification
+  to   = module.ses.aws_route53_record.ses_verification
+}
+
+moved {
+  from = aws_ses_domain_dkim.getstronger
+  to   = module.ses.aws_ses_domain_dkim.ses_dkim
+}
+
+moved {
+  from = aws_route53_record.dkim
+  to   = module.ses.aws_route53_record.dkim
+}
+
+moved {
+  from = aws_route53_record.spf
+  to   = module.ses.aws_route53_record.spf
+}
+
+moved {
+  from = aws_route53_record.mx_record
+  to   = module.ses.aws_route53_record.mx
+}
+
+moved {
+  from = aws_iam_policy.ses_send_email
+  to   = module.ses.aws_iam_policy.ses_send_email
+}
+
+moved {
+  from = aws_iam_user.ses_user
+  to   = module.ses.aws_iam_user.ses_user
+}
+
+moved {
+  from = aws_iam_user_policy_attachment.ses_policy_attach
+  to   = module.ses.aws_iam_user_policy_attachment.ses_policy_attach
+}
+
+moved {
+  from = aws_iam_access_key.ses_user_key
+  to   = module.ses.aws_iam_access_key.ses_user_key
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.ses_policy_cloudwatch
+  to   = module.ses.aws_iam_role_policy_attachment.cloudwatch
+}
