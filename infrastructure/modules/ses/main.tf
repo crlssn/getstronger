@@ -59,7 +59,7 @@ resource "aws_iam_policy" "ses_send_email" {
 }
 
 resource "aws_iam_user" "ses_user" {
-  name = var.ses_user_name
+  name = var.user_name
 }
 
 resource "aws_iam_user_policy_attachment" "ses_policy_attach" {

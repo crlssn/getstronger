@@ -13,3 +13,14 @@ variable "region" {
   type        = string
   default     = "eu-west-2"
 }
+
+variable "account_id" {
+  description = "The AWS account ID"
+  type        = string
+}
+
+variable "user_name" {
+  description = "The name of the IAM user for SES"
+  type        = string
+  default     = "ses_user"
+}
