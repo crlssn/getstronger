@@ -53,9 +53,10 @@ module "ec2" {
 module "ses" {
   source = "./modules/ses"
 
-  domain     = var.domain
-  zone_id    = aws_route53_zone.getstronger_pro.zone_id
-  region     = var.aws_region
-  account_id = "205930632120"
-  user_name  = "ses_user_getstronger_pro"
+  domain               = var.domain
+  zone_id              = aws_route53_zone.getstronger_pro.zone_id
+  region               = var.aws_region
+  account_id           = "205930632120"
+  user_name            = "ses_user_getstronger_pro"
+  cloudwatch_role_name = module.cloudwatch.role_name
 }

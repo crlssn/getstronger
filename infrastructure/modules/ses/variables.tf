@@ -24,3 +24,8 @@ variable "user_name" {
   type        = string
   default     = "ses_user"
 }
+
+variable "cloudwatch_role_name" {
+  description = "The IAM role for CloudWatch"
+  type        = string
+}
