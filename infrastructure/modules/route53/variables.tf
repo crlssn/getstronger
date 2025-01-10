@@ -3,7 +3,6 @@ variable "domain" {
   type        = string
 }
 
-# API DNS Record
 variable "api_record_ip" {
   description = "The IP address for the API record"
   type        = string
@@ -15,7 +14,6 @@ variable "api_record_ttl" {
   default     = 300
 }
 
-# CloudFront Alias Record
 variable "cloudfront_alias_name" {
   description = "The alias name for the CloudFront distribution"
   type        = string
@@ -32,7 +30,6 @@ variable "cloudfront_evaluate_target_health" {
   default     = false
 }
 
-# SSH DNS Record
 variable "ssh_record_ip" {
   description = "The IP address for the SSH record"
   type        = string
