@@ -28,3 +28,24 @@ module "db" {
   db_port                    = 5432
   ingress_cidr_blocks        = ["0.0.0.0/0"] # DEBT: Replace with specific IP ranges for better security.
 }
+
+module "ec2" {
+  source = "./modules/ec2"
+
+  ami                  = "ami-02f617729751b375a"
+  instance_type        = "t2.micro"
+  iam_instance_profile = module.cloudwatch.instance_profile_name
+  user_data            = file("scripts/cloudwatch.sh")
+
+  key_name   = "backend-ec2-key"
+  public_key = var.ec2_public_key
+
+  ssh_security_group_name        = "allow_ssh"
+  ssh_security_group_description = "Allow SSH inbound traffic"
+  ssh_ingress_cidr_blocks        = ["0.0.0.0/0"]
+
+  api_security_group_name        = "allow_api_access"
+  api_security_group_description = "Allow inbound traffic to API"
+  api_https_port                 = 443
+  api_ingress_cidr_blocks        = ["0.0.0.0/0"]
+}
