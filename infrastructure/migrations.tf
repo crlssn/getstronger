@@ -103,3 +103,7 @@ moved {
   to   = module.ses.aws_iam_access_key.ses_user_key
 }
 
+moved {
+    from = aws_iam_role_policy_attachment.ses_policy_cloudwatch
+    to   = module.ses.aws_iam_role_policy_attachment.cloudwatch
+}
