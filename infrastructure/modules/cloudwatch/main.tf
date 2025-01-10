@@ -37,11 +37,3 @@ resource "aws_iam_instance_profile" "instance_profile" {
   name = var.instance_profile_name
   role = aws_iam_role.role.name
 }
-
-output "instance_profile_name" {
-  value = aws_iam_instance_profile.instance_profile.name
-}
-
-output "role_name" {
-  value = aws_iam_role.role.name
-}
