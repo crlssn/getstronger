@@ -3,7 +3,7 @@ resource "aws_instance" "backend" {
   instance_type        = "t2.micro"
   security_groups      = [aws_security_group.ssh_access.name, aws_security_group.api_access.name]
   key_name             = aws_key_pair.backend_ec2_key.key_name
-  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+  iam_instance_profile = module.cloudwatch.instance_profile_name
 
   user_data = <<-EOT
 #!/bin/bash
