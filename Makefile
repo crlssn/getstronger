@@ -44,6 +44,7 @@ format:
 	gofumpt -l -w .
 	cd web && npx sort-package-json
 	cd web && npm run format
+	terraform fmt -recursive
 
 lint:
 	golangci-lint run
