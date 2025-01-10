@@ -40,7 +40,7 @@ resource "aws_iam_policy" "ses_send_email" {
       {
         Effect   = "Allow",
         Action   = "ses:SendEmail",
-        Resource = "*"
+        Resource = "arn:aws:ses:eu-west-2:205930632120:identity/getstronger.pro"
       }
     ]
   })
@@ -52,6 +52,11 @@ resource "aws_iam_user" "ses_user" {
 
 resource "aws_iam_user_policy_attachment" "ses_policy_attach" {
   user       = aws_iam_user.ses_user.name
+  policy_arn = aws_iam_policy.ses_send_email.arn
+}
+
+resource "aws_iam_role_policy_attachment" "ses_policy_cloudwatch" {
+  role       = aws_iam_role.ec2_cloudwatch_role.name
   policy_arn = aws_iam_policy.ses_send_email.arn
 }
 
