@@ -89,5 +89,5 @@ variable "db_port" {
 variable "ingress_cidr_blocks" {
   description = "The CIDR blocks allowed to access the database"
   type        = list(string)
-  default     = ["0.0.0.0/0"] # Replace with specific IP ranges for better security
+  default     = ["0.0.0.0/0"]
 }
