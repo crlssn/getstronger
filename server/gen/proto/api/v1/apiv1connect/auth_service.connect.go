@@ -53,18 +53,6 @@ const (
 	AuthServiceUpdatePasswordProcedure = "/api.v1.AuthService/UpdatePassword"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	authServiceServiceDescriptor              = v1.File_api_v1_auth_service_proto.Services().ByName("AuthService")
-	authServiceSignupMethodDescriptor         = authServiceServiceDescriptor.Methods().ByName("Signup")
-	authServiceLoginMethodDescriptor          = authServiceServiceDescriptor.Methods().ByName("Login")
-	authServiceRefreshTokenMethodDescriptor   = authServiceServiceDescriptor.Methods().ByName("RefreshToken")
-	authServiceLogoutMethodDescriptor         = authServiceServiceDescriptor.Methods().ByName("Logout")
-	authServiceVerifyEmailMethodDescriptor    = authServiceServiceDescriptor.Methods().ByName("VerifyEmail")
-	authServiceResetPasswordMethodDescriptor  = authServiceServiceDescriptor.Methods().ByName("ResetPassword")
-	authServiceUpdatePasswordMethodDescriptor = authServiceServiceDescriptor.Methods().ByName("UpdatePassword")
-)
-
 // AuthServiceClient is a client for the api.v1.AuthService service.
 type AuthServiceClient interface {
 	Signup(context.Context, *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error)
@@ -85,47 +73,48 @@ type AuthServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AuthServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	authServiceMethods := v1.File_api_v1_auth_service_proto.Services().ByName("AuthService").Methods()
 	return &authServiceClient{
 		signup: connect.NewClient[v1.SignupRequest, v1.SignupResponse](
 			httpClient,
 			baseURL+AuthServiceSignupProcedure,
-			connect.WithSchema(authServiceSignupMethodDescriptor),
+			connect.WithSchema(authServiceMethods.ByName("Signup")),
 			connect.WithClientOptions(opts...),
 		),
 		login: connect.NewClient[v1.LoginRequest, v1.LoginResponse](
 			httpClient,
 			baseURL+AuthServiceLoginProcedure,
-			connect.WithSchema(authServiceLoginMethodDescriptor),
+			connect.WithSchema(authServiceMethods.ByName("Login")),
 			connect.WithClientOptions(opts...),
 		),
 		refreshToken: connect.NewClient[v1.RefreshTokenRequest, v1.RefreshTokenResponse](
 			httpClient,
 			baseURL+AuthServiceRefreshTokenProcedure,
-			connect.WithSchema(authServiceRefreshTokenMethodDescriptor),
+			connect.WithSchema(authServiceMethods.ByName("RefreshToken")),
 			connect.WithClientOptions(opts...),
 		),
 		logout: connect.NewClient[v1.LogoutRequest, v1.LogoutResponse](
 			httpClient,
 			baseURL+AuthServiceLogoutProcedure,
-			connect.WithSchema(authServiceLogoutMethodDescriptor),
+			connect.WithSchema(authServiceMethods.ByName("Logout")),
 			connect.WithClientOptions(opts...),
 		),
 		verifyEmail: connect.NewClient[v1.VerifyEmailRequest, v1.VerifyEmailResponse](
 			httpClient,
 			baseURL+AuthServiceVerifyEmailProcedure,
-			connect.WithSchema(authServiceVerifyEmailMethodDescriptor),
+			connect.WithSchema(authServiceMethods.ByName("VerifyEmail")),
 			connect.WithClientOptions(opts...),
 		),
 		resetPassword: connect.NewClient[v1.ResetPasswordRequest, v1.ResetPasswordResponse](
 			httpClient,
 			baseURL+AuthServiceResetPasswordProcedure,
-			connect.WithSchema(authServiceResetPasswordMethodDescriptor),
+			connect.WithSchema(authServiceMethods.ByName("ResetPassword")),
 			connect.WithClientOptions(opts...),
 		),
 		updatePassword: connect.NewClient[v1.UpdatePasswordRequest, v1.UpdatePasswordResponse](
 			httpClient,
 			baseURL+AuthServiceUpdatePasswordProcedure,
-			connect.WithSchema(authServiceUpdatePasswordMethodDescriptor),
+			connect.WithSchema(authServiceMethods.ByName("UpdatePassword")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -194,46 +183,47 @@ type AuthServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	authServiceMethods := v1.File_api_v1_auth_service_proto.Services().ByName("AuthService").Methods()
 	authServiceSignupHandler := connect.NewUnaryHandler(
 		AuthServiceSignupProcedure,
 		svc.Signup,
-		connect.WithSchema(authServiceSignupMethodDescriptor),
+		connect.WithSchema(authServiceMethods.ByName("Signup")),
 		connect.WithHandlerOptions(opts...),
 	)
 	authServiceLoginHandler := connect.NewUnaryHandler(
 		AuthServiceLoginProcedure,
 		svc.Login,
-		connect.WithSchema(authServiceLoginMethodDescriptor),
+		connect.WithSchema(authServiceMethods.ByName("Login")),
 		connect.WithHandlerOptions(opts...),
 	)
 	authServiceRefreshTokenHandler := connect.NewUnaryHandler(
 		AuthServiceRefreshTokenProcedure,
 		svc.RefreshToken,
-		connect.WithSchema(authServiceRefreshTokenMethodDescriptor),
+		connect.WithSchema(authServiceMethods.ByName("RefreshToken")),
 		connect.WithHandlerOptions(opts...),
 	)
 	authServiceLogoutHandler := connect.NewUnaryHandler(
 		AuthServiceLogoutProcedure,
 		svc.Logout,
-		connect.WithSchema(authServiceLogoutMethodDescriptor),
+		connect.WithSchema(authServiceMethods.ByName("Logout")),
 		connect.WithHandlerOptions(opts...),
 	)
 	authServiceVerifyEmailHandler := connect.NewUnaryHandler(
 		AuthServiceVerifyEmailProcedure,
 		svc.VerifyEmail,
-		connect.WithSchema(authServiceVerifyEmailMethodDescriptor),
+		connect.WithSchema(authServiceMethods.ByName("VerifyEmail")),
 		connect.WithHandlerOptions(opts...),
 	)
 	authServiceResetPasswordHandler := connect.NewUnaryHandler(
 		AuthServiceResetPasswordProcedure,
 		svc.ResetPassword,
-		connect.WithSchema(authServiceResetPasswordMethodDescriptor),
+		connect.WithSchema(authServiceMethods.ByName("ResetPassword")),
 		connect.WithHandlerOptions(opts...),
 	)
 	authServiceUpdatePasswordHandler := connect.NewUnaryHandler(
 		AuthServiceUpdatePasswordProcedure,
 		svc.UpdatePassword,
-		connect.WithSchema(authServiceUpdatePasswordMethodDescriptor),
+		connect.WithSchema(authServiceMethods.ByName("UpdatePassword")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -54,17 +54,6 @@ const (
 	WorkoutServiceUpdateWorkoutProcedure = "/api.v1.WorkoutService/UpdateWorkout"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	workoutServiceServiceDescriptor             = v1.File_api_v1_workout_service_proto.Services().ByName("WorkoutService")
-	workoutServiceCreateWorkoutMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("CreateWorkout")
-	workoutServiceGetWorkoutMethodDescriptor    = workoutServiceServiceDescriptor.Methods().ByName("GetWorkout")
-	workoutServiceListWorkoutsMethodDescriptor  = workoutServiceServiceDescriptor.Methods().ByName("ListWorkouts")
-	workoutServiceDeleteWorkoutMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("DeleteWorkout")
-	workoutServicePostCommentMethodDescriptor   = workoutServiceServiceDescriptor.Methods().ByName("PostComment")
-	workoutServiceUpdateWorkoutMethodDescriptor = workoutServiceServiceDescriptor.Methods().ByName("UpdateWorkout")
-)
-
 // WorkoutServiceClient is a client for the api.v1.WorkoutService service.
 type WorkoutServiceClient interface {
 	CreateWorkout(context.Context, *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error)
@@ -84,41 +73,42 @@ type WorkoutServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewWorkoutServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) WorkoutServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	workoutServiceMethods := v1.File_api_v1_workout_service_proto.Services().ByName("WorkoutService").Methods()
 	return &workoutServiceClient{
 		createWorkout: connect.NewClient[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse](
 			httpClient,
 			baseURL+WorkoutServiceCreateWorkoutProcedure,
-			connect.WithSchema(workoutServiceCreateWorkoutMethodDescriptor),
+			connect.WithSchema(workoutServiceMethods.ByName("CreateWorkout")),
 			connect.WithClientOptions(opts...),
 		),
 		getWorkout: connect.NewClient[v1.GetWorkoutRequest, v1.GetWorkoutResponse](
 			httpClient,
 			baseURL+WorkoutServiceGetWorkoutProcedure,
-			connect.WithSchema(workoutServiceGetWorkoutMethodDescriptor),
+			connect.WithSchema(workoutServiceMethods.ByName("GetWorkout")),
 			connect.WithClientOptions(opts...),
 		),
 		listWorkouts: connect.NewClient[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse](
 			httpClient,
 			baseURL+WorkoutServiceListWorkoutsProcedure,
-			connect.WithSchema(workoutServiceListWorkoutsMethodDescriptor),
+			connect.WithSchema(workoutServiceMethods.ByName("ListWorkouts")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteWorkout: connect.NewClient[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse](
 			httpClient,
 			baseURL+WorkoutServiceDeleteWorkoutProcedure,
-			connect.WithSchema(workoutServiceDeleteWorkoutMethodDescriptor),
+			connect.WithSchema(workoutServiceMethods.ByName("DeleteWorkout")),
 			connect.WithClientOptions(opts...),
 		),
 		postComment: connect.NewClient[v1.PostCommentRequest, v1.PostCommentResponse](
 			httpClient,
 			baseURL+WorkoutServicePostCommentProcedure,
-			connect.WithSchema(workoutServicePostCommentMethodDescriptor),
+			connect.WithSchema(workoutServiceMethods.ByName("PostComment")),
 			connect.WithClientOptions(opts...),
 		),
 		updateWorkout: connect.NewClient[v1.UpdateWorkoutRequest, v1.UpdateWorkoutResponse](
 			httpClient,
 			baseURL+WorkoutServiceUpdateWorkoutProcedure,
-			connect.WithSchema(workoutServiceUpdateWorkoutMethodDescriptor),
+			connect.WithSchema(workoutServiceMethods.ByName("UpdateWorkout")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -180,40 +170,41 @@ type WorkoutServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	workoutServiceMethods := v1.File_api_v1_workout_service_proto.Services().ByName("WorkoutService").Methods()
 	workoutServiceCreateWorkoutHandler := connect.NewUnaryHandler(
 		WorkoutServiceCreateWorkoutProcedure,
 		svc.CreateWorkout,
-		connect.WithSchema(workoutServiceCreateWorkoutMethodDescriptor),
+		connect.WithSchema(workoutServiceMethods.ByName("CreateWorkout")),
 		connect.WithHandlerOptions(opts...),
 	)
 	workoutServiceGetWorkoutHandler := connect.NewUnaryHandler(
 		WorkoutServiceGetWorkoutProcedure,
 		svc.GetWorkout,
-		connect.WithSchema(workoutServiceGetWorkoutMethodDescriptor),
+		connect.WithSchema(workoutServiceMethods.ByName("GetWorkout")),
 		connect.WithHandlerOptions(opts...),
 	)
 	workoutServiceListWorkoutsHandler := connect.NewUnaryHandler(
 		WorkoutServiceListWorkoutsProcedure,
 		svc.ListWorkouts,
-		connect.WithSchema(workoutServiceListWorkoutsMethodDescriptor),
+		connect.WithSchema(workoutServiceMethods.ByName("ListWorkouts")),
 		connect.WithHandlerOptions(opts...),
 	)
 	workoutServiceDeleteWorkoutHandler := connect.NewUnaryHandler(
 		WorkoutServiceDeleteWorkoutProcedure,
 		svc.DeleteWorkout,
-		connect.WithSchema(workoutServiceDeleteWorkoutMethodDescriptor),
+		connect.WithSchema(workoutServiceMethods.ByName("DeleteWorkout")),
 		connect.WithHandlerOptions(opts...),
 	)
 	workoutServicePostCommentHandler := connect.NewUnaryHandler(
 		WorkoutServicePostCommentProcedure,
 		svc.PostComment,
-		connect.WithSchema(workoutServicePostCommentMethodDescriptor),
+		connect.WithSchema(workoutServiceMethods.ByName("PostComment")),
 		connect.WithHandlerOptions(opts...),
 	)
 	workoutServiceUpdateWorkoutHandler := connect.NewUnaryHandler(
 		WorkoutServiceUpdateWorkoutProcedure,
 		svc.UpdateWorkout,
-		connect.WithSchema(workoutServiceUpdateWorkoutMethodDescriptor),
+		connect.WithSchema(workoutServiceMethods.ByName("UpdateWorkout")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.WorkoutService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

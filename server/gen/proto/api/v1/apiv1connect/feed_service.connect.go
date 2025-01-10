@@ -39,12 +39,6 @@ const (
 	FeedServiceListFeedItemsProcedure = "/api.v1.FeedService/ListFeedItems"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	feedServiceServiceDescriptor             = v1.File_api_v1_feed_service_proto.Services().ByName("FeedService")
-	feedServiceListFeedItemsMethodDescriptor = feedServiceServiceDescriptor.Methods().ByName("ListFeedItems")
-)
-
 // FeedServiceClient is a client for the api.v1.FeedService service.
 type FeedServiceClient interface {
 	ListFeedItems(context.Context, *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error)
@@ -59,11 +53,12 @@ type FeedServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewFeedServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) FeedServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	feedServiceMethods := v1.File_api_v1_feed_service_proto.Services().ByName("FeedService").Methods()
 	return &feedServiceClient{
 		listFeedItems: connect.NewClient[v1.ListFeedItemsRequest, v1.ListFeedItemsResponse](
 			httpClient,
 			baseURL+FeedServiceListFeedItemsProcedure,
-			connect.WithSchema(feedServiceListFeedItemsMethodDescriptor),
+			connect.WithSchema(feedServiceMethods.ByName("ListFeedItems")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -90,10 +85,11 @@ type FeedServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewFeedServiceHandler(svc FeedServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	feedServiceMethods := v1.File_api_v1_feed_service_proto.Services().ByName("FeedService").Methods()
 	feedServiceListFeedItemsHandler := connect.NewUnaryHandler(
 		FeedServiceListFeedItemsProcedure,
 		svc.ListFeedItems,
-		connect.WithSchema(feedServiceListFeedItemsMethodDescriptor),
+		connect.WithSchema(feedServiceMethods.ByName("ListFeedItems")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.FeedService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

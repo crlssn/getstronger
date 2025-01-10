@@ -60,19 +60,6 @@ const (
 	RoutineServiceUpdateExerciseOrderProcedure = "/api.v1.RoutineService/UpdateExerciseOrder"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	routineServiceServiceDescriptor                   = v1.File_api_v1_routine_service_proto.Services().ByName("RoutineService")
-	routineServiceCreateRoutineMethodDescriptor       = routineServiceServiceDescriptor.Methods().ByName("CreateRoutine")
-	routineServiceGetRoutineMethodDescriptor          = routineServiceServiceDescriptor.Methods().ByName("GetRoutine")
-	routineServiceUpdateRoutineMethodDescriptor       = routineServiceServiceDescriptor.Methods().ByName("UpdateRoutine")
-	routineServiceDeleteRoutineMethodDescriptor       = routineServiceServiceDescriptor.Methods().ByName("DeleteRoutine")
-	routineServiceListRoutinesMethodDescriptor        = routineServiceServiceDescriptor.Methods().ByName("ListRoutines")
-	routineServiceAddExerciseMethodDescriptor         = routineServiceServiceDescriptor.Methods().ByName("AddExercise")
-	routineServiceRemoveExerciseMethodDescriptor      = routineServiceServiceDescriptor.Methods().ByName("RemoveExercise")
-	routineServiceUpdateExerciseOrderMethodDescriptor = routineServiceServiceDescriptor.Methods().ByName("UpdateExerciseOrder")
-)
-
 // RoutineServiceClient is a client for the api.v1.RoutineService service.
 type RoutineServiceClient interface {
 	CreateRoutine(context.Context, *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error)
@@ -94,53 +81,54 @@ type RoutineServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewRoutineServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) RoutineServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	routineServiceMethods := v1.File_api_v1_routine_service_proto.Services().ByName("RoutineService").Methods()
 	return &routineServiceClient{
 		createRoutine: connect.NewClient[v1.CreateRoutineRequest, v1.CreateRoutineResponse](
 			httpClient,
 			baseURL+RoutineServiceCreateRoutineProcedure,
-			connect.WithSchema(routineServiceCreateRoutineMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("CreateRoutine")),
 			connect.WithClientOptions(opts...),
 		),
 		getRoutine: connect.NewClient[v1.GetRoutineRequest, v1.GetRoutineResponse](
 			httpClient,
 			baseURL+RoutineServiceGetRoutineProcedure,
-			connect.WithSchema(routineServiceGetRoutineMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("GetRoutine")),
 			connect.WithClientOptions(opts...),
 		),
 		updateRoutine: connect.NewClient[v1.UpdateRoutineRequest, v1.UpdateRoutineResponse](
 			httpClient,
 			baseURL+RoutineServiceUpdateRoutineProcedure,
-			connect.WithSchema(routineServiceUpdateRoutineMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("UpdateRoutine")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteRoutine: connect.NewClient[v1.DeleteRoutineRequest, v1.DeleteRoutineResponse](
 			httpClient,
 			baseURL+RoutineServiceDeleteRoutineProcedure,
-			connect.WithSchema(routineServiceDeleteRoutineMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("DeleteRoutine")),
 			connect.WithClientOptions(opts...),
 		),
 		listRoutines: connect.NewClient[v1.ListRoutinesRequest, v1.ListRoutinesResponse](
 			httpClient,
 			baseURL+RoutineServiceListRoutinesProcedure,
-			connect.WithSchema(routineServiceListRoutinesMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("ListRoutines")),
 			connect.WithClientOptions(opts...),
 		),
 		addExercise: connect.NewClient[v1.AddExerciseRequest, v1.AddExerciseResponse](
 			httpClient,
 			baseURL+RoutineServiceAddExerciseProcedure,
-			connect.WithSchema(routineServiceAddExerciseMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("AddExercise")),
 			connect.WithClientOptions(opts...),
 		),
 		removeExercise: connect.NewClient[v1.RemoveExerciseRequest, v1.RemoveExerciseResponse](
 			httpClient,
 			baseURL+RoutineServiceRemoveExerciseProcedure,
-			connect.WithSchema(routineServiceRemoveExerciseMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("RemoveExercise")),
 			connect.WithClientOptions(opts...),
 		),
 		updateExerciseOrder: connect.NewClient[v1.UpdateExerciseOrderRequest, v1.UpdateExerciseOrderResponse](
 			httpClient,
 			baseURL+RoutineServiceUpdateExerciseOrderProcedure,
-			connect.WithSchema(routineServiceUpdateExerciseOrderMethodDescriptor),
+			connect.WithSchema(routineServiceMethods.ByName("UpdateExerciseOrder")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -216,52 +204,53 @@ type RoutineServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	routineServiceMethods := v1.File_api_v1_routine_service_proto.Services().ByName("RoutineService").Methods()
 	routineServiceCreateRoutineHandler := connect.NewUnaryHandler(
 		RoutineServiceCreateRoutineProcedure,
 		svc.CreateRoutine,
-		connect.WithSchema(routineServiceCreateRoutineMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("CreateRoutine")),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceGetRoutineHandler := connect.NewUnaryHandler(
 		RoutineServiceGetRoutineProcedure,
 		svc.GetRoutine,
-		connect.WithSchema(routineServiceGetRoutineMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("GetRoutine")),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceUpdateRoutineHandler := connect.NewUnaryHandler(
 		RoutineServiceUpdateRoutineProcedure,
 		svc.UpdateRoutine,
-		connect.WithSchema(routineServiceUpdateRoutineMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("UpdateRoutine")),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceDeleteRoutineHandler := connect.NewUnaryHandler(
 		RoutineServiceDeleteRoutineProcedure,
 		svc.DeleteRoutine,
-		connect.WithSchema(routineServiceDeleteRoutineMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("DeleteRoutine")),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceListRoutinesHandler := connect.NewUnaryHandler(
 		RoutineServiceListRoutinesProcedure,
 		svc.ListRoutines,
-		connect.WithSchema(routineServiceListRoutinesMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("ListRoutines")),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceAddExerciseHandler := connect.NewUnaryHandler(
 		RoutineServiceAddExerciseProcedure,
 		svc.AddExercise,
-		connect.WithSchema(routineServiceAddExerciseMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("AddExercise")),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceRemoveExerciseHandler := connect.NewUnaryHandler(
 		RoutineServiceRemoveExerciseProcedure,
 		svc.RemoveExercise,
-		connect.WithSchema(routineServiceRemoveExerciseMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("RemoveExercise")),
 		connect.WithHandlerOptions(opts...),
 	)
 	routineServiceUpdateExerciseOrderHandler := connect.NewUnaryHandler(
 		RoutineServiceUpdateExerciseOrderProcedure,
 		svc.UpdateExerciseOrder,
-		connect.WithSchema(routineServiceUpdateExerciseOrderMethodDescriptor),
+		connect.WithSchema(routineServiceMethods.ByName("UpdateExerciseOrder")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.RoutineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
