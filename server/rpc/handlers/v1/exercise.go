@@ -38,7 +38,7 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 		Label:  req.Msg.GetLabel(),
 	})
 	if err != nil {
-		log.Error("create exercise failed")
+		log.Error("create exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
