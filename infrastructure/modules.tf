@@ -50,11 +50,25 @@ module "ec2" {
   api_ingress_cidr_blocks        = ["0.0.0.0/0"]
 }
 
+module "route53" {
+  source = "./modules/route53"
+
+  domain                            = "getstronger.pro"
+  api_record_ip                     = module.ec2.public_ip
+  api_record_ttl                    = 300
+  cloudfront_alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
+  cloudfront_alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
+  cloudfront_evaluate_target_health = false
+  ssh_record_ip                     = module.ec2.public_ip
+  ssh_record_ttl                    = 300
+  ec2_instance_id                   = module.ec2.instance_id
+}
+
 module "ses" {
   source = "./modules/ses"
 
   domain               = var.domain
-  zone_id              = aws_route53_zone.getstronger_pro.zone_id
+  zone_id              = module.route53.hosted_zone_id
   region               = var.aws_region
   account_id           = "205930632120"
   user_name            = "ses_user_getstronger_pro"

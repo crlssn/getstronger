@@ -107,3 +107,28 @@ moved {
   from = aws_iam_role_policy_attachment.ses_policy_cloudwatch
   to   = module.ses.aws_iam_role_policy_attachment.cloudwatch
 }
+
+moved {
+  from = aws_route53_zone.getstronger_pro
+  to   = module.route53.aws_route53_zone.hosted_zone
+}
+
+moved {
+  from = aws_route53_record.api_getstronger_pro
+  to   = module.route53.aws_route53_record.api_record
+}
+
+moved {
+  from = aws_route53_record.www_getstronger_pro
+  to   = module.route53.aws_route53_record.www_record
+}
+
+moved {
+  from = aws_route53_record.ssh_getstronger_pro
+  to   = module.route53.aws_route53_record.ssh_record
+}
+
+moved {
+  from = aws_eip.ec2_instance
+  to   = module.route53.aws_eip.ec2_instance
+}
