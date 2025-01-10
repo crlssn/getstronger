@@ -63,7 +63,7 @@ jobs:
         run: go test ./... -coverprofile=coverage.out
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
         with:
           slug: crlssn/getstronger
           files: coverage.out
