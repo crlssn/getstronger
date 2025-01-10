@@ -38,7 +38,7 @@ module "ec2" {
   user_data            = file("user-data.sh") # Save user data as a separate script
 
   key_name   = "backend-ec2-key"
-  public_key = var.public_key
+  public_key = var.ec2_public_key
 
   ssh_security_group_name        = "allow_ssh"
   ssh_security_group_description = "Allow SSH inbound traffic"
