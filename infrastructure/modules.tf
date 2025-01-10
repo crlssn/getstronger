@@ -35,7 +35,7 @@ module "ec2" {
   ami                  = "ami-02f617729751b375a"
   instance_type        = "t2.micro"
   iam_instance_profile = module.cloudwatch.instance_profile_name
-  user_data            = file("user-data.sh") # Save user data as a separate script
+  user_data            = file("scripts/cloudwatch.sh")
 
   key_name   = "backend-ec2-key"
   public_key = var.ec2_public_key
