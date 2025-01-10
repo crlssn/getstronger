@@ -17,12 +17,9 @@ import (
 func TestSendEmail(t *testing.T) {
 	t.Parallel()
 	e := email.MustNew(&config.Config{
-		DB:  config.DB{},
-		JWT: config.JWT{},
 		Server: config.Server{
-			AllowedOrigins: nil,
+			AllowedOrigins: []string{os.Getenv("GET_STRONGER_ALLOWED_ORIGIN")},
 		},
-		Environment: "",
 	})
 	err := e.SendVerification(context.Background(), email.SendVerification{
 		Name:  "John Doe",
