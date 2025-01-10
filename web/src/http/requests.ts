@@ -489,7 +489,7 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
         }
       }
 
-      // DEBT: Filter out some error codes to alert the user until we have a better way to handle errors.
+      // DEBT: Filter out some error codes to alert the user until we have a better way to handle them.
       const ignoredCodes: Code[] = [Code.Unauthenticated, Code.Unavailable, Code.Canceled]
       if (!ignoredCodes.includes(error.code)) {
         alert(`${error.code}: ${error.message}`)
