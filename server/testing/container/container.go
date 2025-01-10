@@ -17,7 +17,7 @@ import (
 
 type Container struct {
 	DB         *sql.DB
-	Terminate  func(ctx context.Context) error
+	Terminate  func(ctx context.Context, opts ...testcontainers.TerminateOption) error
 	Connection string
 }
 
