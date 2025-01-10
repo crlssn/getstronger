@@ -21,6 +21,10 @@ variable "aws_region" {
   default     = "eu-west-2"
 }
 
+variable "domain" {
+  default = "getstronger.pro"
+}
+
 output "ses_access_key" {
   value       = aws_iam_access_key.ses_user_key.id
   description = "Access Key ID for SES user"
