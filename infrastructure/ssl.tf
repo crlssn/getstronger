@@ -170,7 +170,7 @@ resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
 resource "null_resource" "letsencrypt_cert" {
   provisioner "remote-exec" {
     connection {
-      host        = aws_instance.backend.public_ip
+      host        = module.ec2.public_ip
       type        = "ssh"
       user        = "ec2-user"
       private_key = file("~/.ssh/id_rsa")

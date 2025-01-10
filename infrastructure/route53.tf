@@ -4,7 +4,7 @@ resource "aws_route53_zone" "getstronger_pro" {
 
 # Elastic IP for EC2 instance
 resource "aws_eip" "ec2_instance" {
-  instance = aws_instance.backend.id
+  instance = module.ec2.instance_id
 }
 
 # Route 53 record for api.getstronger.pro -> EC2 instance
