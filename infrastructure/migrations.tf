@@ -127,3 +127,8 @@ moved {
   from = aws_route53_record.ssh_getstronger_pro
   to   = module.route53.aws_route53_record.ssh_record
 }
+
+moved {
+  from = aws_eip.ec2_instance
+  to   = module.route53.aws_eip.ec2_instance
+}
