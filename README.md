@@ -5,6 +5,17 @@
 
 </div>
 
+## Try It Out
+
+Experience the web app firsthand by visiting [getstronger.pro](https://www.getstronger.pro).
+
+Log in using the following demo credentials:
+
+- **Email**: `demo@demo.com`
+- **Password**: `demodemo`
+
+Feel free to explore all features using this demo account!
+
 ## Screenshots
 <table>
   <tr>
