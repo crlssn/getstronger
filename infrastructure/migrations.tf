@@ -32,3 +32,23 @@ moved {
   from = aws_security_group.db_access
   to   = module.db.aws_security_group.db_access
 }
+
+moved {
+  from = aws_instance.backend
+  to   = module.ec2.aws_instance.ec2_instance
+}
+
+moved {
+  from = aws_key_pair.backend_ec2_key
+  to   = module.ec2.aws_key_pair.ec2_key
+}
+
+moved {
+  from = aws_security_group.ssh_access
+  to   = module.ec2.aws_security_group.ssh_access
+}
+
+moved {
+  from = aws_security_group.api_access
+  to   = module.ec2.aws_security_group.api_access
+}
