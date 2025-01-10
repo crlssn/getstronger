@@ -43,7 +43,7 @@ resource "aws_route53_record" "mx" {
 }
 
 resource "aws_iam_policy" "ses_send_email" {
-  name        = "SES_Send_Email_${var.domain}"
+  name        = "SES_Send_Email_GetStronger_Pro"
   description = "Allows sending emails via SES for ${var.domain}"
 
   policy = jsonencode({
