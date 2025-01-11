@@ -65,7 +65,7 @@ module "route53" {
     www = {
       type    = "A"
       ttl     = null
-      records = []
+      records = null
       alias = {
         name                   = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
         zone_id                = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id

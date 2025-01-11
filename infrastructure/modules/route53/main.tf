@@ -9,7 +9,14 @@ resource "aws_route53_record" "records" {
   name    = "${each.key}.${var.domain}"
   type    = each.value.type
   ttl     = each.value.ttl
-  records = each.value.records == [] ? null : each.value.records
+
+  dynamic "records" {
+    for_each = each.value.records != null ? each.value.records : []
+    content {
+      value = records.value
+    }
+  }
+
   dynamic "alias" {
     for_each = each.value.alias != null ? ["ok"] : []
     content {
