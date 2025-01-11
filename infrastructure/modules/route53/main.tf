@@ -9,7 +9,7 @@ resource "aws_route53_record" "records" {
   name    = "${each.key}.${var.domain}"
   type    = each.value.type
   ttl     = each.value.ttl
-  records = each.value.records
+  records = each.value.records == [] ? null : each.value.records
 
   alias {
     name                   = each.value.alias_name
