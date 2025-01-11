@@ -53,15 +53,25 @@ module "ec2" {
 module "route53" {
   source = "./modules/route53"
 
-  domain                            = "getstronger.pro"
-  api_record_ip                     = module.ec2.public_ip
-  api_record_ttl                    = 300
-  cloudfront_alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
-  cloudfront_alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
-  cloudfront_evaluate_target_health = false
-  ssh_record_ip                     = module.ec2.public_ip
-  ssh_record_ttl                    = 300
-  ec2_instance_id                   = module.ec2.instance_id
+  zone_id = module.route53.hosted_zone_id
+  domain  = var.domain
+  subdomains = {
+    api = {
+      type    = "A"
+      ttl     = 300
+      records = [module.ec2.public_ip]
+    }
+    www = {
+      type          = "A"
+      alias_name    = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
+      alias_zone_id = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
+    }
+    ssh = {
+      type    = "A"
+      ttl     = 300
+      records = [module.ec2.public_ip]
+    }
+  }
 }
 
 module "ses" {
