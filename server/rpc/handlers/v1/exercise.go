@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -73,7 +72,6 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 	log := xcontext.MustExtractLogger(ctx).
 		With(xzap.FieldExerciseID(req.Msg.GetExercise().GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
-	spew.Dump(req.Msg)
 
 	exercise, err := h.repo.GetExercise(ctx,
 		repo.GetExerciseWithID(req.Msg.GetExercise().GetId()),

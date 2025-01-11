@@ -275,7 +275,6 @@ export const updateExercise = async (
       paths: ['name', 'label'],
     } as FieldMask,
   })
-  console.log(req)
   return tryCatch(() => exerciseClient.updateExercise(req))
 }
 
