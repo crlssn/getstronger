@@ -9,11 +9,15 @@ resource "aws_route53_record" "records" {
   name    = "${each.key}.${var.domain}"
   type    = each.value.type
   ttl     = each.value.ttl
-
   records = each.value.records
-  alias {
-    name                   = each.value.alias_name
-    zone_id                = each.value.alias_zone_id
-    evaluate_target_health = each.value.evaluate_target_health
+
+  dynamic "alias" {
+    # Use a dummy list to conditionally include this block.
+    for_each = records != [] ? [1] : []
+    content {
+      name                   = each.value.alias_name
+      zone_id                = each.value.alias_zone_id
+      evaluate_target_health = each.value.evaluate_target_health
+    }
   }
 }
