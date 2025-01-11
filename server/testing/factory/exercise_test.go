@@ -73,7 +73,7 @@ func TestFactory_Exercise(t *testing.T) {
 		expected := f.NewExercise(factory.ExerciseSubTitle(subTitle))
 		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, subTitle, created.SubTitle)
+		require.Equal(t, subTitle, created.SubTitle.String)
 	})
 
 	t.Run("ExerciseDeleted", func(t *testing.T) {
