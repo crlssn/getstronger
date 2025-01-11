@@ -74,3 +74,15 @@ module "ses" {
   user_name            = "ses_user_getstronger_pro"
   cloudwatch_role_name = module.cloudwatch.role_name
 }
+
+module "s3" {
+  source = "./modules/s3"
+
+  bucket_name             = "www.getstronger.pro"
+  index_document          = "index.html"
+  error_document          = "index.html"
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}

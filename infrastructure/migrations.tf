@@ -132,3 +132,23 @@ moved {
   from = aws_eip.ec2_instance
   to   = module.route53.aws_eip.ec2_instance
 }
+
+moved {
+  from = aws_s3_bucket.www_getstronger_pro
+  to   = module.s3.aws_s3_bucket.bucket
+}
+
+moved {
+  from = aws_s3_bucket_website_configuration.vue_js_bucket
+  to   = module.s3.aws_s3_bucket_website_configuration.website
+}
+
+moved {
+  from = aws_s3_bucket_public_access_block.public_access_block
+  to   = module.s3.aws_s3_bucket_public_access_block.public_access
+}
+
+moved {
+  from = aws_s3_bucket_policy.public_access
+  to   = module.s3.aws_s3_bucket_policy.bucket_policy
+}
