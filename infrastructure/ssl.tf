@@ -37,7 +37,7 @@ resource "aws_acm_certificate_validation" "s3_cert_validation" {
 resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   provider = aws.us_east_1
   origin {
-    domain_name = aws_s3_bucket.www_getstronger_pro.bucket_domain_name
+    domain_name = module.s3.bucket_name
     origin_id   = "S3-origin"
   }
 
