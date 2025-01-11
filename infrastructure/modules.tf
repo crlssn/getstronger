@@ -74,17 +74,17 @@ module "s3" {
 }
 
 module "ssl" {
-  source               = "./modules/ssl"
+  source = "./modules/ssl"
 
-  domain_name          = "www.${var.domain}"
-  zone_id              = module.route53.hosted_zone_id
-  origin_domain_name   = module.s3.website_endpoint
-  alias                = "www.${var.domain}"
-  https_port           = 443
+  domain_name            = "www.${var.domain}"
+  zone_id                = module.route53.hosted_zone_id
+  origin_domain_name     = module.s3.website_endpoint
+  alias                  = "www.${var.domain}"
+  https_port             = 443
   origin_protocol_policy = "https-only"
-  origin_ssl_protocols = ["TLSv1.2"]
-  default_root_object  = "index.html"
-  error_page_path      = "/index.html"
+  origin_ssl_protocols   = ["TLSv1.2"]
+  default_root_object    = "index.html"
+  error_page_path        = "/index.html"
   tags = {
     Environment = "Production"
   }

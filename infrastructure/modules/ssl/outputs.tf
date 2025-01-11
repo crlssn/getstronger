@@ -14,6 +14,6 @@ output "distribution_id" {
 }
 
 output "distribution_zone_id" {
-    description = "The Route 53 hosted zone ID of the CloudFront distribution"
-    value       = aws_cloudfront_distribution.distribution.hosted_zone_id
+  description = "The Route 53 hosted zone ID of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.distribution.hosted_zone_id
 }
