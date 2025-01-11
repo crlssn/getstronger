@@ -57,19 +57,28 @@ module "route53" {
   domain  = var.domain
   subdomains = {
     api = {
-      type    = "A"
-      ttl     = 300
-      records = [module.ec2.public_ip]
+      type                   = "A"
+      ttl                    = 300
+      records                = [module.ec2.public_ip]
+      alias_name             = null
+      alias_zone_id          = null
+      evaluate_target_health = false
     }
     www = {
-      type          = "A"
-      alias_name    = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
-      alias_zone_id = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
+      type                   = "A"
+      ttl                    = null
+      records                = []
+      alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
+      alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
+      evaluate_target_health = false
     }
     ssh = {
-      type    = "A"
-      ttl     = 300
-      records = [module.ec2.public_ip]
+      type                   = "A"
+      ttl                    = 300
+      records                = [module.ec2.public_ip]
+      alias_name             = null
+      alias_zone_id          = null
+      evaluate_target_health = false
     }
   }
 }
