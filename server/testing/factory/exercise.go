@@ -75,9 +75,9 @@ func ExerciseTitle(title string) ExerciseOpt {
 	}
 }
 
-func ExerciseSubTitle(subTitle null.String) ExerciseOpt {
+func ExerciseSubTitle(subTitle string) ExerciseOpt {
 	return func(m *orm.Exercise) {
-		m.SubTitle = subTitle
+		m.SubTitle = null.StringFrom(subTitle)
 	}
 }
 

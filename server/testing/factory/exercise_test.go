@@ -9,7 +9,6 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"github.com/volatiletech/null/v8"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -70,7 +69,7 @@ func TestFactory_Exercise(t *testing.T) {
 
 	t.Run("ExerciseSubTitle", func(t *testing.T) {
 		t.Parallel()
-		subTitle := null.StringFrom(gofakeit.Name())
+		subTitle := gofakeit.Name()
 		expected := f.NewExercise(factory.ExerciseSubTitle(subTitle))
 		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
