@@ -13,7 +13,7 @@ resource "aws_route53_record" "records" {
 
   dynamic "alias" {
     # Use a dummy list to conditionally include this block.
-    for_each = each.value.records != [] ? [1] : []
+    for_each = each.value.records != [] ? ["populate"] : []
     content {
       name                   = each.value.alias_name
       zone_id                = each.value.alias_zone_id
