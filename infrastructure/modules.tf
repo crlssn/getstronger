@@ -50,20 +50,6 @@ module "ec2" {
   api_ingress_cidr_blocks        = ["0.0.0.0/0"]
 }
 
-module "route53" {
-  source = "./modules/route53"
-
-  domain                            = "getstronger.pro"
-  api_record_ip                     = module.ec2.public_ip
-  api_record_ttl                    = 300
-  cloudfront_alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
-  cloudfront_alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
-  cloudfront_evaluate_target_health = false
-  ssh_record_ip                     = module.ec2.public_ip
-  ssh_record_ttl                    = 300
-  ec2_instance_id                   = module.ec2.instance_id
-}
-
 module "ses" {
   source = "./modules/ses"
 
@@ -78,11 +64,42 @@ module "ses" {
 module "s3" {
   source = "./modules/s3"
 
-  bucket_name             = "www.getstronger.pro"
+  bucket_name             = "www.${var.domain}"
   index_document          = "index.html"
   error_document          = "index.html"
   block_public_acls       = false
   block_public_policy     = false
   ignore_public_acls      = false
   restrict_public_buckets = false
+}
+
+module "ssl" {
+  source               = "./modules/ssl"
+
+  domain_name          = "www.${var.domain}"
+  zone_id              = module.route53.hosted_zone_id
+  origin_domain_name   = module.s3.website_endpoint
+  alias                = "www.${var.domain}"
+  https_port           = 443
+  origin_protocol_policy = "https-only"
+  origin_ssl_protocols = ["TLSv1.2"]
+  default_root_object  = "index.html"
+  error_page_path      = "/index.html"
+  tags = {
+    Environment = "Production"
+  }
+}
+
+module "route53" {
+  source = "./modules/route53"
+
+  domain                            = var.domain
+  api_record_ip                     = module.ec2.public_ip
+  api_record_ttl                    = 300
+  cloudfront_alias_name             = module.ssl.distribution_domain_name
+  cloudfront_alias_zone_id          = module.ssl.distribution_zone_id
+  cloudfront_evaluate_target_health = false
+  ssh_record_ip                     = module.ec2.public_ip
+  ssh_record_ttl                    = 300
+  ec2_instance_id                   = module.ec2.instance_id
 }
