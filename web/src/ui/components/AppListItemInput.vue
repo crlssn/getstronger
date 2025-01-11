@@ -25,6 +25,7 @@ onMounted(() => {
 })
 
 const onChange = () => {
+  console.log('onChange', value.value)
   emits('update', value.value)
 }
 
