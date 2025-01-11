@@ -10,9 +10,12 @@ resource "aws_route53_record" "records" {
   type    = each.value.type
   ttl     = each.value.ttl
   records = each.value.records == [] ? null : each.value.records
-  alias = each.value.alias == null ? null : {
-    name                   = each.value.alias.name
-    zone_id                = each.value.alias.zone_id
-    evaluate_target_health = each.value.alias.evaluate_target_health
+  dynamic "alias" {
+    for_each = each.value.alias != null ? ["ok"] : []
+    content {
+      name                   = each.value.alias.name
+      zone_id                = each.value.alias.zone_id
+      evaluate_target_health = each.value.alias.evaluate_target_health
+    }
   }
 }
