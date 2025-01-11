@@ -76,7 +76,8 @@ module "ses" {
 }
 
 module "s3" {
-  source                  = "./modules/s3"
+  source = "./modules/s3"
+
   bucket_name             = "www.getstronger.pro"
   index_document          = "index.html"
   error_document          = "index.html"
