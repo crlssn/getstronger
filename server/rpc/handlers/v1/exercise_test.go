@@ -112,7 +112,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 
 	tests := []test{
 		{
-			name: "valid_request",
+			name: "ok",
 			req: &connect.Request[v1.UpdateExerciseRequest]{
 				Msg: &v1.UpdateExerciseRequest{
 					Exercise: &v1.Exercise{
