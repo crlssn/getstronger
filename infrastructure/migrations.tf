@@ -152,3 +152,23 @@ moved {
   from = aws_s3_bucket_policy.public_access
   to   = module.s3.aws_s3_bucket_policy.bucket_policy
 }
+
+moved {
+  from = aws_acm_certificate.www_getstronger_pro_ssl_cert
+  to   = module.ssl.aws_acm_certificate.ssl_certificate
+}
+
+moved {
+  from = aws_route53_record.s3_ssl_cert_validation
+  to   = module.ssl.aws_route53_record.certificate_validation
+}
+
+moved {
+  from = aws_acm_certificate_validation.s3_cert_validation
+  to   = module.ssl.aws_acm_certificate_validation.certificate_validation
+}
+
+moved {
+  from = aws_cloudfront_distribution.www_getstronger_pro_distribution
+  to   = module.ssl.aws_cloudfront_distribution.distribution
+}
