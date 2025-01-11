@@ -11,12 +11,13 @@ import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 
 const route = useRoute()
 const router = useRouter()
-const exercise = ref<Exercise>()
+const exercise = ref({} as Exercise)
 const alertStore = useAlertStore()
 
 onMounted(async () => {
   const res = await getExercise(route.params.id as string)
   if (!res) return
+  if (!res.exercise) return
 
   exercise.value = res.exercise
 })
@@ -36,12 +37,22 @@ async function onUpdateExercise() {
   <form v-if="exercise" @submit.prevent="onUpdateExercise">
     <h6>Name</h6>
     <AppList>
-      <AppListItemInput :model="exercise.name" type="text" required />
+      <AppListItemInput
+        :model="exercise.name"
+        type="text"
+        required
+        @update="(value) => (exercise.name = value)"
+      />
     </AppList>
 
     <h6>Label</h6>
     <AppList>
-      <AppListItemInput :model="exercise.label" type="text" placeholder="Optional" />
+      <AppListItemInput
+        :model="exercise.label"
+        type="text"
+        placeholder="Optional"
+        @update="(value) => (exercise.label = value)"
+      />
     </AppList>
 
     <AppButton type="submit" colour="primary">Update Exercise</AppButton>
