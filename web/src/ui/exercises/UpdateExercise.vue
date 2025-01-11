@@ -11,12 +11,13 @@ import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 
 const route = useRoute()
 const router = useRouter()
-const exercise = ref<Exercise>()
+const exercise = ref({} as Exercise)
 const alertStore = useAlertStore()
 
 onMounted(async () => {
   const res = await getExercise(route.params.id as string)
   if (!res) return
+  if (!res.exercise) return
 
   exercise.value = res.exercise
 })
