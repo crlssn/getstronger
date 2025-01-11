@@ -172,3 +172,19 @@ moved {
   from = aws_cloudfront_distribution.www_getstronger_pro_distribution
   to   = module.ssl.aws_cloudfront_distribution.distribution
 }
+
+moved {
+  from = aws_acm_certificate.api_getstronger_pro_ssl_cert
+  to   = module.ssl.aws_acm_certificate.ssl_certificate
+}
+
+moved {
+  from = aws_acm_certificate_validation.api_getstronger_pro_cert_validation
+  to   = module.ssl.aws_acm_certificate_validation.certificate_validation
+}
+
+moved {
+  from = aws_cloudfront_distribution.api_getstronger_pro_distribution
+  to   = module.ssl.aws_cloudfront_distribution.distribution
+}
+
