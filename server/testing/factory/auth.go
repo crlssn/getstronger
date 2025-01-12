@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
@@ -26,15 +25,10 @@ func (f *Factory) NewAuthSlice(count int, opts ...AuthOpt) orm.AuthSlice {
 type AuthOpt func(event *orm.Auth)
 
 func (f *Factory) NewAuth(opts ...AuthOpt) *orm.Auth {
-	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
-	if err != nil {
-		panic(fmt.Errorf("bcrypt password generation: %w", err))
-	}
-
 	m := &orm.Auth{
 		ID:                 uuid.NewString(),
 		Email:              fmt.Sprintf("%s-%s", uuid.NewString(), f.faker.Email()),
-		Password:           bcryptPassword,
+		Password:           nil,
 		RefreshToken:       null.String{},
 		CreatedAt:          time.Time{},
 		EmailVerified:      false,
@@ -42,11 +36,15 @@ func (f *Factory) NewAuth(opts ...AuthOpt) *orm.Auth {
 		PasswordResetToken: null.String{},
 	}
 
+	if m.Password == nil {
+		m.Password = repo.MustHashPassword("password")
+	}
+
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	if err = m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
 		panic(fmt.Errorf("failed to insert user: %w", err))
 	}
 

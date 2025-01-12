@@ -24,7 +24,15 @@ func NewFactory(db *sql.DB) *Factory {
 	}
 }
 
+type SeedUser struct {
+	Email     string
+	Password  string
+	FirstName string
+	LastName  string
+}
+
 type SeedParams struct {
+	User                SeedUser
 	UserCount           int
 	ExerciseCount       int
 	RoutineCount        int
@@ -34,6 +42,17 @@ type SeedParams struct {
 }
 
 func (f *Factory) Seed(p SeedParams) {
+	auth := f.NewAuth(
+		AuthEmailVerified(),
+		AuthEmail(p.User.Email),
+		AuthPassword(p.User.Password),
+	)
+	user := f.NewUser(
+		UserAuthID(auth.ID),
+		UserFirstName(p.User.FirstName),
+		UserLastName(p.User.LastName),
+	)
+
 	for range p.UserCount {
 		auth := f.NewAuth(AuthEmailVerified())
 		user := f.NewUser(UserAuthID(auth.ID))
