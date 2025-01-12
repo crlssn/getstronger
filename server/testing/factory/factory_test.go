@@ -32,7 +32,7 @@ func TestFactory_Seed(t *testing.T) {
 	f.Seed(factory.SeedParams{
 		User: &factory.SeedUser{
 			Email:     email,
-			Password:  "",
+			Password:  "password",
 			FirstName: gofakeit.FirstName(),
 			LastName:  gofakeit.LastName(),
 		},
@@ -50,27 +50,27 @@ func TestFactory_Seed(t *testing.T) {
 
 	count, err := orm.Users().Count(ctx, c.DB)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), count)
+	require.Equal(t, int64(2), count)
 
 	count, err = orm.Exercises().Count(ctx, c.DB)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), count)
+	require.Equal(t, int64(2), count)
 
 	count, err = orm.Routines().Count(ctx, c.DB)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), count)
+	require.Equal(t, int64(2), count)
 
 	count, err = orm.Workouts().Count(ctx, c.DB)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), count)
+	require.Equal(t, int64(2), count)
 
 	count, err = orm.Sets().Count(ctx, c.DB)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), count)
+	require.Equal(t, int64(2), count)
 
 	count, err = orm.WorkoutComments().Count(ctx, c.DB)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), count)
+	require.Equal(t, int64(2), count)
 
 	t.Cleanup(func() {
 		if err = c.Terminate(ctx); err != nil {
