@@ -20,6 +20,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc"
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -105,6 +106,24 @@ func (s *authSuite) TestSignup() {
 				err: nil,
 			},
 		},
+		{
+			name: "err_password_mismatch",
+			req: &connect.Request[v1.SignupRequest]{
+				Msg: &v1.SignupRequest{
+					Email:                gofakeit.Email(),
+					Password:             "pass",
+					PasswordConfirmation: "password",
+					FirstName:            gofakeit.FirstName(),
+					LastName:             gofakeit.LastName(),
+				},
+			},
+			init: func(t test) {
+				s.mocks.email.EXPECT().SendVerification(gomock.Any(), gomock.Any()).Times(0)
+			},
+			expected: expected{
+				err: rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH),
+			},
+		},
 	}
 
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -117,7 +136,7 @@ func (s *authSuite) TestSignup() {
 			if t.expected.err != nil {
 				s.Require().Nil(res)
 				s.Require().Error(err)
-				s.Require().ErrorIs(err, t.expected.err)
+				s.Require().Equal(err.Error(), t.expected.err.Error())
 				return
 			}
 
