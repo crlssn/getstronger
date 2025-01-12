@@ -32,7 +32,7 @@ type SeedUser struct {
 }
 
 type SeedParams struct {
-	User                SeedUser
+	User                *SeedUser
 	UserCount           int
 	ExerciseCount       int
 	RoutineCount        int
@@ -42,48 +42,54 @@ type SeedParams struct {
 }
 
 func (f *Factory) Seed(p SeedParams) {
-	auth := f.NewAuth(
-		AuthEmailVerified(),
-		AuthEmail(p.User.Email),
-		AuthPassword(p.User.Password),
-	)
-	user := f.NewUser(
-		UserAuthID(auth.ID),
-		UserFirstName(p.User.FirstName),
-		UserLastName(p.User.LastName),
-	)
+	if p.User != nil {
+		auth := f.NewAuth(
+			AuthEmailVerified(),
+			AuthEmail(p.User.Email),
+			AuthPassword(p.User.Password),
+		)
+		user := f.NewUser(
+			UserAuthID(auth.ID),
+			UserFirstName(p.User.FirstName),
+			UserLastName(p.User.LastName),
+		)
+		f.seedUser(p, user)
+	}
 
 	for range p.UserCount {
 		auth := f.NewAuth(AuthEmailVerified())
 		user := f.NewUser(UserAuthID(auth.ID))
+		f.seedUser(p, user)
+	}
+}
 
-		var exercises orm.ExerciseSlice
-		for range p.ExerciseCount {
-			exercises = append(exercises, f.NewExercise(ExerciseUserID(user.ID)))
+func (f *Factory) seedUser(p SeedParams, user *orm.User) {
+	var exercises orm.ExerciseSlice
+	for range p.ExerciseCount {
+		exercises = append(exercises, f.NewExercise(ExerciseUserID(user.ID)))
+	}
+
+	for range p.RoutineCount {
+		routine := f.NewRoutine(RoutineUserID(user.ID))
+		f.AddRoutineExercise(routine, randomExercises(exercises)...)
+	}
+
+	for range p.WorkoutCount {
+		workout := f.NewWorkout(WorkoutUserID(user.ID))
+
+		for range p.WorkoutSetCount {
+			f.NewSet(
+				SetUserID(user.ID),
+				SetWorkoutID(workout.ID),
+				SetExerciseID(randomExercise(exercises).ID),
+			)
 		}
 
-		for range p.RoutineCount {
-			routine := f.NewRoutine(RoutineUserID(user.ID))
-			f.AddRoutineExercise(routine, randomExercises(exercises)...)
-		}
-
-		for range p.WorkoutCount {
-			workout := f.NewWorkout(WorkoutUserID(user.ID))
-
-			for range p.WorkoutSetCount {
-				f.NewSet(
-					SetUserID(user.ID),
-					SetWorkoutID(workout.ID),
-					SetExerciseID(randomExercise(exercises).ID),
-				)
-			}
-
-			for range p.WorkoutCommentCount {
-				f.NewWorkoutComment(
-					WorkoutCommentUserID(user.ID),
-					WorkoutCommentWorkoutID(workout.ID),
-				)
-			}
+		for range p.WorkoutCommentCount {
+			f.NewWorkoutComment(
+				WorkoutCommentUserID(user.ID),
+				WorkoutCommentWorkoutID(workout.ID),
+			)
 		}
 	}
 }

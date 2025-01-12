@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 
@@ -28,8 +29,25 @@ func main() {
 		return
 	}
 
+	email := flag.String("email", "", "the user's email")
+	password := flag.String("password", "", "the user's password")
+	firstname := flag.String("firstname", "", "the user's first name")
+	lastname := flag.String("lastname", "", "the user's last name")
+	flag.Parse()
+
+	var user *factory.SeedUser
+	if !empty(*email, *password, *firstname, *lastname) {
+		user = &factory.SeedUser{
+			Email:     *email,
+			Password:  *password,
+			FirstName: *firstname,
+			LastName:  *lastname,
+		}
+	}
+
 	f := factory.NewFactory(database)
 	f.Seed(factory.SeedParams{
+		User:                user,
 		UserCount:           10,
 		ExerciseCount:       10,
 		RoutineCount:        5,
@@ -37,4 +55,14 @@ func main() {
 		WorkoutSetCount:     5,
 		WorkoutCommentCount: 2,
 	})
+}
+
+func empty(slice ...string) bool {
+	for _, s := range slice {
+		if s == "" {
+			return true
+		}
+	}
+
+	return false
 }
