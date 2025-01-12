@@ -12,6 +12,15 @@ import (
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
 
+const (
+	userCount           = 10
+	exerciseCount       = 10
+	routineCount        = 5
+	workoutCount        = 5
+	workoutSetCount     = 5
+	workoutCommentCount = 2
+)
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		panic(fmt.Errorf("failed to load .env file: %w", err))
@@ -48,12 +57,12 @@ func main() {
 	f := factory.NewFactory(database)
 	f.Seed(factory.SeedParams{
 		User:                user,
-		UserCount:           10,
-		ExerciseCount:       10,
-		RoutineCount:        5,
-		WorkoutCount:        5,
-		WorkoutSetCount:     5,
-		WorkoutCommentCount: 2,
+		UserCount:           userCount,
+		ExerciseCount:       exerciseCount,
+		RoutineCount:        routineCount,
+		WorkoutCount:        workoutCount,
+		WorkoutSetCount:     workoutSetCount,
+		WorkoutCommentCount: workoutCommentCount,
 	})
 }
 
