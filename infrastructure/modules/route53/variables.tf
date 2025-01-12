@@ -1,7 +1,7 @@
-variable "zone_id" {
-  description = "The Route 53 hosted zone ID"
-  type        = string
-}
+# variable "zone_id" {
+#   description = "The Route 53 hosted zone ID"
+#   type        = string
+# }
 
 variable "domain" {
   description = "The domain name for the hosted zone"
@@ -32,10 +32,10 @@ variable "aliases" {
 variable "ssl_validation_records" {
   description = "A map of SSL validation DNS records"
   type = map(object({
-    name    = string
-    type    = string
-    value   = string
-    ttl     = number
+    name  = string
+    type  = string
+    value = string
+    ttl   = number
   }))
   default = {}
 }

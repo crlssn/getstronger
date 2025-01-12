@@ -1,8 +1,12 @@
+resource "aws_route53_zone" "hosted_zone" {
+  name = var.domain
+}
+
 # Standard DNS records (e.g., A, CNAME)
 resource "aws_route53_record" "records" {
   for_each = var.records
 
-  zone_id = var.zone_id
+  zone_id = aws_route53_zone.hosted_zone.zone_id
   name    = "${each.key}.${var.domain}"
   type    = each.value.type
   ttl     = each.value.ttl
@@ -13,7 +17,7 @@ resource "aws_route53_record" "records" {
 resource "aws_route53_record" "aliases" {
   for_each = var.aliases
 
-  zone_id = var.zone_id
+  zone_id = aws_route53_zone.hosted_zone.zone_id
   name    = "${each.key}.${var.domain}"
   type    = each.value.type
 
@@ -28,7 +32,7 @@ resource "aws_route53_record" "aliases" {
 resource "aws_route53_record" "ssl_records" {
   for_each = var.ssl_validation_records
 
-  zone_id = var.zone_id
+  zone_id = aws_route53_zone.hosted_zone.zone_id
   name    = each.value.name
   type    = each.value.type
   ttl     = each.value.ttl

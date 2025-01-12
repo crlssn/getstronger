@@ -50,25 +50,24 @@ module "ec2" {
   api_ingress_cidr_blocks        = ["0.0.0.0/0"]
 }
 
+# module "route53" {
+#   source = "./modules/route53"
+#
+#   domain                            = "getstronger.pro"
+#   api_record_ip                     = module.ec2.public_ip
+#   api_record_ttl                    = 300
+#   cloudfront_alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
+#   cloudfront_alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
+#   cloudfront_evaluate_target_health = false
+#   ssh_record_ip                     = module.ec2.public_ip
+#   ssh_record_ttl                    = 300
+#   ec2_instance_id                   = module.ec2.instance_id
+# }
+
 module "route53" {
   source = "./modules/route53"
 
-  domain                            = "getstronger.pro"
-  api_record_ip                     = module.ec2.public_ip
-  api_record_ttl                    = 300
-  cloudfront_alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
-  cloudfront_alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
-  cloudfront_evaluate_target_health = false
-  ssh_record_ip                     = module.ec2.public_ip
-  ssh_record_ttl                    = 300
-  ec2_instance_id                   = module.ec2.instance_id
-}
-
-module "route53" {
-  source  = "./modules/route53"
-
-  zone_id = "Z3EXAMPLE1234" # Replace with your hosted zone ID
-  domain  = var.domain
+  domain = var.domain
 
   records = {
     api = {
@@ -94,15 +93,15 @@ module "route53" {
 
   ssl_validation_records = {
     www = {
-      name  = "_abc123.www.getstronger.pro"
-      type  = "CNAME"
-      value = "_def456.acm-validations.aws."
+      name  = aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_name
+      type  = aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_type
+      value = aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_value
       ttl   = 60
     }
     api = {
-      name  = "_xyz789.api.getstronger.pro"
-      type  = "CNAME"
-      value = "_ghi012.acm-validations.aws."
+      name  = aws_acm_certificate.api_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_name
+      type  = aws_acm_certificate.api_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_type
+      value = aws_acm_certificate.api_getstronger_pro_ssl_cert.domain_validation_options[0].resource_record_value
       ttl   = 60
     }
   }
