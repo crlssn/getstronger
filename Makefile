@@ -14,6 +14,9 @@ run_migrations_up:
 	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
 	sqlboiler -c ./database/sqlboiler.toml psql
 
+seed_db:
+	go run server/testing/factory/seed/main.go -email=john@doe.com -password=123 -firstname=John -lastname=Doe
+
 migrate:
 	$(MAKE) run_db
 	sleep 1
