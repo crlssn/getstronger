@@ -64,6 +64,51 @@ module "route53" {
   ec2_instance_id                   = module.ec2.instance_id
 }
 
+module "route53" {
+  source  = "./modules/route53"
+
+  zone_id = "Z3EXAMPLE1234" # Replace with your hosted zone ID
+  domain  = var.domain
+
+  records = {
+    api = {
+      type    = "A"
+      ttl     = 300
+      records = module.ec2.public_ip
+    }
+    ssh = {
+      type    = "A"
+      ttl     = 300
+      records = module.ec2.public_ip
+    }
+  }
+
+  aliases = {
+    www = {
+      type                   = "A"
+      alias_name             = aws_cloudfront_distribution.www_getstronger_pro_distribution.domain_name
+      alias_zone_id          = aws_cloudfront_distribution.www_getstronger_pro_distribution.hosted_zone_id
+      evaluate_target_health = false
+    }
+  }
+
+  ssl_validation_records = {
+    www = {
+      name  = "_abc123.www.getstronger.pro"
+      type  = "CNAME"
+      value = "_def456.acm-validations.aws."
+      ttl   = 60
+    }
+    api = {
+      name  = "_xyz789.api.getstronger.pro"
+      type  = "CNAME"
+      value = "_ghi012.acm-validations.aws."
+      ttl   = 60
+    }
+  }
+}
+
+
 module "ses" {
   source = "./modules/ses"
 

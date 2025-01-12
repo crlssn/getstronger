@@ -1,35 +1,36 @@
-resource "aws_route53_zone" "hosted_zone" {
-  name = var.domain
+# Standard DNS records (e.g., A, CNAME)
+resource "aws_route53_record" "records" {
+  for_each = var.records
+
+  zone_id = var.zone_id
+  name    = "${each.key}.${var.domain}"
+  type    = each.value.type
+  ttl     = each.value.ttl
+  records = each.value.records
 }
 
-resource "aws_route53_record" "api_record" {
-  zone_id = aws_route53_zone.hosted_zone.zone_id
-  name    = "api.${var.domain}"
-  type    = "A"
-  ttl     = var.api_record_ttl
-  records = [var.api_record_ip]
-}
+# Alias DNS records (e.g., pointing to CloudFront or S3)
+resource "aws_route53_record" "aliases" {
+  for_each = var.aliases
 
-resource "aws_route53_record" "www_record" {
-  zone_id = aws_route53_zone.hosted_zone.zone_id
-  name    = "www.${var.domain}"
-  type    = "A"
+  zone_id = var.zone_id
+  name    = "${each.key}.${var.domain}"
+  type    = each.value.type
 
   alias {
-    name                   = var.cloudfront_alias_name
-    zone_id                = var.cloudfront_alias_zone_id
-    evaluate_target_health = var.cloudfront_evaluate_target_health
+    name                   = each.value.alias_name
+    zone_id                = each.value.alias_zone_id
+    evaluate_target_health = each.value.evaluate_target_health
   }
 }
 
-resource "aws_route53_record" "ssh_record" {
-  zone_id = aws_route53_zone.hosted_zone.zone_id
-  name    = "ssh.${var.domain}"
-  type    = "A"
-  ttl     = var.ssh_record_ttl
-  records = [var.ssh_record_ip]
-}
+# SSL validation DNS records
+resource "aws_route53_record" "ssl_records" {
+  for_each = var.ssl_validation_records
 
-resource "aws_eip" "ec2_instance" {
-  instance = var.ec2_instance_id
+  zone_id = var.zone_id
+  name    = each.value.name
+  type    = each.value.type
+  ttl     = each.value.ttl
+  records = [each.value.value]
 }
