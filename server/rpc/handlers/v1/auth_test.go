@@ -136,7 +136,7 @@ func (s *authSuite) TestSignup() {
 			if t.expected.err != nil {
 				s.Require().Nil(res)
 				s.Require().Error(err)
-				s.Require().Equal(err.Error(), t.expected.err.Error())
+				s.Require().Equal(t.expected.err.Error(), err.Error())
 				return
 			}
 
@@ -145,12 +145,109 @@ func (s *authSuite) TestSignup() {
 
 			auth, err := orm.Auths(orm.AuthWhere.Email.EQ(t.req.Msg.GetEmail())).One(ctx, s.container.DB)
 			s.Require().NoError(err)
+			s.Require().False(auth.EmailVerified)
 
 			user, err := auth.User().One(ctx, s.container.DB)
 			s.Require().NoError(err)
 
 			s.Require().Equal(t.req.Msg.GetFirstName(), user.FirstName)
 			s.Require().Equal(t.req.Msg.GetLastName(), user.LastName)
+		})
+	}
+}
+
+func (s *authSuite) TestLogin() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.LoginRequest]
+		init     func(t test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok",
+			req: &connect.Request[v1.LoginRequest]{
+				Msg: &v1.LoginRequest{
+					Email:    gofakeit.Email(),
+					Password: "password",
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthPassword(t.req.Msg.GetPassword()),
+					factory.AuthEmailVerified(),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "err_invalid_credentials",
+			req: &connect.Request[v1.LoginRequest]{
+				Msg: &v1.LoginRequest{
+					Email:    gofakeit.Email(),
+					Password: "password",
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidCredentials),
+			},
+		},
+		{
+			name: "err_email_not_verified",
+			req: &connect.Request[v1.LoginRequest]{
+				Msg: &v1.LoginRequest{
+					Email:    gofakeit.Email(),
+					Password: "password",
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthPassword(t.req.Msg.GetPassword()),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+			},
+			expected: expected{
+				err: rpc.Error(connect.CodeFailedPrecondition, v1.Error_ERROR_EMAIL_NOT_VERIFIED),
+			},
+		},
+	}
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			res, err := s.handler.Login(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+			s.Require().NotEmpty(res.Msg.GetAccessToken())
+
+			auth, err := orm.Auths(orm.AuthWhere.Email.EQ(t.req.Msg.GetEmail())).One(ctx, s.container.DB)
+			s.Require().NoError(err)
+			s.Require().True(auth.RefreshToken.Valid)
 		})
 	}
 }

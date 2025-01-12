@@ -104,14 +104,14 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 	return connect.NewResponse(&apiv1.SignupResponse{}), nil
 }
 
-var errInvalidCredentials = errors.New("invalid credentials")
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.LoginRequest]) (*connect.Response[apiv1.LoginResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
 		log.Error("credentials invalid", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidCredentials)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
 
 	auth, err := h.repo.GetAuth(ctx,
