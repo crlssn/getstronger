@@ -117,7 +117,7 @@ func (s *authSuite) TestSignup() {
 					LastName:             gofakeit.LastName(),
 				},
 			},
-			init: func(t test) {
+			init: func(_ test) {
 				s.mocks.email.EXPECT().SendVerification(gomock.Any(), gomock.Any()).Times(0)
 			},
 			expected: expected{
