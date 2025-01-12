@@ -12,6 +12,7 @@ import (
 
 func TestError(t *testing.T) {
 	t.Parallel()
+
 	rpcError := rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	require.Error(t, rpcError)
 	require.Equal(t, connect.CodeInvalidArgument, rpcError.Code())
