@@ -13,7 +13,6 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/cookies"
 	"github.com/crlssn/getstronger/server/email"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -30,7 +29,6 @@ type authHandler struct {
 	jwt     *jwt.Manager
 	repo    repo.Repo
 	email   email.Email
-	config  *config.Config
 	cookies *cookies.Cookies
 }
 
@@ -40,7 +38,6 @@ type AuthHandlerParams struct {
 	JWT     *jwt.Manager
 	Repo    repo.Repo
 	Email   email.Email
-	Config  *config.Config
 	Cookies *cookies.Cookies
 }
 
@@ -49,7 +46,6 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 		jwt:     p.JWT,
 		repo:    p.Repo,
 		email:   p.Email,
-		config:  p.Config,
 		cookies: p.Cookies,
 	}
 }
