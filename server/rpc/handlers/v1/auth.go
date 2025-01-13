@@ -162,8 +162,8 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 }
 
 var (
-	errInvalidRefreshToken  = errors.New("invalid refresh token")
-	errRefreshTokenNotFound = errors.New("refresh token not found")
+	ErrInvalidRefreshToken  = errors.New("invalid refresh token")
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 )
 
 func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1.RefreshTokenRequest]) (*connect.Response[apiv1.RefreshTokenResponse], error) {
@@ -181,18 +181,18 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 	}
 	if !exists {
 		log.Warn("refresh token not found")
-		return nil, connect.NewError(connect.CodeUnauthenticated, errRefreshTokenNotFound)
+		return nil, connect.NewError(connect.CodeUnauthenticated, ErrRefreshTokenNotFound)
 	}
 
 	claims, err := h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
 	if err != nil {
 		log.Error("token parsing failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidRefreshToken)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
 	if err = h.jwt.ValidateClaims(claims); err != nil {
 		log.Error("token validation failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidRefreshToken)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
 	accessToken, err := h.jwt.CreateToken(claims.UserID, jwt.TokenTypeAccess)

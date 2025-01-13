@@ -30,6 +30,7 @@ import (
 type authSuite struct {
 	suite.Suite
 
+	jwt     *jwt.Manager
 	handler apiv1connect.AuthServiceHandler
 
 	factory   *factory.Factory
@@ -53,8 +54,9 @@ func (s *authSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
+	s.jwt = jwt.NewManager([]byte("access-key"), []byte("refresh-key"))
 	s.handler = handlers.NewAuthHandler(handlers.AuthHandlerParams{
-		JWT:     jwt.NewManager([]byte("access-key"), []byte("refresh-key")),
+		JWT:     s.jwt,
 		Repo:    repo.New(s.container.DB),
 		Email:   s.mocks.email,
 		Cookies: cookies.New(new(config.Config)),
@@ -248,6 +250,78 @@ func (s *authSuite) TestLogin() {
 			auth, err := orm.Auths(orm.AuthWhere.Email.EQ(t.req.Msg.GetEmail())).One(ctx, s.container.DB)
 			s.Require().NoError(err)
 			s.Require().True(auth.RefreshToken.Valid)
+		})
+	}
+}
+
+func (s *authSuite) TestRefreshToken() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		token    string
+		init     func(t test) context.Context
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:  "ok",
+			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			init: func(t test) context.Context {
+				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithRefreshToken(ctx, t.token)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:  "err_token_not_found",
+			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			init: func(t test) context.Context {
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithRefreshToken(ctx, t.token)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeUnauthenticated, handlers.ErrRefreshTokenNotFound),
+			},
+		},
+		{
+			name:  "err_access_token_provided",
+			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeAccess),
+			init: func(t test) context.Context {
+				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithRefreshToken(ctx, t.token)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidRefreshToken),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := t.init(t)
+
+			res, err := s.handler.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
+				Msg: &v1.RefreshTokenRequest{},
+			})
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+			s.Require().NotEmpty(res.Msg.GetAccessToken())
+			s.Require().NoError(s.jwt.ValidateAccessToken(res.Msg.GetAccessToken()))
 		})
 	}
 }
