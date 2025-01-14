@@ -1139,13 +1139,13 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 			s.Require().NoError(err)
 
 			var setCount int
-			var mapExpectedExerciseSets = make(map[string][]repo.Set)
+			mapExpectedExerciseSets := make(map[string][]repo.Set)
 			for _, exerciseSet := range t.params.ExerciseSets {
 				setCount += len(exerciseSet.Sets)
 				mapExpectedExerciseSets[exerciseSet.ExerciseID] = exerciseSet.Sets
 			}
 
-			var mapReceivedExerciseSets = make(map[string]orm.SetSlice)
+			mapReceivedExerciseSets := make(map[string]orm.SetSlice)
 			for _, set := range sets {
 				mapReceivedExerciseSets[set.ExerciseID] = append(mapReceivedExerciseSets[set.ExerciseID], set)
 			}

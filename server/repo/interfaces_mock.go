@@ -794,17 +794,17 @@ func (mr *MockRepoMockRecorder) UpdateWorkout(ctx, workoutID any, opts ...any) *
 }
 
 // UpdateWorkoutSets mocks base method.
-func (m *MockRepo) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
+func (m *MockRepo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, workoutID, exerciseSets)
+	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, p)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateWorkoutSets indicates an expected call of UpdateWorkoutSets.
-func (mr *MockRepoMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets any) *gomock.Call {
+func (mr *MockRepoMockRecorder) UpdateWorkoutSets(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockRepo)(nil).UpdateWorkoutSets), ctx, workoutID, exerciseSets)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockRepo)(nil).UpdateWorkoutSets), ctx, p)
 }
 
 // MockTx is a mock of Tx interface.
@@ -1569,17 +1569,17 @@ func (mr *MockTxMockRecorder) UpdateWorkout(ctx, workoutID any, opts ...any) *go
 }
 
 // UpdateWorkoutSets mocks base method.
-func (m *MockTx) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
+func (m *MockTx) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, workoutID, exerciseSets)
+	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, p)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateWorkoutSets indicates an expected call of UpdateWorkoutSets.
-func (mr *MockTxMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets any) *gomock.Call {
+func (mr *MockTxMockRecorder) UpdateWorkoutSets(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockTx)(nil).UpdateWorkoutSets), ctx, workoutID, exerciseSets)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockTx)(nil).UpdateWorkoutSets), ctx, p)
 }
 
 // exec mocks base method.
@@ -2358,17 +2358,17 @@ func (mr *MockmethodsMockRecorder) UpdateWorkout(ctx, workoutID any, opts ...any
 }
 
 // UpdateWorkoutSets mocks base method.
-func (m *Mockmethods) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
+func (m *Mockmethods) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, workoutID, exerciseSets)
+	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, p)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateWorkoutSets indicates an expected call of UpdateWorkoutSets.
-func (mr *MockmethodsMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets any) *gomock.Call {
+func (mr *MockmethodsMockRecorder) UpdateWorkoutSets(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*Mockmethods)(nil).UpdateWorkoutSets), ctx, workoutID, exerciseSets)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*Mockmethods)(nil).UpdateWorkoutSets), ctx, p)
 }
 
 // MocksetMethods is a mock of setMethods interface.
@@ -3083,17 +3083,17 @@ func (mr *MockworkoutMethodsMockRecorder) UpdateWorkout(ctx, workoutID any, opts
 }
 
 // UpdateWorkoutSets mocks base method.
-func (m *MockworkoutMethods) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
+func (m *MockworkoutMethods) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, workoutID, exerciseSets)
+	ret := m.ctrl.Call(m, "UpdateWorkoutSets", ctx, p)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateWorkoutSets indicates an expected call of UpdateWorkoutSets.
-func (mr *MockworkoutMethodsMockRecorder) UpdateWorkoutSets(ctx, workoutID, exerciseSets any) *gomock.Call {
+func (mr *MockworkoutMethodsMockRecorder) UpdateWorkoutSets(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockworkoutMethods)(nil).UpdateWorkoutSets), ctx, workoutID, exerciseSets)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockworkoutMethods)(nil).UpdateWorkoutSets), ctx, p)
 }
 
 // MockexerciseMethods is a mock of exerciseMethods interface.
