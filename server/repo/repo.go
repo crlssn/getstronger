@@ -1518,6 +1518,7 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 		}
 
 		var sets orm.SetSlice
+		setCreatedAt := workout.CreatedAt
 		for _, exerciseSet := range p.ExerciseSets {
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &orm.Set{
@@ -1526,8 +1527,12 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 					ExerciseID: exerciseSet.ExerciseID,
 					Reps:       set.Reps,
 					Weight:     set.Weight,
+					CreatedAt:  setCreatedAt,
 				})
 			}
+
+			// Simulate a rest period between sets.
+			setCreatedAt = setCreatedAt.Add(2 * time.Minute)
 		}
 
 		if err = workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {

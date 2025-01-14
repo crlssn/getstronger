@@ -1135,8 +1135,14 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 			workout, err := orm.FindWorkout(context.Background(), s.container.DB, t.params.WorkoutID)
 			s.Require().NoError(err)
 
-			sets, err := workout.Sets().All(context.Background(), s.container.DB)
+			sets, err := workout.Sets(
+				qm.OrderBy(orm.SetColumns.CreatedAt),
+			).All(context.Background(), s.container.DB)
 			s.Require().NoError(err)
+
+			for i, set := range sets {
+				s.Require().Equal(workout.CreatedAt.Add(time.Duration(i*2)*time.Minute), set.CreatedAt)
+			}
 
 			var setCount int
 			mapExpectedExerciseSets := make(map[string][]repo.Set)
