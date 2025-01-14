@@ -3,9 +3,9 @@ name: terraform
 on:
   pull_request:
     types:
-      - opened
-      - ready_for_review
       - synchronize
+      - ready_for_review
+      - review_requested
     paths:
       - 'infrastructure/**'
 

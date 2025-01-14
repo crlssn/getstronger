@@ -6,7 +6,6 @@ on:
       - main
   pull_request:
     types:
-      - reopened
       - synchronize
       - ready_for_review
       - review_requested
