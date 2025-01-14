@@ -1526,7 +1526,7 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &orm.Set{
 					UserID:     workout.UserID,
-					WorkoutID:  p.WorkoutID,
+					WorkoutID:  workout.ID,
 					ExerciseID: exerciseSet.ExerciseID,
 					Reps:       set.Reps,
 					Weight:     set.Weight,
