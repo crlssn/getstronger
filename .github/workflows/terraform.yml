@@ -2,6 +2,10 @@ name: terraform
 
 on:
   pull_request:
+    types:
+      - opened
+      - ready_for_review
+      - synchronize
     paths:
       - 'infrastructure/**'
 
