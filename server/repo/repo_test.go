@@ -30,8 +30,8 @@ type repoSuite struct {
 
 	repo repo.Repo
 
-	testContainer *container.Container
-	factory       *factory.Factory
+	container *container.Container
+	factory   *factory.Factory
 }
 
 func TestRepoSuite(t *testing.T) {
@@ -41,11 +41,11 @@ func TestRepoSuite(t *testing.T) {
 
 func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = container.NewContainer(ctx)
-	s.factory = factory.NewFactory(s.testContainer.DB)
-	s.repo = repo.New(s.testContainer.DB)
+	s.container = container.NewContainer(ctx)
+	s.factory = factory.NewFactory(s.container.DB)
+	s.repo = repo.New(s.container.DB)
 	s.T().Cleanup(func() {
-		if err := s.testContainer.Terminate(ctx); err != nil {
+		if err := s.container.Terminate(ctx); err != nil {
 			log.Fatalf("failed to clean container: %s", err)
 		}
 	})
@@ -94,13 +94,13 @@ func (s *repoSuite) TestNewTx() {
 			if t.expected.err != nil {
 				s.Require().Error(err)
 				s.Require().ErrorIs(err, t.expected.err)
-				exists, existsErr := orm.Auths(orm.AuthWhere.Email.EQ(emailNotCreated)).Exists(context.Background(), s.testContainer.DB)
+				exists, existsErr := orm.Auths(orm.AuthWhere.Email.EQ(emailNotCreated)).Exists(context.Background(), s.container.DB)
 				s.Require().NoError(existsErr)
 				s.Require().False(exists)
 				return
 			}
 			s.Require().NoError(err)
-			exists, err := orm.Auths(orm.AuthWhere.Email.EQ(emailCreated)).Exists(context.Background(), s.testContainer.DB)
+			exists, err := orm.Auths(orm.AuthWhere.Email.EQ(emailCreated)).Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})
@@ -312,7 +312,7 @@ func (s *repoSuite) TestUpdateAuth() {
 			}
 			s.Require().NoError(err)
 
-			auth, err := orm.FindAuth(context.Background(), s.testContainer.DB, t.authID)
+			auth, err := orm.FindAuth(context.Background(), s.container.DB, t.authID)
 			s.Require().NoError(err)
 			s.Require().Equal(t.expected.auth.Email, auth.Email)
 			s.Require().Equal(t.expected.auth.EmailVerified, auth.EmailVerified)
@@ -707,13 +707,13 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 			exists, err := orm.Exercises(
 				orm.ExerciseWhere.ID.EQ(t.params.ExerciseID),
 				orm.ExerciseWhere.DeletedAt.IsNull(),
-			).Exists(context.Background(), s.testContainer.DB)
+			).Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
-			s.Require().NoError(routines.ReloadAll(context.Background(), s.testContainer.DB))
+			s.Require().NoError(routines.ReloadAll(context.Background(), s.container.DB))
 			for _, routine := range routines {
-				exercises, exercisesErr := routine.Exercises().All(context.Background(), s.testContainer.DB)
+				exercises, exercisesErr := routine.Exercises().All(context.Background(), s.container.DB)
 				s.Require().NoError(exercisesErr)
 
 				for _, exercise := range exercises {
@@ -1048,22 +1048,22 @@ func (s *repoSuite) TestDeleteWorkout() {
 			s.Require().ErrorIs(err, t.expected.err)
 
 			exists, err := orm.Workouts(orm.WorkoutWhere.ID.EQ(workout.ID)).
-				Exists(context.Background(), s.testContainer.DB)
+				Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
 			exists, err = orm.Sets(orm.SetWhere.WorkoutID.EQ(workout.ID)).
-				Exists(context.Background(), s.testContainer.DB)
+				Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
 			exists, err = orm.WorkoutComments(orm.WorkoutCommentWhere.WorkoutID.EQ(workout.ID)).
-				Exists(context.Background(), s.testContainer.DB)
+				Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
 			exists, err = orm.Notifications(qm.Where("payload ->> 'workoutId' = ?", workout.ID)).
-				Exists(context.Background(), s.testContainer.DB)
+				Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
 		})
@@ -1097,6 +1097,15 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 							},
 						},
 					},
+					{
+						ExerciseID: uuid.NewString(),
+						Sets: []repo.Set{
+							{
+								Reps:   3,
+								Weight: 4,
+							},
+						},
+					},
 				},
 			},
 			init: func(t test) {
@@ -1123,6 +1132,36 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 			}
 
 			s.Require().NoError(err)
+			workout, err := orm.FindWorkout(context.Background(), s.container.DB, t.params.WorkoutID)
+			s.Require().NoError(err)
+
+			sets, err := workout.Sets().All(context.Background(), s.container.DB)
+			s.Require().NoError(err)
+
+			var setCount int
+			var mapExpectedExerciseSets = make(map[string][]repo.Set)
+			for _, exerciseSet := range t.params.ExerciseSets {
+				setCount += len(exerciseSet.Sets)
+				mapExpectedExerciseSets[exerciseSet.ExerciseID] = exerciseSet.Sets
+			}
+
+			var mapReceivedExerciseSets = make(map[string]orm.SetSlice)
+			for _, set := range sets {
+				mapReceivedExerciseSets[set.ExerciseID] = append(mapReceivedExerciseSets[set.ExerciseID], set)
+			}
+
+			s.Require().Len(sets, setCount)
+			s.Require().Len(mapReceivedExerciseSets, len(mapExpectedExerciseSets))
+
+			for exerciseID, receivedSets := range mapReceivedExerciseSets {
+				expectedSets, ok := mapExpectedExerciseSets[exerciseID]
+				s.Require().True(ok)
+
+				for i, receivedSet := range receivedSets {
+					s.Require().Equal(expectedSets[i].Reps, receivedSet.Reps)
+					s.Require().InEpsilon(expectedSets[i].Weight, receivedSet.Weight, 0)
+				}
+			}
 		})
 	}
 }
@@ -1170,7 +1209,7 @@ func (s *repoSuite) TestPublishEvent() {
 		s.Run(t.name, func() {
 			var listener *pq.Listener
 			if t.topic.IsValid() == nil {
-				listener = pq.NewListener(s.testContainer.Connection, time.Second, time.Minute, nil)
+				listener = pq.NewListener(s.container.Connection, time.Second, time.Minute, nil)
 				s.Require().NoError(listener.Listen(t.topic.String()))
 			}
 
@@ -1189,7 +1228,7 @@ func (s *repoSuite) TestPublishEvent() {
 			exists, err := orm.Events(
 				orm.EventWhere.Topic.EQ(t.topic),
 				orm.EventWhere.Payload.EQ(t.payload),
-			).Exists(context.Background(), s.testContainer.DB)
+			).Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})
