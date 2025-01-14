@@ -1508,7 +1508,10 @@ type UpdateWorkoutSetsParams struct {
 
 func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	return r.NewTx(ctx, func(tx Tx) error {
-		workout, err := r.GetWorkout(ctx, GetWorkoutWithID(p.WorkoutID), GetWorkoutLoadSets())
+		workout, err := r.GetWorkout(ctx,
+			GetWorkoutWithID(p.WorkoutID),
+			GetWorkoutLoadSets(),
+		)
 		if err != nil {
 			return fmt.Errorf("workout fetch: %w", err)
 		}
