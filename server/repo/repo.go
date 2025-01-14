@@ -1508,7 +1508,10 @@ type UpdateWorkoutSetsParams struct {
 
 func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	return r.NewTx(ctx, func(tx Tx) error {
-		workout, err := r.GetWorkout(ctx, GetWorkoutWithID(p.WorkoutID), GetWorkoutLoadSets())
+		workout, err := r.GetWorkout(ctx,
+			GetWorkoutWithID(p.WorkoutID),
+			GetWorkoutLoadSets(),
+		)
 		if err != nil {
 			return fmt.Errorf("workout fetch: %w", err)
 		}
@@ -1518,16 +1521,22 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 		}
 
 		var sets orm.SetSlice
+		setCreatedAt := workout.CreatedAt
 		for _, exerciseSet := range p.ExerciseSets {
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &orm.Set{
 					UserID:     workout.UserID,
-					WorkoutID:  p.WorkoutID,
+					WorkoutID:  workout.ID,
 					ExerciseID: exerciseSet.ExerciseID,
 					Reps:       set.Reps,
 					Weight:     set.Weight,
+					CreatedAt:  setCreatedAt,
 				})
 			}
+
+			// Simulate a rest period between sets.
+			const durationSetRest = 2 * time.Minute
+			setCreatedAt = setCreatedAt.Add(durationSetRest)
 		}
 
 		if err = workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
