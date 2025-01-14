@@ -1506,6 +1506,8 @@ type UpdateWorkoutSetsParams struct {
 	ExerciseSets []ExerciseSet
 }
 
+const durationSetRest = 2 * time.Minute
+
 func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	return r.NewTx(ctx, func(tx Tx) error {
 		workout, err := r.GetWorkout(ctx, GetWorkoutWithID(p.WorkoutID), GetWorkoutLoadSets())
@@ -1532,7 +1534,7 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 			}
 
 			// Simulate a rest period between sets.
-			setCreatedAt = setCreatedAt.Add(2 * time.Minute)
+			setCreatedAt = setCreatedAt.Add(durationSetRest * time.Minute)
 		}
 
 		if err = workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
