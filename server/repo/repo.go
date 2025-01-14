@@ -1501,18 +1501,28 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 	})
 }
 
-func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exerciseSets []ExerciseSet) error {
+type UpdateWorkoutSetsParams struct {
+	WorkoutID    string
+	ExerciseSets []ExerciseSet
+}
+
+func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	return r.NewTx(ctx, func(tx Tx) error {
-		workout := &orm.Workout{ID: workoutID}
-		if _, err := workout.Sets().DeleteAll(ctx, tx.exec()); err != nil {
+		workout, err := r.GetWorkout(ctx, GetWorkoutWithID(p.WorkoutID), GetWorkoutLoadSets())
+		if err != nil {
+			return fmt.Errorf("workout fetch: %w", err)
+		}
+
+		if _, err = workout.R.Sets.DeleteAll(ctx, tx.exec()); err != nil {
 			return fmt.Errorf("workout sets delete: %w", err)
 		}
 
 		var sets orm.SetSlice
-		for _, exerciseSet := range exerciseSets {
+		for _, exerciseSet := range p.ExerciseSets {
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &orm.Set{
-					WorkoutID:  workoutID,
+					UserID:     workout.UserID,
+					WorkoutID:  p.WorkoutID,
 					ExerciseID: exerciseSet.ExerciseID,
 					Reps:       set.Reps,
 					Weight:     set.Weight,
@@ -1520,7 +1530,7 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, workoutID string, exercise
 			}
 		}
 
-		if err := workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
+		if err = workout.AddSets(ctx, tx.exec(), true, sets...); err != nil {
 			return fmt.Errorf("workout sets add: %w", err)
 		}
 

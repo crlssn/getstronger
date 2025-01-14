@@ -31,7 +31,7 @@ type repoSuite struct {
 	repo repo.Repo
 
 	testContainer *container.Container
-	testFactory   *factory.Factory
+	factory       *factory.Factory
 }
 
 func TestRepoSuite(t *testing.T) {
@@ -42,7 +42,7 @@ func TestRepoSuite(t *testing.T) {
 func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = container.NewContainer(ctx)
-	s.testFactory = factory.NewFactory(s.testContainer.DB)
+	s.factory = factory.NewFactory(s.testContainer.DB)
 	s.repo = repo.New(s.testContainer.DB)
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
@@ -135,7 +135,7 @@ func (s *repoSuite) TestCreateAuth() {
 			email:    gofakeit.Email(),
 			password: "password",
 			init: func(t test) {
-				s.testFactory.NewAuth(factory.AuthEmail(t.email))
+				s.factory.NewAuth(factory.AuthEmail(t.email))
 			},
 			expected: expected{
 				err: repo.ErrAuthEmailExists,
@@ -184,7 +184,7 @@ func (s *repoSuite) TestUpdateAuth() {
 				repo.UpdateAuthPassword("new_password"),
 			},
 			init: func(t *test) {
-				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
 			},
 			expected: expected{
 				err:      nil,
@@ -198,7 +198,7 @@ func (s *repoSuite) TestUpdateAuth() {
 				repo.UpdateAuthEmailVerified(),
 			},
 			init: func(t *test) {
-				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
 				t.expected.auth.EmailVerified = true
 			},
 			expected: expected{
@@ -212,7 +212,7 @@ func (s *repoSuite) TestUpdateAuth() {
 				repo.UpdateAuthPasswordResetToken(factory.UUID(0)),
 			},
 			init: func(t *test) {
-				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
 				t.expected.auth.PasswordResetToken = null.StringFrom(factory.UUID(0))
 			},
 			expected: expected{
@@ -226,7 +226,7 @@ func (s *repoSuite) TestUpdateAuth() {
 				repo.UpdateAuthDeletePasswordResetToken(),
 			},
 			init: func(t *test) {
-				t.expected.auth = s.testFactory.NewAuth(
+				t.expected.auth = s.factory.NewAuth(
 					factory.AuthID(t.authID),
 					factory.AuthPasswordResetToken(uuid.NewString()),
 				)
@@ -243,7 +243,7 @@ func (s *repoSuite) TestUpdateAuth() {
 				repo.UpdateAuthRefreshToken("refresh_token"),
 			},
 			init: func(t *test) {
-				t.expected.auth = s.testFactory.NewAuth(factory.AuthID(t.authID))
+				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
 				t.expected.auth.RefreshToken = null.StringFrom("refresh_token")
 			},
 			expected: expected{
@@ -257,7 +257,7 @@ func (s *repoSuite) TestUpdateAuth() {
 				repo.UpdateAuthDeleteRefreshToken(),
 			},
 			init: func(t *test) {
-				t.expected.auth = s.testFactory.NewAuth(
+				t.expected.auth = s.factory.NewAuth(
 					factory.AuthID(t.authID),
 					factory.AuthRefreshToken("refresh_token"),
 				)
@@ -346,7 +346,7 @@ func (s *repoSuite) TestCompareEmailAndPassword() {
 			email:    gofakeit.Email(),
 			password: "valid_password",
 			init: func(t test) {
-				s.testFactory.NewAuth(
+				s.factory.NewAuth(
 					factory.AuthEmail(t.email),
 					factory.AuthPassword(t.password),
 				)
@@ -369,7 +369,7 @@ func (s *repoSuite) TestCompareEmailAndPassword() {
 			email:    gofakeit.Email(),
 			password: "wrong_password",
 			init: func(t test) {
-				s.testFactory.NewAuth(
+				s.factory.NewAuth(
 					factory.AuthEmail(t.email),
 					factory.AuthPassword("actual_password"),
 				)
@@ -412,7 +412,7 @@ func (s *repoSuite) TestRefreshTokenExists() {
 			name:         "ok_token_exists",
 			refreshToken: "valid_refresh_token",
 			init: func(t test) {
-				s.testFactory.NewAuth(factory.AuthRefreshToken(t.refreshToken))
+				s.factory.NewAuth(factory.AuthRefreshToken(t.refreshToken))
 			},
 			expected: expected{
 				exists: true,
@@ -464,7 +464,7 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "ok_user_created",
 			params: repo.CreateUserParams{
-				AuthID:    s.testFactory.NewAuth().ID,
+				AuthID:    s.factory.NewAuth().ID,
 				FirstName: "John",
 				LastName:  "Doe",
 			},
@@ -543,7 +543,7 @@ func (s *repoSuite) TestCreateExercise() {
 		{
 			name: "ok_exercise_created_with_label",
 			params: repo.CreateExerciseParams{
-				UserID: s.testFactory.NewUser().ID,
+				UserID: s.factory.NewUser().ID,
 				Name:   "Bench Press",
 				Label:  "Chest",
 			},
@@ -559,7 +559,7 @@ func (s *repoSuite) TestCreateExercise() {
 		{
 			name: "ok_exercise_created_without_label",
 			params: repo.CreateExerciseParams{
-				UserID: s.testFactory.NewUser().ID,
+				UserID: s.factory.NewUser().ID,
 				Name:   "Squat",
 				Label:  "",
 			},
@@ -624,35 +624,35 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "ok_soft_delete_exercise_with_routines",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.testFactory.NewUser().ID,
+				UserID:     s.factory.NewUser().ID,
 				ExerciseID: uuid.NewString(),
 			},
 			init: func(t test) orm.RoutineSlice {
 				exercises := orm.ExerciseSlice{
-					s.testFactory.NewExercise(
+					s.factory.NewExercise(
 						factory.ExerciseID(t.params.ExerciseID),
 						factory.ExerciseUserID(t.params.UserID),
 					),
-					s.testFactory.NewExercise(
+					s.factory.NewExercise(
 						factory.ExerciseUserID(t.params.UserID),
 					),
 				}
 
 				routines := orm.RoutineSlice{
-					s.testFactory.NewRoutine(
+					s.factory.NewRoutine(
 						factory.RoutineExerciseOrder([]string{
 							exercises[0].ID, exercises[1].ID,
 						}),
 					),
-					s.testFactory.NewRoutine(
+					s.factory.NewRoutine(
 						factory.RoutineExerciseOrder([]string{
 							exercises[0].ID, exercises[1].ID,
 						}),
 					),
 				}
 
-				s.testFactory.AddRoutineExercise(routines[0], exercises...)
-				s.testFactory.AddRoutineExercise(routines[1], exercises...)
+				s.factory.AddRoutineExercise(routines[0], exercises...)
+				s.factory.AddRoutineExercise(routines[1], exercises...)
 
 				return routines
 			},
@@ -663,11 +663,11 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "ok_soft_delete_exercise_without_routines",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.testFactory.NewUser().ID,
+				UserID:     s.factory.NewUser().ID,
 				ExerciseID: uuid.NewString(),
 			},
 			init: func(t test) orm.RoutineSlice {
-				s.testFactory.NewExercise(
+				s.factory.NewExercise(
 					factory.ExerciseID(t.params.ExerciseID),
 					factory.ExerciseUserID(t.params.UserID),
 				)
@@ -680,7 +680,7 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "err_exercise_not_found",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.testFactory.NewUser().ID,
+				UserID:     s.factory.NewUser().ID,
 				ExerciseID: uuid.NewString(),
 			},
 			expected: expected{
@@ -744,7 +744,7 @@ func (s *repoSuite) TestListExercises() {
 		expected expected
 	}
 
-	user := s.testFactory.NewUser()
+	user := s.factory.NewUser()
 
 	tests := []test{
 		{
@@ -754,9 +754,9 @@ func (s *repoSuite) TestListExercises() {
 				repo.ListExercisesWithLimit(2),
 			},
 			init: func(_ test) {
-				s.testFactory.NewExercise(factory.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(factory.ExerciseUserID(user.ID))
-				s.testFactory.NewExercise(factory.ExerciseUserID(user.ID))
+				s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+				s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+				s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 			},
 			expected: expected{
 				err:           nil,
@@ -804,7 +804,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 				repo.UpdateRoutineName("new"),
 			},
 			init: func(t test) {
-				s.testFactory.NewRoutine(
+				s.factory.NewRoutine(
 					factory.RoutineID(t.routineID),
 					factory.RoutineName("old"),
 				)
@@ -820,7 +820,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
 			},
 			init: func(t test) {
-				s.testFactory.NewRoutine(
+				s.factory.NewRoutine(
 					factory.RoutineID(t.routineID),
 					factory.RoutineExerciseOrder([]string{"2", "1"}),
 				)
@@ -837,7 +837,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
 			},
 			init: func(t test) {
-				s.testFactory.NewRoutine(
+				s.factory.NewRoutine(
 					factory.RoutineID(t.routineID),
 					factory.RoutineName("old"),
 					factory.RoutineExerciseOrder([]string{"2", "1"}),
@@ -885,12 +885,12 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 
 	exerciseIDs := []string{factory.UUID(0), factory.UUID(1)}
 	for _, exerciseID := range exerciseIDs {
-		s.testFactory.NewExercise(factory.ExerciseID(exerciseID))
+		s.factory.NewExercise(factory.ExerciseID(exerciseID))
 	}
 
 	workoutIDs := []string{factory.UUID(0), factory.UUID(1)}
 	for _, workoutID := range workoutIDs {
-		s.testFactory.NewWorkout(factory.WorkoutID(workoutID))
+		s.factory.NewWorkout(factory.WorkoutID(workoutID))
 	}
 
 	now := time.Now().UTC()
@@ -900,22 +900,22 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 			name:        "ok",
 			exerciseIDs: exerciseIDs,
 			init: func(t test) {
-				s.testFactory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
-				s.testFactory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
+				s.factory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
+				s.factory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
 
 				for _, exerciseID := range t.exerciseIDs {
-					s.testFactory.NewSet(
+					s.factory.NewSet(
 						factory.SetExerciseID(exerciseID),
 						factory.SetCreatedAt(now.Add(-time.Second)),
 					)
-					s.testFactory.NewSet(
+					s.factory.NewSet(
 						factory.SetExerciseID(exerciseID),
 						factory.SetCreatedAt(now.Add(-time.Second)),
 					)
 				}
 
 				for _, set := range t.expected.sets {
-					s.testFactory.NewSet(
+					s.factory.NewSet(
 						factory.SetWorkoutID(set.WorkoutID),
 						factory.SetExerciseID(set.ExerciseID),
 						factory.SetReps(set.Reps),
@@ -1006,10 +1006,10 @@ func (s *repoSuite) TestDeleteWorkout() {
 				repo.DeleteWorkoutWithID(workoutID),
 			},
 			init: func(_ test) *orm.Workout {
-				workout := s.testFactory.NewWorkout(factory.WorkoutID(workoutID))
-				s.testFactory.NewSet(factory.SetWorkoutID(workoutID))
-				s.testFactory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workoutID))
-				s.testFactory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
+				workout := s.factory.NewWorkout(factory.WorkoutID(workoutID))
+				s.factory.NewSet(factory.SetWorkoutID(workoutID))
+				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workoutID))
+				s.factory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
 					WorkoutID: workoutID,
 				}))
 
@@ -1025,11 +1025,11 @@ func (s *repoSuite) TestDeleteWorkout() {
 				repo.DeleteWorkoutWithUserID(userID),
 			},
 			init: func(_ test) *orm.Workout {
-				user := s.testFactory.NewUser(factory.UserID(userID))
-				workout := s.testFactory.NewWorkout(factory.WorkoutUserID(user.ID))
-				s.testFactory.NewSet(factory.SetWorkoutID(workout.ID))
-				s.testFactory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID))
-				s.testFactory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
+				user := s.factory.NewUser(factory.UserID(userID))
+				workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+				s.factory.NewSet(factory.SetWorkoutID(workout.ID))
+				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID))
+				s.factory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
 					WorkoutID: workout.ID,
 				}))
 
@@ -1066,6 +1066,63 @@ func (s *repoSuite) TestDeleteWorkout() {
 				Exists(context.Background(), s.testContainer.DB)
 			s.Require().NoError(err)
 			s.Require().False(exists)
+		})
+	}
+}
+
+func (s *repoSuite) TestUpdateWorkoutSets() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		params   repo.UpdateWorkoutSetsParams
+		init     func(test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok",
+			params: repo.UpdateWorkoutSetsParams{
+				WorkoutID: uuid.NewString(),
+				ExerciseSets: []repo.ExerciseSet{
+					{
+						ExerciseID: uuid.NewString(),
+						Sets: []repo.Set{
+							{
+								Reps:   1,
+								Weight: 2,
+							},
+						},
+					},
+				},
+			},
+			init: func(t test) {
+				s.factory.NewWorkout(factory.WorkoutID(t.params.WorkoutID))
+				s.factory.NewSet(factory.SetWorkoutID(t.params.WorkoutID))
+				for _, exerciseSet := range t.params.ExerciseSets {
+					s.factory.NewExercise(factory.ExerciseID(exerciseSet.ExerciseID))
+				}
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+			err := s.repo.UpdateWorkoutSets(context.Background(), t.params)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+
+			s.Require().NoError(err)
 		})
 	}
 }

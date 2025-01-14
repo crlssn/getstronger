@@ -242,7 +242,10 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		}
 
 		exerciseSets := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
-		if err = tx.UpdateWorkoutSets(ctx, workout.ID, exerciseSets); err != nil {
+		if err = tx.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
+			WorkoutID:    workout.ID,
+			ExerciseSets: exerciseSets,
+		}); err != nil {
 			return fmt.Errorf("failed to update workout sets: %w", err)
 		}
 
