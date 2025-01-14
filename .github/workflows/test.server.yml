@@ -6,9 +6,10 @@ on:
       - main
   pull_request:
     types:
+      - opened
+      - reopened
       - synchronize
       - ready_for_review
-      - review_requested
     paths:
       - 'go.mod'
       - 'server/**'
@@ -16,6 +17,7 @@ on:
 
 jobs:
   server:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:

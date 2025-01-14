@@ -3,14 +3,16 @@ name: terraform
 on:
   pull_request:
     types:
+      - opened
+      - reopened
       - synchronize
       - ready_for_review
-      - review_requested
     paths:
       - 'infrastructure/**'
 
 jobs:
   plan:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:

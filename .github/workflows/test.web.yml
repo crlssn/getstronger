@@ -6,14 +6,16 @@ on:
       - main
   pull_request:
     types:
+      - opened
+      - reopened
       - synchronize
       - ready_for_review
-      - review_requested
     paths:
       - 'web/**'
 
 jobs:
   web:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
