@@ -6,7 +6,6 @@ on:
       - main
   pull_request:
     types:
-      - synchronize
       - ready_for_review
       - review_requested
     paths:
