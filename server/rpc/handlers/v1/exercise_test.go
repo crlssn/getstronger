@@ -750,6 +750,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 
 						// Non-matching set.
 						s.factory.NewSet(
+							factory.SetUserID(user.ID),
 							factory.SetExerciseID(exercise.GetId()),
 						)
 					}
@@ -865,6 +866,150 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetMetadata().GetWorkoutId(), set.GetMetadata().GetWorkoutId())
 					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetMetadata().GetCreatedAt(), set.GetMetadata().GetCreatedAt())
 				}
+			}
+		})
+	}
+}
+
+func (s *exerciseSuite) TestGetPersonalBests() {
+	type expected struct {
+		err error
+		res *v1.GetPersonalBestsResponse
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.GetPersonalBestsRequest]
+		init     func(t test)
+		expected expected
+	}
+
+	now := time.Now().UTC()
+
+	tests := []test{
+		{
+			name: "ok_personal_bests_found",
+			req: &connect.Request[v1.GetPersonalBestsRequest]{
+				Msg: &v1.GetPersonalBestsRequest{
+					UserId: factory.UUID(0),
+				},
+			},
+			init: func(t test) {
+				user := s.factory.NewUser(
+					factory.UserID(t.req.Msg.GetUserId()),
+				)
+
+				for _, pb := range t.expected.res.GetPersonalBests() {
+					exercise := s.factory.NewExercise(
+						factory.ExerciseID(pb.GetExercise().GetId()),
+						factory.ExerciseUserID(user.ID),
+						factory.ExerciseTitle(pb.GetExercise().GetName()),
+					)
+					workout := s.factory.NewWorkout(
+						factory.WorkoutID(pb.GetSet().GetMetadata().GetWorkoutId()),
+						factory.WorkoutUserID(user.ID),
+					)
+					s.factory.NewSet(
+						factory.SetID(pb.GetSet().GetId()),
+						factory.SetUserID(user.ID),
+						factory.SetWorkoutID(workout.ID),
+						factory.SetExerciseID(exercise.ID),
+						factory.SetWeight(pb.GetSet().GetWeight()),
+						factory.SetReps(int(pb.GetSet().GetReps())),
+						factory.SetCreatedAt(pb.GetSet().GetMetadata().GetCreatedAt().AsTime()),
+					)
+
+					// Non-matching set.
+					workout = s.factory.NewWorkout(
+						factory.WorkoutUserID(user.ID),
+					)
+					s.factory.NewSet(
+						factory.SetUserID(user.ID),
+						factory.SetWorkoutID(workout.ID),
+						factory.SetExerciseID(exercise.ID),
+						factory.SetWeight(0),
+						factory.SetReps(0),
+					)
+				}
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.GetPersonalBestsResponse{
+					PersonalBests: []*v1.ExerciseSet{
+						{
+							Exercise: &v1.Exercise{
+								Id:     uuid.NewString(),
+								UserId: factory.UUID(0),
+								Name:   gofakeit.Name(),
+							},
+							Set: &v1.Set{
+								Id:     uuid.NewString(),
+								Weight: 1,
+								Reps:   2,
+								Metadata: &v1.MetadataSet{
+									WorkoutId: uuid.NewString(),
+									CreatedAt: timestamppb.New(now),
+								},
+							},
+						},
+						{
+							Exercise: &v1.Exercise{
+								Id:     uuid.NewString(),
+								UserId: factory.UUID(0),
+								Name:   gofakeit.Name(),
+							},
+							Set: &v1.Set{
+								Id:     uuid.NewString(),
+								Weight: 3,
+								Reps:   4,
+								Metadata: &v1.MetadataSet{
+									WorkoutId: uuid.NewString(),
+									CreatedAt: timestamppb.New(now.Add(-time.Second)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "ok_no_personal_bests_found",
+			req: &connect.Request[v1.GetPersonalBestsRequest]{
+				Msg: &v1.GetPersonalBestsRequest{
+					UserId: uuid.NewString(),
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: nil,
+				res: &v1.GetPersonalBestsResponse{
+					PersonalBests: nil,
+				},
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			res, err := s.handler.GetPersonalBests(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			s.Require().Equal(len(t.expected.res.GetPersonalBests()), len(res.Msg.GetPersonalBests()))
+			for i, pb := range res.Msg.GetPersonalBests() {
+				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetExercise().GetId(), pb.GetExercise().GetId())
+				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetReps(), pb.GetSet().GetReps())
+				s.Require().InEpsilon(t.expected.res.GetPersonalBests()[i].GetSet().GetWeight(), pb.GetSet().GetWeight(), 0)
 			}
 		})
 	}
