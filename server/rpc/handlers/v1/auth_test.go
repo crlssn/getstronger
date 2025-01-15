@@ -85,7 +85,7 @@ func (s *authSuite) TestSignup() {
 
 	tests := []test{
 		{
-			name: "ok",
+			name: "ok_signed_up",
 			req: &connect.Request[v1.SignupRequest]{
 				Msg: &v1.SignupRequest{
 					Email:                gofakeit.Email(),
@@ -173,7 +173,7 @@ func (s *authSuite) TestLogin() {
 
 	tests := []test{
 		{
-			name: "ok",
+			name: "ok_logged_in",
 			req: &connect.Request[v1.LoginRequest]{
 				Msg: &v1.LoginRequest{
 					Email:    gofakeit.Email(),
@@ -269,7 +269,7 @@ func (s *authSuite) TestRefreshToken() {
 
 	tests := []test{
 		{
-			name:  "ok",
+			name:  "ok_token_refreshed",
 			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
@@ -341,7 +341,7 @@ func (s *authSuite) TestLogout() {
 
 	tests := []test{
 		{
-			name:  "ok_logout",
+			name:  "ok_logged_out",
 			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				auth := s.factory.NewAuth(factory.AuthRefreshToken(t.token))
