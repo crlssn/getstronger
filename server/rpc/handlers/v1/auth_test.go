@@ -2,6 +2,7 @@ package v1_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"testing"
 
@@ -465,6 +466,113 @@ func (s *authSuite) TestVerifyEmail() {
 			auth, err := orm.Auths(orm.AuthWhere.EmailToken.EQ(t.req.Msg.GetToken())).One(ctx, s.container.DB)
 			s.Require().NoError(err)
 			s.Require().True(auth.EmailVerified)
+		})
+	}
+}
+
+func (s *authSuite) TestResetPassword() {
+	type expected struct {
+		err  error
+		resp *v1.ResetPasswordResponse
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.ResetPasswordRequest]
+		init     func(t test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_password_reset_email_sent",
+			req: &connect.Request[v1.ResetPasswordRequest]{
+				Msg: &v1.ResetPasswordRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+				)
+				user := s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+
+				s.mocks.email.EXPECT().
+					SendPasswordReset(gomock.Any(), gomock.Any()).
+					Do(func(_ context.Context, req email.SendPasswordReset) {
+						s.Require().Equal(user.FirstName, req.Name)
+						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
+						_, err := uuid.Parse(req.Token)
+						s.Require().NoError(err)
+					})
+			},
+			expected: expected{
+				err:  nil,
+				resp: &v1.ResetPasswordResponse{},
+			},
+		},
+		{
+			name: "ok_email_not_found_no_exposure",
+			req: &connect.Request[v1.ResetPasswordRequest]{
+				Msg: &v1.ResetPasswordRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err:  nil,
+				resp: &v1.ResetPasswordResponse{},
+			},
+		},
+		{
+			name: "err_email_send_failure",
+			req: &connect.Request[v1.ResetPasswordRequest]{
+				Msg: &v1.ResetPasswordRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+				)
+				user := s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+
+				s.mocks.email.EXPECT().
+					SendPasswordReset(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, req email.SendPasswordReset) error {
+						s.Require().Equal(user.FirstName, req.Name)
+						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
+						_, err := uuid.Parse(req.Token)
+						s.Require().NoError(err)
+						return errors.New("failure")
+					})
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeInternal, nil),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			res, err := s.handler.ResetPassword(ctx, t.req)
+
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.resp, res.Msg)
 		})
 	}
 }
