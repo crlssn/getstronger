@@ -489,7 +489,9 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					return exercises[i].CreatedAt.Before(exercises[j].CreatedAt)
 				})
 
-				nextPageToken, err := json.Marshal(repo.PageToken{CreatedAt: exercises[0].CreatedAt})
+				nextPageToken, err := json.Marshal(repo.PageToken{
+					CreatedAt: exercises[0].CreatedAt.Truncate(time.Microsecond),
+				})
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
@@ -864,7 +866,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetReps(), set.GetReps())
 					s.Require().InEpsilon(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetWeight(), set.GetWeight(), 0)
 					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetMetadata().GetWorkoutId(), set.GetMetadata().GetWorkoutId())
-					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetMetadata().GetCreatedAt(), set.GetMetadata().GetCreatedAt())
+					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetMetadata().GetCreatedAt().GetSeconds(), set.GetMetadata().GetCreatedAt().GetSeconds())
 				}
 			}
 		})
@@ -1064,7 +1066,9 @@ func (s *exerciseSuite) TestListSets() {
 					return sets[i].CreatedAt.Before(sets[j].CreatedAt)
 				})
 
-				nextPageToken, err := json.Marshal(repo.PageToken{CreatedAt: sets[0].CreatedAt})
+				nextPageToken, err := json.Marshal(repo.PageToken{
+					CreatedAt: sets[0].CreatedAt.Truncate(time.Microsecond),
+				})
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
