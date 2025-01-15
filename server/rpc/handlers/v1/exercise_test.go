@@ -359,3 +359,80 @@ func (s *exerciseSuite) TestUpdateExercise() {
 		})
 	}
 }
+
+func (s *exerciseSuite) TestDeleteExercise() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.DeleteExerciseRequest]
+		init     func(t test) context.Context
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_exercise_deleted",
+			req: &connect.Request[v1.DeleteExerciseRequest]{
+				Msg: &v1.DeleteExerciseRequest{
+					Id: uuid.NewString(),
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				s.factory.NewExercise(
+					factory.ExerciseID(t.req.Msg.GetId()),
+					factory.ExerciseUserID(user.ID),
+				)
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "err_exercise_not_found",
+			req: &connect.Request[v1.DeleteExerciseRequest]{
+				Msg: &v1.DeleteExerciseRequest{
+					Id: uuid.NewString(),
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := t.init(t)
+
+			res, err := s.handler.DeleteExercise(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			exists, err := orm.Exercises(
+				orm.ExerciseWhere.ID.EQ(t.req.Msg.GetId()),
+				orm.ExerciseWhere.DeletedAt.IsNotNull(),
+			).Exists(ctx, s.testContainer.DB)
+			s.Require().NoError(err)
+			s.Require().True(exists)
+		})
+	}
+}
