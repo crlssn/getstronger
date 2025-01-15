@@ -214,7 +214,7 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.Logou
 		auth, err := h.repo.GetAuth(ctx, repo.GetAuthByRefreshToken(refreshToken))
 		if err != nil {
 			log.Error("auth fetch failed", zap.Error(err))
-			return nil, connect.NewError(connect.CodeInternal, nil)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
 		if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthDeleteRefreshToken()); err != nil {

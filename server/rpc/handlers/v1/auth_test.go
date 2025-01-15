@@ -9,6 +9,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"github.com/volatiletech/null/v8"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
@@ -322,6 +323,80 @@ func (s *authSuite) TestRefreshToken() {
 			s.Require().NotNil(res)
 			s.Require().NotEmpty(res.Msg.GetAccessToken())
 			s.Require().NoError(s.jwt.ValidateAccessToken(res.Msg.GetAccessToken()))
+		})
+	}
+}
+
+func (s *authSuite) TestLogout() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		token    string
+		init     func(t test) context.Context
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name:  "ok_logout",
+			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			init: func(t test) context.Context {
+				auth := s.factory.NewAuth(factory.AuthRefreshToken(t.token))
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithRefreshToken(ctx, auth.RefreshToken.String)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:  "ok_no_refresh_token",
+			token: "",
+			init: func(_ test) context.Context {
+				return xcontext.WithLogger(context.Background(), zap.NewExample())
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:  "err_refresh_token_not_found",
+			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			init: func(t test) context.Context {
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithRefreshToken(ctx, t.token)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := t.init(t)
+
+			res, err := s.handler.Logout(ctx, &connect.Request[v1.LogoutRequest]{})
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			cookie := res.Header().Get("Set-Cookie")
+			s.Require().Contains(cookie, "HttpOnly")
+			s.Require().Contains(cookie, "Max-Age=0")
+
+			exists, existsErr := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(t.token))).Exists(ctx, s.container.DB)
+			s.Require().NoError(existsErr)
+			s.Require().False(exists)
 		})
 	}
 }
