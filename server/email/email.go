@@ -13,11 +13,6 @@ import (
 	c "github.com/crlssn/getstronger/server/config"
 )
 
-type Email interface {
-	SendVerification(ctx context.Context, req SendVerification) error
-	SendPasswordReset(ctx context.Context, req SendPasswordReset) error
-}
-
 type email struct {
 	client *ses.Client
 	config *c.Config

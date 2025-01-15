@@ -76,6 +76,15 @@ func TestFactory_Exercise(t *testing.T) {
 		require.Equal(t, subTitle, created.SubTitle.String)
 	})
 
+	t.Run("ExerciseCreatedAt", func(t *testing.T) {
+		t.Parallel()
+		now := time.Now()
+		expected := f.NewExercise(factory.ExerciseCreatedAt(now))
+		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		require.NoError(t, err)
+		require.Equal(t, now.UTC().Truncate(time.Microsecond), created.CreatedAt.Truncate(time.Microsecond))
+	})
+
 	t.Run("ExerciseDeleted", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewExercise(factory.ExerciseDeleted())

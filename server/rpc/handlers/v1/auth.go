@@ -13,7 +13,6 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/cookies"
 	"github.com/crlssn/getstronger/server/email"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -30,7 +29,6 @@ type authHandler struct {
 	jwt     *jwt.Manager
 	repo    repo.Repo
 	email   email.Email
-	config  *config.Config
 	cookies *cookies.Cookies
 }
 
@@ -40,7 +38,6 @@ type AuthHandlerParams struct {
 	JWT     *jwt.Manager
 	Repo    repo.Repo
 	Email   email.Email
-	Config  *config.Config
 	Cookies *cookies.Cookies
 }
 
@@ -49,7 +46,6 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 		jwt:     p.JWT,
 		repo:    p.Repo,
 		email:   p.Email,
-		config:  p.Config,
 		cookies: p.Cookies,
 	}
 }
@@ -108,14 +104,14 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 	return connect.NewResponse(&apiv1.SignupResponse{}), nil
 }
 
-var errInvalidCredentials = errors.New("invalid credentials")
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.LoginRequest]) (*connect.Response[apiv1.LoginResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
 		log.Error("credentials invalid", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidCredentials)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
 
 	auth, err := h.repo.GetAuth(ctx,
@@ -166,8 +162,8 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 }
 
 var (
-	errInvalidRefreshToken  = errors.New("invalid refresh token")
-	errRefreshTokenNotFound = errors.New("refresh token not found")
+	ErrInvalidRefreshToken  = errors.New("invalid refresh token")
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 )
 
 func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1.RefreshTokenRequest]) (*connect.Response[apiv1.RefreshTokenResponse], error) {
@@ -185,18 +181,18 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 	}
 	if !exists {
 		log.Warn("refresh token not found")
-		return nil, connect.NewError(connect.CodeUnauthenticated, errRefreshTokenNotFound)
+		return nil, connect.NewError(connect.CodeUnauthenticated, ErrRefreshTokenNotFound)
 	}
 
 	claims, err := h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
 	if err != nil {
 		log.Error("token parsing failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidRefreshToken)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
 	if err = h.jwt.ValidateClaims(claims); err != nil {
 		log.Error("token validation failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidRefreshToken)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
 	accessToken, err := h.jwt.CreateToken(claims.UserID, jwt.TokenTypeAccess)
@@ -218,7 +214,7 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.Logou
 		auth, err := h.repo.GetAuth(ctx, repo.GetAuthByRefreshToken(refreshToken))
 		if err != nil {
 			log.Error("auth fetch failed", zap.Error(err))
-			return nil, connect.NewError(connect.CodeInternal, nil)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
 		if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthDeleteRefreshToken()); err != nil {

@@ -66,7 +66,7 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 	}), nil
 }
 
-var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
+var ErrInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
 func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseRequest]) (*connect.Response[apiv1.UpdateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx).
@@ -96,7 +96,7 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 			opts = append(opts, repo.UpdateExerciseSubTitle(req.Msg.GetExercise().GetLabel()))
 		default:
 			log.Error("invalid update mask path", zap.String("path", path))
-			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidUpdateMaskPath)
+			return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidUpdateMaskPath)
 		}
 	}
 
@@ -152,14 +152,23 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	exercises, err := h.repo.ListExercises(ctx,
-		repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()),
-		repo.ListExercisesWithName(req.Msg.GetName()),
-		repo.ListExercisesWithLimit(limit+1),
+
+	opts := []repo.ListExercisesOpt{
+		repo.ListExercisesWithLimit(limit + 1),
 		repo.ListExercisesWithUserID(userID),
 		repo.ListExercisesWithPageToken(req.Msg.GetPagination().GetPageToken()),
 		repo.ListExercisesWithoutDeleted(),
-	)
+	}
+
+	if req.Msg.GetName() != "" {
+		opts = append(opts, repo.ListExercisesWithName(req.Msg.GetName()))
+	}
+
+	if req.Msg.GetExerciseIds() != nil {
+		opts = append(opts, repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()))
+	}
+
+	exercises, err := h.repo.ListExercises(ctx, opts...)
 	if err != nil {
 		log.Error("list exercises failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -224,13 +233,21 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	sets, err := h.repo.ListSets(ctx,
-		repo.ListSetsWithLimit(limit+1),
-		repo.ListSetsWithUserID(req.Msg.GetUserIds()...),
-		repo.ListSetsWithExerciseID(req.Msg.GetExerciseIds()...),
+	opts := []repo.ListSetsOpt{
+		repo.ListSetsWithLimit(limit + 1),
 		repo.ListSetsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 		repo.ListSetsOrderByCreatedAt(repo.DESC),
-	)
+	}
+
+	if req.Msg.GetExerciseIds() != nil {
+		opts = append(opts, repo.ListSetsWithExerciseID(req.Msg.GetExerciseIds()...))
+	}
+
+	if req.Msg.GetUserIds() != nil {
+		opts = append(opts, repo.ListSetsWithUserID(req.Msg.GetUserIds()...))
+	}
+
+	sets, err := h.repo.ListSets(ctx, opts...)
 	if err != nil {
 		log.Error("list sets failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

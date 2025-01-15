@@ -112,6 +112,15 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 	return tokenString, nil
 }
 
+func (m *Manager) MustCreateToken(userID string, tokenType TokenType) string {
+	token, err := m.CreateToken(userID, tokenType)
+	if err != nil {
+		panic(err)
+	}
+
+	return token
+}
+
 var (
 	ErrInvalidToken            = fmt.Errorf("invalid token")
 	ErrUnexpectedSubject       = errors.New("unexpected subject")
