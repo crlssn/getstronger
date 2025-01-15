@@ -13,6 +13,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/cookies"
@@ -573,6 +574,94 @@ func (s *authSuite) TestResetPassword() {
 
 			s.Require().NoError(err)
 			s.Require().Equal(t.expected.resp, res.Msg)
+		})
+	}
+}
+
+func (s *authSuite) TestUpdatePassword() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.UpdatePasswordRequest]
+		init     func(t test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_password_updated",
+			req: &connect.Request[v1.UpdatePasswordRequest]{
+				Msg: &v1.UpdatePasswordRequest{
+					Token:                uuid.NewString(),
+					Password:             "new_password",
+					PasswordConfirmation: "new_password",
+				},
+			},
+			init: func(t test) {
+				s.factory.NewAuth(
+					factory.AuthPasswordResetToken(t.req.Msg.GetToken()),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "err_password_mismatch",
+			req: &connect.Request[v1.UpdatePasswordRequest]{
+				Msg: &v1.UpdatePasswordRequest{
+					Token:                uuid.NewString(),
+					Password:             "new_password",
+					PasswordConfirmation: "different_password",
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: rpc.Error(connect.CodeInvalidArgument, v1.Error_ERROR_PASSWORDS_DO_NOT_MATCH),
+			},
+		},
+		{
+			name: "err_token_not_found",
+			req: &connect.Request[v1.UpdatePasswordRequest]{
+				Msg: &v1.UpdatePasswordRequest{
+					Token:                uuid.NewString(),
+					Password:             "new_password",
+					PasswordConfirmation: "new_password",
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+
+			auth, err := orm.Auths(
+				orm.AuthWhere.PasswordResetToken.EQ(null.StringFrom(t.req.Msg.GetToken())),
+			).One(ctx, s.container.DB)
+
+			res, err := s.handler.UpdatePassword(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NotNil(res)
+			s.Require().NoError(err)
+			s.Require().NoError(auth.Reload(ctx, s.container.DB))
+			s.Require().Empty(auth.PasswordResetToken.String)
+			s.Require().Nil(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.req.Msg.GetPassword())))
 		})
 	}
 }
