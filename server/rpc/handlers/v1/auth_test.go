@@ -615,10 +615,14 @@ func (s *authSuite) TestUpdatePassword() {
 
 			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 
-			auth, err := orm.Auths(
-				orm.AuthWhere.PasswordResetToken.EQ(null.StringFrom(t.req.Msg.GetToken())),
-			).One(ctx, s.container.DB)
-			s.Require().NoError(err)
+			var err error
+			var auth *orm.Auth
+			if t.expected.err == nil {
+				auth, err = orm.Auths(
+					orm.AuthWhere.PasswordResetToken.EQ(null.StringFrom(t.req.Msg.GetToken())),
+				).One(ctx, s.container.DB)
+				s.Require().NoError(err)
+			}
 
 			res, err := s.handler.UpdatePassword(ctx, t.req)
 			if t.expected.err != nil {
