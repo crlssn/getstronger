@@ -66,7 +66,7 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 	}), nil
 }
 
-var errInvalidUpdateMaskPath = errors.New("invalid update mask path")
+var ErrInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
 func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseRequest]) (*connect.Response[apiv1.UpdateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx).
@@ -96,7 +96,7 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 			opts = append(opts, repo.UpdateExerciseSubTitle(req.Msg.GetExercise().GetLabel()))
 		default:
 			log.Error("invalid update mask path", zap.String("path", path))
-			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidUpdateMaskPath)
+			return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidUpdateMaskPath)
 		}
 	}
 

@@ -190,62 +190,172 @@ func (s *exerciseSuite) TestUpdateExercise() {
 	type test struct {
 		name     string
 		req      *connect.Request[v1.UpdateExerciseRequest]
-		init     func(test)
+		init     func(t test) context.Context
 		expected expected
 	}
 
-	user := s.factory.NewUser()
-
 	tests := []test{
 		{
-			name: "ok",
+			name: "ok_exercise_name_updated",
 			req: &connect.Request[v1.UpdateExerciseRequest]{
 				Msg: &v1.UpdateExerciseRequest{
 					Exercise: &v1.Exercise{
-						Id:     uuid.NewString(),
-						UserId: user.ID,
-						Name:   "new_name",
-						Label:  "new_label",
+						Id:   uuid.NewString(),
+						Name: "New Name",
+					},
+					UpdateMask: &fieldmaskpb.FieldMask{
+						Paths: []string{"name"},
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				s.factory.NewExercise(
+					factory.ExerciseID(t.req.Msg.GetExercise().GetId()),
+					factory.ExerciseUserID(user.ID),
+					factory.ExerciseTitle("Old Name"),
+				)
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "ok_exercise_label_updated",
+			req: &connect.Request[v1.UpdateExerciseRequest]{
+				Msg: &v1.UpdateExerciseRequest{
+					Exercise: &v1.Exercise{
+						Id:    uuid.NewString(),
+						Name:  "Name",
+						Label: "New Label",
+					},
+					UpdateMask: &fieldmaskpb.FieldMask{
+						Paths: []string{"label"},
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				s.factory.NewExercise(
+					factory.ExerciseID(t.req.Msg.GetExercise().GetId()),
+					factory.ExerciseUserID(user.ID),
+					factory.ExerciseTitle(t.req.Msg.GetExercise().GetName()),
+					factory.ExerciseSubTitle("Old Label"),
+				)
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "ok_exercise_name_and_label_updated",
+			req: &connect.Request[v1.UpdateExerciseRequest]{
+				Msg: &v1.UpdateExerciseRequest{
+					Exercise: &v1.Exercise{
+						Id:    uuid.NewString(),
+						Name:  "New Name",
+						Label: "New Label",
 					},
 					UpdateMask: &fieldmaskpb.FieldMask{
 						Paths: []string{"name", "label"},
 					},
 				},
 			},
-			init: func(t test) {
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
 				s.factory.NewExercise(
 					factory.ExerciseID(t.req.Msg.GetExercise().GetId()),
-					factory.ExerciseUserID(t.req.Msg.GetExercise().GetUserId()),
-					factory.ExerciseTitle("old_name"),
-					factory.ExerciseSubTitle("old_label"),
+					factory.ExerciseUserID(user.ID),
+					factory.ExerciseTitle("Old Name"),
+					factory.ExerciseSubTitle("Old Label"),
 				)
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
 			},
 		},
-	}
+		{
+			name: "err_exercise_not_found",
+			req: &connect.Request[v1.UpdateExerciseRequest]{
+				Msg: &v1.UpdateExerciseRequest{
+					Exercise: &v1.Exercise{
+						Id: uuid.NewString(),
+					},
+					UpdateMask: &fieldmaskpb.FieldMask{
+						Paths: []string{"name"},
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+		{
+			name: "err_invalid_update_mask_path",
+			req: &connect.Request[v1.UpdateExerciseRequest]{
+				Msg: &v1.UpdateExerciseRequest{
+					Exercise: &v1.Exercise{
+						Id: uuid.NewString(),
+					},
+					UpdateMask: &fieldmaskpb.FieldMask{
+						Paths: []string{"invalid"},
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				s.factory.NewExercise(
+					factory.ExerciseID(t.req.Msg.GetExercise().GetId()),
+					factory.ExerciseUserID(user.ID),
+				)
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
-	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidUpdateMaskPath),
+			},
+		},
+	}
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			t.init(t)
+			ctx := t.init(t)
 
 			res, err := s.handler.UpdateExercise(ctx, t.req)
 			if t.expected.err != nil {
 				s.Require().Nil(res)
 				s.Require().Error(err)
-				s.Require().ErrorIs(err, t.expected.err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
 				return
 			}
 
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
+
 			s.Require().Equal(t.req.Msg.GetExercise().GetId(), res.Msg.GetExercise().GetId())
 			s.Require().Equal(t.req.Msg.GetExercise().GetName(), res.Msg.GetExercise().GetName())
 			s.Require().Equal(t.req.Msg.GetExercise().GetLabel(), res.Msg.GetExercise().GetLabel())
+
+			exercise, err := orm.FindExercise(ctx, s.testContainer.DB, res.Msg.GetExercise().GetId())
+			s.Require().NoError(err)
+			s.Require().NotNil(exercise)
+			s.Require().Equal(t.req.Msg.GetExercise().GetName(), exercise.Title)
+			s.Require().Equal(t.req.Msg.GetExercise().GetLabel(), exercise.SubTitle.String)
 		})
 	}
 }
