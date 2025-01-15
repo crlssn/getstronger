@@ -71,6 +71,15 @@ func TestFactory_Auth(t *testing.T) {
 		require.Equal(t, refreshToken, created.RefreshToken.String)
 	})
 
+	t.Run("AuthEmailToken", func(t *testing.T) {
+		t.Parallel()
+		token := uuid.NewString()
+		expected := f.NewAuth(factory.AuthEmailToken(token))
+		created, err := orm.FindAuth(ctx, c.DB, expected.ID)
+		require.NoError(t, err)
+		require.Equal(t, token, created.EmailToken)
+	})
+
 	t.Run("AuthEmailVerified", func(t *testing.T) {
 		t.Parallel()
 		passwordResetToken := uuid.NewString()
