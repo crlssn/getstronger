@@ -152,14 +152,23 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	exercises, err := h.repo.ListExercises(ctx,
-		repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()),
-		repo.ListExercisesWithName(req.Msg.GetName()),
-		repo.ListExercisesWithLimit(limit+1),
+
+	opts := []repo.ListExercisesOpt{
+		repo.ListExercisesWithLimit(limit + 1),
 		repo.ListExercisesWithUserID(userID),
 		repo.ListExercisesWithPageToken(req.Msg.GetPagination().GetPageToken()),
 		repo.ListExercisesWithoutDeleted(),
-	)
+	}
+
+	if req.Msg.GetName() != "" {
+		opts = append(opts, repo.ListExercisesWithName(req.Msg.GetName()))
+	}
+
+	if req.Msg.GetExerciseIds() != nil {
+		opts = append(opts, repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()))
+	}
+
+	exercises, err := h.repo.ListExercises(ctx, opts...)
 	if err != nil {
 		log.Error("list exercises failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

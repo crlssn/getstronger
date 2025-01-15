@@ -81,6 +81,12 @@ func ExerciseSubTitle(subTitle string) ExerciseOpt {
 	}
 }
 
+func ExerciseCreatedAt(t time.Time) ExerciseOpt {
+	return func(m *orm.Exercise) {
+		m.CreatedAt = t.UTC()
+	}
+}
+
 func ExerciseDeleted() ExerciseOpt {
 	return func(m *orm.Exercise) {
 		m.DeletedAt = null.TimeFrom(time.Now())

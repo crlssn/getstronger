@@ -2,10 +2,14 @@ package v1_test
 
 import (
 	"context"
+	"encoding/json"
 	"log"
+	"sort"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -433,6 +437,262 @@ func (s *exerciseSuite) TestDeleteExercise() {
 			).Exists(ctx, s.testContainer.DB)
 			s.Require().NoError(err)
 			s.Require().True(exists)
+		})
+	}
+}
+
+func (s *exerciseSuite) TestListExercises() {
+	type expected struct {
+		err error
+		res *v1.ListExercisesResponse
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.ListExercisesRequest]
+		init     func(t test) context.Context
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_list_exercises_with_pagination",
+			req: &connect.Request[v1.ListExercisesRequest]{
+				Msg: &v1.ListExercisesRequest{
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 2,
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				now := time.Now()
+				user := s.factory.NewUser(factory.UserID(factory.UUID(0)))
+
+				s.factory.NewExercise(
+					factory.ExerciseUserID(user.ID),
+					factory.ExerciseCreatedAt(now),
+				)
+
+				var exercises orm.ExerciseSlice
+				for _, exercise := range t.expected.res.GetExercises() {
+					exercises = append(exercises, s.factory.NewExercise(
+						factory.ExerciseID(exercise.GetId()),
+						factory.ExerciseUserID(user.ID),
+						factory.ExerciseTitle(exercise.GetName()),
+						factory.ExerciseSubTitle(exercise.GetLabel()),
+						factory.ExerciseCreatedAt(now.Add(time.Second)),
+					))
+				}
+
+				sort.Slice(exercises, func(i, j int) bool {
+					return exercises[i].CreatedAt.Before(exercises[j].CreatedAt)
+				})
+
+				nextPageToken, err := json.Marshal(repo.PageToken{CreatedAt: exercises[0].CreatedAt})
+				s.Require().NoError(err)
+				t.expected.res.Pagination.NextPageToken = nextPageToken
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.ListExercisesResponse{
+					Exercises: []*v1.Exercise{
+						{
+							Id:     uuid.NewString(),
+							UserId: factory.UUID(0),
+							Name:   gofakeit.Name(),
+							Label:  gofakeit.Word(),
+						},
+						{
+							Id:     uuid.NewString(),
+							UserId: factory.UUID(0),
+							Name:   gofakeit.Name(),
+							Label:  gofakeit.Word(),
+						},
+					},
+					Pagination: &v1.PaginationResponse{},
+				},
+			},
+		},
+		{
+			name: "ok_list_exercises_filtered_by_name",
+			req: &connect.Request[v1.ListExercisesRequest]{
+				Msg: &v1.ListExercisesRequest{
+					Name: "Exercise Name",
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 2,
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser(factory.UserID(factory.UUID(1)))
+
+				for _, exercise := range t.expected.res.GetExercises() {
+					s.factory.NewExercise(
+						factory.ExerciseID(exercise.GetId()),
+						factory.ExerciseUserID(user.ID),
+						factory.ExerciseTitle(exercise.GetName()),
+						factory.ExerciseSubTitle(exercise.GetLabel()),
+					)
+				}
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.ListExercisesResponse{
+					Exercises: []*v1.Exercise{
+						{
+							Id:     uuid.NewString(),
+							UserId: factory.UUID(1),
+							Name:   "Exercise Name",
+							Label:  gofakeit.Word(),
+						},
+					},
+					Pagination: &v1.PaginationResponse{},
+				},
+			},
+		},
+		{
+			name: "ok_list_exercises_filtered_by_ids",
+			req: &connect.Request[v1.ListExercisesRequest]{
+				Msg: &v1.ListExercisesRequest{
+					ExerciseIds: []string{factory.UUID(9)},
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 2,
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser(factory.UserID(factory.UUID(2)))
+
+				for _, exercise := range t.expected.res.GetExercises() {
+					s.factory.NewExercise(
+						factory.ExerciseID(exercise.GetId()),
+						factory.ExerciseUserID(user.ID),
+						factory.ExerciseTitle(exercise.GetName()),
+						factory.ExerciseSubTitle(exercise.GetLabel()),
+					)
+				}
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.ListExercisesResponse{
+					Exercises: []*v1.Exercise{
+						{
+							Id:     factory.UUID(9),
+							UserId: factory.UUID(2),
+							Name:   gofakeit.Name(),
+							Label:  gofakeit.Word(),
+						},
+					},
+					Pagination: &v1.PaginationResponse{},
+				},
+			},
+		},
+		{
+			name: "ok_list_exercises_filtered_by_name_and_id",
+			req: &connect.Request[v1.ListExercisesRequest]{
+				Msg: &v1.ListExercisesRequest{
+					Name:        "Target",
+					ExerciseIds: []string{factory.UUID(0)},
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 2,
+					},
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser(factory.UserID(factory.UUID(4)))
+
+				for _, exercise := range t.expected.res.GetExercises() {
+					s.factory.NewExercise(
+						factory.ExerciseID(exercise.GetId()),
+						factory.ExerciseUserID(user.ID),
+						factory.ExerciseTitle(exercise.GetName()),
+						factory.ExerciseSubTitle(exercise.GetLabel()),
+					)
+				}
+
+				// Non-matching exercises
+				s.factory.NewExercise(
+					factory.ExerciseID(uuid.NewString()),       // ID not matching
+					factory.ExerciseTitle(t.req.Msg.GetName()), // Name matching
+					factory.ExerciseUserID(user.ID),
+				)
+				s.factory.NewExercise(
+					factory.ExerciseID(uuid.NewString()),   // ID not matching
+					factory.ExerciseTitle(gofakeit.Name()), // Name not matching
+					factory.ExerciseUserID(user.ID),
+				)
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.ListExercisesResponse{
+					Exercises: []*v1.Exercise{
+						{
+							Id:     factory.UUID(0),
+							UserId: factory.UUID(4),
+							Name:   "Target",
+							Label:  "Label",
+						},
+					},
+					Pagination: &v1.PaginationResponse{},
+				},
+			},
+		},
+		{
+			name: "ok_no_exercises_found",
+			req: &connect.Request[v1.ListExercisesRequest]{
+				Msg: &v1.ListExercisesRequest{},
+			},
+			init: func(_ test) context.Context {
+				user := s.factory.NewUser(factory.UserID(factory.UUID(3)))
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.ListExercisesResponse{
+					Exercises:  []*v1.Exercise{},
+					Pagination: &v1.PaginationResponse{},
+				},
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := t.init(t)
+
+			res, err := s.handler.ListExercises(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			s.Require().Equal(len(t.expected.res.GetExercises()), len(res.Msg.GetExercises()))
+			for i, exercise := range res.Msg.GetExercises() {
+				s.Require().Equal(t.expected.res.GetExercises()[i].GetId(), exercise.GetId())
+				s.Require().Equal(t.expected.res.GetExercises()[i].GetName(), exercise.GetName())
+				s.Require().Equal(t.expected.res.GetExercises()[i].GetLabel(), exercise.GetLabel())
+			}
+
+			s.Require().Equal(t.expected.res.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
 		})
 	}
 }
