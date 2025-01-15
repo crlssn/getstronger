@@ -299,7 +299,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 					},
 				},
 			},
-			init: func(t test) context.Context {
+			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithUserID(ctx, user.ID)
@@ -405,7 +405,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 					Id: uuid.NewString(),
 				},
 			},
-			init: func(t test) context.Context {
+			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithUserID(ctx, user.ID)
@@ -441,7 +441,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 	}
 }
 
-func (s *exerciseSuite) TestListExercises() {
+func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 	type expected struct {
 		err error
 		res *v1.ListExercisesResponse
