@@ -34,10 +34,7 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 	}
 
 	items = items[:limit]
-	nextPageToken, err := json.Marshal(PageToken{
-		// Truncate to microseconds to unify precision across different databases.
-		CreatedAt: createdAt(items[len(items)-1]).Truncate(time.Microsecond),
-	})
+	nextPageToken, err := json.Marshal(PageTokenCreatedAt(createdAt(items[len(items)-1])))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal page token: %w", err)
 	}
@@ -46,6 +43,13 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 		Items:         items,
 		NextPageToken: nextPageToken,
 	}, nil
+}
+
+func PageTokenCreatedAt(t time.Time) PageToken {
+	return PageToken{
+		// Truncate to microseconds to unify precision across different databases.
+		CreatedAt: t.Truncate(time.Microsecond),
+	}
 }
 
 type PageToken struct {

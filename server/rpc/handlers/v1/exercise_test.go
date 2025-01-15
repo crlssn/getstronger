@@ -489,9 +489,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					return exercises[i].CreatedAt.Before(exercises[j].CreatedAt)
 				})
 
-				nextPageToken, err := json.Marshal(repo.PageToken{
-					CreatedAt: exercises[0].CreatedAt.Truncate(time.Microsecond),
-				})
+				nextPageToken, err := json.Marshal(repo.PageTokenCreatedAt(exercises[0].CreatedAt))
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
@@ -1066,9 +1064,7 @@ func (s *exerciseSuite) TestListSets() {
 					return sets[i].CreatedAt.Before(sets[j].CreatedAt)
 				})
 
-				nextPageToken, err := json.Marshal(repo.PageToken{
-					CreatedAt: sets[0].CreatedAt.Truncate(time.Microsecond),
-				})
+				nextPageToken, err := json.Marshal(repo.PageTokenCreatedAt(sets[0].CreatedAt))
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
