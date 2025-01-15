@@ -116,7 +116,10 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 		m.WorkoutID = f.NewWorkout().ID
 	}
 
-	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+	insertColumns := boil.Infer()
+	updateColumns := boil.Infer()
+	conflictColumns := []string{orm.WorkoutCommentColumns.ID}
+	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
 		panic(fmt.Errorf("failed to insert workout comment: %w", err))
 	}
 

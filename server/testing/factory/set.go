@@ -57,7 +57,10 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		m.ExerciseID = f.NewExercise().ID
 	}
 
-	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+	insertColumns := boil.Infer()
+	updateColumns := boil.Infer()
+	conflictColumns := []string{orm.SetColumns.ID}
+	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
 		panic(fmt.Errorf("failed to insert set: %w", err))
 	}
 

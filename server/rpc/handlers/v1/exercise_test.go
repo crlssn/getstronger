@@ -31,8 +31,8 @@ type exerciseSuite struct {
 
 	handler apiv1connect.ExerciseServiceHandler
 
-	factory       *factory.Factory
-	testContainer *container.Container
+	factory   *factory.Factory
+	container *container.Container
 }
 
 func TestExerciseSuite(t *testing.T) {
@@ -42,12 +42,12 @@ func TestExerciseSuite(t *testing.T) {
 
 func (s *exerciseSuite) SetupSuite() {
 	ctx := context.Background()
-	s.testContainer = container.NewContainer(ctx)
-	s.factory = factory.NewFactory(s.testContainer.DB)
-	s.handler = handlers.NewExerciseHandler(repo.New(s.testContainer.DB))
+	s.container = container.NewContainer(ctx)
+	s.factory = factory.NewFactory(s.container.DB)
+	s.handler = handlers.NewExerciseHandler(repo.New(s.container.DB))
 
 	s.T().Cleanup(func() {
-		if err := s.testContainer.Terminate(ctx); err != nil {
+		if err := s.container.Terminate(ctx); err != nil {
 			log.Fatalf("failed to clean container: %s", err)
 		}
 	})
@@ -103,7 +103,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			_, err = uuid.Parse(res.Msg.GetId())
 			s.Require().NoError(err)
 
-			exercise, err := orm.FindExercise(ctx, s.testContainer.DB, res.Msg.GetId())
+			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetLabel(), exercise.SubTitle.String)
@@ -179,7 +179,7 @@ func (s *exerciseSuite) TestGetExercise() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			exercise, err := orm.FindExercise(ctx, s.testContainer.DB, res.Msg.GetExercise().GetId())
+			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetExercise().GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetId(), exercise.ID)
@@ -356,7 +356,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 			s.Require().Equal(t.req.Msg.GetExercise().GetName(), res.Msg.GetExercise().GetName())
 			s.Require().Equal(t.req.Msg.GetExercise().GetLabel(), res.Msg.GetExercise().GetLabel())
 
-			exercise, err := orm.FindExercise(ctx, s.testContainer.DB, res.Msg.GetExercise().GetId())
+			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetExercise().GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetExercise().GetName(), exercise.Title)
@@ -435,7 +435,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 			exists, err := orm.Exercises(
 				orm.ExerciseWhere.ID.EQ(t.req.Msg.GetId()),
 				orm.ExerciseWhere.DeletedAt.IsNotNull(),
-			).Exists(ctx, s.testContainer.DB)
+			).Exists(ctx, s.container.DB)
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})

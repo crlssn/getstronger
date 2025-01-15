@@ -53,7 +53,10 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *orm.Notification {
 		m.Payload = []byte("{}")
 	}
 
-	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+	insertColumns := boil.Infer()
+	updateColumns := boil.Infer()
+	conflictColumns := []string{orm.NotificationColumns.ID}
+	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
 		panic(fmt.Errorf("failed to insert notification: %w", err))
 	}
 
