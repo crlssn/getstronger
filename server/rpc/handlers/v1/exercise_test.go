@@ -69,7 +69,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 					Label: "Label",
 				},
 			},
-			init: func(t test) context.Context {
+			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithUserID(ctx, user.ID)
