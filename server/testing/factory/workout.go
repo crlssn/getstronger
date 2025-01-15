@@ -41,7 +41,10 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 		m.UserID = f.NewUser().ID
 	}
 
-	if err := m.Insert(context.Background(), f.db, boil.Infer()); err != nil {
+	updateColumns := boil.Infer()
+	insertColumns := boil.Infer()
+	conflictColumns := []string{orm.WorkoutColumns.ID}
+	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
 		panic(fmt.Errorf("failed to insert workout: %w", err))
 	}
 

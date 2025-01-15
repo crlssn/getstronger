@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -693,6 +694,178 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 			}
 
 			s.Require().Equal(t.expected.res.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
+		})
+	}
+}
+
+func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
+	type expected struct {
+		err error
+		res *v1.GetPreviousWorkoutSetsResponse
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.GetPreviousWorkoutSetsRequest]
+		init     func(t test)
+		expected expected
+	}
+
+	now := time.Now().UTC()
+
+	tests := []test{
+		{
+			name: "ok_previous_workout_sets_found",
+			req: &connect.Request[v1.GetPreviousWorkoutSetsRequest]{
+				Msg: &v1.GetPreviousWorkoutSetsRequest{
+					ExerciseIds: []string{factory.UUID(0), factory.UUID(1)},
+				},
+			},
+			init: func(t test) {
+				for _, exerciseSets := range t.expected.res.GetExerciseSets() {
+					exercise := exerciseSets.GetExercise()
+					user := s.factory.NewUser(
+						factory.UserID(exercise.GetUserId()),
+					)
+					s.factory.NewExercise(
+						factory.ExerciseID(exercise.GetId()),
+						factory.ExerciseUserID(user.ID),
+						factory.ExerciseTitle(exercise.GetName()),
+						factory.ExerciseSubTitle(exercise.GetLabel()),
+					)
+
+					for _, set := range exerciseSets.GetSets() {
+						workout := s.factory.NewWorkout(
+							factory.WorkoutID(set.GetMetadata().GetWorkoutId()),
+						)
+						s.factory.NewSet(
+							factory.SetID(set.GetId()),
+							factory.SetUserID(user.ID),
+							factory.SetExerciseID(exercise.GetId()),
+							factory.SetWeight(set.GetWeight()),
+							factory.SetReps(int(set.GetReps())),
+							factory.SetWorkoutID(workout.ID),
+							factory.SetCreatedAt(set.GetMetadata().GetCreatedAt().AsTime()),
+						)
+
+						// Non-matching set.
+						s.factory.NewSet(
+							factory.SetExerciseID(exercise.GetId()),
+						)
+					}
+				}
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.GetPreviousWorkoutSetsResponse{
+					ExerciseSets: []*v1.ExerciseSets{
+						{
+							Exercise: &v1.Exercise{
+								Id:     factory.UUID(0),
+								UserId: uuid.NewString(),
+								Name:   gofakeit.Name(),
+								Label:  gofakeit.Word(),
+							},
+							Sets: []*v1.Set{
+								{
+									Id:     uuid.NewString(),
+									Weight: 1,
+									Reps:   2,
+									Metadata: &v1.MetadataSet{
+										WorkoutId: factory.UUID(9),
+										CreatedAt: timestamppb.New(now),
+									},
+								},
+								{
+									Id:     uuid.NewString(),
+									Weight: 2,
+									Reps:   3,
+									Metadata: &v1.MetadataSet{
+										WorkoutId: factory.UUID(9),
+										CreatedAt: timestamppb.New(now.Add(time.Second)),
+									},
+								},
+							},
+						},
+						{
+							Exercise: &v1.Exercise{
+								Id:     factory.UUID(1),
+								UserId: uuid.NewString(),
+								Name:   gofakeit.Name(),
+								Label:  gofakeit.Word(),
+							},
+							Sets: []*v1.Set{
+								{
+									Id:     uuid.NewString(),
+									Weight: 1,
+									Reps:   2,
+									Metadata: &v1.MetadataSet{
+										WorkoutId: factory.UUID(8),
+										CreatedAt: timestamppb.New(now.Add(time.Minute)),
+									},
+								},
+								{
+									Id:     uuid.NewString(),
+									Weight: 2,
+									Reps:   3,
+									Metadata: &v1.MetadataSet{
+										WorkoutId: factory.UUID(8),
+										CreatedAt: timestamppb.New(now.Add(time.Hour)),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "ok_no_previous_workout_sets",
+			req: &connect.Request[v1.GetPreviousWorkoutSetsRequest]{
+				Msg: &v1.GetPreviousWorkoutSetsRequest{
+					ExerciseIds: []string{uuid.NewString()},
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: nil,
+				res: &v1.GetPreviousWorkoutSetsResponse{
+					ExerciseSets: nil,
+				},
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			res, err := s.handler.GetPreviousWorkoutSets(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			s.Require().Equal(len(t.expected.res.GetExerciseSets()), len(res.Msg.GetExerciseSets()))
+			for i, exerciseSets := range res.Msg.GetExerciseSets() {
+				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetId(), exerciseSets.GetExercise().GetId())
+				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetName(), exerciseSets.GetExercise().GetName())
+				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetLabel(), exerciseSets.GetExercise().GetLabel())
+				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetUserId(), exerciseSets.GetExercise().GetUserId())
+				for j, set := range exerciseSets.GetSets() {
+					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetId(), set.GetId())
+					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetReps(), set.GetReps())
+					s.Require().InEpsilon(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetWeight(), set.GetWeight(), 0)
+					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetMetadata().GetWorkoutId(), set.GetMetadata().GetWorkoutId())
+					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetMetadata().GetCreatedAt(), set.GetMetadata().GetCreatedAt())
+				}
+			}
 		})
 	}
 }
