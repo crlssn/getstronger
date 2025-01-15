@@ -106,6 +106,82 @@ func (s *exerciseSuite) TestCreateExercise() {
 	}
 }
 
+func (s *exerciseSuite) TestGetExercise() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.GetExerciseRequest]
+		init     func(t test) context.Context
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_exercise_found",
+			req: &connect.Request[v1.GetExerciseRequest]{
+				Msg: &v1.GetExerciseRequest{
+					Id: uuid.NewString(),
+				},
+			},
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				exercise := s.factory.NewExercise(
+					factory.ExerciseID(t.req.Msg.GetId()),
+					factory.ExerciseUserID(user.ID),
+				)
+
+				s.Require().NotNil(exercise)
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "err_exercise_not_found",
+			req: &connect.Request[v1.GetExerciseRequest]{
+				Msg: &v1.GetExerciseRequest{
+					Id: uuid.NewString(),
+				},
+			},
+			init: func(_ test) context.Context {
+				user := s.factory.NewUser()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeNotFound, nil),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := t.init(t)
+
+			res, err := s.handler.GetExercise(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			exercise, err := orm.FindExercise(ctx, s.testContainer.DB, res.Msg.GetExercise().GetId())
+			s.Require().NoError(err)
+			s.Require().NotNil(exercise)
+			s.Require().Equal(t.req.Msg.GetId(), exercise.ID)
+		})
+	}
+}
+
 func (s *exerciseSuite) TestUpdateExercise() {
 	type expected struct {
 		err error
