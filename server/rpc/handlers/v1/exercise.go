@@ -233,13 +233,21 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	sets, err := h.repo.ListSets(ctx,
-		repo.ListSetsWithLimit(limit+1),
-		repo.ListSetsWithUserID(req.Msg.GetUserIds()...),
-		repo.ListSetsWithExerciseID(req.Msg.GetExerciseIds()...),
+	opts := []repo.ListSetsOpt{
+		repo.ListSetsWithLimit(limit + 1),
 		repo.ListSetsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 		repo.ListSetsOrderByCreatedAt(repo.DESC),
-	)
+	}
+
+	if req.Msg.GetExerciseIds() != nil {
+		opts = append(opts, repo.ListSetsWithExerciseID(req.Msg.GetExerciseIds()...))
+	}
+
+	if req.Msg.GetUserIds() != nil {
+		opts = append(opts, repo.ListSetsWithUserID(req.Msg.GetUserIds()...))
+	}
+
+	sets, err := h.repo.ListSets(ctx, opts...)
 	if err != nil {
 		log.Error("list sets failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

@@ -1016,3 +1016,195 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 		})
 	}
 }
+
+func (s *exerciseSuite) TestListSets() {
+	type expected struct {
+		err error
+		res *v1.ListSetsResponse
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.ListSetsRequest]
+		init     func(t test)
+		expected expected
+	}
+
+	now := time.Now().UTC()
+
+	tests := []test{
+		{
+			name: "ok_list_sets_with_pagination",
+			req: &connect.Request[v1.ListSetsRequest]{
+				Msg: &v1.ListSetsRequest{
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 2,
+					},
+				},
+			},
+			init: func(t test) {
+				var sets orm.SetSlice
+				for _, set := range t.expected.res.GetSets() {
+					workout := s.factory.NewWorkout(
+						factory.WorkoutID(set.GetMetadata().GetWorkoutId()),
+					)
+					sets = append(sets, s.factory.NewSet(
+						factory.SetID(set.GetId()),
+						factory.SetWorkoutID(workout.ID),
+						factory.SetWeight(set.GetWeight()),
+						factory.SetReps(int(set.GetReps())),
+						factory.SetCreatedAt(set.GetMetadata().GetCreatedAt().AsTime()),
+					))
+				}
+
+				sort.Slice(sets, func(i, j int) bool {
+					return sets[i].CreatedAt.Before(sets[j].CreatedAt)
+				})
+
+				nextPageToken, err := json.Marshal(repo.PageToken{CreatedAt: sets[0].CreatedAt})
+				s.Require().NoError(err)
+				t.expected.res.Pagination.NextPageToken = nextPageToken
+
+				// Additional set to create pagination token.
+				s.factory.NewSet(
+					factory.SetCreatedAt(now.Add(-time.Hour)),
+				)
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.ListSetsResponse{
+					Sets: []*v1.Set{
+						{
+							Id:     uuid.NewString(),
+							Weight: 1,
+							Reps:   2,
+							Metadata: &v1.MetadataSet{
+								WorkoutId: factory.UUID(0),
+								CreatedAt: timestamppb.New(now),
+							},
+						},
+						{
+							Id:     uuid.NewString(),
+							Weight: 3,
+							Reps:   4,
+							Metadata: &v1.MetadataSet{
+								WorkoutId: factory.UUID(1),
+								CreatedAt: timestamppb.New(now.Add(-time.Second)),
+							},
+						},
+					},
+					Pagination: &v1.PaginationResponse{},
+				},
+			},
+		},
+		{
+			name: "ok_list_sets_filtered_by_user_ids_and_exercise_ids",
+			req: &connect.Request[v1.ListSetsRequest]{
+				Msg: &v1.ListSetsRequest{
+					UserIds:     []string{factory.UUID(0)},
+					ExerciseIds: []string{factory.UUID(1)},
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 2,
+					},
+				},
+			},
+			init: func(t test) {
+				user := s.factory.NewUser(
+					factory.UserID(factory.UUID(0)),
+				)
+
+				for _, set := range t.expected.res.GetSets() {
+					exercise := s.factory.NewExercise(
+						factory.ExerciseID(factory.UUID(1)),
+						factory.ExerciseUserID(user.ID),
+					)
+					workout := s.factory.NewWorkout(
+						factory.WorkoutID(set.GetMetadata().GetWorkoutId()),
+						factory.WorkoutUserID(user.ID),
+					)
+					s.factory.NewSet(
+						factory.SetID(set.GetId()),
+						factory.SetUserID(user.ID),
+						factory.SetWorkoutID(workout.ID),
+						factory.SetExerciseID(exercise.ID),
+						factory.SetWeight(set.GetWeight()),
+						factory.SetReps(int(set.GetReps())),
+						factory.SetCreatedAt(set.GetMetadata().GetCreatedAt().AsTime()),
+					)
+				}
+
+				// Non-matching set.
+				s.factory.NewSet()
+			},
+			expected: expected{
+				err: nil,
+				res: &v1.ListSetsResponse{
+					Sets: []*v1.Set{
+						{
+							Id:     uuid.NewString(),
+							Weight: 1,
+							Reps:   2,
+							Metadata: &v1.MetadataSet{
+								WorkoutId: factory.UUID(9),
+								CreatedAt: timestamppb.New(now),
+							},
+						},
+					},
+					Pagination: &v1.PaginationResponse{
+						NextPageToken: nil,
+					},
+				},
+			},
+		},
+		{
+			name: "ok_no_sets_found",
+			req: &connect.Request[v1.ListSetsRequest]{
+				Msg: &v1.ListSetsRequest{
+					UserIds: []string{uuid.NewString()},
+					Pagination: &v1.PaginationRequest{
+						PageLimit: 2,
+					},
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: nil,
+				res: &v1.ListSetsResponse{
+					Sets: []*v1.Set{},
+					Pagination: &v1.PaginationResponse{
+						NextPageToken: nil,
+					},
+				},
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			res, err := s.handler.ListSets(ctx, t.req)
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			s.Require().Equal(len(t.expected.res.GetSets()), len(res.Msg.GetSets()))
+			for i, set := range res.Msg.GetSets() {
+				s.Require().Equal(t.expected.res.GetSets()[i].GetId(), set.GetId())
+				s.Require().Equal(t.expected.res.GetSets()[i].GetReps(), set.GetReps())
+				s.Require().InEpsilon(t.expected.res.GetSets()[i].GetWeight(), set.GetWeight(), 0)
+				s.Require().Equal(t.expected.res.GetSets()[i].GetMetadata().GetWorkoutId(), set.GetMetadata().GetWorkoutId())
+				s.Require().Equal(t.expected.res.GetSets()[i].GetMetadata().GetCreatedAt(), set.GetMetadata().GetCreatedAt())
+			}
+
+			s.Require().Equal(t.expected.res.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
+		})
+	}
+}
