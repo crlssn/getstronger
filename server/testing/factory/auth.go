@@ -63,6 +63,12 @@ func AuthEmail(email string) AuthOpt {
 	}
 }
 
+func AuthEmailToken(token string) AuthOpt {
+	return func(m *orm.Auth) {
+		m.EmailToken = token
+	}
+}
+
 func AuthEmailVerified() AuthOpt {
 	return func(m *orm.Auth) {
 		m.EmailVerified = true

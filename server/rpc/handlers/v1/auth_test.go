@@ -400,3 +400,71 @@ func (s *authSuite) TestLogout() {
 		})
 	}
 }
+
+func (s *authSuite) TestVerifyEmail() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.VerifyEmailRequest]
+		init     func(t test)
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_email_verified",
+			req: &connect.Request[v1.VerifyEmailRequest]{
+				Msg: &v1.VerifyEmailRequest{
+					Token: uuid.NewString(),
+				},
+			},
+			init: func(t test) {
+				s.factory.NewAuth(
+					factory.AuthEmailToken(t.req.Msg.GetToken()),
+					factory.AuthEmailVerified(),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "err_email_token_not_found",
+			req: &connect.Request[v1.VerifyEmailRequest]{
+				Msg: &v1.VerifyEmailRequest{
+					Token: uuid.NewString(),
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			res, err := s.handler.VerifyEmail(ctx, t.req)
+
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			auth, err := orm.Auths(orm.AuthWhere.EmailToken.EQ(t.req.Msg.GetToken())).One(ctx, s.container.DB)
+			s.Require().NoError(err)
+			s.Require().True(auth.EmailVerified)
+		})
+	}
+}
