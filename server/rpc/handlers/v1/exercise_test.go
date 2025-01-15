@@ -1010,6 +1010,8 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetExercise().GetId(), pb.GetExercise().GetId())
 				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetReps(), pb.GetSet().GetReps())
 				s.Require().InEpsilon(t.expected.res.GetPersonalBests()[i].GetSet().GetWeight(), pb.GetSet().GetWeight(), 0)
+				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetMetadata().GetWorkoutId(), pb.GetSet().GetMetadata().GetWorkoutId())
+				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetMetadata().GetCreatedAt(), pb.GetSet().GetMetadata().GetCreatedAt())
 			}
 		})
 	}
