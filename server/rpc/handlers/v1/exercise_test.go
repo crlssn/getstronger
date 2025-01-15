@@ -1043,6 +1043,9 @@ func (s *exerciseSuite) TestListSets() {
 				},
 			},
 			init: func(t test) {
+				_, err := orm.Sets().DeleteAll(context.Background(), s.container.DB)
+				s.Require().NoError(err)
+
 				var sets orm.SetSlice
 				for _, set := range t.expected.res.GetSets() {
 					workout := s.factory.NewWorkout(
@@ -1079,7 +1082,7 @@ func (s *exerciseSuite) TestListSets() {
 							Weight: 1,
 							Reps:   2,
 							Metadata: &v1.MetadataSet{
-								WorkoutId: factory.UUID(0),
+								WorkoutId: uuid.NewString(),
 								CreatedAt: timestamppb.New(now),
 							},
 						},
@@ -1088,7 +1091,7 @@ func (s *exerciseSuite) TestListSets() {
 							Weight: 3,
 							Reps:   4,
 							Metadata: &v1.MetadataSet{
-								WorkoutId: factory.UUID(1),
+								WorkoutId: uuid.NewString(),
 								CreatedAt: timestamppb.New(now.Add(-time.Second)),
 							},
 						},
