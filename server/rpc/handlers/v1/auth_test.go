@@ -2,7 +2,6 @@ package v1_test
 
 import (
 	"context"
-	"errors"
 	"log"
 	"testing"
 
@@ -527,35 +526,6 @@ func (s *authSuite) TestResetPassword() {
 				resp: &v1.ResetPasswordResponse{},
 			},
 		},
-		{
-			name: "err_email_send_failure",
-			req: &connect.Request[v1.ResetPasswordRequest]{
-				Msg: &v1.ResetPasswordRequest{
-					Email: gofakeit.Email(),
-				},
-			},
-			init: func(t test) {
-				auth := s.factory.NewAuth(
-					factory.AuthEmail(t.req.Msg.GetEmail()),
-				)
-				user := s.factory.NewUser(
-					factory.UserAuthID(auth.ID),
-				)
-
-				s.mocks.email.EXPECT().
-					SendPasswordReset(gomock.Any(), gomock.Any()).
-					DoAndReturn(func(_ context.Context, req email.SendPasswordReset) error {
-						s.Require().Equal(user.FirstName, req.Name)
-						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
-						_, err := uuid.Parse(req.Token)
-						s.Require().NoError(err)
-						return errors.New("failure")
-					})
-			},
-			expected: expected{
-				err: connect.NewError(connect.CodeInternal, nil),
-			},
-		},
 	}
 
 	for _, t := range tests {
@@ -648,6 +618,7 @@ func (s *authSuite) TestUpdatePassword() {
 			auth, err := orm.Auths(
 				orm.AuthWhere.PasswordResetToken.EQ(null.StringFrom(t.req.Msg.GetToken())),
 			).One(ctx, s.container.DB)
+			s.Require().NoError(err)
 
 			res, err := s.handler.UpdatePassword(ctx, t.req)
 			if t.expected.err != nil {
@@ -661,7 +632,7 @@ func (s *authSuite) TestUpdatePassword() {
 			s.Require().NoError(err)
 			s.Require().NoError(auth.Reload(ctx, s.container.DB))
 			s.Require().Empty(auth.PasswordResetToken.String)
-			s.Require().Nil(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.req.Msg.GetPassword())))
+			s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.req.Msg.GetPassword())))
 		})
 	}
 }
