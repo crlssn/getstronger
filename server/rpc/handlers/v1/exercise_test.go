@@ -1011,7 +1011,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetReps(), pb.GetSet().GetReps())
 				s.Require().InEpsilon(t.expected.res.GetPersonalBests()[i].GetSet().GetWeight(), pb.GetSet().GetWeight(), 0)
 				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetMetadata().GetWorkoutId(), pb.GetSet().GetMetadata().GetWorkoutId())
-				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetMetadata().GetCreatedAt(), pb.GetSet().GetMetadata().GetCreatedAt())
+				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetMetadata().GetCreatedAt().GetSeconds(), pb.GetSet().GetMetadata().GetCreatedAt().GetSeconds())
 			}
 		})
 	}
@@ -1204,7 +1204,7 @@ func (s *exerciseSuite) TestListSets() {
 				s.Require().Equal(t.expected.res.GetSets()[i].GetReps(), set.GetReps())
 				s.Require().InEpsilon(t.expected.res.GetSets()[i].GetWeight(), set.GetWeight(), 0)
 				s.Require().Equal(t.expected.res.GetSets()[i].GetMetadata().GetWorkoutId(), set.GetMetadata().GetWorkoutId())
-				s.Require().Equal(t.expected.res.GetSets()[i].GetMetadata().GetCreatedAt(), set.GetMetadata().GetCreatedAt())
+				s.Require().Equal(t.expected.res.GetSets()[i].GetMetadata().GetCreatedAt().GetSeconds(), set.GetMetadata().GetCreatedAt().GetSeconds())
 			}
 
 			s.Require().Equal(t.expected.res.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())

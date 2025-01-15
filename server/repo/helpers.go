@@ -35,7 +35,8 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 
 	items = items[:limit]
 	nextPageToken, err := json.Marshal(PageToken{
-		CreatedAt: createdAt(items[len(items)-1]),
+		// Truncate to microseconds to unify precision across different databases.
+		CreatedAt: createdAt(items[len(items)-1]).Truncate(time.Microsecond),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal page token: %w", err)
