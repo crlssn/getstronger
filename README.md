@@ -97,17 +97,17 @@ Use the demo account to explore all features:
 
 4. Start the database:
    ```bash
-   make run_db
+   make db_init
    ```
 
 5. Run migrations:
    ```bash
-   make run_migrations_up
+   make db_migrate_up
    ```
 
 6. Seed the database:
    ```bash
-   make seed_db
+   make db_seed
    ```
 
 7. Start the backend:

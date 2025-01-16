@@ -1,64 +1,87 @@
-# Start the existing database container
-start_db:
-	docker start getstronger
+# =============================================================================
+# Database Commands
+# =============================================================================
 
-# Run a new database container
-run_db:
-	$(MAKE) clean
+db_init:
+	$(MAKE) clean_db
 	docker run --name getstronger -d -p 5433:5432 \
 	-e POSTGRES_DB=root \
 	-e POSTGRES_USER=root \
 	-e POSTGRES_HOST_AUTH_METHOD=trust \
 	postgres:16.4
 
-# Run all database migrations
-run_migrations:
+db_start:
+	docker start getstronger
+
+db_migrate:
 	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose down --all
 	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
 	sqlboiler -c ./database/sqlboiler.toml psql
 
-# Run only upward migrations
-run_migrations_up:
+db_migrate_up:
 	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
 	sqlboiler -c ./database/sqlboiler.toml psql
 
-# Seed the database with test data
-seed_db:
+db_seed:
 	go run server/testing/factory/seed/main.go -email=john@doe.com -password=123 -firstname=John -lastname=Doe
 
-# Full database setup with migrations
-migrate:
-	$(MAKE) run_db
-	sleep 1
-	$(MAKE) run_migrations
+# =============================================================================
+# Code Generation Commands
+# =============================================================================
 
-# Generate Protocol Buffers
-protos:
-	buf generate
-	$(MAKE) format_backend
+gen:
+	$(MAKE) gen_go
+	$(MAKE) gen_certs
+	$(MAKE) gen_protos
 
-# Generate SSL certificates for local backend server
+gen_go:
+	go generate ./...
+
 gen_certs:
 	@bash -c 'openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
 	-newkey rsa:2048 -nodes -sha256 \
 	-subj "/CN=localhost" -extensions EXT -config <( \
 	printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")'
 
-# Run backend tests and build web app
+gen_protos:
+	buf generate
+	$(MAKE) format_backend
+
+# =============================================================================
+# Test Commands
+# =============================================================================
+
 test:
-	go test ./... --count=1
+	$(MAKE) test_web
+	$(MAKE) test_backend
+
+test_web:
 	cd web && npm run build
+	# cd web && npm run test:unit
 
-# Run the backend server
-run_backend:
-	go run ./server/cmd/main.go
+test_backend:
+	go test ./... --count=1
 
-# Run the frontend development server
-run_web:
+# ==============================================================================
+# Application Commands
+# ==============================================================================
+
+app:
+	$(MAKE) app_web &
+	$(MAKE) app_backend &
+	wait
+
+app_web:
 	cd web && npm install
 	cd web && npm run dev
 
-# Format all files
+app_backend:
+	go run ./server/cmd/main.go
+
+# ==============================================================================
+# Code Quality Commands
+# ==============================================================================
+
 format:
 	$(MAKE) format_web
 	$(MAKE) format_backend
@@ -77,45 +100,39 @@ format_terraform:
 
 lint:
 	$(MAKE) lint_web
-	$(MAKE) lint_backend
 	$(MAKE) lint_protos
+	$(MAKE) lint_backend
 
 lint_web:
 	cd web && npm run lint
 
-lint_backend:
-	golangci-lint run
-
 lint_protos:
 	buf lint
 
-# Generate code
-gen:
-	go generate ./...
+lint_backend:
+	golangci-lint run
 
-# Static analysis
 vet:
+	$(MAKE) vet_go
+
+vet_go:
 	go vet ./...
 
-# Clean up Docker containers and artifacts
-clean:
-	docker rm -f getstronger || true
+# ==============================================================================
+# Package Installation Commands
+# ==============================================================================
 
-# Full setup for development environment
-setup:
+install:
+	$(MAKE) install_go
+	$(MAKE) install_js
 	$(MAKE) install_tools
-	$(MAKE) init_env
-	$(MAKE) gen_certs
-	$(MAKE) run_db
-	sleep 1
-	$(MAKE) run_migrations
-	$(MAKE) db_seed
-	$(MAKE) run_web
-	$(MAKE) run_backend
 
-init_env:
-	cp -n .env.example .env
-	cd web && cp -n .env.example .env
+install_go:
+	go mod download
+	go mod tidy
+
+install_js:
+	cd web && npm install
 
 install_tools:
 	go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
@@ -125,3 +142,31 @@ install_tools:
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install mvdan.cc/gofumpt@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# ==============================================================================
+# Local Development Commands
+# ==============================================================================
+
+env_init:
+	cp -n .env.example .env
+	cd web && cp -n .env.example .env
+
+setup:
+	$(MAKE) install
+	$(MAKE) env_init
+	$(MAKE) gen_certs
+	$(MAKE) db_init
+	sleep 1
+	$(MAKE) db_migrate
+	$(MAKE) db_seed
+	$(MAKE) app
+
+# ==============================================================================
+# Cleanup Commands
+# ==============================================================================
+
+clean:
+	$(MAKE) clean_db
+
+clean_db:
+	docker rm -f getstronger || true
