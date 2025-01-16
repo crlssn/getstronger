@@ -27,7 +27,7 @@ func main() {
 	}
 
 	c := config.New()
-	if c.Environment != "local" {
+	if c.Environment != config.EnvironmentLocal {
 		log.Printf("environment must be local, got %s", c.Environment)
 		return
 	}

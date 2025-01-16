@@ -25,7 +25,7 @@ func New() *Config {
 			CookieDomain:   os.Getenv("COOKIE_DOMAIN"),
 			AllowedOrigins: strings.Split(os.Getenv("CORS_ALLOWED_ORIGIN"), ","),
 		},
-		Environment: os.Getenv("ENV"),
+		Environment: Environment(os.Getenv("ENV")),
 	}
 }
 
@@ -33,8 +33,12 @@ type Config struct {
 	DB          DB
 	JWT         JWT
 	Server      Server
-	Environment string
+	Environment Environment
 }
+
+type Environment string
+
+const EnvironmentLocal = "local"
 
 type DB struct {
 	Host     string

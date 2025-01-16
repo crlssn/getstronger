@@ -26,10 +26,22 @@ func (c *Cookies) RefreshToken(value string) *http.Cookie {
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   c.config.Server.CookieDomain,
 		MaxAge:   int(jwt.ExpiryTimeRefresh),
-		Secure:   true,
+		Secure:   c.secure(),
 		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: c.sameSite(),
 	}
+}
+
+func (c *Cookies) secure() bool {
+	return c.config.Environment != config.EnvironmentLocal
+}
+
+func (c *Cookies) sameSite() http.SameSite {
+	if c.config.Environment == config.EnvironmentLocal {
+		return http.SameSiteDefaultMode
+	}
+
+	return http.SameSiteNoneMode
 }
 
 func (c *Cookies) ExpiredRefreshToken() *http.Cookie {
@@ -39,8 +51,8 @@ func (c *Cookies) ExpiredRefreshToken() *http.Cookie {
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   c.config.Server.CookieDomain,
 		MaxAge:   -1,
-		Secure:   true,
+		Secure:   c.secure(),
 		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: c.sameSite(),
 	}
 }
