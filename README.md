@@ -1,22 +1,35 @@
-<div align="center">
+# GetStronger
 
-  [![codecov](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW)](https://codecov.io/gh/crlssn/getstronger) 
-  [![Codacy Badge](https://app.codacy.com/project/badge/Grade/75e3f5a2db734f71871daaf8aadb3e5e)](https://app.codacy.com/gh/crlssn/getstronger/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+![Code Coverage](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW) ![Codacy Badge](https://app.codacy.com/project/badge/Grade/75e3f5a2db734f71871daaf8aadb3e5e)
 
-</div>
+**GetStronger** is an open-source gym workout application designed to help users track strength training routines, monitor progress, and connect with others in the fitness community.
 
-## Try It Out
+---
 
-Experience the web app firsthand by visiting [getstronger.pro](https://www.getstronger.pro).
+## Key Features
 
-Log in using the following demo credentials:
+- **Workout Tracking**: Log exercises, sets, and reps with ease.
+- **Personal Bests**: Automatically track and display personal records for each exercise.
+- **Social Features**: Follow friends, share progress, and stay motivated.
+- **Progress Analytics**: Visualize strength gains over time.
+- **Mobile-First Design**: Optimized for mobile devices to ensure seamless usability in the gym.
+
+---
+
+## Live Demo
+
+Experience the app firsthand:
+[**Visit GetStronger**](https://www.getstronger.pro)
+
+Use the demo account to explore all features:
 
 - **Email**: `demo@demo.com`
 - **Password**: `demodemo`
 
-Feel free to explore all features using this demo account!
+---
 
 ## Screenshots
+
 <table>
   <tr>
     <td><img src="https://github.com/user-attachments/assets/f6ee3471-a98f-4db6-864e-4bff35327805"/></td>
@@ -39,3 +52,106 @@ Feel free to explore all features using this demo account!
     <td><img src="https://github.com/user-attachments/assets/61c8574f-be29-4a60-99c1-573f3bfd6b83"/></td>
   </tr>
 </table>
+
+---
+
+## Tech Stack
+
+- **Frontend**: Typescript using Vue.js
+- **Backend**: Golang
+- **Database**: PostgreSQL
+- **APIs**: Connect RPC, Protocol Buffers
+- **Infrastructure**: AWS (S3, EC2, Route 53), Terraform
+- **CI/CD**: GitHub Actions
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js**: v22
+- **Go**: v1.23
+- **Docker**
+- **PostgreSQL**
+
+### Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/crlssn/getstronger.git
+   cd getstronger
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   go mod tidy
+   ```
+
+3. Setup environment variables:
+   Copy `.env.example` to `.env` and update the necessary fields.
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Start the database:
+   ```bash
+   make run_db
+   ```
+
+5. Run migrations:
+   ```bash
+   make run_migrations_up
+   ```
+
+6. Seed the database:
+   ```bash
+   make seed_db
+   ```
+
+7. Start the backend:
+   ```bash
+   make run_backend
+   ```
+
+8. Start the frontend:
+   ```bash
+   make run_web
+   ```
+
+9. Access the web app at [http://localhost:5173](http://localhost:5173) and login with email `john@doe.com` and password `123`.
+
+---
+
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository.
+2. Create a new branch:
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+3. Commit changes and push the branch:
+   ```bash
+   git commit -m "Add your message here"
+   git push origin feature/your-feature
+   ```
+4. Submit a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+---
+
+## Contact
+
+For inquiries or feedback, please email: [support@getstronger.pro](mailto:support@getstronger.pro).
+
+---
+
+We hope you enjoy using GetStronger as much as we enjoyed building it!
