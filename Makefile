@@ -1,29 +1,54 @@
 # =============================================================================
+# Variables
+# =============================================================================
+
+DB_USER=root
+DB_PASSWORD=root
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=postgres
+DB_SSL_MODE=disable
+DB_URL=postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
+DB_IMAGE=postgres:16.4
+DB_CONTAINER=getstronger
+DB_CONFIG_PATH=./database/sqlboiler.toml
+DB_MIGRATIONS_PATH=database/migrations/
+
+USER_EMAIL=john@doe.com
+USER_PASSWORD=123
+USER_FIRSTNAME=John
+USER_LASTNAME=Doe
+
+# =============================================================================
 # Database Commands
 # =============================================================================
 
 db_init:
 	$(MAKE) clean_db
-	docker run --name getstronger -d -p 5433:5432 \
-	-e POSTGRES_DB=root \
-	-e POSTGRES_USER=root \
-	-e POSTGRES_HOST_AUTH_METHOD=trust \
-	postgres:16.4
+	docker run --name $(DB_CONTAINER) -d -p $(DB_PORT):5432 \
+		-e POSTGRES_DB=$(DB_NAME) \
+		-e POSTGRES_USER=$(DB_USER) \
+		-e POSTGRES_HOST_AUTH_METHOD=trust \
+		$(DB_IMAGE)
 
 db_start:
-	docker start getstronger
+	docker start $(DB_CONTAINER)
 
 db_migrate:
-	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose down --all
-	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
-	sqlboiler -c ./database/sqlboiler.toml psql
+	migrate -path $(DB_MIGRATIONS_PATH) -database "$(DB_URL)" -verbose down --all
+	migrate -path $(DB_MIGRATIONS_PATH) -database "$(DB_URL)" -verbose up
+	sqlboiler -c $(DB_CONFIG_PATH) psql
 
 db_migrate_up:
-	migrate -path database/migrations/ -database "postgresql://root:root@localhost:5433/postgres?sslmode=disable" -verbose up
-	sqlboiler -c ./database/sqlboiler.toml psql
+	migrate -path $(DB_MIGRATIONS_PATH) -database "$(DB_URL)" -verbose up
+	sqlboiler -c $(DB_CONFIG_PATH) psql
 
 db_seed:
-	go run server/testing/factory/seed/main.go -email=john@doe.com -password=123 -firstname=John -lastname=Doe
+	go run server/testing/factory/seed/main.go \
+		-email=$(USER_EMAIL) \
+		-password=$(USER_PASSWORD) \
+		-firstname=$(USER_FIRSTNAME) \
+		-lastname=$(USER_LASTNAME)
 
 # =============================================================================
 # Code Generation Commands
@@ -169,4 +194,4 @@ clean:
 	$(MAKE) clean_db
 
 clean_db:
-	docker rm -f getstronger || true
+	docker rm -f $(DB_CONTAINER) || true
