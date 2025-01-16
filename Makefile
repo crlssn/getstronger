@@ -173,8 +173,8 @@ install_tools:
 # ==============================================================================
 
 env_init:
-	cp -n .env.example .env
-	cd web && cp -n .env.example .env
+	@test -f .env || cp .env.example .env
+	@test -f web/.env || cp web/.env.example web/.env
 
 setup:
 	$(MAKE) install
