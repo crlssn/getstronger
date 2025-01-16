@@ -39,6 +39,7 @@ type Params struct {
 
 func NewServer(p Params) *Server {
 	return &Server{
+		log:      p.Log,
 		conn:     p.Conn,
 		keyPath:  p.Config.Server.KeyPath,
 		certPath: p.Config.Server.CertPath,
@@ -73,9 +74,11 @@ func (s *Server) listenAndServe() error {
 	s.server.RegisterOnShutdown(s.conn.Cancel)
 
 	if s.certPath == "" && s.keyPath == "" {
+		s.log.Info("server: listening on http")
 		return s.server.ListenAndServe() //nolint:wrapcheck
 	}
 
+	s.log.Info("server: listening on https")
 	return s.server.ListenAndServeTLS(s.certPath, s.keyPath) //nolint:wrapcheck
 }
 
