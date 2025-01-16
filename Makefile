@@ -4,7 +4,7 @@
 
 DB_USER=root
 DB_PASSWORD=root
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_PORT=5433
 DB_NAME=postgres
 DB_SSL_MODE=disable
