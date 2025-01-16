@@ -57,9 +57,9 @@ Use the demo account to explore all features:
 
 ## Tech Stack
 
-- **Frontend**: Typescript using Vue.js
+- **Frontend**: Web app written in Typescript using Vue.js
 - **Backend**: Golang
-- **Database**: PostgreSQL
+- **Database**: Postgres
 - **APIs**: Connect RPC, Protocol Buffers
 - **Infrastructure**: AWS (S3, EC2, Route 53), Terraform
 - **CI/CD**: GitHub Actions
@@ -70,10 +70,9 @@ Use the demo account to explore all features:
 
 ### Prerequisites
 
-- **Node.js**: v22
 - **Go**: v1.23
+- **Node.js**: v22
 - **Docker**
-- **PostgreSQL**
 
 ### Setup
 
@@ -85,24 +84,23 @@ Use the demo account to explore all features:
 
 2. Install dependencies:
    ```bash
-   npm install
-   go mod tidy
+   make install
    ```
 
 3. Setup environment variables:
    Copy `.env.example` to `.env` and update the necessary fields.
    ```bash
-   cp .env.example .env
+   make env
    ```
 
-4. Start the database:
+4. Initialise the database:
    ```bash
    make db_init
    ```
 
 5. Run migrations:
    ```bash
-   make db_migrate_up
+   make db_migrate
    ```
 
 6. Seed the database:
@@ -110,48 +108,14 @@ Use the demo account to explore all features:
    make db_seed
    ```
 
-7. Start the backend:
+7. Start the backend app:
    ```bash
-   make run_backend
+   make app_backend
    ```
 
-8. Start the frontend:
+8. Start the web app:
    ```bash
-   make run_web
+   make app_web
    ```
 
 9. Access the web app at [http://localhost:5173](http://localhost:5173) and login with email `john@doe.com` and password `123`.
-
----
-
-## Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-3. Commit changes and push the branch:
-   ```bash
-   git commit -m "Add your message here"
-   git push origin feature/your-feature
-   ```
-4. Submit a pull request.
-
----
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
----
-
-## Contact
-
-For inquiries or feedback, please email: [support@getstronger.pro](mailto:support@getstronger.pro).
-
----
-
-We hope you enjoy using GetStronger as much as we enjoyed building it!

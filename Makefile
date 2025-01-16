@@ -62,6 +62,7 @@ gen:
 gen_go:
 	go generate ./...
 
+# Generate certs to run the backend using https.
 gen_certs:
 	@mkdir -p .secrets
 	@bash -c 'openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
@@ -174,13 +175,13 @@ install_tools:
 # Local Development Commands
 # ==============================================================================
 
-env_init:
+env:
 	@test -f .env || cp .env.example .env
 	@test -f web/.env || cp web/.env.example web/.env
 
 setup:
 	$(MAKE) install
-	$(MAKE) env_init
+	$(MAKE) env
 	$(MAKE) gen_certs
 	$(MAKE) db_init
 	sleep 1
