@@ -63,6 +63,7 @@ gen_go:
 	go generate ./...
 
 gen_certs:
+	@mkdir -p .secrets
 	@bash -c 'openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
 	-newkey rsa:2048 -nodes -sha256 \
 	-subj "/CN=localhost" -extensions EXT -config <( \
@@ -92,8 +93,9 @@ test_backend:
 # ==============================================================================
 
 app:
-	$(MAKE) app_web &
-	$(MAKE) app_backend &
+	@trap 'kill 0' SIGINT SIGTERM EXIT; \
+	$(MAKE) app_web & \
+	$(MAKE) app_backend & \
 	wait
 
 app_web:
