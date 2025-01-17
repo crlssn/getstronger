@@ -4,7 +4,7 @@ resource "aws_ses_domain_identity" "getstronger" {
 
 resource "aws_route53_record" "ses_verification" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "_amazonses.getstronger.pro"
+  name    = "_amazonses.${var.domain}"
   type    = "TXT"
   ttl     = 600
   records = [aws_ses_domain_identity.getstronger.verification_token]
@@ -17,7 +17,7 @@ resource "aws_ses_domain_dkim" "getstronger" {
 resource "aws_route53_record" "dkim" {
   for_each = toset(aws_ses_domain_dkim.getstronger.dkim_tokens)
   zone_id  = aws_route53_zone.getstronger_pro.zone_id
-  name     = "${each.value}._domainkey.getstronger.pro"
+  name     = "${each.value}._domainkey.${var.domain}"
   type     = "CNAME"
   ttl      = 600
   records  = ["${each.value}.dkim.amazonses.com"]
@@ -25,7 +25,7 @@ resource "aws_route53_record" "dkim" {
 
 resource "aws_route53_record" "spf" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "getstronger.pro"
+  name    = var.domain
   type    = "TXT"
   ttl     = 600
   records = ["v=spf1 include:amazonses.com ~all"]
@@ -33,14 +33,14 @@ resource "aws_route53_record" "spf" {
 
 resource "aws_iam_policy" "ses_send_email" {
   name        = "SES_Send_Email_GetStronger_Pro"
-  description = "Allows sending emails via SES for getstronger.pro"
+  description = "Allows sending emails via SES for ${var.domain}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
         Effect   = "Allow",
         Action   = "ses:SendEmail",
-        Resource = "arn:aws:ses:eu-west-2:205930632120:identity/getstronger.pro"
+        Resource = "arn:aws:ses:eu-west-2:205930632120:identity/${var.domain}"
       }
     ]
   })
@@ -66,7 +66,7 @@ resource "aws_iam_access_key" "ses_user_key" {
 
 resource "aws_route53_record" "mx_record" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "getstronger.pro"
+  name    = var.domain
   type    = "MX"
   ttl     = 300
   records = ["10 inbound-smtp.eu-west-2.amazonaws.com", "10 feedback-smtp.eu-west-2.amazonses.com"]

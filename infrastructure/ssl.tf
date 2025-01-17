@@ -83,7 +83,7 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
 
 resource "aws_acm_certificate" "api_getstronger_pro_ssl_cert" {
   provider          = aws.us_east_1
-  domain_name       = "api.getstronger.pro"
+  domain_name       = "api.${var.domain}"
   validation_method = "DNS"
 }
 
