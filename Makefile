@@ -2,11 +2,9 @@
 # Variables
 # =============================================================================
 
-DB_USER=root
-DB_PASSWORD=root
-DB_HOST=127.0.0.1
-DB_PORT=5433
-DB_NAME=postgres
+# Load environment variables from .env file.
+include .env
+
 DB_SSL_MODE=disable
 DB_URL=postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
 DB_IMAGE=postgres:16.4
@@ -62,13 +60,18 @@ gen:
 gen_go:
 	go generate ./...
 
-# Generate certs to run the backend using https.
+# Generate certs to run the backend using HTTPS locally.
 gen_certs:
 	@mkdir -p .secrets
 	@bash -c 'openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
 	-newkey rsa:2048 -nodes -sha256 \
 	-subj "/CN=localhost" -extensions EXT -config <( \
 	printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")'
+
+	@echo "✅  Appending cert and key paths to .env file"
+	@echo "SERVER_KEY_PATH=$(shell pwd)/.secrets/localhost.key" >> .env
+	@echo "SERVER_CERT_PATH=$(shell pwd)/.secrets/localhost.crt" >> .env
+	@echo "⚠️ Restart the server and visit the following link to trust the certificate in your browser: https://localhost:$(SERVER_PORT)"
 
 gen_protos:
 	buf generate
@@ -163,7 +166,7 @@ install_js:
 	cd web && npm install
 
 install_tools:
-	go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	go install github.com/volatiletech/sqlboiler/v4@latest
 	go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
 	go install github.com/bufbuild/buf/cmd/buf@latest

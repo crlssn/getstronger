@@ -17,6 +17,8 @@ func TestCookies_RefreshToken(t *testing.T) {
 	t.Parallel()
 
 	cfg := new(config.Config)
+	cfg.Server.KeyPath = "key_path"
+	cfg.Server.CertPath = "cert_path"
 	cfg.Server.CookieDomain = "cookie_domain"
 	cookie := cookies.New(cfg)
 
@@ -30,12 +32,28 @@ func TestCookies_RefreshToken(t *testing.T) {
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 	}, cookie.RefreshToken("value"))
+
+	cfg.Server.KeyPath = ""
+	cfg.Server.CertPath = ""
+
+	require.Equal(t, &http.Cookie{
+		Name:     cookies.CookieNameRefreshToken,
+		Value:    "value",
+		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
+		Domain:   cfg.Server.CookieDomain,
+		MaxAge:   int(jwt.ExpiryTimeRefresh),
+		Secure:   false,
+		HttpOnly: true,
+		SameSite: http.SameSiteDefaultMode,
+	}, cookie.RefreshToken("value"))
 }
 
 func TestCookies_ExpiredRefreshToken(t *testing.T) {
 	t.Parallel()
 
 	cfg := new(config.Config)
+	cfg.Server.KeyPath = "key_path"
+	cfg.Server.CertPath = "cert_path"
 	cfg.Server.CookieDomain = "cookie_domain"
 	cookie := cookies.New(cfg)
 
@@ -48,5 +66,19 @@ func TestCookies_ExpiredRefreshToken(t *testing.T) {
 		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
+	}, cookie.ExpiredRefreshToken())
+
+	cfg.Server.KeyPath = ""
+	cfg.Server.CertPath = ""
+
+	require.Equal(t, &http.Cookie{
+		Name:     cookies.CookieNameRefreshToken,
+		Value:    "",
+		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
+		Domain:   cfg.Server.CookieDomain,
+		MaxAge:   -1,
+		Secure:   false,
+		HttpOnly: true,
+		SameSite: http.SameSiteDefaultMode,
 	}, cookie.ExpiredRefreshToken())
 }

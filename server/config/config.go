@@ -60,3 +60,7 @@ type Server struct {
 	CookieDomain   string
 	AllowedOrigins []string
 }
+
+func (s Server) HasCertificate() bool {
+	return s.KeyPath != "" && s.CertPath != ""
+}
