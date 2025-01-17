@@ -57,7 +57,7 @@ Use the demo account to explore all features:
 
 ## Tech Stack
 
-- **Frontend**: Web app written in Typescript using Vue.js
+- **Web**: Typescript using Vue.js
 - **Backend**: Golang
 - **Database**: Postgres
 - **APIs**: Connect RPC, Protocol Buffers
@@ -88,7 +88,7 @@ Use the demo account to explore all features:
    ```
 
 3. Setup environment variables:
-   Copy `.env.example` to `.env` and update the necessary fields.
+   Copies `.env.example` to `.env` for the web and backend: files you may need to update to suite your environment.
    ```bash
    make env
    ```
@@ -103,19 +103,24 @@ Use the demo account to explore all features:
    make db_migrate
    ```
 
-6. Seed the database:
+6. (Optional) Seed the database:
    ```bash
    make db_seed
    ```
 
-7. Start the backend app:
+7. (Optional) Generate self-signed certificates for the backend:
+   ```bash
+   make gen_certs
+   ```
+
+8. Start the backend app:
    ```bash
    make app_backend
    ```
 
-8. Start the web app:
+9. Start the web app:
    ```bash
    make app_web
    ```
 
-9. Access the web app at [http://localhost:5173](http://localhost:5173) and login with email `john@doe.com` and password `123`.
+10. Access the web app at [http://localhost:5173](http://localhost:5173). If you seeded the database you can login with email `john@doe.com` and password `123`.
