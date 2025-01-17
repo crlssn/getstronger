@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
+import createGtag from 'vue-gtag-next'
 
 import App from './App.vue'
 import router from './router/router'
@@ -16,6 +17,14 @@ pinia.use(piniaPluginPersistedstate)
 
 app.use(router)
 app.use(pinia)
+
+if (import.meta.env.VITE_ENABLE_GOOGLE_ANALYTICS === 'true') {
+  app.use(createGtag, {
+    property: {
+      id: 'G-JP6D8WJFND',
+    },
+  })
+}
 
 const init = async () => {
   const authStore = useAuthStore()
