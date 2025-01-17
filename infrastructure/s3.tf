@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "www_getstronger_pro" {
-  bucket = "www.getstronger.pro"
+  bucket = "www.${var.domain}"
 }
 
 resource "aws_s3_bucket_website_configuration" "vue_js_bucket" {

@@ -5,7 +5,7 @@ provider "aws" {
 
 resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
   provider          = aws.us_east_1
-  domain_name       = "www.getstronger.pro"
+  domain_name       = "www.${var.domain}"
   validation_method = "DNS"
 }
 
@@ -113,7 +113,7 @@ resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
   provider = aws.us_east_1
 
   origin {
-    domain_name = "api.getstronger.pro"
+    domain_name = "api.${var.domain}"
     origin_id   = "EC2-origin"
 
     custom_origin_config {
@@ -170,7 +170,7 @@ resource "null_resource" "letsencrypt_cert" {
     inline = [
       "sudo dnf update -y",
       "sudo dnf install -y certbot",
-      "sudo certbot certonly --standalone -d api.getstronger.pro --non-interactive --agree-tos -m admin@getstronger.pro",
+      "sudo certbot certonly --standalone -d api.${var.domain} --non-interactive --agree-tos -m admin@${var.domain}",
       "sudo systemctl start certbot-renew.timer",
     ]
   }

@@ -1,5 +1,5 @@
 resource "aws_route53_zone" "getstronger_pro" {
-  name = "getstronger.pro"
+  name = var.domain
 }
 
 resource "aws_eip" "ec2_instance" {
@@ -8,7 +8,7 @@ resource "aws_eip" "ec2_instance" {
 
 resource "aws_route53_record" "api_getstronger_pro" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "api.getstronger.pro"
+  name    = "api.${var.domain}"
   type    = "A"
   ttl     = 300
   records = [aws_eip.ec2_instance.public_ip]
@@ -16,7 +16,7 @@ resource "aws_route53_record" "api_getstronger_pro" {
 
 resource "aws_route53_record" "www_getstronger_pro" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "www.getstronger.pro"
+  name    = "www.${var.domain}"
   type    = "A"
 
   alias {
@@ -28,7 +28,7 @@ resource "aws_route53_record" "www_getstronger_pro" {
 
 resource "aws_route53_record" "ssh_getstronger_pro" {
   zone_id = aws_route53_zone.getstronger_pro.zone_id
-  name    = "ssh.getstronger.pro"
+  name    = "ssh.${var.domain}"
   type    = "A"
   ttl     = 300
   records = [aws_eip.ec2_instance.public_ip]

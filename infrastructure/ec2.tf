@@ -9,7 +9,7 @@ resource "aws_instance" "backend" {
 
 resource "aws_key_pair" "backend_ec2_key" {
   key_name   = "backend-ec2-key"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDIW6zV0WOcWG4+CizaD9KkgbHvtz4yJNdy5RuMl1GfLqWC5bosw7gejuI4+0WKvp+zePMdcZUh3pu+Quor9ttc3agQybS1sc5ipHOYk+sGVZUIM70wVvtTtj5M3tnycUps41Ufv9CgSl0WiUH1kURBvUQdqtLjrViNK1V8rsDx6lRTS9zNFXd8K+EVujztgnsygWL934qcvu8mZUb5SXvhgJq1LmsVY4uVkH4sVP8c1IbuBtPL+O+JLfDCwNGZqBYKehaVz14+It9+wqW2Df/izQVcgzUOX8wl1jEa808CGHx3QuW8WOmDxeiIUzfN0LzA2O4WAJGEfIwX2fVXSLSN6vTegteDs5g7Sree74UZglMtzvvozInyCOLkGeNQFyeN3Kuc/bs6Sp7iAdO/3w/YT3AI+U2CkAJ8GMw+nDEUTskloO5I4IANCttBm11fqAR3Lij8cxZsheVrKhgYXmaoEOh62FRoOW4GxsGZRfaeG5Rb4T9rINyjY4KV2mgpkr9OMwfSAkugEDZUHVgZEdfAxqOgngQ7PgNt/N2G+sNwzbOQ9GbIpa86FLa0/fchqfFjKJWDZ6VJTybjDDpLASCOnmoVrgYe4imvoCXqEJulnuoxOhkY3yfuqwY3c5nWD3PSXWe/UnHe9+7u5qlOKNZ5TkSvULOBww78qYXLZXM2Ew== christian@Mac"
+  public_key = var.ec2_public_key
 }
 
 resource "aws_security_group" "ssh_access" {
@@ -50,8 +50,4 @@ resource "aws_security_group" "api_access" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-output "ec2_instance_public_ip" {
-  value = aws_instance.backend.public_ip
 }

@@ -1,5 +1,5 @@
 resource "aws_ses_domain_identity" "getstronger" {
-  domain = "getstronger.pro"
+  domain = var.domain
 }
 
 resource "aws_route53_record" "ses_verification" {
