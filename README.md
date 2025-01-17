@@ -87,8 +87,7 @@ Use the demo account to explore all features:
    make install
    ```
 
-3. Setup environment variables:
-   Copies `.env.example` to `.env` for the web and backend: files you may need to update to suite your environment.
+3. Initialise `.env` files for the web and backend: files you may need to update to suite your environment.
    ```bash
    make env
    ```
@@ -98,7 +97,7 @@ Use the demo account to explore all features:
    make db_init
    ```
 
-5. Run migrations:
+5. Run database migrations:
    ```bash
    make db_migrate
    ```
@@ -112,7 +111,7 @@ Use the demo account to explore all features:
    ```bash
    make gen_certs
    ```
-   ⚠ You must trust the self-signed certificate in your browser after you've started the backend.
+   **⚠ You must trust the self-signed certificate in your browser after you've started the backend.**
 
 8. Start the backend app:
    ```bash
