@@ -3,14 +3,12 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Obtain an SSL certificate
 resource "aws_acm_certificate" "www_getstronger_pro_ssl_cert" {
   provider          = aws.us_east_1
   domain_name       = "www.getstronger.pro"
   validation_method = "DNS"
 }
 
-# # Validate the certificate
 resource "aws_route53_record" "s3_ssl_cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.www_getstronger_pro_ssl_cert.domain_validation_options : dvo.domain_name => dvo
@@ -33,7 +31,6 @@ resource "aws_acm_certificate_validation" "s3_cert_validation" {
   ]
 }
 
-# # Create CloudFront distribution for the S3 bucket
 resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   provider = aws.us_east_1
   origin {
@@ -61,7 +58,6 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
     }
   }
 
-  # Custom error response to handle SPA routing for all 403 errors
   custom_error_response {
     error_code            = 403
     response_page_path    = "/index.html"
@@ -69,7 +65,6 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
     error_caching_min_ttl = 0
   }
 
-  # Associate SSL certificate
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate.www_getstronger_pro_ssl_cert.arn
     ssl_support_method  = "sni-only"
@@ -86,14 +81,12 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   }
 }
 
-# Obtain an SSL certificate for EC2 instance
 resource "aws_acm_certificate" "api_getstronger_pro_ssl_cert" {
   provider          = aws.us_east_1
   domain_name       = "api.getstronger.pro"
   validation_method = "DNS"
 }
 
-# Validate the certificate
 resource "aws_route53_record" "api_getstronger_pro_ssl_cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.api_getstronger_pro_ssl_cert.domain_validation_options : dvo.domain_name => dvo
@@ -116,7 +109,6 @@ resource "aws_acm_certificate_validation" "api_getstronger_pro_cert_validation" 
   ]
 }
 
-# Create CloudFront distribution for EC2 instance
 resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
   provider = aws.us_east_1
 
@@ -150,7 +142,6 @@ resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
     }
   }
 
-  # Associate SSL certificate
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate.api_getstronger_pro_ssl_cert.arn
     ssl_support_method  = "sni-only"
@@ -176,7 +167,6 @@ resource "null_resource" "letsencrypt_cert" {
       private_key = file("~/.ssh/id_rsa")
     }
 
-    # Install Certbot and generate the certificate
     inline = [
       "sudo dnf update -y",
       "sudo dnf install -y certbot",
