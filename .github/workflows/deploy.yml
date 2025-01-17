@@ -83,7 +83,7 @@ jobs:
   database:
     needs: [init, terraform]
     runs-on: ubuntu-latest
-    if: always() && (needs.terraform.result == 'skipped' || needs.terraform.result == 'success') && needs.init.outputs.database == 'true'
+    if: always() && needs.terraform.result != 'failure' && needs.init.outputs.database == 'true'
 
     steps:
       - name: Checkout code
@@ -109,7 +109,7 @@ jobs:
   server:
     needs: [init, database]
     runs-on: ubuntu-latest
-    if: always() && (needs.database.result == 'skipped' || needs.database.result == 'success') && needs.init.outputs.server == 'true'
+    if: always() && needs.database.result != 'failure' && needs.init.outputs.server == 'true'
 
     steps:
       - name: Checkout code
@@ -177,7 +177,7 @@ jobs:
   web:
     needs: [init, server]
     runs-on: ubuntu-latest
-    if: always() && (needs.server.result == 'skipped' || needs.server.result == 'success') && needs.init.outputs.web == 'true'
+    if: always() && needs.server.result != 'failure' && needs.init.outputs.web == 'true'
 
     steps:
       - name: Checkout code
