@@ -34,7 +34,7 @@ resource "aws_acm_certificate_validation" "s3_cert_validation" {
 resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   provider = aws.us_east_1
   origin {
-    domain_name = aws_s3_bucket.www_getstronger_pro.bucket_domain_name
+    domain_name = "www.${var.domain}.s3.amazonaws.com"
     origin_id   = "S3-origin"
   }
 
@@ -42,7 +42,7 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
 
-  aliases = ["www.getstronger.pro"]
+  aliases = ["www.${var.domain}"]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -175,5 +175,3 @@ resource "null_resource" "letsencrypt_cert" {
     ]
   }
 }
-
-
