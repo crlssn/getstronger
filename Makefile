@@ -163,6 +163,7 @@ install_go:
 	go mod tidy
 
 install_js:
+	npm install
 	cd web && npm install
 
 install_tools:
