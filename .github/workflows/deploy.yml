@@ -21,9 +21,34 @@ permissions:
   repository-projects: read
 
 jobs:
-  terraform:
+  init:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy' && github.actor == 'crlssn')
     runs-on: ubuntu-latest
+
+    outputs:
+      web: ${{ steps.changes.outputs.web }}
+      server: ${{ steps.changes.outputs.server }}
+      database: ${{ steps.changes.outputs.database }}
+      terraform: ${{ steps.changes.outputs.terraform }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        id: changes
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            web: ['web/**']
+            server: ['server/**']
+            database: ['database/**']
+            terraform: ['infrastructure/**']
+
+  terraform:
+    needs: [init]
+    runs-on: ubuntu-latest
+    if: needs.init.outputs.terraform == 'true'
 
     steps:
       - name: Checkout code
@@ -56,8 +81,9 @@ jobs:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
   database:
-    needs: terraform
+    needs: [init, terraform]
     runs-on: ubuntu-latest
+    if: needs.init.outputs.database == 'true'
 
     steps:
       - name: Checkout code
@@ -81,8 +107,9 @@ jobs:
             -verbose up
 
   server:
-    needs: database
+    needs: [init, database]
     runs-on: ubuntu-latest
+    if: needs.init.outputs.server == 'true'
 
     steps:
       - name: Checkout code
@@ -148,8 +175,9 @@ jobs:
             sudo systemctl restart app.service   
 
   web:
-    needs: server
+    needs: [init, server]
     runs-on: ubuntu-latest
+    if: needs.init.outputs.web == 'true'
 
     steps:
       - name: Checkout code
@@ -185,7 +213,7 @@ jobs:
           aws s3 website "s3://$AWS_BUCKET_NAME/" --index-document index.html --error-document index.html
 
   cleanup:
-    needs: [terraform, database, server, web]
+    needs: [init, terraform, database, server, web]
     runs-on: ubuntu-latest
     if: always()
 
