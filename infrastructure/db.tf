@@ -1,15 +1,15 @@
 resource "aws_db_instance" "postgres" {
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  engine               = "postgres"
-  engine_version       = "16.4"
-  instance_class       = "db.t3.micro"
-  db_name              = "getstronger"
-  username             = var.db_username
-  password             = var.db_password
-  parameter_group_name = "default.postgres16"
-  skip_final_snapshot  = true
-  publicly_accessible = true
+  allocated_storage      = 20
+  storage_type           = "gp2"
+  engine                 = "postgres"
+  engine_version         = "16.4"
+  instance_class         = "db.t3.micro"
+  db_name                = "getstronger"
+  username               = var.db_username
+  password               = var.db_password
+  parameter_group_name   = "default.postgres16"
+  skip_final_snapshot    = true
+  publicly_accessible    = true
   vpc_security_group_ids = [aws_security_group.db_access.id]
 }
 
