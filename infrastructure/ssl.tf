@@ -18,7 +18,7 @@ resource "aws_route53_record" "s3_ssl_cert_validation" {
 
   name    = each.value.resource_record_name
   type    = each.value.resource_record_type
-  zone_id = module.route53.hosted_zone_id
+  zone_id = aws_route53_zone.getstronger_pro.zone_id
   records = [each.value.resource_record_value]
   ttl     = 60
 }
@@ -37,7 +37,7 @@ resource "aws_acm_certificate_validation" "s3_cert_validation" {
 resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   provider = aws.us_east_1
   origin {
-    domain_name = "www.${var.domain}.s3.amazonaws.com"
+    domain_name = aws_s3_bucket.www_getstronger_pro.bucket_domain_name
     origin_id   = "S3-origin"
   }
 
@@ -45,7 +45,7 @@ resource "aws_cloudfront_distribution" "www_getstronger_pro_distribution" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
 
-  aliases = ["www.${var.domain}"]
+  aliases = ["www.getstronger.pro"]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -101,7 +101,7 @@ resource "aws_route53_record" "api_getstronger_pro_ssl_cert_validation" {
 
   name    = each.value.resource_record_name
   type    = each.value.resource_record_type
-  zone_id = module.route53.hosted_zone_id
+  zone_id = aws_route53_zone.getstronger_pro.zone_id
   records = [each.value.resource_record_value]
   ttl     = 60
 }
@@ -170,7 +170,7 @@ resource "aws_cloudfront_distribution" "api_getstronger_pro_distribution" {
 resource "null_resource" "letsencrypt_cert" {
   provisioner "remote-exec" {
     connection {
-      host        = module.ec2.public_ip
+      host        = aws_instance.backend.public_ip
       type        = "ssh"
       user        = "ec2-user"
       private_key = file("~/.ssh/id_rsa")
@@ -185,3 +185,5 @@ resource "null_resource" "letsencrypt_cert" {
     ]
   }
 }
+
+
