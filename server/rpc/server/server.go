@@ -21,11 +21,10 @@ import (
 )
 
 type Server struct {
-	log      *zap.Logger
-	conn     *stream.Conn
-	server   *http.Server
-	keyPath  string
-	certPath string
+	log    *zap.Logger
+	conn   *stream.Conn
+	config *config.Config
+	server *http.Server
 }
 
 type Params struct {
@@ -37,18 +36,23 @@ type Params struct {
 	Config *config.Config
 }
 
+const (
+	readTimeout  = 10 * time.Second
+	idleTimeout  = 120 * time.Second
+	writeTimeout = 0
+)
+
 func NewServer(p Params) *Server {
 	return &Server{
-		log:      p.Log,
-		conn:     p.Conn,
-		keyPath:  p.Config.Server.KeyPath,
-		certPath: p.Config.Server.CertPath,
+		log:    p.Log,
+		conn:   p.Conn,
+		config: p.Config,
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%s", p.Config.Server.Port),
 			Handler:      h2c.NewHandler(p.Mux, &http2.Server{}),
-			ReadTimeout:  10 * time.Second, //nolint:mnd
-			WriteTimeout: 0,
-			IdleTimeout:  120 * time.Second, //nolint:mnd
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
 			TLSConfig: &tls.Config{
 				MinVersion: tls.VersionTLS12,
 			},
@@ -73,13 +77,13 @@ func (s *Server) ListenAndServe(_ context.Context) error {
 func (s *Server) listenAndServe() error {
 	s.server.RegisterOnShutdown(s.conn.Cancel)
 
-	if s.certPath == "" && s.keyPath == "" {
-		s.log.Info("server: listening on http")
-		return s.server.ListenAndServe() //nolint:wrapcheck
+	if s.config.Server.HasCertificate() {
+		s.log.Info("server: listening on https")
+		return s.server.ListenAndServeTLS(s.config.Server.CertPath, s.config.Server.KeyPath) //nolint:wrapcheck
 	}
 
-	s.log.Info("server: listening on https")
-	return s.server.ListenAndServeTLS(s.certPath, s.keyPath) //nolint:wrapcheck
+	s.log.Info("server: listening on http")
+	return s.server.ListenAndServe() //nolint:wrapcheck
 }
 
 func NewMultiplexer(f []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {

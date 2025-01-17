@@ -61,6 +61,6 @@ type Server struct {
 	AllowedOrigins []string
 }
 
-func (s Server) UsingHTTPS() bool {
+func (s Server) HasCertificate() bool {
 	return s.KeyPath != "" && s.CertPath != ""
 }
