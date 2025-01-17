@@ -124,4 +124,4 @@ Use the demo account to explore all features:
    make app_web
    ```
 
-10. Access the web app at [http://localhost:5173](http://localhost:5173). If you seeded the database you can login with email `john@doe.com` and password `123`.
+10. Access the web app at [http://localhost:5173](http://localhost:5173). If you seeded the database you can now login with email `john@doe.com` and password `123`.
