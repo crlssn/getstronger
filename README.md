@@ -112,6 +112,7 @@ Use the demo account to explore all features:
    ```bash
    make gen_certs
    ```
+   ⚠ You must trust the self-signed certificate in your browser after you've started the backend.
 
 8. Start the backend app:
    ```bash
