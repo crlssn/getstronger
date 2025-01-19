@@ -113,9 +113,9 @@ Use the demo account to explore all features:
    ```
    **⚠ You must trust the self-signed certificate in your browser after you've started the backend.**
 
-8. Start the email service if you want to sign up locally and your `EMAIL_PROVIDER` env is set to `local`:
+8. Start the email app if you want to sign up locally and your `EMAIL_PROVIDER` env is set to `local`:
    ```bash
-   make email
+   make app_email
    ```
 
 9. Start the backend app:

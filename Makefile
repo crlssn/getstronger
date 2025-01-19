@@ -99,12 +99,17 @@ test_backend:
 app:
 	@trap 'kill 0' SIGINT SIGTERM EXIT; \
 	$(MAKE) app_web & \
+	$(MAKE) app_email & \
 	$(MAKE) app_backend & \
 	wait
 
 app_web:
 	cd web && npm install
 	cd web && npm run dev
+
+app_email:
+	docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+	@echo "The email app is running at http://localhost:8025"
 
 app_backend:
 	go run ./server/cmd/main.go
@@ -203,10 +208,3 @@ clean:
 clean_db:
 	docker rm -f $(DB_CONTAINER) || true
 
-# ==============================================================================
-# Email Commands
-# ==============================================================================
-
-email:
-	docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
-	@echo "MailHog is running at http://localhost:8025"
