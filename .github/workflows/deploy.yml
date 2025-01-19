@@ -142,6 +142,7 @@ jobs:
             echo COOKIE_DOMAIN=${{ vars.COOKIE_DOMAIN }}
             echo JWT_ACCESS_TOKEN_KEY=${{ secrets.JWT_ACCESS_TOKEN_KEY }}
             echo JWT_REFRESH_TOKEN_KEY=${{ secrets.JWT_REFRESH_TOKEN_KEY }}
+            echo EMAIL_PROVIDER=${{ vars.EMAIL_PROVIDER }}
           } >> .env
 
       - name: Deploy to EC2

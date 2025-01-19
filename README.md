@@ -113,14 +113,19 @@ Use the demo account to explore all features:
    ```
    **⚠ You must trust the self-signed certificate in your browser after you've started the backend.**
 
-8. Start the backend app:
+8. Start the email service if you want to sign up locally and your `EMAIL_PROVIDER` env is set to `local`:
+   ```bash
+   make email
+   ```
+
+9. Start the backend app:
    ```bash
    make app_backend
    ```
 
-9. Start the web app:
+10. Start the web app:
    ```bash
    make app_web
    ```
 
-10. Access the web app at [http://localhost:5173](http://localhost:5173). If you seeded the database you can now login with email `john@doe.com` and password `123`.
+11. Access the web app at [http://localhost:5173](http://localhost:5173). You can now login with email `john@doe.com` and password `123` if you seeded the database.
