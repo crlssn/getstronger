@@ -16,7 +16,7 @@ import (
 
 func TestSendEmail(t *testing.T) {
 	t.Parallel()
-	e := email.MustNew(&config.Config{
+	e := email.MustNewSES(&config.Config{
 		Server: config.Server{
 			AllowedOrigins: []string{os.Getenv("GET_STRONGER_ALLOWED_ORIGIN")},
 		},

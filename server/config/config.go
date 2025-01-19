@@ -18,6 +18,9 @@ func New() *Config {
 			AccessTokenKey:  os.Getenv("JWT_ACCESS_TOKEN_KEY"),
 			RefreshTokenKey: os.Getenv("JWT_REFRESH_TOKEN_KEY"),
 		},
+		Email: Email{
+			Provider: EmailProvider(os.Getenv("EMAIL_PROVIDER")),
+		},
 		Server: Server{
 			Port:           os.Getenv("SERVER_PORT"),
 			KeyPath:        os.Getenv("SERVER_KEY_PATH"),
@@ -32,6 +35,7 @@ func New() *Config {
 type Config struct {
 	DB          DB
 	JWT         JWT
+	Email       Email
 	Server      Server
 	Environment Environment
 }
@@ -64,3 +68,15 @@ type Server struct {
 func (s Server) HasCertificate() bool {
 	return s.KeyPath != "" && s.CertPath != ""
 }
+
+type Email struct {
+	Provider EmailProvider
+}
+
+type EmailProvider string
+
+const (
+	EmailProviderSES   EmailProvider = "ses"
+	EmailProviderNoop  EmailProvider = "noop"
+	EmailProviderLocal EmailProvider = "local"
+)

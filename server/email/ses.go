@@ -22,7 +22,7 @@ var _ Email = (*email)(nil)
 
 const timeout = 5 * time.Second
 
-func New(c *c.Config) (Email, error) {
+func NewSES(c *c.Config) (Email, error) {
 	ctx, cancelFuc := context.WithTimeout(context.Background(), timeout)
 	defer cancelFuc()
 
@@ -37,8 +37,8 @@ func New(c *c.Config) (Email, error) {
 	}, nil
 }
 
-func MustNew(c *c.Config) Email {
-	e, err := New(c)
+func MustNewSES(c *c.Config) Email {
+	e, err := NewSES(c)
 	if err != nil {
 		panic(err)
 	}
