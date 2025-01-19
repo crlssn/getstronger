@@ -22,7 +22,7 @@ func New(c *config.Config) (Email, error) {
 	case config.EmailProviderNoop:
 		return NewNoop(), nil
 	case config.EmailProviderLocal:
-		return NewLocal(), nil
+		return NewLocal(c), nil
 	default:
 		return nil, fmt.Errorf("%w: %s", errUnknownEmailProvider, c.Email.Provider)
 	}

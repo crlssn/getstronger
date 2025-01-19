@@ -87,9 +87,9 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		}
 
 		if err = h.email.SendVerification(ctx, email.SendVerification{
-			Name:  user.FirstName,
-			Email: auth.Email,
-			Token: auth.EmailToken,
+			Name:    user.FirstName,
+			ToEmail: auth.Email,
+			Token:   auth.EmailToken,
 		}); err != nil {
 			return fmt.Errorf("send verification email: %w", err)
 		}
