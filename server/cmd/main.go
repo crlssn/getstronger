@@ -37,7 +37,7 @@ func options() []fx.Option {
 		server.Module(),
 		fx.Provide(
 			repo.New,
-			email.NewSES,
+			email.New,
 			trace.New,
 			config.New,
 			stream.New,

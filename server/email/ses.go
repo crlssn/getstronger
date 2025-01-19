@@ -53,28 +53,19 @@ type SendVerification struct {
 }
 
 func (e *email) SendVerification(ctx context.Context, req SendVerification) error {
-	sender := "noreply@getstronger.pro"
-	subject := "[GetStronger] Verify your email"
-	body := fmt.Sprintf(`Hi %s, 
-	
-Please verify your email address by clicking on the link below.
-
-%s/verify-email?token=%s
-`, req.Name, e.config.Server.AllowedOrigins[0], req.Token)
-
 	if _, err := e.client.SendEmail(ctx, &ses.SendEmailInput{
-		Source: aws.String(sender),
+		Source: aws.String(fromEmail),
 		Destination: &types.Destination{
 			ToAddresses: []string{req.Email},
 		},
 		Message: &types.Message{
 			Body: &types.Body{
 				Text: &types.Content{
-					Data: aws.String(body),
+					Data: aws.String(bodySendVerification(req.Name, e.config.Server.AllowedOrigins[0], req.Token)),
 				},
 			},
 			Subject: &types.Content{
-				Data: aws.String(subject),
+				Data: aws.String(subjectSendVerification),
 			},
 		},
 	}); err != nil {
@@ -91,28 +82,19 @@ type SendPasswordReset struct {
 }
 
 func (e *email) SendPasswordReset(ctx context.Context, req SendPasswordReset) error {
-	sender := "noreply@getstronger.pro"
-	subject := "[GetStronger] Reset your password"
-	body := fmt.Sprintf(`Hi %s, 
-	
-Please click the link below to reset your password.
-
-%s/reset-password?token=%s
-`, req.Name, e.config.Server.AllowedOrigins[0], req.Token)
-
 	if _, err := e.client.SendEmail(ctx, &ses.SendEmailInput{
-		Source: aws.String(sender),
+		Source: aws.String(fromEmail),
 		Destination: &types.Destination{
 			ToAddresses: []string{req.Email},
 		},
 		Message: &types.Message{
 			Body: &types.Body{
 				Text: &types.Content{
-					Data: aws.String(body),
+					Data: aws.String(bodySendPasswordReset(req.Name, e.config.Server.AllowedOrigins[0], req.Token)),
 				},
 			},
 			Subject: &types.Content{
-				Data: aws.String(subject),
+				Data: aws.String(subjectSendPasswordReset),
 			},
 		},
 	}); err != nil {
