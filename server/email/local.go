@@ -3,6 +3,7 @@ package email
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/smtp"
 )
 
@@ -24,11 +25,23 @@ func NewLocal() Email {
 }
 
 func (l *local) SendVerification(_ context.Context, req SendVerification) error {
-	body := bodySendVerification(req.Name, fmt.Sprintf("http://%s:%s", l.host, l.port), req.Token)
-	return smtp.SendMail(fmt.Sprintf("%s:%s", l.host, l.port), l.auth, fromEmail, []string{req.Email}, []byte(body))
+	addr := net.JoinHostPort(l.host, l.port)
+	body := bodySendVerification(req.Name, fmt.Sprintf("http://%s", addr), req.Token)
+
+	if err := smtp.SendMail(addr, l.auth, fromEmail, []string{req.Email}, []byte(body)); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
 }
 
 func (l *local) SendPasswordReset(_ context.Context, req SendPasswordReset) error {
-	body := bodySendPasswordReset(req.Name, fmt.Sprintf("http://%s:%s", l.host, l.port), req.Token)
-	return smtp.SendMail(fmt.Sprintf("%s:%s", l.host, l.port), l.auth, fromEmail, []string{req.Email}, []byte(body))
+	addr := net.JoinHostPort(l.host, l.port)
+	body := bodySendPasswordReset(req.Name, fmt.Sprintf("http://%s", addr), req.Token)
+
+	if err := smtp.SendMail(addr, l.auth, fromEmail, []string{req.Email}, []byte(body)); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
 }

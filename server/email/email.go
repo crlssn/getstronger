@@ -32,7 +32,7 @@ const (
 	fromEmail = "noreply@getstronger.pro"
 
 	subjectSendVerification  = "[GetStronger] Verify your email"
-	subjectSendPasswordReset = "[GetStronger] Reset your password"
+	subjectSendPasswordReset = "[GetStronger] Reset your password" //nolint:gosec
 )
 
 func bodySendVerification(name, domain, token string) string {
