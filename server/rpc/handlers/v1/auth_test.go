@@ -100,7 +100,7 @@ func (s *authSuite) TestSignup() {
 				s.mocks.email.EXPECT().
 					SendVerification(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, req email.SendVerification) {
-						s.Require().Equal(t.req.Msg.GetEmail(), req.ToEmail)
+						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
 						s.Require().Equal(t.req.Msg.GetFirstName(), req.Name)
 						_, err := uuid.Parse(req.Token)
 						s.Require().NoError(err)

@@ -47,16 +47,16 @@ func MustNewSES(c *c.Config) Email {
 }
 
 type SendVerification struct {
-	Name    string
-	ToEmail string
-	Token   string
+	Name  string
+	Email string
+	Token string
 }
 
 func (e *email) SendVerification(ctx context.Context, req SendVerification) error {
 	if _, err := e.client.SendEmail(ctx, &ses.SendEmailInput{
 		Source: aws.String(fromEmail),
 		Destination: &types.Destination{
-			ToAddresses: []string{req.ToEmail},
+			ToAddresses: []string{req.Email},
 		},
 		Message: &types.Message{
 			Body: &types.Body{
