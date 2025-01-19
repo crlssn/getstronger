@@ -13,7 +13,7 @@ type Email interface {
 	SendPasswordReset(ctx context.Context, req SendPasswordReset) error
 }
 
-var errUnknownEmailProvider = fmt.Errorf("unknown email provider")
+var ErrUnknownEmailProvider = fmt.Errorf("unknown email provider")
 
 func New(c *config.Config) (Email, error) {
 	switch c.Email.Provider {
@@ -24,7 +24,7 @@ func New(c *config.Config) (Email, error) {
 	case config.EmailProviderLocal:
 		return NewLocal(c), nil
 	default:
-		return nil, fmt.Errorf("%w: %s", errUnknownEmailProvider, c.Email.Provider)
+		return nil, fmt.Errorf("%w: %s", ErrUnknownEmailProvider, c.Email.Provider)
 	}
 }
 
@@ -35,7 +35,7 @@ const (
 	subjectSendPasswordReset = "[GetStronger] Reset your password" //nolint:gosec
 )
 
-func bodySendVerification(name, domain, token string) string {
+func BodySendVerification(name, domain, token string) string {
 	return fmt.Sprintf(`Hi %s, 
 	
 Please verify your email address by clicking on the link below.
@@ -44,7 +44,7 @@ Please verify your email address by clicking on the link below.
 `, name, domain, token)
 }
 
-func bodySendPasswordReset(name, domain, token string) string {
+func BodySendPasswordReset(name, domain, token string) string {
 	return fmt.Sprintf(`Hi %s, 
 	
 Please click the link below to reset your password.

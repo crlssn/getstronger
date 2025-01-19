@@ -27,7 +27,7 @@ func NewLocal(c *config.Config) Email {
 }
 
 func (l *local) SendVerification(_ context.Context, req SendVerification) error {
-	body := bodySendVerification(req.Name, l.config.Server.AllowedOrigins[0], req.Token)
+	body := BodySendVerification(req.Name, l.config.Server.AllowedOrigins[0], req.Token)
 	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\n\n%s", fromEmail, req.Email, subjectSendVerification, body)
 
 	if err := smtp.SendMail(l.addr, l.auth, fromEmail, []string{req.Email}, []byte(msg)); err != nil {
@@ -38,7 +38,7 @@ func (l *local) SendVerification(_ context.Context, req SendVerification) error 
 }
 
 func (l *local) SendPasswordReset(_ context.Context, req SendPasswordReset) error {
-	body := bodySendPasswordReset(req.Name, l.config.Server.AllowedOrigins[0], req.Token)
+	body := BodySendPasswordReset(req.Name, l.config.Server.AllowedOrigins[0], req.Token)
 	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\n\n%s", fromEmail, req.Email, subjectSendPasswordReset, body)
 
 	if err := smtp.SendMail(l.addr, l.auth, fromEmail, []string{req.Email}, []byte(msg)); err != nil {

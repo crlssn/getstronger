@@ -61,7 +61,7 @@ func (e *email) SendVerification(ctx context.Context, req SendVerification) erro
 		Message: &types.Message{
 			Body: &types.Body{
 				Text: &types.Content{
-					Data: aws.String(bodySendVerification(req.Name, e.config.Server.AllowedOrigins[0], req.Token)),
+					Data: aws.String(BodySendVerification(req.Name, e.config.Server.AllowedOrigins[0], req.Token)),
 				},
 			},
 			Subject: &types.Content{
@@ -90,7 +90,7 @@ func (e *email) SendPasswordReset(ctx context.Context, req SendPasswordReset) er
 		Message: &types.Message{
 			Body: &types.Body{
 				Text: &types.Content{
-					Data: aws.String(bodySendPasswordReset(req.Name, e.config.Server.AllowedOrigins[0], req.Token)),
+					Data: aws.String(BodySendPasswordReset(req.Name, e.config.Server.AllowedOrigins[0], req.Token)),
 				},
 			},
 			Subject: &types.Content{
