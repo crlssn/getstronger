@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Set } from '@/proto/api/v1/shared_pb.ts'
+import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 import { computed } from 'vue'
 import { Line as LineChart } from 'vue-chartjs'
 import { formatToShortDateTime } from '@/utils/datetime.ts'
@@ -28,7 +28,7 @@ ChartJS.register(
 )
 
 const props = defineProps<{
-  sets: Set[]
+  workouts: Workout[]
 }>()
 
 const options = {
@@ -83,28 +83,15 @@ const options = {
   },
 }
 
-const sets = computed(() => [...props.sets].reverse())
+const workouts = computed(() => [...props.workouts].reverse())
 
 const data = computed(() => {
   const labels: string[] = []
   const intensity: number[] = []
-  const intensityByWorkout: Record<string, number> = {}
 
-  sets.value.map((set) => {
-    const workoutId = set.metadata?.workoutId
-
-    if (!workoutId) {
-      return
-    }
-
-    if (intensityByWorkout[workoutId]) {
-      intensityByWorkout[workoutId] += set.reps * set.weight
-    } else {
-      intensityByWorkout[workoutId] = set.reps * set.weight
-    }
-
-    labels.push(formatToShortDateTime(set.metadata?.createdAt))
-    intensity.push(intensityByWorkout[workoutId])
+  workouts.value.map((workout) => {
+    labels.push(formatToShortDateTime(workout.finishedAt))
+    intensity.push(workout.intensity)
   })
 
   return {
