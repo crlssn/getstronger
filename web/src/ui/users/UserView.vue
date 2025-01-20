@@ -80,7 +80,7 @@ const followed = computed(() => user.value.followed)
 </script>
 
 <template>
-  <!-- We need at least two data points to show the graph  -->
+  <!-- We need at least two data points to show a trend -->
   <div v-if="workouts.length > 1">
     <h6>Trend</h6>
     <AppCard class="p-2">
