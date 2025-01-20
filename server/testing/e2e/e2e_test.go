@@ -152,8 +152,7 @@ func randomUnusedPort() string {
 	for range 20 {
 		// Find random port in range [1024, 65535).
 		port := rand.Intn(65535-1024) + 1024 //nolint:gosec
-		address := fmt.Sprintf(":%d", port)
-		listener, err := net.Listen("tcp", address)
+		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 		if err == nil {
 			if err = listener.Close(); err != nil {
 				panic(fmt.Sprintf("could not close listener: %v", err))
