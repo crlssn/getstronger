@@ -136,13 +136,19 @@ func UpdateAuthRefreshToken(refreshToken string) UpdateAuthOpt {
 
 func UpdateAuthPasswordResetToken(token string) UpdateAuthOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.AuthColumns.PasswordResetToken: null.StringFrom(token)}, nil
+		return orm.M{
+			orm.AuthColumns.PasswordResetToken:           null.StringFrom(token),
+			orm.AuthColumns.PasswordResetTokenValidUntil: time.Now().UTC().Add(24 * time.Hour),
+		}, nil
 	}
 }
 
 func UpdateAuthDeletePasswordResetToken() UpdateAuthOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.AuthColumns.PasswordResetToken: nil}, nil
+		return orm.M{
+			orm.AuthColumns.PasswordResetToken:           nil,
+			orm.AuthColumns.PasswordResetTokenValidUntil: nil,
+		}, nil
 	}
 }
 

@@ -24,57 +24,62 @@ import (
 
 // Auth is an object representing the database table.
 type Auth struct {
-	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Email              string      `boil:"email" json:"email" toml:"email" yaml:"email"`
-	Password           []byte      `boil:"password" json:"password" toml:"password" yaml:"password"`
-	RefreshToken       null.String `boil:"refresh_token" json:"refresh_token,omitempty" toml:"refresh_token" yaml:"refresh_token,omitempty"`
-	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	EmailVerified      bool        `boil:"email_verified" json:"email_verified" toml:"email_verified" yaml:"email_verified"`
-	EmailToken         string      `boil:"email_token" json:"email_token" toml:"email_token" yaml:"email_token"`
-	PasswordResetToken null.String `boil:"password_reset_token" json:"password_reset_token,omitempty" toml:"password_reset_token" yaml:"password_reset_token,omitempty"`
+	ID                           string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Email                        string      `boil:"email" json:"email" toml:"email" yaml:"email"`
+	Password                     []byte      `boil:"password" json:"password" toml:"password" yaml:"password"`
+	RefreshToken                 null.String `boil:"refresh_token" json:"refresh_token,omitempty" toml:"refresh_token" yaml:"refresh_token,omitempty"`
+	CreatedAt                    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	EmailVerified                bool        `boil:"email_verified" json:"email_verified" toml:"email_verified" yaml:"email_verified"`
+	EmailToken                   string      `boil:"email_token" json:"email_token" toml:"email_token" yaml:"email_token"`
+	PasswordResetToken           null.String `boil:"password_reset_token" json:"password_reset_token,omitempty" toml:"password_reset_token" yaml:"password_reset_token,omitempty"`
+	PasswordResetTokenValidUntil null.Time   `boil:"password_reset_token_valid_until" json:"password_reset_token_valid_until,omitempty" toml:"password_reset_token_valid_until" yaml:"password_reset_token_valid_until,omitempty"`
 
 	R *authR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L authL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AuthColumns = struct {
-	ID                 string
-	Email              string
-	Password           string
-	RefreshToken       string
-	CreatedAt          string
-	EmailVerified      string
-	EmailToken         string
-	PasswordResetToken string
+	ID                           string
+	Email                        string
+	Password                     string
+	RefreshToken                 string
+	CreatedAt                    string
+	EmailVerified                string
+	EmailToken                   string
+	PasswordResetToken           string
+	PasswordResetTokenValidUntil string
 }{
-	ID:                 "id",
-	Email:              "email",
-	Password:           "password",
-	RefreshToken:       "refresh_token",
-	CreatedAt:          "created_at",
-	EmailVerified:      "email_verified",
-	EmailToken:         "email_token",
-	PasswordResetToken: "password_reset_token",
+	ID:                           "id",
+	Email:                        "email",
+	Password:                     "password",
+	RefreshToken:                 "refresh_token",
+	CreatedAt:                    "created_at",
+	EmailVerified:                "email_verified",
+	EmailToken:                   "email_token",
+	PasswordResetToken:           "password_reset_token",
+	PasswordResetTokenValidUntil: "password_reset_token_valid_until",
 }
 
 var AuthTableColumns = struct {
-	ID                 string
-	Email              string
-	Password           string
-	RefreshToken       string
-	CreatedAt          string
-	EmailVerified      string
-	EmailToken         string
-	PasswordResetToken string
+	ID                           string
+	Email                        string
+	Password                     string
+	RefreshToken                 string
+	CreatedAt                    string
+	EmailVerified                string
+	EmailToken                   string
+	PasswordResetToken           string
+	PasswordResetTokenValidUntil string
 }{
-	ID:                 "auth.id",
-	Email:              "auth.email",
-	Password:           "auth.password",
-	RefreshToken:       "auth.refresh_token",
-	CreatedAt:          "auth.created_at",
-	EmailVerified:      "auth.email_verified",
-	EmailToken:         "auth.email_token",
-	PasswordResetToken: "auth.password_reset_token",
+	ID:                           "auth.id",
+	Email:                        "auth.email",
+	Password:                     "auth.password",
+	RefreshToken:                 "auth.refresh_token",
+	CreatedAt:                    "auth.created_at",
+	EmailVerified:                "auth.email_verified",
+	EmailToken:                   "auth.email_token",
+	PasswordResetToken:           "auth.password_reset_token",
+	PasswordResetTokenValidUntil: "auth.password_reset_token_valid_until",
 }
 
 // Generated where
@@ -205,24 +210,50 @@ func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field
 func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
 func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var AuthWhere = struct {
-	ID                 whereHelperstring
-	Email              whereHelperstring
-	Password           whereHelper__byte
-	RefreshToken       whereHelpernull_String
-	CreatedAt          whereHelpertime_Time
-	EmailVerified      whereHelperbool
-	EmailToken         whereHelperstring
-	PasswordResetToken whereHelpernull_String
+	ID                           whereHelperstring
+	Email                        whereHelperstring
+	Password                     whereHelper__byte
+	RefreshToken                 whereHelpernull_String
+	CreatedAt                    whereHelpertime_Time
+	EmailVerified                whereHelperbool
+	EmailToken                   whereHelperstring
+	PasswordResetToken           whereHelpernull_String
+	PasswordResetTokenValidUntil whereHelpernull_Time
 }{
-	ID:                 whereHelperstring{field: "\"getstronger\".\"auth\".\"id\""},
-	Email:              whereHelperstring{field: "\"getstronger\".\"auth\".\"email\""},
-	Password:           whereHelper__byte{field: "\"getstronger\".\"auth\".\"password\""},
-	RefreshToken:       whereHelpernull_String{field: "\"getstronger\".\"auth\".\"refresh_token\""},
-	CreatedAt:          whereHelpertime_Time{field: "\"getstronger\".\"auth\".\"created_at\""},
-	EmailVerified:      whereHelperbool{field: "\"getstronger\".\"auth\".\"email_verified\""},
-	EmailToken:         whereHelperstring{field: "\"getstronger\".\"auth\".\"email_token\""},
-	PasswordResetToken: whereHelpernull_String{field: "\"getstronger\".\"auth\".\"password_reset_token\""},
+	ID:                           whereHelperstring{field: "\"getstronger\".\"auth\".\"id\""},
+	Email:                        whereHelperstring{field: "\"getstronger\".\"auth\".\"email\""},
+	Password:                     whereHelper__byte{field: "\"getstronger\".\"auth\".\"password\""},
+	RefreshToken:                 whereHelpernull_String{field: "\"getstronger\".\"auth\".\"refresh_token\""},
+	CreatedAt:                    whereHelpertime_Time{field: "\"getstronger\".\"auth\".\"created_at\""},
+	EmailVerified:                whereHelperbool{field: "\"getstronger\".\"auth\".\"email_verified\""},
+	EmailToken:                   whereHelperstring{field: "\"getstronger\".\"auth\".\"email_token\""},
+	PasswordResetToken:           whereHelpernull_String{field: "\"getstronger\".\"auth\".\"password_reset_token\""},
+	PasswordResetTokenValidUntil: whereHelpernull_Time{field: "\"getstronger\".\"auth\".\"password_reset_token_valid_until\""},
 }
 
 // AuthRels is where relationship names are stored.
@@ -253,9 +284,9 @@ func (r *authR) GetUser() *User {
 type authL struct{}
 
 var (
-	authAllColumns            = []string{"id", "email", "password", "refresh_token", "created_at", "email_verified", "email_token", "password_reset_token"}
+	authAllColumns            = []string{"id", "email", "password", "refresh_token", "created_at", "email_verified", "email_token", "password_reset_token", "password_reset_token_valid_until"}
 	authColumnsWithoutDefault = []string{"email", "password"}
-	authColumnsWithDefault    = []string{"id", "refresh_token", "created_at", "email_verified", "email_token", "password_reset_token"}
+	authColumnsWithDefault    = []string{"id", "refresh_token", "created_at", "email_verified", "email_token", "password_reset_token", "password_reset_token_valid_until"}
 	authPrimaryKeyColumns     = []string{"id"}
 	authGeneratedColumns      = []string{}
 )
