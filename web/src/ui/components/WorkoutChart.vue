@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 import { computed } from 'vue'
 import { Line as LineChart } from 'vue-chartjs'
 import { formatToShortDateTime } from '@/utils/datetime.ts'
@@ -14,7 +15,6 @@ import {
   Tooltip,
   Scale,
 } from 'chart.js'
-import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 
 ChartJS.register(
   Title,
