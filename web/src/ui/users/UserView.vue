@@ -4,17 +4,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, ref, watch } from 'vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type Set, type User } from '@/proto/api/v1/shared_pb.ts'
-import { followUser, getUser, listSets, unfollowUser } from '@/http/requests.ts'
+import { followUser, getUser, listSets, listWorkouts, unfollowUser } from '@/http/requests.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import AppCard from '@/ui/components/AppCard.vue'
+import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 
-const user = ref({} as User)
-const sets = ref([] as Set[])
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const pageTitleStore = usePageTitleStore()
+
+const user = ref({} as User)
+const workouts = ref([] as Workout[])
+const pageToken = ref(new Uint8Array(0))
 
 const tabs = computed(() => [
   { href: `/users/${user.value.id}`, name: 'Workouts' },
@@ -40,9 +43,19 @@ watch(
 onMounted(async () => {
   await fetchUser()
   pageTitleStore.setPageTitle(pageTitle.value)
-  const res = await listSets([user.value.id], [], new Uint8Array(0), 100)
-  if (res) sets.value = res.sets
+  await fetchWorkouts()
 })
+
+const fetchWorkouts = async () => {
+  const res = await listWorkouts([user.value.id], pageToken.value)
+  if (!res) return
+
+  workouts.value = [...workouts.value, ...res.workouts]
+  pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
+  if (pageToken.value.length > 0) {
+    await fetchWorkouts()
+  }
+}
 
 const fetchUser = async () => {
   const res = await getUser(route.params.id as string)
@@ -71,10 +84,10 @@ const followed = computed(() => user.value.followed)
 </script>
 
 <template>
-  <div v-if="sets.length">
+  <div v-if="workouts.length">
     <h6>Trend</h6>
     <AppCard class="p-2">
-      <WorkoutChart :sets="sets" />
+      <WorkoutChart :workouts="workouts" />
     </AppCard>
   </div>
 
