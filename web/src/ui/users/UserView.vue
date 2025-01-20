@@ -17,7 +17,6 @@ const pageTitleStore = usePageTitleStore()
 
 const user = ref({} as User)
 const workouts = ref([] as Workout[])
-const pageToken = ref(new Uint8Array(0))
 
 const tabs = computed(() => [
   { href: `/users/${user.value.id}`, name: 'Workouts' },
@@ -47,14 +46,11 @@ onMounted(async () => {
 })
 
 const fetchWorkouts = async () => {
-  const res = await listWorkouts([user.value.id], pageToken.value)
+  // We only care about the most recent workouts for the chart.
+  const res = await listWorkouts([user.value.id], new Uint8Array(0))
   if (!res) return
 
-  workouts.value = [...workouts.value, ...res.workouts]
-  pageToken.value = res.pagination?.nextPageToken || new Uint8Array(0)
-  if (pageToken.value.length > 0) {
-    await fetchWorkouts()
-  }
+  workouts.value = res.workouts
 }
 
 const fetchUser = async () => {
