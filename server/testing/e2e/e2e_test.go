@@ -3,6 +3,9 @@ package e2e_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"math/rand"
+	"net"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -134,11 +137,28 @@ func options() []fx.Option {
 			protovalidate.New,
 			func() *config.Config {
 				return &config.Config{
-					DB:     config.DB{},
-					JWT:    config.JWT{},
-					Server: config.Server{Port: "65432"},
+					DB:  config.DB{},
+					JWT: config.JWT{},
+					Server: config.Server{
+						Port: randomUnusedPort(),
+					},
 				}
 			},
 		),
 	}
+}
+
+func randomUnusedPort() string {
+	for range 20 {
+		// Find random port in range [1024, 65535).
+		port := rand.Intn(65535-1024) + 1024 //nolint:gosec
+		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err == nil {
+			if err = listener.Close(); err != nil {
+				panic(fmt.Sprintf("could not close listener: %v", err))
+			}
+			return fmt.Sprintf("%d", port)
+		}
+	}
+	panic("could not find an unused port after 20 attempts")
 }
