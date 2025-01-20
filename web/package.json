@@ -16,7 +16,7 @@
   "dependencies": {
     "@bufbuild/protobuf": "2.2.3",
     "@connectrpc/connect": "2.0.0",
-    "@connectrpc/connect-web": "2.0.0",
+    "@connectrpc/connect-web": "2.0.1",
     "@headlessui/vue": "1.7.23",
     "@heroicons/vue": "2.2.0",
     "@vueuse/components": "12.4.0",
