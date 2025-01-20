@@ -83,15 +83,15 @@ const formatComment = computed(() => {
         :sets="exerciseSet.sets"
       />
     </div>
-    <div class="p-4 flex gap-x-1 font-medium text-sm uppercase">
-      <div class="flex items-center">
-        {{ workout.intensity.toLocaleString() }}
-        <FireIcon class="size-4 text-orange-500 ml-1" />
-      </div>
+    <div class="p-4 flex gap-x-1 font-medium text-sm uppercase justify-between">
       <div class="flex items-center">
         <RouterLink :to="`/workouts/${workout.id}`">
           {{ workout.comments.length }} {{ formatComment }}
         </RouterLink>
+      </div>
+      <div class="flex items-center">
+        {{ workout.intensity.toLocaleString() }}
+        <FireIcon class="size-4 text-orange-500 ml-1" />
       </div>
     </div>
     <div v-if="!compact" class="p-4">
