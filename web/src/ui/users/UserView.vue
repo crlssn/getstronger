@@ -80,7 +80,8 @@ const followed = computed(() => user.value.followed)
 </script>
 
 <template>
-  <div v-if="workouts.length">
+  <!-- We need at least two data points to show the graph  -->
+  <div v-if="workouts.length > 1">
     <h6>Trend</h6>
     <AppCard class="p-2">
       <WorkoutChart :workouts="workouts" />
