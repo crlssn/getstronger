@@ -15,6 +15,13 @@ resource "aws_iam_role" "ec2_cloudwatch_role" {
           Service = "ec2.amazonaws.com"
         },
         Action = "sts:AssumeRole"
+      },
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "monitoring.rds.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
       }
     ]
   })
