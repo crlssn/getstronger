@@ -13,7 +13,7 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids          = [aws_security_group.db_access.id]
   enabled_cloudwatch_logs_exports = ["postgresql"]
   monitoring_interval             = 60
-  monitoring_role_arn             = aws_iam_role.ec2_cloudwatch_role.arn
+  monitoring_role_arn             = aws_iam_role.rds_monitoring_role.arn
 }
 
 resource "aws_security_group" "db_access" {
@@ -35,3 +35,20 @@ resource "aws_security_group" "db_access" {
   }
 }
 
+resource "aws_iam_role" "rds_monitoring_role" {
+  name                = "rds-monitoring-role"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"]
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "monitoring.rds.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
