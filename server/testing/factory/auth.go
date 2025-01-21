@@ -90,6 +90,12 @@ func AuthPasswordResetToken(token string) AuthOpt {
 	}
 }
 
+func AuthPasswordResetTokenValidUntil(expiredTime time.Time) AuthOpt {
+	return func(m *orm.Auth) {
+		m.PasswordResetTokenValidUntil = null.TimeFrom(expiredTime)
+	}
+}
+
 func AuthPassword(password string) AuthOpt {
 	return func(m *orm.Auth) {
 		m.Password = repo.MustHashPassword(password)

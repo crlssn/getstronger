@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
@@ -603,6 +604,26 @@ func (s *authSuite) TestUpdatePassword() {
 				},
 			},
 			init: func(_ test) {},
+			expected: expected{
+				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+		{
+			name: "err_token_expired",
+			req: &connect.Request[v1.UpdatePasswordRequest]{
+				Msg: &v1.UpdatePasswordRequest{
+					Token:                uuid.NewString(),
+					Password:             "new_password",
+					PasswordConfirmation: "new_password",
+				},
+			},
+			init: func(t test) {
+				expiredTime := time.Now().UTC().Add(-1 * time.Hour)
+				s.factory.NewAuth(
+					factory.AuthPasswordResetToken(t.req.Msg.GetToken()),
+					factory.AuthPasswordResetTokenValidUntil(expiredTime),
+				)
+			},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
 			},
