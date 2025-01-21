@@ -35,6 +35,13 @@ resource "aws_iam_policy" "cloudwatch_logs_policy" {
           "logs:PutLogEvents"
         ],
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "cloudwatch:PutMetricData"
+        ],
+        Resource = "*"
       }
     ]
   })
