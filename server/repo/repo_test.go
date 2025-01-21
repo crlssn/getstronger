@@ -214,7 +214,7 @@ func (s *repoSuite) TestUpdateAuth() {
 			init: func(t *test) {
 				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
 				t.expected.auth.PasswordResetToken = null.StringFrom(factory.UUID(0))
-				t.expected.auth.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(24 * time.Hour)) // Ensure this matches the type
+				t.expected.auth.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(repo.PasswordResetTokenTTL * time.Hour)) // Ensure this matches the type
 			},
 			expected: expected{
 				err: nil,
