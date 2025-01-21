@@ -15,13 +15,6 @@ resource "aws_iam_role" "ec2_cloudwatch_role" {
           Service = "ec2.amazonaws.com"
         },
         Action = "sts:AssumeRole"
-      },
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "monitoring.rds.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
       }
     ]
   })
@@ -42,13 +35,6 @@ resource "aws_iam_policy" "cloudwatch_logs_policy" {
           "logs:PutLogEvents"
         ],
         Resource = "arn:aws:logs:*:*:*"
-      },
-      {
-        Effect = "Allow",
-        Action = [
-          "cloudwatch:PutMetricData"
-        ],
-        Resource = "*"
       }
     ]
   })
