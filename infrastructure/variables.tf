@@ -17,6 +17,7 @@ variable "aws_region" {
 
 variable "domain" {
   default = "getstronger.pro"
+  type    = string
 }
 
 variable "ec2_public_key" {

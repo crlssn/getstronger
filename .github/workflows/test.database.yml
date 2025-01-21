@@ -1,0 +1,41 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths:
+      - 'database/migrations/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  sql:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find migrations
+        id: migrations
+        run: |
+          modified_migrations=$(git diff --diff-filter=d --name-only origin/"$GITHUB_BASE_REF"...origin/"$GITHUB_HEAD_REF" -- database/migrations/*.sql)
+          echo "$modified_migrations"
+          echo "file_names=${modified_migrations}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Squawk
+        uses: sbdchd/squawk-action@88de415330adcae2214818f02e55c1817a717432 # v2.0.0
+        with:
+          files: ${{ steps.migrations.outputs.file_names }}
