@@ -1,6 +1,6 @@
 # GetStronger
 
-![Code Coverage](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW) ![Codacy Badge](https://app.codacy.com/project/badge/Grade/75e3f5a2db734f71871daaf8aadb3e5e)
+![Code Coverage](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW)
 
 **GetStronger** is an open-source gym workout application designed to help users track strength training routines, monitor progress, and connect with others in the fitness community.
 
