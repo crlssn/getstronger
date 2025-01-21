@@ -25,8 +25,8 @@ jobs:
       - name: Find migrations
         id: migrations
         run: |
-          modified_migrations=$(git diff --diff-filter=d --name-only origin/"$GITHUB_BASE_REF"...origin/"$GITHUB_HEAD_REF" -- database/migrations/*.sql)
-          echo "Modified migrations: $modified_migrations"
+          modified_migrations=$(jq -r '.pull_request.files[] | select(.filename | startswith("database/migrations/")) | .filename' "$GITHUB_EVENT_PATH")
+          echo "$modified_migrations"
           echo "file_names=${modified_migrations}" >> "$GITHUB_OUTPUT"
 
       - name: Run Squawk
