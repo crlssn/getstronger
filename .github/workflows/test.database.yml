@@ -22,15 +22,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Find migrations
+        uses: actions/github-script@v7
         id: migrations
-        run: |
-          modified_migrations=$(git diff --diff-filter=d --name-only origin/"$GITHUB_BASE_REF"...origin/"$GITHUB_HEAD_REF" -- database/migrations/*.sql)
-          echo "$modified_migrations"
-          echo "file_names=${modified_migrations}" >> "$GITHUB_OUTPUT"
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const { data } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            
+            const files = data
+              .filter(file => file.filename.startsWith('database/migrations/') && file.filename.endsWith('.sql'))
+              .map(file => file.filename);
+            
+            core.setOutput('file_names', JSON.stringify(files));
+            console.log('Modified migrations:', files);
 
       - name: Run Squawk
         uses: sbdchd/squawk-action@88de415330adcae2214818f02e55c1817a717432 # v2.0.0
