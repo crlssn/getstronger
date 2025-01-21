@@ -1,4 +1,4 @@
-name: terraform
+name: test
 
 on:
   pull_request:
@@ -11,13 +11,22 @@ on:
       - 'infrastructure/**'
 
 jobs:
-  plan:
+  terraform:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - uses: terraform-linters/setup-tflint@8093687ecc9dcbfa88d07c103ad4176739a7287e # v4.1.0
+        name: Set up TFLint
+
+      - name: Install TFLint plugins
+        run: tflint --init
+
+      - name: Run TFLint
+        run: tflint --chdir=infrastructure
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
