@@ -13,7 +13,7 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids = [aws_security_group.db_access.id]
   # monitoring_interval             = 60
   # monitoring_role_arn             = aws_iam_role.rds_monitoring_role.arn
-  # enabled_cloudwatch_logs_exports = ["postgresql"]
+  enabled_cloudwatch_logs_exports = ["postgresql"]
 }
 
 resource "aws_security_group" "db_access" {
