@@ -11,9 +11,9 @@ resource "aws_db_instance" "postgres" {
   skip_final_snapshot             = true
   publicly_accessible             = true
   vpc_security_group_ids          = [aws_security_group.db_access.id]
+  enabled_cloudwatch_logs_exports = ["postgresql"]
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.rds_monitoring_role.arn
-  enabled_cloudwatch_logs_exports = ["postgresql"]
 }
 
 resource "aws_security_group" "db_access" {
@@ -36,7 +36,8 @@ resource "aws_security_group" "db_access" {
 }
 
 resource "aws_iam_role" "rds_monitoring_role" {
-  name = "rds-monitoring-role"
+  name                = "rds-monitoring-role"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -50,30 +51,4 @@ resource "aws_iam_role" "rds_monitoring_role" {
       }
     ]
   })
-}
-
-resource "aws_iam_policy" "rds_monitoring_policy" {
-  name        = "rds-monitoring-policy"
-  description = "Policy for RDS Enhanced Monitoring"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "cloudwatch:PutMetricData",
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "attach_rds_monitoring_policy" {
-  role       = aws_iam_role.rds_monitoring_role.name
-  policy_arn = aws_iam_policy.rds_monitoring_policy.arn
 }
