@@ -11,4 +11,3 @@ CREATE TABLE getstronger.events
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP               NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
 );
-
