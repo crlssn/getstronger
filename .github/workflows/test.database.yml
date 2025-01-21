@@ -39,8 +39,8 @@ jobs:
               .filter(file => file.filename.startsWith('database/migrations/') && file.filename.endsWith('.sql'))
               .map(file => file.filename);
             
-            core.setOutput('file_names', JSON.stringify(files));
-            console.log('Modified migrations:', files);
+            core.setOutput('file_names', files.join(' '));
+            console.log('Modified migrations:', files.join(' '));
 
       - name: Run Squawk
         uses: sbdchd/squawk-action@88de415330adcae2214818f02e55c1817a717432 # v2.0.0
