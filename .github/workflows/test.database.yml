@@ -28,11 +28,10 @@ jobs:
         id: migrations
         with:
           script: |
-            const prNumber = context.payload.pull_request.number;
             const { data } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: prNumber,
+              owner: context.repo.owner,
+              pull_number: context.payload.pull_request.number,
             });
             
             const files = data
