@@ -11,9 +11,9 @@ resource "aws_db_instance" "postgres" {
   skip_final_snapshot    = true
   publicly_accessible    = true
   vpc_security_group_ids = [aws_security_group.db_access.id]
-  enabled_cloudwatch_logs_exports = ["postgresql"]
-  monitoring_interval             = 60
-  monitoring_role_arn             = aws_iam_role.ec2_cloudwatch_role.arn
+  # enabled_cloudwatch_logs_exports = ["postgresql"]
+  # monitoring_interval             = 60
+  # monitoring_role_arn             = aws_iam_role.ec2_cloudwatch_role.arn
 }
 
 resource "aws_security_group" "db_access" {
