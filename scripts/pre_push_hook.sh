@@ -31,5 +31,5 @@ make test > /dev/null || {
     exit 1
 }
 
-echo -e "✅ ${GREEN}All checks passed. Pushing changes...${NO_COLOUR}"
+echo -e "✅  ${GREEN}All checks passed. Pushing changes.${NO_COLOUR}"
 exit 0
