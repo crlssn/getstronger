@@ -619,7 +619,7 @@ func (s *authSuite) TestUpdatePassword() {
 			},
 			init: func(t test) {
 				s.factory.NewAuth(
-					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), time.Hour),
+					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), -time.Hour),
 				)
 			},
 			expected: expected{
