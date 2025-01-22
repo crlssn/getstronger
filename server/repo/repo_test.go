@@ -212,9 +212,10 @@ func (s *repoSuite) TestUpdateAuth() {
 				repo.UpdateAuthPasswordResetToken(factory.UUID(0)),
 			},
 			init: func(t *test) {
-				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
-				t.expected.auth.PasswordResetToken = null.StringFrom(factory.UUID(0))
-				t.expected.auth.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(repo.PasswordResetTokenTTL * time.Hour)) // Ensure this matches the type
+				t.expected.auth = s.factory.NewAuth(
+					factory.AuthID(t.authID),
+					factory.AuthPasswordResetToken(factory.UUID(0), repo.PasswordResetTokenTTL),
+				)
 			},
 			expected: expected{
 				err: nil,
@@ -229,7 +230,6 @@ func (s *repoSuite) TestUpdateAuth() {
 			init: func(t *test) {
 				t.expected.auth = s.factory.NewAuth(
 					factory.AuthID(t.authID),
-					factory.AuthPasswordResetToken(uuid.NewString()),
 				)
 				t.expected.auth.PasswordResetToken = null.String{}
 				t.expected.auth.PasswordResetTokenValidUntil = null.Time{}
@@ -323,12 +323,10 @@ func (s *repoSuite) TestUpdateAuth() {
 			s.Require().Equal(t.expected.auth.RefreshToken.String, auth.RefreshToken.String)
 			s.Require().Equal(t.expected.auth.PasswordResetToken.Valid, auth.PasswordResetToken.Valid)
 			s.Require().Equal(t.expected.auth.PasswordResetToken.String, auth.PasswordResetToken.String)
+			s.Require().Equal(t.expected.auth.PasswordResetTokenValidUntil.Valid, auth.PasswordResetTokenValidUntil.Valid)
+			s.Require().True(t.expected.auth.PasswordResetTokenValidUntil.Time.Round(time.Second).Equal(auth.PasswordResetTokenValidUntil.Time.Round(time.Second)))
 			if t.expected.password != "" {
 				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
-			}
-			s.Require().Equal(t.expected.auth.PasswordResetTokenValidUntil.Valid, auth.PasswordResetTokenValidUntil.Valid)
-			if t.expected.auth.PasswordResetTokenValidUntil.Valid {
-				s.Require().True(t.expected.auth.PasswordResetTokenValidUntil.Time.Round(time.Second).Equal(auth.PasswordResetTokenValidUntil.Time.Round(time.Second)))
 			}
 		})
 	}

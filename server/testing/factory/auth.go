@@ -26,14 +26,15 @@ type AuthOpt func(event *orm.Auth)
 
 func (f *Factory) NewAuth(opts ...AuthOpt) *orm.Auth {
 	m := &orm.Auth{
-		ID:                 uuid.NewString(),
-		Email:              fmt.Sprintf("%s-%s", uuid.NewString(), f.faker.Email()),
-		Password:           nil,
-		RefreshToken:       null.String{},
-		CreatedAt:          time.Time{},
-		EmailVerified:      false,
-		EmailToken:         "",
-		PasswordResetToken: null.String{},
+		ID:                           uuid.NewString(),
+		Email:                        fmt.Sprintf("%s-%s", uuid.NewString(), f.faker.Email()),
+		Password:                     nil,
+		RefreshToken:                 null.String{},
+		CreatedAt:                    time.Time{},
+		EmailVerified:                false,
+		EmailToken:                   "",
+		PasswordResetToken:           null.String{},
+		PasswordResetTokenValidUntil: null.Time{},
 	}
 
 	if m.Password == nil {
@@ -84,15 +85,11 @@ func AuthRefreshToken(token string) AuthOpt {
 	}
 }
 
-func AuthPasswordResetToken(token string) AuthOpt {
+func AuthPasswordResetToken(token string, ttl time.Duration) AuthOpt {
 	return func(m *orm.Auth) {
 		m.PasswordResetToken = null.StringFrom(token)
-	}
-}
-
-func AuthPasswordResetTokenValidUntil(expiredTime time.Time) AuthOpt {
-	return func(m *orm.Auth) {
-		m.PasswordResetTokenValidUntil = null.TimeFrom(expiredTime)
+		// Truncate to microseconds to unify precision across different databases.
+		m.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))
 	}
 }
 
