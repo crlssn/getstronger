@@ -19,6 +19,7 @@ echo "Linting code..."
 make lint > /dev/null || {
     echo -e "⚠️ ${RED}Linting failed. Aborting push.${NO_COLOUR}"
     echo "Run 'make lint' to see linting output."
+    echo "Run 'git push --no-verify' to bypass this check."
     exit 1
 }
 
@@ -26,6 +27,7 @@ echo "Running tests..."
 make test > /dev/null || {
     echo -e "⚠️ ${RED}Tests failed. Aborting push.${NO_COLOUR}"
     echo "Run 'make test' to see test output."
+    echo "Run 'git push --no-verify' to bypass this check."
     exit 1
 }
 
