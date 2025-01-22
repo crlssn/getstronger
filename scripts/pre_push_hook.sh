@@ -8,8 +8,8 @@ make format
 
 echo "Checking for uncommitted changes"
 if [[ $(git status --porcelain) ]]; then
-  diff "$(git diff)"
-  echo diff
+  diff=$(git diff)
+  echo "$diff"
   echo "Uncommitted changes found. Aborting push."
   exit 1
 fi
