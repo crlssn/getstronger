@@ -214,6 +214,7 @@ func (s *repoSuite) TestUpdateAuth() {
 			init: func(t *test) {
 				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
 				t.expected.auth.PasswordResetToken = null.StringFrom(factory.UUID(0))
+				t.expected.auth.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(repo.PasswordResetTokenTTL * time.Hour)) // Ensure this matches the type
 			},
 			expected: expected{
 				err: nil,
@@ -231,6 +232,7 @@ func (s *repoSuite) TestUpdateAuth() {
 					factory.AuthPasswordResetToken(uuid.NewString()),
 				)
 				t.expected.auth.PasswordResetToken = null.String{}
+				t.expected.auth.PasswordResetTokenValidUntil = null.Time{}
 			},
 			expected: expected{
 				err: nil,
@@ -262,6 +264,7 @@ func (s *repoSuite) TestUpdateAuth() {
 					factory.AuthRefreshToken("refresh_token"),
 				)
 				t.expected.auth.RefreshToken = null.String{}
+				t.expected.auth.PasswordResetTokenValidUntil = null.Time{}
 			},
 			expected: expected{
 				err: nil,
@@ -322,6 +325,10 @@ func (s *repoSuite) TestUpdateAuth() {
 			s.Require().Equal(t.expected.auth.PasswordResetToken.String, auth.PasswordResetToken.String)
 			if t.expected.password != "" {
 				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
+			}
+			s.Require().Equal(t.expected.auth.PasswordResetTokenValidUntil.Valid, auth.PasswordResetTokenValidUntil.Valid)
+			if t.expected.auth.PasswordResetTokenValidUntil.Valid {
+				s.Require().True(t.expected.auth.PasswordResetTokenValidUntil.Time.Round(time.Second).Equal(auth.PasswordResetTokenValidUntil.Time.Round(time.Second)))
 			}
 		})
 	}

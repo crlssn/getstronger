@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
@@ -307,6 +308,11 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 
 		log.Error("auth fetch failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if auth.PasswordResetTokenValidUntil.Valid && auth.PasswordResetTokenValidUntil.Time.Before(time.Now().UTC()) {
+		log.Warn("password reset token expired")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}
 
 	if err = h.repo.UpdateAuth(ctx, auth.ID,
