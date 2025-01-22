@@ -1,5 +1,9 @@
 #!/bin/bash
 
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NO_COLOUR='\033[0m'
+
 # Run tests
 echo "Running pre-push hook..."
 
@@ -8,21 +12,21 @@ make format
 
 echo "Checking for uncommitted changes"
 if [[ $(git status --porcelain) ]]; then
-  echo "Uncommitted changes found. Aborting push."
+  echo -e "${RED}Uncommitted changes found. Aborting push.${NO_COLOUR}"
   exit 1
 fi
 
 echo "Linting code..."
 make lint || {
-    echo "Linting failed. Aborting push."
+    echo -e "${RED}Linting failed. Aborting push.${NO_COLOUR}"
     exit 1
 }
 
 echo "Running tests..."
 make test || {
-    echo "Tests failed. Aborting push."
+    echo -e "${RED}Tests failed. Aborting push.${NO_COLOUR}"
     exit 1
 }
 
-echo "All checks passed. Pushing changes..."
+echo -e "${GREEN}All checks passed. Pushing changes...${NO_COLOUR}"
 exit 0
