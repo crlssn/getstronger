@@ -88,7 +88,8 @@ func AuthRefreshToken(token string) AuthOpt {
 func AuthPasswordResetToken(token string, ttl time.Duration) AuthOpt {
 	return func(m *orm.Auth) {
 		m.PasswordResetToken = null.StringFrom(token)
-		m.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(ttl))
+		// Truncate to microseconds to unify precision across different databases.
+		m.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))
 	}
 }
 
