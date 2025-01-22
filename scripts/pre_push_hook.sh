@@ -10,15 +10,15 @@ echo "Formatting code..."
 make format > /dev/null
 if [[ $(git status --porcelain) ]]; then
   echo -e "⚠️ ${RED}Uncommitted changes found. Aborting push.${NO_COLOUR}"
-  diff=$(git diff)
-  echo "$diff"
+  echo "Run 'git diff' to see uncommitted changes."
+  echo "Run 'git push --no-verify' to bypass this check."
   exit 1
 fi
 
 echo "Linting code..."
 make lint > /dev/null || {
     echo -e "⚠️ ${RED}Linting failed. Aborting push.${NO_COLOUR}"
-    echo "Run 'make lint' to see linting output."
+    echo "Run 'make lint' to see linting errors."
     echo "Run 'git push --no-verify' to bypass this check."
     exit 1
 }
@@ -26,7 +26,7 @@ make lint > /dev/null || {
 echo "Running tests..."
 make test > /dev/null || {
     echo -e "⚠️ ${RED}Tests failed. Aborting push.${NO_COLOUR}"
-    echo "Run 'make test' to see test output."
+    echo "Run 'make test' to see test failures."
     echo "Run 'git push --no-verify' to bypass this check."
     exit 1
 }
