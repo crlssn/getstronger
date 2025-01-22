@@ -19,7 +19,7 @@
     "@connectrpc/connect-web": "2.0.0",
     "@headlessui/vue": "1.7.23",
     "@heroicons/vue": "2.2.0",
-    "@vueuse/components": "12.4.0",
+    "@vueuse/components": "12.5.0",
     "@vueuse/core": "12.5.0",
     "@vueuse/head": "2.0.0",
     "@vueuse/integrations": "12.4.0",
