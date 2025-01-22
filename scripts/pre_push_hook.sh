@@ -7,20 +7,22 @@ NO_COLOUR='\033[0m'
 echo "Running pre-push hook..."
 
 echo "Formatting code..."
-make format > /dev/null
+make format > /dev/null 2>&1
 if [[ $(git status --porcelain) ]]; then
+  diff=$(git diff)
+  echo "$diff"
   echo -e "⚠️ ${RED}Uncommitted changes found. Aborting push.${NO_COLOUR}"
   exit 1
 fi
 
 echo "Linting code..."
-make lint > /dev/null || {
+make lint > /dev/null 2>&1 || {
     echo -e "⚠️ ${RED}Linting failed. Aborting push.${NO_COLOUR}"
     exit 1
 }
 
 echo "Running tests..."
-make test > /dev/null || {
+make test > /dev/null 2>&1 || {
     echo -e "⚠️ ${RED}Tests failed. Aborting push.${NO_COLOUR}"
     exit 1
 }
