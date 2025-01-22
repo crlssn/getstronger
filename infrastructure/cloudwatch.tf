@@ -1,5 +1,5 @@
 resource "aws_cloudwatch_log_group" "backend_logs" {
-  name             = "/aws/backend-service/logs"
+  name = "/aws/backend-service/logs"
   retention_in_days = 30
 }
 
