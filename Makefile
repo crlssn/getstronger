@@ -182,7 +182,7 @@ install_tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 install_hooks:
-	@cp ./scripts/pre_push_hook.sh .git/hooks/pre_push.sh
+	@cp ./scripts/pre_push_hook.sh .git/hooks/pre-push
 	@echo "✅  Installed pre-push hook"
 
 # ==============================================================================
