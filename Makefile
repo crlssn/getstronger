@@ -90,7 +90,7 @@ test_web:
 	# cd web && npm run test:unit
 
 test_backend:
-	go test ./... --count=1
+	go test ./...
 
 # ==============================================================================
 # Application Commands
