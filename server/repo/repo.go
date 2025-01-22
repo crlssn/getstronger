@@ -134,13 +134,13 @@ func UpdateAuthRefreshToken(refreshToken string) UpdateAuthOpt {
 	}
 }
 
-const PasswordResetTokenTTL = 24
+const PasswordResetTokenTTL = 24 * time.Hour
 
 func UpdateAuthPasswordResetToken(token string) UpdateAuthOpt {
 	return func() (orm.M, error) {
 		return orm.M{
 			orm.AuthColumns.PasswordResetToken:           null.StringFrom(token),
-			orm.AuthColumns.PasswordResetTokenValidUntil: null.TimeFrom(time.Now().UTC().Add(PasswordResetTokenTTL * time.Hour)),
+			orm.AuthColumns.PasswordResetTokenValidUntil: null.TimeFrom(time.Now().UTC().Add(PasswordResetTokenTTL)),
 		}, nil
 	}
 }

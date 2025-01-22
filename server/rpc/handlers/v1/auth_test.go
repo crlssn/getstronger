@@ -573,7 +573,7 @@ func (s *authSuite) TestUpdatePassword() {
 			},
 			init: func(t test) {
 				s.factory.NewAuth(
-					factory.AuthPasswordResetToken(t.req.Msg.GetToken()),
+					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), repo.PasswordResetTokenTTL),
 				)
 			},
 			expected: expected{
@@ -618,10 +618,8 @@ func (s *authSuite) TestUpdatePassword() {
 				},
 			},
 			init: func(t test) {
-				expiredTime := time.Now().UTC().Add(-1 * time.Hour)
 				s.factory.NewAuth(
-					factory.AuthPasswordResetToken(t.req.Msg.GetToken()),
-					factory.AuthPasswordResetTokenValidUntil(expiredTime),
+					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), -time.Hour),
 				)
 			},
 			expected: expected{
