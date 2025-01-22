@@ -1,7 +1,7 @@
 #!/bin/bash
 
-GREEN='\033[0;32m'
 RED='\033[0;31m'
+GREEN='\033[0;32m'
 NO_COLOUR='\033[0m'
 
 echo "Running pre-push hook"
