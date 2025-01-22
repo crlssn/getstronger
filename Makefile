@@ -162,6 +162,7 @@ install:
 	$(MAKE) install_go
 	$(MAKE) install_js
 	$(MAKE) install_tools
+	$(MAKE) install_hooks
 
 install_go:
 	go mod download
@@ -179,6 +180,10 @@ install_tools:
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install mvdan.cc/gofumpt@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+install_hooks:
+	@cp ./scripts/pre_push_hook.sh .git/hooks/pre_push.sh
+	@echo "✅  Installed pre-push hook"
 
 # ==============================================================================
 # Local Development Commands
