@@ -9,7 +9,7 @@ make format
 echo "Checking for uncommitted changes"
 if [[ $(git status --porcelain) ]]; then
   diff=$(git diff)
-  echo "$diff"
+  echo "$diff" | less
   echo "Uncommitted changes found. Aborting push."
   exit 1
 fi
