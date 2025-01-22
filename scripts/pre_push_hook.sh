@@ -9,9 +9,9 @@ echo "Running pre-push hook..."
 echo "Formatting code..."
 make format > /dev/null 2>&1
 if [[ $(git status --porcelain) ]]; then
+  echo -e "⚠️ ${RED}Uncommitted changes found. Aborting push.${NO_COLOUR}"
   diff=$(git diff)
   echo "$diff"
-  echo -e "⚠️ ${RED}Uncommitted changes found. Aborting push.${NO_COLOUR}"
   exit 1
 fi
 
