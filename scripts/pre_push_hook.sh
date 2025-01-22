@@ -4,10 +4,10 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NO_COLOUR='\033[0m'
 
-echo "Running pre-push hook..."
+echo "Running pre-push hook"
 
 echo "Formatting code..."
-make format > /dev/null 2>&1
+make format > /dev/null
 if [[ $(git status --porcelain) ]]; then
   echo -e "⚠️ ${RED}Uncommitted changes found. Aborting push.${NO_COLOUR}"
   diff=$(git diff)
@@ -16,14 +16,16 @@ if [[ $(git status --porcelain) ]]; then
 fi
 
 echo "Linting code..."
-make lint > /dev/null 2>&1 || {
+make lint > /dev/null || {
     echo -e "⚠️ ${RED}Linting failed. Aborting push.${NO_COLOUR}"
+    echo "Run 'make lint' to see linting output."
     exit 1
 }
 
 echo "Running tests..."
-make test > /dev/null 2>&1 || {
+make test > /dev/null || {
     echo -e "⚠️ ${RED}Tests failed. Aborting push.${NO_COLOUR}"
+    echo "Run 'make test' to see test output."
     exit 1
 }
 
