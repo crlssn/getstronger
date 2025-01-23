@@ -1,7 +1,5 @@
 # GetStronger
 
-![Code Coverage](https://codecov.io/gh/crlssn/getstronger/graph/badge.svg?token=Y0VUDQ3FZW)
-
 **GetStronger** is an open-source gym workout application designed to help users track strength training routines, monitor progress, and connect with others in the fitness community.
 
 ---
@@ -11,8 +9,8 @@
 - **Workout Tracking**: Log exercises, sets, and reps with ease.
 - **Personal Bests**: Automatically track and display personal records for each exercise.
 - **Social Features**: Follow friends, share progress, and stay motivated.
-- **Progress Analytics**: Visualize strength gains over time.
-- **Mobile-First Design**: Optimized for mobile devices to ensure seamless usability in the gym.
+- **Progress Analytics**: Visualise strength gains over time.
+- **Mobile-First Design**: Optimised for mobile devices to ensure seamless usability in the gym.
 
 ---
 
@@ -57,10 +55,10 @@ Use the demo account to explore all features:
 
 ## Tech Stack
 
-- **Web**: Typescript using Vue.js
+- **Web**: TypeScript (Vue.js, Tailwind CSS)
 - **Backend**: Golang
-- **Database**: Postgres
-- **APIs**: Connect RPC, Protocol Buffers
+- **Database**: PostgreSQL
+- **APIs**: gRPC-compatible, Protocol Buffers
 - **Infrastructure**: AWS (S3, EC2, Route 53), Terraform
 - **CI/CD**: GitHub Actions
 
