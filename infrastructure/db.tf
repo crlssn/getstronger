@@ -14,7 +14,9 @@ resource "aws_db_instance" "postgres" {
   enabled_cloudwatch_logs_exports = ["postgresql"]
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.rds_monitoring_role.arn
+  backup_window                   = "03:00-04:00"
   backup_retention_period         = 7
+  maintenance_window              = "sun:05:00-sun:06:00"
   deletion_protection             = true
 }
 
