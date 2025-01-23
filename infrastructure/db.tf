@@ -15,6 +15,7 @@ resource "aws_db_instance" "postgres" {
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.rds_monitoring_role.arn
   backup_retention_period         = 7
+  deletion_protection             = true
 }
 
 resource "aws_security_group" "db_access" {
