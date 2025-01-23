@@ -1,0 +1,4 @@
+exclude:
+  paths:
+    - server/gen
+    - web/src/proto
