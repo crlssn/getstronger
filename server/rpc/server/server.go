@@ -22,8 +22,8 @@ import (
 
 type Server struct {
 	log    *zap.Logger
-	conn   *stream.Conn
 	config *config.Config
+	stream *stream.Manager
 	server *http.Server
 }
 
@@ -32,8 +32,8 @@ type Params struct {
 
 	Log    *zap.Logger
 	Mux    *http.ServeMux
-	Conn   *stream.Conn
 	Config *config.Config
+	Stream *stream.Manager
 }
 
 const (
@@ -45,8 +45,8 @@ const (
 func NewServer(p Params) *Server {
 	return &Server{
 		log:    p.Log,
-		conn:   p.Conn,
 		config: p.Config,
+		stream: p.Stream,
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%s", p.Config.Server.Port),
 			Handler:      h2c.NewHandler(p.Mux, &http2.Server{}),
@@ -75,7 +75,7 @@ func (s *Server) ListenAndServe(_ context.Context) error {
 }
 
 func (s *Server) listenAndServe() error {
-	s.server.RegisterOnShutdown(s.conn.Cancel)
+	s.server.RegisterOnShutdown(s.stream.Cancel)
 
 	if s.config.Server.HasCertificate() {
 		s.log.Info("server: listening on https")

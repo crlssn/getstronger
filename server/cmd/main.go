@@ -40,7 +40,7 @@ func options() []fx.Option {
 			email.New,
 			trace.New,
 			config.New,
-			stream.New,
+			stream.NewManager,
 			cookies.New,
 			protovalidate.New,
 		),
