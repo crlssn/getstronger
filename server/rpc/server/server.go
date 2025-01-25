@@ -22,7 +22,7 @@ import (
 
 type Server struct {
 	log    *zap.Logger
-	conn   *stream.Conn
+	conn   *stream.Manager
 	config *config.Config
 	server *http.Server
 }
@@ -32,7 +32,7 @@ type Params struct {
 
 	Log    *zap.Logger
 	Mux    *http.ServeMux
-	Conn   *stream.Conn
+	Conn   *stream.Manager
 	Config *config.Config
 }
 

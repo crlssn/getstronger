@@ -132,7 +132,7 @@ func options() []fx.Option {
 			repo.New,
 			email.NewNoop,
 			trace.New,
-			stream.New,
+			stream.NewManager,
 			cookies.New,
 			protovalidate.New,
 			func() *config.Config {
