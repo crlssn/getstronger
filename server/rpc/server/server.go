@@ -32,8 +32,8 @@ type Params struct {
 
 	Log    *zap.Logger
 	Mux    *http.ServeMux
-	Conn   *stream.Manager
 	Config *config.Config
+	Stream *stream.Manager
 }
 
 const (
@@ -46,7 +46,7 @@ func NewServer(p Params) *Server {
 	return &Server{
 		log:    p.Log,
 		config: p.Config,
-		stream: p.Conn,
+		stream: p.Stream,
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%s", p.Config.Server.Port),
 			Handler:      h2c.NewHandler(p.Mux, &http2.Server{}),
