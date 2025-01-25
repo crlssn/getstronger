@@ -21,6 +21,6 @@ func TestManager(t *testing.T) {
 	m.Cancel()
 
 	if len(cancelled) != 1 {
-		t.Error("expected cancel to be called")
+		t.Error("expected cancel func to be called once")
 	}
 }
