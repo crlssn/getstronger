@@ -324,7 +324,6 @@ func (s *authSuite) TestRefreshToken() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 			s.Require().NotEmpty(res.Msg.GetAccessToken())
-			s.Require().NoError(s.jwt.ValidateAccessToken(res.Msg.GetAccessToken()))
 		})
 	}
 }

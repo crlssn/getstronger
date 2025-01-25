@@ -160,23 +160,3 @@ func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, e
 
 	return claims, nil
 }
-
-func (m *Manager) ValidateAccessToken(token string) error {
-	claims, err := m.ClaimsFromToken(token, TokenTypeAccess)
-	if err != nil {
-		return fmt.Errorf("parsing claims: %w", err)
-	}
-
-	if err = m.ValidateClaims(claims); err != nil {
-		return fmt.Errorf("validating claims: %w", err)
-	}
-
-	return nil
-}
-
-func (m *Manager) ValidateClaims(claims *Claims) error {
-	if err := m.Validator.Validate(claims); err != nil {
-		return fmt.Errorf("claims validation: %w", err)
-	}
-	return nil
-}

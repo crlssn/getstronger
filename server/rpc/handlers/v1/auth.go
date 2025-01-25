@@ -191,7 +191,7 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
-	if err = h.jwt.ValidateClaims(claims); err != nil {
+	if err = h.jwt.Validator.Validate(claims); err != nil {
 		log.Error("token validation failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}

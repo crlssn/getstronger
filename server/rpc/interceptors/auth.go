@@ -170,7 +170,7 @@ func (a *Auth) ClaimsFromHeader(header http.Header) (*jwt.Claims, error) {
 		return nil, fmt.Errorf("claims from token: %w", err)
 	}
 
-	if err = a.jwt.ValidateClaims(claims); err != nil {
+	if err = a.jwt.Validator.Validate(claims); err != nil {
 		return nil, fmt.Errorf("validate claims: %w", err)
 	}
 
