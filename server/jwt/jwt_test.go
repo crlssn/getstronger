@@ -16,12 +16,10 @@ func TestGenerateTokens(t *testing.T) {
 
 	m := jwt.NewManager([]byte("access_key"), []byte("refresh_key"))
 
-	accessToken, err := m.CreateToken(userID, jwt.TokenTypeAccess)
-	require.NoError(t, err)
+	accessToken := m.MustCreateToken(userID, jwt.TokenTypeAccess)
 	require.NotEmpty(t, accessToken)
 
-	refreshToken, err := m.CreateToken(userID, jwt.TokenTypeRefresh)
-	require.NoError(t, err)
+	refreshToken := m.MustCreateToken(userID, jwt.TokenTypeRefresh)
 	require.NotEmpty(t, refreshToken)
 
 	claims, err := m.ClaimsFromToken(accessToken, jwt.TokenTypeAccess)
@@ -52,13 +50,13 @@ func TestGenerateTokens(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, "token parsing: token is unverifiable: error while executing keyfunc: unexpected subject: refresh_token", err.Error())
 
-	m2 := jwt.NewManager([]byte("access_key2"), []byte("refresh_key2"))
+	m = jwt.NewManager([]byte("access_key2"), []byte("refresh_key2"))
 
-	_, err = m2.ClaimsFromToken(accessToken, jwt.TokenTypeAccess)
+	_, err = m.ClaimsFromToken(accessToken, jwt.TokenTypeAccess)
 	require.Error(t, err)
 	require.Equal(t, "token parsing: token signature is invalid: signature is invalid", err.Error())
 
-	_, err = m2.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
+	_, err = m.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
 	require.Error(t, err)
 	require.Equal(t, "token parsing: token signature is invalid: signature is invalid", err.Error())
 }
