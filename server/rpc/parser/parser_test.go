@@ -181,6 +181,12 @@ func (s *parserSuite) TestWorkout() {
 			s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())
 		}
 	}
+
+	workout = s.factory.NewWorkout(
+		factory.WorkoutNote("note"),
+	)
+	parsed = parser.Workout(workout)
+	s.Require().Equal(workout.Note.String, parsed.GetNote())
 }
 
 func (s *parserSuite) TestWorkoutSlice() {
