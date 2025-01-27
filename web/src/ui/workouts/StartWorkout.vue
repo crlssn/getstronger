@@ -27,8 +27,8 @@ const route = useRoute()
 const routineID = route.params.routine_id as string
 const routine = ref<Routine | undefined>(undefined)
 const prevExerciseSets = ref<ExerciseSets[]>([])
-const startDateTime = ref(DateTime.now().toFormat('yyyy-MM-dd\'T\'HH:mm'))
-const endDateTime = ref(DateTime.now().toFormat('yyyy-MM-dd\'T\'HH:mm'))
+const startDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
+const endDateTime = ref(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"))
 
 const workoutStore = useWorkoutStore()
 const alertStore = useAlertStore()
@@ -69,7 +69,7 @@ const fetchPreviousExerciseSets = async () => {
 
 const addEmptySetsFromPreviousSession = () => {
   routine.value?.exercises.forEach((exercise) =>
-    workoutStore.addEmptySetIfNone(routineID, exercise.id)
+    workoutStore.addEmptySetIfNone(routineID, exercise.id),
   )
 
   prevExerciseSets.value.forEach((es) => {
@@ -86,7 +86,7 @@ const addEmptySetsFromPreviousSession = () => {
 
 const startDateTimeUpdater = () => {
   dateTimeInterval = setInterval(() => {
-    endDateTime.value = DateTime.now().toFormat('yyyy-MM-dd\'T\'HH:mm')
+    endDateTime.value = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm")
   }, 1000)
 }
 
@@ -141,7 +141,7 @@ const onFinishWorkout = async () => {
     exerciseSets,
     DateTime.fromISO(startDateTime.value),
     DateTime.fromISO(endDateTime.value),
-    note.value
+    note.value,
   )
 
   if (res) {
@@ -176,8 +176,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= exercises.length) return
-    ;
-  [exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
+  ;[exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]]
 }
 </script>
 
@@ -203,66 +202,66 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       <div class="table-container">
         <table>
           <thead>
-          <tr>
-            <th>Set</th>
-            <th>Previous</th>
-            <th>Weight</th>
-            <th></th>
-            <th>Reps</th>
-            <th></th>
-          </tr>
+            <tr>
+              <th>Set</th>
+              <th>Previous</th>
+              <th>Weight</th>
+              <th></th>
+              <th>Reps</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-if="workoutStore.getSets(routineID, exercise.id).length === 0">
-            <td colspan="6">
-              <AppButton
-                colour="primary"
-                type="button"
-                @click="workoutStore.addEmptySet(routineID, exercise.id)"
-              >
-                Add Set
-              </AppButton>
-            </td>
-          </tr>
-          <tr v-for="(set, index) in workoutStore.getSets(routineID, exercise.id)" :key="index">
-            <td>{{ index + 1 }}</td>
-            <td>
-              <template
-                v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)"
-              >
-                {{ prevSetWeight(exercise.id, index) }} kg x {{ prevSetReps(exercise.id, index) }}
-              </template>
-            </td>
-            <td class="w-1/4">
-              <input
-                v-model.number="set.weight"
-                type="text"
-                inputmode="decimal"
-                :required="isNumber(set.reps)"
-                @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
-                @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, index)"
-              />
-            </td>
-            <td class="text-center">x</td>
-            <td class="w-1/4">
-              <input
-                v-model.number="set.reps"
-                type="text"
-                inputmode="numeric"
-                :required="isNumber(set.weight)"
-                @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
-                @focus="setPrevSetRepIfEmpty($event, exercise.id, set, index)"
-              />
-            </td>
-            <td>
-              <div class="flex justify-center">
-                <MinusCircleIcon
-                  class="cursor-pointer size-6 text-gray-900"
-                  @click="workoutStore.deleteSet(routineID, exercise.id, index)"
+            <tr v-if="workoutStore.getSets(routineID, exercise.id).length === 0">
+              <td colspan="6">
+                <AppButton
+                  colour="primary"
+                  type="button"
+                  @click="workoutStore.addEmptySet(routineID, exercise.id)"
+                >
+                  Add Set
+                </AppButton>
+              </td>
+            </tr>
+            <tr v-for="(set, index) in workoutStore.getSets(routineID, exercise.id)" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td>
+                <template
+                  v-if="prevSetWeight(exercise.id, index) && prevSetReps(exercise.id, index)"
+                >
+                  {{ prevSetWeight(exercise.id, index) }} kg x {{ prevSetReps(exercise.id, index) }}
+                </template>
+              </td>
+              <td class="w-1/4">
+                <input
+                  v-model.number="set.weight"
+                  type="text"
+                  inputmode="decimal"
+                  :required="isNumber(set.reps)"
+                  @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
+                  @focus="setPrevSetWeightIfEmpty($event, exercise.id, set, index)"
                 />
-              </div>
-            </td>
-          </tr>
+              </td>
+              <td class="text-center">x</td>
+              <td class="w-1/4">
+                <input
+                  v-model.number="set.reps"
+                  type="text"
+                  inputmode="numeric"
+                  :required="isNumber(set.weight)"
+                  @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
+                  @focus="setPrevSetRepIfEmpty($event, exercise.id, set, index)"
+                />
+              </td>
+              <td>
+                <div class="flex justify-center">
+                  <MinusCircleIcon
+                    class="cursor-pointer size-6 text-gray-900"
+                    @click="workoutStore.deleteSet(routineID, exercise.id, index)"
+                  />
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
