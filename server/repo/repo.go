@@ -737,6 +737,7 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 
 type CreateWorkoutParams struct {
 	Name         string
+	Note         string
 	UserID       string
 	ExerciseSets []ExerciseSet
 	StartedAt    time.Time
@@ -757,6 +758,7 @@ type Set struct {
 func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
 	workout := &orm.Workout{
 		Name:       p.Name,
+		Note:       null.NewString(p.Note, p.Note != ""),
 		UserID:     p.UserID,
 		StartedAt:  p.StartedAt.Truncate(time.Minute).UTC(),
 		FinishedAt: p.FinishedAt.Truncate(time.Minute).UTC(),

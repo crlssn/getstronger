@@ -40,19 +40,23 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
 	}
 
-	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
+	routine, err := h.repo.GetRoutine(ctx,
+		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
+		repo.GetRoutineWithUserID(userID),
+	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("routine not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("failed to get routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if routine.UserID != userID {
-		log.Error("routine does not belong to user")
-		return nil, connect.NewError(connect.CodePermissionDenied, nil)
-	}
-
 	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		Name:         routine.Title,
+		Note:         req.Msg.GetNote(),
 		UserID:       userID,
 		StartedAt:    req.Msg.GetStartedAt().AsTime(),
 		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
