@@ -69,6 +69,15 @@ func TestFactory_Workout(t *testing.T) {
 		require.Equal(t, name, created.Name)
 	})
 
+	t.Run("WorkoutNote", func(t *testing.T) {
+		t.Parallel()
+		note := gofakeit.Word()
+		expected := f.NewWorkout(factory.WorkoutNote(note))
+		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
+		require.NoError(t, err)
+		require.Equal(t, note, created.Note.String)
+	})
+
 	t.Run("WorkoutCreatedAt", func(t *testing.T) {
 		t.Parallel()
 		createdAt := time.Now().Add(-24 * time.Hour)

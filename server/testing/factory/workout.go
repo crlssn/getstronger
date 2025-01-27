@@ -80,6 +80,12 @@ func WorkoutName(name string) WorkoutOpt {
 	}
 }
 
+func WorkoutNote(note string) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.Note = null.StringFrom(note)
+	}
+}
+
 func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
 	return func(workout *orm.Workout) {
 		workout.CreatedAt = createdAt
