@@ -239,6 +239,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		if err = tx.UpdateWorkout(ctx, workout.ID,
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
+			repo.UpdateWorkoutNote(req.Msg.GetWorkout().GetNote()),
 			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
 			repo.UpdateWorkoutFinishedAt(req.Msg.GetWorkout().GetFinishedAt().AsTime()),
 		); err != nil {

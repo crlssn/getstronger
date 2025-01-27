@@ -1471,6 +1471,12 @@ func UpdateWorkoutName(name string) UpdateWorkoutOpt {
 	}
 }
 
+func UpdateWorkoutNote(note string) UpdateWorkoutOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.WorkoutColumns.Note: null.NewString(note, note != "")}, nil
+	}
+}
+
 func UpdateWorkoutStartedAt(startedAt time.Time) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
 		return orm.M{orm.WorkoutColumns.StartedAt: startedAt}, nil
