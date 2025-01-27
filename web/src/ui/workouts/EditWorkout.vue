@@ -208,7 +208,8 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
     </AppList>
 
     <h6>Note</h6>
-    <textarea v-if="workout"
+    <textarea
+      v-if="workout"
       ref="textarea"
       v-model="workout.note"
       class="w-full border-gray-200 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-base min-h-20 py-3 mb-4 resize-none overflow-hidden"
