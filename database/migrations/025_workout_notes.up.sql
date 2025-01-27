@@ -1,1 +1,1 @@
-ALTER TABLE getstronger.workouts ADD COLUMN notes TEXT;
+ALTER TABLE getstronger.workouts ADD COLUMN note TEXT;
