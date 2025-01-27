@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -31,6 +32,7 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 		StartedAt:  startedAt,
 		FinishedAt: startedAt.Add(time.Hour),
 		CreatedAt:  time.Time{},
+		Note:       null.String{},
 	}
 
 	for _, opt := range opts {

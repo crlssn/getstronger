@@ -1490,6 +1490,10 @@ func UpdateWorkoutFinishedAt(finishedAt time.Time) UpdateWorkoutOpt {
 }
 
 func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
+	if _, err := r.GetWorkout(ctx, GetWorkoutWithID(workoutID)); err != nil {
+		return fmt.Errorf("workout fetch: %w", err)
+	}
+
 	columns, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("workout update columns: %w", err)
