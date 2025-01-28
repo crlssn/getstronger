@@ -113,7 +113,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 			},
 		},
 		{
-			name: "err_invalid_time_order",
+			name: "err_invalid_timestamps",
 			req: &connect.Request[apiv1.CreateWorkoutRequest]{
 				Msg: &apiv1.CreateWorkoutRequest{
 					StartedAt:  timestamppb.New(time.Now().Add(1 * time.Hour)),
