@@ -43,7 +43,7 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *orm.Notification {
 	}
 
 	if m.Type == "" {
-		m.Type = orm.NotificationType(f.faker.RandomString([]string{
+		m.Type = orm.NotificationType(f.Faker.RandomString([]string{
 			orm.NotificationTypeFollow.String(),
 			orm.NotificationTypeWorkoutComment.String(),
 		}))

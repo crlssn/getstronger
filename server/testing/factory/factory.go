@@ -13,14 +13,15 @@ import (
 )
 
 type Factory struct {
-	db    *sql.DB
-	faker *gofakeit.Faker
+	Faker *gofakeit.Faker
+
+	db *sql.DB
 }
 
 func NewFactory(db *sql.DB) *Factory {
 	return &Factory{
 		db:    db,
-		faker: gofakeit.New(0),
+		Faker: gofakeit.New(0),
 	}
 }
 

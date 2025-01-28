@@ -24,8 +24,8 @@ type UserOpt func(event *orm.User)
 func (f *Factory) NewUser(opts ...UserOpt) *orm.User {
 	m := &orm.User{
 		AuthID:    "",
-		FirstName: f.faker.FirstName(),
-		LastName:  f.faker.LastName(),
+		FirstName: f.Faker.FirstName(),
+		LastName:  f.Faker.LastName(),
 		CreatedAt: time.Time{},
 	}
 

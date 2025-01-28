@@ -27,7 +27,7 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 	m := &orm.Exercise{
 		ID:        uuid.NewString(),
 		UserID:    "",
-		Title:     f.faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"}),
+		Title:     f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"}),
 		SubTitle:  null.String{},
 		CreatedAt: time.Time{},
 		DeletedAt: null.Time{},

@@ -37,7 +37,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 
 	if req.Msg.GetStartedAt().AsTime().After(req.Msg.GetFinishedAt().AsTime()) {
 		log.Warn("workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
 	}
 
 	routine, err := h.repo.GetRoutine(ctx,
@@ -209,7 +209,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	}, nil
 }
 
-var errWorkoutMustStartBeforeFinish = errors.New("workout must start before it finishes")
+var ErrWorkoutMustStartBeforeFinish = errors.New("workout must start before it finishes")
 
 func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[apiv1.UpdateWorkoutRequest]) (*connect.Response[apiv1.UpdateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
@@ -217,7 +217,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 	if req.Msg.GetWorkout().GetStartedAt().AsTime().After(req.Msg.GetWorkout().GetFinishedAt().AsTime()) {
 		log.Warn("workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
 	}
 
 	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))

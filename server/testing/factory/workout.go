@@ -27,7 +27,7 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 	startedAt := time.Now().UTC()
 	m := &orm.Workout{
 		ID:         uuid.NewString(),
-		Name:       f.faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
+		Name:       f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
 		UserID:     "",
 		StartedAt:  startedAt,
 		FinishedAt: startedAt.Add(time.Hour),
@@ -108,7 +108,7 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 		ID:        uuid.NewString(),
 		UserID:    "",
 		WorkoutID: "",
-		Comment:   f.faker.Sentence(5), //nolint:mnd
+		Comment:   f.Faker.Sentence(5), //nolint:mnd
 		CreatedAt: time.Time{},
 	}
 
