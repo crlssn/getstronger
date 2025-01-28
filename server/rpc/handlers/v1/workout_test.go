@@ -75,7 +75,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 							Sets: []*apiv1.Set{
 								{
 									Id:     uuid.NewString(),
-									Reps:   int32(s.factory.Faker.Int()),
+									Reps:   s.factory.Faker.Int32(),
 									Weight: s.factory.Faker.Float64(),
 								},
 							},
