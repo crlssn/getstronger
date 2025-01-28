@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -51,7 +52,6 @@ func (s *workoutSuite) SetupSuite() {
 func (s *workoutSuite) TestCreateWorkout() {
 	type expected struct {
 		err error
-		res *connect.Response[apiv1.CreateWorkoutResponse]
 	}
 
 	type test struct {
@@ -87,6 +87,10 @@ func (s *workoutSuite) TestCreateWorkout() {
 				},
 			},
 			init: func(t test, userID string) {
+				for _, es := range t.req.Msg.GetExerciseSets() {
+					s.factory.NewExercise(factory.ExerciseID(es.GetExercise().GetId()))
+				}
+
 				s.factory.NewRoutine(
 					factory.RoutineID(t.req.Msg.GetRoutineId()),
 					factory.RoutineUserID(userID),
@@ -94,11 +98,6 @@ func (s *workoutSuite) TestCreateWorkout() {
 			},
 			expected: expected{
 				err: nil,
-				res: &connect.Response[apiv1.CreateWorkoutResponse]{
-					Msg: &apiv1.CreateWorkoutResponse{
-						//WorkoutId: factory.UUID(0),
-					},
-				},
 			},
 		},
 		{
@@ -111,7 +110,6 @@ func (s *workoutSuite) TestCreateWorkout() {
 			init: func(_ test, _ string) {},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
-				res: nil,
 			},
 		},
 		{
@@ -125,7 +123,6 @@ func (s *workoutSuite) TestCreateWorkout() {
 			init: func(_ test, _ string) {},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrWorkoutMustStartBeforeFinish),
-				res: nil,
 			},
 		},
 	}
@@ -141,13 +138,16 @@ func (s *workoutSuite) TestCreateWorkout() {
 			if t.expected.err != nil {
 				s.Require().Nil(res)
 				s.Require().Error(err)
-				s.Require().ErrorIs(err, t.expected.err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
 				return
 			}
 
 			s.Require().NotNil(res)
 			s.Require().NoError(err)
-			//s.Require().Equal(t.expected.res.Msg.WorkoutId, res.Msg.WorkoutId)
+
+			w, err := orm.FindWorkout(ctx, s.container.DB, res.Msg.GetWorkoutId())
+			s.Require().NoError(err)
+			s.Require().NotNil(w)
 		})
 	}
 }
