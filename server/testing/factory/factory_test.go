@@ -83,6 +83,9 @@ func TestFactory_Seed(t *testing.T) {
 func TestFactory_Now(t *testing.T) {
 	t.Parallel()
 
-	require.NotEmpty(t, factory.Now())
-	require.WithinRange(t, time.Now().UTC(), factory.Now().Add(-time.Microsecond), factory.Now().Add(time.Microsecond))
+	actual := time.Now().UTC()
+	expected := factory.Now()
+
+	require.WithinRange(t, expected, actual.Add(-time.Microsecond), actual.Add(time.Microsecond))
+	require.WithinDuration(t, expected, actual, time.Microsecond)
 }

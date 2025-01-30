@@ -98,7 +98,7 @@ func (f *Factory) seedUser(p SeedParams, user *orm.User) {
 
 func Now() time.Time {
 	// Truncate to microseconds to unify precision across different databases.
-	return time.Now().UTC().Truncate(time.Microsecond)
+	return time.Now().UTC().Round(time.Microsecond)
 }
 
 func randomExercise(slice orm.ExerciseSlice) *orm.Exercise {
