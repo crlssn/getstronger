@@ -23,7 +23,7 @@ func TestBodySendPasswordReset(t *testing.T) {
 	t.Parallel()
 	require.Equal(t, `Hi name, 
 	
-Please click the link below to reset your password.
+Please click the link below within 24 hours to reset your password.
 
 domain/reset-password?token=token
 `, email.BodySendPasswordReset("name", "domain", "token"))
