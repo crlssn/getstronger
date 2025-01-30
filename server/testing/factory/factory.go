@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 
@@ -93,6 +94,11 @@ func (f *Factory) seedUser(p SeedParams, user *orm.User) {
 			)
 		}
 	}
+}
+
+func (f *Factory) Now() time.Time {
+	// Truncate to microseconds to unify precision across different databases.
+	return time.Now().UTC().Truncate(time.Microsecond)
 }
 
 func randomExercise(slice orm.ExerciseSlice) *orm.Exercise {
