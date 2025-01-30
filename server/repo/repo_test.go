@@ -1260,6 +1260,8 @@ func (s *repoSuite) TestUpdateWorkout() {
 		expected expected
 	}
 
+	now := time.Now().UTC()
+
 	tests := []test{
 		{
 			name:    "ok_update_name",
@@ -1291,12 +1293,12 @@ func (s *repoSuite) TestUpdateWorkout() {
 			name:    "ok_update_started_at",
 			workout: s.factory.NewWorkout(),
 			opts: []repo.UpdateWorkoutOpt{
-				repo.UpdateWorkoutStartedAt(time.Now().Add(-1 * time.Hour)),
+				repo.UpdateWorkoutStartedAt(now.Add(-1 * time.Hour)),
 			},
 			expected: expected{
 				err: nil,
 				columns: orm.M{
-					orm.WorkoutColumns.StartedAt: time.Now().Add(-1 * time.Hour),
+					orm.WorkoutColumns.StartedAt: now.Add(-1 * time.Hour),
 				},
 			},
 		},
