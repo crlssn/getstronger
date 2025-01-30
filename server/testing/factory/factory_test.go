@@ -83,7 +83,6 @@ func TestFactory_Seed(t *testing.T) {
 func TestFactory_Now(t *testing.T) {
 	t.Parallel()
 
-	f := factory.NewFactory(nil)
-	require.NotEmpty(t, f.Now())
-	require.Equal(t, time.Now().UTC().Truncate(time.Microsecond), f.Now())
+	require.NotEmpty(t, factory.Now())
+	require.Equal(t, time.Now().UTC().Truncate(time.Microsecond), factory.Now())
 }

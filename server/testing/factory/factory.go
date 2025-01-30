@@ -96,7 +96,7 @@ func (f *Factory) seedUser(p SeedParams, user *orm.User) {
 	}
 }
 
-func (f *Factory) Now() time.Time {
+func Now() time.Time {
 	// Truncate to microseconds to unify precision across different databases.
 	return time.Now().UTC().Truncate(time.Microsecond)
 }

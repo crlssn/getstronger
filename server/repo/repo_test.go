@@ -898,7 +898,7 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 		s.factory.NewWorkout(factory.WorkoutID(workoutID))
 	}
 
-	now := s.factory.Now()
+	now := factory.Now()
 
 	tests := []test{
 		{
@@ -1260,7 +1260,7 @@ func (s *repoSuite) TestUpdateWorkout() {
 		expected expected
 	}
 
-	now := s.factory.Now()
+	now := factory.Now()
 
 	tests := []test{
 		{
