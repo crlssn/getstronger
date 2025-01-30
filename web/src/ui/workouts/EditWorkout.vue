@@ -217,7 +217,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
     />
 
     <AppButton type="submit" colour="primary" class="mb-2">Update Workout</AppButton>
-    <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="black">
+    <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
       Cancel Update
     </AppButton>
   </form>
