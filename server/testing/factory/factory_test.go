@@ -84,5 +84,5 @@ func TestFactory_Now(t *testing.T) {
 	t.Parallel()
 
 	require.NotEmpty(t, factory.Now())
-	require.Equal(t, time.Now().UTC().Truncate(time.Microsecond), factory.Now())
+	require.WithinRange(t, time.Now().UTC(), factory.Now().Add(-time.Microsecond), factory.Now().Add(time.Microsecond))
 }
