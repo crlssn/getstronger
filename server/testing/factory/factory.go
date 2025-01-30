@@ -16,7 +16,8 @@ import (
 type Factory struct {
 	Faker *gofakeit.Faker
 
-	db *sql.DB
+	db  *sql.DB
+	now time.Time
 }
 
 func NewFactory(db *sql.DB) *Factory {
@@ -94,6 +95,16 @@ func (f *Factory) seedUser(p SeedParams, user *orm.User) {
 			)
 		}
 	}
+}
+
+// Now stays fixed regardless how many times it's called.
+func (f *Factory) Now() time.Time {
+	if f.now.IsZero() {
+		f.now = Now()
+		return f.now
+	}
+
+	return f.now
 }
 
 func Now() time.Time {
