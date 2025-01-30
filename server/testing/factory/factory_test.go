@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
@@ -77,4 +78,12 @@ func TestFactory_Seed(t *testing.T) {
 			t.Fatal(fmt.Errorf("failed to terminate container: %w", err))
 		}
 	})
+}
+
+func TestFactory_Now(t *testing.T) {
+	t.Parallel()
+
+	f := factory.NewFactory(nil)
+	require.NotEmpty(t, f.Now())
+	require.Equal(t, time.Now().UTC().Truncate(time.Microsecond), f.Now())
 }
