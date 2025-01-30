@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -26,11 +27,12 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
 	startedAt := time.Now().UTC()
 	m := &orm.Workout{
 		ID:         uuid.NewString(),
-		Name:       f.faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
+		Name:       f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
 		UserID:     "",
 		StartedAt:  startedAt,
 		FinishedAt: startedAt.Add(time.Hour),
 		CreatedAt:  time.Time{},
+		Note:       null.String{},
 	}
 
 	for _, opt := range opts {
@@ -78,6 +80,12 @@ func WorkoutName(name string) WorkoutOpt {
 	}
 }
 
+func WorkoutNote(note string) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.Note = null.StringFrom(note)
+	}
+}
+
 func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
 	return func(workout *orm.Workout) {
 		workout.CreatedAt = createdAt
@@ -100,7 +108,7 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComme
 		ID:        uuid.NewString(),
 		UserID:    "",
 		WorkoutID: "",
-		Comment:   f.faker.Sentence(5), //nolint:mnd
+		Comment:   f.Faker.Sentence(5), //nolint:mnd
 		CreatedAt: time.Time{},
 	}
 

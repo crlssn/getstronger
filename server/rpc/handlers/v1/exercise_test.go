@@ -466,7 +466,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				},
 			},
 			init: func(t test) context.Context {
-				now := time.Now()
+				now := factory.Now()
 				user := s.factory.NewUser(factory.UserID(factory.UUID(0)))
 
 				s.factory.NewExercise(
@@ -711,7 +711,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 		expected expected
 	}
 
-	now := time.Now().UTC()
+	now := factory.Now()
 
 	tests := []test{
 		{
@@ -884,7 +884,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 		expected expected
 	}
 
-	now := time.Now().UTC()
+	now := factory.Now()
 
 	tests := []test{
 		{
@@ -1030,7 +1030,7 @@ func (s *exerciseSuite) TestListSets() {
 		expected expected
 	}
 
-	now := time.Now().UTC()
+	now := factory.Now()
 
 	tests := []test{
 		{

@@ -737,6 +737,7 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 
 type CreateWorkoutParams struct {
 	Name         string
+	Note         string
 	UserID       string
 	ExerciseSets []ExerciseSet
 	StartedAt    time.Time
@@ -757,6 +758,7 @@ type Set struct {
 func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
 	workout := &orm.Workout{
 		Name:       p.Name,
+		Note:       null.NewString(p.Note, p.Note != ""),
 		UserID:     p.UserID,
 		StartedAt:  p.StartedAt.Truncate(time.Minute).UTC(),
 		FinishedAt: p.FinishedAt.Truncate(time.Minute).UTC(),
@@ -1465,23 +1467,41 @@ type UpdateWorkoutOpt func() (orm.M, error)
 
 func UpdateWorkoutName(name string) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.WorkoutColumns.Name: name}, nil
+		return orm.M{
+			orm.WorkoutColumns.Name: name,
+		}, nil
+	}
+}
+
+func UpdateWorkoutNote(note string) UpdateWorkoutOpt {
+	return func() (orm.M, error) {
+		return orm.M{
+			orm.WorkoutColumns.Note: null.NewString(note, note != ""),
+		}, nil
 	}
 }
 
 func UpdateWorkoutStartedAt(startedAt time.Time) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.WorkoutColumns.StartedAt: startedAt}, nil
+		return orm.M{
+			orm.WorkoutColumns.StartedAt: startedAt,
+		}, nil
 	}
 }
 
 func UpdateWorkoutFinishedAt(finishedAt time.Time) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.WorkoutColumns.FinishedAt: finishedAt}, nil
+		return orm.M{
+			orm.WorkoutColumns.FinishedAt: finishedAt,
+		}, nil
 	}
 }
 
 func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
+	if _, err := r.GetWorkout(ctx, GetWorkoutWithID(workoutID)); err != nil {
+		return fmt.Errorf("workout fetch: %w", err)
+	}
+
 	columns, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("workout update columns: %w", err)

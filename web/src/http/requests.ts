@@ -283,6 +283,7 @@ export const createWorkout = async (
   exerciseSets: ExerciseSets[],
   startedAt: DateTimeMaybeValid,
   finishedAt: DateTimeMaybeValid,
+  note: string,
 ): Promise<CreateWorkoutResponse | void> => {
   const req = create(CreateWorkoutRequestSchema, {
     exerciseSets: exerciseSets,
@@ -293,6 +294,7 @@ export const createWorkout = async (
     startedAt: {
       seconds: BigInt(startedAt.toSeconds()),
     } as Timestamp,
+    note: note,
   })
   return tryCatch(() => workoutClient.createWorkout(req))
 }

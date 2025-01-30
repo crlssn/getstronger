@@ -32,8 +32,8 @@ func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
 		UserID:     "",
 		WorkoutID:  "",
 		ExerciseID: "",
-		Reps:       f.faker.IntRange(1, maxReps),
-		Weight:     float64(f.faker.IntRange(1, maxWeight)),
+		Reps:       f.Faker.IntRange(1, maxReps),
+		Weight:     float64(f.Faker.IntRange(1, maxWeight)),
 		CreatedAt:  time.Time{},
 	}
 

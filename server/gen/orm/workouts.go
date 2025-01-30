@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,12 +24,13 @@ import (
 
 // Workout is an object representing the database table.
 type Workout struct {
-	ID         string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID     string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	FinishedAt time.Time `boil:"finished_at" json:"finished_at" toml:"finished_at" yaml:"finished_at"`
-	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	Name       string    `boil:"name" json:"name" toml:"name" yaml:"name"`
-	StartedAt  time.Time `boil:"started_at" json:"started_at" toml:"started_at" yaml:"started_at"`
+	ID         string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID     string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	FinishedAt time.Time   `boil:"finished_at" json:"finished_at" toml:"finished_at" yaml:"finished_at"`
+	CreatedAt  time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	Name       string      `boil:"name" json:"name" toml:"name" yaml:"name"`
+	StartedAt  time.Time   `boil:"started_at" json:"started_at" toml:"started_at" yaml:"started_at"`
+	Note       null.String `boil:"note" json:"note,omitempty" toml:"note" yaml:"note,omitempty"`
 
 	R *workoutR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L workoutL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,6 +43,7 @@ var WorkoutColumns = struct {
 	CreatedAt  string
 	Name       string
 	StartedAt  string
+	Note       string
 }{
 	ID:         "id",
 	UserID:     "user_id",
@@ -48,6 +51,7 @@ var WorkoutColumns = struct {
 	CreatedAt:  "created_at",
 	Name:       "name",
 	StartedAt:  "started_at",
+	Note:       "note",
 }
 
 var WorkoutTableColumns = struct {
@@ -57,6 +61,7 @@ var WorkoutTableColumns = struct {
 	CreatedAt  string
 	Name       string
 	StartedAt  string
+	Note       string
 }{
 	ID:         "workouts.id",
 	UserID:     "workouts.user_id",
@@ -64,6 +69,7 @@ var WorkoutTableColumns = struct {
 	CreatedAt:  "workouts.created_at",
 	Name:       "workouts.name",
 	StartedAt:  "workouts.started_at",
+	Note:       "workouts.note",
 }
 
 // Generated where
@@ -75,6 +81,7 @@ var WorkoutWhere = struct {
 	CreatedAt  whereHelpertime_Time
 	Name       whereHelperstring
 	StartedAt  whereHelpertime_Time
+	Note       whereHelpernull_String
 }{
 	ID:         whereHelperstring{field: "\"getstronger\".\"workouts\".\"id\""},
 	UserID:     whereHelperstring{field: "\"getstronger\".\"workouts\".\"user_id\""},
@@ -82,6 +89,7 @@ var WorkoutWhere = struct {
 	CreatedAt:  whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"created_at\""},
 	Name:       whereHelperstring{field: "\"getstronger\".\"workouts\".\"name\""},
 	StartedAt:  whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"started_at\""},
+	Note:       whereHelpernull_String{field: "\"getstronger\".\"workouts\".\"note\""},
 }
 
 // WorkoutRels is where relationship names are stored.
@@ -132,9 +140,9 @@ func (r *workoutR) GetWorkoutComments() WorkoutCommentSlice {
 type workoutL struct{}
 
 var (
-	workoutAllColumns            = []string{"id", "user_id", "finished_at", "created_at", "name", "started_at"}
+	workoutAllColumns            = []string{"id", "user_id", "finished_at", "created_at", "name", "started_at", "note"}
 	workoutColumnsWithoutDefault = []string{"user_id", "finished_at", "name", "started_at"}
-	workoutColumnsWithDefault    = []string{"id", "created_at"}
+	workoutColumnsWithDefault    = []string{"id", "created_at", "note"}
 	workoutPrimaryKeyColumns     = []string{"id"}
 	workoutGeneratedColumns      = []string{}
 )

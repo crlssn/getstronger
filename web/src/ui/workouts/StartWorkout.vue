@@ -19,6 +19,9 @@ import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/
 
 import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests'
 import { isNumber } from '@/utils/numbers.ts'
+import { useTextareaAutosize } from '@vueuse/core'
+
+const { input: note, textarea } = useTextareaAutosize()
 
 const route = useRoute()
 const routineID = route.params.routine_id as string
@@ -138,6 +141,7 @@ const onFinishWorkout = async () => {
     exerciseSets,
     DateTime.fromISO(startDateTime.value),
     DateTime.fromISO(endDateTime.value),
+    note.value,
   )
 
   if (res) {
@@ -282,6 +286,14 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
         @update="(value) => (endDateTime = value)"
       />
     </AppList>
+
+    <h6>Note</h6>
+    <textarea
+      ref="textarea"
+      v-model="note"
+      class="w-full border-gray-200 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-base min-h-20 py-3 mb-4 resize-none overflow-hidden"
+      placeholder="How was it?"
+    />
 
     <AppButton type="submit" colour="primary" class="mb-4">Finish Workout</AppButton>
     <AppButton type="button" colour="gray" @click="cancelWorkout">Cancel Workout</AppButton>

@@ -898,7 +898,7 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 		s.factory.NewWorkout(factory.WorkoutID(workoutID))
 	}
 
-	now := time.Now().UTC()
+	now := factory.Now()
 
 	tests := []test{
 		{
@@ -1242,6 +1242,127 @@ func (s *repoSuite) TestPublishEvent() {
 			).Exists(context.Background(), s.container.DB)
 			s.Require().NoError(err)
 			s.Require().True(exists)
+		})
+	}
+}
+
+func (s *repoSuite) TestUpdateWorkout() {
+	type expected struct {
+		err     error
+		workout *orm.Workout
+		columns orm.M
+	}
+
+	type test struct {
+		name     string
+		workout  *orm.Workout
+		opts     []repo.UpdateWorkoutOpt
+		expected expected
+	}
+
+	now := factory.Now()
+
+	tests := []test{
+		{
+			name:    "ok_update_name",
+			workout: s.factory.NewWorkout(),
+			opts: []repo.UpdateWorkoutOpt{
+				repo.UpdateWorkoutName("New"),
+			},
+			expected: expected{
+				err: nil,
+				columns: orm.M{
+					orm.WorkoutColumns.Name: "New",
+				},
+			},
+		},
+		{
+			name:    "ok_update_note",
+			workout: s.factory.NewWorkout(),
+			opts: []repo.UpdateWorkoutOpt{
+				repo.UpdateWorkoutNote("Note"),
+			},
+			expected: expected{
+				err: nil,
+				columns: orm.M{
+					orm.WorkoutColumns.Note: null.NewString("Note", true),
+				},
+			},
+		},
+		{
+			name:    "ok_update_started_at",
+			workout: s.factory.NewWorkout(),
+			opts: []repo.UpdateWorkoutOpt{
+				repo.UpdateWorkoutStartedAt(now.Add(-1 * time.Hour)),
+			},
+			expected: expected{
+				err: nil,
+				columns: orm.M{
+					orm.WorkoutColumns.StartedAt: now.Add(-1 * time.Hour),
+				},
+			},
+		},
+		{
+			name:    "ok_update_multiple_columns",
+			workout: s.factory.NewWorkout(),
+			opts: []repo.UpdateWorkoutOpt{
+				repo.UpdateWorkoutName("Name"),
+				repo.UpdateWorkoutNote("Note"),
+			},
+			expected: expected{
+				err: nil,
+				columns: orm.M{
+					orm.WorkoutColumns.Name: "Name",
+					orm.WorkoutColumns.Note: null.NewString("Note", true),
+				},
+			},
+		},
+		{
+			name: "err_not_found",
+			workout: &orm.Workout{
+				ID: uuid.NewString(),
+			},
+			opts: []repo.UpdateWorkoutOpt{
+				repo.UpdateWorkoutName("Name"),
+			},
+			expected: expected{
+				err: sql.ErrNoRows,
+			},
+		},
+		{
+			name:    "err_empty_opts",
+			workout: s.factory.NewWorkout(),
+			opts:    nil,
+			expected: expected{
+				err: repo.ErrUpdateNoColumns,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			err := s.repo.UpdateWorkout(context.Background(), t.workout.ID, t.opts...)
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+			s.Require().NoError(err)
+
+			workout, err := orm.FindWorkout(context.Background(), s.container.DB, t.workout.ID)
+			s.Require().NoError(err)
+			for column, value := range t.expected.columns {
+				switch column {
+				case orm.WorkoutColumns.Name:
+					s.Require().Equal(value, workout.Name)
+				case orm.WorkoutColumns.Note:
+					s.Require().Equal(value, workout.Note)
+				case orm.WorkoutColumns.StartedAt:
+					s.Require().True(value.(time.Time).Equal(workout.StartedAt))
+				case orm.WorkoutColumns.FinishedAt:
+					s.Require().True(value.(time.Time).Equal(workout.FinishedAt))
+				}
+			}
 		})
 	}
 }

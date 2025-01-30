@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 
@@ -13,14 +14,15 @@ import (
 )
 
 type Factory struct {
-	db    *sql.DB
-	faker *gofakeit.Faker
+	Faker *gofakeit.Faker
+
+	db *sql.DB
 }
 
 func NewFactory(db *sql.DB) *Factory {
 	return &Factory{
 		db:    db,
-		faker: gofakeit.New(0),
+		Faker: gofakeit.New(0),
 	}
 }
 
@@ -92,6 +94,11 @@ func (f *Factory) seedUser(p SeedParams, user *orm.User) {
 			)
 		}
 	}
+}
+
+func Now() time.Time {
+	// Truncate to microseconds to unify precision across different databases.
+	return time.Now().UTC().Round(time.Microsecond)
 }
 
 func randomExercise(slice orm.ExerciseSlice) *orm.Exercise {

@@ -37,22 +37,26 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 
 	if req.Msg.GetStartedAt().AsTime().After(req.Msg.GetFinishedAt().AsTime()) {
 		log.Warn("workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
 	}
 
-	routine, err := h.repo.GetRoutine(ctx, repo.GetRoutineWithID(req.Msg.GetRoutineId()))
+	routine, err := h.repo.GetRoutine(ctx,
+		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
+		repo.GetRoutineWithUserID(userID),
+	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("routine not found")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
 		log.Error("failed to get routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if routine.UserID != userID {
-		log.Error("routine does not belong to user")
-		return nil, connect.NewError(connect.CodePermissionDenied, nil)
-	}
-
 	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		Name:         routine.Title,
+		Note:         req.Msg.GetNote(),
 		UserID:       userID,
 		StartedAt:    req.Msg.GetStartedAt().AsTime(),
 		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
@@ -205,7 +209,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	}, nil
 }
 
-var errWorkoutMustStartBeforeFinish = errors.New("workout must start before it finishes")
+var ErrWorkoutMustStartBeforeFinish = errors.New("workout must start before it finishes")
 
 func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[apiv1.UpdateWorkoutRequest]) (*connect.Response[apiv1.UpdateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
@@ -213,7 +217,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 	if req.Msg.GetWorkout().GetStartedAt().AsTime().After(req.Msg.GetWorkout().GetFinishedAt().AsTime()) {
 		log.Warn("workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errWorkoutMustStartBeforeFinish)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
 	}
 
 	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
@@ -235,6 +239,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		if err = tx.UpdateWorkout(ctx, workout.ID,
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
+			repo.UpdateWorkoutNote(req.Msg.GetWorkout().GetNote()),
 			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
 			repo.UpdateWorkoutFinishedAt(req.Msg.GetWorkout().GetFinishedAt().AsTime()),
 		); err != nil {

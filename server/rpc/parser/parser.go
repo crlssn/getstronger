@@ -107,6 +107,7 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 		Comments:     nil,
 		ExerciseSets: nil,
 		Intensity:    0,
+		Note:         workout.Note.String,
 	}
 
 	if workout.R != nil {

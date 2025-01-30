@@ -83,6 +83,10 @@ const formatComment = computed(() => {
         :sets="exerciseSet.sets"
       />
     </div>
+    <div class="p-4" v-if="workout.note.length > 0">
+      <p class="font-medium">Note</p>
+      {{ workout.note }}
+    </div>
     <div class="p-4 flex gap-x-1 font-medium text-sm uppercase justify-between">
       <div class="flex items-center">
         <RouterLink :to="`/workouts/${workout.id}`">
