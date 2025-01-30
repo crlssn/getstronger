@@ -1260,7 +1260,7 @@ func (s *repoSuite) TestUpdateWorkout() {
 		expected expected
 	}
 
-	now := time.Now().UTC()
+	now := time.Now().UTC().Truncate(time.Microsecond)
 
 	tests := []test{
 		{
