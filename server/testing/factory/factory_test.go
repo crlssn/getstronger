@@ -90,5 +90,5 @@ func TestFactory_Now(t *testing.T) {
 	require.WithinDuration(t, expected, actual, time.Microsecond)
 
 	f := factory.NewFactory(nil)
-	require.Equal(t, f.Now(), f.Now())
+	require.Equal(t, f.Now(), f.Now()) //nolint:testifylint
 }
