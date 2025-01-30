@@ -898,24 +898,22 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 		s.factory.NewWorkout(factory.WorkoutID(workoutID))
 	}
 
-	now := factory.Now()
-
 	tests := []test{
 		{
 			name:        "ok",
 			exerciseIDs: exerciseIDs,
 			init: func(t test) {
-				s.factory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
-				s.factory.NewSet(factory.SetCreatedAt(now.Add(-time.Minute)))
+				s.factory.NewSet(factory.SetCreatedAt(s.factory.Now().Add(-time.Minute)))
+				s.factory.NewSet(factory.SetCreatedAt(s.factory.Now().Add(-time.Minute)))
 
 				for _, exerciseID := range t.exerciseIDs {
 					s.factory.NewSet(
 						factory.SetExerciseID(exerciseID),
-						factory.SetCreatedAt(now.Add(-time.Second)),
+						factory.SetCreatedAt(s.factory.Now().Add(-time.Second)),
 					)
 					s.factory.NewSet(
 						factory.SetExerciseID(exerciseID),
-						factory.SetCreatedAt(now.Add(-time.Second)),
+						factory.SetCreatedAt(s.factory.Now().Add(-time.Second)),
 					)
 				}
 
@@ -937,28 +935,28 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 						ExerciseID: exerciseIDs[0],
 						Reps:       1,
 						Weight:     1,
-						CreatedAt:  now,
+						CreatedAt:  s.factory.Now(),
 					},
 					{
 						WorkoutID:  workoutIDs[0],
 						ExerciseID: exerciseIDs[0],
 						Reps:       2,
 						Weight:     2,
-						CreatedAt:  now.Add(time.Second),
+						CreatedAt:  s.factory.Now().Add(time.Second),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       3,
 						Weight:     3,
-						CreatedAt:  now.Add(2 * time.Second),
+						CreatedAt:  s.factory.Now().Add(2 * time.Second),
 					},
 					{
 						WorkoutID:  workoutIDs[1],
 						ExerciseID: exerciseIDs[1],
 						Reps:       4,
 						Weight:     4,
-						CreatedAt:  now.Add(3 * time.Second),
+						CreatedAt:  s.factory.Now().Add(3 * time.Second),
 					},
 				},
 			},
@@ -1260,8 +1258,6 @@ func (s *repoSuite) TestUpdateWorkout() {
 		expected expected
 	}
 
-	now := factory.Now()
-
 	tests := []test{
 		{
 			name:    "ok_update_name",
@@ -1293,12 +1289,12 @@ func (s *repoSuite) TestUpdateWorkout() {
 			name:    "ok_update_started_at",
 			workout: s.factory.NewWorkout(),
 			opts: []repo.UpdateWorkoutOpt{
-				repo.UpdateWorkoutStartedAt(now.Add(-1 * time.Hour)),
+				repo.UpdateWorkoutStartedAt(s.factory.Now().Add(-1 * time.Hour)),
 			},
 			expected: expected{
 				err: nil,
 				columns: orm.M{
-					orm.WorkoutColumns.StartedAt: now.Add(-1 * time.Hour),
+					orm.WorkoutColumns.StartedAt: s.factory.Now().Add(-1 * time.Hour),
 				},
 			},
 		},

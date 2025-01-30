@@ -466,12 +466,11 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				},
 			},
 			init: func(t test) context.Context {
-				now := factory.Now()
 				user := s.factory.NewUser(factory.UserID(factory.UUID(0)))
 
 				s.factory.NewExercise(
 					factory.ExerciseUserID(user.ID),
-					factory.ExerciseCreatedAt(now),
+					factory.ExerciseCreatedAt(s.factory.Now()),
 				)
 
 				var exercises orm.ExerciseSlice
@@ -481,7 +480,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 						factory.ExerciseUserID(user.ID),
 						factory.ExerciseTitle(exercise.GetName()),
 						factory.ExerciseSubTitle(exercise.GetLabel()),
-						factory.ExerciseCreatedAt(now.Add(time.Second)),
+						factory.ExerciseCreatedAt(s.factory.Now().Add(time.Second)),
 					))
 				}
 
@@ -711,8 +710,6 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 		expected expected
 	}
 
-	now := factory.Now()
-
 	tests := []test{
 		{
 			name: "ok_previous_workout_sets_found",
@@ -774,7 +771,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Reps:   2,
 									Metadata: &v1.MetadataSet{
 										WorkoutId: factory.UUID(9),
-										CreatedAt: timestamppb.New(now),
+										CreatedAt: timestamppb.New(s.factory.Now()),
 									},
 								},
 								{
@@ -783,7 +780,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Reps:   3,
 									Metadata: &v1.MetadataSet{
 										WorkoutId: factory.UUID(9),
-										CreatedAt: timestamppb.New(now.Add(time.Second)),
+										CreatedAt: timestamppb.New(s.factory.Now().Add(time.Second)),
 									},
 								},
 							},
@@ -802,7 +799,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Reps:   2,
 									Metadata: &v1.MetadataSet{
 										WorkoutId: factory.UUID(8),
-										CreatedAt: timestamppb.New(now.Add(time.Minute)),
+										CreatedAt: timestamppb.New(s.factory.Now().Add(time.Minute)),
 									},
 								},
 								{
@@ -811,7 +808,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Reps:   3,
 									Metadata: &v1.MetadataSet{
 										WorkoutId: factory.UUID(8),
-										CreatedAt: timestamppb.New(now.Add(time.Hour)),
+										CreatedAt: timestamppb.New(s.factory.Now().Add(time.Hour)),
 									},
 								},
 							},
@@ -884,8 +881,6 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 		expected expected
 	}
 
-	now := factory.Now()
-
 	tests := []test{
 		{
 			name: "ok_personal_bests_found",
@@ -948,7 +943,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 								Reps:   2,
 								Metadata: &v1.MetadataSet{
 									WorkoutId: uuid.NewString(),
-									CreatedAt: timestamppb.New(now),
+									CreatedAt: timestamppb.New(s.factory.Now()),
 								},
 							},
 						},
@@ -964,7 +959,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 								Reps:   4,
 								Metadata: &v1.MetadataSet{
 									WorkoutId: uuid.NewString(),
-									CreatedAt: timestamppb.New(now.Add(-time.Second)),
+									CreatedAt: timestamppb.New(s.factory.Now().Add(-time.Second)),
 								},
 							},
 						},
@@ -1030,8 +1025,6 @@ func (s *exerciseSuite) TestListSets() {
 		expected expected
 	}
 
-	now := factory.Now()
-
 	tests := []test{
 		{
 			name: "ok_list_sets_with_pagination",
@@ -1070,7 +1063,7 @@ func (s *exerciseSuite) TestListSets() {
 
 				// Additional set to create pagination token.
 				s.factory.NewSet(
-					factory.SetCreatedAt(now.Add(-time.Hour)),
+					factory.SetCreatedAt(s.factory.Now().Add(-time.Hour)),
 				)
 			},
 			expected: expected{
@@ -1083,7 +1076,7 @@ func (s *exerciseSuite) TestListSets() {
 							Reps:   2,
 							Metadata: &v1.MetadataSet{
 								WorkoutId: uuid.NewString(),
-								CreatedAt: timestamppb.New(now),
+								CreatedAt: timestamppb.New(s.factory.Now()),
 							},
 						},
 						{
@@ -1092,7 +1085,7 @@ func (s *exerciseSuite) TestListSets() {
 							Reps:   4,
 							Metadata: &v1.MetadataSet{
 								WorkoutId: uuid.NewString(),
-								CreatedAt: timestamppb.New(now.Add(-time.Second)),
+								CreatedAt: timestamppb.New(s.factory.Now().Add(-time.Second)),
 							},
 						},
 					},
@@ -1149,7 +1142,7 @@ func (s *exerciseSuite) TestListSets() {
 							Reps:   2,
 							Metadata: &v1.MetadataSet{
 								WorkoutId: factory.UUID(9),
-								CreatedAt: timestamppb.New(now),
+								CreatedAt: timestamppb.New(s.factory.Now()),
 							},
 						},
 					},
