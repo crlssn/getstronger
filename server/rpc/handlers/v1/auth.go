@@ -272,7 +272,6 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	// TODO: Set expiration time for token.
 	token := uuid.NewString()
 	if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthPasswordResetToken(token)); err != nil {
 		log.Error("password reset token update failed", zap.Error(err))
