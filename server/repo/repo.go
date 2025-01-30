@@ -1467,25 +1467,33 @@ type UpdateWorkoutOpt func() (orm.M, error)
 
 func UpdateWorkoutName(name string) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.WorkoutColumns.Name: name}, nil
+		return orm.M{
+			orm.WorkoutColumns.Name: name,
+		}, nil
 	}
 }
 
 func UpdateWorkoutNote(note string) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.WorkoutColumns.Note: null.NewString(note, note != "")}, nil
+		return orm.M{
+			orm.WorkoutColumns.Note: null.NewString(note, note != ""),
+		}, nil
 	}
 }
 
 func UpdateWorkoutStartedAt(startedAt time.Time) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.WorkoutColumns.StartedAt: startedAt}, nil
+		return orm.M{
+			orm.WorkoutColumns.StartedAt: startedAt,
+		}, nil
 	}
 }
 
 func UpdateWorkoutFinishedAt(finishedAt time.Time) UpdateWorkoutOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.WorkoutColumns.FinishedAt: finishedAt}, nil
+		return orm.M{
+			orm.WorkoutColumns.FinishedAt: finishedAt,
+		}, nil
 	}
 }
 
