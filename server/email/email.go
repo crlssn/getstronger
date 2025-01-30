@@ -47,7 +47,7 @@ Please verify your email address by clicking on the link below.
 func BodySendPasswordReset(name, domain, token string) string {
 	return fmt.Sprintf(`Hi %s, 
 	
-Please click the link below to reset your password.
+Please click the link below within 24 hours to reset your password.
 
 %s/reset-password?token=%s
 `, name, domain, token)
