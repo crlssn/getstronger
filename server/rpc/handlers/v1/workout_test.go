@@ -101,13 +101,36 @@ func (s *workoutSuite) TestCreateWorkout() {
 			},
 		},
 		{
-			name: "err_routine_not_found",
+			name: "err_routine_not_found_unexpected_routine_id",
 			req: &connect.Request[apiv1.CreateWorkoutRequest]{
 				Msg: &apiv1.CreateWorkoutRequest{
 					RoutineId: uuid.NewString(),
 				},
 			},
-			init: func(_ test, _ string) {},
+			init: func(_ test, userID string) {
+				s.factory.NewRoutine(
+					factory.RoutineID(uuid.NewString()),
+					factory.RoutineUserID(userID),
+				)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+		{
+			name: "err_routine_not_found_unexpected_user_id",
+			req: &connect.Request[apiv1.CreateWorkoutRequest]{
+				Msg: &apiv1.CreateWorkoutRequest{
+					RoutineId: uuid.NewString(),
+				},
+			},
+			init: func(t test, _ string) {
+				user := s.factory.NewUser()
+				s.factory.NewRoutine(
+					factory.RoutineID(t.req.Msg.GetRoutineId()),
+					factory.RoutineUserID(user.ID),
+				)
+			},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
 			},
@@ -116,7 +139,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 			name: "err_invalid_timestamps",
 			req: &connect.Request[apiv1.CreateWorkoutRequest]{
 				Msg: &apiv1.CreateWorkoutRequest{
-					StartedAt:  timestamppb.New(time.Now().Add(1 * time.Hour)),
+					StartedAt:  timestamppb.New(time.Now().Add(time.Minute)),
 					FinishedAt: timestamppb.New(time.Now()),
 				},
 			},
