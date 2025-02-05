@@ -14,7 +14,7 @@ import (
 
 var _ connect.Interceptor = (*validator)(nil)
 
-func newValidator(log *zap.Logger, v *protovalidate.Validator) connect.Interceptor {
+func newValidator(log *zap.Logger, v protovalidate.Validator) connect.Interceptor {
 	return &validator{
 		log:       log,
 		validator: v,
@@ -23,7 +23,7 @@ func newValidator(log *zap.Logger, v *protovalidate.Validator) connect.Intercept
 
 type validator struct {
 	log       *zap.Logger
-	validator *protovalidate.Validator
+	validator protovalidate.Validator
 }
 
 var errRequestMessageNotProtoMessage = errors.New("request message is not a proto.Message")
