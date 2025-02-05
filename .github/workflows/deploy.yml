@@ -9,7 +9,7 @@ on:
       - labeled
 
 concurrency:
-  group: ${{ github.ref }}
+  group: deployments
   cancel-in-progress: false
 
 permissions:
