@@ -17,5 +17,9 @@ plugins:
     opt: target=ts
     out: web/src/proto
     include_imports: true
+  - local: protoc-gen-es
+    opt: target=ts
+    out: mobile/proto
+    include_imports: true
 inputs:
   - directory: proto
