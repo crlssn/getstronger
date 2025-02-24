@@ -17,5 +17,14 @@ plugins:
     opt: target=ts
     out: web/src/proto
     include_imports: true
+  - remote: buf.build/connectrpc/swift
+    out: mobile/Generated
+    opt:
+      - GenerateAsyncMethods=true
+      - GenerateCallbackMethods=true
+      - Visibility=Public
+  - remote: buf.build/apple/swift
+    out: mobile/Generated
+    opt: Visibility=Public
 inputs:
   - directory: proto
