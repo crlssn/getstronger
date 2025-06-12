@@ -92,6 +92,6 @@ func ExerciseCreatedAt(t time.Time) ExerciseOpt {
 
 func ExerciseDeleted() ExerciseOpt {
 	return func(m *orm.Exercise) {
-		m.DeletedAt = null.TimeFrom(time.Now())
+		m.DeletedAt = null.TimeFrom(time.Now().UTC())
 	}
 }

@@ -80,7 +80,7 @@ func TestFactory_Workout(t *testing.T) {
 
 	t.Run("WorkoutCreatedAt", func(t *testing.T) {
 		t.Parallel()
-		createdAt := time.Now().Add(-24 * time.Hour)
+		createdAt := time.Now().Add(-24 * time.Hour).UTC()
 		expected := f.NewWorkout(factory.WorkoutCreatedAt(createdAt))
 		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
 		require.NoError(t, err)

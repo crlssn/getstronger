@@ -91,7 +91,7 @@ func TestFactory_Exercise(t *testing.T) {
 		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
 		require.True(t, created.DeletedAt.Valid)
-		require.WithinDuration(t, time.Now().UTC(), created.DeletedAt.Time, time.Second)
+		require.WithinDuration(t, time.Now().UTC(), created.DeletedAt.Time.UTC(), time.Second)
 	})
 
 	t.Cleanup(func() {
