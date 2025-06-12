@@ -109,6 +109,6 @@ func NotificationID(id string) NotificationOpt {
 
 func NotificationCreatedAt(t time.Time) NotificationOpt {
 	return func(notification *orm.Notification) {
-		notification.CreatedAt = t
+		notification.CreatedAt = t.UTC()
 	}
 }
