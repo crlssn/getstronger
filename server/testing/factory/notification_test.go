@@ -89,12 +89,12 @@ func TestFactory_Notification(t *testing.T) {
 		created, err := orm.FindNotification(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
 		require.True(t, created.ReadAt.Valid)
-		require.WithinDuration(t, time.Now().UTC(), created.ReadAt.Time, time.Second)
+		require.WithinDuration(t, time.Now().UTC(), created.ReadAt.Time.UTC(), time.Second)
 	})
 
 	t.Run("NotificationCreatedAt", func(t *testing.T) {
 		t.Parallel()
-		createdAt := time.Now().Add(-24 * time.Hour)
+		createdAt := time.Now().Add(-24 * time.Hour).UTC()
 		expected := f.NewNotification(factory.NotificationCreatedAt(createdAt))
 		created, err := orm.FindNotification(ctx, c.DB, expected.ID)
 		require.NoError(t, err)

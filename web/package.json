@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
+    "build-only": "vite build",
+    "dev": "vite",
+    "format": "prettier --write .",
+    "lint": "eslint .",
     "preview": "vite preview",
     "test:unit": "vitest",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build --force",
-    "lint": "eslint .",
-    "format": "prettier --write ."
+    "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.2.3",

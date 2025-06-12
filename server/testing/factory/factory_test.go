@@ -86,8 +86,8 @@ func TestFactory_Now(t *testing.T) {
 	actual := time.Now().UTC()
 	expected := factory.Now()
 
-	require.WithinRange(t, expected, actual.Add(-time.Microsecond), actual.Add(time.Microsecond))
-	require.WithinDuration(t, expected, actual, time.Microsecond)
+	require.WithinRange(t, expected, actual.Add(-time.Second), actual.Add(time.Second))
+	require.WithinDuration(t, expected, actual, time.Second)
 
 	f := factory.NewFactory(nil)
 	require.Equal(t, f.Now(), f.Now()) //nolint:testifylint

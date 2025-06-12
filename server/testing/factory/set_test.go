@@ -96,7 +96,7 @@ func TestFactory_Set(t *testing.T) {
 
 	t.Run("SetCreatedAt", func(t *testing.T) {
 		t.Parallel()
-		createdAt := time.Now().Add(-24 * time.Hour)
+		createdAt := time.Now().Add(-24 * time.Hour).UTC()
 		expected := f.NewSet(factory.SetCreatedAt(createdAt))
 		created, err := orm.FindSet(ctx, c.DB, expected.ID)
 		require.NoError(t, err)

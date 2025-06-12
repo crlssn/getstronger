@@ -7,7 +7,6 @@ linters:
     - godox
     - lll
     - wsl
-    - exportloopref
     - depguard
     - gci
     - nlreturn
@@ -16,3 +15,4 @@ linters:
     - perfsprint
     - exhaustruct
     - funlen
+    - tenv

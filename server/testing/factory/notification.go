@@ -97,7 +97,7 @@ func NotificationType(t orm.NotificationType) NotificationOpt {
 
 func NotificationRead() NotificationOpt {
 	return func(notification *orm.Notification) {
-		notification.ReadAt = null.TimeFrom(time.Now())
+		notification.ReadAt = null.TimeFrom(time.Now().UTC())
 	}
 }
 
@@ -109,6 +109,6 @@ func NotificationID(id string) NotificationOpt {
 
 func NotificationCreatedAt(t time.Time) NotificationOpt {
 	return func(notification *orm.Notification) {
-		notification.CreatedAt = t
+		notification.CreatedAt = t.UTC()
 	}
 }
