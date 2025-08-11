@@ -3,7 +3,7 @@ module github.com/crlssn/getstronger
 go 1.23.5
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250307204501-0409229c3780.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.7-20250717185734-6c6e0d3c608e.1
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
 	github.com/aws/aws-sdk-go-v2 v1.37.1
@@ -29,7 +29,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.37.0
 	golang.org/x/net v0.39.0
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/protobuf v1.36.7
 )
 
 require (
