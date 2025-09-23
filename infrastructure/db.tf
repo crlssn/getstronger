@@ -21,6 +21,11 @@ resource "aws_db_instance" "postgres" {
   deletion_protection             = true
 }
 
+import {
+  to = aws_db_instance.postgres
+  id = "arn:aws:rds:eu-west-2:205930632120:db:getstronger"
+}
+
 resource "aws_security_group" "db_access" {
   name        = "db-access"
   description = "Allow public access to RDS instance"
