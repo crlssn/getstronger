@@ -3,7 +3,7 @@ resource "aws_db_instance" "postgres" {
   allocated_storage               = 20
   storage_type                    = "gp2"
   engine                          = "postgres"
-  engine_version                  = "16.4"
+  engine_version                  = "16.8"
   instance_class                  = "db.t3.micro"
   db_name                         = "getstronger"
   username                        = var.db_username
