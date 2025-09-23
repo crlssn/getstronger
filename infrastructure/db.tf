@@ -1,5 +1,4 @@
 resource "aws_db_instance" "postgres" {
-  identifier                      = "getstronger"
   allocated_storage               = 20
   storage_type                    = "gp2"
   engine                          = "postgres"
