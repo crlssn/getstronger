@@ -1,3 +1,8 @@
+import {
+  to = "aws_db_instance".postgres
+  id = "db-3OXD6GQHBLTNTO2QDG7QR46PM4"
+}
+
 resource "aws_db_instance" "postgres" {
   allocated_storage               = 20
   storage_type                    = "gp2"
