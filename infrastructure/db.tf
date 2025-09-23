@@ -19,6 +19,7 @@ resource "aws_db_instance" "postgres" {
   backup_retention_period         = 7
   maintenance_window              = "fri:00:16-fri:00:46"
   deletion_protection             = true
+  # resource_id             = "db-3OXD6GQHBLTNTO2QDG7QR46PM4"
 }
 
 resource "aws_security_group" "db_access" {
