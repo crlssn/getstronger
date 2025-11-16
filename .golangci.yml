@@ -1,18 +1,39 @@
-run:
-  timeout: 5m
-
+version: "2"
 linters:
-  enable-all: true
+  default: all
   disable:
-    - godox
-    - lll
-    - wsl
+    - funcorder
+    - noinlineerr
+    - wsl_v5
     - depguard
-    - gci
-    - nlreturn
-    - ireturn
-    - varnamelen
-    - perfsprint
     - exhaustruct
     - funlen
-    - tenv
+    - godox
+    - ireturn
+    - lll
+    - nlreturn
+    - perfsprint
+    - varnamelen
+    - wsl
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

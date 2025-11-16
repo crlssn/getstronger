@@ -1,5 +1,4 @@
 //go:build external
-// +build external
 
 package email
 

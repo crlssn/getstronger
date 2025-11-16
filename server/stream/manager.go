@@ -24,7 +24,7 @@ func (m *Manager) Remove(userID string) {
 }
 
 func (m *Manager) Cancel() {
-	m.connections.Range(func(_, value interface{}) bool {
+	m.connections.Range(func(_, value any) bool {
 		cancelFunc, ok := value.(context.CancelFunc)
 		if !ok {
 			// Continue iteration.

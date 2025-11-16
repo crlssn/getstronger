@@ -14,6 +14,7 @@ import (
 
 type ResponseWriter struct {
 	http.ResponseWriter
+
 	statusCode int
 }
 

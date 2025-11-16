@@ -468,7 +468,7 @@ func (s *parserSuite) TestNotificationSlice() {
 		case orm.NotificationTypeWorkoutComment:
 			s.Require().NotNil(notification.GetWorkoutComment())
 		default:
-			s.FailNow("unexpected notification type: %v", notifications[i].Type)
+			s.FailNow(fmt.Sprintf("unexpected notification type: %v", notifications[i].Type))
 		}
 
 		switch i {
@@ -510,7 +510,7 @@ func (s *parserSuite) TestNotificationSlice() {
 			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetComments())
 			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetExerciseSets())
 		default:
-			s.FailNow("unexpected notification index: %d", i)
+			s.FailNow(fmt.Sprintf("unexpected notification index: %d", i))
 		}
 	}
 }
@@ -555,7 +555,7 @@ func (s *parserSuite) TestFeedItemSlice() {
 
 			s.Require().Nil(feedItem.GetWorkout().GetComments())
 		default:
-			s.FailNow("unexpected feed item index: %d", i)
+			s.FailNow(fmt.Sprintf("unexpected feed item index: %d", i))
 		}
 	}
 }
