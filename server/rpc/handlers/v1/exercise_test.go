@@ -685,7 +685,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			s.Require().Len(len(res.Msg.GetExercises()), len(t.expected.res.GetExercises()))
+			s.Require().Len(res.Msg.GetExercises(), len(t.expected.res.GetExercises()))
 			for i, exercise := range res.Msg.GetExercises() {
 				s.Require().Equal(t.expected.res.GetExercises()[i].GetId(), exercise.GetId())
 				s.Require().Equal(t.expected.res.GetExercises()[i].GetName(), exercise.GetName())
