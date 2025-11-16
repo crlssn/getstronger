@@ -10,8 +10,9 @@ import (
 )
 
 type Claims struct {
-	UserID string `json:"userId"`
 	jwt.RegisteredClaims
+
+	UserID string `json:"userId"`
 }
 
 type Secrets struct {
@@ -134,7 +135,7 @@ func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, e
 	}
 
 	claims := new(Claims)
-	t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+	t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("%w: %v", ErrUnexpectedSigningMethod, token.Header["alg"])
 		}

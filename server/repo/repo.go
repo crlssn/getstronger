@@ -1590,7 +1590,7 @@ func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload [
 			return fmt.Errorf("event insert: %w", err)
 		}
 
-		if _, err := tx.exec().Exec("SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
+		if _, err := tx.exec().ExecContext(ctx, "SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
 			return fmt.Errorf("pg_notify: %w", err)
 		}
 

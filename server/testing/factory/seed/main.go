@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"slices"
 
 	"github.com/joho/godotenv"
 
@@ -67,11 +68,5 @@ func main() {
 }
 
 func empty(slice ...string) bool {
-	for _, s := range slice {
-		if s == "" {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(slice, "")
 }
