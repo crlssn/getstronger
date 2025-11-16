@@ -685,7 +685,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			s.Require().Equal(len(t.expected.res.GetExercises()), len(res.Msg.GetExercises()))
+			s.Require().Len(len(res.Msg.GetExercises()), len(t.expected.res.GetExercises()))
 			for i, exercise := range res.Msg.GetExercises() {
 				s.Require().Equal(t.expected.res.GetExercises()[i].GetId(), exercise.GetId())
 				s.Require().Equal(t.expected.res.GetExercises()[i].GetName(), exercise.GetName())
@@ -850,7 +850,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			s.Require().Equal(len(t.expected.res.GetExerciseSets()), len(res.Msg.GetExerciseSets()))
+			s.Require().Len(res.Msg.GetExerciseSets(), len(t.expected.res.GetExerciseSets()))
 			for i, exerciseSets := range res.Msg.GetExerciseSets() {
 				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetId(), exerciseSets.GetExercise().GetId())
 				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetName(), exerciseSets.GetExercise().GetName())
@@ -1000,7 +1000,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			s.Require().Equal(len(t.expected.res.GetPersonalBests()), len(res.Msg.GetPersonalBests()))
+			s.Require().Len(res.Msg.GetPersonalBests(), len(t.expected.res.GetPersonalBests()))
 			for i, pb := range res.Msg.GetPersonalBests() {
 				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetExercise().GetId(), pb.GetExercise().GetId())
 				s.Require().Equal(t.expected.res.GetPersonalBests()[i].GetSet().GetReps(), pb.GetSet().GetReps())
@@ -1191,7 +1191,7 @@ func (s *exerciseSuite) TestListSets() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			s.Require().Equal(len(t.expected.res.GetSets()), len(res.Msg.GetSets()))
+			s.Require().Len(res.Msg.GetSets(), len(t.expected.res.GetSets()))
 			for i, set := range res.Msg.GetSets() {
 				s.Require().Equal(t.expected.res.GetSets()[i].GetId(), set.GetId())
 				s.Require().Equal(t.expected.res.GetSets()[i].GetReps(), set.GetReps())
