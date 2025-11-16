@@ -1,6 +1,6 @@
 module github.com/crlssn/getstronger
 
-go 1.23.5
+go 1.25.4
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250307204501-0409229c3780.1
