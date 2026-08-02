@@ -558,7 +558,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .workout-header h1 { @apply text-xl font-semibold tracking-tight text-slate-950; }
 .workout-header p:last-child { @apply mt-0.5 text-sm text-slate-500; }
 .elapsed { @apply rounded-xl bg-indigo-50 px-3 py-2 font-mono text-sm text-indigo-700; }
-.rest-banner { @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl bg-indigo-50 p-4 text-indigo-900; }
+.rest-banner { @apply sticky top-20 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/95 p-4 text-indigo-900 shadow-md backdrop-blur; }
 .rest-banner > svg { @apply size-6; }
 .rest-banner p { @apply text-sm text-indigo-700; }
 .rest-banner button { @apply rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-white; }
