@@ -1,107 +1,157 @@
 <script setup lang="ts">
 import type { SortableEvent } from 'sortablejs'
 
-import { onMounted, ref } from 'vue'
-import router from '@/router/router'
-import { useRoute } from 'vue-router'
-import { useAlertStore } from '@/stores/alerts.ts'
-import AppList from '@/ui/components/AppList.vue'
-import AppButton from '@/ui/components/AppButton.vue'
-import { usePageTitleStore } from '@/stores/pageTitle'
-import AppListItem from '@/ui/components/AppListItem.vue'
+import { nextTick, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import { type Routine } from '@/proto/api/v1/routine_service_pb.ts'
+import {
+  Bars3Icon,
+  ClockIcon,
+  PencilIcon,
+  PlayIcon,
+  StarIcon,
+  TrashIcon,
+} from '@heroicons/vue/24/outline'
+
 import { deleteRoutine, getRoutine, updateExerciseOrder } from '@/http/requests'
-import { ChevronRightIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import { useAlertStore } from '@/stores/alerts'
+import { useDashboardStore } from '@/stores/dashboard'
+import { usePageTitleStore } from '@/stores/pageTitle'
 
-import AppListItemLink from '../components/AppListItemLink.vue'
-
-const routine = ref<Routine | undefined>(undefined)
+const routine = ref<Routine>()
+const listElement = ref<HTMLElement | null>(null)
+const loading = ref(true)
 const route = useRoute()
+const router = useRouter()
 const pageTitleStore = usePageTitleStore()
 const alertStore = useAlertStore()
-const el = ref<HTMLElement | null>(null)
+const dashboardStore = useDashboardStore()
 
 onMounted(async () => {
-  await fetchRoutine(route.params.id as string)
-  pageTitleStore.setPageTitle(routine.value?.name as string)
+  const response = await getRoutine(route.params.id as string)
+  routine.value = response?.routine
+  pageTitleStore.setPageTitle(routine.value?.name ?? 'Routine')
+  loading.value = false
+
+  if (!routine.value) return
+  await nextTick()
+  useSortable(listElement, routine.value.exercises, {
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    ghostClass: 'sortable-ghost',
+    handle: '.drag-handle',
+    onUpdate: onReorder,
+  })
 })
 
-useSortable(el, routine.value?.exercises || [], {
-  chosenClass: 'sortable-chosen',
-  dragClass: 'sortable-drag',
-  ghostClass: 'sortable-ghost',
-  onUpdate: async (event: SortableEvent) => {
-    const oldIndex = event.oldIndex ?? 0
-    const newIndex = event.newIndex ?? 0
-    const exercises = routine.value?.exercises
-    if (!exercises) {
-      return
-    }
+const onReorder = async (event: SortableEvent) => {
+  if (!routine.value) return
+  const oldIndex = event.oldIndex ?? 0
+  const newIndex = event.newIndex ?? 0
+  const [movedExercise] = routine.value.exercises.splice(oldIndex, 1)
+  routine.value.exercises.splice(newIndex, 0, movedExercise)
+  await updateExerciseOrder(
+    routine.value.id,
+    routine.value.exercises.map((exercise) => exercise.id),
+  )
+}
 
-    const [movedExercise] = exercises.splice(oldIndex, 1)
-    exercises.splice(newIndex, 0, movedExercise)
-    const exerciseIDs = exercises.map((e) => e.id)
-
-    await updateExerciseOrder(routine.value?.id as string, exerciseIDs)
-  },
-})
-
-const fetchRoutine = async (id: string) => {
-  const res = await getRoutine(id)
-  if (!res) return
-
-  routine.value = res.routine
+const makeUpNext = async () => {
+  if (!routine.value) return
+  await dashboardStore.selectRoutine(routine.value.id)
+  alertStore.setSuccess(`${routine.value.name} is up next`)
 }
 
 const onDeleteRoutine = async () => {
-  if (confirm('Are you sure you want to delete this routine?')) {
-    await deleteRoutine(routine.value?.id as string)
-    alertStore.setError('Routine deleted')
-    await router.push('/routines')
-  }
+  if (!routine.value || !confirm(`Delete “${routine.value.name}”? This cannot be undone.`)) return
+
+  await deleteRoutine(routine.value.id)
+  alertStore.setError('Routine deleted')
+  await router.push('/routines')
 }
 </script>
 
 <template>
-  <AppButton type="link" :to="`/workouts/routine/${route.params.id}`" colour="primary" class="mb-4">
-    Start Workout
-  </AppButton>
-  <h6>Exercises</h6>
-  <AppList ref="el">
-    <AppListItem
-      v-for="exercise in routine?.exercises"
-      :key="exercise.id"
-      :data-id="exercise.id"
-      class="hover:cursor-move"
-    >
-      {{ exercise.name }}
-      <ChevronUpDownIcon class="size-8" />
-    </AppListItem>
-  </AppList>
-  <h6>Admin</h6>
-  <AppList>
-    <AppListItemLink :to="`/routines/${route.params.id}/edit`">
-      Update Routine
-      <ChevronRightIcon class="size-6" />
-    </AppListItemLink>
-    <AppListItem is="danger" class="cursor-pointer" @click="onDeleteRoutine">
-      Delete Routine
-      <TrashIcon class="size-6" />
-    </AppListItem>
-  </AppList>
+  <div v-if="loading" class="loading-card">Loading routine…</div>
+  <div v-else-if="routine" class="routine-detail">
+    <section class="routine-hero">
+      <div>
+        <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill">Up next</span>
+        <p class="eyebrow">Training routine</p>
+        <h1>{{ routine.name }}</h1>
+        <p class="summary">
+          <ClockIcon /> {{ routine.exercises.length }} exercises · About
+          {{ Math.max(30, routine.exercises.length * 8) }} minutes
+        </p>
+      </div>
+      <div class="hero-actions">
+        <RouterLink :to="`/workouts/routine/${routine.id}`" class="start-button">
+          <PlayIcon /> Start workout
+        </RouterLink>
+        <button
+          v-if="routine.id !== dashboardStore.preferredRoutineId"
+          type="button"
+          class="next-button"
+          @click="makeUpNext"
+        >
+          <StarIcon /> Make up next
+        </button>
+      </div>
+    </section>
+
+    <section class="exercise-section">
+      <div class="section-heading">
+        <div><h2>Exercise order</h2><p>Drag the handle to reorder your session.</p></div>
+        <RouterLink :to="`/routines/${routine.id}/edit`"><PencilIcon /> Edit exercises</RouterLink>
+      </div>
+      <ol ref="listElement" class="exercise-list">
+        <li v-for="(exercise, index) in routine.exercises" :key="exercise.id" :data-id="exercise.id">
+          <span class="number">{{ index + 1 }}</span>
+          <span class="exercise-copy"><strong>{{ exercise.name }}</strong><small v-if="exercise.label">{{ exercise.label }}</small></span>
+          <button type="button" class="drag-handle" aria-label="Reorder exercise"><Bars3Icon /></button>
+        </li>
+      </ol>
+    </section>
+
+    <section class="danger-zone">
+      <div><h2>Delete routine</h2><p>This removes the plan, not your workout history.</p></div>
+      <button type="button" @click="onDeleteRoutine"><TrashIcon /> Delete</button>
+    </section>
+  </div>
 </template>
 
 <style scoped>
-.sortable-drag {
-  @apply bg-white rounded-md;
-}
-
-.sortable-ghost {
-  @apply text-white;
-
-  svg {
-    @apply text-white;
-  }
-}
+.routine-detail { @apply mx-auto max-w-4xl space-y-5; }
+.loading-card { @apply rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500; }
+.routine-hero { @apply flex flex-col gap-5 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 to-violet-600 p-6 text-white shadow-lg sm:flex-row sm:items-end sm:justify-between md:p-8; }
+.status-pill { @apply mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20; }
+.eyebrow { @apply text-xs font-semibold uppercase tracking-wider text-indigo-100; }
+h1 { @apply mt-1 text-3xl font-semibold tracking-tight; }
+.summary { @apply mt-3 flex items-center gap-2 text-sm text-indigo-100; }
+.summary svg { @apply size-4; }
+.hero-actions { @apply flex shrink-0 flex-wrap gap-2; }
+.hero-actions a, .hero-actions button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold; }
+.hero-actions svg { @apply size-5; }
+.start-button { @apply bg-white text-indigo-700 hover:bg-indigo-50; }
+.next-button { @apply bg-indigo-950/20 text-white ring-1 ring-white/30 hover:bg-indigo-950/30; }
+.exercise-section, .danger-zone { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm; }
+.section-heading { @apply mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between; }
+.section-heading h2, .danger-zone h2 { @apply text-lg font-semibold text-slate-950; }
+.section-heading p, .danger-zone p { @apply mt-1 text-sm text-slate-500; }
+.section-heading a { @apply inline-flex w-max items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50; }
+.section-heading svg { @apply size-4; }
+.exercise-list { @apply divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200; }
+.exercise-list li { @apply flex min-h-16 items-center gap-3 bg-white px-4 py-3; }
+.number { @apply grid size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-500; }
+.exercise-copy { @apply min-w-0 flex-1; }
+.exercise-copy strong { @apply block text-sm font-semibold text-slate-900; }
+.exercise-copy small { @apply mt-0.5 block text-xs text-slate-500; }
+.drag-handle { @apply grid size-10 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing; }
+.drag-handle svg { @apply size-5; }
+.sortable-ghost { @apply opacity-30; }
+.sortable-drag { @apply rounded-xl border border-indigo-200 shadow-lg; }
+.danger-zone { @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between; }
+.danger-zone button { @apply inline-flex min-h-11 w-max items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-600 hover:bg-red-50; }
+.danger-zone svg { @apply size-5; }
 </style>

@@ -5,13 +5,12 @@
 package apiv1connect
 
 import (
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
+	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	http "net/http"
 	strings "strings"
-
-	connect "connectrpc.com/connect"
-	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 )
 
 // This is a compile-time assertion to ensure that this generated file and the connect package are
@@ -58,6 +57,9 @@ const (
 	// RoutineServiceUpdateExerciseOrderProcedure is the fully-qualified name of the RoutineService's
 	// UpdateExerciseOrder RPC.
 	RoutineServiceUpdateExerciseOrderProcedure = "/api.v1.RoutineService/UpdateExerciseOrder"
+	// RoutineServiceGetDashboardProcedure is the fully-qualified name of the RoutineService's
+	// GetDashboard RPC.
+	RoutineServiceGetDashboardProcedure = "/api.v1.RoutineService/GetDashboard"
 )
 
 // RoutineServiceClient is a client for the api.v1.RoutineService service.
@@ -70,6 +72,7 @@ type RoutineServiceClient interface {
 	AddExercise(context.Context, *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error)
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
 	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
+	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
 }
 
 // NewRoutineServiceClient constructs a client for the api.v1.RoutineService service. By default, it
@@ -131,6 +134,12 @@ func NewRoutineServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(routineServiceMethods.ByName("UpdateExerciseOrder")),
 			connect.WithClientOptions(opts...),
 		),
+		getDashboard: connect.NewClient[v1.GetDashboardRequest, v1.GetDashboardResponse](
+			httpClient,
+			baseURL+RoutineServiceGetDashboardProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("GetDashboard")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -144,6 +153,7 @@ type routineServiceClient struct {
 	addExercise         *connect.Client[v1.AddExerciseRequest, v1.AddExerciseResponse]
 	removeExercise      *connect.Client[v1.RemoveExerciseRequest, v1.RemoveExerciseResponse]
 	updateExerciseOrder *connect.Client[v1.UpdateExerciseOrderRequest, v1.UpdateExerciseOrderResponse]
+	getDashboard        *connect.Client[v1.GetDashboardRequest, v1.GetDashboardResponse]
 }
 
 // CreateRoutine calls api.v1.RoutineService.CreateRoutine.
@@ -186,6 +196,11 @@ func (c *routineServiceClient) UpdateExerciseOrder(ctx context.Context, req *con
 	return c.updateExerciseOrder.CallUnary(ctx, req)
 }
 
+// GetDashboard calls api.v1.RoutineService.GetDashboard.
+func (c *routineServiceClient) GetDashboard(ctx context.Context, req *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error) {
+	return c.getDashboard.CallUnary(ctx, req)
+}
+
 // RoutineServiceHandler is an implementation of the api.v1.RoutineService service.
 type RoutineServiceHandler interface {
 	CreateRoutine(context.Context, *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error)
@@ -196,6 +211,7 @@ type RoutineServiceHandler interface {
 	AddExercise(context.Context, *connect.Request[v1.AddExerciseRequest]) (*connect.Response[v1.AddExerciseResponse], error)
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
 	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
+	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
 }
 
 // NewRoutineServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -253,6 +269,12 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 		connect.WithSchema(routineServiceMethods.ByName("UpdateExerciseOrder")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routineServiceGetDashboardHandler := connect.NewUnaryHandler(
+		RoutineServiceGetDashboardProcedure,
+		svc.GetDashboard,
+		connect.WithSchema(routineServiceMethods.ByName("GetDashboard")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.RoutineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RoutineServiceCreateRoutineProcedure:
@@ -271,6 +293,8 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 			routineServiceRemoveExerciseHandler.ServeHTTP(w, r)
 		case RoutineServiceUpdateExerciseOrderProcedure:
 			routineServiceUpdateExerciseOrderHandler.ServeHTTP(w, r)
+		case RoutineServiceGetDashboardProcedure:
+			routineServiceGetDashboardHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -310,4 +334,8 @@ func (UnimplementedRoutineServiceHandler) RemoveExercise(context.Context, *conne
 
 func (UnimplementedRoutineServiceHandler) UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.UpdateExerciseOrder is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.GetDashboard is not implemented"))
 }

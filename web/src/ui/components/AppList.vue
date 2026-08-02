@@ -24,11 +24,10 @@ const onFetch = async () => {
 
 <style scoped>
 ul {
-  @apply divide-y divide-gray-100;
-  @apply bg-white border border-gray-200 mb-4 rounded-md;
+  @apply mb-4 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
 
   li.fetching {
-    @apply h-16 flex justify-center items-center text-gray-800;
+    @apply flex h-16 items-center justify-center text-slate-700;
   }
 }
 </style>

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"connectrpc.com/connect"
@@ -202,6 +203,7 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	routines, err := h.repo.ListRoutines(ctx,
+		repo.ListRoutinesLoadExercises(),
 		repo.ListRoutinesWithName(req.Msg.GetName()),
 		repo.ListRoutinesWithLimit(limit+1),
 		repo.ListRoutinesWithUserID(userID),
@@ -227,6 +229,98 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 			NextPageToken: pagination.NextPageToken,
 		},
 	}), nil
+}
+
+func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	routines, err := h.repo.ListRoutines(ctx,
+		repo.ListRoutinesLoadExercises(),
+		repo.ListRoutinesWithLimit(50),
+		repo.ListRoutinesWithUserID(userID),
+		repo.ListRoutinesWithPageToken(nil),
+	)
+	if err != nil {
+		log.Error("dashboard routines failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	var nextRoutine *orm.Routine
+	preferredRoutineID := req.Msg.GetPreferredRoutineId()
+	if preferredRoutineID != "" {
+		index := slices.IndexFunc(routines, func(routine *orm.Routine) bool {
+			return routine.ID == preferredRoutineID
+		})
+		if index >= 0 {
+			nextRoutine = routines[index]
+		}
+	}
+	if nextRoutine == nil && len(routines) > 0 {
+		nextRoutine = routines[0]
+	}
+
+	workouts, err := h.repo.ListWorkouts(ctx,
+		repo.ListWorkoutsLoadSets(),
+		repo.ListWorkoutsLoadUser(),
+		repo.ListWorkoutsLoadExercises(),
+		repo.ListWorkoutsWithLimit(50),
+		repo.ListWorkoutsWithUserIDs(userID),
+		repo.ListWorkoutsWithPageToken(nil),
+	)
+	if err != nil {
+		log.Error("dashboard workouts failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
+	if err != nil {
+		log.Error("dashboard personal bests failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	weekStart := startOfWeek(time.Now().UTC())
+	var workoutsThisWeek int32
+	var volumeThisWeek float64
+	for _, workout := range workouts {
+		if workout.FinishedAt.Before(weekStart) {
+			continue
+		}
+		workoutsThisWeek++
+		for _, set := range workout.R.GetSets() {
+			volumeThisWeek += set.Weight * float64(set.Reps)
+		}
+	}
+
+	recentWorkouts := workouts
+	if len(recentWorkouts) > 3 {
+		recentWorkouts = recentWorkouts[:3]
+	}
+	parsedWorkouts, err := parser.WorkoutSlice(recentWorkouts, personalBests)
+	if err != nil {
+		log.Error("dashboard workouts parse failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	var parsedNextRoutine *apiv1.Routine
+	if nextRoutine != nil {
+		parsedNextRoutine = parser.Routine(nextRoutine)
+	}
+
+	log.Info("dashboard returned")
+	return connect.NewResponse(&apiv1.GetDashboardResponse{
+		NextRoutine:      parsedNextRoutine,
+		Routines:         parser.RoutineSlice(routines),
+		WorkoutsThisWeek: workoutsThisWeek,
+		VolumeThisWeek:   volumeThisWeek,
+		PersonalBests:    parser.ExerciseSetSlice(personalBests),
+		RecentWorkouts:   parsedWorkouts,
+	}), nil
+}
+
+func startOfWeek(value time.Time) time.Time {
+	dayOffset := (int(value.Weekday()) + 6) % 7
+	start := value.AddDate(0, 0, -dayOffset)
+	return time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
 }
 
 func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl

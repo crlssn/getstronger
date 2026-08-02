@@ -1,93 +1,52 @@
 <script setup lang="ts">
-import { type Exercise } from '@/proto/api/v1/shared_pb.ts'
 import { onMounted, ref } from 'vue'
-import { Switch } from '@headlessui/vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAlertStore } from '@/stores/alerts.ts'
-import AppList from '@/ui/components/AppList.vue'
-import AppButton from '@/ui/components/AppButton.vue'
-import AppListItem from '@/ui/components/AppListItem.vue'
-import AppListItemInput from '@/ui/components/AppListItemInput.vue'
-import { getRoutine, listExercises, updateRoutine } from '@/http/requests.ts'
-import usePagination from '@/utils/usePagination'
 
-const name = ref('')
-const exercises = ref([] as Exercise[])
-const exerciseIDs = ref([] as string[])
+import { getRoutine, updateRoutine } from '@/http/requests'
+import { useAlertStore } from '@/stores/alerts'
+import RoutineForm from '@/ui/routines/RoutineForm.vue'
 
 const route = useRoute()
 const router = useRouter()
 const alertStore = useAlertStore()
-const { hasMorePages, pageToken, resolvePageToken } = usePagination()
+const name = ref('')
+const exerciseIds = ref<string[]>([])
+const loading = ref(true)
+const saving = ref(false)
 
 onMounted(async () => {
-  await fetchRoutine()
-  await fetchExercises()
+  const response = await getRoutine(route.params.id as string)
+  if (response?.routine) {
+    name.value = response.routine.name
+    exerciseIds.value = response.routine.exercises.map((exercise) => exercise.id)
+  }
+  loading.value = false
 })
 
-const fetchRoutine = async () => {
-  const res = await getRoutine(route.params.id as string)
-  if (!res) return
+const onSave = async (updatedName: string, updatedExerciseIds: string[]) => {
+  saving.value = true
+  try {
+    const response = await updateRoutine(route.params.id as string, updatedName, updatedExerciseIds)
+    if (!response) return
 
-  name.value = res.routine?.name as string
-  res.routine?.exercises.forEach((e) => exerciseIDs.value.push(e.id))
-}
-
-const fetchExercises = async () => {
-  const res = await listExercises(pageToken.value)
-  if (!res) return
-
-  exercises.value = [...exercises.value, ...res.exercises]
-  pageToken.value = resolvePageToken(res.pagination)
-}
-
-const toggleExercise = (id: string) => {
-  if (exerciseIDs.value.includes(id)) {
-    exerciseIDs.value = exerciseIDs.value.filter((e) => e !== id)
-  } else {
-    exerciseIDs.value.push(id)
+    alertStore.setSuccess('Routine updated')
+    await router.push(`/routines/${route.params.id}`)
+  } finally {
+    saving.value = false
   }
-}
-
-const onSubmit = async () => {
-  const res = await updateRoutine(route.params.id as string, name.value, exerciseIDs.value)
-  if (!res) return
-
-  alertStore.setSuccess('Routine updated')
-  await router.push(`/routines/${route.params.id}`)
 }
 </script>
 
 <template>
-  <form @submit.prevent="onSubmit">
-    <h6>Name</h6>
-    <AppList v-if="name">
-      <AppListItemInput :model="name" type="text" required @update="(n) => (name = n)" />
-    </AppList>
-
-    <h6>Exercises</h6>
-    <AppList :can-fetch="hasMorePages" @fetch="fetchExercises">
-      <AppListItem v-for="exercise in exercises" :key="exercise.id">
-        <div class="flex justify-between items-center w-full">
-          {{ exercise.name }}
-          <Switch
-            :class="[
-              exerciseIDs.includes(exercise.id) ? 'bg-indigo-600' : 'bg-gray-200',
-              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2',
-            ]"
-            @click="toggleExercise(exercise.id)"
-          >
-            <span
-              :class="[
-                exerciseIDs.includes(exercise.id) ? 'translate-x-5' : 'translate-x-0',
-                'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-              ]"
-            />
-          </Switch>
-        </div>
-      </AppListItem>
-    </AppList>
-
-    <AppButton type="submit" colour="primary">Update Routine</AppButton>
-  </form>
+  <div v-if="loading" class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+    Loading routine…
+  </div>
+  <RoutineForm
+    v-else
+    submit-label="Save changes"
+    :initial-name="name"
+    :initial-exercise-ids="exerciseIds"
+    :saving="saving"
+    @save="onSave"
+  />
 </template>

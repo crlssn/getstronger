@@ -1,7 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div class="bg-white border border-gray-200 mb-4 rounded-md">
+  <div class="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm">
     <slot />
   </div>
 </template>

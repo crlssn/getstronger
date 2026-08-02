@@ -30,8 +30,7 @@ const computedClasses = computed(() => {
 <style scoped>
 a,
 button {
-  @apply uppercase w-full border-b-8 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
-  @apply py-3 text-sm font-semibold;
+  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition;
 }
 
 .link {
@@ -39,26 +38,26 @@ button {
 }
 
 .primary {
-  @apply bg-indigo-600 border-b-indigo-800  focus-visible:outline-indigo-600 text-white;
+  @apply border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700;
 }
 
 .green {
-  @apply bg-green-600 border-b-green-800 focus-visible:outline-green-600 text-white;
+  @apply border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700;
 }
 
 .red {
-  @apply bg-red-600  border-b-red-800 focus-visible:outline-red-600 text-white;
+  @apply border-red-200 bg-white text-red-600 hover:bg-red-50;
 }
 
 .amber {
-  @apply bg-amber-600 border-b-amber-800  focus-visible:outline-amber-600 text-white;
+  @apply border-amber-600 bg-amber-600 text-white hover:bg-amber-700;
 }
 
 .gray {
-  @apply bg-gray-200 border-b-0 py-4 focus-visible:outline-gray-500 text-gray-500;
+  @apply border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
 }
 
 .black {
-  @apply bg-gray-800 border-b-black text-white;
+  @apply border-slate-900 bg-slate-900 text-white hover:bg-slate-800;
 }
 </style>

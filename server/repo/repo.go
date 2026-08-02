@@ -576,6 +576,14 @@ func ListRoutinesWithLimit(limit int) ListRoutineOpt {
 	}
 }
 
+func ListRoutinesLoadExercises() ListRoutineOpt {
+	return func() ([]qm.QueryMod, error) {
+		return []qm.QueryMod{
+			qm.Load(orm.RoutineRels.Exercises),
+		}, nil
+	}
+}
+
 func (r *repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
 	var query []qm.QueryMod
 	for _, opt := range opts {

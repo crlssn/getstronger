@@ -1,28 +1,24 @@
 <script setup lang="ts">
-import { type User } from '@/proto/api/v1/shared_pb.ts'
 import { nextTick, ref } from 'vue'
-import { searchUsers } from '@/http/requests.ts'
-import { usePageTitleStore } from '@/stores/pageTitle.ts'
-import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { type User } from '@/proto/api/v1/shared_pb'
+import { searchUsers } from '@/http/requests'
+import { usePageTitleStore } from '@/stores/pageTitle'
+import { useNotificationStore } from '@/stores/notifications'
+import { BellIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import ActionButton from '@/ui/components/ActionButton.vue'
-import { useActionButton } from '@/stores/actionButton.ts'
-import { useNavTabs } from '@/stores/navTabs.ts'
-import AppNavTabs from '@/ui/components/AppNavTabs.vue'
+import { useActionButton } from '@/stores/actionButton'
 
 const input = ref<HTMLInputElement | null>(null)
-const users = ref(Array<User>())
+const users = ref<User[]>([])
 const searchBarOpen = ref(false)
 
-const navTabs = useNavTabs()
 const actionButton = useActionButton()
 const pageTitleStore = usePageTitleStore()
+const notificationStore = useNotificationStore()
 
 const openSearchBar = () => {
   searchBarOpen.value = true
-  nextTick(() => {
-    input.value?.focus()
-  })
+  nextTick(() => input.value?.focus())
 }
 
 const closeSearchBar = () => {
@@ -31,77 +27,89 @@ const closeSearchBar = () => {
 }
 
 const onSearchUsers = async () => {
-  if (!input.value) return
-
-  if ((input.value.value?.length ?? 0) < 3) {
+  const query = input.value?.value.trim() ?? ''
+  if (query.length < 3) {
     users.value = []
     return
   }
 
-  const res = await searchUsers(input.value.value, new Uint8Array(0))
-  if (!res) return
-
-  users.value = res.users
+  const response = await searchUsers(query, new Uint8Array(0))
+  if (response) users.value = response.users
 }
 </script>
 
 <template>
-  <nav :class="navTabs.active ? 'border-b-0' : 'border-b-2'">
-    <div class="container">
+  <header class="top-nav">
+    <div class="top-nav-inner">
       <template v-if="searchBarOpen">
-        <form class="w-full">
+        <div class="search-wrap">
+          <MagnifyingGlassIcon />
           <input
             ref="input"
-            type="text"
-            class="w-full text-sm border-none focus:ring-0"
-            placeholder="Search users"
-            @keyup="onSearchUsers"
+            type="search"
+            placeholder="Search people"
+            aria-label="Search people"
+            @input="onSearchUsers"
           />
-        </form>
-        <ul
-          v-if="users.length > 0"
-          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white max-w-4xl mx-auto lg:rounded-b-md z-50"
-        >
-          <li v-for="user in users" :key="user.id" @click="closeSearchBar">
-            <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">
-              {{ user.firstName }} {{ user.lastName }}
-            </RouterLink>
-          </li>
-        </ul>
-        <XMarkIcon class="w-8 h-6 cursor-pointer" @click="closeSearchBar" />
+        </div>
+        <button type="button" class="icon-button" aria-label="Close search" @click="closeSearchBar">
+          <XMarkIcon />
+        </button>
+        <div v-if="users.length" class="search-results">
+          <RouterLink
+            v-for="user in users"
+            :key="user.id"
+            :to="`/users/${user.id}`"
+            @click="closeSearchBar"
+          >
+            <span class="avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
+            <span><strong>{{ user.firstName }} {{ user.lastName }}</strong><small>View profile</small></span>
+          </RouterLink>
+        </div>
       </template>
       <template v-else>
-        <RouterLink to="/home">
-          <img class="h-auto w-8" src="/favicon.png" />
+        <RouterLink to="/home" class="brand" aria-label="GetStronger home">
+          <span class="brand-mark"><img src="/favicon.png" alt="" /></span>
+          <span class="brand-name">GetStronger</span>
         </RouterLink>
-        <div class="flex flex-1 gap-x-4 justify-center">
-          <p class="uppercase text-sm font-semibold text-gray-900">
-            {{ pageTitleStore.pageTitle }}
-          </p>
+        <p class="page-title">{{ pageTitleStore.pageTitle }}</p>
+        <div class="top-actions">
+          <RouterLink to="/notifications" class="icon-button notification-button" aria-label="Notifications">
+            <BellIcon />
+            <span v-if="notificationStore.unreadCount" class="notification-badge">
+              {{ notificationStore.unreadCount > 9 ? '9+' : notificationStore.unreadCount }}
+            </span>
+          </RouterLink>
+          <ActionButton v-if="actionButton.active" :action="actionButton.action" :icon="actionButton.icon" />
+          <button v-else type="button" class="icon-button" aria-label="Search people" @click="openSearchBar">
+            <MagnifyingGlassIcon />
+          </button>
         </div>
-        <ActionButton
-          v-if="actionButton.active"
-          :action="actionButton.action"
-          :icon="actionButton.icon"
-        />
-        <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
       </template>
     </div>
-    <AppNavTabs v-if="navTabs.active" />
-  </nav>
-  <div
-    v-if="searchBarOpen"
-    class="fixed z-20 top-0 left-0 right-0 bottom-0 bg-black opacity-50"
-    @click="closeSearchBar"
-  />
+  </header>
+  <div v-if="searchBarOpen" class="search-backdrop" @click="closeSearchBar"></div>
 </template>
 
 <style scoped>
-nav {
-  @apply sticky top-0 z-30  border-gray-200 bg-white;
-
-  .container {
-    @apply flex items-center justify-between max-w-4xl mx-auto  gap-x-4  px-4 h-16;
-  }
-}
+.top-nav { @apply sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur; }
+.top-nav-inner { @apply relative mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6 lg:px-8; }
+.brand { @apply flex min-w-0 items-center gap-2; }
+.brand-mark { @apply grid size-10 place-items-center rounded-xl bg-indigo-600; }
+.brand-mark img { @apply size-6 brightness-0 invert; }
+.brand-name { @apply hidden font-semibold tracking-tight text-slate-950 sm:block; }
+.page-title { @apply flex-1 truncate text-center text-sm font-semibold text-slate-900 sm:text-left sm:text-base; }
+.top-actions { @apply flex items-center gap-2; }
+.icon-button { @apply relative grid size-10 flex-none place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700; }
+.icon-button :deep(svg), .icon-button > svg { @apply size-5; }
+.notification-badge { @apply absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-red-600 px-1 text-xs font-semibold text-white; }
+.search-wrap { @apply flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3; }
+.search-wrap svg { @apply size-5 flex-none text-slate-400; }
+.search-wrap input { @apply h-11 w-full border-0 bg-transparent p-0 text-sm text-slate-950 placeholder:text-slate-400 focus:ring-0; }
+.search-results { @apply absolute left-4 right-4 top-14 z-50 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:left-auto sm:right-16 sm:w-96; }
+.search-results a { @apply grid grid-cols-[auto_1fr] items-center gap-3 p-4 transition hover:bg-slate-50; }
+.search-results strong, .search-results small { @apply block; }
+.search-results small { @apply mt-0.5 text-sm text-slate-500; }
+.avatar { @apply grid size-10 place-items-center rounded-xl bg-indigo-100 text-sm font-semibold text-indigo-700; }
+.search-backdrop { @apply fixed inset-0 z-30 bg-slate-950/30; }
 </style>

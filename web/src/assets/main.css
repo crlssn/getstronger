@@ -3,12 +3,21 @@
 html,
 body {
   touch-action: manipulation;
+  @apply min-h-full bg-slate-50 text-slate-950 antialiased;
+}
+
+#app {
+  @apply min-h-screen;
 }
 
 h6 {
-  @apply block text-sm font-semibold text-gray-500 mb-2 uppercase px-4;
+  @apply mb-2 block px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 
-li svg {
-  @apply size-5 flex-none;
+button,
+a,
+input,
+textarea,
+select {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
 }

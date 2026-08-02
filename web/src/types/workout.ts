@@ -11,4 +11,6 @@ export interface Set {
 
 export interface Workout {
   exerciseSets?: ExerciseSets
+  note?: string
+  startedAt?: string
 }

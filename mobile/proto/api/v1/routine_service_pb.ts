@@ -5,8 +5,10 @@
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv1";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
 import { file_api_v1_options } from "./options_pb";
-import type { Exercise, PaginationRequest, PaginationResponse } from "./shared_pb";
+import type { Exercise, ExerciseSet, PaginationRequest, PaginationResponse } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
+import type { Workout } from "./workout_service_pb";
+import { file_api_v1_workout_service } from "./workout_service_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -14,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/routine_service.proto.
  */
 export const file_api_v1_routine_service: GenFile = /*@__PURE__*/
-  fileDesc("ChxhcGkvdjEvcm91dGluZV9zZXJ2aWNlLnByb3RvEgZhcGkudjEiTQoUQ3JlYXRlUm91dGluZVJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARIeCgxleGVyY2lzZV9pZHMYAiADKAlCCLpIBZIBAggBIiMKFUNyZWF0ZVJvdXRpbmVSZXNwb25zZRIKCgJpZBgBIAEoCSIpChFHZXRSb3V0aW5lUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiNgoSR2V0Um91dGluZVJlc3BvbnNlEiAKB3JvdXRpbmUYASABKAsyDy5hcGkudjEuUm91dGluZSJAChRVcGRhdGVSb3V0aW5lUmVxdWVzdBIoCgdyb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmVCBrpIA8gBASI5ChVVcGRhdGVSb3V0aW5lUmVzcG9uc2USIAoHcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lIiwKFERlbGV0ZVJvdXRpbmVSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASIXChVEZWxldGVSb3V0aW5lUmVzcG9uc2UiWgoTTGlzdFJvdXRpbmVzUmVxdWVzdBIMCgRuYW1lGAEgASgJEjUKCnBhZ2luYXRpb24YAiABKAsyGS5hcGkudjEuUGFnaW5hdGlvblJlcXVlc3RCBrpIA8gBASJpChRMaXN0Um91dGluZXNSZXNwb25zZRIhCghyb3V0aW5lcxgBIAMoCzIPLmFwaS52MS5Sb3V0aW5lEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIlEKEkFkZEV4ZXJjaXNlUmVxdWVzdBIcCgpyb3V0aW5lX2lkGAEgASgJQgi6SAVyA7ABARIdCgtleGVyY2lzZV9pZBgCIAEoCUIIukgFcgOwAQEiFQoTQWRkRXhlcmNpc2VSZXNwb25zZSJUChVSZW1vdmVFeGVyY2lzZVJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESHQoLZXhlcmNpc2VfaWQYAiABKAlCCLpIBXIDsAEBIhgKFlJlbW92ZUV4ZXJjaXNlUmVzcG9uc2UiWgoaVXBkYXRlRXhlcmNpc2VPcmRlclJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESHgoMZXhlcmNpc2VfaWRzGAIgAygJQgi6SAWSAQIIASIdChtVcGRhdGVFeGVyY2lzZU9yZGVyUmVzcG9uc2UiZQoHUm91dGluZRIUCgJpZBgBIAEoCUIIukgFcgOwAQESFQoEbmFtZRgCIAEoCUIHukgEcgIQARItCglleGVyY2lzZXMYAyADKAsyEC5hcGkudjEuRXhlcmNpc2VCCLpIBZIBAggBMrMFCg5Sb3V0aW5lU2VydmljZRJSCg1DcmVhdGVSb3V0aW5lEhwuYXBpLnYxLkNyZWF0ZVJvdXRpbmVSZXF1ZXN0Gh0uYXBpLnYxLkNyZWF0ZVJvdXRpbmVSZXNwb25zZSIEiLUYARJJCgpHZXRSb3V0aW5lEhkuYXBpLnYxLkdldFJvdXRpbmVSZXF1ZXN0GhouYXBpLnYxLkdldFJvdXRpbmVSZXNwb25zZSIEiLUYARJSCg1VcGRhdGVSb3V0aW5lEhwuYXBpLnYxLlVwZGF0ZVJvdXRpbmVSZXF1ZXN0Gh0uYXBpLnYxLlVwZGF0ZVJvdXRpbmVSZXNwb25zZSIEiLUYARJSCg1EZWxldGVSb3V0aW5lEhwuYXBpLnYxLkRlbGV0ZVJvdXRpbmVSZXF1ZXN0Gh0uYXBpLnYxLkRlbGV0ZVJvdXRpbmVSZXNwb25zZSIEiLUYARJPCgxMaXN0Um91dGluZXMSGy5hcGkudjEuTGlzdFJvdXRpbmVzUmVxdWVzdBocLmFwaS52MS5MaXN0Um91dGluZXNSZXNwb25zZSIEiLUYARJMCgtBZGRFeGVyY2lzZRIaLmFwaS52MS5BZGRFeGVyY2lzZVJlcXVlc3QaGy5hcGkudjEuQWRkRXhlcmNpc2VSZXNwb25zZSIEiLUYARJVCg5SZW1vdmVFeGVyY2lzZRIdLmFwaS52MS5SZW1vdmVFeGVyY2lzZVJlcXVlc3QaHi5hcGkudjEuUmVtb3ZlRXhlcmNpc2VSZXNwb25zZSIEiLUYARJkChNVcGRhdGVFeGVyY2lzZU9yZGVyEiIuYXBpLnYxLlVwZGF0ZUV4ZXJjaXNlT3JkZXJSZXF1ZXN0GiMuYXBpLnYxLlVwZGF0ZUV4ZXJjaXNlT3JkZXJSZXNwb25zZSIEiLUYAUKXAQoKY29tLmFwaS52MUITUm91dGluZVNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
+  fileDesc("ChxhcGkvdjEvcm91dGluZV9zZXJ2aWNlLnByb3RvEgZhcGkudjEiTQoUQ3JlYXRlUm91dGluZVJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARIeCgxleGVyY2lzZV9pZHMYAiADKAlCCLpIBZIBAggBIiMKFUNyZWF0ZVJvdXRpbmVSZXNwb25zZRIKCgJpZBgBIAEoCSIpChFHZXRSb3V0aW5lUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiNgoSR2V0Um91dGluZVJlc3BvbnNlEiAKB3JvdXRpbmUYASABKAsyDy5hcGkudjEuUm91dGluZSJAChRVcGRhdGVSb3V0aW5lUmVxdWVzdBIoCgdyb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmVCBrpIA8gBASI5ChVVcGRhdGVSb3V0aW5lUmVzcG9uc2USIAoHcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lIiwKFERlbGV0ZVJvdXRpbmVSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASIXChVEZWxldGVSb3V0aW5lUmVzcG9uc2UiWgoTTGlzdFJvdXRpbmVzUmVxdWVzdBIMCgRuYW1lGAEgASgJEjUKCnBhZ2luYXRpb24YAiABKAsyGS5hcGkudjEuUGFnaW5hdGlvblJlcXVlc3RCBrpIA8gBASJpChRMaXN0Um91dGluZXNSZXNwb25zZRIhCghyb3V0aW5lcxgBIAMoCzIPLmFwaS52MS5Sb3V0aW5lEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIlEKEkFkZEV4ZXJjaXNlUmVxdWVzdBIcCgpyb3V0aW5lX2lkGAEgASgJQgi6SAVyA7ABARIdCgtleGVyY2lzZV9pZBgCIAEoCUIIukgFcgOwAQEiFQoTQWRkRXhlcmNpc2VSZXNwb25zZSJUChVSZW1vdmVFeGVyY2lzZVJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESHQoLZXhlcmNpc2VfaWQYAiABKAlCCLpIBXIDsAEBIhgKFlJlbW92ZUV4ZXJjaXNlUmVzcG9uc2UiWgoaVXBkYXRlRXhlcmNpc2VPcmRlclJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESHgoMZXhlcmNpc2VfaWRzGAIgAygJQgi6SAWSAQIIASIdChtVcGRhdGVFeGVyY2lzZU9yZGVyUmVzcG9uc2UiMwoTR2V0RGFzaGJvYXJkUmVxdWVzdBIcChRwcmVmZXJyZWRfcm91dGluZV9pZBgBIAEoCSLtAQoUR2V0RGFzaGJvYXJkUmVzcG9uc2USJQoMbmV4dF9yb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmUSIQoIcm91dGluZXMYAiADKAsyDy5hcGkudjEuUm91dGluZRIaChJ3b3Jrb3V0c190aGlzX3dlZWsYAyABKAUSGAoQdm9sdW1lX3RoaXNfd2VlaxgEIAEoARIrCg5wZXJzb25hbF9iZXN0cxgFIAMoCzITLmFwaS52MS5FeGVyY2lzZVNldBIoCg9yZWNlbnRfd29ya291dHMYBiADKAsyDy5hcGkudjEuV29ya291dCJlCgdSb3V0aW5lEhQKAmlkGAEgASgJQgi6SAVyA7ABARIVCgRuYW1lGAIgASgJQge6SARyAhABEi0KCWV4ZXJjaXNlcxgDIAMoCzIQLmFwaS52MS5FeGVyY2lzZUIIukgFkgECCAEyhAYKDlJvdXRpbmVTZXJ2aWNlElIKDUNyZWF0ZVJvdXRpbmUSHC5hcGkudjEuQ3JlYXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuQ3JlYXRlUm91dGluZVJlc3BvbnNlIgSItRgBEkkKCkdldFJvdXRpbmUSGS5hcGkudjEuR2V0Um91dGluZVJlcXVlc3QaGi5hcGkudjEuR2V0Um91dGluZVJlc3BvbnNlIgSItRgBElIKDVVwZGF0ZVJvdXRpbmUSHC5hcGkudjEuVXBkYXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuVXBkYXRlUm91dGluZVJlc3BvbnNlIgSItRgBElIKDURlbGV0ZVJvdXRpbmUSHC5hcGkudjEuRGVsZXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuRGVsZXRlUm91dGluZVJlc3BvbnNlIgSItRgBEk8KDExpc3RSb3V0aW5lcxIbLmFwaS52MS5MaXN0Um91dGluZXNSZXF1ZXN0GhwuYXBpLnYxLkxpc3RSb3V0aW5lc1Jlc3BvbnNlIgSItRgBEkwKC0FkZEV4ZXJjaXNlEhouYXBpLnYxLkFkZEV4ZXJjaXNlUmVxdWVzdBobLmFwaS52MS5BZGRFeGVyY2lzZVJlc3BvbnNlIgSItRgBElUKDlJlbW92ZUV4ZXJjaXNlEh0uYXBpLnYxLlJlbW92ZUV4ZXJjaXNlUmVxdWVzdBoeLmFwaS52MS5SZW1vdmVFeGVyY2lzZVJlc3BvbnNlIgSItRgBEmQKE1VwZGF0ZUV4ZXJjaXNlT3JkZXISIi5hcGkudjEuVXBkYXRlRXhlcmNpc2VPcmRlclJlcXVlc3QaIy5hcGkudjEuVXBkYXRlRXhlcmNpc2VPcmRlclJlc3BvbnNlIgSItRgBEk8KDEdldERhc2hib2FyZBIbLmFwaS52MS5HZXREYXNoYm9hcmRSZXF1ZXN0GhwuYXBpLnYxLkdldERhc2hib2FyZFJlc3BvbnNlIgSItRgBQpcBCgpjb20uYXBpLnYxQhNSb3V0aW5lU2VydmljZVByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9nZW4vcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.CreateRoutineRequest
@@ -303,6 +305,65 @@ export const UpdateExerciseOrderResponseSchema: GenMessage<UpdateExerciseOrderRe
   messageDesc(file_api_v1_routine_service, 15);
 
 /**
+ * @generated from message api.v1.GetDashboardRequest
+ */
+export type GetDashboardRequest = Message<"api.v1.GetDashboardRequest"> & {
+  /**
+   * @generated from field: string preferred_routine_id = 1;
+   */
+  preferredRoutineId: string;
+};
+
+/**
+ * Describes the message api.v1.GetDashboardRequest.
+ * Use `create(GetDashboardRequestSchema)` to create a new message.
+ */
+export const GetDashboardRequestSchema: GenMessage<GetDashboardRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_routine_service, 16);
+
+/**
+ * @generated from message api.v1.GetDashboardResponse
+ */
+export type GetDashboardResponse = Message<"api.v1.GetDashboardResponse"> & {
+  /**
+   * @generated from field: api.v1.Routine next_routine = 1;
+   */
+  nextRoutine?: Routine;
+
+  /**
+   * @generated from field: repeated api.v1.Routine routines = 2;
+   */
+  routines: Routine[];
+
+  /**
+   * @generated from field: int32 workouts_this_week = 3;
+   */
+  workoutsThisWeek: number;
+
+  /**
+   * @generated from field: double volume_this_week = 4;
+   */
+  volumeThisWeek: number;
+
+  /**
+   * @generated from field: repeated api.v1.ExerciseSet personal_bests = 5;
+   */
+  personalBests: ExerciseSet[];
+
+  /**
+   * @generated from field: repeated api.v1.Workout recent_workouts = 6;
+   */
+  recentWorkouts: Workout[];
+};
+
+/**
+ * Describes the message api.v1.GetDashboardResponse.
+ * Use `create(GetDashboardResponseSchema)` to create a new message.
+ */
+export const GetDashboardResponseSchema: GenMessage<GetDashboardResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_routine_service, 17);
+
+/**
  * @generated from message api.v1.Routine
  */
 export type Routine = Message<"api.v1.Routine"> & {
@@ -327,7 +388,7 @@ export type Routine = Message<"api.v1.Routine"> & {
  * Use `create(RoutineSchema)` to create a new message.
  */
 export const RoutineSchema: GenMessage<Routine> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 16);
+  messageDesc(file_api_v1_routine_service, 18);
 
 /**
  * @generated from service api.v1.RoutineService
@@ -396,6 +457,14 @@ export const RoutineService: GenService<{
     methodKind: "unary";
     input: typeof UpdateExerciseOrderRequestSchema;
     output: typeof UpdateExerciseOrderResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.RoutineService.GetDashboard
+   */
+  getDashboard: {
+    methodKind: "unary";
+    input: typeof GetDashboardRequestSchema;
+    output: typeof GetDashboardResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_routine_service, 0);

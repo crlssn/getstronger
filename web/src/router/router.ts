@@ -23,6 +23,13 @@ const router: Router = createRouter({
     },
     {
       beforeEnter: [auth],
+      component: () => import('@/ui/ProgressView.vue'),
+      meta: { title: 'Progress' },
+      name: 'progress',
+      path: '/progress',
+    },
+    {
+      beforeEnter: [auth],
       component: () => import('@/ui/profile/ProfileView.vue'),
       meta: { title: 'Profile' },
       name: 'profile',

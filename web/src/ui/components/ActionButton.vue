@@ -15,7 +15,12 @@ const onClick = async () => {
 </script>
 
 <template>
-  <component :is="props.icon" class="size-6 cursor-pointer" @click="onClick" />
+  <button type="button" aria-label="Page action" @click="onClick">
+    <component :is="props.icon" />
+  </button>
 </template>
 
-<style scoped></style>
+<style scoped>
+button { @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700; }
+svg { @apply size-5; }
+</style>

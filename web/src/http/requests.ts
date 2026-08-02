@@ -35,6 +35,8 @@ import {
   type CreateRoutineResponse,
   DeleteRoutineRequestSchema,
   type DeleteRoutineResponse,
+  GetDashboardRequestSchema,
+  type GetDashboardResponse,
   GetRoutineRequestSchema,
   type GetRoutineResponse,
   ListRoutinesRequestSchema,
@@ -217,6 +219,15 @@ export const getRoutine = async (id: string): Promise<GetRoutineResponse | void>
     id: id,
   })
   return tryCatch(() => routineClient.getRoutine(req))
+}
+
+export const getDashboard = async (
+  preferredRoutineId: string,
+): Promise<GetDashboardResponse | void> => {
+  const req = create(GetDashboardRequestSchema, {
+    preferredRoutineId,
+  })
+  return tryCatch(() => routineClient.getDashboard(req))
 }
 
 export const listExercises = async (

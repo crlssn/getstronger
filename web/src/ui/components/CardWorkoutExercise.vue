@@ -8,6 +8,9 @@ const props = defineProps<{
   name?: string
   sets: Set[]
 }>()
+
+const formatWeight = (weight: number) =>
+  new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(weight)
 </script>
 
 <template>
@@ -24,7 +27,7 @@ const props = defineProps<{
       <tbody>
         <tr v-for="(set, index) in props.sets" :key="index" class="text-gray-800 text-base">
           <td>Set {{ index + 1 }}:</td>
-          <td class="font-medium text-right">{{ set.weight }} kg</td>
+          <td class="font-medium text-right">{{ formatWeight(set.weight) }} kg</td>
           <td class="font-medium">x</td>
           <td class="font-medium">
             {{ set.reps }}

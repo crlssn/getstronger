@@ -4,6 +4,7 @@ package api.v1;
 
 import "api/v1/options.proto";
 import "api/v1/shared.proto";
+import "api/v1/workout_service.proto";
 
 import "buf/validate/validate.proto";
 
@@ -30,6 +31,9 @@ service RoutineService {
     option (auth) = true;
   }
   rpc UpdateExerciseOrder (UpdateExerciseOrderRequest) returns (UpdateExerciseOrderResponse) {
+    option (auth) = true;
+  }
+  rpc GetDashboard (GetDashboardRequest) returns (GetDashboardResponse) {
     option (auth) = true;
   }
 }
@@ -88,10 +92,22 @@ message UpdateExerciseOrderRequest {
 }
 message UpdateExerciseOrderResponse {}
 
+message GetDashboardRequest {
+  string preferred_routine_id = 1;
+}
+
+message GetDashboardResponse {
+  Routine next_routine = 1;
+  repeated Routine routines = 2;
+  int32 workouts_this_week = 3;
+  double volume_this_week = 4;
+  repeated ExerciseSet personal_bests = 5;
+  repeated Workout recent_workouts = 6;
+}
+
 message Routine {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
   repeated Exercise exercises = 3 [(buf.validate.field).repeated.min_items = 1];
 }
-
 

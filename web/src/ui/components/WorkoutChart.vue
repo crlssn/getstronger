@@ -13,7 +13,6 @@ import {
   PointElement,
   Title,
   Tooltip,
-  Scale,
 } from 'chart.js'
 
 ChartJS.register(
@@ -44,7 +43,9 @@ const options = {
         drawBorder: true,
       },
       ticks: {
-        display: false,
+        display: true,
+        maxTicksLimit: 6,
+        color: '#64748b',
       },
       title: {
         display: false,
@@ -55,31 +56,22 @@ const options = {
         display: false,
       },
       grid: {
-        display: false,
+        color: '#e2e8f0',
         drawBorder: false,
       },
       ticks: {
         display: true,
+        color: '#64748b',
       },
       title: {
-        display: false,
+        display: true,
+        text: 'Volume (kg)',
+        color: '#64748b',
       },
     },
-    yWeight: {
-      legend: {
-        display: false,
-      },
-      position: 'right',
-      grid: {
-        display: false,
-        drawBorder: false,
-      },
-      afterBuildTicks: (axis: Scale) => {
-        axis.ticks = [...axis.chart.scales.y.ticks]
-        axis.min = axis.chart.scales.y.min
-        axis.max = axis.chart.scales.y.max
-      },
-    },
+  },
+  plugins: {
+    legend: { display: false },
   },
 }
 
@@ -98,12 +90,14 @@ const data = computed(() => {
     datasets: [
       {
         borderColor: '#4f46e5',
-        borderWidth: 1,
-        backgroundColor: '#4f46e5',
+        borderWidth: 3,
+        backgroundColor: 'rgba(79, 70, 229, 0.10)',
         data: intensity,
         label: 'Weight Lifted',
         tension: 0.4,
-        pointRadius: 0,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#4f46e5',
+        pointRadius: 3,
         fill: true,
       },
     ],
