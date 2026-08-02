@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ExerciseSetsSchema, type ExerciseSets } from '@/proto/api/v1/shared_pb'
+import { ExerciseSetsSchema, type Exercise, type ExerciseSets } from '@/proto/api/v1/shared_pb'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import type { Set } from '@/types/workout'
 
@@ -14,7 +14,9 @@ import {
   ChevronUpIcon,
   ClockIcon,
   FlagIcon,
+  MagnifyingGlassIcon,
   MinusIcon,
+  PlusIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import { useTextareaAutosize } from '@vueuse/core'
@@ -22,7 +24,7 @@ import { useTextareaAutosize } from '@vueuse/core'
 import { useAlertStore } from '@/stores/alerts'
 import { useWorkoutStore } from '@/stores/workout'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import { createWorkout, getPreviousWorkoutSets, getRoutine } from '@/http/requests'
+import { createWorkout, getPreviousWorkoutSets, getRoutine, listExercises } from '@/http/requests'
 import { isNumber } from '@/utils/numbers'
 
 const { input: note, textarea } = useTextareaAutosize()
@@ -36,6 +38,12 @@ const restSeconds = ref(0)
 const completedSets = ref<Record<string, boolean>>({})
 const submitting = ref(false)
 const finishError = ref('')
+const exercisePickerOpen = ref(false)
+const exercisePickerLoading = ref(false)
+const exerciseOptionsLoaded = ref(false)
+const exerciseOptions = ref<Exercise[]>([])
+const exerciseSearch = ref('')
+const exercisePageToken = ref(new Uint8Array(0))
 
 const workoutStore = useWorkoutStore()
 const alertStore = useAlertStore()
@@ -59,6 +67,16 @@ onUnmounted(() => {
 })
 
 const maxExerciseIndex = computed(() => (routine.value?.exercises.length ?? 1) - 1)
+const availableExercises = computed(() => {
+  const currentExerciseIds = new Set(routine.value?.exercises.map((exercise) => exercise.id) ?? [])
+  const query = exerciseSearch.value.trim().toLowerCase()
+  return exerciseOptions.value.filter(
+    (exercise) =>
+      !currentExerciseIds.has(exercise.id) &&
+      (!query || `${exercise.name} ${exercise.label}`.toLowerCase().includes(query)),
+  )
+})
+const hasMoreExercises = computed(() => exercisePageToken.value.length > 0)
 const completedSetCount = computed(() => Object.values(completedSets.value).filter(Boolean).length)
 const isCompleteSet = (set: Set) =>
   isNumber(set.weight) &&
@@ -137,6 +155,11 @@ const initializeRoutine = async () => {
   routine.value = response.routine
   pageTitleStore.setPageTitle(response.routine.name)
   workoutStore.initialiseWorkout(routineID)
+  workoutStore.getAddedExercises(routineID).forEach((exercise) => {
+    if (!response.routine?.exercises.some((entry) => entry.id === exercise.id)) {
+      response.routine?.exercises.push(exercise)
+    }
+  })
   const savedStartedAt = workoutStore.getStartedAt(routineID)
   if (savedStartedAt) {
     const parsedStartedAt = DateTime.fromISO(savedStartedAt)
@@ -262,7 +285,49 @@ const onFinishWorkout = async () => {
 const cancelWorkout = async () => {
   if (!confirm('Cancel this workout and discard the sets you entered?')) return
   workoutStore.removeWorkout(routineID)
-  await router.push(`/routines/${routineID}`)
+  await router.push('/home')
+}
+
+const loadExerciseOptions = async () => {
+  exercisePickerLoading.value = true
+  try {
+    const response = await listExercises(exercisePageToken.value)
+    if (!response) return
+
+    const existingIds = new Set(exerciseOptions.value.map((exercise) => exercise.id))
+    exerciseOptions.value.push(
+      ...response.exercises.filter((exercise) => !existingIds.has(exercise.id)),
+    )
+    exercisePageToken.value = response.pagination?.nextPageToken ?? new Uint8Array(0)
+    exerciseOptionsLoaded.value = true
+  } finally {
+    exercisePickerLoading.value = false
+  }
+}
+
+const openExercisePicker = async () => {
+  exercisePickerOpen.value = true
+  if (!exerciseOptionsLoaded.value) await loadExerciseOptions()
+}
+
+const closeExercisePicker = () => {
+  exercisePickerOpen.value = false
+  exerciseSearch.value = ''
+}
+
+const addExerciseToWorkout = async (exercise: Exercise) => {
+  if (!routine.value || routine.value.exercises.some((entry) => entry.id === exercise.id)) return
+
+  routine.value.exercises.push(exercise)
+  workoutStore.addWorkoutExercise(routineID, exercise)
+  workoutStore.addEmptySetIfNone(routineID, exercise.id)
+  closeExercisePicker()
+
+  const previousResponse = await getPreviousWorkoutSets([exercise.id])
+  if (previousResponse) {
+    prevExerciseSets.value.push(...previousResponse.exerciseSets)
+    addEmptySetsFromPreviousSession()
+  }
 }
 
 const moveExercise = (index: number, direction: 'up' | 'down') => {
@@ -348,11 +413,53 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
       </section>
 
+      <button type="button" class="add-exercise" @click="openExercisePicker">
+        <PlusIcon />
+        <span><strong>Add exercise</strong><small>Only for this workout</small></span>
+      </button>
+
       <section class="note-card">
         <label for="workout-note">Workout note <span>Optional</span></label>
         <textarea id="workout-note" ref="textarea" v-model="note" placeholder="How did the session feel?"></textarea>
       </section>
     </main>
+
+    <div v-if="exercisePickerOpen" class="picker-backdrop" @click.self="closeExercisePicker">
+      <section class="exercise-picker" role="dialog" aria-modal="true" aria-labelledby="exercise-picker-title">
+        <header>
+          <div>
+            <p class="eyebrow">Workout only</p>
+            <h2 id="exercise-picker-title">Add an exercise</h2>
+          </div>
+          <button type="button" aria-label="Close exercise picker" @click="closeExercisePicker"><XMarkIcon /></button>
+        </header>
+
+        <label class="exercise-search">
+          <MagnifyingGlassIcon />
+          <input v-model="exerciseSearch" type="search" placeholder="Search exercises" aria-label="Search exercises" />
+        </label>
+
+        <div v-if="exercisePickerLoading && !exerciseOptionsLoaded" class="picker-empty">Loading exercises…</div>
+        <div v-else-if="availableExercises.length" class="exercise-options">
+          <button
+            v-for="exercise in availableExercises"
+            :key="exercise.id"
+            type="button"
+            @click="addExerciseToWorkout(exercise)"
+          >
+            <span class="min-w-0"><strong>{{ exercise.name }}</strong><small v-if="exercise.label">{{ exercise.label }}</small></span>
+            <PlusIcon />
+          </button>
+        </div>
+        <div v-else class="picker-empty">
+          {{ exerciseSearch ? 'No exercises match your search.' : 'All available exercises are already in this workout.' }}
+        </div>
+
+        <button v-if="hasMoreExercises" type="button" class="load-more" :disabled="exercisePickerLoading" @click="loadExerciseOptions">
+          {{ exercisePickerLoading ? 'Loading…' : 'Load more exercises' }}
+        </button>
+      </section>
+    </div>
 
     <footer class="finish-dock">
       <strong v-if="finishError || finishStatus" :class="{ 'text-red-600': finishError }">{{ finishError || finishStatus }}</strong>
@@ -402,6 +509,11 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .remove-set { @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600; }
 .set-row:hover .remove-set, .remove-set:focus-visible { @apply opacity-100; }
 .remove-set svg { @apply size-4; }
+.add-exercise { @apply flex w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-300 bg-indigo-50/50 p-4 text-left text-indigo-700 transition hover:border-indigo-400 hover:bg-indigo-50; }
+.add-exercise > svg { @apply size-5; }
+.add-exercise strong, .add-exercise small { @apply block; }
+.add-exercise strong { @apply text-sm font-semibold; }
+.add-exercise small { @apply mt-0.5 text-xs text-indigo-500; }
 .note-card label { @apply flex items-center justify-between text-sm font-semibold text-slate-900; }
 .note-card label span { @apply font-normal text-slate-500; }
 .note-card textarea { @apply mt-3 min-h-24 w-full resize-none rounded-xl border-slate-200 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500; }
@@ -410,6 +522,23 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .cancel-workout { @apply grid size-12 shrink-0 place-items-center rounded-xl bg-slate-200 text-slate-700 transition hover:bg-slate-300; }
 .finish-workout { @apply inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300; }
 .finish-dock svg { @apply size-5; }
+.picker-backdrop { @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 sm:items-center sm:p-6; }
+.exercise-picker { @apply w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl; }
+.exercise-picker header { @apply mb-4 flex items-center justify-between gap-4; }
+.exercise-picker header h2 { @apply mt-1 text-xl font-semibold text-slate-950; }
+.exercise-picker header button { @apply grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-500; }
+.exercise-picker header button svg { @apply size-5; }
+.exercise-search { @apply mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3; }
+.exercise-search svg { @apply size-5 text-slate-400; }
+.exercise-search input { @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0; }
+.exercise-options { @apply max-h-80 space-y-2 overflow-y-auto; }
+.exercise-options button { @apply flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50; }
+.exercise-options strong, .exercise-options small { @apply block truncate; }
+.exercise-options strong { @apply text-sm font-semibold text-slate-900; }
+.exercise-options small { @apply mt-0.5 text-xs text-slate-500; }
+.exercise-options button > svg { @apply size-5 shrink-0 text-indigo-600; }
+.picker-empty { @apply rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500; }
+.load-more { @apply mt-4 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400; }
 @media (max-width: 520px) {
   .set-grid { @apply grid-cols-[1.5rem_minmax(2.8rem,1fr)_3.8rem_3.4rem_2.25rem] gap-1.5; }
   .set-labels { @apply text-[0.65rem]; }

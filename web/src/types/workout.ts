@@ -1,3 +1,5 @@
+import type { Exercise } from '@/proto/api/v1/shared_pb'
+
 export type ExerciseID = string
 export type ExerciseSets = Record<ExerciseID, Set[]>
 
@@ -10,6 +12,7 @@ export interface Set {
 }
 
 export interface Workout {
+  addedExercises?: Exercise[]
   exerciseSets?: ExerciseSets
   note?: string
   startedAt?: string

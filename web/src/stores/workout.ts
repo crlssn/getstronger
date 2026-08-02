@@ -1,4 +1,5 @@
 import type { ExerciseID, RoutineID, RoutineWorkout } from '@/types/workout'
+import type { Exercise } from '@/proto/api/v1/shared_pb'
 
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
@@ -47,6 +48,19 @@ export const useWorkoutStore = defineStore(
 
     const getStartedAt = (routineID: RoutineID) => workouts.value[routineID]?.startedAt
 
+    const getAddedExercises = (routineID: RoutineID) =>
+      workouts.value[routineID]?.addedExercises ?? []
+
+    const addWorkoutExercise = (routineID: RoutineID, exercise: Exercise) => {
+      const workout = workouts.value[routineID]
+      if (!workout) return
+
+      workout.addedExercises = workout.addedExercises || []
+      if (!workout.addedExercises.some((entry) => entry.id === exercise.id)) {
+        workout.addedExercises.push(exercise)
+      }
+    }
+
     const setNote = (routineID: RoutineID, note: string) => {
       if (!workouts.value[routineID]) return
       workouts.value[routineID].note = note
@@ -87,7 +101,9 @@ export const useWorkoutStore = defineStore(
     return {
       addEmptySet,
       addEmptySetIfNone,
+      addWorkoutExercise,
       deleteSet,
+      getAddedExercises,
       getAllSets,
       getNote,
       getSets,
