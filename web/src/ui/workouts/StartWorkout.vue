@@ -251,7 +251,7 @@ const onFinishWorkout = async () => {
 
     workoutStore.removeWorkout(routineID)
     alertStore.setSuccess('Workout saved')
-    await router.push('/progress')
+    await router.push(`/workouts/${response.workoutId}`)
   } catch (error) {
     console.error('failed to finish workout', error)
     finishError.value = 'Workout could not be saved. Check your connection and try again.'
