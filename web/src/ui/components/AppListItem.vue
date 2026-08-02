@@ -21,4 +21,8 @@ li {
     @apply block text-sm font-semibold text-slate-600;
   }
 }
+
+li > :deep(svg) {
+  @apply size-5 shrink-0;
+}
 </style>

@@ -89,7 +89,8 @@ h2 { @apply mt-1 text-xl font-semibold tracking-tight text-slate-950; }
 .empty-copy { @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500; }
 @media (max-width: 520px) {
   .record-list a { @apply grid-cols-[auto_1fr_auto]; }
-  .record-value { @apply col-span-2 col-start-2 text-left; }
-  .chevron { @apply row-span-2 row-start-1; }
+  .record-icon { @apply row-span-2; }
+  .record-value { @apply col-start-2 row-start-2 text-left; }
+  .chevron { @apply col-start-3 row-span-2 row-start-1; }
 }
 </style>
