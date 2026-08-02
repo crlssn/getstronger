@@ -153,12 +153,11 @@ const workoutDuration = (startedAt: { seconds: bigint } | undefined, finishedAt:
           <div class="min-w-0">
             <strong>{{ workout.name }}</strong>
             <p>
-              {{ workout.exerciseSets.length }} exercises
+              {{ workout.exerciseSets.length }} {{ workout.exerciseSets.length === 1 ? 'exercise' : 'exercises' }}
               <span aria-hidden="true">•</span>
               {{ workoutDuration(workout.startedAt, workout.finishedAt) }}
-              <span aria-hidden="true">•</span>
-              {{ formatToRelativeDateTime(workout.finishedAt) }}
             </p>
+            <small>{{ formatToRelativeDateTime(workout.finishedAt) }}</small>
           </div>
           <span class="volume-label">{{ formatVolume(workout.intensity) }} kg</span>
         </RouterLink>
@@ -179,6 +178,7 @@ const workoutDuration = (startedAt: { seconds: bigint } | undefined, finishedAt:
           <div class="min-w-0">
             <strong>{{ personalBest.exercise?.name }}</strong>
             <p>{{ formatWeight(personalBest.set?.weight) }} kg × {{ personalBest.set?.reps }}</p>
+            <small>{{ formatToRelativeDateTime(personalBest.set?.metadata?.createdAt) }}</small>
           </div>
           <span class="pr-pill">PR</span>
         </article>
@@ -245,6 +245,7 @@ h2 { @apply text-xl font-semibold tracking-tight text-slate-950; }
 .highlight-row, .workout-row { @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 py-4 first:pt-0 last:pb-0; }
 .workout-row { @apply transition hover:text-indigo-700; }
 .highlight-row p, .workout-row p { @apply mt-0.5 truncate text-sm text-slate-500; }
+.highlight-row small, .workout-row small { @apply mt-1 block truncate text-xs text-slate-400; }
 .highlight-icon, .workout-icon, .routine-icon { @apply grid size-11 place-items-center rounded-xl bg-indigo-50 text-indigo-600; }
 .highlight-icon svg, .workout-icon svg, .routine-icon svg { @apply size-5; }
 .pr-pill { @apply rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700; }
