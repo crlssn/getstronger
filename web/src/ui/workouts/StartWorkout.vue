@@ -110,8 +110,17 @@ const finishStatus = computed(() => {
   return ''
 })
 
-const elapsedLabel = computed(() => formatTimer(elapsedSeconds.value))
+const elapsedLabel = computed(() => formatDuration(elapsedSeconds.value))
 const restLabel = computed(() => formatTimer(restSeconds.value))
+
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainder = seconds % 60
+  return [hours > 0 ? `${hours}h` : '', hours > 0 || minutes > 0 ? `${minutes}m` : '', `${remainder}s`]
+    .filter(Boolean)
+    .join(' ')
+}
 
 const formatTimer = (seconds: number) => {
   const minutes = Math.floor(seconds / 60).toString().padStart(2, '0')
@@ -268,10 +277,6 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
 <template>
   <form class="workout-shell" novalidate @submit.prevent="onFinishWorkout">
-    <button type="button" class="cancel-workout" @click="cancelWorkout">
-      <XMarkIcon /> Cancel workout
-    </button>
-
     <header class="workout-header">
       <div>
         <p class="eyebrow">Active workout</p>
@@ -353,17 +358,20 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
     <footer class="finish-dock">
       <strong v-if="finishError || finishStatus" :class="{ 'text-red-600': finishError }">{{ finishError || finishStatus }}</strong>
-      <button type="submit" :disabled="!canFinish">
-        <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
-      </button>
+      <div class="finish-actions">
+        <button type="button" class="cancel-workout" aria-label="Cancel workout" @click="cancelWorkout">
+          <XMarkIcon />
+        </button>
+        <button type="submit" class="finish-workout" :disabled="!canFinish">
+          <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
+        </button>
+      </div>
     </footer>
   </form>
 </template>
 
 <style scoped>
 .workout-shell { @apply mx-auto max-w-4xl space-y-4 pb-24; }
-.cancel-workout { @apply flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700; }
-.cancel-workout svg { @apply size-5; }
 .workout-header { @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm; }
 .eyebrow { @apply text-xs font-semibold uppercase tracking-wider text-slate-500; }
 .workout-header h1 { @apply text-xl font-semibold tracking-tight text-slate-950; }
@@ -402,7 +410,9 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .note-card label span { @apply font-normal text-slate-500; }
 .note-card textarea { @apply mt-3 min-h-24 w-full resize-none rounded-xl border-slate-200 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500; }
 .finish-dock { @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-4xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:bottom-4 sm:rounded-2xl sm:border; }
-.finish-dock > button { @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300; }
+.finish-actions { @apply flex items-stretch gap-2; }
+.cancel-workout { @apply grid size-12 shrink-0 place-items-center rounded-xl bg-slate-200 text-slate-700 transition hover:bg-slate-300; }
+.finish-workout { @apply inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300; }
 .finish-dock svg { @apply size-5; }
 @media (max-width: 520px) {
   .set-grid { @apply grid-cols-[1.5rem_minmax(2.8rem,1fr)_3.8rem_3.4rem_2.25rem] gap-1.5; }
