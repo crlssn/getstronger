@@ -6,6 +6,7 @@ import {
   Battery50Icon,
   CheckIcon,
   ChevronRightIcon,
+  ClockIcon,
   FireIcon,
   ListBulletIcon,
   PlayIcon,
@@ -14,9 +15,11 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
+import { useWorkoutStore } from '@/stores/workout'
 import { formatToRelativeDateTime } from '@/utils/datetime'
 
 const dashboardStore = useDashboardStore()
+const workoutStore = useWorkoutStore()
 const routinePickerOpen = ref(false)
 
 onMounted(async () => {
@@ -25,6 +28,23 @@ onMounted(async () => {
 
 const dashboard = computed(() => dashboardStore.dashboard)
 const nextRoutine = computed(() => dashboardStore.nextRoutine)
+const activeWorkout = computed(() => {
+  const activeWorkouts = Object.entries(workoutStore.workouts)
+    .filter(([, workout]) => workout.startedAt)
+    .sort(
+      ([, first], [, second]) =>
+        Date.parse(second.startedAt ?? '') - Date.parse(first.startedAt ?? ''),
+    )
+  const currentWorkout = activeWorkouts[0]
+  if (!currentWorkout) return undefined
+
+  const [routineId, workout] = currentWorkout
+  return {
+    routine: dashboard.value?.routines.find((routine) => routine.id === routineId),
+    routineId,
+    startedAt: workout.startedAt,
+  }
+})
 const weeklyGoal = 4
 
 const greeting = computed(() => {
@@ -36,6 +56,12 @@ const greeting = computed(() => {
 
 const dateLabel = computed(() => DateTime.now().toFormat('EEEE, d LLLL'))
 const estimatedMinutes = computed(() => Math.max(30, (nextRoutine.value?.exercises.length ?? 0) * 8))
+const activeWorkoutStarted = computed(() => {
+  if (!activeWorkout.value?.startedAt) return 'Workout in progress'
+  const startedAt = DateTime.fromISO(activeWorkout.value.startedAt)
+  if (!startedAt.isValid) return 'Workout in progress'
+  return `Started ${startedAt.toRelative()}`
+})
 const weeklyProgress = computed(() =>
   Math.min(100, ((dashboard.value?.workoutsThisWeek ?? 0) / weeklyGoal) * 100),
 )
@@ -72,6 +98,17 @@ const workoutDuration = (startedAt: { seconds: bigint } | undefined, finishedAt:
       <div class="loading-line w-32"></div>
       <div class="loading-line w-52"></div>
       <div class="loading-line w-full"></div>
+    </section>
+
+    <section v-else-if="activeWorkout" class="active-session">
+      <div class="session-copy">
+        <p class="eyebrow">Active workout</p>
+        <h2>{{ activeWorkout.routine?.name ?? 'Workout in progress' }}</h2>
+        <p class="active-meta"><ClockIcon /> {{ activeWorkoutStarted }}</p>
+      </div>
+      <RouterLink :to="`/workouts/routine/${activeWorkout.routineId}`" class="resume-button">
+        Resume workout <ChevronRightIcon />
+      </RouterLink>
     </section>
 
     <section v-else-if="nextRoutine" class="next-session">
@@ -212,6 +249,12 @@ h1 { @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950; }
 h2 { @apply text-xl font-semibold tracking-tight text-slate-950; }
 .readiness-pill { @apply hidden sm:inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700; }
 .readiness-pill svg { @apply size-5; }
+.active-session { @apply grid gap-5 rounded-3xl border border-indigo-200 bg-indigo-50 p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-7; }
+.active-session h2 { @apply mt-1 text-2xl; }
+.active-meta { @apply mt-2 flex items-center gap-2 text-sm text-indigo-700; }
+.active-meta svg { @apply size-4; }
+.resume-button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700; }
+.resume-button svg { @apply size-5; }
 .next-session { @apply grid gap-5 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-indigo-200 sm:grid-cols-[1fr_auto] sm:items-end sm:p-7; }
 .next-session h2 { @apply mt-1 text-2xl text-white; }
 .session-meta { @apply mt-2 flex flex-wrap items-center gap-2 text-sm text-indigo-100; }

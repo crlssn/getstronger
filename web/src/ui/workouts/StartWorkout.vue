@@ -107,7 +107,7 @@ const finishStatus = computed(() => {
     return `Complete ${incompleteSetCount.value} partial ${incompleteSetCount.value === 1 ? 'set' : 'sets'}`
   }
   if (!loggedSetCount.value) return 'Log at least one set to finish'
-  return `${loggedSetCount.value} ${loggedSetCount.value === 1 ? 'set' : 'sets'} ready`
+  return ''
 })
 
 const elapsedLabel = computed(() => formatTimer(elapsedSeconds.value))
@@ -268,8 +268,11 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
 <template>
   <form class="workout-shell" novalidate @submit.prevent="onFinishWorkout">
+    <button type="button" class="cancel-workout" @click="cancelWorkout">
+      <XMarkIcon /> Cancel workout
+    </button>
+
     <header class="workout-header">
-      <button type="button" class="icon-button" aria-label="Cancel workout" @click="cancelWorkout"><XMarkIcon /></button>
       <div>
         <p class="eyebrow">Active workout</p>
         <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
@@ -289,8 +292,11 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
         <header class="exercise-heading">
           <div><p class="eyebrow">Exercise {{ exerciseIndex + 1 }} of {{ routine?.exercises.length }}</p><h2>{{ exercise.name }}</h2><p v-if="exercise.label">{{ exercise.label }}</p></div>
           <div class="reorder-actions">
-            <button v-if="exerciseIndex > 0" type="button" aria-label="Move exercise up" @click="moveExercise(exerciseIndex, 'up')"><ChevronUpIcon /></button>
-            <button v-if="exerciseIndex < maxExerciseIndex" type="button" aria-label="Move exercise down" @click="moveExercise(exerciseIndex, 'down')"><ChevronDownIcon /></button>
+            <span>Reorder</span>
+            <div>
+              <button v-if="exerciseIndex > 0" type="button" aria-label="Move exercise up" @click="moveExercise(exerciseIndex, 'up')"><ChevronUpIcon /></button>
+              <button v-if="exerciseIndex < maxExerciseIndex" type="button" aria-label="Move exercise down" @click="moveExercise(exerciseIndex, 'down')"><ChevronDownIcon /></button>
+            </div>
           </div>
         </header>
 
@@ -346,10 +352,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
     </main>
 
     <footer class="finish-dock">
-      <div>
-        <strong :class="{ 'text-red-600': finishError }">{{ finishError || finishStatus }}</strong>
-        <p>Started {{ startedAt.toFormat('HH:mm') }}</p>
-      </div>
+      <strong v-if="finishError || finishStatus" :class="{ 'text-red-600': finishError }">{{ finishError || finishStatus }}</strong>
       <button type="submit" :disabled="!canFinish">
         <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
       </button>
@@ -359,9 +362,9 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
 <style scoped>
 .workout-shell { @apply mx-auto max-w-4xl space-y-4 pb-24; }
-.workout-header { @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm; }
-.icon-button { @apply grid size-11 place-items-center rounded-xl border border-slate-200 text-slate-600; }
-.icon-button svg { @apply size-5; }
+.cancel-workout { @apply flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700; }
+.cancel-workout svg { @apply size-5; }
+.workout-header { @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm; }
 .eyebrow { @apply text-xs font-semibold uppercase tracking-wider text-slate-500; }
 .workout-header h1 { @apply text-xl font-semibold tracking-tight text-slate-950; }
 .workout-header p:last-child { @apply mt-0.5 text-sm text-slate-500; }
@@ -375,8 +378,10 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .exercise-heading { @apply mb-4 flex items-start justify-between gap-3; }
 .exercise-heading h2 { @apply mt-1 text-xl font-semibold tracking-tight; }
 .exercise-heading p:last-child { @apply mt-1 text-sm text-slate-500; }
-.reorder-actions { @apply flex items-center gap-1; }
-.reorder-actions button { @apply grid size-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100; }
+.reorder-actions { @apply flex flex-col items-end gap-1; }
+.reorder-actions > span { @apply text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400; }
+.reorder-actions > div { @apply flex items-center gap-1; }
+.reorder-actions button { @apply grid size-9 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700; }
 .reorder-actions svg { @apply size-5; }
 .set-grid { @apply grid grid-cols-[2rem_minmax(3.4rem,1fr)_4.5rem_4rem_2.5rem] items-center gap-2; }
 .set-labels { @apply pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500; }
@@ -391,24 +396,17 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .remove-set { @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600; }
 .set-row:hover .remove-set, .remove-set:focus-visible { @apply opacity-100; }
 .remove-set svg { @apply size-4; }
-.add-set { @apply mt-3 inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50; }
+.add-set { @apply ml-auto mt-3 flex min-h-10 w-max items-center gap-2 rounded-xl px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50; }
 .add-set svg { @apply size-4; }
 .note-card label { @apply flex items-center justify-between text-sm font-semibold text-slate-900; }
 .note-card label span { @apply font-normal text-slate-500; }
 .note-card textarea { @apply mt-3 min-h-24 w-full resize-none rounded-xl border-slate-200 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500; }
-.finish-dock { @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-4xl items-center justify-between gap-4 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:bottom-4 sm:rounded-2xl sm:border; }
-.finish-dock p { @apply text-sm text-slate-500; }
-.finish-dock > button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300; }
+.finish-dock { @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-4xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:bottom-4 sm:rounded-2xl sm:border; }
+.finish-dock > button { @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300; }
 .finish-dock svg { @apply size-5; }
 @media (max-width: 520px) {
-  .workout-header { @apply grid-cols-[auto_1fr]; }
-  .elapsed { @apply col-start-2 row-start-2 w-max; }
   .set-grid { @apply grid-cols-[1.5rem_minmax(2.8rem,1fr)_3.8rem_3.4rem_2.25rem] gap-1.5; }
   .set-labels { @apply text-[0.65rem]; }
   .set-row input { @apply px-1; }
-  .finish-dock { @apply flex-col items-stretch gap-2; }
-  .finish-dock > div { @apply text-center; }
-  .finish-dock > div p { @apply hidden; }
-  .finish-dock > button { @apply w-full; }
 }
 </style>
