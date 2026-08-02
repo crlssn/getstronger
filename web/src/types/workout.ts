@@ -13,6 +13,7 @@ export interface Set {
 
 export interface Workout {
   addedExercises?: Exercise[]
+  completedExerciseIds?: ExerciseID[]
   exerciseSets?: ExerciseSets
   note?: string
   startedAt?: string

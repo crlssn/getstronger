@@ -51,6 +51,9 @@ export const useWorkoutStore = defineStore(
     const getAddedExercises = (routineID: RoutineID) =>
       workouts.value[routineID]?.addedExercises ?? []
 
+    const getCompletedExerciseIds = (routineID: RoutineID) =>
+      workouts.value[routineID]?.completedExerciseIds ?? []
+
     const addWorkoutExercise = (routineID: RoutineID, exercise: Exercise) => {
       const workout = workouts.value[routineID]
       if (!workout) return
@@ -59,6 +62,20 @@ export const useWorkoutStore = defineStore(
       if (!workout.addedExercises.some((entry) => entry.id === exercise.id)) {
         workout.addedExercises.push(exercise)
       }
+    }
+
+    const setExerciseCompleted = (
+      routineID: RoutineID,
+      exerciseID: ExerciseID,
+      completed: boolean,
+    ) => {
+      const workout = workouts.value[routineID]
+      if (!workout) return
+
+      const completedIds = workout.completedExerciseIds ?? []
+      workout.completedExerciseIds = completed
+        ? [...new Set([...completedIds, exerciseID])]
+        : completedIds.filter((id) => id !== exerciseID)
     }
 
     const setNote = (routineID: RoutineID, note: string) => {
@@ -105,11 +122,13 @@ export const useWorkoutStore = defineStore(
       deleteSet,
       getAddedExercises,
       getAllSets,
+      getCompletedExerciseIds,
       getNote,
       getSets,
       getStartedAt,
       initialiseWorkout,
       removeWorkout,
+      setExerciseCompleted,
       setNote,
       workouts,
     }

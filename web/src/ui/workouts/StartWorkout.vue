@@ -36,6 +36,7 @@ const startedAt = ref(DateTime.now())
 const elapsedSeconds = ref(0)
 const restSeconds = ref(0)
 const completedSets = ref<Record<string, boolean>>({})
+const completedExercises = ref<Record<string, boolean>>({})
 const submitting = ref(false)
 const finishError = ref('')
 const exercisePickerOpen = ref(false)
@@ -77,7 +78,9 @@ const availableExercises = computed(() => {
   )
 })
 const hasMoreExercises = computed(() => exercisePageToken.value.length > 0)
-const completedSetCount = computed(() => Object.values(completedSets.value).filter(Boolean).length)
+const completedExerciseCount = computed(
+  () => Object.values(completedExercises.value).filter(Boolean).length,
+)
 const isCompleteSet = (set: Set) =>
   isNumber(set.weight) &&
   isNumber(set.reps) &&
@@ -170,6 +173,10 @@ const initializeRoutine = async () => {
   const previousResponse = await getPreviousWorkoutSets(response.routine.exercises.map((exercise) => exercise.id))
   if (previousResponse) prevExerciseSets.value = previousResponse.exerciseSets
   addEmptySetsFromPreviousSession()
+  seedCompletedSets()
+  workoutStore.getCompletedExerciseIds(routineID).forEach((exerciseId) => {
+    if (canCompleteExercise(exerciseId)) completedExercises.value[exerciseId] = true
+  })
 }
 
 const addEmptySetsFromPreviousSession = () => {
@@ -187,6 +194,35 @@ const addEmptySetsFromPreviousSession = () => {
 const previousSet = (exerciseID: string, index: number) =>
   prevExerciseSets.value.find((entry) => entry.exercise?.id === exerciseID)?.sets[index]
 
+const setKey = (exerciseID: string, index: number) => `${exerciseID}:${index}`
+
+const seedCompletedSets = () => {
+  routine.value?.exercises.forEach((exercise) => {
+    workoutStore.getSets(routineID, exercise.id).forEach((set, index) => {
+      if (isCompleteSet(set)) completedSets.value[setKey(exercise.id, index)] = true
+    })
+  })
+}
+
+const syncSetCompletion = (exerciseID: string, set: Set, index: number) => {
+  const key = setKey(exerciseID, index)
+  if (isCompleteSet(set)) {
+    if (!completedSets.value[key]) {
+      completedSets.value[key] = true
+      startRestTimer()
+    }
+    return
+  }
+
+  delete completedSets.value[key]
+}
+
+const onSetInput = (exerciseID: string, set: Set, index: number) => {
+  finishError.value = ''
+  workoutStore.addEmptySetIfNone(routineID, exerciseID)
+  syncSetCompletion(exerciseID, set, index)
+}
+
 const copyPreviousValue = (event: Event, exerciseId: string, set: Set, index: number, field: 'weight' | 'reps') => {
   if (isNumber(set[field])) return
   const previous = previousSet(exerciseId, index) ?? workoutStore.getSets(routineID, exerciseId)[index - 1]
@@ -195,15 +231,17 @@ const copyPreviousValue = (event: Event, exerciseId: string, set: Set, index: nu
   set[field] = previous[field]
   ;(event.target as HTMLInputElement).select()
   workoutStore.addEmptySetIfNone(routineID, exerciseId)
+  syncSetCompletion(exerciseId, set, index)
 }
 
-const setKey = (exerciseID: string, index: number) => `${exerciseID}:${index}`
-
-const toggleSetComplete = (exerciseID: string, set: Set, index: number) => {
-  if (!isCompleteSet(set)) return
-  const key = setKey(exerciseID, index)
-  completedSets.value[key] = !completedSets.value[key]
-  if (completedSets.value[key]) startRestTimer()
+const deleteWorkoutSet = (exerciseID: string, index: number) => {
+  workoutStore.deleteSet(routineID, exerciseID, index)
+  Object.keys(completedSets.value)
+    .filter((key) => key.startsWith(`${exerciseID}:`))
+    .forEach((key) => delete completedSets.value[key])
+  workoutStore.getSets(routineID, exerciseID).forEach((set, setIndex) => {
+    if (isCompleteSet(set)) completedSets.value[setKey(exerciseID, setIndex)] = true
+  })
 }
 
 const startRestTimer = (seconds = 90) => {
@@ -222,6 +260,29 @@ const skipRest = () => {
   if (restInterval) clearInterval(restInterval)
   restInterval = undefined
   restSeconds.value = 0
+}
+
+const exerciseLoggedSetCount = (exerciseID: string) =>
+  workoutStore.getSets(routineID, exerciseID).filter(isCompleteSet).length
+
+const exerciseHasIncompleteSets = (exerciseID: string) =>
+  workoutStore.getSets(routineID, exerciseID).some(
+    (set) =>
+      (hasEnteredValue(set.weight) || hasEnteredValue(set.reps)) && !isCompleteSet(set),
+  )
+
+const canCompleteExercise = (exerciseID: string) =>
+  exerciseLoggedSetCount(exerciseID) > 0 && !exerciseHasIncompleteSets(exerciseID)
+
+const completeExercise = (exerciseID: string) => {
+  if (!canCompleteExercise(exerciseID)) return
+  completedExercises.value[exerciseID] = true
+  workoutStore.setExerciseCompleted(routineID, exerciseID, true)
+}
+
+const reopenExercise = (exerciseID: string) => {
+  completedExercises.value[exerciseID] = false
+  workoutStore.setExerciseCompleted(routineID, exerciseID, false)
 }
 
 const buildWorkoutSets = () => {
@@ -345,7 +406,10 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       <div>
         <p class="eyebrow">Active workout</p>
         <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
-        <p>{{ completedSetCount }} completed · {{ loggedSetCount }} logged</p>
+        <p>
+          {{ completedExerciseCount }} {{ completedExerciseCount === 1 ? 'exercise' : 'exercises' }} completed
+          · {{ loggedSetCount }} {{ loggedSetCount === 1 ? 'set' : 'sets' }} logged
+        </p>
       </div>
       <strong class="elapsed">{{ elapsedLabel }}</strong>
     </header>
@@ -369,48 +433,60 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
           </div>
         </header>
 
-        <div class="set-grid set-labels" aria-hidden="true">
-          <span>Set</span><span>Previous</span><span>kg</span><span>Reps</span><span></span>
-        </div>
-        <div
-          v-for="(set, setIndex) in workoutStore.getSets(routineID, exercise.id)"
-          :key="setIndex"
-          class="set-grid set-row"
-          :class="{ complete: completedSets[setKey(exercise.id, setIndex)] }"
-        >
-          <span class="set-number">{{ setIndex + 1 }}</span>
-          <span class="previous-value">
-            <template v-if="previousSet(exercise.id, setIndex)">
-              {{ previousSet(exercise.id, setIndex)?.weight }} × {{ previousSet(exercise.id, setIndex)?.reps }}
-            </template>
-            <span v-else>—</span>
-          </span>
-          <input
-            v-model.number="set.weight"
-            type="text"
-            inputmode="decimal"
-            :aria-label="`${exercise.name} set ${setIndex + 1} weight`"
-            @input="finishError = ''; workoutStore.addEmptySetIfNone(routineID, exercise.id)"
-            @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'weight')"
-          />
-          <input
-            v-model.number="set.reps"
-            type="text"
-            inputmode="numeric"
-            :aria-label="`${exercise.name} set ${setIndex + 1} repetitions`"
-            @input="finishError = ''; workoutStore.addEmptySetIfNone(routineID, exercise.id)"
-            @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'reps')"
-          />
-          <button
-            type="button"
-            class="complete-button"
-            :aria-pressed="completedSets[setKey(exercise.id, setIndex)] ?? false"
-            :aria-label="`Complete ${exercise.name} set ${setIndex + 1}`"
-            @click="toggleSetComplete(exercise.id, set, setIndex)"
-          ><CheckIcon /></button>
-          <button type="button" class="remove-set" :aria-label="`Remove set ${setIndex + 1}`" @click="workoutStore.deleteSet(routineID, exercise.id, setIndex)"><MinusIcon /></button>
+        <div v-if="completedExercises[exercise.id]" class="completed-exercise">
+          <span class="completed-icon"><CheckIcon /></span>
+          <div>
+            <strong>Exercise completed</strong>
+            <p>{{ exerciseLoggedSetCount(exercise.id) }} {{ exerciseLoggedSetCount(exercise.id) === 1 ? 'set' : 'sets' }} logged</p>
+          </div>
+          <button type="button" @click="reopenExercise(exercise.id)">Reopen</button>
         </div>
 
+        <template v-else>
+          <div class="set-grid set-labels" aria-hidden="true">
+            <span>Set</span><span>Previous</span><span>kg</span><span>Reps</span>
+          </div>
+          <div
+            v-for="(set, setIndex) in workoutStore.getSets(routineID, exercise.id)"
+            :key="setIndex"
+            class="set-grid set-row"
+            :class="{ complete: isCompleteSet(set) }"
+          >
+            <span class="set-number">{{ setIndex + 1 }}</span>
+            <span class="previous-value">
+              <template v-if="previousSet(exercise.id, setIndex)">
+                {{ previousSet(exercise.id, setIndex)?.weight }} × {{ previousSet(exercise.id, setIndex)?.reps }}
+              </template>
+              <span v-else>—</span>
+            </span>
+            <input
+              v-model.number="set.weight"
+              type="text"
+              inputmode="decimal"
+              :aria-label="`${exercise.name} set ${setIndex + 1} weight`"
+              @input="onSetInput(exercise.id, set, setIndex)"
+              @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'weight')"
+            />
+            <input
+              v-model.number="set.reps"
+              type="text"
+              inputmode="numeric"
+              :aria-label="`${exercise.name} set ${setIndex + 1} repetitions`"
+              @input="onSetInput(exercise.id, set, setIndex)"
+              @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'reps')"
+            />
+            <button type="button" class="remove-set" :aria-label="`Remove set ${setIndex + 1}`" @click="deleteWorkoutSet(exercise.id, setIndex)"><MinusIcon /></button>
+          </div>
+
+          <button
+            type="button"
+            class="complete-exercise-button"
+            :disabled="!canCompleteExercise(exercise.id)"
+            @click="completeExercise(exercise.id)"
+          >
+            <CheckIcon /> Complete exercise
+          </button>
+        </template>
       </section>
 
       <button type="button" class="add-exercise" @click="openExercisePicker">
@@ -496,19 +572,24 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .reorder-actions > div { @apply flex items-center gap-1; }
 .reorder-actions button { @apply grid size-9 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700; }
 .reorder-actions svg { @apply size-5; }
-.set-grid { @apply grid grid-cols-[2rem_minmax(3.4rem,1fr)_4.5rem_4rem_2.5rem] items-center gap-2; }
+.set-grid { @apply grid grid-cols-[2rem_minmax(3.4rem,1fr)_4.5rem_4rem] items-center gap-2; }
 .set-labels { @apply pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500; }
 .set-row { @apply relative border-t border-slate-100 py-2; }
 .set-row.complete { @apply text-emerald-700; }
 .set-number { @apply text-center text-sm font-semibold; }
 .previous-value { @apply truncate text-sm text-slate-500; }
 .set-row input { @apply min-w-0 rounded-xl border-slate-200 px-2 py-2 text-center font-semibold shadow-sm focus:border-indigo-500 focus:ring-indigo-500; }
-.complete-button { @apply grid size-9 place-items-center rounded-full border border-slate-300 text-slate-400 transition; }
-.complete-button svg { @apply size-5; }
-.complete-button[aria-pressed='true'] { @apply border-emerald-600 bg-emerald-50 text-emerald-700; }
 .remove-set { @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600; }
 .set-row:hover .remove-set, .remove-set:focus-visible { @apply opacity-100; }
 .remove-set svg { @apply size-4; }
+.complete-exercise-button { @apply mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400; }
+.complete-exercise-button svg { @apply size-5; }
+.completed-exercise { @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-800; }
+.completed-icon { @apply grid size-9 place-items-center rounded-full bg-emerald-100; }
+.completed-icon svg { @apply size-5; }
+.completed-exercise strong { @apply text-sm font-semibold; }
+.completed-exercise p { @apply mt-0.5 text-xs text-emerald-700; }
+.completed-exercise button { @apply rounded-lg px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100; }
 .add-exercise { @apply flex w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-300 bg-indigo-50/50 p-4 text-left text-indigo-700 transition hover:border-indigo-400 hover:bg-indigo-50; }
 .add-exercise > svg { @apply size-5; }
 .add-exercise strong, .add-exercise small { @apply block; }
@@ -540,7 +621,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .picker-empty { @apply rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500; }
 .load-more { @apply mt-4 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400; }
 @media (max-width: 520px) {
-  .set-grid { @apply grid-cols-[1.5rem_minmax(2.8rem,1fr)_3.8rem_3.4rem_2.25rem] gap-1.5; }
+  .set-grid { @apply grid-cols-[1.5rem_minmax(2.8rem,1fr)_4.25rem_3.75rem] gap-1.5; }
   .set-labels { @apply text-[0.65rem]; }
   .set-row input { @apply px-1; }
 }
