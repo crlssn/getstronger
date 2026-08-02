@@ -15,7 +15,6 @@ import {
   ClockIcon,
   FlagIcon,
   MinusIcon,
-  PlusIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import { useTextareaAutosize } from '@vueuse/core'
@@ -347,7 +346,6 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
           <button type="button" class="remove-set" :aria-label="`Remove set ${setIndex + 1}`" @click="workoutStore.deleteSet(routineID, exercise.id, setIndex)"><MinusIcon /></button>
         </div>
 
-        <button type="button" class="add-set" @click="workoutStore.addEmptySet(routineID, exercise.id)"><PlusIcon /> Add set</button>
       </section>
 
       <section class="note-card">
@@ -404,8 +402,6 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .remove-set { @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600; }
 .set-row:hover .remove-set, .remove-set:focus-visible { @apply opacity-100; }
 .remove-set svg { @apply size-4; }
-.add-set { @apply ml-auto mt-3 flex min-h-10 w-max items-center gap-2 rounded-xl px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50; }
-.add-set svg { @apply size-4; }
 .note-card label { @apply flex items-center justify-between text-sm font-semibold text-slate-900; }
 .note-card label span { @apply font-normal text-slate-500; }
 .note-card textarea { @apply mt-3 min-h-24 w-full resize-none rounded-xl border-slate-200 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500; }
