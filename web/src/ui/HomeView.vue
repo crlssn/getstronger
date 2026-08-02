@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { DateTime } from 'luxon'
 import {
-  ArrowTrendingUpIcon,
   Battery50Icon,
   CheckIcon,
   ChevronRightIcon,
@@ -45,7 +44,6 @@ const activeWorkout = computed(() => {
     startedAt: workout.startedAt,
   }
 })
-const weeklyGoal = 4
 
 const greeting = computed(() => {
   const hour = DateTime.now().hour
@@ -62,9 +60,6 @@ const activeWorkoutStarted = computed(() => {
   if (!startedAt.isValid) return 'Workout in progress'
   return `Started ${startedAt.toRelative()}`
 })
-const weeklyProgress = computed(() =>
-  Math.min(100, ((dashboard.value?.workoutsThisWeek ?? 0) / weeklyGoal) * 100),
-)
 
 const selectRoutine = async (routineId: string) => {
   await dashboardStore.selectRoutine(routineId)
@@ -140,47 +135,6 @@ const workoutDuration = (startedAt: { seconds: bigint } | undefined, finishedAt:
       <RouterLink to="/routines/create" class="primary-link">Create routine</RouterLink>
     </section>
 
-    <section class="metric-grid">
-      <article class="metric-card">
-        <div class="metric-heading">
-          <span>This week</span>
-          <strong>{{ dashboard?.workoutsThisWeek ?? 0 }} of {{ weeklyGoal }}</strong>
-        </div>
-        <div class="progress-track" aria-label="Weekly workout progress">
-          <div class="progress-fill" :style="{ width: `${weeklyProgress}%` }"></div>
-        </div>
-        <p>{{ weeklyGoal - (dashboard?.workoutsThisWeek ?? 0) > 0 ? `${weeklyGoal - (dashboard?.workoutsThisWeek ?? 0)} sessions to go` : 'Weekly goal complete' }}</p>
-      </article>
-      <article class="metric-card">
-        <div class="metric-heading">
-          <span>Weekly volume</span>
-          <ArrowTrendingUpIcon class="metric-icon" />
-        </div>
-        <strong class="metric-value">{{ formatVolume(dashboard?.volumeThisWeek) }} kg</strong>
-        <p>Across completed workouts</p>
-      </article>
-    </section>
-
-    <section v-if="dashboard?.personalBests.length" class="section-block">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Momentum</p>
-          <h2>Personal bests</h2>
-        </div>
-        <RouterLink to="/progress">See progress <ChevronRightIcon /></RouterLink>
-      </div>
-      <div class="highlight-list">
-        <article v-for="personalBest in dashboard.personalBests.slice(0, 3)" :key="personalBest.set?.id" class="highlight-row">
-          <span class="highlight-icon"><TrophyIcon /></span>
-          <div class="min-w-0">
-            <strong>{{ personalBest.exercise?.name }}</strong>
-            <p>{{ formatWeight(personalBest.set?.weight) }} kg × {{ personalBest.set?.reps }}</p>
-          </div>
-          <span class="pr-pill">PR</span>
-        </article>
-      </div>
-    </section>
-
     <section v-if="dashboard?.recentWorkouts.length" class="section-block">
       <div class="section-heading">
         <div>
@@ -208,6 +162,26 @@ const workoutDuration = (startedAt: { seconds: bigint } | undefined, finishedAt:
           </div>
           <span class="volume-label">{{ formatVolume(workout.intensity) }} kg</span>
         </RouterLink>
+      </div>
+    </section>
+
+    <section v-if="dashboard?.personalBests.length" class="section-block">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Momentum</p>
+          <h2>Personal bests</h2>
+        </div>
+        <RouterLink to="/progress">See progress <ChevronRightIcon /></RouterLink>
+      </div>
+      <div class="highlight-list">
+        <article v-for="personalBest in dashboard.personalBests.slice(0, 3)" :key="personalBest.set?.id" class="highlight-row">
+          <span class="highlight-icon"><TrophyIcon /></span>
+          <div class="min-w-0">
+            <strong>{{ personalBest.exercise?.name }}</strong>
+            <p>{{ formatWeight(personalBest.set?.weight) }} kg × {{ personalBest.set?.reps }}</p>
+          </div>
+          <span class="pr-pill">PR</span>
+        </article>
       </div>
     </section>
   </div>
@@ -263,16 +237,7 @@ h2 { @apply text-xl font-semibold tracking-tight text-slate-950; }
 .start-button { @apply bg-white text-indigo-700 hover:bg-indigo-50; }
 .choose-button { @apply border border-white/40 bg-white/10 text-white hover:bg-white/20; }
 .start-button svg, .choose-button svg { @apply size-5; }
-.metric-grid { @apply grid gap-4 sm:grid-cols-2; }
-.metric-card, .section-block, .empty-card, .loading-card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm; }
-.metric-card { @apply space-y-3; }
-.metric-heading { @apply flex items-center justify-between gap-3 text-sm text-slate-500; }
-.metric-heading strong { @apply text-slate-900; }
-.metric-icon { @apply size-5 text-indigo-600; }
-.metric-value { @apply block text-2xl font-semibold tracking-tight text-slate-950; }
-.metric-card p { @apply text-sm text-slate-500; }
-.progress-track { @apply h-2 overflow-hidden rounded-full bg-slate-100; }
-.progress-fill { @apply h-full rounded-full bg-indigo-600 transition-all; }
+.section-block, .empty-card, .loading-card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm; }
 .section-heading { @apply mb-4 flex items-end justify-between gap-3; }
 .section-heading a { @apply inline-flex items-center gap-1 text-sm font-semibold text-indigo-600; }
 .section-heading a svg { @apply size-4; }
