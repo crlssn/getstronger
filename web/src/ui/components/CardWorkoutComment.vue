@@ -1,29 +1,42 @@
 <script setup lang="ts">
-import { UserCircleIcon } from '@heroicons/vue/24/solid'
-import { type User } from '@/proto/api/v1/shared_pb.ts'
-import { type Timestamp } from '@bufbuild/protobuf/wkt'
-import { formatToRelativeDateTime } from '@/utils/datetime.ts'
+import type { Timestamp } from '@bufbuild/protobuf/wkt'
+import type { User } from '@/proto/api/v1/shared_pb'
+
+import { computed } from 'vue'
+import { formatToRelativeDateTime } from '@/utils/datetime'
 
 const props = defineProps<{
   comment: string
   timestamp?: Timestamp
   user?: User
 }>()
+
+const initials = computed(
+  () => `${props.user?.firstName.charAt(0) ?? ''}${props.user?.lastName.charAt(0) ?? ''}` || 'GS',
+)
 </script>
 
 <template>
-  <div class="mb-2">
-    <div class="flex items-center">
-      <UserCircleIcon class="size-10 text-gray-900" />
-      <RouterLink :to="`/users/${props.user?.id}`" class="font-semibold text-base mx-2">
-        {{ props.user?.firstName }} {{ props.user?.lastName }}
-      </RouterLink>
-      <span class="text-gray-500 text-sm">
-        {{ formatToRelativeDateTime(props.timestamp) }}
-      </span>
+  <article class="comment-row">
+    <RouterLink :to="`/users/${user?.id}`" class="comment-avatar" :aria-label="`View ${user?.firstName} ${user?.lastName}'s profile`">
+      {{ initials }}
+    </RouterLink>
+    <div class="comment-content">
+      <div class="comment-meta">
+        <RouterLink :to="`/users/${user?.id}`">{{ user?.firstName }} {{ user?.lastName }}</RouterLink>
+        <time>{{ formatToRelativeDateTime(timestamp) }}</time>
+      </div>
+      <p>{{ comment }}</p>
     </div>
-    <p class="ml-12 -mt-1 text-base">
-      {{ props.comment }}
-    </p>
-  </div>
+  </article>
 </template>
+
+<style scoped>
+.comment-row { @apply grid grid-cols-[auto_1fr] gap-3 py-4 first:pt-0 last:pb-0; }
+.comment-avatar { @apply grid size-10 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700; }
+.comment-content { @apply min-w-0; }
+.comment-meta { @apply flex flex-wrap items-baseline gap-x-2; }
+.comment-meta a { @apply text-sm font-semibold text-slate-900 hover:text-indigo-700; }
+.comment-meta time { @apply text-xs text-slate-400; }
+.comment-content p { @apply mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700; }
+</style>
