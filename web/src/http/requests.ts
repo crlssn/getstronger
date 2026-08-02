@@ -1,5 +1,5 @@
 import type { DateTimeMaybeValid } from 'luxon/src/datetime'
-import type { FieldMask, Timestamp } from '@bufbuild/protobuf/wkt'
+import { timestampFromDate, type FieldMask } from '@bufbuild/protobuf/wkt'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb.ts'
 
 import router from '@/router/router.ts'
@@ -298,13 +298,9 @@ export const createWorkout = async (
 ): Promise<CreateWorkoutResponse | void> => {
   const req = create(CreateWorkoutRequestSchema, {
     exerciseSets: exerciseSets,
-    finishedAt: {
-      seconds: BigInt(finishedAt.toSeconds()),
-    } as Timestamp,
+    finishedAt: timestampFromDate(finishedAt.toJSDate()),
     routineId: routineId,
-    startedAt: {
-      seconds: BigInt(startedAt.toSeconds()),
-    } as Timestamp,
+    startedAt: timestampFromDate(startedAt.toJSDate()),
     note: note,
   })
   return tryCatch(() => workoutClient.createWorkout(req))

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Timestamp } from '@bufbuild/protobuf/wkt'
+import { timestampFromDate, type Timestamp } from '@bufbuild/protobuf/wkt'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import type { ExerciseSets, Set } from '@/proto/api/v1/shared_pb'
 
@@ -88,18 +88,14 @@ const deleteSet = (exerciseId: string, index: number) => {
 const setStartDateTime = (value: string) => {
   workout.value = {
     ...workout.value,
-    startedAt: {
-      seconds: BigInt(DateTime.fromISO(value).toSeconds()),
-    } as Timestamp,
+    startedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()),
   } as Workout
 }
 
 const setEndDateTime = (value: string) => {
   workout.value = {
     ...workout.value,
-    finishedAt: {
-      seconds: BigInt(DateTime.fromISO(value).toSeconds()),
-    } as Timestamp,
+    finishedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()),
   } as Workout
 }
 

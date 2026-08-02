@@ -66,6 +66,10 @@ const isCompleteSet = (set: Set) =>
   isNumber(set.reps) &&
   Number.isInteger(set.reps) &&
   (set.reps as number) > 0
+const hasEnteredValue = (value: unknown) =>
+  value !== undefined &&
+  value !== null &&
+  (typeof value !== 'string' || value.trim().length > 0)
 
 const loggedSetCount = computed(() => {
   if (!routine.value) return 0
@@ -84,7 +88,7 @@ const incompleteSetCount = computed(() => {
         .getSets(routineID, exercise.id)
         .filter(
           (set) =>
-            (set.weight !== undefined || set.reps !== undefined) && !isCompleteSet(set),
+            (hasEnteredValue(set.weight) || hasEnteredValue(set.reps)) && !isCompleteSet(set),
         ).length,
     0,
   )
@@ -223,22 +227,28 @@ const onFinishWorkout = async () => {
   }
 
   submitting.value = true
-  const response = await createWorkout(
-    routineID,
-    exerciseSets,
-    startedAt.value,
-    DateTime.now(),
-    note.value,
-  )
-  submitting.value = false
-  if (!response) {
-    finishError.value = 'Workout could not be saved. Check your connection and try again.'
-    return
-  }
+  try {
+    const response = await createWorkout(
+      routineID,
+      exerciseSets,
+      startedAt.value,
+      DateTime.now(),
+      note.value,
+    )
+    if (!response) {
+      finishError.value = 'Workout could not be saved. Check your connection and try again.'
+      return
+    }
 
-  workoutStore.removeWorkout(routineID)
-  alertStore.setSuccess('Workout saved')
-  await router.push('/progress')
+    workoutStore.removeWorkout(routineID)
+    alertStore.setSuccess('Workout saved')
+    await router.push('/progress')
+  } catch (error) {
+    console.error('failed to finish workout', error)
+    finishError.value = 'Workout could not be saved. Check your connection and try again.'
+  } finally {
+    submitting.value = false
+  }
 }
 
 const cancelWorkout = async () => {
