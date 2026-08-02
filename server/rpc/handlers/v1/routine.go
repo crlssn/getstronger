@@ -71,26 +71,12 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	mapExercises := make(map[string]*orm.Exercise, len(routine.R.Exercises))
-	for _, exercise := range routine.R.Exercises {
-		mapExercises[exercise.ID] = exercise
-	}
-
-	var exerciseIDs []string
-	if err = json.Unmarshal(routine.ExerciseOrder, &exerciseIDs); err != nil {
+	orderedExercises, err := reconcileRoutineExercises(routine.R.GetExercises(), routine.ExerciseOrder)
+	if err != nil {
 		log.Error("unmarshal exercise order failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
-
-	routine.R.Exercises = nil
-	for _, exerciseID := range exerciseIDs {
-		exercise, ok := mapExercises[exerciseID]
-		if !ok {
-			log.Error("exercise not found", zap.String("exercise_id", exerciseID))
-			return nil, connect.NewError(connect.CodeInternal, nil)
-		}
-		routine.R.Exercises = append(routine.R.Exercises, exercise)
-	}
+	routine.R.Exercises = orderedExercises
 
 	log.Info("routine returned")
 	return connect.NewResponse(&apiv1.GetRoutineResponse{
@@ -321,6 +307,46 @@ func startOfWeek(value time.Time) time.Time {
 	dayOffset := (int(value.Weekday()) + 6) % 7
 	start := value.AddDate(0, 0, -dayOffset)
 	return time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
+}
+
+// reconcileRoutineExercises treats the relationship table as the source of truth and the
+// exercise_order column as an ordering hint. Older routines can have valid relationships with an
+// empty or incomplete order value; appending any omitted exercises keeps those routines usable.
+func reconcileRoutineExercises(exercises orm.ExerciseSlice, encodedOrder []byte) (orm.ExerciseSlice, error) {
+	var exerciseIDs []string
+	if len(encodedOrder) > 0 {
+		if err := json.Unmarshal(encodedOrder, &exerciseIDs); err != nil {
+			return nil, fmt.Errorf("exercise order unmarshal: %w", err)
+		}
+	}
+
+	exercisesByID := make(map[string]*orm.Exercise, len(exercises))
+	for _, exercise := range exercises {
+		exercisesByID[exercise.ID] = exercise
+	}
+
+	ordered := make(orm.ExerciseSlice, 0, len(exercises))
+	seen := make(map[string]struct{}, len(exercises))
+	for _, exerciseID := range exerciseIDs {
+		exercise, ok := exercisesByID[exerciseID]
+		if !ok {
+			continue
+		}
+		if _, duplicate := seen[exerciseID]; duplicate {
+			continue
+		}
+		ordered = append(ordered, exercise)
+		seen[exerciseID] = struct{}{}
+	}
+
+	for _, exercise := range exercises {
+		if _, exists := seen[exercise.ID]; exists {
+			continue
+		}
+		ordered = append(ordered, exercise)
+	}
+
+	return ordered, nil
 }
 
 func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl

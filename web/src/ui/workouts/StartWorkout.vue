@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ExerciseSets } from '@/proto/api/v1/shared_pb'
+import { ExerciseSetsSchema, type ExerciseSets } from '@/proto/api/v1/shared_pb'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import type { Set } from '@/types/workout'
 
@@ -7,6 +7,7 @@ import { DateTime } from 'luxon'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router/router'
+import { create } from '@bufbuild/protobuf'
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -34,6 +35,8 @@ const startedAt = ref(DateTime.now())
 const elapsedSeconds = ref(0)
 const restSeconds = ref(0)
 const completedSets = ref<Record<string, boolean>>({})
+const submitting = ref(false)
+const finishError = ref('')
 
 const workoutStore = useWorkoutStore()
 const alertStore = useAlertStore()
@@ -58,13 +61,49 @@ onUnmounted(() => {
 
 const maxExerciseIndex = computed(() => (routine.value?.exercises.length ?? 1) - 1)
 const completedSetCount = computed(() => Object.values(completedSets.value).filter(Boolean).length)
+const isCompleteSet = (set: Set) =>
+  isNumber(set.weight) &&
+  isNumber(set.reps) &&
+  Number.isInteger(set.reps) &&
+  (set.reps as number) > 0
+
 const loggedSetCount = computed(() => {
   if (!routine.value) return 0
   return routine.value.exercises.reduce(
     (total, exercise) =>
-      total + workoutStore.getSets(routineID, exercise.id).filter((set) => isNumber(set.reps) && isNumber(set.weight)).length,
+      total + workoutStore.getSets(routineID, exercise.id).filter(isCompleteSet).length,
     0,
   )
+})
+const incompleteSetCount = computed(() => {
+  if (!routine.value) return 0
+  return routine.value.exercises.reduce(
+    (total, exercise) =>
+      total +
+      workoutStore
+        .getSets(routineID, exercise.id)
+        .filter(
+          (set) =>
+            (set.weight !== undefined || set.reps !== undefined) && !isCompleteSet(set),
+        ).length,
+    0,
+  )
+})
+const canFinish = computed(
+  () =>
+    Boolean(routine.value?.exercises.length) &&
+    loggedSetCount.value > 0 &&
+    incompleteSetCount.value === 0 &&
+    !submitting.value,
+)
+const finishStatus = computed(() => {
+  if (!routine.value) return 'Loading routine…'
+  if (!routine.value.exercises.length) return 'This routine has no exercises'
+  if (incompleteSetCount.value > 0) {
+    return `Complete ${incompleteSetCount.value} partial ${incompleteSetCount.value === 1 ? 'set' : 'sets'}`
+  }
+  if (!loggedSetCount.value) return 'Log at least one set to finish'
+  return `${loggedSetCount.value} ${loggedSetCount.value === 1 ? 'set' : 'sets'} ready`
 })
 
 const elapsedLabel = computed(() => formatTimer(elapsedSeconds.value))
@@ -126,7 +165,7 @@ const copyPreviousValue = (event: Event, exerciseId: string, set: Set, index: nu
 const setKey = (exerciseID: string, index: number) => `${exerciseID}:${index}`
 
 const toggleSetComplete = (exerciseID: string, set: Set, index: number) => {
-  if (!isNumber(set.weight) || !isNumber(set.reps)) return
+  if (!isCompleteSet(set)) return
   const key = setKey(exerciseID, index)
   completedSets.value[key] = !completedSets.value[key]
   if (completedSets.value[key]) startRestTimer()
@@ -156,21 +195,46 @@ const buildWorkoutSets = () => {
 
   return (routine.value?.exercises ?? [])
     .map((exercise) => {
-      const sets = allSets[exercise.id]?.filter((set) => isNumber(set.reps) && isNumber(set.weight))
-      return sets?.length ? ({ exercise: { id: exercise.id }, sets } as ExerciseSets) : null
+      const sets = allSets[exercise.id]?.filter(isCompleteSet)
+      if (!sets?.length) return null
+
+      return create(ExerciseSetsSchema, {
+        exercise: { id: exercise.id },
+        sets: sets.map((set) => ({
+          reps: set.reps as number,
+          weight: set.weight as number,
+        })),
+      })
     })
     .filter(Boolean) as ExerciseSets[]
 }
 
 const onFinishWorkout = async () => {
-  const exerciseSets = buildWorkoutSets()
-  if (!exerciseSets.length) {
-    alertStore.setErrorWithoutPageRefresh('Log at least one set before finishing')
+  finishError.value = ''
+  if (!canFinish.value) {
+    finishError.value = finishStatus.value
     return
   }
 
-  const response = await createWorkout(routineID, exerciseSets, startedAt.value, DateTime.now(), note.value)
-  if (!response) return
+  const exerciseSets = buildWorkoutSets()
+  if (!exerciseSets.length) {
+    finishError.value = 'Log at least one complete set before finishing'
+    return
+  }
+
+  submitting.value = true
+  const response = await createWorkout(
+    routineID,
+    exerciseSets,
+    startedAt.value,
+    DateTime.now(),
+    note.value,
+  )
+  submitting.value = false
+  if (!response) {
+    finishError.value = 'Workout could not be saved. Check your connection and try again.'
+    return
+  }
 
   workoutStore.removeWorkout(routineID)
   alertStore.setSuccess('Workout saved')
@@ -193,7 +257,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 </script>
 
 <template>
-  <form class="workout-shell" @submit.prevent="onFinishWorkout">
+  <form class="workout-shell" novalidate @submit.prevent="onFinishWorkout">
     <header class="workout-header">
       <button type="button" class="icon-button" aria-label="Cancel workout" @click="cancelWorkout"><XMarkIcon /></button>
       <div>
@@ -241,8 +305,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
             type="text"
             inputmode="decimal"
             :aria-label="`${exercise.name} set ${setIndex + 1} weight`"
-            :required="isNumber(set.reps)"
-            @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
+            @input="finishError = ''; workoutStore.addEmptySetIfNone(routineID, exercise.id)"
             @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'weight')"
           />
           <input
@@ -250,8 +313,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
             type="text"
             inputmode="numeric"
             :aria-label="`${exercise.name} set ${setIndex + 1} repetitions`"
-            :required="isNumber(set.weight)"
-            @input="workoutStore.addEmptySetIfNone(routineID, exercise.id)"
+            @input="finishError = ''; workoutStore.addEmptySetIfNone(routineID, exercise.id)"
             @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'reps')"
           />
           <button
@@ -274,8 +336,13 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
     </main>
 
     <footer class="finish-dock">
-      <div><strong>{{ loggedSetCount }} sets ready</strong><p>Started {{ startedAt.toFormat('HH:mm') }}</p></div>
-      <button type="submit"><FlagIcon /> Finish workout</button>
+      <div>
+        <strong :class="{ 'text-red-600': finishError }">{{ finishError || finishStatus }}</strong>
+        <p>Started {{ startedAt.toFormat('HH:mm') }}</p>
+      </div>
+      <button type="submit" :disabled="!canFinish">
+        <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
+      </button>
     </footer>
   </form>
 </template>
@@ -321,7 +388,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 .note-card textarea { @apply mt-3 min-h-24 w-full resize-none rounded-xl border-slate-200 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500; }
 .finish-dock { @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-4xl items-center justify-between gap-4 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:bottom-4 sm:rounded-2xl sm:border; }
 .finish-dock p { @apply text-sm text-slate-500; }
-.finish-dock > button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700; }
+.finish-dock > button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300; }
 .finish-dock svg { @apply size-5; }
 @media (max-width: 520px) {
   .workout-header { @apply grid-cols-[auto_1fr]; }
@@ -329,7 +396,9 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
   .set-grid { @apply grid-cols-[1.5rem_minmax(2.8rem,1fr)_3.8rem_3.4rem_2.25rem] gap-1.5; }
   .set-labels { @apply text-[0.65rem]; }
   .set-row input { @apply px-1; }
-  .finish-dock > div { @apply hidden; }
+  .finish-dock { @apply flex-col items-stretch gap-2; }
+  .finish-dock > div { @apply text-center; }
+  .finish-dock > div p { @apply hidden; }
   .finish-dock > button { @apply w-full; }
 }
 </style>
