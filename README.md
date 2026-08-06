@@ -68,9 +68,10 @@ Use the demo account to explore all features:
 
 ### Prerequisites
 
-- **Go**: v1.23
-- **Node.js**: v22
+- [**mise**](https://mise.jdx.dev/getting-started.html)
 - **Docker**
+
+mise installs the project's pinned Go, Node.js, Terraform, and development tool versions from `mise.toml`.
 
 ### Setup
 
@@ -80,50 +81,51 @@ Use the demo account to explore all features:
    cd getstronger
    ```
 
-2. Install dependencies:
+2. Trust the project configuration, then install tools and dependencies:
    ```bash
-   make install
+   mise trust
+   mise run install
    ```
 
 3. Initialise `.env` files for the web and backend: files you may need to update to suite your environment.
    ```bash
-   make env
+   mise run env
    ```
 
 4. Initialise the database:
    ```bash
-   make db_init
+   mise run db_init
    ```
 
 5. Run database migrations:
    ```bash
-   make db_migrate
+   mise run db_migrate
    ```
 
 6. (Optional) Seed the database:
    ```bash
-   make db_seed
+   mise run db_seed
    ```
 
 7. (Optional) Generate self-signed certificates for the backend:
    ```bash
-   make gen_certs
+   mise run gen_certs
    ```
    **⚠ You must trust the self-signed certificate in your browser after you've started the backend.**
 
 8. Start the email app if you want to sign up locally and your `EMAIL_PROVIDER` env is set to `local`:
    ```bash
-   make app_email
+   mise run app_email
    ```
 
 9. Start the backend app:
    ```bash
-   make app_backend
+   mise run app_backend
    ```
 
 10. Start the web app:
    ```bash
-   make app_web
+   mise run app_web
    ```
 
 11. Access the web app at [http://localhost:5173](http://localhost:5173). You can now login with email `john@doe.com` and password `123` if you seeded the database.

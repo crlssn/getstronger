@@ -7,7 +7,7 @@ NO_COLOUR='\033[0m'
 echo "Running pre-push hook"
 
 echo "Formatting code..."
-make format > /dev/null
+mise run format > /dev/null
 if [[ $(git status --porcelain) ]]; then
   echo -e "⚠️ ${RED}Uncommitted changes found. Aborting push.${NO_COLOUR}"
   echo "Run 'git diff' to see uncommitted changes."
@@ -16,17 +16,17 @@ if [[ $(git status --porcelain) ]]; then
 fi
 
 echo "Linting code..."
-make lint > /dev/null || {
+mise run lint > /dev/null || {
     echo -e "⚠️ ${RED}Linting failed. Aborting push.${NO_COLOUR}"
-    echo "Run 'make lint' to see linting errors."
+    echo "Run 'mise run lint' to see linting errors."
     echo "Run 'git push --no-verify' to bypass this check."
     exit 1
 }
 
 echo "Running tests..."
-make test > /dev/null || {
+mise run test > /dev/null || {
     echo -e "⚠️ ${RED}Tests failed. Aborting push.${NO_COLOUR}"
-    echo "Run 'make test' to see test failures."
+    echo "Run 'mise run test' to see test failures."
     echo "Run 'git push --no-verify' to bypass this check."
     exit 1
 }

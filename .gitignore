@@ -10,3 +10,5 @@
 /infrastructure/.terraform.lock.hcl
 /.env
 /web/.env
+/mise.local.toml
+/mise.*.local.toml
