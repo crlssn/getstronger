@@ -86,7 +86,7 @@ const submit = () => {
     <header class="form-intro">
       <div>
         <p class="eyebrow">Routine builder</p>
-        <h1>Build your training plan</h1>
+        <h1>Build your routine</h1>
         <p>Name the session, then choose the exercises in it.</p>
       </div>
       <span class="selection-count">{{ selectedIds.length }} selected</span>
