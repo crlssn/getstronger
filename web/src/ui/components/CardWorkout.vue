@@ -147,7 +147,7 @@ const postComment = async () => {
         </div>
       </article>
       <article>
-        <span class="metric-icon amber"><TrophyIcon /></span>
+        <span class="metric-icon" :class="{ amber: personalBestCount > 0 }"><TrophyIcon /></span>
         <div>
           <small>Personal records</small><strong>{{ personalBestCount }}</strong>
         </div>
@@ -202,7 +202,7 @@ const postComment = async () => {
           </div>
         </article>
         <article>
-          <span class="metric-icon amber"><TrophyIcon /></span>
+          <span class="metric-icon" :class="{ amber: personalBestCount > 0 }"><TrophyIcon /></span>
           <div>
             <small>Personal records</small><strong>{{ personalBestCount }}</strong>
           </div>
