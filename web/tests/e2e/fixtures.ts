@@ -14,7 +14,7 @@ export const test = base.extend<{ runtimeErrors: string[] }>({
       })
       page.on('requestfailed', (request) => {
         const reason = request.failure()?.errorText ?? 'unknown error'
-        if (!reason.includes('ERR_ABORTED'))
+        if (!isNavigationCancellation(reason))
           errors.push(`request failed: ${request.method()} ${request.url()} (${reason})`)
       })
       page.on('response', (response) => {
@@ -57,6 +57,10 @@ export const allowRuntimeErrors = {
 
 const allowsRuntimeErrors = (testInfo: TestInfo) =>
   testInfo.annotations.some((annotation) => annotation.type === allowRuntimeErrors.type)
+
+const isNavigationCancellation = (reason: string) =>
+  ['ERR_ABORTED', 'NS_BINDING_ABORTED'].some((value) => reason.includes(value)) ||
+  /^(cancelled|canceled)$/i.test(reason.trim())
 
 export const expectAccessible = async (page: Page) => {
   const results = await new AxeBuilder({ page })

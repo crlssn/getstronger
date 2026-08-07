@@ -25,8 +25,19 @@ test.describe('exercise library', () => {
     const firstExercise = page.locator('.exercise-group-card a').first()
     const firstExerciseName = (await firstExercise.locator('strong').innerText()).trim()
     await page.getByLabel('Search exercises').fill(firstExerciseName.toLowerCase())
-    await expect(page.locator('.exercise-group-card a')).toHaveCount(1)
-    await expect(page.locator('.exercise-group-card a').first()).toContainText(firstExerciseName)
+    const matches = page.locator('.exercise-group-card a')
+    await expect(matches.first()).toBeVisible()
+    await expect
+      .poll(async () =>
+        Promise.all(
+          (await matches.all()).map(async (match) =>
+            (await match.locator('strong').innerText()).trim().toLocaleLowerCase(),
+          ),
+        ),
+      )
+      .toEqual(
+        Array.from({ length: await matches.count() }, () => firstExerciseName.toLocaleLowerCase()),
+      )
     await expectAccessible(page)
   })
 
