@@ -63,6 +63,7 @@ export default defineConfig({
           cwd: repositoryRoot,
           env: {
             CORS_ALLOWED_ORIGIN: localBaseURL,
+            EMAIL_PROVIDER: 'noop',
             SERVER_CERT_PATH: '',
             SERVER_KEY_PATH: '',
             SERVER_PORT: '18080',
@@ -75,7 +76,7 @@ export default defineConfig({
         {
           command: 'npm run dev -- --host localhost --port 15173',
           cwd: webRoot,
-          env: { VITE_API_URL: localBackendURL },
+          env: { VITE_API_URL: localBackendURL, VITE_ENABLE_DEVTOOLS: 'false' },
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
           url: localBaseURL,

@@ -42,6 +42,12 @@ export const logIn = async (page: Page) => {
   await page.getByRole('button', { name: 'Log in' }).click()
   await expect(page).toHaveURL(/\/home$/)
   await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
+  await waitForHome(page)
+}
+
+export const waitForHome = async (page: Page) => {
+  await expect(page.locator('.loading-card')).toHaveCount(0)
+  await expect(page.locator('.feed-end, .feed-empty, .feed-error')).toBeVisible()
 }
 
 export const allowRuntimeErrors = {
