@@ -1,13 +1,10 @@
 # Files
 .DS_Store
-*.tfvars
 
 # Folders
 .idea/*
 /node_modules/
 /.secrets/
-/infrastructure/.terraform/
-/infrastructure/.terraform.lock.hcl
 /.env
 /web/.env
 /mise.local.toml

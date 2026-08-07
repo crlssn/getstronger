@@ -6,7 +6,6 @@ go = "1.25.4"
 gofumpt = "0.10.0"
 golangci-lint = "2.12.2"
 node = "22.23.2"
-terraform = "1.7.5"
 "go:github.com/golang-migrate/migrate/v4/cmd/migrate" = {
     version = "v4.19.1",
     tags = "postgres",
@@ -207,7 +206,6 @@ description = "Format all code"
 run = [
     { task = "format:web" },
     { task = "format:backend" },
-    { task = "format:terraform" },
 ]
 
 [tasks."format:web"]
@@ -220,11 +218,6 @@ run = ["npx sort-package-json", "npm run format"]
 alias = "format_backend"
 description = "Format backend code"
 run = ["goimports -w .", "gofumpt -l -w ."]
-
-[tasks."format:terraform"]
-alias = "format_terraform"
-description = "Format Terraform code"
-run = "terraform fmt -recursive"
 
 [tasks.lint]
 description = "Lint all code"
