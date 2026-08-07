@@ -8,11 +8,42 @@ const localBackendURL = 'http://localhost:18080'
 const baseURL = process.env.E2E_BASE_URL ?? localBaseURL
 const remoteTarget = process.env.E2E_BASE_URL !== undefined
 
+const localProjects = [
+  {
+    name: 'chromium-mobile',
+    use: { ...devices['Desktop Chrome'], viewport: { height: 844, width: 390 } },
+  },
+  {
+    grep: /@responsive/,
+    name: 'chromium-desktop',
+    use: { ...devices['Desktop Chrome'], viewport: { height: 900, width: 1440 } },
+  },
+  {
+    grep: /@smoke/,
+    name: 'firefox-mobile',
+    use: { ...devices['Desktop Firefox'], viewport: { height: 844, width: 390 } },
+  },
+  {
+    grep: /@smoke/,
+    name: 'webkit-mobile',
+    use: { ...devices['Desktop Safari'], viewport: { height: 844, width: 390 } },
+  },
+]
+
 export default defineConfig({
   expect: { timeout: 10_000 },
   forbidOnly: Boolean(process.env.CI),
   fullyParallel: false,
+  grep: remoteTarget ? /@smoke/ : undefined,
   outputDir: 'test-results',
+  projects: remoteTarget
+    ? [
+        {
+          name: 'chromium-live-smoke',
+          use: { ...devices['Desktop Chrome'], viewport: { height: 844, width: 390 } },
+        },
+      ]
+    : localProjects,
   reporter: process.env.CI
     ? [['line'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
     : [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
@@ -20,11 +51,9 @@ export default defineConfig({
   testDir: './tests/e2e',
   timeout: 45_000,
   use: {
-    ...devices['Desktop Chrome'],
     baseURL,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
-    viewport: { height: 844, width: 390 },
   },
   webServer: remoteTarget
     ? undefined

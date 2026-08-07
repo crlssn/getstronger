@@ -1,6 +1,6 @@
 import { expect, logIn, test } from './fixtures'
 
-test('redirects protected routes to login', async ({ page }) => {
+test('redirects protected routes to login @smoke', async ({ page }) => {
   await page.goto('/profile')
 
   await expect(page).toHaveURL(/\/login$/)
@@ -10,10 +10,12 @@ test('redirects protected routes to login', async ({ page }) => {
 test.describe('authenticated journeys', () => {
   test.beforeEach(async ({ page }) => logIn(page))
 
-  test('navigates between the primary app sections', async ({ page }) => {
+  test('navigates between the primary app sections @smoke @responsive', async ({ page }) => {
     const navigation = page.getByRole('navigation', { name: 'Primary navigation' })
 
-    await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/ })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: /Good (morning|afternoon|evening)/ }),
+    ).toBeVisible()
 
     await navigation.getByRole('link', { name: 'Workout' }).click()
     await expect(page.getByRole('heading', { name: 'Workout', exact: true })).toBeVisible()
@@ -28,7 +30,7 @@ test.describe('authenticated journeys', () => {
     await expect(page.getByRole('heading', { name: 'John Doe' })).toBeVisible()
   })
 
-  test('creates, updates, and deletes a tagged exercise', async ({ page }) => {
+  test('creates, updates, and deletes a tagged exercise @mutation', async ({ page }) => {
     const exerciseName = 'E2E Cable Row'
     const updatedName = 'E2E Seated Cable Row'
 
@@ -60,7 +62,7 @@ test.describe('authenticated journeys', () => {
     await expect(page.getByText('Exercise deleted')).toBeVisible()
   })
 
-  test('completes a quick workout and opens its summary', async ({ page }) => {
+  test('completes a quick workout and opens its summary @mutation', async ({ page }) => {
     await page.goto('/workouts/quick')
     await page.getByRole('button', { name: 'Choose exercise' }).click()
 
@@ -82,7 +84,7 @@ test.describe('authenticated journeys', () => {
     await expect(page.getByText(exerciseName, { exact: true })).toBeVisible()
   })
 
-  test('shows social profile tabs and follow state', async ({ page }) => {
+  test('shows social profile tabs and follow state @smoke', async ({ page }) => {
     await page.goto('/home')
     await page.getByRole('link', { name: 'Jane Doe', exact: true }).first().click()
 

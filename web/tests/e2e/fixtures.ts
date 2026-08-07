@@ -1,4 +1,5 @@
-import { expect, test as base, type Page } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
+import { expect, test as base, type Page, type TestInfo } from '@playwright/test'
 
 const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'john@doe.com'
 const password = process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? '123'
@@ -8,12 +9,25 @@ export const test = base.extend<{ runtimeErrors: string[] }>({
     async ({ page }, use) => {
       const errors: string[] = []
       page.on('pageerror', (error) => errors.push(error.message))
+      page.on('console', (message) => {
+        if (message.type() === 'error') errors.push(`console: ${message.text()}`)
+      })
+      page.on('requestfailed', (request) => {
+        const reason = request.failure()?.errorText ?? 'unknown error'
+        if (!reason.includes('ERR_ABORTED'))
+          errors.push(`request failed: ${request.method()} ${request.url()} (${reason})`)
+      })
       page.on('response', (response) => {
         if (response.status() >= 500) errors.push(`${response.status()} ${response.url()}`)
       })
 
       await use(errors)
-      expect(errors, 'The page should not emit runtime errors or receive 5xx responses').toEqual([])
+      if (!allowsRuntimeErrors(test.info())) {
+        expect(
+          errors,
+          'The page should not emit console/page errors, failed requests, or receive 5xx responses',
+        ).toEqual([])
+      }
     },
     { auto: true },
   ],
@@ -29,3 +43,29 @@ export const logIn = async (page: Page) => {
   await expect(page).toHaveURL(/\/home$/)
   await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
 }
+
+export const allowRuntimeErrors = {
+  description: 'This scenario intentionally exercises a failed request',
+  type: 'allow-runtime-errors',
+}
+
+const allowsRuntimeErrors = (testInfo: TestInfo) =>
+  testInfo.annotations.some((annotation) => annotation.type === allowRuntimeErrors.type)
+
+export const expectAccessible = async (page: Page) => {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze()
+
+  expect(
+    results.violations.map(({ help, id, nodes }) => ({
+      help,
+      id,
+      targets: nodes.map((node) => node.target.join(' ')),
+    })),
+    'The page should have no WCAG A/AA accessibility violations',
+  ).toEqual([])
+}
+
+export const uniqueName = (prefix: string) =>
+  `${prefix} ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`

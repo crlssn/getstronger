@@ -159,6 +159,14 @@ run = [
 description = "Reset seeded data and run visible browser end-to-end tests"
 run = [{ task = "db:seed" }, "cd web && npm run test:e2e:headed"]
 
+[tasks."test:e2e:live"]
+description = "Run the non-mutating browser smoke suite against E2E_BASE_URL"
+dir = "web"
+run = [
+    'test -n "$E2E_BASE_URL" || (echo "E2E_BASE_URL is required" && exit 1)',
+    "npm run test:e2e:live",
+]
+
 [tasks."test:e2e:report"]
 description = "Open the latest browser end-to-end test report"
 run = "cd web && npm run test:e2e:report"
@@ -280,9 +288,9 @@ dir = "web"
 run = "npm install"
 
 [tasks."install:e2e"]
-description = "Install the Chromium browser used by end-to-end tests"
+description = "Install the browsers used by end-to-end tests"
 dir = "web"
-run = "npx playwright install chromium"
+run = "npx playwright install chromium firefox webkit"
 
 [tasks."install:tools"]
 alias = "install_tools"

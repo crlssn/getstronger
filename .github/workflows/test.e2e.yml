@@ -79,9 +79,9 @@ jobs:
         working-directory: web
         run: npm ci
 
-      - name: Install Chromium
+      - name: Install Playwright browsers
         working-directory: web
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Install database migration tool
         run: go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1

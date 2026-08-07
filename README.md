@@ -132,7 +132,7 @@ mise installs the project's pinned Go, Node.js, Terraform, and development tool 
 
 ## End-to-end tests
 
-The browser suite covers authentication, primary navigation, exercise management, quick workouts, and public profiles. It uses the local seeded John and Jane Doe accounts and resets the database before every suite run.
+The browser suite covers release-critical authentication, navigation, training, workout, exercise, progress, and social flows. It uses the local seeded John and Jane Doe accounts and resets the database before every local suite run. The complete suite runs in mobile Chromium, with responsive coverage in desktop Chromium and smoke coverage in Firefox and WebKit.
 
 Install the Playwright browser once:
 
@@ -144,6 +144,12 @@ With the local PostgreSQL container running and migrations applied, run the suit
 
 ```bash
 mise run test:e2e
+```
+
+To run the non-mutating smoke scenarios against a deployed environment, provide its URL and credentials. Live mode never seeds the database and automatically excludes mutation scenarios:
+
+```bash
+E2E_BASE_URL=https://example.com E2E_USER_EMAIL=user@example.com E2E_USER_PASSWORD=secret mise run test:e2e:live
 ```
 
 For interactive debugging, use either the visible browser or Playwright UI:
@@ -159,4 +165,4 @@ Open the most recent HTML report from the repository root with:
 mise run test:e2e:report
 ```
 
-Playwright starts isolated HTTP instances of the backend and web app on ports `18080` and `15173`, so it does not depend on or conflict with the normal local TLS services. Failed tests retain their screenshot and trace under `web/test-results/`; the HTML report is written to `web/playwright-report/`.
+Playwright starts isolated HTTP instances of the backend and web app on ports `18080` and `15173`, so it does not depend on or conflict with the normal local TLS services. The fixtures fail on browser console/page errors, failed requests, backend 5xx responses, and WCAG A/AA violations where accessibility assertions are applied. Failed tests retain their screenshot and trace under `web/test-results/`; the HTML report is written to `web/playwright-report/`.
