@@ -4,7 +4,7 @@ import { RoutineSchema, type Routine } from '@/proto/api/v1/routine_service_pb'
 import type { Set } from '@/types/workout'
 
 import { DateTime } from 'luxon'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
@@ -297,7 +297,7 @@ const onSetInput = (exerciseID: string, set: Set, index: number) => {
   syncSetCompletion(exerciseID, set, index)
 }
 
-const copyPreviousValue = (
+const copyPreviousValue = async (
   event: Event,
   exerciseId: string,
   set: Set,
@@ -310,9 +310,10 @@ const copyPreviousValue = (
   if (!previous) return
 
   set[field] = previous[field]
-  ;(event.target as HTMLInputElement).select()
   workoutStore.addEmptySetIfNone(routineID, exerciseId)
   syncSetCompletion(exerciseId, set, index)
+  await nextTick()
+  ;(event.target as HTMLInputElement).select()
 }
 
 const deleteWorkoutSet = (exerciseID: string, index: number) => {
