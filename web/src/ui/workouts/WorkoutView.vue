@@ -2,11 +2,13 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
 import { useIntersectionObserver } from '@vueuse/core'
+import { DateTime } from 'luxon'
 import {
   BoltIcon,
   CalendarDaysIcon,
   CheckIcon,
   ChevronRightIcon,
+  ClockIcon,
   PlayIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, nextTick, onMounted, ref } from 'vue'
@@ -53,6 +55,21 @@ const savedHref = computed(() => {
   return planId
     ? { path: `/workouts/routine/${routineId}`, query: { plan_id: planId } }
     : `/workouts/routine/${routineId}`
+})
+const savedRoutineName = computed(() => {
+  const routineId = savedWorkout.value?.[0]
+  if (!routineId) return 'Workout in progress'
+  if (routineId === 'quick-workout') return 'Quick Workout'
+  return (
+    dashboardStore.dashboard?.routines.find((routine) => routine.id === routineId)?.name ??
+    'Workout in progress'
+  )
+})
+const savedWorkoutStarted = computed(() => {
+  const startedAt = savedWorkout.value?.[1].startedAt
+  if (!startedAt) return 'Workout in progress'
+  const start = DateTime.fromISO(startedAt)
+  return start.isValid ? `Started ${start.toRelative()}` : 'Workout in progress'
 })
 
 const loadMoreHistory = async () => {
@@ -114,11 +131,14 @@ const skip = async () => {
       <h1>Workout</h1>
       <p>Start your planned session or work out without a routine.</p>
     </header>
-    <RouterLink v-if="savedWorkout" :to="savedHref" class="resume-card"
-      ><span
-        ><strong>Resume workout</strong><small><CheckIcon /> Saved on this device</small></span
-      ><ChevronRightIcon
-    /></RouterLink>
+    <section v-if="savedWorkout" class="active-session">
+      <div>
+        <p class="eyebrow">Active workout</p>
+        <h2>{{ savedRoutineName }}</h2>
+        <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
+      </div>
+      <RouterLink :to="savedHref">Resume workout <ChevronRightIcon /></RouterLink>
+    </section>
     <section v-if="nextRoutine" class="next-card">
       <header>
         <p class="eyebrow">{{ activePlan ? 'Active plan' : 'Up next' }}</p>
@@ -210,36 +230,39 @@ h2 {
 .page-intro > p:last-child {
   @apply mt-1 text-sm text-slate-500;
 }
-.resume-card,
 .quick-card {
   @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
 }
-.resume-card {
-  @apply border-slate-200 bg-white;
-}
-.resume-card span,
 .quick-card > span:nth-child(2) {
   @apply min-w-0;
 }
-.resume-card strong,
-.resume-card small,
 .quick-card strong,
 .quick-card small {
   @apply block truncate;
 }
-.resume-card small,
 .quick-card small {
   @apply mt-1 text-xs text-slate-500;
 }
-.resume-card small {
-  @apply flex items-center gap-1.5;
-}
-.resume-card small svg {
-  @apply size-4 text-emerald-600;
-}
-.resume-card > svg,
 .quick-card > svg {
   @apply size-5 text-slate-400;
+}
+.active-session {
+  @apply grid gap-5 rounded-3xl border border-stone-300 bg-stone-50 p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
+}
+.active-session h2 {
+  @apply mt-1;
+}
+.active-meta {
+  @apply mt-3 flex items-center gap-2 text-sm text-stone-700;
+}
+.active-meta svg {
+  @apply size-4;
+}
+.active-session > a {
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+}
+.active-session > a svg {
+  @apply size-5;
 }
 .next-card {
   @apply rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-lg shadow-indigo-200;

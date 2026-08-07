@@ -4,8 +4,6 @@ import { DateTime } from 'luxon'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
   CheckIcon,
-  ChevronRightIcon,
-  ClockIcon,
   FireIcon,
   ListBulletIcon,
   PlayIcon,
@@ -13,14 +11,12 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
-import { useWorkoutStore } from '@/stores/workout'
 import { listFeedItems } from '@/http/requests'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
 
 const dashboardStore = useDashboardStore()
-const workoutStore = useWorkoutStore()
 const routinePickerOpen = ref(false)
 const followedWorkouts = ref<Workout[]>([])
 const feedPageToken = ref(new Uint8Array(0))
@@ -92,32 +88,6 @@ const nextWorkoutTarget = computed(() =>
       }
     : '/workout',
 )
-const activeWorkout = computed(() => {
-  const activeWorkouts = Object.entries(workoutStore.workouts)
-    .filter(([, workout]) => workout.startedAt)
-    .sort(
-      ([, first], [, second]) =>
-        Date.parse(second.startedAt ?? '') - Date.parse(first.startedAt ?? ''),
-    )
-  const currentWorkout = activeWorkouts[0]
-  if (!currentWorkout) return undefined
-
-  const [routineId, workout] = currentWorkout
-  return {
-    routine: dashboard.value?.routines.find((routine) => routine.id === routineId),
-    routineId,
-    planId: workout.planId,
-    href:
-      routineId === 'quick-workout'
-        ? '/workouts/quick'
-        : {
-            path: `/workouts/routine/${routineId}`,
-            query: workout.planId ? { plan_id: workout.planId } : {},
-          },
-    startedAt: workout.startedAt,
-  }
-})
-
 const greeting = computed(() => {
   const hour = DateTime.now().hour
   if (hour < 12) return 'Good morning'
@@ -129,13 +99,6 @@ const dateLabel = computed(() => DateTime.now().toFormat('EEEE, d LLLL'))
 const estimatedMinutes = computed(() =>
   Math.max(30, (nextRoutine.value?.exercises.length ?? 0) * 8),
 )
-const activeWorkoutStarted = computed(() => {
-  if (!activeWorkout.value?.startedAt) return 'Workout in progress'
-  const startedAt = DateTime.fromISO(activeWorkout.value.startedAt)
-  if (!startedAt.isValid) return 'Workout in progress'
-  return `Started ${startedAt.toRelative()}`
-})
-
 const selectRoutine = async (routineId: string) => {
   await dashboardStore.selectRoutine(routineId)
   routinePickerOpen.value = false
@@ -156,22 +119,6 @@ const selectRoutine = async (routineId: string) => {
       <div class="loading-line w-32"></div>
       <div class="loading-line w-52"></div>
       <div class="loading-line w-full"></div>
-    </section>
-
-    <section v-else-if="activeWorkout" class="active-session">
-      <div class="session-copy">
-        <p class="eyebrow">Active workout</p>
-        <h2>
-          {{
-            activeWorkout.routine?.name ??
-            (activeWorkout.routineId === 'quick-workout' ? 'Quick Workout' : 'Workout in progress')
-          }}
-        </h2>
-        <p class="active-meta"><ClockIcon /> {{ activeWorkoutStarted }}</p>
-      </div>
-      <RouterLink :to="activeWorkout.href" class="resume-button">
-        Resume workout <ChevronRightIcon />
-      </RouterLink>
     </section>
 
     <section v-else-if="nextRoutine" class="next-session">
@@ -296,24 +243,6 @@ h1 {
 }
 h2 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
-}
-.active-session {
-  @apply grid gap-5 rounded-3xl border border-indigo-200 bg-indigo-50 p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-7;
-}
-.active-session h2 {
-  @apply mt-1 text-2xl;
-}
-.active-meta {
-  @apply mt-2 flex items-center gap-2 text-sm text-indigo-700;
-}
-.active-meta svg {
-  @apply size-4;
-}
-.resume-button {
-  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700;
-}
-.resume-button svg {
-  @apply size-5;
 }
 .next-session {
   @apply grid gap-5 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-indigo-200 sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
