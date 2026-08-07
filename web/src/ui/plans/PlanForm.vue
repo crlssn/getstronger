@@ -3,7 +3,6 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ArrowDownIcon,
-  ArrowLeftIcon,
   ArrowUpIcon,
   ArrowsUpDownIcon,
   PlusIcon,
@@ -82,8 +81,6 @@ const save = async () => {
 
 <template>
   <form class="builder-page" @submit.prevent="save">
-    <RouterLink to="/plans" class="back-link"><ArrowLeftIcon /> Back to Plans</RouterLink>
-
     <header class="page-intro">
       <p class="eyebrow">Plan builder</p>
       <h1>{{ editing ? 'Edit plan' : 'New plan' }}</h1>
@@ -212,12 +209,6 @@ const save = async () => {
 <style scoped>
 .builder-page {
   @apply space-y-5;
-}
-.back-link {
-  @apply inline-flex items-center gap-2 text-sm font-semibold text-indigo-600;
-}
-.back-link svg {
-  @apply size-4;
 }
 .page-intro {
   @apply px-1;
