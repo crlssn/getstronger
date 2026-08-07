@@ -67,6 +67,21 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   <div v-else-if="exercise" class="exercise-detail">
     <ExerciseTags :tags="exercise.tags" />
 
+    <section v-if="authStore.userId === exercise.userId" class="manage-card">
+      <div class="manage-heading">
+        <p class="eyebrow">Manage exercise</p>
+        <h2>Exercise settings</h2>
+      </div>
+      <div class="manage-actions">
+        <RouterLink :to="`/exercises/${route.params.id}/edit`">
+          <PencilIcon /> Update exercise <ChevronRightIcon />
+        </RouterLink>
+        <button type="button" @click="onDeleteExercise">
+          <TrashIcon /> Delete exercise
+        </button>
+      </div>
+    </section>
+
     <section v-if="sets.length" class="chart-card">
       <p class="eyebrow">Trend</p>
       <ExerciseChart :sets="downSample(sets, 60)" />
@@ -97,17 +112,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
         Load more sets
       </button>
     </section>
-
-    <section v-if="authStore.userId === exercise.userId" class="manage-card">
-      <div>
-        <p class="eyebrow">Manage exercise</p>
-        <h2>Exercise settings</h2>
-      </div>
-      <RouterLink :to="`/exercises/${route.params.id}/edit`">
-        <PencilIcon /> Update exercise <ChevronRightIcon />
-      </RouterLink>
-      <button type="button" @click="onDeleteExercise"><TrashIcon /> Delete exercise</button>
-    </section>
   </div>
   <section v-else class="empty-card">
     <h1>Exercise unavailable</h1>
@@ -123,9 +127,11 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .loading-card,
 .empty-card,
 .chart-card,
-.sets-card,
-.manage-card {
+.sets-card {
   @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+}
+.manage-card {
+  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
 }
 .loading-card {
   @apply text-sm text-slate-500;
@@ -137,7 +143,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply space-y-4;
 }
 .sets-card > header {
-  @apply mb-3 flex items-end justify-between gap-3;
+  @apply -mx-5 -mt-5 flex items-end justify-between gap-3 px-5 py-5;
 }
 .sets-card h1,
 .manage-card h2,
@@ -148,10 +154,10 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500;
 }
 .set-list {
-  @apply divide-y divide-slate-100 border-t border-slate-100;
+  @apply -mx-5 divide-y divide-slate-100 border-t border-slate-100;
 }
 .set-list > a {
-  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 py-3 transition hover:text-indigo-700;
+  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-3 transition hover:text-indigo-700;
 }
 .set-copy {
   @apply min-w-0;
@@ -182,25 +188,28 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .load-more {
   @apply mt-3 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50;
 }
-.manage-card {
-  @apply space-y-3;
+.manage-heading {
+  @apply p-5;
 }
-.manage-card .eyebrow {
+.manage-heading .eyebrow {
   @apply mb-1;
 }
-.manage-card a,
-.manage-card button {
-  @apply flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+.manage-actions {
+  @apply divide-y divide-slate-100 border-t border-slate-100;
 }
-.manage-card a svg,
-.manage-card button svg {
+.manage-actions a,
+.manage-actions button {
+  @apply flex min-h-14 w-full items-center gap-3 px-5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50;
+}
+.manage-actions a svg,
+.manage-actions button svg {
   @apply size-5;
 }
-.manage-card a svg:last-child {
+.manage-actions a svg:last-child {
   @apply ml-auto text-slate-400;
 }
-.manage-card button {
-  @apply border-red-200 text-red-600 hover:bg-red-50;
+.manage-actions button {
+  @apply text-red-600 hover:bg-red-50;
 }
 .empty-card p {
   @apply mt-2 text-sm text-slate-500;

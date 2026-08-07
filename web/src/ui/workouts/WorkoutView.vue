@@ -293,10 +293,10 @@ h2 {
   @apply mt-1 text-xl text-slate-950;
 }
 .history-list {
-  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
+  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
 }
 .history-list > a {
-  @apply flex min-h-16 items-center justify-between gap-4 border-b border-slate-100 py-3 transition last:border-b-0 hover:text-indigo-700;
+  @apply flex min-h-16 items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 transition last:border-b-0 hover:text-indigo-700;
 }
 .history-list > a > span {
   @apply min-w-0;
