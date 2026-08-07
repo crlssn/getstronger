@@ -15,6 +15,7 @@ linters:
     - perfsprint
     - varnamelen
     - wsl
+    - gomodguard
   exclusions:
     generated: lax
     presets:
