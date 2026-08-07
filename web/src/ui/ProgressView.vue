@@ -146,7 +146,7 @@ h2 {
   @apply mt-4 grid grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1;
 }
 .period-picker button {
-  @apply min-h-10 rounded-lg text-xs font-semibold text-slate-500 transition hover:text-indigo-700;
+  @apply min-h-10 rounded-lg text-xs font-semibold text-slate-600 transition hover:text-indigo-700;
 }
 .period-picker button.active {
   @apply bg-white text-indigo-700 shadow-sm;

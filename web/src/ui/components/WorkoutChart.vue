@@ -95,7 +95,12 @@ const data = computed(() => {
 
 <template>
   <div class="chart-frame">
-    <BarChart :data="data" :options="options as any" />
+    <BarChart
+      :data="data"
+      :options="options as any"
+      aria-label="Training volume by day"
+      role="img"
+    />
   </div>
 </template>
 

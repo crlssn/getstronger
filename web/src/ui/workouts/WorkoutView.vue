@@ -333,7 +333,7 @@ h2 {
   @apply border border-dashed border-slate-300 bg-white;
 }
 .history-end {
-  @apply text-slate-400;
+  @apply text-slate-600;
 }
 .history-end svg {
   @apply size-4 text-emerald-600;

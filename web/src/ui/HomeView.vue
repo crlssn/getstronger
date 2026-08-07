@@ -398,7 +398,7 @@ h2 {
   @apply min-h-10 shrink-0 rounded-xl px-3 font-semibold hover:bg-red-100;
 }
 .feed-end {
-  @apply flex items-center justify-center gap-3 py-5 text-slate-500;
+  @apply flex items-center justify-center gap-3 py-5 text-slate-600;
 }
 .feed-end > span {
   @apply grid size-9 place-items-center rounded-full bg-emerald-50 text-emerald-700;

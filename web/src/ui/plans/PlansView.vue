@@ -81,10 +81,24 @@ const pause = async () => {
     </header>
 
     <div class="tabs" role="tablist" aria-label="Plans view">
-      <button type="button" :class="{ active: tab === 'plans' }" @click="tab = 'plans'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="tab === 'plans'"
+        :tabindex="tab === 'plans' ? 0 : -1"
+        :class="{ active: tab === 'plans' }"
+        @click="tab = 'plans'"
+      >
         Plans
       </button>
-      <button type="button" :class="{ active: tab === 'routines' }" @click="tab = 'routines'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="tab === 'routines'"
+        :tabindex="tab === 'routines' ? 0 : -1"
+        :class="{ active: tab === 'routines' }"
+        @click="tab = 'routines'"
+      >
         Routines
       </button>
     </div>
