@@ -67,7 +67,11 @@ export const expectAccessible = async (page: Page) => {
     results.violations.map(({ help, id, nodes }) => ({
       help,
       id,
-      targets: nodes.map((node) => node.target.join(' ')),
+      nodes: nodes.map((node) => ({
+        failureSummary: node.failureSummary,
+        html: node.html,
+        target: node.target.join(' '),
+      })),
     })),
     'The page should have no WCAG A/AA accessibility violations',
   ).toEqual([])
