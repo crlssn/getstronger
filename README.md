@@ -129,3 +129,28 @@ mise installs the project's pinned Go, Node.js, Terraform, and development tool 
    ```
 
 11. Access the web app at [http://localhost:5173](http://localhost:5173). You can now login with email `john@doe.com` and password `123` if you seeded the database.
+
+## End-to-end tests
+
+The browser suite covers authentication, primary navigation, exercise management, quick workouts, and public profiles. It uses the local seeded John and Jane Doe accounts and resets the database before every suite run.
+
+Install the Playwright browser once:
+
+```bash
+mise run install:e2e
+```
+
+With the local PostgreSQL container running and migrations applied, run the suite:
+
+```bash
+mise run test:e2e
+```
+
+For interactive debugging, use either the visible browser or Playwright UI:
+
+```bash
+mise run test:e2e:headed
+mise run test:e2e:ui
+```
+
+Playwright starts the backend and web app automatically when they are not already running. Failed tests retain their screenshot and trace under `web/test-results/`; the HTML report is written to `web/playwright-report/`.

@@ -88,6 +88,10 @@ func (s *Server) listenAndServe() error {
 
 func NewMultiplexer(f []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.WriteHeader(http.StatusNoContent)
+	})
 	for _, h := range f {
 		path, handler := h(o...)
 		mux.Handle(path, m.Register(handler))
