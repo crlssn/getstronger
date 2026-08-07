@@ -26,7 +26,7 @@ export const useNotificationStore = defineStore('notifications', () => {
           }
         }
 
-        console.error('Stream disconnected, retrying...', error)
+        console.warn('Stream disconnected, retrying...', error)
       }
 
       // Wait before retrying.
