@@ -82,7 +82,7 @@ const data = computed(() => {
   return {
     datasets: [
       {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#25282d',
         borderRadius: 8,
         data: dailyVolume.value.map((day) => day.volume),
         label: 'Training volume',

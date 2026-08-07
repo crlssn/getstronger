@@ -328,7 +328,7 @@ h2 {
   @apply rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white;
 }
 .next-label-row .ready-status {
-  @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-200/40 bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-50;
+  @apply inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white;
 }
 .ready-status svg {
   @apply size-3.5;

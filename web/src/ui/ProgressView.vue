@@ -124,7 +124,7 @@ h2 {
   @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
 }
 .record-count {
-  @apply inline-flex w-max items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700;
+  @apply inline-flex w-max items-center gap-2 rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700;
 }
 .record-count svg {
   @apply size-5;
@@ -161,7 +161,7 @@ h2 {
   @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-indigo-700;
 }
 .record-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-indigo-50 text-indigo-600;
+  @apply grid size-11 place-items-center rounded-xl bg-amber-50 text-amber-600;
 }
 .record-icon svg,
 .chevron {

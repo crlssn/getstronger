@@ -84,14 +84,14 @@ const change = computed(() => {
 const data = computed(() => ({
   datasets: [
     {
-      backgroundColor: 'rgba(79, 70, 229, 0.10)',
-      borderColor: '#4f46e5',
+      backgroundColor: 'rgba(37, 40, 45, 0.10)',
+      borderColor: '#25282d',
       borderWidth: 3,
       data: values.value,
       fill: true,
       label: metricDetails[metric.value].heading,
       pointBackgroundColor: '#ffffff',
-      pointBorderColor: '#4f46e5',
+      pointBorderColor: '#25282d',
       pointBorderWidth: 2,
       pointRadius: 4,
       tension: 0.35,
