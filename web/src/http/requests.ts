@@ -328,11 +328,9 @@ export const updatePlan = async (
   routineIds: string[],
 ): Promise<UpdatePlanResponse | void> => {
   const req = create(UpdatePlanRequestSchema, {
-    plan: {
-      id,
-      name,
-      routines: routineIds.map((routineId) => ({ id: routineId })),
-    },
+    id,
+    name,
+    routineIds,
   })
   return tryCatch(() => routineClient.updatePlan(req))
 }

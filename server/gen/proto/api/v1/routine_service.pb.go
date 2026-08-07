@@ -7,12 +7,13 @@
 package apiv1
 
 import (
-	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -1204,7 +1205,9 @@ func (x *ListPlansResponse) GetPlans() []*Plan {
 
 type UpdatePlanRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	RoutineIds    []string               `protobuf:"bytes,3,rep,name=routine_ids,json=routineIds,proto3" json:"routine_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1239,9 +1242,23 @@ func (*UpdatePlanRequest) Descriptor() ([]byte, []int) {
 	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *UpdatePlanRequest) GetPlan() *Plan {
+func (x *UpdatePlanRequest) GetId() string {
 	if x != nil {
-		return x.Plan
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdatePlanRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdatePlanRequest) GetRoutineIds() []string {
+	if x != nil {
+		return x.RoutineIds
 	}
 	return nil
 }
@@ -1769,9 +1786,12 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"\x12\n" +
 	"\x10ListPlansRequest\"7\n" +
 	"\x11ListPlansResponse\x12\"\n" +
-	"\x05plans\x18\x01 \x03(\v2\f.api.v1.PlanR\x05plans\"=\n" +
-	"\x11UpdatePlanRequest\x12(\n" +
-	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanB\x06\xbaH\x03\xc8\x01\x01R\x04plan\"6\n" +
+	"\x05plans\x18\x01 \x03(\v2\f.api.v1.PlanR\x05plans\"~\n" +
+	"\x11UpdatePlanRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
+	"\vroutine_ids\x18\x03 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
+	"routineIds\"6\n" +
 	"\x12UpdatePlanResponse\x12 \n" +
 	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"-\n" +
 	"\x11DeletePlanRequest\x12\x18\n" +
@@ -1891,50 +1911,49 @@ var file_api_v1_routine_service_proto_depIdxs = []int32{
 	35, // 12: api.v1.CreatePlanResponse.plan:type_name -> api.v1.Plan
 	35, // 13: api.v1.GetPlanResponse.plan:type_name -> api.v1.Plan
 	35, // 14: api.v1.ListPlansResponse.plans:type_name -> api.v1.Plan
-	35, // 15: api.v1.UpdatePlanRequest.plan:type_name -> api.v1.Plan
-	35, // 16: api.v1.UpdatePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 17: api.v1.SetActivePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 18: api.v1.SkipPlanRoutineResponse.plan:type_name -> api.v1.Plan
-	18, // 19: api.v1.Plan.routines:type_name -> api.v1.Routine
-	0,  // 20: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
-	2,  // 21: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
-	4,  // 22: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
-	6,  // 23: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
-	8,  // 24: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
-	10, // 25: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
-	12, // 26: api.v1.RoutineService.RemoveExercise:input_type -> api.v1.RemoveExerciseRequest
-	14, // 27: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
-	16, // 28: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
-	19, // 29: api.v1.RoutineService.CreatePlan:input_type -> api.v1.CreatePlanRequest
-	21, // 30: api.v1.RoutineService.GetPlan:input_type -> api.v1.GetPlanRequest
-	23, // 31: api.v1.RoutineService.ListPlans:input_type -> api.v1.ListPlansRequest
-	25, // 32: api.v1.RoutineService.UpdatePlan:input_type -> api.v1.UpdatePlanRequest
-	27, // 33: api.v1.RoutineService.DeletePlan:input_type -> api.v1.DeletePlanRequest
-	29, // 34: api.v1.RoutineService.SetActivePlan:input_type -> api.v1.SetActivePlanRequest
-	31, // 35: api.v1.RoutineService.PauseActivePlan:input_type -> api.v1.PauseActivePlanRequest
-	33, // 36: api.v1.RoutineService.SkipPlanRoutine:input_type -> api.v1.SkipPlanRoutineRequest
-	1,  // 37: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
-	3,  // 38: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
-	5,  // 39: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
-	7,  // 40: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
-	9,  // 41: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
-	11, // 42: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
-	13, // 43: api.v1.RoutineService.RemoveExercise:output_type -> api.v1.RemoveExerciseResponse
-	15, // 44: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
-	17, // 45: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
-	20, // 46: api.v1.RoutineService.CreatePlan:output_type -> api.v1.CreatePlanResponse
-	22, // 47: api.v1.RoutineService.GetPlan:output_type -> api.v1.GetPlanResponse
-	24, // 48: api.v1.RoutineService.ListPlans:output_type -> api.v1.ListPlansResponse
-	26, // 49: api.v1.RoutineService.UpdatePlan:output_type -> api.v1.UpdatePlanResponse
-	28, // 50: api.v1.RoutineService.DeletePlan:output_type -> api.v1.DeletePlanResponse
-	30, // 51: api.v1.RoutineService.SetActivePlan:output_type -> api.v1.SetActivePlanResponse
-	32, // 52: api.v1.RoutineService.PauseActivePlan:output_type -> api.v1.PauseActivePlanResponse
-	34, // 53: api.v1.RoutineService.SkipPlanRoutine:output_type -> api.v1.SkipPlanRoutineResponse
-	37, // [37:54] is the sub-list for method output_type
-	20, // [20:37] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	35, // 15: api.v1.UpdatePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 16: api.v1.SetActivePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 17: api.v1.SkipPlanRoutineResponse.plan:type_name -> api.v1.Plan
+	18, // 18: api.v1.Plan.routines:type_name -> api.v1.Routine
+	0,  // 19: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
+	2,  // 20: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
+	4,  // 21: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
+	6,  // 22: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
+	8,  // 23: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
+	10, // 24: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
+	12, // 25: api.v1.RoutineService.RemoveExercise:input_type -> api.v1.RemoveExerciseRequest
+	14, // 26: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
+	16, // 27: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
+	19, // 28: api.v1.RoutineService.CreatePlan:input_type -> api.v1.CreatePlanRequest
+	21, // 29: api.v1.RoutineService.GetPlan:input_type -> api.v1.GetPlanRequest
+	23, // 30: api.v1.RoutineService.ListPlans:input_type -> api.v1.ListPlansRequest
+	25, // 31: api.v1.RoutineService.UpdatePlan:input_type -> api.v1.UpdatePlanRequest
+	27, // 32: api.v1.RoutineService.DeletePlan:input_type -> api.v1.DeletePlanRequest
+	29, // 33: api.v1.RoutineService.SetActivePlan:input_type -> api.v1.SetActivePlanRequest
+	31, // 34: api.v1.RoutineService.PauseActivePlan:input_type -> api.v1.PauseActivePlanRequest
+	33, // 35: api.v1.RoutineService.SkipPlanRoutine:input_type -> api.v1.SkipPlanRoutineRequest
+	1,  // 36: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
+	3,  // 37: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
+	5,  // 38: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
+	7,  // 39: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
+	9,  // 40: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
+	11, // 41: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
+	13, // 42: api.v1.RoutineService.RemoveExercise:output_type -> api.v1.RemoveExerciseResponse
+	15, // 43: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
+	17, // 44: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
+	20, // 45: api.v1.RoutineService.CreatePlan:output_type -> api.v1.CreatePlanResponse
+	22, // 46: api.v1.RoutineService.GetPlan:output_type -> api.v1.GetPlanResponse
+	24, // 47: api.v1.RoutineService.ListPlans:output_type -> api.v1.ListPlansResponse
+	26, // 48: api.v1.RoutineService.UpdatePlan:output_type -> api.v1.UpdatePlanResponse
+	28, // 49: api.v1.RoutineService.DeletePlan:output_type -> api.v1.DeletePlanResponse
+	30, // 50: api.v1.RoutineService.SetActivePlan:output_type -> api.v1.SetActivePlanResponse
+	32, // 51: api.v1.RoutineService.PauseActivePlan:output_type -> api.v1.PauseActivePlanResponse
+	34, // 52: api.v1.RoutineService.SkipPlanRoutine:output_type -> api.v1.SkipPlanRoutineResponse
+	36, // [36:53] is the sub-list for method output_type
+	19, // [19:36] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_routine_service_proto_init() }

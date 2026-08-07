@@ -56,7 +56,8 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 		With(xzap.FiledRoutineID(req.Msg.GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx,
+	routine, err := h.repo.GetRoutine(
+		ctx,
 		repo.GetRoutineWithID(req.Msg.GetId()),
 		repo.GetRoutineWithUserID(userID),
 		repo.GetRoutineWithExercises(),
@@ -88,7 +89,8 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx,
+	routine, err := h.repo.GetRoutine(
+		ctx,
 		repo.GetRoutineWithID(req.Msg.GetRoutine().GetId()),
 		repo.GetRoutineWithUserID(userID),
 	)
@@ -107,7 +109,8 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		exerciseIDs = append(exerciseIDs, exercise.GetId())
 	}
 
-	exercises, err := h.repo.ListExercises(ctx,
+	exercises, err := h.repo.ListExercises(
+		ctx,
 		repo.ListExercisesWithIDs(exerciseIDs),
 		repo.ListExercisesWithUserID(userID),
 	)
@@ -122,7 +125,8 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 	}
 
 	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
-		if err = tx.UpdateRoutine(ctx, routine.ID,
+		if err = tx.UpdateRoutine(
+			ctx, routine.ID,
 			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
 			repo.UpdateRoutineExerciseOrder(exerciseIDs),
 		); err != nil {
@@ -139,7 +143,8 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	routine, err = h.repo.GetRoutine(ctx,
+	routine, err = h.repo.GetRoutine(
+		ctx,
 		repo.GetRoutineWithID(req.Msg.GetRoutine().GetId()),
 		repo.GetRoutineWithExercises(),
 	)
@@ -188,7 +193,8 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	routines, err := h.repo.ListRoutines(ctx,
+	routines, err := h.repo.ListRoutines(
+		ctx,
 		repo.ListRoutinesLoadExercises(),
 		repo.ListRoutinesWithName(req.Msg.GetName()),
 		repo.ListRoutinesWithLimit(limit+1),
@@ -221,7 +227,8 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routines, err := h.repo.ListRoutines(ctx,
+	routines, err := h.repo.ListRoutines(
+		ctx,
 		repo.ListRoutinesLoadExercises(),
 		repo.ListRoutinesWithLimit(50),
 		repo.ListRoutinesWithUserID(userID),
@@ -256,7 +263,8 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		}
 	}
 
-	workouts, err := h.repo.ListWorkouts(ctx,
+	workouts, err := h.repo.ListWorkouts(
+		ctx,
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadExercises(),
@@ -369,15 +377,11 @@ func (h *routineHandler) UpdatePlan(ctx context.Context, req *connect.Request[ap
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routineIDs := make([]string, 0, len(req.Msg.GetPlan().GetRoutines()))
-	for _, routine := range req.Msg.GetPlan().GetRoutines() {
-		routineIDs = append(routineIDs, routine.GetId())
-	}
 	plan, err := h.repo.UpdatePlan(ctx, repo.UpdatePlanParams{
-		ID:         req.Msg.GetPlan().GetId(),
+		ID:         req.Msg.GetId(),
 		UserID:     userID,
-		Name:       req.Msg.GetPlan().GetName(),
-		RoutineIDs: routineIDs,
+		Name:       req.Msg.GetName(),
+		RoutineIDs: req.Msg.GetRoutineIds(),
 	})
 	if err != nil {
 		log.Error("update plan failed", zap.Error(err))
@@ -507,7 +511,8 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[a
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx,
+	routine, err := h.repo.GetRoutine(
+		ctx,
 		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
 		repo.GetRoutineWithUserID(userID),
 	)
@@ -521,7 +526,8 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exercise, err := h.repo.GetExercise(ctx,
+	exercise, err := h.repo.GetExercise(
+		ctx,
 		repo.GetExerciseWithID(req.Msg.GetExerciseId()),
 		repo.GetExerciseWithUserID(userID),
 	)
@@ -548,7 +554,8 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx,
+	routine, err := h.repo.GetRoutine(
+		ctx,
 		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
 		repo.GetRoutineWithUserID(userID),
 	)
@@ -562,7 +569,8 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exercise, err := h.repo.GetExercise(ctx,
+	exercise, err := h.repo.GetExercise(
+		ctx,
 		repo.GetExerciseWithID(req.Msg.GetExerciseId()),
 		repo.GetExerciseWithUserID(userID),
 	)
@@ -589,7 +597,8 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routine, err := h.repo.GetRoutine(ctx,
+	routine, err := h.repo.GetRoutine(
+		ctx,
 		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
 		repo.GetRoutineWithExercises(),
 	)

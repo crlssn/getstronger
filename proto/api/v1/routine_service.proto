@@ -157,7 +157,9 @@ message ListPlansResponse {
 }
 
 message UpdatePlanRequest {
-  Plan plan = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  repeated string routine_ids = 3 [(buf.validate.field).repeated = {min_items: 1, unique: true, items: {string: {uuid: true}}}];
 }
 message UpdatePlanResponse {
   Plan plan = 1;
