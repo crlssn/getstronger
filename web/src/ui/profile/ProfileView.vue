@@ -5,7 +5,6 @@ import {
   BellIcon,
   ChartBarIcon,
   ChevronRightIcon,
-  TrophyIcon,
   UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 
@@ -70,11 +69,6 @@ const weeklyVolume = computed(() =>
       <RouterLink to="/notifications"
         ><span class="settings-icon"><BellIcon /></span
         ><span><strong>Notifications</strong><small>Comments and new followers</small></span
-        ><ChevronRightIcon
-      /></RouterLink>
-      <RouterLink :to="`/users/${user.id}/personal-bests`"
-        ><span class="settings-icon"><TrophyIcon /></span
-        ><span><strong>Record history</strong><small>Explore every best set</small></span
         ><ChevronRightIcon
       /></RouterLink>
       <RouterLink :to="`/users/${user.id}`"
