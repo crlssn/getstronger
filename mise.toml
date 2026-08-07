@@ -149,11 +149,19 @@ run = "go test ./..."
 [tasks."test:e2e"]
 alias = "test_e2e"
 description = "Reset seeded data and run browser end-to-end tests"
-run = [{ task = "db:seed" }, "cd web && npm run test:e2e"]
+run = [
+    { task = "db:seed" },
+    "cd web && npm run test:e2e",
+    'echo "Open the report with: mise run test:e2e:report"',
+]
 
 [tasks."test:e2e:headed"]
 description = "Reset seeded data and run visible browser end-to-end tests"
 run = [{ task = "db:seed" }, "cd web && npm run test:e2e:headed"]
+
+[tasks."test:e2e:report"]
+description = "Open the latest browser end-to-end test report"
+run = "cd web && npm run test:e2e:report"
 
 [tasks."test:e2e:ui"]
 description = "Reset seeded data and open the Playwright test UI"

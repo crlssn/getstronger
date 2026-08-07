@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
     "test:e2e:ui": "playwright test --ui",
     "test:unit": "vitest",
     "type-check": "vue-tsc --build --force"

@@ -153,4 +153,10 @@ mise run test:e2e:headed
 mise run test:e2e:ui
 ```
 
-Playwright starts the backend and web app automatically when they are not already running. Failed tests retain their screenshot and trace under `web/test-results/`; the HTML report is written to `web/playwright-report/`.
+Open the most recent HTML report from the repository root with:
+
+```bash
+mise run test:e2e:report
+```
+
+Playwright starts isolated HTTP instances of the backend and web app on ports `18080` and `15173`, so it does not depend on or conflict with the normal local TLS services. Failed tests retain their screenshot and trace under `web/test-results/`; the HTML report is written to `web/playwright-report/`.

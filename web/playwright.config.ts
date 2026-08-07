@@ -3,12 +3,10 @@ import { fileURLToPath } from 'node:url'
 
 const webRoot = fileURLToPath(new URL('.', import.meta.url))
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url))
-const localBaseURL = 'http://localhost:5173'
+const localBaseURL = 'http://localhost:15173'
+const localBackendURL = 'http://localhost:18080'
 const baseURL = process.env.E2E_BASE_URL ?? localBaseURL
 const remoteTarget = process.env.E2E_BASE_URL !== undefined
-const backendHealthURL = process.env.CI
-  ? 'http://localhost:8080/healthz'
-  : 'https://localhost:8080/healthz'
 
 export default defineConfig({
   expect: { timeout: 10_000 },
@@ -24,7 +22,6 @@ export default defineConfig({
   use: {
     ...devices['Desktop Chrome'],
     baseURL,
-    ignoreHTTPSErrors: !remoteTarget,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     viewport: { height: 844, width: 390 },
@@ -35,14 +32,21 @@ export default defineConfig({
         {
           command: process.env.CI ? 'go run ./server/cmd/main.go' : 'mise run app:backend',
           cwd: repositoryRoot,
-          ignoreHTTPSErrors: !process.env.CI,
+          env: {
+            CORS_ALLOWED_ORIGIN: localBaseURL,
+            SERVER_CERT_PATH: '',
+            SERVER_KEY_PATH: '',
+            SERVER_PORT: '18080',
+            SSE_PORT: '18081',
+          },
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
-          url: backendHealthURL,
+          url: `${localBackendURL}/healthz`,
         },
         {
-          command: 'npm run dev -- --host localhost',
+          command: 'npm run dev -- --host localhost --port 15173',
           cwd: webRoot,
+          env: { VITE_API_URL: localBackendURL },
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
           url: localBaseURL,
