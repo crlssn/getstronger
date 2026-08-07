@@ -116,7 +116,7 @@ const skip = async () => {
     </header>
     <RouterLink v-if="savedWorkout" :to="savedHref" class="resume-card"
       ><span
-        ><strong>Resume workout</strong><small>Your progress is saved on this device</small></span
+        ><strong>Resume workout</strong><small><CheckIcon /> Saved on this device</small></span
       ><ChevronRightIcon
     /></RouterLink>
     <section v-if="nextRoutine" class="next-card">
@@ -215,7 +215,7 @@ h2 {
   @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
 }
 .resume-card {
-  @apply border-emerald-200 bg-emerald-50;
+  @apply border-slate-200 bg-white;
 }
 .resume-card span,
 .quick-card > span:nth-child(2) {
@@ -230,6 +230,12 @@ h2 {
 .resume-card small,
 .quick-card small {
   @apply mt-1 text-xs text-slate-500;
+}
+.resume-card small {
+  @apply flex items-center gap-1.5;
+}
+.resume-card small svg {
+  @apply size-4 text-emerald-600;
 }
 .resume-card > svg,
 .quick-card > svg {
