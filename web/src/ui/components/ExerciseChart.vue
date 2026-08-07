@@ -72,6 +72,7 @@ const dailyMetrics = computed(() => {
 
 const values = computed(() => dailyMetrics.value.map((day) => day[metric.value]))
 const latestValue = computed(() => values.value[values.value.length - 1] ?? 0)
+const hasTrend = computed(() => dailyMetrics.value.length > 1)
 const change = computed(() => {
   const first = values.value[0]
   const last = values.value[values.value.length - 1]
@@ -149,8 +150,19 @@ const options = computed(() => ({
       </button>
     </div>
 
-    <div class="chart-frame">
+    <div v-if="hasTrend" class="chart-frame">
       <LineChart :data="data" :options="options as any" />
+    </div>
+    <div v-else class="first-result" role="status">
+      <span aria-hidden="true"></span>
+      <strong>{{ dailyMetrics.length ? 'First result logged' : 'No results yet' }}</strong>
+      <p>
+        {{
+          dailyMetrics.length
+            ? 'Log this exercise on another day to start seeing your trend.'
+            : 'Your progress will appear after you log this exercise.'
+        }}
+      </p>
     </div>
   </div>
 </template>
@@ -185,5 +197,18 @@ const options = computed(() => ({
 }
 .chart-frame {
   @apply h-64;
+}
+.first-result {
+  @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center;
+}
+.first-result > span {
+  @apply mb-2 size-4 rounded-full border-4 border-indigo-600 bg-white;
+  box-shadow: 0 0 0 8px theme('colors.indigo.100');
+}
+.first-result strong {
+  @apply text-base font-semibold text-slate-950;
+}
+.first-result p {
+  @apply max-w-sm text-sm leading-6 text-slate-500;
 }
 </style>
