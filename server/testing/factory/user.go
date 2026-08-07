@@ -11,7 +11,7 @@ import (
 )
 
 func (f *Factory) NewUserSlice(count int, opts ...UserOpt) orm.UserSlice {
-	var slice orm.UserSlice
+	slice := make(orm.UserSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewUser(opts...))
 	}

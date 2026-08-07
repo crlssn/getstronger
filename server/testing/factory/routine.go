@@ -14,7 +14,7 @@ import (
 )
 
 func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) orm.RoutineSlice {
-	var slice orm.RoutineSlice
+	slice := make(orm.RoutineSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewRoutine(opts...))
 	}

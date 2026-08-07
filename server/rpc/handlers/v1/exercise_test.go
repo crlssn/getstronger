@@ -511,7 +511,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					factory.ExerciseCreatedAt(s.factory.Now()),
 				)
 
-				var exercises orm.ExerciseSlice
+				exercises := make(orm.ExerciseSlice, 0, len(t.expected.res.GetExercises()))
 				for _, exercise := range t.expected.res.GetExercises() {
 					exercises = append(exercises, s.factory.NewExercise(
 						factory.ExerciseID(exercise.GetId()),
@@ -1077,7 +1077,7 @@ func (s *exerciseSuite) TestListSets() {
 				_, err := orm.Sets().DeleteAll(context.Background(), s.container.DB)
 				s.Require().NoError(err)
 
-				var sets orm.SetSlice
+				sets := make(orm.SetSlice, 0, len(t.expected.res.GetSets()))
 				for _, set := range t.expected.res.GetSets() {
 					workout := s.factory.NewWorkout(
 						factory.WorkoutID(set.GetMetadata().GetWorkoutId()),

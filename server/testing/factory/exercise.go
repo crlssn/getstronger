@@ -14,7 +14,7 @@ import (
 )
 
 func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) orm.ExerciseSlice {
-	var slice orm.ExerciseSlice
+	slice := make(orm.ExerciseSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewExercise(opts...))
 	}

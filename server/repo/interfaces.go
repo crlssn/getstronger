@@ -31,7 +31,7 @@ type methods interface {
 	notificationMethods
 }
 
-type planMethods interface {
+type planMethods interface { //nolint:interfacebloat // Plan operations form one cohesive transactional capability.
 	validatePlanRoutines(ctx context.Context, userID string, routineIDs []string) error
 	replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error
 	CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error)

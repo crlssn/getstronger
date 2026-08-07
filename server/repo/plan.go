@@ -40,6 +40,7 @@ var (
 	ErrPlanRoutineBelongsToAnotherUser = errors.New("plan routine does not belong to user")
 	ErrPlanRoutineDeleted              = errors.New("plan routine is deleted")
 	ErrPlanRoutineDuplicate            = errors.New("plan routine is duplicated")
+	ErrPlanRequiresRoutine             = errors.New("plan requires at least one routine")
 	ErrPlanNotActive                   = errors.New("plan is not active")
 	ErrPlanUnexpectedRoutine           = errors.New("workout routine is not next in plan")
 )
@@ -85,7 +86,7 @@ VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 
 func (r *repo) CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error) {
 	if len(p.RoutineIDs) == 0 {
-		return nil, fmt.Errorf("plan requires at least one routine")
+		return nil, ErrPlanRequiresRoutine
 	}
 
 	var planID string
@@ -109,7 +110,7 @@ VALUES ($1, $2, $3)`, planID, p.UserID, p.Name); err != nil {
 	return r.GetPlan(ctx, planID, p.UserID)
 }
 
-func (r *repo) scanPlan(ctx context.Context, row interface{ Scan(...any) error }) (*TrainingPlan, error) {
+func (r *repo) scanPlan(ctx context.Context, row interface{ Scan(dest ...any) error }) (*TrainingPlan, error) {
 	plan, err := scanPlanBase(row)
 	if err != nil {
 		return nil, err
@@ -121,7 +122,7 @@ func (r *repo) scanPlan(ctx context.Context, row interface{ Scan(...any) error }
 	return plan, nil
 }
 
-func scanPlanBase(row interface{ Scan(...any) error }) (*TrainingPlan, error) {
+func scanPlanBase(row interface{ Scan(dest ...any) error }) (*TrainingPlan, error) {
 	plan := &TrainingPlan{}
 	if err := row.Scan(
 		&plan.ID,
@@ -146,17 +147,17 @@ ORDER BY position`, plan.ID)
 	if err != nil {
 		return fmt.Errorf("plan routines query: %w", err)
 	}
+	defer routineRows.Close()
+
 	var routineIDs []string
 	for routineRows.Next() {
 		var routineID string
 		if err = routineRows.Scan(&routineID); err != nil {
-			routineRows.Close()
 			return fmt.Errorf("plan routine scan: %w", err)
 		}
 		routineIDs = append(routineIDs, routineID)
 	}
 	if err = routineRows.Err(); err != nil {
-		routineRows.Close()
 		return fmt.Errorf("plan routines iterate: %w", err)
 	}
 	if err = routineRows.Close(); err != nil {
@@ -198,17 +199,17 @@ func (r *repo) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, e
 	if err != nil {
 		return nil, fmt.Errorf("plans query: %w", err)
 	}
+	defer rows.Close()
+
 	var plans []*TrainingPlan
 	for rows.Next() {
 		plan, scanErr := scanPlanBase(rows)
 		if scanErr != nil {
-			rows.Close()
 			return nil, scanErr
 		}
 		plans = append(plans, plan)
 	}
 	if err = rows.Err(); err != nil {
-		rows.Close()
 		return nil, fmt.Errorf("plans iterate: %w", err)
 	}
 	if err = rows.Close(); err != nil {
@@ -226,13 +227,13 @@ func (r *repo) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, e
 
 func (r *repo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error) {
 	if len(p.RoutineIDs) == 0 {
-		return nil, fmt.Errorf("plan requires at least one routine")
+		return nil, ErrPlanRequiresRoutine
 	}
 
 	if err := r.NewTx(ctx, func(tx Tx) error {
 		plan, err := tx.GetPlan(ctx, p.ID, p.UserID)
 		if err != nil {
-			return err
+			return fmt.Errorf("plan get before update: %w", err)
 		}
 		if err = tx.validatePlanRoutines(ctx, p.UserID, p.RoutineIDs); err != nil {
 			return err
@@ -284,7 +285,7 @@ func (r *repo) DeletePlan(ctx context.Context, planID, userID string) error {
 func (r *repo) SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
 	if err := r.NewTx(ctx, func(tx Tx) error {
 		if _, err := tx.GetPlan(ctx, planID, userID); err != nil {
-			return err
+			return fmt.Errorf("plan get before activation: %w", err)
 		}
 		if _, err := tx.exec().ExecContext(ctx,
 			`UPDATE getstronger.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
@@ -301,6 +302,7 @@ func (r *repo) SetActivePlan(ctx context.Context, planID, userID string) (*Train
 
 	return r.GetPlan(ctx, planID, userID)
 }
+
 func (r *repo) PauseActivePlan(ctx context.Context, userID string) error {
 	if _, err := r.executor().ExecContext(ctx,
 		`UPDATE getstronger.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
@@ -313,7 +315,7 @@ func (r *repo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineI
 	if err := r.NewTx(ctx, func(tx Tx) error {
 		plan, err := tx.GetPlan(ctx, planID, userID)
 		if err != nil {
-			return err
+			return fmt.Errorf("plan get before advance: %w", err)
 		}
 		if !plan.Active {
 			return ErrPlanNotActive

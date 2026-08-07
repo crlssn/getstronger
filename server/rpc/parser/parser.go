@@ -87,7 +87,7 @@ func Plan(plan *repo.TrainingPlan) *apiv1.Plan {
 		Id:              plan.ID,
 		Name:            plan.Name,
 		Routines:        RoutineSlice(plan.Routines),
-		CurrentPosition: int32(plan.CurrentPosition),
+		CurrentPosition: safe.Int32FromInt(plan.CurrentPosition),
 		Active:          plan.Active,
 	}
 }

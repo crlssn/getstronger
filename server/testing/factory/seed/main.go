@@ -121,7 +121,7 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, john *orm.User, password 
 	)
 
 	if err := john.AddFolloweeUsers(context.Background(), database, false, jane); err != nil {
-		panic(fmt.Errorf("John Doe follow Jane Doe: %w", err))
+		panic(fmt.Errorf("follow operation from John Doe to Jane Doe: %w", err))
 	}
 
 	squat := f.NewExercise(

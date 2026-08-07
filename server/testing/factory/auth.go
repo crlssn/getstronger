@@ -14,7 +14,7 @@ import (
 )
 
 func (f *Factory) NewAuthSlice(count int, opts ...AuthOpt) orm.AuthSlice {
-	var slice orm.AuthSlice
+	slice := make(orm.AuthSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewAuth(opts...))
 	}

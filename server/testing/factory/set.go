@@ -13,7 +13,7 @@ import (
 )
 
 func (f *Factory) NewSetSlice(count int, opts ...SetOpt) orm.SetSlice {
-	var slice orm.SetSlice
+	slice := make(orm.SetSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewSet(opts...))
 	}

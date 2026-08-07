@@ -23,6 +23,13 @@ import (
 
 var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
 
+const (
+	dashboardListLimit  = 50
+	recentWorkoutLimit  = 3
+	daysPerWeek         = 7
+	mondayWeekdayOffset = 6
+)
+
 type routineHandler struct {
 	repo repo.Repo
 }
@@ -230,7 +237,7 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 	routines, err := h.repo.ListRoutines(
 		ctx,
 		repo.ListRoutinesLoadExercises(),
-		repo.ListRoutinesWithLimit(50),
+		repo.ListRoutinesWithLimit(dashboardListLimit),
 		repo.ListRoutinesWithUserID(userID),
 		repo.ListRoutinesWithPageToken(nil),
 	)
@@ -245,30 +252,14 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var nextRoutine *orm.Routine
-	if activePlan != nil && activePlan.CurrentPosition < len(activePlan.Routines) {
-		nextRoutine = activePlan.Routines[activePlan.CurrentPosition]
-	} else {
-		preferredRoutineID := req.Msg.GetPreferredRoutineId()
-		if preferredRoutineID != "" {
-			index := slices.IndexFunc(routines, func(routine *orm.Routine) bool {
-				return routine.ID == preferredRoutineID
-			})
-			if index >= 0 {
-				nextRoutine = routines[index]
-			}
-		}
-		if nextRoutine == nil && len(routines) > 0 {
-			nextRoutine = routines[0]
-		}
-	}
+	nextRoutine := dashboardNextRoutine(activePlan, routines, req.Msg.GetPreferredRoutineId())
 
 	workouts, err := h.repo.ListWorkouts(
 		ctx,
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadExercises(),
-		repo.ListWorkoutsWithLimit(50),
+		repo.ListWorkoutsWithLimit(dashboardListLimit),
 		repo.ListWorkoutsWithUserIDs(userID),
 		repo.ListWorkoutsWithPageToken(nil),
 	)
@@ -283,22 +274,11 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	weekStart := startOfWeek(time.Now().UTC())
-	var workoutsThisWeek int32
-	var volumeThisWeek float64
-	for _, workout := range workouts {
-		if workout.FinishedAt.Before(weekStart) {
-			continue
-		}
-		workoutsThisWeek++
-		for _, set := range workout.R.GetSets() {
-			volumeThisWeek += set.Weight * float64(set.Reps)
-		}
-	}
+	workoutsThisWeek, volumeThisWeek := summarizeDashboardWeek(workouts, startOfWeek(time.Now().UTC()))
 
 	recentWorkouts := workouts
-	if len(recentWorkouts) > 3 {
-		recentWorkouts = recentWorkouts[:3]
+	if len(recentWorkouts) > recentWorkoutLimit {
+		recentWorkouts = recentWorkouts[:recentWorkoutLimit]
 	}
 	parsedWorkouts, err := parser.WorkoutSlice(recentWorkouts, personalBests)
 	if err != nil {
@@ -462,9 +442,46 @@ func (h *routineHandler) SkipPlanRoutine(ctx context.Context, req *connect.Reque
 }
 
 func startOfWeek(value time.Time) time.Time {
-	dayOffset := (int(value.Weekday()) + 6) % 7
+	dayOffset := (int(value.Weekday()) + mondayWeekdayOffset) % daysPerWeek
 	start := value.AddDate(0, 0, -dayOffset)
 	return time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
+}
+
+func dashboardNextRoutine(activePlan *repo.TrainingPlan, routines orm.RoutineSlice, preferredRoutineID string) *orm.Routine {
+	if activePlan != nil && activePlan.CurrentPosition >= 0 && activePlan.CurrentPosition < len(activePlan.Routines) {
+		return activePlan.Routines[activePlan.CurrentPosition]
+	}
+
+	if preferredRoutineID != "" {
+		index := slices.IndexFunc(routines, func(routine *orm.Routine) bool {
+			return routine.ID == preferredRoutineID
+		})
+		if index >= 0 {
+			return routines[index]
+		}
+	}
+
+	if len(routines) > 0 {
+		return routines[0]
+	}
+
+	return nil
+}
+
+func summarizeDashboardWeek(workouts orm.WorkoutSlice, weekStart time.Time) (int32, float64) {
+	var workoutCount int32
+	var volume float64
+	for _, workout := range workouts {
+		if workout.FinishedAt.Before(weekStart) {
+			continue
+		}
+		workoutCount++
+		for _, set := range workout.R.GetSets() {
+			volume += set.Weight * float64(set.Reps)
+		}
+	}
+
+	return workoutCount, volume
 }
 
 // reconcileRoutineExercises treats the relationship table as the source of truth and the

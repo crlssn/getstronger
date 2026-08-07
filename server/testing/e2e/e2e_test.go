@@ -151,7 +151,7 @@ func options() []fx.Option {
 func randomUnusedPort() string {
 	for range 20 {
 		// Find random port in range [1024, 65535).
-		port := rand.Intn(65535-1024) + 1024                         //nolint:gosec
+		port := rand.Intn(65535-1024) + 1024
 		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port)) //nolint:noctx
 		if err == nil {
 			if err = listener.Close(); err != nil {

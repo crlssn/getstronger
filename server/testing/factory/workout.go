@@ -13,7 +13,7 @@ import (
 )
 
 func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) orm.WorkoutSlice {
-	var slice orm.WorkoutSlice
+	slice := make(orm.WorkoutSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewWorkout(opts...))
 	}
@@ -105,7 +105,7 @@ func WorkoutFinishedAt(finishedAt time.Time) WorkoutOpt {
 }
 
 func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) orm.WorkoutCommentSlice {
-	var slice orm.WorkoutCommentSlice
+	slice := make(orm.WorkoutCommentSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewWorkoutComment(opts...))
 	}

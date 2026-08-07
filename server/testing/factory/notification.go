@@ -14,7 +14,7 @@ import (
 )
 
 func (f *Factory) NewNotificationSlice(count int, opts ...NotificationOpt) orm.NotificationSlice {
-	var slice orm.NotificationSlice
+	slice := make(orm.NotificationSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewNotification(opts...))
 	}
