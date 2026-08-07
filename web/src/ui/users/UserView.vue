@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth.ts'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { computed, onMounted, ref, watch } from 'vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
@@ -11,7 +11,6 @@ import AppCard from '@/ui/components/AppCard.vue'
 import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 
 const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
 const pageTitleStore = usePageTitleStore()
 
@@ -25,7 +24,7 @@ const tabs = computed(() => [
   { href: `/users/${user.value.id}/followers`, name: 'Followers' },
 ])
 
-const activeTab = computed(() => route.fullPath)
+const activeTab = computed(() => route.path)
 const pageTitle = computed(() => {
   if (user.value.id === authStore.userId) return 'Me'
   return `${user.value.firstName} ${user.value.lastName}`
@@ -70,25 +69,12 @@ const onUnfollowUser = async () => {
   await fetchUser()
 }
 
-const updateTab = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  router.push(target.value)
-}
-
-const notMe = computed(() => user.value.id !== authStore.userId)
+const notMe = computed(() => Boolean(user.value.id) && user.value.id !== authStore.userId)
 const followed = computed(() => user.value.followed)
 </script>
 
 <template>
-  <!-- We need at least two data points to show a trend -->
-  <div v-if="workouts.length > 1">
-    <h6>Trend</h6>
-    <AppCard class="p-2">
-      <WorkoutChart :workouts="workouts" />
-    </AppCard>
-  </div>
-
-  <div v-if="notMe" class="mb-4">
+  <div v-if="notMe" class="profile-action">
     <AppButton v-if="followed" colour="gray" type="button" @click="onUnfollowUser">
       Unfollow {{ user.firstName }}
     </AppButton>
@@ -97,25 +83,43 @@ const followed = computed(() => user.value.followed)
     </AppButton>
   </div>
 
-  <div class="mb-4">
-    <select
-      id="tabs"
-      name="tabs"
-      class="block w-full border-gray-200 rounded-md py-4 px-4 font-medium"
-      @change="updateTab"
-    >
-      <option
-        v-for="tab in tabs"
-        :key="tab.name"
-        :value="tab.href"
-        :selected="tab.href === activeTab"
-      >
-        {{ tab.name }}
-      </option>
-    </select>
+  <!-- We need at least two data points to show a trend -->
+  <div v-if="workouts.length > 1">
+    <h6>Trend</h6>
+    <AppCard class="p-2">
+      <WorkoutChart :workouts="workouts" />
+    </AppCard>
   </div>
+
+  <nav v-if="user.id" class="profile-tabs" aria-label="Profile sections">
+    <RouterLink
+      v-for="tab in tabs"
+      :key="tab.name"
+      :to="tab.href"
+      :class="{ active: tab.href === activeTab }"
+    >
+      {{ tab.name }}
+    </RouterLink>
+  </nav>
 
   <router-view :page-title="pageTitle" />
 </template>
 
-<style scoped></style>
+<style scoped>
+.profile-action {
+  @apply mb-4;
+}
+.profile-tabs {
+  @apply mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1;
+  scrollbar-width: none;
+}
+.profile-tabs::-webkit-scrollbar {
+  display: none;
+}
+.profile-tabs a {
+  @apply flex min-h-11 shrink-0 items-center justify-center rounded-xl px-4 text-sm font-semibold text-slate-500;
+}
+.profile-tabs a.active {
+  @apply bg-indigo-50 text-indigo-700;
+}
+</style>
