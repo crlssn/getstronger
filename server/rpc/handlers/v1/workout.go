@@ -40,31 +40,73 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
 	}
 
-	routine, err := h.repo.GetRoutine(ctx,
-		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
-		repo.GetRoutineWithUserID(userID),
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("routine not found")
-			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
-		}
+	workoutName := req.Msg.GetWorkoutName()
+	if workoutName == "" {
+		workoutName = "Quick Workout"
+	}
+	if req.Msg.GetRoutineId() != "" {
+		routine, err := h.repo.GetRoutine(ctx,
+			repo.GetRoutineWithID(req.Msg.GetRoutineId()),
+			repo.GetRoutineWithUserID(userID),
+		)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				log.Warn("routine not found")
+				return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+			}
 
-		log.Error("failed to get routine", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
+			log.Error("failed to get routine", zap.Error(err))
+			return nil, connect.NewError(connect.CodeInternal, nil)
+		}
+		workoutName = routine.Title
+	} else if req.Msg.GetPlanId() != "" {
+		log.Warn("plan workout is missing a routine")
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
-	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
-		Name:         routine.Title,
-		Note:         req.Msg.GetNote(),
-		UserID:       userID,
-		StartedAt:    req.Msg.GetStartedAt().AsTime(),
-		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
-		ExerciseSets: parser.ExerciseSetsFromPB(req.Msg.GetExerciseSets()),
+	var workout *orm.Workout
+	var planAdvanceSkipped error
+	err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
+		createdWorkout, createErr := tx.CreateWorkout(ctx, repo.CreateWorkoutParams{
+			Name:         workoutName,
+			Note:         req.Msg.GetNote(),
+			UserID:       userID,
+			StartedAt:    req.Msg.GetStartedAt().AsTime(),
+			FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
+			ExerciseSets: parser.ExerciseSetsFromPB(req.Msg.GetExerciseSets()),
+		})
+		if createErr != nil {
+			return fmt.Errorf("create workout: %w", createErr)
+		}
+		workout = createdWorkout
+
+		if req.Msg.GetPlanId() != "" {
+			if _, advanceErr := tx.AdvancePlan(ctx, req.Msg.GetPlanId(), userID, req.Msg.GetRoutineId()); advanceErr != nil {
+				if errors.Is(advanceErr, repo.ErrPlanNotActive) ||
+					errors.Is(advanceErr, repo.ErrPlanUnexpectedRoutine) ||
+					errors.Is(advanceErr, sql.ErrNoRows) {
+					planAdvanceSkipped = advanceErr
+					return nil
+				}
+				return fmt.Errorf("advance plan: %w", advanceErr)
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		log.Error("failed to create workout", zap.Error(err))
+		if errors.Is(err, repo.ErrPlanNotActive) || errors.Is(err, repo.ErrPlanUnexpectedRoutine) || errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	if planAdvanceSkipped != nil {
+		log.Warn("workout saved without advancing plan",
+			zap.String("plan_id", req.Msg.GetPlanId()),
+			zap.String("routine_id", req.Msg.GetRoutineId()),
+			zap.Error(planAdvanceSkipped),
+		)
 	}
 
 	log.Info("workout finished")

@@ -36,6 +36,30 @@ service RoutineService {
   rpc GetDashboard (GetDashboardRequest) returns (GetDashboardResponse) {
     option (auth) = true;
   }
+  rpc CreatePlan (CreatePlanRequest) returns (CreatePlanResponse) {
+    option (auth) = true;
+  }
+  rpc GetPlan (GetPlanRequest) returns (GetPlanResponse) {
+    option (auth) = true;
+  }
+  rpc ListPlans (ListPlansRequest) returns (ListPlansResponse) {
+    option (auth) = true;
+  }
+  rpc UpdatePlan (UpdatePlanRequest) returns (UpdatePlanResponse) {
+    option (auth) = true;
+  }
+  rpc DeletePlan (DeletePlanRequest) returns (DeletePlanResponse) {
+    option (auth) = true;
+  }
+  rpc SetActivePlan (SetActivePlanRequest) returns (SetActivePlanResponse) {
+    option (auth) = true;
+  }
+  rpc PauseActivePlan (PauseActivePlanRequest) returns (PauseActivePlanResponse) {
+    option (auth) = true;
+  }
+  rpc SkipPlanRoutine (SkipPlanRoutineRequest) returns (SkipPlanRoutineResponse) {
+    option (auth) = true;
+  }
 }
 
 message CreateRoutineRequest {
@@ -103,6 +127,7 @@ message GetDashboardResponse {
   double volume_this_week = 4;
   repeated ExerciseSet personal_bests = 5;
   repeated Workout recent_workouts = 6;
+  Plan active_plan = 7;
 }
 
 message Routine {
@@ -111,3 +136,59 @@ message Routine {
   repeated Exercise exercises = 3 [(buf.validate.field).repeated.min_items = 1];
 }
 
+message CreatePlanRequest {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  repeated string routine_ids = 2 [(buf.validate.field).repeated = {min_items: 1, unique: true, items: {string: {uuid: true}}}];
+}
+message CreatePlanResponse {
+  Plan plan = 1;
+}
+
+message GetPlanRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetPlanResponse {
+  Plan plan = 1;
+}
+
+message ListPlansRequest {}
+message ListPlansResponse {
+  repeated Plan plans = 1;
+}
+
+message UpdatePlanRequest {
+  Plan plan = 1 [(buf.validate.field).required = true];
+}
+message UpdatePlanResponse {
+  Plan plan = 1;
+}
+
+message DeletePlanRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeletePlanResponse {}
+
+message SetActivePlanRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message SetActivePlanResponse {
+  Plan plan = 1;
+}
+
+message PauseActivePlanRequest {}
+message PauseActivePlanResponse {}
+
+message SkipPlanRoutineRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message SkipPlanRoutineResponse {
+  Plan plan = 1;
+}
+
+message Plan {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  repeated Routine routines = 3 [(buf.validate.field).repeated.min_items = 1];
+  int32 current_position = 4 [(buf.validate.field).int32.gte = 0];
+  bool active = 5;
+}

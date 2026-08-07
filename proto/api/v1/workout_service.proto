@@ -31,11 +31,13 @@ service WorkoutService {
 }
 
 message CreateWorkoutRequest {
-  string routine_id = 1 [(buf.validate.field).string.uuid = true];
+  string routine_id = 1;
   repeated ExerciseSets exercise_sets = 2 [(buf.validate.field).repeated.min_items = 1];
   google.protobuf.Timestamp started_at = 3 [(buf.validate.field).required = true];
   google.protobuf.Timestamp finished_at = 4 [(buf.validate.field).required = true];
   string note = 5;
+  string plan_id = 6;
+  string workout_name = 7;
 }
 message CreateWorkoutResponse {
   string workout_id = 1;

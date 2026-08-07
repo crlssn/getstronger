@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import type { Set } from '@/proto/api/v1/shared_pb'
 import { TrophyIcon } from '@heroicons/vue/24/solid'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 withDefaults(
   defineProps<{
     compact?: boolean
+    flat?: boolean
     exerciseId?: string
-    label?: string
     name?: string
     sets: Set[]
+    tags?: string[]
   }>(),
-  { compact: false },
+  { compact: false, flat: false, tags: () => [] },
 )
 
 const formatWeight = (weight: number) =>
@@ -21,13 +23,15 @@ const setVolume = (set: Set) =>
 </script>
 
 <template>
-  <article class="exercise-block" :class="{ compact }">
+  <article class="exercise-block" :class="{ compact, flat }">
     <header>
       <div>
         <RouterLink :to="`/exercises/${exerciseId}`">{{ name }}</RouterLink>
-        <span v-if="label" class="exercise-label">{{ label }}</span>
+        <ExerciseTags compact :tags="tags" />
       </div>
-      <span class="set-count">{{ sets.length }} {{ sets.length === 1 ? 'set' : 'sets' }}</span>
+      <span v-if="!compact" class="set-count">
+        {{ sets.length }} {{ sets.length === 1 ? 'set' : 'sets' }}
+      </span>
     </header>
 
     <div class="set-table" role="table" :aria-label="`${name} sets`">
@@ -36,48 +40,134 @@ const setVolume = (set: Set) =>
         <span role="columnheader">Weight</span>
         <span role="columnheader">Reps</span>
         <span role="columnheader">Volume</span>
-        <span role="columnheader"></span>
       </div>
       <div v-for="(set, index) in sets" :key="set.id || index" class="set-row" role="row">
-        <span class="set-number" role="cell">{{ index + 1 }}</span>
-        <strong role="cell">{{ formatWeight(set.weight) }} <small>kg</small></strong>
-        <span role="cell">× {{ set.reps }}</span>
-        <span v-if="!compact" class="set-volume" role="cell">{{ setVolume(set) }} kg</span>
-        <span v-if="set.metadata?.personalBest" class="pr-badge" role="cell">
-          <TrophyIcon /> <span>PR</span>
+        <span
+          class="set-number"
+          :class="{ 'personal-best': !compact && set.metadata?.personalBest }"
+          role="cell"
+          :aria-label="
+            set.metadata?.personalBest ? `Set ${index + 1}, personal best` : `Set ${index + 1}`
+          "
+        >
+          <template v-if="compact">{{ index + 1 }}</template>
+          <TrophyIcon v-else-if="set.metadata?.personalBest" aria-hidden="true" />
+          <template v-else>{{ index + 1 }}</template>
         </span>
-        <span v-else-if="!compact" role="cell"></span>
+        <span v-if="compact" class="compact-set-value" role="cell">
+          <strong>{{ formatWeight(set.weight) }} <small>kg</small></strong>
+          <span>× {{ set.reps }}</span>
+          <span
+            v-if="set.metadata?.personalBest"
+            class="compact-personal-best"
+            role="img"
+            aria-label="Personal best"
+          >
+            <TrophyIcon aria-hidden="true" />
+          </span>
+        </span>
+        <template v-else>
+          <strong role="cell">{{ formatWeight(set.weight) }} <small>kg</small></strong>
+          <span role="cell">× {{ set.reps }}</span>
+          <span class="set-volume" role="cell">{{ setVolume(set) }} kg</span>
+        </template>
       </div>
     </div>
   </article>
 </template>
 
 <style scoped>
-.exercise-block { @apply overflow-hidden rounded-2xl border border-slate-200 bg-white; }
-.exercise-block > header { @apply flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5; }
-.exercise-block > header > div { @apply flex min-w-0 items-center gap-2; }
-.exercise-block > header a { @apply truncate text-base font-semibold text-slate-950 transition hover:text-indigo-700; }
-.exercise-label { @apply truncate rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500; }
-.set-count { @apply shrink-0 text-xs font-medium text-slate-500; }
-.set-table { @apply px-4 py-2 sm:px-5; }
-.set-row { @apply grid min-h-11 grid-cols-[2.25rem_minmax(5rem,1fr)_minmax(4rem,.8fr)_minmax(5rem,1fr)_3.25rem] items-center gap-2 border-t border-slate-100 text-sm first:border-t-0; }
-.table-head { @apply min-h-9 border-0 text-xs font-semibold uppercase tracking-wide text-slate-400; }
-.set-number { @apply grid size-7 place-items-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500; }
-.set-row strong { @apply font-semibold text-slate-900; }
-.set-row small { @apply font-normal text-slate-500; }
-.set-volume { @apply text-slate-500; }
-.pr-badge { @apply inline-flex w-max items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700; }
-.pr-badge svg { @apply size-3.5; }
-.compact { @apply rounded-xl border-slate-100; }
-.compact > header { @apply px-3 py-2.5; }
-.compact .set-table { @apply px-3 py-1; }
-.compact .set-row { @apply min-h-9 grid-cols-[1.75rem_minmax(4rem,1fr)_minmax(3rem,.7fr)_3rem] border-0; }
-.compact .set-number { @apply size-6; }
-.compact .pr-badge span { @apply sr-only; }
+.exercise-block {
+  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white;
+}
+.exercise-block > header {
+  @apply flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5;
+}
+.exercise-block > header > div {
+  @apply flex min-w-0 items-center gap-2;
+}
+.exercise-block > header a {
+  @apply truncate text-base font-semibold text-slate-950 transition hover:text-indigo-700;
+}
+.set-count {
+  @apply shrink-0 text-xs font-medium text-slate-500;
+}
+.set-table {
+  @apply px-4 py-2 sm:px-5;
+}
+.set-row {
+  @apply grid min-h-11 grid-cols-[2.25rem_minmax(5rem,1fr)_minmax(4rem,.8fr)_minmax(5rem,1fr)] items-center gap-2 border-t border-slate-100 text-sm first:border-t-0;
+}
+.table-head {
+  @apply min-h-9 border-0 text-xs font-semibold uppercase tracking-wide text-slate-400;
+}
+.set-number {
+  @apply grid size-7 place-items-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500;
+}
+.set-number.personal-best {
+  @apply bg-amber-50 text-amber-700;
+}
+.set-number.personal-best svg {
+  @apply size-4;
+}
+.set-row strong {
+  @apply font-semibold text-slate-900;
+}
+.set-row small {
+  @apply font-normal text-slate-500;
+}
+.set-volume {
+  @apply text-slate-500;
+}
+.flat {
+  @apply rounded-none border-0;
+}
+.flat > header {
+  @apply px-0 py-3;
+}
+.flat .set-table {
+  @apply px-0 pb-4 pt-2;
+}
+.compact {
+  @apply rounded-none border-0 bg-transparent py-3;
+}
+.compact > header {
+  @apply min-w-0 border-0 px-0 py-0;
+}
+.compact > header a {
+  @apply text-[0.9375rem];
+}
+.compact .set-table {
+  @apply mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 px-0 py-0;
+}
+.compact .set-row {
+  @apply min-h-8 grid-cols-[1.75rem_auto] justify-start gap-2 border-0;
+}
+.compact .set-number {
+  @apply size-6;
+}
+.compact .set-row small {
+  @apply text-slate-600;
+}
+.compact-set-value {
+  @apply inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-slate-900;
+}
+.compact-set-value > span {
+  @apply font-medium;
+}
+.compact-set-value .compact-personal-best {
+  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-amber-50 text-amber-700;
+}
+.compact-personal-best svg {
+  @apply size-4;
+}
 @media (max-width: 520px) {
-  .set-row { @apply grid-cols-[2rem_minmax(4.5rem,1fr)_3.5rem_4.5rem_2.75rem] gap-1.5; }
-  .set-row, .table-head { @apply text-xs; }
-  .pr-badge { @apply px-1.5; }
-  .pr-badge span { @apply sr-only; }
+  .set-row {
+    @apply grid-cols-[2rem_minmax(4.5rem,1fr)_3.5rem_4.5rem] gap-1.5;
+  }
+  .set-row,
+  .table-head {
+    @apply text-xs;
+  }
 }
 </style>

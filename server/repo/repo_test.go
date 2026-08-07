@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
@@ -546,33 +547,33 @@ func (s *repoSuite) TestCreateExercise() {
 
 	tests := []test{
 		{
-			name: "ok_exercise_created_with_label",
+			name: "ok_exercise_created_with_tags",
 			params: repo.CreateExerciseParams{
 				UserID: s.factory.NewUser().ID,
 				Name:   "Bench Press",
-				Label:  "Chest",
+				Tags:   []string{"Chest", "Barbell"},
 			},
 			init: func(_ test) {},
 			expected: expected{
 				exercise: &orm.Exercise{
-					Title:    "Bench Press",
-					SubTitle: null.NewString("Chest", true),
+					Title: "Bench Press",
+					Tags:  types.StringArray{"Chest", "Barbell"},
 				},
 				err: nil,
 			},
 		},
 		{
-			name: "ok_exercise_created_without_label",
+			name: "ok_exercise_created_without_tags",
 			params: repo.CreateExerciseParams{
 				UserID: s.factory.NewUser().ID,
 				Name:   "Squat",
-				Label:  "",
+				Tags:   nil,
 			},
 			init: func(_ test) {},
 			expected: expected{
 				exercise: &orm.Exercise{
-					Title:    "Squat",
-					SubTitle: null.NewString("", false),
+					Title: "Squat",
+					Tags:  types.StringArray{},
 				},
 				err: nil,
 			},
@@ -582,7 +583,7 @@ func (s *repoSuite) TestCreateExercise() {
 			params: repo.CreateExerciseParams{
 				UserID: uuid.NewString(),
 				Name:   "Deadlift",
-				Label:  "Back",
+				Tags:   []string{"Back"},
 			},
 			init: func(_ test) {},
 			expected: expected{
@@ -608,7 +609,7 @@ func (s *repoSuite) TestCreateExercise() {
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.params.UserID, exercise.UserID)
 			s.Require().Equal(t.expected.exercise.Title, exercise.Title)
-			s.Require().Equal(t.expected.exercise.SubTitle, exercise.SubTitle)
+			s.Require().ElementsMatch(t.expected.exercise.Tags, exercise.Tags)
 		})
 	}
 }

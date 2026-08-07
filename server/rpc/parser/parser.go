@@ -16,7 +16,7 @@ func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
 		Id:     exercise.ID,
 		UserId: exercise.UserID,
 		Name:   exercise.Title,
-		Label:  exercise.SubTitle.String,
+		Tags:   []string(exercise.Tags),
 	}
 }
 
@@ -76,6 +76,28 @@ func Routine(routine *orm.Routine) *apiv1.Routine {
 
 func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
 	return parseWithoutOpts(routines, Routine)
+}
+
+func Plan(plan *repo.TrainingPlan) *apiv1.Plan {
+	if plan == nil {
+		return nil
+	}
+
+	return &apiv1.Plan{
+		Id:              plan.ID,
+		Name:            plan.Name,
+		Routines:        RoutineSlice(plan.Routines),
+		CurrentPosition: int32(plan.CurrentPosition),
+		Active:          plan.Active,
+	}
+}
+
+func PlanSlice(plans []*repo.TrainingPlan) []*apiv1.Plan {
+	parsed := make([]*apiv1.Plan, 0, len(plans))
+	for _, plan := range plans {
+		parsed = append(parsed, Plan(plan))
+	}
+	return parsed
 }
 
 type WorkoutOpt func(*apiv1.Workout)

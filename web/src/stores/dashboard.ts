@@ -1,4 +1,4 @@
-import type { GetDashboardResponse, Routine } from '@/proto/api/v1/routine_service_pb'
+import type { GetDashboardResponse, Plan, Routine } from '@/proto/api/v1/routine_service_pb'
 
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
@@ -13,6 +13,7 @@ export const useDashboardStore = defineStore(
     const loading = ref(false)
 
     const nextRoutine = computed<Routine | undefined>(() => dashboard.value?.nextRoutine)
+    const activePlan = computed<Plan | undefined>(() => dashboard.value?.activePlan)
 
     const load = async () => {
       loading.value = true
@@ -21,7 +22,11 @@ export const useDashboardStore = defineStore(
         if (!response) return
 
         dashboard.value = response
-        if (response.nextRoutine?.id && response.nextRoutine.id !== preferredRoutineId.value) {
+        if (
+          !response.activePlan &&
+          response.nextRoutine?.id &&
+          response.nextRoutine.id !== preferredRoutineId.value
+        ) {
           preferredRoutineId.value = response.nextRoutine.id
         }
       } finally {
@@ -36,6 +41,7 @@ export const useDashboardStore = defineStore(
 
     return {
       dashboard,
+      activePlan,
       load,
       loading,
       nextRoutine,

@@ -19,7 +19,16 @@ message Exercise {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2;
   string name = 3;
-  string label = 4;
+  repeated string tags = 4 [(buf.validate.field).repeated = {
+    max_items: 10
+    unique: true
+    items: {
+      string: {
+        min_len: 1
+        max_len: 64
+      }
+    }
+  }];
 }
 
 message Set {

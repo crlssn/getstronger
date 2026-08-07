@@ -6,16 +6,22 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts.ts'
 import AppList from '@/ui/components/AppList.vue'
 import AppButton from '@/ui/components/AppButton.vue'
-import { getExercise, updateExercise } from '@/http/requests.ts'
+import { getExercise, listExerciseTags, updateExercise } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
+import ExerciseTagsInput from '@/ui/exercises/ExerciseTagsInput.vue'
 
 const route = useRoute()
 const router = useRouter()
 const exercise = ref({} as Exercise)
+const tagSuggestions = ref<string[]>([])
 const alertStore = useAlertStore()
 
 onMounted(async () => {
-  const res = await getExercise(route.params.id as string)
+  const [res, suggestions] = await Promise.all([
+    getExercise(route.params.id as string),
+    listExerciseTags(),
+  ])
+  tagSuggestions.value = suggestions
   if (!res) return
   if (!res.exercise) return
 
@@ -25,7 +31,7 @@ onMounted(async () => {
 async function onUpdateExercise() {
   if (!exercise.value) return
 
-  const res = await updateExercise(exercise.value.id, exercise.value.name, exercise.value.label)
+  const res = await updateExercise(exercise.value.id, exercise.value.name, exercise.value.tags)
   if (!res) return
 
   alertStore.setSuccess('Exercise updated')
@@ -45,15 +51,8 @@ async function onUpdateExercise() {
       />
     </AppList>
 
-    <h6>Label</h6>
-    <AppList>
-      <AppListItemInput
-        :model="exercise.label"
-        type="text"
-        placeholder="Optional"
-        @update="(value) => (exercise.label = value)"
-      />
-    </AppList>
+    <h6>Tags <small>Optional</small></h6>
+    <ExerciseTagsInput v-model="exercise.tags" :suggestions="tagSuggestions" />
 
     <AppButton type="submit" colour="primary">Update Exercise</AppButton>
   </form>

@@ -88,17 +88,20 @@ var RoutineWhere = struct {
 
 // RoutineRels is where relationship names are stored.
 var RoutineRels = struct {
-	User      string
-	Exercises string
+	User         string
+	Exercises    string
+	PlanRoutines string
 }{
-	User:      "User",
-	Exercises: "Exercises",
+	User:         "User",
+	Exercises:    "Exercises",
+	PlanRoutines: "PlanRoutines",
 }
 
 // routineR is where relationships are stored.
 type routineR struct {
-	User      *User         `boil:"User" json:"User" toml:"User" yaml:"User"`
-	Exercises ExerciseSlice `boil:"Exercises" json:"Exercises" toml:"Exercises" yaml:"Exercises"`
+	User         *User            `boil:"User" json:"User" toml:"User" yaml:"User"`
+	Exercises    ExerciseSlice    `boil:"Exercises" json:"Exercises" toml:"Exercises" yaml:"Exercises"`
+	PlanRoutines PlanRoutineSlice `boil:"PlanRoutines" json:"PlanRoutines" toml:"PlanRoutines" yaml:"PlanRoutines"`
 }
 
 // NewStruct creates a new relationship struct
@@ -136,6 +139,22 @@ func (r *routineR) GetExercises() ExerciseSlice {
 	}
 
 	return r.Exercises
+}
+
+func (o *Routine) GetPlanRoutines() PlanRoutineSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetPlanRoutines()
+}
+
+func (r *routineR) GetPlanRoutines() PlanRoutineSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.PlanRoutines
 }
 
 // routineL is where Load methods for each relationship are stored.
@@ -480,6 +499,20 @@ func (o *Routine) Exercises(mods ...qm.QueryMod) exerciseQuery {
 	return Exercises(queryMods...)
 }
 
+// PlanRoutines retrieves all the plan_routine's PlanRoutines with an executor.
+func (o *Routine) PlanRoutines(mods ...qm.QueryMod) planRoutineQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"getstronger\".\"plan_routines\".\"routine_id\"=?", o.ID),
+	)
+
+	return PlanRoutines(queryMods...)
+}
+
 // LoadUser allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (routineL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybeRoutine interface{}, mods queries.Applicator) error {
@@ -655,7 +688,7 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"exercises\".\"id\", \"getstronger\".\"exercises\".\"user_id\", \"getstronger\".\"exercises\".\"title\", \"getstronger\".\"exercises\".\"sub_title\", \"getstronger\".\"exercises\".\"created_at\", \"getstronger\".\"exercises\".\"deleted_at\", \"a\".\"routine_id\""),
+		qm.Select("\"getstronger\".\"exercises\".\"id\", \"getstronger\".\"exercises\".\"user_id\", \"getstronger\".\"exercises\".\"title\", \"getstronger\".\"exercises\".\"created_at\", \"getstronger\".\"exercises\".\"deleted_at\", \"getstronger\".\"exercises\".\"tags\", \"a\".\"routine_id\""),
 		qm.From("\"getstronger\".\"exercises\""),
 		qm.InnerJoin("\"getstronger\".\"exercises_routines\" as \"a\" on \"getstronger\".\"exercises\".\"id\" = \"a\".\"exercise_id\""),
 		qm.WhereIn("\"a\".\"routine_id\" in ?", argsSlice...),
@@ -676,7 +709,7 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 		one := new(Exercise)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.SubTitle, &one.CreatedAt, &one.DeletedAt, &localJoinCol)
+		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.CreatedAt, &one.DeletedAt, &one.Tags, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for exercises")
 		}
@@ -722,6 +755,119 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 					foreign.R = &exerciseR{}
 				}
 				foreign.R.Routines = append(foreign.R.Routines, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadPlanRoutines allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (routineL) LoadPlanRoutines(ctx context.Context, e boil.ContextExecutor, singular bool, maybeRoutine interface{}, mods queries.Applicator) error {
+	var slice []*Routine
+	var object *Routine
+
+	if singular {
+		var ok bool
+		object, ok = maybeRoutine.(*Routine)
+		if !ok {
+			object = new(Routine)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeRoutine)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeRoutine))
+			}
+		}
+	} else {
+		s, ok := maybeRoutine.(*[]*Routine)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeRoutine)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeRoutine))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &routineR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &routineR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`getstronger.plan_routines`),
+		qm.WhereIn(`getstronger.plan_routines.routine_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load plan_routines")
+	}
+
+	var resultSlice []*PlanRoutine
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice plan_routines")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on plan_routines")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for plan_routines")
+	}
+
+	if len(planRoutineAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.PlanRoutines = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &planRoutineR{}
+			}
+			foreign.R.Routine = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.RoutineID {
+				local.R.PlanRoutines = append(local.R.PlanRoutines, foreign)
+				if foreign.R == nil {
+					foreign.R = &planRoutineR{}
+				}
+				foreign.R.Routine = local
 				break
 			}
 		}
@@ -920,6 +1066,59 @@ func removeExercisesFromRoutinesSlice(o *Routine, related []*Exercise) {
 			break
 		}
 	}
+}
+
+// AddPlanRoutines adds the given related objects to the existing relationships
+// of the routine, optionally inserting them as new records.
+// Appends related to o.R.PlanRoutines.
+// Sets related.R.Routine appropriately.
+func (o *Routine) AddPlanRoutines(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PlanRoutine) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.RoutineID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"getstronger\".\"plan_routines\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"routine_id"}),
+				strmangle.WhereClause("\"", "\"", 2, planRoutinePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.PlanID, rel.Position}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.RoutineID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &routineR{
+			PlanRoutines: related,
+		}
+	} else {
+		o.R.PlanRoutines = append(o.R.PlanRoutines, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &planRoutineR{
+				Routine: o,
+			}
+		} else {
+			rel.R.Routine = o
+		}
+	}
+	return nil
 }
 
 // Routines retrieves all the records using an executor.

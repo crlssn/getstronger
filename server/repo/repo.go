@@ -217,14 +217,14 @@ func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, e
 type CreateExerciseParams struct {
 	UserID string
 	Name   string
-	Label  string
+	Tags   []string
 }
 
 func (r *repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
 	exercise := &orm.Exercise{
-		UserID:   p.UserID,
-		Title:    p.Name,
-		SubTitle: null.NewString(p.Label, p.Label != ""),
+		UserID: p.UserID,
+		Title:  p.Name,
+		Tags:   types.StringArray(p.Tags),
 	}
 	if err := exercise.Insert(ctx, r.executor(), boil.Infer()); err != nil {
 		return nil, fmt.Errorf("exercise insert: %w", err)
@@ -400,9 +400,9 @@ func UpdateExerciseTitle(title string) UpdateExerciseOpt {
 	}
 }
 
-func UpdateExerciseSubTitle(subTitle string) UpdateExerciseOpt {
+func UpdateExerciseTags(tags []string) UpdateExerciseOpt {
 	return func() (orm.M, error) {
-		return orm.M{orm.ExerciseColumns.SubTitle: null.StringFrom(subTitle)}, nil
+		return orm.M{orm.ExerciseColumns.Tags: types.StringArray(tags)}, nil
 	}
 }
 

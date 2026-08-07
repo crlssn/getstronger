@@ -36,7 +36,7 @@ func TestFactory_Exercise(t *testing.T) {
 		require.Equal(t, expected.ID, created.ID)
 		require.Equal(t, expected.UserID, created.UserID)
 		require.Equal(t, expected.Title, created.Title)
-		require.Equal(t, expected.SubTitle, created.SubTitle)
+		require.Equal(t, expected.Tags, created.Tags)
 		require.False(t, expected.DeletedAt.Valid, created.DeletedAt.Valid)
 	})
 
@@ -67,13 +67,13 @@ func TestFactory_Exercise(t *testing.T) {
 		require.Equal(t, title, created.Title)
 	})
 
-	t.Run("ExerciseSubTitle", func(t *testing.T) {
+	t.Run("ExerciseTags", func(t *testing.T) {
 		t.Parallel()
-		subTitle := gofakeit.Name()
-		expected := f.NewExercise(factory.ExerciseSubTitle(subTitle))
+		tags := []string{gofakeit.Word(), gofakeit.Word()}
+		expected := f.NewExercise(factory.ExerciseTags(tags...))
 		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, subTitle, created.SubTitle.String)
+		require.Equal(t, tags, []string(created.Tags))
 	})
 
 	t.Run("ExerciseCreatedAt", func(t *testing.T) {

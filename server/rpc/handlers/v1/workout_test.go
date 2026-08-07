@@ -174,3 +174,102 @@ func (s *workoutSuite) TestCreateWorkout() {
 		})
 	}
 }
+
+func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	nextRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	planRepo := repo.New(s.container.DB)
+	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
+		UserID:     user.ID,
+		Name:       "Rotation",
+		RoutineIDs: []string{routine.ID, nextRoutine.ID},
+	})
+	s.Require().NoError(err)
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID)
+	s.Require().NoError(err)
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: routine.ID,
+		PlanId:    plan.ID,
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(response.Msg.GetWorkoutId())
+
+	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID)
+	s.Require().NoError(err)
+	s.Require().Equal(1, advanced.CurrentPosition)
+}
+
+func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
+	user := s.factory.NewUser()
+	completedRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	nextRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	planRepo := repo.New(s.container.DB)
+	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
+		UserID:     user.ID,
+		Name:       "Rotation",
+		RoutineIDs: []string{completedRoutine.ID, nextRoutine.ID},
+	})
+	s.Require().NoError(err)
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID)
+	s.Require().NoError(err)
+	_, err = planRepo.AdvancePlan(context.Background(), plan.ID, user.ID, completedRoutine.ID)
+	s.Require().NoError(err)
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: completedRoutine.ID,
+		PlanId:    plan.ID,
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(response.Msg.GetWorkoutId())
+
+	savedWorkout, err := orm.FindWorkout(context.Background(), s.container.DB, response.Msg.GetWorkoutId())
+	s.Require().NoError(err)
+	s.Require().Equal(completedRoutine.Title, savedWorkout.Name)
+
+	unchanged, err := planRepo.GetActivePlan(context.Background(), user.ID)
+	s.Require().NoError(err)
+	s.Require().Equal(1, unchanged.CurrentPosition)
+	s.Require().Equal(nextRoutine.ID, unchanged.Routines[unchanged.CurrentPosition].ID)
+}
+
+func (s *workoutSuite) TestCreateQuickWorkoutWithoutRoutine() {
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		WorkoutName: "Quick Workout",
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Sets:     []*apiv1.Set{{Reps: 10, Weight: 20}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	workout, err := orm.FindWorkout(context.Background(), s.container.DB, response.Msg.GetWorkoutId())
+	s.Require().NoError(err)
+	s.Require().Equal("Quick Workout", workout.Name)
+}

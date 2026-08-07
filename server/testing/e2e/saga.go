@@ -126,8 +126,8 @@ func (s *Saga) CreateExercise(ctx context.Context, f func(*connect.Response[apiv
 	client := apiv1connect.NewExerciseServiceClient(s.client(), s.baseURL)
 	f(client.CreateExercise(ctx, &connect.Request[apiv1.CreateExerciseRequest]{
 		Msg: &apiv1.CreateExerciseRequest{
-			Name:  gofakeit.RandomString([]string{"Bench Press", "Deadlifts", "Squats"}),
-			Label: "",
+			Name: gofakeit.RandomString([]string{"Bench Press", "Deadlifts", "Squats"}),
+			Tags: nil,
 		},
 	}))
 

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/types"
 
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
@@ -28,7 +29,7 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
 		ID:        uuid.NewString(),
 		UserID:    "",
 		Title:     f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"}),
-		SubTitle:  null.String{},
+		Tags:      types.StringArray{},
 		CreatedAt: time.Time{},
 		DeletedAt: null.Time{},
 	}
@@ -78,9 +79,9 @@ func ExerciseTitle(title string) ExerciseOpt {
 	}
 }
 
-func ExerciseSubTitle(subTitle string) ExerciseOpt {
+func ExerciseTags(tags ...string) ExerciseOpt {
 	return func(m *orm.Exercise) {
-		m.SubTitle = null.StringFrom(subTitle)
+		m.Tags = types.StringArray(tags)
 	}
 }
 

@@ -2,6 +2,7 @@
 
 html,
 body {
+  color-scheme: light;
   touch-action: manipulation;
   @apply min-h-full bg-slate-50 text-slate-950 antialiased;
 }
@@ -20,4 +21,48 @@ input,
 textarea,
 select {
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
+}
+
+.auth-view {
+  @apply w-full;
+}
+
+.auth-intro {
+  @apply mb-8;
+}
+
+.auth-intro h1 {
+  @apply mt-2 text-3xl font-bold tracking-tight text-slate-950;
+}
+
+.auth-intro > p:last-child {
+  @apply mt-3 text-base leading-6 text-slate-600;
+}
+
+.auth-eyebrow {
+  @apply text-xs font-semibold uppercase tracking-widest text-indigo-600;
+}
+
+.auth-form {
+  @apply space-y-5;
+}
+
+.auth-label {
+  @apply block text-sm font-semibold text-slate-800;
+}
+
+.auth-input {
+  @apply block min-h-14 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-400 transition hover:border-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
+}
+
+.auth-link {
+  @apply font-semibold text-indigo-600 transition hover:text-indigo-700;
+}
+
+.auth-submit {
+  @apply mt-2 min-h-14 text-base;
+}
+
+.auth-footer {
+  @apply mt-7 text-center text-sm text-slate-600;
 }

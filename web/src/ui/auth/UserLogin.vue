@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { RouterLink } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
+import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
 
 const email = ref('')
 const password = ref('')
@@ -23,53 +24,48 @@ const onLogin = async () => {
 </script>
 
 <template>
-  <form class="space-y-6" method="POST" @submit.prevent="onLogin">
-    <div>
-      <label for="email" class="block /6 font-medium text-gray-900">Email address</label>
-      <div class="mt-2">
-        <input id="email" v-model="email" name="email" type="email" autocomplete="email" required />
-      </div>
-    </div>
+  <section class="auth-view">
+    <header class="auth-intro">
+      <p class="auth-eyebrow">Welcome back</p>
+      <h1>Log in to GetStronger</h1>
+      <p>Pick up your training exactly where you left off.</p>
+    </header>
 
-    <div>
-      <div class="flex items-center justify-between">
-        <label for="password" class="block font-medium text-gray-900">Password</label>
-        <div class="">
-          <RouterLink
-            to="/forgot-password"
-            class="font-semibold text-indigo-600 hover:text-indigo-500"
-          >
+    <form class="auth-form" method="POST" @submit.prevent="onLogin">
+      <div>
+        <label for="email" class="auth-label">Email address</label>
+        <div class="mt-2">
+          <input
+            id="email"
+            v-model="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            class="auth-input"
+            inputmode="email"
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between gap-4">
+          <label for="password" class="auth-label">Password</label>
+          <RouterLink to="/forgot-password" class="auth-link text-sm">
             Forgot password?
           </RouterLink>
         </div>
+        <div class="mt-2">
+          <AuthPasswordInput id="password" v-model="password" name="password" />
+        </div>
       </div>
-      <div class="mt-2">
-        <input
-          id="password"
-          v-model="password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
-    </div>
 
-    <div>
-      <AppButton type="submit" colour="primary">Login</AppButton>
-    </div>
-  </form>
+      <AppButton type="submit" colour="primary" class="auth-submit">Log in</AppButton>
+    </form>
 
-  <p class="mt-6 text-center text-gray-400">
-    Not a member?
-    <RouterLink to="signup" class="font-semibold text-indigo-600 hover:text-indigo-500">
-      Sign up
-    </RouterLink>
-  </p>
+    <p class="auth-footer">
+      New to GetStronger?
+      <RouterLink to="/signup" class="auth-link">Create an account</RouterLink>
+    </p>
+  </section>
 </template>
-
-<style scoped>
-input {
-  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
-}
-</style>

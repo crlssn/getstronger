@@ -47,7 +47,7 @@ func (s *parserSuite) TestExercise() {
 	s.Require().Equal(exercise.ID, parsed.GetId())
 	s.Require().Equal(exercise.UserID, parsed.GetUserId())
 	s.Require().Equal(exercise.Title, parsed.GetName())
-	s.Require().Equal(exercise.SubTitle.String, parsed.GetLabel())
+	s.Require().Equal([]string(exercise.Tags), parsed.GetTags())
 }
 
 func (s *parserSuite) TestExerciseSlice() {
@@ -59,7 +59,7 @@ func (s *parserSuite) TestExerciseSlice() {
 		s.Require().Equal(exercise.ID, parsed[i].GetId())
 		s.Require().Equal(exercise.UserID, parsed[i].GetUserId())
 		s.Require().Equal(exercise.Title, parsed[i].GetName())
-		s.Require().Equal(exercise.SubTitle.String, parsed[i].GetLabel())
+		s.Require().Equal([]string(exercise.Tags), parsed[i].GetTags())
 	}
 }
 
@@ -111,7 +111,7 @@ func (s *parserSuite) TestRoutine() {
 		s.Require().Equal(exercise.ID, parsed.GetExercises()[i].GetId())
 		s.Require().Equal(exercise.UserID, parsed.GetExercises()[i].GetUserId())
 		s.Require().Equal(exercise.Title, parsed.GetExercises()[i].GetName())
-		s.Require().Equal(exercise.SubTitle.String, parsed.GetExercises()[i].GetLabel())
+		s.Require().Equal([]string(exercise.Tags), parsed.GetExercises()[i].GetTags())
 	}
 }
 
@@ -274,7 +274,7 @@ func (s *parserSuite) TestExerciseSetsSlice() {
 	s.Require().Len(parsed, len(sets))
 	for i, exerciseSets := range parsed {
 		s.Require().Equal(sets[i].ExerciseID, exerciseSets.GetExercise().GetId())
-		s.Require().Empty(exerciseSets.GetExercise().GetLabel())
+		s.Require().Empty(exerciseSets.GetExercise().GetTags())
 		s.Require().NotEmpty(exerciseSets.GetExercise().GetName())
 		s.Require().NotEmpty(exerciseSets.GetExercise().GetUserId())
 
@@ -293,7 +293,7 @@ func (s *parserSuite) TestExerciseSetsSlice() {
 	s.Require().Len(parsed, len(sets))
 	for i, exerciseSets := range parsed {
 		s.Require().Equal(sets[i].ExerciseID, exerciseSets.GetExercise().GetId())
-		s.Require().Empty(exerciseSets.GetExercise().GetLabel())
+		s.Require().Empty(exerciseSets.GetExercise().GetTags())
 		s.Require().NotEmpty(exerciseSets.GetExercise().GetName())
 		s.Require().NotEmpty(exerciseSets.GetExercise().GetUserId())
 

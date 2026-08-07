@@ -92,6 +92,18 @@ func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
 	}
 }
 
+func WorkoutStartedAt(startedAt time.Time) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.StartedAt = startedAt
+	}
+}
+
+func WorkoutFinishedAt(finishedAt time.Time) WorkoutOpt {
+	return func(workout *orm.Workout) {
+		workout.FinishedAt = finishedAt
+	}
+}
+
 func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) orm.WorkoutCommentSlice {
 	var slice orm.WorkoutCommentSlice
 	for range count {
@@ -167,5 +179,17 @@ func WorkoutCommentUserID(userID string) WorkoutCommentOpt {
 func WorkoutCommentWorkoutID(workoutID string) WorkoutCommentOpt {
 	return func(comment *orm.WorkoutComment) {
 		comment.WorkoutID = workoutID
+	}
+}
+
+func WorkoutCommentText(text string) WorkoutCommentOpt {
+	return func(comment *orm.WorkoutComment) {
+		comment.Comment = text
+	}
+}
+
+func WorkoutCommentCreatedAt(createdAt time.Time) WorkoutCommentOpt {
+	return func(comment *orm.WorkoutComment) {
+		comment.CreatedAt = createdAt.UTC()
 	}
 }

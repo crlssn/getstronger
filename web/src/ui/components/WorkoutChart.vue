@@ -1,37 +1,18 @@
 <script setup lang="ts">
 import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 import { computed } from 'vue'
-import { Line as LineChart } from 'vue-chartjs'
-import { formatToShortDateTime } from '@/utils/datetime.ts'
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-} from 'chart.js'
+import { Bar as BarChart } from 'vue-chartjs'
+import { DateTime } from 'luxon'
+import { BarElement, Chart as ChartJS, CategoryScale, LinearScale, Tooltip } from 'chart.js'
 
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  Filler,
-  PointElement,
-)
+ChartJS.register(Tooltip, BarElement, CategoryScale, LinearScale)
 
 const props = defineProps<{
   workouts: Workout[]
 }>()
 
 const options = {
-  maintainAspectRatio: true,
+  maintainAspectRatio: false,
   responsive: true,
   scales: {
     x: {
@@ -44,7 +25,7 @@ const options = {
       },
       ticks: {
         display: true,
-        maxTicksLimit: 6,
+        maxTicksLimit: 7,
         color: '#64748b',
       },
       title: {
@@ -68,6 +49,7 @@ const options = {
         text: 'Volume (kg)',
         color: '#64748b',
       },
+      beginAtZero: true,
     },
   },
   plugins: {
@@ -75,39 +57,50 @@ const options = {
   },
 }
 
-const workouts = computed(() => [...props.workouts].reverse())
+const dailyVolume = computed(() => {
+  const buckets = new Map<string, { label: string; timestamp: number; volume: number }>()
 
-const data = computed(() => {
-  const labels: string[] = []
-  const intensity: number[] = []
+  props.workouts.forEach((workout) => {
+    if (!workout.finishedAt) return
+    const finishedAt = DateTime.fromSeconds(Number(workout.finishedAt.seconds))
+    if (!finishedAt.isValid) return
 
-  workouts.value.map((workout) => {
-    labels.push(formatToShortDateTime(workout.finishedAt))
-    intensity.push(workout.intensity)
+    const key = finishedAt.toISODate()
+    if (!key) return
+    const existing = buckets.get(key)
+    buckets.set(key, {
+      label: finishedAt.toFormat('d LLL'),
+      timestamp: finishedAt.toMillis(),
+      volume: (existing?.volume ?? 0) + workout.intensity,
+    })
   })
 
+  return [...buckets.values()].sort((first, second) => first.timestamp - second.timestamp)
+})
+
+const data = computed(() => {
   return {
     datasets: [
       {
-        borderColor: '#4f46e5',
-        borderWidth: 3,
-        backgroundColor: 'rgba(79, 70, 229, 0.10)',
-        data: intensity,
-        label: 'Weight Lifted',
-        tension: 0.4,
-        pointBackgroundColor: '#ffffff',
-        pointBorderColor: '#4f46e5',
-        pointRadius: 3,
-        fill: true,
+        backgroundColor: '#6366f1',
+        borderRadius: 8,
+        data: dailyVolume.value.map((day) => day.volume),
+        label: 'Training volume',
       },
     ],
-    labels: labels,
+    labels: dailyVolume.value.map((day) => day.label),
   }
 })
 </script>
 
 <template>
-  <LineChart :data="data" :options="options as any" />
+  <div class="chart-frame">
+    <BarChart :data="data" :options="options as any" />
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.chart-frame {
+  @apply h-64;
+}
+</style>

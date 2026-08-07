@@ -1,24 +1,23 @@
 <script setup lang="ts">
 import { type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
+
 import { onMounted, ref } from 'vue'
-import router from '@/router/router'
 import { useRoute } from 'vue-router'
+import { ChevronRightIcon, PencilIcon, TrashIcon, TrophyIcon } from '@heroicons/vue/24/outline'
+
+import router from '@/router/router'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useAlertStore } from '@/stores/alerts'
-import AppList from '@/ui/components/AppList.vue'
-import ExerciseChart from '@/ui/components/ExerciseChart.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import AppListItem from '@/ui/components/AppListItem.vue'
-import { formatToRelativeDateTime } from '@/utils/datetime.ts'
-import AppListItemLink from '@/ui/components/AppListItemLink.vue'
+import ExerciseChart from '@/ui/components/ExerciseChart.vue'
+import { formatToShortDateTime } from '@/utils/datetime.ts'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
-import { ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import usePagination from '@/utils/usePagination'
-import AppCard from '@/ui/components/AppCard.vue'
-import { TrophyIcon } from '@heroicons/vue/24/solid'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
-const sets = ref([] as Set[])
+const sets = ref<Set[]>([])
 const exercise = ref<Exercise>()
+const loading = ref(true)
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -27,93 +26,186 @@ const alertStore = useAlertStore()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
-  const res = await getExercise(route.params.id as string)
-  if (!res) return
-
-  exercise.value = res.exercise
-  pageTitle.setPageTitle(exercise.value?.name as string)
-
-  await fetchSets()
+  const response = await getExercise(route.params.id as string)
+  if (response?.exercise) {
+    exercise.value = response.exercise
+    pageTitle.setPageTitle(response.exercise.name)
+    await fetchSets()
+  }
+  loading.value = false
 })
 
 const fetchSets = async () => {
-  const res = await listSets([], [route.params.id as string], pageToken.value)
-  if (!res) return
+  const response = await listSets([], [route.params.id as string], pageToken.value)
+  if (!response) return
 
-  sets.value = [...sets.value, ...res.sets]
-  pageToken.value = resolvePageToken(res.pagination)
+  sets.value = [...sets.value, ...response.sets]
+  pageToken.value = resolvePageToken(response.pagination)
 }
 
 const onDeleteExercise = async () => {
-  if (confirm('Are you sure you want to delete this exercise?')) {
-    await deleteExercise(route.params.id as string)
-    alertStore.setError('Exercise deleted')
-    await router.push('/exercises')
+  if (!confirm(`Delete “${exercise.value?.name ?? 'this exercise'}”? This cannot be undone.`)) {
+    return
   }
+
+  await deleteExercise(route.params.id as string)
+  alertStore.setError('Exercise deleted')
+  await router.push('/exercises')
 }
 
 const downSample = (data: Set[], sampleSize: number): Set[] => {
+  if (data.length <= sampleSize) return data
   const sampled: Set[] = []
   const step = Math.ceil(data.length / sampleSize)
-
-  for (let i = 0; i < data.length; i += step) {
-    sampled.push(data[i])
-  }
-
+  for (let index = 0; index < data.length; index += step) sampled.push(data[index])
   return sampled
 }
 </script>
 
 <template>
-  <div v-if="sets.length" class="mb-8">
-    <h6>Trend</h6>
-    <AppCard class="p-2">
-      <ExerciseChart :sets="downSample(sets, 50)" />
-    </AppCard>
-  </div>
+  <div v-if="loading" class="loading-card">Loading exercise…</div>
+  <div v-else-if="exercise" class="exercise-detail">
+    <ExerciseTags :tags="exercise.tags" />
 
-  <div v-if="exercise?.label" class="mb-8">
-    <h6>Label</h6>
-    <AppList>
-      <AppListItem>
-        {{ exercise.label }}
-      </AppListItem>
-    </AppList>
-  </div>
+    <section v-if="sets.length" class="chart-card">
+      <p class="eyebrow">Trend</p>
+      <ExerciseChart :sets="downSample(sets, 60)" />
+    </section>
 
-  <h6>Sets</h6>
-  <AppList :can-fetch="hasMorePages" @fetch="fetchSets">
-    <AppListItem v-if="sets.length === 0"> No sets</AppListItem>
-    <AppListItemLink
-      v-for="(set, index) in sets"
-      :key="index"
-      :to="`/workouts/${set.metadata?.workoutId}`"
-    >
-      <div class="w-full flex flex-col">
-        <p>
-          {{ set.weight }} kg x {{ set.reps }}
-          <TrophyIcon
-            v-if="set.metadata?.personalBest"
-            class="size-4 text-yellow-500 inline ml-1"
-          />
-        </p>
-        <small class="mt-1">{{ formatToRelativeDateTime(set.metadata?.createdAt) }}</small>
+    <section class="sets-card">
+      <header>
+        <div>
+          <p class="eyebrow">History</p>
+          <h1>Logged sets</h1>
+        </div>
+        <span>{{ sets.length }}</span>
+      </header>
+
+      <div v-if="sets.length" class="set-list">
+        <RouterLink v-for="set in sets" :key="set.id" :to="`/workouts/${set.metadata?.workoutId}`">
+          <span class="set-copy">
+            <strong>{{ set.weight }} kg × {{ set.reps }}</strong>
+            <small>{{ formatToShortDateTime(set.metadata?.createdAt) }}</small>
+          </span>
+          <span v-if="set.metadata?.personalBest" class="record-pill"><TrophyIcon /> PR</span>
+          <ChevronRightIcon />
+        </RouterLink>
       </div>
-      <ChevronRightIcon />
-    </AppListItemLink>
-  </AppList>
+      <p v-else class="empty-copy">Log this exercise in a workout to start its history.</p>
 
-  <div v-if="authStore.userId === exercise?.userId">
-    <h6 class="mt-8">Admin</h6>
-    <AppList>
-      <AppListItemLink :to="`/exercises/${route.params.id}/edit`">
-        Update Exercise
-        <ChevronRightIcon />
-      </AppListItemLink>
-      <AppListItem is="danger" class="cursor-pointer" @click="onDeleteExercise">
-        Delete Exercise
-        <TrashIcon />
-      </AppListItem>
-    </AppList>
+      <button v-if="hasMorePages" type="button" class="load-more" @click="fetchSets">
+        Load more sets
+      </button>
+    </section>
+
+    <section v-if="authStore.userId === exercise.userId" class="manage-card">
+      <div>
+        <p class="eyebrow">Manage exercise</p>
+        <h2>Exercise settings</h2>
+      </div>
+      <RouterLink :to="`/exercises/${route.params.id}/edit`">
+        <PencilIcon /> Update exercise <ChevronRightIcon />
+      </RouterLink>
+      <button type="button" @click="onDeleteExercise"><TrashIcon /> Delete exercise</button>
+    </section>
   </div>
+  <section v-else class="empty-card">
+    <h1>Exercise unavailable</h1>
+    <p>This exercise could not be loaded or no longer exists.</p>
+    <RouterLink to="/progress">Back to progress</RouterLink>
+  </section>
 </template>
+
+<style scoped>
+.exercise-detail {
+  @apply mx-auto max-w-3xl space-y-5;
+}
+.loading-card,
+.empty-card,
+.chart-card,
+.sets-card,
+.manage-card {
+  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+}
+.loading-card {
+  @apply text-sm text-slate-500;
+}
+.eyebrow {
+  @apply mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500;
+}
+.chart-card {
+  @apply space-y-4;
+}
+.sets-card > header {
+  @apply mb-3 flex items-end justify-between gap-3;
+}
+.sets-card h1,
+.manage-card h2,
+.empty-card h1 {
+  @apply text-xl font-semibold tracking-tight text-slate-950;
+}
+.sets-card > header > span {
+  @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500;
+}
+.set-list {
+  @apply divide-y divide-slate-100 border-t border-slate-100;
+}
+.set-list > a {
+  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 py-3 transition hover:text-indigo-700;
+}
+.set-copy {
+  @apply min-w-0;
+}
+.set-copy strong,
+.set-copy small {
+  @apply block;
+}
+.set-copy strong {
+  @apply text-sm font-semibold text-slate-950;
+}
+.set-copy small {
+  @apply mt-1 text-xs text-slate-500;
+}
+.record-pill {
+  @apply inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700;
+}
+.record-pill svg,
+.set-list > a > svg {
+  @apply size-4;
+}
+.set-list > a > svg {
+  @apply text-slate-400;
+}
+.empty-copy {
+  @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500;
+}
+.load-more {
+  @apply mt-3 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+}
+.manage-card {
+  @apply space-y-3;
+}
+.manage-card .eyebrow {
+  @apply mb-1;
+}
+.manage-card a,
+.manage-card button {
+  @apply flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+}
+.manage-card a svg,
+.manage-card button svg {
+  @apply size-5;
+}
+.manage-card a svg:last-child {
+  @apply ml-auto text-slate-400;
+}
+.manage-card button {
+  @apply border-red-200 text-red-600 hover:bg-red-50;
+}
+.empty-card p {
+  @apply mt-2 text-sm text-slate-500;
+}
+.empty-card a {
+  @apply mt-4 inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+}
+</style>

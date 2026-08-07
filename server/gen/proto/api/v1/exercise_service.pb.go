@@ -26,7 +26,7 @@ const (
 type CreateExerciseRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,11 +68,11 @@ func (x *CreateExerciseRequest) GetName() string {
 	return ""
 }
 
-func (x *CreateExerciseRequest) GetLabel() string {
+func (x *CreateExerciseRequest) GetTags() []string {
 	if x != nil {
-		return x.Label
+		return x.Tags
 	}
-	return ""
+	return nil
 }
 
 type CreateExerciseResponse struct {
@@ -787,10 +787,11 @@ var File_api_v1_exercise_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"J\n" +
+	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\\\n" +
 	"\x15CreateExerciseRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"(\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12&\n" +
+	"\x04tags\x18\x02 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
+	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\"(\n" +
 	"\x16CreateExerciseResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\".\n" +
 	"\x12GetExerciseRequest\x12\x18\n" +

@@ -70,8 +70,8 @@ func (s *exerciseSuite) TestCreateExercise() {
 			name: "ok_exercise_created",
 			req: &connect.Request[v1.CreateExerciseRequest]{
 				Msg: &v1.CreateExerciseRequest{
-					Name:  "Name",
-					Label: "Label",
+					Name: "Name",
+					Tags: []string{"Strength", "Upper body"},
 				},
 			},
 			init: func(_ test) context.Context {
@@ -81,6 +81,40 @@ func (s *exerciseSuite) TestCreateExercise() {
 			},
 			expected: expected{
 				err: nil,
+			},
+		},
+		{
+			name: "err_more_than_10_tags",
+			req: &connect.Request[v1.CreateExerciseRequest]{
+				Msg: &v1.CreateExerciseRequest{
+					Name: "Name",
+					Tags: make([]string, 11),
+				},
+			},
+			init: func(_ test) context.Context {
+				user := s.factory.NewUser()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidExerciseTags),
+			},
+		},
+		{
+			name: "err_duplicate_tags_are_case_insensitive",
+			req: &connect.Request[v1.CreateExerciseRequest]{
+				Msg: &v1.CreateExerciseRequest{
+					Name: "Name",
+					Tags: []string{"Strength", "strength"},
+				},
+			},
+			init: func(_ test) context.Context {
+				user := s.factory.NewUser()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidExerciseTags),
 			},
 		},
 	}
@@ -106,7 +140,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
-			s.Require().Equal(t.req.Msg.GetLabel(), exercise.SubTitle.String)
+			s.Require().Equal(t.req.Msg.GetTags(), []string(exercise.Tags))
 		})
 	}
 }
@@ -229,16 +263,16 @@ func (s *exerciseSuite) TestUpdateExercise() {
 			},
 		},
 		{
-			name: "ok_exercise_label_updated",
+			name: "ok_exercise_tags_updated",
 			req: &connect.Request[v1.UpdateExerciseRequest]{
 				Msg: &v1.UpdateExerciseRequest{
 					Exercise: &v1.Exercise{
-						Id:    uuid.NewString(),
-						Name:  "Name",
-						Label: "New Label",
+						Id:   uuid.NewString(),
+						Name: "Name",
+						Tags: []string{"New Tag", "Accessory"},
 					},
 					UpdateMask: &fieldmaskpb.FieldMask{
-						Paths: []string{"label"},
+						Paths: []string{"tags"},
 					},
 				},
 			},
@@ -248,7 +282,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 					factory.ExerciseID(t.req.Msg.GetExercise().GetId()),
 					factory.ExerciseUserID(user.ID),
 					factory.ExerciseTitle(t.req.Msg.GetExercise().GetName()),
-					factory.ExerciseSubTitle("Old Label"),
+					factory.ExerciseTags("Old Tag"),
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -259,16 +293,16 @@ func (s *exerciseSuite) TestUpdateExercise() {
 			},
 		},
 		{
-			name: "ok_exercise_name_and_label_updated",
+			name: "ok_exercise_name_and_tags_updated",
 			req: &connect.Request[v1.UpdateExerciseRequest]{
 				Msg: &v1.UpdateExerciseRequest{
 					Exercise: &v1.Exercise{
-						Id:    uuid.NewString(),
-						Name:  "New Name",
-						Label: "New Label",
+						Id:   uuid.NewString(),
+						Name: "New Name",
+						Tags: []string{"New Tag"},
 					},
 					UpdateMask: &fieldmaskpb.FieldMask{
-						Paths: []string{"name", "label"},
+						Paths: []string{"name", "tags"},
 					},
 				},
 			},
@@ -278,7 +312,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 					factory.ExerciseID(t.req.Msg.GetExercise().GetId()),
 					factory.ExerciseUserID(user.ID),
 					factory.ExerciseTitle("Old Name"),
-					factory.ExerciseSubTitle("Old Label"),
+					factory.ExerciseTags("Old Tag"),
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -354,13 +388,17 @@ func (s *exerciseSuite) TestUpdateExercise() {
 
 			s.Require().Equal(t.req.Msg.GetExercise().GetId(), res.Msg.GetExercise().GetId())
 			s.Require().Equal(t.req.Msg.GetExercise().GetName(), res.Msg.GetExercise().GetName())
-			s.Require().Equal(t.req.Msg.GetExercise().GetLabel(), res.Msg.GetExercise().GetLabel())
+			expectedTags := t.req.Msg.GetExercise().GetTags()
+			if expectedTags == nil {
+				expectedTags = []string{}
+			}
+			s.Require().Equal(expectedTags, res.Msg.GetExercise().GetTags())
 
 			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetExercise().GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetExercise().GetName(), exercise.Title)
-			s.Require().Equal(t.req.Msg.GetExercise().GetLabel(), exercise.SubTitle.String)
+			s.Require().Equal(expectedTags, []string(exercise.Tags))
 		})
 	}
 }
@@ -479,7 +517,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 						factory.ExerciseID(exercise.GetId()),
 						factory.ExerciseUserID(user.ID),
 						factory.ExerciseTitle(exercise.GetName()),
-						factory.ExerciseSubTitle(exercise.GetLabel()),
+						factory.ExerciseTags(exercise.GetTags()...),
 						factory.ExerciseCreatedAt(s.factory.Now().Add(time.Second)),
 					))
 				}
@@ -503,13 +541,13 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 							Id:     uuid.NewString(),
 							UserId: factory.UUID(0),
 							Name:   gofakeit.Name(),
-							Label:  gofakeit.Word(),
+							Tags:   []string{gofakeit.Word()},
 						},
 						{
 							Id:     uuid.NewString(),
 							UserId: factory.UUID(0),
 							Name:   gofakeit.Name(),
-							Label:  gofakeit.Word(),
+							Tags:   []string{gofakeit.Word()},
 						},
 					},
 					Pagination: &v1.PaginationResponse{},
@@ -534,7 +572,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 						factory.ExerciseID(exercise.GetId()),
 						factory.ExerciseUserID(user.ID),
 						factory.ExerciseTitle(exercise.GetName()),
-						factory.ExerciseSubTitle(exercise.GetLabel()),
+						factory.ExerciseTags(exercise.GetTags()...),
 					)
 				}
 
@@ -549,7 +587,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 							Id:     uuid.NewString(),
 							UserId: factory.UUID(1),
 							Name:   "Exercise Name",
-							Label:  gofakeit.Word(),
+							Tags:   []string{gofakeit.Word()},
 						},
 					},
 					Pagination: &v1.PaginationResponse{},
@@ -574,7 +612,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 						factory.ExerciseID(exercise.GetId()),
 						factory.ExerciseUserID(user.ID),
 						factory.ExerciseTitle(exercise.GetName()),
-						factory.ExerciseSubTitle(exercise.GetLabel()),
+						factory.ExerciseTags(exercise.GetTags()...),
 					)
 				}
 
@@ -589,7 +627,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 							Id:     factory.UUID(9),
 							UserId: factory.UUID(2),
 							Name:   gofakeit.Name(),
-							Label:  gofakeit.Word(),
+							Tags:   []string{gofakeit.Word()},
 						},
 					},
 					Pagination: &v1.PaginationResponse{},
@@ -615,7 +653,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 						factory.ExerciseID(exercise.GetId()),
 						factory.ExerciseUserID(user.ID),
 						factory.ExerciseTitle(exercise.GetName()),
-						factory.ExerciseSubTitle(exercise.GetLabel()),
+						factory.ExerciseTags(exercise.GetTags()...),
 					)
 				}
 
@@ -642,7 +680,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 							Id:     factory.UUID(0),
 							UserId: factory.UUID(4),
 							Name:   "Target",
-							Label:  "Label",
+							Tags:   []string{"Label"},
 						},
 					},
 					Pagination: &v1.PaginationResponse{},
@@ -689,7 +727,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 			for i, exercise := range res.Msg.GetExercises() {
 				s.Require().Equal(t.expected.res.GetExercises()[i].GetId(), exercise.GetId())
 				s.Require().Equal(t.expected.res.GetExercises()[i].GetName(), exercise.GetName())
-				s.Require().Equal(t.expected.res.GetExercises()[i].GetLabel(), exercise.GetLabel())
+				s.Require().Equal(t.expected.res.GetExercises()[i].GetTags(), exercise.GetTags())
 			}
 
 			s.Require().Equal(t.expected.res.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
@@ -728,7 +766,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 						factory.ExerciseID(exercise.GetId()),
 						factory.ExerciseUserID(user.ID),
 						factory.ExerciseTitle(exercise.GetName()),
-						factory.ExerciseSubTitle(exercise.GetLabel()),
+						factory.ExerciseTags(exercise.GetTags()...),
 					)
 
 					for _, set := range exerciseSets.GetSets() {
@@ -762,7 +800,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 								Id:     factory.UUID(0),
 								UserId: uuid.NewString(),
 								Name:   gofakeit.Name(),
-								Label:  gofakeit.Word(),
+								Tags:   []string{gofakeit.Word()},
 							},
 							Sets: []*v1.Set{
 								{
@@ -790,7 +828,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 								Id:     factory.UUID(1),
 								UserId: uuid.NewString(),
 								Name:   gofakeit.Name(),
-								Label:  gofakeit.Word(),
+								Tags:   []string{gofakeit.Word()},
 							},
 							Sets: []*v1.Set{
 								{
@@ -854,7 +892,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 			for i, exerciseSets := range res.Msg.GetExerciseSets() {
 				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetId(), exerciseSets.GetExercise().GetId())
 				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetName(), exerciseSets.GetExercise().GetName())
-				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetLabel(), exerciseSets.GetExercise().GetLabel())
+				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetTags(), exerciseSets.GetExercise().GetTags())
 				s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetExercise().GetUserId(), exerciseSets.GetExercise().GetUserId())
 				for j, set := range exerciseSets.GetSets() {
 					s.Require().Equal(t.expected.res.GetExerciseSets()[i].GetSets()[j].GetId(), set.GetId())

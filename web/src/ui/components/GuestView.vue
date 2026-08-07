@@ -1,33 +1,40 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
+import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-  <nav>
-    <div class="container">
-      <p><span class="font-semibold">Get</span><span class="font-bold">Stronger</span></p>
-    </div>
-  </nav>
-  <AppAlert fixed />
-  <main>
-    <RouterView />
-  </main>
+  <div class="guest-shell">
+    <header class="guest-header">
+      <RouterLink to="/login" class="guest-brand" aria-label="GetStronger login">
+        <span class="guest-brand-mark"><img src="/favicon.png" alt="" /></span>
+        <span>GetStronger</span>
+      </RouterLink>
+    </header>
+    <AppAlert fixed />
+    <main class="guest-main">
+      <RouterView />
+    </main>
+  </div>
 </template>
 
 <style scoped>
-nav {
-  @apply fixed w-full top-0 z-10  border-b-2 border-gray-200 bg-white h-16;
-
-  .container {
-    @apply flex items-center justify-center max-w-4xl mx-auto px-4 h-16;
-    p {
-      @apply text-2xl;
-    }
-  }
+.guest-shell {
+  @apply min-h-screen bg-slate-50;
 }
-
-main {
-  @apply flex min-h-full flex-col justify-center px-4 max-w-4xl mx-auto pt-20 pb-8;
+.guest-header {
+  @apply border-b border-slate-200 bg-white;
+}
+.guest-brand {
+  @apply mx-auto flex h-20 max-w-lg items-center justify-center gap-3 px-6 text-lg font-bold tracking-tight text-slate-950;
+}
+.guest-brand-mark {
+  @apply grid size-11 place-items-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-200;
+}
+.guest-brand-mark img {
+  @apply size-7 brightness-0 invert;
+}
+.guest-main {
+  @apply mx-auto w-full max-w-lg px-6 py-10 sm:px-8 sm:py-14;
 }
 </style>

@@ -10,7 +10,7 @@ export const useWorkoutStore = defineStore(
   () => {
     const workouts = ref({} as RoutineWorkout)
 
-    const initialiseWorkout = (routineID: RoutineID) => {
+    const initialiseWorkout = (routineID: RoutineID, planId = '') => {
       if (!workouts.value[routineID]) {
         workouts.value[routineID] = {}
       }
@@ -22,6 +22,8 @@ export const useWorkoutStore = defineStore(
       if (!workouts.value[routineID].startedAt) {
         workouts.value[routineID].startedAt = new Date().toISOString()
       }
+
+      if (planId) workouts.value[routineID].planId = planId
     }
 
     const getSets = (routineID: RoutineID, exerciseID: ExerciseID) => {
@@ -47,6 +49,8 @@ export const useWorkoutStore = defineStore(
     const getNote = (routineID: RoutineID) => workouts.value[routineID]?.note ?? ''
 
     const getStartedAt = (routineID: RoutineID) => workouts.value[routineID]?.startedAt
+
+    const getPlanId = (routineID: RoutineID) => workouts.value[routineID]?.planId ?? ''
 
     const getAddedExercises = (routineID: RoutineID) =>
       workouts.value[routineID]?.addedExercises ?? []
@@ -124,6 +128,7 @@ export const useWorkoutStore = defineStore(
       getAllSets,
       getCompletedExerciseIds,
       getNote,
+      getPlanId,
       getSets,
       getStartedAt,
       initialiseWorkout,

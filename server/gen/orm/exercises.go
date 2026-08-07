@@ -19,17 +19,18 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Exercise is an object representing the database table.
 type Exercise struct {
-	ID        string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID    string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Title     string      `boil:"title" json:"title" toml:"title" yaml:"title"`
-	SubTitle  null.String `boil:"sub_title" json:"sub_title,omitempty" toml:"sub_title" yaml:"sub_title,omitempty"`
-	CreatedAt time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	DeletedAt null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ID        string            `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID    string            `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Title     string            `boil:"title" json:"title" toml:"title" yaml:"title"`
+	CreatedAt time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	DeletedAt null.Time         `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	Tags      types.StringArray `boil:"tags" json:"tags" toml:"tags" yaml:"tags"`
 
 	R *exerciseR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L exerciseL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,50 +40,71 @@ var ExerciseColumns = struct {
 	ID        string
 	UserID    string
 	Title     string
-	SubTitle  string
 	CreatedAt string
 	DeletedAt string
+	Tags      string
 }{
 	ID:        "id",
 	UserID:    "user_id",
 	Title:     "title",
-	SubTitle:  "sub_title",
 	CreatedAt: "created_at",
 	DeletedAt: "deleted_at",
+	Tags:      "tags",
 }
 
 var ExerciseTableColumns = struct {
 	ID        string
 	UserID    string
 	Title     string
-	SubTitle  string
 	CreatedAt string
 	DeletedAt string
+	Tags      string
 }{
 	ID:        "exercises.id",
 	UserID:    "exercises.user_id",
 	Title:     "exercises.title",
-	SubTitle:  "exercises.sub_title",
 	CreatedAt: "exercises.created_at",
 	DeletedAt: "exercises.deleted_at",
+	Tags:      "exercises.tags",
 }
 
 // Generated where
+
+type whereHelpertypes_StringArray struct{ field string }
+
+func (w whereHelpertypes_StringArray) EQ(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertypes_StringArray) NEQ(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertypes_StringArray) LT(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertypes_StringArray) LTE(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertypes_StringArray) GT(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
 
 var ExerciseWhere = struct {
 	ID        whereHelperstring
 	UserID    whereHelperstring
 	Title     whereHelperstring
-	SubTitle  whereHelpernull_String
 	CreatedAt whereHelpertime_Time
 	DeletedAt whereHelpernull_Time
+	Tags      whereHelpertypes_StringArray
 }{
 	ID:        whereHelperstring{field: "\"getstronger\".\"exercises\".\"id\""},
 	UserID:    whereHelperstring{field: "\"getstronger\".\"exercises\".\"user_id\""},
 	Title:     whereHelperstring{field: "\"getstronger\".\"exercises\".\"title\""},
-	SubTitle:  whereHelpernull_String{field: "\"getstronger\".\"exercises\".\"sub_title\""},
 	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"exercises\".\"created_at\""},
 	DeletedAt: whereHelpernull_Time{field: "\"getstronger\".\"exercises\".\"deleted_at\""},
+	Tags:      whereHelpertypes_StringArray{field: "\"getstronger\".\"exercises\".\"tags\""},
 }
 
 // ExerciseRels is where relationship names are stored.
@@ -160,9 +182,9 @@ func (r *exerciseR) GetSets() SetSlice {
 type exerciseL struct{}
 
 var (
-	exerciseAllColumns            = []string{"id", "user_id", "title", "sub_title", "created_at", "deleted_at"}
+	exerciseAllColumns            = []string{"id", "user_id", "title", "created_at", "deleted_at", "tags"}
 	exerciseColumnsWithoutDefault = []string{"user_id", "title"}
-	exerciseColumnsWithDefault    = []string{"id", "sub_title", "created_at", "deleted_at"}
+	exerciseColumnsWithDefault    = []string{"id", "created_at", "deleted_at", "tags"}
 	exercisePrimaryKeyColumns     = []string{"id"}
 	exerciseGeneratedColumns      = []string{}
 )

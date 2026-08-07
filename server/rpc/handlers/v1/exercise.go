@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -20,6 +21,33 @@ import (
 
 var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
 
+const maxExerciseTags = 10
+
+var ErrInvalidExerciseTags = errors.New("exercise tags must contain no more than 10 non-empty, trimmed, unique values")
+
+func normalizeExerciseTags(tags []string) ([]string, error) {
+	if len(tags) > maxExerciseTags {
+		return nil, ErrInvalidExerciseTags
+	}
+
+	normalized := make([]string, 0, len(tags))
+	seen := make(map[string]struct{}, len(tags))
+	for _, tag := range tags {
+		tag = strings.TrimSpace(tag)
+		key := strings.ToLower(tag)
+		if tag == "" {
+			return nil, ErrInvalidExerciseTags
+		}
+		if _, duplicate := seen[key]; duplicate {
+			return nil, ErrInvalidExerciseTags
+		}
+		seen[key] = struct{}{}
+		normalized = append(normalized, tag)
+	}
+
+	return normalized, nil
+}
+
 type exerciseHandler struct {
 	repo repo.Repo
 }
@@ -31,11 +59,15 @@ func NewExerciseHandler(r repo.Repo) apiv1connect.ExerciseServiceHandler {
 func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Request[apiv1.CreateExerciseRequest]) (*connect.Response[apiv1.CreateExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
+	tags, err := normalizeExerciseTags(req.Msg.GetTags())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
 		UserID: userID,
 		Name:   req.Msg.GetName(),
-		Label:  req.Msg.GetLabel(),
+		Tags:   tags,
 	})
 	if err != nil {
 		log.Error("create exercise failed", zap.Error(err))
@@ -92,8 +124,12 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 		switch path {
 		case "name":
 			opts = append(opts, repo.UpdateExerciseTitle(req.Msg.GetExercise().GetName()))
-		case "label":
-			opts = append(opts, repo.UpdateExerciseSubTitle(req.Msg.GetExercise().GetLabel()))
+		case "tags":
+			tags, normalizeErr := normalizeExerciseTags(req.Msg.GetExercise().GetTags())
+			if normalizeErr != nil {
+				return nil, connect.NewError(connect.CodeInvalidArgument, normalizeErr)
+			}
+			opts = append(opts, repo.UpdateExerciseTags(tags))
 		default:
 			log.Error("invalid update mask path", zap.String("path", path))
 			return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidUpdateMaskPath)

@@ -42,10 +42,11 @@ USER_LASTNAME = { default = "Doe" }
 
 # Database tasks
 
-[tasks.db_init]
+[tasks."db:init"]
+alias = "db_init"
 description = "Recreate the local PostgreSQL container"
 env = { _.file = ".env" }
-run = [{ task = "clean_db" }, '''
+run = [{ task = "db:clean" }, '''
   docker run --name "$DB_CONTAINER" -d -p "$DB_PORT:5432" \
     -e POSTGRES_DB="$DB_NAME" \
     -e POSTGRES_USER="$DB_USER" \
@@ -53,11 +54,13 @@ run = [{ task = "clean_db" }, '''
     "$DB_IMAGE"
   ''']
 
-[tasks.db_start]
+[tasks."db:start"]
+alias = "db_start"
 description = "Start the local PostgreSQL container"
 run = 'docker start "$DB_CONTAINER"'
 
-[tasks.db_migrate]
+[tasks."db:reset"]
+alias = "db_migrate"
 description = "Reset migrations and regenerate the database models"
 env = { _.file = ".env" }
 run = [
@@ -66,7 +69,8 @@ run = [
     'sqlboiler -c "$DB_CONFIG_PATH" psql',
 ]
 
-[tasks.db_migrate_up]
+[tasks."db:migrate"]
+alias = ["db_migrate_up", "db:migrate:up"]
 description = "Apply pending migrations and regenerate the database models"
 env = { _.file = ".env" }
 run = [
@@ -74,7 +78,8 @@ run = [
     'sqlboiler -c "$DB_CONFIG_PATH" psql',
 ]
 
-[tasks.db_seed]
+[tasks."db:seed"]
+alias = "db_seed"
 description = "Seed the local database"
 run = '''
 go run server/testing/factory/seed/main.go \
@@ -88,13 +93,15 @@ go run server/testing/factory/seed/main.go \
 
 [tasks.gen]
 description = "Generate all code and local certificates"
-run = [{ task = "gen_go" }, { task = "gen_certs" }, { task = "gen_protos" }]
+run = [{ task = "gen:go" }, { task = "gen:certs" }, { task = "gen:protos" }]
 
-[tasks.gen_go]
+[tasks."gen:go"]
+alias = "gen_go"
 description = "Run Go code generation"
 run = "go generate ./..."
 
-[tasks.gen_certs]
+[tasks."gen:certs"]
+alias = "gen_certs"
 description = "Generate self-signed certificates for local HTTPS"
 env = { _.file = ".env" }
 run = '''
@@ -114,17 +121,19 @@ echo "SERVER_CERT_PATH=$PWD/.secrets/localhost.crt" >> .env
 echo "⚠️ Restart the server and visit the following link to trust the certificate in your browser: https://localhost:$SERVER_PORT"
 '''
 
-[tasks.gen_protos]
+[tasks."gen:protos"]
+alias = "gen_protos"
 description = "Generate and format Protocol Buffer code"
-run = ["buf generate", { task = "format_backend" }]
+run = ["buf generate", { task = "format:backend" }]
 
 # Test tasks
 
 [tasks.test]
 description = "Run all tests"
-run = [{ task = "test_web" }, { task = "test_backend" }]
+run = [{ task = "test:web" }, { task = "test:backend" }]
 
-[tasks.test_web]
+[tasks."test:web"]
+alias = "test_web"
 description = "Build and test the web application"
 dir = "web"
 run = [
@@ -132,7 +141,8 @@ run = [
     # "npm run test:unit",
 ]
 
-[tasks.test_backend]
+[tasks."test:backend"]
+alias = "test_backend"
 description = "Run backend tests"
 run = "go test ./..."
 
@@ -140,21 +150,24 @@ run = "go test ./..."
 
 [tasks.app]
 description = "Run the web, email, and backend applications"
-run = [{ tasks = ["app_web", "app_email", "app_backend"] }]
+run = [{ tasks = ["app:web", "app:email", "app:backend"] }]
 
-[tasks.app_web]
+[tasks."app:web"]
+alias = "app_web"
 description = "Run the web development server"
 dir = "web"
 run = ["npm install", "npm run dev"]
 
-[tasks.app_email]
+[tasks."app:email"]
+alias = "app_email"
 description = "Run MailHog"
 run = [
     "docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog",
     '''echo "The email app is running at http://localhost:8025"''',
 ]
 
-[tasks.app_backend]
+[tasks."app:backend"]
+alias = "app_backend"
 description = "Run the backend server"
 run = "go run ./server/cmd/main.go"
 
@@ -163,50 +176,57 @@ run = "go run ./server/cmd/main.go"
 [tasks.format]
 description = "Format all code"
 run = [
-    { task = "format_web" },
-    { task = "format_backend" },
-    { task = "format_terraform" },
+    { task = "format:web" },
+    { task = "format:backend" },
+    { task = "format:terraform" },
 ]
 
-[tasks.format_web]
+[tasks."format:web"]
+alias = "format_web"
 description = "Format web code"
 dir = "web"
 run = ["npx sort-package-json", "npm run format"]
 
-[tasks.format_backend]
+[tasks."format:backend"]
+alias = "format_backend"
 description = "Format backend code"
 run = ["goimports -w .", "gofumpt -l -w ."]
 
-[tasks.format_terraform]
+[tasks."format:terraform"]
+alias = "format_terraform"
 description = "Format Terraform code"
 run = "terraform fmt -recursive"
 
 [tasks.lint]
 description = "Lint all code"
 run = [
-    { task = "lint_web" },
-    { task = "lint_protos" },
-    { task = "lint_backend" },
+    { task = "lint:web" },
+    { task = "lint:protos" },
+    { task = "lint:backend" },
 ]
 
-[tasks.lint_web]
+[tasks."lint:web"]
+alias = "lint_web"
 description = "Lint web code"
 dir = "web"
 run = "npm run lint"
 
-[tasks.lint_protos]
+[tasks."lint:protos"]
+alias = "lint_protos"
 description = "Lint Protocol Buffer definitions"
 run = "buf lint"
 
-[tasks.lint_backend]
+[tasks."lint:backend"]
+alias = "lint_backend"
 description = "Lint backend code"
 run = "golangci-lint run"
 
 [tasks.vet]
 description = "Vet all code"
-run = [{ task = "vet_go" }]
+run = [{ task = "vet:go" }]
 
-[tasks.vet_go]
+[tasks."vet:go"]
+alias = "vet_go"
 description = "Vet Go code"
 run = "go vet ./..."
 
@@ -215,31 +235,36 @@ run = "go vet ./..."
 [tasks.install]
 description = "Install dependencies, tools, and Git hooks"
 run = [
-    { task = "install_tools" },
-    { task = "install_go" },
-    { task = "install_js" },
-    { task = "install_hooks" },
+    { task = "install:tools" },
+    { task = "install:go" },
+    { task = "install:js" },
+    { task = "install:hooks" },
 ]
 
-[tasks.install_go]
+[tasks."install:go"]
+alias = "install_go"
 description = "Install Go dependencies"
 run = ["go mod download", "go mod tidy"]
 
-[tasks.install_js]
+[tasks."install:js"]
+alias = "install_js"
 description = "Install JavaScript dependencies"
-run = ["npm install", { task = "install_js_web" }]
+run = ["npm install", { task = "install:js:web" }]
 
-[tasks.install_js_web]
+[tasks."install:js:web"]
+alias = "install_js_web"
 description = "Install web dependencies"
 hide = true
 dir = "web"
 run = "npm install"
 
-[tasks.install_tools]
+[tasks."install:tools"]
+alias = "install_tools"
 description = "Install the tools configured in mise.toml"
 run = "mise install"
 
-[tasks.install_hooks]
+[tasks."install:hooks"]
+alias = "install_hooks"
 description = "Install the pre-push Git hook"
 run = [
     "cp ./scripts/pre_push_hook.sh .git/hooks/pre-push",
@@ -260,11 +285,11 @@ description = "Set up and run the local development environment"
 run = [
     { task = "install" },
     { task = "env" },
-    { task = "gen_certs" },
-    { task = "db_init" },
+    { task = "gen:certs" },
+    { task = "db:init" },
     "sleep 1",
-    { task = "db_migrate" },
-    { task = "db_seed" },
+    { task = "db:migrate" },
+    { task = "db:seed" },
     { task = "app" },
 ]
 
@@ -272,8 +297,9 @@ run = [
 
 [tasks.clean]
 description = "Remove local development resources"
-run = [{ task = "clean_db" }]
+run = [{ task = "db:clean" }]
 
-[tasks.clean_db]
+[tasks."db:clean"]
+alias = "clean_db"
 description = "Remove the local PostgreSQL container"
 run = 'docker rm -f "$DB_CONTAINER" || true'

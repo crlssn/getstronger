@@ -5,6 +5,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useAlertStore } from '@/stores/alerts.ts'
+import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -26,89 +27,92 @@ const onSignup = async () => {
 </script>
 
 <template>
-  <form class="space-y-6" method="POST" @submit.prevent="onSignup">
-    <div>
-      <label for="email" class="block font-medium text-gray-900">First name</label>
-      <div class="mt-2">
-        <input
-          id="firstname"
-          v-model="req.firstName"
-          name="firstname"
-          type="text"
-          required
-          class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
-        />
-      </div>
-    </div>
+  <section class="auth-view">
+    <header class="auth-intro">
+      <p class="auth-eyebrow">Start training</p>
+      <h1>Create your account</h1>
+      <p>Build routines, follow your progress, and share the work.</p>
+    </header>
 
-    <div>
-      <label for="email" class="block font-medium text-gray-900">Last name</label>
-      <div class="mt-2">
-        <input v-model="req.lastName" name="lastname" type="text" required />
-      </div>
-    </div>
+    <form class="auth-form" method="POST" @submit.prevent="onSignup">
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="firstname" class="auth-label">First name</label>
+          <div class="mt-2">
+            <input
+              id="firstname"
+              v-model="req.firstName"
+              name="firstname"
+              type="text"
+              autocomplete="given-name"
+              class="auth-input"
+              required
+            />
+          </div>
+        </div>
 
-    <div>
-      <label for="email" class="block font-medium text-gray-900">Email address</label>
-      <div class="mt-2">
-        <input
-          id="email"
-          v-model="req.email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          required
-        />
+        <div>
+          <label for="lastname" class="auth-label">Last name</label>
+          <div class="mt-2">
+            <input
+              id="lastname"
+              v-model="req.lastName"
+              name="lastname"
+              type="text"
+              autocomplete="family-name"
+              class="auth-input"
+              required
+            />
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <div class="flex items-center justify-between">
-        <label for="password" class="block font-medium text-gray-900">Password</label>
+      <div>
+        <label for="email" class="auth-label">Email address</label>
+        <div class="mt-2">
+          <input
+            id="email"
+            v-model="req.email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            class="auth-input"
+            inputmode="email"
+            required
+          />
+        </div>
       </div>
-      <div class="mt-2">
-        <input
-          id="password"
-          v-model="req.password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
-    </div>
 
-    <div>
-      <div class="flex items-center justify-between">
-        <label for="password" class="block font-medium text-gray-900"> Confirm Password </label>
+      <div>
+        <label for="password" class="auth-label">Password</label>
+        <div class="mt-2">
+          <AuthPasswordInput
+            id="password"
+            v-model="req.password"
+            name="password"
+            autocomplete="new-password"
+          />
+        </div>
       </div>
-      <div class="mt-2">
-        <input
-          id="passwordConfirmation"
-          v-model="req.passwordConfirmation"
-          name="passwordConfirmation"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
+
+      <div>
+        <label for="passwordConfirmation" class="auth-label">Confirm password</label>
+        <div class="mt-2">
+          <AuthPasswordInput
+            id="passwordConfirmation"
+            v-model="req.passwordConfirmation"
+            name="passwordConfirmation"
+            autocomplete="new-password"
+          />
+        </div>
       </div>
-    </div>
 
-    <div>
-      <AppButton type="submit" colour="primary">Sign up</AppButton>
-    </div>
-  </form>
+      <AppButton type="submit" colour="primary" class="auth-submit">Create account</AppButton>
+    </form>
 
-  <p class="mt-6 text-center text-gray-400">
-    Already a member?
-    <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
-      Login
-    </RouterLink>
-  </p>
+    <p class="auth-footer">
+      Already have an account?
+      <RouterLink to="/login" class="auth-link">Log in</RouterLink>
+    </p>
+  </section>
 </template>
-
-<style scoped>
-input {
-  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
-}
-</style>

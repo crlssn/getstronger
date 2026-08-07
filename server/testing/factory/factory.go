@@ -35,28 +35,32 @@ type SeedUser struct {
 }
 
 type SeedParams struct {
-	User                *SeedUser
-	UserCount           int
-	ExerciseCount       int
-	RoutineCount        int
-	WorkoutCount        int
-	WorkoutSetCount     int
-	WorkoutCommentCount int
+	User                      *SeedUser
+	UserCount                 int
+	ExerciseCount             int
+	RoutineCount              int
+	WorkoutCount              int
+	WorkoutExerciseCount      int
+	WorkoutSetCount           int
+	WorkoutSetsPerExerciseMin int
+	WorkoutSetsPerExerciseMax int
+	WorkoutCommentCount       int
 }
 
-func (f *Factory) Seed(p SeedParams) {
+func (f *Factory) Seed(p SeedParams) *orm.User {
+	var primaryUser *orm.User
 	if p.User != nil {
 		auth := f.NewAuth(
 			AuthEmailVerified(),
 			AuthEmail(p.User.Email),
 			AuthPassword(p.User.Password),
 		)
-		user := f.NewUser(
+		primaryUser = f.NewUser(
 			UserAuthID(auth.ID),
 			UserFirstName(p.User.FirstName),
 			UserLastName(p.User.LastName),
 		)
-		f.seedUser(p, user)
+		f.seedUser(p, primaryUser)
 	}
 
 	for range p.UserCount {
@@ -64,6 +68,8 @@ func (f *Factory) Seed(p SeedParams) {
 		user := f.NewUser(UserAuthID(auth.ID))
 		f.seedUser(p, user)
 	}
+
+	return primaryUser
 }
 
 func (f *Factory) seedUser(p SeedParams, user *orm.User) {
@@ -80,12 +86,29 @@ func (f *Factory) seedUser(p SeedParams, user *orm.User) {
 	for range p.WorkoutCount {
 		workout := f.NewWorkout(WorkoutUserID(user.ID))
 
-		for range p.WorkoutSetCount {
-			f.NewSet(
-				SetUserID(user.ID),
-				SetWorkoutID(workout.ID),
-				SetExerciseID(randomExercise(exercises).ID),
-			)
+		if p.WorkoutExerciseCount > 0 && p.WorkoutSetsPerExerciseMin > 0 &&
+			p.WorkoutSetsPerExerciseMax >= p.WorkoutSetsPerExerciseMin {
+			for _, exercise := range randomExerciseSubset(exercises, p.WorkoutExerciseCount) {
+				setCount := randomIntBetween(
+					p.WorkoutSetsPerExerciseMin,
+					p.WorkoutSetsPerExerciseMax,
+				)
+				for range setCount {
+					f.NewSet(
+						SetUserID(user.ID),
+						SetWorkoutID(workout.ID),
+						SetExerciseID(exercise.ID),
+					)
+				}
+			}
+		} else {
+			for range p.WorkoutSetCount {
+				f.NewSet(
+					SetUserID(user.ID),
+					SetWorkoutID(workout.ID),
+					SetExerciseID(randomExercise(exercises).ID),
+				)
+			}
 		}
 
 		for range p.WorkoutCommentCount {
@@ -128,6 +151,18 @@ func randomExercises(slice orm.ExerciseSlice) orm.ExerciseSlice {
 	length := rand.Intn(len(slice)) + 1
 
 	return slice[:length]
+}
+
+func randomExerciseSubset(slice orm.ExerciseSlice, count int) orm.ExerciseSlice {
+	rand.Shuffle(len(slice), func(i, j int) {
+		slice[i], slice[j] = slice[j], slice[i]
+	})
+
+	return slice[:min(count, len(slice))]
+}
+
+func randomIntBetween(minimum, maximum int) int {
+	return minimum + rand.Intn(maximum-minimum+1)
 }
 
 // UUID generates a UUID populated exclusively by the given digit which can be useful during debugging.

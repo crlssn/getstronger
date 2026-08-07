@@ -73,6 +73,34 @@ func TestFactory_Seed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
+	rangedUser := f.Seed(factory.SeedParams{
+		User: &factory.SeedUser{
+			Email:     gofakeit.Email(),
+			Password:  "password",
+			FirstName: gofakeit.FirstName(),
+			LastName:  gofakeit.LastName(),
+		},
+		ExerciseCount:             4,
+		WorkoutCount:              1,
+		WorkoutExerciseCount:      3,
+		WorkoutSetsPerExerciseMin: 3,
+		WorkoutSetsPerExerciseMax: 6,
+	})
+	require.NotNil(t, rangedUser)
+	rangedWorkout, err := orm.Workouts(orm.WorkoutWhere.UserID.EQ(rangedUser.ID)).One(ctx, c.DB)
+	require.NoError(t, err)
+	rangedSets, err := orm.Sets(orm.SetWhere.WorkoutID.EQ(rangedWorkout.ID)).All(ctx, c.DB)
+	require.NoError(t, err)
+	setsByExercise := make(map[string]int)
+	for _, set := range rangedSets {
+		setsByExercise[set.ExerciseID]++
+	}
+	require.Len(t, setsByExercise, 3)
+	for _, setCount := range setsByExercise {
+		require.GreaterOrEqual(t, setCount, 3)
+		require.LessOrEqual(t, setCount, 6)
+	}
+
 	t.Cleanup(func() {
 		if err = c.Terminate(ctx); err != nil {
 			t.Fatal(fmt.Errorf("failed to terminate container: %w", err))

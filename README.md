@@ -94,38 +94,38 @@ mise installs the project's pinned Go, Node.js, Terraform, and development tool 
 
 4. Initialise the database:
    ```bash
-   mise run db_init
+   mise run db:init
    ```
 
 5. Run database migrations:
    ```bash
-   mise run db_migrate
+   mise run db:migrate
    ```
 
 6. (Optional) Seed the database:
    ```bash
-   mise run db_seed
+   mise run db:seed
    ```
 
 7. (Optional) Generate self-signed certificates for the backend:
    ```bash
-   mise run gen_certs
+   mise run gen:certs
    ```
    **⚠ You must trust the self-signed certificate in your browser after you've started the backend.**
 
 8. Start the email app if you want to sign up locally and your `EMAIL_PROVIDER` env is set to `local`:
    ```bash
-   mise run app_email
+   mise run app:email
    ```
 
 9. Start the backend app:
    ```bash
-   mise run app_backend
+   mise run app:backend
    ```
 
 10. Start the web app:
    ```bash
-   mise run app_web
+   mise run app:web
    ```
 
 11. Access the web app at [http://localhost:5173](http://localhost:5173). You can now login with email `john@doe.com` and password `123` if you seeded the database.

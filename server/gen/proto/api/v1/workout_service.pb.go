@@ -30,6 +30,8 @@ type CreateWorkoutRequest struct {
 	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
 	Note          string                 `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
+	PlanId        string                 `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	WorkoutName   string                 `protobuf:"bytes,7,opt,name=workout_name,json=workoutName,proto3" json:"workout_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -95,6 +97,20 @@ func (x *CreateWorkoutRequest) GetFinishedAt() *timestamppb.Timestamp {
 func (x *CreateWorkoutRequest) GetNote() string {
 	if x != nil {
 		return x.Note
+	}
+	return ""
+}
+
+func (x *CreateWorkoutRequest) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *CreateWorkoutRequest) GetWorkoutName() string {
+	if x != nil {
+		return x.WorkoutName
 	}
 	return ""
 }
@@ -771,16 +787,18 @@ var File_api_v1_workout_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xa0\x02\n" +
-	"\x14CreateWorkoutRequest\x12'\n" +
+	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xd2\x02\n" +
+	"\x14CreateWorkoutRequest\x12\x1d\n" +
 	"\n" +
-	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x12C\n" +
+	"routine_id\x18\x01 \x01(\tR\troutineId\x12C\n" +
 	"\rexercise_sets\x18\x02 \x03(\v2\x14.api.v1.ExerciseSetsB\b\xbaH\x05\x92\x01\x02\b\x01R\fexerciseSets\x12A\n" +
 	"\n" +
 	"started_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tstartedAt\x12C\n" +
 	"\vfinished_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"finishedAt\x12\x12\n" +
-	"\x04note\x18\x05 \x01(\tR\x04note\"6\n" +
+	"\x04note\x18\x05 \x01(\tR\x04note\x12\x17\n" +
+	"\aplan_id\x18\x06 \x01(\tR\x06planId\x12!\n" +
+	"\fworkout_name\x18\a \x01(\tR\vworkoutName\"6\n" +
 	"\x15CreateWorkoutResponse\x12\x1d\n" +
 	"\n" +
 	"workout_id\x18\x01 \x01(\tR\tworkoutId\"\x84\x01\n" +

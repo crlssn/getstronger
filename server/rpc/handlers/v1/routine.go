@@ -232,18 +232,28 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var nextRoutine *orm.Routine
-	preferredRoutineID := req.Msg.GetPreferredRoutineId()
-	if preferredRoutineID != "" {
-		index := slices.IndexFunc(routines, func(routine *orm.Routine) bool {
-			return routine.ID == preferredRoutineID
-		})
-		if index >= 0 {
-			nextRoutine = routines[index]
-		}
+	activePlan, err := h.repo.GetActivePlan(ctx, userID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Error("dashboard active plan failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
-	if nextRoutine == nil && len(routines) > 0 {
-		nextRoutine = routines[0]
+
+	var nextRoutine *orm.Routine
+	if activePlan != nil && activePlan.CurrentPosition < len(activePlan.Routines) {
+		nextRoutine = activePlan.Routines[activePlan.CurrentPosition]
+	} else {
+		preferredRoutineID := req.Msg.GetPreferredRoutineId()
+		if preferredRoutineID != "" {
+			index := slices.IndexFunc(routines, func(routine *orm.Routine) bool {
+				return routine.ID == preferredRoutineID
+			})
+			if index >= 0 {
+				nextRoutine = routines[index]
+			}
+		}
+		if nextRoutine == nil && len(routines) > 0 {
+			nextRoutine = routines[0]
+		}
 	}
 
 	workouts, err := h.repo.ListWorkouts(ctx,
@@ -300,7 +310,151 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		VolumeThisWeek:   volumeThisWeek,
 		PersonalBests:    parser.ExerciseSetSlice(personalBests),
 		RecentWorkouts:   parsedWorkouts,
+		ActivePlan:       parser.Plan(activePlan),
 	}), nil
+}
+
+func (h *routineHandler) CreatePlan(ctx context.Context, req *connect.Request[apiv1.CreatePlanRequest]) (*connect.Response[apiv1.CreatePlanResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	plan, err := h.repo.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     userID,
+		Name:       req.Msg.GetName(),
+		RoutineIDs: req.Msg.GetRoutineIds(),
+	})
+	if err != nil {
+		log.Error("create plan failed", zap.Error(err))
+		if errors.Is(err, repo.ErrPlanRoutineBelongsToAnotherUser) ||
+			errors.Is(err, repo.ErrPlanRoutineDeleted) ||
+			errors.Is(err, repo.ErrPlanRoutineDuplicate) || errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		}
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.CreatePlanResponse{Plan: parser.Plan(plan)}), nil
+}
+
+func (h *routineHandler) GetPlan(ctx context.Context, req *connect.Request[apiv1.GetPlanRequest]) (*connect.Response[apiv1.GetPlanResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	plan, err := h.repo.GetPlan(ctx, req.Msg.GetId(), userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+		log.Error("get plan failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.GetPlanResponse{Plan: parser.Plan(plan)}), nil
+}
+
+func (h *routineHandler) ListPlans(ctx context.Context, _ *connect.Request[apiv1.ListPlansRequest]) (*connect.Response[apiv1.ListPlansResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	plans, err := h.repo.ListPlans(ctx, userID)
+	if err != nil {
+		log.Error("list plans failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.ListPlansResponse{Plans: parser.PlanSlice(plans)}), nil
+}
+
+func (h *routineHandler) UpdatePlan(ctx context.Context, req *connect.Request[apiv1.UpdatePlanRequest]) (*connect.Response[apiv1.UpdatePlanResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	routineIDs := make([]string, 0, len(req.Msg.GetPlan().GetRoutines()))
+	for _, routine := range req.Msg.GetPlan().GetRoutines() {
+		routineIDs = append(routineIDs, routine.GetId())
+	}
+	plan, err := h.repo.UpdatePlan(ctx, repo.UpdatePlanParams{
+		ID:         req.Msg.GetPlan().GetId(),
+		UserID:     userID,
+		Name:       req.Msg.GetPlan().GetName(),
+		RoutineIDs: routineIDs,
+	})
+	if err != nil {
+		log.Error("update plan failed", zap.Error(err))
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+		if errors.Is(err, repo.ErrPlanRoutineBelongsToAnotherUser) ||
+			errors.Is(err, repo.ErrPlanRoutineDeleted) ||
+			errors.Is(err, repo.ErrPlanRoutineDuplicate) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		}
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.UpdatePlanResponse{Plan: parser.Plan(plan)}), nil
+}
+
+func (h *routineHandler) DeletePlan(ctx context.Context, req *connect.Request[apiv1.DeletePlanRequest]) (*connect.Response[apiv1.DeletePlanResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if err := h.repo.DeletePlan(ctx, req.Msg.GetId(), userID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+		log.Error("delete plan failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.DeletePlanResponse{}), nil
+}
+
+func (h *routineHandler) SetActivePlan(ctx context.Context, req *connect.Request[apiv1.SetActivePlanRequest]) (*connect.Response[apiv1.SetActivePlanResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	plan, err := h.repo.SetActivePlan(ctx, req.Msg.GetId(), userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+		log.Error("set active plan failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.SetActivePlanResponse{Plan: parser.Plan(plan)}), nil
+}
+
+func (h *routineHandler) PauseActivePlan(ctx context.Context, _ *connect.Request[apiv1.PauseActivePlanRequest]) (*connect.Response[apiv1.PauseActivePlanResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if err := h.repo.PauseActivePlan(ctx, userID); err != nil {
+		log.Error("pause active plan failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.PauseActivePlanResponse{}), nil
+}
+
+func (h *routineHandler) SkipPlanRoutine(ctx context.Context, req *connect.Request[apiv1.SkipPlanRoutineRequest]) (*connect.Response[apiv1.SkipPlanRoutineResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	plan, err := h.repo.AdvancePlan(ctx, req.Msg.GetId(), userID, "")
+	if err != nil {
+		log.Error("skip plan routine failed", zap.Error(err))
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+		if errors.Is(err, repo.ErrPlanNotActive) || errors.Is(err, repo.ErrPlanUnexpectedRoutine) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return connect.NewResponse(&apiv1.SkipPlanRoutineResponse{Plan: parser.Plan(plan)}), nil
 }
 
 func startOfWeek(value time.Time) time.Time {

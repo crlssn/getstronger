@@ -16,5 +16,6 @@ export interface Workout {
   completedExerciseIds?: ExerciseID[]
   exerciseSets?: ExerciseSets
   note?: string
+  planId?: string
   startedAt?: string
 }

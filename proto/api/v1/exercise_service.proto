@@ -38,7 +38,16 @@ service ExerciseService {
 
 message CreateExerciseRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
-  string label = 2;
+  repeated string tags = 2 [(buf.validate.field).repeated = {
+    max_items: 10
+    unique: true
+    items: {
+      string: {
+        min_len: 1
+        max_len: 64
+      }
+    }
+  }];
 }
 message CreateExerciseResponse {
   string id = 1;

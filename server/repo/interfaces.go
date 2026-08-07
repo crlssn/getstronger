@@ -25,9 +25,24 @@ type methods interface {
 	traceMethods
 	pubSubMethods
 	routineMethods
+	planMethods
 	workoutMethods
 	exerciseMethods
 	notificationMethods
+}
+
+type planMethods interface {
+	validatePlanRoutines(ctx context.Context, userID string, routineIDs []string) error
+	replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error
+	CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error)
+	GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error)
+	GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error)
+	ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error)
+	UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error)
+	DeletePlan(ctx context.Context, planID, userID string) error
+	SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error)
+	PauseActivePlan(ctx context.Context, userID string) error
+	AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*TrainingPlan, error)
 }
 
 type setMethods interface {

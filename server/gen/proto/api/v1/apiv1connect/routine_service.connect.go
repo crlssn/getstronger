@@ -60,6 +60,29 @@ const (
 	// RoutineServiceGetDashboardProcedure is the fully-qualified name of the RoutineService's
 	// GetDashboard RPC.
 	RoutineServiceGetDashboardProcedure = "/api.v1.RoutineService/GetDashboard"
+	// RoutineServiceCreatePlanProcedure is the fully-qualified name of the RoutineService's CreatePlan
+	// RPC.
+	RoutineServiceCreatePlanProcedure = "/api.v1.RoutineService/CreatePlan"
+	// RoutineServiceGetPlanProcedure is the fully-qualified name of the RoutineService's GetPlan RPC.
+	RoutineServiceGetPlanProcedure = "/api.v1.RoutineService/GetPlan"
+	// RoutineServiceListPlansProcedure is the fully-qualified name of the RoutineService's ListPlans
+	// RPC.
+	RoutineServiceListPlansProcedure = "/api.v1.RoutineService/ListPlans"
+	// RoutineServiceUpdatePlanProcedure is the fully-qualified name of the RoutineService's UpdatePlan
+	// RPC.
+	RoutineServiceUpdatePlanProcedure = "/api.v1.RoutineService/UpdatePlan"
+	// RoutineServiceDeletePlanProcedure is the fully-qualified name of the RoutineService's DeletePlan
+	// RPC.
+	RoutineServiceDeletePlanProcedure = "/api.v1.RoutineService/DeletePlan"
+	// RoutineServiceSetActivePlanProcedure is the fully-qualified name of the RoutineService's
+	// SetActivePlan RPC.
+	RoutineServiceSetActivePlanProcedure = "/api.v1.RoutineService/SetActivePlan"
+	// RoutineServicePauseActivePlanProcedure is the fully-qualified name of the RoutineService's
+	// PauseActivePlan RPC.
+	RoutineServicePauseActivePlanProcedure = "/api.v1.RoutineService/PauseActivePlan"
+	// RoutineServiceSkipPlanRoutineProcedure is the fully-qualified name of the RoutineService's
+	// SkipPlanRoutine RPC.
+	RoutineServiceSkipPlanRoutineProcedure = "/api.v1.RoutineService/SkipPlanRoutine"
 )
 
 // RoutineServiceClient is a client for the api.v1.RoutineService service.
@@ -73,6 +96,14 @@ type RoutineServiceClient interface {
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
 	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
 	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
+	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
+	UpdatePlan(context.Context, *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error)
+	DeletePlan(context.Context, *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error)
+	SetActivePlan(context.Context, *connect.Request[v1.SetActivePlanRequest]) (*connect.Response[v1.SetActivePlanResponse], error)
+	PauseActivePlan(context.Context, *connect.Request[v1.PauseActivePlanRequest]) (*connect.Response[v1.PauseActivePlanResponse], error)
+	SkipPlanRoutine(context.Context, *connect.Request[v1.SkipPlanRoutineRequest]) (*connect.Response[v1.SkipPlanRoutineResponse], error)
 }
 
 // NewRoutineServiceClient constructs a client for the api.v1.RoutineService service. By default, it
@@ -140,6 +171,54 @@ func NewRoutineServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(routineServiceMethods.ByName("GetDashboard")),
 			connect.WithClientOptions(opts...),
 		),
+		createPlan: connect.NewClient[v1.CreatePlanRequest, v1.CreatePlanResponse](
+			httpClient,
+			baseURL+RoutineServiceCreatePlanProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("CreatePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		getPlan: connect.NewClient[v1.GetPlanRequest, v1.GetPlanResponse](
+			httpClient,
+			baseURL+RoutineServiceGetPlanProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("GetPlan")),
+			connect.WithClientOptions(opts...),
+		),
+		listPlans: connect.NewClient[v1.ListPlansRequest, v1.ListPlansResponse](
+			httpClient,
+			baseURL+RoutineServiceListPlansProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("ListPlans")),
+			connect.WithClientOptions(opts...),
+		),
+		updatePlan: connect.NewClient[v1.UpdatePlanRequest, v1.UpdatePlanResponse](
+			httpClient,
+			baseURL+RoutineServiceUpdatePlanProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("UpdatePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		deletePlan: connect.NewClient[v1.DeletePlanRequest, v1.DeletePlanResponse](
+			httpClient,
+			baseURL+RoutineServiceDeletePlanProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("DeletePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		setActivePlan: connect.NewClient[v1.SetActivePlanRequest, v1.SetActivePlanResponse](
+			httpClient,
+			baseURL+RoutineServiceSetActivePlanProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("SetActivePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		pauseActivePlan: connect.NewClient[v1.PauseActivePlanRequest, v1.PauseActivePlanResponse](
+			httpClient,
+			baseURL+RoutineServicePauseActivePlanProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("PauseActivePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		skipPlanRoutine: connect.NewClient[v1.SkipPlanRoutineRequest, v1.SkipPlanRoutineResponse](
+			httpClient,
+			baseURL+RoutineServiceSkipPlanRoutineProcedure,
+			connect.WithSchema(routineServiceMethods.ByName("SkipPlanRoutine")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -154,6 +233,14 @@ type routineServiceClient struct {
 	removeExercise      *connect.Client[v1.RemoveExerciseRequest, v1.RemoveExerciseResponse]
 	updateExerciseOrder *connect.Client[v1.UpdateExerciseOrderRequest, v1.UpdateExerciseOrderResponse]
 	getDashboard        *connect.Client[v1.GetDashboardRequest, v1.GetDashboardResponse]
+	createPlan          *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	getPlan             *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
+	listPlans           *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
+	updatePlan          *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
+	deletePlan          *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
+	setActivePlan       *connect.Client[v1.SetActivePlanRequest, v1.SetActivePlanResponse]
+	pauseActivePlan     *connect.Client[v1.PauseActivePlanRequest, v1.PauseActivePlanResponse]
+	skipPlanRoutine     *connect.Client[v1.SkipPlanRoutineRequest, v1.SkipPlanRoutineResponse]
 }
 
 // CreateRoutine calls api.v1.RoutineService.CreateRoutine.
@@ -201,6 +288,46 @@ func (c *routineServiceClient) GetDashboard(ctx context.Context, req *connect.Re
 	return c.getDashboard.CallUnary(ctx, req)
 }
 
+// CreatePlan calls api.v1.RoutineService.CreatePlan.
+func (c *routineServiceClient) CreatePlan(ctx context.Context, req *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error) {
+	return c.createPlan.CallUnary(ctx, req)
+}
+
+// GetPlan calls api.v1.RoutineService.GetPlan.
+func (c *routineServiceClient) GetPlan(ctx context.Context, req *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
+	return c.getPlan.CallUnary(ctx, req)
+}
+
+// ListPlans calls api.v1.RoutineService.ListPlans.
+func (c *routineServiceClient) ListPlans(ctx context.Context, req *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error) {
+	return c.listPlans.CallUnary(ctx, req)
+}
+
+// UpdatePlan calls api.v1.RoutineService.UpdatePlan.
+func (c *routineServiceClient) UpdatePlan(ctx context.Context, req *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error) {
+	return c.updatePlan.CallUnary(ctx, req)
+}
+
+// DeletePlan calls api.v1.RoutineService.DeletePlan.
+func (c *routineServiceClient) DeletePlan(ctx context.Context, req *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error) {
+	return c.deletePlan.CallUnary(ctx, req)
+}
+
+// SetActivePlan calls api.v1.RoutineService.SetActivePlan.
+func (c *routineServiceClient) SetActivePlan(ctx context.Context, req *connect.Request[v1.SetActivePlanRequest]) (*connect.Response[v1.SetActivePlanResponse], error) {
+	return c.setActivePlan.CallUnary(ctx, req)
+}
+
+// PauseActivePlan calls api.v1.RoutineService.PauseActivePlan.
+func (c *routineServiceClient) PauseActivePlan(ctx context.Context, req *connect.Request[v1.PauseActivePlanRequest]) (*connect.Response[v1.PauseActivePlanResponse], error) {
+	return c.pauseActivePlan.CallUnary(ctx, req)
+}
+
+// SkipPlanRoutine calls api.v1.RoutineService.SkipPlanRoutine.
+func (c *routineServiceClient) SkipPlanRoutine(ctx context.Context, req *connect.Request[v1.SkipPlanRoutineRequest]) (*connect.Response[v1.SkipPlanRoutineResponse], error) {
+	return c.skipPlanRoutine.CallUnary(ctx, req)
+}
+
 // RoutineServiceHandler is an implementation of the api.v1.RoutineService service.
 type RoutineServiceHandler interface {
 	CreateRoutine(context.Context, *connect.Request[v1.CreateRoutineRequest]) (*connect.Response[v1.CreateRoutineResponse], error)
@@ -212,6 +339,14 @@ type RoutineServiceHandler interface {
 	RemoveExercise(context.Context, *connect.Request[v1.RemoveExerciseRequest]) (*connect.Response[v1.RemoveExerciseResponse], error)
 	UpdateExerciseOrder(context.Context, *connect.Request[v1.UpdateExerciseOrderRequest]) (*connect.Response[v1.UpdateExerciseOrderResponse], error)
 	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
+	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
+	UpdatePlan(context.Context, *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error)
+	DeletePlan(context.Context, *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error)
+	SetActivePlan(context.Context, *connect.Request[v1.SetActivePlanRequest]) (*connect.Response[v1.SetActivePlanResponse], error)
+	PauseActivePlan(context.Context, *connect.Request[v1.PauseActivePlanRequest]) (*connect.Response[v1.PauseActivePlanResponse], error)
+	SkipPlanRoutine(context.Context, *connect.Request[v1.SkipPlanRoutineRequest]) (*connect.Response[v1.SkipPlanRoutineResponse], error)
 }
 
 // NewRoutineServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -275,6 +410,54 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 		connect.WithSchema(routineServiceMethods.ByName("GetDashboard")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routineServiceCreatePlanHandler := connect.NewUnaryHandler(
+		RoutineServiceCreatePlanProcedure,
+		svc.CreatePlan,
+		connect.WithSchema(routineServiceMethods.ByName("CreatePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routineServiceGetPlanHandler := connect.NewUnaryHandler(
+		RoutineServiceGetPlanProcedure,
+		svc.GetPlan,
+		connect.WithSchema(routineServiceMethods.ByName("GetPlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routineServiceListPlansHandler := connect.NewUnaryHandler(
+		RoutineServiceListPlansProcedure,
+		svc.ListPlans,
+		connect.WithSchema(routineServiceMethods.ByName("ListPlans")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routineServiceUpdatePlanHandler := connect.NewUnaryHandler(
+		RoutineServiceUpdatePlanProcedure,
+		svc.UpdatePlan,
+		connect.WithSchema(routineServiceMethods.ByName("UpdatePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routineServiceDeletePlanHandler := connect.NewUnaryHandler(
+		RoutineServiceDeletePlanProcedure,
+		svc.DeletePlan,
+		connect.WithSchema(routineServiceMethods.ByName("DeletePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routineServiceSetActivePlanHandler := connect.NewUnaryHandler(
+		RoutineServiceSetActivePlanProcedure,
+		svc.SetActivePlan,
+		connect.WithSchema(routineServiceMethods.ByName("SetActivePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routineServicePauseActivePlanHandler := connect.NewUnaryHandler(
+		RoutineServicePauseActivePlanProcedure,
+		svc.PauseActivePlan,
+		connect.WithSchema(routineServiceMethods.ByName("PauseActivePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routineServiceSkipPlanRoutineHandler := connect.NewUnaryHandler(
+		RoutineServiceSkipPlanRoutineProcedure,
+		svc.SkipPlanRoutine,
+		connect.WithSchema(routineServiceMethods.ByName("SkipPlanRoutine")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.RoutineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RoutineServiceCreateRoutineProcedure:
@@ -295,6 +478,22 @@ func NewRoutineServiceHandler(svc RoutineServiceHandler, opts ...connect.Handler
 			routineServiceUpdateExerciseOrderHandler.ServeHTTP(w, r)
 		case RoutineServiceGetDashboardProcedure:
 			routineServiceGetDashboardHandler.ServeHTTP(w, r)
+		case RoutineServiceCreatePlanProcedure:
+			routineServiceCreatePlanHandler.ServeHTTP(w, r)
+		case RoutineServiceGetPlanProcedure:
+			routineServiceGetPlanHandler.ServeHTTP(w, r)
+		case RoutineServiceListPlansProcedure:
+			routineServiceListPlansHandler.ServeHTTP(w, r)
+		case RoutineServiceUpdatePlanProcedure:
+			routineServiceUpdatePlanHandler.ServeHTTP(w, r)
+		case RoutineServiceDeletePlanProcedure:
+			routineServiceDeletePlanHandler.ServeHTTP(w, r)
+		case RoutineServiceSetActivePlanProcedure:
+			routineServiceSetActivePlanHandler.ServeHTTP(w, r)
+		case RoutineServicePauseActivePlanProcedure:
+			routineServicePauseActivePlanHandler.ServeHTTP(w, r)
+		case RoutineServiceSkipPlanRoutineProcedure:
+			routineServiceSkipPlanRoutineHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -338,4 +537,36 @@ func (UnimplementedRoutineServiceHandler) UpdateExerciseOrder(context.Context, *
 
 func (UnimplementedRoutineServiceHandler) GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.GetDashboard is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.CreatePlan is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.GetPlan is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.ListPlans is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) UpdatePlan(context.Context, *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.UpdatePlan is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) DeletePlan(context.Context, *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.DeletePlan is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) SetActivePlan(context.Context, *connect.Request[v1.SetActivePlanRequest]) (*connect.Response[v1.SetActivePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.SetActivePlan is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) PauseActivePlan(context.Context, *connect.Request[v1.PauseActivePlanRequest]) (*connect.Response[v1.PauseActivePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.PauseActivePlan is not implemented"))
+}
+
+func (UnimplementedRoutineServiceHandler) SkipPlanRoutine(context.Context, *connect.Request[v1.SkipPlanRoutineRequest]) (*connect.Response[v1.SkipPlanRoutineResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.RoutineService.SkipPlanRoutine is not implemented"))
 }

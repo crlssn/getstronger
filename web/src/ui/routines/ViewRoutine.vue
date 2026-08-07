@@ -18,6 +18,7 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import { useAlertStore } from '@/stores/alerts'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 const routine = ref<Routine>()
 const listElement = ref<HTMLElement | null>(null)
@@ -77,7 +78,9 @@ const onDeleteRoutine = async () => {
   <div v-else-if="routine" class="routine-detail">
     <section class="routine-hero">
       <div>
-        <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill">Up next</span>
+        <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill"
+          >Up next</span
+        >
         <p class="eyebrow">Training routine</p>
         <h1>{{ routine.name }}</h1>
         <p class="summary">
@@ -102,56 +105,139 @@ const onDeleteRoutine = async () => {
 
     <section class="exercise-section">
       <div class="section-heading">
-        <div><h2>Exercise order</h2><p>Drag the handle to reorder your session.</p></div>
+        <div>
+          <h2>Exercise order</h2>
+          <p>Drag the handle to reorder your session.</p>
+        </div>
         <RouterLink :to="`/routines/${routine.id}/edit`"><PencilIcon /> Edit exercises</RouterLink>
       </div>
       <ol ref="listElement" class="exercise-list">
-        <li v-for="(exercise, index) in routine.exercises" :key="exercise.id" :data-id="exercise.id">
+        <li
+          v-for="(exercise, index) in routine.exercises"
+          :key="exercise.id"
+          :data-id="exercise.id"
+        >
           <span class="number">{{ index + 1 }}</span>
-          <span class="exercise-copy"><strong>{{ exercise.name }}</strong><small v-if="exercise.label">{{ exercise.label }}</small></span>
-          <button type="button" class="drag-handle" aria-label="Reorder exercise"><Bars3Icon /></button>
+          <span class="exercise-copy"
+            ><strong>{{ exercise.name }}</strong
+            ><ExerciseTags compact :tags="exercise.tags"
+          /></span>
+          <button type="button" class="drag-handle" aria-label="Reorder exercise">
+            <Bars3Icon />
+          </button>
         </li>
       </ol>
     </section>
 
     <section class="danger-zone">
-      <div><h2>Delete routine</h2><p>This removes the plan, not your workout history.</p></div>
+      <div>
+        <h2>Delete routine</h2>
+        <p>This removes the plan, not your workout history.</p>
+      </div>
       <button type="button" @click="onDeleteRoutine"><TrashIcon /> Delete</button>
     </section>
   </div>
 </template>
 
 <style scoped>
-.routine-detail { @apply mx-auto max-w-4xl space-y-5; }
-.loading-card { @apply rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500; }
-.routine-hero { @apply flex flex-col gap-5 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 to-violet-600 p-6 text-white shadow-lg sm:flex-row sm:items-end sm:justify-between md:p-8; }
-.status-pill { @apply mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20; }
-.eyebrow { @apply text-xs font-semibold uppercase tracking-wider text-indigo-100; }
-h1 { @apply mt-1 text-3xl font-semibold tracking-tight; }
-.summary { @apply mt-3 flex items-center gap-2 text-sm text-indigo-100; }
-.summary svg { @apply size-4; }
-.hero-actions { @apply flex shrink-0 flex-wrap gap-2; }
-.hero-actions a, .hero-actions button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold; }
-.hero-actions svg { @apply size-5; }
-.start-button { @apply bg-white text-indigo-700 hover:bg-indigo-50; }
-.next-button { @apply bg-indigo-950/20 text-white ring-1 ring-white/30 hover:bg-indigo-950/30; }
-.exercise-section, .danger-zone { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm; }
-.section-heading { @apply mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between; }
-.section-heading h2, .danger-zone h2 { @apply text-lg font-semibold text-slate-950; }
-.section-heading p, .danger-zone p { @apply mt-1 text-sm text-slate-500; }
-.section-heading a { @apply inline-flex w-max items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50; }
-.section-heading svg { @apply size-4; }
-.exercise-list { @apply divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200; }
-.exercise-list li { @apply flex min-h-16 items-center gap-3 bg-white px-4 py-3; }
-.number { @apply grid size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-500; }
-.exercise-copy { @apply min-w-0 flex-1; }
-.exercise-copy strong { @apply block text-sm font-semibold text-slate-900; }
-.exercise-copy small { @apply mt-0.5 block text-xs text-slate-500; }
-.drag-handle { @apply grid size-10 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing; }
-.drag-handle svg { @apply size-5; }
-.sortable-ghost { @apply opacity-30; }
-.sortable-drag { @apply rounded-xl border border-indigo-200 shadow-lg; }
-.danger-zone { @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between; }
-.danger-zone button { @apply inline-flex min-h-11 w-max items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-600 hover:bg-red-50; }
-.danger-zone svg { @apply size-5; }
+.routine-detail {
+  @apply mx-auto max-w-4xl space-y-5;
+}
+.loading-card {
+  @apply rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500;
+}
+.routine-hero {
+  @apply flex flex-col gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 to-violet-600 p-5 text-white shadow-lg sm:flex-row sm:items-end sm:justify-between md:p-6;
+}
+.status-pill {
+  @apply mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20;
+}
+.eyebrow {
+  @apply text-xs font-semibold uppercase tracking-wider text-indigo-100;
+}
+h1 {
+  @apply mt-1 text-2xl font-semibold tracking-tight;
+}
+.summary {
+  @apply mt-3 flex items-center gap-2 text-sm text-indigo-100;
+}
+.summary svg {
+  @apply size-4;
+}
+.hero-actions {
+  @apply flex shrink-0 flex-wrap gap-2;
+}
+.hero-actions a,
+.hero-actions button {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
+}
+.hero-actions svg {
+  @apply size-5;
+}
+.start-button {
+  @apply bg-white text-indigo-700 hover:bg-indigo-50;
+}
+.next-button {
+  @apply bg-indigo-950/20 text-white ring-1 ring-white/30 hover:bg-indigo-950/30;
+}
+.exercise-section,
+.danger-zone {
+  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+}
+.section-heading {
+  @apply mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+}
+.section-heading h2,
+.danger-zone h2 {
+  @apply text-lg font-semibold text-slate-950;
+}
+.section-heading p,
+.danger-zone p {
+  @apply mt-1 text-sm text-slate-500;
+}
+.section-heading a {
+  @apply inline-flex w-max items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50;
+}
+.section-heading svg {
+  @apply size-4;
+}
+.exercise-list {
+  @apply divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200;
+}
+.exercise-list li {
+  @apply flex min-h-14 items-center gap-3 bg-white px-4 py-2.5;
+}
+.number {
+  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-500;
+}
+.exercise-copy {
+  @apply min-w-0 flex-1;
+}
+.exercise-copy strong {
+  @apply block text-sm font-semibold text-slate-900;
+}
+.exercise-copy small {
+  @apply mt-0.5 block text-xs text-slate-500;
+}
+.drag-handle {
+  @apply grid size-10 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing;
+}
+.drag-handle svg {
+  @apply size-5;
+}
+.sortable-ghost {
+  @apply opacity-30;
+}
+.sortable-drag {
+  @apply rounded-xl border border-indigo-200 shadow-lg;
+}
+.danger-zone {
+  @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
+}
+.danger-zone button {
+  @apply inline-flex min-h-11 w-max items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+}
+.danger-zone svg {
+  @apply size-5;
+}
 </style>

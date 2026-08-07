@@ -17,6 +17,7 @@ import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/
 import { getWorkout, updateWorkout } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { isNumber } from '@/utils/numbers.ts'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 const route = useRoute()
 const workout = ref<Workout>()
@@ -126,7 +127,10 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
   <form @submit.prevent="onUpdateWorkout">
     <template v-for="(es, index) in workout?.exerciseSets" :key="es.exercise?.id">
       <div class="flex justify-between pr-4">
-        <h6>{{ es.exercise?.name }}</h6>
+        <div>
+          <h6>{{ es.exercise?.name }}</h6>
+          <ExerciseTags compact :tags="es.exercise?.tags" />
+        </div>
         <div class="flex gap-x-1">
           <ChevronUpIcon
             v-if="index > 0"

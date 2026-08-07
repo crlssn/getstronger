@@ -794,6 +794,7 @@ type GetDashboardResponse struct {
 	VolumeThisWeek   float64                `protobuf:"fixed64,4,opt,name=volume_this_week,json=volumeThisWeek,proto3" json:"volume_this_week,omitempty"`
 	PersonalBests    []*ExerciseSet         `protobuf:"bytes,5,rep,name=personal_bests,json=personalBests,proto3" json:"personal_bests,omitempty"`
 	RecentWorkouts   []*Workout             `protobuf:"bytes,6,rep,name=recent_workouts,json=recentWorkouts,proto3" json:"recent_workouts,omitempty"`
+	ActivePlan       *Plan                  `protobuf:"bytes,7,opt,name=active_plan,json=activePlan,proto3" json:"active_plan,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -870,6 +871,13 @@ func (x *GetDashboardResponse) GetRecentWorkouts() []*Workout {
 	return nil
 }
 
+func (x *GetDashboardResponse) GetActivePlan() *Plan {
+	if x != nil {
+		return x.ActivePlan
+	}
+	return nil
+}
+
 type Routine struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -930,6 +938,762 @@ func (x *Routine) GetExercises() []*Exercise {
 	return nil
 }
 
+type CreatePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	RoutineIds    []string               `protobuf:"bytes,2,rep,name=routine_ids,json=routineIds,proto3" json:"routine_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePlanRequest) Reset() {
+	*x = CreatePlanRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePlanRequest) ProtoMessage() {}
+
+func (x *CreatePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePlanRequest.ProtoReflect.Descriptor instead.
+func (*CreatePlanRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *CreatePlanRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreatePlanRequest) GetRoutineIds() []string {
+	if x != nil {
+		return x.RoutineIds
+	}
+	return nil
+}
+
+type CreatePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePlanResponse) Reset() {
+	*x = CreatePlanResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePlanResponse) ProtoMessage() {}
+
+func (x *CreatePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePlanResponse.ProtoReflect.Descriptor instead.
+func (*CreatePlanResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *CreatePlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type GetPlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlanRequest) Reset() {
+	*x = GetPlanRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlanRequest) ProtoMessage() {}
+
+func (x *GetPlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlanRequest.ProtoReflect.Descriptor instead.
+func (*GetPlanRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GetPlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetPlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlanResponse) Reset() {
+	*x = GetPlanResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlanResponse) ProtoMessage() {}
+
+func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlanResponse.ProtoReflect.Descriptor instead.
+func (*GetPlanResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *GetPlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type ListPlansRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPlansRequest) Reset() {
+	*x = ListPlansRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPlansRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPlansRequest) ProtoMessage() {}
+
+func (x *ListPlansRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPlansRequest.ProtoReflect.Descriptor instead.
+func (*ListPlansRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{23}
+}
+
+type ListPlansResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plans         []*Plan                `protobuf:"bytes,1,rep,name=plans,proto3" json:"plans,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPlansResponse) Reset() {
+	*x = ListPlansResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPlansResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPlansResponse) ProtoMessage() {}
+
+func (x *ListPlansResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPlansResponse.ProtoReflect.Descriptor instead.
+func (*ListPlansResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListPlansResponse) GetPlans() []*Plan {
+	if x != nil {
+		return x.Plans
+	}
+	return nil
+}
+
+type UpdatePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdatePlanRequest) Reset() {
+	*x = UpdatePlanRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdatePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdatePlanRequest) ProtoMessage() {}
+
+func (x *UpdatePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdatePlanRequest.ProtoReflect.Descriptor instead.
+func (*UpdatePlanRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *UpdatePlanRequest) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type UpdatePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdatePlanResponse) Reset() {
+	*x = UpdatePlanResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdatePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdatePlanResponse) ProtoMessage() {}
+
+func (x *UpdatePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdatePlanResponse.ProtoReflect.Descriptor instead.
+func (*UpdatePlanResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *UpdatePlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type DeletePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeletePlanRequest) Reset() {
+	*x = DeletePlanRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeletePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeletePlanRequest) ProtoMessage() {}
+
+func (x *DeletePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeletePlanRequest.ProtoReflect.Descriptor instead.
+func (*DeletePlanRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *DeletePlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeletePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeletePlanResponse) Reset() {
+	*x = DeletePlanResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeletePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeletePlanResponse) ProtoMessage() {}
+
+func (x *DeletePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeletePlanResponse.ProtoReflect.Descriptor instead.
+func (*DeletePlanResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{28}
+}
+
+type SetActivePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetActivePlanRequest) Reset() {
+	*x = SetActivePlanRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetActivePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetActivePlanRequest) ProtoMessage() {}
+
+func (x *SetActivePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetActivePlanRequest.ProtoReflect.Descriptor instead.
+func (*SetActivePlanRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *SetActivePlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type SetActivePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetActivePlanResponse) Reset() {
+	*x = SetActivePlanResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetActivePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetActivePlanResponse) ProtoMessage() {}
+
+func (x *SetActivePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetActivePlanResponse.ProtoReflect.Descriptor instead.
+func (*SetActivePlanResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *SetActivePlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type PauseActivePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PauseActivePlanRequest) Reset() {
+	*x = PauseActivePlanRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PauseActivePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseActivePlanRequest) ProtoMessage() {}
+
+func (x *PauseActivePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseActivePlanRequest.ProtoReflect.Descriptor instead.
+func (*PauseActivePlanRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{31}
+}
+
+type PauseActivePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PauseActivePlanResponse) Reset() {
+	*x = PauseActivePlanResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PauseActivePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseActivePlanResponse) ProtoMessage() {}
+
+func (x *PauseActivePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseActivePlanResponse.ProtoReflect.Descriptor instead.
+func (*PauseActivePlanResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{32}
+}
+
+type SkipPlanRoutineRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SkipPlanRoutineRequest) Reset() {
+	*x = SkipPlanRoutineRequest{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SkipPlanRoutineRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SkipPlanRoutineRequest) ProtoMessage() {}
+
+func (x *SkipPlanRoutineRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SkipPlanRoutineRequest.ProtoReflect.Descriptor instead.
+func (*SkipPlanRoutineRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *SkipPlanRoutineRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type SkipPlanRoutineResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SkipPlanRoutineResponse) Reset() {
+	*x = SkipPlanRoutineResponse{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SkipPlanRoutineResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SkipPlanRoutineResponse) ProtoMessage() {}
+
+func (x *SkipPlanRoutineResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SkipPlanRoutineResponse.ProtoReflect.Descriptor instead.
+func (*SkipPlanRoutineResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *SkipPlanRoutineResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type Plan struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Routines        []*Routine             `protobuf:"bytes,3,rep,name=routines,proto3" json:"routines,omitempty"`
+	CurrentPosition int32                  `protobuf:"varint,4,opt,name=current_position,json=currentPosition,proto3" json:"current_position,omitempty"`
+	Active          bool                   `protobuf:"varint,5,opt,name=active,proto3" json:"active,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Plan) Reset() {
+	*x = Plan{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Plan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Plan) ProtoMessage() {}
+
+func (x *Plan) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Plan.ProtoReflect.Descriptor instead.
+func (*Plan) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *Plan) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Plan) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Plan) GetRoutines() []*Routine {
+	if x != nil {
+		return x.Routines
+	}
+	return nil
+}
+
+func (x *Plan) GetCurrentPosition() int32 {
+	if x != nil {
+		return x.CurrentPosition
+	}
+	return 0
+}
+
+func (x *Plan) GetActive() bool {
+	if x != nil {
+		return x.Active
+	}
+	return false
+}
+
 var File_api_v1_routine_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_routine_service_proto_rawDesc = "" +
@@ -979,18 +1743,57 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\fexercise_ids\x18\x02 \x03(\tB\b\xbaH\x05\x92\x01\x02\b\x01R\vexerciseIds\"\x1d\n" +
 	"\x1bUpdateExerciseOrderResponse\"G\n" +
 	"\x13GetDashboardRequest\x120\n" +
-	"\x14preferred_routine_id\x18\x01 \x01(\tR\x12preferredRoutineId\"\xc5\x02\n" +
+	"\x14preferred_routine_id\x18\x01 \x01(\tR\x12preferredRoutineId\"\xf4\x02\n" +
 	"\x14GetDashboardResponse\x122\n" +
 	"\fnext_routine\x18\x01 \x01(\v2\x0f.api.v1.RoutineR\vnextRoutine\x12+\n" +
 	"\broutines\x18\x02 \x03(\v2\x0f.api.v1.RoutineR\broutines\x12,\n" +
 	"\x12workouts_this_week\x18\x03 \x01(\x05R\x10workoutsThisWeek\x12(\n" +
 	"\x10volume_this_week\x18\x04 \x01(\x01R\x0evolumeThisWeek\x12:\n" +
 	"\x0epersonal_bests\x18\x05 \x03(\v2\x13.api.v1.ExerciseSetR\rpersonalBests\x128\n" +
-	"\x0frecent_workouts\x18\x06 \x03(\v2\x0f.api.v1.WorkoutR\x0erecentWorkouts\"z\n" +
+	"\x0frecent_workouts\x18\x06 \x03(\v2\x0f.api.v1.WorkoutR\x0erecentWorkouts\x12-\n" +
+	"\vactive_plan\x18\a \x01(\v2\f.api.v1.PlanR\n" +
+	"activePlan\"z\n" +
 	"\aRoutine\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x128\n" +
-	"\texercises\x18\x03 \x03(\v2\x10.api.v1.ExerciseB\b\xbaH\x05\x92\x01\x02\b\x01R\texercises2\x84\x06\n" +
+	"\texercises\x18\x03 \x03(\v2\x10.api.v1.ExerciseB\b\xbaH\x05\x92\x01\x02\b\x01R\texercises\"d\n" +
+	"\x11CreatePlanRequest\x12\x1b\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
+	"\vroutine_ids\x18\x02 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
+	"routineIds\"6\n" +
+	"\x12CreatePlanResponse\x12 \n" +
+	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"*\n" +
+	"\x0eGetPlanRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"3\n" +
+	"\x0fGetPlanResponse\x12 \n" +
+	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"\x12\n" +
+	"\x10ListPlansRequest\"7\n" +
+	"\x11ListPlansResponse\x12\"\n" +
+	"\x05plans\x18\x01 \x03(\v2\f.api.v1.PlanR\x05plans\"=\n" +
+	"\x11UpdatePlanRequest\x12(\n" +
+	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanB\x06\xbaH\x03\xc8\x01\x01R\x04plan\"6\n" +
+	"\x12UpdatePlanResponse\x12 \n" +
+	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"-\n" +
+	"\x11DeletePlanRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x14\n" +
+	"\x12DeletePlanResponse\"0\n" +
+	"\x14SetActivePlanRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"9\n" +
+	"\x15SetActivePlanResponse\x12 \n" +
+	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"\x18\n" +
+	"\x16PauseActivePlanRequest\"\x19\n" +
+	"\x17PauseActivePlanResponse\"2\n" +
+	"\x16SkipPlanRoutineRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\";\n" +
+	"\x17SkipPlanRoutineResponse\x12 \n" +
+	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"\xc0\x01\n" +
+	"\x04Plan\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x125\n" +
+	"\broutines\x18\x03 \x03(\v2\x0f.api.v1.RoutineB\b\xbaH\x05\x92\x01\x02\b\x01R\broutines\x122\n" +
+	"\x10current_position\x18\x04 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x0fcurrentPosition\x12\x16\n" +
+	"\x06active\x18\x05 \x01(\bR\x06active2\xf7\n" +
+	"\n" +
 	"\x0eRoutineService\x12R\n" +
 	"\rCreateRoutine\x12\x1c.api.v1.CreateRoutineRequest\x1a\x1d.api.v1.CreateRoutineResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
 	"\n" +
@@ -1001,7 +1804,18 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\vAddExercise\x12\x1a.api.v1.AddExerciseRequest\x1a\x1b.api.v1.AddExerciseResponse\"\x04\x88\xb5\x18\x01\x12U\n" +
 	"\x0eRemoveExercise\x12\x1d.api.v1.RemoveExerciseRequest\x1a\x1e.api.v1.RemoveExerciseResponse\"\x04\x88\xb5\x18\x01\x12d\n" +
 	"\x13UpdateExerciseOrder\x12\".api.v1.UpdateExerciseOrderRequest\x1a#.api.v1.UpdateExerciseOrderResponse\"\x04\x88\xb5\x18\x01\x12O\n" +
-	"\fGetDashboard\x12\x1b.api.v1.GetDashboardRequest\x1a\x1c.api.v1.GetDashboardResponse\"\x04\x88\xb5\x18\x01B\x97\x01\n" +
+	"\fGetDashboard\x12\x1b.api.v1.GetDashboardRequest\x1a\x1c.api.v1.GetDashboardResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"\n" +
+	"CreatePlan\x12\x19.api.v1.CreatePlanRequest\x1a\x1a.api.v1.CreatePlanResponse\"\x04\x88\xb5\x18\x01\x12@\n" +
+	"\aGetPlan\x12\x16.api.v1.GetPlanRequest\x1a\x17.api.v1.GetPlanResponse\"\x04\x88\xb5\x18\x01\x12F\n" +
+	"\tListPlans\x12\x18.api.v1.ListPlansRequest\x1a\x19.api.v1.ListPlansResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"\n" +
+	"UpdatePlan\x12\x19.api.v1.UpdatePlanRequest\x1a\x1a.api.v1.UpdatePlanResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"\n" +
+	"DeletePlan\x12\x19.api.v1.DeletePlanRequest\x1a\x1a.api.v1.DeletePlanResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
+	"\rSetActivePlan\x12\x1c.api.v1.SetActivePlanRequest\x1a\x1d.api.v1.SetActivePlanResponse\"\x04\x88\xb5\x18\x01\x12X\n" +
+	"\x0fPauseActivePlan\x12\x1e.api.v1.PauseActivePlanRequest\x1a\x1f.api.v1.PauseActivePlanResponse\"\x04\x88\xb5\x18\x01\x12X\n" +
+	"\x0fSkipPlanRoutine\x12\x1e.api.v1.SkipPlanRoutineRequest\x1a\x1f.api.v1.SkipPlanRoutineResponse\"\x04\x88\xb5\x18\x01B\x97\x01\n" +
 	"\n" +
 	"com.api.v1B\x13RoutineServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -1017,7 +1831,7 @@ func file_api_v1_routine_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_routine_service_proto_rawDescData
 }
 
-var file_api_v1_routine_service_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_api_v1_routine_service_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_api_v1_routine_service_proto_goTypes = []any{
 	(*CreateRoutineRequest)(nil),        // 0: api.v1.CreateRoutineRequest
 	(*CreateRoutineResponse)(nil),       // 1: api.v1.CreateRoutineResponse
@@ -1038,47 +1852,89 @@ var file_api_v1_routine_service_proto_goTypes = []any{
 	(*GetDashboardRequest)(nil),         // 16: api.v1.GetDashboardRequest
 	(*GetDashboardResponse)(nil),        // 17: api.v1.GetDashboardResponse
 	(*Routine)(nil),                     // 18: api.v1.Routine
-	(*PaginationRequest)(nil),           // 19: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),          // 20: api.v1.PaginationResponse
-	(*ExerciseSet)(nil),                 // 21: api.v1.ExerciseSet
-	(*Workout)(nil),                     // 22: api.v1.Workout
-	(*Exercise)(nil),                    // 23: api.v1.Exercise
+	(*CreatePlanRequest)(nil),           // 19: api.v1.CreatePlanRequest
+	(*CreatePlanResponse)(nil),          // 20: api.v1.CreatePlanResponse
+	(*GetPlanRequest)(nil),              // 21: api.v1.GetPlanRequest
+	(*GetPlanResponse)(nil),             // 22: api.v1.GetPlanResponse
+	(*ListPlansRequest)(nil),            // 23: api.v1.ListPlansRequest
+	(*ListPlansResponse)(nil),           // 24: api.v1.ListPlansResponse
+	(*UpdatePlanRequest)(nil),           // 25: api.v1.UpdatePlanRequest
+	(*UpdatePlanResponse)(nil),          // 26: api.v1.UpdatePlanResponse
+	(*DeletePlanRequest)(nil),           // 27: api.v1.DeletePlanRequest
+	(*DeletePlanResponse)(nil),          // 28: api.v1.DeletePlanResponse
+	(*SetActivePlanRequest)(nil),        // 29: api.v1.SetActivePlanRequest
+	(*SetActivePlanResponse)(nil),       // 30: api.v1.SetActivePlanResponse
+	(*PauseActivePlanRequest)(nil),      // 31: api.v1.PauseActivePlanRequest
+	(*PauseActivePlanResponse)(nil),     // 32: api.v1.PauseActivePlanResponse
+	(*SkipPlanRoutineRequest)(nil),      // 33: api.v1.SkipPlanRoutineRequest
+	(*SkipPlanRoutineResponse)(nil),     // 34: api.v1.SkipPlanRoutineResponse
+	(*Plan)(nil),                        // 35: api.v1.Plan
+	(*PaginationRequest)(nil),           // 36: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),          // 37: api.v1.PaginationResponse
+	(*ExerciseSet)(nil),                 // 38: api.v1.ExerciseSet
+	(*Workout)(nil),                     // 39: api.v1.Workout
+	(*Exercise)(nil),                    // 40: api.v1.Exercise
 }
 var file_api_v1_routine_service_proto_depIdxs = []int32{
 	18, // 0: api.v1.GetRoutineResponse.routine:type_name -> api.v1.Routine
 	18, // 1: api.v1.UpdateRoutineRequest.routine:type_name -> api.v1.Routine
 	18, // 2: api.v1.UpdateRoutineResponse.routine:type_name -> api.v1.Routine
-	19, // 3: api.v1.ListRoutinesRequest.pagination:type_name -> api.v1.PaginationRequest
+	36, // 3: api.v1.ListRoutinesRequest.pagination:type_name -> api.v1.PaginationRequest
 	18, // 4: api.v1.ListRoutinesResponse.routines:type_name -> api.v1.Routine
-	20, // 5: api.v1.ListRoutinesResponse.pagination:type_name -> api.v1.PaginationResponse
+	37, // 5: api.v1.ListRoutinesResponse.pagination:type_name -> api.v1.PaginationResponse
 	18, // 6: api.v1.GetDashboardResponse.next_routine:type_name -> api.v1.Routine
 	18, // 7: api.v1.GetDashboardResponse.routines:type_name -> api.v1.Routine
-	21, // 8: api.v1.GetDashboardResponse.personal_bests:type_name -> api.v1.ExerciseSet
-	22, // 9: api.v1.GetDashboardResponse.recent_workouts:type_name -> api.v1.Workout
-	23, // 10: api.v1.Routine.exercises:type_name -> api.v1.Exercise
-	0,  // 11: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
-	2,  // 12: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
-	4,  // 13: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
-	6,  // 14: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
-	8,  // 15: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
-	10, // 16: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
-	12, // 17: api.v1.RoutineService.RemoveExercise:input_type -> api.v1.RemoveExerciseRequest
-	14, // 18: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
-	16, // 19: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
-	1,  // 20: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
-	3,  // 21: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
-	5,  // 22: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
-	7,  // 23: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
-	9,  // 24: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
-	11, // 25: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
-	13, // 26: api.v1.RoutineService.RemoveExercise:output_type -> api.v1.RemoveExerciseResponse
-	15, // 27: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
-	17, // 28: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
-	20, // [20:29] is the sub-list for method output_type
-	11, // [11:20] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	38, // 8: api.v1.GetDashboardResponse.personal_bests:type_name -> api.v1.ExerciseSet
+	39, // 9: api.v1.GetDashboardResponse.recent_workouts:type_name -> api.v1.Workout
+	35, // 10: api.v1.GetDashboardResponse.active_plan:type_name -> api.v1.Plan
+	40, // 11: api.v1.Routine.exercises:type_name -> api.v1.Exercise
+	35, // 12: api.v1.CreatePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 13: api.v1.GetPlanResponse.plan:type_name -> api.v1.Plan
+	35, // 14: api.v1.ListPlansResponse.plans:type_name -> api.v1.Plan
+	35, // 15: api.v1.UpdatePlanRequest.plan:type_name -> api.v1.Plan
+	35, // 16: api.v1.UpdatePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 17: api.v1.SetActivePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 18: api.v1.SkipPlanRoutineResponse.plan:type_name -> api.v1.Plan
+	18, // 19: api.v1.Plan.routines:type_name -> api.v1.Routine
+	0,  // 20: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
+	2,  // 21: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
+	4,  // 22: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
+	6,  // 23: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
+	8,  // 24: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
+	10, // 25: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
+	12, // 26: api.v1.RoutineService.RemoveExercise:input_type -> api.v1.RemoveExerciseRequest
+	14, // 27: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
+	16, // 28: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
+	19, // 29: api.v1.RoutineService.CreatePlan:input_type -> api.v1.CreatePlanRequest
+	21, // 30: api.v1.RoutineService.GetPlan:input_type -> api.v1.GetPlanRequest
+	23, // 31: api.v1.RoutineService.ListPlans:input_type -> api.v1.ListPlansRequest
+	25, // 32: api.v1.RoutineService.UpdatePlan:input_type -> api.v1.UpdatePlanRequest
+	27, // 33: api.v1.RoutineService.DeletePlan:input_type -> api.v1.DeletePlanRequest
+	29, // 34: api.v1.RoutineService.SetActivePlan:input_type -> api.v1.SetActivePlanRequest
+	31, // 35: api.v1.RoutineService.PauseActivePlan:input_type -> api.v1.PauseActivePlanRequest
+	33, // 36: api.v1.RoutineService.SkipPlanRoutine:input_type -> api.v1.SkipPlanRoutineRequest
+	1,  // 37: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
+	3,  // 38: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
+	5,  // 39: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
+	7,  // 40: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
+	9,  // 41: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
+	11, // 42: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
+	13, // 43: api.v1.RoutineService.RemoveExercise:output_type -> api.v1.RemoveExerciseResponse
+	15, // 44: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
+	17, // 45: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
+	20, // 46: api.v1.RoutineService.CreatePlan:output_type -> api.v1.CreatePlanResponse
+	22, // 47: api.v1.RoutineService.GetPlan:output_type -> api.v1.GetPlanResponse
+	24, // 48: api.v1.RoutineService.ListPlans:output_type -> api.v1.ListPlansResponse
+	26, // 49: api.v1.RoutineService.UpdatePlan:output_type -> api.v1.UpdatePlanResponse
+	28, // 50: api.v1.RoutineService.DeletePlan:output_type -> api.v1.DeletePlanResponse
+	30, // 51: api.v1.RoutineService.SetActivePlan:output_type -> api.v1.SetActivePlanResponse
+	32, // 52: api.v1.RoutineService.PauseActivePlan:output_type -> api.v1.PauseActivePlanResponse
+	34, // 53: api.v1.RoutineService.SkipPlanRoutine:output_type -> api.v1.SkipPlanRoutineResponse
+	37, // [37:54] is the sub-list for method output_type
+	20, // [20:37] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_routine_service_proto_init() }
@@ -1095,7 +1951,7 @@ func file_api_v1_routine_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_routine_service_proto_rawDesc), len(file_api_v1_routine_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
