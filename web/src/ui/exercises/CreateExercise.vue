@@ -41,6 +41,14 @@ const onSubmit = async () => {
     <h6>Tags <small>Optional</small></h6>
     <ExerciseTagsInput v-model="req.tags" :suggestions="tagSuggestions" />
 
-    <AppButton text="Create" type="submit" colour="primary">Save Exercise</AppButton>
+    <div class="form-actions">
+      <AppButton text="Create" type="submit" colour="primary">Save Exercise</AppButton>
+    </div>
   </form>
 </template>
+
+<style scoped>
+.form-actions {
+  @apply mt-4;
+}
+</style>

@@ -54,11 +54,16 @@ async function onUpdateExercise() {
     <h6>Tags <small>Optional</small></h6>
     <ExerciseTagsInput v-model="exercise.tags" :suggestions="tagSuggestions" />
 
-    <AppButton type="submit" colour="primary">Update Exercise</AppButton>
+    <div class="form-actions">
+      <AppButton type="submit" colour="primary">Update Exercise</AppButton>
+    </div>
   </form>
 </template>
 
 <style scoped>
+.form-actions {
+  @apply mt-4;
+}
 input {
   @apply block w-full border-0 bg-white px-4 py-5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
 }
