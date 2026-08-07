@@ -11,11 +11,13 @@ import {
 import { getUser } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
+import { useNotificationStore } from '@/stores/notifications'
 import type { User } from '@/proto/api/v1/shared_pb'
 
 const user = ref<User>()
 const authStore = useAuthStore()
 const dashboardStore = useDashboardStore()
+const notificationStore = useNotificationStore()
 
 onMounted(async () => {
   const [response] = await Promise.all([getUser(authStore.userId), dashboardStore.load()])
@@ -42,6 +44,12 @@ const weeklyVolume = computed(() =>
         <h1>{{ user.firstName }} {{ user.lastName }}</h1>
         <p>{{ user.email }}</p>
       </div>
+      <RouterLink to="/notifications" class="notification-link" aria-label="Notifications">
+        <BellIcon />
+        <span v-if="notificationStore.unreadCount" class="notification-badge">
+          {{ notificationStore.unreadCount > 99 ? '99+' : notificationStore.unreadCount }}
+        </span>
+      </RouterLink>
     </section>
 
     <section class="stats-strip" aria-label="Training summary">
@@ -66,11 +74,6 @@ const weeklyVolume = computed(() =>
           ><small>Volume trends and personal bests</small></span
         ><ChevronRightIcon
       /></RouterLink>
-      <RouterLink to="/notifications"
-        ><span class="settings-icon"><BellIcon /></span
-        ><span><strong>Notifications</strong><small>Comments and new followers</small></span
-        ><ChevronRightIcon
-      /></RouterLink>
       <RouterLink :to="`/users/${user.id}`"
         ><span class="settings-icon"><UserCircleIcon /></span
         ><span><strong>Public profile</strong><small>See what friends can view</small></span
@@ -87,7 +90,7 @@ const weeklyVolume = computed(() =>
   @apply mx-auto max-w-3xl space-y-5;
 }
 .profile-card {
-  @apply grid grid-cols-[auto_1fr] items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
 }
 .avatar {
   @apply grid size-16 place-items-center rounded-2xl bg-indigo-600 text-xl font-semibold text-white;
@@ -100,6 +103,15 @@ h1 {
 }
 .profile-card p:last-child {
   @apply mt-1 truncate text-sm text-slate-500;
+}
+.notification-link {
+  @apply relative grid size-11 place-items-center rounded-xl text-stone-700 transition hover:bg-stone-100 hover:text-stone-950;
+}
+.notification-link > svg {
+  @apply size-6;
+}
+.notification-badge {
+  @apply absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[0.625rem] font-bold leading-none text-white;
 }
 .stats-strip {
   @apply grid grid-cols-3 divide-x divide-slate-200 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;

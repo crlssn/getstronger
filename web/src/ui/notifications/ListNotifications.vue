@@ -7,13 +7,16 @@ import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
 import NotificationUserFollow from '@/ui/components/NotificationUserFollow.vue'
 import NotificationWorkoutComment from '@/ui/components/NotificationWorkoutComment.vue'
 import usePagination from '@/utils/usePagination'
+import { useNotificationStore } from '@/stores/notifications'
 
 const notifications = ref([] as Notification[])
+const notificationStore = useNotificationStore()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
   await fetchNotifications()
   await markNotificationAsRead()
+  notificationStore.unreadCount = 0
 })
 
 const fetchNotifications = async () => {

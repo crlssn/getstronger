@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useNotificationStore } from '@/stores/notifications'
 import {
   BoltIcon,
   BookOpenIcon,
@@ -17,6 +18,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const route = useRoute()
+const notificationStore = useNotificationStore()
 
 const navigation = computed(() => [
   {
@@ -25,6 +27,7 @@ const navigation = computed(() => [
     iconActive: HomeIconSolid,
     name: 'Home',
     active: route.path === '/home',
+    badge: 0,
   },
   {
     href: '/workout',
@@ -32,6 +35,7 @@ const navigation = computed(() => [
     iconActive: BoltIconSolid,
     name: 'Workout',
     active: route.path === '/workout' || route.path.startsWith('/workouts/'),
+    badge: 0,
   },
   {
     href: '/plans',
@@ -39,6 +43,7 @@ const navigation = computed(() => [
     iconActive: RectangleStackIconSolid,
     name: 'Training',
     active: route.path.startsWith('/plans') || route.path.startsWith('/routines'),
+    badge: 0,
   },
   {
     href: '/exercises',
@@ -46,13 +51,15 @@ const navigation = computed(() => [
     iconActive: BookOpenIconSolid,
     name: 'Exercises',
     active: route.path.startsWith('/exercises'),
+    badge: 0,
   },
   {
     href: '/profile',
     icon: UserIcon,
     iconActive: UserIconSolid,
     name: 'Me',
-    active: route.path.startsWith('/profile'),
+    active: route.path.startsWith('/profile') || route.path.startsWith('/notifications'),
+    badge: notificationStore.unreadCount,
   },
 ])
 </script>
@@ -67,7 +74,12 @@ const navigation = computed(() => [
         :class="{ active: item.active }"
         :aria-current="item.active ? 'page' : undefined"
       >
-        <component :is="item.active ? item.iconActive : item.icon" />
+        <span class="nav-icon">
+          <component :is="item.active ? item.iconActive : item.icon" />
+          <span v-if="item.badge" class="notification-badge">
+            {{ item.badge > 99 ? '99+' : item.badge }}
+          </span>
+        </span>
         <span>{{ item.name }}</span>
       </RouterLink>
     </div>
@@ -90,6 +102,12 @@ const navigation = computed(() => [
 }
 .bottom-nav svg {
   @apply size-6;
+}
+.nav-icon {
+  @apply relative grid place-items-center;
+}
+.notification-badge {
+  @apply absolute -right-3 -top-2 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-red-600 px-1 text-[0.625rem] font-bold leading-none text-white;
 }
 .bottom-nav span {
   @apply truncate;

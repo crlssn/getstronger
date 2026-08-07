@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
-import { BellIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 import { searchUsers } from '@/http/requests'
 import type { User } from '@/proto/api/v1/shared_pb'
-import { useNotificationStore } from '@/stores/notifications'
-
-const notificationStore = useNotificationStore()
 const input = ref<HTMLInputElement | null>(null)
 const users = ref<User[]>([])
 const searchOpen = ref(false)
@@ -36,12 +33,6 @@ const onSearchUsers = async () => {
 
 <template>
   <div class="home-actions">
-    <RouterLink to="/notifications" class="icon-button" aria-label="Notifications">
-      <BellIcon />
-      <span v-if="notificationStore.unreadCount" class="notification-badge">
-        {{ notificationStore.unreadCount > 9 ? '9+' : notificationStore.unreadCount }}
-      </span>
-    </RouterLink>
     <button type="button" class="icon-button" aria-label="Search people" @click="openSearch">
       <MagnifyingGlassIcon />
     </button>
@@ -93,9 +84,6 @@ const onSearchUsers = async () => {
 }
 .icon-button svg {
   @apply size-5;
-}
-.notification-badge {
-  @apply absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-red-600 px-1 text-xs font-semibold text-white;
 }
 .search-panel {
   width: min(22rem, calc(100vw - 1.5rem));
