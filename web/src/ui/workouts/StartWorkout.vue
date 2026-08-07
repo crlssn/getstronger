@@ -919,7 +919,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply rounded-xl bg-indigo-50 px-3 py-2 font-mono text-sm text-indigo-700;
 }
 .rest-banner {
-  @apply sticky top-20 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/95 p-4 text-indigo-900 shadow-md backdrop-blur;
+  @apply sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/95 p-4 text-indigo-900 shadow-md backdrop-blur;
 }
 .rest-banner > svg {
   @apply size-6;
