@@ -120,6 +120,6 @@ const followed = computed(() => user.value.followed)
   @apply flex min-h-11 shrink-0 items-center justify-center rounded-xl px-4 text-sm font-semibold text-slate-500;
 }
 .profile-tabs a.active {
-  @apply bg-indigo-50 text-indigo-700;
+  @apply bg-indigo-100 text-indigo-800;
 }
 </style>

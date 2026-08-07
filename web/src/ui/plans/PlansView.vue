@@ -272,7 +272,7 @@ h2 {
   @apply min-h-11 rounded-xl text-sm font-semibold text-slate-500;
 }
 .tabs button.active {
-  @apply bg-indigo-50 text-indigo-700;
+  @apply bg-indigo-100 text-indigo-800;
 }
 .search-field {
   @apply flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
@@ -307,7 +307,7 @@ h2 {
   @apply p-6;
 }
 .empty-plan-icon {
-  @apply mb-5 grid size-12 place-items-center rounded-2xl bg-indigo-50 text-indigo-600;
+  @apply mb-5 grid size-12 place-items-center rounded-2xl bg-indigo-100 text-indigo-700;
 }
 .empty-plan-icon svg {
   @apply size-6;

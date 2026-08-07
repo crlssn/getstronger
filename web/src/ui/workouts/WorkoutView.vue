@@ -278,7 +278,7 @@ h2 {
   @apply grid-cols-[3rem_1fr_auto];
 }
 .quick-icon {
-  @apply grid size-12 place-items-center rounded-xl bg-indigo-50 text-indigo-600;
+  @apply grid size-12 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
 }
 .quick-icon svg {
   @apply size-6;

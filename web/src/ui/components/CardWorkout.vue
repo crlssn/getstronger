@@ -346,7 +346,7 @@ const postComment = async () => {
   @apply flex items-center gap-3 bg-white p-4;
 }
 .metric-icon {
-  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600;
+  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
 }
 .metric-icon.amber {
   @apply bg-amber-50 text-amber-600;

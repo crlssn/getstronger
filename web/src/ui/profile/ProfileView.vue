@@ -123,7 +123,7 @@ h1 {
   @apply size-5 text-slate-400;
 }
 .settings-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-indigo-50 text-indigo-600;
+  @apply grid size-11 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
 }
 .settings-icon svg {
   @apply size-5;

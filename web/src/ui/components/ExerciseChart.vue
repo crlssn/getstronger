@@ -181,7 +181,7 @@ const options = computed(() => ({
   @apply min-h-10 rounded-lg text-xs font-semibold text-slate-500 transition hover:text-indigo-700;
 }
 .metric-picker button.active {
-  @apply bg-white text-indigo-700 shadow-sm;
+  @apply bg-indigo-100 text-indigo-800 shadow-sm;
 }
 .chart-frame {
   @apply h-64;
