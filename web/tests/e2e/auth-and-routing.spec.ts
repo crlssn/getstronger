@@ -12,12 +12,14 @@ test.describe('guest authentication and routing', () => {
   test('routes guests through the public authentication pages @smoke', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/login$/)
-    await expect(page.getByRole('heading', { name: 'Log in to GetStronger' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Log in to One More Rep' })).toBeVisible()
+    await expect(page.getByText('Track your training. Beat your last.')).toBeVisible()
     await expectAccessible(page)
 
     await page.getByRole('link', { name: 'Create an account' }).click()
     await expect(page).toHaveURL(/\/signup$/)
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
+    await expect(page.getByText('Track your training. Beat your last.')).toBeVisible()
 
     await page.getByRole('link', { name: 'Log in' }).click()
     await page.getByRole('link', { name: 'Forgot password?' }).click()

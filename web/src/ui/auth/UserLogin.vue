@@ -27,7 +27,7 @@ const onLogin = async () => {
   <section class="auth-view">
     <header class="auth-intro">
       <p class="auth-eyebrow">Welcome back</p>
-      <h1>Log in to GetStronger</h1>
+      <h1>Log in to One More Rep</h1>
       <p>Pick up your training exactly where you left off.</p>
     </header>
 
@@ -64,7 +64,7 @@ const onLogin = async () => {
     </form>
 
     <p class="auth-footer">
-      New to GetStronger?
+      New to One More Rep?
       <RouterLink to="/signup" class="auth-link">Create an account</RouterLink>
     </p>
   </section>

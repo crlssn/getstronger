@@ -31,8 +31,8 @@ func New(c *config.Config) (Email, error) {
 const (
 	fromEmail = "noreply@getstronger.pro"
 
-	subjectSendVerification  = "[GetStronger] Verify your email"
-	subjectSendPasswordReset = "[GetStronger] Reset your password" //nolint:gosec
+	subjectSendVerification  = "[One More Rep] Verify your email"
+	subjectSendPasswordReset = "[One More Rep] Reset your password" //nolint:gosec
 )
 
 func BodySendVerification(name, domain, token string) string {

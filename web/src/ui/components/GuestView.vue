@@ -6,9 +6,12 @@ import { RouterLink, RouterView } from 'vue-router'
 <template>
   <div class="guest-shell">
     <header class="guest-header">
-      <RouterLink to="/login" class="guest-brand" aria-label="GetStronger login">
+      <RouterLink to="/login" class="guest-brand" aria-label="One More Rep login">
         <span class="guest-brand-mark"><img src="/favicon.png" alt="" /></span>
-        <span>GetStronger</span>
+        <span class="guest-brand-copy">
+          <strong>One More Rep</strong>
+          <span>Track your training. Beat your last.</span>
+        </span>
       </RouterLink>
     </header>
     <AppAlert fixed />
@@ -26,13 +29,22 @@ import { RouterLink, RouterView } from 'vue-router'
   @apply border-b border-slate-200 bg-white;
 }
 .guest-brand {
-  @apply mx-auto flex h-20 max-w-lg items-center justify-center gap-3 px-6 text-lg font-bold tracking-tight text-slate-950;
+  @apply mx-auto flex min-h-24 max-w-lg items-center justify-center gap-3 px-6 py-4 text-slate-950;
 }
 .guest-brand-mark {
   @apply grid size-11 place-items-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-200;
 }
 .guest-brand-mark img {
   @apply size-7 brightness-0 invert;
+}
+.guest-brand-copy {
+  @apply flex flex-col;
+}
+.guest-brand-copy strong {
+  @apply text-lg font-bold leading-6 tracking-tight;
+}
+.guest-brand-copy > span {
+  @apply text-xs font-medium leading-5 text-slate-500;
 }
 .guest-main {
   @apply mx-auto w-full max-w-lg px-6 py-10 sm:px-8 sm:py-14;
