@@ -231,7 +231,7 @@ description = "Lint all code"
 run = [
     { task = "lint:web" },
     { task = "lint:protos" },
-    { task = "lint:backend" },
+    { task = "lint:go" },
 ]
 
 [tasks."lint:web"]
@@ -245,10 +245,10 @@ alias = "lint_protos"
 description = "Lint Protocol Buffer definitions"
 run = "buf lint"
 
-[tasks."lint:backend"]
-alias = "lint_backend"
-description = "Lint backend code"
-run = "golangci-lint run"
+[tasks."lint:go"]
+alias = ["lint_go", "lint:backend", "lint_backend"]
+description = "Lint Go code"
+run = "golangci-lint run ./..."
 
 [tasks.vet]
 description = "Vet all code"
