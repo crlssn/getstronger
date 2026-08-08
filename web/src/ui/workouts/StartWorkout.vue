@@ -326,14 +326,54 @@ const deleteWorkoutSet = (exerciseID: string, index: number) => {
   })
 }
 
+let audioContext: AudioContext | undefined
+
+// Create/resume the context during a user gesture so browser autoplay
+// policies allow the beep when the timer later hits zero.
+const prepareRestSound = () => {
+  try {
+    audioContext = audioContext ?? new AudioContext()
+    if (audioContext.state === 'suspended') void audioContext.resume()
+  } catch {
+    audioContext = undefined
+  }
+}
+
+const playRestFinishedSound = () => {
+  const context = audioContext
+  if (!context || context.state !== 'running') return
+
+  try {
+    const beep = (offset: number) => {
+      const oscillator = context.createOscillator()
+      const gain = context.createGain()
+      const start = context.currentTime + offset
+      oscillator.type = 'sine'
+      oscillator.frequency.value = 880
+      gain.gain.setValueAtTime(0.0001, start)
+      gain.gain.exponentialRampToValueAtTime(0.35, start + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.3)
+      oscillator.connect(gain).connect(context.destination)
+      oscillator.start(start)
+      oscillator.stop(start + 0.35)
+    }
+    beep(0)
+    beep(0.4)
+  } catch {
+    // Sound is best-effort; never break the workout flow over it.
+  }
+}
+
 const startRestTimer = (seconds = 90) => {
   if (restInterval) clearInterval(restInterval)
+  prepareRestSound()
   restSeconds.value = seconds
   restInterval = setInterval(() => {
     restSeconds.value -= 1
     if (restSeconds.value <= 0 && restInterval) {
       clearInterval(restInterval)
       restInterval = undefined
+      playRestFinishedSound()
     }
   }, 1000)
 }
@@ -919,19 +959,19 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply rounded-xl bg-indigo-50 px-3 py-2 font-mono text-sm text-indigo-700;
 }
 .rest-banner {
-  @apply sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/95 p-4 text-indigo-900 shadow-md backdrop-blur;
+  @apply sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-3xl border border-stone-300 bg-stone-50/95 p-4 text-stone-900 shadow-sm backdrop-blur;
 }
 .rest-banner > svg {
   @apply size-6;
 }
 .rest-banner p {
-  @apply text-sm text-indigo-700;
+  @apply text-sm text-stone-700;
 }
 .rest-actions {
   @apply flex items-center;
 }
 .rest-banner button {
-  @apply min-h-10 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-white;
+  @apply min-h-10 rounded-xl px-3 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-200/70;
 }
 .exercise-stack {
   @apply space-y-4;
