@@ -3,6 +3,8 @@ import { useAuthStore } from '@/stores/auth.ts'
 import { useRoute } from 'vue-router'
 import { computed, onMounted, ref, watch } from 'vue'
 import AppButton from '@/ui/components/AppButton.vue'
+import DropdownButton from '@/ui/components/DropdownButton.vue'
+import type { DropdownItem } from '@/types/dropdown'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import { followUser, getUser, listWorkouts, unfollowUser } from '@/http/requests.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
@@ -71,13 +73,15 @@ const onUnfollowUser = async () => {
 
 const notMe = computed(() => Boolean(user.value.id) && user.value.id !== authStore.userId)
 const followed = computed(() => user.value.followed)
+const profileActions = computed<DropdownItem[]>(() => [
+  { func: () => onUnfollowUser(), title: `Unfollow ${user.value.firstName}` },
+])
 </script>
 
 <template>
-  <div v-if="notMe" class="profile-action">
-    <AppButton v-if="followed" colour="gray" type="button" @click="onUnfollowUser">
-      Unfollow {{ user.firstName }}
-    </AppButton>
+  <div v-if="notMe" class="profile-action" :class="{ following: followed }">
+    <span v-if="followed" class="following-status">Following {{ user.firstName }}</span>
+    <DropdownButton v-if="followed" label="Profile actions" :items="profileActions" />
     <AppButton v-else colour="primary" type="button" @click="onFollowUser">
       Follow {{ user.firstName }}
     </AppButton>
@@ -108,6 +112,12 @@ const followed = computed(() => user.value.followed)
 <style scoped>
 .profile-action {
   @apply mb-4;
+}
+.profile-action.following {
+  @apply flex items-center justify-between gap-3;
+}
+.following-status {
+  @apply text-sm font-semibold text-slate-600;
 }
 .profile-tabs {
   @apply mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1;

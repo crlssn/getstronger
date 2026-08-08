@@ -3,12 +3,14 @@ import type { DropdownItem } from '@/types/dropdown'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 
-defineProps<{ items: DropdownItem[] }>()
+withDefaults(defineProps<{ items: DropdownItem[]; label?: string }>(), {
+  label: 'Workout actions',
+})
 </script>
 
 <template>
   <Menu as="div" class="relative inline-block text-left">
-    <MenuButton class="menu-trigger" aria-label="Workout actions">
+    <MenuButton class="menu-trigger" :aria-label="label">
       <EllipsisHorizontalIcon />
     </MenuButton>
     <transition
@@ -24,7 +26,13 @@ defineProps<{ items: DropdownItem[] }>()
           <RouterLink v-if="item.href" :to="item.href" class="menu-item" :class="{ active }">
             {{ item.title }}
           </RouterLink>
-          <button v-else type="button" class="menu-item danger" :class="{ active }" @click="item.func">
+          <button
+            v-else
+            type="button"
+            class="menu-item danger"
+            :class="{ active }"
+            @click="item.func"
+          >
             {{ item.title }}
           </button>
         </MenuItem>
@@ -34,11 +42,25 @@ defineProps<{ items: DropdownItem[] }>()
 </template>
 
 <style scoped>
-.menu-trigger { @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700; }
-.menu-trigger svg { @apply size-5; }
-.menu-items { @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl focus:outline-none; }
-.menu-item { @apply block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700; }
-.menu-item.active { @apply bg-slate-50; }
-.menu-item.danger { @apply text-red-600; }
-.menu-item.danger.active { @apply bg-red-50; }
+.menu-trigger {
+  @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700;
+}
+.menu-trigger svg {
+  @apply size-5;
+}
+.menu-items {
+  @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl focus:outline-none;
+}
+.menu-item {
+  @apply block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700;
+}
+.menu-item.active {
+  @apply bg-slate-50;
+}
+.menu-item.danger {
+  @apply text-red-600;
+}
+.menu-item.danger.active {
+  @apply bg-red-50;
+}
 </style>
