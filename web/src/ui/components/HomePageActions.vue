@@ -4,9 +4,14 @@ import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 import { searchUsers } from '@/http/requests'
 import type { User } from '@/proto/api/v1/shared_pb'
+
+const searchOpen = defineModel<boolean>('open', { default: false })
 const input = ref<HTMLInputElement | null>(null)
 const users = ref<User[]>([])
-const searchOpen = ref(false)
+const query = ref('')
+const searching = ref(false)
+const hasSearched = ref(false)
+let searchSequence = 0
 
 const openSearch = async () => {
   searchOpen.value = true
@@ -15,25 +20,43 @@ const openSearch = async () => {
 }
 
 const closeSearch = () => {
+  searchSequence += 1
+  query.value = ''
   users.value = []
+  searching.value = false
+  hasSearched.value = false
   searchOpen.value = false
 }
 
 const onSearchUsers = async () => {
-  const query = input.value?.value.trim() ?? ''
-  if (query.length < 3) {
+  const searchQuery = query.value.trim()
+  const sequence = ++searchSequence
+  if (searchQuery.length < 3) {
     users.value = []
+    searching.value = false
+    hasSearched.value = false
     return
   }
 
-  const response = await searchUsers(query, new Uint8Array(0))
-  if (response) users.value = response.users
+  searching.value = true
+  const response = await searchUsers(searchQuery, new Uint8Array(0))
+  if (sequence !== searchSequence) return
+
+  users.value = response?.users ?? []
+  searching.value = false
+  hasSearched.value = true
 }
 </script>
 
 <template>
-  <div class="home-actions">
-    <button type="button" class="icon-button" aria-label="Search people" @click="openSearch">
+  <div class="home-actions" :class="{ searching: searchOpen }">
+    <button
+      v-if="!searchOpen"
+      type="button"
+      class="search-trigger"
+      aria-label="Search people"
+      @click="openSearch"
+    >
       <MagnifyingGlassIcon />
     </button>
 
@@ -42,10 +65,12 @@ const onSearchUsers = async () => {
         <MagnifyingGlassIcon />
         <input
           ref="input"
+          v-model="query"
           type="search"
           placeholder="Search people"
           aria-label="Search people"
           @input="onSearchUsers"
+          @keydown.esc="closeSearch"
         />
         <button type="button" aria-label="Close search" @click="closeSearch"><XMarkIcon /></button>
       </div>
@@ -63,40 +88,37 @@ const onSearchUsers = async () => {
           </span>
         </RouterLink>
       </div>
+      <p v-else-if="searching" class="search-hint" aria-live="polite">Searching…</p>
+      <p v-else-if="hasSearched" class="search-hint">No people found.</p>
       <p v-else class="search-hint">Type at least 3 characters to find someone.</p>
     </section>
   </div>
-  <button
-    v-if="searchOpen"
-    type="button"
-    class="search-backdrop"
-    aria-label="Close search"
-    @click="closeSearch"
-  ></button>
 </template>
 
 <style scoped>
 .home-actions {
-  @apply relative z-40 flex shrink-0 items-center gap-2;
+  @apply flex shrink-0 items-center;
 }
-.icon-button {
-  @apply relative grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700;
+.home-actions.searching {
+  @apply w-full;
 }
-.icon-button svg {
+.search-trigger {
+  @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-900;
+}
+.search-trigger svg {
   @apply size-5;
 }
 .search-panel {
-  width: min(22rem, calc(100vw - 1.5rem));
-  @apply absolute right-0 top-12 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl;
+  @apply w-full;
 }
 .search-field {
-  @apply flex items-center gap-2 rounded-xl bg-slate-50 px-3;
+  @apply flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
 }
 .search-field > svg {
-  @apply size-5 shrink-0 text-slate-400;
+  @apply size-6 shrink-0 text-slate-500;
 }
 .search-field input {
-  @apply h-11 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-slate-950 placeholder:text-slate-400 focus:ring-0;
+  @apply h-14 min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-slate-950 placeholder:text-slate-400 focus:ring-0;
 }
 .search-field button {
   @apply grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-200;
@@ -105,10 +127,10 @@ const onSearchUsers = async () => {
   @apply size-5;
 }
 .search-results {
-  @apply mt-2 divide-y divide-slate-100;
+  @apply mt-3 w-full divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
 }
 .search-results a {
-  @apply grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl p-3 transition hover:bg-slate-50;
+  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 p-4 transition hover:bg-stone-50;
 }
 .search-results strong,
 .search-results small {
@@ -121,12 +143,9 @@ const onSearchUsers = async () => {
   @apply mt-0.5 text-xs text-slate-500;
 }
 .avatar {
-  @apply grid size-10 place-items-center rounded-xl bg-indigo-100 text-sm font-semibold text-indigo-700;
+  @apply grid size-11 place-items-center rounded-xl bg-stone-200 text-sm font-semibold text-stone-800;
 }
 .search-hint {
-  @apply px-3 py-4 text-sm text-slate-500;
-}
-.search-backdrop {
-  @apply fixed inset-0 z-30 cursor-default bg-slate-950/20;
+  @apply px-1 py-4 text-sm text-slate-500;
 }
 </style>

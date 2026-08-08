@@ -4,19 +4,26 @@ import { DateTime } from 'luxon'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
   CheckIcon,
+  ChevronRightIcon,
+  ClockIcon,
   FireIcon,
   ListBulletIcon,
   PlayIcon,
+  TrashIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
+import { useWorkoutStore } from '@/stores/workout'
 import { listFeedItems } from '@/http/requests'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
+import StreakCard from '@/ui/components/StreakCard.vue'
 
 const dashboardStore = useDashboardStore()
+const workoutStore = useWorkoutStore()
+const searchOpen = ref(false)
 const routinePickerOpen = ref(false)
 const followedWorkouts = ref<Workout[]>([])
 const feedPageToken = ref(new Uint8Array(0))
@@ -103,93 +110,147 @@ const selectRoutine = async (routineId: string) => {
   await dashboardStore.selectRoutine(routineId)
   routinePickerOpen.value = false
 }
+
+const savedWorkout = computed(
+  () =>
+    Object.entries(workoutStore.workouts)
+      .filter(([, workout]) => workout.startedAt)
+      .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0],
+)
+const savedHref = computed(() => {
+  if (savedWorkout.value?.[0] === 'quick-workout') return '/workouts/quick'
+  const routineId = savedWorkout.value?.[0]
+  if (!routineId) return '/workout'
+  const planId = savedWorkout.value?.[1].planId
+  return planId
+    ? { path: `/workouts/routine/${routineId}`, query: { plan_id: planId } }
+    : `/workouts/routine/${routineId}`
+})
+const savedRoutineName = computed(() => {
+  const routineId = savedWorkout.value?.[0]
+  if (!routineId) return 'Workout in progress'
+  if (routineId === 'quick-workout') return 'Quick Workout'
+  return (
+    dashboardStore.dashboard?.routines.find((routine) => routine.id === routineId)?.name ??
+    'Workout in progress'
+  )
+})
+const savedWorkoutStarted = computed(() => {
+  const startedAt = savedWorkout.value?.[1].startedAt
+  if (!startedAt) return 'Workout in progress'
+  const start = DateTime.fromISO(startedAt)
+  return start.isValid ? `Started ${start.toRelative()}` : 'Workout in progress'
+})
+
+const discardSavedWorkout = () => {
+  const routineId = savedWorkout.value?.[0]
+  if (!routineId) return
+  if (!confirm(`Discard “${savedRoutineName.value}”? All logged sets will be removed.`)) return
+  workoutStore.removeWorkout(routineId)
+}
 </script>
 
 <template>
   <div class="dashboard-stack">
-    <section class="welcome-row">
-      <div>
+    <section class="welcome-row" :class="{ searching: searchOpen }">
+      <div v-if="!searchOpen">
         <p class="eyebrow">{{ dateLabel }}</p>
         <h1>{{ greeting }}</h1>
       </div>
-      <HomePageActions />
+      <HomePageActions v-model:open="searchOpen" />
     </section>
 
-    <section v-if="dashboardStore.loading && !dashboard" class="loading-card">
-      <div class="loading-line w-32"></div>
-      <div class="loading-line w-52"></div>
-      <div class="loading-line w-full"></div>
-    </section>
-
-    <section v-else-if="nextRoutine" class="next-session">
-      <div class="session-copy">
-        <div class="next-label-row">
-          <p class="eyebrow">Up next</p>
-          <span v-if="activePlan" class="plan-progress"
-            >{{ activePlan.currentPosition + 1 }} of {{ activePlan.routines.length }}</span
-          >
-          <span v-else class="ready-status"><CheckIcon /> Ready</span>
+    <template v-if="!searchOpen">
+      <section v-if="savedWorkout" class="active-session">
+        <div>
+          <p class="eyebrow">Active workout</p>
+          <h2>{{ savedRoutineName }}</h2>
+          <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
         </div>
-        <h2>{{ nextRoutine.name }}</h2>
-        <p v-if="activePlan" class="plan-source">{{ activePlan.name }}</p>
-        <p class="session-meta">
-          {{ nextRoutine.exercises.length }} exercises
-          <span aria-hidden="true">•</span>
-          About {{ estimatedMinutes }} min
-        </p>
-      </div>
-      <div class="session-actions">
-        <RouterLink :to="nextWorkoutTarget" class="start-button">
-          <PlayIcon /> Start workout
-        </RouterLink>
-        <RouterLink v-if="activePlan" to="/workout" class="choose-button"
-          >Workout options</RouterLink
-        >
-        <button v-else type="button" class="choose-button" @click="routinePickerOpen = true">
-          Choose another routine
-        </button>
-      </div>
-    </section>
+        <div class="active-actions">
+          <RouterLink :to="savedHref">Resume workout <ChevronRightIcon /></RouterLink>
+          <button type="button" @click="discardSavedWorkout"><TrashIcon /> Discard workout</button>
+        </div>
+      </section>
 
-    <section v-else class="empty-card">
-      <div class="empty-icon"><ListBulletIcon /></div>
-      <div>
-        <h2>Create your first routine</h2>
-        <p>Build a repeatable workout to start tracking your progress.</p>
-      </div>
-      <RouterLink to="/routines/create" class="primary-link">Create routine</RouterLink>
-    </section>
+      <section v-else-if="dashboardStore.loading && !dashboard" class="loading-card">
+        <div class="loading-line w-32"></div>
+        <div class="loading-line w-52"></div>
+        <div class="loading-line w-full"></div>
+      </section>
 
-    <section class="following-feed">
-      <header>
-        <p class="eyebrow">Following</p>
-        <h2>Latest workouts</h2>
-      </header>
-      <CardWorkout
-        v-for="workout in followedWorkouts"
-        :key="workout.id"
-        compact
-        :workout="workout"
-      />
-      <div v-if="!feedInitiallyLoaded" class="feed-status" aria-live="polite">
-        <span class="feed-spinner"></span> Loading latest workouts…
-      </div>
-      <div v-else-if="feedError" class="feed-error" role="alert">
-        <span>Latest workouts could not be loaded.</span>
-        <button type="button" @click="loadMoreFeed">Try again</button>
-      </div>
-      <div v-else-if="!followedWorkouts.length" class="feed-empty">
-        Follow people to see their workouts here.
-      </div>
-      <div v-else-if="feedLoading" class="feed-status" aria-live="polite">
-        <span class="feed-spinner"></span> Loading more workouts…
-      </div>
-      <div v-else-if="feedReachedEnd" class="feed-end" role="status">
-        <span><CheckIcon /></span>
-        <div><strong>You're all caught up</strong><small>You've reached the end.</small></div>
-      </div>
-      <div ref="feedSentinel" class="feed-sentinel" aria-hidden="true"></div>
-    </section>
+      <section v-else-if="nextRoutine" class="next-session">
+        <div class="session-copy">
+          <div class="next-label-row">
+            <p class="eyebrow">Up next</p>
+            <span v-if="activePlan" class="plan-progress"
+              >{{ activePlan.currentPosition + 1 }} of {{ activePlan.routines.length }}</span
+            >
+            <span v-else class="ready-status"><CheckIcon /> Ready</span>
+          </div>
+          <h2>{{ nextRoutine.name }}</h2>
+          <p v-if="activePlan" class="plan-source">{{ activePlan.name }}</p>
+          <p class="session-meta">
+            {{ nextRoutine.exercises.length }} exercises
+            <span aria-hidden="true">•</span>
+            About {{ estimatedMinutes }} min
+          </p>
+        </div>
+        <div class="session-actions">
+          <RouterLink :to="nextWorkoutTarget" class="start-button">
+            <PlayIcon /> Start workout
+          </RouterLink>
+          <RouterLink v-if="activePlan" to="/workout" class="choose-button"
+            >Workout options</RouterLink
+          >
+          <button v-else type="button" class="choose-button" @click="routinePickerOpen = true">
+            Choose another routine
+          </button>
+        </div>
+      </section>
+
+      <section v-else class="empty-card">
+        <div class="empty-icon"><ListBulletIcon /></div>
+        <div>
+          <h2>Create your first routine</h2>
+          <p>Build a repeatable workout to start tracking your progress.</p>
+        </div>
+        <RouterLink to="/routines/create" class="primary-link">Create routine</RouterLink>
+      </section>
+
+      <StreakCard />
+
+      <section class="following-feed">
+        <header>
+          <p class="eyebrow">Following</p>
+          <h2>Latest workouts</h2>
+        </header>
+        <CardWorkout
+          v-for="workout in followedWorkouts"
+          :key="workout.id"
+          compact
+          :workout="workout"
+        />
+        <div v-if="!feedInitiallyLoaded" class="feed-status" aria-live="polite">
+          <span class="feed-spinner"></span> Loading latest workouts…
+        </div>
+        <div v-else-if="feedError" class="feed-error" role="alert">
+          <span>Latest workouts could not be loaded.</span>
+          <button type="button" @click="loadMoreFeed">Try again</button>
+        </div>
+        <div v-else-if="!followedWorkouts.length" class="feed-empty">
+          Follow people to see their workouts here.
+        </div>
+        <div v-else-if="feedLoading" class="feed-status" aria-live="polite">
+          <span class="feed-spinner"></span> Loading more workouts…
+        </div>
+        <div v-else-if="feedReachedEnd" class="feed-end" role="status">
+          <span><CheckIcon /></span>
+          <div><strong>You're all caught up</strong><small>You've reached the end.</small></div>
+        </div>
+        <div ref="feedSentinel" class="feed-sentinel" aria-hidden="true"></div>
+      </section>
+    </template>
   </div>
 
   <div v-if="routinePickerOpen" class="picker-backdrop" @click.self="routinePickerOpen = false">
@@ -235,6 +296,9 @@ const selectRoutine = async (routineId: string) => {
 .welcome-row {
   @apply flex items-start justify-between gap-4 px-1;
 }
+.welcome-row.searching {
+  @apply block;
+}
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-600;
 }
@@ -243,6 +307,33 @@ h1 {
 }
 h2 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
+}
+.active-session {
+  @apply grid gap-5 rounded-3xl border border-stone-300 bg-stone-50 p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
+}
+.active-session h2 {
+  @apply mt-1;
+}
+.active-meta {
+  @apply mt-3 flex items-center gap-2 text-sm text-stone-700;
+}
+.active-meta svg {
+  @apply size-4;
+}
+.active-actions {
+  @apply grid gap-1 sm:min-w-48;
+}
+.active-actions > a {
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+}
+.active-actions > button {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
+}
+.active-actions svg {
+  @apply size-5;
+}
+.active-actions > button svg {
+  @apply size-4;
 }
 .next-session {
   @apply grid gap-5 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-indigo-200 sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
