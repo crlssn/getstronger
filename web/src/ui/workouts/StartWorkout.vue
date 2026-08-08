@@ -1169,7 +1169,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 sm:items-center sm:p-6;
 }
 .exercise-picker {
-  @apply w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
+  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
 }
 .exercise-picker header {
   @apply mb-4 flex items-center justify-between gap-4;
@@ -1193,7 +1193,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
 }
 .exercise-options {
-  @apply max-h-80 space-y-2 overflow-y-auto;
+  @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .exercise-options button {
   @apply flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50;
@@ -1218,7 +1218,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-4 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400;
 }
 .finish-dialog {
-  @apply w-full max-w-lg rounded-t-3xl bg-white p-5 text-left shadow-2xl sm:rounded-3xl;
+  @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 text-left shadow-2xl sm:rounded-3xl;
 }
 .dialog-handle {
   @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-slate-200 sm:hidden;

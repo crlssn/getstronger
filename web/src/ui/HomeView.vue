@@ -499,7 +499,7 @@ h2 {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-6;
 }
 .routine-picker {
-  @apply w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
+  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
 }
 .routine-picker header {
   @apply mb-5 flex items-center justify-between gap-4;
@@ -511,7 +511,7 @@ h2 {
   @apply size-5;
 }
 .routine-options {
-  @apply space-y-2;
+  @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .routine-options > button {
   @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 p-4 text-left hover:border-indigo-300 hover:bg-indigo-50/50;
