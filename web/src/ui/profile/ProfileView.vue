@@ -105,10 +105,10 @@ h1 {
   @apply mt-1 truncate text-sm text-slate-500;
 }
 .notification-link {
-  @apply relative grid size-11 place-items-center rounded-xl text-stone-700 transition hover:bg-stone-100 hover:text-stone-950;
+  @apply relative grid size-14 place-items-center rounded-xl text-stone-700 transition hover:bg-stone-100 hover:text-stone-950;
 }
 .notification-link > svg {
-  @apply size-6;
+  @apply size-8;
 }
 .notification-badge {
   @apply absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[0.625rem] font-bold leading-none text-white;
