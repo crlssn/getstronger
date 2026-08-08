@@ -14,15 +14,16 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
-import { useWorkoutStore } from '@/stores/workout'
 import { listFeedItems } from '@/http/requests'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
+import useActiveWorkout from '@/utils/useActiveWorkout'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
 import StreakCard from '@/ui/components/StreakCard.vue'
 
 const dashboardStore = useDashboardStore()
-const workoutStore = useWorkoutStore()
+const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
+  useActiveWorkout()
 const searchOpen = ref(false)
 const routinePickerOpen = ref(false)
 const followedWorkouts = ref<Workout[]>([])
@@ -109,44 +110,6 @@ const estimatedMinutes = computed(() =>
 const selectRoutine = async (routineId: string) => {
   await dashboardStore.selectRoutine(routineId)
   routinePickerOpen.value = false
-}
-
-const savedWorkout = computed(
-  () =>
-    Object.entries(workoutStore.workouts)
-      .filter(([, workout]) => workout.startedAt)
-      .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0],
-)
-const savedHref = computed(() => {
-  if (savedWorkout.value?.[0] === 'quick-workout') return '/workouts/quick'
-  const routineId = savedWorkout.value?.[0]
-  if (!routineId) return '/workout'
-  const planId = savedWorkout.value?.[1].planId
-  return planId
-    ? { path: `/workouts/routine/${routineId}`, query: { plan_id: planId } }
-    : `/workouts/routine/${routineId}`
-})
-const savedRoutineName = computed(() => {
-  const routineId = savedWorkout.value?.[0]
-  if (!routineId) return 'Workout in progress'
-  if (routineId === 'quick-workout') return 'Quick Workout'
-  return (
-    dashboardStore.dashboard?.routines.find((routine) => routine.id === routineId)?.name ??
-    'Workout in progress'
-  )
-})
-const savedWorkoutStarted = computed(() => {
-  const startedAt = savedWorkout.value?.[1].startedAt
-  if (!startedAt) return 'Workout in progress'
-  const start = DateTime.fromISO(startedAt)
-  return start.isValid ? `Started ${start.toRelative()}` : 'Workout in progress'
-})
-
-const discardSavedWorkout = () => {
-  const routineId = savedWorkout.value?.[0]
-  if (!routineId) return
-  if (!confirm(`Discard “${savedRoutineName.value}”? All logged sets will be removed.`)) return
-  workoutStore.removeWorkout(routineId)
 }
 </script>
 

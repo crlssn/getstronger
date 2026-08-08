@@ -2,7 +2,6 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
 import { useIntersectionObserver } from '@vueuse/core'
-import { DateTime } from 'luxon'
 import {
   BoltIcon,
   CalendarDaysIcon,
@@ -18,13 +17,14 @@ import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
-import { useWorkoutStore } from '@/stores/workout'
 import { formatToShortDateTime } from '@/utils/datetime'
+import useActiveWorkout from '@/utils/useActiveWorkout'
 
 const authStore = useAuthStore()
 const dashboardStore = useDashboardStore()
 const planStore = usePlanStore()
-const workoutStore = useWorkoutStore()
+const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
+  useActiveWorkout()
 const previousWorkouts = ref<Workout[]>([])
 const historyPageToken = ref(new Uint8Array(0))
 const historySentinel = ref<HTMLElement | null>(null)
@@ -42,37 +42,6 @@ const plannedStart = computed(() =>
       }
     : '/plans',
 )
-const savedWorkout = computed(
-  () =>
-    Object.entries(workoutStore.workouts)
-      .filter(([, workout]) => workout.startedAt)
-      .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0],
-)
-const savedHref = computed(() => {
-  if (savedWorkout.value?.[0] === 'quick-workout') return '/workouts/quick'
-  const routineId = savedWorkout.value?.[0]
-  if (!routineId) return '/workout'
-  const planId = savedWorkout.value?.[1].planId
-  return planId
-    ? { path: `/workouts/routine/${routineId}`, query: { plan_id: planId } }
-    : `/workouts/routine/${routineId}`
-})
-const savedRoutineName = computed(() => {
-  const routineId = savedWorkout.value?.[0]
-  if (!routineId) return 'Workout in progress'
-  if (routineId === 'quick-workout') return 'Quick Workout'
-  return (
-    dashboardStore.dashboard?.routines.find((routine) => routine.id === routineId)?.name ??
-    'Workout in progress'
-  )
-})
-const savedWorkoutStarted = computed(() => {
-  const startedAt = savedWorkout.value?.[1].startedAt
-  if (!startedAt) return 'Workout in progress'
-  const start = DateTime.fromISO(startedAt)
-  return start.isValid ? `Started ${start.toRelative()}` : 'Workout in progress'
-})
-
 const loadMoreHistory = async () => {
   if (historyLoading.value || historyReachedEnd.value || !authStore.userId) return
 
@@ -122,13 +91,6 @@ const skip = async () => {
   if (!activePlan.value || !nextRoutine.value) return
   if (!confirm(`Skip ${nextRoutine.value.name}? No workout will be logged.`)) return
   if (await planStore.skip(activePlan.value.id)) await dashboardStore.load()
-}
-
-const discardSavedWorkout = () => {
-  const routineId = savedWorkout.value?.[0]
-  if (!routineId) return
-  if (!confirm(`Discard “${savedRoutineName.value}”? All logged sets will be removed.`)) return
-  workoutStore.removeWorkout(routineId)
 }
 </script>
 

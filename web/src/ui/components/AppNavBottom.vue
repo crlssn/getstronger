@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
-import { useWorkoutStore } from '@/stores/workout'
+import useActiveWorkout from '@/utils/useActiveWorkout'
 import {
   BoltIcon,
   BookOpenIcon,
@@ -20,7 +20,7 @@ import {
 
 const route = useRoute()
 const notificationStore = useNotificationStore()
-const workoutStore = useWorkoutStore()
+const { savedHref, savedWorkout, savedWorkoutStartedAtMs } = useActiveWorkout()
 
 const now = ref(Date.now())
 let timerTick: ReturnType<typeof setInterval> | undefined
@@ -35,16 +35,9 @@ onUnmounted(() => {
   if (timerTick) clearInterval(timerTick)
 })
 
-const activeWorkoutStartedAt = computed(() => {
-  const startTimes = Object.values(workoutStore.workouts)
-    .map((workout) => Date.parse(workout.startedAt ?? ''))
-    .filter((time) => !Number.isNaN(time))
-  return startTimes.length ? Math.max(...startTimes) : undefined
-})
-
 const activeWorkoutTimer = computed(() => {
-  if (!activeWorkoutStartedAt.value) return ''
-  const totalSeconds = Math.max(0, Math.floor((now.value - activeWorkoutStartedAt.value) / 1000))
+  if (!savedWorkoutStartedAtMs.value) return ''
+  const totalSeconds = Math.max(0, Math.floor((now.value - savedWorkoutStartedAtMs.value) / 1000))
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
@@ -63,7 +56,7 @@ const navigation = computed(() => [
     timer: '',
   },
   {
-    href: '/workout',
+    href: savedWorkout.value ? savedHref.value : '/workout',
     icon: BoltIcon,
     iconActive: BoltIconSolid,
     name: 'Workout',
