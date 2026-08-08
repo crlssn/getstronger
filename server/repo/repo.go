@@ -955,7 +955,7 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 	SELECT DISTINCT ON (exercise_id) exercise_id, id
 	FROM getstronger.sets
 	WHERE workout_id = ANY ($1)
-	ORDER BY exercise_id, weight DESC, reps DESC;
+	ORDER BY exercise_id, weight DESC, reps DESC, created_at ASC;
 `
 
 	var sets orm.SetSlice
