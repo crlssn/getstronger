@@ -10,6 +10,7 @@ import {
   ChevronRightIcon,
   ClockIcon,
   PlayIcon,
+  TrashIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, nextTick, onMounted, ref } from 'vue'
 
@@ -122,6 +123,13 @@ const skip = async () => {
   if (!confirm(`Skip ${nextRoutine.value.name}? No workout will be logged.`)) return
   if (await planStore.skip(activePlan.value.id)) await dashboardStore.load()
 }
+
+const discardSavedWorkout = () => {
+  const routineId = savedWorkout.value?.[0]
+  if (!routineId) return
+  if (!confirm(`Discard “${savedRoutineName.value}”? All logged sets will be removed.`)) return
+  workoutStore.removeWorkout(routineId)
+}
 </script>
 
 <template>
@@ -137,9 +145,12 @@ const skip = async () => {
         <h2>{{ savedRoutineName }}</h2>
         <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
       </div>
-      <RouterLink :to="savedHref">Resume workout <ChevronRightIcon /></RouterLink>
+      <div class="active-actions">
+        <RouterLink :to="savedHref">Resume workout <ChevronRightIcon /></RouterLink>
+        <button type="button" @click="discardSavedWorkout"><TrashIcon /> Discard workout</button>
+      </div>
     </section>
-    <section v-if="nextRoutine" class="next-card">
+    <section v-else-if="nextRoutine" class="next-card">
       <header>
         <p class="eyebrow">{{ activePlan ? 'Active plan' : 'Up next' }}</p>
         <span v-if="activePlan"
@@ -157,7 +168,7 @@ const skip = async () => {
         Skip this routine
       </button>
     </section>
-    <section v-else class="empty-card">
+    <section v-else-if="!savedWorkout" class="empty-card">
       <h2>No workout selected</h2>
       <p>Create a routine or activate a plan to choose what comes next.</p>
       <RouterLink to="/plans">Choose a routine</RouterLink>
@@ -258,11 +269,20 @@ h2 {
 .active-meta svg {
   @apply size-4;
 }
-.active-session > a {
+.active-actions {
+  @apply grid gap-1 sm:min-w-48;
+}
+.active-actions > a {
   @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
 }
-.active-session > a svg {
+.active-actions > a svg {
   @apply size-5;
+}
+.active-actions > button {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
+}
+.active-actions > button svg {
+  @apply size-4;
 }
 .next-card {
   @apply rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-lg shadow-indigo-200;
