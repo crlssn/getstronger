@@ -29,7 +29,7 @@ import { RouterLink, RouterView } from 'vue-router'
   @apply border-b border-slate-200 bg-white;
 }
 .guest-brand {
-  @apply mx-auto flex min-h-24 max-w-lg items-center justify-center gap-3 px-6 py-4 text-slate-950;
+  @apply mx-auto flex min-h-24 max-w-lg items-center justify-start gap-3 px-6 py-4 text-slate-950;
 }
 .guest-brand-mark {
   @apply grid size-11 place-items-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-200;
