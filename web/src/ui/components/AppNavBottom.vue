@@ -112,11 +112,11 @@ const navigation = computed(() => [
           <span v-if="item.badge" class="notification-badge">
             {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
-          <span v-if="item.timer" class="timer-badge" aria-label="Active workout duration">
-            {{ item.timer }}
-          </span>
         </span>
-        <span>{{ item.name }}</span>
+        <span v-if="item.timer" class="timer-badge" aria-label="Active workout duration">
+          {{ item.timer }}
+        </span>
+        <span v-else>{{ item.name }}</span>
       </RouterLink>
     </div>
   </nav>
@@ -146,7 +146,7 @@ const navigation = computed(() => [
   @apply absolute -right-3 -top-2 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-red-600 px-1 text-[0.625rem] font-bold leading-none text-white;
 }
 .timer-badge {
-  @apply absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border-2 border-white bg-stone-900 px-1.5 py-0.5 font-mono text-[0.6rem] font-semibold leading-none text-white;
+  @apply whitespace-nowrap rounded-full bg-stone-900 px-2 py-0.5 font-mono text-[0.65rem] font-semibold leading-none text-white;
 }
 .bottom-nav a > span:last-child {
   @apply truncate;
