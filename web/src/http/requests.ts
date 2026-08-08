@@ -263,10 +263,11 @@ export const getDashboard = async (
 
 export const listExercises = async (
   pageToken: Uint8Array,
+  name = '',
 ): Promise<ListExercisesResponse | void> => {
   const req = create(ListExercisesRequestSchema, {
     exerciseIds: [],
-    name: '',
+    name: name,
     pagination: {
       pageLimit: defaultPageLimit,
       pageToken: pageToken,
@@ -482,9 +483,12 @@ export const unfollowUser = async (unfollowId: string): Promise<UnfollowUserResp
   return tryCatch(() => userClient.unfollowUser(req))
 }
 
-export const listRoutines = async (pageToken: Uint8Array): Promise<ListRoutinesResponse | void> => {
+export const listRoutines = async (
+  pageToken: Uint8Array,
+  name = '',
+): Promise<ListRoutinesResponse | void> => {
   const req = create(ListRoutinesRequestSchema, {
-    name: '',
+    name: name,
     pagination: {
       pageLimit: defaultPageLimit,
       pageToken: pageToken,

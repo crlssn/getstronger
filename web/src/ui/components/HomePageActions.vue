@@ -1,17 +1,37 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
-import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { computed, nextTick, ref } from 'vue'
+import {
+  BookOpenIcon,
+  FireIcon,
+  MagnifyingGlassIcon,
+  RectangleStackIcon,
+  XMarkIcon,
+} from '@heroicons/vue/24/outline'
 
-import { searchUsers } from '@/http/requests'
-import type { User } from '@/proto/api/v1/shared_pb'
+import { listExercises, listPlans, listRoutines, searchUsers } from '@/http/requests'
+import type { Exercise, User } from '@/proto/api/v1/shared_pb'
+import type { Plan, Routine } from '@/proto/api/v1/routine_service_pb'
+
+const maxResultsPerGroup = 5
 
 const searchOpen = defineModel<boolean>('open', { default: false })
 const input = ref<HTMLInputElement | null>(null)
 const users = ref<User[]>([])
+const routines = ref<Routine[]>([])
+const plans = ref<Plan[]>([])
+const exercises = ref<Exercise[]>([])
 const query = ref('')
 const searching = ref(false)
 const hasSearched = ref(false)
 let searchSequence = 0
+
+const hasResults = computed(
+  () =>
+    users.value.length > 0 ||
+    routines.value.length > 0 ||
+    plans.value.length > 0 ||
+    exercises.value.length > 0,
+)
 
 const openSearch = async () => {
   searchOpen.value = true
@@ -19,30 +39,47 @@ const openSearch = async () => {
   input.value?.focus()
 }
 
+const clearResults = () => {
+  users.value = []
+  routines.value = []
+  plans.value = []
+  exercises.value = []
+}
+
 const closeSearch = () => {
   searchSequence += 1
   query.value = ''
-  users.value = []
+  clearResults()
   searching.value = false
   hasSearched.value = false
   searchOpen.value = false
 }
 
-const onSearchUsers = async () => {
+const onSearch = async () => {
   const searchQuery = query.value.trim()
   const sequence = ++searchSequence
   if (searchQuery.length < 3) {
-    users.value = []
+    clearResults()
     searching.value = false
     hasSearched.value = false
     return
   }
 
   searching.value = true
-  const response = await searchUsers(searchQuery, new Uint8Array(0))
+  const [userResponse, routineResponse, planResponse, exerciseResponse] = await Promise.all([
+    searchUsers(searchQuery, new Uint8Array(0)),
+    listRoutines(new Uint8Array(0), searchQuery),
+    listPlans(),
+    listExercises(new Uint8Array(0), searchQuery),
+  ])
   if (sequence !== searchSequence) return
 
-  users.value = response?.users ?? []
+  users.value = userResponse?.users ?? []
+  routines.value = (routineResponse?.routines ?? []).slice(0, maxResultsPerGroup)
+  plans.value = (planResponse?.plans ?? [])
+    .filter((plan) => plan.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .slice(0, maxResultsPerGroup)
+  exercises.value = (exerciseResponse?.exercises ?? []).slice(0, maxResultsPerGroup)
   searching.value = false
   hasSearched.value = true
 }
@@ -54,43 +91,97 @@ const onSearchUsers = async () => {
       v-if="!searchOpen"
       type="button"
       class="search-trigger"
-      aria-label="Search people"
+      aria-label="Search"
       @click="openSearch"
     >
       <MagnifyingGlassIcon />
     </button>
 
-    <section v-if="searchOpen" class="search-panel" aria-label="Search people">
+    <section v-if="searchOpen" class="search-panel" aria-label="Search">
       <div class="search-field">
         <MagnifyingGlassIcon />
         <input
           ref="input"
           v-model="query"
           type="search"
-          placeholder="Search people"
-          aria-label="Search people"
-          @input="onSearchUsers"
+          placeholder="Search people, routines, plans, exercises"
+          aria-label="Search people, routines, plans and exercises"
+          @input="onSearch"
           @keydown.esc="closeSearch"
         />
         <button type="button" aria-label="Close search" @click="closeSearch"><XMarkIcon /></button>
       </div>
-      <div v-if="users.length" class="search-results">
-        <RouterLink
-          v-for="user in users"
-          :key="user.id"
-          :to="`/users/${user.id}`"
-          @click="closeSearch"
-        >
-          <span class="avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
-          <span>
-            <strong>{{ user.firstName }} {{ user.lastName }}</strong>
-            <small>View profile</small>
-          </span>
-        </RouterLink>
+      <div v-if="hasResults" class="search-results">
+        <template v-if="users.length">
+          <p class="group-label">People</p>
+          <RouterLink
+            v-for="user in users"
+            :key="user.id"
+            :to="`/users/${user.id}`"
+            @click="closeSearch"
+          >
+            <span class="avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
+            <span>
+              <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+              <small>View profile</small>
+            </span>
+          </RouterLink>
+        </template>
+        <template v-if="routines.length">
+          <p class="group-label">Routines</p>
+          <RouterLink
+            v-for="routine in routines"
+            :key="routine.id"
+            :to="`/routines/${routine.id}`"
+            @click="closeSearch"
+          >
+            <span class="avatar"><FireIcon /></span>
+            <span>
+              <strong>{{ routine.name }}</strong>
+              <small>
+                {{ routine.exercises.length }}
+                {{ routine.exercises.length === 1 ? 'exercise' : 'exercises' }}
+              </small>
+            </span>
+          </RouterLink>
+        </template>
+        <template v-if="plans.length">
+          <p class="group-label">Plans</p>
+          <RouterLink
+            v-for="plan in plans"
+            :key="plan.id"
+            :to="`/plans/${plan.id}`"
+            @click="closeSearch"
+          >
+            <span class="avatar"><RectangleStackIcon /></span>
+            <span>
+              <strong>{{ plan.name }}</strong>
+              <small>
+                {{ plan.routines.length }}
+                {{ plan.routines.length === 1 ? 'routine' : 'routines' }}
+              </small>
+            </span>
+          </RouterLink>
+        </template>
+        <template v-if="exercises.length">
+          <p class="group-label">Exercises</p>
+          <RouterLink
+            v-for="exercise in exercises"
+            :key="exercise.id"
+            :to="`/exercises/${exercise.id}`"
+            @click="closeSearch"
+          >
+            <span class="avatar"><BookOpenIcon /></span>
+            <span>
+              <strong>{{ exercise.name }}</strong>
+              <small>View exercise</small>
+            </span>
+          </RouterLink>
+        </template>
       </div>
       <p v-else-if="searching" class="search-hint" aria-live="polite">Searching…</p>
-      <p v-else-if="hasSearched" class="search-hint">No people found.</p>
-      <p v-else class="search-hint">Type at least 3 characters to find someone.</p>
+      <p v-else-if="hasSearched" class="search-hint">Nothing found. Try a different search.</p>
+      <p v-else class="search-hint">Type at least 3 characters to search.</p>
     </section>
   </div>
 </template>
@@ -127,14 +218,17 @@ const onSearchUsers = async () => {
   @apply size-5;
 }
 .search-results {
-  @apply mt-3 w-full divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply mt-3 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+}
+.group-label {
+  @apply border-b border-slate-100 bg-slate-50/60 px-4 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .search-results a {
-  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 p-4 transition hover:bg-stone-50;
+  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 border-b border-slate-100 p-4 transition last:border-b-0 hover:bg-stone-50;
 }
 .search-results strong,
 .search-results small {
-  @apply block;
+  @apply block truncate;
 }
 .search-results strong {
   @apply text-sm text-slate-900;
@@ -144,6 +238,9 @@ const onSearchUsers = async () => {
 }
 .avatar {
   @apply grid size-11 place-items-center rounded-xl bg-stone-200 text-sm font-semibold text-stone-800;
+}
+.avatar svg {
+  @apply size-5;
 }
 .search-hint {
   @apply px-1 py-4 text-sm text-slate-500;
