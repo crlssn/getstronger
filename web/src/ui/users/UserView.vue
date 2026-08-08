@@ -79,10 +79,12 @@ const profileActions = computed<DropdownItem[]>(() => [
 </script>
 
 <template>
-  <div v-if="notMe" class="profile-action" :class="{ following: followed }">
-    <span v-if="followed" class="following-status">Following {{ user.firstName }}</span>
-    <DropdownButton v-if="followed" label="Profile actions" :items="profileActions" />
-    <AppButton v-else colour="primary" type="button" @click="onFollowUser">
+  <Teleport v-if="notMe && followed" to="#page-nav-action">
+    <DropdownButton label="Profile actions" :items="profileActions" />
+  </Teleport>
+
+  <div v-if="notMe && !followed" class="profile-action">
+    <AppButton colour="primary" type="button" @click="onFollowUser">
       Follow {{ user.firstName }}
     </AppButton>
   </div>
@@ -112,12 +114,6 @@ const profileActions = computed<DropdownItem[]>(() => [
 <style scoped>
 .profile-action {
   @apply mb-4;
-}
-.profile-action.following {
-  @apply flex items-center justify-between gap-3;
-}
-.following-status {
-  @apply text-sm font-semibold text-slate-600;
 }
 .profile-tabs {
   @apply mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1;

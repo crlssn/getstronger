@@ -31,7 +31,8 @@ const goBack = async () => {
       <ArrowLeftIcon />
     </button>
     <p>{{ pageTitleStore.pageTitle }}</p>
-    <div class="page-action">
+    <!-- Views can Teleport their own action (e.g. a dropdown) into this slot. -->
+    <div id="page-nav-action" class="page-action">
       <ActionButton
         v-if="actionButton.active"
         :action="actionButton.action"
