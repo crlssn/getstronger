@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
@@ -16,6 +19,7 @@ type Repo interface {
 type Tx interface {
 	methods
 	exec() *sql.Tx
+	bobExec() bob.Executor
 }
 
 type methods interface {
@@ -52,8 +56,8 @@ type setMethods interface {
 }
 
 type authMethods interface {
-	GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error)
-	CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error)
+	GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error)
+	CreateAuth(ctx context.Context, email, password string) (*models.Auth, error)
 	UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error
 	RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error)
 	CompareEmailAndPassword(ctx context.Context, email, password string) error

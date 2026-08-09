@@ -141,8 +141,8 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	refreshToken := auth.RefreshToken.String
-	if !auth.RefreshToken.Valid {
+	refreshToken := auth.RefreshToken.GetOrZero()
+	if auth.RefreshToken.IsNull() {
 		refreshToken, err = h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeRefresh)
 		if err != nil {
 			log.Error("token generation failed", zap.Error(err))
@@ -311,7 +311,7 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if auth.PasswordResetTokenValidUntil.Valid && auth.PasswordResetTokenValidUntil.Time.Before(time.Now().UTC()) {
+	if !auth.PasswordResetTokenValidUntil.IsNull() && auth.PasswordResetTokenValidUntil.GetOrZero().Before(time.Now().UTC()) {
 		log.Warn("password reset token expired")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}

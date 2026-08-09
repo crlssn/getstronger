@@ -14,7 +14,9 @@ import (
 	sql "database/sql"
 	reflect "reflect"
 
+	models "github.com/crlssn/getstronger/server/gen/models"
 	orm "github.com/crlssn/getstronger/server/gen/orm"
+	bob "github.com/stephenafamo/bob"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -106,10 +108,10 @@ func (mr *MockRepoMockRecorder) CountNotifications(ctx any, opts ...any) *gomock
 }
 
 // CreateAuth mocks base method.
-func (m *MockRepo) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
+func (m *MockRepo) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAuth", ctx, email, password)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -306,14 +308,14 @@ func (mr *MockRepoMockRecorder) GetActivePlan(ctx, userID any) *gomock.Call {
 }
 
 // GetAuth mocks base method.
-func (m *MockRepo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
+func (m *MockRepo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAuth", varargs...)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1056,10 +1058,10 @@ func (mr *MockTxMockRecorder) CountNotifications(ctx any, opts ...any) *gomock.C
 }
 
 // CreateAuth mocks base method.
-func (m *MockTx) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
+func (m *MockTx) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAuth", ctx, email, password)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1256,14 +1258,14 @@ func (mr *MockTxMockRecorder) GetActivePlan(ctx, userID any) *gomock.Call {
 }
 
 // GetAuth mocks base method.
-func (m *MockTx) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
+func (m *MockTx) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAuth", varargs...)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1876,6 +1878,20 @@ func (mr *MockTxMockRecorder) UpdateWorkoutSets(ctx, p any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkoutSets", reflect.TypeOf((*MockTx)(nil).UpdateWorkoutSets), ctx, p)
 }
 
+// bobExec mocks base method.
+func (m *MockTx) bobExec() bob.Executor {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "bobExec")
+	ret0, _ := ret[0].(bob.Executor)
+	return ret0
+}
+
+// bobExec indicates an expected call of bobExec.
+func (mr *MockTxMockRecorder) bobExec() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "bobExec", reflect.TypeOf((*MockTx)(nil).bobExec))
+}
+
 // exec mocks base method.
 func (m *MockTx) exec() *sql.Tx {
 	m.ctrl.T.Helper()
@@ -2006,10 +2022,10 @@ func (mr *MockmethodsMockRecorder) CountNotifications(ctx any, opts ...any) *gom
 }
 
 // CreateAuth mocks base method.
-func (m *Mockmethods) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
+func (m *Mockmethods) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAuth", ctx, email, password)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2206,14 +2222,14 @@ func (mr *MockmethodsMockRecorder) GetActivePlan(ctx, userID any) *gomock.Call {
 }
 
 // GetAuth mocks base method.
-func (m *Mockmethods) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
+func (m *Mockmethods) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAuth", varargs...)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3157,10 +3173,10 @@ func (mr *MockauthMethodsMockRecorder) CompareEmailAndPassword(ctx, email, passw
 }
 
 // CreateAuth mocks base method.
-func (m *MockauthMethods) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
+func (m *MockauthMethods) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAuth", ctx, email, password)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3172,14 +3188,14 @@ func (mr *MockauthMethodsMockRecorder) CreateAuth(ctx, email, password any) *gom
 }
 
 // GetAuth mocks base method.
-func (m *MockauthMethods) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
+func (m *MockauthMethods) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAuth", varargs...)
-	ret0, _ := ret[0].(*orm.Auth)
+	ret0, _ := ret[0].(*models.Auth)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

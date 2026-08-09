@@ -8,6 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aarondl/opt/omit"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/dialect"
+	"github.com/stephenafamo/bob/dialect/psql/um"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
@@ -15,6 +20,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
@@ -75,10 +81,23 @@ func (r *repo) executor() boil.ContextExecutor {
 	return r.db
 }
 
+// bobExec mirrors executor for the tables already migrated to Bob. Both wrap
+// the same connection or transaction, so the two ORMs stay consistent while
+// the migration is in progress.
+func (r *repo) bobExec() bob.Executor {
+	if r.tx != nil {
+		return bob.NewTx(r.tx)
+	}
+
+	return bob.NewDB(r.db)
+}
+
 var ErrAuthEmailExists = fmt.Errorf("email already exists")
 
-func (r *repo) CreateAuth(ctx context.Context, email, password string) (*orm.Auth, error) {
-	exists, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).Exists(ctx, r.executor())
+func (r *repo) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
+	exists, err := models.Auths.Query(
+		models.SelectWhere.Auths.Email.EQ(email),
+	).Exists(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("email exists check: %w", err)
 	}
@@ -91,77 +110,77 @@ func (r *repo) CreateAuth(ctx context.Context, email, password string) (*orm.Aut
 		return nil, fmt.Errorf("bcrypt password generation: %w", err)
 	}
 
-	auth := &orm.Auth{
-		Email:    email,
-		Password: bcryptPassword,
-	}
-
-	if err = auth.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+	auth, err := models.Auths.Insert(&models.AuthSetter{
+		Email:    omit.From(email),
+		Password: omit.From(bcryptPassword),
+	}).One(ctx, r.bobExec())
+	if err != nil {
 		return nil, fmt.Errorf("auth insert: %w", err)
 	}
 
 	return auth, nil
 }
 
-type UpdateAuthOpt func() (orm.M, error)
+type UpdateAuthOpt func() (columns, error)
 
 func UpdateAuthPassword(password string) UpdateAuthOpt {
-	return func() (orm.M, error) {
+	return func() (columns, error) {
 		passwordHash, err := hashPassword(password)
 		if err != nil {
 			return nil, fmt.Errorf("password hash: %w", err)
 		}
 
-		return orm.M{orm.AuthColumns.Password: passwordHash}, nil
+		return columns{models.Auths.Columns.Password.Name(): passwordHash}, nil
 	}
 }
 
 func UpdateAuthEmailVerified() UpdateAuthOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.AuthColumns.EmailVerified: true}, nil
+	return func() (columns, error) {
+		return columns{models.Auths.Columns.EmailVerified.Name(): true}, nil
 	}
 }
 
 func UpdateAuthDeleteRefreshToken() UpdateAuthOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.AuthColumns.RefreshToken: nil}, nil
+	return func() (columns, error) {
+		return columns{models.Auths.Columns.RefreshToken.Name(): nil}, nil
 	}
 }
 
 func UpdateAuthRefreshToken(refreshToken string) UpdateAuthOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.AuthColumns.RefreshToken: null.StringFrom(refreshToken)}, nil
+	return func() (columns, error) {
+		return columns{models.Auths.Columns.RefreshToken.Name(): refreshToken}, nil
 	}
 }
 
 const PasswordResetTokenTTL = 24 * time.Hour
 
 func UpdateAuthPasswordResetToken(token string) UpdateAuthOpt {
-	return func() (orm.M, error) {
-		return orm.M{
-			orm.AuthColumns.PasswordResetToken:           null.StringFrom(token),
-			orm.AuthColumns.PasswordResetTokenValidUntil: null.TimeFrom(time.Now().UTC().Add(PasswordResetTokenTTL)),
+	return func() (columns, error) {
+		return columns{
+			models.Auths.Columns.PasswordResetToken.Name():           token,
+			models.Auths.Columns.PasswordResetTokenValidUntil.Name(): time.Now().UTC().Add(PasswordResetTokenTTL),
 		}, nil
 	}
 }
 
 func UpdateAuthDeletePasswordResetToken() UpdateAuthOpt {
-	return func() (orm.M, error) {
-		return orm.M{
-			orm.AuthColumns.PasswordResetToken:           nil,
-			orm.AuthColumns.PasswordResetTokenValidUntil: nil,
+	return func() (columns, error) {
+		return columns{
+			models.Auths.Columns.PasswordResetToken.Name():           nil,
+			models.Auths.Columns.PasswordResetTokenValidUntil.Name(): nil,
 		}, nil
 	}
 }
 
 func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error {
-	columns, err := updateColumnsFromOpts(opts)
+	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("auth update columns: %w", err)
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Auths(orm.AuthWhere.ID.EQ(authID)).UpdateAll(ctx, tx.exec(), columns)
+		mods := append(cols.updateMods(), um.Where(models.Auths.Columns.ID.EQ(psql.Arg(authID))))
+		rows, rowsErr := models.Auths.Update(mods...).Exec(ctx, tx.bobExec())
 		if rowsErr != nil {
 			return fmt.Errorf("auth update: %w", rowsErr)
 		}
@@ -175,7 +194,9 @@ func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 }
 
 func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
-	auth, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).One(ctx, r.executor())
+	auth, err := models.Auths.Query(
+		models.SelectWhere.Auths.Email.EQ(email),
+	).One(ctx, r.bobExec())
 	if err != nil {
 		return fmt.Errorf("auth fetch: %w", err)
 	}
@@ -188,7 +209,9 @@ func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password stri
 }
 
 func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
-	exists, err := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(refreshToken))).Exists(ctx, r.executor())
+	exists, err := models.Auths.Query(
+		models.SelectWhere.Auths.RefreshToken.EQ(refreshToken),
+	).Exists(ctx, r.bobExec())
 	if err != nil {
 		return false, fmt.Errorf("refresh token exists check: %w", err)
 	}
@@ -416,40 +439,40 @@ func (r *repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Ex
 	return exercise, nil
 }
 
-type UpdateExerciseOpt func() (orm.M, error)
+type UpdateExerciseOpt func() (columns, error)
 
 func UpdateExerciseTitle(title string) UpdateExerciseOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.ExerciseColumns.Title: title}, nil
+	return func() (columns, error) {
+		return columns{orm.ExerciseColumns.Title: title}, nil
 	}
 }
 
 func UpdateExerciseTags(tags []string) UpdateExerciseOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.ExerciseColumns.Tags: types.StringArray(tags)}, nil
+	return func() (columns, error) {
+		return columns{orm.ExerciseColumns.Tags: types.StringArray(tags)}, nil
 	}
 }
 
 func UpdateExerciseMetrics(metrics []string) UpdateExerciseOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.ExerciseColumns.Metrics: types.StringArray(metrics)}, nil
+	return func() (columns, error) {
+		return columns{orm.ExerciseColumns.Metrics: types.StringArray(metrics)}, nil
 	}
 }
 
 func UpdateExerciseRestSeconds(restSeconds int) UpdateExerciseOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.ExerciseColumns.RestSeconds: restSeconds}, nil
+	return func() (columns, error) {
+		return columns{orm.ExerciseColumns.RestSeconds: restSeconds}, nil
 	}
 }
 
 func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error {
-	columns, err := updateColumnsFromOpts(opts)
+	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("exercise update columns: %w", err)
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Exercises(orm.ExerciseWhere.ID.EQ(exerciseID)).UpdateAll(ctx, tx.exec(), columns)
+		rows, rowsErr := orm.Exercises(orm.ExerciseWhere.ID.EQ(exerciseID)).UpdateAll(ctx, tx.exec(), orm.M(cols))
 		if rowsErr != nil {
 			return fmt.Errorf("exercise update: %w", err)
 		}
@@ -638,33 +661,33 @@ func (r *repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.Ro
 	return routines, nil
 }
 
-type UpdateRoutineOpt func() (orm.M, error)
+type UpdateRoutineOpt func() (columns, error)
 
 func UpdateRoutineName(name string) UpdateRoutineOpt {
-	return func() (orm.M, error) {
-		return orm.M{orm.RoutineColumns.Title: name}, nil
+	return func() (columns, error) {
+		return columns{orm.RoutineColumns.Title: name}, nil
 	}
 }
 
 func UpdateRoutineExerciseOrder(exerciseIDs []string) UpdateRoutineOpt {
-	return func() (orm.M, error) {
+	return func() (columns, error) {
 		bytes, err := json.Marshal(exerciseIDs)
 		if err != nil {
 			return nil, fmt.Errorf("exercise IDs marshal: %w", err)
 		}
 
-		return orm.M{orm.RoutineColumns.ExerciseOrder: bytes}, nil
+		return columns{orm.RoutineColumns.ExerciseOrder: bytes}, nil
 	}
 }
 
 func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
-	columns, err := updateColumnsFromOpts(opts)
+	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("routine update columns: %w", err)
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, tx.exec(), columns)
+		rows, rowsErr := orm.Routines(orm.RoutineWhere.ID.EQ(routineID)).UpdateAll(ctx, tx.exec(), orm.M(cols))
 		if rowsErr != nil {
 			return fmt.Errorf("routine update: %w", err)
 		}
@@ -1389,51 +1412,51 @@ func (r *repo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userI
 	return exists, nil
 }
 
-type GetAuthOpt func() qm.QueryMod
+type GetAuthOpt func() bob.Mod[*dialect.SelectQuery]
 
 func GetAuthByID(id string) GetAuthOpt {
-	return func() qm.QueryMod {
-		return orm.AuthWhere.ID.EQ(id)
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Auths.ID.EQ(id)
 	}
 }
 
 func GetAuthByEmail(email string) GetAuthOpt {
-	return func() qm.QueryMod {
-		return orm.AuthWhere.Email.EQ(email)
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Auths.Email.EQ(email)
 	}
 }
 
 func GetAuthByEmailToken(token string) GetAuthOpt {
-	return func() qm.QueryMod {
-		return orm.AuthWhere.EmailToken.EQ(token)
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Auths.EmailToken.EQ(token)
 	}
 }
 
 func GetAuthWithUser() GetAuthOpt {
-	return func() qm.QueryMod {
-		return qm.Load(orm.AuthRels.User)
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.Preload.Auth.User()
 	}
 }
 
 func GetAuthByPasswordResetToken(token string) GetAuthOpt {
-	return func() qm.QueryMod {
-		return orm.AuthWhere.PasswordResetToken.EQ(null.StringFrom(token))
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Auths.PasswordResetToken.EQ(token)
 	}
 }
 
 func GetAuthByRefreshToken(token string) GetAuthOpt {
-	return func() qm.QueryMod {
-		return orm.AuthWhere.RefreshToken.EQ(null.StringFrom(token))
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Auths.RefreshToken.EQ(token)
 	}
 }
 
-func (r *repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*orm.Auth, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
+func (r *repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error) {
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	auth, err := orm.Auths(query...).One(ctx, r.executor())
+	auth, err := models.Auths.Query(query...).One(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("auth fetch: %w", err)
 	}
@@ -1522,35 +1545,35 @@ func (r *repo) SetRoutineExercises(ctx context.Context, routine *orm.Routine, ex
 	return nil
 }
 
-type UpdateWorkoutOpt func() (orm.M, error)
+type UpdateWorkoutOpt func() (columns, error)
 
 func UpdateWorkoutName(name string) UpdateWorkoutOpt {
-	return func() (orm.M, error) {
-		return orm.M{
+	return func() (columns, error) {
+		return columns{
 			orm.WorkoutColumns.Name: name,
 		}, nil
 	}
 }
 
 func UpdateWorkoutNote(note string) UpdateWorkoutOpt {
-	return func() (orm.M, error) {
-		return orm.M{
+	return func() (columns, error) {
+		return columns{
 			orm.WorkoutColumns.Note: null.NewString(note, note != ""),
 		}, nil
 	}
 }
 
 func UpdateWorkoutStartedAt(startedAt time.Time) UpdateWorkoutOpt {
-	return func() (orm.M, error) {
-		return orm.M{
+	return func() (columns, error) {
+		return columns{
 			orm.WorkoutColumns.StartedAt: startedAt,
 		}, nil
 	}
 }
 
 func UpdateWorkoutFinishedAt(finishedAt time.Time) UpdateWorkoutOpt {
-	return func() (orm.M, error) {
-		return orm.M{
+	return func() (columns, error) {
+		return columns{
 			orm.WorkoutColumns.FinishedAt: finishedAt,
 		}, nil
 	}
@@ -1561,13 +1584,13 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 		return fmt.Errorf("workout fetch: %w", err)
 	}
 
-	columns, err := updateColumnsFromOpts(opts)
+	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("workout update columns: %w", err)
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		rows, rowsErr := orm.Workouts(orm.WorkoutWhere.ID.EQ(workoutID)).UpdateAll(ctx, tx.exec(), columns)
+		rows, rowsErr := orm.Workouts(orm.WorkoutWhere.ID.EQ(workoutID)).UpdateAll(ctx, tx.exec(), orm.M(cols))
 		if rowsErr != nil {
 			return fmt.Errorf("workout update: %w", err)
 		}
