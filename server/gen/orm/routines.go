@@ -688,7 +688,7 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.Select("\"getstronger\".\"exercises\".\"id\", \"getstronger\".\"exercises\".\"user_id\", \"getstronger\".\"exercises\".\"title\", \"getstronger\".\"exercises\".\"created_at\", \"getstronger\".\"exercises\".\"deleted_at\", \"getstronger\".\"exercises\".\"tags\", \"a\".\"routine_id\""),
+		qm.Select("\"getstronger\".\"exercises\".\"id\", \"getstronger\".\"exercises\".\"user_id\", \"getstronger\".\"exercises\".\"title\", \"getstronger\".\"exercises\".\"created_at\", \"getstronger\".\"exercises\".\"deleted_at\", \"getstronger\".\"exercises\".\"tags\", \"getstronger\".\"exercises\".\"metrics\", \"getstronger\".\"exercises\".\"rest_seconds\", \"a\".\"routine_id\""),
 		qm.From("\"getstronger\".\"exercises\""),
 		qm.InnerJoin("\"getstronger\".\"exercises_routines\" as \"a\" on \"getstronger\".\"exercises\".\"id\" = \"a\".\"exercise_id\""),
 		qm.WhereIn("\"a\".\"routine_id\" in ?", argsSlice...),
@@ -709,7 +709,7 @@ func (routineL) LoadExercises(ctx context.Context, e boil.ContextExecutor, singu
 		one := new(Exercise)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.CreatedAt, &one.DeletedAt, &one.Tags, &localJoinCol)
+		err = results.Scan(&one.ID, &one.UserID, &one.Title, &one.CreatedAt, &one.DeletedAt, &one.Tags, &one.Metrics, &one.RestSeconds, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for exercises")
 		}

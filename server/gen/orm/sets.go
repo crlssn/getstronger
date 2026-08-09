@@ -23,52 +23,62 @@ import (
 
 // Set is an object representing the database table.
 type Set struct {
-	ID         string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	WorkoutID  string    `boil:"workout_id" json:"workout_id" toml:"workout_id" yaml:"workout_id"`
-	ExerciseID string    `boil:"exercise_id" json:"exercise_id" toml:"exercise_id" yaml:"exercise_id"`
-	Weight     float64   `boil:"weight" json:"weight" toml:"weight" yaml:"weight"`
-	Reps       int       `boil:"reps" json:"reps" toml:"reps" yaml:"reps"`
-	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UserID     string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	ID              string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	WorkoutID       string    `boil:"workout_id" json:"workout_id" toml:"workout_id" yaml:"workout_id"`
+	ExerciseID      string    `boil:"exercise_id" json:"exercise_id" toml:"exercise_id" yaml:"exercise_id"`
+	Weight          float64   `boil:"weight" json:"weight" toml:"weight" yaml:"weight"`
+	Reps            int       `boil:"reps" json:"reps" toml:"reps" yaml:"reps"`
+	CreatedAt       time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UserID          string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Distance        float64   `boil:"distance" json:"distance" toml:"distance" yaml:"distance"`
+	DurationSeconds int       `boil:"duration_seconds" json:"duration_seconds" toml:"duration_seconds" yaml:"duration_seconds"`
 
 	R *setR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L setL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var SetColumns = struct {
-	ID         string
-	WorkoutID  string
-	ExerciseID string
-	Weight     string
-	Reps       string
-	CreatedAt  string
-	UserID     string
+	ID              string
+	WorkoutID       string
+	ExerciseID      string
+	Weight          string
+	Reps            string
+	CreatedAt       string
+	UserID          string
+	Distance        string
+	DurationSeconds string
 }{
-	ID:         "id",
-	WorkoutID:  "workout_id",
-	ExerciseID: "exercise_id",
-	Weight:     "weight",
-	Reps:       "reps",
-	CreatedAt:  "created_at",
-	UserID:     "user_id",
+	ID:              "id",
+	WorkoutID:       "workout_id",
+	ExerciseID:      "exercise_id",
+	Weight:          "weight",
+	Reps:            "reps",
+	CreatedAt:       "created_at",
+	UserID:          "user_id",
+	Distance:        "distance",
+	DurationSeconds: "duration_seconds",
 }
 
 var SetTableColumns = struct {
-	ID         string
-	WorkoutID  string
-	ExerciseID string
-	Weight     string
-	Reps       string
-	CreatedAt  string
-	UserID     string
+	ID              string
+	WorkoutID       string
+	ExerciseID      string
+	Weight          string
+	Reps            string
+	CreatedAt       string
+	UserID          string
+	Distance        string
+	DurationSeconds string
 }{
-	ID:         "sets.id",
-	WorkoutID:  "sets.workout_id",
-	ExerciseID: "sets.exercise_id",
-	Weight:     "sets.weight",
-	Reps:       "sets.reps",
-	CreatedAt:  "sets.created_at",
-	UserID:     "sets.user_id",
+	ID:              "sets.id",
+	WorkoutID:       "sets.workout_id",
+	ExerciseID:      "sets.exercise_id",
+	Weight:          "sets.weight",
+	Reps:            "sets.reps",
+	CreatedAt:       "sets.created_at",
+	UserID:          "sets.user_id",
+	Distance:        "sets.distance",
+	DurationSeconds: "sets.duration_seconds",
 }
 
 // Generated where
@@ -103,21 +113,25 @@ func (w whereHelperfloat64) NIN(slice []float64) qm.QueryMod {
 }
 
 var SetWhere = struct {
-	ID         whereHelperstring
-	WorkoutID  whereHelperstring
-	ExerciseID whereHelperstring
-	Weight     whereHelperfloat64
-	Reps       whereHelperint
-	CreatedAt  whereHelpertime_Time
-	UserID     whereHelperstring
+	ID              whereHelperstring
+	WorkoutID       whereHelperstring
+	ExerciseID      whereHelperstring
+	Weight          whereHelperfloat64
+	Reps            whereHelperint
+	CreatedAt       whereHelpertime_Time
+	UserID          whereHelperstring
+	Distance        whereHelperfloat64
+	DurationSeconds whereHelperint
 }{
-	ID:         whereHelperstring{field: "\"getstronger\".\"sets\".\"id\""},
-	WorkoutID:  whereHelperstring{field: "\"getstronger\".\"sets\".\"workout_id\""},
-	ExerciseID: whereHelperstring{field: "\"getstronger\".\"sets\".\"exercise_id\""},
-	Weight:     whereHelperfloat64{field: "\"getstronger\".\"sets\".\"weight\""},
-	Reps:       whereHelperint{field: "\"getstronger\".\"sets\".\"reps\""},
-	CreatedAt:  whereHelpertime_Time{field: "\"getstronger\".\"sets\".\"created_at\""},
-	UserID:     whereHelperstring{field: "\"getstronger\".\"sets\".\"user_id\""},
+	ID:              whereHelperstring{field: "\"getstronger\".\"sets\".\"id\""},
+	WorkoutID:       whereHelperstring{field: "\"getstronger\".\"sets\".\"workout_id\""},
+	ExerciseID:      whereHelperstring{field: "\"getstronger\".\"sets\".\"exercise_id\""},
+	Weight:          whereHelperfloat64{field: "\"getstronger\".\"sets\".\"weight\""},
+	Reps:            whereHelperint{field: "\"getstronger\".\"sets\".\"reps\""},
+	CreatedAt:       whereHelpertime_Time{field: "\"getstronger\".\"sets\".\"created_at\""},
+	UserID:          whereHelperstring{field: "\"getstronger\".\"sets\".\"user_id\""},
+	Distance:        whereHelperfloat64{field: "\"getstronger\".\"sets\".\"distance\""},
+	DurationSeconds: whereHelperint{field: "\"getstronger\".\"sets\".\"duration_seconds\""},
 }
 
 // SetRels is where relationship names are stored.
@@ -176,9 +190,9 @@ func (r *setR) GetWorkout() *Workout {
 type setL struct{}
 
 var (
-	setAllColumns            = []string{"id", "workout_id", "exercise_id", "weight", "reps", "created_at", "user_id"}
+	setAllColumns            = []string{"id", "workout_id", "exercise_id", "weight", "reps", "created_at", "user_id", "distance", "duration_seconds"}
 	setColumnsWithoutDefault = []string{"workout_id", "exercise_id", "weight", "reps", "user_id"}
-	setColumnsWithDefault    = []string{"id", "created_at"}
+	setColumnsWithDefault    = []string{"id", "created_at", "distance", "duration_seconds"}
 	setPrimaryKeyColumns     = []string{"id"}
 	setGeneratedColumns      = []string{}
 )

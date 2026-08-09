@@ -115,7 +115,8 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
 
-	auth, err := h.repo.GetAuth(ctx,
+	auth, err := h.repo.GetAuth(
+		ctx,
 		repo.GetAuthByEmail(req.Msg.GetEmail()),
 		repo.GetAuthWithUser(),
 	)
@@ -257,7 +258,8 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv
 
 func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[apiv1.ResetPasswordRequest]) (*connect.Response[apiv1.ResetPasswordResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	auth, err := h.repo.GetAuth(ctx,
+	auth, err := h.repo.GetAuth(
+		ctx,
 		repo.GetAuthByEmail(req.Msg.GetEmail()),
 		repo.GetAuthWithUser(),
 	)
@@ -314,7 +316,8 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}
 
-	if err = h.repo.UpdateAuth(ctx, auth.ID,
+	if err = h.repo.UpdateAuth(
+		ctx, auth.ID,
 		repo.UpdateAuthPassword(req.Msg.GetPassword()),
 		repo.UpdateAuthDeletePasswordResetToken(),
 	); err != nil {

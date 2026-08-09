@@ -13,11 +13,30 @@ import (
 
 func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
-		Id:     exercise.ID,
-		UserId: exercise.UserID,
-		Name:   exercise.Title,
-		Tags:   []string(exercise.Tags),
+		Id:          exercise.ID,
+		UserId:      exercise.UserID,
+		Name:        exercise.Title,
+		Tags:        []string(exercise.Tags),
+		Metrics:     exerciseMetricsFromDB(exercise.Metrics),
+		RestSeconds: int32(exercise.RestSeconds), //nolint:gosec
 	}
+}
+
+func exerciseMetricsFromDB(metrics []string) []apiv1.ExerciseMetric {
+	parsed := make([]apiv1.ExerciseMetric, 0, len(metrics))
+	for _, metric := range metrics {
+		switch metric {
+		case "weight":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_WEIGHT)
+		case "reps":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_REPS)
+		case "distance":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_DISTANCE)
+		case "time":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_TIME)
+		}
+	}
+	return parsed
 }
 
 func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
@@ -159,7 +178,8 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 
 		var workoutOpts []WorkoutOpt
 		if workout.R.GetSets() != nil {
-			workoutOpts = append(workoutOpts,
+			workoutOpts = append(
+				workoutOpts,
 				WorkoutIntensity(workout.R.GetSets()),
 				WorkoutExerciseSets(workout.R.GetSets(), personalBests),
 			)
@@ -259,9 +279,11 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
 		for _, set := range exerciseSet.GetSets() {
 			sets = append(sets, repo.Set{
-				ID:     set.GetId(),
-				Reps:   int(set.GetReps()),
-				Weight: set.GetWeight(),
+				ID:              set.GetId(),
+				Reps:            int(set.GetReps()),
+				Weight:          set.GetWeight(),
+				Distance:        set.GetDistance(),
+				DurationSeconds: int(set.GetDurationSeconds()),
 			})
 		}
 
@@ -365,13 +387,15 @@ func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice
 		switch n.Type {
 		case orm.NotificationTypeFollow:
 			if actorExists {
-				nSlice = append(nSlice, Notification(n,
+				nSlice = append(nSlice, Notification(
+					n,
 					NotificationActor(n.Type, actor),
 				))
 			}
 		case orm.NotificationTypeWorkoutComment:
 			if actorExists && workoutExists {
-				nSlice = append(nSlice, Notification(n,
+				nSlice = append(nSlice, Notification(
+					n,
 					NotificationActor(n.Type, actor),
 					NotificationWorkout(n.Type, workout),
 				))
@@ -417,9 +441,11 @@ func SetSlice(sets orm.SetSlice, personalBests orm.SetSlice) []*apiv1.Set {
 
 func Set(set *orm.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 	return &apiv1.Set{
-		Id:     set.ID,
-		Weight: set.Weight,
-		Reps:   int32(set.Reps), //nolint:gosec
+		Id:              set.ID,
+		Weight:          set.Weight,
+		Reps:            int32(set.Reps), //nolint:gosec
+		Distance:        set.Distance,
+		DurationSeconds: int32(set.DurationSeconds), //nolint:gosec
 		Metadata: &apiv1.MetadataSet{
 			WorkoutId: set.WorkoutID,
 			CreatedAt: timestamppb.New(set.CreatedAt),

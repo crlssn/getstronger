@@ -16,8 +16,13 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { getWorkout, updateWorkout } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
-import { isNumber } from '@/utils/numbers.ts'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import DurationInput from '@/ui/workouts/DurationInput.vue'
+import {
+  hasAnyExerciseSetValue,
+  isExerciseSetComplete,
+  measurementsForExercise,
+} from '@/utils/exerciseMeasurements'
 
 const route = useRoute()
 const workout = ref<Workout>()
@@ -50,7 +55,7 @@ const onUpdateWorkout = async () => {
 
   workout.value.exerciseSets = workout.value.exerciseSets
     .map((exerciseSet) => {
-      const sets = exerciseSet.sets.filter((set) => isNumber(set.reps) && isNumber(set.weight))
+      const sets = exerciseSet.sets.filter((set) => isExerciseSetComplete(set, exerciseSet.exercise))
       if (!sets.length) return null
       exerciseSet.sets = sets
       return exerciseSet
@@ -149,28 +154,34 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
         <AppListItem class="flex flex-col">
           <div v-for="(set, index) in es.sets" :key="index" class="w-full">
             <label>Set {{ index + 1 }}</label>
-            <div class="flex items-center gap-x-4 mb-4">
-              <div class="w-full">
-                <input
-                  v-model.number="set.weight"
-                  type="text"
-                  inputmode="decimal"
-                  placeholder="Weight"
-                  :required="isNumber(set.reps)"
+            <div
+              class="measurement-row"
+              :style="{ '--metric-count': measurementsForExercise(es.exercise).length }"
+            >
+              <div
+                v-for="measurement in measurementsForExercise(es.exercise)"
+                :key="measurement.field"
+                class="measurement-input"
+              >
+                <span>{{ measurement.label }}</span>
+                <DurationInput
+                  v-if="measurement.field === 'durationSeconds'"
+                  v-model="set.durationSeconds"
+                  :required="hasAnyExerciseSetValue(set, es.exercise)"
                 />
-              </div>
-              <span class="text-gray-500 font-medium">x</span>
-              <div class="w-full">
                 <input
-                  v-model.number="set.reps"
-                  type="text"
-                  inputmode="numeric"
-                  placeholder="Reps"
-                  :required="isNumber(set.weight)"
+                  v-else
+                  v-model.number="set[measurement.field]"
+                  type="number"
+                  :inputmode="measurement.inputmode"
+                  min="0"
+                  :step="measurement.field === 'reps' ? 1 : 'any'"
+                  :placeholder="measurement.label"
+                  :required="hasAnyExerciseSetValue(set, es.exercise)"
                 />
               </div>
               <MinusCircleIcon
-                class="cursor-pointer"
+                class="remove-set"
                 @click="deleteSet(es.exercise?.id as string, index)"
               />
             </div>
@@ -241,5 +252,24 @@ label {
 
 input {
   @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 font-medium;
+}
+
+.measurement-row {
+  grid-template-columns: repeat(var(--metric-count), minmax(0, 1fr)) auto;
+  @apply mb-4 grid items-end gap-3;
+}
+
+.measurement-input > span {
+  @apply mb-1 block text-xs font-semibold text-slate-500;
+}
+
+.remove-set {
+  @apply mb-3 size-7 cursor-pointer text-slate-500;
+}
+
+@media (max-width: 520px) {
+  .measurement-row {
+    @apply gap-2;
+  }
 }
 </style>

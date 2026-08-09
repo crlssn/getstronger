@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import type { Set } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, type Set } from '@/proto/api/v1/shared_pb'
 import { TrophyIcon } from '@heroicons/vue/24/solid'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import {
+  exerciseMetrics,
+  formatExerciseSet,
+  formatMeasurementDuration,
+  measurementDefinitions,
+} from '@/utils/exerciseMeasurements'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     compact?: boolean
     flat?: boolean
@@ -11,15 +17,27 @@ withDefaults(
     name?: string
     sets: Set[]
     tags?: string[]
+    metrics?: ExerciseMetric[]
   }>(),
   { compact: false, flat: false, tags: () => [] },
 )
 
-const formatWeight = (weight: number) =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(weight)
+const metrics = exerciseMetrics({ metrics: props.metrics ?? [] })
+const measurements = measurementDefinitions.filter(({ metric }) => metrics.includes(metric))
 
-const setVolume = (set: Set) =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(set.weight * set.reps)
+const formatValue = (set: Set, field: (typeof measurementDefinitions)[number]['field']) => {
+  const value = set[field]
+  if (field === 'durationSeconds') return formatMeasurementDuration(value)
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+}
+
+const metricLabels: Partial<Record<ExerciseMetric, string>> = {
+  [ExerciseMetric.WEIGHT]: 'Weight',
+  [ExerciseMetric.REPS]: 'Reps',
+  [ExerciseMetric.DISTANCE]: 'Distance',
+  [ExerciseMetric.TIME]: 'Time',
+}
+const columnLabel = (metric: ExerciseMetric) => metricLabels[metric]
 </script>
 
 <template>
@@ -34,12 +52,17 @@ const setVolume = (set: Set) =>
       </span>
     </header>
 
-    <div class="set-table" role="table" :aria-label="`${name} sets`">
+    <div
+      class="set-table"
+      role="table"
+      :aria-label="`${name} sets`"
+      :style="{ '--metric-count': measurements.length }"
+    >
       <div v-if="!compact" class="set-row table-head" role="row">
         <span role="columnheader">Set</span>
-        <span role="columnheader">Weight</span>
-        <span role="columnheader">Reps</span>
-        <span role="columnheader">Volume</span>
+        <span v-for="measurement in measurements" :key="measurement.field" role="columnheader">
+          {{ columnLabel(measurement.metric) }}
+        </span>
       </div>
       <div v-for="(set, index) in sets" :key="set.id || index" class="set-row" role="row">
         <span
@@ -55,8 +78,7 @@ const setVolume = (set: Set) =>
           <template v-else>{{ index + 1 }}</template>
         </span>
         <span v-if="compact" class="compact-set-value" role="cell">
-          <strong>{{ formatWeight(set.weight) }} <small>kg</small></strong>
-          <span>× {{ set.reps }}</span>
+          <strong>{{ formatExerciseSet(set, { metrics }) }}</strong>
           <span
             v-if="set.metadata?.personalBest"
             class="compact-personal-best"
@@ -67,9 +89,11 @@ const setVolume = (set: Set) =>
           </span>
         </span>
         <template v-else>
-          <strong role="cell">{{ formatWeight(set.weight) }} <small>kg</small></strong>
-          <span role="cell">× {{ set.reps }}</span>
-          <span class="set-volume" role="cell">{{ setVolume(set) }} kg</span>
+          <span v-for="measurement in measurements" :key="measurement.field" role="cell">
+            <strong>{{ formatValue(set, measurement.field) }}</strong>
+            <small v-if="measurement.field === 'weight'"> kg</small>
+            <small v-else-if="measurement.field === 'distance'"> km</small>
+          </span>
         </template>
       </div>
     </div>
@@ -96,7 +120,8 @@ const setVolume = (set: Set) =>
   @apply px-4 py-2 sm:px-5;
 }
 .set-row {
-  @apply grid min-h-11 grid-cols-[2.25rem_minmax(5rem,1fr)_minmax(4rem,.8fr)_minmax(5rem,1fr)] items-center gap-2 border-t border-slate-100 text-sm first:border-t-0;
+  grid-template-columns: 2.25rem repeat(var(--metric-count), minmax(4.5rem, 1fr));
+  @apply grid min-h-11 items-center gap-2 border-t border-slate-100 text-sm first:border-t-0;
 }
 .table-head {
   @apply min-h-9 border-0 text-xs font-semibold uppercase tracking-wide text-slate-400;
@@ -163,7 +188,8 @@ const setVolume = (set: Set) =>
 }
 @media (max-width: 520px) {
   .set-row {
-    @apply grid-cols-[2rem_minmax(4.5rem,1fr)_3.5rem_4.5rem] gap-1.5;
+    grid-template-columns: 2rem repeat(var(--metric-count), minmax(3.75rem, 1fr));
+    @apply gap-1.5;
   }
   .set-row,
   .table-head {

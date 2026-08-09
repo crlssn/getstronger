@@ -368,18 +368,12 @@ export const updateRoutine = async (
 }
 
 export const updateExercise = async (
-  id: string,
-  name: string,
-  tags: string[],
+  exercise: Exercise,
 ): Promise<UpdateExerciseResponse | void> => {
   const req = create(UpdateExerciseRequestSchema, {
-    exercise: {
-      id: id,
-      name: name,
-      tags,
-    } as Exercise,
+    exercise,
     updateMask: {
-      paths: ['name', 'tags'],
+      paths: ['name', 'tags', 'metrics', 'rest_seconds'],
     } as FieldMask,
   })
   return tryCatch(() => exerciseClient.updateExercise(req))

@@ -7,13 +7,14 @@
 package apiv1
 
 import (
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
 )
 
 const (
@@ -27,6 +28,8 @@ type CreateExerciseRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
+	Metrics       []ExerciseMetric       `protobuf:"varint,3,rep,packed,name=metrics,proto3,enum=api.v1.ExerciseMetric" json:"metrics,omitempty"`
+	RestSeconds   int32                  `protobuf:"varint,4,opt,name=rest_seconds,json=restSeconds,proto3" json:"rest_seconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -73,6 +76,20 @@ func (x *CreateExerciseRequest) GetTags() []string {
 		return x.Tags
 	}
 	return nil
+}
+
+func (x *CreateExerciseRequest) GetMetrics() []ExerciseMetric {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
+}
+
+func (x *CreateExerciseRequest) GetRestSeconds() int32 {
+	if x != nil {
+		return x.RestSeconds
+	}
+	return 0
 }
 
 type CreateExerciseResponse struct {
@@ -787,11 +804,14 @@ var File_api_v1_exercise_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\\\n" +
+	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xd1\x01\n" +
 	"\x15CreateExerciseRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12&\n" +
 	"\x04tags\x18\x02 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
-	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\"(\n" +
+	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
+	"\ametrics\x18\x03 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametrics\x12-\n" +
+	"\frest_seconds\x18\x04 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"(\n" +
 	"\x16CreateExerciseResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\".\n" +
 	"\x12GetExerciseRequest\x12\x18\n" +
@@ -881,48 +901,50 @@ var file_api_v1_exercise_service_proto_goTypes = []any{
 	(*GetPersonalBestsResponse)(nil),       // 13: api.v1.GetPersonalBestsResponse
 	(*ListSetsRequest)(nil),                // 14: api.v1.ListSetsRequest
 	(*ListSetsResponse)(nil),               // 15: api.v1.ListSetsResponse
-	(*Exercise)(nil),                       // 16: api.v1.Exercise
-	(*fieldmaskpb.FieldMask)(nil),          // 17: google.protobuf.FieldMask
-	(*PaginationRequest)(nil),              // 18: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),             // 19: api.v1.PaginationResponse
-	(*ExerciseSets)(nil),                   // 20: api.v1.ExerciseSets
-	(*ExerciseSet)(nil),                    // 21: api.v1.ExerciseSet
-	(*Set)(nil),                            // 22: api.v1.Set
+	(ExerciseMetric)(0),                    // 16: api.v1.ExerciseMetric
+	(*Exercise)(nil),                       // 17: api.v1.Exercise
+	(*fieldmaskpb.FieldMask)(nil),          // 18: google.protobuf.FieldMask
+	(*PaginationRequest)(nil),              // 19: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),             // 20: api.v1.PaginationResponse
+	(*ExerciseSets)(nil),                   // 21: api.v1.ExerciseSets
+	(*ExerciseSet)(nil),                    // 22: api.v1.ExerciseSet
+	(*Set)(nil),                            // 23: api.v1.Set
 }
 var file_api_v1_exercise_service_proto_depIdxs = []int32{
-	16, // 0: api.v1.GetExerciseResponse.exercise:type_name -> api.v1.Exercise
-	16, // 1: api.v1.UpdateExerciseRequest.exercise:type_name -> api.v1.Exercise
-	17, // 2: api.v1.UpdateExerciseRequest.update_mask:type_name -> google.protobuf.FieldMask
-	16, // 3: api.v1.UpdateExerciseResponse.exercise:type_name -> api.v1.Exercise
-	18, // 4: api.v1.ListExercisesRequest.pagination:type_name -> api.v1.PaginationRequest
-	16, // 5: api.v1.ListExercisesResponse.exercises:type_name -> api.v1.Exercise
-	19, // 6: api.v1.ListExercisesResponse.pagination:type_name -> api.v1.PaginationResponse
-	20, // 7: api.v1.GetPreviousWorkoutSetsResponse.exercise_sets:type_name -> api.v1.ExerciseSets
-	21, // 8: api.v1.GetPersonalBestsResponse.personal_bests:type_name -> api.v1.ExerciseSet
-	18, // 9: api.v1.ListSetsRequest.pagination:type_name -> api.v1.PaginationRequest
-	22, // 10: api.v1.ListSetsResponse.sets:type_name -> api.v1.Set
-	19, // 11: api.v1.ListSetsResponse.pagination:type_name -> api.v1.PaginationResponse
-	0,  // 12: api.v1.ExerciseService.CreateExercise:input_type -> api.v1.CreateExerciseRequest
-	2,  // 13: api.v1.ExerciseService.GetExercise:input_type -> api.v1.GetExerciseRequest
-	4,  // 14: api.v1.ExerciseService.UpdateExercise:input_type -> api.v1.UpdateExerciseRequest
-	6,  // 15: api.v1.ExerciseService.DeleteExercise:input_type -> api.v1.DeleteExerciseRequest
-	8,  // 16: api.v1.ExerciseService.ListExercises:input_type -> api.v1.ListExercisesRequest
-	10, // 17: api.v1.ExerciseService.GetPreviousWorkoutSets:input_type -> api.v1.GetPreviousWorkoutSetsRequest
-	12, // 18: api.v1.ExerciseService.GetPersonalBests:input_type -> api.v1.GetPersonalBestsRequest
-	14, // 19: api.v1.ExerciseService.ListSets:input_type -> api.v1.ListSetsRequest
-	1,  // 20: api.v1.ExerciseService.CreateExercise:output_type -> api.v1.CreateExerciseResponse
-	3,  // 21: api.v1.ExerciseService.GetExercise:output_type -> api.v1.GetExerciseResponse
-	5,  // 22: api.v1.ExerciseService.UpdateExercise:output_type -> api.v1.UpdateExerciseResponse
-	7,  // 23: api.v1.ExerciseService.DeleteExercise:output_type -> api.v1.DeleteExerciseResponse
-	9,  // 24: api.v1.ExerciseService.ListExercises:output_type -> api.v1.ListExercisesResponse
-	11, // 25: api.v1.ExerciseService.GetPreviousWorkoutSets:output_type -> api.v1.GetPreviousWorkoutSetsResponse
-	13, // 26: api.v1.ExerciseService.GetPersonalBests:output_type -> api.v1.GetPersonalBestsResponse
-	15, // 27: api.v1.ExerciseService.ListSets:output_type -> api.v1.ListSetsResponse
-	20, // [20:28] is the sub-list for method output_type
-	12, // [12:20] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	16, // 0: api.v1.CreateExerciseRequest.metrics:type_name -> api.v1.ExerciseMetric
+	17, // 1: api.v1.GetExerciseResponse.exercise:type_name -> api.v1.Exercise
+	17, // 2: api.v1.UpdateExerciseRequest.exercise:type_name -> api.v1.Exercise
+	18, // 3: api.v1.UpdateExerciseRequest.update_mask:type_name -> google.protobuf.FieldMask
+	17, // 4: api.v1.UpdateExerciseResponse.exercise:type_name -> api.v1.Exercise
+	19, // 5: api.v1.ListExercisesRequest.pagination:type_name -> api.v1.PaginationRequest
+	17, // 6: api.v1.ListExercisesResponse.exercises:type_name -> api.v1.Exercise
+	20, // 7: api.v1.ListExercisesResponse.pagination:type_name -> api.v1.PaginationResponse
+	21, // 8: api.v1.GetPreviousWorkoutSetsResponse.exercise_sets:type_name -> api.v1.ExerciseSets
+	22, // 9: api.v1.GetPersonalBestsResponse.personal_bests:type_name -> api.v1.ExerciseSet
+	19, // 10: api.v1.ListSetsRequest.pagination:type_name -> api.v1.PaginationRequest
+	23, // 11: api.v1.ListSetsResponse.sets:type_name -> api.v1.Set
+	20, // 12: api.v1.ListSetsResponse.pagination:type_name -> api.v1.PaginationResponse
+	0,  // 13: api.v1.ExerciseService.CreateExercise:input_type -> api.v1.CreateExerciseRequest
+	2,  // 14: api.v1.ExerciseService.GetExercise:input_type -> api.v1.GetExerciseRequest
+	4,  // 15: api.v1.ExerciseService.UpdateExercise:input_type -> api.v1.UpdateExerciseRequest
+	6,  // 16: api.v1.ExerciseService.DeleteExercise:input_type -> api.v1.DeleteExerciseRequest
+	8,  // 17: api.v1.ExerciseService.ListExercises:input_type -> api.v1.ListExercisesRequest
+	10, // 18: api.v1.ExerciseService.GetPreviousWorkoutSets:input_type -> api.v1.GetPreviousWorkoutSetsRequest
+	12, // 19: api.v1.ExerciseService.GetPersonalBests:input_type -> api.v1.GetPersonalBestsRequest
+	14, // 20: api.v1.ExerciseService.ListSets:input_type -> api.v1.ListSetsRequest
+	1,  // 21: api.v1.ExerciseService.CreateExercise:output_type -> api.v1.CreateExerciseResponse
+	3,  // 22: api.v1.ExerciseService.GetExercise:output_type -> api.v1.GetExerciseResponse
+	5,  // 23: api.v1.ExerciseService.UpdateExercise:output_type -> api.v1.UpdateExerciseResponse
+	7,  // 24: api.v1.ExerciseService.DeleteExercise:output_type -> api.v1.DeleteExerciseResponse
+	9,  // 25: api.v1.ExerciseService.ListExercises:output_type -> api.v1.ListExercisesResponse
+	11, // 26: api.v1.ExerciseService.GetPreviousWorkoutSets:output_type -> api.v1.GetPreviousWorkoutSetsResponse
+	13, // 27: api.v1.ExerciseService.GetPersonalBests:output_type -> api.v1.GetPersonalBestsResponse
+	15, // 28: api.v1.ExerciseService.ListSets:output_type -> api.v1.ListSetsResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_exercise_service_proto_init() }

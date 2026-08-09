@@ -7,6 +7,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
 const dashboardStore = useDashboardStore()
 const periodDays = ref(28)
@@ -37,8 +38,6 @@ const filteredWorkouts = computed(() => {
 const filteredVolume = computed(() =>
   filteredWorkouts.value.reduce((total, workout) => total + workout.intensity, 0),
 )
-const formatWeight = (weight: number | undefined) =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(weight ?? 0)
 </script>
 
 <template>
@@ -94,9 +93,9 @@ const formatWeight = (weight: number | undefined) =>
               formatToShortDateTime(personalBest.set.metadata.createdAt)
             }}</small>
           </span>
-          <span class="record-value"
-            >{{ formatWeight(personalBest.set?.weight) }} kg × {{ personalBest.set?.reps }}</span
-          >
+          <span class="record-value">{{
+            personalBest.set ? formatExerciseSet(personalBest.set, personalBest.exercise) : ''
+          }}</span>
           <ChevronRightIcon class="chevron" />
         </RouterLink>
       </div>

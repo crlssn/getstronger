@@ -14,6 +14,7 @@ import { formatToShortDateTime } from '@/utils/datetime.ts'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import usePagination from '@/utils/usePagination'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
 const sets = ref<Set[]>([])
 const exercise = ref<Exercise>()
@@ -84,7 +85,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 
     <section v-if="sets.length" class="chart-card">
       <p class="eyebrow">Trend</p>
-      <ExerciseChart :sets="downSample(sets, 60)" />
+      <ExerciseChart :sets="downSample(sets, 60)" :exercise="exercise" />
     </section>
 
     <section class="sets-card">
@@ -99,7 +100,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
       <div v-if="sets.length" class="set-list">
         <RouterLink v-for="set in sets" :key="set.id" :to="`/workouts/${set.metadata?.workoutId}`">
           <span class="set-copy">
-            <strong>{{ set.weight }} kg × {{ set.reps }}</strong>
+            <strong>{{ formatExerciseSet(set, exercise) }}</strong>
             <small>{{ formatToShortDateTime(set.metadata?.createdAt) }}</small>
           </span>
           <span v-if="set.metadata?.personalBest" class="record-pill"><TrophyIcon /> PR</span>

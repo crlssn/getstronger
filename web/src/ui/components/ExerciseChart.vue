@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Set } from '@/proto/api/v1/shared_pb.ts'
+import { ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
 
 import { computed, ref } from 'vue'
 import { DateTime } from 'luxon'
@@ -13,26 +13,46 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js'
+import { exerciseMetrics, formatMeasurementDuration } from '@/utils/exerciseMeasurements'
 
 ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
 
 const props = defineProps<{
   sets: Set[]
+  exercise: Pick<Exercise, 'metrics'>
 }>()
 
-type Metric = 'oneRm' | 'weight' | 'volume'
+type Metric = 'oneRm' | 'weight' | 'volume' | 'reps' | 'distance' | 'durationSeconds'
 
-const metric = ref<Metric>('oneRm')
-const metricOptions: Array<{ key: Metric; label: string }> = [
-  { key: 'oneRm', label: 'Est. 1RM' },
-  { key: 'weight', label: 'Weight' },
-  { key: 'volume', label: 'Volume' },
-]
+const selectedMetrics = computed(() => exerciseMetrics(props.exercise))
+const hasWeightAndReps = computed(
+  () =>
+    selectedMetrics.value.includes(ExerciseMetric.WEIGHT) &&
+    selectedMetrics.value.includes(ExerciseMetric.REPS),
+)
+const metricOptions = computed<Array<{ key: Metric; label: string }>>(() => {
+  const options: Array<{ key: Metric; label: string }> = []
+  if (hasWeightAndReps.value) options.push({ key: 'oneRm', label: 'Est. 1RM' })
+  if (selectedMetrics.value.includes(ExerciseMetric.WEIGHT))
+    options.push({ key: 'weight', label: 'Weight' })
+  if (selectedMetrics.value.includes(ExerciseMetric.REPS))
+    options.push({ key: 'reps', label: 'Reps' })
+  if (selectedMetrics.value.includes(ExerciseMetric.DISTANCE))
+    options.push({ key: 'distance', label: 'Distance' })
+  if (selectedMetrics.value.includes(ExerciseMetric.TIME))
+    options.push({ key: 'durationSeconds', label: 'Time' })
+  if (hasWeightAndReps.value) options.push({ key: 'volume', label: 'Volume' })
+  return options
+})
+const metric = ref<Metric>(metricOptions.value[0]?.key ?? 'weight')
 
 const metricDetails: Record<Metric, { heading: string; unit: string }> = {
   oneRm: { heading: 'Estimated 1RM', unit: 'kg' },
   weight: { heading: 'Working weight', unit: 'kg' },
   volume: { heading: 'Daily volume', unit: 'kg' },
+  reps: { heading: 'Most reps', unit: 'reps' },
+  distance: { heading: 'Longest distance', unit: 'km' },
+  durationSeconds: { heading: 'Longest time', unit: '' },
 }
 
 const calc1RM = (weight: number, reps: number): number => {
@@ -43,7 +63,16 @@ const calc1RM = (weight: number, reps: number): number => {
 const dailyMetrics = computed(() => {
   const buckets = new Map<
     string,
-    { label: string; timestamp: number; oneRm: number; weight: number; volume: number }
+    {
+      label: string
+      timestamp: number
+      oneRm: number
+      weight: number
+      volume: number
+      reps: number
+      distance: number
+      durationSeconds: number
+    }
   >()
 
   props.sets.forEach((set) => {
@@ -60,10 +89,16 @@ const dailyMetrics = computed(() => {
       oneRm: 0,
       weight: 0,
       volume: 0,
+      reps: 0,
+      distance: 0,
+      durationSeconds: 0,
     }
     existing.oneRm = Math.max(existing.oneRm, calc1RM(set.weight, set.reps))
     existing.weight = Math.max(existing.weight, set.weight)
     existing.volume += set.weight * set.reps
+    existing.reps = Math.max(existing.reps, set.reps)
+    existing.distance = Math.max(existing.distance, set.distance)
+    existing.durationSeconds = Math.max(existing.durationSeconds, set.durationSeconds)
     buckets.set(key, existing)
   })
 
@@ -72,6 +107,11 @@ const dailyMetrics = computed(() => {
 
 const values = computed(() => dailyMetrics.value.map((day) => day[metric.value]))
 const latestValue = computed(() => values.value[values.value.length - 1] ?? 0)
+const formattedLatestValue = computed(() =>
+  metric.value === 'durationSeconds'
+    ? formatMeasurementDuration(latestValue.value)
+    : `${Math.round(latestValue.value).toLocaleString()} ${metricDetails[metric.value].unit}`.trim(),
+)
 const hasTrend = computed(() => dailyMetrics.value.length > 1)
 const change = computed(() => {
   const first = values.value[0]
@@ -132,7 +172,7 @@ const options = computed(() => ({
       <div>
         <small>{{ metricDetails[metric].heading }}</small>
         <strong
-          >{{ Math.round(latestValue).toLocaleString() }} {{ metricDetails[metric].unit }}</strong
+          >{{ formattedLatestValue }}</strong
         >
       </div>
       <span v-if="change">{{ change }}</span>

@@ -9,6 +9,8 @@ export type RoutineWorkout = Record<RoutineID, Workout>
 export interface Set {
   reps?: number
   weight?: number
+  distance?: number
+  durationSeconds?: number
 }
 
 export interface Workout {

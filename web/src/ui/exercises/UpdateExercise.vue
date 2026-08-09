@@ -9,6 +9,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { getExercise, listExerciseTags, updateExercise } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import ExerciseTagsInput from '@/ui/exercises/ExerciseTagsInput.vue'
+import ExerciseMeasurementSettings from '@/ui/exercises/ExerciseMeasurementSettings.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -31,7 +32,7 @@ onMounted(async () => {
 async function onUpdateExercise() {
   if (!exercise.value) return
 
-  const res = await updateExercise(exercise.value.id, exercise.value.name, exercise.value.tags)
+  const res = await updateExercise(exercise.value)
   if (!res) return
 
   alertStore.setSuccess('Exercise updated')
@@ -53,6 +54,12 @@ async function onUpdateExercise() {
 
     <h6>Tags <small>Optional</small></h6>
     <ExerciseTagsInput v-model="exercise.tags" :suggestions="tagSuggestions" />
+
+    <h6>Tracking</h6>
+    <ExerciseMeasurementSettings
+      v-model:metrics="exercise.metrics"
+      v-model:rest-seconds="exercise.restSeconds"
+    />
 
     <div class="form-actions">
       <AppButton type="submit" colour="primary">Update Exercise</AppButton>

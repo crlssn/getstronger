@@ -2,8 +2,8 @@
 // @generated from file api/v1/shared.proto (package api.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv1";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv1";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv1";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv1";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/shared.proto.
  */
 export const file_api_v1_shared: GenFile = /*@__PURE__*/
-  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiWwoLRXhlcmNpc2VTZXQSKgoIZXhlcmNpc2UYASABKAsyEC5hcGkudjEuRXhlcmNpc2VCBrpIA8gBARIgCgNzZXQYAiABKAsyCy5hcGkudjEuU2V0Qga6SAPIAQEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBImEKCEV4ZXJjaXNlEhQKAmlkGAEgASgJQgi6SAVyA7ABARIPCgd1c2VyX2lkGAIgASgJEgwKBG5hbWUYAyABKAkSIAoEdGFncxgEIAMoCUISukgPkgEMEAoYASIGcgQQARhAIl8KA1NldBIKCgJpZBgBIAEoCRIOCgZ3ZWlnaHQYAiABKAESFQoEcmVwcxgDIAEoBUIHukgEGgIoARIlCghtZXRhZGF0YRgEIAEoCzITLmFwaS52MS5NZXRhZGF0YVNldCJyCgtNZXRhZGF0YVNldBIcCgp3b3Jrb3V0X2lkGAEgASgJQgi6SAVyA7ABARIuCgpjcmVhdGVkX2F0GAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIVCg1wZXJzb25hbF9iZXN0GAMgASgIInYKBFVzZXISFAoCaWQYASABKAlCCLpIBXIDsAEBEhsKCmZpcnN0X25hbWUYAiABKAlCB7pIBHICEAESGgoJbGFzdF9uYW1lGAMgASgJQge6SARyAhABEg0KBWVtYWlsGAQgASgJEhAKCGZvbGxvd2VkGAUgASgIIkYKEVBhZ2luYXRpb25SZXF1ZXN0Eh0KCnBhZ2VfbGltaXQYASABKAVCCbpIBhoEGGQoARISCgpwYWdlX3Rva2VuGAIgASgMIi0KElBhZ2luYXRpb25SZXNwb25zZRIXCg9uZXh0X3BhZ2VfdG9rZW4YASABKAxCjwEKCmNvbS5hcGkudjFCC1NoYXJlZFByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9nZW4vcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp]);
+  fileDesc("ChNhcGkvdjEvc2hhcmVkLnByb3RvEgZhcGkudjEiWwoLRXhlcmNpc2VTZXQSKgoIZXhlcmNpc2UYASABKAsyEC5hcGkudjEuRXhlcmNpc2VCBrpIA8gBARIgCgNzZXQYAiABKAsyCy5hcGkudjEuU2V0Qga6SAPIAQEiXwoMRXhlcmNpc2VTZXRzEioKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlQga6SAPIAQESIwoEc2V0cxgCIAMoCzILLmFwaS52MS5TZXRCCLpIBZIBAggBIsABCghFeGVyY2lzZRIUCgJpZBgBIAEoCUIIukgFcgOwAQESDwoHdXNlcl9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEiAKBHRhZ3MYBCADKAlCErpID5IBDBAKGAEiBnIEEAEYQBI7CgdtZXRyaWNzGAUgAygOMhYuYXBpLnYxLkV4ZXJjaXNlTWV0cmljQhK6SA+SAQwYASIIggEFEAEiAQASIAoMcmVzdF9zZWNvbmRzGAYgASgFQgq6SAcaBRiQHCgAIqQBCgNTZXQSCgoCaWQYASABKAkSDgoGd2VpZ2h0GAIgASgBEhUKBHJlcHMYAyABKAVCB7pIBBoCKAASJQoIbWV0YWRhdGEYBCABKAsyEy5hcGkudjEuTWV0YWRhdGFTZXQSIAoIZGlzdGFuY2UYBSABKAFCDrpICxIJKQAAAAAAAAAAEiEKEGR1cmF0aW9uX3NlY29uZHMYBiABKAVCB7pIBBoCKAAicgoLTWV0YWRhdGFTZXQSHAoKd29ya291dF9pZBgBIAEoCUIIukgFcgOwAQESLgoKY3JlYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFQoNcGVyc29uYWxfYmVzdBgDIAEoCCJ2CgRVc2VyEhQKAmlkGAEgASgJQgi6SAVyA7ABARIbCgpmaXJzdF9uYW1lGAIgASgJQge6SARyAhABEhoKCWxhc3RfbmFtZRgDIAEoCUIHukgEcgIQARINCgVlbWFpbBgEIAEoCRIQCghmb2xsb3dlZBgFIAEoCCJGChFQYWdpbmF0aW9uUmVxdWVzdBIdCgpwYWdlX2xpbWl0GAEgASgFQgm6SAYaBBhkKAESEgoKcGFnZV90b2tlbhgCIAEoDCItChJQYWdpbmF0aW9uUmVzcG9uc2USFwoPbmV4dF9wYWdlX3Rva2VuGAEgASgMKp8BCg5FeGVyY2lzZU1ldHJpYxIfChtFWEVSQ0lTRV9NRVRSSUNfVU5TUEVDSUZJRUQQABIaChZFWEVSQ0lTRV9NRVRSSUNfV0VJR0hUEAESGAoURVhFUkNJU0VfTUVUUklDX1JFUFMQAhIcChhFWEVSQ0lTRV9NRVRSSUNfRElTVEFOQ0UQAxIYChRFWEVSQ0lTRV9NRVRSSUNfVElNRRAEQo8BCgpjb20uYXBpLnYxQgtTaGFyZWRQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message api.v1.ExerciseSet
@@ -82,6 +82,16 @@ export type Exercise = Message<"api.v1.Exercise"> & {
    * @generated from field: repeated string tags = 4;
    */
   tags: string[];
+
+  /**
+   * @generated from field: repeated api.v1.ExerciseMetric metrics = 5;
+   */
+  metrics: ExerciseMetric[];
+
+  /**
+   * @generated from field: int32 rest_seconds = 6;
+   */
+  restSeconds: number;
 };
 
 /**
@@ -116,6 +126,16 @@ export type Set = Message<"api.v1.Set"> & {
    * @generated from field: api.v1.MetadataSet metadata = 4;
    */
   metadata?: MetadataSet;
+
+  /**
+   * @generated from field: double distance = 5;
+   */
+  distance: number;
+
+  /**
+   * @generated from field: int32 duration_seconds = 6;
+   */
+  durationSeconds: number;
 };
 
 /**
@@ -227,4 +247,40 @@ export type PaginationResponse = Message<"api.v1.PaginationResponse"> & {
  */
 export const PaginationResponseSchema: GenMessage<PaginationResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_shared, 7);
+
+/**
+ * @generated from enum api.v1.ExerciseMetric
+ */
+export enum ExerciseMetric {
+  /**
+   * @generated from enum value: EXERCISE_METRIC_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: EXERCISE_METRIC_WEIGHT = 1;
+   */
+  WEIGHT = 1,
+
+  /**
+   * @generated from enum value: EXERCISE_METRIC_REPS = 2;
+   */
+  REPS = 2,
+
+  /**
+   * @generated from enum value: EXERCISE_METRIC_DISTANCE = 3;
+   */
+  DISTANCE = 3,
+
+  /**
+   * @generated from enum value: EXERCISE_METRIC_TIME = 4;
+   */
+  TIME = 4,
+}
+
+/**
+ * Describes the enum api.v1.ExerciseMetric.
+ */
+export const ExerciseMetricSchema: GenEnum<ExerciseMetric> = /*@__PURE__*/
+  enumDesc(file_api_v1_shared, 0);
 

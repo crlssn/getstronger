@@ -7,13 +7,14 @@
 package apiv1
 
 import (
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
 )
 
 const (
@@ -22,6 +23,61 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type ExerciseMetric int32
+
+const (
+	ExerciseMetric_EXERCISE_METRIC_UNSPECIFIED ExerciseMetric = 0
+	ExerciseMetric_EXERCISE_METRIC_WEIGHT      ExerciseMetric = 1
+	ExerciseMetric_EXERCISE_METRIC_REPS        ExerciseMetric = 2
+	ExerciseMetric_EXERCISE_METRIC_DISTANCE    ExerciseMetric = 3
+	ExerciseMetric_EXERCISE_METRIC_TIME        ExerciseMetric = 4
+)
+
+// Enum value maps for ExerciseMetric.
+var (
+	ExerciseMetric_name = map[int32]string{
+		0: "EXERCISE_METRIC_UNSPECIFIED",
+		1: "EXERCISE_METRIC_WEIGHT",
+		2: "EXERCISE_METRIC_REPS",
+		3: "EXERCISE_METRIC_DISTANCE",
+		4: "EXERCISE_METRIC_TIME",
+	}
+	ExerciseMetric_value = map[string]int32{
+		"EXERCISE_METRIC_UNSPECIFIED": 0,
+		"EXERCISE_METRIC_WEIGHT":      1,
+		"EXERCISE_METRIC_REPS":        2,
+		"EXERCISE_METRIC_DISTANCE":    3,
+		"EXERCISE_METRIC_TIME":        4,
+	}
+)
+
+func (x ExerciseMetric) Enum() *ExerciseMetric {
+	p := new(ExerciseMetric)
+	*p = x
+	return p
+}
+
+func (x ExerciseMetric) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ExerciseMetric) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_shared_proto_enumTypes[0].Descriptor()
+}
+
+func (ExerciseMetric) Type() protoreflect.EnumType {
+	return &file_api_v1_shared_proto_enumTypes[0]
+}
+
+func (x ExerciseMetric) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ExerciseMetric.Descriptor instead.
+func (ExerciseMetric) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_shared_proto_rawDescGZIP(), []int{0}
+}
 
 type ExerciseSet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -133,6 +189,8 @@ type Exercise struct {
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Tags          []string               `protobuf:"bytes,4,rep,name=tags,proto3" json:"tags,omitempty"`
+	Metrics       []ExerciseMetric       `protobuf:"varint,5,rep,packed,name=metrics,proto3,enum=api.v1.ExerciseMetric" json:"metrics,omitempty"`
+	RestSeconds   int32                  `protobuf:"varint,6,opt,name=rest_seconds,json=restSeconds,proto3" json:"rest_seconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -195,14 +253,30 @@ func (x *Exercise) GetTags() []string {
 	return nil
 }
 
+func (x *Exercise) GetMetrics() []ExerciseMetric {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
+}
+
+func (x *Exercise) GetRestSeconds() int32 {
+	if x != nil {
+		return x.RestSeconds
+	}
+	return 0
+}
+
 type Set struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Weight        float64                `protobuf:"fixed64,2,opt,name=weight,proto3" json:"weight,omitempty"` // The weight can be less than zero.
-	Reps          int32                  `protobuf:"varint,3,opt,name=reps,proto3" json:"reps,omitempty"`
-	Metadata      *MetadataSet           `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Weight          float64                `protobuf:"fixed64,2,opt,name=weight,proto3" json:"weight,omitempty"` // The weight can be less than zero.
+	Reps            int32                  `protobuf:"varint,3,opt,name=reps,proto3" json:"reps,omitempty"`
+	Metadata        *MetadataSet           `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Distance        float64                `protobuf:"fixed64,5,opt,name=distance,proto3" json:"distance,omitempty"`
+	DurationSeconds int32                  `protobuf:"varint,6,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Set) Reset() {
@@ -261,6 +335,20 @@ func (x *Set) GetMetadata() *MetadataSet {
 		return x.Metadata
 	}
 	return nil
+}
+
+func (x *Set) GetDistance() float64 {
+	if x != nil {
+		return x.Distance
+	}
+	return 0
+}
+
+func (x *Set) GetDurationSeconds() int32 {
+	if x != nil {
+		return x.DurationSeconds
+	}
+	return 0
 }
 
 type MetadataSet struct {
@@ -505,18 +593,23 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"\x03set\x18\x02 \x01(\v2\v.api.v1.SetB\x06\xbaH\x03\xc8\x01\x01R\x03set\"o\n" +
 	"\fExerciseSets\x124\n" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseB\x06\xbaH\x03\xc8\x01\x01R\bexercise\x12)\n" +
-	"\x04sets\x18\x02 \x03(\v2\v.api.v1.SetB\b\xbaH\x05\x92\x01\x02\b\x01R\x04sets\"y\n" +
+	"\x04sets\x18\x02 \x03(\v2\v.api.v1.SetB\b\xbaH\x05\x92\x01\x02\b\x01R\x04sets\"\xee\x01\n" +
 	"\bExercise\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12&\n" +
 	"\x04tags\x18\x04 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
-	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\"{\n" +
+	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
+	"\ametrics\x18\x05 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametrics\x12-\n" +
+	"\frest_seconds\x18\x06 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"\xdb\x01\n" +
 	"\x03Set\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06weight\x18\x02 \x01(\x01R\x06weight\x12\x1b\n" +
-	"\x04reps\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x01R\x04reps\x12/\n" +
-	"\bmetadata\x18\x04 \x01(\v2\x13.api.v1.MetadataSetR\bmetadata\"\x96\x01\n" +
+	"\x04reps\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x04reps\x12/\n" +
+	"\bmetadata\x18\x04 \x01(\v2\x13.api.v1.MetadataSetR\bmetadata\x12*\n" +
+	"\bdistance\x18\x05 \x01(\x01B\x0e\xbaH\v\x12\t)\x00\x00\x00\x00\x00\x00\x00\x00R\bdistance\x122\n" +
+	"\x10duration_seconds\x18\x06 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x0fdurationSeconds\"\x96\x01\n" +
 	"\vMetadataSet\x12'\n" +
 	"\n" +
 	"workout_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tworkoutId\x129\n" +
@@ -536,7 +629,13 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"\n" +
 	"page_token\x18\x02 \x01(\fR\tpageToken\"<\n" +
 	"\x12PaginationResponse\x12&\n" +
-	"\x0fnext_page_token\x18\x01 \x01(\fR\rnextPageTokenB\x8f\x01\n" +
+	"\x0fnext_page_token\x18\x01 \x01(\fR\rnextPageToken*\x9f\x01\n" +
+	"\x0eExerciseMetric\x12\x1f\n" +
+	"\x1bEXERCISE_METRIC_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16EXERCISE_METRIC_WEIGHT\x10\x01\x12\x18\n" +
+	"\x14EXERCISE_METRIC_REPS\x10\x02\x12\x1c\n" +
+	"\x18EXERCISE_METRIC_DISTANCE\x10\x03\x12\x18\n" +
+	"\x14EXERCISE_METRIC_TIME\x10\x04B\x8f\x01\n" +
 	"\n" +
 	"com.api.v1B\vSharedProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -552,30 +651,33 @@ func file_api_v1_shared_proto_rawDescGZIP() []byte {
 	return file_api_v1_shared_proto_rawDescData
 }
 
+var file_api_v1_shared_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_api_v1_shared_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_v1_shared_proto_goTypes = []any{
-	(*ExerciseSet)(nil),           // 0: api.v1.ExerciseSet
-	(*ExerciseSets)(nil),          // 1: api.v1.ExerciseSets
-	(*Exercise)(nil),              // 2: api.v1.Exercise
-	(*Set)(nil),                   // 3: api.v1.Set
-	(*MetadataSet)(nil),           // 4: api.v1.MetadataSet
-	(*User)(nil),                  // 5: api.v1.User
-	(*PaginationRequest)(nil),     // 6: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),    // 7: api.v1.PaginationResponse
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(ExerciseMetric)(0),           // 0: api.v1.ExerciseMetric
+	(*ExerciseSet)(nil),           // 1: api.v1.ExerciseSet
+	(*ExerciseSets)(nil),          // 2: api.v1.ExerciseSets
+	(*Exercise)(nil),              // 3: api.v1.Exercise
+	(*Set)(nil),                   // 4: api.v1.Set
+	(*MetadataSet)(nil),           // 5: api.v1.MetadataSet
+	(*User)(nil),                  // 6: api.v1.User
+	(*PaginationRequest)(nil),     // 7: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),    // 8: api.v1.PaginationResponse
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_api_v1_shared_proto_depIdxs = []int32{
-	2, // 0: api.v1.ExerciseSet.exercise:type_name -> api.v1.Exercise
-	3, // 1: api.v1.ExerciseSet.set:type_name -> api.v1.Set
-	2, // 2: api.v1.ExerciseSets.exercise:type_name -> api.v1.Exercise
-	3, // 3: api.v1.ExerciseSets.sets:type_name -> api.v1.Set
-	4, // 4: api.v1.Set.metadata:type_name -> api.v1.MetadataSet
-	8, // 5: api.v1.MetadataSet.created_at:type_name -> google.protobuf.Timestamp
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	3, // 0: api.v1.ExerciseSet.exercise:type_name -> api.v1.Exercise
+	4, // 1: api.v1.ExerciseSet.set:type_name -> api.v1.Set
+	3, // 2: api.v1.ExerciseSets.exercise:type_name -> api.v1.Exercise
+	4, // 3: api.v1.ExerciseSets.sets:type_name -> api.v1.Set
+	0, // 4: api.v1.Exercise.metrics:type_name -> api.v1.ExerciseMetric
+	5, // 5: api.v1.Set.metadata:type_name -> api.v1.MetadataSet
+	9, // 6: api.v1.MetadataSet.created_at:type_name -> google.protobuf.Timestamp
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_shared_proto_init() }
@@ -588,13 +690,14 @@ func file_api_v1_shared_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_shared_proto_rawDesc), len(file_api_v1_shared_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_api_v1_shared_proto_goTypes,
 		DependencyIndexes: file_api_v1_shared_proto_depIdxs,
+		EnumInfos:         file_api_v1_shared_proto_enumTypes,
 		MessageInfos:      file_api_v1_shared_proto_msgTypes,
 	}.Build()
 	File_api_v1_shared_proto = out.File

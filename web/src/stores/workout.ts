@@ -1,9 +1,10 @@
-import type { ExerciseID, RoutineID, RoutineWorkout } from '@/types/workout'
+import type { ExerciseID, RoutineID, RoutineWorkout, Set } from '@/types/workout'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { isNumber } from '@/utils/numbers'
+import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 
 export const useWorkoutStore = defineStore(
   'workouts',
@@ -113,13 +114,24 @@ export const useWorkoutStore = defineStore(
       workout.exerciseSets[exerciseID].push({})
     }
 
-    const addEmptySetIfNone = (routineID: RoutineID, exerciseID: ExerciseID) => {
+    const addEmptySetIfNone = (
+      routineID: RoutineID,
+      exerciseID: ExerciseID,
+      metrics: ExerciseMetric[] = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+    ) => {
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {}
       workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
 
-      const noEmptySet = workout.exerciseSets[exerciseID].every(
-        (set) => isNumber(set.weight) && isNumber(set.reps),
+      const metricFields: Partial<Record<ExerciseMetric, keyof Set>> = {
+        [ExerciseMetric.WEIGHT]: 'weight',
+        [ExerciseMetric.REPS]: 'reps',
+        [ExerciseMetric.DISTANCE]: 'distance',
+        [ExerciseMetric.TIME]: 'durationSeconds',
+      }
+      const fields = metrics.map((metric) => metricFields[metric]).filter(Boolean) as Array<keyof Set>
+      const noEmptySet = workout.exerciseSets[exerciseID].every((set) =>
+        fields.every((field) => isNumber(set[field])),
       )
       if (noEmptySet) {
         workout.exerciseSets[exerciseID].push({})

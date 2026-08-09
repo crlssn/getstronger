@@ -215,18 +215,42 @@ func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, e
 }
 
 type CreateExerciseParams struct {
-	UserID string
-	Name   string
-	Tags   []string
+	UserID      string
+	Name        string
+	Tags        []string
+	Metrics     []string
+	RestSeconds int
 }
 
 func (r *repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
-	exercise := &orm.Exercise{
-		UserID: p.UserID,
-		Title:  p.Name,
-		Tags:   types.StringArray(p.Tags),
+	// Preserve the original exercise behaviour for internal and older callers that
+	// predate configurable measurements. An explicit metric selection may still
+	// use a zero rest period.
+	if len(p.Metrics) == 0 {
+		p.Metrics = []string{"weight", "reps"}
+		if p.RestSeconds == 0 {
+			p.RestSeconds = 90
+		}
 	}
-	if err := exercise.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+	if p.Tags == nil {
+		p.Tags = []string{}
+	}
+	exercise := &orm.Exercise{
+		UserID:      p.UserID,
+		Title:       p.Name,
+		Tags:        types.StringArray(p.Tags),
+		Metrics:     types.StringArray(p.Metrics),
+		RestSeconds: p.RestSeconds,
+	}
+	// RestSeconds intentionally supports zero (rest timer disabled), so include it
+	// explicitly instead of allowing boil.Infer to replace it with the DB default.
+	if err := exercise.Insert(ctx, r.executor(), boil.Whitelist(
+		orm.ExerciseColumns.UserID,
+		orm.ExerciseColumns.Title,
+		orm.ExerciseColumns.Tags,
+		orm.ExerciseColumns.Metrics,
+		orm.ExerciseColumns.RestSeconds,
+	)); err != nil {
 		return nil, fmt.Errorf("exercise insert: %w", err)
 	}
 
@@ -403,6 +427,18 @@ func UpdateExerciseTitle(title string) UpdateExerciseOpt {
 func UpdateExerciseTags(tags []string) UpdateExerciseOpt {
 	return func() (orm.M, error) {
 		return orm.M{orm.ExerciseColumns.Tags: types.StringArray(tags)}, nil
+	}
+}
+
+func UpdateExerciseMetrics(metrics []string) UpdateExerciseOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.ExerciseColumns.Metrics: types.StringArray(metrics)}, nil
+	}
+}
+
+func UpdateExerciseRestSeconds(restSeconds int) UpdateExerciseOpt {
+	return func() (orm.M, error) {
+		return orm.M{orm.ExerciseColumns.RestSeconds: restSeconds}, nil
 	}
 }
 
@@ -758,9 +794,11 @@ type ExerciseSet struct {
 }
 
 type Set struct {
-	ID     string
-	Reps   int
-	Weight float64
+	ID              string
+	Reps            int
+	Weight          float64
+	Distance        float64
+	DurationSeconds int
 }
 
 func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
@@ -781,11 +819,13 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.W
 			sets := make([]*orm.Set, 0, len(exerciseSet.Sets))
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &orm.Set{
-					Reps:       set.Reps,
-					Weight:     set.Weight,
-					UserID:     p.UserID,
-					WorkoutID:  workout.ID,
-					ExerciseID: exerciseSet.ExerciseID,
+					Reps:            set.Reps,
+					Weight:          set.Weight,
+					Distance:        set.Distance,
+					DurationSeconds: set.DurationSeconds,
+					UserID:          p.UserID,
+					WorkoutID:       workout.ID,
+					ExerciseID:      exerciseSet.ExerciseID,
 				})
 			}
 
@@ -933,7 +973,8 @@ ORDER BY created_at;
 		setIDs = append(setIDs, set.ID)
 	}
 
-	return r.ListSets(ctx,
+	return r.ListSets(
+		ctx,
 		ListSetsWithID(setIDs...),
 		ListSetsLoadExercise(),
 		ListSetsOrderByCreatedAt(ASC),
@@ -952,10 +993,17 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 	}
 
 	rawQuery := `
-	SELECT DISTINCT ON (exercise_id) exercise_id, id
+	SELECT DISTINCT ON (sets.exercise_id) sets.exercise_id, sets.id
 	FROM getstronger.sets
-	WHERE workout_id = ANY ($1)
-	ORDER BY exercise_id, weight DESC, reps DESC, created_at ASC;
+	JOIN getstronger.exercises ON exercises.id = sets.exercise_id
+	WHERE sets.workout_id = ANY ($1)
+	ORDER BY
+		sets.exercise_id,
+		CASE WHEN 'weight' = ANY(exercises.metrics) THEN sets.weight ELSE 0 END DESC,
+		CASE WHEN 'reps' = ANY(exercises.metrics) THEN sets.reps ELSE 0 END DESC,
+		CASE WHEN 'distance' = ANY(exercises.metrics) THEN sets.distance ELSE 0 END DESC,
+		CASE WHEN 'time' = ANY(exercises.metrics) THEN sets.duration_seconds ELSE 0 END DESC,
+		sets.created_at ASC;
 `
 
 	var sets orm.SetSlice
@@ -968,7 +1016,8 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.Set
 		setIDs = append(setIDs, set.ID)
 	}
 
-	return r.ListSets(ctx,
+	return r.ListSets(
+		ctx,
 		ListSetsWithID(setIDs...),
 		ListSetsLoadExercise(),
 		ListSetsOrderByCreatedAt(DESC),
@@ -1536,7 +1585,8 @@ type UpdateWorkoutSetsParams struct {
 
 func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
 	return r.NewTx(ctx, func(tx Tx) error {
-		workout, err := r.GetWorkout(ctx,
+		workout, err := r.GetWorkout(
+			ctx,
 			GetWorkoutWithID(p.WorkoutID),
 			GetWorkoutLoadSets(),
 		)
@@ -1553,12 +1603,14 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 		for _, exerciseSet := range p.ExerciseSets {
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &orm.Set{
-					UserID:     workout.UserID,
-					WorkoutID:  workout.ID,
-					ExerciseID: exerciseSet.ExerciseID,
-					Reps:       set.Reps,
-					Weight:     set.Weight,
-					CreatedAt:  setCreatedAt,
+					UserID:          workout.UserID,
+					WorkoutID:       workout.ID,
+					ExerciseID:      exerciseSet.ExerciseID,
+					Reps:            set.Reps,
+					Weight:          set.Weight,
+					Distance:        set.Distance,
+					DurationSeconds: set.DurationSeconds,
+					CreatedAt:       setCreatedAt,
 				})
 			}
 

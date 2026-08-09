@@ -8,6 +8,8 @@ import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import { type CreateExerciseRequest } from '@/proto/api/v1/exercise_service_pb'
 import AppButton from '@/ui/components/AppButton.vue'
 import ExerciseTagsInput from '@/ui/exercises/ExerciseTagsInput.vue'
+import ExerciseMeasurementSettings from '@/ui/exercises/ExerciseMeasurementSettings.vue'
+import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -17,6 +19,8 @@ const req = ref<CreateExerciseRequest>({
   $typeName: 'api.v1.CreateExerciseRequest',
   name: '',
   tags: [],
+  metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+  restSeconds: 90,
 })
 
 onMounted(async () => {
@@ -40,6 +44,9 @@ const onSubmit = async () => {
 
     <h6>Tags <small>Optional</small></h6>
     <ExerciseTagsInput v-model="req.tags" :suggestions="tagSuggestions" />
+
+    <h6>Tracking</h6>
+    <ExerciseMeasurementSettings v-model:metrics="req.metrics" v-model:rest-seconds="req.restSeconds" />
 
     <div class="form-actions">
       <AppButton text="Create" type="submit" colour="primary">Save Exercise</AppButton>

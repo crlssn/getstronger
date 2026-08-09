@@ -165,7 +165,8 @@ ORDER BY position`, plan.ID)
 	}
 
 	for _, routineID := range routineIDs {
-		routine, routineErr := r.GetRoutine(ctx,
+		routine, routineErr := r.GetRoutine(
+			ctx,
 			GetRoutineWithID(routineID),
 			GetRoutineWithUserID(plan.UserID),
 			GetRoutineWithExercises(),

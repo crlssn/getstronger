@@ -23,7 +23,43 @@ var _ apiv1connect.ExerciseServiceHandler = (*exerciseHandler)(nil)
 
 const maxExerciseTags = 10
 
-var ErrInvalidExerciseTags = errors.New("exercise tags must contain no more than 10 non-empty, trimmed, unique values")
+var (
+	ErrInvalidExerciseTags    = errors.New("exercise tags must contain no more than 10 non-empty, trimmed, unique values")
+	ErrInvalidExerciseMetrics = errors.New("exercise must contain one or more unique measurements")
+)
+
+func normalizeExerciseMetrics(metrics []apiv1.ExerciseMetric) ([]string, error) {
+	if len(metrics) == 0 {
+		return []string{"weight", "reps"}, nil
+	}
+
+	normalized := make([]string, 0, len(metrics))
+	seen := make(map[string]struct{}, len(metrics))
+	for _, metric := range metrics {
+		var value string
+		switch metric {
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_WEIGHT:
+			value = "weight"
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_REPS:
+			value = "reps"
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_DISTANCE:
+			value = "distance"
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_TIME:
+			value = "time"
+		default:
+			return nil, ErrInvalidExerciseMetrics
+		}
+		if _, duplicate := seen[value]; duplicate {
+			return nil, ErrInvalidExerciseMetrics
+		}
+		seen[value] = struct{}{}
+		normalized = append(normalized, value)
+	}
+	if len(normalized) == 0 {
+		return nil, ErrInvalidExerciseMetrics
+	}
+	return normalized, nil
+}
 
 func normalizeExerciseTags(tags []string) ([]string, error) {
 	if len(tags) > maxExerciseTags {
@@ -63,11 +99,21 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+	metrics, err := normalizeExerciseMetrics(req.Msg.GetMetrics())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 
+	restSeconds := int(req.Msg.GetRestSeconds())
+	if len(req.Msg.GetMetrics()) == 0 && restSeconds == 0 {
+		restSeconds = 90
+	}
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
-		UserID: userID,
-		Name:   req.Msg.GetName(),
-		Tags:   tags,
+		UserID:      userID,
+		Name:        req.Msg.GetName(),
+		Tags:        tags,
+		Metrics:     metrics,
+		RestSeconds: restSeconds,
 	})
 	if err != nil {
 		log.Error("create exercise failed", zap.Error(err))
@@ -105,7 +151,8 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 		With(xzap.FieldExerciseID(req.Msg.GetExercise().GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
 
-	exercise, err := h.repo.GetExercise(ctx,
+	exercise, err := h.repo.GetExercise(
+		ctx,
 		repo.GetExerciseWithID(req.Msg.GetExercise().GetId()),
 		repo.GetExerciseWithUserID(userID),
 	)
@@ -130,6 +177,14 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 				return nil, connect.NewError(connect.CodeInvalidArgument, normalizeErr)
 			}
 			opts = append(opts, repo.UpdateExerciseTags(tags))
+		case "metrics":
+			metrics, normalizeErr := normalizeExerciseMetrics(req.Msg.GetExercise().GetMetrics())
+			if normalizeErr != nil {
+				return nil, connect.NewError(connect.CodeInvalidArgument, normalizeErr)
+			}
+			opts = append(opts, repo.UpdateExerciseMetrics(metrics))
+		case "rest_seconds":
+			opts = append(opts, repo.UpdateExerciseRestSeconds(int(req.Msg.GetExercise().GetRestSeconds())))
 		default:
 			log.Error("invalid update mask path", zap.String("path", path))
 			return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidUpdateMaskPath)
@@ -158,7 +213,8 @@ func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Reque
 		With(xzap.FieldExerciseID(req.Msg.GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if _, err := h.repo.GetExercise(ctx,
+	if _, err := h.repo.GetExercise(
+		ctx,
 		repo.GetExerciseWithID(req.Msg.GetId()),
 		repo.GetExerciseWithUserID(userID),
 	); err != nil {

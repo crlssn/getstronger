@@ -25,47 +25,57 @@ import (
 
 // Exercise is an object representing the database table.
 type Exercise struct {
-	ID        string            `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID    string            `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Title     string            `boil:"title" json:"title" toml:"title" yaml:"title"`
-	CreatedAt time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	DeletedAt null.Time         `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
-	Tags      types.StringArray `boil:"tags" json:"tags" toml:"tags" yaml:"tags"`
+	ID          string            `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID      string            `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Title       string            `boil:"title" json:"title" toml:"title" yaml:"title"`
+	CreatedAt   time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	DeletedAt   null.Time         `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	Tags        types.StringArray `boil:"tags" json:"tags" toml:"tags" yaml:"tags"`
+	Metrics     types.StringArray `boil:"metrics" json:"metrics" toml:"metrics" yaml:"metrics"`
+	RestSeconds int               `boil:"rest_seconds" json:"rest_seconds" toml:"rest_seconds" yaml:"rest_seconds"`
 
 	R *exerciseR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L exerciseL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var ExerciseColumns = struct {
-	ID        string
-	UserID    string
-	Title     string
-	CreatedAt string
-	DeletedAt string
-	Tags      string
+	ID          string
+	UserID      string
+	Title       string
+	CreatedAt   string
+	DeletedAt   string
+	Tags        string
+	Metrics     string
+	RestSeconds string
 }{
-	ID:        "id",
-	UserID:    "user_id",
-	Title:     "title",
-	CreatedAt: "created_at",
-	DeletedAt: "deleted_at",
-	Tags:      "tags",
+	ID:          "id",
+	UserID:      "user_id",
+	Title:       "title",
+	CreatedAt:   "created_at",
+	DeletedAt:   "deleted_at",
+	Tags:        "tags",
+	Metrics:     "metrics",
+	RestSeconds: "rest_seconds",
 }
 
 var ExerciseTableColumns = struct {
-	ID        string
-	UserID    string
-	Title     string
-	CreatedAt string
-	DeletedAt string
-	Tags      string
+	ID          string
+	UserID      string
+	Title       string
+	CreatedAt   string
+	DeletedAt   string
+	Tags        string
+	Metrics     string
+	RestSeconds string
 }{
-	ID:        "exercises.id",
-	UserID:    "exercises.user_id",
-	Title:     "exercises.title",
-	CreatedAt: "exercises.created_at",
-	DeletedAt: "exercises.deleted_at",
-	Tags:      "exercises.tags",
+	ID:          "exercises.id",
+	UserID:      "exercises.user_id",
+	Title:       "exercises.title",
+	CreatedAt:   "exercises.created_at",
+	DeletedAt:   "exercises.deleted_at",
+	Tags:        "exercises.tags",
+	Metrics:     "exercises.metrics",
+	RestSeconds: "exercises.rest_seconds",
 }
 
 // Generated where
@@ -91,20 +101,47 @@ func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelperint struct{ field string }
+
+func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 var ExerciseWhere = struct {
-	ID        whereHelperstring
-	UserID    whereHelperstring
-	Title     whereHelperstring
-	CreatedAt whereHelpertime_Time
-	DeletedAt whereHelpernull_Time
-	Tags      whereHelpertypes_StringArray
+	ID          whereHelperstring
+	UserID      whereHelperstring
+	Title       whereHelperstring
+	CreatedAt   whereHelpertime_Time
+	DeletedAt   whereHelpernull_Time
+	Tags        whereHelpertypes_StringArray
+	Metrics     whereHelpertypes_StringArray
+	RestSeconds whereHelperint
 }{
-	ID:        whereHelperstring{field: "\"getstronger\".\"exercises\".\"id\""},
-	UserID:    whereHelperstring{field: "\"getstronger\".\"exercises\".\"user_id\""},
-	Title:     whereHelperstring{field: "\"getstronger\".\"exercises\".\"title\""},
-	CreatedAt: whereHelpertime_Time{field: "\"getstronger\".\"exercises\".\"created_at\""},
-	DeletedAt: whereHelpernull_Time{field: "\"getstronger\".\"exercises\".\"deleted_at\""},
-	Tags:      whereHelpertypes_StringArray{field: "\"getstronger\".\"exercises\".\"tags\""},
+	ID:          whereHelperstring{field: "\"getstronger\".\"exercises\".\"id\""},
+	UserID:      whereHelperstring{field: "\"getstronger\".\"exercises\".\"user_id\""},
+	Title:       whereHelperstring{field: "\"getstronger\".\"exercises\".\"title\""},
+	CreatedAt:   whereHelpertime_Time{field: "\"getstronger\".\"exercises\".\"created_at\""},
+	DeletedAt:   whereHelpernull_Time{field: "\"getstronger\".\"exercises\".\"deleted_at\""},
+	Tags:        whereHelpertypes_StringArray{field: "\"getstronger\".\"exercises\".\"tags\""},
+	Metrics:     whereHelpertypes_StringArray{field: "\"getstronger\".\"exercises\".\"metrics\""},
+	RestSeconds: whereHelperint{field: "\"getstronger\".\"exercises\".\"rest_seconds\""},
 }
 
 // ExerciseRels is where relationship names are stored.
@@ -182,9 +219,9 @@ func (r *exerciseR) GetSets() SetSlice {
 type exerciseL struct{}
 
 var (
-	exerciseAllColumns            = []string{"id", "user_id", "title", "created_at", "deleted_at", "tags"}
+	exerciseAllColumns            = []string{"id", "user_id", "title", "created_at", "deleted_at", "tags", "metrics", "rest_seconds"}
 	exerciseColumnsWithoutDefault = []string{"user_id", "title"}
-	exerciseColumnsWithDefault    = []string{"id", "created_at", "deleted_at", "tags"}
+	exerciseColumnsWithDefault    = []string{"id", "created_at", "deleted_at", "tags", "metrics", "rest_seconds"}
 	exercisePrimaryKeyColumns     = []string{"id"}
 	exerciseGeneratedColumns      = []string{}
 )

@@ -34,7 +34,8 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	user, err := h.repo.GetUser(ctx,
+	user, err := h.repo.GetUser(
+		ctx,
 		repo.GetUserWithID(req.Msg.GetId()),
 		repo.GetUserLoadAuth(),
 	)
@@ -65,7 +66,8 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	users, err := h.repo.ListUsers(ctx,
+	users, err := h.repo.ListUsers(
+		ctx,
 		repo.ListUsersWithLimit(limit+1),
 		repo.ListUsersWithNameMatching(req.Msg.GetQuery()),
 	)

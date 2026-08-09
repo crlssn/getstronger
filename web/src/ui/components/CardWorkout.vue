@@ -258,6 +258,7 @@ const postComment = async () => {
           :name="exerciseSet.exercise?.name"
           :sets="exerciseSet.sets"
           :tags="exerciseSet.exercise?.tags"
+          :metrics="exerciseSet.exercise?.metrics"
         />
       </div>
     </section>

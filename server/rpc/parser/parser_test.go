@@ -384,7 +384,8 @@ func (s *parserSuite) TestNotification() {
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetComments())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetExerciseSets())
 
-	parsed = parser.Notification(notification,
+	parsed = parser.Notification(
+		notification,
 		parser.NotificationActor(notification.Type, actor),
 		parser.NotificationWorkout(notification.Type, workout),
 	)

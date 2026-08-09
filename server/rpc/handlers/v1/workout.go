@@ -51,7 +51,8 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 	if planAdvanceSkipped != nil {
-		log.Warn("workout saved without advancing plan",
+		log.Warn(
+			"workout saved without advancing plan",
 			zap.String("plan_id", req.Msg.GetPlanId()),
 			zap.String("routine_id", req.Msg.GetRoutineId()),
 			zap.Error(planAdvanceSkipped),
@@ -81,7 +82,8 @@ func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.
 		return "Quick Workout", nil
 	}
 
-	routine, err := h.repo.GetRoutine(ctx,
+	routine, err := h.repo.GetRoutine(
+		ctx,
 		repo.GetRoutineWithID(request.GetRoutineId()),
 		repo.GetRoutineWithUserID(userID),
 	)
@@ -149,7 +151,8 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	log := xcontext.MustExtractLogger(ctx)
 
 	// TODO: Analyse query performance.
-	workout, err := h.repo.GetWorkout(ctx,
+	workout, err := h.repo.GetWorkout(
+		ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
 		repo.GetWorkoutLoadSets(),
 		repo.GetWorkoutLoadUser(),
@@ -176,7 +179,8 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	log.Info("workout fetched")
 	return &connect.Response[apiv1.GetWorkoutResponse]{
 		Msg: &apiv1.GetWorkoutResponse{
-			Workout: parser.Workout(workout,
+			Workout: parser.Workout(
+				workout,
 				parser.WorkoutIntensity(workout.R.GetSets()),
 				parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
 			),
@@ -188,7 +192,8 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	workouts, err := h.repo.ListWorkouts(ctx,
+	workouts, err := h.repo.ListWorkouts(
+		ctx,
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadExercises(),
@@ -236,7 +241,8 @@ func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.DeleteWorkout(ctx,
+	if err := h.repo.DeleteWorkout(
+		ctx,
 		repo.DeleteWorkoutWithID(req.Msg.GetId()),
 		repo.DeleteWorkoutWithUserID(userID),
 	); err != nil {
@@ -307,7 +313,8 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 	}
 
 	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
-		if err = tx.UpdateWorkout(ctx, workout.ID,
+		if err = tx.UpdateWorkout(
+			ctx, workout.ID,
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
 			repo.UpdateWorkoutNote(req.Msg.GetWorkout().GetNote()),
 			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),

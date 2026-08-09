@@ -32,7 +32,8 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	notifications, err := h.repo.ListNotifications(ctx,
+	notifications, err := h.repo.ListNotifications(
+		ctx,
 		repo.ListNotificationsWithLimit(limit+1),
 		repo.ListNotificationsWithUserID(userID),
 		repo.ListNotificationsWithPageToken(req.Msg.GetPagination().GetPageToken()),
@@ -74,7 +75,8 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workouts, err := h.repo.ListWorkouts(ctx,
+	workouts, err := h.repo.ListWorkouts(
+		ctx,
 		repo.ListWorkoutsWithIDs(workoutIDs),
 		repo.ListWorkoutsLoadUser(),
 	)
@@ -130,7 +132,8 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 			h.stream.Remove(userID)
 			return nil
 		case <-ticker.C:
-			count, err := h.repo.CountNotifications(ctx,
+			count, err := h.repo.CountNotifications(
+				ctx,
 				repo.CountNotificationsWithUserID(userID),
 				repo.CountNotificationsWithUnreadOnly(true),
 			)

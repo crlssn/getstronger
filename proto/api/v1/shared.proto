@@ -29,13 +29,28 @@ message Exercise {
       }
     }
   }];
+  repeated ExerciseMetric metrics = 5 [(buf.validate.field).repeated = {
+    unique: true
+    items: { enum: { defined_only: true not_in: [0] } }
+  }];
+  int32 rest_seconds = 6 [(buf.validate.field).int32 = { gte: 0, lte: 3600 }];
+}
+
+enum ExerciseMetric {
+  EXERCISE_METRIC_UNSPECIFIED = 0;
+  EXERCISE_METRIC_WEIGHT = 1;
+  EXERCISE_METRIC_REPS = 2;
+  EXERCISE_METRIC_DISTANCE = 3;
+  EXERCISE_METRIC_TIME = 4;
 }
 
 message Set {
   string id = 1;
   double weight = 2; // The weight can be less than zero.
-  int32 reps = 3 [(buf.validate.field).int32 = { gte: 1 }];
+  int32 reps = 3 [(buf.validate.field).int32 = { gte: 0 }];
   MetadataSet metadata = 4;
+  double distance = 5 [(buf.validate.field).double = { gte: 0 }];
+  int32 duration_seconds = 6 [(buf.validate.field).int32 = { gte: 0 }];
 }
 
 message MetadataSet {

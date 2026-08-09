@@ -55,7 +55,9 @@ func (s *exerciseSuite) SetupSuite() {
 
 func (s *exerciseSuite) TestCreateExercise() {
 	type expected struct {
-		err error
+		err         error
+		metrics     []string
+		restSeconds int
 	}
 
 	type test struct {
@@ -80,7 +82,29 @@ func (s *exerciseSuite) TestCreateExercise() {
 				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
-				err: nil,
+				err:         nil,
+				metrics:     []string{"weight", "reps"},
+				restSeconds: 90,
+			},
+		},
+		{
+			name: "ok_custom_measurements_without_rest_timer",
+			req: &connect.Request[v1.CreateExerciseRequest]{
+				Msg: &v1.CreateExerciseRequest{
+					Name:        "Loaded carry",
+					Tags:        []string{},
+					Metrics:     []v1.ExerciseMetric{v1.ExerciseMetric_EXERCISE_METRIC_WEIGHT, v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE, v1.ExerciseMetric_EXERCISE_METRIC_TIME},
+					RestSeconds: 0,
+				},
+			},
+			init: func(_ test) context.Context {
+				user := s.factory.NewUser()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				metrics:     []string{"weight", "distance", "time"},
+				restSeconds: 0,
 			},
 		},
 		{
@@ -141,6 +165,8 @@ func (s *exerciseSuite) TestCreateExercise() {
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetTags(), []string(exercise.Tags))
+			s.Require().Equal(t.expected.metrics, []string(exercise.Metrics))
+			s.Require().Equal(t.expected.restSeconds, exercise.RestSeconds)
 		})
 	}
 }

@@ -31,6 +31,14 @@ import { useStreakStore } from '@/stores/streak'
 import { createWorkout, getPreviousWorkoutSets, getRoutine, listExercises } from '@/http/requests'
 import { isNumber } from '@/utils/numbers'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import DurationInput from '@/ui/workouts/DurationInput.vue'
+import {
+  formatExerciseSet,
+  hasAnyExerciseSetValue,
+  isExerciseSetComplete,
+  measurementsForExercise,
+  type MeasurementField,
+} from '@/utils/exerciseMeasurements'
 
 const { input: note, textarea } = useTextareaAutosize()
 const route = useRoute()
@@ -125,19 +133,15 @@ const nextIncompleteExerciseIndex = computed(() => {
   if (afterCurrent >= 0) return afterCurrent
   return exercises.findIndex((exercise) => !completedExercises.value[exercise.id])
 })
-const isCompleteSet = (set: Set) =>
-  isNumber(set.weight) &&
-  isNumber(set.reps) &&
-  Number.isInteger(set.reps) &&
-  (set.reps as number) > 0
-const hasEnteredValue = (value: unknown) =>
-  value !== undefined && value !== null && (typeof value !== 'string' || value.trim().length > 0)
-
+const exerciseByID = (exerciseID: string) =>
+  routine.value?.exercises.find((exercise) => exercise.id === exerciseID)
+const isCompleteSet = (set: Set, exercise = currentExercise.value) =>
+  isExerciseSetComplete(set, exercise)
 const loggedSetCount = computed(() => {
   if (!routine.value) return 0
   return routine.value.exercises.reduce(
     (total, exercise) =>
-      total + workoutStore.getSets(routineID, exercise.id).filter(isCompleteSet).length,
+      total + workoutStore.getSets(routineID, exercise.id).filter((set) => isCompleteSet(set, exercise)).length,
     0,
   )
 })
@@ -150,7 +154,7 @@ const incompleteSetCount = computed(() => {
         .getSets(routineID, exercise.id)
         .filter(
           (set) =>
-            (hasEnteredValue(set.weight) || hasEnteredValue(set.reps)) && !isCompleteSet(set),
+            hasAnyExerciseSetValue(set, exercise) && !isCompleteSet(set, exercise),
         ).length,
     0,
   )
@@ -326,7 +330,7 @@ const initializeRoutine = async () => {
 
 const addEmptySetsFromPreviousSession = () => {
   routine.value?.exercises.forEach((exercise) =>
-    workoutStore.addEmptySetIfNone(routineID, exercise.id),
+    workoutStore.addEmptySetIfNone(routineID, exercise.id, exercise.metrics),
   )
 
   prevExerciseSets.value.forEach((exerciseSets) => {
@@ -346,17 +350,18 @@ const setKey = (exerciseID: string, index: number) => `${exerciseID}:${index}`
 const seedCompletedSets = () => {
   routine.value?.exercises.forEach((exercise) => {
     workoutStore.getSets(routineID, exercise.id).forEach((set, index) => {
-      if (isCompleteSet(set)) completedSets.value[setKey(exercise.id, index)] = true
+      if (isCompleteSet(set, exercise)) completedSets.value[setKey(exercise.id, index)] = true
     })
   })
 }
 
 const syncSetCompletion = (exerciseID: string, set: Set, index: number) => {
+  const exercise = exerciseByID(exerciseID)
   const key = setKey(exerciseID, index)
-  if (isCompleteSet(set)) {
+  if (isCompleteSet(set, exercise)) {
     if (!completedSets.value[key]) {
       completedSets.value[key] = true
-      startRestTimer()
+      if (exercise?.restSeconds) startRestTimer(exercise.restSeconds)
     }
     return
   }
@@ -366,7 +371,7 @@ const syncSetCompletion = (exerciseID: string, set: Set, index: number) => {
 
 const onSetInput = (exerciseID: string, set: Set, index: number) => {
   finishError.value = ''
-  workoutStore.addEmptySetIfNone(routineID, exerciseID)
+  workoutStore.addEmptySetIfNone(routineID, exerciseID, exerciseByID(exerciseID)?.metrics)
   syncSetCompletion(exerciseID, set, index)
 }
 
@@ -375,7 +380,7 @@ const copyPreviousValue = async (
   exerciseId: string,
   set: Set,
   index: number,
-  field: 'weight' | 'reps',
+  field: MeasurementField,
 ) => {
   if (isNumber(set[field])) return
   const previous =
@@ -383,7 +388,7 @@ const copyPreviousValue = async (
   if (!previous) return
 
   set[field] = previous[field]
-  workoutStore.addEmptySetIfNone(routineID, exerciseId)
+  workoutStore.addEmptySetIfNone(routineID, exerciseId, exerciseByID(exerciseId)?.metrics)
   syncSetCompletion(exerciseId, set, index)
   await nextTick()
   ;(event.target as HTMLInputElement).select()
@@ -395,7 +400,7 @@ const deleteWorkoutSet = (exerciseID: string, index: number) => {
     .filter((key) => key.startsWith(`${exerciseID}:`))
     .forEach((key) => delete completedSets.value[key])
   workoutStore.getSets(routineID, exerciseID).forEach((set, setIndex) => {
-    if (isCompleteSet(set)) completedSets.value[setKey(exerciseID, setIndex)] = true
+    if (isCompleteSet(set, exerciseByID(exerciseID))) completedSets.value[setKey(exerciseID, setIndex)] = true
   })
 }
 
@@ -495,13 +500,13 @@ const addRestTime = () => {
 }
 
 const exerciseLoggedSetCount = (exerciseID: string) =>
-  workoutStore.getSets(routineID, exerciseID).filter(isCompleteSet).length
+  workoutStore.getSets(routineID, exerciseID).filter((set) => isCompleteSet(set, exerciseByID(exerciseID))).length
 
 const exerciseHasIncompleteSets = (exerciseID: string) =>
   workoutStore
     .getSets(routineID, exerciseID)
     .some(
-      (set) => (hasEnteredValue(set.weight) || hasEnteredValue(set.reps)) && !isCompleteSet(set),
+      (set) => hasAnyExerciseSetValue(set, exerciseByID(exerciseID)) && !isCompleteSet(set, exerciseByID(exerciseID)),
     )
 
 const canCompleteExercise = (exerciseID: string) =>
@@ -550,7 +555,7 @@ const buildWorkoutSets = () => {
 
   return (routine.value?.exercises ?? [])
     .map((exercise) => {
-      const sets = allSets[exercise.id]?.filter(isCompleteSet)
+      const sets = allSets[exercise.id]?.filter((set) => isCompleteSet(set, exercise))
       if (!sets?.length) return null
 
       return create(ExerciseSetsSchema, {
@@ -558,6 +563,8 @@ const buildWorkoutSets = () => {
         sets: sets.map((set) => ({
           reps: set.reps as number,
           weight: set.weight as number,
+          distance: set.distance ?? 0,
+          durationSeconds: set.durationSeconds ?? 0,
         })),
       })
     })
@@ -719,7 +726,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
   routine.value.exercises.push(exercise)
   workoutStore.addWorkoutExercise(routineID, exercise)
-  workoutStore.addEmptySetIfNone(routineID, exercise.id)
+  workoutStore.addEmptySetIfNone(routineID, exercise.id, exercise.metrics)
   closeExercisePicker()
 
   const previousResponse = await getPreviousWorkoutSets([exercise.id])
@@ -807,42 +814,54 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </div>
 
         <template v-else>
-          <div class="set-grid set-labels" aria-hidden="true">
-            <span>Set</span><span>Previous</span><span>kg</span><span>Reps</span>
+          <div
+            class="set-grid set-labels"
+            :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
+            aria-hidden="true"
+          >
+            <span>Set</span><span>Previous</span>
+            <span v-for="measurement in measurementsForExercise(currentExercise)" :key="measurement.metric">
+              {{ measurement.label }}
+            </span>
           </div>
           <div
             v-for="(set, setIndex) in workoutStore.getSets(routineID, currentExercise.id)"
             :key="setIndex"
             class="set-grid set-row"
-            :class="{ complete: isCompleteSet(set) }"
+            :class="{ complete: isCompleteSet(set, currentExercise) }"
+            :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
           >
             <span class="set-number">
-              <CheckIcon v-if="isCompleteSet(set)" />
+              <CheckIcon v-if="isCompleteSet(set, currentExercise)" />
               <template v-else>{{ setIndex + 1 }}</template>
             </span>
             <span class="previous-value">
               <template v-if="previousSet(currentExercise.id, setIndex)">
-                {{ previousSet(currentExercise.id, setIndex)?.weight }} ×
-                {{ previousSet(currentExercise.id, setIndex)?.reps }}
+                {{ formatExerciseSet(previousSet(currentExercise.id, setIndex)!, currentExercise) }}
               </template>
               <span v-else>—</span>
             </span>
-            <input
-              v-model.number="set.weight"
-              type="text"
-              inputmode="decimal"
-              :aria-label="`${currentExercise.name} set ${setIndex + 1} weight`"
-              @input="onSetInput(currentExercise.id, set, setIndex)"
-              @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'weight')"
-            />
-            <input
-              v-model.number="set.reps"
-              type="text"
-              inputmode="numeric"
-              :aria-label="`${currentExercise.name} set ${setIndex + 1} repetitions`"
-              @input="onSetInput(currentExercise.id, set, setIndex)"
-              @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'reps')"
-            />
+            <template
+              v-for="measurement in measurementsForExercise(currentExercise)"
+              :key="measurement.metric"
+            >
+              <DurationInput
+                v-if="measurement.field === 'durationSeconds'"
+                v-model="set.durationSeconds"
+                :aria-label="`${currentExercise.name} set ${setIndex + 1} time`"
+                @input="onSetInput(currentExercise.id, set, setIndex)"
+                @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)"
+              />
+              <input
+                v-else
+                v-model.number="set[measurement.field]"
+                type="text"
+                :inputmode="measurement.inputmode"
+                :aria-label="`${currentExercise.name} set ${setIndex + 1} ${measurement.label}`"
+                @input="onSetInput(currentExercise.id, set, setIndex)"
+                @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)"
+              />
+            </template>
             <button
               type="button"
               class="remove-set"
@@ -1260,7 +1279,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-1 text-sm text-slate-500;
 }
 .set-grid {
-  @apply grid grid-cols-[2rem_minmax(3.4rem,1fr)_4.5rem_4rem] items-center gap-2;
+  @apply grid items-center gap-2 overflow-x-auto;
+  grid-template-columns: 2rem minmax(5.5rem, 1fr) repeat(var(--metric-count), minmax(4.25rem, .75fr));
 }
 .set-labels {
   @apply pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500;
@@ -1489,7 +1509,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 @media (max-width: 520px) {
   .set-grid {
-    @apply grid-cols-[1.5rem_minmax(2.8rem,1fr)_4.25rem_3.75rem] gap-1.5;
+    @apply gap-1.5;
+    grid-template-columns: 1.5rem minmax(4.5rem, 1fr) repeat(var(--metric-count), minmax(4rem, .75fr));
   }
   .set-labels {
     @apply text-[0.65rem];
