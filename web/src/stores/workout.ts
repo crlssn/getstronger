@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { isNumber } from '@/utils/numbers'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { exerciseMetrics } from '@/utils/exerciseMeasurements'
 
 export const useWorkoutStore = defineStore(
   'workouts',
@@ -69,7 +70,12 @@ export const useWorkoutStore = defineStore(
       if (!workout) return
 
       workout.addedExercises = workout.addedExercises || []
-      if (!workout.addedExercises.some((entry) => entry.id === exercise.id)) {
+      const existingIndex = workout.addedExercises.findIndex((entry) => entry.id === exercise.id)
+      if (existingIndex >= 0) {
+        // Exercise definitions can change while a workout draft is saved. Keep
+        // the draft's reference current without touching any logged set data.
+        workout.addedExercises[existingIndex] = exercise
+      } else {
         workout.addedExercises.push(exercise)
       }
     }
@@ -129,7 +135,11 @@ export const useWorkoutStore = defineStore(
         [ExerciseMetric.DISTANCE]: 'distance',
         [ExerciseMetric.TIME]: 'durationSeconds',
       }
-      const fields = metrics.map((metric) => metricFields[metric]).filter(Boolean) as Array<keyof Set>
+      // Older persisted drafts may not contain metrics. Normalising here avoids
+      // the empty-array `every()` case appending another blank row on refresh.
+      const fields = exerciseMetrics({ metrics })
+        .map((metric) => metricFields[metric])
+        .filter(Boolean) as Array<keyof Set>
       const noEmptySet = workout.exerciseSets[exerciseID].every((set) =>
         fields.every((field) => isNumber(set[field])),
       )

@@ -29,7 +29,13 @@ import { useWorkoutStore } from '@/stores/workout'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useStreakStore } from '@/stores/streak'
-import { createWorkout, getPreviousWorkoutSets, getRoutine, listExercises } from '@/http/requests'
+import {
+  createWorkout,
+  getExercise,
+  getPreviousWorkoutSets,
+  getRoutine,
+  listExercises,
+} from '@/http/requests'
 import { isNumber } from '@/utils/numbers'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
@@ -272,9 +278,17 @@ const initializeRoutine = async () => {
     routine.value = create(RoutineSchema, { name: 'Quick Workout', exercises: [] })
     pageTitleStore.setPageTitle('Quick Workout')
     workoutStore.initialiseWorkout(routineID)
-    workoutStore
-      .getAddedExercises(routineID)
-      .forEach((exercise) => routine.value?.exercises.push(exercise))
+    const savedExercises = workoutStore.getAddedExercises(routineID)
+    const currentExercises = await Promise.all(
+      savedExercises.map(async (savedExercise) => {
+        const response = await getExercise(savedExercise.id)
+        return response?.exercise ?? savedExercise
+      }),
+    )
+    currentExercises.forEach((exercise) => {
+      routine.value?.exercises.push(exercise)
+      workoutStore.addWorkoutExercise(routineID, exercise)
+    })
     const savedStartedAt = workoutStore.getStartedAt(routineID)
     if (savedStartedAt) {
       const parsedStartedAt = DateTime.fromISO(savedStartedAt)
