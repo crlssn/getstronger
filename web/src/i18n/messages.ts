@@ -243,6 +243,10 @@ export const en = {
     older: 'Older than a month',
     never: 'Not tried yet',
   },
+  routine: {
+    noExercises: 'No exercises yet',
+    andMore: '+{count} more',
+  },
   exercise: {
     library: 'Exercise library',
     heading: 'Exercises',
@@ -547,6 +551,10 @@ export const sv = {
     month: 'Senaste månaden',
     older: 'Äldre än en månad',
     never: 'Inte provad än',
+  },
+  routine: {
+    noExercises: 'Inga övningar än',
+    andMore: '+{count} till',
   },
   exercise: {
     library: 'Övningsbibliotek',

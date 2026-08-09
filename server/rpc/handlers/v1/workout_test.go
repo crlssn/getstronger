@@ -210,6 +210,60 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	s.Require().Equal(1, advanced.CurrentPosition)
 }
 
+func (s *workoutSuite) TestCreateWorkoutLinksTheRoutine() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: routine.ID,
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	listed, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
+		UserIds:    []string{user.ID},
+		Pagination: &apiv1.PaginationRequest{PageLimit: 10},
+	}))
+	s.Require().NoError(err)
+	s.Require().Len(listed.Msg.GetWorkouts(), 1)
+	s.Require().Equal(created.Msg.GetWorkoutId(), listed.Msg.GetWorkouts()[0].GetId())
+	s.Require().Equal(routine.ID, listed.Msg.GetWorkouts()[0].GetRoutineId())
+}
+
+func (s *workoutSuite) TestCreateQuickWorkoutHasNoRoutine() {
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	_, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		WorkoutName: "Quick Workout",
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	listed, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
+		UserIds:    []string{user.ID},
+		Pagination: &apiv1.PaginationRequest{PageLimit: 10},
+	}))
+	s.Require().NoError(err)
+	s.Require().Len(listed.Msg.GetWorkouts(), 1)
+	s.Require().Empty(listed.Msg.GetWorkouts()[0].GetRoutineId())
+}
+
 func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 	user := s.factory.NewUser()
 	completedRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))

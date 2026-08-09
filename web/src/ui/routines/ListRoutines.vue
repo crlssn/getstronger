@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   ChevronRightIcon,
   EllipsisHorizontalIcon,
@@ -10,17 +11,27 @@ import {
 
 import { listRoutines } from '@/http/requests'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import usePagination from '@/utils/usePagination'
+import {
+  activityBucketFor,
+  activityBucketLabelKey,
+  activityBucketOrder,
+  type ActivityBucket,
+} from '@/utils/activityBuckets'
 
+const { t } = useI18n()
 const routines = ref<Routine[]>([])
 const search = ref('')
 const isMounted = ref(false)
 const dashboardStore = useDashboardStore()
+const activityStore = useActivityStore()
+const routineNameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
-  await Promise.all([fetchRoutines(), dashboardStore.load()])
+  await Promise.all([fetchRoutines(), dashboardStore.load(), activityStore.load()])
   isMounted.value = true
 })
 
@@ -28,6 +39,45 @@ const filteredRoutines = computed(() => {
   const query = search.value.trim().toLowerCase()
   if (!query) return routines.value
   return routines.value.filter((routine) => routine.name.toLowerCase().includes(query))
+})
+
+const maxNamedExercises = 3
+const exerciseSummary = (routine: Routine) => {
+  const names = routine.exercises.slice(0, maxNamedExercises).map((exercise) => exercise.name)
+  const remaining = routine.exercises.length - names.length
+  if (!names.length) return t('routine.noExercises')
+  return remaining > 0
+    ? `${names.join(' · ')} ${t('routine.andMore', { count: remaining })}`
+    : names.join(' · ')
+}
+
+// Grouped by when the routine was last performed, most recent first.
+const groupedRoutines = computed(() => {
+  const buckets = new Map<ActivityBucket, { routine: Routine; performedAt?: number }[]>()
+
+  for (const routine of filteredRoutines.value) {
+    const performedAt = activityStore.routineLastPerformedFor(routine.id)
+    const bucket = activityBucketFor(performedAt)
+    const entry = { routine, performedAt: performedAt?.toMillis() }
+    const group = buckets.get(bucket)
+    if (group) group.push(entry)
+    else buckets.set(bucket, [entry])
+  }
+
+  return activityBucketOrder
+    .filter((bucket) => buckets.has(bucket))
+    .map((bucket) => ({
+      bucket,
+      labelKey: activityBucketLabelKey(bucket),
+      routines: (buckets.get(bucket) ?? [])
+        .sort((first, second) => {
+          if (first.performedAt !== second.performedAt) {
+            return (second.performedAt ?? 0) - (first.performedAt ?? 0)
+          }
+          return routineNameCollator.compare(first.routine.name, second.routine.name)
+        })
+        .map((entry) => entry.routine),
+    }))
 })
 
 const fetchRoutines = async () => {
@@ -63,48 +113,50 @@ const makeUpNext = async (routineId: string) => {
       />
     </label>
 
-    <div v-if="isMounted && filteredRoutines.length" class="routine-grid">
-      <article v-for="routine in filteredRoutines" :key="routine.id" class="routine-card">
-        <div class="routine-heading">
-          <RouterLink :to="`/routines/${routine.id}`">
-            <span v-if="routine.id === dashboardStore.preferredRoutineId" class="up-next"
-              >Up next</span
-            >
-            <h2>{{ routine.name }}</h2>
-            <p>
-              {{ routine.exercises.length }} exercises · About
-              {{ Math.max(30, routine.exercises.length * 8) }} min
-            </p>
-          </RouterLink>
-          <ChevronRightIcon />
-        </div>
-        <div class="exercise-preview">
-          <span v-for="exercise in routine.exercises.slice(0, 3)" :key="exercise.id">{{
-            exercise.name
-          }}</span>
-          <span v-if="routine.exercises.length > 3">+{{ routine.exercises.length - 3 }} more</span>
-        </div>
-        <div class="routine-actions">
-          <RouterLink :to="`/workouts/routine/${routine.id}`" class="start-link"
-            ><PlayIcon /> Start</RouterLink
-          >
-          <RouterLink :to="`/routines/${routine.id}`" class="view-link">View routine</RouterLink>
-          <details class="routine-menu">
-            <summary aria-label="Routine actions"><EllipsisHorizontalIcon /></summary>
-            <div>
-              <RouterLink :to="`/routines/${routine.id}/edit`">Edit routine</RouterLink>
-              <button
-                v-if="routine.id !== dashboardStore.preferredRoutineId"
-                type="button"
-                @click="makeUpNext(routine.id)"
-              >
-                Make up next
-              </button>
+    <template v-if="isMounted && filteredRoutines.length">
+      <section v-for="group in groupedRoutines" :key="group.bucket" class="routine-group">
+        <h2 class="group-heading">{{ t(group.labelKey) }}</h2>
+        <div class="routine-grid">
+          <article v-for="routine in group.routines" :key="routine.id" class="routine-card">
+            <div class="routine-heading">
+              <RouterLink :to="`/routines/${routine.id}`">
+                <span v-if="routine.id === dashboardStore.preferredRoutineId" class="up-next"
+                  >Up next</span
+                >
+                <h3>{{ routine.name }}</h3>
+                <p class="routine-exercises">{{ exerciseSummary(routine) }}</p>
+                <p class="routine-meta">
+                  {{ routine.exercises.length }} exercises · About
+                  {{ Math.max(30, routine.exercises.length * 8) }} min
+                </p>
+              </RouterLink>
+              <ChevronRightIcon />
             </div>
-          </details>
+            <div class="routine-actions">
+              <RouterLink :to="`/workouts/routine/${routine.id}`" class="start-link"
+                ><PlayIcon /> Start</RouterLink
+              >
+              <RouterLink :to="`/routines/${routine.id}`" class="view-link"
+                >View routine</RouterLink
+              >
+              <details class="routine-menu">
+                <summary aria-label="Routine actions"><EllipsisHorizontalIcon /></summary>
+                <div>
+                  <RouterLink :to="`/routines/${routine.id}/edit`">Edit routine</RouterLink>
+                  <button
+                    v-if="routine.id !== dashboardStore.preferredRoutineId"
+                    type="button"
+                    @click="makeUpNext(routine.id)"
+                  >
+                    Make up next
+                  </button>
+                </div>
+              </details>
+            </div>
+          </article>
         </div>
-      </article>
-    </div>
+      </section>
+    </template>
 
     <section v-else-if="isMounted" class="empty-state">
       <h2>{{ search ? 'No matching routines' : 'No routines yet' }}</h2>
@@ -153,6 +205,12 @@ h1 {
 .search-field input {
   @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
 }
+.routine-group {
+  @apply space-y-3;
+}
+.group-heading {
+  @apply px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
+}
 .routine-grid {
   @apply grid gap-4 md:grid-cols-2;
 }
@@ -168,20 +226,17 @@ h1 {
 .routine-heading > svg {
   @apply mt-2 size-5 text-slate-400;
 }
-.routine-heading h2 {
+.routine-heading h3 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
-.routine-heading p {
-  @apply mt-1 text-sm text-slate-500;
+.routine-exercises {
+  @apply mt-1 text-sm text-slate-700;
+}
+.routine-meta {
+  @apply mt-0.5 text-xs text-slate-500;
 }
 .up-next {
   @apply mb-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
-}
-.exercise-preview {
-  @apply flex flex-wrap gap-2;
-}
-.exercise-preview span {
-  @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600;
 }
 .routine-actions {
   @apply relative mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4;

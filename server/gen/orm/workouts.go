@@ -31,6 +31,7 @@ type Workout struct {
 	Name       string      `boil:"name" json:"name" toml:"name" yaml:"name"`
 	StartedAt  time.Time   `boil:"started_at" json:"started_at" toml:"started_at" yaml:"started_at"`
 	Note       null.String `boil:"note" json:"note,omitempty" toml:"note" yaml:"note,omitempty"`
+	RoutineID  null.String `boil:"routine_id" json:"routine_id,omitempty" toml:"routine_id" yaml:"routine_id,omitempty"`
 
 	R *workoutR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L workoutL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +45,7 @@ var WorkoutColumns = struct {
 	Name       string
 	StartedAt  string
 	Note       string
+	RoutineID  string
 }{
 	ID:         "id",
 	UserID:     "user_id",
@@ -52,6 +54,7 @@ var WorkoutColumns = struct {
 	Name:       "name",
 	StartedAt:  "started_at",
 	Note:       "note",
+	RoutineID:  "routine_id",
 }
 
 var WorkoutTableColumns = struct {
@@ -62,6 +65,7 @@ var WorkoutTableColumns = struct {
 	Name       string
 	StartedAt  string
 	Note       string
+	RoutineID  string
 }{
 	ID:         "workouts.id",
 	UserID:     "workouts.user_id",
@@ -70,6 +74,7 @@ var WorkoutTableColumns = struct {
 	Name:       "workouts.name",
 	StartedAt:  "workouts.started_at",
 	Note:       "workouts.note",
+	RoutineID:  "workouts.routine_id",
 }
 
 // Generated where
@@ -82,6 +87,7 @@ var WorkoutWhere = struct {
 	Name       whereHelperstring
 	StartedAt  whereHelpertime_Time
 	Note       whereHelpernull_String
+	RoutineID  whereHelpernull_String
 }{
 	ID:         whereHelperstring{field: "\"getstronger\".\"workouts\".\"id\""},
 	UserID:     whereHelperstring{field: "\"getstronger\".\"workouts\".\"user_id\""},
@@ -90,14 +96,17 @@ var WorkoutWhere = struct {
 	Name:       whereHelperstring{field: "\"getstronger\".\"workouts\".\"name\""},
 	StartedAt:  whereHelpertime_Time{field: "\"getstronger\".\"workouts\".\"started_at\""},
 	Note:       whereHelpernull_String{field: "\"getstronger\".\"workouts\".\"note\""},
+	RoutineID:  whereHelpernull_String{field: "\"getstronger\".\"workouts\".\"routine_id\""},
 }
 
 // WorkoutRels is where relationship names are stored.
 var WorkoutRels = struct {
+	Routine         string
 	User            string
 	Sets            string
 	WorkoutComments string
 }{
+	Routine:         "Routine",
 	User:            "User",
 	Sets:            "Sets",
 	WorkoutComments: "WorkoutComments",
@@ -105,6 +114,7 @@ var WorkoutRels = struct {
 
 // workoutR is where relationships are stored.
 type workoutR struct {
+	Routine         *Routine            `boil:"Routine" json:"Routine" toml:"Routine" yaml:"Routine"`
 	User            *User               `boil:"User" json:"User" toml:"User" yaml:"User"`
 	Sets            SetSlice            `boil:"Sets" json:"Sets" toml:"Sets" yaml:"Sets"`
 	WorkoutComments WorkoutCommentSlice `boil:"WorkoutComments" json:"WorkoutComments" toml:"WorkoutComments" yaml:"WorkoutComments"`
@@ -113,6 +123,22 @@ type workoutR struct {
 // NewStruct creates a new relationship struct
 func (*workoutR) NewStruct() *workoutR {
 	return &workoutR{}
+}
+
+func (o *Workout) GetRoutine() *Routine {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetRoutine()
+}
+
+func (r *workoutR) GetRoutine() *Routine {
+	if r == nil {
+		return nil
+	}
+
+	return r.Routine
 }
 
 func (o *Workout) GetUser() *User {
@@ -167,9 +193,9 @@ func (r *workoutR) GetWorkoutComments() WorkoutCommentSlice {
 type workoutL struct{}
 
 var (
-	workoutAllColumns            = []string{"id", "user_id", "finished_at", "created_at", "name", "started_at", "note"}
+	workoutAllColumns            = []string{"id", "user_id", "finished_at", "created_at", "name", "started_at", "note", "routine_id"}
 	workoutColumnsWithoutDefault = []string{"user_id", "finished_at", "name", "started_at"}
-	workoutColumnsWithDefault    = []string{"id", "created_at", "note"}
+	workoutColumnsWithDefault    = []string{"id", "created_at", "note", "routine_id"}
 	workoutPrimaryKeyColumns     = []string{"id"}
 	workoutGeneratedColumns      = []string{}
 )
@@ -479,6 +505,17 @@ func (q workoutQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bo
 	return count > 0, nil
 }
 
+// Routine pointed to by the foreign key.
+func (o *Workout) Routine(mods ...qm.QueryMod) routineQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.RoutineID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Routines(queryMods...)
+}
+
 // User pointed to by the foreign key.
 func (o *Workout) User(mods ...qm.QueryMod) userQuery {
 	queryMods := []qm.QueryMod{
@@ -516,6 +553,130 @@ func (o *Workout) WorkoutComments(mods ...qm.QueryMod) workoutCommentQuery {
 	)
 
 	return WorkoutComments(queryMods...)
+}
+
+// LoadRoutine allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (workoutL) LoadRoutine(ctx context.Context, e boil.ContextExecutor, singular bool, maybeWorkout interface{}, mods queries.Applicator) error {
+	var slice []*Workout
+	var object *Workout
+
+	if singular {
+		var ok bool
+		object, ok = maybeWorkout.(*Workout)
+		if !ok {
+			object = new(Workout)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeWorkout)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeWorkout))
+			}
+		}
+	} else {
+		s, ok := maybeWorkout.(*[]*Workout)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeWorkout)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeWorkout))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &workoutR{}
+		}
+		if !queries.IsNil(object.RoutineID) {
+			args[object.RoutineID] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &workoutR{}
+			}
+
+			if !queries.IsNil(obj.RoutineID) {
+				args[obj.RoutineID] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`getstronger.routines`),
+		qm.WhereIn(`getstronger.routines.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Routine")
+	}
+
+	var resultSlice []*Routine
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Routine")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for routines")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for routines")
+	}
+
+	if len(routineAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Routine = foreign
+		if foreign.R == nil {
+			foreign.R = &routineR{}
+		}
+		foreign.R.Workouts = append(foreign.R.Workouts, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.RoutineID, foreign.ID) {
+				local.R.Routine = foreign
+				if foreign.R == nil {
+					foreign.R = &routineR{}
+				}
+				foreign.R.Workouts = append(foreign.R.Workouts, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadUser allows an eager lookup of values, cached into the
@@ -861,6 +1022,86 @@ func (workoutL) LoadWorkoutComments(ctx context.Context, e boil.ContextExecutor,
 		}
 	}
 
+	return nil
+}
+
+// SetRoutine of the workout to the related item.
+// Sets o.R.Routine to related.
+// Adds o to related.R.Workouts.
+func (o *Workout) SetRoutine(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Routine) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"getstronger\".\"workouts\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"routine_id"}),
+		strmangle.WhereClause("\"", "\"", 2, workoutPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.RoutineID, related.ID)
+	if o.R == nil {
+		o.R = &workoutR{
+			Routine: related,
+		}
+	} else {
+		o.R.Routine = related
+	}
+
+	if related.R == nil {
+		related.R = &routineR{
+			Workouts: WorkoutSlice{o},
+		}
+	} else {
+		related.R.Workouts = append(related.R.Workouts, o)
+	}
+
+	return nil
+}
+
+// RemoveRoutine relationship.
+// Sets o.R.Routine to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Workout) RemoveRoutine(ctx context.Context, exec boil.ContextExecutor, related *Routine) error {
+	var err error
+
+	queries.SetScanner(&o.RoutineID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("routine_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Routine = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.Workouts {
+		if queries.Equal(o.RoutineID, ri.RoutineID) {
+			continue
+		}
+
+		ln := len(related.R.Workouts)
+		if ln > 1 && i < ln-1 {
+			related.R.Workouts[i] = related.R.Workouts[ln-1]
+		}
+		related.R.Workouts = related.R.Workouts[:ln-1]
+		break
+	}
 	return nil
 }
 

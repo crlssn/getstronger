@@ -12,16 +12,20 @@ const maxPages = 6
 
 export const useActivityStore = defineStore('activity', () => {
   const exerciseLastPerformed = ref<Record<string, string>>({})
+  const routineLastPerformed = ref<Record<string, string>>({})
   const loaded = ref(false)
   const failed = ref(false)
   let inFlight: Promise<void> | undefined
 
-  const lastPerformedFor = (exerciseId: string) => {
-    const iso = exerciseLastPerformed.value[exerciseId]
+  const parse = (iso: string | undefined) => {
     if (!iso) return undefined
     const parsed = DateTime.fromISO(iso)
     return parsed.isValid ? parsed : undefined
   }
+
+  const lastPerformedFor = (exerciseId: string) => parse(exerciseLastPerformed.value[exerciseId])
+  const routineLastPerformedFor = (routineId: string) =>
+    parse(routineLastPerformed.value[routineId])
 
   const refresh = async () => {
     const authStore = useAuthStore()
@@ -29,6 +33,7 @@ export const useActivityStore = defineStore('activity', () => {
 
     const cutoff = DateTime.now().minus({ days: oldestRelevantDays })
     const performed: Record<string, string> = {}
+    const routinesPerformed: Record<string, string> = {}
     let pageToken = new Uint8Array(0)
     let requestFailed = false
 
@@ -45,6 +50,12 @@ export const useActivityStore = defineStore('activity', () => {
         const finished = DateTime.fromSeconds(Number(workout.finishedAt.seconds))
         if (finished < cutoff) reachedCutoff = true
 
+        // Empty for quick workouts and for anything logged before routines
+        // were linked to workouts.
+        if (workout.routineId && !routinesPerformed[workout.routineId]) {
+          routinesPerformed[workout.routineId] = finished.toISO() ?? ''
+        }
+
         for (const exerciseSets of workout.exerciseSets) {
           const exerciseId = exerciseSets.exercise?.id
           if (!exerciseId) continue
@@ -59,7 +70,10 @@ export const useActivityStore = defineStore('activity', () => {
     }
 
     failed.value = requestFailed
-    if (!requestFailed) exerciseLastPerformed.value = performed
+    if (!requestFailed) {
+      exerciseLastPerformed.value = performed
+      routineLastPerformed.value = routinesPerformed
+    }
     loaded.value = true
   }
 
@@ -79,5 +93,14 @@ export const useActivityStore = defineStore('activity', () => {
     failed.value = false
   }
 
-  return { exerciseLastPerformed, failed, lastPerformedFor, load, loaded, reset }
+  return {
+    exerciseLastPerformed,
+    failed,
+    lastPerformedFor,
+    load,
+    loaded,
+    reset,
+    routineLastPerformed,
+    routineLastPerformedFor,
+  }
 })

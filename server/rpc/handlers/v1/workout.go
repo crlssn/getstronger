@@ -113,6 +113,7 @@ func (h *workoutHandler) createWorkout(
 			Name:         workoutName,
 			Note:         request.GetNote(),
 			UserID:       userID,
+			RoutineID:    request.GetRoutineId(),
 			StartedAt:    request.GetStartedAt().AsTime(),
 			FinishedAt:   request.GetFinishedAt().AsTime(),
 			ExerciseSets: parser.ExerciseSetsFromPB(request.GetExerciseSets()),

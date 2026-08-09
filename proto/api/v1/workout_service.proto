@@ -87,6 +87,9 @@ message Workout {
   google.protobuf.Timestamp finished_at = 7 [(buf.validate.field).required = true];
   int32 intensity = 8; // intensity = (kg * reps) * sets
   string note = 9;
+  // Empty for quick workouts and for workouts recorded before routines were
+  // linked, which only kept the routine's name.
+  string routine_id = 10;
 }
 
 message WorkoutComment {

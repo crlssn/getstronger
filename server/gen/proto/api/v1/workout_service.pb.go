@@ -7,14 +7,13 @@
 package apiv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -609,16 +608,19 @@ func (*UpdateWorkoutResponse) Descriptor() ([]byte, []int) {
 }
 
 type Workout struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	User          *User                  `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
-	ExerciseSets  []*ExerciseSets        `protobuf:"bytes,4,rep,name=exercise_sets,json=exerciseSets,proto3" json:"exercise_sets,omitempty"`
-	Comments      []*WorkoutComment      `protobuf:"bytes,5,rep,name=comments,proto3" json:"comments,omitempty"`
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Intensity     int32                  `protobuf:"varint,8,opt,name=intensity,proto3" json:"intensity,omitempty"` // intensity = (kg * reps) * sets
-	Note          string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	User         *User                  `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
+	ExerciseSets []*ExerciseSets        `protobuf:"bytes,4,rep,name=exercise_sets,json=exerciseSets,proto3" json:"exercise_sets,omitempty"`
+	Comments     []*WorkoutComment      `protobuf:"bytes,5,rep,name=comments,proto3" json:"comments,omitempty"`
+	StartedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	FinishedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	Intensity    int32                  `protobuf:"varint,8,opt,name=intensity,proto3" json:"intensity,omitempty"` // intensity = (kg * reps) * sets
+	Note         string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"`
+	// Empty for quick workouts and for workouts recorded before routines were
+	// linked, which only kept the routine's name.
+	RoutineId     string `protobuf:"bytes,10,opt,name=routine_id,json=routineId,proto3" json:"routine_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -712,6 +714,13 @@ func (x *Workout) GetIntensity() int32 {
 func (x *Workout) GetNote() string {
 	if x != nil {
 		return x.Note
+	}
+	return ""
+}
+
+func (x *Workout) GetRoutineId() string {
+	if x != nil {
+		return x.RoutineId
 	}
 	return ""
 }
@@ -828,7 +837,7 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\acomment\x18\x01 \x01(\v2\x16.api.v1.WorkoutCommentR\acomment\"I\n" +
 	"\x14UpdateWorkoutRequest\x121\n" +
 	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutB\x06\xbaH\x03\xc8\x01\x01R\aworkout\"\x17\n" +
-	"\x15UpdateWorkoutResponse\"\x95\x03\n" +
+	"\x15UpdateWorkoutResponse\"\xb4\x03\n" +
 	"\aWorkout\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12(\n" +
@@ -840,7 +849,10 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\vfinished_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"finishedAt\x12\x1c\n" +
 	"\tintensity\x18\b \x01(\x05R\tintensity\x12\x12\n" +
-	"\x04note\x18\t \x01(\tR\x04note\"\xba\x01\n" +
+	"\x04note\x18\t \x01(\tR\x04note\x12\x1d\n" +
+	"\n" +
+	"routine_id\x18\n" +
+	" \x01(\tR\troutineId\"\xba\x01\n" +
 	"\x0eWorkoutComment\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12(\n" +
 	"\x04user\x18\x02 \x01(\v2\f.api.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\x12!\n" +
