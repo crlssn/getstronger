@@ -124,6 +124,8 @@ const selectRoutine = async (routineId: string) => {
     </section>
 
     <template v-if="!searchOpen">
+      <StreakCard />
+
       <section v-if="savedWorkout" class="active-session">
         <div>
           <p class="eyebrow">Active workout</p>
@@ -180,8 +182,6 @@ const selectRoutine = async (routineId: string) => {
         </div>
         <RouterLink to="/routines/create" class="primary-link">Create routine</RouterLink>
       </section>
-
-      <StreakCard />
 
       <section class="following-feed">
         <header>
