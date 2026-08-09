@@ -125,7 +125,7 @@ const skip = async () => {
         {{ nextRoutine.exercises.length }} exercises · About
         {{ Math.max(30, nextRoutine.exercises.length * 8) }} min
       </p>
-      <RouterLink :to="plannedStart"><PlayIcon /> Start {{ nextRoutine.name }}</RouterLink>
+      <RouterLink :to="plannedStart"><PlayIcon /> Start workout</RouterLink>
       <button v-if="activePlan" type="button" class="skip-button" @click="skip">
         Skip this routine
       </button>
