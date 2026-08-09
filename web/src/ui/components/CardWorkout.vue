@@ -434,26 +434,29 @@ const postComment = async () => {
   box-shadow: inset 4px 0 0 theme('colors.indigo.500');
 }
 .feed-summary-card--personal-best {
-  @apply border-amber-200 shadow-md;
+  @apply border-champagne-300 shadow-md;
 }
 .feed-summary-card--personal-best .workout-heading {
-  @apply border-amber-100 bg-amber-50;
-  box-shadow: inset 4px 0 0 theme('colors.amber.500');
+  @apply border-champagne-200 bg-champagne-50;
+  box-shadow: inset 4px 0 0 theme('colors.gold.500');
 }
 .feed-summary-card .workout-heading .eyebrow {
   @apply text-indigo-600;
 }
 .feed-summary-card--personal-best .workout-heading .eyebrow {
-  @apply text-amber-700;
+  @apply text-gold-700;
 }
 .workout-heading-copy {
   @apply flex items-start justify-between gap-4;
 }
 .personal-best-badge {
-  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700;
+  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-champagne-300 bg-champagne-100 px-2.5 py-1 text-xs font-semibold text-gold-700;
 }
 .personal-best-badge svg {
   @apply size-4;
+}
+.feed-summary-card--personal-best .metric-icon.amber {
+  @apply bg-champagne-100 text-gold-600;
 }
 .feed-card-link {
   @apply absolute inset-0 z-10 rounded-2xl;

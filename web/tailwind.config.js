@@ -29,13 +29,28 @@ const achievement = {
   950: '#401109',
 }
 
+const champagne = {
+  50: '#fffdf8',
+  100: '#fbf4e6',
+  200: '#f3e4c8',
+  300: '#e8d0a2',
+}
+
+const gold = {
+  400: '#c69a3a',
+  500: '#ad7b1f',
+  600: '#8b5f18',
+  700: '#6f4815',
+}
+
 export default {
   content: ['./index.html', './src/**/*.{html,vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
         amber: achievement,
-        gold: achievement[500],
+        champagne,
+        gold,
         indigo: graphite,
         primary: graphite[600],
         violet: graphite,
