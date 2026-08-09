@@ -24,8 +24,15 @@ const restEnabled = computed({
   set: (enabled: boolean) => (restSeconds.value = enabled ? 90 : 0),
 })
 
+// Every 30 seconds up to five minutes, so any common rest length is one tap.
+const restPresets = Array.from({ length: 10 }, (_, index) => (index + 1) * 30)
+const formatRest = (seconds: number) =>
+  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+
 function sameMetrics(values: ExerciseMetric[]) {
-  return values.length === metrics.value.length && values.every((value) => metrics.value.includes(value))
+  return (
+    values.length === metrics.value.length && values.every((value) => metrics.value.includes(value))
+  )
 }
 
 function toggleMetric(metric: ExerciseMetric) {
@@ -80,21 +87,28 @@ function toggleMetric(metric: ExerciseMetric) {
         <strong>Rest timer</strong>
         <small>Starts after every completed set</small>
       </div>
-      <label class="switch">
-        <input v-model="restEnabled" type="checkbox" />
-        <span>{{ restEnabled ? 'On' : 'Off' }}</span>
-      </label>
+      <button
+        type="button"
+        role="switch"
+        class="switch"
+        :aria-checked="restEnabled"
+        aria-label="Rest timer"
+        @click="restEnabled = !restEnabled"
+      >
+        <span class="knob"></span>
+      </button>
     </div>
 
     <div v-if="restEnabled" class="rest-options">
       <button
-        v-for="seconds in [30, 60, 90, 120, 180]"
+        v-for="seconds in restPresets"
         :key="seconds"
         type="button"
+        :aria-pressed="restSeconds === seconds"
         :class="{ selected: restSeconds === seconds }"
         @click="restSeconds = seconds"
       >
-        {{ seconds < 60 ? `${seconds}s` : `${seconds / 60}m` }}
+        {{ formatRest(seconds) }}
       </button>
     </div>
   </section>
@@ -104,25 +118,60 @@ function toggleMetric(metric: ExerciseMetric) {
 .measurement-settings {
   @apply space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm;
 }
-h3 { @apply text-xl font-bold text-slate-950; }
-p, small { @apply block text-sm text-slate-500; }
-.presets, .rest-options { @apply flex flex-wrap gap-2; }
-.presets button, .rest-options button {
+h3 {
+  @apply text-xl font-bold text-slate-950;
+}
+p,
+small {
+  @apply block text-sm text-slate-500;
+}
+.presets,
+.rest-options {
+  @apply flex flex-wrap gap-2;
+}
+.presets button,
+.rest-options button {
   @apply rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600;
 }
-.presets button.selected, .rest-options button.selected { @apply border-slate-900 bg-slate-900 text-white; }
-.measurement-grid { @apply grid grid-cols-2 gap-3; }
+.presets button.selected,
+.rest-options button.selected {
+  @apply border-slate-900 bg-slate-900 text-white;
+}
+.measurement-grid {
+  @apply grid grid-cols-2 gap-3;
+}
 .measurement {
   @apply flex items-center gap-3 rounded-2xl border border-slate-200 p-4 text-left;
 }
-.measurement.selected { @apply border-slate-900 bg-stone-50; }
-.measurement strong { @apply block text-base text-slate-950; }
-.check { @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold; }
-.measurement.selected .check { @apply bg-slate-900 text-white; }
-.rest-setting { @apply flex items-center justify-between border-t border-slate-100 pt-5; }
-.rest-setting strong { @apply block text-base text-slate-950; }
-.switch { @apply cursor-pointer; }
-.switch input { @apply sr-only; }
-.switch span { @apply block min-w-16 rounded-full bg-slate-100 px-4 py-2 text-center text-sm font-bold; }
-.switch input:checked + span { @apply bg-slate-900 text-white; }
+.measurement.selected {
+  @apply border-slate-900 bg-stone-50;
+}
+.measurement strong {
+  @apply block text-base text-slate-950;
+}
+.check {
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold;
+}
+.measurement.selected .check {
+  @apply bg-slate-900 text-white;
+}
+.rest-setting {
+  @apply flex items-center justify-between border-t border-slate-100 pt-5;
+}
+.rest-setting strong {
+  @apply block text-base text-slate-950;
+}
+/* A real track-and-knob switch: the old pill read as a button. */
+.switch {
+  @apply relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full bg-slate-200 transition-colors;
+}
+.switch[aria-checked='true'] {
+  @apply bg-slate-900;
+}
+.knob {
+  @apply absolute left-1 size-6 rounded-full bg-white shadow-sm transition-transform;
+}
+.switch[aria-checked='true'] .knob {
+  @apply translate-x-6;
+}
 </style>
