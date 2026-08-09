@@ -973,57 +973,58 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply sticky top-0 z-30 -mx-3 -mt-5 space-y-3 bg-slate-50/95 pb-3 backdrop-blur sm:-mx-5 lg:-mx-8 lg:-mt-7;
 }
 .workout-header {
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 bg-stone-900 px-4 py-3.5 text-white shadow-sm;
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 border-b border-slate-200 bg-white px-4 py-3.5 text-slate-950;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .workout-header .eyebrow {
-  @apply text-[0.65rem] text-stone-400;
+  @apply text-[0.65rem];
 }
 .workout-header h1 {
-  @apply truncate text-lg font-semibold tracking-tight text-white;
+  @apply truncate text-lg font-semibold tracking-tight text-slate-950;
 }
 .session-progress {
-  @apply mt-0.5 truncate text-xs text-stone-400;
+  @apply mt-0.5 truncate text-xs text-slate-500;
 }
 /* Secondary to the rest countdown below it. */
 .elapsed {
   @apply grid shrink-0 justify-items-end gap-0.5;
 }
 .elapsed span {
-  @apply text-[0.6rem] font-semibold uppercase tracking-wider text-stone-500;
+  @apply text-[0.6rem] font-semibold uppercase tracking-wider text-slate-400;
 }
 .elapsed strong {
-  @apply font-mono text-sm font-semibold leading-none tabular-nums text-stone-300;
+  @apply font-mono text-sm font-semibold leading-none tabular-nums text-slate-600;
 }
-/* The primary timer while resting: loud countdown, elapsed time stays quiet. */
+/* The primary timer while resting: it carries the dark accent so it outranks
+   the header bar, which stays light. */
 .rest-banner {
-  @apply mx-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-3xl border border-stone-300 bg-white p-4 text-stone-900 shadow-md sm:mx-5 lg:mx-8;
+  @apply mx-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-3xl bg-stone-900 p-4 text-white shadow-lg sm:mx-5 lg:mx-8;
 }
 .rest-copy {
   @apply min-w-0;
 }
 .rest-label {
-  @apply flex items-center gap-1.5 text-[0.65rem] font-semibold uppercase tracking-wider text-stone-500;
+  @apply flex items-center gap-1.5 text-[0.65rem] font-semibold uppercase tracking-wider text-stone-400;
 }
 .rest-label svg {
   @apply size-3.5;
 }
 .rest-copy strong {
-  @apply mt-1 block font-mono text-4xl font-bold leading-none tabular-nums text-stone-900;
+  @apply mt-1 block font-mono text-4xl font-bold leading-none tabular-nums text-white;
 }
 .rest-actions {
   @apply flex shrink-0 items-center gap-1;
 }
 .rest-banner button {
-  @apply min-h-11 rounded-xl bg-stone-100 px-3 text-sm font-semibold text-stone-800 transition hover:bg-stone-200;
+  @apply min-h-11 rounded-xl bg-white/10 px-3 text-sm font-semibold text-white transition hover:bg-white/20;
 }
 .rest-progress {
-  @apply col-span-2 h-1.5 overflow-hidden rounded-full bg-stone-200;
+  @apply col-span-2 h-1.5 overflow-hidden rounded-full bg-white/15;
 }
 .rest-progress span {
-  @apply block h-full rounded-full bg-stone-900 transition-[width] duration-1000 ease-linear;
+  @apply block h-full rounded-full bg-white transition-[width] duration-1000 ease-linear;
 }
 .exercise-stack {
   @apply space-y-4;
