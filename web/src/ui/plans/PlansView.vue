@@ -11,12 +11,21 @@ import {
 
 import { listRoutines } from '@/http/requests'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
+import {
+  activityBucketFor,
+  activityBucketLabelKey,
+  activityBucketOrder,
+  type ActivityBucket,
+} from '@/utils/activityBuckets'
 
 const planStore = usePlanStore()
 const { t } = useI18n()
 const dashboardStore = useDashboardStore()
+const activityStore = useActivityStore()
+const routineNameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 const routines = ref<Routine[]>([])
 const tab = ref<'plans' | 'routines'>('plans')
 const plansLoaded = ref(false)
@@ -39,8 +48,51 @@ const filteredRoutines = computed(() => {
   )
 })
 
+const maxNamedExercises = 3
+const exerciseSummary = (routine: Routine) => {
+  const names = routine.exercises.slice(0, maxNamedExercises).map((exercise) => exercise.name)
+  const remaining = routine.exercises.length - names.length
+  if (!names.length) return t('routine.noExercises')
+  return remaining > 0
+    ? `${names.join(' · ')} ${t('routine.andMore', { count: remaining })}`
+    : names.join(' · ')
+}
+
+// Grouped by when the routine was last performed, most recent first.
+const groupedRoutines = computed(() => {
+  const buckets = new Map<ActivityBucket, { routine: Routine; performedAt?: number }[]>()
+
+  for (const routine of filteredRoutines.value) {
+    const performedAt = activityStore.routineLastPerformedFor(routine.id)
+    const bucket = activityBucketFor(performedAt)
+    const entry = { routine, performedAt: performedAt?.toMillis() }
+    const group = buckets.get(bucket)
+    if (group) group.push(entry)
+    else buckets.set(bucket, [entry])
+  }
+
+  return activityBucketOrder
+    .filter((bucket) => buckets.has(bucket))
+    .map((bucket) => ({
+      bucket,
+      labelKey: activityBucketLabelKey(bucket),
+      routines: (buckets.get(bucket) ?? [])
+        .sort((first, second) => {
+          if (first.performedAt !== second.performedAt) {
+            return (second.performedAt ?? 0) - (first.performedAt ?? 0)
+          }
+          return routineNameCollator.compare(first.routine.name, second.routine.name)
+        })
+        .map((entry) => entry.routine),
+    }))
+})
+
 onMounted(async () => {
-  const [, response] = await Promise.all([planStore.load(), listRoutines(new Uint8Array(0))])
+  const [, response] = await Promise.all([
+    planStore.load(),
+    listRoutines(new Uint8Array(0)),
+    activityStore.load(),
+  ])
   routines.value = response?.routines ?? []
   plansLoaded.value = true
 })
@@ -218,22 +270,25 @@ const pause = async () => {
         />
       </label>
 
-      <section v-if="filteredRoutines.length" class="routine-list">
+      <section v-for="group in groupedRoutines" :key="group.bucket" class="routine-list">
         <header>
-          <h2>{{ t('training.yourRoutines') }}</h2>
+          <h2>{{ t(group.labelKey) }}</h2>
         </header>
         <RouterLink
-          v-for="routine in filteredRoutines"
+          v-for="routine in group.routines"
           :key="routine.id"
           :to="`/routines/${routine.id}`"
           ><span
             ><strong>{{ routine.name }}</strong
-            ><small>{{ t('home.exerciseCount', { count: routine.exercises.length }) }}</small></span
+            ><small>{{ exerciseSummary(routine) }}</small
+            ><small class="routine-count">{{
+              t('home.exerciseCount', { count: routine.exercises.length })
+            }}</small></span
           ><ChevronRightIcon
         /></RouterLink>
       </section>
 
-      <section v-else class="routine-empty">
+      <section v-if="!filteredRoutines.length" class="routine-empty">
         <h2>{{ routineSearch ? t('training.noMatchingRoutines') : t('training.noRoutines') }}</h2>
         <p>
           {{ routineSearch ? t('exercise.tryAnotherSearch') : t('training.noRoutinesBody') }}
@@ -430,7 +485,13 @@ h2 {
   @apply mb-2;
 }
 .routine-list > header h2 {
-  @apply text-lg;
+  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+}
+.routine-list + .routine-list {
+  @apply mt-4;
+}
+.routine-count {
+  @apply text-slate-400;
 }
 .routine-list > a {
   @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 py-3 transition hover:text-indigo-700;
@@ -444,6 +505,9 @@ h2 {
 }
 .routine-list small {
   @apply mt-1 text-xs text-slate-500;
+}
+.routine-list small:first-of-type {
+  @apply text-slate-700;
 }
 .routine-list > a > svg {
   @apply size-5 shrink-0 text-slate-400;
