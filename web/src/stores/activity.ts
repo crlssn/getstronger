@@ -34,7 +34,7 @@ export const useActivityStore = defineStore('activity', () => {
     const cutoff = DateTime.now().minus({ days: oldestRelevantDays })
     const performed: Record<string, string> = {}
     const routinesPerformed: Record<string, string> = {}
-    let pageToken = new Uint8Array(0)
+    let pageToken: Uint8Array = new Uint8Array(0)
     let requestFailed = false
 
     for (let page = 0; page < maxPages; page += 1) {

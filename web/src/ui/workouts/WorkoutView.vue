@@ -28,7 +28,7 @@ const planStore = usePlanStore()
 const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
   useActiveWorkout()
 const previousWorkouts = ref<Workout[]>([])
-const historyPageToken = ref(new Uint8Array(0))
+const historyPageToken = ref<Uint8Array>(new Uint8Array(0))
 const historySentinel = ref<HTMLElement | null>(null)
 const historyLoading = ref(false)
 const historyInitiallyLoaded = ref(false)

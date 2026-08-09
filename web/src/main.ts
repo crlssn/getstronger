@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
-import VueGtag from 'vue-gtag'
+import { createGtag } from 'vue-gtag'
 
 import App from './App.vue'
 import { appLocale, i18n } from './i18n'
@@ -23,11 +23,11 @@ app.use(pinia)
 app.use(i18n)
 
 if (import.meta.env.VITE_ENABLE_GOOGLE_ANALYTICS === 'true') {
-  app.use(VueGtag, {
-    config: {
-      id: import.meta.env.VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID,
-    },
-  })
+  app.use(
+    createGtag({
+      tagId: import.meta.env.VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID,
+    }),
+  )
 }
 
 const init = async () => {

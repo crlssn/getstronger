@@ -35,7 +35,7 @@ export const useStreakStore = defineStore('streak', () => {
 
     const weeks = new Set<string>()
     let oldestWeek: DateTime | undefined
-    let pageToken = new Uint8Array(0)
+    let pageToken: Uint8Array = new Uint8Array(0)
     let requestFailed = false
 
     for (let page = 0; page < maxPages; page += 1) {

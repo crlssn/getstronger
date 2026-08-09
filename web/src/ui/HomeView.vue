@@ -31,7 +31,7 @@ const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWor
 const searchOpen = ref(false)
 const routinePickerOpen = ref(false)
 const followedWorkouts = ref<Workout[]>([])
-const feedPageToken = ref(new Uint8Array(0))
+const feedPageToken = ref<Uint8Array>(new Uint8Array(0))
 const feedSentinel = ref<HTMLElement | null>(null)
 const feedLoading = ref(false)
 const feedInitiallyLoaded = ref(false)

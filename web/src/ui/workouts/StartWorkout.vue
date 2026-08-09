@@ -56,7 +56,7 @@ const routineID = quickWorkout ? 'quick-workout' : (route.params.routine_id as s
 const requestedPlanID = typeof route.query.plan_id === 'string' ? route.query.plan_id : ''
 const routine = ref<Routine>()
 const prevExerciseSets = ref<ExerciseSets[]>([])
-const startedAt = ref(DateTime.now())
+const startedAt = ref<DateTime<boolean>>(DateTime.now())
 const elapsedSeconds = ref(0)
 const restSeconds = ref(0)
 const restTotalSeconds = ref(0)
@@ -74,7 +74,7 @@ const exercisePickerLoading = ref(false)
 const exerciseOptionsLoaded = ref(false)
 const exerciseOptions = ref<Exercise[]>([])
 const exerciseSearch = ref('')
-const exercisePageToken = ref(new Uint8Array(0))
+const exercisePageToken = ref<Uint8Array>(new Uint8Array(0))
 const exerciseCard = ref<HTMLElement | null>(null)
 
 const workoutStore = useWorkoutStore()

@@ -1,4 +1,4 @@
-import type { DateTimeMaybeValid } from 'luxon/src/datetime'
+import type { DateTime } from 'luxon'
 import { timestampFromDate, type FieldMask } from '@bufbuild/protobuf/wkt'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb.ts'
 
@@ -279,7 +279,7 @@ export const listExercises = async (
 export const listExerciseTags = async (): Promise<string[]> => {
   const tags = new Map<string, string>()
   const seenPageTokens = new Set<string>()
-  let pageToken = new Uint8Array(0)
+  let pageToken: Uint8Array = new Uint8Array(0)
 
   while (true) {
     const response = await listExercises(pageToken)
@@ -382,8 +382,8 @@ export const updateExercise = async (
 export const createWorkout = async (
   routineId: string,
   exerciseSets: ExerciseSets[],
-  startedAt: DateTimeMaybeValid,
-  finishedAt: DateTimeMaybeValid,
+  startedAt: DateTime<boolean>,
+  finishedAt: DateTime<boolean>,
   note: string,
   planId = '',
   workoutName = '',
