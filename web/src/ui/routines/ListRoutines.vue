@@ -14,6 +14,7 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import usePagination from '@/utils/usePagination'
+import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 import {
   activityBucketFor,
   activityBucketLabelKey,
@@ -96,12 +97,14 @@ const makeUpNext = async (routineId: string) => {
   <div class="routine-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">Training plans</p>
-        <h1>Your routines</h1>
-        <p>Choose what is up next or edit the structure of a session.</p>
+        <p class="eyebrow">{{ t('training.eyebrow') }}</p>
+        <h1>{{ t('training.heading') }}</h1>
+        <p>{{ t('training.routinesDescription') }}</p>
       </div>
       <RouterLink to="/routines/create" class="create-link"><PlusIcon /> New routine</RouterLink>
     </header>
+
+    <TrainingTabs />
 
     <label class="search-field">
       <MagnifyingGlassIcon />

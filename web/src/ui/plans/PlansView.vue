@@ -1,35 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  ArrowPathIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-} from '@heroicons/vue/24/outline'
+import { ArrowPathIcon, CheckIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
-import { listRoutines } from '@/http/requests'
-import type { Routine } from '@/proto/api/v1/routine_service_pb'
-import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
-import {
-  activityBucketFor,
-  activityBucketLabelKey,
-  activityBucketOrder,
-  type ActivityBucket,
-} from '@/utils/activityBuckets'
+import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 
 const planStore = usePlanStore()
 const { t } = useI18n()
 const dashboardStore = useDashboardStore()
-const activityStore = useActivityStore()
-const routineNameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
-const routines = ref<Routine[]>([])
-const tab = ref<'plans' | 'routines'>('plans')
 const plansLoaded = ref(false)
-const routineSearch = ref('')
 
 const activePlan = computed(() => planStore.activePlan)
 const otherPlans = computed(() => planStore.plans.filter((plan) => !plan.active))
@@ -37,63 +18,8 @@ const nextRoutine = computed(() => {
   const plan = activePlan.value
   return plan?.routines[plan.currentPosition]
 })
-const filteredRoutines = computed(() => {
-  const query = routineSearch.value.trim().toLowerCase()
-  if (!query) return routines.value
-  return routines.value.filter((routine) =>
-    [routine.name, ...routine.exercises.map((exercise) => exercise.name)]
-      .join(' ')
-      .toLowerCase()
-      .includes(query),
-  )
-})
-
-const maxNamedExercises = 3
-const exerciseSummary = (routine: Routine) => {
-  const names = routine.exercises.slice(0, maxNamedExercises).map((exercise) => exercise.name)
-  const remaining = routine.exercises.length - names.length
-  if (!names.length) return t('routine.noExercises')
-  return remaining > 0
-    ? `${names.join(' · ')} ${t('routine.andMore', { count: remaining })}`
-    : names.join(' · ')
-}
-
-// Grouped by when the routine was last performed, most recent first.
-const groupedRoutines = computed(() => {
-  const buckets = new Map<ActivityBucket, { routine: Routine; performedAt?: number }[]>()
-
-  for (const routine of filteredRoutines.value) {
-    const performedAt = activityStore.routineLastPerformedFor(routine.id)
-    const bucket = activityBucketFor(performedAt)
-    const entry = { routine, performedAt: performedAt?.toMillis() }
-    const group = buckets.get(bucket)
-    if (group) group.push(entry)
-    else buckets.set(bucket, [entry])
-  }
-
-  return activityBucketOrder
-    .filter((bucket) => buckets.has(bucket))
-    .map((bucket) => ({
-      bucket,
-      labelKey: activityBucketLabelKey(bucket),
-      routines: (buckets.get(bucket) ?? [])
-        .sort((first, second) => {
-          if (first.performedAt !== second.performedAt) {
-            return (second.performedAt ?? 0) - (first.performedAt ?? 0)
-          }
-          return routineNameCollator.compare(first.routine.name, second.routine.name)
-        })
-        .map((entry) => entry.routine),
-    }))
-})
-
 onMounted(async () => {
-  const [, response] = await Promise.all([
-    planStore.load(),
-    listRoutines(new Uint8Array(0)),
-    activityStore.load(),
-  ])
-  routines.value = response?.routines ?? []
+  await planStore.load()
   plansLoaded.value = true
 })
 
@@ -115,184 +41,119 @@ const pause = async () => {
         <p class="eyebrow">{{ t('training.eyebrow') }}</p>
         <h1>{{ t('training.heading') }}</h1>
       </div>
-      <RouterLink v-if="tab === 'plans' && planStore.plans.length" to="/plans/create"
+      <RouterLink v-if="planStore.plans.length" to="/plans/create"
         ><PlusIcon /> {{ t('training.newPlan') }}</RouterLink
       >
-      <RouterLink v-else-if="tab === 'routines'" to="/routines/create"
-        ><PlusIcon /> {{ t('training.newRoutine') }}</RouterLink
-      >
-      <p>
-        {{ tab === 'plans' ? t('training.plansDescription') : t('training.routinesDescription') }}
-      </p>
+      <p>{{ t('training.plansDescription') }}</p>
     </header>
 
-    <div class="tabs" role="tablist" aria-label="Plans view">
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="tab === 'plans'"
-        :tabindex="tab === 'plans' ? 0 : -1"
-        :class="{ active: tab === 'plans' }"
-        @click="tab = 'plans'"
-      >
-        {{ t('common.plans') }}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="tab === 'routines'"
-        :tabindex="tab === 'routines' ? 0 : -1"
-        :class="{ active: tab === 'routines' }"
-        @click="tab = 'routines'"
-      >
-        {{ t('common.routines') }}
-      </button>
-    </div>
+    <TrainingTabs />
 
-    <template v-if="tab === 'plans'">
-      <section v-if="!plansLoaded" class="plan-loading" aria-live="polite">
-        <span></span><span></span><span></span>
-      </section>
+    <section v-if="!plansLoaded" class="plan-loading" aria-live="polite">
+      <span></span><span></span><span></span>
+    </section>
 
-      <section v-else-if="!planStore.plans.length" class="empty-plan-state">
-        <span class="empty-plan-icon"><ArrowPathIcon /></span>
-        <p class="eyebrow">{{ t('training.howPlansWork') }}</p>
-        <h2>{{ t('training.repeatingTitle') }}</h2>
-        <p class="empty-plan-copy">
-          {{ t('training.repeatingBody') }}
-        </p>
+    <section v-else-if="!planStore.plans.length" class="empty-plan-state">
+      <span class="empty-plan-icon"><ArrowPathIcon /></span>
+      <p class="eyebrow">{{ t('training.howPlansWork') }}</p>
+      <h2>{{ t('training.repeatingTitle') }}</h2>
+      <p class="empty-plan-copy">
+        {{ t('training.repeatingBody') }}
+      </p>
 
-        <ol class="plan-steps">
-          <li>
-            <span>1</span>
-            <div>
-              <strong>{{ t('training.chooseRoutines') }}</strong
-              ><small>{{ t('training.chooseRoutinesBody') }}</small>
-            </div>
-          </li>
-          <li>
-            <span>2</span>
-            <div>
-              <strong>{{ t('training.activatePlan') }}</strong
-              ><small>{{ t('training.activatePlanBody') }}</small>
-            </div>
-          </li>
-          <li>
-            <span><CheckIcon /></span>
-            <div>
-              <strong>{{ t('training.keepTraining') }}</strong
-              ><small>{{ t('training.keepTrainingBody') }}</small>
-            </div>
-          </li>
-        </ol>
-
-        <p class="active-plan-rule">
-          {{ t('training.oneActive') }}
-        </p>
-        <RouterLink to="/plans/create" class="first-plan-button">
-          <PlusIcon /> {{ t('training.createFirstPlan') }}
-        </RouterLink>
-      </section>
-
-      <template v-else>
-        <section v-if="activePlan" class="active-plan">
-          <header>
-            <p class="eyebrow">{{ t('training.activePlan') }}</p>
-            <span>{{ t('training.active') }}</span>
-          </header>
-          <h2>{{ activePlan.name }}</h2>
-          <p>{{ t('training.routineCountRepeats', { count: activePlan.routines.length }) }}</p>
-          <div class="position-row">
-            <span>{{ t('training.currentPosition') }}</span
-            ><strong>{{
-              t('training.routinePosition', {
-                current: activePlan.currentPosition + 1,
-                total: activePlan.routines.length,
-              })
-            }}</strong>
+      <ol class="plan-steps">
+        <li>
+          <span>1</span>
+          <div>
+            <strong>{{ t('training.chooseRoutines') }}</strong
+            ><small>{{ t('training.chooseRoutinesBody') }}</small>
           </div>
-          <div class="sequence" aria-label="Current plan position">
-            <span
-              v-for="(_, index) in activePlan.routines"
-              :key="index"
-              :class="{
-                current: index === activePlan.currentPosition,
-                done: index < activePlan.currentPosition,
-              }"
-              >{{ index + 1 }}</span
-            >
+        </li>
+        <li>
+          <span>2</span>
+          <div>
+            <strong>{{ t('training.activatePlan') }}</strong
+            ><small>{{ t('training.activatePlanBody') }}</small>
           </div>
-          <div v-if="nextRoutine" class="next-row">
-            <div>
-              <small>{{ t('home.upNext') }}</small
-              ><strong>{{ nextRoutine.name }}</strong
-              ><small>{{ t('home.exerciseCount', { count: nextRoutine.exercises.length }) }}</small>
-            </div>
+        </li>
+        <li>
+          <span><CheckIcon /></span>
+          <div>
+            <strong>{{ t('training.keepTraining') }}</strong
+            ><small>{{ t('training.keepTrainingBody') }}</small>
           </div>
-          <footer>
-            <RouterLink :to="`/plans/${activePlan.id}`">{{ t('training.viewPlan') }}</RouterLink
-            ><button type="button" @click="pause">{{ t('training.pause') }}</button>
-          </footer>
-        </section>
+        </li>
+      </ol>
 
-        <section v-else class="paused-note">
-          <h2>{{ t('training.noActivePlan') }}</h2>
-          <p>{{ t('training.noActivePlanBody') }}</p>
-        </section>
-
-        <section v-if="otherPlans.length" class="other-plans">
-          <header>
-            <p class="eyebrow">{{ t('training.yourPlans') }}</p>
-            <h2>{{ activePlan ? t('training.otherPlans') : t('training.choosePlan') }}</h2>
-          </header>
-          <article v-for="plan in otherPlans" :key="plan.id">
-            <RouterLink :to="`/plans/${plan.id}`"
-              ><strong>{{ plan.name }}</strong
-              ><small>{{
-                t('training.routineCountSequence', { count: plan.routines.length })
-              }}</small></RouterLink
-            ><button type="button" @click="activate(plan.id)">
-              {{ t('training.makeActive') }}
-            </button>
-          </article>
-        </section>
-      </template>
-    </template>
+      <p class="active-plan-rule">
+        {{ t('training.oneActive') }}
+      </p>
+      <RouterLink to="/plans/create" class="first-plan-button">
+        <PlusIcon /> {{ t('training.createFirstPlan') }}
+      </RouterLink>
+    </section>
 
     <template v-else>
-      <label class="search-field">
-        <MagnifyingGlassIcon />
-        <input
-          v-model="routineSearch"
-          type="search"
-          :placeholder="t('training.searchRoutines')"
-          :aria-label="t('training.searchRoutines')"
-        />
-      </label>
-
-      <section v-for="group in groupedRoutines" :key="group.bucket" class="routine-list">
+      <section v-if="activePlan" class="active-plan">
         <header>
-          <h2>{{ t(group.labelKey) }}</h2>
+          <p class="eyebrow">{{ t('training.activePlan') }}</p>
+          <span>{{ t('training.active') }}</span>
         </header>
-        <RouterLink
-          v-for="routine in group.routines"
-          :key="routine.id"
-          :to="`/routines/${routine.id}`"
-          ><span
-            ><strong>{{ routine.name }}</strong
-            ><small>{{ exerciseSummary(routine) }}</small
-            ><small class="routine-count">{{
-              t('home.exerciseCount', { count: routine.exercises.length })
-            }}</small></span
-          ><ChevronRightIcon
-        /></RouterLink>
+        <h2>{{ activePlan.name }}</h2>
+        <p>{{ t('training.routineCountRepeats', { count: activePlan.routines.length }) }}</p>
+        <div class="position-row">
+          <span>{{ t('training.currentPosition') }}</span
+          ><strong>{{
+            t('training.routinePosition', {
+              current: activePlan.currentPosition + 1,
+              total: activePlan.routines.length,
+            })
+          }}</strong>
+        </div>
+        <div class="sequence" aria-label="Current plan position">
+          <span
+            v-for="(_, index) in activePlan.routines"
+            :key="index"
+            :class="{
+              current: index === activePlan.currentPosition,
+              done: index < activePlan.currentPosition,
+            }"
+            >{{ index + 1 }}</span
+          >
+        </div>
+        <div v-if="nextRoutine" class="next-row">
+          <div>
+            <small>{{ t('home.upNext') }}</small
+            ><strong>{{ nextRoutine.name }}</strong
+            ><small>{{ t('home.exerciseCount', { count: nextRoutine.exercises.length }) }}</small>
+          </div>
+        </div>
+        <footer>
+          <RouterLink :to="`/plans/${activePlan.id}`">{{ t('training.viewPlan') }}</RouterLink
+          ><button type="button" @click="pause">{{ t('training.pause') }}</button>
+        </footer>
       </section>
 
-      <section v-if="!filteredRoutines.length" class="routine-empty">
-        <h2>{{ routineSearch ? t('training.noMatchingRoutines') : t('training.noRoutines') }}</h2>
-        <p>
-          {{ routineSearch ? t('exercise.tryAnotherSearch') : t('training.noRoutinesBody') }}
-        </p>
+      <section v-else class="paused-note">
+        <h2>{{ t('training.noActivePlan') }}</h2>
+        <p>{{ t('training.noActivePlanBody') }}</p>
+      </section>
+
+      <section v-if="otherPlans.length" class="other-plans">
+        <header>
+          <p class="eyebrow">{{ t('training.yourPlans') }}</p>
+          <h2>{{ activePlan ? t('training.otherPlans') : t('training.choosePlan') }}</h2>
+        </header>
+        <article v-for="plan in otherPlans" :key="plan.id">
+          <RouterLink :to="`/plans/${plan.id}`"
+            ><strong>{{ plan.name }}</strong
+            ><small>{{
+              t('training.routineCountSequence', { count: plan.routines.length })
+            }}</small></RouterLink
+          ><button type="button" @click="activate(plan.id)">
+            {{ t('training.makeActive') }}
+          </button>
+        </article>
       </section>
     </template>
   </div>
@@ -322,24 +183,6 @@ h2 {
 }
 .page-intro > p {
   @apply col-span-2 max-w-none text-sm leading-6 text-slate-500;
-}
-.tabs {
-  @apply grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1;
-}
-.tabs button {
-  @apply min-h-11 rounded-xl text-sm font-semibold text-slate-500;
-}
-.tabs button.active {
-  @apply bg-indigo-100 text-indigo-800;
-}
-.search-field {
-  @apply flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
-}
-.search-field svg {
-  @apply size-5 text-slate-400;
-}
-.search-field input {
-  @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
 }
 .active-plan,
 .other-plans,
@@ -481,40 +324,7 @@ h2 {
 .other-plans article button {
   @apply shrink-0 text-sm font-semibold text-indigo-600;
 }
-.routine-list > header {
-  @apply mb-2;
-}
-.routine-list > header h2 {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
-}
-.routine-list + .routine-list {
-  @apply mt-4;
-}
-.routine-count {
-  @apply text-slate-400;
-}
-.routine-list > a {
-  @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 py-3 transition hover:text-indigo-700;
-}
-.routine-list > a span {
-  @apply min-w-0;
-}
 .routine-list strong,
-.routine-list small {
-  @apply block truncate;
-}
-.routine-list small {
-  @apply mt-1 text-xs text-slate-500;
-}
-.routine-list small:first-of-type {
-  @apply text-slate-700;
-}
-.routine-list > a > svg {
-  @apply size-5 shrink-0 text-slate-400;
-}
-.routine-empty {
-  @apply rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500;
-}
 .routine-empty h2 {
   @apply text-lg font-semibold text-slate-900;
 }
