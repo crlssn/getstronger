@@ -1314,7 +1314,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply max-w-sm text-sm text-slate-500;
 }
 .quick-empty button {
-  @apply mt-1 inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-2 inline-flex min-h-14 w-full items-center justify-center gap-2 justify-self-stretch rounded-xl bg-indigo-600 px-4 text-base font-semibold text-white transition hover:bg-indigo-700;
 }
 .quick-empty button svg {
   @apply size-5;

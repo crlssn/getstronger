@@ -42,11 +42,14 @@ const onSubmit = async () => {
       <AppListItemInput :model="req.name" type="text" required @update="(n) => (req.name = n)" />
     </AppList>
 
+    <h6>Tracking</h6>
+    <ExerciseMeasurementSettings
+      v-model:metrics="req.metrics"
+      v-model:rest-seconds="req.restSeconds"
+    />
+
     <h6>Tags <small>Optional</small></h6>
     <ExerciseTagsInput v-model="req.tags" :suggestions="tagSuggestions" />
-
-    <h6>Tracking</h6>
-    <ExerciseMeasurementSettings v-model:metrics="req.metrics" v-model:rest-seconds="req.restSeconds" />
 
     <div class="form-actions">
       <AppButton text="Create" type="submit" colour="primary">Save Exercise</AppButton>
@@ -55,7 +58,9 @@ const onSubmit = async () => {
 </template>
 
 <style scoped>
+/* Sticks above the bottom navigation so saving never needs a scroll. */
 .form-actions {
-  @apply mt-4;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  @apply sticky z-20 -mx-3 mt-4 border-t border-slate-200 bg-slate-50 px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
 }
 </style>
