@@ -15,7 +15,6 @@ import (
 	reflect "reflect"
 
 	models "github.com/crlssn/getstronger/server/gen/models"
-	orm "github.com/crlssn/getstronger/server/gen/orm"
 	bob "github.com/stephenafamo/bob"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -45,7 +44,7 @@ func (m *MockRepo) EXPECT() *MockRepoMockRecorder {
 }
 
 // AddExerciseToRoutine mocks base method.
-func (m *MockRepo) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *MockRepo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddExerciseToRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -123,10 +122,10 @@ func (mr *MockRepoMockRecorder) CreateAuth(ctx, email, password any) *gomock.Cal
 }
 
 // CreateExercise mocks base method.
-func (m *MockRepo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
+func (m *MockRepo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateExercise", ctx, p)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -167,10 +166,10 @@ func (mr *MockRepoMockRecorder) CreatePlan(ctx, p any) *gomock.Call {
 }
 
 // CreateRoutine mocks base method.
-func (m *MockRepo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
+func (m *MockRepo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateRoutine", ctx, p)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -197,10 +196,10 @@ func (mr *MockRepoMockRecorder) CreateUser(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkout mocks base method.
-func (m *MockRepo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+func (m *MockRepo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWorkout", ctx, p)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -212,14 +211,14 @@ func (mr *MockRepoMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockRepo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
+func (m *MockRepo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, p}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -328,14 +327,14 @@ func (mr *MockRepoMockRecorder) GetAuth(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetExercise mocks base method.
-func (m *MockRepo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
+func (m *MockRepo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetExercise", varargs...)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -348,14 +347,14 @@ func (mr *MockRepoMockRecorder) GetExercise(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetPersonalBests mocks base method.
-func (m *MockRepo) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
+func (m *MockRepo) GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range userIDs {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -383,10 +382,10 @@ func (mr *MockRepoMockRecorder) GetPlan(ctx, planID, userID any) *gomock.Call {
 }
 
 // GetPreviousWorkoutSets mocks base method.
-func (m *MockRepo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+func (m *MockRepo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPreviousWorkoutSets", ctx, exerciseIDs)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -398,14 +397,14 @@ func (mr *MockRepoMockRecorder) GetPreviousWorkoutSets(ctx, exerciseIDs any) *go
 }
 
 // GetRoutine mocks base method.
-func (m *MockRepo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
+func (m *MockRepo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetRoutine", varargs...)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -438,14 +437,14 @@ func (mr *MockRepoMockRecorder) GetUser(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetWorkout mocks base method.
-func (m *MockRepo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
+func (m *MockRepo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkout", varargs...)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -458,14 +457,14 @@ func (mr *MockRepoMockRecorder) GetWorkout(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetWorkoutComment mocks base method.
-func (m *MockRepo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
+func (m *MockRepo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -493,14 +492,14 @@ func (mr *MockRepoMockRecorder) IsUserFollowedByUserID(ctx, user, userID any) *g
 }
 
 // ListExercises mocks base method.
-func (m *MockRepo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
+func (m *MockRepo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (models.ExerciseSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListExercises", varargs...)
-	ret0, _ := ret[0].(orm.ExerciseSlice)
+	ret0, _ := ret[0].(models.ExerciseSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -588,14 +587,14 @@ func (mr *MockRepoMockRecorder) ListPlans(ctx, userID any) *gomock.Call {
 }
 
 // ListRoutines mocks base method.
-func (m *MockRepo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
+func (m *MockRepo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListRoutines", varargs...)
-	ret0, _ := ret[0].(orm.RoutineSlice)
+	ret0, _ := ret[0].(models.RoutineSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -608,14 +607,14 @@ func (mr *MockRepoMockRecorder) ListRoutines(ctx any, opts ...any) *gomock.Call 
 }
 
 // ListSets mocks base method.
-func (m *MockRepo) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+func (m *MockRepo) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListSets", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -648,14 +647,14 @@ func (mr *MockRepoMockRecorder) ListUsers(ctx any, opts ...any) *gomock.Call {
 }
 
 // ListWorkouts mocks base method.
-func (m *MockRepo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
+func (m *MockRepo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (models.WorkoutSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListWorkouts", varargs...)
-	ret0, _ := ret[0].(orm.WorkoutSlice)
+	ret0, _ := ret[0].(models.WorkoutSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -753,7 +752,7 @@ func (mr *MockRepoMockRecorder) RefreshTokenExists(ctx, refreshToken any) *gomoc
 }
 
 // RemoveExerciseFromRoutine mocks base method.
-func (m *MockRepo) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *MockRepo) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveExerciseFromRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -782,7 +781,7 @@ func (mr *MockRepoMockRecorder) SetActivePlan(ctx, planID, userID any) *gomock.C
 }
 
 // SetRoutineExercises mocks base method.
-func (m *MockRepo) SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error {
+func (m *MockRepo) SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetRoutineExercises", ctx, routine, exercises)
 	ret0, _ := ret[0].(error)
@@ -995,7 +994,7 @@ func (m *MockTx) EXPECT() *MockTxMockRecorder {
 }
 
 // AddExerciseToRoutine mocks base method.
-func (m *MockTx) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *MockTx) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddExerciseToRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -1073,10 +1072,10 @@ func (mr *MockTxMockRecorder) CreateAuth(ctx, email, password any) *gomock.Call 
 }
 
 // CreateExercise mocks base method.
-func (m *MockTx) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
+func (m *MockTx) CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateExercise", ctx, p)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1117,10 +1116,10 @@ func (mr *MockTxMockRecorder) CreatePlan(ctx, p any) *gomock.Call {
 }
 
 // CreateRoutine mocks base method.
-func (m *MockTx) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
+func (m *MockTx) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateRoutine", ctx, p)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1147,10 +1146,10 @@ func (mr *MockTxMockRecorder) CreateUser(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkout mocks base method.
-func (m *MockTx) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+func (m *MockTx) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWorkout", ctx, p)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1162,14 +1161,14 @@ func (mr *MockTxMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockTx) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
+func (m *MockTx) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, p}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1278,14 +1277,14 @@ func (mr *MockTxMockRecorder) GetAuth(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetExercise mocks base method.
-func (m *MockTx) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
+func (m *MockTx) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetExercise", varargs...)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1298,14 +1297,14 @@ func (mr *MockTxMockRecorder) GetExercise(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetPersonalBests mocks base method.
-func (m *MockTx) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
+func (m *MockTx) GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range userIDs {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1333,10 +1332,10 @@ func (mr *MockTxMockRecorder) GetPlan(ctx, planID, userID any) *gomock.Call {
 }
 
 // GetPreviousWorkoutSets mocks base method.
-func (m *MockTx) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+func (m *MockTx) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPreviousWorkoutSets", ctx, exerciseIDs)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1348,14 +1347,14 @@ func (mr *MockTxMockRecorder) GetPreviousWorkoutSets(ctx, exerciseIDs any) *gomo
 }
 
 // GetRoutine mocks base method.
-func (m *MockTx) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
+func (m *MockTx) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetRoutine", varargs...)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1388,14 +1387,14 @@ func (mr *MockTxMockRecorder) GetUser(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetWorkout mocks base method.
-func (m *MockTx) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
+func (m *MockTx) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkout", varargs...)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1408,14 +1407,14 @@ func (mr *MockTxMockRecorder) GetWorkout(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetWorkoutComment mocks base method.
-func (m *MockTx) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
+func (m *MockTx) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1443,14 +1442,14 @@ func (mr *MockTxMockRecorder) IsUserFollowedByUserID(ctx, user, userID any) *gom
 }
 
 // ListExercises mocks base method.
-func (m *MockTx) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
+func (m *MockTx) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (models.ExerciseSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListExercises", varargs...)
-	ret0, _ := ret[0].(orm.ExerciseSlice)
+	ret0, _ := ret[0].(models.ExerciseSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1538,14 +1537,14 @@ func (mr *MockTxMockRecorder) ListPlans(ctx, userID any) *gomock.Call {
 }
 
 // ListRoutines mocks base method.
-func (m *MockTx) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
+func (m *MockTx) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListRoutines", varargs...)
-	ret0, _ := ret[0].(orm.RoutineSlice)
+	ret0, _ := ret[0].(models.RoutineSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1558,14 +1557,14 @@ func (mr *MockTxMockRecorder) ListRoutines(ctx any, opts ...any) *gomock.Call {
 }
 
 // ListSets mocks base method.
-func (m *MockTx) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+func (m *MockTx) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListSets", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1598,14 +1597,14 @@ func (mr *MockTxMockRecorder) ListUsers(ctx any, opts ...any) *gomock.Call {
 }
 
 // ListWorkouts mocks base method.
-func (m *MockTx) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
+func (m *MockTx) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (models.WorkoutSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListWorkouts", varargs...)
-	ret0, _ := ret[0].(orm.WorkoutSlice)
+	ret0, _ := ret[0].(models.WorkoutSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1689,7 +1688,7 @@ func (mr *MockTxMockRecorder) RefreshTokenExists(ctx, refreshToken any) *gomock.
 }
 
 // RemoveExerciseFromRoutine mocks base method.
-func (m *MockTx) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *MockTx) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveExerciseFromRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -1718,7 +1717,7 @@ func (mr *MockTxMockRecorder) SetActivePlan(ctx, planID, userID any) *gomock.Cal
 }
 
 // SetRoutineExercises mocks base method.
-func (m *MockTx) SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error {
+func (m *MockTx) SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetRoutineExercises", ctx, routine, exercises)
 	ret0, _ := ret[0].(error)
@@ -1959,7 +1958,7 @@ func (m *Mockmethods) EXPECT() *MockmethodsMockRecorder {
 }
 
 // AddExerciseToRoutine mocks base method.
-func (m *Mockmethods) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *Mockmethods) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddExerciseToRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -2037,10 +2036,10 @@ func (mr *MockmethodsMockRecorder) CreateAuth(ctx, email, password any) *gomock.
 }
 
 // CreateExercise mocks base method.
-func (m *Mockmethods) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
+func (m *Mockmethods) CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateExercise", ctx, p)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2081,10 +2080,10 @@ func (mr *MockmethodsMockRecorder) CreatePlan(ctx, p any) *gomock.Call {
 }
 
 // CreateRoutine mocks base method.
-func (m *Mockmethods) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
+func (m *Mockmethods) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateRoutine", ctx, p)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2111,10 +2110,10 @@ func (mr *MockmethodsMockRecorder) CreateUser(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkout mocks base method.
-func (m *Mockmethods) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+func (m *Mockmethods) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWorkout", ctx, p)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2126,14 +2125,14 @@ func (mr *MockmethodsMockRecorder) CreateWorkout(ctx, p any) *gomock.Call {
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *Mockmethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
+func (m *Mockmethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, p}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2242,14 +2241,14 @@ func (mr *MockmethodsMockRecorder) GetAuth(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetExercise mocks base method.
-func (m *Mockmethods) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
+func (m *Mockmethods) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetExercise", varargs...)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2262,14 +2261,14 @@ func (mr *MockmethodsMockRecorder) GetExercise(ctx any, opts ...any) *gomock.Cal
 }
 
 // GetPersonalBests mocks base method.
-func (m *Mockmethods) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
+func (m *Mockmethods) GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range userIDs {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2297,10 +2296,10 @@ func (mr *MockmethodsMockRecorder) GetPlan(ctx, planID, userID any) *gomock.Call
 }
 
 // GetPreviousWorkoutSets mocks base method.
-func (m *Mockmethods) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+func (m *Mockmethods) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPreviousWorkoutSets", ctx, exerciseIDs)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2312,14 +2311,14 @@ func (mr *MockmethodsMockRecorder) GetPreviousWorkoutSets(ctx, exerciseIDs any) 
 }
 
 // GetRoutine mocks base method.
-func (m *Mockmethods) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
+func (m *Mockmethods) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetRoutine", varargs...)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2352,14 +2351,14 @@ func (mr *MockmethodsMockRecorder) GetUser(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetWorkout mocks base method.
-func (m *Mockmethods) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
+func (m *Mockmethods) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkout", varargs...)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2372,14 +2371,14 @@ func (mr *MockmethodsMockRecorder) GetWorkout(ctx any, opts ...any) *gomock.Call
 }
 
 // GetWorkoutComment mocks base method.
-func (m *Mockmethods) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
+func (m *Mockmethods) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2407,14 +2406,14 @@ func (mr *MockmethodsMockRecorder) IsUserFollowedByUserID(ctx, user, userID any)
 }
 
 // ListExercises mocks base method.
-func (m *Mockmethods) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
+func (m *Mockmethods) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (models.ExerciseSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListExercises", varargs...)
-	ret0, _ := ret[0].(orm.ExerciseSlice)
+	ret0, _ := ret[0].(models.ExerciseSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2502,14 +2501,14 @@ func (mr *MockmethodsMockRecorder) ListPlans(ctx, userID any) *gomock.Call {
 }
 
 // ListRoutines mocks base method.
-func (m *Mockmethods) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
+func (m *Mockmethods) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListRoutines", varargs...)
-	ret0, _ := ret[0].(orm.RoutineSlice)
+	ret0, _ := ret[0].(models.RoutineSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2522,14 +2521,14 @@ func (mr *MockmethodsMockRecorder) ListRoutines(ctx any, opts ...any) *gomock.Ca
 }
 
 // ListSets mocks base method.
-func (m *Mockmethods) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+func (m *Mockmethods) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListSets", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2562,14 +2561,14 @@ func (mr *MockmethodsMockRecorder) ListUsers(ctx any, opts ...any) *gomock.Call 
 }
 
 // ListWorkouts mocks base method.
-func (m *Mockmethods) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
+func (m *Mockmethods) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (models.WorkoutSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListWorkouts", varargs...)
-	ret0, _ := ret[0].(orm.WorkoutSlice)
+	ret0, _ := ret[0].(models.WorkoutSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2653,7 +2652,7 @@ func (mr *MockmethodsMockRecorder) RefreshTokenExists(ctx, refreshToken any) *go
 }
 
 // RemoveExerciseFromRoutine mocks base method.
-func (m *Mockmethods) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *Mockmethods) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveExerciseFromRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -2682,7 +2681,7 @@ func (mr *MockmethodsMockRecorder) SetActivePlan(ctx, planID, userID any) *gomoc
 }
 
 // SetRoutineExercises mocks base method.
-func (m *Mockmethods) SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error {
+func (m *Mockmethods) SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetRoutineExercises", ctx, routine, exercises)
 	ret0, _ := ret[0].(error)
@@ -3080,14 +3079,14 @@ func (m *MocksetMethods) EXPECT() *MocksetMethodsMockRecorder {
 }
 
 // GetPersonalBests mocks base method.
-func (m *MocksetMethods) GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error) {
+func (m *MocksetMethods) GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range userIDs {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetPersonalBests", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3100,10 +3099,10 @@ func (mr *MocksetMethodsMockRecorder) GetPersonalBests(ctx any, userIDs ...any) 
 }
 
 // GetPreviousWorkoutSets mocks base method.
-func (m *MocksetMethods) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error) {
+func (m *MocksetMethods) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPreviousWorkoutSets", ctx, exerciseIDs)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3115,14 +3114,14 @@ func (mr *MocksetMethodsMockRecorder) GetPreviousWorkoutSets(ctx, exerciseIDs an
 }
 
 // ListSets mocks base method.
-func (m *MocksetMethods) ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error) {
+func (m *MocksetMethods) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListSets", varargs...)
-	ret0, _ := ret[0].(orm.SetSlice)
+	ret0, _ := ret[0].(models.SetSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3466,7 +3465,7 @@ func (m *MockroutineMethods) EXPECT() *MockroutineMethodsMockRecorder {
 }
 
 // AddExerciseToRoutine mocks base method.
-func (m *MockroutineMethods) AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *MockroutineMethods) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddExerciseToRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -3480,10 +3479,10 @@ func (mr *MockroutineMethodsMockRecorder) AddExerciseToRoutine(ctx, exercise, ro
 }
 
 // CreateRoutine mocks base method.
-func (m *MockroutineMethods) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error) {
+func (m *MockroutineMethods) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateRoutine", ctx, p)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3509,14 +3508,14 @@ func (mr *MockroutineMethodsMockRecorder) DeleteRoutine(ctx, routineID any) *gom
 }
 
 // GetRoutine mocks base method.
-func (m *MockroutineMethods) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error) {
+func (m *MockroutineMethods) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetRoutine", varargs...)
-	ret0, _ := ret[0].(*orm.Routine)
+	ret0, _ := ret[0].(*models.Routine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3529,14 +3528,14 @@ func (mr *MockroutineMethodsMockRecorder) GetRoutine(ctx any, opts ...any) *gomo
 }
 
 // ListRoutines mocks base method.
-func (m *MockroutineMethods) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error) {
+func (m *MockroutineMethods) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListRoutines", varargs...)
-	ret0, _ := ret[0].(orm.RoutineSlice)
+	ret0, _ := ret[0].(models.RoutineSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3549,7 +3548,7 @@ func (mr *MockroutineMethodsMockRecorder) ListRoutines(ctx any, opts ...any) *go
 }
 
 // RemoveExerciseFromRoutine mocks base method.
-func (m *MockroutineMethods) RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error {
+func (m *MockroutineMethods) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveExerciseFromRoutine", ctx, exercise, routine)
 	ret0, _ := ret[0].(error)
@@ -3563,7 +3562,7 @@ func (mr *MockroutineMethodsMockRecorder) RemoveExerciseFromRoutine(ctx, exercis
 }
 
 // SetRoutineExercises mocks base method.
-func (m *MockroutineMethods) SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error {
+func (m *MockroutineMethods) SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetRoutineExercises", ctx, routine, exercises)
 	ret0, _ := ret[0].(error)
@@ -3620,10 +3619,10 @@ func (m *MockworkoutMethods) EXPECT() *MockworkoutMethodsMockRecorder {
 }
 
 // CreateWorkout mocks base method.
-func (m *MockworkoutMethods) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error) {
+func (m *MockworkoutMethods) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWorkout", ctx, p)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3635,14 +3634,14 @@ func (mr *MockworkoutMethodsMockRecorder) CreateWorkout(ctx, p any) *gomock.Call
 }
 
 // CreateWorkoutComment mocks base method.
-func (m *MockworkoutMethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error) {
+func (m *MockworkoutMethods) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, p}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3674,14 +3673,14 @@ func (mr *MockworkoutMethodsMockRecorder) DeleteWorkout(ctx any, opts ...any) *g
 }
 
 // GetWorkout mocks base method.
-func (m *MockworkoutMethods) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error) {
+func (m *MockworkoutMethods) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.Workout, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkout", varargs...)
-	ret0, _ := ret[0].(*orm.Workout)
+	ret0, _ := ret[0].(*models.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3694,14 +3693,14 @@ func (mr *MockworkoutMethodsMockRecorder) GetWorkout(ctx any, opts ...any) *gomo
 }
 
 // GetWorkoutComment mocks base method.
-func (m *MockworkoutMethods) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error) {
+func (m *MockworkoutMethods) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*models.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*orm.WorkoutComment)
+	ret0, _ := ret[0].(*models.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3714,14 +3713,14 @@ func (mr *MockworkoutMethodsMockRecorder) GetWorkoutComment(ctx any, opts ...any
 }
 
 // ListWorkouts mocks base method.
-func (m *MockworkoutMethods) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error) {
+func (m *MockworkoutMethods) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (models.WorkoutSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListWorkouts", varargs...)
-	ret0, _ := ret[0].(orm.WorkoutSlice)
+	ret0, _ := ret[0].(models.WorkoutSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3805,10 +3804,10 @@ func (m *MockexerciseMethods) EXPECT() *MockexerciseMethodsMockRecorder {
 }
 
 // CreateExercise mocks base method.
-func (m *MockexerciseMethods) CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error) {
+func (m *MockexerciseMethods) CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateExercise", ctx, p)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3820,14 +3819,14 @@ func (mr *MockexerciseMethodsMockRecorder) CreateExercise(ctx, p any) *gomock.Ca
 }
 
 // GetExercise mocks base method.
-func (m *MockexerciseMethods) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error) {
+func (m *MockexerciseMethods) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*models.Exercise, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetExercise", varargs...)
-	ret0, _ := ret[0].(*orm.Exercise)
+	ret0, _ := ret[0].(*models.Exercise)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3840,14 +3839,14 @@ func (mr *MockexerciseMethodsMockRecorder) GetExercise(ctx any, opts ...any) *go
 }
 
 // ListExercises mocks base method.
-func (m *MockexerciseMethods) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error) {
+func (m *MockexerciseMethods) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (models.ExerciseSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListExercises", varargs...)
-	ret0, _ := ret[0].(orm.ExerciseSlice)
+	ret0, _ := ret[0].(models.ExerciseSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 )
 
 type TrainingPlan struct {
@@ -20,7 +20,7 @@ type TrainingPlan struct {
 	CurrentPosition int
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	Routines        orm.RoutineSlice
+	Routines        models.RoutineSlice
 }
 
 type CreatePlanParams struct {
@@ -60,7 +60,7 @@ func (r *repo) validatePlanRoutines(ctx context.Context, userID string, routineI
 		if routine.UserID != userID {
 			return ErrPlanRoutineBelongsToAnotherUser
 		}
-		if routine.DeletedAt.Valid {
+		if !routine.DeletedAt.IsNull() {
 			return ErrPlanRoutineDeleted
 		}
 	}
@@ -69,12 +69,12 @@ func (r *repo) validatePlanRoutines(ctx context.Context, userID string, routineI
 }
 
 func (r *repo) replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error {
-	if _, err := r.executor().ExecContext(ctx, `DELETE FROM getstronger.plan_routines WHERE plan_id = $1`, planID); err != nil {
+	if _, err := r.sqlExec().ExecContext(ctx, `DELETE FROM getstronger.plan_routines WHERE plan_id = $1`, planID); err != nil {
 		return fmt.Errorf("plan routines delete: %w", err)
 	}
 
 	for position, routineID := range routineIDs {
-		if _, err := r.executor().ExecContext(ctx, `
+		if _, err := r.sqlExec().ExecContext(ctx, `
 INSERT INTO getstronger.plan_routines (plan_id, routine_id, position)
 VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 			return fmt.Errorf("plan routine insert: %w", err)
@@ -139,7 +139,7 @@ func scanPlanBase(row interface{ Scan(dest ...any) error }) (*TrainingPlan, erro
 }
 
 func (r *repo) loadPlanRoutines(ctx context.Context, plan *TrainingPlan) error {
-	routineRows, err := r.executor().QueryContext(ctx, `
+	routineRows, err := r.sqlExec().QueryContext(ctx, `
 SELECT routine_id
 FROM getstronger.plan_routines
 WHERE plan_id = $1
@@ -185,17 +185,17 @@ SELECT id, user_id, name, active, current_position, created_at, updated_at
 FROM getstronger.plans`
 
 func (r *repo) GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
-	return r.scanPlan(ctx, r.executor().QueryRowContext(ctx,
+	return r.scanPlan(ctx, r.sqlExec().QueryRowContext(ctx,
 		selectPlanColumns+` WHERE id = $1 AND user_id = $2`, planID, userID))
 }
 
 func (r *repo) GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error) {
-	return r.scanPlan(ctx, r.executor().QueryRowContext(ctx,
+	return r.scanPlan(ctx, r.sqlExec().QueryRowContext(ctx,
 		selectPlanColumns+` WHERE user_id = $1 AND active = TRUE`, userID))
 }
 
 func (r *repo) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error) {
-	rows, err := r.executor().QueryContext(ctx,
+	rows, err := r.sqlExec().QueryContext(ctx,
 		selectPlanColumns+` WHERE user_id = $1 ORDER BY active DESC, created_at DESC`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("plans query: %w", err)
@@ -268,7 +268,7 @@ WHERE id = $3 AND user_id = $4`, p.Name, currentPosition, p.ID, p.UserID); err !
 }
 
 func (r *repo) DeletePlan(ctx context.Context, planID, userID string) error {
-	result, err := r.executor().ExecContext(ctx,
+	result, err := r.sqlExec().ExecContext(ctx,
 		`DELETE FROM getstronger.plans WHERE id = $1 AND user_id = $2`, planID, userID)
 	if err != nil {
 		return fmt.Errorf("plan delete: %w", err)
@@ -305,7 +305,7 @@ func (r *repo) SetActivePlan(ctx context.Context, planID, userID string) (*Train
 }
 
 func (r *repo) PauseActivePlan(ctx context.Context, userID string) error {
-	if _, err := r.executor().ExecContext(ctx,
+	if _, err := r.sqlExec().ExecContext(ctx,
 		`UPDATE getstronger.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
 		return fmt.Errorf("active plan pause: %w", err)
 	}

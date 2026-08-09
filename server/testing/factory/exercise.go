@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/types"
+	"github.com/lib/pq"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 )
 
-func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) orm.ExerciseSlice {
-	slice := make(orm.ExerciseSlice, 0, count)
+func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) models.ExerciseSlice {
+	slice := make(models.ExerciseSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewExercise(opts...))
 	}
@@ -22,77 +24,76 @@ func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) orm.ExerciseS
 	return slice
 }
 
-type ExerciseOpt func(event *orm.Exercise)
+type ExerciseOpt func(event *models.ExerciseSetter)
 
-func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
-	m := &orm.Exercise{
-		ID:        uuid.NewString(),
-		UserID:    "",
-		Title:     f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"}),
-		Tags:      types.StringArray{},
-		CreatedAt: time.Time{},
-		DeletedAt: null.Time{},
+func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise {
+	m := &models.ExerciseSetter{
+		ID:    omit.From(uuid.NewString()),
+		Title: omit.From(f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"})),
+		Tags:  omit.From(pq.StringArray{}),
 	}
 
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	if m.UserID.IsUnset() {
+		m.UserID = omit.From(f.NewUser().ID)
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.ExerciseColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
+	ctx := context.Background()
+	exercise, err := models.Exercises.Insert(m,
+		im.OnConflict(models.Exercises.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(m.SetColumns()...)),
+	).One(ctx, bob.NewDB(f.db))
+	if err != nil {
 		panic(fmt.Errorf("failed to insert exercise: %w", err))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	user, err := models.Users.Query(
+		models.SelectWhere.Users.ID.EQ(exercise.UserID),
+	).One(ctx, bob.NewDB(f.db))
 	if err != nil {
 		panic(fmt.Errorf("failed to retrieve user: %w", err))
 	}
+	exercise.R.User = user
+	exercise.R.Loaded.User = true
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return exercise
 }
 
 func ExerciseID(id string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.ID = id
+	return func(m *models.ExerciseSetter) {
+		m.ID = omit.From(id)
 	}
 }
 
 func ExerciseUserID(userID string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.UserID = userID
+	return func(m *models.ExerciseSetter) {
+		m.UserID = omit.From(userID)
 	}
 }
 
 func ExerciseTitle(title string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.Title = title
+	return func(m *models.ExerciseSetter) {
+		m.Title = omit.From(title)
 	}
 }
 
 func ExerciseTags(tags ...string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.Tags = types.StringArray(tags)
+	return func(m *models.ExerciseSetter) {
+		m.Tags = omit.From(pq.StringArray(tags))
 	}
 }
 
 func ExerciseCreatedAt(t time.Time) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.CreatedAt = t.UTC()
+	return func(m *models.ExerciseSetter) {
+		m.CreatedAt = omit.From(t.UTC())
 	}
 }
 
 func ExerciseDeleted() ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.DeletedAt = null.TimeFrom(time.Now().UTC())
+	return func(m *models.ExerciseSetter) {
+		m.DeletedAt = omitnull.From(time.Now().UTC())
 	}
 }

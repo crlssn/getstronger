@@ -10,7 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
@@ -105,8 +105,8 @@ func (h *workoutHandler) createWorkout(
 	request *apiv1.CreateWorkoutRequest,
 	userID string,
 	workoutName string,
-) (*orm.Workout, error, error) {
-	var workout *orm.Workout
+) (*models.Workout, error, error) {
+	var workout *models.Workout
 	var planAdvanceSkipped error
 	err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		createdWorkout, createErr := tx.CreateWorkout(ctx, repo.CreateWorkoutParams{
@@ -182,8 +182,8 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		Msg: &apiv1.GetWorkoutResponse{
 			Workout: parser.Workout(
 				workout,
-				parser.WorkoutIntensity(workout.R.GetSets()),
-				parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
+				parser.WorkoutIntensity(workout.R.Sets),
+				parser.WorkoutExerciseSets(workout.R.Sets, personalBests),
 			),
 		},
 	}, nil
@@ -207,7 +207,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *orm.Workout) time.Time {
+	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) time.Time {
 		return workout.CreatedAt
 	})
 	if err != nil {

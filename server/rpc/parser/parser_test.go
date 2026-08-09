@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -147,14 +146,14 @@ func (s *parserSuite) TestWorkout() {
 	s.Require().Empty(parsed.GetUser().GetEmail())
 
 	workout = s.factory.NewWorkout()
-	parsed = parser.Workout(workout, parser.WorkoutIntensity(orm.SetSlice{
+	parsed = parser.Workout(workout, parser.WorkoutIntensity(models.SetSlice{
 		s.factory.NewSet(factory.SetReps(2), factory.SetWeight(5)),
 		s.factory.NewSet(factory.SetReps(1), factory.SetWeight(10)),
 	}))
 	s.Require().Equal(20, int(parsed.GetIntensity()))
 
 	workout = s.factory.NewWorkout()
-	workout.R.WorkoutComments = orm.WorkoutCommentSlice{
+	workout.R.WorkoutComments = models.WorkoutCommentSlice{
 		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
 		s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID)),
 	}
@@ -168,7 +167,7 @@ func (s *parserSuite) TestWorkout() {
 
 	workout = s.factory.NewWorkout()
 	sets := s.factory.NewSetSlice(2)
-	personalBests := orm.SetSlice{sets[0]}
+	personalBests := models.SetSlice{sets[0]}
 	parsed = parser.Workout(workout, parser.WorkoutExerciseSets(sets, personalBests))
 	s.Require().Len(parsed.GetExerciseSets(), 2)
 	for i, exerciseSet := range parsed.GetExerciseSets() {
@@ -176,7 +175,7 @@ func (s *parserSuite) TestWorkout() {
 		for _, set := range exerciseSet.GetSets() {
 			s.Require().Equal(sets[i].ID, set.GetId())
 			s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
-			s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+			s.Require().Equal(sets[i].Reps, set.GetReps())
 			s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
 			s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
 			s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())
@@ -187,22 +186,22 @@ func (s *parserSuite) TestWorkout() {
 		factory.WorkoutNote("note"),
 	)
 	parsed = parser.Workout(workout)
-	s.Require().Equal(workout.Note.String, parsed.GetNote())
+	s.Require().Equal(workout.Note.GetOrZero(), parsed.GetNote())
 }
 
 func (s *parserSuite) TestWorkoutSlice() {
 	s.Run("ok_workouts_with_relationships", func() {
-		workouts := orm.WorkoutSlice{
+		workouts := models.WorkoutSlice{
 			s.factory.NewWorkout(),
 		}
 
 		for _, workout := range workouts {
-			workout.R.Sets = orm.SetSlice{
+			workout.R.Sets = models.SetSlice{
 				s.factory.NewSet(factory.SetWorkoutID(workout.ID)),
 			}
 		}
 
-		personalBests := orm.SetSlice{
+		personalBests := models.SetSlice{
 			workouts[0].R.Sets[0],
 		}
 
@@ -227,7 +226,7 @@ func (s *parserSuite) TestWorkoutSlice() {
 				for _, set := range exerciseSet.GetSets() {
 					s.Require().Equal(workouts[i].R.Sets[j].ID, set.GetId())
 					s.Require().InEpsilon(workouts[i].R.Sets[j].Weight, set.GetWeight(), 0)
-					s.Require().Equal(workouts[i].R.Sets[j].Reps, int(set.GetReps()))
+					s.Require().Equal(workouts[i].R.Sets[j].Reps, set.GetReps())
 
 					s.Require().NotNil(set.GetMetadata())
 					s.Require().Equal(workouts[i].R.Sets[j].WorkoutID, set.GetMetadata().GetWorkoutId())
@@ -240,9 +239,9 @@ func (s *parserSuite) TestWorkoutSlice() {
 
 	s.Run("ok_workout_without_relationship", func() {
 		workout := s.factory.NewWorkout()
-		workout.R = nil
+		workout.R = models.Workout{}.R
 
-		parsed, err := parser.WorkoutSlice(orm.WorkoutSlice{workout}, nil)
+		parsed, err := parser.WorkoutSlice(models.WorkoutSlice{workout}, nil)
 		s.Require().NoError(err)
 		s.Require().Len(parsed, 1)
 		s.Require().Equal(workout.ID, parsed[0].GetId())
@@ -282,14 +281,14 @@ func (s *parserSuite) TestExerciseSetsSlice() {
 		for _, set := range exerciseSets.GetSets() {
 			s.Require().Equal(sets[i].ID, set.GetId())
 			s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
-			s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+			s.Require().Equal(sets[i].Reps, set.GetReps())
 			s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
 			s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
 			s.Require().False(set.GetMetadata().GetPersonalBest())
 		}
 	}
 
-	personalBests := orm.SetSlice{sets[0]}
+	personalBests := models.SetSlice{sets[0]}
 	parsed = parser.ExerciseSetsSlice(sets, parser.ExerciseSetsPersonalBests(personalBests))
 	s.Require().Len(parsed, len(sets))
 	for i, exerciseSets := range parsed {
@@ -301,7 +300,7 @@ func (s *parserSuite) TestExerciseSetsSlice() {
 		for _, set := range exerciseSets.GetSets() {
 			s.Require().Equal(sets[i].ID, set.GetId())
 			s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
-			s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+			s.Require().Equal(sets[i].Reps, set.GetReps())
 			s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
 			s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
 			s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())
@@ -317,7 +316,7 @@ func (s *parserSuite) TestExerciseSetSlice() {
 	for i, exerciseSet := range parsed {
 		s.Require().Equal(sets[i].ID, exerciseSet.GetSet().GetId())
 		s.Require().InEpsilon(sets[i].Weight, exerciseSet.GetSet().GetWeight(), 0)
-		s.Require().Equal(sets[i].Reps, int(exerciseSet.GetSet().GetReps()))
+		s.Require().Equal(sets[i].Reps, exerciseSet.GetSet().GetReps())
 		s.Require().Equal(sets[i].WorkoutID, exerciseSet.GetSet().GetMetadata().GetWorkoutId())
 		s.Require().True(sets[i].CreatedAt.Equal(exerciseSet.GetSet().GetMetadata().GetCreatedAt().AsTime()))
 		s.Require().False(exerciseSet.GetSet().GetMetadata().GetPersonalBest())
@@ -548,7 +547,7 @@ func (s *parserSuite) TestFeedItemSlice() {
 				for _, set := range exerciseSet.GetSets() {
 					s.Require().Equal(workouts[i].R.Sets[j].ID, set.GetId())
 					s.Require().InEpsilon(workouts[i].R.Sets[j].Weight, set.GetWeight(), 0)
-					s.Require().Equal(workouts[i].R.Sets[j].Reps, int(set.GetReps()))
+					s.Require().Equal(workouts[i].R.Sets[j].Reps, set.GetReps())
 					s.Require().Equal(workouts[i].R.Sets[j].WorkoutID, set.GetMetadata().GetWorkoutId())
 					s.Require().True(workouts[i].R.Sets[j].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
 					s.Require().False(set.GetMetadata().GetPersonalBest())
@@ -568,7 +567,7 @@ func (s *parserSuite) TestSet() {
 
 	s.Require().Equal(set.ID, parsed.GetId())
 	s.Require().InEpsilon(set.Weight, parsed.GetWeight(), 0)
-	s.Require().Equal(set.Reps, int(parsed.GetReps()))
+	s.Require().Equal(set.Reps, parsed.GetReps())
 	s.Require().Equal(set.WorkoutID, parsed.GetMetadata().GetWorkoutId())
 	s.Require().True(set.CreatedAt.Equal(parsed.GetMetadata().GetCreatedAt().AsTime()))
 	s.Require().False(parsed.GetMetadata().GetPersonalBest())
@@ -586,19 +585,19 @@ func (s *parserSuite) TestSetSlice() {
 	for i, set := range parsed {
 		s.Require().Equal(sets[i].ID, set.GetId())
 		s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
-		s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+		s.Require().Equal(sets[i].Reps, set.GetReps())
 		s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
 		s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
 		s.Require().False(set.GetMetadata().GetPersonalBest())
 	}
 
-	personalBests := orm.SetSlice{sets[0]}
+	personalBests := models.SetSlice{sets[0]}
 	parsed = parser.SetSlice(sets, personalBests)
 	s.Require().Len(parsed, len(sets))
 	for i, set := range parsed {
 		s.Require().Equal(sets[i].ID, set.GetId())
 		s.Require().InEpsilon(sets[i].Weight, set.GetWeight(), 0)
-		s.Require().Equal(sets[i].Reps, int(set.GetReps()))
+		s.Require().Equal(sets[i].Reps, set.GetReps())
 		s.Require().Equal(sets[i].WorkoutID, set.GetMetadata().GetWorkoutId())
 		s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
 		s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())

@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -31,20 +33,20 @@ func TestFactory_Exercise(t *testing.T) {
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewExercise()
-		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, expected.ID, created.ID)
 		require.Equal(t, expected.UserID, created.UserID)
 		require.Equal(t, expected.Title, created.Title)
 		require.Equal(t, expected.Tags, created.Tags)
-		require.False(t, expected.DeletedAt.Valid, created.DeletedAt.Valid)
+		require.True(t, created.DeletedAt.IsNull())
 	})
 
 	t.Run("ExerciseID", func(t *testing.T) {
 		t.Parallel()
 		id := uuid.NewString()
 		expected := f.NewExercise(factory.ExerciseID(id))
-		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, id, created.ID)
 	})
@@ -53,7 +55,7 @@ func TestFactory_Exercise(t *testing.T) {
 		t.Parallel()
 		userID := f.NewUser().ID
 		expected := f.NewExercise(factory.ExerciseUserID(userID))
-		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, userID, created.UserID)
 	})
@@ -62,7 +64,7 @@ func TestFactory_Exercise(t *testing.T) {
 		t.Parallel()
 		title := gofakeit.Name()
 		expected := f.NewExercise(factory.ExerciseTitle(title))
-		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, title, created.Title)
 	})
@@ -71,7 +73,7 @@ func TestFactory_Exercise(t *testing.T) {
 		t.Parallel()
 		tags := []string{gofakeit.Word(), gofakeit.Word()}
 		expected := f.NewExercise(factory.ExerciseTags(tags...))
-		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, tags, []string(created.Tags))
 	})
@@ -80,7 +82,7 @@ func TestFactory_Exercise(t *testing.T) {
 		t.Parallel()
 		now := time.Now()
 		expected := f.NewExercise(factory.ExerciseCreatedAt(now))
-		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, now.UTC().Truncate(time.Microsecond), created.CreatedAt.Truncate(time.Microsecond))
 	})
@@ -88,10 +90,10 @@ func TestFactory_Exercise(t *testing.T) {
 	t.Run("ExerciseDeleted", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewExercise(factory.ExerciseDeleted())
-		created, err := orm.FindExercise(ctx, c.DB, expected.ID)
+		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.True(t, created.DeletedAt.Valid)
-		require.WithinDuration(t, time.Now().UTC(), created.DeletedAt.Time.UTC(), time.Second)
+		require.False(t, created.DeletedAt.IsNull())
+		require.WithinDuration(t, time.Now().UTC(), created.DeletedAt.GetOrZero().UTC(), time.Second)
 	})
 
 	t.Cleanup(func() {

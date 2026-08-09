@@ -16,7 +16,9 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -161,12 +163,12 @@ func (s *exerciseSuite) TestCreateExercise() {
 			_, err = uuid.Parse(res.Msg.GetId())
 			s.Require().NoError(err)
 
-			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetId())
+			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), res.Msg.GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetTags(), []string(exercise.Tags))
 			s.Require().Equal(t.expected.metrics, []string(exercise.Metrics))
-			s.Require().Equal(t.expected.restSeconds, exercise.RestSeconds)
+			s.Require().Equal(int32(t.expected.restSeconds), exercise.RestSeconds)
 		})
 	}
 }
@@ -239,7 +241,7 @@ func (s *exerciseSuite) TestGetExercise() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetExercise().GetId())
+			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), res.Msg.GetExercise().GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetId(), exercise.ID)
@@ -420,7 +422,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 			}
 			s.Require().Equal(expectedTags, res.Msg.GetExercise().GetTags())
 
-			exercise, err := orm.FindExercise(ctx, s.container.DB, res.Msg.GetExercise().GetId())
+			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), res.Msg.GetExercise().GetId())
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetExercise().GetName(), exercise.Title)
@@ -496,10 +498,10 @@ func (s *exerciseSuite) TestDeleteExercise() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			exists, err := orm.Exercises(
-				orm.ExerciseWhere.ID.EQ(t.req.Msg.GetId()),
-				orm.ExerciseWhere.DeletedAt.IsNotNull(),
-			).Exists(ctx, s.container.DB)
+			exists, err := models.Exercises.Query(
+				models.SelectWhere.Exercises.ID.EQ(t.req.Msg.GetId()),
+				models.SelectWhere.Exercises.DeletedAt.IsNotNull(),
+			).Exists(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})
@@ -537,7 +539,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					factory.ExerciseCreatedAt(s.factory.Now()),
 				)
 
-				exercises := make(orm.ExerciseSlice, 0, len(t.expected.res.GetExercises()))
+				exercises := make(models.ExerciseSlice, 0, len(t.expected.res.GetExercises()))
 				for _, exercise := range t.expected.res.GetExercises() {
 					exercises = append(exercises, s.factory.NewExercise(
 						factory.ExerciseID(exercise.GetId()),
@@ -1100,10 +1102,10 @@ func (s *exerciseSuite) TestListSets() {
 				},
 			},
 			init: func(t test) {
-				_, err := orm.Sets().DeleteAll(context.Background(), s.container.DB)
+				_, err := models.Sets.Delete().Exec(context.Background(), bob.NewDB(s.container.DB))
 				s.Require().NoError(err)
 
-				sets := make(orm.SetSlice, 0, len(t.expected.res.GetSets()))
+				sets := make(models.SetSlice, 0, len(t.expected.res.GetSets()))
 				for _, set := range t.expected.res.GetSets() {
 					workout := s.factory.NewWorkout(
 						factory.WorkoutID(set.GetMetadata().GetWorkoutId()),

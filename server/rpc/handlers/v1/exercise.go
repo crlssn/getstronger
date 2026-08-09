@@ -10,7 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -266,7 +266,7 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *orm.Exercise) time.Time {
+	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *models.Exercise) time.Time {
 		return exercise.CreatedAt
 	})
 	if err != nil {
@@ -345,7 +345,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(sets, limit, func(set *orm.Set) time.Time {
+	paginated, err := repo.PaginateSlice(sets, limit, func(set *models.Set) time.Time {
 		return set.CreatedAt
 	})
 	if err != nil {

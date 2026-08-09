@@ -11,12 +11,8 @@ node = "22.23.2"
     tags = "postgres",
     depends = ["go"]
 }
-"go:github.com/volatiletech/sqlboiler/v4" = {
-    version = "v4.19.1",
-    depends = ["go"]
-}
-"go:github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql" = {
-    version = "v4.19.1",
+"go:github.com/stephenafamo/bob/gen/bobgen-psql" = {
+    version = "v0.49.0",
     depends = ["go"]
 }
 "go:go.uber.org/mock/mockgen" = {
@@ -32,7 +28,7 @@ node = "22.23.2"
 DB_SSL_MODE = { default = "disable" }
 DB_IMAGE = { default = "postgres:16.4" }
 DB_CONTAINER = { default = "getstronger" }
-DB_CONFIG_PATH = { default = "./database/sqlboiler.toml" }
+DB_CONFIG_PATH = { default = "./database/bobgen.yaml" }
 DB_MIGRATIONS_PATH = { default = "database/migrations/" }
 USER_EMAIL = { default = "john@doe.com" }
 USER_PASSWORD = { default = "123" }
@@ -65,7 +61,7 @@ env = { _.file = ".env" }
 run = [
     'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose down --all',
     'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
-    'sqlboiler -c "$DB_CONFIG_PATH" psql',
+    'bobgen-psql -c "$DB_CONFIG_PATH"',
 ]
 
 [tasks."db:migrate"]
@@ -74,7 +70,7 @@ description = "Apply pending migrations and regenerate the database models"
 env = { _.file = ".env" }
 run = [
     'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
-    'sqlboiler -c "$DB_CONFIG_PATH" psql',
+    'bobgen-psql -c "$DB_CONFIG_PATH"',
 ]
 
 [tasks."db:seed"]

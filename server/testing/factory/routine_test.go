@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -31,13 +33,13 @@ func TestFactory_Routine(t *testing.T) {
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewRoutine()
-		created, err := orm.FindRoutine(ctx, c.DB, expected.ID)
+		created, err := models.FindRoutine(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, expected.ID, created.ID)
 		require.Equal(t, expected.UserID, created.UserID)
 		require.Equal(t, expected.Title, created.Title)
 		require.Equal(t, expected.ExerciseOrder, created.ExerciseOrder)
-		require.Equal(t, expected.DeletedAt.Valid, created.DeletedAt.Valid)
+		require.Equal(t, expected.DeletedAt.IsNull(), created.DeletedAt.IsNull())
 		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
@@ -45,7 +47,7 @@ func TestFactory_Routine(t *testing.T) {
 		t.Parallel()
 		id := uuid.NewString()
 		expected := f.NewRoutine(factory.RoutineID(id))
-		created, err := orm.FindRoutine(ctx, c.DB, expected.ID)
+		created, err := models.FindRoutine(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, id, created.ID)
 	})
@@ -54,7 +56,7 @@ func TestFactory_Routine(t *testing.T) {
 		t.Parallel()
 		userID := f.NewUser().ID
 		expected := f.NewRoutine(factory.RoutineUserID(userID))
-		created, err := orm.FindRoutine(ctx, c.DB, expected.ID)
+		created, err := models.FindRoutine(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, userID, created.UserID)
 	})
@@ -63,7 +65,7 @@ func TestFactory_Routine(t *testing.T) {
 		t.Parallel()
 		name := "Custom Routine Name"
 		expected := f.NewRoutine(factory.RoutineName(name))
-		created, err := orm.FindRoutine(ctx, c.DB, expected.ID)
+		created, err := models.FindRoutine(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, name, created.Title)
 	})
@@ -72,26 +74,26 @@ func TestFactory_Routine(t *testing.T) {
 		t.Parallel()
 		exerciseIDs := []string{uuid.NewString(), uuid.NewString()}
 		expected := f.NewRoutine(factory.RoutineExerciseOrder(exerciseIDs))
-		created, err := orm.FindRoutine(ctx, c.DB, expected.ID)
+		created, err := models.FindRoutine(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 
 		var createdOrder []string
-		require.NoError(t, json.Unmarshal(created.ExerciseOrder, &createdOrder))
+		require.NoError(t, json.Unmarshal(created.ExerciseOrder.Val, &createdOrder))
 		require.Equal(t, exerciseIDs, createdOrder)
 	})
 
 	t.Run("AddRoutineExercise", func(t *testing.T) {
 		t.Parallel()
 		routine := f.NewRoutine()
-		exercises := []*orm.Exercise{
+		exercises := []*models.Exercise{
 			f.NewExercise(),
 			f.NewExercise(),
 		}
 
 		f.AddRoutineExercise(routine, exercises...)
 
-		require.NoError(t, routine.Reload(ctx, c.DB))
-		routineExercises, err := routine.Exercises().All(ctx, c.DB)
+		require.NoError(t, routine.Reload(ctx, bob.NewDB(c.DB)))
+		routineExercises, err := routine.Exercises().All(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.Len(t, routineExercises, len(exercises))
 

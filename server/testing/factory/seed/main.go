@@ -17,7 +17,6 @@ import (
 	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -153,7 +152,7 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, john *models.User, passwo
 	)
 
 	type workoutSet struct {
-		exercise *orm.Exercise
+		exercise *models.Exercise
 		weight   float64
 		reps     int
 	}
@@ -240,9 +239,9 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, john *models.User, passwo
 }
 
 func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.User, now time.Time) {
-	johnWorkouts, err := orm.Workouts(
-		orm.WorkoutWhere.UserID.EQ(john.ID),
-	).All(context.Background(), database)
+	johnWorkouts, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.UserID.EQ(john.ID),
+	).All(context.Background(), bob.NewDB(database))
 	if err != nil {
 		panic(fmt.Errorf("retrieve John Doe workouts for Jane Doe comments: %w", err))
 	}

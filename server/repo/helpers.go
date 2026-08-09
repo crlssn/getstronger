@@ -12,12 +12,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
 type ModelItem interface {
-	*orm.Workout | *orm.Exercise | *orm.Routine | *orm.Set | *orm.WorkoutComment | *models.Notification |
-		*models.Auth | *models.User
+	*models.Workout | *models.Exercise | *models.Routine | *models.Set | *models.WorkoutComment |
+		*models.Notification | *models.Auth | *models.User
 }
 
 type ModelSlice[T any] interface {

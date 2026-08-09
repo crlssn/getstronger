@@ -11,7 +11,6 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
 type Factory struct {
@@ -74,7 +73,7 @@ func (f *Factory) Seed(p SeedParams) *models.User {
 }
 
 func (f *Factory) seedUser(p SeedParams, user *models.User) {
-	var exercises orm.ExerciseSlice
+	var exercises models.ExerciseSlice
 	for range p.ExerciseCount {
 		exercises = append(exercises, f.NewExercise(ExerciseUserID(user.ID)))
 	}
@@ -136,7 +135,7 @@ func Now() time.Time {
 	return time.Now().UTC().Round(time.Microsecond)
 }
 
-func randomExercise(slice orm.ExerciseSlice) *orm.Exercise {
+func randomExercise(slice models.ExerciseSlice) *models.Exercise {
 	rand.Shuffle(len(slice), func(i, j int) {
 		slice[i], slice[j] = slice[j], slice[i]
 	})
@@ -144,7 +143,7 @@ func randomExercise(slice orm.ExerciseSlice) *orm.Exercise {
 	return slice[0]
 }
 
-func randomExercises(slice orm.ExerciseSlice) orm.ExerciseSlice {
+func randomExercises(slice models.ExerciseSlice) models.ExerciseSlice {
 	rand.Shuffle(len(slice), func(i, j int) {
 		slice[i], slice[j] = slice[j], slice[i]
 	})
@@ -154,7 +153,7 @@ func randomExercises(slice orm.ExerciseSlice) orm.ExerciseSlice {
 	return slice[:length]
 }
 
-func randomExerciseSubset(slice orm.ExerciseSlice, count int) orm.ExerciseSlice {
+func randomExerciseSubset(slice models.ExerciseSlice, count int) models.ExerciseSlice {
 	rand.Shuffle(len(slice), func(i, j int) {
 		slice[i], slice[j] = slice[j], slice[i]
 	})

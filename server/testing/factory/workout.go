@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 )
 
-func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) orm.WorkoutSlice {
-	slice := make(orm.WorkoutSlice, 0, count)
+func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) models.WorkoutSlice {
+	slice := make(models.WorkoutSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewWorkout(opts...))
 	}
@@ -21,91 +23,90 @@ func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) orm.WorkoutSlic
 	return slice
 }
 
-type WorkoutOpt func(workout *orm.Workout)
+type WorkoutOpt func(workout *models.WorkoutSetter)
 
-func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
+func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout {
 	startedAt := time.Now().UTC()
-	m := &orm.Workout{
-		ID:         uuid.NewString(),
-		Name:       f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
-		UserID:     "",
-		StartedAt:  startedAt,
-		FinishedAt: startedAt.Add(time.Hour),
-		CreatedAt:  time.Time{},
-		Note:       null.String{},
+	m := &models.WorkoutSetter{
+		ID:         omit.From(uuid.NewString()),
+		Name:       omit.From(f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"})),
+		StartedAt:  omit.From(startedAt),
+		FinishedAt: omit.From(startedAt.Add(time.Hour)),
 	}
 
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	if m.UserID.IsUnset() {
+		m.UserID = omit.From(f.NewUser().ID)
 	}
 
-	updateColumns := boil.Infer()
-	insertColumns := boil.Infer()
-	conflictColumns := []string{orm.WorkoutColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
+	ctx := context.Background()
+	workout, err := models.Workouts.Insert(m,
+		im.OnConflict(models.Workouts.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(m.SetColumns()...)),
+	).One(ctx, bob.NewDB(f.db))
+	if err != nil {
 		panic(fmt.Errorf("failed to insert workout: %w", err))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	user, err := models.Users.Query(
+		models.SelectWhere.Users.ID.EQ(workout.UserID),
+	).One(ctx, bob.NewDB(f.db))
 	if err != nil {
 		panic(fmt.Errorf("failed to retrieve user: %w", err))
 	}
+	workout.R.User = user
+	workout.R.Loaded.User = true
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return workout
 }
 
 func WorkoutID(workoutID string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.ID = workoutID
+	return func(workout *models.WorkoutSetter) {
+		workout.ID = omit.From(workoutID)
 	}
 }
 
 func WorkoutUserID(userID string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.UserID = userID
+	return func(workout *models.WorkoutSetter) {
+		workout.UserID = omit.From(userID)
 	}
 }
 
 func WorkoutName(name string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.Name = name
+	return func(workout *models.WorkoutSetter) {
+		workout.Name = omit.From(name)
 	}
 }
 
 func WorkoutNote(note string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.Note = null.StringFrom(note)
+	return func(workout *models.WorkoutSetter) {
+		workout.Note = omitnull.From(note)
 	}
 }
 
 func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.CreatedAt = createdAt
+	return func(workout *models.WorkoutSetter) {
+		workout.CreatedAt = omit.From(createdAt)
 	}
 }
 
 func WorkoutStartedAt(startedAt time.Time) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.StartedAt = startedAt
+	return func(workout *models.WorkoutSetter) {
+		workout.StartedAt = omit.From(startedAt)
 	}
 }
 
 func WorkoutFinishedAt(finishedAt time.Time) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.FinishedAt = finishedAt
+	return func(workout *models.WorkoutSetter) {
+		workout.FinishedAt = omit.From(finishedAt)
 	}
 }
 
-func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) orm.WorkoutCommentSlice {
-	slice := make(orm.WorkoutCommentSlice, 0, count)
+func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) models.WorkoutCommentSlice {
+	slice := make(models.WorkoutCommentSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewWorkoutComment(opts...))
 	}
@@ -113,83 +114,82 @@ func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) o
 	return slice
 }
 
-type WorkoutCommentOpt func(comment *orm.WorkoutComment)
+type WorkoutCommentOpt func(comment *models.WorkoutCommentSetter)
 
-func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComment {
-	m := &orm.WorkoutComment{
-		ID:        uuid.NewString(),
-		UserID:    "",
-		WorkoutID: "",
-		Comment:   f.Faker.Sentence(5), //nolint:mnd
-		CreatedAt: time.Time{},
+func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutComment {
+	m := &models.WorkoutCommentSetter{
+		ID:      omit.From(uuid.NewString()),
+		Comment: omit.From(f.Faker.Sentence(5)), //nolint:mnd
 	}
 
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	if m.UserID.IsUnset() {
+		m.UserID = omit.From(f.NewUser().ID)
 	}
 
-	if m.WorkoutID == "" {
-		m.WorkoutID = f.NewWorkout().ID
+	if m.WorkoutID.IsUnset() {
+		m.WorkoutID = omit.From(f.NewWorkout().ID)
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.WorkoutCommentColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
+	ctx := context.Background()
+	comment, err := models.WorkoutComments.Insert(m,
+		im.OnConflict(models.WorkoutComments.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(m.SetColumns()...)),
+	).One(ctx, bob.NewDB(f.db))
+	if err != nil {
 		panic(fmt.Errorf("failed to insert workout comment: %w", err))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	user, err := models.Users.Query(
+		models.SelectWhere.Users.ID.EQ(comment.UserID),
+	).One(ctx, bob.NewDB(f.db))
 	if err != nil {
 		panic(fmt.Errorf("failed to retrieve user: %w", err))
 	}
+	comment.R.User = user
+	comment.R.Loaded.User = true
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	workout, err := m.Workout().One(context.Background(), f.db)
+	workout, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.ID.EQ(comment.WorkoutID),
+	).One(ctx, bob.NewDB(f.db))
 	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
+		panic(fmt.Errorf("failed to retrieve workout: %w", err))
 	}
+	comment.R.Workout = workout
+	comment.R.Loaded.Workout = true
 
-	if err = m.SetWorkout(context.Background(), f.db, false, workout); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return comment
 }
 
 func WorkoutCommentID(id string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.ID = id
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.ID = omit.From(id)
 	}
 }
 
 func WorkoutCommentUserID(userID string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.UserID = userID
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.UserID = omit.From(userID)
 	}
 }
 
 func WorkoutCommentWorkoutID(workoutID string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.WorkoutID = workoutID
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.WorkoutID = omit.From(workoutID)
 	}
 }
 
 func WorkoutCommentText(text string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.Comment = text
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.Comment = omit.From(text)
 	}
 }
 
 func WorkoutCommentCreatedAt(createdAt time.Time) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.CreatedAt = createdAt.UTC()
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.CreatedAt = omit.From(createdAt.UTC())
 	}
 }

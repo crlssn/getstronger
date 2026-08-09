@@ -12,7 +12,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -168,7 +170,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 			s.Require().NotNil(res)
 			s.Require().NoError(err)
 
-			w, err := orm.FindWorkout(ctx, s.container.DB, res.Msg.GetWorkoutId())
+			w, err := models.FindWorkout(ctx, bob.NewDB(s.container.DB), res.Msg.GetWorkoutId())
 			s.Require().NoError(err)
 			s.Require().NotNil(w)
 		})
@@ -296,7 +298,7 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(response.Msg.GetWorkoutId())
 
-	savedWorkout, err := orm.FindWorkout(context.Background(), s.container.DB, response.Msg.GetWorkoutId())
+	savedWorkout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), response.Msg.GetWorkoutId())
 	s.Require().NoError(err)
 	s.Require().Equal(completedRoutine.Title, savedWorkout.Name)
 
@@ -323,7 +325,7 @@ func (s *workoutSuite) TestCreateQuickWorkoutWithoutRoutine() {
 	}))
 	s.Require().NoError(err)
 
-	workout, err := orm.FindWorkout(context.Background(), s.container.DB, response.Msg.GetWorkoutId())
+	workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), response.Msg.GetWorkoutId())
 	s.Require().NoError(err)
 	s.Require().Equal("Quick Workout", workout.Name)
 }

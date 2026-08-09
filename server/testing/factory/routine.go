@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
+	"github.com/aarondl/opt/omit"
 	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/im"
+	bobtypes "github.com/stephenafamo/bob/types"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 )
 
-func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) orm.RoutineSlice {
-	slice := make(orm.RoutineSlice, 0, count)
+func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) models.RoutineSlice {
+	slice := make(models.RoutineSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewRoutine(opts...))
 	}
@@ -22,75 +23,86 @@ func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) orm.RoutineSlic
 	return slice
 }
 
-type RoutineOpt func(event *orm.Routine)
+type RoutineOpt func(event *models.RoutineSetter)
 
-func (f *Factory) NewRoutine(opts ...RoutineOpt) *orm.Routine {
-	m := &orm.Routine{
-		ID:            uuid.NewString(),
-		UserID:        "",
-		Title:         f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
-		CreatedAt:     time.Time{},
-		DeletedAt:     null.Time{},
-		ExerciseOrder: nil,
+func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
+	m := &models.RoutineSetter{
+		ID:    omit.From(uuid.NewString()),
+		Title: omit.From(f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"})),
 	}
 
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	if m.UserID.IsUnset() {
+		m.UserID = omit.From(f.NewUser().ID)
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.RoutineColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
+	ctx := context.Background()
+	routine, err := models.Routines.Insert(m,
+		im.OnConflict(models.Routines.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(m.SetColumns()...)),
+	).One(ctx, bob.NewDB(f.db))
+	if err != nil {
 		panic(fmt.Errorf("failed to insert routine: %w", err))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	user, err := models.Users.Query(
+		models.SelectWhere.Users.ID.EQ(routine.UserID),
+	).One(ctx, bob.NewDB(f.db))
 	if err != nil {
 		panic(fmt.Errorf("failed to retrieve user: %w", err))
 	}
+	routine.R.User = user
+	routine.R.Loaded.User = true
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return routine
 }
 
 func RoutineID(id string) RoutineOpt {
-	return func(m *orm.Routine) {
-		m.ID = id
+	return func(m *models.RoutineSetter) {
+		m.ID = omit.From(id)
 	}
 }
 
 func RoutineUserID(userID string) RoutineOpt {
-	return func(m *orm.Routine) {
-		m.UserID = userID
+	return func(m *models.RoutineSetter) {
+		m.UserID = omit.From(userID)
 	}
 }
 
 func RoutineName(name string) RoutineOpt {
-	return func(m *orm.Routine) {
-		m.Title = name
+	return func(m *models.RoutineSetter) {
+		m.Title = omit.From(name)
 	}
 }
 
 func RoutineExerciseOrder(exerciseIDs []string) RoutineOpt {
-	return func(m *orm.Routine) {
+	return func(m *models.RoutineSetter) {
 		bytes, err := json.Marshal(exerciseIDs)
 		if err != nil {
 			panic(fmt.Errorf("failed to marshal exercise order: %w", err))
 		}
-		m.ExerciseOrder = bytes
+		m.ExerciseOrder = omit.From(bobtypes.NewJSON[json.RawMessage](bytes))
 	}
 }
 
-func (f *Factory) AddRoutineExercise(routine *orm.Routine, exercises ...*orm.Exercise) {
-	if err := routine.AddExercises(context.Background(), f.db, false, exercises...); err != nil {
+func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*models.Exercise) {
+	if len(exercises) == 0 {
+		return
+	}
+
+	links := make([]*models.ExerciseRoutineSetter, 0, len(exercises))
+	for _, exercise := range exercises {
+		links = append(links, &models.ExerciseRoutineSetter{
+			RoutineID:  omit.From(routine.ID),
+			ExerciseID: omit.From(exercise.ID),
+		})
+	}
+
+	if _, err := models.ExerciseRoutines.Insert(bob.ToMods(links...)).
+		Exec(context.Background(), bob.NewDB(f.db)); err != nil {
 		panic(fmt.Errorf("failed to add exercises to routine: %w", err))
 	}
 }

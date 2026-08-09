@@ -9,11 +9,11 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/stephenafamo/bob"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/crlssn/getstronger/server/config"
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 )
@@ -94,7 +94,7 @@ func (s *Saga) Signup(ctx context.Context, f func(*connect.Response[apiv1.Signup
 }
 
 func (s *Saga) VerifyEmail(ctx context.Context, f func(*connect.Response[apiv1.VerifyEmailResponse], error)) *Saga {
-	a, err := orm.Auths(orm.AuthWhere.Email.EQ(s.auth.email)).One(ctx, s.db)
+	a, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(s.auth.email)).One(ctx, bob.NewDB(s.db))
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load auth: %w", err))
 		return s
@@ -169,7 +169,7 @@ func (s *Saga) RefreshToken(ctx context.Context, f func(*connect.Response[apiv1.
 }
 
 func (s *Saga) CreateRoutine(ctx context.Context, f func(*connect.Response[apiv1.CreateRoutineResponse], error)) *Saga {
-	exercises, err := orm.Exercises().All(ctx, s.db)
+	exercises, err := models.Exercises.Query().All(ctx, bob.NewDB(s.db))
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load exercises: %w", err))
 		return s
@@ -192,7 +192,7 @@ func (s *Saga) CreateRoutine(ctx context.Context, f func(*connect.Response[apiv1
 }
 
 func (s *Saga) CreateWorkout(ctx context.Context, f func(*connect.Response[apiv1.CreateWorkoutResponse], error)) *Saga {
-	routine, err := orm.Routines(qm.Load(orm.RoutineRels.Exercises)).One(ctx, s.db)
+	routine, err := models.Routines.Query(models.SelectThenLoad.Routine.Exercises()).One(ctx, bob.NewDB(s.db))
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load routines: %w", err))
 		return s
@@ -240,7 +240,7 @@ func (s *Saga) ListRoutines(ctx context.Context, f func(*connect.Response[apiv1.
 }
 
 func (s *Saga) ListWorkouts(ctx context.Context, f func(*connect.Response[apiv1.ListWorkoutsResponse], error)) *Saga {
-	user, err := orm.Users().One(ctx, s.db)
+	user, err := models.Users.Query().One(ctx, bob.NewDB(s.db))
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load user: %w", err))
 		return s
@@ -261,7 +261,7 @@ func (s *Saga) ListWorkouts(ctx context.Context, f func(*connect.Response[apiv1.
 }
 
 func (s *Saga) SearchUsers(ctx context.Context, f func(*connect.Response[apiv1.SearchUsersResponse], error)) *Saga {
-	user, err := orm.Users().One(ctx, s.db)
+	user, err := models.Users.Query().One(ctx, bob.NewDB(s.db))
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load user: %w", err))
 		return s
@@ -304,7 +304,7 @@ func (s *Saga) SetRefreshTokenCookie(cookie string) {
 }
 
 func (s *Saga) GetWorkout(ctx context.Context, f func(*connect.Response[apiv1.GetWorkoutResponse], error)) *Saga {
-	workout, err := orm.Workouts().One(ctx, s.db)
+	workout, err := models.Workouts.Query().One(ctx, bob.NewDB(s.db))
 	if err != nil {
 		f(nil, fmt.Errorf("failed to load workout: %w", err))
 		return s

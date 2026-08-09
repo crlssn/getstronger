@@ -11,7 +11,6 @@ import (
 	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -52,16 +51,16 @@ func TestSeedJaneDoe(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, followsJane)
 
-	exerciseCount, err := orm.Exercises(orm.ExerciseWhere.UserID.EQ(jane.ID)).Count(ctx, c.DB)
+	exerciseCount, err := models.Exercises.Query(models.SelectWhere.Exercises.UserID.EQ(jane.ID)).Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, int64(4), exerciseCount)
 
-	workouts, err := orm.Workouts(orm.WorkoutWhere.UserID.EQ(jane.ID)).All(ctx, c.DB)
+	workouts, err := models.Workouts.Query(models.SelectWhere.Workouts.UserID.EQ(jane.ID)).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Len(t, workouts, 3)
 	for _, workout := range workouts {
 		require.WithinRange(t, workout.FinishedAt, time.Now().UTC().Add(-5*24*time.Hour), time.Now().UTC())
-		sets, setsErr := orm.Sets(orm.SetWhere.WorkoutID.EQ(workout.ID)).All(ctx, c.DB)
+		sets, setsErr := models.Sets.Query(models.SelectWhere.Sets.WorkoutID.EQ(workout.ID)).All(ctx, bob.NewDB(c.DB))
 		require.NoError(t, setsErr)
 		setsByExercise := make(map[string]int)
 		for _, set := range sets {
@@ -73,9 +72,9 @@ func TestSeedJaneDoe(t *testing.T) {
 		}
 	}
 
-	comments, err := orm.WorkoutComments(
-		orm.WorkoutCommentWhere.UserID.EQ(jane.ID),
-	).All(ctx, c.DB)
+	comments, err := models.WorkoutComments.Query(
+		models.SelectWhere.WorkoutComments.UserID.EQ(jane.ID),
+	).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Len(t, comments, 3)
 	johnWorkoutIDs := make(map[string]struct{}, len(johnWorkouts))
@@ -123,10 +122,10 @@ func TestTruncateDatabase(t *testing.T) {
 	userCount, err := models.Users.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Zero(t, userCount)
-	exerciseCount, err := orm.Exercises().Count(ctx, c.DB)
+	exerciseCount, err := models.Exercises.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Zero(t, exerciseCount)
-	workoutCount, err := orm.Workouts().Count(ctx, c.DB)
+	workoutCount, err := models.Workouts.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Zero(t, workoutCount)
 }

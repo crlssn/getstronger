@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
@@ -102,13 +103,13 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 
 		handler.HandlePayload(string(bytes))
 
-		count, err := orm.Notifications(orm.NotificationWhere.UserID.IN(
-			[]string{factory.UUID(0), factory.UUID(1), factory.UUID(2)},
-		)).Count(ctx, c.DB)
+		count, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.In(
+			factory.UUID(0), factory.UUID(1), factory.UUID(2),
+		)).Count(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.Equal(t, 3, int(count))
 
-		exists, err := orm.Notifications(orm.NotificationWhere.UserID.EQ(factory.UUID(3))).Exists(ctx, c.DB)
+		exists, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.EQ(factory.UUID(3))).Exists(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.False(t, exists)
 	})

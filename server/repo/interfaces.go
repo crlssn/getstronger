@@ -7,7 +7,6 @@ import (
 	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
 //go:generate mockgen -package repo -source=interfaces.go -destination=interfaces_mock.go Repo
@@ -50,9 +49,9 @@ type planMethods interface { //nolint:interfacebloat // Plan operations form one
 }
 
 type setMethods interface {
-	ListSets(ctx context.Context, opts ...ListSetsOpt) (orm.SetSlice, error)
-	GetPersonalBests(ctx context.Context, userIDs ...string) (orm.SetSlice, error)
-	GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (orm.SetSlice, error)
+	ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSlice, error)
+	GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error)
+	GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error)
 }
 
 type authMethods interface {
@@ -79,32 +78,32 @@ type traceMethods interface {
 }
 
 type routineMethods interface {
-	GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*orm.Routine, error)
-	ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (orm.RoutineSlice, error)
-	CreateRoutine(ctx context.Context, p CreateRoutineParams) (*orm.Routine, error)
+	GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error)
+	ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error)
+	CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error)
 	DeleteRoutine(ctx context.Context, routineID string) error
 	UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error
-	SetRoutineExercises(ctx context.Context, routine *orm.Routine, exercises orm.ExerciseSlice) error
-	AddExerciseToRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error
-	RemoveExerciseFromRoutine(ctx context.Context, exercise *orm.Exercise, routine *orm.Routine) error
+	SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error
+	AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error
+	RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error
 }
 
 type workoutMethods interface {
-	GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*orm.Workout, error)
-	ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (orm.WorkoutSlice, error)
-	CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*orm.Workout, error)
+	GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.Workout, error)
+	ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (models.WorkoutSlice, error)
+	CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error)
 	DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error
 	UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error
-	GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*orm.WorkoutComment, error)
+	GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*models.WorkoutComment, error)
 	UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error
-	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*orm.WorkoutComment, error)
+	CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error)
 	PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts
 }
 
 type exerciseMethods interface {
-	GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*orm.Exercise, error)
-	ListExercises(ctx context.Context, opts ...ListExercisesOpt) (orm.ExerciseSlice, error)
-	CreateExercise(ctx context.Context, p CreateExerciseParams) (*orm.Exercise, error)
+	GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*models.Exercise, error)
+	ListExercises(ctx context.Context, opts ...ListExercisesOpt) (models.ExerciseSlice, error)
+	CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error)
 	UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error
 	SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error
 }

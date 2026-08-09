@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -45,31 +46,31 @@ func TestFactory_Seed(t *testing.T) {
 		WorkoutCommentCount: 1,
 	})
 
-	exists, err := orm.Auths(orm.AuthWhere.Email.EQ(email)).Exists(ctx, c.DB)
+	exists, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(email)).Exists(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.True(t, exists)
 
-	count, err := orm.Users().Count(ctx, c.DB)
+	count, err := models.Users.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
-	count, err = orm.Exercises().Count(ctx, c.DB)
+	count, err = models.Exercises.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
-	count, err = orm.Routines().Count(ctx, c.DB)
+	count, err = models.Routines.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
-	count, err = orm.Workouts().Count(ctx, c.DB)
+	count, err = models.Workouts.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
-	count, err = orm.Sets().Count(ctx, c.DB)
+	count, err = models.Sets.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
-	count, err = orm.WorkoutComments().Count(ctx, c.DB)
+	count, err = models.WorkoutComments.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
@@ -87,9 +88,9 @@ func TestFactory_Seed(t *testing.T) {
 		WorkoutSetsPerExerciseMax: 6,
 	})
 	require.NotNil(t, rangedUser)
-	rangedWorkout, err := orm.Workouts(orm.WorkoutWhere.UserID.EQ(rangedUser.ID)).One(ctx, c.DB)
+	rangedWorkout, err := models.Workouts.Query(models.SelectWhere.Workouts.UserID.EQ(rangedUser.ID)).One(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
-	rangedSets, err := orm.Sets(orm.SetWhere.WorkoutID.EQ(rangedWorkout.ID)).All(ctx, c.DB)
+	rangedSets, err := models.Sets.Query(models.SelectWhere.Sets.WorkoutID.EQ(rangedWorkout.ID)).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	setsByExercise := make(map[string]int)
 	for _, set := range rangedSets {

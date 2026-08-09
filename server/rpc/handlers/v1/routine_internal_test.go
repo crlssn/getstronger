@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 )
 
 func TestReconcileRoutineExercises(t *testing.T) {
 	t.Parallel()
 
-	exercises := orm.ExerciseSlice{
+	exercises := models.ExerciseSlice{
 		{ID: "first", Title: "First"},
 		{ID: "second", Title: "Second"},
 		{ID: "third", Title: "Third"},

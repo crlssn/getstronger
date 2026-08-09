@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 )
 
-func (f *Factory) NewAuthSlice(count int, opts ...AuthOpt) orm.AuthSlice {
-	slice := make(orm.AuthSlice, 0, count)
+func (f *Factory) NewAuthSlice(count int, opts ...AuthOpt) models.AuthSlice {
+	slice := make(models.AuthSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewAuth(opts...))
 	}
@@ -22,79 +24,73 @@ func (f *Factory) NewAuthSlice(count int, opts ...AuthOpt) orm.AuthSlice {
 	return slice
 }
 
-type AuthOpt func(event *orm.Auth)
+type AuthOpt func(event *models.AuthSetter)
 
-func (f *Factory) NewAuth(opts ...AuthOpt) *orm.Auth {
-	m := &orm.Auth{
-		ID:                           uuid.NewString(),
-		Email:                        fmt.Sprintf("%s-%s", uuid.NewString(), f.Faker.Email()),
-		Password:                     nil,
-		RefreshToken:                 null.String{},
-		CreatedAt:                    time.Time{},
-		EmailVerified:                false,
-		EmailToken:                   "",
-		PasswordResetToken:           null.String{},
-		PasswordResetTokenValidUntil: null.Time{},
-	}
-
-	if m.Password == nil {
-		m.Password = repo.MustHashPassword("password")
+func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth {
+	m := &models.AuthSetter{
+		ID:    omit.From(uuid.NewString()),
+		Email: omit.From(fmt.Sprintf("%s-%s", uuid.NewString(), f.Faker.Email())),
 	}
 
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.AuthColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
+	if m.Password.IsUnset() {
+		m.Password = omit.From(repo.MustHashPassword("password"))
+	}
+
+	auth, err := models.Auths.Insert(m,
+		im.OnConflict(models.Auths.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(m.SetColumns()...)),
+	).One(context.Background(), bob.NewDB(f.db))
+	if err != nil {
 		panic(fmt.Errorf("failed to insert user: %w", err))
 	}
 
-	return m
+	return auth
 }
 
 func AuthID(id string) AuthOpt {
-	return func(m *orm.Auth) {
-		m.ID = id
+	return func(m *models.AuthSetter) {
+		m.ID = omit.From(id)
 	}
 }
 
 func AuthEmail(email string) AuthOpt {
-	return func(m *orm.Auth) {
-		m.Email = email
+	return func(m *models.AuthSetter) {
+		m.Email = omit.From(email)
 	}
 }
 
 func AuthEmailToken(token string) AuthOpt {
-	return func(m *orm.Auth) {
-		m.EmailToken = token
+	return func(m *models.AuthSetter) {
+		m.EmailToken = omit.From(token)
 	}
 }
 
 func AuthEmailVerified() AuthOpt {
-	return func(m *orm.Auth) {
-		m.EmailVerified = true
+	return func(m *models.AuthSetter) {
+		m.EmailVerified = omit.From(true)
 	}
 }
 
 func AuthRefreshToken(token string) AuthOpt {
-	return func(m *orm.Auth) {
-		m.RefreshToken = null.StringFrom(token)
+	return func(m *models.AuthSetter) {
+		m.RefreshToken = omitnull.From(token)
 	}
 }
 
 func AuthPasswordResetToken(token string, ttl time.Duration) AuthOpt {
-	return func(m *orm.Auth) {
-		m.PasswordResetToken = null.StringFrom(token)
+	return func(m *models.AuthSetter) {
+		m.PasswordResetToken = omitnull.From(token)
 		// Truncate to microseconds to unify precision across different databases.
-		m.PasswordResetTokenValidUntil = null.TimeFrom(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))
+		m.PasswordResetTokenValidUntil = omitnull.From(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))
 	}
 }
 
 func AuthPassword(password string) AuthOpt {
-	return func(m *orm.Auth) {
-		m.Password = repo.MustHashPassword(password)
+	return func(m *models.AuthSetter) {
+		m.Password = omit.From(repo.MustHashPassword(password))
 	}
 }

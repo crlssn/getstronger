@@ -12,7 +12,7 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -79,7 +79,7 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	orderedExercises, err := reconcileRoutineExercises(routine.R.GetExercises(), routine.ExerciseOrder)
+	orderedExercises, err := reconcileRoutineExercises(routine.R.Exercises, routine.ExerciseOrder.Val)
 	if err != nil {
 		log.Error("unmarshal exercise order failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -213,7 +213,7 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(routines, limit, func(routine *orm.Routine) time.Time {
+	pagination, err := repo.PaginateSlice(routines, limit, func(routine *models.Routine) time.Time {
 		return routine.CreatedAt
 	})
 	if err != nil {
@@ -447,13 +447,13 @@ func startOfWeek(value time.Time) time.Time {
 	return time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
 }
 
-func dashboardNextRoutine(activePlan *repo.TrainingPlan, routines orm.RoutineSlice, preferredRoutineID string) *orm.Routine {
+func dashboardNextRoutine(activePlan *repo.TrainingPlan, routines models.RoutineSlice, preferredRoutineID string) *models.Routine {
 	if activePlan != nil && activePlan.CurrentPosition >= 0 && activePlan.CurrentPosition < len(activePlan.Routines) {
 		return activePlan.Routines[activePlan.CurrentPosition]
 	}
 
 	if preferredRoutineID != "" {
-		index := slices.IndexFunc(routines, func(routine *orm.Routine) bool {
+		index := slices.IndexFunc(routines, func(routine *models.Routine) bool {
 			return routine.ID == preferredRoutineID
 		})
 		if index >= 0 {
@@ -468,7 +468,7 @@ func dashboardNextRoutine(activePlan *repo.TrainingPlan, routines orm.RoutineSli
 	return nil
 }
 
-func summarizeDashboardWeek(workouts orm.WorkoutSlice, weekStart time.Time) (int32, float64) {
+func summarizeDashboardWeek(workouts models.WorkoutSlice, weekStart time.Time) (int32, float64) {
 	var workoutCount int32
 	var volume float64
 	for _, workout := range workouts {
@@ -476,7 +476,7 @@ func summarizeDashboardWeek(workouts orm.WorkoutSlice, weekStart time.Time) (int
 			continue
 		}
 		workoutCount++
-		for _, set := range workout.R.GetSets() {
+		for _, set := range workout.R.Sets {
 			volume += set.Weight * float64(set.Reps)
 		}
 	}
@@ -487,7 +487,7 @@ func summarizeDashboardWeek(workouts orm.WorkoutSlice, weekStart time.Time) (int
 // reconcileRoutineExercises treats the relationship table as the source of truth and the
 // exercise_order column as an ordering hint. Older routines can have valid relationships with an
 // empty or incomplete order value; appending any omitted exercises keeps those routines usable.
-func reconcileRoutineExercises(exercises orm.ExerciseSlice, encodedOrder []byte) (orm.ExerciseSlice, error) {
+func reconcileRoutineExercises(exercises models.ExerciseSlice, encodedOrder []byte) (models.ExerciseSlice, error) {
 	var exerciseIDs []string
 	if len(encodedOrder) > 0 {
 		if err := json.Unmarshal(encodedOrder, &exerciseIDs); err != nil {
@@ -495,12 +495,12 @@ func reconcileRoutineExercises(exercises orm.ExerciseSlice, encodedOrder []byte)
 		}
 	}
 
-	exercisesByID := make(map[string]*orm.Exercise, len(exercises))
+	exercisesByID := make(map[string]*models.Exercise, len(exercises))
 	for _, exercise := range exercises {
 		exercisesByID[exercise.ID] = exercise
 	}
 
-	ordered := make(orm.ExerciseSlice, 0, len(exercises))
+	ordered := make(models.ExerciseSlice, 0, len(exercises))
 	seen := make(map[string]struct{}, len(exercises))
 	for _, exerciseID := range exerciseIDs {
 		exercise, ok := exercisesByID[exerciseID]
