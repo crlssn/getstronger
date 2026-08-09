@@ -1,8 +1,22 @@
+import type { Workout } from '@/types/workout'
+
 import { computed } from 'vue'
 import { DateTime } from 'luxon'
 
 import { useDashboardStore } from '@/stores/dashboard'
 import { useWorkoutStore } from '@/stores/workout'
+
+const hasEnteredValue = (value: unknown) =>
+  value !== undefined && value !== null && (typeof value !== 'string' || value.trim().length > 0)
+
+// Opening a routine stamps startedAt before anything is logged, so a workout
+// only counts as resumable once it holds real progress.
+const hasProgress = (workout: Workout) =>
+  Object.values(workout.exerciseSets ?? {}).some((sets) =>
+    sets.some((set) => hasEnteredValue(set.weight) || hasEnteredValue(set.reps)),
+  ) ||
+  Boolean(workout.note?.trim()) ||
+  Boolean(workout.addedExercises?.length)
 
 // Shared view of the locally persisted in-progress workout.
 export default function useActiveWorkout() {
@@ -12,7 +26,7 @@ export default function useActiveWorkout() {
   const savedWorkout = computed(
     () =>
       Object.entries(workoutStore.workouts)
-        .filter(([, workout]) => workout.startedAt)
+        .filter(([, workout]) => workout.startedAt && hasProgress(workout))
         .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0],
   )
 

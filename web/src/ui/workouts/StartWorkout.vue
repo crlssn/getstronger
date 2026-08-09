@@ -26,6 +26,7 @@ import { useAlertStore } from '@/stores/alerts'
 import { useWorkoutStore } from '@/stores/workout'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import { useStreakStore } from '@/stores/streak'
 import { createWorkout, getPreviousWorkoutSets, getRoutine, listExercises } from '@/http/requests'
 import { isNumber } from '@/utils/numbers'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
@@ -60,11 +61,13 @@ const workoutStore = useWorkoutStore()
 const dashboardStore = useDashboardStore()
 const alertStore = useAlertStore()
 const pageTitleStore = usePageTitleStore()
+const streakStore = useStreakStore()
 
 watch(note, (value) => workoutStore.setNote(routineID, value))
 
 let elapsedInterval: ReturnType<typeof setInterval>
 let restInterval: ReturnType<typeof setInterval> | undefined
+let audioContext: AudioContext | undefined
 
 onMounted(async () => {
   await initializeRoutine()
@@ -76,6 +79,10 @@ onMounted(async () => {
 onUnmounted(() => {
   clearInterval(elapsedInterval)
   if (restInterval) clearInterval(restInterval)
+  // Browsers cap concurrent AudioContexts; release ours so later sessions
+  // can still create one.
+  void audioContext?.close().catch(() => undefined)
+  audioContext = undefined
 })
 
 const currentExercise = computed(() => routine.value?.exercises[activeExerciseIndex.value])
@@ -326,8 +333,6 @@ const deleteWorkoutSet = (exerciseID: string, index: number) => {
   })
 }
 
-let audioContext: AudioContext | undefined
-
 // Create/resume the context during a user gesture so browser autoplay
 // policies allow the beep when the timer later hits zero.
 const prepareRestSound = () => {
@@ -469,6 +474,7 @@ const openSavedWorkout = async (workoutId: string) => {
 
   workoutStore.removeWorkout(routineID)
   void dashboardStore.load()
+  streakStore.reset()
   return true
 }
 

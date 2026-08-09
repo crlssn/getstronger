@@ -106,6 +106,7 @@ const navigation = computed(() => [
         :to="item.href"
         :class="{ active: item.active }"
         :aria-current="item.active ? 'page' : undefined"
+        :aria-label="item.timer ? item.name : undefined"
       >
         <span class="nav-icon">
           <component :is="item.active ? item.iconActive : item.icon" />
@@ -113,10 +114,12 @@ const navigation = computed(() => [
             {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
         </span>
-        <span v-if="item.timer" class="timer-badge" aria-label="Active workout duration">
+        <!-- The link keeps its name via aria-label; the ticking duration is
+             decorative so it does not re-announce every second. -->
+        <span v-if="item.timer" class="timer-badge" aria-hidden="true">
           {{ item.timer }}
         </span>
-        <span v-else>{{ item.name }}</span>
+        <span v-else class="nav-label">{{ item.name }}</span>
       </RouterLink>
     </div>
   </nav>
@@ -148,7 +151,7 @@ const navigation = computed(() => [
 .timer-badge {
   @apply whitespace-nowrap rounded-full bg-stone-900 px-2 py-0.5 font-mono text-[0.65rem] font-semibold leading-none text-white;
 }
-.bottom-nav a > span:last-child {
+.nav-label {
   @apply truncate;
 }
 @media (min-width: 1024px) {
