@@ -173,7 +173,10 @@ const postComment = async () => {
   </article>
 
   <div v-else-if="!workoutDeleted" class="workout-detail">
-    <section class="summary-card">
+    <section
+      class="summary-card detail-summary-card"
+      :class="{ 'detail-summary-card--personal-best': personalBestCount > 0 }"
+    >
       <header v-if="!isOwner" class="author-row">
         <RouterLink :to="`/users/${workout.user?.id}`" class="avatar large">{{
           initials
@@ -190,8 +193,16 @@ const postComment = async () => {
       </header>
 
       <div class="workout-heading">
-        <p class="eyebrow">Completed workout</p>
-        <h1>{{ workout.name }}</h1>
+        <div class="workout-heading-copy">
+          <div>
+            <p class="eyebrow">Completed workout</p>
+            <h1>{{ workout.name }}</h1>
+          </div>
+          <span v-if="personalBestCount > 0" class="personal-best-badge">
+            <TrophyIcon />
+            {{ personalBestCount === 1 ? 'New PR' : `${personalBestCount} new PRs` }}
+          </span>
+        </div>
       </div>
 
       <div class="metric-grid">
@@ -436,14 +447,25 @@ const postComment = async () => {
 .feed-summary-card--personal-best {
   @apply border-gold-400 shadow-md;
 }
+.detail-summary-card--personal-best {
+  @apply border-gold-400 shadow-md;
+}
 .feed-summary-card--personal-best .workout-heading {
   @apply border-champagne-300 bg-champagne-100;
+  box-shadow: inset 4px 0 0 theme('colors.gold.500');
+}
+.detail-summary-card--personal-best .workout-heading {
+  @apply border-y border-champagne-300 bg-champagne-100 text-slate-950;
+  background-image: none;
   box-shadow: inset 4px 0 0 theme('colors.gold.500');
 }
 .feed-summary-card .workout-heading .eyebrow {
   @apply text-indigo-600;
 }
 .feed-summary-card--personal-best .workout-heading .eyebrow {
+  @apply text-gold-700;
+}
+.detail-summary-card--personal-best .workout-heading .eyebrow {
   @apply text-gold-700;
 }
 .workout-heading-copy {
@@ -455,7 +477,8 @@ const postComment = async () => {
 .personal-best-badge svg {
   @apply size-4;
 }
-.feed-summary-card--personal-best .metric-icon.amber {
+.feed-summary-card--personal-best .metric-icon.amber,
+.detail-summary-card--personal-best .metric-icon.amber {
   @apply bg-champagne-200 text-gold-700;
 }
 .feed-card-link {
