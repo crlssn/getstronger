@@ -182,10 +182,10 @@ func (mr *MockRepoMockRecorder) CreateRoutine(ctx, p any) *gomock.Call {
 }
 
 // CreateUser mocks base method.
-func (m *MockRepo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
+func (m *MockRepo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, p)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -418,14 +418,14 @@ func (mr *MockRepoMockRecorder) GetRoutine(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetUser mocks base method.
-func (m *MockRepo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
+func (m *MockRepo) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetUser", varargs...)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -478,7 +478,7 @@ func (mr *MockRepoMockRecorder) GetWorkoutComment(ctx any, opts ...any) *gomock.
 }
 
 // IsUserFollowedByUserID mocks base method.
-func (m *MockRepo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
+func (m *MockRepo) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsUserFollowedByUserID", ctx, user, userID)
 	ret0, _ := ret[0].(bool)
@@ -513,14 +513,14 @@ func (mr *MockRepoMockRecorder) ListExercises(ctx any, opts ...any) *gomock.Call
 }
 
 // ListFollowees mocks base method.
-func (m *MockRepo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
+func (m *MockRepo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowees", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -533,14 +533,14 @@ func (mr *MockRepoMockRecorder) ListFollowees(ctx, userID any, opts ...any) *gom
 }
 
 // ListFollowers mocks base method.
-func (m *MockRepo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (orm.UserSlice, error) {
+func (m *MockRepo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -628,14 +628,14 @@ func (mr *MockRepoMockRecorder) ListSets(ctx any, opts ...any) *gomock.Call {
 }
 
 // ListUsers mocks base method.
-func (m *MockRepo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
+func (m *MockRepo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListUsers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1132,10 +1132,10 @@ func (mr *MockTxMockRecorder) CreateRoutine(ctx, p any) *gomock.Call {
 }
 
 // CreateUser mocks base method.
-func (m *MockTx) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
+func (m *MockTx) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, p)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1368,14 +1368,14 @@ func (mr *MockTxMockRecorder) GetRoutine(ctx any, opts ...any) *gomock.Call {
 }
 
 // GetUser mocks base method.
-func (m *MockTx) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
+func (m *MockTx) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetUser", varargs...)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1428,7 +1428,7 @@ func (mr *MockTxMockRecorder) GetWorkoutComment(ctx any, opts ...any) *gomock.Ca
 }
 
 // IsUserFollowedByUserID mocks base method.
-func (m *MockTx) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
+func (m *MockTx) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsUserFollowedByUserID", ctx, user, userID)
 	ret0, _ := ret[0].(bool)
@@ -1463,14 +1463,14 @@ func (mr *MockTxMockRecorder) ListExercises(ctx any, opts ...any) *gomock.Call {
 }
 
 // ListFollowees mocks base method.
-func (m *MockTx) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
+func (m *MockTx) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowees", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1483,14 +1483,14 @@ func (mr *MockTxMockRecorder) ListFollowees(ctx, userID any, opts ...any) *gomoc
 }
 
 // ListFollowers mocks base method.
-func (m *MockTx) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (orm.UserSlice, error) {
+func (m *MockTx) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1578,14 +1578,14 @@ func (mr *MockTxMockRecorder) ListSets(ctx any, opts ...any) *gomock.Call {
 }
 
 // ListUsers mocks base method.
-func (m *MockTx) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
+func (m *MockTx) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListUsers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2096,10 +2096,10 @@ func (mr *MockmethodsMockRecorder) CreateRoutine(ctx, p any) *gomock.Call {
 }
 
 // CreateUser mocks base method.
-func (m *Mockmethods) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
+func (m *Mockmethods) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, p)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2332,14 +2332,14 @@ func (mr *MockmethodsMockRecorder) GetRoutine(ctx any, opts ...any) *gomock.Call
 }
 
 // GetUser mocks base method.
-func (m *Mockmethods) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
+func (m *Mockmethods) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetUser", varargs...)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2392,7 +2392,7 @@ func (mr *MockmethodsMockRecorder) GetWorkoutComment(ctx any, opts ...any) *gomo
 }
 
 // IsUserFollowedByUserID mocks base method.
-func (m *Mockmethods) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
+func (m *Mockmethods) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsUserFollowedByUserID", ctx, user, userID)
 	ret0, _ := ret[0].(bool)
@@ -2427,14 +2427,14 @@ func (mr *MockmethodsMockRecorder) ListExercises(ctx any, opts ...any) *gomock.C
 }
 
 // ListFollowees mocks base method.
-func (m *Mockmethods) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
+func (m *Mockmethods) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowees", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2447,14 +2447,14 @@ func (mr *MockmethodsMockRecorder) ListFollowees(ctx, userID any, opts ...any) *
 }
 
 // ListFollowers mocks base method.
-func (m *Mockmethods) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (orm.UserSlice, error) {
+func (m *Mockmethods) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2542,14 +2542,14 @@ func (mr *MockmethodsMockRecorder) ListSets(ctx any, opts ...any) *gomock.Call {
 }
 
 // ListUsers mocks base method.
-func (m *Mockmethods) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
+func (m *Mockmethods) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListUsers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3266,10 +3266,10 @@ func (m *MockuserMethods) EXPECT() *MockuserMethodsMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockuserMethods) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
+func (m *MockuserMethods) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, p)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3295,14 +3295,14 @@ func (mr *MockuserMethodsMockRecorder) Follow(ctx, p any) *gomock.Call {
 }
 
 // GetUser mocks base method.
-func (m *MockuserMethods) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
+func (m *MockuserMethods) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetUser", varargs...)
-	ret0, _ := ret[0].(*orm.User)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3315,7 +3315,7 @@ func (mr *MockuserMethodsMockRecorder) GetUser(ctx any, opts ...any) *gomock.Cal
 }
 
 // IsUserFollowedByUserID mocks base method.
-func (m *MockuserMethods) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
+func (m *MockuserMethods) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsUserFollowedByUserID", ctx, user, userID)
 	ret0, _ := ret[0].(bool)
@@ -3330,14 +3330,14 @@ func (mr *MockuserMethodsMockRecorder) IsUserFollowedByUserID(ctx, user, userID 
 }
 
 // ListFollowees mocks base method.
-func (m *MockuserMethods) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
+func (m *MockuserMethods) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowees", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3350,14 +3350,14 @@ func (mr *MockuserMethodsMockRecorder) ListFollowees(ctx, userID any, opts ...an
 }
 
 // ListFollowers mocks base method.
-func (m *MockuserMethods) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (orm.UserSlice, error) {
+func (m *MockuserMethods) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, userID}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListFollowers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3370,14 +3370,14 @@ func (mr *MockuserMethodsMockRecorder) ListFollowers(ctx, userID any, opts ...an
 }
 
 // ListUsers mocks base method.
-func (m *MockuserMethods) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
+func (m *MockuserMethods) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListUsers", varargs...)
-	ret0, _ := ret[0].(orm.UserSlice)
+	ret0, _ := ret[0].(models.UserSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -455,7 +456,7 @@ func (s *repoSuite) TestRefreshTokenExists() {
 
 func (s *repoSuite) TestCreateUser() {
 	type expected struct {
-		user *orm.User
+		user *models.User
 		err  error
 	}
 
@@ -476,7 +477,7 @@ func (s *repoSuite) TestCreateUser() {
 			},
 			init: func(_ test) {},
 			expected: expected{
-				user: &orm.User{
+				user: &models.User{
 					FirstName: "John",
 					LastName:  "Doe",
 				},
@@ -493,7 +494,7 @@ func (s *repoSuite) TestCreateUser() {
 			init: func(_ test) {},
 			expected: expected{
 				user: nil,
-				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: invalid input syntax for type uuid: \"\" (SQLSTATE 22P02)"),
+				err:  fmt.Errorf("user insert: ERROR: invalid input syntax for type uuid: \"\" (SQLSTATE 22P02)"),
 			},
 		},
 		{
@@ -506,7 +507,7 @@ func (s *repoSuite) TestCreateUser() {
 			init: func(_ test) {},
 			expected: expected{
 				user: nil,
-				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: insert or update on table \"users\" violates foreign key constraint \"users_auth_id_fkey\" (SQLSTATE 23503)"),
+				err:  fmt.Errorf("user insert: ERROR: insert or update on table \"users\" violates foreign key constraint \"users_auth_id_fkey\" (SQLSTATE 23503)"),
 			},
 		},
 	}

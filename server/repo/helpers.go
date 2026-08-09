@@ -16,8 +16,8 @@ import (
 )
 
 type ModelItem interface {
-	*orm.Workout | *orm.Exercise | *orm.User | *orm.Routine | *orm.Set | *orm.WorkoutComment | *orm.Notification |
-		*models.Auth
+	*orm.Workout | *orm.Exercise | *orm.Routine | *orm.Set | *orm.WorkoutComment | *orm.Notification |
+		*models.Auth | *models.User
 }
 
 type ModelSlice[T any] interface {

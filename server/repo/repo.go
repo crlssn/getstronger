@@ -12,6 +12,7 @@ import (
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -224,13 +225,13 @@ type CreateUserParams struct {
 	LastName  string
 }
 
-func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*orm.User, error) {
-	user := &orm.User{
-		AuthID:    p.AuthID,
-		FirstName: p.FirstName,
-		LastName:  p.LastName,
-	}
-	if err := user.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
+	user, err := models.Users.Insert(&models.UserSetter{
+		AuthID:    omit.From(p.AuthID),
+		FirstName: omit.From(p.FirstName),
+		LastName:  omit.From(p.LastName),
+	}).One(ctx, r.bobExec())
+	if err != nil {
 		return nil, fmt.Errorf("user insert: %w", err)
 	}
 
@@ -1055,8 +1056,10 @@ type FollowParams struct {
 }
 
 func (r *repo) Follow(ctx context.Context, p FollowParams) error {
-	user := &orm.User{ID: p.FollowerID}
-	if err := user.AddFolloweeUsers(ctx, r.executor(), false, &orm.User{ID: p.FolloweeID}); err != nil {
+	if _, err := models.Followers.Insert(&models.FollowerSetter{
+		FollowerID: omit.From(p.FollowerID),
+		FolloweeID: omit.From(p.FolloweeID),
+	}).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("follow add: %w", err)
 	}
 
@@ -1069,24 +1072,45 @@ type UnfollowParams struct {
 }
 
 func (r *repo) Unfollow(ctx context.Context, p UnfollowParams) error {
-	user := &orm.User{ID: p.FollowerID}
-	if err := user.RemoveFolloweeUsers(ctx, r.executor(), &orm.User{ID: p.FolloweeID}); err != nil {
-		return fmt.Errorf("follow add: %w", err)
+	if _, err := models.Followers.Delete(
+		models.DeleteWhere.Followers.FollowerID.EQ(p.FollowerID),
+		models.DeleteWhere.Followers.FolloweeID.EQ(p.FolloweeID),
+	).Exec(ctx, r.bobExec()); err != nil {
+		return fmt.Errorf("follow remove: %w", err)
 	}
 
 	return nil
 }
 
-type ListFollowersOpt func() qm.QueryMod
+// followerIDsOf selects the users following userID, and followeeIDsOf the users
+// they follow. Bob collapses both foreign keys of the self-referencing
+// followers table into one relationship, so each direction is spelled out.
+func followerIDsOf(userID string) bob.Expression {
+	return psql.Select(
+		sm.Columns(models.Followers.Columns.FollowerID),
+		sm.From(models.Followers.NameExpr()),
+		sm.Where(models.Followers.Columns.FolloweeID.EQ(psql.Arg(userID))),
+	)
+}
 
-func (r *repo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (orm.UserSlice, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
+func followeeIDsOf(userID string) bob.Expression {
+	return psql.Select(
+		sm.Columns(models.Followers.Columns.FolloweeID),
+		sm.From(models.Followers.NameExpr()),
+		sm.Where(models.Followers.Columns.FollowerID.EQ(psql.Arg(userID))),
+	)
+}
+
+type ListFollowersOpt func() bob.Mod[*dialect.SelectQuery]
+
+func (r *repo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts)+1)
+	query = append(query, sm.Where(models.Users.Columns.ID.In(followerIDsOf(userID))))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	user := &orm.User{ID: userID}
-	users, err := user.FollowerUsers(query...).All(ctx, r.executor())
+	users, err := models.Users.Query(query...).All(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("users fetch: %w", err)
 	}
@@ -1094,16 +1118,16 @@ func (r *repo) ListFollowers(ctx context.Context, userID string, opts ...ListFol
 	return users, nil
 }
 
-type ListFolloweesOpt func() qm.QueryMod
+type ListFolloweesOpt func() bob.Mod[*dialect.SelectQuery]
 
-func (r *repo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (orm.UserSlice, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
+func (r *repo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts)+1)
+	query = append(query, sm.Where(models.Users.Columns.ID.In(followeeIDsOf(userID))))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	user := &orm.User{ID: userID}
-	users, err := user.FolloweeUsers(query...).All(ctx, r.executor())
+	users, err := models.Users.Query(query...).All(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("users fetch: %w", err)
 	}
@@ -1111,27 +1135,27 @@ func (r *repo) ListFollowees(ctx context.Context, userID string, opts ...ListFol
 	return users, nil
 }
 
-type GetUserOpt func() qm.QueryMod
+type GetUserOpt func() bob.Mod[*dialect.SelectQuery]
 
 func GetUserWithID(id string) GetUserOpt {
-	return func() qm.QueryMod {
-		return orm.UserWhere.ID.EQ(id)
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Users.ID.EQ(id)
 	}
 }
 
 func GetUserLoadAuth() GetUserOpt {
-	return func() qm.QueryMod {
-		return qm.Load(orm.UserRels.Auth)
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.Preload.User.Auth()
 	}
 }
 
-func (r *repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
+func (r *repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, error) {
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
 
-	user, err := orm.Users(query...).One(ctx, r.executor())
+	user, err := models.Users.Query(query...).One(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("user fetch: %w", err)
 	}
@@ -1139,40 +1163,40 @@ func (r *repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*orm.User, erro
 	return user, nil
 }
 
-type ListUsersOpt func() []qm.QueryMod
+type ListUsersOpt func() []bob.Mod[*dialect.SelectQuery]
 
 func ListUsersWithIDs(ids []string) ListUsersOpt {
-	return func() []qm.QueryMod {
-		return []qm.QueryMod{
-			orm.UserWhere.ID.IN(ids),
+	return func() []bob.Mod[*dialect.SelectQuery] {
+		return []bob.Mod[*dialect.SelectQuery]{
+			models.SelectWhere.Users.ID.In(ids...),
 		}
 	}
 }
 
 func ListUsersWithNameMatching(query string) ListUsersOpt {
-	return func() []qm.QueryMod {
-		return []qm.QueryMod{
-			orm.UserWhere.FullNameSearch.LIKE(fmt.Sprintf("%%%s%%", strings.ToLower(query))),
-			qm.OrderBy(fmt.Sprintf("similarity(full_name_search, '%s') DESC", query)),
+	return func() []bob.Mod[*dialect.SelectQuery] {
+		return []bob.Mod[*dialect.SelectQuery]{
+			models.SelectWhere.Users.FullNameSearch.Like(fmt.Sprintf("%%%s%%", strings.ToLower(query))),
+			sm.OrderBy(psql.F("similarity", models.Users.Columns.FullNameSearch, psql.Arg(query))).Desc(),
 		}
 	}
 }
 
 func ListUsersWithLimit(limit int) ListUsersOpt {
-	return func() []qm.QueryMod {
-		return []qm.QueryMod{
-			qm.Limit(limit),
+	return func() []bob.Mod[*dialect.SelectQuery] {
+		return []bob.Mod[*dialect.SelectQuery]{
+			sm.Limit(limit),
 		}
 	}
 }
 
-func (r *repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (orm.UserSlice, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
+func (r *repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt()...)
 	}
 
-	users, err := orm.Users(query...).All(ctx, r.executor())
+	users, err := models.Users.Query(query...).All(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("users fetch: %w", err)
 	}
@@ -1403,8 +1427,11 @@ func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID string) error
 	return nil
 }
 
-func (r *repo) IsUserFollowedByUserID(ctx context.Context, user *orm.User, userID string) (bool, error) {
-	exists, err := user.FollowerUsers(orm.UserWhere.ID.EQ(userID)).Exists(ctx, r.executor())
+func (r *repo) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
+	exists, err := models.Followers.Query(
+		models.SelectWhere.Followers.FolloweeID.EQ(user.ID),
+		models.SelectWhere.Followers.FollowerID.EQ(userID),
+	).Exists(ctx, r.bobExec())
 	if err != nil {
 		return false, fmt.Errorf("user exists check: %w", err)
 	}

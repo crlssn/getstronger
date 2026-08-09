@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
@@ -51,7 +52,24 @@ func UserFollowed(followed bool) UserOpt {
 	}
 }
 
-func User(user *orm.User, opts ...UserOpt) *apiv1.User {
+// userFromORM adapts a user still preloaded by SQLBoiler for the Bob-based
+// parser. Remove it once workouts and comments move over; the relations it
+// covers never carry a preloaded auth, so a field copy is enough.
+func userFromORM(user *orm.User) *models.User {
+	if user == nil {
+		return nil
+	}
+
+	return &models.User{
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		CreatedAt: user.CreatedAt,
+		AuthID:    user.AuthID,
+	}
+}
+
+func User(user *models.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
 		Id:        user.ID,
 		FirstName: user.FirstName,
@@ -60,10 +78,8 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 		Email:     "",
 	}
 
-	if user.R != nil {
-		if user.R.Auth != nil {
-			u.Email = user.R.GetAuth().Email
-		}
+	if user.R.Auth != nil {
+		u.Email = user.R.Auth.Email
 	}
 
 	for _, opt := range opts {
@@ -73,7 +89,7 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 	return u
 }
 
-func UserSlice(users orm.UserSlice) []*apiv1.User {
+func UserSlice(users models.UserSlice) []*apiv1.User {
 	return parseWithEmptyOpts(users, User)
 }
 
@@ -154,7 +170,7 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 
 	if workout.R != nil {
 		if workout.R.User != nil {
-			w.User = User(workout.R.GetUser())
+			w.User = User(userFromORM(workout.R.GetUser()))
 		}
 
 		for _, comment := range workout.R.GetWorkoutComments() {
@@ -205,7 +221,7 @@ func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
 	}
 
 	if comment.R.User != nil {
-		c.User = User(comment.R.GetUser())
+		c.User = User(userFromORM(comment.R.GetUser()))
 	}
 
 	return c
@@ -299,7 +315,7 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 
 type NotificationOpt func(*apiv1.Notification)
 
-func NotificationActor(nType orm.NotificationType, actor *orm.User) NotificationOpt {
+func NotificationActor(nType orm.NotificationType, actor *models.User) NotificationOpt {
 	return func(n *apiv1.Notification) {
 		if actor == nil {
 			return
@@ -364,8 +380,8 @@ func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv
 	return n
 }
 
-func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
-	mapActors := make(map[string]*orm.User)
+func NotificationSlice(notifications orm.NotificationSlice, actors models.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
+	mapActors := make(map[string]*models.User)
 	for _, a := range actors {
 		mapActors[a.ID] = a
 	}

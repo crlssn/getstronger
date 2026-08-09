@@ -8,6 +8,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -31,14 +34,21 @@ func TestSeedJaneDoe(t *testing.T) {
 
 	seedJaneDoe(c.DB, f, john, "password")
 
-	janeAuth, err := orm.Auths(orm.AuthWhere.Email.EQ("jane@doe.com")).One(ctx, c.DB)
+	janeAuth, err := models.Auths.Query(
+		models.SelectWhere.Auths.Email.EQ("jane@doe.com"),
+	).One(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
-	jane, err := orm.Users(orm.UserWhere.AuthID.EQ(janeAuth.ID)).One(ctx, c.DB)
+	jane, err := models.Users.Query(
+		models.SelectWhere.Users.AuthID.EQ(janeAuth.ID),
+	).One(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, "Jane", jane.FirstName)
 	require.Equal(t, "Doe", jane.LastName)
 
-	followsJane, err := john.FolloweeUsers(orm.UserWhere.ID.EQ(jane.ID)).Exists(ctx, c.DB)
+	followsJane, err := models.Followers.Query(
+		models.SelectWhere.Followers.FollowerID.EQ(john.ID),
+		models.SelectWhere.Followers.FolloweeID.EQ(jane.ID),
+	).Exists(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.True(t, followsJane)
 
@@ -110,7 +120,7 @@ func TestTruncateDatabase(t *testing.T) {
 
 	require.NoError(t, truncateDatabase(ctx, c.DB))
 
-	userCount, err := orm.Users().Count(ctx, c.DB)
+	userCount, err := models.Users.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Zero(t, userCount)
 	exerciseCount, err := orm.Exercises().Count(ctx, c.DB)

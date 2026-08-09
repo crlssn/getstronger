@@ -11,8 +11,12 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/aarondl/opt/omit"
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/db"
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -108,7 +112,7 @@ END $$;`
 	return nil
 }
 
-func seedJaneDoe(database *sql.DB, f *factory.Factory, john *orm.User, password string) {
+func seedJaneDoe(database *sql.DB, f *factory.Factory, john *models.User, password string) {
 	auth := f.NewAuth(
 		factory.AuthEmailVerified(),
 		factory.AuthEmail("jane@doe.com"),
@@ -120,7 +124,10 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, john *orm.User, password 
 		factory.UserLastName("Doe"),
 	)
 
-	if err := john.AddFolloweeUsers(context.Background(), database, false, jane); err != nil {
+	if _, err := models.Followers.Insert(&models.FollowerSetter{
+		FollowerID: omit.From(john.ID),
+		FolloweeID: omit.From(jane.ID),
+	}).Exec(context.Background(), bob.NewDB(database)); err != nil {
 		panic(fmt.Errorf("follow operation from John Doe to Jane Doe: %w", err))
 	}
 
@@ -232,7 +239,7 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, john *orm.User, password 
 	seedJaneComments(database, f, john, jane, now)
 }
 
-func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *orm.User, now time.Time) {
+func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.User, now time.Time) {
 	johnWorkouts, err := orm.Workouts(
 		orm.WorkoutWhere.UserID.EQ(john.ID),
 	).All(context.Background(), database)

@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
@@ -76,7 +77,7 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(users, limit, func(user *orm.User) time.Time {
+	pagination, err := repo.PaginateSlice(users, limit, func(user *models.User) time.Time {
 		return user.CreatedAt
 	})
 	if err != nil {

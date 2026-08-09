@@ -10,6 +10,7 @@ import (
 
 	"github.com/brianvoe/gofakeit/v7"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 )
 
@@ -47,8 +48,8 @@ type SeedParams struct {
 	WorkoutCommentCount       int
 }
 
-func (f *Factory) Seed(p SeedParams) *orm.User {
-	var primaryUser *orm.User
+func (f *Factory) Seed(p SeedParams) *models.User {
+	var primaryUser *models.User
 	if p.User != nil {
 		auth := f.NewAuth(
 			AuthEmailVerified(),
@@ -72,7 +73,7 @@ func (f *Factory) Seed(p SeedParams) *orm.User {
 	return primaryUser
 }
 
-func (f *Factory) seedUser(p SeedParams, user *orm.User) {
+func (f *Factory) seedUser(p SeedParams, user *models.User) {
 	var exercises orm.ExerciseSlice
 	for range p.ExerciseCount {
 		exercises = append(exercises, f.NewExercise(ExerciseUserID(user.ID)))
