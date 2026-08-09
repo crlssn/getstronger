@@ -640,7 +640,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           {{ loggedSetCount }} {{ loggedSetCount === 1 ? 'set' : 'sets' }} logged
         </p>
       </div>
-      <strong class="elapsed">{{ elapsedLabel }}</strong>
+      <div class="elapsed">
+        <span>Elapsed</span>
+        <strong>{{ elapsedLabel }}</strong>
+      </div>
     </header>
 
     <section v-if="restSeconds > 0" class="rest-banner" aria-live="polite">
@@ -962,7 +965,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-0.5 text-sm text-slate-500;
 }
 .elapsed {
-  @apply rounded-xl bg-indigo-50 px-3 py-2 font-mono text-sm text-indigo-700;
+  @apply grid justify-items-end gap-1 rounded-2xl bg-stone-900 px-4 py-2.5 text-white shadow-sm;
+}
+.elapsed span {
+  @apply text-[0.65rem] font-semibold uppercase tracking-wider text-stone-300;
+}
+.elapsed strong {
+  @apply font-mono text-2xl font-bold leading-none tabular-nums;
 }
 .rest-banner {
   @apply sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-3xl border border-stone-300 bg-stone-50/95 p-4 text-stone-900 shadow-sm backdrop-blur;
