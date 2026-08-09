@@ -124,7 +124,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 </script>
 
 <template>
-  <form @submit.prevent="onUpdateWorkout">
+  <form class="edit-workout-form" @submit.prevent="onUpdateWorkout">
     <template v-for="(es, index) in workout?.exerciseSets" :key="es.exercise?.id">
       <div class="flex justify-between pr-4">
         <div>
@@ -216,14 +216,25 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       placeholder="How was it?"
     />
 
-    <AppButton type="submit" colour="primary" class="mb-2">Update Workout</AppButton>
-    <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
-      Cancel Update
-    </AppButton>
+    <footer class="update-dock">
+      <AppButton type="submit" colour="primary">Update Workout</AppButton>
+      <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
+        Cancel Update
+      </AppButton>
+    </footer>
   </form>
 </template>
 
 <style scoped>
+.edit-workout-form {
+  @apply pb-32;
+}
+
+.update-dock {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:bottom-4 sm:rounded-2xl sm:border sm:pb-3;
+}
+
 label {
   @apply block text-sm font-semibold text-gray-600 uppercase mb-2;
 }

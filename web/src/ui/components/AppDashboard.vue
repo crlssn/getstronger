@@ -21,7 +21,9 @@ const routesWithoutPageNavigation = new Set([
 ])
 const showsTopNavigation = computed(() => !routesWithoutPageNavigation.has(route.name as string))
 const hidesBottomNavigation = computed(
-  () => focusedWorkout.value || ['routine', 'view-workout'].includes(route.name as string),
+  () =>
+    focusedWorkout.value ||
+    ['routine', 'view-workout', 'edit-workout'].includes(route.name as string),
 )
 </script>
 
