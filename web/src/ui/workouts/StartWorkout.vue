@@ -10,6 +10,7 @@ import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
+  ArrowLeftIcon,
   CheckIcon,
   ChevronRightIcon,
   ClockIcon,
@@ -641,6 +642,14 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
          elapsed time stays on screen for the whole workout. -->
     <div class="session-top">
       <header class="workout-header">
+        <button
+          type="button"
+          class="leave-workout"
+          aria-label="Leave workout"
+          @click="cancelWorkout"
+        >
+          <ArrowLeftIcon />
+        </button>
         <div class="min-w-0">
           <p class="eyebrow">{{ quickWorkout ? 'Quick workout' : 'Active workout' }}</p>
           <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
@@ -946,19 +955,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <strong v-if="finishError || finishStatus" :class="{ 'text-red-600': finishError }">{{
         finishError || finishStatus
       }}</strong>
-      <div class="finish-actions">
-        <button
-          type="button"
-          class="cancel-workout"
-          aria-label="Cancel workout"
-          @click="cancelWorkout"
-        >
-          <XMarkIcon />
-        </button>
-        <button type="submit" class="finish-workout" :disabled="!canFinish">
-          <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
-        </button>
-      </div>
+      <button type="submit" class="finish-workout" :disabled="!canFinish">
+        <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
+      </button>
     </footer>
   </form>
 </template>
@@ -973,7 +972,14 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply sticky top-0 z-30 -mx-3 -mt-5 space-y-3 bg-slate-50/95 pb-3 backdrop-blur sm:-mx-5 lg:-mx-8 lg:-mt-7;
 }
 .workout-header {
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 border-b border-slate-200 bg-white px-4 py-3.5 text-slate-950;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-slate-200 bg-white px-3 py-3.5 text-slate-950;
+}
+/* Leaving lives in the chrome, away from the primary action it would undo. */
+.leave-workout {
+  @apply -ml-1 grid size-10 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900;
+}
+.leave-workout svg {
+  @apply size-5;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
@@ -1174,21 +1180,22 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .workout-tools {
   @apply space-y-3;
 }
+/* A real, solid card: the dashed ghost read as a placeholder. */
 .add-exercise {
-  @apply flex w-full items-center justify-center gap-3 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 p-4 text-left text-indigo-700 transition hover:border-indigo-400 hover:bg-indigo-50;
+  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/40;
 }
 .add-exercise > svg {
-  @apply size-5;
+  @apply size-11 shrink-0 rounded-xl bg-indigo-600 p-2.5 text-white;
 }
 .add-exercise strong,
 .add-exercise small {
   @apply block;
 }
 .add-exercise strong {
-  @apply text-sm font-semibold;
+  @apply text-base font-semibold text-slate-950;
 }
 .add-exercise small {
-  @apply mt-0.5 text-xs text-indigo-500;
+  @apply mt-0.5 text-xs text-slate-500;
 }
 .note-card {
   @apply p-4 shadow-none;
@@ -1199,21 +1206,16 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .note-card label span {
   @apply font-normal text-slate-500;
 }
+/* The card is already the container; a bordered field inside it double-boxes. */
 .note-card textarea {
-  @apply mt-3 min-h-24 w-full resize-none rounded-xl border-slate-200 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500;
+  @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
 }
 .finish-dock {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 pt-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:bottom-4 sm:rounded-2xl sm:border sm:pb-3;
 }
-.finish-actions {
-  @apply flex items-stretch gap-2;
-}
-.cancel-workout {
-  @apply grid size-12 shrink-0 place-items-center rounded-xl bg-slate-200 text-slate-700 transition hover:bg-slate-300;
-}
 .finish-workout {
-  @apply inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
 }
 .finish-dock svg {
   @apply size-5;
