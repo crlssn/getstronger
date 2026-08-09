@@ -248,6 +248,7 @@ export const en = {
     andMore: '+{count} more',
   },
   exercise: {
+    unavailable: 'Exercise unavailable',
     library: 'Exercise library',
     heading: 'Exercises',
     new: 'New exercise',
@@ -557,6 +558,7 @@ export const sv = {
     andMore: '+{count} till',
   },
   exercise: {
+    unavailable: 'Övningen är inte tillgänglig',
     library: 'Övningsbibliotek',
     heading: 'Övningar',
     new: 'Ny övning',

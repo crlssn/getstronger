@@ -2,6 +2,7 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts.ts'
 import AppList from '@/ui/components/AppList.vue'
@@ -11,9 +12,13 @@ import AppListItemInput from '@/ui/components/AppListItemInput.vue'
 import ExerciseTagsInput from '@/ui/exercises/ExerciseTagsInput.vue'
 import ExerciseMeasurementSettings from '@/ui/exercises/ExerciseMeasurementSettings.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const exercise = ref({} as Exercise)
+// Undefined until loaded: an empty object literal is truthy, so the form used
+// to render with undefined metrics and crash before the fetch resolved.
+const exercise = ref<Exercise>()
+const loading = ref(true)
 const tagSuggestions = ref<string[]>([])
 const alertStore = useAlertStore()
 
@@ -23,10 +28,8 @@ onMounted(async () => {
     listExerciseTags(),
   ])
   tagSuggestions.value = suggestions
-  if (!res) return
-  if (!res.exercise) return
-
-  exercise.value = res.exercise
+  if (res?.exercise) exercise.value = res.exercise
+  loading.value = false
 })
 
 async function onUpdateExercise() {
@@ -48,7 +51,7 @@ async function onUpdateExercise() {
         :model="exercise.name"
         type="text"
         required
-        @update="(value) => (exercise.name = value)"
+        @update="(value: string) => exercise && (exercise.name = value)"
       />
     </AppList>
 
@@ -65,10 +68,26 @@ async function onUpdateExercise() {
       <AppButton type="submit" colour="primary">Update Exercise</AppButton>
     </div>
   </form>
+
+  <p v-else-if="loading" class="form-status">{{ t('common.loading') }}</p>
+
+  <section v-else class="form-status">
+    <h1>{{ t('exercise.unavailable') }}</h1>
+    <RouterLink to="/exercises">{{ t('nav.back.exercises') }}</RouterLink>
+  </section>
 </template>
 
 <style scoped>
 /* Sticks above the bottom navigation so saving never needs a scroll. */
+.form-status {
+  @apply rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm;
+}
+.form-status h1 {
+  @apply text-xl font-semibold text-slate-950;
+}
+.form-status a {
+  @apply mt-3 inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+}
 .form-actions {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
   @apply sticky z-20 -mx-3 mt-4 border-t border-slate-200 bg-slate-50 px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
