@@ -236,6 +236,13 @@ export const en = {
     noRoutines: 'No routines yet',
     noRoutinesBody: 'Create your first workout template to use in a plan.',
   },
+  activity: {
+    today: 'Today',
+    week: 'Last week',
+    month: 'Last month',
+    older: 'Older than a month',
+    never: 'Not tried yet',
+  },
   exercise: {
     library: 'Exercise library',
     heading: 'Exercises',
@@ -533,6 +540,13 @@ export const sv = {
     noMatchingRoutines: 'Inga matchande pass',
     noRoutines: 'Inga pass ännu',
     noRoutinesBody: 'Skapa din första träningsmall för att använda i en plan.',
+  },
+  activity: {
+    today: 'Idag',
+    week: 'Senaste veckan',
+    month: 'Senaste månaden',
+    older: 'Äldre än en månad',
+    never: 'Inte provad än',
   },
   exercise: {
     library: 'Övningsbibliotek',

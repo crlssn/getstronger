@@ -29,6 +29,7 @@ import { useWorkoutStore } from '@/stores/workout'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useStreakStore } from '@/stores/streak'
+import { useActivityStore } from '@/stores/activity'
 import {
   createWorkout,
   getExercise,
@@ -81,6 +82,7 @@ const dashboardStore = useDashboardStore()
 const alertStore = useAlertStore()
 const pageTitleStore = usePageTitleStore()
 const streakStore = useStreakStore()
+const activityStore = useActivityStore()
 
 watch(note, (value) => workoutStore.setNote(routineID, value))
 
@@ -618,6 +620,7 @@ const openSavedWorkout = async (workoutId: string) => {
   workoutStore.removeWorkout(routineID)
   void dashboardStore.load()
   streakStore.reset()
+  activityStore.reset()
   return true
 }
 
