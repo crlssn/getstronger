@@ -60,6 +60,10 @@ export const en = {
       login: 'Back to log in',
     },
   },
+  update: {
+    available: 'A new version is available.',
+    refresh: 'Refresh',
+  },
   auth: {
     welcomeBack: 'Welcome back',
     loginTitle: 'Log in to {brand}',
@@ -371,6 +375,10 @@ export const sv = {
       exercises: 'Tillbaka till övningarna',
       login: 'Tillbaka till inloggningen',
     },
+  },
+  update: {
+    available: 'En ny version finns tillgänglig.',
+    refresh: 'Uppdatera',
   },
   auth: {
     welcomeBack: 'Välkommen tillbaka',
