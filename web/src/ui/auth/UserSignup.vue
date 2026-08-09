@@ -29,15 +29,15 @@ const onSignup = async () => {
 <template>
   <section class="auth-view">
     <header class="auth-intro">
-      <p class="auth-eyebrow">Start training</p>
-      <h1>Create your account</h1>
-      <p>Build routines, follow your progress, and share the work.</p>
+      <p class="auth-eyebrow">{{ $t('auth.startTraining') }}</p>
+      <h1>{{ $t('auth.signupTitle') }}</h1>
+      <p>{{ $t('auth.signupSubtitle') }}</p>
     </header>
 
     <form class="auth-form" method="POST" @submit.prevent="onSignup">
       <div class="grid gap-5 sm:grid-cols-2">
         <div>
-          <label for="firstname" class="auth-label">First name</label>
+          <label for="firstname" class="auth-label">{{ $t('auth.firstName') }}</label>
           <div class="mt-2">
             <input
               id="firstname"
@@ -52,7 +52,7 @@ const onSignup = async () => {
         </div>
 
         <div>
-          <label for="lastname" class="auth-label">Last name</label>
+          <label for="lastname" class="auth-label">{{ $t('auth.lastName') }}</label>
           <div class="mt-2">
             <input
               id="lastname"
@@ -68,7 +68,7 @@ const onSignup = async () => {
       </div>
 
       <div>
-        <label for="email" class="auth-label">Email address</label>
+        <label for="email" class="auth-label">{{ $t('auth.email') }}</label>
         <div class="mt-2">
           <input
             id="email"
@@ -84,7 +84,7 @@ const onSignup = async () => {
       </div>
 
       <div>
-        <label for="password" class="auth-label">Password</label>
+        <label for="password" class="auth-label">{{ $t('auth.password') }}</label>
         <div class="mt-2">
           <AuthPasswordInput
             id="password"
@@ -96,7 +96,9 @@ const onSignup = async () => {
       </div>
 
       <div>
-        <label for="passwordConfirmation" class="auth-label">Confirm password</label>
+        <label for="passwordConfirmation" class="auth-label">{{
+          $t('auth.confirmPassword')
+        }}</label>
         <div class="mt-2">
           <AuthPasswordInput
             id="passwordConfirmation"
@@ -107,12 +109,14 @@ const onSignup = async () => {
         </div>
       </div>
 
-      <AppButton type="submit" colour="primary" class="auth-submit">Create account</AppButton>
+      <AppButton type="submit" colour="primary" class="auth-submit">{{
+        $t('auth.createAccount')
+      }}</AppButton>
     </form>
 
     <p class="auth-footer">
-      Already have an account?
-      <RouterLink to="/login" class="auth-link">Log in</RouterLink>
+      {{ $t('auth.alreadyMember') }}
+      <RouterLink to="/login" class="auth-link">{{ $t('auth.login') }}</RouterLink>
     </p>
   </section>
 </template>

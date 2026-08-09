@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
@@ -20,6 +21,9 @@ import useActiveWorkout from '@/utils/useActiveWorkout'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
 import StreakCard from '@/ui/components/StreakCard.vue'
+import { dateLocale } from '@/i18n'
+
+const { t } = useI18n()
 
 const dashboardStore = useDashboardStore()
 const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
@@ -98,12 +102,12 @@ const nextWorkoutTarget = computed(() =>
 )
 const greeting = computed(() => {
   const hour = DateTime.now().hour
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (hour < 12) return t('home.morning')
+  if (hour < 18) return t('home.afternoon')
+  return t('home.evening')
 })
 
-const dateLabel = computed(() => DateTime.now().toFormat('EEEE, d LLLL'))
+const dateLabel = computed(() => DateTime.now().setLocale(dateLocale).toFormat('EEEE, d LLLL'))
 const estimatedMinutes = computed(() =>
   Math.max(30, (nextRoutine.value?.exercises.length ?? 0) * 8),
 )
@@ -128,13 +132,17 @@ const selectRoutine = async (routineId: string) => {
 
       <section v-if="savedWorkout" class="active-session">
         <div>
-          <p class="eyebrow">Active workout</p>
+          <p class="eyebrow">{{ $t('home.activeWorkout') }}</p>
           <h2>{{ savedRoutineName }}</h2>
           <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
         </div>
         <div class="active-actions">
-          <RouterLink :to="savedHref">Resume workout <ChevronRightIcon /></RouterLink>
-          <button type="button" @click="discardSavedWorkout"><TrashIcon /> Discard workout</button>
+          <RouterLink :to="savedHref"
+            >{{ $t('home.resumeWorkout') }} <ChevronRightIcon
+          /></RouterLink>
+          <button type="button" @click="discardSavedWorkout">
+            <TrashIcon /> {{ $t('home.discardWorkout') }}
+          </button>
         </div>
       </section>
 
@@ -147,29 +155,30 @@ const selectRoutine = async (routineId: string) => {
       <section v-else-if="nextRoutine" class="next-session">
         <div class="session-copy">
           <div class="next-label-row">
-            <p class="eyebrow">Up next</p>
+            <p class="eyebrow">{{ $t('home.upNext') }}</p>
             <span v-if="activePlan" class="plan-progress"
-              >{{ activePlan.currentPosition + 1 }} of {{ activePlan.routines.length }}</span
+              >{{ activePlan.currentPosition + 1 }} {{ $t('common.of') }}
+              {{ activePlan.routines.length }}</span
             >
-            <span v-else class="ready-status"><CheckIcon /> Ready</span>
+            <span v-else class="ready-status"><CheckIcon /> {{ $t('home.ready') }}</span>
           </div>
           <h2>{{ nextRoutine.name }}</h2>
           <p v-if="activePlan" class="plan-source">{{ activePlan.name }}</p>
           <p class="session-meta">
-            {{ nextRoutine.exercises.length }} exercises
+            {{ $t('home.exerciseCount', nextRoutine.exercises.length) }}
             <span aria-hidden="true">•</span>
-            About {{ estimatedMinutes }} min
+            {{ $t('home.aboutMinutes', { count: estimatedMinutes }) }}
           </p>
         </div>
         <div class="session-actions">
           <RouterLink :to="nextWorkoutTarget" class="start-button">
-            <PlayIcon /> Start workout
+            <PlayIcon /> {{ $t('home.startWorkout') }}
           </RouterLink>
-          <RouterLink v-if="activePlan" to="/workout" class="choose-button"
-            >Workout options</RouterLink
-          >
+          <RouterLink v-if="activePlan" to="/workout" class="choose-button">{{
+            $t('home.workoutOptions')
+          }}</RouterLink>
           <button v-else type="button" class="choose-button" @click="routinePickerOpen = true">
-            Choose another routine
+            {{ $t('home.chooseRoutine') }}
           </button>
         </div>
       </section>
@@ -177,16 +186,18 @@ const selectRoutine = async (routineId: string) => {
       <section v-else class="empty-card">
         <div class="empty-icon"><ListBulletIcon /></div>
         <div>
-          <h2>Create your first routine</h2>
-          <p>Build a repeatable workout to start tracking your progress.</p>
+          <h2>{{ $t('home.createFirstRoutine') }}</h2>
+          <p>{{ $t('home.createFirstRoutineBody') }}</p>
         </div>
-        <RouterLink to="/routines/create" class="primary-link">Create routine</RouterLink>
+        <RouterLink to="/routines/create" class="primary-link">{{
+          $t('home.createRoutine')
+        }}</RouterLink>
       </section>
 
       <section class="following-feed">
         <header>
-          <p class="eyebrow">Following</p>
-          <h2>Latest workouts</h2>
+          <p class="eyebrow">{{ $t('home.following') }}</p>
+          <h2>{{ $t('home.latestWorkouts') }}</h2>
         </header>
         <CardWorkout
           v-for="workout in followedWorkouts"
@@ -195,21 +206,24 @@ const selectRoutine = async (routineId: string) => {
           :workout="workout"
         />
         <div v-if="!feedInitiallyLoaded" class="feed-status" aria-live="polite">
-          <span class="feed-spinner"></span> Loading latest workouts…
+          <span class="feed-spinner"></span> {{ $t('home.loadingLatest') }}
         </div>
         <div v-else-if="feedError" class="feed-error" role="alert">
-          <span>Latest workouts could not be loaded.</span>
-          <button type="button" @click="loadMoreFeed">Try again</button>
+          <span>{{ $t('home.loadFailed') }}</span>
+          <button type="button" @click="loadMoreFeed">{{ $t('common.retry') }}</button>
         </div>
         <div v-else-if="!followedWorkouts.length" class="feed-empty">
-          Follow people to see their workouts here.
+          {{ $t('home.emptyFeed') }}
         </div>
         <div v-else-if="feedLoading" class="feed-status" aria-live="polite">
-          <span class="feed-spinner"></span> Loading more workouts…
+          <span class="feed-spinner"></span> {{ $t('home.loadingMore') }}
         </div>
         <div v-else-if="feedReachedEnd" class="feed-end" role="status">
           <span><CheckIcon /></span>
-          <div><strong>You're all caught up</strong><small>You've reached the end.</small></div>
+          <div>
+            <strong>{{ $t('home.caughtUp') }}</strong
+            ><small>{{ $t('home.reachedEnd') }}</small>
+          </div>
         </div>
         <div ref="feedSentinel" class="feed-sentinel" aria-hidden="true"></div>
       </section>
@@ -225,10 +239,14 @@ const selectRoutine = async (routineId: string) => {
     >
       <header>
         <div>
-          <p class="eyebrow">Change what is up next</p>
-          <h2 id="routine-picker-title">Choose routine</h2>
+          <p class="eyebrow">{{ $t('home.changeNext') }}</p>
+          <h2 id="routine-picker-title">{{ $t('home.chooseRoutine') }}</h2>
         </div>
-        <button type="button" aria-label="Close routine picker" @click="routinePickerOpen = false">
+        <button
+          type="button"
+          :aria-label="$t('home.closePicker')"
+          @click="routinePickerOpen = false"
+        >
           <XMarkIcon />
         </button>
       </header>
@@ -243,7 +261,7 @@ const selectRoutine = async (routineId: string) => {
           <span class="routine-icon"><FireIcon /></span>
           <span class="min-w-0">
             <strong>{{ routine.name }}</strong>
-            <small>{{ routine.exercises.length }} exercises</small>
+            <small>{{ $t('home.exerciseCount', routine.exercises.length) }}</small>
           </span>
           <span class="selection-icon"><CheckIcon /></span>
         </button>

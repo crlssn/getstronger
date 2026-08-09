@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   ArrowPathIcon,
   CheckIcon,
@@ -14,6 +15,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 
 const planStore = usePlanStore()
+const { t } = useI18n()
 const dashboardStore = useDashboardStore()
 const routines = ref<Routine[]>([])
 const tab = ref<'plans' | 'routines'>('plans')
@@ -44,16 +46,12 @@ onMounted(async () => {
 })
 
 const activate = async (id: string) => {
-  if (
-    activePlan.value &&
-    !confirm('Your current plan will be paused with its position saved. Make this plan active?')
-  )
-    return
+  if (activePlan.value && !confirm(t('training.activateConfirm'))) return
   if (await planStore.activate(id)) await dashboardStore.load()
 }
 
 const pause = async () => {
-  if (!confirm('Pause this plan? Its current position will be saved.')) return
+  if (!confirm(t('training.pauseConfirm'))) return
   if (await planStore.pause()) await dashboardStore.load()
 }
 </script>
@@ -62,21 +60,17 @@ const pause = async () => {
   <div class="plans-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">Plans and routines</p>
-        <h1>Training</h1>
+        <p class="eyebrow">{{ t('training.eyebrow') }}</p>
+        <h1>{{ t('training.heading') }}</h1>
       </div>
       <RouterLink v-if="tab === 'plans' && planStore.plans.length" to="/plans/create"
-        ><PlusIcon /> New plan</RouterLink
+        ><PlusIcon /> {{ t('training.newPlan') }}</RouterLink
       >
       <RouterLink v-else-if="tab === 'routines'" to="/routines/create"
-        ><PlusIcon /> New routine</RouterLink
+        ><PlusIcon /> {{ t('training.newRoutine') }}</RouterLink
       >
       <p>
-        {{
-          tab === 'plans'
-            ? 'Put routines in order and repeat them continuously—no schedule or end date.'
-            : 'Create reusable workout templates from your exercises.'
-        }}
+        {{ tab === 'plans' ? t('training.plansDescription') : t('training.routinesDescription') }}
       </p>
     </header>
 
@@ -89,7 +83,7 @@ const pause = async () => {
         :class="{ active: tab === 'plans' }"
         @click="tab = 'plans'"
       >
-        Plans
+        {{ t('common.plans') }}
       </button>
       <button
         type="button"
@@ -99,7 +93,7 @@ const pause = async () => {
         :class="{ active: tab === 'routines' }"
         @click="tab = 'routines'"
       >
-        Routines
+        {{ t('common.routines') }}
       </button>
     </div>
 
@@ -110,52 +104,60 @@ const pause = async () => {
 
       <section v-else-if="!planStore.plans.length" class="empty-plan-state">
         <span class="empty-plan-icon"><ArrowPathIcon /></span>
-        <p class="eyebrow">How plans work</p>
-        <h2>Turn routines into a repeating sequence</h2>
+        <p class="eyebrow">{{ t('training.howPlansWork') }}</p>
+        <h2>{{ t('training.repeatingTitle') }}</h2>
         <p class="empty-plan-copy">
-          A plan works through your chosen routines in order, then starts again from the beginning.
+          {{ t('training.repeatingBody') }}
         </p>
 
         <ol class="plan-steps">
           <li>
             <span>1</span>
-            <div><strong>Choose routines</strong><small>Add them in any order.</small></div>
+            <div>
+              <strong>{{ t('training.chooseRoutines') }}</strong
+              ><small>{{ t('training.chooseRoutinesBody') }}</small>
+            </div>
           </li>
           <li>
             <span>2</span>
-            <div><strong>Activate the plan</strong><small>It controls what is Up Next.</small></div>
+            <div>
+              <strong>{{ t('training.activatePlan') }}</strong
+              ><small>{{ t('training.activatePlanBody') }}</small>
+            </div>
           </li>
           <li>
             <span><CheckIcon /></span>
             <div>
-              <strong>Keep training</strong><small>The sequence repeats until paused.</small>
+              <strong>{{ t('training.keepTraining') }}</strong
+              ><small>{{ t('training.keepTrainingBody') }}</small>
             </div>
           </li>
         </ol>
 
         <p class="active-plan-rule">
-          You can have one active plan at a time. Plans are optional and can be paused whenever you
-          like.
+          {{ t('training.oneActive') }}
         </p>
         <RouterLink to="/plans/create" class="first-plan-button">
-          <PlusIcon /> Create your first plan
+          <PlusIcon /> {{ t('training.createFirstPlan') }}
         </RouterLink>
       </section>
 
       <template v-else>
         <section v-if="activePlan" class="active-plan">
           <header>
-            <p class="eyebrow">Active plan</p>
-            <span>Active</span>
+            <p class="eyebrow">{{ t('training.activePlan') }}</p>
+            <span>{{ t('training.active') }}</span>
           </header>
           <h2>{{ activePlan.name }}</h2>
-          <p>{{ activePlan.routines.length }} routines · repeats continuously</p>
+          <p>{{ t('training.routineCountRepeats', { count: activePlan.routines.length }) }}</p>
           <div class="position-row">
-            <span>Current position</span
-            ><strong
-              >Routine {{ activePlan.currentPosition + 1 }} of
-              {{ activePlan.routines.length }}</strong
-            >
+            <span>{{ t('training.currentPosition') }}</span
+            ><strong>{{
+              t('training.routinePosition', {
+                current: activePlan.currentPosition + 1,
+                total: activePlan.routines.length,
+              })
+            }}</strong>
           </div>
           <div class="sequence" aria-label="Current plan position">
             <span
@@ -170,31 +172,36 @@ const pause = async () => {
           </div>
           <div v-if="nextRoutine" class="next-row">
             <div>
-              <small>UP NEXT</small><strong>{{ nextRoutine.name }}</strong
-              ><small>{{ nextRoutine.exercises.length }} exercises</small>
+              <small>{{ t('home.upNext') }}</small
+              ><strong>{{ nextRoutine.name }}</strong
+              ><small>{{ t('home.exerciseCount', { count: nextRoutine.exercises.length }) }}</small>
             </div>
           </div>
           <footer>
-            <RouterLink :to="`/plans/${activePlan.id}`">View plan</RouterLink
-            ><button type="button" @click="pause">Pause</button>
+            <RouterLink :to="`/plans/${activePlan.id}`">{{ t('training.viewPlan') }}</RouterLink
+            ><button type="button" @click="pause">{{ t('training.pause') }}</button>
           </footer>
         </section>
 
         <section v-else class="paused-note">
-          <h2>No active plan</h2>
-          <p>Start any routine manually, or activate a plan below.</p>
+          <h2>{{ t('training.noActivePlan') }}</h2>
+          <p>{{ t('training.noActivePlanBody') }}</p>
         </section>
 
         <section v-if="otherPlans.length" class="other-plans">
           <header>
-            <p class="eyebrow">Your plans</p>
-            <h2>{{ activePlan ? 'Other plans' : 'Choose a plan' }}</h2>
+            <p class="eyebrow">{{ t('training.yourPlans') }}</p>
+            <h2>{{ activePlan ? t('training.otherPlans') : t('training.choosePlan') }}</h2>
           </header>
           <article v-for="plan in otherPlans" :key="plan.id">
             <RouterLink :to="`/plans/${plan.id}`"
               ><strong>{{ plan.name }}</strong
-              ><small>{{ plan.routines.length }} routines · repeating sequence</small></RouterLink
-            ><button type="button" @click="activate(plan.id)">Make active</button>
+              ><small>{{
+                t('training.routineCountSequence', { count: plan.routines.length })
+              }}</small></RouterLink
+            ><button type="button" @click="activate(plan.id)">
+              {{ t('training.makeActive') }}
+            </button>
           </article>
         </section>
       </template>
@@ -206,14 +213,14 @@ const pause = async () => {
         <input
           v-model="routineSearch"
           type="search"
-          placeholder="Search routines"
-          aria-label="Search routines"
+          :placeholder="t('training.searchRoutines')"
+          :aria-label="t('training.searchRoutines')"
         />
       </label>
 
       <section v-if="filteredRoutines.length" class="routine-list">
         <header>
-          <h2>Your routines</h2>
+          <h2>{{ t('training.yourRoutines') }}</h2>
         </header>
         <RouterLink
           v-for="routine in filteredRoutines"
@@ -221,19 +228,15 @@ const pause = async () => {
           :to="`/routines/${routine.id}`"
           ><span
             ><strong>{{ routine.name }}</strong
-            ><small>{{ routine.exercises.length }} exercises</small></span
+            ><small>{{ t('home.exerciseCount', { count: routine.exercises.length }) }}</small></span
           ><ChevronRightIcon
         /></RouterLink>
       </section>
 
       <section v-else class="routine-empty">
-        <h2>{{ routineSearch ? 'No matching routines' : 'No routines yet' }}</h2>
+        <h2>{{ routineSearch ? t('training.noMatchingRoutines') : t('training.noRoutines') }}</h2>
         <p>
-          {{
-            routineSearch
-              ? 'Try another search.'
-              : 'Create your first workout template to use in a plan.'
-          }}
+          {{ routineSearch ? t('exercise.tryAnotherSearch') : t('training.noRoutinesBody') }}
         </p>
       </section>
     </template>

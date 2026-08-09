@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 withDefaults(
   defineProps<{
@@ -14,6 +15,7 @@ withDefaults(
 )
 
 const model = defineModel<string>({ required: true })
+const { t } = useI18n()
 const passwordVisible = ref(false)
 </script>
 
@@ -31,7 +33,7 @@ const passwordVisible = ref(false)
     <button
       type="button"
       class="password-toggle"
-      :aria-label="passwordVisible ? 'Hide password' : 'Show password'"
+      :aria-label="passwordVisible ? t('auth.hidePassword') : t('auth.showPassword')"
       :aria-pressed="passwordVisible"
       @click="passwordVisible = !passwordVisible"
     >

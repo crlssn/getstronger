@@ -6,11 +6,11 @@ import { RouterLink, RouterView } from 'vue-router'
 <template>
   <div class="guest-shell">
     <header class="guest-header">
-      <RouterLink to="/login" class="guest-brand" aria-label="One More Rep login">
+      <RouterLink to="/login" class="guest-brand" :aria-label="$t('auth.loginTitle')">
         <span class="guest-brand-mark"><img src="/favicon.png" alt="" /></span>
         <span class="guest-brand-copy">
           <strong>One More Rep</strong>
-          <span>Track your training. Beat your last.</span>
+          <span>{{ $t('auth.brandTagline') }}</span>
         </span>
       </RouterLink>
     </header>

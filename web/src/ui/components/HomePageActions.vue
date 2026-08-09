@@ -91,29 +91,31 @@ const onSearch = async () => {
       v-if="!searchOpen"
       type="button"
       class="search-trigger"
-      aria-label="Search"
+      :aria-label="$t('search.open')"
       @click="openSearch"
     >
       <MagnifyingGlassIcon />
     </button>
 
-    <section v-if="searchOpen" class="search-panel" aria-label="Search">
+    <section v-if="searchOpen" class="search-panel" :aria-label="$t('search.open')">
       <div class="search-field">
         <MagnifyingGlassIcon />
         <input
           ref="input"
           v-model="query"
           type="search"
-          placeholder="Search people, routines, plans, exercises"
-          aria-label="Search people, routines, plans and exercises"
+          :placeholder="$t('search.placeholder')"
+          :aria-label="$t('search.placeholder')"
           @input="onSearch"
           @keydown.esc="closeSearch"
         />
-        <button type="button" aria-label="Close search" @click="closeSearch"><XMarkIcon /></button>
+        <button type="button" :aria-label="$t('search.close')" @click="closeSearch">
+          <XMarkIcon />
+        </button>
       </div>
       <div v-if="hasResults" class="search-results">
         <template v-if="users.length">
-          <p class="group-label">People</p>
+          <p class="group-label">{{ $t('search.people') }}</p>
           <RouterLink
             v-for="user in users"
             :key="user.id"
@@ -123,12 +125,12 @@ const onSearch = async () => {
             <span class="avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
             <span>
               <strong>{{ user.firstName }} {{ user.lastName }}</strong>
-              <small>View profile</small>
+              <small>{{ $t('search.viewProfile') }}</small>
             </span>
           </RouterLink>
         </template>
         <template v-if="routines.length">
-          <p class="group-label">Routines</p>
+          <p class="group-label">{{ $t('search.routines') }}</p>
           <RouterLink
             v-for="routine in routines"
             :key="routine.id"
@@ -139,14 +141,13 @@ const onSearch = async () => {
             <span>
               <strong>{{ routine.name }}</strong>
               <small>
-                {{ routine.exercises.length }}
-                {{ routine.exercises.length === 1 ? 'exercise' : 'exercises' }}
+                {{ $t('home.exerciseCount', routine.exercises.length) }}
               </small>
             </span>
           </RouterLink>
         </template>
         <template v-if="plans.length">
-          <p class="group-label">Plans</p>
+          <p class="group-label">{{ $t('search.plans') }}</p>
           <RouterLink
             v-for="plan in plans"
             :key="plan.id"
@@ -157,14 +158,13 @@ const onSearch = async () => {
             <span>
               <strong>{{ plan.name }}</strong>
               <small>
-                {{ plan.routines.length }}
-                {{ plan.routines.length === 1 ? 'routine' : 'routines' }}
+                {{ plan.routines.length }} {{ $t('common.routines').toLocaleLowerCase() }}
               </small>
             </span>
           </RouterLink>
         </template>
         <template v-if="exercises.length">
-          <p class="group-label">Exercises</p>
+          <p class="group-label">{{ $t('search.exercises') }}</p>
           <RouterLink
             v-for="exercise in exercises"
             :key="exercise.id"
@@ -174,14 +174,16 @@ const onSearch = async () => {
             <span class="avatar"><BookOpenIcon /></span>
             <span>
               <strong>{{ exercise.name }}</strong>
-              <small>View exercise</small>
+              <small>{{ $t('search.viewExercise') }}</small>
             </span>
           </RouterLink>
         </template>
       </div>
-      <p v-else-if="searching" class="search-hint" aria-live="polite">Searching…</p>
-      <p v-else-if="hasSearched" class="search-hint">Nothing found. Try a different search.</p>
-      <p v-else class="search-hint">Type at least 3 characters to search.</p>
+      <p v-else-if="searching" class="search-hint" aria-live="polite">
+        {{ $t('search.searching') }}
+      </p>
+      <p v-else-if="hasSearched" class="search-hint">{{ $t('search.nothingFound', { query }) }}</p>
+      <p v-else class="search-hint">{{ $t('search.hint') }}</p>
     </section>
   </div>
 </template>

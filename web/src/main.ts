@@ -9,14 +9,18 @@ import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
 import VueGtag from 'vue-gtag'
 
 import App from './App.vue'
+import { appLocale, i18n } from './i18n'
 import router from './router/router'
 
 const app = createApp(App)
+
+document.documentElement.lang = appLocale
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
 app.use(router)
 app.use(pinia)
+app.use(i18n)
 
 if (import.meta.env.VITE_ENABLE_GOOGLE_ANALYTICS === 'true') {
   app.use(VueGtag, {

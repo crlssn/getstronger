@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useNotificationStore } from '@/stores/notifications'
 import useActiveWorkout from '@/utils/useActiveWorkout'
@@ -19,6 +20,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const route = useRoute()
+const { t } = useI18n()
 const notificationStore = useNotificationStore()
 const { savedHref, savedRestTimerEndsAtMs, savedWorkout, savedWorkoutStartedAtMs } =
   useActiveWorkout()
@@ -61,7 +63,7 @@ const navigation = computed(() => [
     href: '/home',
     icon: HomeIcon,
     iconActive: HomeIconSolid,
-    name: 'Home',
+    name: t('nav.home'),
     active: route.path === '/home',
     badge: 0,
     timer: '',
@@ -70,7 +72,7 @@ const navigation = computed(() => [
     href: savedWorkout.value ? savedHref.value : '/workout',
     icon: BoltIcon,
     iconActive: BoltIconSolid,
-    name: 'Workout',
+    name: t('nav.workout'),
     active: route.path === '/workout' || route.path.startsWith('/workouts/'),
     badge: 0,
     timer:
@@ -82,7 +84,7 @@ const navigation = computed(() => [
     href: '/plans',
     icon: RectangleStackIcon,
     iconActive: RectangleStackIconSolid,
-    name: 'Training',
+    name: t('nav.training'),
     active: route.path.startsWith('/plans') || route.path.startsWith('/routines'),
     badge: 0,
     timer: '',
@@ -91,7 +93,7 @@ const navigation = computed(() => [
     href: '/exercises',
     icon: BookOpenIcon,
     iconActive: BookOpenIconSolid,
-    name: 'Exercises',
+    name: t('nav.exercises'),
     active: route.path.startsWith('/exercises'),
     badge: 0,
     timer: '',
@@ -100,7 +102,7 @@ const navigation = computed(() => [
     href: '/profile',
     icon: UserIcon,
     iconActive: UserIconSolid,
-    name: 'Me',
+    name: t('nav.me'),
     active: route.path.startsWith('/profile') || route.path.startsWith('/notifications'),
     badge: notificationStore.unreadCount,
     timer: '',
@@ -109,7 +111,7 @@ const navigation = computed(() => [
 </script>
 
 <template>
-  <nav class="bottom-nav" aria-label="Primary navigation">
+  <nav class="bottom-nav" :aria-label="$t('nav.primary')">
     <div class="bottom-nav-inner">
       <RouterLink
         v-for="item in navigation"

@@ -22,6 +22,7 @@ import {
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import { useTextareaAutosize } from '@vueuse/core'
+import { useI18n } from 'vue-i18n'
 
 import { useAlertStore } from '@/stores/alerts'
 import { useWorkoutStore } from '@/stores/workout'
@@ -41,6 +42,7 @@ import {
 } from '@/utils/exerciseMeasurements'
 
 const { input: note, textarea } = useTextareaAutosize()
+const { t } = useI18n()
 const route = useRoute()
 const quickWorkout = route.name === 'quick-workout'
 const routineID = quickWorkout ? 'quick-workout' : (route.params.routine_id as string)
@@ -141,7 +143,9 @@ const loggedSetCount = computed(() => {
   if (!routine.value) return 0
   return routine.value.exercises.reduce(
     (total, exercise) =>
-      total + workoutStore.getSets(routineID, exercise.id).filter((set) => isCompleteSet(set, exercise)).length,
+      total +
+      workoutStore.getSets(routineID, exercise.id).filter((set) => isCompleteSet(set, exercise))
+        .length,
     0,
   )
 })
@@ -152,10 +156,8 @@ const incompleteSetCount = computed(() => {
       total +
       workoutStore
         .getSets(routineID, exercise.id)
-        .filter(
-          (set) =>
-            hasAnyExerciseSetValue(set, exercise) && !isCompleteSet(set, exercise),
-        ).length,
+        .filter((set) => hasAnyExerciseSetValue(set, exercise) && !isCompleteSet(set, exercise))
+        .length,
     0,
   )
 })
@@ -400,7 +402,8 @@ const deleteWorkoutSet = (exerciseID: string, index: number) => {
     .filter((key) => key.startsWith(`${exerciseID}:`))
     .forEach((key) => delete completedSets.value[key])
   workoutStore.getSets(routineID, exerciseID).forEach((set, setIndex) => {
-    if (isCompleteSet(set, exerciseByID(exerciseID))) completedSets.value[setKey(exerciseID, setIndex)] = true
+    if (isCompleteSet(set, exerciseByID(exerciseID)))
+      completedSets.value[setKey(exerciseID, setIndex)] = true
   })
 }
 
@@ -509,13 +512,17 @@ const addRestTime = () => {
 }
 
 const exerciseLoggedSetCount = (exerciseID: string) =>
-  workoutStore.getSets(routineID, exerciseID).filter((set) => isCompleteSet(set, exerciseByID(exerciseID))).length
+  workoutStore
+    .getSets(routineID, exerciseID)
+    .filter((set) => isCompleteSet(set, exerciseByID(exerciseID))).length
 
 const exerciseHasIncompleteSets = (exerciseID: string) =>
   workoutStore
     .getSets(routineID, exerciseID)
     .some(
-      (set) => hasAnyExerciseSetValue(set, exerciseByID(exerciseID)) && !isCompleteSet(set, exerciseByID(exerciseID)),
+      (set) =>
+        hasAnyExerciseSetValue(set, exerciseByID(exerciseID)) &&
+        !isCompleteSet(set, exerciseByID(exerciseID)),
     )
 
 const canCompleteExercise = (exerciseID: string) =>
@@ -755,20 +762,24 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     <!-- Two independent sticky layers, not one block: the header pins until the
          rest bar reaches the top, then the bar rides over and covers it. -->
     <header class="workout-header">
-      <button type="button" class="leave-workout" aria-label="Leave workout" @click="cancelWorkout">
+      <button
+        type="button"
+        class="leave-workout"
+        :aria-label="t('workout.leaveTitle')"
+        @click="cancelWorkout"
+      >
         <ArrowLeftIcon />
       </button>
       <div class="min-w-0">
-        <p class="eyebrow">{{ quickWorkout ? 'Quick workout' : 'Active workout' }}</p>
-        <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
+        <p class="eyebrow">{{ quickWorkout ? t('workout.quick') : t('workout.active') }}</p>
+        <h1>{{ routine?.name ?? t('workout.loading') }}</h1>
         <p class="session-progress">
-          {{ completedExerciseCount }}
-          {{ completedExerciseCount === 1 ? 'exercise' : 'exercises' }} completed ·
-          {{ loggedSetCount }} {{ loggedSetCount === 1 ? 'set' : 'sets' }} logged
+          {{ t('workout.completedExercises', completedExerciseCount) }} ·
+          {{ t('workout.loggedSets', loggedSetCount) }}
         </p>
       </div>
       <div class="elapsed">
-        <span>Elapsed</span>
+        <span>{{ t('workout.elapsed') }}</span>
         <strong>{{ elapsedLabel }}</strong>
       </div>
     </header>
@@ -780,15 +791,15 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       class="rest-banner"
       :class="{ final: restFinalCountdown, bright: restFinalMinute }"
       :style="{ '--rest-hue': restHue }"
-      aria-label="Rest timer"
+      :aria-label="t('workout.restTimer')"
     >
       <div class="rest-copy">
-        <p class="rest-label"><ClockIcon /> Rest</p>
+        <p class="rest-label"><ClockIcon /> {{ t('workout.rest') }}</p>
         <strong aria-hidden="true">{{ restLabel }}</strong>
       </div>
       <div class="rest-actions">
-        <button type="button" @click="addRestTime">+30 sec</button>
-        <button type="button" @click="skipRest">Skip</button>
+        <button type="button" @click="addRestTime">{{ t('workout.addSeconds') }}</button>
+        <button type="button" @click="skipRest">{{ t('workout.skip') }}</button>
       </div>
       <div class="rest-progress" aria-hidden="true">
         <span :style="{ width: restProgress }"></span>
@@ -798,16 +809,23 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     <main class="exercise-stack">
       <section v-if="quickWorkout && !currentExercise" class="quick-empty">
         <span><PlusIcon /></span>
-        <h2>Add your first exercise</h2>
-        <p>Choose an exercise, log your sets, and add more whenever you need them.</p>
-        <button type="button" @click="openExercisePicker"><PlusIcon /> Choose exercise</button>
+        <h2>{{ t('workout.addFirstExercise') }}</h2>
+        <p>{{ t('workout.addFirstExerciseBody') }}</p>
+        <button type="button" @click="openExercisePicker">
+          <PlusIcon /> {{ t('workout.chooseExercise') }}
+        </button>
       </section>
 
       <section v-if="currentExercise" ref="exerciseCard" class="exercise-card">
         <header class="exercise-heading">
           <div>
             <p class="eyebrow">
-              Exercise {{ activeExerciseIndex + 1 }} of {{ routine?.exercises.length }}
+              {{
+                t('workout.exercisePosition', {
+                  current: activeExerciseIndex + 1,
+                  total: routine?.exercises.length,
+                })
+              }}
             </p>
             <h2>{{ currentExercise.name }}</h2>
             <ExerciseTags compact :tags="currentExercise.tags" />
@@ -817,13 +835,15 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
           <span class="completed-icon"><CheckIcon /></span>
           <div>
-            <strong>Exercise completed</strong>
+            <strong>{{ t('workout.exerciseCompleted') }}</strong>
             <p>
               {{ exerciseLoggedSetCount(currentExercise.id) }}
-              {{ exerciseLoggedSetCount(currentExercise.id) === 1 ? 'set' : 'sets' }} logged
+              {{ t('workout.loggedSets', exerciseLoggedSetCount(currentExercise.id)) }}
             </p>
           </div>
-          <button type="button" @click="reopenExercise(currentExercise.id)">Reopen</button>
+          <button type="button" @click="reopenExercise(currentExercise.id)">
+            {{ t('workout.reopen') }}
+          </button>
         </div>
 
         <template v-else>
@@ -832,8 +852,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
             :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
             aria-hidden="true"
           >
-            <span>Set</span><span>Previous</span>
-            <span v-for="measurement in measurementsForExercise(currentExercise)" :key="measurement.metric">
+            <span>{{ t('common.set') }}</span
+            ><span>{{ t('common.previous') }}</span>
+            <span
+              v-for="measurement in measurementsForExercise(currentExercise)"
+              :key="measurement.metric"
+            >
               {{ measurement.label }}
             </span>
           </div>
@@ -863,7 +887,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                 v-model="set.durationSeconds"
                 :aria-label="`${currentExercise.name} set ${setIndex + 1} time`"
                 @input="onSetInput(currentExercise.id, set, setIndex)"
-                @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)"
+                @focus="
+                  copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
+                "
               />
               <input
                 v-else
@@ -872,7 +898,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                 :inputmode="measurement.inputmode"
                 :aria-label="`${currentExercise.name} set ${setIndex + 1} ${measurement.label}`"
                 @input="onSetInput(currentExercise.id, set, setIndex)"
-                @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)"
+                @focus="
+                  copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
+                "
               />
             </template>
             <button
@@ -890,10 +918,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <section v-if="exerciseQueue.length" class="exercise-queue">
         <header>
           <div>
-            <p class="eyebrow">Session</p>
-            <h2>Exercise queue</h2>
+            <p class="eyebrow">{{ t('workout.session') }}</p>
+            <h2>{{ t('workout.queue') }}</h2>
           </div>
-          <small>Tap to switch</small>
+          <small>{{ t('workout.tapSwitch') }}</small>
         </header>
         <div>
           <button
@@ -918,7 +946,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                 Previous {{ previousSet(entry.exercise.id, 0)?.weight }} ×
                 {{ previousSet(entry.exercise.id, 0)?.reps }}
               </small>
-              <small v-else>Not started</small>
+              <small v-else>{{ t('workout.notStarted') }}</small>
             </span>
             <ChevronRightIcon />
           </button>
@@ -928,16 +956,21 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <section v-if="!quickWorkout || (routine?.exercises.length ?? 0) > 0" class="workout-tools">
         <button type="button" class="add-exercise" @click="openExercisePicker">
           <PlusIcon />
-          <span><strong>Add exercise</strong><small>Only for this workout</small></span>
+          <span
+            ><strong>{{ t('workout.addExercise') }}</strong
+            ><small>{{ t('workout.onlyThisWorkout') }}</small></span
+          >
         </button>
 
         <section class="note-card">
-          <label for="workout-note">Workout note <span>Optional</span></label>
+          <label for="workout-note"
+            >{{ t('workout.note') }} <span>{{ t('common.optional') }}</span></label
+          >
           <textarea
             id="workout-note"
             ref="textarea"
             v-model="note"
-            placeholder="How did the session feel?"
+            :placeholder="t('workout.notePlaceholder')"
           ></textarea>
         </section>
       </section>
@@ -952,8 +985,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       >
         <header>
           <div>
-            <p class="eyebrow">Workout only</p>
-            <h2 id="exercise-picker-title">Add an exercise</h2>
+            <p class="eyebrow">{{ t('workout.onlyThisWorkout') }}</p>
+            <h2 id="exercise-picker-title">{{ t('workout.addExercise') }}</h2>
           </div>
           <button type="button" aria-label="Close exercise picker" @click="closeExercisePicker">
             <XMarkIcon />
@@ -965,13 +998,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           <input
             v-model="exerciseSearch"
             type="search"
-            placeholder="Search exercises"
-            aria-label="Search exercises"
+            :placeholder="t('exercise.search')"
+            :aria-label="t('exercise.search')"
           />
         </label>
 
         <div v-if="exercisePickerLoading && !exerciseOptionsLoaded" class="picker-empty">
-          Loading exercises…
+          {{ t('exercise.loading') }}
         </div>
         <div v-else-if="availableExercises.length" class="exercise-options">
           <button
@@ -988,11 +1021,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           </button>
         </div>
         <div v-else class="picker-empty">
-          {{
-            exerciseSearch
-              ? 'No exercises match your search.'
-              : 'All available exercises are already in this workout.'
-          }}
+          {{ exerciseSearch ? t('workout.noExerciseMatches') : t('workout.allExercisesAdded') }}
         </div>
 
         <button
@@ -1002,7 +1031,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           :disabled="exercisePickerLoading"
           @click="loadExerciseOptions"
         >
-          {{ exercisePickerLoading ? 'Loading…' : 'Load more exercises' }}
+          {{ exercisePickerLoading ? t('common.loading') : t('exercise.loadMore') }}
         </button>
       </section>
     </div>
@@ -1015,17 +1044,17 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         aria-labelledby="finish-dialog-title"
       >
         <span class="dialog-handle" aria-hidden="true"></span>
-        <h2 id="finish-dialog-title">Finish workout early?</h2>
+        <h2 id="finish-dialog-title">{{ t('workout.finishEarly') }}</h2>
         <p>
           You still have {{ unfinishedExerciseCount }}
           {{ unfinishedExerciseCount === 1 ? 'exercise' : 'exercises' }} unfinished. Every logged
           set will be saved.
         </p>
         <button type="button" class="confirm-finish" @click="confirmFinishWorkout">
-          <FlagIcon /> Finish and save
+          <FlagIcon /> {{ t('workout.finishSave') }}
         </button>
         <button type="button" class="keep-training" @click="finishDialogOpen = false">
-          Keep training
+          {{ t('workout.keepTraining') }}
         </button>
       </section>
     </div>
@@ -1039,30 +1068,32 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       >
         <span class="dialog-handle" aria-hidden="true"></span>
         <template v-if="discardConfirmationOpen">
-          <p class="eyebrow text-red-600">Discard workout</p>
-          <h2 id="leave-dialog-title">Delete this workout?</h2>
+          <p class="eyebrow text-red-600">{{ t('workout.discard') }}</p>
+          <h2 id="leave-dialog-title">{{ t('workout.deleteTitle') }}</h2>
           <p>
             All sets, added exercises, and notes saved on this device will be permanently removed.
             Your active plan will not advance.
           </p>
           <button type="button" class="confirm-discard" @click="discardWorkout">
-            <TrashIcon /> Discard workout
+            <TrashIcon /> {{ t('workout.discard') }}
           </button>
           <button type="button" class="keep-training" @click="discardConfirmationOpen = false">
-            Go back
+            {{ t('common.back') }}
           </button>
         </template>
         <template v-else>
-          <p class="eyebrow text-emerald-700">Autosaved</p>
-          <h2 id="leave-dialog-title">Leave workout?</h2>
-          <p>Your progress is saved on this device. You can resume from Workout.</p>
+          <p class="eyebrow text-emerald-700">{{ t('workout.autosaved') }}</p>
+          <h2 id="leave-dialog-title">{{ t('workout.leaveTitle') }}</h2>
+          <p>{{ t('workout.leaveBody') }}</p>
           <button type="button" class="confirm-finish" @click="saveAndLeave">
-            Save &amp; leave
+            {{ t('workout.saveLeave') }}
           </button>
           <button type="button" class="discard-workout" @click="discardConfirmationOpen = true">
-            Discard workout
+            {{ t('workout.discard') }}
           </button>
-          <button type="button" class="keep-training" @click="closeLeaveDialog">Stay</button>
+          <button type="button" class="keep-training" @click="closeLeaveDialog">
+            {{ t('workout.stay') }}
+          </button>
         </template>
       </section>
     </div>
@@ -1293,7 +1324,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 .set-grid {
   @apply grid items-center gap-2 overflow-x-auto;
-  grid-template-columns: 2rem minmax(5.5rem, 1fr) repeat(var(--metric-count), minmax(4.25rem, .75fr));
+  grid-template-columns: 2rem minmax(5.5rem, 1fr) repeat(
+      var(--metric-count),
+      minmax(4.25rem, 0.75fr)
+    );
 }
 .set-labels {
   @apply pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500;
@@ -1523,7 +1557,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 @media (max-width: 520px) {
   .set-grid {
     @apply gap-1.5;
-    grid-template-columns: 1.5rem minmax(4.5rem, 1fr) repeat(var(--metric-count), minmax(4rem, .75fr));
+    grid-template-columns: 1.5rem minmax(4.5rem, 1fr) repeat(
+        var(--metric-count),
+        minmax(4rem, 0.75fr)
+      );
   }
   .set-labels {
     @apply text-[0.65rem];

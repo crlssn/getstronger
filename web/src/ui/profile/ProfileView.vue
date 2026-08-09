@@ -40,11 +40,15 @@ const weeklyVolume = computed(() =>
     <section class="profile-card">
       <div class="avatar">{{ initials }}</div>
       <div class="min-w-0">
-        <p class="eyebrow">Your account</p>
+        <p class="eyebrow">{{ $t('profile.account') }}</p>
         <h1>{{ user.firstName }} {{ user.lastName }}</h1>
         <p>{{ user.email }}</p>
       </div>
-      <RouterLink to="/notifications" class="notification-link" aria-label="Notifications">
+      <RouterLink
+        to="/notifications"
+        class="notification-link"
+        :aria-label="$t('profile.notifications')"
+      >
         <BellIcon />
         <span v-if="notificationStore.unreadCount" class="notification-badge">
           {{ notificationStore.unreadCount > 99 ? '99+' : notificationStore.unreadCount }}
@@ -52,17 +56,17 @@ const weeklyVolume = computed(() =>
       </RouterLink>
     </section>
 
-    <section class="stats-strip" aria-label="Training summary">
+    <section class="stats-strip" :aria-label="$t('profile.trainingSummary')">
       <article>
         <strong>{{ recentWorkoutCount }}</strong
-        ><small>workouts</small>
+        ><small>{{ $t('profile.workouts') }}</small>
       </article>
       <article>
         <strong>{{ dashboardStore.dashboard?.personalBests.length ?? 0 }}</strong
-        ><small>records</small>
+        ><small>{{ $t('profile.records') }}</small>
       </article>
       <article>
-        <strong>{{ weeklyVolume }} kg</strong><small>this week</small>
+        <strong>{{ weeklyVolume }} kg</strong><small>{{ $t('profile.thisWeek') }}</small>
       </article>
     </section>
 
@@ -70,18 +74,22 @@ const weeklyVolume = computed(() =>
       <RouterLink to="/progress"
         ><span class="settings-icon"><ChartBarIcon /></span
         ><span
-          ><strong>Progress &amp; records</strong
-          ><small>Volume trends and personal bests</small></span
+          ><strong>{{ $t('profile.progress') }}</strong
+          ><small>{{ $t('profile.progressBody') }}</small></span
         ><ChevronRightIcon
       /></RouterLink>
       <RouterLink :to="`/users/${user.id}`"
         ><span class="settings-icon"><UserCircleIcon /></span
-        ><span><strong>Public profile</strong><small>See what friends can view</small></span
+        ><span
+          ><strong>{{ $t('profile.publicProfile') }}</strong
+          ><small>{{ $t('profile.publicProfileBody') }}</small></span
         ><ChevronRightIcon
       /></RouterLink>
     </section>
 
-    <RouterLink to="/logout" class="logout-link"><ArrowRightOnRectangleIcon /> Log out</RouterLink>
+    <RouterLink to="/logout" class="logout-link"
+      ><ArrowRightOnRectangleIcon /> {{ $t('auth.logout') }}</RouterLink
+    >
   </div>
 </template>
 

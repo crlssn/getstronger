@@ -26,14 +26,14 @@ const onLogin = async () => {
 <template>
   <section class="auth-view">
     <header class="auth-intro">
-      <p class="auth-eyebrow">Welcome back</p>
-      <h1>Log in to One More Rep</h1>
-      <p>Pick up your training exactly where you left off.</p>
+      <p class="auth-eyebrow">{{ $t('auth.welcomeBack') }}</p>
+      <h1>{{ $t('auth.loginTitle') }}</h1>
+      <p>{{ $t('auth.loginSubtitle') }}</p>
     </header>
 
     <form class="auth-form" method="POST" @submit.prevent="onLogin">
       <div>
-        <label for="email" class="auth-label">Email address</label>
+        <label for="email" class="auth-label">{{ $t('auth.email') }}</label>
         <div class="mt-2">
           <input
             id="email"
@@ -50,9 +50,9 @@ const onLogin = async () => {
 
       <div>
         <div class="flex items-center justify-between gap-4">
-          <label for="password" class="auth-label">Password</label>
+          <label for="password" class="auth-label">{{ $t('auth.password') }}</label>
           <RouterLink to="/forgot-password" class="auth-link text-sm">
-            Forgot password?
+            {{ $t('auth.forgotPassword') }}
           </RouterLink>
         </div>
         <div class="mt-2">
@@ -60,12 +60,14 @@ const onLogin = async () => {
         </div>
       </div>
 
-      <AppButton type="submit" colour="primary" class="auth-submit">Log in</AppButton>
+      <AppButton type="submit" colour="primary" class="auth-submit">{{
+        $t('auth.login')
+      }}</AppButton>
     </form>
 
     <p class="auth-footer">
-      New to One More Rep?
-      <RouterLink to="/signup" class="auth-link">Create an account</RouterLink>
+      {{ $t('auth.newMember') }}
+      <RouterLink to="/signup" class="auth-link">{{ $t('auth.createAccount') }}</RouterLink>
     </p>
   </section>
 </template>

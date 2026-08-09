@@ -12,6 +12,7 @@ import {
   TrashIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
@@ -21,6 +22,7 @@ import { formatToShortDateTime } from '@/utils/datetime'
 import useActiveWorkout from '@/utils/useActiveWorkout'
 
 const authStore = useAuthStore()
+const { t } = useI18n()
 const dashboardStore = useDashboardStore()
 const planStore = usePlanStore()
 const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
@@ -89,7 +91,7 @@ onMounted(async () => Promise.all([dashboardStore.load(), planStore.load(), load
 
 const skip = async () => {
   if (!activePlan.value || !nextRoutine.value) return
-  if (!confirm(`Skip ${nextRoutine.value.name}? No workout will be logged.`)) return
+  if (!confirm(t('workout.skipConfirm', { name: nextRoutine.value.name }))) return
   if (await planStore.skip(activePlan.value.id)) await dashboardStore.load()
 }
 </script>
@@ -97,56 +99,59 @@ const skip = async () => {
 <template>
   <div class="workout-page">
     <header class="page-intro">
-      <p class="eyebrow">Start workout</p>
-      <h1>Workout</h1>
-      <p>Start your planned session or work out without a routine.</p>
+      <p class="eyebrow">{{ t('workout.eyebrow') }}</p>
+      <h1>{{ t('workout.heading') }}</h1>
+      <p>{{ t('workout.subtitle') }}</p>
     </header>
     <section v-if="savedWorkout" class="active-session">
       <div>
-        <p class="eyebrow">Active workout</p>
+        <p class="eyebrow">{{ t('workout.active') }}</p>
         <h2>{{ savedRoutineName }}</h2>
         <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
       </div>
       <div class="active-actions">
-        <RouterLink :to="savedHref">Resume workout <ChevronRightIcon /></RouterLink>
-        <button type="button" @click="discardSavedWorkout"><TrashIcon /> Discard workout</button>
+        <RouterLink :to="savedHref">{{ t('workout.resume') }} <ChevronRightIcon /></RouterLink>
+        <button type="button" @click="discardSavedWorkout">
+          <TrashIcon /> {{ t('workout.discard') }}
+        </button>
       </div>
     </section>
     <section v-else-if="nextRoutine" class="next-card">
       <header>
-        <p class="eyebrow">{{ activePlan ? 'Active plan' : 'Up next' }}</p>
+        <p class="eyebrow">{{ activePlan ? t('training.activePlan') : t('home.upNext') }}</p>
         <span v-if="activePlan"
-          >{{ activePlan.currentPosition + 1 }} of {{ activePlan.routines.length }}</span
+          >{{ activePlan.currentPosition + 1 }} {{ t('common.of') }}
+          {{ activePlan.routines.length }}</span
         >
       </header>
       <h2>{{ nextRoutine.name }}</h2>
       <p v-if="activePlan" class="plan-name">{{ activePlan.name }}</p>
       <p>
-        {{ nextRoutine.exercises.length }} exercises · About
-        {{ Math.max(30, nextRoutine.exercises.length * 8) }} min
+        {{ t('home.exerciseCount', { count: nextRoutine.exercises.length }) }} ·
+        {{ t('home.aboutMinutes', { count: Math.max(30, nextRoutine.exercises.length * 8) }) }}
       </p>
-      <RouterLink :to="plannedStart"><PlayIcon /> Start routine</RouterLink>
+      <RouterLink :to="plannedStart"><PlayIcon /> {{ t('workout.startRoutine') }}</RouterLink>
       <button v-if="activePlan" type="button" class="skip-button" @click="skip">
-        Skip this routine
+        {{ t('workout.skipRoutine') }}
       </button>
     </section>
     <section v-else-if="!savedWorkout" class="empty-card">
-      <h2>No workout selected</h2>
-      <p>Create a routine or activate a plan to choose what comes next.</p>
-      <RouterLink to="/plans">Choose a routine</RouterLink>
+      <h2>{{ t('workout.noSelection') }}</h2>
+      <p>{{ t('workout.noSelectionBody') }}</p>
+      <RouterLink to="/plans">{{ t('home.chooseRoutine') }}</RouterLink>
     </section>
     <RouterLink to="/workouts/quick" class="quick-card"
       ><span class="quick-icon"><BoltIcon /></span
       ><span
-        ><strong>Quick workout</strong
-        ><small>Build as you go · won’t advance your plan</small></span
+        ><strong>{{ t('workout.quick') }}</strong
+        ><small>{{ t('workout.quickBody') }}</small></span
       ><ChevronRightIcon
     /></RouterLink>
 
     <section class="workout-history">
       <header>
-        <p class="eyebrow">History</p>
-        <h2>Previous workouts</h2>
+        <p class="eyebrow">{{ t('workout.history') }}</p>
+        <h2>{{ t('workout.previous') }}</h2>
       </header>
 
       <div v-if="previousWorkouts.length" class="history-list">
@@ -164,20 +169,20 @@ const skip = async () => {
       </div>
 
       <div v-if="!historyInitiallyLoaded" class="history-status" aria-live="polite">
-        <span class="history-spinner"></span> Loading workout history…
+        <span class="history-spinner"></span> {{ t('workout.loadingHistory') }}
       </div>
       <div v-else-if="historyError" class="history-error" role="alert">
-        <span>Workout history could not be loaded.</span>
-        <button type="button" @click="loadMoreHistory">Try again</button>
+        <span>{{ t('workout.historyError') }}</span>
+        <button type="button" @click="loadMoreHistory">{{ t('common.retry') }}</button>
       </div>
       <div v-else-if="!previousWorkouts.length" class="history-empty">
-        Your completed workouts will appear here.
+        {{ t('workout.historyEmpty') }}
       </div>
       <div v-else-if="historyLoading" class="history-status" aria-live="polite">
-        <span class="history-spinner"></span> Loading more workouts…
+        <span class="history-spinner"></span> {{ t('workout.loadingMoreHistory') }}
       </div>
       <div v-else-if="historyReachedEnd" class="history-end" role="status">
-        <CheckIcon /> You’ve reached the end of your workout history.
+        <CheckIcon /> {{ t('workout.historyEnd') }}
       </div>
       <div ref="historySentinel" class="history-sentinel" aria-hidden="true"></div>
     </section>

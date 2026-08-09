@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronRightIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 import { listExercises } from '@/http/requests'
@@ -8,6 +9,7 @@ import usePagination from '@/utils/usePagination'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 const exercises = ref<Exercise[]>([])
+const { t } = useI18n()
 const search = ref('')
 const loading = ref(true)
 const exerciseNameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
@@ -54,10 +56,12 @@ const fetchExercises = async () => {
   <div class="exercise-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">Exercise library</p>
-        <h1>Exercises</h1>
+        <p class="eyebrow">{{ t('exercise.library') }}</p>
+        <h1>{{ t('exercise.heading') }}</h1>
       </div>
-      <RouterLink to="/exercises/create" class="create-link"><PlusIcon /> New exercise</RouterLink>
+      <RouterLink to="/exercises/create" class="create-link"
+        ><PlusIcon /> {{ t('exercise.new') }}</RouterLink
+      >
     </header>
 
     <label class="search-field">
@@ -65,12 +69,12 @@ const fetchExercises = async () => {
       <input
         v-model="search"
         type="search"
-        placeholder="Search exercises"
-        aria-label="Search exercises"
+        :placeholder="t('exercise.search')"
+        :aria-label="t('exercise.search')"
       />
     </label>
 
-    <div v-if="loading" class="empty-state">Loading exercises…</div>
+    <div v-if="loading" class="empty-state">{{ t('exercise.loading') }}</div>
     <section v-else-if="filteredExercises.length" class="exercise-list">
       <section v-for="group in groupedExercises" :key="group.letter" class="exercise-group">
         <h2>{{ group.letter }}</h2>
@@ -89,13 +93,13 @@ const fetchExercises = async () => {
         </div>
       </section>
       <button v-if="hasMorePages" type="button" class="load-more" @click="fetchExercises">
-        Load more exercises
+        {{ t('exercise.loadMore') }}
       </button>
     </section>
     <section v-else class="empty-state">
-      <h2>{{ search ? 'No matching exercises' : 'No exercises yet' }}</h2>
+      <h2>{{ search ? t('exercise.noMatches') : t('exercise.empty') }}</h2>
       <p>
-        {{ search ? 'Try another search.' : 'Add your first movement to start building routines.' }}
+        {{ search ? t('exercise.tryAnotherSearch') : t('exercise.emptyBody') }}
       </p>
     </section>
   </div>
