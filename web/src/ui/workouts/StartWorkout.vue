@@ -996,8 +996,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </section>
     </div>
 
-    <!-- One forward action for the whole session: it advances through the
-         exercises and turns into Finish once they are all done. -->
+    <!-- Advancing remains the primary action while exercises are unfinished,
+         but finishing stays visible for the entire session. -->
     <footer class="finish-dock">
       <strong v-if="finishError || primaryStatus" :class="{ 'text-red-600': finishError }">{{
         finishError || primaryStatus
@@ -1006,12 +1006,17 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
         {{ primaryActionLabel }}
       </button>
-      <!-- Finishing early is a supported path, so it stays reachable while
-           exercises remain, just far quieter than the main action. -->
+      <!-- Keep the escape hatch in a stable position even when a partial set
+           temporarily prevents saving the workout. -->
       <button
-        v-if="canFinish && !allExercisesComplete"
+        v-if="!allExercisesComplete"
         type="button"
         class="finish-early"
+        :disabled="!canFinish"
+        :title="!canFinish ? finishStatus : undefined"
+        :aria-label="
+          !canFinish && finishStatus ? `Finish workout: ${finishStatus}` : 'Finish workout'
+        "
         @click="requestFinishWorkout"
       >
         <FlagIcon /> Finish workout
@@ -1356,7 +1361,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 /* Mirrors the leave dialog's secondary button, so the dock and the dialog
    speak the same language. */
 .finish-early {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50;
+  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
 }
 .finish-dock svg {
   @apply size-5;
