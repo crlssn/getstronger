@@ -1,0 +1,110 @@
+psql:
+  dsn: "postgres://root:root@localhost:5433/postgres?sslmode=disable"
+  schemas:
+    - getstronger
+  # Without this Bob treats the first schema as implicit and emits unqualified
+  # table names, which would resolve against public instead of getstronger.
+  shared_schema: public
+  except:
+    schema_migrations:
+
+# Postgres uuid columns stay Go strings, as they were under SQLBoiler: IDs
+# arrive from protobuf as strings and are handed straight back out again.
+replacements:
+  - match:
+      db_type: uuid
+    replace: string
+
+wipe: true
+no_tests: true
+
+# The repo layer is the only consumer, so generate the query surface it needs
+# and skip Bob's own factories — server/testing/factory owns test fixtures.
+plugins:
+  models:
+    destination: server/gen/models
+    pkgname: models
+  enums:
+    destination: server/gen/models/enums
+    pkgname: enums
+  dberrors:
+    destination: server/gen/models/dberrors
+    pkgname: dberrors
+  factory:
+    disabled: true
+  dbinfo:
+    disabled: true
+
+# Bob prefixes names with the schema when it is qualified; these keep the
+# generated types reading as models.User rather than models.GetstrongerUser.
+aliases:
+  getstronger.auth:
+    up_plural: Auths
+    up_singular: Auth
+    down_plural: auths
+    down_singular: auth
+  getstronger.events:
+    up_plural: Events
+    up_singular: Event
+    down_plural: events
+    down_singular: event
+  getstronger.exercises:
+    up_plural: Exercises
+    up_singular: Exercise
+    down_plural: exercises
+    down_singular: exercise
+  getstronger.exercises_routines:
+    up_plural: ExerciseRoutines
+    up_singular: ExerciseRoutine
+    down_plural: exerciseRoutines
+    down_singular: exerciseRoutine
+  getstronger.followers:
+    up_plural: Followers
+    up_singular: Follower
+    down_plural: followers
+    down_singular: follower
+  getstronger.notifications:
+    up_plural: Notifications
+    up_singular: Notification
+    down_plural: notifications
+    down_singular: notification
+  getstronger.plan_routines:
+    up_plural: PlanRoutines
+    up_singular: PlanRoutine
+    down_plural: planRoutines
+    down_singular: planRoutine
+  getstronger.plans:
+    up_plural: Plans
+    up_singular: Plan
+    down_plural: plans
+    down_singular: plan
+  getstronger.routines:
+    up_plural: Routines
+    up_singular: Routine
+    down_plural: routines
+    down_singular: routine
+  getstronger.sets:
+    up_plural: Sets
+    up_singular: Set
+    down_plural: sets
+    down_singular: set
+  getstronger.traces:
+    up_plural: Traces
+    up_singular: Trace
+    down_plural: traces
+    down_singular: trace
+  getstronger.users:
+    up_plural: Users
+    up_singular: User
+    down_plural: users
+    down_singular: user
+  getstronger.workout_comments:
+    up_plural: WorkoutComments
+    up_singular: WorkoutComment
+    down_plural: workoutComments
+    down_singular: workoutComment
+  getstronger.workouts:
+    up_plural: Workouts
+    up_singular: Workout
+    down_plural: workouts
+    down_singular: workout
