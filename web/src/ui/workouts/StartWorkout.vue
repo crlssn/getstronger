@@ -171,11 +171,23 @@ const finishStatus = computed(() => {
 
 const elapsedLabel = computed(() => formatDuration(elapsedSeconds.value))
 const restLabel = computed(() => formatTimer(restSeconds.value))
-const restProgress = computed(() =>
+const restFraction = computed(() =>
   restTotalSeconds.value > 0
-    ? `${Math.max(0, Math.min(100, (restSeconds.value / restTotalSeconds.value) * 100))}%`
-    : '0%',
+    ? Math.max(0, Math.min(1, restSeconds.value / restTotalSeconds.value))
+    : 0,
 )
+const restProgress = computed(() => `${restFraction.value * 100}%`)
+// Each remaining minute owns a hue, so a glance at the colour tells you roughly
+// how long is left: violet, blue, teal, then green. The final minute is handled
+// separately as a bright band (see .bright) rather than another dark hue.
+const restMinuteHues = [45, 100, 165, 205, 270]
+const restHue = computed(
+  () => restMinuteHues[Math.min(Math.floor(restSeconds.value / 60), restMinuteHues.length - 1)],
+)
+// The last minute goes sunny instead of darker: this is the run-up to lifting,
+// so it should read as energising rather than as a warning.
+const restFinalMinute = computed(() => restSeconds.value > 0 && restSeconds.value < 60)
+const restFinalCountdown = computed(() => restSeconds.value > 0 && restSeconds.value <= 10)
 const nextActionLabel = computed(() =>
   nextIncompleteExerciseIndex.value >= 0 &&
   nextIncompleteExerciseIndex.value !== activeExerciseIndex.value
@@ -638,49 +650,48 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
 <template>
   <form class="workout-shell" novalidate @submit.prevent="requestFinishWorkout">
-    <!-- Replaces the app's top navigation while a session is running, so the
-         elapsed time stays on screen for the whole workout. -->
-    <div class="session-top">
-      <header class="workout-header">
-        <button
-          type="button"
-          class="leave-workout"
-          aria-label="Leave workout"
-          @click="cancelWorkout"
-        >
-          <ArrowLeftIcon />
-        </button>
-        <div class="min-w-0">
-          <p class="eyebrow">{{ quickWorkout ? 'Quick workout' : 'Active workout' }}</p>
-          <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
-          <p class="session-progress">
-            {{ completedExerciseCount }}
-            {{ completedExerciseCount === 1 ? 'exercise' : 'exercises' }} completed ·
-            {{ loggedSetCount }} {{ loggedSetCount === 1 ? 'set' : 'sets' }} logged
-          </p>
-        </div>
-        <div class="elapsed">
-          <span>Elapsed</span>
-          <strong>{{ elapsedLabel }}</strong>
-        </div>
-      </header>
+    <!-- Two independent sticky layers, not one block: the header pins until the
+         rest bar reaches the top, then the bar rides over and covers it. -->
+    <header class="workout-header">
+      <button type="button" class="leave-workout" aria-label="Leave workout" @click="cancelWorkout">
+        <ArrowLeftIcon />
+      </button>
+      <div class="min-w-0">
+        <p class="eyebrow">{{ quickWorkout ? 'Quick workout' : 'Active workout' }}</p>
+        <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
+        <p class="session-progress">
+          {{ completedExerciseCount }}
+          {{ completedExerciseCount === 1 ? 'exercise' : 'exercises' }} completed ·
+          {{ loggedSetCount }} {{ loggedSetCount === 1 ? 'set' : 'sets' }} logged
+        </p>
+      </div>
+      <div class="elapsed">
+        <span>Elapsed</span>
+        <strong>{{ elapsedLabel }}</strong>
+      </div>
+    </header>
 
-      <!-- The countdown is the focal point while resting; it is aria-hidden so
+    <!-- The countdown is the focal point while resting; it is aria-hidden so
            screen readers are not re-announced to every second. -->
-      <section v-if="restSeconds > 0" class="rest-banner" aria-label="Rest timer">
-        <div class="rest-copy">
-          <p class="rest-label"><ClockIcon /> Rest</p>
-          <strong aria-hidden="true">{{ restLabel }}</strong>
-        </div>
-        <div class="rest-actions">
-          <button type="button" @click="addRestTime">+30 sec</button>
-          <button type="button" @click="skipRest">Skip</button>
-        </div>
-        <div class="rest-progress" aria-hidden="true">
-          <span :style="{ width: restProgress }"></span>
-        </div>
-      </section>
-    </div>
+    <section
+      v-if="restSeconds > 0"
+      class="rest-banner"
+      :class="{ final: restFinalCountdown, bright: restFinalMinute }"
+      :style="{ '--rest-hue': restHue }"
+      aria-label="Rest timer"
+    >
+      <div class="rest-copy">
+        <p class="rest-label"><ClockIcon /> Rest</p>
+        <strong aria-hidden="true">{{ restLabel }}</strong>
+      </div>
+      <div class="rest-actions">
+        <button type="button" @click="addRestTime">+30 sec</button>
+        <button type="button" @click="skipRest">Skip</button>
+      </div>
+      <div class="rest-progress" aria-hidden="true">
+        <span :style="{ width: restProgress }"></span>
+      </div>
+    </section>
 
     <main class="exercise-stack">
       <section v-if="quickWorkout && !currentExercise" class="quick-empty">
@@ -955,7 +966,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <strong v-if="finishError || finishStatus" :class="{ 'text-red-600': finishError }">{{
         finishError || finishStatus
       }}</strong>
-      <button type="submit" class="finish-workout" :disabled="!canFinish">
+      <button
+        type="submit"
+        class="finish-workout"
+        :class="{ primary: canFinish && unfinishedExerciseCount === 0 }"
+        :disabled="!canFinish"
+      >
         <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
       </button>
     </footer>
@@ -968,11 +984,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 /* Full-bleed: cancels the shell's page gutters and top padding so the bar
    spans the viewport where the top navigation used to sit. */
-.session-top {
-  @apply sticky top-0 z-30 -mx-3 -mt-5 space-y-3 bg-slate-50/95 pb-3 backdrop-blur sm:-mx-5 lg:-mx-8 lg:-mt-7;
-}
+/* Pins below the rest bar, so the bar covers it once you scroll. Opaque, or
+   scrolled content bleeds through and reads as passing over the header. */
 .workout-header {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-slate-200 bg-white px-3 py-3.5 text-slate-950;
+  @apply sticky top-0 z-20 -mx-3 -mt-5 grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-slate-200 bg-white px-3 py-3.5 text-slate-950 sm:-mx-5 lg:-mx-8 lg:-mt-7;
 }
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leave-workout {
@@ -1003,16 +1018,99 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .elapsed strong {
   @apply font-mono text-sm font-semibold leading-none tabular-nums text-slate-600;
 }
-/* The primary timer while resting: it carries the dark accent so it outranks
-   the header bar, which stays light. */
+/* The primary timer while resting: it carries the accent so it outranks the
+   header bar, which stays light. The hue is driven by --rest-hue and shifts
+   ~1.5deg per second, so it morphs smoothly without needing a transition.
+   Lightness is held dark enough for white text to stay legible at every hue. */
+/* Registered so the hue can be transitioned: without this the gradient would
+   snap at each minute boundary instead of morphing. */
+@property --rest-hue {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 160;
+}
+/* A square, edge-to-edge band that rides over the header on scroll, so the
+   countdown owns the top of the screen while resting. */
 .rest-banner {
-  @apply mx-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-3xl bg-stone-900 p-4 text-white shadow-lg sm:mx-5 lg:mx-8;
+  @apply !mt-0 sticky top-0 z-30 -mx-3 sm:-mx-5 lg:-mx-8;
+  /* Energy comes from saturation, not lightness: near-full saturation reads
+     vivid while staying dark enough for white text. The gradient runs dark at
+     the top-left, where the label and countdown sit, out to a bright corner. */
+  background-image: linear-gradient(
+    140deg,
+    hsl(var(--rest-hue, 165) 95% 21%) 0%,
+    hsl(var(--rest-hue, 165) 92% 31%) 58%,
+    hsl(calc(var(--rest-hue, 165) - 28) 96% 40%) 100%
+  );
+  transition: --rest-hue 900ms ease;
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 px-4 pb-4 pt-3 text-white shadow-lg;
+}
+/* The last minute goes sunny with dark text: warm hues only read as happy when
+   they are bright, and bright needs dark type to stay legible. */
+.rest-banner.bright {
+  background-image: linear-gradient(
+    140deg,
+    hsl(42 100% 50%) 0%,
+    hsl(50 100% 56%) 55%,
+    hsl(70 92% 54%) 100%
+  );
+  @apply text-stone-950;
+}
+.rest-banner.bright .rest-label {
+  @apply text-stone-900/70;
+}
+.rest-banner.bright .rest-copy strong {
+  @apply text-stone-950;
+}
+.rest-banner.bright button {
+  @apply bg-black/15 text-stone-950 hover:bg-black/25;
+}
+.rest-banner.bright .rest-progress {
+  @apply bg-black/15;
+}
+.rest-banner.bright .rest-progress span {
+  @apply bg-stone-950;
+}
+/* One beat per second through the last ten: the band itself brightens rather
+   than the digits resizing, so the numbers stay steady and readable. */
+.rest-banner.final {
+  animation: rest-pulse 1s ease-in-out infinite;
+  @apply shadow-xl;
+}
+/* An already-bright band would blow out on the dark band's pulse range. */
+.rest-banner.final.bright {
+  animation: rest-pulse-bright 1s ease-in-out infinite;
+}
+@keyframes rest-pulse-bright {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  45% {
+    filter: brightness(1.14) saturate(1.3);
+  }
+}
+@keyframes rest-pulse {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  45% {
+    filter: brightness(1.55) saturate(1.25);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rest-banner.final,
+  .rest-banner.final.bright {
+    animation: none;
+  }
 }
 .rest-copy {
   @apply min-w-0;
 }
+/* White, not grey: a neutral grey washes out against a saturated background. */
 .rest-label {
-  @apply flex items-center gap-1.5 text-[0.65rem] font-semibold uppercase tracking-wider text-stone-400;
+  @apply flex items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-wider text-white/85;
 }
 .rest-label svg {
   @apply size-3.5;
@@ -1023,8 +1121,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .rest-actions {
   @apply flex shrink-0 items-center gap-1;
 }
+/* A dark tint keeps the white label high-contrast wherever the chips land on
+   the gradient; a white tint washes out against the bright corner. */
 .rest-banner button {
-  @apply min-h-11 rounded-xl bg-white/10 px-3 text-sm font-semibold text-white transition hover:bg-white/20;
+  @apply min-h-11 rounded-xl bg-black/25 px-3 text-sm font-semibold text-white transition hover:bg-black/40;
 }
 .rest-progress {
   @apply col-span-2 h-1.5 overflow-hidden rounded-full bg-white/15;
@@ -1214,8 +1314,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 pt-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:bottom-4 sm:rounded-2xl sm:border sm:pb-3;
 }
+/* Secondary while training: Next exercise is pressed many times a session and
+   should lead. This promotes itself once every exercise is done. */
 .finish-workout {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-white disabled:text-slate-400;
+}
+.finish-workout.primary {
+  @apply border-transparent bg-indigo-600 text-white hover:bg-indigo-700;
 }
 .finish-dock svg {
   @apply size-5;
