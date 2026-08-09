@@ -361,7 +361,7 @@ const syncSetCompletion = (exerciseID: string, set: Set, index: number) => {
   if (isCompleteSet(set, exercise)) {
     if (!completedSets.value[key]) {
       completedSets.value[key] = true
-      if (exercise?.restSeconds) startRestTimer(exercise.restSeconds)
+      useExerciseRestTimer(exercise)
     }
     return
   }
@@ -477,6 +477,15 @@ const startRestTimer = (seconds = 90) => {
   runRestTimer(endsAtMs, seconds)
 }
 
+const useExerciseRestTimer = (exercise?: Exercise) => {
+  if (exercise?.restSeconds) {
+    startRestTimer(exercise.restSeconds)
+    return
+  }
+
+  clearRestTimer()
+}
+
 const restoreRestTimer = () => {
   const savedTimer = workoutStore.getRestTimer(routineID)
   if (!savedTimer.endsAt) return
@@ -540,13 +549,17 @@ const advanceExercise = () => {
   )
   if (nextIndex !== undefined && nextIndex >= 0) {
     selectExercise(nextIndex)
+    useExerciseRestTimer(routine.value?.exercises[nextIndex])
     return
   }
 
   const firstIncomplete = routine.value?.exercises.findIndex(
     (entry) => !completedExercises.value[entry.id],
   )
-  if (firstIncomplete !== undefined && firstIncomplete >= 0) selectExercise(firstIncomplete)
+  if (firstIncomplete !== undefined && firstIncomplete >= 0) {
+    selectExercise(firstIncomplete)
+    useExerciseRestTimer(routine.value?.exercises[firstIncomplete])
+  }
 }
 
 const buildWorkoutSets = () => {
