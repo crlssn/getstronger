@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import AppAlert from '@/ui/components/AppAlert.vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { brandName, brandSlogan } from '@/brand'
 </script>
 
 <template>
   <div class="guest-shell">
     <header class="guest-header">
-      <RouterLink to="/login" class="guest-brand" :aria-label="$t('auth.loginTitle')">
+      <RouterLink
+        to="/login"
+        class="guest-brand"
+        :aria-label="$t('auth.loginTitle', { brand: brandName })"
+      >
         <span class="guest-brand-mark"><img src="/favicon.png" alt="" /></span>
         <span class="guest-brand-copy">
-          <strong>One More Rep</strong>
-          <span>{{ $t('auth.brandTagline') }}</span>
+          <strong>{{ brandName }}</strong>
+          <span>{{ brandSlogan }}</span>
         </span>
       </RouterLink>
     </header>

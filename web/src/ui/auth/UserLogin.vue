@@ -7,6 +7,7 @@ import { RouterLink } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
+import { brandName } from '@/brand'
 
 const email = ref('')
 const password = ref('')
@@ -27,7 +28,7 @@ const onLogin = async () => {
   <section class="auth-view">
     <header class="auth-intro">
       <p class="auth-eyebrow">{{ $t('auth.welcomeBack') }}</p>
-      <h1>{{ $t('auth.loginTitle') }}</h1>
+      <h1>{{ $t('auth.loginTitle', { brand: brandName }) }}</h1>
       <p>{{ $t('auth.loginSubtitle') }}</p>
     </header>
 
@@ -66,7 +67,7 @@ const onLogin = async () => {
     </form>
 
     <p class="auth-footer">
-      {{ $t('auth.newMember') }}
+      {{ $t('auth.newMember', { brand: brandName }) }}
       <RouterLink to="/signup" class="auth-link">{{ $t('auth.createAccount') }}</RouterLink>
     </p>
   </section>
