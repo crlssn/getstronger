@@ -15,6 +15,9 @@ const routesWithoutPageNavigation = new Set([
   'routines',
   'exercises',
   'profile',
+  // Active sessions render their own sticky timer bar in place of the top nav.
+  'workout-routine',
+  'quick-workout',
 ])
 const showsTopNavigation = computed(() => !routesWithoutPageNavigation.has(route.name as string))
 const hidesBottomNavigation = computed(

@@ -41,6 +41,7 @@ const prevExerciseSets = ref<ExerciseSets[]>([])
 const startedAt = ref(DateTime.now())
 const elapsedSeconds = ref(0)
 const restSeconds = ref(0)
+const restTotalSeconds = ref(0)
 const completedSets = ref<Record<string, boolean>>({})
 const completedExercises = ref<Record<string, boolean>>({})
 const activeExerciseIndex = ref(0)
@@ -169,6 +170,11 @@ const finishStatus = computed(() => {
 
 const elapsedLabel = computed(() => formatDuration(elapsedSeconds.value))
 const restLabel = computed(() => formatTimer(restSeconds.value))
+const restProgress = computed(() =>
+  restTotalSeconds.value > 0
+    ? `${Math.max(0, Math.min(100, (restSeconds.value / restTotalSeconds.value) * 100))}%`
+    : '0%',
+)
 const nextActionLabel = computed(() =>
   nextIncompleteExerciseIndex.value >= 0 &&
   nextIncompleteExerciseIndex.value !== activeExerciseIndex.value
@@ -372,6 +378,7 @@ const playRestFinishedSound = () => {
 const startRestTimer = (seconds = 90) => {
   if (restInterval) clearInterval(restInterval)
   prepareRestSound()
+  restTotalSeconds.value = seconds
   restSeconds.value = seconds
   restInterval = setInterval(() => {
     restSeconds.value -= 1
@@ -630,33 +637,41 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
 <template>
   <form class="workout-shell" novalidate @submit.prevent="requestFinishWorkout">
-    <header class="workout-header">
-      <div>
-        <p class="eyebrow">{{ quickWorkout ? 'Quick workout' : 'Active workout' }}</p>
-        <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
-        <p>
-          {{ completedExerciseCount }}
-          {{ completedExerciseCount === 1 ? 'exercise' : 'exercises' }} completed ·
-          {{ loggedSetCount }} {{ loggedSetCount === 1 ? 'set' : 'sets' }} logged
-        </p>
-      </div>
-      <div class="elapsed">
-        <span>Elapsed</span>
-        <strong>{{ elapsedLabel }}</strong>
-      </div>
-    </header>
+    <!-- Replaces the app's top navigation while a session is running, so the
+         elapsed time stays on screen for the whole workout. -->
+    <div class="session-top">
+      <header class="workout-header">
+        <div class="min-w-0">
+          <p class="eyebrow">{{ quickWorkout ? 'Quick workout' : 'Active workout' }}</p>
+          <h1>{{ routine?.name ?? 'Loading workout' }}</h1>
+          <p class="session-progress">
+            {{ completedExerciseCount }}
+            {{ completedExerciseCount === 1 ? 'exercise' : 'exercises' }} completed ·
+            {{ loggedSetCount }} {{ loggedSetCount === 1 ? 'set' : 'sets' }} logged
+          </p>
+        </div>
+        <div class="elapsed">
+          <span>Elapsed</span>
+          <strong>{{ elapsedLabel }}</strong>
+        </div>
+      </header>
 
-    <section v-if="restSeconds > 0" class="rest-banner" aria-live="polite">
-      <ClockIcon />
-      <div>
-        <strong>Rest timer</strong>
-        <p>{{ restLabel }} remaining</p>
-      </div>
-      <div class="rest-actions">
-        <button type="button" @click="addRestTime">+30 sec</button>
-        <button type="button" @click="skipRest">Skip</button>
-      </div>
-    </section>
+      <!-- The countdown is the focal point while resting; it is aria-hidden so
+           screen readers are not re-announced to every second. -->
+      <section v-if="restSeconds > 0" class="rest-banner" aria-label="Rest timer">
+        <div class="rest-copy">
+          <p class="rest-label"><ClockIcon /> Rest</p>
+          <strong aria-hidden="true">{{ restLabel }}</strong>
+        </div>
+        <div class="rest-actions">
+          <button type="button" @click="addRestTime">+30 sec</button>
+          <button type="button" @click="skipRest">Skip</button>
+        </div>
+        <div class="rest-progress" aria-hidden="true">
+          <span :style="{ width: restProgress }"></span>
+        </div>
+      </section>
+    </div>
 
     <main class="exercise-stack">
       <section v-if="quickWorkout && !currentExercise" class="quick-empty">
@@ -952,41 +967,63 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .workout-shell {
   @apply mx-auto max-w-3xl space-y-4 pb-28;
 }
+/* Full-bleed: cancels the shell's page gutters and top padding so the bar
+   spans the viewport where the top navigation used to sit. */
+.session-top {
+  @apply sticky top-0 z-30 -mx-3 -mt-5 space-y-3 bg-slate-50/95 pb-3 backdrop-blur sm:-mx-5 lg:-mx-8 lg:-mt-7;
+}
 .workout-header {
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 px-1 py-1;
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 bg-stone-900 px-4 py-3.5 text-white shadow-sm;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
+.workout-header .eyebrow {
+  @apply text-[0.65rem] text-stone-400;
+}
 .workout-header h1 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply truncate text-lg font-semibold tracking-tight text-white;
 }
-.workout-header p:last-child {
-  @apply mt-0.5 text-sm text-slate-500;
+.session-progress {
+  @apply mt-0.5 truncate text-xs text-stone-400;
 }
+/* Secondary to the rest countdown below it. */
 .elapsed {
-  @apply grid justify-items-end gap-1 rounded-2xl bg-stone-900 px-4 py-2.5 text-white shadow-sm;
+  @apply grid shrink-0 justify-items-end gap-0.5;
 }
 .elapsed span {
-  @apply text-[0.65rem] font-semibold uppercase tracking-wider text-stone-300;
+  @apply text-[0.6rem] font-semibold uppercase tracking-wider text-stone-500;
 }
 .elapsed strong {
-  @apply font-mono text-2xl font-bold leading-none tabular-nums;
+  @apply font-mono text-sm font-semibold leading-none tabular-nums text-stone-300;
 }
+/* The primary timer while resting: loud countdown, elapsed time stays quiet. */
 .rest-banner {
-  @apply sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-3xl border border-stone-300 bg-stone-50/95 p-4 text-stone-900 shadow-sm backdrop-blur;
+  @apply mx-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-3xl border border-stone-300 bg-white p-4 text-stone-900 shadow-md sm:mx-5 lg:mx-8;
 }
-.rest-banner > svg {
-  @apply size-6;
+.rest-copy {
+  @apply min-w-0;
 }
-.rest-banner p {
-  @apply text-sm text-stone-700;
+.rest-label {
+  @apply flex items-center gap-1.5 text-[0.65rem] font-semibold uppercase tracking-wider text-stone-500;
+}
+.rest-label svg {
+  @apply size-3.5;
+}
+.rest-copy strong {
+  @apply mt-1 block font-mono text-4xl font-bold leading-none tabular-nums text-stone-900;
 }
 .rest-actions {
-  @apply flex items-center;
+  @apply flex shrink-0 items-center gap-1;
 }
 .rest-banner button {
-  @apply min-h-10 rounded-xl px-3 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-200/70;
+  @apply min-h-11 rounded-xl bg-stone-100 px-3 text-sm font-semibold text-stone-800 transition hover:bg-stone-200;
+}
+.rest-progress {
+  @apply col-span-2 h-1.5 overflow-hidden rounded-full bg-stone-200;
+}
+.rest-progress span {
+  @apply block h-full rounded-full bg-stone-900 transition-[width] duration-1000 ease-linear;
 }
 .exercise-stack {
   @apply space-y-4;
