@@ -3,31 +3,33 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 import ActionButton from '@/ui/components/ActionButton.vue'
 import { useActionButton } from '@/stores/actionButton'
+import { backDestinationFor } from '@/router/backDestination'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 const actionButton = useActionButton()
 const pageTitleStore = usePageTitleStore()
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
+const backDestination = computed(() => backDestinationFor(route))
+const backLabel = computed(() => t(backDestination.value.labelKey))
 
 const goBack = async () => {
-  if (window.history.length > 1) {
-    router.back()
-    return
-  }
-
-  if (route.path === '/progress') await router.push('/profile')
-  else if (route.path.startsWith('/plans/')) await router.push('/plans')
-  else if (route.path.startsWith('/routines/')) await router.push('/routines')
-  else if (route.path.startsWith('/exercises/')) await router.push('/exercises')
-  else if (route.path.startsWith('/workouts/')) await router.push('/workout')
-  else await router.push('/home')
+  await router.push(backDestination.value.path)
 }
 </script>
 
 <template>
   <nav class="page-nav" :aria-label="`Back from ${pageTitleStore.pageTitle}`">
-    <button type="button" class="back-button" aria-label="Go back" @click="goBack">
+    <button
+      type="button"
+      class="back-button"
+      :aria-label="backLabel"
+      :title="backLabel"
+      @click="goBack"
+    >
       <ArrowLeftIcon />
     </button>
     <p>{{ pageTitleStore.pageTitle }}</p>

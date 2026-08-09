@@ -3,7 +3,13 @@ import { type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { BoltIcon, ChevronRightIcon, PencilIcon, TrashIcon, TrophyIcon } from '@heroicons/vue/24/outline'
+import {
+  BoltIcon,
+  ChevronRightIcon,
+  PencilIcon,
+  TrashIcon,
+  TrophyIcon,
+} from '@heroicons/vue/24/outline'
 import { useI18n } from 'vue-i18n'
 
 import router from '@/router/router'
@@ -118,9 +124,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
         <RouterLink :to="`/exercises/${route.params.id}/edit`">
           <PencilIcon /> Update exercise <ChevronRightIcon />
         </RouterLink>
-        <button type="button" @click="onDeleteExercise">
-          <TrashIcon /> Delete exercise
-        </button>
+        <button type="button" @click="onDeleteExercise"><TrashIcon /> Delete exercise</button>
       </div>
     </section>
 
@@ -158,7 +162,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   <section v-else class="empty-card">
     <h1>Exercise unavailable</h1>
     <p>This exercise could not be loaded or no longer exists.</p>
-    <RouterLink to="/progress">Back to progress</RouterLink>
+    <RouterLink to="/exercises">Back to exercises</RouterLink>
   </section>
 </template>
 
