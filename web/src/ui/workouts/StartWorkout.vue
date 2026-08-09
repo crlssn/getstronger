@@ -58,6 +58,7 @@ const exerciseOptionsLoaded = ref(false)
 const exerciseOptions = ref<Exercise[]>([])
 const exerciseSearch = ref('')
 const exercisePageToken = ref(new Uint8Array(0))
+const exerciseCard = ref<HTMLElement | null>(null)
 
 const workoutStore = useWorkoutStore()
 const dashboardStore = useDashboardStore()
@@ -194,6 +195,46 @@ const nextActionLabel = computed(() =>
     ? 'Next exercise'
     : 'Complete exercise',
 )
+
+// The dock holds a single forward action: advance while exercises remain,
+// finish once they are all done.
+const allExercisesComplete = computed(() => unfinishedExerciseCount.value === 0)
+const primaryActionLabel = computed(() => {
+  if (!allExercisesComplete.value) return nextActionLabel.value
+  return submitting.value ? 'Saving…' : 'Finish workout'
+})
+const canRunPrimaryAction = computed(() =>
+  allExercisesComplete.value
+    ? canFinish.value
+    : Boolean(currentExercise.value && canCompleteExercise(currentExercise.value.id)),
+)
+// Only the finish-related hints are worth surfacing; while logging, the empty
+// set field is the instruction.
+const primaryStatus = computed(() => (allExercisesComplete.value ? finishStatus.value : ''))
+
+const onPrimaryAction = async () => {
+  if (!allExercisesComplete.value) {
+    advanceExercise()
+    return
+  }
+  await requestFinishWorkout()
+}
+
+// Puts the cursor on the set you are about to log, so the keyboard is aimed at
+// the right field after advancing or after a rest ends. Never steals focus from
+// a field the user is already typing in.
+const focusNextSetInput = async () => {
+  await nextTick()
+  if (document.activeElement instanceof HTMLInputElement) return
+
+  const inputs = exerciseCard.value?.querySelectorAll('input') ?? []
+  for (const input of inputs) {
+    if (!input.value) {
+      input.focus()
+      return
+    }
+  }
+}
 
 const formatDuration = (seconds: number) => {
   const hours = Math.floor(seconds / 3600)
@@ -399,6 +440,7 @@ const startRestTimer = (seconds = 90) => {
       clearInterval(restInterval)
       restInterval = undefined
       playRestFinishedSound()
+      void focusNextSetInput()
     }
   }, 1000)
 }
@@ -441,6 +483,7 @@ const selectExercise = (index: number) => {
   if (!routine.value?.exercises[index]) return
   activeExerciseIndex.value = index
   window.scrollTo({ top: 0, behavior: 'smooth' })
+  void focusNextSetInput()
 }
 
 const advanceExercise = () => {
@@ -649,7 +692,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 </script>
 
 <template>
-  <form class="workout-shell" novalidate @submit.prevent="requestFinishWorkout">
+  <form class="workout-shell" novalidate @submit.prevent="onPrimaryAction">
     <!-- Two independent sticky layers, not one block: the header pins until the
          rest bar reaches the top, then the bar rides over and covers it. -->
     <header class="workout-header">
@@ -701,7 +744,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         <button type="button" @click="openExercisePicker"><PlusIcon /> Choose exercise</button>
       </section>
 
-      <section v-if="currentExercise" class="exercise-card">
+      <section v-if="currentExercise" ref="exerciseCard" class="exercise-card">
         <header class="exercise-heading">
           <div>
             <p class="eyebrow">
@@ -770,15 +813,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               <MinusIcon />
             </button>
           </div>
-
-          <button
-            type="button"
-            class="next-exercise-button"
-            :disabled="!canCompleteExercise(currentExercise.id)"
-            @click="advanceExercise"
-          >
-            <CheckIcon /> {{ nextActionLabel }}
-          </button>
         </template>
       </section>
 
@@ -962,17 +996,25 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </section>
     </div>
 
+    <!-- One forward action for the whole session: it advances through the
+         exercises and turns into Finish once they are all done. -->
     <footer class="finish-dock">
-      <strong v-if="finishError || finishStatus" :class="{ 'text-red-600': finishError }">{{
-        finishError || finishStatus
+      <strong v-if="finishError || primaryStatus" :class="{ 'text-red-600': finishError }">{{
+        finishError || primaryStatus
       }}</strong>
+      <button type="submit" class="primary-action" :disabled="!canRunPrimaryAction">
+        <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
+        {{ primaryActionLabel }}
+      </button>
+      <!-- Finishing early is a supported path, so it stays reachable while
+           exercises remain, just far quieter than the main action. -->
       <button
-        type="submit"
-        class="finish-workout"
-        :class="{ primary: canFinish && unfinishedExerciseCount === 0 }"
-        :disabled="!canFinish"
+        v-if="canFinish && !allExercisesComplete"
+        type="button"
+        class="finish-early"
+        @click="requestFinishWorkout"
       >
-        <FlagIcon /> {{ submitting ? 'Saving…' : 'Finish workout' }}
+        <FlagIcon /> Finish workout
       </button>
     </footer>
   </form>
@@ -1207,12 +1249,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .remove-set svg {
   @apply size-4;
 }
-.next-exercise-button {
-  @apply mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400;
-}
-.next-exercise-button svg {
-  @apply size-5;
-}
 .completed-exercise {
   @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-800;
 }
@@ -1314,13 +1350,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 pt-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:bottom-4 sm:rounded-2xl sm:border sm:pb-3;
 }
-/* Secondary while training: Next exercise is pressed many times a session and
-   should lead. This promotes itself once every exercise is done. */
-.finish-workout {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-white disabled:text-slate-400;
+.primary-action {
+  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400;
 }
-.finish-workout.primary {
-  @apply border-transparent bg-indigo-600 text-white hover:bg-indigo-700;
+/* Mirrors the leave dialog's secondary button, so the dock and the dialog
+   speak the same language. */
+.finish-early {
+  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50;
 }
 .finish-dock svg {
   @apply size-5;
