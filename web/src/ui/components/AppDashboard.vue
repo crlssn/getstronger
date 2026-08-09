@@ -39,6 +39,8 @@ const hidesBottomNavigation = computed(
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .dashboard-shell {
   padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
 }

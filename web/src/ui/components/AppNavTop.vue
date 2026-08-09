@@ -45,6 +45,8 @@ const goBack = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .page-nav {
   @apply mb-5 grid min-h-11 grid-cols-[2.75rem_1fr_2.75rem] items-center gap-3 px-1;
 }

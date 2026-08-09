@@ -208,6 +208,8 @@ const options = computed(() => ({
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .exercise-chart {
   @apply space-y-4;
 }

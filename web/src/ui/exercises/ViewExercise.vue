@@ -167,6 +167,8 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .exercise-detail {
   @apply mx-auto max-w-3xl space-y-5;
 }

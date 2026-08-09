@@ -140,6 +140,8 @@ const onDeleteRoutine = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .routine-detail {
   @apply mx-auto max-w-4xl space-y-5;
 }

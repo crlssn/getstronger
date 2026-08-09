@@ -44,6 +44,8 @@ const passwordVisible = ref(false)
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .password-input {
   @apply relative;
 }

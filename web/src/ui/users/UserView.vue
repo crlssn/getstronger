@@ -112,6 +112,8 @@ const profileActions = computed<DropdownItem[]>(() => [
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .profile-action {
   @apply mb-4;
 }

@@ -94,6 +94,8 @@ const weeklyVolume = computed(() =>
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .profile-stack {
   @apply mx-auto max-w-3xl space-y-5;
 }

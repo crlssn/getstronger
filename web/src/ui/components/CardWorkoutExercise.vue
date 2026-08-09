@@ -101,6 +101,8 @@ const columnLabel = (metric: ExerciseMetric) => metricLabels[metric]
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .exercise-block {
   @apply overflow-hidden rounded-2xl border border-slate-200 bg-white;
 }

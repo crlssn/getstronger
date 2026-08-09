@@ -42,6 +42,8 @@ withDefaults(defineProps<{ items: DropdownItem[]; label?: string }>(), {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .menu-trigger {
   @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700;
 }

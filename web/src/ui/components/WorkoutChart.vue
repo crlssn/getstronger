@@ -105,6 +105,8 @@ const data = computed(() => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .chart-frame {
   @apply h-64;
 }

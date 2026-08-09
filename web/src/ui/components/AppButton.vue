@@ -28,6 +28,8 @@ const computedClasses = computed(() => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 a,
 button {
   @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition;

@@ -160,6 +160,8 @@ const pause = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .plans-page {
   @apply space-y-4;
 }

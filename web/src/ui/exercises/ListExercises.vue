@@ -128,6 +128,8 @@ const fetchExercises = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .exercise-page {
   @apply space-y-4;
 }

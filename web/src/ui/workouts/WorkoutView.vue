@@ -190,6 +190,8 @@ const skip = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .workout-page {
   @apply space-y-4;
 }

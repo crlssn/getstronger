@@ -36,6 +36,8 @@ const fetchWorkout = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .loading-card,
 .empty-card {
   @apply mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm;

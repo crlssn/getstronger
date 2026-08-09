@@ -14,6 +14,8 @@ const { t } = useI18n()
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .tabs {
   @apply grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1;
 }

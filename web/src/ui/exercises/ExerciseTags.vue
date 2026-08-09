@@ -18,6 +18,8 @@ withDefaults(
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .exercise-tags {
   @apply inline-flex min-w-0 flex-wrap items-center gap-1.5;
 }

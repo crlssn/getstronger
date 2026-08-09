@@ -305,6 +305,8 @@ const postComment = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .workout-detail {
   @apply mx-auto max-w-4xl space-y-5;
 }

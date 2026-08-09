@@ -27,6 +27,8 @@ import { brandName, brandSlogan } from '@/brand'
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .guest-shell {
   @apply min-h-screen bg-slate-50;
 }

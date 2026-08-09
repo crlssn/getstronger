@@ -115,6 +115,8 @@ function toggleMetric(metric: ExerciseMetric) {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .measurement-settings {
   @apply space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm;
 }

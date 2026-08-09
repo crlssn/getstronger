@@ -107,6 +107,8 @@ const filteredVolume = computed(() =>
 </template>
 
 <style scoped>
+@reference '../assets/base.css';
+
 .progress-stack {
   @apply space-y-5;
 }

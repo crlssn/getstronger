@@ -139,6 +139,8 @@ const navigation = computed(() => [
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .bottom-nav {
   @apply fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white;
 }

@@ -32,6 +32,8 @@ const initials = computed(
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .comment-row { @apply grid grid-cols-[auto_1fr] gap-3 py-4 first:pt-0 last:pb-0; }
 .comment-avatar { @apply grid size-10 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700; }
 .comment-content { @apply min-w-0; }

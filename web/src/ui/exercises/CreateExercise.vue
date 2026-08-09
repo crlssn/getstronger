@@ -58,6 +58,8 @@ const onSubmit = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 /* Sticks above the bottom navigation so saving never needs a scroll. */
 .form-actions {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));

@@ -31,6 +31,8 @@ onUnmounted(() => versionStore.stop())
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 /* Sits above the bottom navigation and the workout dock. */
 .update-banner {
   bottom: calc(5.75rem + env(safe-area-inset-bottom));

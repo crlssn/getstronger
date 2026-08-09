@@ -165,6 +165,8 @@ const submit = () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .routine-form {
   @apply mx-auto max-w-4xl space-y-5;
 }

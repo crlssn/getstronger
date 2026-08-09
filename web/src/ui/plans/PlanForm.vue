@@ -207,6 +207,8 @@ const save = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .builder-page {
   @apply space-y-5;
 }

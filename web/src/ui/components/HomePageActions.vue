@@ -189,6 +189,8 @@ const onSearch = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .home-actions {
   @apply flex shrink-0 items-center;
 }

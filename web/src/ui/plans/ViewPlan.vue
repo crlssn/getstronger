@@ -90,6 +90,8 @@ const remove = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .plan-page {
   @apply space-y-4;
 }

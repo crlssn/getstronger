@@ -23,6 +23,8 @@ const onFetch = async () => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 ul {
   @apply mb-4 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
 

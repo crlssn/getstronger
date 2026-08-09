@@ -237,6 +237,8 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .edit-workout-form {
   @apply pb-32;
 }

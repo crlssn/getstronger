@@ -1145,6 +1145,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .workout-shell {
   @apply mx-auto max-w-3xl space-y-4 pb-28;
 }
@@ -1340,11 +1342,17 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-1 text-sm text-slate-500;
 }
 .set-grid {
+  /* Scrolls for many-metric exercises, but the remove button overhangs by 8px
+     and would otherwise paint a scrollbar under every row. */
+  scrollbar-width: none;
   @apply grid items-center gap-2 overflow-x-auto;
   grid-template-columns: 2rem minmax(5.5rem, 1fr) repeat(
       var(--metric-count),
       minmax(4.25rem, 0.75fr)
     );
+}
+.set-grid::-webkit-scrollbar {
+  display: none;
 }
 .set-labels {
   @apply pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500;

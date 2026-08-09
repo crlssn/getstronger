@@ -271,6 +271,8 @@ const selectRoutine = async (routineId: string) => {
 </template>
 
 <style scoped>
+@reference '../assets/base.css';
+
 .dashboard-stack {
   @apply space-y-5;
 }

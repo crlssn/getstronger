@@ -178,6 +178,8 @@ const makeUpNext = async (routineId: string) => {
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 .routine-page {
   @apply space-y-5;
 }
