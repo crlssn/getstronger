@@ -271,7 +271,7 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.U
 		)
 		f.NewNotification(
 			factory.NotificationUserID(john.ID),
-			factory.NotificationType(orm.NotificationTypeWorkoutComment),
+			factory.NotificationType(repo.NotificationTypeWorkoutComment),
 			factory.NotificationPayload(repo.NotificationPayload{
 				ActorID:   jane.ID,
 				WorkoutID: workout.ID,

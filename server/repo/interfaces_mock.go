@@ -553,14 +553,14 @@ func (mr *MockRepoMockRecorder) ListFollowers(ctx, userID any, opts ...any) *gom
 }
 
 // ListNotifications mocks base method.
-func (m *MockRepo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
+func (m *MockRepo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListNotifications", varargs...)
-	ret0, _ := ret[0].(orm.NotificationSlice)
+	ret0, _ := ret[0].(models.NotificationSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -724,7 +724,7 @@ func (mr *MockRepoMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomoc
 }
 
 // PublishEvent mocks base method.
-func (m *MockRepo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
+func (m *MockRepo) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)
@@ -1503,14 +1503,14 @@ func (mr *MockTxMockRecorder) ListFollowers(ctx, userID any, opts ...any) *gomoc
 }
 
 // ListNotifications mocks base method.
-func (m *MockTx) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
+func (m *MockTx) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListNotifications", varargs...)
-	ret0, _ := ret[0].(orm.NotificationSlice)
+	ret0, _ := ret[0].(models.NotificationSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1660,7 +1660,7 @@ func (mr *MockTxMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.
 }
 
 // PublishEvent mocks base method.
-func (m *MockTx) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
+func (m *MockTx) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)
@@ -2467,14 +2467,14 @@ func (mr *MockmethodsMockRecorder) ListFollowers(ctx, userID any, opts ...any) *
 }
 
 // ListNotifications mocks base method.
-func (m *Mockmethods) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
+func (m *Mockmethods) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListNotifications", varargs...)
-	ret0, _ := ret[0].(orm.NotificationSlice)
+	ret0, _ := ret[0].(models.NotificationSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2624,7 +2624,7 @@ func (mr *MockmethodsMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *go
 }
 
 // PublishEvent mocks base method.
-func (m *Mockmethods) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
+func (m *Mockmethods) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)
@@ -3951,14 +3951,14 @@ func (mr *MocknotificationMethodsMockRecorder) CreateNotification(ctx, p any) *g
 }
 
 // ListNotifications mocks base method.
-func (m *MocknotificationMethods) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
+func (m *MocknotificationMethods) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ListNotifications", varargs...)
-	ret0, _ := ret[0].(orm.NotificationSlice)
+	ret0, _ := ret[0].(models.NotificationSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -4009,7 +4009,7 @@ func (m *MockpubSubMethods) EXPECT() *MockpubSubMethodsMockRecorder {
 }
 
 // PublishEvent mocks base method.
-func (m *MockpubSubMethods) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
+func (m *MockpubSubMethods) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)

@@ -7,7 +7,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
 )
@@ -105,7 +104,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 
 	for userID := range mapUserIDs {
 		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-			Type:   orm.NotificationTypeWorkoutComment,
+			Type:   repo.NotificationTypeWorkoutComment,
 			UserID: userID,
 			Payload: repo.NotificationPayload{
 				ActorID:   comment.UserID,
@@ -137,7 +136,7 @@ func (u *FollowedUser) HandlePayload(payload string) {
 	}
 
 	if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-		Type:   orm.NotificationTypeFollow,
+		Type:   repo.NotificationTypeFollow,
 		UserID: p.FolloweeID,
 		Payload: repo.NotificationPayload{
 			ActorID: p.FollowerID,

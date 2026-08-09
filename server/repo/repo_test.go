@@ -20,6 +20,9 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/stephenafamo/bob"
+	bobtypes "github.com/stephenafamo/bob/types"
+
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
@@ -1184,7 +1187,7 @@ func (s *repoSuite) TestPublishEvent() {
 
 	type test struct {
 		name     string
-		topic    orm.EventTopic
+		topic    repo.EventTopic
 		payload  []byte
 		expected expected
 	}
@@ -1192,7 +1195,7 @@ func (s *repoSuite) TestPublishEvent() {
 	tests := []test{
 		{
 			name:    "ok_publish_event_with_notify",
-			topic:   orm.EventTopicWorkoutCommentPosted,
+			topic:   repo.EventTopicWorkoutCommentPosted,
 			payload: []byte("{}"),
 			expected: expected{
 				err: nil,
@@ -1200,7 +1203,7 @@ func (s *repoSuite) TestPublishEvent() {
 		},
 		{
 			name:    "err_invalid_topic",
-			topic:   orm.EventTopic("not_found"),
+			topic:   repo.EventTopic("not_found"),
 			payload: nil,
 			expected: expected{
 				err: repo.ErrInvalidTopic,
@@ -1208,7 +1211,7 @@ func (s *repoSuite) TestPublishEvent() {
 		},
 		{
 			name:    "err_empty_payload",
-			topic:   orm.EventTopicWorkoutCommentPosted,
+			topic:   repo.EventTopicWorkoutCommentPosted,
 			payload: nil,
 			expected: expected{
 				err: repo.ErrEmptyPayload,
@@ -1219,7 +1222,7 @@ func (s *repoSuite) TestPublishEvent() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			var listener *pq.Listener
-			if t.topic.IsValid() == nil {
+			if t.topic.Valid() {
 				listener = pq.NewListener(s.container.Connection, time.Second, time.Minute, nil)
 				s.Require().NoError(listener.Listen(t.topic.String()))
 			}
@@ -1236,10 +1239,10 @@ func (s *repoSuite) TestPublishEvent() {
 			s.Require().Equal(t.topic.String(), notification.Channel)
 			s.Require().Equal(string(t.payload), notification.Extra)
 
-			exists, err := orm.Events(
-				orm.EventWhere.Topic.EQ(t.topic),
-				orm.EventWhere.Payload.EQ(t.payload),
-			).Exists(context.Background(), s.container.DB)
+			exists, err := models.Events.Query(
+				models.SelectWhere.Events.Topic.EQ(t.topic),
+				models.SelectWhere.Events.Payload.EQ(bobtypes.NewJSON[json.RawMessage](t.payload)),
+			).Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})

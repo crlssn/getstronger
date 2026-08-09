@@ -3,11 +3,11 @@ package handlers
 import (
 	"go.uber.org/fx"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/repo"
 )
 
 type Registry struct {
-	handlers map[orm.EventTopic]Handler
+	handlers map[repo.EventTopic]Handler
 }
 
 type RegistryParams struct {
@@ -20,14 +20,14 @@ type RegistryParams struct {
 
 func NewRegistry(p RegistryParams) *Registry {
 	return &Registry{
-		handlers: map[orm.EventTopic]Handler{
-			orm.EventTopicFollowedUser:         p.FollowedUser,
-			orm.EventTopicRequestTraced:        p.RequestTraced,
-			orm.EventTopicWorkoutCommentPosted: p.WorkoutCommentPosted,
+		handlers: map[repo.EventTopic]Handler{
+			repo.EventTopicFollowedUser:         p.FollowedUser,
+			repo.EventTopicRequestTraced:        p.RequestTraced,
+			repo.EventTopicWorkoutCommentPosted: p.WorkoutCommentPosted,
 		},
 	}
 }
 
-func (r *Registry) Handlers() map[orm.EventTopic]Handler {
+func (r *Registry) Handlers() map[repo.EventTopic]Handler {
 	return r.handlers
 }

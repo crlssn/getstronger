@@ -14,6 +14,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
+	bobtypes "github.com/stephenafamo/bob/types"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/safe"
 )
 
 type order string
@@ -1254,12 +1256,11 @@ type StoreTraceParams struct {
 }
 
 func (r *repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
-	trace := &orm.Trace{
-		Request:    p.Request,
-		StatusCode: p.StatusCode,
-		DurationMS: p.DurationMS,
-	}
-	if err := trace.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+	if _, err := models.Traces.Insert(&models.TraceSetter{
+		Request:    omit.From(p.Request),
+		StatusCode: omit.From(safe.Int32FromInt(p.StatusCode)),
+		DurationMS: omit.From(safe.Int32FromInt(p.DurationMS)),
+	}).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("trace insert: %w", err)
 	}
 
@@ -1267,7 +1268,7 @@ func (r *repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 }
 
 type CreateNotificationParams struct {
-	Type    orm.NotificationType
+	Type    NotificationType
 	UserID  string
 	Payload NotificationPayload
 }
@@ -1283,12 +1284,11 @@ func (r *repo) CreateNotification(ctx context.Context, p CreateNotificationParam
 		return fmt.Errorf("payload marshal: %w", err)
 	}
 
-	n := &orm.Notification{
-		UserID:  p.UserID,
-		Type:    p.Type,
-		Payload: payload,
-	}
-	if err = n.Insert(ctx, r.executor(), boil.Infer()); err != nil {
+	if _, err = models.Notifications.Insert(&models.NotificationSetter{
+		UserID:  omit.From(p.UserID),
+		Type:    omit.From(p.Type),
+		Payload: omit.From(bobtypes.NewJSON[json.RawMessage](payload)),
+	}).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("insert: %w", err)
 	}
 
@@ -1323,30 +1323,29 @@ func (r *repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentO
 	return comment, nil
 }
 
-type ListNotificationsOpt func() ([]qm.QueryMod, error)
+type ListNotificationsOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
 func ListNotificationsWithLimit(limit int) ListNotificationsOpt {
-	return func() ([]qm.QueryMod, error) {
-		return []qm.QueryMod{
-			qm.Limit(limit),
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
+		return []bob.Mod[*dialect.SelectQuery]{
+			sm.Limit(limit),
 		}, nil
 	}
 }
 
 func ListNotificationsWithUserID(userID string) ListNotificationsOpt {
-	return func() ([]qm.QueryMod, error) {
-		return []qm.QueryMod{
-			orm.NotificationWhere.UserID.EQ(userID),
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
+		return []bob.Mod[*dialect.SelectQuery]{
+			models.SelectWhere.Notifications.UserID.EQ(userID),
 		}, nil
 	}
 }
 
 func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
-	return func() ([]qm.QueryMod, error) {
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
+		newestFirst := sm.OrderBy(models.Notifications.Columns.CreatedAt).Desc()
 		if len(token) == 0 {
-			return []qm.QueryMod{
-				qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt)),
-			}, nil
+			return []bob.Mod[*dialect.SelectQuery]{newestFirst}, nil
 		}
 
 		var pageToken PageToken
@@ -1354,15 +1353,15 @@ func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
-		return []qm.QueryMod{
-			orm.NotificationWhere.CreatedAt.LT(pageToken.CreatedAt),
-			qm.OrderBy(fmt.Sprintf("%s DESC", orm.NotificationColumns.CreatedAt)),
+		return []bob.Mod[*dialect.SelectQuery]{
+			models.SelectWhere.Notifications.CreatedAt.LT(pageToken.CreatedAt),
+			newestFirst,
 		}, nil
 	}
 }
 
-func (r *repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
+func (r *repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error) {
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		q, err := opt()
 		if err != nil {
@@ -1372,7 +1371,7 @@ func (r *repo) ListNotifications(ctx context.Context, opts ...ListNotificationsO
 		query = append(query, q...)
 	}
 
-	notifications, err := orm.Notifications(query...).All(ctx, r.executor())
+	notifications, err := models.Notifications.Query(query...).All(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("notifications fetch: %w", err)
 	}
@@ -1380,26 +1379,26 @@ func (r *repo) ListNotifications(ctx context.Context, opts ...ListNotificationsO
 	return notifications, nil
 }
 
-type CountNotificationsOpt func() qm.QueryMod
+type CountNotificationsOpt func() bob.Mod[*dialect.SelectQuery]
 
 func CountNotificationsWithUserID(userID string) CountNotificationsOpt {
-	return func() qm.QueryMod {
-		return orm.NotificationWhere.UserID.EQ(userID)
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Notifications.UserID.EQ(userID)
 	}
 }
 
 func CountNotificationsWithUnreadOnly(onlyUnread bool) CountNotificationsOpt {
-	return func() qm.QueryMod {
+	return func() bob.Mod[*dialect.SelectQuery] {
 		if !onlyUnread {
 			return nil
 		}
 
-		return orm.NotificationWhere.ReadAt.IsNull()
+		return models.SelectWhere.Notifications.ReadAt.IsNull()
 	}
 }
 
 func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error) {
-	query := make([]qm.QueryMod, 0, len(opts))
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		if opt() == nil {
 			continue
@@ -1407,7 +1406,7 @@ func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotification
 		query = append(query, opt())
 	}
 
-	count, err := orm.Notifications(query...).Count(ctx, r.executor())
+	count, err := models.Notifications.Query(query...).Count(ctx, r.bobExec())
 	if err != nil {
 		return 0, fmt.Errorf("notifications count: %w", err)
 	}
@@ -1416,11 +1415,10 @@ func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotification
 }
 
 func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID string) error {
-	if _, err := orm.Notifications(
-		orm.NotificationWhere.UserID.EQ(userID),
-	).UpdateAll(ctx, r.executor(), orm.M{
-		orm.NotificationColumns.ReadAt: time.Now().UTC(),
-	}); err != nil {
+	if _, err := models.Notifications.Update(
+		um.SetCol(models.Notifications.Columns.ReadAt.Name()).ToArg(time.Now().UTC()),
+		models.UpdateWhere.Notifications.UserID.EQ(userID),
+	).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("notifications update: %w", err)
 	}
 
@@ -1684,8 +1682,8 @@ var (
 	ErrInvalidTopic = fmt.Errorf("invalid topic")
 )
 
-func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error {
-	if topic.IsValid() != nil {
+func (r *repo) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
+	if !topic.Valid() {
 		return fmt.Errorf("%w: %s", ErrInvalidTopic, topic)
 	}
 
@@ -1694,11 +1692,10 @@ func (r *repo) PublishEvent(ctx context.Context, topic orm.EventTopic, payload [
 	}
 
 	return r.NewTx(ctx, func(tx Tx) error {
-		event := &orm.Event{
-			Topic:   topic,
-			Payload: payload,
-		}
-		if err := event.Insert(ctx, tx.exec(), boil.Infer()); err != nil {
+		if _, err := models.Events.Insert(&models.EventSetter{
+			Topic:   omit.From(topic),
+			Payload: omit.From(bobtypes.NewJSON[json.RawMessage](payload)),
+		}).Exec(ctx, tx.bobExec()); err != nil {
 			return fmt.Errorf("event insert: %w", err)
 		}
 

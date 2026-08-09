@@ -88,17 +88,17 @@ func TestSeedJaneDoe(t *testing.T) {
 		require.NotEmpty(t, comment.Comment)
 	}
 
-	notifications, err := orm.Notifications(
-		orm.NotificationWhere.UserID.EQ(john.ID),
-		orm.NotificationWhere.Type.EQ(orm.NotificationTypeWorkoutComment),
-	).All(ctx, c.DB)
+	notifications, err := models.Notifications.Query(
+		models.SelectWhere.Notifications.UserID.EQ(john.ID),
+		models.SelectWhere.Notifications.Type.EQ(repo.NotificationTypeWorkoutComment),
+	).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Len(t, notifications, 3)
 	for _, notification := range notifications {
-		require.False(t, notification.ReadAt.Valid)
+		require.True(t, notification.ReadAt.IsNull())
 
 		var payload repo.NotificationPayload
-		require.NoError(t, json.Unmarshal(notification.Payload, &payload))
+		require.NoError(t, json.Unmarshal(notification.Payload.Val, &payload))
 		require.Equal(t, jane.ID, payload.ActorID)
 		_, notifiesAboutJohnWorkout := johnWorkoutIDs[payload.WorkoutID]
 		require.True(t, notifiesAboutJohnWorkout)

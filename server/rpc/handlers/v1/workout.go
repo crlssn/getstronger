@@ -274,7 +274,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.pubSub.Publish(ctx, orm.EventTopicWorkoutCommentPosted, payloads.WorkoutCommentPosted{
+	h.pubSub.Publish(ctx, repo.EventTopicWorkoutCommentPosted, payloads.WorkoutCommentPosted{
 		CommentID: comment.ID,
 	})
 

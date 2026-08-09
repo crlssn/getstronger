@@ -6,15 +6,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/im"
+	bobtypes "github.com/stephenafamo/bob/types"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 )
 
-func (f *Factory) NewNotificationSlice(count int, opts ...NotificationOpt) orm.NotificationSlice {
-	slice := make(orm.NotificationSlice, 0, count)
+func (f *Factory) NewNotificationSlice(count int, opts ...NotificationOpt) models.NotificationSlice {
+	slice := make(models.NotificationSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewNotification(opts...))
 	}
@@ -22,93 +25,88 @@ func (f *Factory) NewNotificationSlice(count int, opts ...NotificationOpt) orm.N
 	return slice
 }
 
-type NotificationOpt func(notification *orm.Notification)
+type NotificationOpt func(notification *models.NotificationSetter)
 
-func (f *Factory) NewNotification(opts ...NotificationOpt) *orm.Notification {
-	m := &orm.Notification{
-		ID:        "",
-		UserID:    "",
-		Type:      "",
-		Payload:   nil,
-		ReadAt:    null.Time{},
-		CreatedAt: time.Time{},
-	}
+func (f *Factory) NewNotification(opts ...NotificationOpt) *models.Notification {
+	m := &models.NotificationSetter{}
 
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	if m.UserID.IsUnset() {
+		m.UserID = omit.From(f.NewUser().ID)
 	}
 
-	if m.Type == "" {
-		m.Type = orm.NotificationType(f.Faker.RandomString([]string{
-			orm.NotificationTypeFollow.String(),
-			orm.NotificationTypeWorkoutComment.String(),
-		}))
+	if m.Type.IsUnset() {
+		m.Type = omit.From(repo.NotificationType(f.Faker.RandomString([]string{
+			repo.NotificationTypeFollow.String(),
+			repo.NotificationTypeWorkoutComment.String(),
+		})))
 	}
 
-	if m.Payload == nil {
-		m.Payload = []byte("{}")
+	if m.Payload.IsUnset() {
+		m.Payload = omit.From(bobtypes.NewJSON[json.RawMessage]([]byte("{}")))
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.NotificationColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
+	ctx := context.Background()
+	notification, err := models.Notifications.Insert(m,
+		im.OnConflict(models.Notifications.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(m.SetColumns()...)),
+	).One(ctx, bob.NewDB(f.db))
+	if err != nil {
 		panic(fmt.Errorf("failed to insert notification: %w", err))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	user, err := models.Users.Query(
+		models.SelectWhere.Users.ID.EQ(notification.UserID),
+	).One(ctx, bob.NewDB(f.db))
 	if err != nil {
 		panic(fmt.Errorf("failed to retrieve user: %w", err))
 	}
+	notification.R.User = user
+	notification.R.Loaded.User = true
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return notification
 }
 
 func NotificationUserID(userID string) NotificationOpt {
-	return func(notification *orm.Notification) {
-		notification.UserID = userID
+	return func(notification *models.NotificationSetter) {
+		notification.UserID = omit.From(userID)
 	}
 }
 
 func NotificationPayload(payload repo.NotificationPayload) NotificationOpt {
-	return func(notification *orm.Notification) {
+	return func(notification *models.NotificationSetter) {
 		p, err := json.Marshal(payload)
 		if err != nil {
 			panic(fmt.Errorf("failed to marshal payload: %w", err))
 		}
 
-		notification.Payload = p
+		notification.Payload = omit.From(bobtypes.NewJSON[json.RawMessage](p))
 	}
 }
 
-func NotificationType(t orm.NotificationType) NotificationOpt {
-	return func(notification *orm.Notification) {
-		notification.Type = t
+func NotificationType(t repo.NotificationType) NotificationOpt {
+	return func(notification *models.NotificationSetter) {
+		notification.Type = omit.From(t)
 	}
 }
 
 func NotificationRead() NotificationOpt {
-	return func(notification *orm.Notification) {
-		notification.ReadAt = null.TimeFrom(time.Now().UTC())
+	return func(notification *models.NotificationSetter) {
+		notification.ReadAt = omitnull.From(time.Now().UTC())
 	}
 }
 
 func NotificationID(id string) NotificationOpt {
-	return func(notification *orm.Notification) {
-		notification.ID = id
+	return func(notification *models.NotificationSetter) {
+		notification.ID = omit.From(id)
 	}
 }
 
 func NotificationCreatedAt(t time.Time) NotificationOpt {
-	return func(notification *orm.Notification) {
-		notification.CreatedAt = t.UTC()
+	return func(notification *models.NotificationSetter) {
+		notification.CreatedAt = omit.From(t.UTC())
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -115,7 +114,7 @@ func (s *notificationSuite) TestListNotifications() {
 					)
 					s.testFactory.NewNotification(
 						factory.NotificationID(n.GetId()),
-						factory.NotificationType(orm.NotificationTypeWorkoutComment),
+						factory.NotificationType(repo.NotificationTypeWorkoutComment),
 						factory.NotificationUserID(userID),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						factory.NotificationPayload(repo.NotificationPayload{
@@ -171,7 +170,7 @@ func (s *notificationSuite) TestListNotifications() {
 				for _, n := range test.expected.res.Msg.GetNotifications() {
 					s.testFactory.NewNotification(
 						factory.NotificationID(n.GetId()),
-						factory.NotificationType(orm.NotificationTypeFollow),
+						factory.NotificationType(repo.NotificationTypeFollow),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						factory.NotificationUserID(userID),
 						factory.NotificationPayload(repo.NotificationPayload{
@@ -219,7 +218,7 @@ func (s *notificationSuite) TestListNotifications() {
 			},
 			init: func(_ test, userID string) {
 				s.testFactory.NewNotification(
-					factory.NotificationType(orm.NotificationTypeWorkoutComment),
+					factory.NotificationType(repo.NotificationTypeWorkoutComment),
 					factory.NotificationUserID(userID),
 					factory.NotificationPayload(repo.NotificationPayload{
 						ActorID:   s.testFactory.NewUser().ID,

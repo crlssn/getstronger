@@ -2,12 +2,13 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -43,7 +44,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(notifications, limit, func(n *orm.Notification) time.Time {
+	paginated, err := repo.PaginateSlice(notifications, limit, func(n *models.Notification) time.Time {
 		return n.CreatedAt
 	})
 	if err != nil {
@@ -56,7 +57,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 
 	for _, n := range paginated.Items {
 		var payload repo.NotificationPayload
-		if err = n.Payload.Unmarshal(&payload); err != nil {
+		if err = json.Unmarshal(n.Payload.Val, &payload); err != nil {
 			log.Error("failed to unmarshal notification payload", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}

@@ -110,12 +110,12 @@ type exerciseMethods interface {
 }
 
 type notificationMethods interface {
-	ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (orm.NotificationSlice, error)
+	ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error)
 	CreateNotification(ctx context.Context, p CreateNotificationParams) error
 	CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error)
 	MarkNotificationsAsRead(ctx context.Context, userID string) error
 }
 
 type pubSubMethods interface {
-	PublishEvent(ctx context.Context, topic orm.EventTopic, payload []byte) error
+	PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error
 }

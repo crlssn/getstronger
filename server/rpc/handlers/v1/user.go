@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
@@ -108,7 +107,7 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.pubSub.Publish(ctx, orm.EventTopicFollowedUser, payloads.UserFollowed{
+	h.pubSub.Publish(ctx, repo.EventTopicFollowedUser, payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
 	})

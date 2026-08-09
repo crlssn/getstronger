@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
@@ -341,7 +342,7 @@ func (s *parserSuite) TestExerciseSetsFromPB() {
 
 func (s *parserSuite) TestNotification() {
 	notification := s.factory.NewNotification(
-		factory.NotificationType(orm.NotificationTypeWorkoutComment),
+		factory.NotificationType(repo.NotificationTypeWorkoutComment),
 	)
 	parsed := parser.Notification(notification)
 
@@ -415,7 +416,7 @@ func (s *parserSuite) TestNotification() {
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetExerciseSets())
 
 	notification = s.factory.NewNotification(
-		factory.NotificationType(orm.NotificationTypeFollow),
+		factory.NotificationType(repo.NotificationTypeFollow),
 	)
 	parsed = parser.Notification(notification)
 
@@ -440,15 +441,15 @@ func (s *parserSuite) TestNotification() {
 func (s *parserSuite) TestNotificationSlice() {
 	actors := s.factory.NewUserSlice(2)
 	workouts := s.factory.NewWorkoutSlice(1)
-	notifications := orm.NotificationSlice{
+	notifications := models.NotificationSlice{
 		s.factory.NewNotification(
-			factory.NotificationType(orm.NotificationTypeFollow),
+			factory.NotificationType(repo.NotificationTypeFollow),
 			factory.NotificationPayload(repo.NotificationPayload{
 				ActorID: actors[0].ID,
 			}),
 		),
 		s.factory.NewNotification(
-			factory.NotificationType(orm.NotificationTypeWorkoutComment),
+			factory.NotificationType(repo.NotificationTypeWorkoutComment),
 			factory.NotificationPayload(repo.NotificationPayload{
 				ActorID:   actors[1].ID,
 				WorkoutID: workouts[0].ID,
@@ -464,9 +465,9 @@ func (s *parserSuite) TestNotificationSlice() {
 		s.Require().Equal(notifications[i].CreatedAt.Unix(), notification.GetNotifiedAtUnix())
 
 		switch notifications[i].Type {
-		case orm.NotificationTypeFollow:
+		case repo.NotificationTypeFollow:
 			s.Require().NotNil(notification.GetUserFollowed())
-		case orm.NotificationTypeWorkoutComment:
+		case repo.NotificationTypeWorkoutComment:
 			s.Require().NotNil(notification.GetWorkoutComment())
 		default:
 			s.FailNow(fmt.Sprintf("unexpected notification type: %v", notifications[i].Type))

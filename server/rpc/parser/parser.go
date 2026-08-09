@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -315,14 +316,14 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 
 type NotificationOpt func(*apiv1.Notification)
 
-func NotificationActor(nType orm.NotificationType, actor *models.User) NotificationOpt {
+func NotificationActor(nType repo.NotificationType, actor *models.User) NotificationOpt {
 	return func(n *apiv1.Notification) {
 		if actor == nil {
 			return
 		}
 
 		switch nType {
-		case orm.NotificationTypeFollow:
+		case repo.NotificationTypeFollow:
 			if _, ok := n.GetType().(*apiv1.Notification_UserFollowed_); !ok {
 				n.Type = &apiv1.Notification_UserFollowed_{
 					UserFollowed: &apiv1.Notification_UserFollowed{
@@ -332,7 +333,7 @@ func NotificationActor(nType orm.NotificationType, actor *models.User) Notificat
 			}
 
 			n.GetType().(*apiv1.Notification_UserFollowed_).UserFollowed.Actor = User(actor) //nolint:forcetypeassert
-		case orm.NotificationTypeWorkoutComment:
+		case repo.NotificationTypeWorkoutComment:
 			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
 				n.Type = &apiv1.Notification_WorkoutComment_{
 					WorkoutComment: &apiv1.Notification_WorkoutComment{
@@ -347,9 +348,9 @@ func NotificationActor(nType orm.NotificationType, actor *models.User) Notificat
 	}
 }
 
-func NotificationWorkout(nType orm.NotificationType, workout *orm.Workout) NotificationOpt {
+func NotificationWorkout(nType repo.NotificationType, workout *orm.Workout) NotificationOpt {
 	return func(n *apiv1.Notification) {
-		if nType != orm.NotificationTypeWorkoutComment || workout == nil {
+		if nType != repo.NotificationTypeWorkoutComment || workout == nil {
 			return
 		}
 
@@ -366,7 +367,7 @@ func NotificationWorkout(nType orm.NotificationType, workout *orm.Workout) Notif
 	}
 }
 
-func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv1.Notification {
+func Notification(notification *models.Notification, opts ...NotificationOpt) *apiv1.Notification {
 	n := &apiv1.Notification{
 		Id:             notification.ID,
 		NotifiedAtUnix: notification.CreatedAt.Unix(),
@@ -380,7 +381,7 @@ func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv
 	return n
 }
 
-func NotificationSlice(notifications orm.NotificationSlice, actors models.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
+func NotificationSlice(notifications models.NotificationSlice, actors models.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
 	mapActors := make(map[string]*models.User)
 	for _, a := range actors {
 		mapActors[a.ID] = a
@@ -394,7 +395,7 @@ func NotificationSlice(notifications orm.NotificationSlice, actors models.UserSl
 	nSlice := make([]*apiv1.Notification, 0, len(notifications))
 	for _, n := range notifications {
 		var p repo.NotificationPayload
-		if err := n.Payload.Unmarshal(&p); err != nil {
+		if err := json.Unmarshal(n.Payload.Val, &p); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
 		}
 
@@ -402,14 +403,14 @@ func NotificationSlice(notifications orm.NotificationSlice, actors models.UserSl
 		workout, workoutExists := mapWorkouts[p.WorkoutID]
 
 		switch n.Type {
-		case orm.NotificationTypeFollow:
+		case repo.NotificationTypeFollow:
 			if actorExists {
 				nSlice = append(nSlice, Notification(
 					n,
 					NotificationActor(n.Type, actor),
 				))
 			}
-		case orm.NotificationTypeWorkoutComment:
+		case repo.NotificationTypeWorkoutComment:
 			if actorExists && workoutExists {
 				nSlice = append(nSlice, Notification(
 					n,

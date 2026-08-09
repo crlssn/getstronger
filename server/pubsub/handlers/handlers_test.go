@@ -140,7 +140,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 		}
 
 		repoMock.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
-			Type:   orm.NotificationTypeFollow,
+			Type:   repo.NotificationTypeFollow,
 			UserID: payload.FolloweeID,
 			Payload: repo.NotificationPayload{
 				ActorID: payload.FollowerID,

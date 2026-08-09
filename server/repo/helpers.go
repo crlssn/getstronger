@@ -16,7 +16,7 @@ import (
 )
 
 type ModelItem interface {
-	*orm.Workout | *orm.Exercise | *orm.Routine | *orm.Set | *orm.WorkoutComment | *orm.Notification |
+	*orm.Workout | *orm.Exercise | *orm.Routine | *orm.Set | *orm.WorkoutComment | *models.Notification |
 		*models.Auth | *models.User
 }
 
