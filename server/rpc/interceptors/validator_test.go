@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/bufbuild/protovalidate-go"
+	"buf.build/go/protovalidate"
 	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 

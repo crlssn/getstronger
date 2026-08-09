@@ -8,8 +8,8 @@ import (
 	"net"
 	"testing"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

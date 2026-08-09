@@ -11,8 +11,6 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/rpc/handlers"
@@ -43,13 +41,22 @@ const (
 )
 
 func NewServer(p Params) *Server {
+	// gRPC clients speak HTTP/2 without TLS, which the stdlib server only
+	// accepts once unencrypted HTTP/2 is opted into. This replaces the
+	// deprecated h2c handler wrapper.
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetHTTP2(true)
+	protocols.SetUnencryptedHTTP2(true)
+
 	return &Server{
 		log:    p.Log,
 		config: p.Config,
 		stream: p.Stream,
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%s", p.Config.Server.Port),
-			Handler:      h2c.NewHandler(p.Mux, &http2.Server{}),
+			Handler:      p.Mux,
+			Protocols:    protocols,
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
