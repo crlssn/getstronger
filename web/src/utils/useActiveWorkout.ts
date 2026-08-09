@@ -62,6 +62,11 @@ export default function useActiveWorkout() {
     return Number.isNaN(time) ? undefined : time
   })
 
+  const savedRestTimerEndsAtMs = computed(() => {
+    const time = Date.parse(savedWorkout.value?.[1].restTimerEndsAt ?? '')
+    return Number.isNaN(time) ? undefined : time
+  })
+
   const discardSavedWorkout = () => {
     const routineId = savedWorkout.value?.[0]
     if (!routineId) return
@@ -76,5 +81,6 @@ export default function useActiveWorkout() {
     savedWorkout,
     savedWorkoutStarted,
     savedWorkoutStartedAtMs,
+    savedRestTimerEndsAtMs,
   }
 }

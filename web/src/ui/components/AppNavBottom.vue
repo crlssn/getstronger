@@ -20,7 +20,8 @@ import {
 
 const route = useRoute()
 const notificationStore = useNotificationStore()
-const { savedHref, savedWorkout, savedWorkoutStartedAtMs } = useActiveWorkout()
+const { savedHref, savedRestTimerEndsAtMs, savedWorkout, savedWorkoutStartedAtMs } =
+  useActiveWorkout()
 
 const now = ref(Date.now())
 let timerTick: ReturnType<typeof setInterval> | undefined
@@ -36,6 +37,16 @@ onUnmounted(() => {
 })
 
 const activeWorkoutTimer = computed(() => {
+  if (savedRestTimerEndsAtMs.value && savedRestTimerEndsAtMs.value > now.value) {
+    const remainingSeconds = Math.max(
+      0,
+      Math.ceil((savedRestTimerEndsAtMs.value - now.value) / 1000),
+    )
+    const minutes = Math.floor(remainingSeconds / 60)
+    const seconds = remainingSeconds % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
+
   if (!savedWorkoutStartedAtMs.value) return ''
   const totalSeconds = Math.max(0, Math.floor((now.value - savedWorkoutStartedAtMs.value) / 1000))
   const hours = Math.floor(totalSeconds / 3600)

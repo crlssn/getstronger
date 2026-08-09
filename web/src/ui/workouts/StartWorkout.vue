@@ -74,6 +74,10 @@ let audioContext: AudioContext | undefined
 
 onMounted(async () => {
   await initializeRoutine()
+  elapsedSeconds.value = Math.max(
+    0,
+    Math.floor(DateTime.now().diff(startedAt.value, 'seconds').seconds),
+  )
   elapsedInterval = setInterval(() => {
     elapsedSeconds.value = Math.floor(DateTime.now().diff(startedAt.value, 'seconds').seconds)
   }, 1000)
@@ -279,6 +283,7 @@ const initializeRoutine = async () => {
       addEmptySetsFromPreviousSession()
       seedCompletedSets()
     }
+    restoreRestTimer()
     return
   }
 
@@ -316,6 +321,7 @@ const initializeRoutine = async () => {
     (exercise) => !completedExercises.value[exercise.id],
   )
   activeExerciseIndex.value = Math.max(0, firstIncomplete)
+  restoreRestTimer()
 }
 
 const addEmptySetsFromPreviousSession = () => {
@@ -429,26 +435,59 @@ const playRestFinishedSound = () => {
   }
 }
 
-const startRestTimer = (seconds = 90) => {
-  if (restInterval) clearInterval(restInterval)
-  prepareRestSound()
-  restTotalSeconds.value = seconds
-  restSeconds.value = seconds
-  restInterval = setInterval(() => {
-    restSeconds.value -= 1
-    if (restSeconds.value <= 0 && restInterval) {
-      clearInterval(restInterval)
-      restInterval = undefined
-      playRestFinishedSound()
-      void focusNextSetInput()
-    }
-  }, 1000)
-}
-
-const skipRest = () => {
+const clearRestTimer = () => {
   if (restInterval) clearInterval(restInterval)
   restInterval = undefined
   restSeconds.value = 0
+  restTotalSeconds.value = 0
+  workoutStore.setRestTimer(routineID)
+}
+
+const runRestTimer = (endsAtMs: number, totalSeconds: number) => {
+  if (restInterval) clearInterval(restInterval)
+  prepareRestSound()
+  restTotalSeconds.value = totalSeconds
+
+  const updateRemaining = () => {
+    restSeconds.value = Math.max(0, Math.ceil((endsAtMs - Date.now()) / 1000))
+    if (restSeconds.value > 0) return
+
+    if (restInterval) clearInterval(restInterval)
+    restInterval = undefined
+    workoutStore.setRestTimer(routineID)
+    playRestFinishedSound()
+    void focusNextSetInput()
+  }
+
+  updateRemaining()
+  if (restSeconds.value <= 0) return
+  restInterval = setInterval(() => {
+    updateRemaining()
+  }, 1000)
+}
+
+const startRestTimer = (seconds = 90) => {
+  const endsAtMs = Date.now() + seconds * 1000
+  workoutStore.setRestTimer(routineID, new Date(endsAtMs).toISOString(), seconds)
+  runRestTimer(endsAtMs, seconds)
+}
+
+const restoreRestTimer = () => {
+  const savedTimer = workoutStore.getRestTimer(routineID)
+  if (!savedTimer.endsAt) return
+
+  const endsAtMs = Date.parse(savedTimer.endsAt)
+  if (Number.isNaN(endsAtMs) || endsAtMs <= Date.now()) {
+    workoutStore.setRestTimer(routineID)
+    return
+  }
+
+  const remainingSeconds = Math.ceil((endsAtMs - Date.now()) / 1000)
+  runRestTimer(endsAtMs, Math.max(savedTimer.totalSeconds, remainingSeconds))
+}
+
+const skipRest = () => {
+  clearRestTimer()
 }
 
 const addRestTime = () => {

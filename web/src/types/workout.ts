@@ -17,5 +17,7 @@ export interface Workout {
   exerciseSets?: ExerciseSets
   note?: string
   planId?: string
+  restTimerEndsAt?: string
+  restTimerTotalSeconds?: number
   startedAt?: string
 }

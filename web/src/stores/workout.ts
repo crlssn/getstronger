@@ -52,6 +52,11 @@ export const useWorkoutStore = defineStore(
 
     const getPlanId = (routineID: RoutineID) => workouts.value[routineID]?.planId ?? ''
 
+    const getRestTimer = (routineID: RoutineID) => ({
+      endsAt: workouts.value[routineID]?.restTimerEndsAt,
+      totalSeconds: workouts.value[routineID]?.restTimerTotalSeconds ?? 0,
+    })
+
     const getAddedExercises = (routineID: RoutineID) =>
       workouts.value[routineID]?.addedExercises ?? []
 
@@ -85,6 +90,20 @@ export const useWorkoutStore = defineStore(
     const setNote = (routineID: RoutineID, note: string) => {
       if (!workouts.value[routineID]) return
       workouts.value[routineID].note = note
+    }
+
+    const setRestTimer = (routineID: RoutineID, endsAt?: string, totalSeconds = 0) => {
+      const workout = workouts.value[routineID]
+      if (!workout) return
+
+      if (!endsAt) {
+        delete workout.restTimerEndsAt
+        delete workout.restTimerTotalSeconds
+        return
+      }
+
+      workout.restTimerEndsAt = endsAt
+      workout.restTimerTotalSeconds = totalSeconds
     }
 
     const addEmptySet = (routineID: RoutineID, exerciseID: ExerciseID) => {
@@ -129,12 +148,14 @@ export const useWorkoutStore = defineStore(
       getCompletedExerciseIds,
       getNote,
       getPlanId,
+      getRestTimer,
       getSets,
       getStartedAt,
       initialiseWorkout,
       removeWorkout,
       setExerciseCompleted,
       setNote,
+      setRestTimer,
       workouts,
     }
   },
