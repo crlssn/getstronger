@@ -3,18 +3,21 @@ import { type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
 
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { ChevronRightIcon, PencilIcon, TrashIcon, TrophyIcon } from '@heroicons/vue/24/outline'
+import { BoltIcon, ChevronRightIcon, PencilIcon, TrashIcon, TrophyIcon } from '@heroicons/vue/24/outline'
+import { useI18n } from 'vue-i18n'
 
 import router from '@/router/router'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useAlertStore } from '@/stores/alerts'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import { useWorkoutStore } from '@/stores/workout'
 import ExerciseChart from '@/ui/components/ExerciseChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime.ts'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import usePagination from '@/utils/usePagination'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
+import useActiveWorkout from '@/utils/useActiveWorkout'
 
 const sets = ref<Set[]>([])
 const exercise = ref<Exercise>()
@@ -24,6 +27,9 @@ const route = useRoute()
 const authStore = useAuthStore()
 const pageTitle = usePageTitleStore()
 const alertStore = useAlertStore()
+const workoutStore = useWorkoutStore()
+const { t } = useI18n()
+const { savedRoutineName, savedWorkout } = useActiveWorkout()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
 
 onMounted(async () => {
@@ -54,6 +60,27 @@ const onDeleteExercise = async () => {
   await router.push('/exercises')
 }
 
+const onStartQuickWorkout = async () => {
+  if (!exercise.value) return
+
+  const activeRoutineID = savedWorkout.value?.[0]
+  if (
+    activeRoutineID &&
+    !confirm(
+      t('exercise.replaceWorkoutConfirm', {
+        workout: savedRoutineName.value,
+        exercise: exercise.value.name,
+      }),
+    )
+  ) {
+    return
+  }
+
+  if (activeRoutineID) workoutStore.removeWorkout(activeRoutineID)
+  workoutStore.startQuickWorkoutWithExercise(exercise.value)
+  await router.push('/workouts/quick')
+}
+
 const downSample = (data: Set[], sampleSize: number): Set[] => {
   if (data.length <= sampleSize) return data
   const sampled: Set[] = []
@@ -67,6 +94,20 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   <div v-if="loading" class="loading-card">Loading exercise…</div>
   <div v-else-if="exercise" class="exercise-detail">
     <ExerciseTags :tags="exercise.tags" />
+
+    <button
+      v-if="authStore.userId === exercise.userId"
+      type="button"
+      class="start-quick-card"
+      @click="onStartQuickWorkout"
+    >
+      <span class="start-quick-icon"><BoltIcon /></span>
+      <span class="start-quick-copy">
+        <strong>{{ t('exercise.startQuickWorkout') }}</strong>
+        <small>{{ t('exercise.startQuickWorkoutBody', { name: exercise.name }) }}</small>
+      </span>
+      <ChevronRightIcon class="start-quick-chevron" />
+    </button>
 
     <section v-if="authStore.userId === exercise.userId" class="manage-card">
       <div class="manage-heading">
@@ -133,6 +174,31 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 }
 .manage-card {
   @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+}
+.start-quick-card {
+  @apply flex min-h-20 w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50;
+}
+.start-quick-icon {
+  @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white;
+}
+.start-quick-icon svg {
+  @apply size-6;
+}
+.start-quick-copy {
+  @apply min-w-0 flex-1;
+}
+.start-quick-copy strong,
+.start-quick-copy small {
+  @apply block;
+}
+.start-quick-copy strong {
+  @apply text-sm font-semibold text-slate-950;
+}
+.start-quick-copy small {
+  @apply mt-1 truncate text-xs text-slate-500;
+}
+.start-quick-chevron {
+  @apply size-5 shrink-0 text-slate-400;
 }
 .loading-card {
   @apply text-sm text-slate-500;

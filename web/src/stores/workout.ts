@@ -160,6 +160,14 @@ export const useWorkoutStore = defineStore(
       delete workouts.value[routineID]
     }
 
+    const startQuickWorkoutWithExercise = (exercise: Exercise) => {
+      const routineID = 'quick-workout'
+      removeWorkout(routineID)
+      initialiseWorkout(routineID)
+      addWorkoutExercise(routineID, exercise)
+      addEmptySetIfNone(routineID, exercise.id, exercise.metrics)
+    }
+
     return {
       addEmptySet,
       addEmptySetIfNone,
@@ -175,6 +183,7 @@ export const useWorkoutStore = defineStore(
       getStartedAt,
       initialiseWorkout,
       removeWorkout,
+      startQuickWorkoutWithExercise,
       setExerciseCompleted,
       setNote,
       setRestTimer,

@@ -244,6 +244,10 @@ export const en = {
     unit: 'Measurement units',
     restTimer: 'Rest timer',
     restOptional: 'Optional rest between sets',
+    startQuickWorkout: 'Start quick workout',
+    startQuickWorkoutBody: 'Start logging {name} now.',
+    replaceWorkoutConfirm:
+      'Discard “{workout}” and start a quick workout with “{exercise}”? All logged sets in the active workout will be removed.',
     loading: 'Loading exercises…',
     loadMore: 'Load more exercises',
     noMatches: 'No matching exercises',
@@ -525,6 +529,10 @@ export const sv = {
     unit: 'Måttenheter',
     restTimer: 'Vilotimer',
     restOptional: 'Valfri vila mellan set',
+    startQuickWorkout: 'Starta snabbpass',
+    startQuickWorkoutBody: 'Börja logga {name} nu.',
+    replaceWorkoutConfirm:
+      'Kassera ”{workout}” och starta ett snabbpass med ”{exercise}”? Alla loggade set i det aktiva passet tas bort.',
     loading: 'Laddar övningar…',
     loadMore: 'Ladda fler övningar',
     noMatches: 'Inga matchande övningar',

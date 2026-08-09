@@ -13,7 +13,13 @@ const hasEnteredValue = (value: unknown) =>
 // only counts as resumable once it holds real progress.
 const hasProgress = (workout: Workout) =>
   Object.values(workout.exerciseSets ?? {}).some((sets) =>
-    sets.some((set) => hasEnteredValue(set.weight) || hasEnteredValue(set.reps)),
+    sets.some(
+      (set) =>
+        hasEnteredValue(set.weight) ||
+        hasEnteredValue(set.reps) ||
+        hasEnteredValue(set.distance) ||
+        hasEnteredValue(set.durationSeconds),
+    ),
   ) ||
   Boolean(workout.note?.trim()) ||
   Boolean(workout.addedExercises?.length)
