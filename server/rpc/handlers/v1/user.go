@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -110,6 +111,7 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 	h.pubSub.Publish(ctx, repo.EventTopicFollowedUser, payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
+		EventID:    uuid.NewString(),
 	})
 
 	return &connect.Response[apiv1.FollowUserResponse]{

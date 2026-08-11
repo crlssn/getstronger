@@ -79,6 +79,7 @@ func (s *pubSubSuite) TestPublish() {
 			payload: payloads.UserFollowed{
 				FollowerID: uuid.NewString(),
 				FolloweeID: uuid.NewString(),
+				EventID:    uuid.NewString(),
 			},
 			init: func(t test) {
 				payload, err := json.Marshal(t.payload)
@@ -95,6 +96,7 @@ func (s *pubSubSuite) TestPublish() {
 			topic: repo.EventTopicRequestTraced,
 			payload: payloads.WorkoutCommentPosted{
 				CommentID: uuid.NewString(),
+				EventID:   uuid.NewString(),
 			},
 			init: func(t test) {
 				payload, err := json.Marshal(t.payload)

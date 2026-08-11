@@ -30,7 +30,16 @@ const fetchNotifications = async () => {
 
 <template>
   <AppList :can-fetch="hasMorePages" @fetch="fetchNotifications">
-    <AppListItem v-for="notification in notifications" :key="notification.id">
+    <AppListItem
+      v-for="notification in notifications"
+      :key="notification.id"
+      class="notification-item"
+      :class="{ unread: !notification.read }"
+    >
+      <span v-if="!notification.read" class="sr-only">
+        {{ $t('profile.unreadNotification') }}
+      </span>
+      <span v-if="!notification.read" class="unread-indicator" aria-hidden="true"></span>
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
         :actor="notification.type.value?.actor"
@@ -49,4 +58,16 @@ const fetchNotifications = async () => {
   </AppList>
 </template>
 
-<style scoped></style>
+<style scoped>
+@reference '../../assets/base.css';
+
+.notification-item {
+  @apply relative transition-colors;
+}
+.notification-item.unread {
+  @apply bg-indigo-50/70;
+}
+.unread-indicator {
+  @apply absolute left-1.5 top-1/2 size-2 -translate-y-1/2 rounded-full bg-indigo-600;
+}
+</style>

@@ -70,6 +70,10 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 		w.log.Error("unmarshal payload", zap.Error(err))
 		return
 	}
+	if p.EventID == "" {
+		w.log.Error("workout comment event is missing an ID")
+		return
+	}
 
 	comment, err := w.repo.GetWorkoutComment(
 		ctx,
@@ -108,6 +112,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 			UserID: userID,
 			Payload: repo.NotificationPayload{
 				ActorID:   comment.UserID,
+				EventID:   p.EventID,
 				WorkoutID: comment.WorkoutID,
 			},
 		}); err != nil {
@@ -134,12 +139,17 @@ func (u *FollowedUser) HandlePayload(payload string) {
 		u.log.Error("unmarshal payload", zap.Error(err))
 		return
 	}
+	if p.EventID == "" {
+		u.log.Error("followed user event is missing an ID")
+		return
+	}
 
 	if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
 		Type:   repo.NotificationTypeFollow,
 		UserID: p.FolloweeID,
 		Payload: repo.NotificationPayload{
 			ActorID: p.FollowerID,
+			EventID: p.EventID,
 		},
 	}); err != nil {
 		u.log.Error("create notification", zap.Error(err))

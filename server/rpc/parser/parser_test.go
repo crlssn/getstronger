@@ -347,6 +347,7 @@ func (s *parserSuite) TestNotification() {
 
 	s.Require().Equal(notification.ID, parsed.GetId())
 	s.Require().Equal(notification.CreatedAt.Unix(), parsed.GetNotifiedAtUnix())
+	s.Require().False(parsed.GetRead())
 	s.Require().Nil(parsed.GetUserFollowed())
 	s.Require().Nil(parsed.GetWorkoutComment().GetActor())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout())
@@ -424,6 +425,12 @@ func (s *parserSuite) TestNotification() {
 
 	s.Require().Nil(parsed.GetWorkoutComment())
 	s.Require().Nil(parsed.GetUserFollowed().GetActor())
+
+	readNotification := s.factory.NewNotification(
+		factory.NotificationType(repo.NotificationTypeFollow),
+		factory.NotificationRead(),
+	)
+	s.Require().True(parser.Notification(readNotification).GetRead())
 
 	actor = s.factory.NewUser()
 	parsed = parser.Notification(notification, parser.NotificationActor(notification.Type, actor))

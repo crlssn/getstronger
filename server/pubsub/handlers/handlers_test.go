@@ -70,6 +70,7 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 		t.Parallel()
 		payload := payloads.WorkoutCommentPosted{
 			CommentID: uuid.NewString(),
+			EventID:   uuid.NewString(),
 		}
 
 		f.NewUser(factory.UserID(factory.UUID(0)))
@@ -101,6 +102,7 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 		bytes, err := json.Marshal(payload)
 		require.NoError(t, err)
 
+		handler.HandlePayload(string(bytes))
 		handler.HandlePayload(string(bytes))
 
 		count, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.In(
@@ -138,6 +140,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 		payload := payloads.UserFollowed{
 			FollowerID: "follower_id",
 			FolloweeID: "followee_id",
+			EventID:    "event_id",
 		}
 
 		repoMock.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
@@ -145,6 +148,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 			UserID: payload.FolloweeID,
 			Payload: repo.NotificationPayload{
 				ActorID: payload.FollowerID,
+				EventID: payload.EventID,
 			},
 		})
 

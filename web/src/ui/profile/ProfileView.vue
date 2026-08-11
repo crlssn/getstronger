@@ -121,7 +121,7 @@ h1 {
   @apply size-8;
 }
 .notification-badge {
-  @apply absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[0.625rem] font-bold leading-none text-white;
+  @apply absolute right-1 top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[0.625rem] font-bold leading-none text-white;
 }
 .stats-strip {
   @apply grid grid-cols-3 divide-x divide-slate-200 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;

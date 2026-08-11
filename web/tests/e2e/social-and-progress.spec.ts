@@ -10,7 +10,10 @@ test.describe('social feed and discovery', () => {
     await search.fill('Ja')
     await expect(page.getByText('Type at least 3 characters to find someone.')).toBeVisible()
     await search.fill('Jane')
-    await page.locator('.search-panel').getByRole('link', { name: /Jane Doe/ }).click()
+    await page
+      .locator('.search-panel')
+      .getByRole('link', { name: /Jane Doe/ })
+      .click()
 
     await expect(page).toHaveURL(/\/users\/[0-9a-f-]+$/)
     await expect(page.getByRole('button', { name: 'Unfollow Jane' })).toBeVisible()
@@ -57,6 +60,7 @@ test.describe('profiles and notifications', () => {
   test('loads seeded notifications and follows their destinations @smoke', async ({ page }) => {
     await page.getByRole('link', { name: 'Notifications' }).first().click()
     await expect(page).toHaveURL(/\/notifications$/)
+    await expect(page.locator('.notification-item.unread')).toHaveCount(3)
 
     const janeNotification = page.getByRole('link').filter({ hasText: 'Jane Doe' }).first()
     await expect(janeNotification).toBeVisible()

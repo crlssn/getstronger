@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -276,6 +277,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 
 	h.pubSub.Publish(ctx, repo.EventTopicWorkoutCommentPosted, payloads.WorkoutCommentPosted{
 		CommentID: comment.ID,
+		EventID:   uuid.NewString(),
 	})
 
 	log.Info("workout comment posted")

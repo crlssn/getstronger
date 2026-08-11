@@ -52,4 +52,5 @@ message Notification {
     UserFollowed user_followed = 3;
     WorkoutComment workout_comment = 4;
   }
+  bool read = 5;
 }

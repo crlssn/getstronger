@@ -280,6 +280,7 @@ type Notification struct {
 	//	*Notification_UserFollowed_
 	//	*Notification_WorkoutComment_
 	Type          isNotification_Type `protobuf_oneof:"type"`
+	Read          bool                `protobuf:"varint,5,opt,name=read,proto3" json:"read,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -351,6 +352,13 @@ func (x *Notification) GetWorkoutComment() *Notification_WorkoutComment {
 		}
 	}
 	return nil
+}
+
+func (x *Notification) GetRead() bool {
+	if x != nil {
+		return x.Read
+	}
+	return false
 }
 
 type isNotification_Type interface {
@@ -483,12 +491,13 @@ const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\x1fMarkNotificationsAsReadResponse\"\x1c\n" +
 	"\x1aUnreadNotificationsRequest\"3\n" +
 	"\x1bUnreadNotificationsResponse\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x03R\x05count\"\xff\x02\n" +
+	"\x05count\x18\x01 \x01(\x03R\x05count\"\x93\x03\n" +
 	"\fNotification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12(\n" +
 	"\x10notified_at_unix\x18\x02 \x01(\x03R\x0enotifiedAtUnix\x12H\n" +
 	"\ruser_followed\x18\x03 \x01(\v2!.api.v1.Notification.UserFollowedH\x00R\fuserFollowed\x12N\n" +
-	"\x0fworkout_comment\x18\x04 \x01(\v2#.api.v1.Notification.WorkoutCommentH\x00R\x0eworkoutComment\x1a2\n" +
+	"\x0fworkout_comment\x18\x04 \x01(\v2#.api.v1.Notification.WorkoutCommentH\x00R\x0eworkoutComment\x12\x12\n" +
+	"\x04read\x18\x05 \x01(\bR\x04read\x1a2\n" +
 	"\fUserFollowed\x12\"\n" +
 	"\x05actor\x18\x01 \x01(\v2\f.api.v1.UserR\x05actor\x1a_\n" +
 	"\x0eWorkoutComment\x12\"\n" +

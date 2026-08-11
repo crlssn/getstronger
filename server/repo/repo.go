@@ -15,6 +15,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
 	"github.com/stephenafamo/bob/dialect/psql/dm"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	bobtypes "github.com/stephenafamo/bob/types"
@@ -1360,6 +1361,7 @@ type CreateNotificationParams struct {
 
 type NotificationPayload struct {
 	ActorID   string `json:"actorId,omitempty"`
+	EventID   string `json:"eventId,omitempty"`
 	WorkoutID string `json:"workoutId,omitempty"`
 }
 
@@ -1369,11 +1371,14 @@ func (r *repo) CreateNotification(ctx context.Context, p CreateNotificationParam
 		return fmt.Errorf("payload marshal: %w", err)
 	}
 
-	if _, err = models.Notifications.Insert(&models.NotificationSetter{
-		UserID:  omit.From(p.UserID),
-		Type:    omit.From(p.Type),
-		Payload: omit.From(bobtypes.NewJSON[json.RawMessage](payload)),
-	}).Exec(ctx, r.bobExec()); err != nil {
+	if _, err = models.Notifications.Insert(
+		&models.NotificationSetter{
+			UserID:  omit.From(p.UserID),
+			Type:    omit.From(p.Type),
+			Payload: omit.From(bobtypes.NewJSON[json.RawMessage](payload)),
+		},
+		im.OnConflict().DoNothing(),
+	).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("insert: %w", err)
 	}
 

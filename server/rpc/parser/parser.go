@@ -340,6 +340,7 @@ func Notification(notification *models.Notification, opts ...NotificationOpt) *a
 	n := &apiv1.Notification{
 		Id:             notification.ID,
 		NotifiedAtUnix: notification.CreatedAt.Unix(),
+		Read:           !notification.ReadAt.IsNull(),
 		Type:           nil,
 	}
 

@@ -207,13 +207,13 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-field {
-  @apply flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
+  @apply flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-indigo-500;
 }
 .search-field > svg {
   @apply size-6 shrink-0 text-slate-500;
 }
 .search-field input {
-  @apply h-14 min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-slate-950 placeholder:text-slate-400 focus:ring-0;
+  @apply h-14 min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-slate-950 placeholder:text-slate-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0;
 }
 .search-field button {
   @apply grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-200;
