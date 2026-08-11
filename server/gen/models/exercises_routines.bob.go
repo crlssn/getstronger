@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -24,8 +25,8 @@ import (
 
 // ExercisesRoutine is an object representing the database table.
 type ExercisesRoutine struct {
-	RoutineID  string `db:"routine_id,pk" `
-	ExerciseID string `db:"exercise_id,pk" `
+	RoutineID  uuid.UUID `db:"routine_id,pk" `
+	ExerciseID uuid.UUID `db:"exercise_id,pk" `
 
 	R exercisesRoutineR `db:"-" `
 }
@@ -123,8 +124,8 @@ func (c exercisesRoutineColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type ExercisesRoutineSetter struct {
-	RoutineID  omit.Val[string] `db:"routine_id,pk" `
-	ExerciseID omit.Val[string] `db:"exercise_id,pk" `
+	RoutineID  omit.Val[uuid.UUID] `db:"routine_id,pk" `
+	ExerciseID omit.Val[uuid.UUID] `db:"exercise_id,pk" `
 }
 
 func (s ExercisesRoutineSetter) SetColumns() []string {
@@ -220,7 +221,7 @@ func exercisesRoutineScanMapper(ctx context.Context, cols []string) (scan.Before
 
 // FindExercisesRoutine retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindExercisesRoutine(ctx context.Context, exec bob.Executor, RoutineIDPK string, ExerciseIDPK string, cols ...string) (*ExercisesRoutine, error) {
+func FindExercisesRoutine(ctx context.Context, exec bob.Executor, RoutineIDPK uuid.UUID, ExerciseIDPK uuid.UUID, cols ...string) (*ExercisesRoutine, error) {
 	if len(cols) == 0 {
 		return ExercisesRoutines.Query(
 			sm.Where(ExercisesRoutines.Columns.RoutineID.EQ(psql.Arg(RoutineIDPK))),
@@ -236,7 +237,7 @@ func FindExercisesRoutine(ctx context.Context, exec bob.Executor, RoutineIDPK st
 }
 
 // ExercisesRoutineExists checks the presence of a single record by primary key
-func ExercisesRoutineExists(ctx context.Context, exec bob.Executor, RoutineIDPK string, ExerciseIDPK string) (bool, error) {
+func ExercisesRoutineExists(ctx context.Context, exec bob.Executor, RoutineIDPK uuid.UUID, ExerciseIDPK uuid.UUID) (bool, error) {
 	return ExercisesRoutines.Query(
 		sm.Where(ExercisesRoutines.Columns.RoutineID.EQ(psql.Arg(RoutineIDPK))),
 		sm.Where(ExercisesRoutines.Columns.ExerciseID.EQ(psql.Arg(ExerciseIDPK))),
@@ -491,11 +492,11 @@ func (o *ExercisesRoutine) Exercise(mods ...bob.Mod[*dialect.SelectQuery]) Exerc
 }
 
 func (os ExercisesRoutineSlice) Exercise(mods ...bob.Mod[*dialect.SelectQuery]) ExercisesQuery {
-	pkExerciseID := make(pgtypes.Array[string], 0, len(os))
+	pkExerciseID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenExerciseID := make(map[string]struct{}, len(os))
+	seenExerciseID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -521,11 +522,11 @@ func (o *ExercisesRoutine) Routine(mods ...bob.Mod[*dialect.SelectQuery]) Routin
 }
 
 func (os ExercisesRoutineSlice) Routine(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuery {
-	pkRoutineID := make(pgtypes.Array[string], 0, len(os))
+	pkRoutineID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenRoutineID := make(map[string]struct{}, len(os))
+	seenRoutineID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -637,8 +638,8 @@ func (exercisesRoutine0 *ExercisesRoutine) AttachRoutine(ctx context.Context, ex
 
 type exercisesRoutineWhere[Q psql.Filterable] struct {
 	cols       exercisesRoutineColumns
-	RoutineID  psql.WhereMod[Q, string]
-	ExerciseID psql.WhereMod[Q, string]
+	RoutineID  psql.WhereMod[Q, uuid.UUID]
+	ExerciseID psql.WhereMod[Q, uuid.UUID]
 	R          exercisesRoutineWhereR[Q]
 }
 
@@ -649,8 +650,8 @@ func (exercisesRoutineWhere[Q]) AliasedAs(alias string) exercisesRoutineWhere[Q]
 func buildExercisesRoutineWhere[Q psql.Filterable](cols exercisesRoutineColumns) exercisesRoutineWhere[Q] {
 	return exercisesRoutineWhere[Q]{
 		cols:       cols,
-		RoutineID:  psql.Where[Q, string](cols.RoutineID.Expression),
-		ExerciseID: psql.Where[Q, string](cols.ExerciseID.Expression),
+		RoutineID:  psql.Where[Q, uuid.UUID](cols.RoutineID.Expression),
+		ExerciseID: psql.Where[Q, uuid.UUID](cols.ExerciseID.Expression),
 		R:          exercisesRoutineWhereR[Q]{cols: cols},
 	}
 }
@@ -826,7 +827,7 @@ func (os ExercisesRoutineSlice) LoadExercise(ctx context.Context, exec bob.Execu
 		o.R.Loaded.Exercise = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	exercisesRoutineByKey := make(map[string][]*ExercisesRoutine, len(os))
+	exercisesRoutineByKey := make(map[uuid.UUID][]*ExercisesRoutine, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -897,7 +898,7 @@ func (os ExercisesRoutineSlice) LoadRoutine(ctx context.Context, exec bob.Execut
 		o.R.Loaded.Routine = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	exercisesRoutineByKey := make(map[string][]*ExercisesRoutine, len(os))
+	exercisesRoutineByKey := make(map[uuid.UUID][]*ExercisesRoutine, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue

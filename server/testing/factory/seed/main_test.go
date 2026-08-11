@@ -64,7 +64,7 @@ func TestSeedJaneDoe(t *testing.T) {
 		require.NoError(t, setsErr)
 		setsByExercise := make(map[string]int)
 		for _, set := range sets {
-			setsByExercise[set.ExerciseID]++
+			setsByExercise[set.ExerciseID.String()]++
 		}
 		for _, setCount := range setsByExercise {
 			require.GreaterOrEqual(t, setCount, 3)
@@ -79,10 +79,10 @@ func TestSeedJaneDoe(t *testing.T) {
 	require.Len(t, comments, 3)
 	johnWorkoutIDs := make(map[string]struct{}, len(johnWorkouts))
 	for _, workout := range johnWorkouts {
-		johnWorkoutIDs[workout.ID] = struct{}{}
+		johnWorkoutIDs[workout.ID.String()] = struct{}{}
 	}
 	for _, comment := range comments {
-		_, commentsOnJohnWorkout := johnWorkoutIDs[comment.WorkoutID]
+		_, commentsOnJohnWorkout := johnWorkoutIDs[comment.WorkoutID.String()]
 		require.True(t, commentsOnJohnWorkout)
 		require.NotEmpty(t, comment.Comment)
 	}
@@ -98,7 +98,7 @@ func TestSeedJaneDoe(t *testing.T) {
 
 		var payload repo.NotificationPayload
 		require.NoError(t, json.Unmarshal(notification.Payload.Val, &payload))
-		require.Equal(t, jane.ID, payload.ActorID)
+		require.Equal(t, jane.ID.String(), payload.ActorID)
 		_, notifiesAboutJohnWorkout := johnWorkoutIDs[payload.WorkoutID]
 		require.True(t, notifiesAboutJohnWorkout)
 	}

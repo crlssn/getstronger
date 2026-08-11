@@ -12,6 +12,7 @@ import (
 
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -27,8 +28,8 @@ import (
 
 // Plan is an object representing the database table.
 type Plan struct {
-	ID              string    `db:"id,pk" `
-	UserID          string    `db:"user_id" `
+	ID              uuid.UUID `db:"id,pk" `
+	UserID          uuid.UUID `db:"user_id" `
 	Name            string    `db:"name" `
 	Active          bool      `db:"active" `
 	CurrentPosition int32     `db:"current_position" `
@@ -143,8 +144,8 @@ func (c planColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type PlanSetter struct {
-	ID              omit.Val[string]    `db:"id,pk" `
-	UserID          omit.Val[string]    `db:"user_id" `
+	ID              omit.Val[uuid.UUID] `db:"id,pk" `
+	UserID          omit.Val[uuid.UUID] `db:"user_id" `
 	Name            omit.Val[string]    `db:"name" `
 	Active          omit.Val[bool]      `db:"active" `
 	CurrentPosition omit.Val[int32]     `db:"current_position" `
@@ -345,7 +346,7 @@ func planScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 
 // FindPlan retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindPlan(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Plan, error) {
+func FindPlan(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Plan, error) {
 	if len(cols) == 0 {
 		return Plans.Query(
 			sm.Where(Plans.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -359,7 +360,7 @@ func FindPlan(ctx context.Context, exec bob.Executor, IDPK string, cols ...strin
 }
 
 // PlanExists checks the presence of a single record by primary key
-func PlanExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func PlanExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Plans.Query(
 		sm.Where(Plans.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -467,7 +468,7 @@ func (o PlanSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o PlanSlice) copyMatchingRows(from ...*Plan) {
-	fromByPK := make(map[string]*Plan, len(from))
+	fromByPK := make(map[uuid.UUID]*Plan, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -612,7 +613,7 @@ func (o *Plan) PlanRoutines(mods ...bob.Mod[*dialect.SelectQuery]) PlanRoutinesQ
 }
 
 func (os PlanSlice) PlanRoutines(mods ...bob.Mod[*dialect.SelectQuery]) PlanRoutinesQuery {
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	for _, o := range os {
 		if o == nil {
@@ -635,11 +636,11 @@ func (o *Plan) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
 }
 
 func (os PlanSlice) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkUserID := make(pgtypes.Array[string], 0, len(os))
+	pkUserID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenUserID := make(map[string]struct{}, len(os))
+	seenUserID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -779,8 +780,8 @@ func (plan0 *Plan) AttachUser(ctx context.Context, exec bob.Executor, user1 *Use
 
 type planWhere[Q psql.Filterable] struct {
 	cols            planColumns
-	ID              psql.WhereMod[Q, string]
-	UserID          psql.WhereMod[Q, string]
+	ID              psql.WhereMod[Q, uuid.UUID]
+	UserID          psql.WhereMod[Q, uuid.UUID]
 	Name            psql.WhereMod[Q, string]
 	Active          psql.WhereMod[Q, bool]
 	CurrentPosition psql.WhereMod[Q, int32]
@@ -796,8 +797,8 @@ func (planWhere[Q]) AliasedAs(alias string) planWhere[Q] {
 func buildPlanWhere[Q psql.Filterable](cols planColumns) planWhere[Q] {
 	return planWhere[Q]{
 		cols:            cols,
-		ID:              psql.Where[Q, string](cols.ID.Expression),
-		UserID:          psql.Where[Q, string](cols.UserID.Expression),
+		ID:              psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		UserID:          psql.Where[Q, uuid.UUID](cols.UserID.Expression),
 		Name:            psql.Where[Q, string](cols.Name.Expression),
 		Active:          psql.Where[Q, bool](cols.Active.Expression),
 		CurrentPosition: psql.Where[Q, int32](cols.CurrentPosition.Expression),
@@ -846,8 +847,8 @@ func (w planWhereR[Q]) HasUser(filters ...bob.Mod[*dialect.SelectQuery]) mods.Wh
 // on a LEFT JOIN miss every column comes back NULL, so each field uses the
 // nullable version of the column type even when the column itself is NOT NULL.
 type planPreloadBuf struct {
-	ID              null.Val[string]
-	UserID          null.Val[string]
+	ID              null.Val[uuid.UUID]
+	UserID          null.Val[uuid.UUID]
 	Name            null.Val[string]
 	Active          null.Val[bool]
 	CurrentPosition null.Val[int32]
@@ -1083,7 +1084,7 @@ func (os PlanSlice) LoadPlanRoutines(ctx context.Context, exec bob.Executor, mod
 		o.R.Loaded.PlanRoutines = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	planByKey := make(map[string][]*Plan, len(os))
+	planByKey := make(map[uuid.UUID][]*Plan, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1154,7 +1155,7 @@ func (os PlanSlice) LoadUser(ctx context.Context, exec bob.Executor, mods ...bob
 		o.R.Loaded.User = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	planByKey := make(map[string][]*Plan, len(os))
+	planByKey := make(map[uuid.UUID][]*Plan, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1273,7 +1274,7 @@ func (os PlanSlice) LoadCountPlanRoutines(ctx context.Context, exec bob.Executor
 
 	// Build the IN arg expression from parent PKs
 
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1285,7 +1286,7 @@ func (os PlanSlice) LoadCountPlanRoutines(ctx context.Context, exec bob.Executor
 	// countResult holds one scanned row from the batch count query.
 	// FK columns are aliased to the parent PK column names for direct map lookup.
 	type countResult struct {
-		ID    string
+		ID    uuid.UUID
 		Count int64
 	}
 
@@ -1314,7 +1315,7 @@ func (os PlanSlice) LoadCountPlanRoutines(ctx context.Context, exec bob.Executor
 	}
 
 	// Single-column FK: direct map lookup
-	countMap := make(map[string]int64, len(results))
+	countMap := make(map[uuid.UUID]int64, len(results))
 	for _, r := range results {
 		countMap[r.ID] = r.Count
 	}

@@ -155,10 +155,10 @@ func (s *workoutSuite) TestCreateWorkout() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			user := s.factory.NewUser()
-			ctx := xcontext.WithUserID(context.Background(), user.ID)
+			ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 			ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
-			t.init(t, user.ID)
+			t.init(t, user.ID.String())
 			res, err := s.handler.CreateWorkout(ctx, t.req)
 			if t.expected.err != nil {
 				s.Require().Nil(res)
@@ -170,7 +170,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 			s.Require().NotNil(res)
 			s.Require().NoError(err)
 
-			w, err := models.FindWorkout(ctx, bob.NewDB(s.container.DB), res.Msg.GetWorkoutId())
+			w, err := models.FindWorkout(ctx, bob.NewDB(s.container.DB), nativeUUID(res.Msg.GetWorkoutId()))
 			s.Require().NoError(err)
 			s.Require().NotNil(w)
 		})
@@ -184,21 +184,21 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	planRepo := repo.New(s.container.DB)
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
-		UserID:     user.ID,
+		UserID:     user.ID.String(),
 		Name:       "Rotation",
-		RoutineIDs: []string{routine.ID, nextRoutine.ID},
+		RoutineIDs: []string{routine.ID.String(), nextRoutine.ID.String()},
 	})
 	s.Require().NoError(err)
-	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID)
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID.String())
 	s.Require().NoError(err)
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
-		RoutineId: routine.ID,
+		RoutineId: routine.ID.String(),
 		PlanId:    plan.ID,
 		ExerciseSets: []*apiv1.ExerciseSets{{
-			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
 		}},
 		StartedAt:  timestamppb.Now(),
@@ -207,7 +207,7 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(response.Msg.GetWorkoutId())
 
-	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID)
+	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID.String())
 	s.Require().NoError(err)
 	s.Require().Equal(1, advanced.CurrentPosition)
 }
@@ -217,12 +217,12 @@ func (s *workoutSuite) TestCreateWorkoutLinksTheRoutine() {
 	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
-		RoutineId: routine.ID,
+		RoutineId: routine.ID.String(),
 		ExerciseSets: []*apiv1.ExerciseSets{{
-			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
 		}},
 		StartedAt:  timestamppb.Now(),
@@ -231,25 +231,25 @@ func (s *workoutSuite) TestCreateWorkoutLinksTheRoutine() {
 	s.Require().NoError(err)
 
 	listed, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
-		UserIds:    []string{user.ID},
+		UserIds:    []string{user.ID.String()},
 		Pagination: &apiv1.PaginationRequest{PageLimit: 10},
 	}))
 	s.Require().NoError(err)
 	s.Require().Len(listed.Msg.GetWorkouts(), 1)
 	s.Require().Equal(created.Msg.GetWorkoutId(), listed.Msg.GetWorkouts()[0].GetId())
-	s.Require().Equal(routine.ID, listed.Msg.GetWorkouts()[0].GetRoutineId())
+	s.Require().Equal(routine.ID.String(), listed.Msg.GetWorkouts()[0].GetRoutineId())
 }
 
 func (s *workoutSuite) TestCreateQuickWorkoutHasNoRoutine() {
 	user := s.factory.NewUser()
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	_, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		WorkoutName: "Quick Workout",
 		ExerciseSets: []*apiv1.ExerciseSets{{
-			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
 		}},
 		StartedAt:  timestamppb.Now(),
@@ -258,7 +258,7 @@ func (s *workoutSuite) TestCreateQuickWorkoutHasNoRoutine() {
 	s.Require().NoError(err)
 
 	listed, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
-		UserIds:    []string{user.ID},
+		UserIds:    []string{user.ID.String()},
 		Pagination: &apiv1.PaginationRequest{PageLimit: 10},
 	}))
 	s.Require().NoError(err)
@@ -273,23 +273,23 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	planRepo := repo.New(s.container.DB)
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
-		UserID:     user.ID,
+		UserID:     user.ID.String(),
 		Name:       "Rotation",
-		RoutineIDs: []string{completedRoutine.ID, nextRoutine.ID},
+		RoutineIDs: []string{completedRoutine.ID.String(), nextRoutine.ID.String()},
 	})
 	s.Require().NoError(err)
-	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID)
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID.String())
 	s.Require().NoError(err)
-	_, err = planRepo.AdvancePlan(context.Background(), plan.ID, user.ID, completedRoutine.ID)
+	_, err = planRepo.AdvancePlan(context.Background(), plan.ID, user.ID.String(), completedRoutine.ID.String())
 	s.Require().NoError(err)
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
-		RoutineId: completedRoutine.ID,
+		RoutineId: completedRoutine.ID.String(),
 		PlanId:    plan.ID,
 		ExerciseSets: []*apiv1.ExerciseSets{{
-			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
 		}},
 		StartedAt:  timestamppb.Now(),
@@ -298,11 +298,11 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(response.Msg.GetWorkoutId())
 
-	savedWorkout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), response.Msg.GetWorkoutId())
+	savedWorkout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), nativeUUID(response.Msg.GetWorkoutId()))
 	s.Require().NoError(err)
 	s.Require().Equal(completedRoutine.Title, savedWorkout.Name)
 
-	unchanged, err := planRepo.GetActivePlan(context.Background(), user.ID)
+	unchanged, err := planRepo.GetActivePlan(context.Background(), user.ID.String())
 	s.Require().NoError(err)
 	s.Require().Equal(1, unchanged.CurrentPosition)
 	s.Require().Equal(nextRoutine.ID, unchanged.Routines[unchanged.CurrentPosition].ID)
@@ -311,13 +311,13 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 func (s *workoutSuite) TestCreateQuickWorkoutWithoutRoutine() {
 	user := s.factory.NewUser()
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
-	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		WorkoutName: "Quick Workout",
 		ExerciseSets: []*apiv1.ExerciseSets{{
-			Exercise: &apiv1.Exercise{Id: exercise.ID},
+			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 			Sets:     []*apiv1.Set{{Reps: 10, Weight: 20}},
 		}},
 		StartedAt:  timestamppb.Now(),
@@ -325,7 +325,7 @@ func (s *workoutSuite) TestCreateQuickWorkoutWithoutRoutine() {
 	}))
 	s.Require().NoError(err)
 
-	workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), response.Msg.GetWorkoutId())
+	workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), nativeUUID(response.Msg.GetWorkoutId()))
 	s.Require().NoError(err)
 	s.Require().Equal("Quick Workout", workout.Name)
 }

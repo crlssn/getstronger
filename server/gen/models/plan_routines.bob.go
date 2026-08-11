@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -24,9 +25,9 @@ import (
 
 // PlanRoutine is an object representing the database table.
 type PlanRoutine struct {
-	PlanID    string `db:"plan_id,pk" `
-	RoutineID string `db:"routine_id" `
-	Position  int32  `db:"position,pk" `
+	PlanID    uuid.UUID `db:"plan_id,pk" `
+	RoutineID uuid.UUID `db:"routine_id" `
+	Position  int32     `db:"position,pk" `
 
 	R planRoutineR `db:"-" `
 }
@@ -126,9 +127,9 @@ func (c planRoutineColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type PlanRoutineSetter struct {
-	PlanID    omit.Val[string] `db:"plan_id,pk" `
-	RoutineID omit.Val[string] `db:"routine_id" `
-	Position  omit.Val[int32]  `db:"position,pk" `
+	PlanID    omit.Val[uuid.UUID] `db:"plan_id,pk" `
+	RoutineID omit.Val[uuid.UUID] `db:"routine_id" `
+	Position  omit.Val[int32]     `db:"position,pk" `
 }
 
 func (s PlanRoutineSetter) SetColumns() []string {
@@ -244,7 +245,7 @@ func planRoutineScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc,
 
 // FindPlanRoutine retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindPlanRoutine(ctx context.Context, exec bob.Executor, PlanIDPK string, PositionPK int32, cols ...string) (*PlanRoutine, error) {
+func FindPlanRoutine(ctx context.Context, exec bob.Executor, PlanIDPK uuid.UUID, PositionPK int32, cols ...string) (*PlanRoutine, error) {
 	if len(cols) == 0 {
 		return PlanRoutines.Query(
 			sm.Where(PlanRoutines.Columns.PlanID.EQ(psql.Arg(PlanIDPK))),
@@ -260,7 +261,7 @@ func FindPlanRoutine(ctx context.Context, exec bob.Executor, PlanIDPK string, Po
 }
 
 // PlanRoutineExists checks the presence of a single record by primary key
-func PlanRoutineExists(ctx context.Context, exec bob.Executor, PlanIDPK string, PositionPK int32) (bool, error) {
+func PlanRoutineExists(ctx context.Context, exec bob.Executor, PlanIDPK uuid.UUID, PositionPK int32) (bool, error) {
 	return PlanRoutines.Query(
 		sm.Where(PlanRoutines.Columns.PlanID.EQ(psql.Arg(PlanIDPK))),
 		sm.Where(PlanRoutines.Columns.Position.EQ(psql.Arg(PositionPK))),
@@ -515,11 +516,11 @@ func (o *PlanRoutine) Plan(mods ...bob.Mod[*dialect.SelectQuery]) PlansQuery {
 }
 
 func (os PlanRoutineSlice) Plan(mods ...bob.Mod[*dialect.SelectQuery]) PlansQuery {
-	pkPlanID := make(pgtypes.Array[string], 0, len(os))
+	pkPlanID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenPlanID := make(map[string]struct{}, len(os))
+	seenPlanID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -545,11 +546,11 @@ func (o *PlanRoutine) Routine(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQue
 }
 
 func (os PlanRoutineSlice) Routine(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuery {
-	pkRoutineID := make(pgtypes.Array[string], 0, len(os))
+	pkRoutineID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenRoutineID := make(map[string]struct{}, len(os))
+	seenRoutineID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -669,8 +670,8 @@ func (planRoutine0 *PlanRoutine) AttachRoutine(ctx context.Context, exec bob.Exe
 
 type planRoutineWhere[Q psql.Filterable] struct {
 	cols      planRoutineColumns
-	PlanID    psql.WhereMod[Q, string]
-	RoutineID psql.WhereMod[Q, string]
+	PlanID    psql.WhereMod[Q, uuid.UUID]
+	RoutineID psql.WhereMod[Q, uuid.UUID]
 	Position  psql.WhereMod[Q, int32]
 	R         planRoutineWhereR[Q]
 }
@@ -682,8 +683,8 @@ func (planRoutineWhere[Q]) AliasedAs(alias string) planRoutineWhere[Q] {
 func buildPlanRoutineWhere[Q psql.Filterable](cols planRoutineColumns) planRoutineWhere[Q] {
 	return planRoutineWhere[Q]{
 		cols:      cols,
-		PlanID:    psql.Where[Q, string](cols.PlanID.Expression),
-		RoutineID: psql.Where[Q, string](cols.RoutineID.Expression),
+		PlanID:    psql.Where[Q, uuid.UUID](cols.PlanID.Expression),
+		RoutineID: psql.Where[Q, uuid.UUID](cols.RoutineID.Expression),
 		Position:  psql.Where[Q, int32](cols.Position.Expression),
 		R:         planRoutineWhereR[Q]{cols: cols},
 	}
@@ -868,7 +869,7 @@ func (os PlanRoutineSlice) LoadPlan(ctx context.Context, exec bob.Executor, mods
 		o.R.Loaded.Plan = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	planRoutineByKey := make(map[string][]*PlanRoutine, len(os))
+	planRoutineByKey := make(map[uuid.UUID][]*PlanRoutine, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -943,7 +944,7 @@ func (os PlanRoutineSlice) LoadRoutine(ctx context.Context, exec bob.Executor, m
 		o.R.Loaded.Routine = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	planRoutineByKey := make(map[string][]*PlanRoutine, len(os))
+	planRoutineByKey := make(map[uuid.UUID][]*PlanRoutine, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue

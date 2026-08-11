@@ -31,49 +31,49 @@ func TestPlanLifecycle(t *testing.T) {
 	pull := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Pull"))
 
 	plan, err := r.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID,
+		UserID:     user.ID.String(),
 		Name:       "Strength Rotation",
-		RoutineIDs: []string{lower.ID, chest.ID, pull.ID},
+		RoutineIDs: []string{lower.ID.String(), chest.ID.String(), pull.ID.String()},
 	})
 	require.NoError(t, err)
 	require.False(t, plan.Active)
-	require.Equal(t, []string{lower.ID, chest.ID, pull.ID}, planRoutineIDs(plan))
+	require.Equal(t, []string{lower.ID.String(), chest.ID.String(), pull.ID.String()}, planRoutineIDs(plan))
 
-	plan, err = r.SetActivePlan(ctx, plan.ID, user.ID)
+	plan, err = r.SetActivePlan(ctx, plan.ID, user.ID.String())
 	require.NoError(t, err)
 	require.True(t, plan.Active)
 	require.Zero(t, plan.CurrentPosition)
 
-	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID, lower.ID)
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), lower.ID.String())
 	require.NoError(t, err)
 	require.Equal(t, 1, plan.CurrentPosition)
 
 	plan, err = r.UpdatePlan(ctx, repo.UpdatePlanParams{
 		ID:         plan.ID,
-		UserID:     user.ID,
+		UserID:     user.ID.String(),
 		Name:       "Updated Rotation",
-		RoutineIDs: []string{pull.ID, chest.ID, lower.ID},
+		RoutineIDs: []string{pull.ID.String(), chest.ID.String(), lower.ID.String()},
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Updated Rotation", plan.Name)
 	require.Equal(t, 1, plan.CurrentPosition, "the current Chest routine should remain current")
 
-	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID, chest.ID)
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), chest.ID.String())
 	require.NoError(t, err)
 	require.Equal(t, 2, plan.CurrentPosition)
-	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID, lower.ID)
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), lower.ID.String())
 	require.NoError(t, err)
 	require.Zero(t, plan.CurrentPosition, "the sequence should repeat indefinitely")
 
-	require.NoError(t, r.PauseActivePlan(ctx, user.ID))
-	_, err = r.GetActivePlan(ctx, user.ID)
+	require.NoError(t, r.PauseActivePlan(ctx, user.ID.String()))
+	_, err = r.GetActivePlan(ctx, user.ID.String())
 	require.Error(t, err)
 }
 
 func planRoutineIDs(plan *repo.TrainingPlan) []string {
 	ids := make([]string, 0, len(plan.Routines))
 	for _, routine := range plan.Routines {
-		ids = append(ids, routine.ID)
+		ids = append(ids, routine.ID.String())
 	}
 	return ids
 }

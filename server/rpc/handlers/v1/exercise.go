@@ -121,7 +121,7 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 	}
 
 	return connect.NewResponse(&apiv1.CreateExerciseResponse{
-		Id: exercise.ID,
+		Id: exercise.ID.String(),
 	}), nil
 }
 
@@ -191,12 +191,12 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 		}
 	}
 
-	if err = h.repo.UpdateExercise(ctx, exercise.ID, opts...); err != nil {
+	if err = h.repo.UpdateExercise(ctx, exercise.ID.String(), opts...); err != nil {
 		log.Error("update exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exercise, err = h.repo.GetExercise(ctx, repo.GetExerciseWithID(exercise.ID))
+	exercise, err = h.repo.GetExercise(ctx, repo.GetExerciseWithID(exercise.ID.String()))
 	if err != nil {
 		log.Error("find exercise failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -355,7 +355,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 
 	userIDs := make([]string, 0, len(paginated.Items))
 	for _, set := range paginated.Items {
-		userIDs = append(userIDs, set.UserID)
+		userIDs = append(userIDs, set.UserID.String())
 	}
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, userIDs...)

@@ -13,6 +13,7 @@ import (
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -28,14 +29,14 @@ import (
 
 // Workout is an object representing the database table.
 type Workout struct {
-	ID         string           `db:"id,pk" `
-	UserID     string           `db:"user_id" `
-	FinishedAt time.Time        `db:"finished_at" `
-	CreatedAt  time.Time        `db:"created_at" `
-	Name       string           `db:"name" `
-	StartedAt  time.Time        `db:"started_at" `
-	Note       null.Val[string] `db:"note" `
-	RoutineID  null.Val[string] `db:"routine_id" `
+	ID         uuid.UUID           `db:"id,pk" `
+	UserID     uuid.UUID           `db:"user_id" `
+	FinishedAt time.Time           `db:"finished_at" `
+	CreatedAt  time.Time           `db:"created_at" `
+	Name       string              `db:"name" `
+	StartedAt  time.Time           `db:"started_at" `
+	Note       null.Val[string]    `db:"note" `
+	RoutineID  null.Val[uuid.UUID] `db:"routine_id" `
 
 	R workoutR `db:"-" `
 
@@ -151,14 +152,14 @@ func (c workoutColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type WorkoutSetter struct {
-	ID         omit.Val[string]     `db:"id,pk" `
-	UserID     omit.Val[string]     `db:"user_id" `
-	FinishedAt omit.Val[time.Time]  `db:"finished_at" `
-	CreatedAt  omit.Val[time.Time]  `db:"created_at" `
-	Name       omit.Val[string]     `db:"name" `
-	StartedAt  omit.Val[time.Time]  `db:"started_at" `
-	Note       omitnull.Val[string] `db:"note" `
-	RoutineID  omitnull.Val[string] `db:"routine_id" `
+	ID         omit.Val[uuid.UUID]     `db:"id,pk" `
+	UserID     omit.Val[uuid.UUID]     `db:"user_id" `
+	FinishedAt omit.Val[time.Time]     `db:"finished_at" `
+	CreatedAt  omit.Val[time.Time]     `db:"created_at" `
+	Name       omit.Val[string]        `db:"name" `
+	StartedAt  omit.Val[time.Time]     `db:"started_at" `
+	Note       omitnull.Val[string]    `db:"note" `
+	RoutineID  omitnull.Val[uuid.UUID] `db:"routine_id" `
 }
 
 func (s WorkoutSetter) SetColumns() []string {
@@ -374,7 +375,7 @@ func workoutScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fun
 
 // FindWorkout retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindWorkout(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Workout, error) {
+func FindWorkout(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Workout, error) {
 	if len(cols) == 0 {
 		return Workouts.Query(
 			sm.Where(Workouts.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -388,7 +389,7 @@ func FindWorkout(ctx context.Context, exec bob.Executor, IDPK string, cols ...st
 }
 
 // WorkoutExists checks the presence of a single record by primary key
-func WorkoutExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func WorkoutExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Workouts.Query(
 		sm.Where(Workouts.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -496,7 +497,7 @@ func (o WorkoutSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o WorkoutSlice) copyMatchingRows(from ...*Workout) {
-	fromByPK := make(map[string]*Workout, len(from))
+	fromByPK := make(map[uuid.UUID]*Workout, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -641,7 +642,7 @@ func (o *Workout) Sets(mods ...bob.Mod[*dialect.SelectQuery]) SetsQuery {
 }
 
 func (os WorkoutSlice) Sets(mods ...bob.Mod[*dialect.SelectQuery]) SetsQuery {
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	for _, o := range os {
 		if o == nil {
@@ -664,7 +665,7 @@ func (o *Workout) WorkoutComments(mods ...bob.Mod[*dialect.SelectQuery]) Workout
 }
 
 func (os WorkoutSlice) WorkoutComments(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutCommentsQuery {
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	for _, o := range os {
 		if o == nil {
@@ -687,11 +688,11 @@ func (o *Workout) Routine(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuery {
 }
 
 func (os WorkoutSlice) Routine(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuery {
-	pkRoutineID := make(pgtypes.Array[null.Val[string]], 0, len(os))
+	pkRoutineID := make(pgtypes.Array[null.Val[uuid.UUID]], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenRoutineID := make(map[null.Val[string]]struct{}, len(os))
+	seenRoutineID := make(map[null.Val[uuid.UUID]]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -717,11 +718,11 @@ func (o *Workout) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
 }
 
 func (os WorkoutSlice) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkUserID := make(pgtypes.Array[string], 0, len(os))
+	pkUserID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenUserID := make(map[string]struct{}, len(os))
+	seenUserID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -981,14 +982,14 @@ func (workout0 *Workout) AttachUser(ctx context.Context, exec bob.Executor, user
 
 type workoutWhere[Q psql.Filterable] struct {
 	cols       workoutColumns
-	ID         psql.WhereMod[Q, string]
-	UserID     psql.WhereMod[Q, string]
+	ID         psql.WhereMod[Q, uuid.UUID]
+	UserID     psql.WhereMod[Q, uuid.UUID]
 	FinishedAt psql.WhereMod[Q, time.Time]
 	CreatedAt  psql.WhereMod[Q, time.Time]
 	Name       psql.WhereMod[Q, string]
 	StartedAt  psql.WhereMod[Q, time.Time]
 	Note       psql.WhereNullMod[Q, string]
-	RoutineID  psql.WhereNullMod[Q, string]
+	RoutineID  psql.WhereNullMod[Q, uuid.UUID]
 	R          workoutWhereR[Q]
 }
 
@@ -999,14 +1000,14 @@ func (workoutWhere[Q]) AliasedAs(alias string) workoutWhere[Q] {
 func buildWorkoutWhere[Q psql.Filterable](cols workoutColumns) workoutWhere[Q] {
 	return workoutWhere[Q]{
 		cols:       cols,
-		ID:         psql.Where[Q, string](cols.ID.Expression),
-		UserID:     psql.Where[Q, string](cols.UserID.Expression),
+		ID:         psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		UserID:     psql.Where[Q, uuid.UUID](cols.UserID.Expression),
 		FinishedAt: psql.Where[Q, time.Time](cols.FinishedAt.Expression),
 		CreatedAt:  psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		Name:       psql.Where[Q, string](cols.Name.Expression),
 		StartedAt:  psql.Where[Q, time.Time](cols.StartedAt.Expression),
 		Note:       psql.WhereNull[Q, string](cols.Note.Expression),
-		RoutineID:  psql.WhereNull[Q, string](cols.RoutineID.Expression),
+		RoutineID:  psql.WhereNull[Q, uuid.UUID](cols.RoutineID.Expression),
 		R:          workoutWhereR[Q]{cols: cols},
 	}
 }
@@ -1078,14 +1079,14 @@ func (w workoutWhereR[Q]) HasUser(filters ...bob.Mod[*dialect.SelectQuery]) mods
 // on a LEFT JOIN miss every column comes back NULL, so each field uses the
 // nullable version of the column type even when the column itself is NOT NULL.
 type workoutPreloadBuf struct {
-	ID         null.Val[string]
-	UserID     null.Val[string]
+	ID         null.Val[uuid.UUID]
+	UserID     null.Val[uuid.UUID]
 	FinishedAt null.Val[time.Time]
 	CreatedAt  null.Val[time.Time]
 	Name       null.Val[string]
 	StartedAt  null.Val[time.Time]
 	Note       null.Val[string]
-	RoutineID  null.Val[string]
+	RoutineID  null.Val[uuid.UUID]
 }
 
 // workoutScanMapperNullable maps the preloaded workout
@@ -1381,7 +1382,7 @@ func (os WorkoutSlice) LoadSets(ctx context.Context, exec bob.Executor, mods ...
 		o.R.Loaded.Sets = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	workoutByKey := make(map[string][]*Workout, len(os))
+	workoutByKey := make(map[uuid.UUID][]*Workout, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1455,7 +1456,7 @@ func (os WorkoutSlice) LoadWorkoutComments(ctx context.Context, exec bob.Executo
 		o.R.Loaded.WorkoutComments = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	workoutByKey := make(map[string][]*Workout, len(os))
+	workoutByKey := make(map[uuid.UUID][]*Workout, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1526,7 +1527,7 @@ func (os WorkoutSlice) LoadRoutine(ctx context.Context, exec bob.Executor, mods 
 		o.R.Loaded.Routine = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	workoutByKey := make(map[string][]*Workout, len(os))
+	workoutByKey := make(map[uuid.UUID][]*Workout, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1606,7 +1607,7 @@ func (os WorkoutSlice) LoadUser(ctx context.Context, exec bob.Executor, mods ...
 		o.R.Loaded.User = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	workoutByKey := make(map[string][]*Workout, len(os))
+	workoutByKey := make(map[uuid.UUID][]*Workout, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1756,7 +1757,7 @@ func (os WorkoutSlice) LoadCountSets(ctx context.Context, exec bob.Executor, mod
 
 	// Build the IN arg expression from parent PKs
 
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1768,7 +1769,7 @@ func (os WorkoutSlice) LoadCountSets(ctx context.Context, exec bob.Executor, mod
 	// countResult holds one scanned row from the batch count query.
 	// FK columns are aliased to the parent PK column names for direct map lookup.
 	type countResult struct {
-		ID    string
+		ID    uuid.UUID
 		Count int64
 	}
 
@@ -1797,7 +1798,7 @@ func (os WorkoutSlice) LoadCountSets(ctx context.Context, exec bob.Executor, mod
 	}
 
 	// Single-column FK: direct map lookup
-	countMap := make(map[string]int64, len(results))
+	countMap := make(map[uuid.UUID]int64, len(results))
 	for _, r := range results {
 		countMap[r.ID] = r.Count
 	}
@@ -1835,7 +1836,7 @@ func (os WorkoutSlice) LoadCountWorkoutComments(ctx context.Context, exec bob.Ex
 
 	// Build the IN arg expression from parent PKs
 
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1847,7 +1848,7 @@ func (os WorkoutSlice) LoadCountWorkoutComments(ctx context.Context, exec bob.Ex
 	// countResult holds one scanned row from the batch count query.
 	// FK columns are aliased to the parent PK column names for direct map lookup.
 	type countResult struct {
-		ID    string
+		ID    uuid.UUID
 		Count int64
 	}
 
@@ -1876,7 +1877,7 @@ func (os WorkoutSlice) LoadCountWorkoutComments(ctx context.Context, exec bob.Ex
 	}
 
 	// Single-column FK: direct map lookup
-	countMap := make(map[string]int64, len(results))
+	countMap := make(map[uuid.UUID]int64, len(results))
 	for _, r := range results {
 		countMap[r.ID] = r.Count
 	}

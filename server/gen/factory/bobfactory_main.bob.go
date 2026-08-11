@@ -12,6 +12,7 @@ import (
 	"github.com/aarondl/opt/null"
 	models "github.com/crlssn/getstronger/server/gen/models"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
+	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob/types"
 )
@@ -62,14 +63,14 @@ func (f *Factory) FromExistingAuth(ctx context.Context, m *models.Auth) *AuthTem
 func (f *Factory) fromExistingAuth(ctx context.Context, m *models.Auth) *AuthTemplate {
 	o := &AuthTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
+	o.ID = func() uuid.UUID { return m.ID }
 	o.Email = func() string { return m.Email }
 	o.Password = func() []byte { return m.Password }
 	o.RefreshToken = func() null.Val[string] { return m.RefreshToken }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 	o.EmailVerified = func() bool { return m.EmailVerified }
-	o.EmailToken = func() string { return m.EmailToken }
-	o.PasswordResetToken = func() null.Val[string] { return m.PasswordResetToken }
+	o.EmailToken = func() uuid.UUID { return m.EmailToken }
+	o.PasswordResetToken = func() null.Val[uuid.UUID] { return m.PasswordResetToken }
 	o.PasswordResetTokenValidUntil = func() null.Val[time.Time] { return m.PasswordResetTokenValidUntil }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
@@ -109,7 +110,7 @@ func (f *Factory) FromExistingEvent(ctx context.Context, m *models.Event) *Event
 func (f *Factory) fromExistingEvent(ctx context.Context, m *models.Event) *EventTemplate {
 	o := &EventTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
+	o.ID = func() uuid.UUID { return m.ID }
 	o.Topic = func() enums.EventTopic { return m.Topic }
 	o.Payload = func() types.JSON[json.RawMessage] { return m.Payload }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
@@ -142,8 +143,8 @@ func (f *Factory) FromExistingExercise(ctx context.Context, m *models.Exercise) 
 func (f *Factory) fromExistingExercise(ctx context.Context, m *models.Exercise) *ExerciseTemplate {
 	o := &ExerciseTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
-	o.UserID = func() string { return m.UserID }
+	o.ID = func() uuid.UUID { return m.ID }
+	o.UserID = func() uuid.UUID { return m.UserID }
 	o.Title = func() string { return m.Title }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 	o.DeletedAt = func() null.Val[time.Time] { return m.DeletedAt }
@@ -196,8 +197,8 @@ func (f *Factory) FromExistingExercisesRoutine(ctx context.Context, m *models.Ex
 func (f *Factory) fromExistingExercisesRoutine(ctx context.Context, m *models.ExercisesRoutine) *ExercisesRoutineTemplate {
 	o := &ExercisesRoutineTemplate{f: f, alreadyPersisted: true}
 
-	o.RoutineID = func() string { return m.RoutineID }
-	o.ExerciseID = func() string { return m.ExerciseID }
+	o.RoutineID = func() uuid.UUID { return m.RoutineID }
+	o.ExerciseID = func() uuid.UUID { return m.ExerciseID }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -241,8 +242,8 @@ func (f *Factory) FromExistingFollower(ctx context.Context, m *models.Follower) 
 func (f *Factory) fromExistingFollower(ctx context.Context, m *models.Follower) *FollowerTemplate {
 	o := &FollowerTemplate{f: f, alreadyPersisted: true}
 
-	o.FollowerID = func() string { return m.FollowerID }
-	o.FolloweeID = func() string { return m.FolloweeID }
+	o.FollowerID = func() uuid.UUID { return m.FollowerID }
+	o.FolloweeID = func() uuid.UUID { return m.FolloweeID }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -286,8 +287,8 @@ func (f *Factory) FromExistingNotification(ctx context.Context, m *models.Notifi
 func (f *Factory) fromExistingNotification(ctx context.Context, m *models.Notification) *NotificationTemplate {
 	o := &NotificationTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
-	o.UserID = func() string { return m.UserID }
+	o.ID = func() uuid.UUID { return m.ID }
+	o.UserID = func() uuid.UUID { return m.UserID }
 	o.Type = func() enums.NotificationType { return m.Type }
 	o.Payload = func() types.JSON[json.RawMessage] { return m.Payload }
 	o.ReadAt = func() null.Val[time.Time] { return m.ReadAt }
@@ -332,8 +333,8 @@ func (f *Factory) FromExistingPlanRoutine(ctx context.Context, m *models.PlanRou
 func (f *Factory) fromExistingPlanRoutine(ctx context.Context, m *models.PlanRoutine) *PlanRoutineTemplate {
 	o := &PlanRoutineTemplate{f: f, alreadyPersisted: true}
 
-	o.PlanID = func() string { return m.PlanID }
-	o.RoutineID = func() string { return m.RoutineID }
+	o.PlanID = func() uuid.UUID { return m.PlanID }
+	o.RoutineID = func() uuid.UUID { return m.RoutineID }
 	o.Position = func() int32 { return m.Position }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
@@ -378,8 +379,8 @@ func (f *Factory) FromExistingPlan(ctx context.Context, m *models.Plan) *PlanTem
 func (f *Factory) fromExistingPlan(ctx context.Context, m *models.Plan) *PlanTemplate {
 	o := &PlanTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
-	o.UserID = func() string { return m.UserID }
+	o.ID = func() uuid.UUID { return m.ID }
+	o.UserID = func() uuid.UUID { return m.UserID }
 	o.Name = func() string { return m.Name }
 	o.Active = func() bool { return m.Active }
 	o.CurrentPosition = func() int32 { return m.CurrentPosition }
@@ -428,8 +429,8 @@ func (f *Factory) FromExistingRoutine(ctx context.Context, m *models.Routine) *R
 func (f *Factory) fromExistingRoutine(ctx context.Context, m *models.Routine) *RoutineTemplate {
 	o := &RoutineTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
-	o.UserID = func() string { return m.UserID }
+	o.ID = func() uuid.UUID { return m.ID }
+	o.UserID = func() uuid.UUID { return m.UserID }
 	o.Title = func() string { return m.Title }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 	o.DeletedAt = func() null.Val[time.Time] { return m.DeletedAt }
@@ -483,13 +484,13 @@ func (f *Factory) FromExistingSet(ctx context.Context, m *models.Set) *SetTempla
 func (f *Factory) fromExistingSet(ctx context.Context, m *models.Set) *SetTemplate {
 	o := &SetTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
-	o.WorkoutID = func() string { return m.WorkoutID }
-	o.ExerciseID = func() string { return m.ExerciseID }
+	o.ID = func() uuid.UUID { return m.ID }
+	o.WorkoutID = func() uuid.UUID { return m.WorkoutID }
+	o.ExerciseID = func() uuid.UUID { return m.ExerciseID }
 	o.Weight = func() float64 { return m.Weight }
 	o.Reps = func() int32 { return m.Reps }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
-	o.UserID = func() string { return m.UserID }
+	o.UserID = func() uuid.UUID { return m.UserID }
 	o.Distance = func() float64 { return m.Distance }
 	o.DurationSeconds = func() int32 { return m.DurationSeconds }
 
@@ -533,7 +534,7 @@ func (f *Factory) FromExistingTrace(ctx context.Context, m *models.Trace) *Trace
 func (f *Factory) fromExistingTrace(ctx context.Context, m *models.Trace) *TraceTemplate {
 	o := &TraceTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
+	o.ID = func() uuid.UUID { return m.ID }
 	o.Request = func() string { return m.Request }
 	o.StatusCode = func() int32 { return m.StatusCode }
 	o.DurationMS = func() int32 { return m.DurationMS }
@@ -567,12 +568,12 @@ func (f *Factory) FromExistingUser(ctx context.Context, m *models.User) *UserTem
 func (f *Factory) fromExistingUser(ctx context.Context, m *models.User) *UserTemplate {
 	o := &UserTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
+	o.ID = func() uuid.UUID { return m.ID }
 	o.FirstName = func() string { return m.FirstName }
 	o.LastName = func() string { return m.LastName }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 	o.FullNameSearch = func() string { return m.FullNameSearch }
-	o.AuthID = func() string { return m.AuthID }
+	o.AuthID = func() uuid.UUID { return m.AuthID }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -634,9 +635,9 @@ func (f *Factory) FromExistingWorkoutComment(ctx context.Context, m *models.Work
 func (f *Factory) fromExistingWorkoutComment(ctx context.Context, m *models.WorkoutComment) *WorkoutCommentTemplate {
 	o := &WorkoutCommentTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
-	o.UserID = func() string { return m.UserID }
-	o.WorkoutID = func() string { return m.WorkoutID }
+	o.ID = func() uuid.UUID { return m.ID }
+	o.UserID = func() uuid.UUID { return m.UserID }
+	o.WorkoutID = func() uuid.UUID { return m.WorkoutID }
 	o.Comment = func() string { return m.Comment }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 
@@ -682,14 +683,14 @@ func (f *Factory) FromExistingWorkout(ctx context.Context, m *models.Workout) *W
 func (f *Factory) fromExistingWorkout(ctx context.Context, m *models.Workout) *WorkoutTemplate {
 	o := &WorkoutTemplate{f: f, alreadyPersisted: true}
 
-	o.ID = func() string { return m.ID }
-	o.UserID = func() string { return m.UserID }
+	o.ID = func() uuid.UUID { return m.ID }
+	o.UserID = func() uuid.UUID { return m.UserID }
 	o.FinishedAt = func() time.Time { return m.FinishedAt }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 	o.Name = func() string { return m.Name }
 	o.StartedAt = func() time.Time { return m.StartedAt }
 	o.Note = func() null.Val[string] { return m.Note }
-	o.RoutineID = func() null.Val[string] { return m.RoutineID }
+	o.RoutineID = func() null.Val[uuid.UUID] { return m.RoutineID }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

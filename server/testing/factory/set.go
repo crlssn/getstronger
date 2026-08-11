@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/omit"
-	"github.com/google/uuid"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
@@ -38,7 +37,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 		opt(setter)
 	}
 	if setter.ID.IsUnset() {
-		setter.ID = omit.From(uuid.NewString())
+		setter.ID = omit.From(newUUID())
 	}
 	if setter.UserID.IsUnset() {
 		setter.UserID = omit.From(f.NewUser().ID)
@@ -111,27 +110,27 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 	return set
 }
 
-func SetID(id string) SetOpt {
+func SetID(id any) SetOpt {
 	return func(set *models.SetSetter) {
-		set.ID = omit.From(id)
+		set.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func SetUserID(userID string) SetOpt {
+func SetUserID(userID any) SetOpt {
 	return func(set *models.SetSetter) {
-		set.UserID = omit.From(userID)
+		set.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
-func SetExerciseID(exerciseID string) SetOpt {
+func SetExerciseID(exerciseID any) SetOpt {
 	return func(set *models.SetSetter) {
-		set.ExerciseID = omit.From(exerciseID)
+		set.ExerciseID = omit.From(nativeUUID(exerciseID))
 	}
 }
 
-func SetWorkoutID(workoutID string) SetOpt {
+func SetWorkoutID(workoutID any) SetOpt {
 	return func(set *models.SetSetter) {
-		set.WorkoutID = omit.From(workoutID)
+		set.WorkoutID = omit.From(nativeUUID(workoutID))
 	}
 }
 

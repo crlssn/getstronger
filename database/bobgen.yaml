@@ -3,12 +3,6 @@ psql:
   except:
     schema_migrations:
 
-# IDs cross the API boundary as strings, so retain the existing model contract.
-replacements:
-  - match:
-      db_type: uuid
-    replace: string
-
 no_tests: true
 
 plugins:

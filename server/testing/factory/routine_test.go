@@ -49,7 +49,7 @@ func TestFactory_Routine(t *testing.T) {
 		expected := f.NewRoutine(factory.RoutineID(id))
 		created, err := models.FindRoutine(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("RoutineUserID", func(t *testing.T) {

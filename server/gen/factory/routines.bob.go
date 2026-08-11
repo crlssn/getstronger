@@ -13,6 +13,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/types"
@@ -39,8 +40,8 @@ func (mods RoutineModSlice) Apply(ctx context.Context, n *RoutineTemplate) {
 // RoutineTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type RoutineTemplate struct {
-	ID            func() string
-	UserID        func() string
+	ID            func() uuid.UUID
+	UserID        func() uuid.UUID
 	Title         func() string
 	CreatedAt     func() time.Time
 	DeletedAt     func() null.Val[time.Time]
@@ -227,7 +228,7 @@ func (o RoutineTemplate) BuildMany(number int) models.RoutineSlice {
 
 func ensureCreatableRoutine(m *models.RoutineSetter) {
 	if m.UserID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.UserID = omit.From(val)
 	}
 	if m.Title.IsUnset() {
@@ -453,14 +454,14 @@ func (m routineMods) RandomizeAllColumns(f *faker.Faker) RoutineMod {
 }
 
 // Set the model columns to this value
-func (m routineMods) ID(val string) RoutineMod {
+func (m routineMods) ID(val uuid.UUID) RoutineMod {
 	return RoutineModFunc(func(_ context.Context, o *RoutineTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m routineMods) IDFunc(f func() string) RoutineMod {
+func (m routineMods) IDFunc(f func() uuid.UUID) RoutineMod {
 	return RoutineModFunc(func(_ context.Context, o *RoutineTemplate) {
 		o.ID = f
 	})
@@ -477,21 +478,21 @@ func (m routineMods) UnsetID() RoutineMod {
 // if faker is nil, a default faker is used
 func (m routineMods) RandomID(f *faker.Faker) RoutineMod {
 	return RoutineModFunc(func(_ context.Context, o *RoutineTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m routineMods) UserID(val string) RoutineMod {
+func (m routineMods) UserID(val uuid.UUID) RoutineMod {
 	return RoutineModFunc(func(_ context.Context, o *RoutineTemplate) {
-		o.UserID = func() string { return val }
+		o.UserID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m routineMods) UserIDFunc(f func() string) RoutineMod {
+func (m routineMods) UserIDFunc(f func() uuid.UUID) RoutineMod {
 	return RoutineModFunc(func(_ context.Context, o *RoutineTemplate) {
 		o.UserID = f
 	})
@@ -508,8 +509,8 @@ func (m routineMods) UnsetUserID() RoutineMod {
 // if faker is nil, a default faker is used
 func (m routineMods) RandomUserID(f *faker.Faker) RoutineMod {
 	return RoutineModFunc(func(_ context.Context, o *RoutineTemplate) {
-		o.UserID = func() string {
-			return random_string(f)
+		o.UserID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }

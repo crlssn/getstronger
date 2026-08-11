@@ -81,7 +81,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err:         nil,
@@ -102,7 +102,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				metrics:     []string{"weight", "distance", "time"},
@@ -120,7 +120,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidExerciseTags),
@@ -137,7 +137,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidExerciseTags),
@@ -163,7 +163,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			_, err = uuid.Parse(res.Msg.GetId())
 			s.Require().NoError(err)
 
-			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), res.Msg.GetId())
+			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), nativeUUID(res.Msg.GetId()))
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetTags(), []string(exercise.Tags))
@@ -202,7 +202,7 @@ func (s *exerciseSuite) TestGetExercise() {
 
 				s.Require().NotNil(exercise)
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -218,7 +218,7 @@ func (s *exerciseSuite) TestGetExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeNotFound, nil),
@@ -241,10 +241,10 @@ func (s *exerciseSuite) TestGetExercise() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), res.Msg.GetExercise().GetId())
+			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), nativeUUID(res.Msg.GetExercise().GetId()))
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
-			s.Require().Equal(t.req.Msg.GetId(), exercise.ID)
+			s.Require().Equal(t.req.Msg.GetId(), exercise.ID.String())
 		})
 	}
 }
@@ -284,7 +284,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -314,7 +314,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -344,7 +344,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -365,7 +365,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
@@ -391,7 +391,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidUpdateMaskPath),
@@ -422,7 +422,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 			}
 			s.Require().Equal(expectedTags, res.Msg.GetExercise().GetTags())
 
-			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), res.Msg.GetExercise().GetId())
+			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), nativeUUID(res.Msg.GetExercise().GetId()))
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetExercise().GetName(), exercise.Title)
@@ -459,7 +459,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -475,7 +475,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
@@ -499,7 +499,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 			s.Require().NotNil(res)
 
 			exists, err := models.Exercises.Query(
-				models.SelectWhere.Exercises.ID.EQ(t.req.Msg.GetId()),
+				models.SelectWhere.Exercises.ID.EQ(nativeUUID(t.req.Msg.GetId())),
 				models.SelectWhere.Exercises.DeletedAt.IsNotNull(),
 			).Exists(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
@@ -559,7 +559,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -605,7 +605,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				}
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -645,7 +645,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				}
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -698,7 +698,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,
@@ -724,7 +724,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				user := s.factory.NewUser(factory.UserID(factory.UUID(3)))
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID)
+				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
 				err: nil,

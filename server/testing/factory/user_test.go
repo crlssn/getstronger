@@ -48,7 +48,7 @@ func TestFactory_User(t *testing.T) {
 		expected := f.NewUser(factory.UserID(id))
 		created, err := models.FindUser(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("UserAuthID", func(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -35,12 +36,12 @@ func (mods UserModSlice) Apply(ctx context.Context, n *UserTemplate) {
 // UserTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type UserTemplate struct {
-	ID             func() string
+	ID             func() uuid.UUID
 	FirstName      func() string
 	LastName       func() string
 	CreatedAt      func() time.Time
 	FullNameSearch func() string
-	AuthID         func() string
+	AuthID         func() uuid.UUID
 
 	r userR
 	f *Factory
@@ -305,7 +306,7 @@ func ensureCreatableUser(m *models.UserSetter) {
 		m.LastName = omit.From(val)
 	}
 	if m.AuthID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.AuthID = omit.From(val)
 	}
 }
@@ -613,14 +614,14 @@ func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 }
 
 // Set the model columns to this value
-func (m userMods) ID(val string) UserMod {
+func (m userMods) ID(val uuid.UUID) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) IDFunc(f func() string) UserMod {
+func (m userMods) IDFunc(f func() uuid.UUID) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.ID = f
 	})
@@ -637,8 +638,8 @@ func (m userMods) UnsetID() UserMod {
 // if faker is nil, a default faker is used
 func (m userMods) RandomID(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
@@ -768,14 +769,14 @@ func (m userMods) RandomFullNameSearch(f *faker.Faker) UserMod {
 }
 
 // Set the model columns to this value
-func (m userMods) AuthID(val string) UserMod {
+func (m userMods) AuthID(val uuid.UUID) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.AuthID = func() string { return val }
+		o.AuthID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) AuthIDFunc(f func() string) UserMod {
+func (m userMods) AuthIDFunc(f func() uuid.UUID) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.AuthID = f
 	})
@@ -792,8 +793,8 @@ func (m userMods) UnsetAuthID() UserMod {
 // if faker is nil, a default faker is used
 func (m userMods) RandomAuthID(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.AuthID = func() string {
-			return random_string(f)
+		o.AuthID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }

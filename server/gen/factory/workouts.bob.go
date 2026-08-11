@@ -12,6 +12,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -37,14 +38,14 @@ func (mods WorkoutModSlice) Apply(ctx context.Context, n *WorkoutTemplate) {
 // WorkoutTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type WorkoutTemplate struct {
-	ID         func() string
-	UserID     func() string
+	ID         func() uuid.UUID
+	UserID     func() uuid.UUID
 	FinishedAt func() time.Time
 	CreatedAt  func() time.Time
 	Name       func() string
 	StartedAt  func() time.Time
 	Note       func() null.Val[string]
-	RoutineID  func() null.Val[string]
+	RoutineID  func() null.Val[uuid.UUID]
 
 	r workoutR
 	f *Factory
@@ -235,7 +236,7 @@ func (o WorkoutTemplate) BuildMany(number int) models.WorkoutSlice {
 
 func ensureCreatableWorkout(m *models.WorkoutSetter) {
 	if m.UserID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.UserID = omit.From(val)
 	}
 	if m.FinishedAt.IsUnset() {
@@ -470,14 +471,14 @@ func (m workoutMods) RandomizeAllColumns(f *faker.Faker) WorkoutMod {
 }
 
 // Set the model columns to this value
-func (m workoutMods) ID(val string) WorkoutMod {
+func (m workoutMods) ID(val uuid.UUID) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m workoutMods) IDFunc(f func() string) WorkoutMod {
+func (m workoutMods) IDFunc(f func() uuid.UUID) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
 		o.ID = f
 	})
@@ -494,21 +495,21 @@ func (m workoutMods) UnsetID() WorkoutMod {
 // if faker is nil, a default faker is used
 func (m workoutMods) RandomID(f *faker.Faker) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m workoutMods) UserID(val string) WorkoutMod {
+func (m workoutMods) UserID(val uuid.UUID) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
-		o.UserID = func() string { return val }
+		o.UserID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m workoutMods) UserIDFunc(f func() string) WorkoutMod {
+func (m workoutMods) UserIDFunc(f func() uuid.UUID) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
 		o.UserID = f
 	})
@@ -525,8 +526,8 @@ func (m workoutMods) UnsetUserID() WorkoutMod {
 // if faker is nil, a default faker is used
 func (m workoutMods) RandomUserID(f *faker.Faker) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
-		o.UserID = func() string {
-			return random_string(f)
+		o.UserID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
@@ -709,14 +710,14 @@ func (m workoutMods) RandomNoteNotNull(f *faker.Faker) WorkoutMod {
 }
 
 // Set the model columns to this value
-func (m workoutMods) RoutineID(val null.Val[string]) WorkoutMod {
+func (m workoutMods) RoutineID(val null.Val[uuid.UUID]) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
-		o.RoutineID = func() null.Val[string] { return val }
+		o.RoutineID = func() null.Val[uuid.UUID] { return val }
 	})
 }
 
 // Set the Column from the function
-func (m workoutMods) RoutineIDFunc(f func() null.Val[string]) WorkoutMod {
+func (m workoutMods) RoutineIDFunc(f func() null.Val[uuid.UUID]) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
 		o.RoutineID = f
 	})
@@ -734,12 +735,12 @@ func (m workoutMods) UnsetRoutineID() WorkoutMod {
 // The generated value is sometimes null
 func (m workoutMods) RandomRoutineID(f *faker.Faker) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
-		o.RoutineID = func() null.Val[string] {
+		o.RoutineID = func() null.Val[uuid.UUID] {
 			if f == nil {
 				f = &defaultFaker
 			}
 
-			val := random_string(f)
+			val := random_uuid_UUID(f)
 			return null.From(val)
 		}
 	})
@@ -750,12 +751,12 @@ func (m workoutMods) RandomRoutineID(f *faker.Faker) WorkoutMod {
 // The generated value is never null
 func (m workoutMods) RandomRoutineIDNotNull(f *faker.Faker) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
-		o.RoutineID = func() null.Val[string] {
+		o.RoutineID = func() null.Val[uuid.UUID] {
 			if f == nil {
 				f = &defaultFaker
 			}
 
-			val := random_string(f)
+			val := random_uuid_UUID(f)
 			return null.From(val)
 		}
 	})

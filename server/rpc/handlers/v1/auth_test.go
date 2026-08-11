@@ -464,7 +464,7 @@ func (s *authSuite) TestVerifyEmail() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			auth, err := models.Auths.Query(models.SelectWhere.Auths.EmailToken.EQ(t.req.Msg.GetToken())).One(ctx, bob.NewDB(s.container.DB))
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.EmailToken.EQ(nativeUUID(t.req.Msg.GetToken()))).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().True(auth.EmailVerified)
 		})
@@ -637,7 +637,7 @@ func (s *authSuite) TestUpdatePassword() {
 			var err error
 			var auth *models.Auth
 			if t.expected.err == nil {
-				auth, err = models.Auths.Query(models.SelectWhere.Auths.PasswordResetToken.EQ(t.req.Msg.GetToken())).One(ctx, bob.NewDB(s.container.DB))
+				auth, err = models.Auths.Query(models.SelectWhere.Auths.PasswordResetToken.EQ(nativeUUID(t.req.Msg.GetToken()))).One(ctx, bob.NewDB(s.container.DB))
 				s.Require().NoError(err)
 			}
 

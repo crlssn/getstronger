@@ -94,7 +94,7 @@ func TestFactory_Seed(t *testing.T) {
 	require.NoError(t, err)
 	setsByExercise := make(map[string]int)
 	for _, set := range rangedSets {
-		setsByExercise[set.ExerciseID]++
+		setsByExercise[set.ExerciseID.String()]++
 	}
 	require.Len(t, setsByExercise, 3)
 	for _, setCount := range setsByExercise {

@@ -103,7 +103,7 @@ func (s *Saga) VerifyEmail(ctx context.Context, f func(*connect.Response[apiv1.V
 	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
 	f(client.VerifyEmail(ctx, &connect.Request[apiv1.VerifyEmailRequest]{
 		Msg: &apiv1.VerifyEmailRequest{
-			Token: a.EmailToken,
+			Token: a.EmailToken.String(),
 		},
 	}))
 
@@ -177,7 +177,7 @@ func (s *Saga) CreateRoutine(ctx context.Context, f func(*connect.Response[apiv1
 
 	exerciseIDs := make([]string, 0, len(exercises))
 	for _, e := range exercises {
-		exerciseIDs = append(exerciseIDs, e.ID)
+		exerciseIDs = append(exerciseIDs, e.ID.String())
 	}
 
 	client := apiv1connect.NewRoutineServiceClient(s.client(), s.baseURL)
@@ -201,7 +201,7 @@ func (s *Saga) CreateWorkout(ctx context.Context, f func(*connect.Response[apiv1
 	exerciseSets := make([]*apiv1.ExerciseSets, 0, len(routine.R.Exercises))
 	for _, e := range routine.R.Exercises {
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSets{
-			Exercise: &apiv1.Exercise{Id: e.ID},
+			Exercise: &apiv1.Exercise{Id: e.ID.String()},
 			Sets: []*apiv1.Set{
 				{
 					Reps:   10,  //nolint:mnd
@@ -214,7 +214,7 @@ func (s *Saga) CreateWorkout(ctx context.Context, f func(*connect.Response[apiv1
 	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
 	f(client.CreateWorkout(ctx, &connect.Request[apiv1.CreateWorkoutRequest]{
 		Msg: &apiv1.CreateWorkoutRequest{
-			RoutineId:    routine.ID,
+			RoutineId:    routine.ID.String(),
 			ExerciseSets: exerciseSets,
 			StartedAt:    timestamppb.New(time.Now().Add(-time.Hour).UTC()),
 			FinishedAt:   timestamppb.New(time.Now().UTC()),
@@ -249,7 +249,7 @@ func (s *Saga) ListWorkouts(ctx context.Context, f func(*connect.Response[apiv1.
 	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
 	f(client.ListWorkouts(ctx, &connect.Request[apiv1.ListWorkoutsRequest]{
 		Msg: &apiv1.ListWorkoutsRequest{
-			UserIds: []string{user.ID},
+			UserIds: []string{user.ID.String()},
 			Pagination: &apiv1.PaginationRequest{
 				PageLimit: 100, //nolint:mnd
 				PageToken: nil,
@@ -313,7 +313,7 @@ func (s *Saga) GetWorkout(ctx context.Context, f func(*connect.Response[apiv1.Ge
 	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
 	f(client.GetWorkout(ctx, &connect.Request[apiv1.GetWorkoutRequest]{
 		Msg: &apiv1.GetWorkoutRequest{
-			Id: workout.ID,
+			Id: workout.ID.String(),
 		},
 	}))
 

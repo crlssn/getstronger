@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -25,9 +26,9 @@ import (
 
 // WorkoutComment is an object representing the database table.
 type WorkoutComment struct {
-	ID        string    `db:"id,pk" `
-	UserID    string    `db:"user_id" `
-	WorkoutID string    `db:"workout_id" `
+	ID        uuid.UUID `db:"id,pk" `
+	UserID    uuid.UUID `db:"user_id" `
+	WorkoutID uuid.UUID `db:"workout_id" `
 	Comment   string    `db:"comment" `
 	CreatedAt time.Time `db:"created_at" `
 
@@ -133,9 +134,9 @@ func (c workoutCommentColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type WorkoutCommentSetter struct {
-	ID        omit.Val[string]    `db:"id,pk" `
-	UserID    omit.Val[string]    `db:"user_id" `
-	WorkoutID omit.Val[string]    `db:"workout_id" `
+	ID        omit.Val[uuid.UUID] `db:"id,pk" `
+	UserID    omit.Val[uuid.UUID] `db:"user_id" `
+	WorkoutID omit.Val[uuid.UUID] `db:"workout_id" `
 	Comment   omit.Val[string]    `db:"comment" `
 	CreatedAt omit.Val[time.Time] `db:"created_at" `
 }
@@ -293,7 +294,7 @@ func workoutCommentScanMapper(ctx context.Context, cols []string) (scan.BeforeFu
 
 // FindWorkoutComment retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindWorkoutComment(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*WorkoutComment, error) {
+func FindWorkoutComment(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*WorkoutComment, error) {
 	if len(cols) == 0 {
 		return WorkoutComments.Query(
 			sm.Where(WorkoutComments.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -307,7 +308,7 @@ func FindWorkoutComment(ctx context.Context, exec bob.Executor, IDPK string, col
 }
 
 // WorkoutCommentExists checks the presence of a single record by primary key
-func WorkoutCommentExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func WorkoutCommentExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return WorkoutComments.Query(
 		sm.Where(WorkoutComments.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -415,7 +416,7 @@ func (o WorkoutCommentSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o WorkoutCommentSlice) copyMatchingRows(from ...*WorkoutComment) {
-	fromByPK := make(map[string]*WorkoutComment, len(from))
+	fromByPK := make(map[uuid.UUID]*WorkoutComment, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -560,11 +561,11 @@ func (o *WorkoutComment) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery 
 }
 
 func (os WorkoutCommentSlice) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkUserID := make(pgtypes.Array[string], 0, len(os))
+	pkUserID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenUserID := make(map[string]struct{}, len(os))
+	seenUserID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -590,11 +591,11 @@ func (o *WorkoutComment) Workout(mods ...bob.Mod[*dialect.SelectQuery]) Workouts
 }
 
 func (os WorkoutCommentSlice) Workout(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutsQuery {
-	pkWorkoutID := make(pgtypes.Array[string], 0, len(os))
+	pkWorkoutID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenWorkoutID := make(map[string]struct{}, len(os))
+	seenWorkoutID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -714,9 +715,9 @@ func (workoutComment0 *WorkoutComment) AttachWorkout(ctx context.Context, exec b
 
 type workoutCommentWhere[Q psql.Filterable] struct {
 	cols      workoutCommentColumns
-	ID        psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
-	WorkoutID psql.WhereMod[Q, string]
+	ID        psql.WhereMod[Q, uuid.UUID]
+	UserID    psql.WhereMod[Q, uuid.UUID]
+	WorkoutID psql.WhereMod[Q, uuid.UUID]
 	Comment   psql.WhereMod[Q, string]
 	CreatedAt psql.WhereMod[Q, time.Time]
 	R         workoutCommentWhereR[Q]
@@ -729,9 +730,9 @@ func (workoutCommentWhere[Q]) AliasedAs(alias string) workoutCommentWhere[Q] {
 func buildWorkoutCommentWhere[Q psql.Filterable](cols workoutCommentColumns) workoutCommentWhere[Q] {
 	return workoutCommentWhere[Q]{
 		cols:      cols,
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
-		WorkoutID: psql.Where[Q, string](cols.WorkoutID.Expression),
+		ID:        psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		UserID:    psql.Where[Q, uuid.UUID](cols.UserID.Expression),
+		WorkoutID: psql.Where[Q, uuid.UUID](cols.WorkoutID.Expression),
 		Comment:   psql.Where[Q, string](cols.Comment.Expression),
 		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		R:         workoutCommentWhereR[Q]{cols: cols},
@@ -917,7 +918,7 @@ func (os WorkoutCommentSlice) LoadUser(ctx context.Context, exec bob.Executor, m
 		o.R.Loaded.User = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	workoutCommentByKey := make(map[string][]*WorkoutComment, len(os))
+	workoutCommentByKey := make(map[uuid.UUID][]*WorkoutComment, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -992,7 +993,7 @@ func (os WorkoutCommentSlice) LoadWorkout(ctx context.Context, exec bob.Executor
 		o.R.Loaded.Workout = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	workoutCommentByKey := make(map[string][]*WorkoutComment, len(os))
+	workoutCommentByKey := make(map[uuid.UUID][]*WorkoutComment, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue

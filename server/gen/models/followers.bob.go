@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -24,8 +25,8 @@ import (
 
 // Follower is an object representing the database table.
 type Follower struct {
-	FollowerID string `db:"follower_id,pk" `
-	FolloweeID string `db:"followee_id,pk" `
+	FollowerID uuid.UUID `db:"follower_id,pk" `
+	FolloweeID uuid.UUID `db:"followee_id,pk" `
 
 	R followerR `db:"-" `
 }
@@ -123,8 +124,8 @@ func (c followerColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type FollowerSetter struct {
-	FollowerID omit.Val[string] `db:"follower_id,pk" `
-	FolloweeID omit.Val[string] `db:"followee_id,pk" `
+	FollowerID omit.Val[uuid.UUID] `db:"follower_id,pk" `
+	FolloweeID omit.Val[uuid.UUID] `db:"followee_id,pk" `
 }
 
 func (s FollowerSetter) SetColumns() []string {
@@ -220,7 +221,7 @@ func followerScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fu
 
 // FindFollower retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindFollower(ctx context.Context, exec bob.Executor, FollowerIDPK string, FolloweeIDPK string, cols ...string) (*Follower, error) {
+func FindFollower(ctx context.Context, exec bob.Executor, FollowerIDPK uuid.UUID, FolloweeIDPK uuid.UUID, cols ...string) (*Follower, error) {
 	if len(cols) == 0 {
 		return Followers.Query(
 			sm.Where(Followers.Columns.FollowerID.EQ(psql.Arg(FollowerIDPK))),
@@ -236,7 +237,7 @@ func FindFollower(ctx context.Context, exec bob.Executor, FollowerIDPK string, F
 }
 
 // FollowerExists checks the presence of a single record by primary key
-func FollowerExists(ctx context.Context, exec bob.Executor, FollowerIDPK string, FolloweeIDPK string) (bool, error) {
+func FollowerExists(ctx context.Context, exec bob.Executor, FollowerIDPK uuid.UUID, FolloweeIDPK uuid.UUID) (bool, error) {
 	return Followers.Query(
 		sm.Where(Followers.Columns.FollowerID.EQ(psql.Arg(FollowerIDPK))),
 		sm.Where(Followers.Columns.FolloweeID.EQ(psql.Arg(FolloweeIDPK))),
@@ -491,11 +492,11 @@ func (o *Follower) FolloweeUser(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuer
 }
 
 func (os FollowerSlice) FolloweeUser(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkFolloweeID := make(pgtypes.Array[string], 0, len(os))
+	pkFolloweeID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenFolloweeID := make(map[string]struct{}, len(os))
+	seenFolloweeID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -521,11 +522,11 @@ func (o *Follower) FollowerUser(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuer
 }
 
 func (os FollowerSlice) FollowerUser(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkFollowerID := make(pgtypes.Array[string], 0, len(os))
+	pkFollowerID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenFollowerID := make(map[string]struct{}, len(os))
+	seenFollowerID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -637,8 +638,8 @@ func (follower0 *Follower) AttachFollowerUser(ctx context.Context, exec bob.Exec
 
 type followerWhere[Q psql.Filterable] struct {
 	cols       followerColumns
-	FollowerID psql.WhereMod[Q, string]
-	FolloweeID psql.WhereMod[Q, string]
+	FollowerID psql.WhereMod[Q, uuid.UUID]
+	FolloweeID psql.WhereMod[Q, uuid.UUID]
 	R          followerWhereR[Q]
 }
 
@@ -649,8 +650,8 @@ func (followerWhere[Q]) AliasedAs(alias string) followerWhere[Q] {
 func buildFollowerWhere[Q psql.Filterable](cols followerColumns) followerWhere[Q] {
 	return followerWhere[Q]{
 		cols:       cols,
-		FollowerID: psql.Where[Q, string](cols.FollowerID.Expression),
-		FolloweeID: psql.Where[Q, string](cols.FolloweeID.Expression),
+		FollowerID: psql.Where[Q, uuid.UUID](cols.FollowerID.Expression),
+		FolloweeID: psql.Where[Q, uuid.UUID](cols.FolloweeID.Expression),
 		R:          followerWhereR[Q]{cols: cols},
 	}
 }
@@ -826,7 +827,7 @@ func (os FollowerSlice) LoadFolloweeUser(ctx context.Context, exec bob.Executor,
 		o.R.Loaded.FolloweeUser = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	followerByKey := make(map[string][]*Follower, len(os))
+	followerByKey := make(map[uuid.UUID][]*Follower, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -897,7 +898,7 @@ func (os FollowerSlice) LoadFollowerUser(ctx context.Context, exec bob.Executor,
 		o.R.Loaded.FollowerUser = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	followerByKey := make(map[string][]*Follower, len(os))
+	followerByKey := make(map[uuid.UUID][]*Follower, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue

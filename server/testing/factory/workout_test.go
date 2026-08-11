@@ -50,7 +50,7 @@ func TestFactory_Workout(t *testing.T) {
 		expected := f.NewWorkout(factory.WorkoutID(id))
 		created, err := models.FindWorkout(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("WorkoutUserID", func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestFactory_WorkoutComment(t *testing.T) {
 		expected := f.NewWorkoutComment(factory.WorkoutCommentID(id))
 		created, err := models.FindWorkoutComment(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("WorkoutCommentUserID", func(t *testing.T) {

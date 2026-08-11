@@ -74,15 +74,15 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 	return user
 }
 
-func UserID(id string) UserOpt {
+func UserID(id any) UserOpt {
 	return func(m *models.UserSetter) {
-		m.ID = omit.From(id)
+		m.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func UserAuthID(authID string) UserOpt {
+func UserAuthID(authID any) UserOpt {
 	return func(m *models.UserSetter) {
-		m.AuthID = omit.From(authID)
+		m.AuthID = omit.From(nativeUUID(authID))
 	}
 }
 

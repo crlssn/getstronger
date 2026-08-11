@@ -48,7 +48,7 @@ func TestFactory_Exercise(t *testing.T) {
 		expected := f.NewExercise(factory.ExerciseID(id))
 		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("ExerciseUserID", func(t *testing.T) {

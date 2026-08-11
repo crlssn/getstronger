@@ -12,6 +12,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -37,14 +38,14 @@ func (mods AuthModSlice) Apply(ctx context.Context, n *AuthTemplate) {
 // AuthTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type AuthTemplate struct {
-	ID                           func() string
+	ID                           func() uuid.UUID
 	Email                        func() string
 	Password                     func() []byte
 	RefreshToken                 func() null.Val[string]
 	CreatedAt                    func() time.Time
 	EmailVerified                func() bool
-	EmailToken                   func() string
-	PasswordResetToken           func() null.Val[string]
+	EmailToken                   func() uuid.UUID
+	PasswordResetToken           func() null.Val[uuid.UUID]
 	PasswordResetTokenValidUntil func() null.Val[time.Time]
 
 	r authR
@@ -349,14 +350,14 @@ func (m authMods) RandomizeAllColumns(f *faker.Faker) AuthMod {
 }
 
 // Set the model columns to this value
-func (m authMods) ID(val string) AuthMod {
+func (m authMods) ID(val uuid.UUID) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m authMods) IDFunc(f func() string) AuthMod {
+func (m authMods) IDFunc(f func() uuid.UUID) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
 		o.ID = f
 	})
@@ -373,8 +374,8 @@ func (m authMods) UnsetID() AuthMod {
 // if faker is nil, a default faker is used
 func (m authMods) RandomID(f *faker.Faker) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
@@ -557,14 +558,14 @@ func (m authMods) RandomEmailVerified(f *faker.Faker) AuthMod {
 }
 
 // Set the model columns to this value
-func (m authMods) EmailToken(val string) AuthMod {
+func (m authMods) EmailToken(val uuid.UUID) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
-		o.EmailToken = func() string { return val }
+		o.EmailToken = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m authMods) EmailTokenFunc(f func() string) AuthMod {
+func (m authMods) EmailTokenFunc(f func() uuid.UUID) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
 		o.EmailToken = f
 	})
@@ -581,21 +582,21 @@ func (m authMods) UnsetEmailToken() AuthMod {
 // if faker is nil, a default faker is used
 func (m authMods) RandomEmailToken(f *faker.Faker) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
-		o.EmailToken = func() string {
-			return random_string(f)
+		o.EmailToken = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m authMods) PasswordResetToken(val null.Val[string]) AuthMod {
+func (m authMods) PasswordResetToken(val null.Val[uuid.UUID]) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
-		o.PasswordResetToken = func() null.Val[string] { return val }
+		o.PasswordResetToken = func() null.Val[uuid.UUID] { return val }
 	})
 }
 
 // Set the Column from the function
-func (m authMods) PasswordResetTokenFunc(f func() null.Val[string]) AuthMod {
+func (m authMods) PasswordResetTokenFunc(f func() null.Val[uuid.UUID]) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
 		o.PasswordResetToken = f
 	})
@@ -613,12 +614,12 @@ func (m authMods) UnsetPasswordResetToken() AuthMod {
 // The generated value is sometimes null
 func (m authMods) RandomPasswordResetToken(f *faker.Faker) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
-		o.PasswordResetToken = func() null.Val[string] {
+		o.PasswordResetToken = func() null.Val[uuid.UUID] {
 			if f == nil {
 				f = &defaultFaker
 			}
 
-			val := random_string(f)
+			val := random_uuid_UUID(f)
 			return null.From(val)
 		}
 	})
@@ -629,12 +630,12 @@ func (m authMods) RandomPasswordResetToken(f *faker.Faker) AuthMod {
 // The generated value is never null
 func (m authMods) RandomPasswordResetTokenNotNull(f *faker.Faker) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
-		o.PasswordResetToken = func() null.Val[string] {
+		o.PasswordResetToken = func() null.Val[uuid.UUID] {
 			if f == nil {
 				f = &defaultFaker
 			}
 
-			val := random_string(f)
+			val := random_uuid_UUID(f)
 			return null.From(val)
 		}
 	})

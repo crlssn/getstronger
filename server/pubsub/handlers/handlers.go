@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
@@ -86,7 +87,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 
 	workout, err := w.repo.GetWorkout(
 		ctx,
-		repo.GetWorkoutWithID(comment.WorkoutID),
+		repo.GetWorkoutWithID(comment.WorkoutID.String()),
 		repo.GetWorkoutLoadComments(),
 	)
 	if err != nil {
@@ -94,7 +95,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 		return
 	}
 
-	mapUserIDs := make(map[string]struct{})
+	mapUserIDs := make(map[uuid.UUID]struct{})
 	if comment.UserID != workout.UserID {
 		mapUserIDs[workout.UserID] = struct{}{}
 	}
@@ -109,11 +110,11 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 	for userID := range mapUserIDs {
 		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
 			Type:   repo.NotificationTypeWorkoutComment,
-			UserID: userID,
+			UserID: userID.String(),
 			Payload: repo.NotificationPayload{
-				ActorID:   comment.UserID,
+				ActorID:   comment.UserID.String(),
 				EventID:   p.EventID,
-				WorkoutID: comment.WorkoutID,
+				WorkoutID: comment.WorkoutID.String(),
 			},
 		}); err != nil {
 			w.log.Error("create notification", zap.Error(err))

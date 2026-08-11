@@ -53,7 +53,7 @@ func TestFactory_Auth(t *testing.T) {
 		expected := f.NewAuth(factory.AuthID(id))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("AuthEmail", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestFactory_Auth(t *testing.T) {
 		expected := f.NewAuth(factory.AuthEmailToken(token))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, token, created.EmailToken)
+		require.Equal(t, token, created.EmailToken.String())
 	})
 
 	t.Run("AuthEmailVerified", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestFactory_Auth(t *testing.T) {
 		expected := f.NewAuth(factory.AuthPasswordResetToken(passwordResetToken, repo.PasswordResetTokenTTL))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, passwordResetToken, created.PasswordResetToken.GetOrZero())
+		require.Equal(t, passwordResetToken, created.PasswordResetToken.GetOrZero().String())
 		require.Equal(t, expected.PasswordResetTokenValidUntil, created.PasswordResetTokenValidUntil)
 	})
 

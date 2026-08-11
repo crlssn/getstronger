@@ -14,6 +14,7 @@ import (
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
+	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -30,8 +31,8 @@ import (
 
 // Exercise is an object representing the database table.
 type Exercise struct {
-	ID          string              `db:"id,pk" `
-	UserID      string              `db:"user_id" `
+	ID          uuid.UUID           `db:"id,pk" `
+	UserID      uuid.UUID           `db:"user_id" `
 	Title       string              `db:"title" `
 	CreatedAt   time.Time           `db:"created_at" `
 	DeletedAt   null.Val[time.Time] `db:"deleted_at" `
@@ -151,8 +152,8 @@ func (c exerciseColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type ExerciseSetter struct {
-	ID          omit.Val[string]         `db:"id,pk" `
-	UserID      omit.Val[string]         `db:"user_id" `
+	ID          omit.Val[uuid.UUID]      `db:"id,pk" `
+	UserID      omit.Val[uuid.UUID]      `db:"user_id" `
 	Title       omit.Val[string]         `db:"title" `
 	CreatedAt   omit.Val[time.Time]      `db:"created_at" `
 	DeletedAt   omitnull.Val[time.Time]  `db:"deleted_at" `
@@ -374,7 +375,7 @@ func exerciseScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fu
 
 // FindExercise retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindExercise(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Exercise, error) {
+func FindExercise(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Exercise, error) {
 	if len(cols) == 0 {
 		return Exercises.Query(
 			sm.Where(Exercises.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -388,7 +389,7 @@ func FindExercise(ctx context.Context, exec bob.Executor, IDPK string, cols ...s
 }
 
 // ExerciseExists checks the presence of a single record by primary key
-func ExerciseExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func ExerciseExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Exercises.Query(
 		sm.Where(Exercises.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -496,7 +497,7 @@ func (o ExerciseSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o ExerciseSlice) copyMatchingRows(from ...*Exercise) {
-	fromByPK := make(map[string]*Exercise, len(from))
+	fromByPK := make(map[uuid.UUID]*Exercise, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -641,11 +642,11 @@ func (o *Exercise) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
 }
 
 func (os ExerciseSlice) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkUserID := make(pgtypes.Array[string], 0, len(os))
+	pkUserID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenUserID := make(map[string]struct{}, len(os))
+	seenUserID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -673,7 +674,7 @@ func (o *Exercise) Routines(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuery
 }
 
 func (os ExerciseSlice) Routines(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuery {
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	for _, o := range os {
 		if o == nil {
@@ -699,7 +700,7 @@ func (o *Exercise) Sets(mods ...bob.Mod[*dialect.SelectQuery]) SetsQuery {
 }
 
 func (os ExerciseSlice) Sets(mods ...bob.Mod[*dialect.SelectQuery]) SetsQuery {
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	for _, o := range os {
 		if o == nil {
@@ -901,8 +902,8 @@ func (exercise0 *Exercise) AttachSets(ctx context.Context, exec bob.Executor, re
 
 type exerciseWhere[Q psql.Filterable] struct {
 	cols        exerciseColumns
-	ID          psql.WhereMod[Q, string]
-	UserID      psql.WhereMod[Q, string]
+	ID          psql.WhereMod[Q, uuid.UUID]
+	UserID      psql.WhereMod[Q, uuid.UUID]
 	Title       psql.WhereMod[Q, string]
 	CreatedAt   psql.WhereMod[Q, time.Time]
 	DeletedAt   psql.WhereNullMod[Q, time.Time]
@@ -919,8 +920,8 @@ func (exerciseWhere[Q]) AliasedAs(alias string) exerciseWhere[Q] {
 func buildExerciseWhere[Q psql.Filterable](cols exerciseColumns) exerciseWhere[Q] {
 	return exerciseWhere[Q]{
 		cols:        cols,
-		ID:          psql.Where[Q, string](cols.ID.Expression),
-		UserID:      psql.Where[Q, string](cols.UserID.Expression),
+		ID:          psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		UserID:      psql.Where[Q, uuid.UUID](cols.UserID.Expression),
 		Title:       psql.Where[Q, string](cols.Title.Expression),
 		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		DeletedAt:   psql.WhereNull[Q, time.Time](cols.DeletedAt.Expression),
@@ -987,8 +988,8 @@ func (w exerciseWhereR[Q]) HasRoutines(filters ...bob.Mod[*dialect.SelectQuery])
 // on a LEFT JOIN miss every column comes back NULL, so each field uses the
 // nullable version of the column type even when the column itself is NOT NULL.
 type exercisePreloadBuf struct {
-	ID          null.Val[string]
-	UserID      null.Val[string]
+	ID          null.Val[uuid.UUID]
+	UserID      null.Val[uuid.UUID]
 	Title       null.Val[string]
 	CreatedAt   null.Val[time.Time]
 	DeletedAt   null.Val[time.Time]
@@ -1251,7 +1252,7 @@ func (os ExerciseSlice) LoadUser(ctx context.Context, exec bob.Executor, mods ..
 		o.R.Loaded.User = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	exerciseByKey := make(map[string][]*Exercise, len(os))
+	exerciseByKey := make(map[uuid.UUID][]*Exercise, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1327,7 +1328,7 @@ func (os ExerciseSlice) LoadRoutines(ctx context.Context, exec bob.Executor, mod
 		sm.Columns(ExercisesRoutines.Columns.ExerciseID.As("related_exercises.ID")),
 	)...)
 
-	IDSlice := make([]string, 0, len(os))
+	IDSlice := make([]uuid.UUID, 0, len(os))
 
 	mapper := scan.Mod(q.Scanner, func(ctx context.Context, cols []string) (scan.BeforeFunc, func(any, any) error) {
 		// Resolve each joined key column name to its index once per query. The
@@ -1343,7 +1344,7 @@ func (os ExerciseSlice) LoadRoutines(ctx context.Context, exec bob.Executor, mod
 		}
 
 		return func(row *scan.Row) (any, error) {
-				IDSlice = append(IDSlice, *new(string))
+				IDSlice = append(IDSlice, *new(uuid.UUID))
 				if IDIdx >= 0 {
 					row.ScheduleScanByIndex(IDIdx, &IDSlice[len(IDSlice)-1])
 				}
@@ -1368,7 +1369,7 @@ func (os ExerciseSlice) LoadRoutines(ctx context.Context, exec bob.Executor, mod
 		o.R.Loaded.Routines = true
 	}
 	// O(N+M) stitch via a map; child key is the carried slice IDSlice[i] (was O(N*M)).
-	exerciseByKey := make(map[string][]*Exercise, len(os))
+	exerciseByKey := make(map[uuid.UUID][]*Exercise, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1440,7 +1441,7 @@ func (os ExerciseSlice) LoadSets(ctx context.Context, exec bob.Executor, mods ..
 		o.R.Loaded.Sets = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	exerciseByKey := make(map[string][]*Exercise, len(os))
+	exerciseByKey := make(map[uuid.UUID][]*Exercise, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1589,7 +1590,7 @@ func (os ExerciseSlice) LoadCountRoutines(ctx context.Context, exec bob.Executor
 
 	// Build the IN arg expression from parent PKs
 
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1601,7 +1602,7 @@ func (os ExerciseSlice) LoadCountRoutines(ctx context.Context, exec bob.Executor
 	// countResult holds one scanned row from the batch count query.
 	// FK columns are aliased to the parent PK column names for direct map lookup.
 	type countResult struct {
-		ID    string
+		ID    uuid.UUID
 		Count int64
 	}
 
@@ -1633,7 +1634,7 @@ func (os ExerciseSlice) LoadCountRoutines(ctx context.Context, exec bob.Executor
 	}
 
 	// Single-column FK: direct map lookup
-	countMap := make(map[string]int64, len(results))
+	countMap := make(map[uuid.UUID]int64, len(results))
 	for _, r := range results {
 		countMap[r.ID] = r.Count
 	}
@@ -1671,7 +1672,7 @@ func (os ExerciseSlice) LoadCountSets(ctx context.Context, exec bob.Executor, mo
 
 	// Build the IN arg expression from parent PKs
 
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1683,7 +1684,7 @@ func (os ExerciseSlice) LoadCountSets(ctx context.Context, exec bob.Executor, mo
 	// countResult holds one scanned row from the batch count query.
 	// FK columns are aliased to the parent PK column names for direct map lookup.
 	type countResult struct {
-		ID    string
+		ID    uuid.UUID
 		Count int64
 	}
 
@@ -1712,7 +1713,7 @@ func (os ExerciseSlice) LoadCountSets(ctx context.Context, exec bob.Executor, mo
 	}
 
 	// Single-column FK: direct map lookup
-	countMap := make(map[string]int64, len(results))
+	countMap := make(map[uuid.UUID]int64, len(results))
 	for _, r := range results {
 		countMap[r.ID] = r.Count
 	}

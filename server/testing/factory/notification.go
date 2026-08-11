@@ -88,9 +88,9 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *models.Notification 
 	return notification
 }
 
-func NotificationUserID(userID string) NotificationOpt {
+func NotificationUserID(userID any) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
-		notification.UserID = omit.From(userID)
+		notification.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
@@ -117,9 +117,9 @@ func NotificationRead() NotificationOpt {
 	}
 }
 
-func NotificationID(id string) NotificationOpt {
+func NotificationID(id any) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
-		notification.ID = omit.From(id)
+		notification.ID = omit.From(nativeUUID(id))
 	}
 }
 

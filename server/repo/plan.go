@@ -57,7 +57,7 @@ func (r *repo) validatePlanRoutines(ctx context.Context, userID string, routineI
 		if err != nil {
 			return fmt.Errorf("plan routine fetch: %w", err)
 		}
-		if routine.UserID != userID {
+		if routine.UserID != uuidFromString(userID) {
 			return ErrPlanRoutineBelongsToAnotherUser
 		}
 		if !routine.DeletedAt.IsNull() {
@@ -242,7 +242,7 @@ func (r *repo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPla
 
 		currentRoutineID := ""
 		if plan.CurrentPosition >= 0 && plan.CurrentPosition < len(plan.Routines) {
-			currentRoutineID = plan.Routines[plan.CurrentPosition].ID
+			currentRoutineID = plan.Routines[plan.CurrentPosition].ID.String()
 		}
 		currentPosition := 0
 		for position, routineID := range p.RoutineIDs {
@@ -324,7 +324,7 @@ func (r *repo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineI
 		if len(plan.Routines) == 0 || plan.CurrentPosition >= len(plan.Routines) {
 			return ErrPlanUnexpectedRoutine
 		}
-		if expectedRoutineID != "" && plan.Routines[plan.CurrentPosition].ID != expectedRoutineID {
+		if expectedRoutineID != "" && plan.Routines[plan.CurrentPosition].ID != uuidFromString(expectedRoutineID) {
 			return ErrPlanUnexpectedRoutine
 		}
 

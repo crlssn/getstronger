@@ -13,6 +13,7 @@ import (
 	"time"
 
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob/types"
@@ -147,4 +148,12 @@ func random_types_JSON_json_RawMessage_(f *faker.Faker, limits ...string) types.
 	}
 	s.WriteRune('}')
 	return types.NewJSON[json.RawMessage](s.Bytes())
+}
+
+func random_uuid_UUID(f *faker.Faker, limits ...string) uuid.UUID {
+	if f == nil {
+		f = &defaultFaker
+	}
+
+	return uuid.Must(uuid.NewV4())
 }

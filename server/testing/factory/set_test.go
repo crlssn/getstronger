@@ -57,7 +57,7 @@ func TestFactory_Set(t *testing.T) {
 		expected := f.NewSet(factory.SetID(id))
 		created, err := models.FindSet(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("SetUserID", func(t *testing.T) {

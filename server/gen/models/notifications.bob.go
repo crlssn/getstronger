@@ -14,6 +14,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -30,8 +31,8 @@ import (
 
 // Notification is an object representing the database table.
 type Notification struct {
-	ID        string                      `db:"id,pk" `
-	UserID    string                      `db:"user_id" `
+	ID        uuid.UUID                   `db:"id,pk" `
+	UserID    uuid.UUID                   `db:"user_id" `
 	Type      enums.NotificationType      `db:"type" `
 	Payload   types.JSON[json.RawMessage] `db:"payload" `
 	ReadAt    null.Val[time.Time]         `db:"read_at" `
@@ -139,8 +140,8 @@ func (c notificationColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type NotificationSetter struct {
-	ID        omit.Val[string]                      `db:"id,pk" `
-	UserID    omit.Val[string]                      `db:"user_id" `
+	ID        omit.Val[uuid.UUID]                   `db:"id,pk" `
+	UserID    omit.Val[uuid.UUID]                   `db:"user_id" `
 	Type      omit.Val[enums.NotificationType]      `db:"type" `
 	Payload   omit.Val[types.JSON[json.RawMessage]] `db:"payload" `
 	ReadAt    omitnull.Val[time.Time]               `db:"read_at" `
@@ -320,7 +321,7 @@ func notificationScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc
 
 // FindNotification retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindNotification(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Notification, error) {
+func FindNotification(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Notification, error) {
 	if len(cols) == 0 {
 		return Notifications.Query(
 			sm.Where(Notifications.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -334,7 +335,7 @@ func FindNotification(ctx context.Context, exec bob.Executor, IDPK string, cols 
 }
 
 // NotificationExists checks the presence of a single record by primary key
-func NotificationExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func NotificationExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Notifications.Query(
 		sm.Where(Notifications.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -442,7 +443,7 @@ func (o NotificationSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o NotificationSlice) copyMatchingRows(from ...*Notification) {
-	fromByPK := make(map[string]*Notification, len(from))
+	fromByPK := make(map[uuid.UUID]*Notification, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -587,11 +588,11 @@ func (o *Notification) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
 }
 
 func (os NotificationSlice) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkUserID := make(pgtypes.Array[string], 0, len(os))
+	pkUserID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenUserID := make(map[string]struct{}, len(os))
+	seenUserID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -661,8 +662,8 @@ func (notification0 *Notification) AttachUser(ctx context.Context, exec bob.Exec
 
 type notificationWhere[Q psql.Filterable] struct {
 	cols      notificationColumns
-	ID        psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
+	ID        psql.WhereMod[Q, uuid.UUID]
+	UserID    psql.WhereMod[Q, uuid.UUID]
 	Type      psql.WhereMod[Q, enums.NotificationType]
 	Payload   psql.WhereMod[Q, types.JSON[json.RawMessage]]
 	ReadAt    psql.WhereNullMod[Q, time.Time]
@@ -677,8 +678,8 @@ func (notificationWhere[Q]) AliasedAs(alias string) notificationWhere[Q] {
 func buildNotificationWhere[Q psql.Filterable](cols notificationColumns) notificationWhere[Q] {
 	return notificationWhere[Q]{
 		cols:      cols,
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
+		ID:        psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		UserID:    psql.Where[Q, uuid.UUID](cols.UserID.Expression),
 		Type:      psql.Where[Q, enums.NotificationType](cols.Type.Expression),
 		Payload:   psql.Where[Q, types.JSON[json.RawMessage]](cols.Payload.Expression),
 		ReadAt:    psql.WhereNull[Q, time.Time](cols.ReadAt.Expression),
@@ -815,7 +816,7 @@ func (os NotificationSlice) LoadUser(ctx context.Context, exec bob.Executor, mod
 		o.R.Loaded.User = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	notificationByKey := make(map[string][]*Notification, len(os))
+	notificationByKey := make(map[uuid.UUID][]*Notification, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue

@@ -13,6 +13,7 @@ import (
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -28,14 +29,14 @@ import (
 
 // Auth is an object representing the database table.
 type Auth struct {
-	ID                           string              `db:"id,pk" `
+	ID                           uuid.UUID           `db:"id,pk" `
 	Email                        string              `db:"email" `
 	Password                     []byte              `db:"password" `
 	RefreshToken                 null.Val[string]    `db:"refresh_token" `
 	CreatedAt                    time.Time           `db:"created_at" `
 	EmailVerified                bool                `db:"email_verified" `
-	EmailToken                   string              `db:"email_token" `
-	PasswordResetToken           null.Val[string]    `db:"password_reset_token" `
+	EmailToken                   uuid.UUID           `db:"email_token" `
+	PasswordResetToken           null.Val[uuid.UUID] `db:"password_reset_token" `
 	PasswordResetTokenValidUntil null.Val[time.Time] `db:"password_reset_token_valid_until" `
 
 	R authR `db:"-" `
@@ -146,14 +147,14 @@ func (c authColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type AuthSetter struct {
-	ID                           omit.Val[string]        `db:"id,pk" `
+	ID                           omit.Val[uuid.UUID]     `db:"id,pk" `
 	Email                        omit.Val[string]        `db:"email" `
 	Password                     omit.Val[[]byte]        `db:"password" `
 	RefreshToken                 omitnull.Val[string]    `db:"refresh_token" `
 	CreatedAt                    omit.Val[time.Time]     `db:"created_at" `
 	EmailVerified                omit.Val[bool]          `db:"email_verified" `
-	EmailToken                   omit.Val[string]        `db:"email_token" `
-	PasswordResetToken           omitnull.Val[string]    `db:"password_reset_token" `
+	EmailToken                   omit.Val[uuid.UUID]     `db:"email_token" `
+	PasswordResetToken           omitnull.Val[uuid.UUID] `db:"password_reset_token" `
 	PasswordResetTokenValidUntil omitnull.Val[time.Time] `db:"password_reset_token_valid_until" `
 }
 
@@ -390,7 +391,7 @@ func authScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 
 // FindAuth retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindAuth(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Auth, error) {
+func FindAuth(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Auth, error) {
 	if len(cols) == 0 {
 		return Auths.Query(
 			sm.Where(Auths.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -404,7 +405,7 @@ func FindAuth(ctx context.Context, exec bob.Executor, IDPK string, cols ...strin
 }
 
 // AuthExists checks the presence of a single record by primary key
-func AuthExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func AuthExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Auths.Query(
 		sm.Where(Auths.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -512,7 +513,7 @@ func (o AuthSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o AuthSlice) copyMatchingRows(from ...*Auth) {
-	fromByPK := make(map[string]*Auth, len(from))
+	fromByPK := make(map[uuid.UUID]*Auth, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -657,7 +658,7 @@ func (o *Auth) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
 }
 
 func (os AuthSlice) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
-	pkID := make(pgtypes.Array[string], 0, len(os))
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	for _, o := range os {
 		if o == nil {
@@ -732,14 +733,14 @@ func (auth0 *Auth) AttachUser(ctx context.Context, exec bob.Executor, user1 *Use
 
 type authWhere[Q psql.Filterable] struct {
 	cols                         authColumns
-	ID                           psql.WhereMod[Q, string]
+	ID                           psql.WhereMod[Q, uuid.UUID]
 	Email                        psql.WhereMod[Q, string]
 	Password                     psql.WhereMod[Q, []byte]
 	RefreshToken                 psql.WhereNullMod[Q, string]
 	CreatedAt                    psql.WhereMod[Q, time.Time]
 	EmailVerified                psql.WhereMod[Q, bool]
-	EmailToken                   psql.WhereMod[Q, string]
-	PasswordResetToken           psql.WhereNullMod[Q, string]
+	EmailToken                   psql.WhereMod[Q, uuid.UUID]
+	PasswordResetToken           psql.WhereNullMod[Q, uuid.UUID]
 	PasswordResetTokenValidUntil psql.WhereNullMod[Q, time.Time]
 	R                            authWhereR[Q]
 }
@@ -751,14 +752,14 @@ func (authWhere[Q]) AliasedAs(alias string) authWhere[Q] {
 func buildAuthWhere[Q psql.Filterable](cols authColumns) authWhere[Q] {
 	return authWhere[Q]{
 		cols:                         cols,
-		ID:                           psql.Where[Q, string](cols.ID.Expression),
+		ID:                           psql.Where[Q, uuid.UUID](cols.ID.Expression),
 		Email:                        psql.Where[Q, string](cols.Email.Expression),
 		Password:                     psql.Where[Q, []byte](cols.Password.Expression),
 		RefreshToken:                 psql.WhereNull[Q, string](cols.RefreshToken.Expression),
 		CreatedAt:                    psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		EmailVerified:                psql.Where[Q, bool](cols.EmailVerified.Expression),
-		EmailToken:                   psql.Where[Q, string](cols.EmailToken.Expression),
-		PasswordResetToken:           psql.WhereNull[Q, string](cols.PasswordResetToken.Expression),
+		EmailToken:                   psql.Where[Q, uuid.UUID](cols.EmailToken.Expression),
+		PasswordResetToken:           psql.WhereNull[Q, uuid.UUID](cols.PasswordResetToken.Expression),
 		PasswordResetTokenValidUntil: psql.WhereNull[Q, time.Time](cols.PasswordResetTokenValidUntil.Expression),
 		R:                            authWhereR[Q]{cols: cols},
 	}
@@ -789,14 +790,14 @@ func (w authWhereR[Q]) HasUser(filters ...bob.Mod[*dialect.SelectQuery]) mods.Wh
 // on a LEFT JOIN miss every column comes back NULL, so each field uses the
 // nullable version of the column type even when the column itself is NOT NULL.
 type authPreloadBuf struct {
-	ID                           null.Val[string]
+	ID                           null.Val[uuid.UUID]
 	Email                        null.Val[string]
 	Password                     null.Val[[]byte]
 	RefreshToken                 null.Val[string]
 	CreatedAt                    null.Val[time.Time]
 	EmailVerified                null.Val[bool]
-	EmailToken                   null.Val[string]
-	PasswordResetToken           null.Val[string]
+	EmailToken                   null.Val[uuid.UUID]
+	PasswordResetToken           null.Val[uuid.UUID]
 	PasswordResetTokenValidUntil null.Val[time.Time]
 }
 
@@ -1007,7 +1008,7 @@ func (os AuthSlice) LoadUser(ctx context.Context, exec bob.Executor, mods ...bob
 		o.R.Loaded.User = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	authByKey := make(map[string][]*Auth, len(os))
+	authByKey := make(map[uuid.UUID][]*Auth, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue

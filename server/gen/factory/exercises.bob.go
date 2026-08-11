@@ -12,6 +12,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob"
@@ -38,8 +39,8 @@ func (mods ExerciseModSlice) Apply(ctx context.Context, n *ExerciseTemplate) {
 // ExerciseTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type ExerciseTemplate struct {
-	ID          func() string
-	UserID      func() string
+	ID          func() uuid.UUID
+	UserID      func() uuid.UUID
 	Title       func() string
 	CreatedAt   func() time.Time
 	DeletedAt   func() null.Val[time.Time]
@@ -222,7 +223,7 @@ func (o ExerciseTemplate) BuildMany(number int) models.ExerciseSlice {
 
 func ensureCreatableExercise(m *models.ExerciseSetter) {
 	if m.UserID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.UserID = omit.From(val)
 	}
 	if m.Title.IsUnset() {
@@ -429,14 +430,14 @@ func (m exerciseMods) RandomizeAllColumns(f *faker.Faker) ExerciseMod {
 }
 
 // Set the model columns to this value
-func (m exerciseMods) ID(val string) ExerciseMod {
+func (m exerciseMods) ID(val uuid.UUID) ExerciseMod {
 	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m exerciseMods) IDFunc(f func() string) ExerciseMod {
+func (m exerciseMods) IDFunc(f func() uuid.UUID) ExerciseMod {
 	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
 		o.ID = f
 	})
@@ -453,21 +454,21 @@ func (m exerciseMods) UnsetID() ExerciseMod {
 // if faker is nil, a default faker is used
 func (m exerciseMods) RandomID(f *faker.Faker) ExerciseMod {
 	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m exerciseMods) UserID(val string) ExerciseMod {
+func (m exerciseMods) UserID(val uuid.UUID) ExerciseMod {
 	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.UserID = func() string { return val }
+		o.UserID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m exerciseMods) UserIDFunc(f func() string) ExerciseMod {
+func (m exerciseMods) UserIDFunc(f func() uuid.UUID) ExerciseMod {
 	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
 		o.UserID = f
 	})
@@ -484,8 +485,8 @@ func (m exerciseMods) UnsetUserID() ExerciseMod {
 // if faker is nil, a default faker is used
 func (m exerciseMods) RandomUserID(f *faker.Faker) ExerciseMod {
 	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.UserID = func() string {
-			return random_string(f)
+		o.UserID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }

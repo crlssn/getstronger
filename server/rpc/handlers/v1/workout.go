@@ -63,7 +63,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	log.Info("workout finished")
 	return &connect.Response[apiv1.CreateWorkoutResponse]{
 		Msg: &apiv1.CreateWorkoutResponse{
-			WorkoutId: workout.ID,
+			WorkoutId: workout.ID.String(),
 		},
 	}, nil
 }
@@ -172,7 +172,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID)
+	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID.String())
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -276,7 +276,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	}
 
 	h.pubSub.Publish(ctx, repo.EventTopicWorkoutCommentPosted, payloads.WorkoutCommentPosted{
-		CommentID: comment.ID,
+		CommentID: comment.ID.String(),
 		EventID:   uuid.NewString(),
 	})
 
@@ -310,14 +310,14 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if workout.UserID != userID {
+	if workout.UserID.String() != userID {
 		log.Error("workout does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
 	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		if err = tx.UpdateWorkout(
-			ctx, workout.ID,
+			ctx, workout.ID.String(),
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
 			repo.UpdateWorkoutNote(req.Msg.GetWorkout().GetNote()),
 			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
@@ -328,7 +328,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 		exerciseSets := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
 		if err = tx.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
-			WorkoutID:    workout.ID,
+			WorkoutID:    workout.ID.String(),
 			ExerciseSets: exerciseSets,
 		}); err != nil {
 			return fmt.Errorf("failed to update workout sets: %w", err)

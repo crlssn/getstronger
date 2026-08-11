@@ -50,7 +50,7 @@ func TestFactory_Notification(t *testing.T) {
 		expected := f.NewNotification(factory.NotificationID(id))
 		created, err := models.FindNotification(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("NotificationUserID", func(t *testing.T) {

@@ -14,8 +14,8 @@ import (
 
 func Exercise(exercise *models.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
-		Id:          exercise.ID,
-		UserId:      exercise.UserID,
+		Id:          exercise.ID.String(),
+		UserId:      exercise.UserID.String(),
 		Name:        exercise.Title,
 		Tags:        []string(exercise.Tags),
 		Metrics:     exerciseMetricsFromDB(exercise.Metrics),
@@ -54,7 +54,7 @@ func UserFollowed(followed bool) UserOpt {
 
 func User(user *models.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
-		Id:        user.ID,
+		Id:        user.ID.String(),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Followed:  false,
@@ -78,7 +78,7 @@ func UserSlice(users models.UserSlice) []*apiv1.User {
 
 func Routine(routine *models.Routine) *apiv1.Routine {
 	r := &apiv1.Routine{
-		Id:        routine.ID,
+		Id:        routine.ID.String(),
 		Name:      routine.Title,
 		Exercises: nil,
 	}
@@ -136,8 +136,13 @@ func WorkoutIntensity(sets models.SetSlice) WorkoutOpt {
 }
 
 func Workout(workout *models.Workout, opts ...WorkoutOpt) *apiv1.Workout {
+	routineID := ""
+	if !workout.RoutineID.IsNull() {
+		routineID = workout.RoutineID.GetOrZero().String()
+	}
+
 	w := &apiv1.Workout{
-		Id:           workout.ID,
+		Id:           workout.ID.String(),
 		Name:         workout.Name,
 		StartedAt:    timestamppb.New(workout.StartedAt),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
@@ -146,7 +151,7 @@ func Workout(workout *models.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 		ExerciseSets: nil,
 		Intensity:    0,
 		Note:         workout.Note.GetOrZero(),
-		RoutineId:    workout.RoutineID.GetOrZero(),
+		RoutineId:    routineID,
 	}
 
 	if workout.R.User != nil {
@@ -184,7 +189,7 @@ func WorkoutSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) (
 
 func WorkoutComment(comment *models.WorkoutComment) *apiv1.WorkoutComment {
 	c := &apiv1.WorkoutComment{
-		Id:        comment.ID,
+		Id:        comment.ID.String(),
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
 		User:      nil,
@@ -203,7 +208,7 @@ func ExerciseSetsPersonalBests(personalBests models.SetSlice) ExerciseSetsSliceO
 	return func(s *apiv1.ExerciseSets) {
 		mapPersonalBests := make(map[string]struct{}, len(personalBests))
 		for _, set := range personalBests {
-			mapPersonalBests[set.ID] = struct{}{}
+			mapPersonalBests[set.ID.String()] = struct{}{}
 		}
 
 		for _, set := range s.GetSets() {
@@ -222,9 +227,10 @@ func ExerciseSetsSlice(sets models.SetSlice, opts ...ExerciseSetsSliceOpt) []*ap
 	mapExerciseSets := make(map[string]*apiv1.ExerciseSets)
 	for _, set := range sets {
 		exercise := set.R.Exercise
-		if _, ok := mapExerciseSets[exercise.ID]; !ok {
-			exerciseOrder = append(exerciseOrder, exercise.ID)
-			mapExerciseSets[exercise.ID] = &apiv1.ExerciseSets{
+		exerciseID := exercise.ID.String()
+		if _, ok := mapExerciseSets[exerciseID]; !ok {
+			exerciseOrder = append(exerciseOrder, exerciseID)
+			mapExerciseSets[exerciseID] = &apiv1.ExerciseSets{
 				Exercise: Exercise(exercise),
 				Sets:     []*apiv1.Set{Set(set, nil)},
 			}
@@ -232,7 +238,7 @@ func ExerciseSetsSlice(sets models.SetSlice, opts ...ExerciseSetsSliceOpt) []*ap
 			continue
 		}
 
-		mapExerciseSets[exercise.ID].Sets = append(mapExerciseSets[exercise.ID].Sets, Set(set, nil))
+		mapExerciseSets[exerciseID].Sets = append(mapExerciseSets[exerciseID].Sets, Set(set, nil))
 	}
 
 	sliceExerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
@@ -338,7 +344,7 @@ func NotificationWorkout(nType repo.NotificationType, workout *models.Workout) N
 
 func Notification(notification *models.Notification, opts ...NotificationOpt) *apiv1.Notification {
 	n := &apiv1.Notification{
-		Id:             notification.ID,
+		Id:             notification.ID.String(),
 		NotifiedAtUnix: notification.CreatedAt.Unix(),
 		Read:           !notification.ReadAt.IsNull(),
 		Type:           nil,
@@ -354,12 +360,12 @@ func Notification(notification *models.Notification, opts ...NotificationOpt) *a
 func NotificationSlice(notifications models.NotificationSlice, actors models.UserSlice, workouts models.WorkoutSlice) ([]*apiv1.Notification, error) {
 	mapActors := make(map[string]*models.User)
 	for _, a := range actors {
-		mapActors[a.ID] = a
+		mapActors[a.ID.String()] = a
 	}
 
 	mapWorkouts := make(map[string]*models.Workout)
 	for _, w := range workouts {
-		mapWorkouts[w.ID] = w
+		mapWorkouts[w.ID.String()] = w
 	}
 
 	nSlice := make([]*apiv1.Notification, 0, len(notifications))
@@ -416,7 +422,7 @@ func FeedItemSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) 
 func SetSlice(sets models.SetSlice, personalBests models.SetSlice) []*apiv1.Set {
 	mapPersonalBests := make(map[string]struct{}, len(personalBests))
 	for _, set := range personalBests {
-		mapPersonalBests[set.ID] = struct{}{}
+		mapPersonalBests[set.ID.String()] = struct{}{}
 	}
 
 	slice := make([]*apiv1.Set, 0, len(sets))
@@ -429,16 +435,16 @@ func SetSlice(sets models.SetSlice, personalBests models.SetSlice) []*apiv1.Set 
 
 func Set(set *models.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 	return &apiv1.Set{
-		Id:              set.ID,
+		Id:              set.ID.String(),
 		Weight:          set.Weight,
 		Reps:            set.Reps,
 		Distance:        set.Distance,
 		DurationSeconds: set.DurationSeconds,
 		Metadata: &apiv1.MetadataSet{
-			WorkoutId: set.WorkoutID,
+			WorkoutId: set.WorkoutID.String(),
 			CreatedAt: timestamppb.New(set.CreatedAt),
 			PersonalBest: func() bool {
-				_, yes := mapPersonalBests[set.ID]
+				_, yes := mapPersonalBests[set.ID.String()]
 				return yes
 			}(),
 		},

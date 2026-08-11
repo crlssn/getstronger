@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
@@ -21,6 +22,21 @@ type Factory struct {
 	generated *bobfactory.Factory
 	exec      bob.Executor
 	now       time.Time
+}
+
+func newUUID() uuid.UUID {
+	return uuid.Must(uuid.NewV4())
+}
+
+func nativeUUID(value any) uuid.UUID {
+	switch value := value.(type) {
+	case uuid.UUID:
+		return value
+	case string:
+		return uuid.FromStringOrNil(value)
+	default:
+		panic(fmt.Sprintf("unsupported UUID value %T", value))
+	}
 }
 
 func NewFactory(db *sql.DB) *Factory {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -25,13 +26,13 @@ import (
 
 // Set is an object representing the database table.
 type Set struct {
-	ID              string    `db:"id,pk" `
-	WorkoutID       string    `db:"workout_id" `
-	ExerciseID      string    `db:"exercise_id" `
+	ID              uuid.UUID `db:"id,pk" `
+	WorkoutID       uuid.UUID `db:"workout_id" `
+	ExerciseID      uuid.UUID `db:"exercise_id" `
 	Weight          float64   `db:"weight" `
 	Reps            int32     `db:"reps" `
 	CreatedAt       time.Time `db:"created_at" `
-	UserID          string    `db:"user_id" `
+	UserID          uuid.UUID `db:"user_id" `
 	Distance        float64   `db:"distance" `
 	DurationSeconds int32     `db:"duration_seconds" `
 
@@ -145,13 +146,13 @@ func (c setColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type SetSetter struct {
-	ID              omit.Val[string]    `db:"id,pk" `
-	WorkoutID       omit.Val[string]    `db:"workout_id" `
-	ExerciseID      omit.Val[string]    `db:"exercise_id" `
+	ID              omit.Val[uuid.UUID] `db:"id,pk" `
+	WorkoutID       omit.Val[uuid.UUID] `db:"workout_id" `
+	ExerciseID      omit.Val[uuid.UUID] `db:"exercise_id" `
 	Weight          omit.Val[float64]   `db:"weight" `
 	Reps            omit.Val[int32]     `db:"reps" `
 	CreatedAt       omit.Val[time.Time] `db:"created_at" `
-	UserID          omit.Val[string]    `db:"user_id" `
+	UserID          omit.Val[uuid.UUID] `db:"user_id" `
 	Distance        omit.Val[float64]   `db:"distance" `
 	DurationSeconds omit.Val[int32]     `db:"duration_seconds" `
 }
@@ -389,7 +390,7 @@ func setScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(an
 
 // FindSet retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindSet(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Set, error) {
+func FindSet(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Set, error) {
 	if len(cols) == 0 {
 		return Sets.Query(
 			sm.Where(Sets.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -403,7 +404,7 @@ func FindSet(ctx context.Context, exec bob.Executor, IDPK string, cols ...string
 }
 
 // SetExists checks the presence of a single record by primary key
-func SetExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func SetExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Sets.Query(
 		sm.Where(Sets.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -511,7 +512,7 @@ func (o SetSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o SetSlice) copyMatchingRows(from ...*Set) {
-	fromByPK := make(map[string]*Set, len(from))
+	fromByPK := make(map[uuid.UUID]*Set, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -656,11 +657,11 @@ func (o *Set) Exercise(mods ...bob.Mod[*dialect.SelectQuery]) ExercisesQuery {
 }
 
 func (os SetSlice) Exercise(mods ...bob.Mod[*dialect.SelectQuery]) ExercisesQuery {
-	pkExerciseID := make(pgtypes.Array[string], 0, len(os))
+	pkExerciseID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenExerciseID := make(map[string]struct{}, len(os))
+	seenExerciseID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -686,11 +687,11 @@ func (o *Set) Workout(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutsQuery {
 }
 
 func (os SetSlice) Workout(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutsQuery {
-	pkWorkoutID := make(pgtypes.Array[string], 0, len(os))
+	pkWorkoutID := make(pgtypes.Array[uuid.UUID], 0, len(os))
 
 	// the array is only a filter (semi-join), so duplicate keys can be
 	// dropped before they are sent over the wire
-	seenWorkoutID := make(map[string]struct{}, len(os))
+	seenWorkoutID := make(map[uuid.UUID]struct{}, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -810,13 +811,13 @@ func (set0 *Set) AttachWorkout(ctx context.Context, exec bob.Executor, workout1 
 
 type setWhere[Q psql.Filterable] struct {
 	cols            setColumns
-	ID              psql.WhereMod[Q, string]
-	WorkoutID       psql.WhereMod[Q, string]
-	ExerciseID      psql.WhereMod[Q, string]
+	ID              psql.WhereMod[Q, uuid.UUID]
+	WorkoutID       psql.WhereMod[Q, uuid.UUID]
+	ExerciseID      psql.WhereMod[Q, uuid.UUID]
 	Weight          psql.WhereMod[Q, float64]
 	Reps            psql.WhereMod[Q, int32]
 	CreatedAt       psql.WhereMod[Q, time.Time]
-	UserID          psql.WhereMod[Q, string]
+	UserID          psql.WhereMod[Q, uuid.UUID]
 	Distance        psql.WhereMod[Q, float64]
 	DurationSeconds psql.WhereMod[Q, int32]
 	R               setWhereR[Q]
@@ -829,13 +830,13 @@ func (setWhere[Q]) AliasedAs(alias string) setWhere[Q] {
 func buildSetWhere[Q psql.Filterable](cols setColumns) setWhere[Q] {
 	return setWhere[Q]{
 		cols:            cols,
-		ID:              psql.Where[Q, string](cols.ID.Expression),
-		WorkoutID:       psql.Where[Q, string](cols.WorkoutID.Expression),
-		ExerciseID:      psql.Where[Q, string](cols.ExerciseID.Expression),
+		ID:              psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		WorkoutID:       psql.Where[Q, uuid.UUID](cols.WorkoutID.Expression),
+		ExerciseID:      psql.Where[Q, uuid.UUID](cols.ExerciseID.Expression),
 		Weight:          psql.Where[Q, float64](cols.Weight.Expression),
 		Reps:            psql.Where[Q, int32](cols.Reps.Expression),
 		CreatedAt:       psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UserID:          psql.Where[Q, string](cols.UserID.Expression),
+		UserID:          psql.Where[Q, uuid.UUID](cols.UserID.Expression),
 		Distance:        psql.Where[Q, float64](cols.Distance.Expression),
 		DurationSeconds: psql.Where[Q, int32](cols.DurationSeconds.Expression),
 		R:               setWhereR[Q]{cols: cols},
@@ -1021,7 +1022,7 @@ func (os SetSlice) LoadExercise(ctx context.Context, exec bob.Executor, mods ...
 		o.R.Loaded.Exercise = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	setByKey := make(map[string][]*Set, len(os))
+	setByKey := make(map[uuid.UUID][]*Set, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue
@@ -1096,7 +1097,7 @@ func (os SetSlice) LoadWorkout(ctx context.Context, exec bob.Executor, mods ...b
 		o.R.Loaded.Workout = true
 	}
 	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
-	setByKey := make(map[string][]*Set, len(os))
+	setByKey := make(map[uuid.UUID][]*Set, len(os))
 	for _, o := range os {
 		if o == nil {
 			continue

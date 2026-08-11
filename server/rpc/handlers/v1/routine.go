@@ -54,7 +54,7 @@ func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request
 
 	log.Info("routine created")
 	return connect.NewResponse(&apiv1.CreateRoutineResponse{
-		Id: routine.ID,
+		Id: routine.ID.String(),
 	}), nil
 }
 
@@ -133,7 +133,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 
 	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
 		if err = tx.UpdateRoutine(
-			ctx, routine.ID,
+			ctx, routine.ID.String(),
 			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
 			repo.UpdateRoutineExerciseOrder(exerciseIDs),
 		); err != nil {
@@ -181,7 +181,7 @@ func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if routine.UserID != userID {
+	if routine.UserID.String() != userID {
 		log.Error("routine does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
@@ -454,7 +454,7 @@ func dashboardNextRoutine(activePlan *repo.TrainingPlan, routines models.Routine
 
 	if preferredRoutineID != "" {
 		index := slices.IndexFunc(routines, func(routine *models.Routine) bool {
-			return routine.ID == preferredRoutineID
+			return routine.ID.String() == preferredRoutineID
 		})
 		if index >= 0 {
 			return routines[index]
@@ -497,7 +497,7 @@ func reconcileRoutineExercises(exercises models.ExerciseSlice, encodedOrder []by
 
 	exercisesByID := make(map[string]*models.Exercise, len(exercises))
 	for _, exercise := range exercises {
-		exercisesByID[exercise.ID] = exercise
+		exercisesByID[exercise.ID.String()] = exercise
 	}
 
 	ordered := make(models.ExerciseSlice, 0, len(exercises))
@@ -515,7 +515,7 @@ func reconcileRoutineExercises(exercises models.ExerciseSlice, encodedOrder []by
 	}
 
 	for _, exercise := range exercises {
-		if _, exists := seen[exercise.ID]; exists {
+		if _, exists := seen[exercise.ID.String()]; exists {
 			continue
 		}
 		ordered = append(ordered, exercise)
@@ -629,7 +629,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if routine.UserID != userID {
+	if routine.UserID.String() != userID {
 		log.Error("routine does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
@@ -641,7 +641,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 
 	mapExpectedExerciseIDs := make(map[string]struct{}, len(routine.R.Exercises))
 	for _, exercise := range routine.R.Exercises {
-		mapExpectedExerciseIDs[exercise.ID] = struct{}{}
+		mapExpectedExerciseIDs[exercise.ID.String()] = struct{}{}
 	}
 
 	for _, exerciseID := range req.Msg.GetExerciseIds() {
@@ -651,7 +651,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		}
 	}
 
-	if err = h.repo.UpdateRoutine(ctx, routine.ID, repo.UpdateRoutineExerciseOrder(req.Msg.GetExerciseIds())); err != nil {
+	if err = h.repo.UpdateRoutine(ctx, routine.ID.String(), repo.UpdateRoutineExerciseOrder(req.Msg.GetExerciseIds())); err != nil {
 		log.Error("update routine failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

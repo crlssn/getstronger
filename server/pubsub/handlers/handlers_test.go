@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
@@ -106,12 +107,16 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 		handler.HandlePayload(string(bytes))
 
 		count, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.In(
-			factory.UUID(0), factory.UUID(1), factory.UUID(2),
+			gofrsuuid.FromStringOrNil(factory.UUID(0)),
+			gofrsuuid.FromStringOrNil(factory.UUID(1)),
+			gofrsuuid.FromStringOrNil(factory.UUID(2)),
 		)).Count(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.Equal(t, 3, int(count))
 
-		exists, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.EQ(factory.UUID(3))).Exists(ctx, bob.NewDB(c.DB))
+		exists, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.EQ(
+			gofrsuuid.FromStringOrNil(factory.UUID(3)),
+		)).Exists(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.False(t, exists)
 	})

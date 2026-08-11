@@ -10,6 +10,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -35,8 +36,8 @@ func (mods PlanModSlice) Apply(ctx context.Context, n *PlanTemplate) {
 // PlanTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type PlanTemplate struct {
-	ID              func() string
-	UserID          func() string
+	ID              func() uuid.UUID
+	UserID          func() uuid.UUID
 	Name            func() string
 	Active          func() bool
 	CurrentPosition func() int32
@@ -193,7 +194,7 @@ func (o PlanTemplate) BuildMany(number int) models.PlanSlice {
 
 func ensureCreatablePlan(m *models.PlanSetter) {
 	if m.UserID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.UserID = omit.From(val)
 	}
 	if m.Name.IsUnset() {
@@ -378,14 +379,14 @@ func (m planMods) RandomizeAllColumns(f *faker.Faker) PlanMod {
 }
 
 // Set the model columns to this value
-func (m planMods) ID(val string) PlanMod {
+func (m planMods) ID(val uuid.UUID) PlanMod {
 	return PlanModFunc(func(_ context.Context, o *PlanTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m planMods) IDFunc(f func() string) PlanMod {
+func (m planMods) IDFunc(f func() uuid.UUID) PlanMod {
 	return PlanModFunc(func(_ context.Context, o *PlanTemplate) {
 		o.ID = f
 	})
@@ -402,21 +403,21 @@ func (m planMods) UnsetID() PlanMod {
 // if faker is nil, a default faker is used
 func (m planMods) RandomID(f *faker.Faker) PlanMod {
 	return PlanModFunc(func(_ context.Context, o *PlanTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m planMods) UserID(val string) PlanMod {
+func (m planMods) UserID(val uuid.UUID) PlanMod {
 	return PlanModFunc(func(_ context.Context, o *PlanTemplate) {
-		o.UserID = func() string { return val }
+		o.UserID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m planMods) UserIDFunc(f func() string) PlanMod {
+func (m planMods) UserIDFunc(f func() uuid.UUID) PlanMod {
 	return PlanModFunc(func(_ context.Context, o *PlanTemplate) {
 		o.UserID = f
 	})
@@ -433,8 +434,8 @@ func (m planMods) UnsetUserID() PlanMod {
 // if faker is nil, a default faker is used
 func (m planMods) RandomUserID(f *faker.Faker) PlanMod {
 	return PlanModFunc(func(_ context.Context, o *PlanTemplate) {
-		o.UserID = func() string {
-			return random_string(f)
+		o.UserID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }

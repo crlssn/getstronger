@@ -48,7 +48,7 @@ func (s *notificationSuite) SetupSuite() {
 	})
 }
 
-func (s *notificationSuite) TestListNotifications() {
+func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table-driven notification states are clearer together.
 	type expected struct {
 		err error
 		res *connect.Response[apiv1.ListNotificationsResponse]
@@ -118,8 +118,8 @@ func (s *notificationSuite) TestListNotifications() {
 						factory.NotificationUserID(userID),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						factory.NotificationPayload(repo.NotificationPayload{
-							ActorID:   comment.UserID,
-							WorkoutID: workout.ID,
+							ActorID:   comment.UserID.String(),
+							WorkoutID: workout.ID.String(),
 						}),
 					)
 				}
@@ -178,7 +178,7 @@ func (s *notificationSuite) TestListNotifications() {
 								factory.UserID(n.GetUserFollowed().GetActor().GetId()),
 								factory.UserLastName(n.GetUserFollowed().GetActor().GetLastName()),
 								factory.UserFirstName(n.GetUserFollowed().GetActor().GetFirstName()),
-							).ID,
+							).ID.String(),
 						}),
 					)
 				}
@@ -221,7 +221,7 @@ func (s *notificationSuite) TestListNotifications() {
 					factory.NotificationType(repo.NotificationTypeWorkoutComment),
 					factory.NotificationUserID(userID),
 					factory.NotificationPayload(repo.NotificationPayload{
-						ActorID:   s.testFactory.NewUser().ID,
+						ActorID:   s.testFactory.NewUser().ID.String(),
 						WorkoutID: uuid.NewString(),
 					}),
 				)
@@ -240,10 +240,10 @@ func (s *notificationSuite) TestListNotifications() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			user := s.testFactory.NewUser()
-			ctx := xcontext.WithUserID(context.Background(), user.ID)
+			ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 			ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
-			t.init(t, user.ID)
+			t.init(t, user.ID.String())
 			res, err := s.handler.ListNotifications(ctx, t.req)
 			if t.expected.err != nil {
 				s.Require().Nil(res)

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -21,7 +22,7 @@ import (
 
 // Trace is an object representing the database table.
 type Trace struct {
-	ID         string    `db:"id,pk" `
+	ID         uuid.UUID `db:"id,pk" `
 	Request    string    `db:"request" `
 	StatusCode int32     `db:"status_code" `
 	DurationMS int32     `db:"duration_ms" `
@@ -111,7 +112,7 @@ func (c traceColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type TraceSetter struct {
-	ID         omit.Val[string]    `db:"id,pk" `
+	ID         omit.Val[uuid.UUID] `db:"id,pk" `
 	Request    omit.Val[string]    `db:"request" `
 	StatusCode omit.Val[int32]     `db:"status_code" `
 	DurationMS omit.Val[int32]     `db:"duration_ms" `
@@ -271,7 +272,7 @@ func traceScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(
 
 // FindTrace retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindTrace(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Trace, error) {
+func FindTrace(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Trace, error) {
 	if len(cols) == 0 {
 		return Traces.Query(
 			sm.Where(Traces.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -285,7 +286,7 @@ func FindTrace(ctx context.Context, exec bob.Executor, IDPK string, cols ...stri
 }
 
 // TraceExists checks the presence of a single record by primary key
-func TraceExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func TraceExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Traces.Query(
 		sm.Where(Traces.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -392,7 +393,7 @@ func (o TraceSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o TraceSlice) copyMatchingRows(from ...*Trace) {
-	fromByPK := make(map[string]*Trace, len(from))
+	fromByPK := make(map[uuid.UUID]*Trace, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -531,7 +532,7 @@ func (o TraceSlice) ReloadAll(ctx context.Context, exec bob.Executor) error {
 
 type traceWhere[Q psql.Filterable] struct {
 	cols       traceColumns
-	ID         psql.WhereMod[Q, string]
+	ID         psql.WhereMod[Q, uuid.UUID]
 	Request    psql.WhereMod[Q, string]
 	StatusCode psql.WhereMod[Q, int32]
 	DurationMS psql.WhereMod[Q, int32]
@@ -545,7 +546,7 @@ func (traceWhere[Q]) AliasedAs(alias string) traceWhere[Q] {
 func buildTraceWhere[Q psql.Filterable](cols traceColumns) traceWhere[Q] {
 	return traceWhere[Q]{
 		cols:       cols,
-		ID:         psql.Where[Q, string](cols.ID.Expression),
+		ID:         psql.Where[Q, uuid.UUID](cols.ID.Expression),
 		Request:    psql.Where[Q, string](cols.Request.Expression),
 		StatusCode: psql.Where[Q, int32](cols.StatusCode.Expression),
 		DurationMS: psql.Where[Q, int32](cols.DurationMS.Expression),

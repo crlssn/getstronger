@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/aarondl/opt/omit"
-	"github.com/google/uuid"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	bobtypes "github.com/stephenafamo/bob/types"
 
@@ -27,7 +26,7 @@ type RoutineOpt func(routine *models.RoutineSetter)
 
 func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
 	setter := &models.RoutineSetter{
-		ID:    omit.From(uuid.NewString()),
+		ID:    omit.From(newUUID()),
 		Title: omit.From(f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"})),
 	}
 	for _, opt := range opts {
@@ -80,15 +79,15 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
 	return routine
 }
 
-func RoutineID(id string) RoutineOpt {
+func RoutineID(id any) RoutineOpt {
 	return func(m *models.RoutineSetter) {
-		m.ID = omit.From(id)
+		m.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func RoutineUserID(userID string) RoutineOpt {
+func RoutineUserID(userID any) RoutineOpt {
 	return func(m *models.RoutineSetter) {
-		m.UserID = omit.From(userID)
+		m.UserID = omit.From(nativeUUID(userID))
 	}
 }
 

@@ -48,7 +48,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 
 		followeeIDs := make([]string, 0, len(followees))
 		for _, follower := range followees {
-			followeeIDs = append(followeeIDs, follower.ID)
+			followeeIDs = append(followeeIDs, follower.ID.String())
 		}
 
 		opts = append(opts, repo.ListWorkoutsWithUserIDs(append(followeeIDs, userID)...))

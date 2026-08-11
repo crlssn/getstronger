@@ -10,6 +10,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -35,9 +36,9 @@ func (mods WorkoutCommentModSlice) Apply(ctx context.Context, n *WorkoutCommentT
 // WorkoutCommentTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type WorkoutCommentTemplate struct {
-	ID        func() string
-	UserID    func() string
-	WorkoutID func() string
+	ID        func() uuid.UUID
+	UserID    func() uuid.UUID
+	WorkoutID func() uuid.UUID
 	Comment   func() string
 	CreatedAt func() time.Time
 
@@ -169,11 +170,11 @@ func (o WorkoutCommentTemplate) BuildMany(number int) models.WorkoutCommentSlice
 
 func ensureCreatableWorkoutComment(m *models.WorkoutCommentSetter) {
 	if m.UserID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.UserID = omit.From(val)
 	}
 	if m.WorkoutID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.WorkoutID = omit.From(val)
 	}
 	if m.Comment.IsUnset() {
@@ -364,14 +365,14 @@ func (m workoutCommentMods) RandomizeAllColumns(f *faker.Faker) WorkoutCommentMo
 }
 
 // Set the model columns to this value
-func (m workoutCommentMods) ID(val string) WorkoutCommentMod {
+func (m workoutCommentMods) ID(val uuid.UUID) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m workoutCommentMods) IDFunc(f func() string) WorkoutCommentMod {
+func (m workoutCommentMods) IDFunc(f func() uuid.UUID) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
 		o.ID = f
 	})
@@ -388,21 +389,21 @@ func (m workoutCommentMods) UnsetID() WorkoutCommentMod {
 // if faker is nil, a default faker is used
 func (m workoutCommentMods) RandomID(f *faker.Faker) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m workoutCommentMods) UserID(val string) WorkoutCommentMod {
+func (m workoutCommentMods) UserID(val uuid.UUID) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
-		o.UserID = func() string { return val }
+		o.UserID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m workoutCommentMods) UserIDFunc(f func() string) WorkoutCommentMod {
+func (m workoutCommentMods) UserIDFunc(f func() uuid.UUID) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
 		o.UserID = f
 	})
@@ -419,21 +420,21 @@ func (m workoutCommentMods) UnsetUserID() WorkoutCommentMod {
 // if faker is nil, a default faker is used
 func (m workoutCommentMods) RandomUserID(f *faker.Faker) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
-		o.UserID = func() string {
-			return random_string(f)
+		o.UserID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m workoutCommentMods) WorkoutID(val string) WorkoutCommentMod {
+func (m workoutCommentMods) WorkoutID(val uuid.UUID) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
-		o.WorkoutID = func() string { return val }
+		o.WorkoutID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m workoutCommentMods) WorkoutIDFunc(f func() string) WorkoutCommentMod {
+func (m workoutCommentMods) WorkoutIDFunc(f func() uuid.UUID) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
 		o.WorkoutID = f
 	})
@@ -450,8 +451,8 @@ func (m workoutCommentMods) UnsetWorkoutID() WorkoutCommentMod {
 // if faker is nil, a default faker is used
 func (m workoutCommentMods) RandomWorkoutID(f *faker.Faker) WorkoutCommentMod {
 	return WorkoutCommentModFunc(func(_ context.Context, o *WorkoutCommentTemplate) {
-		o.WorkoutID = func() string {
-			return random_string(f)
+		o.WorkoutID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }

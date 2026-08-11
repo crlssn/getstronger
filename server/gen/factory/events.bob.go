@@ -12,6 +12,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	models "github.com/crlssn/getstronger/server/gen/models"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/types"
@@ -38,7 +39,7 @@ func (mods EventModSlice) Apply(ctx context.Context, n *EventTemplate) {
 // EventTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type EventTemplate struct {
-	ID        func() string
+	ID        func() uuid.UUID
 	Topic     func() enums.EventTopic
 	Payload   func() types.JSON[json.RawMessage]
 	CreatedAt func() time.Time
@@ -266,14 +267,14 @@ func (m eventMods) RandomizeAllColumns(f *faker.Faker) EventMod {
 }
 
 // Set the model columns to this value
-func (m eventMods) ID(val string) EventMod {
+func (m eventMods) ID(val uuid.UUID) EventMod {
 	return EventModFunc(func(_ context.Context, o *EventTemplate) {
-		o.ID = func() string { return val }
+		o.ID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m eventMods) IDFunc(f func() string) EventMod {
+func (m eventMods) IDFunc(f func() uuid.UUID) EventMod {
 	return EventModFunc(func(_ context.Context, o *EventTemplate) {
 		o.ID = f
 	})
@@ -290,8 +291,8 @@ func (m eventMods) UnsetID() EventMod {
 // if faker is nil, a default faker is used
 func (m eventMods) RandomID(f *faker.Faker) EventMod {
 	return EventModFunc(func(_ context.Context, o *EventTemplate) {
-		o.ID = func() string {
-			return random_string(f)
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }

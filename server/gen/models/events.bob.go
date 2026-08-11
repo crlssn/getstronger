@@ -11,6 +11,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -24,7 +25,7 @@ import (
 
 // Event is an object representing the database table.
 type Event struct {
-	ID        string                      `db:"id,pk" `
+	ID        uuid.UUID                   `db:"id,pk" `
 	Topic     enums.EventTopic            `db:"topic" `
 	Payload   types.JSON[json.RawMessage] `db:"payload" `
 	CreatedAt time.Time                   `db:"created_at" `
@@ -111,7 +112,7 @@ func (c eventColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type EventSetter struct {
-	ID        omit.Val[string]                      `db:"id,pk" `
+	ID        omit.Val[uuid.UUID]                   `db:"id,pk" `
 	Topic     omit.Val[enums.EventTopic]            `db:"topic" `
 	Payload   omit.Val[types.JSON[json.RawMessage]] `db:"payload" `
 	CreatedAt omit.Val[time.Time]                   `db:"created_at" `
@@ -250,7 +251,7 @@ func eventScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(
 
 // FindEvent retrieves a single record by primary key
 // If cols is empty Find will return all columns.
-func FindEvent(ctx context.Context, exec bob.Executor, IDPK string, cols ...string) (*Event, error) {
+func FindEvent(ctx context.Context, exec bob.Executor, IDPK uuid.UUID, cols ...string) (*Event, error) {
 	if len(cols) == 0 {
 		return Events.Query(
 			sm.Where(Events.Columns.ID.EQ(psql.Arg(IDPK))),
@@ -264,7 +265,7 @@ func FindEvent(ctx context.Context, exec bob.Executor, IDPK string, cols ...stri
 }
 
 // EventExists checks the presence of a single record by primary key
-func EventExists(ctx context.Context, exec bob.Executor, IDPK string) (bool, error) {
+func EventExists(ctx context.Context, exec bob.Executor, IDPK uuid.UUID) (bool, error) {
 	return Events.Query(
 		sm.Where(Events.Columns.ID.EQ(psql.Arg(IDPK))),
 	).Exists(ctx, exec)
@@ -371,7 +372,7 @@ func (o EventSlice) pkIN() dialect.Expression {
 // then it first copies the existing relationships from the old model to the new model
 // and then replaces the old model in the slice with the new model
 func (o EventSlice) copyMatchingRows(from ...*Event) {
-	fromByPK := make(map[string]*Event, len(from))
+	fromByPK := make(map[uuid.UUID]*Event, len(from))
 	for _, new := range from {
 		// keep the first row for each key, like the nested loop did
 		if _, ok := fromByPK[new.ID]; !ok {
@@ -510,7 +511,7 @@ func (o EventSlice) ReloadAll(ctx context.Context, exec bob.Executor) error {
 
 type eventWhere[Q psql.Filterable] struct {
 	cols      eventColumns
-	ID        psql.WhereMod[Q, string]
+	ID        psql.WhereMod[Q, uuid.UUID]
 	Topic     psql.WhereMod[Q, enums.EventTopic]
 	Payload   psql.WhereMod[Q, types.JSON[json.RawMessage]]
 	CreatedAt psql.WhereMod[Q, time.Time]
@@ -523,7 +524,7 @@ func (eventWhere[Q]) AliasedAs(alias string) eventWhere[Q] {
 func buildEventWhere[Q psql.Filterable](cols eventColumns) eventWhere[Q] {
 	return eventWhere[Q]{
 		cols:      cols,
-		ID:        psql.Where[Q, string](cols.ID.Expression),
+		ID:        psql.Where[Q, uuid.UUID](cols.ID.Expression),
 		Topic:     psql.Where[Q, enums.EventTopic](cols.Topic.Expression),
 		Payload:   psql.Where[Q, types.JSON[json.RawMessage]](cols.Payload.Expression),
 		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),

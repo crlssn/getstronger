@@ -7,7 +7,6 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
-	"github.com/google/uuid"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
@@ -28,8 +27,8 @@ type AuthOpt func(auth *models.AuthSetter)
 
 func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
 	setter := &models.AuthSetter{
-		ID:    omit.From(uuid.NewString()),
-		Email: omit.From(fmt.Sprintf("%s-%s", uuid.NewString(), f.Faker.Email())),
+		ID:    omit.From(newUUID()),
+		Email: omit.From(fmt.Sprintf("%s-%s", newUUID(), f.Faker.Email())),
 	}
 	for _, opt := range opts {
 		opt(setter)
@@ -81,9 +80,9 @@ func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth { //nolint:cyclop // Map
 	return auth
 }
 
-func AuthID(id string) AuthOpt {
+func AuthID(id any) AuthOpt {
 	return func(m *models.AuthSetter) {
-		m.ID = omit.From(id)
+		m.ID = omit.From(nativeUUID(id))
 	}
 }
 
@@ -95,7 +94,7 @@ func AuthEmail(email string) AuthOpt {
 
 func AuthEmailToken(token string) AuthOpt {
 	return func(m *models.AuthSetter) {
-		m.EmailToken = omit.From(token)
+		m.EmailToken = omit.From(nativeUUID(token))
 	}
 }
 
@@ -113,7 +112,7 @@ func AuthRefreshToken(token string) AuthOpt {
 
 func AuthPasswordResetToken(token string, ttl time.Duration) AuthOpt {
 	return func(m *models.AuthSetter) {
-		m.PasswordResetToken = omitnull.From(token)
+		m.PasswordResetToken = omitnull.From(nativeUUID(token))
 		m.PasswordResetTokenValidUntil = omitnull.From(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))
 	}
 }

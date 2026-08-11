@@ -9,6 +9,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -34,8 +35,8 @@ func (mods FollowerModSlice) Apply(ctx context.Context, n *FollowerTemplate) {
 // FollowerTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type FollowerTemplate struct {
-	FollowerID func() string
-	FolloweeID func() string
+	FollowerID func() uuid.UUID
+	FolloweeID func() uuid.UUID
 
 	r followerR
 	f *Factory
@@ -142,11 +143,11 @@ func (o FollowerTemplate) BuildMany(number int) models.FollowerSlice {
 
 func ensureCreatableFollower(m *models.FollowerSetter) {
 	if m.FollowerID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.FollowerID = omit.From(val)
 	}
 	if m.FolloweeID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.FolloweeID = omit.From(val)
 	}
 }
@@ -330,14 +331,14 @@ func (m followerMods) RandomizeAllColumns(f *faker.Faker) FollowerMod {
 }
 
 // Set the model columns to this value
-func (m followerMods) FollowerID(val string) FollowerMod {
+func (m followerMods) FollowerID(val uuid.UUID) FollowerMod {
 	return FollowerModFunc(func(_ context.Context, o *FollowerTemplate) {
-		o.FollowerID = func() string { return val }
+		o.FollowerID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m followerMods) FollowerIDFunc(f func() string) FollowerMod {
+func (m followerMods) FollowerIDFunc(f func() uuid.UUID) FollowerMod {
 	return FollowerModFunc(func(_ context.Context, o *FollowerTemplate) {
 		o.FollowerID = f
 	})
@@ -354,21 +355,21 @@ func (m followerMods) UnsetFollowerID() FollowerMod {
 // if faker is nil, a default faker is used
 func (m followerMods) RandomFollowerID(f *faker.Faker) FollowerMod {
 	return FollowerModFunc(func(_ context.Context, o *FollowerTemplate) {
-		o.FollowerID = func() string {
-			return random_string(f)
+		o.FollowerID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m followerMods) FolloweeID(val string) FollowerMod {
+func (m followerMods) FolloweeID(val uuid.UUID) FollowerMod {
 	return FollowerModFunc(func(_ context.Context, o *FollowerTemplate) {
-		o.FolloweeID = func() string { return val }
+		o.FolloweeID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m followerMods) FolloweeIDFunc(f func() string) FollowerMod {
+func (m followerMods) FolloweeIDFunc(f func() uuid.UUID) FollowerMod {
 	return FollowerModFunc(func(_ context.Context, o *FollowerTemplate) {
 		o.FolloweeID = f
 	})
@@ -385,8 +386,8 @@ func (m followerMods) UnsetFolloweeID() FollowerMod {
 // if faker is nil, a default faker is used
 func (m followerMods) RandomFolloweeID(f *faker.Faker) FollowerMod {
 	return FollowerModFunc(func(_ context.Context, o *FollowerTemplate) {
-		o.FolloweeID = func() string {
-			return random_string(f)
+		o.FolloweeID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }

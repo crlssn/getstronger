@@ -7,7 +7,6 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
-	"github.com/google/uuid"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
@@ -28,7 +27,7 @@ type WorkoutOpt func(workout *models.WorkoutSetter)
 func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
 	startedAt := time.Now().UTC()
 	setter := &models.WorkoutSetter{
-		ID:         omit.From(uuid.NewString()),
+		ID:         omit.From(newUUID()),
 		Name:       omit.From(f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"})),
 		StartedAt:  omit.From(startedAt),
 		FinishedAt: omit.From(startedAt.Add(time.Hour)),
@@ -89,15 +88,15 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cycl
 	return workout
 }
 
-func WorkoutID(workoutID string) WorkoutOpt {
+func WorkoutID(workoutID any) WorkoutOpt {
 	return func(workout *models.WorkoutSetter) {
-		workout.ID = omit.From(workoutID)
+		workout.ID = omit.From(nativeUUID(workoutID))
 	}
 }
 
-func WorkoutUserID(userID string) WorkoutOpt {
+func WorkoutUserID(userID any) WorkoutOpt {
 	return func(workout *models.WorkoutSetter) {
-		workout.UserID = omit.From(userID)
+		workout.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
@@ -144,7 +143,7 @@ type WorkoutCommentOpt func(comment *models.WorkoutCommentSetter)
 
 func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutComment {
 	setter := &models.WorkoutCommentSetter{
-		ID:      omit.From(uuid.NewString()),
+		ID:      omit.From(newUUID()),
 		Comment: omit.From(f.Faker.Sentence(5)), //nolint:mnd
 	}
 	for _, opt := range opts {
@@ -206,21 +205,21 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutCo
 	return comment
 }
 
-func WorkoutCommentID(id string) WorkoutCommentOpt {
+func WorkoutCommentID(id any) WorkoutCommentOpt {
 	return func(comment *models.WorkoutCommentSetter) {
-		comment.ID = omit.From(id)
+		comment.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func WorkoutCommentUserID(userID string) WorkoutCommentOpt {
+func WorkoutCommentUserID(userID any) WorkoutCommentOpt {
 	return func(comment *models.WorkoutCommentSetter) {
-		comment.UserID = omit.From(userID)
+		comment.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
-func WorkoutCommentWorkoutID(workoutID string) WorkoutCommentOpt {
+func WorkoutCommentWorkoutID(workoutID any) WorkoutCommentOpt {
 	return func(comment *models.WorkoutCommentSetter) {
-		comment.WorkoutID = omit.From(workoutID)
+		comment.WorkoutID = omit.From(nativeUUID(workoutID))
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
@@ -28,7 +27,7 @@ type ExerciseOpt func(exercise *models.ExerciseSetter)
 
 func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
 	setter := &models.ExerciseSetter{
-		ID:    omit.From(uuid.NewString()),
+		ID:    omit.From(newUUID()),
 		Title: omit.From(f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"})),
 		Tags:  omit.From(pq.StringArray{}),
 	}
@@ -88,15 +87,15 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:c
 	return exercise
 }
 
-func ExerciseID(id string) ExerciseOpt {
+func ExerciseID(id any) ExerciseOpt {
 	return func(m *models.ExerciseSetter) {
-		m.ID = omit.From(id)
+		m.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func ExerciseUserID(userID string) ExerciseOpt {
+func ExerciseUserID(userID any) ExerciseOpt {
 	return func(m *models.ExerciseSetter) {
-		m.UserID = omit.From(userID)
+		m.UserID = omit.From(nativeUUID(userID))
 	}
 }
 

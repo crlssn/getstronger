@@ -9,6 +9,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -34,8 +35,8 @@ func (mods PlanRoutineModSlice) Apply(ctx context.Context, n *PlanRoutineTemplat
 // PlanRoutineTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type PlanRoutineTemplate struct {
-	PlanID    func() string
-	RoutineID func() string
+	PlanID    func() uuid.UUID
+	RoutineID func() uuid.UUID
 	Position  func() int32
 
 	r planRoutineR
@@ -152,11 +153,11 @@ func (o PlanRoutineTemplate) BuildMany(number int) models.PlanRoutineSlice {
 
 func ensureCreatablePlanRoutine(m *models.PlanRoutineSetter) {
 	if m.PlanID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.PlanID = omit.From(val)
 	}
 	if m.RoutineID.IsUnset() {
-		val := random_string(nil)
+		val := random_uuid_UUID(nil)
 		m.RoutineID = omit.From(val)
 	}
 	if m.Position.IsUnset() {
@@ -345,14 +346,14 @@ func (m planRoutineMods) RandomizeAllColumns(f *faker.Faker) PlanRoutineMod {
 }
 
 // Set the model columns to this value
-func (m planRoutineMods) PlanID(val string) PlanRoutineMod {
+func (m planRoutineMods) PlanID(val uuid.UUID) PlanRoutineMod {
 	return PlanRoutineModFunc(func(_ context.Context, o *PlanRoutineTemplate) {
-		o.PlanID = func() string { return val }
+		o.PlanID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m planRoutineMods) PlanIDFunc(f func() string) PlanRoutineMod {
+func (m planRoutineMods) PlanIDFunc(f func() uuid.UUID) PlanRoutineMod {
 	return PlanRoutineModFunc(func(_ context.Context, o *PlanRoutineTemplate) {
 		o.PlanID = f
 	})
@@ -369,21 +370,21 @@ func (m planRoutineMods) UnsetPlanID() PlanRoutineMod {
 // if faker is nil, a default faker is used
 func (m planRoutineMods) RandomPlanID(f *faker.Faker) PlanRoutineMod {
 	return PlanRoutineModFunc(func(_ context.Context, o *PlanRoutineTemplate) {
-		o.PlanID = func() string {
-			return random_string(f)
+		o.PlanID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m planRoutineMods) RoutineID(val string) PlanRoutineMod {
+func (m planRoutineMods) RoutineID(val uuid.UUID) PlanRoutineMod {
 	return PlanRoutineModFunc(func(_ context.Context, o *PlanRoutineTemplate) {
-		o.RoutineID = func() string { return val }
+		o.RoutineID = func() uuid.UUID { return val }
 	})
 }
 
 // Set the Column from the function
-func (m planRoutineMods) RoutineIDFunc(f func() string) PlanRoutineMod {
+func (m planRoutineMods) RoutineIDFunc(f func() uuid.UUID) PlanRoutineMod {
 	return PlanRoutineModFunc(func(_ context.Context, o *PlanRoutineTemplate) {
 		o.RoutineID = f
 	})
@@ -400,8 +401,8 @@ func (m planRoutineMods) UnsetRoutineID() PlanRoutineMod {
 // if faker is nil, a default faker is used
 func (m planRoutineMods) RandomRoutineID(f *faker.Faker) PlanRoutineMod {
 	return PlanRoutineModFunc(func(_ context.Context, o *PlanRoutineTemplate) {
-		o.RoutineID = func() string {
-			return random_string(f)
+		o.RoutineID = func() uuid.UUID {
+			return random_uuid_UUID(f)
 		}
 	})
 }
