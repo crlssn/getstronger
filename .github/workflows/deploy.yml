@@ -54,7 +54,7 @@ jobs:
 
       - name: Install golang-migrate
         run: |
-          wget https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
+          wget https://github.com/golang-migrate/migrate/releases/download/v4.19.1/migrate.linux-amd64.deb
           sudo dpkg -i migrate.linux-amd64.deb
 
       - name: Run migration
@@ -62,11 +62,11 @@ jobs:
           DB_HOST: ${{ vars.DB_HOST }}
           DB_PORT: ${{ vars.DB_PORT }}
           DB_NAME: ${{ vars.DB_NAME }}
-          DB_USER: ${{ vars.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
+          DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
         run: |
           migrate -path database/migrations/ \
-            -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
+            -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
             -verbose up
 
   server:

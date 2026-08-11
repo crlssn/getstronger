@@ -144,12 +144,15 @@ Production infrastructure is provisioned manually in the [Scaleway console](http
 
 Choose one region for the regional resources (for example, Paris) and one nearby Availability Zone for the Instance. Resource names below are examples and can be changed.
 
-### 1. Create the project and database identity
+### 1. Create the project and database identities
 
 1. Create or select a Scaleway Project dedicated to the production environment.
-2. Open **IAM & API keys**, create an IAM application named `getstronger-production`, and create a policy for it scoped to the production Project.
-3. Add the `ServerlessSQLDatabaseReadWrite` permission set from the **Databases** product. This allows the application and the migration runner to read and write data and manage the schema.
-4. Create an API key for the IAM application. Save both the application ID and secret key in a password manager; the secret key is only displayed once.
+2. Open **IAM & API keys**, create an IAM application named `getstronger-runtime`, and create a policy for it scoped to the production Project.
+3. Add the `ServerlessSQLDatabaseDataReadWrite` permission set from the **Databases** product. This lets the API modify table data without granting it schema-management access.
+4. Create an API key for the runtime application. Save both the application ID and secret key in a password manager; the secret key is only displayed once.
+5. Create a second IAM application named `getstronger-migrations` with a policy scoped to the production Project.
+6. Add the `ServerlessSQLDatabaseReadWrite` permission set. This lets the GitHub Actions migration job modify both data and table structure without granting access to create databases or edit database settings.
+7. Create an API key for the migration application and save its application ID and secret key separately.
 
 See Scaleway's guides to [IAM applications](https://www.scaleway.com/en/docs/iam/how-to/manage-applications/) and [Serverless SQL permissions](https://www.scaleway.com/en/docs/serverless-sql-databases/how-to/manage-permissions/) for the current console screens.
 
@@ -160,16 +163,18 @@ See Scaleway's guides to [IAM applications](https://www.scaleway.com/en/docs/iam
    - A minimum of `0` vCPU costs less while idle but introduces cold starts.
    - A minimum of `1` vCPU avoids cold starts and is the safer production default.
    - Set a conservative maximum initially to cap unexpected spend; it can be raised later.
-3. Create the database. On its **Overview** tab, click **Connect application**, select `getstronger-production`, and use the API key created above.
-4. Save the connection parameters shown by Scaleway. Map them to the backend configuration as follows:
+3. Create the database. On its **Overview** tab, click **Connect application**, select `getstronger-runtime`, and use its API key.
+4. Save the connection parameters shown by Scaleway. The host, port, and database name are shared by both identities. Map the credentials as follows:
 
    | Backend variable | Scaleway value |
    | --- | --- |
    | `DB_HOST` | Database hostname |
    | `DB_PORT` | `5432` |
    | `DB_NAME` | Database name (`getstronger`) |
-   | `DB_USER` | IAM application ID |
-   | `DB_PASSWORD` | IAM application secret key |
+   | `DB_USER` | `getstronger-runtime` IAM application ID |
+   | `DB_PASSWORD` | `getstronger-runtime` IAM secret key |
+   | `DB_MIGRATION_USER` | `getstronger-migrations` IAM application ID |
+   | `DB_MIGRATION_PASSWORD` | `getstronger-migrations` IAM secret key |
 
 Serverless SQL requires TLS. To verify the credentials and apply the schema from a trusted machine, run:
 
@@ -177,12 +182,12 @@ Serverless SQL requires TLS. To verify the credentials and apply the schema from
 export DB_HOST='<database-hostname>'
 export DB_PORT='5432'
 export DB_NAME='getstronger'
-export DB_USER='<iam-application-id>'
-export DB_PASSWORD='<iam-secret-key>'
+export DB_MIGRATION_USER='<migration-iam-application-id>'
+export DB_MIGRATION_PASSWORD='<migration-iam-secret-key>'
 
-psql "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require"
+psql "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require"
 migrate -path database/migrations/ \
-  -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
+  -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
   -verbose up
 ```
 
@@ -207,8 +212,8 @@ ENV=production
 DB_HOST=<database-hostname>
 DB_PORT=5432
 DB_NAME=getstronger
-DB_USER=<iam-application-id>
-DB_PASSWORD=<iam-secret-key>
+DB_USER=<runtime-iam-application-id>
+DB_PASSWORD=<runtime-iam-secret-key>
 CORS_ALLOWED_ORIGIN=https://www.example.com
 SERVER_PORT=8080
 SERVER_CERT_PATH=<path-to-backend-certificate>
@@ -259,7 +264,7 @@ The GitHub Actions deployment workflow uploads the API over SSH and uses Scalewa
 Configure these GitHub repository variables:
 
 ```text
-DB_HOST, DB_PORT, DB_NAME, DB_USER
+DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_MIGRATION_USER
 CORS_ALLOWED_ORIGIN, SERVER_PORT, SERVER_CERT_PATH, SERVER_KEY_PATH
 COOKIE_DOMAIN, EMAIL_PROVIDER, VITE_API_URL
 SCW_INSTANCE_HOST, SCW_INSTANCE_USER, SCW_INSTANCE_APP_DIR
@@ -269,9 +274,12 @@ SCW_REGION, SCW_BUCKET_NAME
 Configure these GitHub repository secrets:
 
 ```text
-DB_PASSWORD, JWT_ACCESS_TOKEN_KEY, JWT_REFRESH_TOKEN_KEY
+DB_PASSWORD, DB_MIGRATION_PASSWORD
+JWT_ACCESS_TOKEN_KEY, JWT_REFRESH_TOKEN_KEY
 SCW_INSTANCE_SSH_KEY, SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
 ```
+
+Set `DB_USER` and `DB_PASSWORD` to the runtime IAM application's ID and secret key. Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key. The workflow uses the migration identity only in the database job and writes only the runtime identity to the API's `.env` file.
 
 The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secret key goes in `SCW_SECRET_KEY`. See [Using IAM API keys with Object Storage](https://www.scaleway.com/en/docs/iam/api-cli/using-api-key-object-storage/) for the preferred-Project behavior.
 
