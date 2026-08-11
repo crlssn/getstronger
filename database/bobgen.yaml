@@ -3,6 +3,10 @@ psql:
   except:
     schema_migrations:
 
+types:
+  int32:
+    random_expr: "return f.Int32Between(0, 3600)"
+
 plugins:
   models:
     destination: server/gen/models

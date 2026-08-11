@@ -62,6 +62,7 @@ run = [
     'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose down --all',
     'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
     'bobgen-psql -c "$DB_CONFIG_PATH"',
+    'git apply --ignore-space-change database/bobgen-v0.50.0.patch',
 ]
 
 [tasks."db:migrate"]
@@ -71,6 +72,7 @@ env = { _.file = ".env" }
 run = [
     'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
     'bobgen-psql -c "$DB_CONFIG_PATH"',
+    'git apply --ignore-space-change database/bobgen-v0.50.0.patch',
 ]
 
 [tasks."db:seed"]

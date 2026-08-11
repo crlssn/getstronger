@@ -91,7 +91,7 @@ func random_int32(f *faker.Faker, limits ...string) int32 {
 		f = &defaultFaker
 	}
 
-	return f.Int32()
+	return f.Int32Between(0, 3600)
 }
 
 func random_pq_StringArray(f *faker.Faker, limits ...string) pq.StringArray {
