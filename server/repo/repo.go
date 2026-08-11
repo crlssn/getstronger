@@ -1175,7 +1175,7 @@ func (r *repo) Unfollow(ctx context.Context, p UnfollowParams) error {
 func followerIDsOf(userID string) bob.Expression {
 	return psql.Select(
 		sm.Columns(models.Followers.Columns.FollowerID),
-		sm.From(models.Followers.NameExpr()),
+		sm.From(models.Followers.NameAsExpr()),
 		sm.Where(models.Followers.Columns.FolloweeID.EQ(psql.Arg(userID))),
 	)
 }
@@ -1183,7 +1183,7 @@ func followerIDsOf(userID string) bob.Expression {
 func followeeIDsOf(userID string) bob.Expression {
 	return psql.Select(
 		sm.Columns(models.Followers.Columns.FolloweeID),
-		sm.From(models.Followers.NameExpr()),
+		sm.From(models.Followers.NameAsExpr()),
 		sm.Where(models.Followers.Columns.FollowerID.EQ(psql.Arg(userID))),
 	)
 }

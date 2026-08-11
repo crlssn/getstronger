@@ -1366,3 +1366,29 @@ func (s *repoSuite) TestUpdateWorkout() {
 		})
 	}
 }
+
+func (s *repoSuite) TestListFollowersAndFollowees() {
+	ctx := context.Background()
+	follower := s.factory.NewUser()
+	user := s.factory.NewUser()
+	followee := s.factory.NewUser()
+
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: follower.ID,
+		FolloweeID: user.ID,
+	}))
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: user.ID,
+		FolloweeID: followee.ID,
+	}))
+
+	followers, err := s.repo.ListFollowers(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Len(followers, 1)
+	s.Require().Equal(follower.ID, followers[0].ID)
+
+	followees, err := s.repo.ListFollowees(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Len(followees, 1)
+	s.Require().Equal(followee.ID, followees[0].ID)
+}
