@@ -153,6 +153,9 @@ Choose one region for the regional resources (for example, Paris) and one nearby
 5. Create a second IAM application named `getstronger-migrations` with a policy scoped to the production Project.
 6. Add the `ServerlessSQLDatabaseReadWrite` permission set. This lets the GitHub Actions migration job modify both data and table structure without granting access to create databases or edit database settings.
 7. Create an API key for the migration application and save its application ID and secret key separately.
+8. Create a third IAM application named `getstronger-email` with a policy scoped to the production Project.
+9. Add the `TransactionalEmailEmailApiCreate` permission set so the application can send transactional emails without receiving broader Transactional Email permissions.
+10. Create an API key for the email application and save its secret key.
 
 See Scaleway's guides to [IAM applications](https://www.scaleway.com/en/docs/iam/how-to/manage-applications/) and [Serverless SQL permissions](https://www.scaleway.com/en/docs/serverless-sql-databases/how-to/manage-permissions/) for the current console screens.
 
@@ -221,12 +224,25 @@ SERVER_KEY_PATH=<path-to-backend-private-key>
 COOKIE_DOMAIN=.example.com
 JWT_ACCESS_TOKEN_KEY=<long-random-secret>
 JWT_REFRESH_TOKEN_KEY=<different-long-random-secret>
-EMAIL_PROVIDER=noop
+EMAIL_PROVIDER=scaleway
+EMAIL_FROM_ADDRESS=noreply@getstronger.pro
+SCW_PROJECT_ID=<production-project-id>
+SCW_TEM_REGION=fr-par
+SCW_TEM_SECRET_KEY=<email-iam-secret-key>
 ```
 
-Replace `example.com` with the production domain. The backend currently supports `ses`, `local`, and `noop` email providers; it does not yet support Scaleway Transactional Email. `noop` disables delivery, including verification and password-reset messages, so keep a separately configured SES account if those flows must work. Never commit the production `.env` or IAM secret key.
+Replace `example.com` with the production domain. The backend supports Scaleway Transactional Email in production, a local SMTP capture service for development, and `noop` when delivery must be disabled. Never commit the production `.env` or IAM secret keys.
 
-### 4. Host the web application
+### 4. Configure Transactional Email
+
+1. Open **Transactional Email** in the Scaleway console and register the domain used by `EMAIL_FROM_ADDRESS` in the production Project.
+2. Add the SPF, DKIM, and recommended MX records shown by Scaleway to the domain's DNS zone.
+3. Run the domain check and wait until the sending domain is validated.
+4. Set `SCW_PROJECT_ID` to the production Project ID, `SCW_TEM_REGION` to `fr-par`, and `SCW_TEM_SECRET_KEY` to the `getstronger-email` IAM application's secret key.
+
+Transactional Email currently sends from the `fr-par` API endpoint. The setup and request format are documented in [Sending an email using the Transactional Email API](https://www.scaleway.com/en/docs/transactional-email/api-cli/send-emails-with-api/).
+
+### 5. Host the web application
 
 1. Open **Object Storage**, create a bucket in the same region, and enable the **Bucket Website** feature.
 2. Set both the index document and error document to `index.html`; the error document provides fallback routing for the Vue single-page application.
@@ -242,7 +258,7 @@ Replace `example.com` with the production domain. The backend currently supports
 
 Refer to Scaleway's guides for [creating the bucket](https://www.scaleway.com/en/docs/object-storage/how-to/create-a-bucket/), [static website hosting](https://www.scaleway.com/en/docs/account/reference-content/use-case-informational-website/), and [Edge Services](https://www.scaleway.com/en/docs/edge-services/quickstart/).
 
-### 5. Configure DNS and validate
+### 6. Configure DNS and validate
 
 1. In **Domains and DNS**, add or open the production DNS zone.
 2. Create an `A` record for `api.example.com` pointing to the Instance's flexible IPv4 address.
@@ -257,16 +273,17 @@ Refer to Scaleway's guides for [creating the bucket](https://www.scaleway.com/en
 
 The DNS console flow is described in [Configure DNS zones](https://www.scaleway.com/en/docs/domains-and-dns/how-to/configure-dns-zones/).
 
-### 6. Connect the deployment workflow
+### 7. Connect the deployment workflow
 
-The GitHub Actions deployment workflow uploads the API over SSH and uses Scaleway Object Storage's S3-compatible endpoint for the web build. Create a separate IAM application named `getstronger-deploy`, give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` on the production Project, and set that Project as the API key's preferred Object Storage Project.
+The GitHub Actions deployment workflow uploads the API over SSH and uses Scaleway Object Storage's S3-compatible endpoint for the web build. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`, give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` on the production Project, and set that Project as the API key's preferred Object Storage Project.
 
 Configure these GitHub repository variables:
 
 ```text
 DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_MIGRATION_USER
 CORS_ALLOWED_ORIGIN, SERVER_PORT, SERVER_CERT_PATH, SERVER_KEY_PATH
-COOKIE_DOMAIN, EMAIL_PROVIDER, VITE_API_URL
+COOKIE_DOMAIN, EMAIL_PROVIDER, EMAIL_FROM_ADDRESS, VITE_API_URL
+SCW_PROJECT_ID, SCW_TEM_REGION
 SCW_INSTANCE_HOST, SCW_INSTANCE_USER, SCW_INSTANCE_APP_DIR
 SCW_REGION, SCW_BUCKET_NAME
 ```
@@ -276,10 +293,13 @@ Configure these GitHub repository secrets:
 ```text
 DB_PASSWORD, DB_MIGRATION_PASSWORD
 JWT_ACCESS_TOKEN_KEY, JWT_REFRESH_TOKEN_KEY
-SCW_INSTANCE_SSH_KEY, SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
+SCW_TEM_SECRET_KEY, SCW_INSTANCE_SSH_KEY
+SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
 ```
 
 Set `DB_USER` and `DB_PASSWORD` to the runtime IAM application's ID and secret key. Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key. The workflow uses the migration identity only in the database job and writes only the runtime identity to the API's `.env` file.
+
+For the initial cutover, open the **deploy** workflow in GitHub Actions and choose **Run workflow**. Its manual inputs can independently migrate the Serverless SQL Database, deploy the API, and deploy the web application. This also provides a safe way to migrate a newly created database when no migration file changed in the triggering commit.
 
 The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secret key goes in `SCW_SECRET_KEY`. See [Using IAM API keys with Object Storage](https://www.scaleway.com/en/docs/iam/api-cli/using-api-key-object-storage/) for the preferred-Project behavior.
 

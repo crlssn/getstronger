@@ -19,7 +19,11 @@ func New() *Config {
 			RefreshTokenKey: os.Getenv("JWT_REFRESH_TOKEN_KEY"),
 		},
 		Email: Email{
-			Provider: EmailProvider(os.Getenv("EMAIL_PROVIDER")),
+			Provider:          EmailProvider(os.Getenv("EMAIL_PROVIDER")),
+			FromAddress:       os.Getenv("EMAIL_FROM_ADDRESS"),
+			ScalewayProjectID: os.Getenv("SCW_PROJECT_ID"),
+			ScalewayRegion:    os.Getenv("SCW_TEM_REGION"),
+			ScalewaySecretKey: os.Getenv("SCW_TEM_SECRET_KEY"),
 		},
 		Server: Server{
 			Port:           os.Getenv("SERVER_PORT"),
@@ -70,13 +74,17 @@ func (s Server) HasCertificate() bool {
 }
 
 type Email struct {
-	Provider EmailProvider
+	Provider          EmailProvider
+	FromAddress       string
+	ScalewayProjectID string
+	ScalewayRegion    string
+	ScalewaySecretKey string
 }
 
 type EmailProvider string
 
 const (
-	EmailProviderSES   EmailProvider = "ses"
-	EmailProviderNoop  EmailProvider = "noop"
-	EmailProviderLocal EmailProvider = "local"
+	EmailProviderScaleway EmailProvider = "scaleway"
+	EmailProviderNoop     EmailProvider = "noop"
+	EmailProviderLocal    EmailProvider = "local"
 )

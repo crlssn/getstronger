@@ -7,6 +7,23 @@ on:
   pull_request:
     types:
       - labeled
+  workflow_dispatch:
+    inputs:
+      migrate:
+        description: Run pending database migrations
+        required: true
+        default: true
+        type: boolean
+      deploy_server:
+        description: Deploy the API to the Scaleway Instance
+        required: true
+        default: true
+        type: boolean
+      deploy_web:
+        description: Deploy the web app to Scaleway Object Storage
+        required: true
+        default: true
+        type: boolean
 
 concurrency:
   group: deployments
@@ -22,7 +39,7 @@ permissions:
 
 jobs:
   init:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy' && github.actor == 'crlssn')
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy' && github.actor == 'crlssn')
     runs-on: ubuntu-latest
 
     outputs:
@@ -40,13 +57,13 @@ jobs:
         with:
           filters: |
             web: ['web/**']
-            server: ['server/**']
+            server: ['server/**', 'go.mod', 'go.sum', 'mise.toml']
             database: ['database/**']
 
   database:
     needs: init
     runs-on: ubuntu-latest
-    if: needs.init.outputs.database == 'true'
+    if: needs.init.outputs.database == 'true' || (github.event_name == 'workflow_dispatch' && inputs.migrate)
 
     steps:
       - name: Checkout code
@@ -72,7 +89,10 @@ jobs:
   server:
     needs: [init, database]
     runs-on: ubuntu-latest
-    if: always() && needs.database.result != 'failure' && needs.init.outputs.server == 'true'
+    if: >-
+      always() &&
+      (needs.database.result == 'success' || needs.database.result == 'skipped') &&
+      (needs.init.outputs.server == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_server))
 
     steps:
       - name: Checkout code
@@ -107,6 +127,10 @@ jobs:
             echo JWT_ACCESS_TOKEN_KEY=${{ secrets.JWT_ACCESS_TOKEN_KEY }}
             echo JWT_REFRESH_TOKEN_KEY=${{ secrets.JWT_REFRESH_TOKEN_KEY }}
             echo EMAIL_PROVIDER=${{ vars.EMAIL_PROVIDER }}
+            echo EMAIL_FROM_ADDRESS=${{ vars.EMAIL_FROM_ADDRESS }}
+            echo SCW_PROJECT_ID=${{ vars.SCW_PROJECT_ID }}
+            echo SCW_TEM_REGION=${{ vars.SCW_TEM_REGION }}
+            echo SCW_TEM_SECRET_KEY=${{ secrets.SCW_TEM_SECRET_KEY }}
           } >> .env
 
       - name: Deploy to Scaleway Instance
@@ -132,7 +156,10 @@ jobs:
   web:
     needs: [init, server]
     runs-on: ubuntu-latest
-    if: always() && needs.server.result != 'failure' && needs.init.outputs.web == 'true'
+    if: >-
+      always() &&
+      (needs.server.result == 'success' || needs.server.result == 'skipped') &&
+      (needs.init.outputs.web == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
 
     steps:
       - name: Checkout code

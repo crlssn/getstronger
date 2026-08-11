@@ -17,8 +17,8 @@ var ErrUnknownEmailProvider = fmt.Errorf("unknown email provider")
 
 func New(c *config.Config) (Email, error) {
 	switch c.Email.Provider {
-	case config.EmailProviderSES:
-		return NewSES(c)
+	case config.EmailProviderScaleway:
+		return NewScaleway(c)
 	case config.EmailProviderNoop:
 		return NewNoop(), nil
 	case config.EmailProviderLocal:
@@ -30,10 +30,23 @@ func New(c *config.Config) (Email, error) {
 
 const (
 	fromEmail = "noreply@getstronger.pro"
+	fromName  = "One More Rep"
 
 	subjectSendVerification  = "[One More Rep] Verify your email"
 	subjectSendPasswordReset = "[One More Rep] Reset your password" //nolint:gosec
 )
+
+type SendVerification struct {
+	Name  string
+	Email string
+	Token string
+}
+
+type SendPasswordReset struct {
+	Name  string
+	Email string
+	Token string
+}
 
 func BodySendVerification(name, domain, token string) string {
 	return fmt.Sprintf(`Hi %s, 
