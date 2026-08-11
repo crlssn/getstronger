@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/aarondl/opt/omit"
-	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 )
 
@@ -20,39 +20,56 @@ func (f *Factory) NewUserSlice(count int, opts ...UserOpt) models.UserSlice {
 	return slice
 }
 
-type UserOpt func(event *models.UserSetter)
+type UserOpt func(user *models.UserSetter)
 
 func (f *Factory) NewUser(opts ...UserOpt) *models.User {
-	m := &models.UserSetter{
+	setter := &models.UserSetter{
 		FirstName: omit.From(f.Faker.FirstName()),
 		LastName:  omit.From(f.Faker.LastName()),
 	}
-
 	for _, opt := range opts {
-		opt(m)
-	}
-
-	if m.AuthID.IsUnset() {
-		m.AuthID = omit.From(f.NewAuth().ID)
+		opt(setter)
 	}
 
 	ctx := context.Background()
-	// Upsert so a fixed ID can be reused across a test without a unique violation.
-	user, err := models.Users.Insert(m, im.OnConflict(models.Users.Columns.ID.Name()).
-		DoUpdate(im.SetExcluded(m.SetColumns()...)),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to insert user: %w", err))
+	var auth *models.Auth
+	if authID, ok := setter.AuthID.Get(); ok {
+		var err error
+		auth, err = models.Auths.Query(models.SelectWhere.Auths.ID.EQ(authID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve auth: %w", err))
+		}
+	} else {
+		auth = f.NewAuth()
 	}
 
-	auth, err := models.Auths.Query(
-		models.SelectWhere.Auths.ID.EQ(user.AuthID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve auth: %w", err))
+	mods := []bobfactory.UserMod{bobfactory.UserMods.WithExistingAuth(authWithoutRelationships(auth))}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.ID(value))
 	}
-	user.R.Auth = auth
-	user.R.Loaded.Auth = true
+	if value, ok := setter.FirstName.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.FirstName(value))
+	}
+	if value, ok := setter.LastName.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.LastName(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.CreatedAt(value))
+	}
+
+	template := f.generated.NewUser(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.AuthID = omit.From(built.AuthID)
+	user, err := models.Users.Insert(
+		setter,
+		im.OnConflict(models.Users.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
+	if err != nil {
+		panic(fmt.Errorf("failed to create user with Bob factory: %w", err))
+	}
+	user.R = built.R
 
 	return user
 }

@@ -1,1 +1,1 @@
-CREATE INDEX ON getstronger.sets (exercise_id);
+CREATE INDEX ON public.sets (exercise_id);

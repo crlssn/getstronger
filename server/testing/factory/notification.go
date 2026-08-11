@@ -8,10 +8,10 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
-	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	bobtypes "github.com/stephenafamo/bob/types"
 
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 )
@@ -27,45 +27,63 @@ func (f *Factory) NewNotificationSlice(count int, opts ...NotificationOpt) model
 
 type NotificationOpt func(notification *models.NotificationSetter)
 
-func (f *Factory) NewNotification(opts ...NotificationOpt) *models.Notification {
-	m := &models.NotificationSetter{}
-
+func (f *Factory) NewNotification(opts ...NotificationOpt) *models.Notification { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
+	setter := &models.NotificationSetter{}
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
 	}
-
-	if m.UserID.IsUnset() {
-		m.UserID = omit.From(f.NewUser().ID)
-	}
-
-	if m.Type.IsUnset() {
-		m.Type = omit.From(repo.NotificationType(f.Faker.RandomString([]string{
+	if setter.Type.IsUnset() {
+		setter.Type = omit.From(repo.NotificationType(f.Faker.RandomString([]string{
 			repo.NotificationTypeFollow.String(),
 			repo.NotificationTypeWorkoutComment.String(),
 		})))
 	}
-
-	if m.Payload.IsUnset() {
-		m.Payload = omit.From(bobtypes.NewJSON[json.RawMessage]([]byte("{}")))
+	if setter.Payload.IsUnset() {
+		setter.Payload = omit.From(bobtypes.NewJSON[json.RawMessage]([]byte("{}")))
 	}
 
 	ctx := context.Background()
-	notification, err := models.Notifications.Insert(m,
-		im.OnConflict(models.Notifications.Columns.ID.Name()).
-			DoUpdate(im.SetExcluded(m.SetColumns()...)),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to insert notification: %w", err))
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		var err error
+		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve user: %w", err))
+		}
+	} else {
+		user = f.NewUser()
 	}
 
-	user, err := models.Users.Query(
-		models.SelectWhere.Users.ID.EQ(notification.UserID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	mods := []bobfactory.NotificationMod{bobfactory.NotificationMods.WithExistingUser(userWithoutRelationships(user))}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.NotificationMods.ID(value))
 	}
-	notification.R.User = user
-	notification.R.Loaded.User = true
+	if value, ok := setter.Type.Get(); ok {
+		mods = append(mods, bobfactory.NotificationMods.Type(value))
+	}
+	if value, ok := setter.Payload.Get(); ok {
+		mods = append(mods, bobfactory.NotificationMods.Payload(value))
+	}
+	if value, ok := setter.ReadAt.GetNull(); ok {
+		mods = append(mods, bobfactory.NotificationMods.ReadAt(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.NotificationMods.CreatedAt(value))
+	}
+
+	template := f.generated.NewNotification(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	notification, err := models.Notifications.Insert(
+		setter,
+		im.OnConflict(models.Notifications.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
+	if err != nil {
+		panic(fmt.Errorf("failed to create notification with Bob factory: %w", err))
+	}
+	notification.R = built.R
 
 	return notification
 }
@@ -78,18 +96,18 @@ func NotificationUserID(userID string) NotificationOpt {
 
 func NotificationPayload(payload repo.NotificationPayload) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
-		p, err := json.Marshal(payload)
+		value, err := json.Marshal(payload)
 		if err != nil {
 			panic(fmt.Errorf("failed to marshal payload: %w", err))
 		}
 
-		notification.Payload = omit.From(bobtypes.NewJSON[json.RawMessage](p))
+		notification.Payload = omit.From(bobtypes.NewJSON[json.RawMessage](value))
 	}
 }
 
-func NotificationType(t repo.NotificationType) NotificationOpt {
+func NotificationType(notificationType repo.NotificationType) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
-		notification.Type = omit.From(t)
+		notification.Type = omit.From(notificationType)
 	}
 }
 
@@ -105,8 +123,8 @@ func NotificationID(id string) NotificationOpt {
 	}
 }
 
-func NotificationCreatedAt(t time.Time) NotificationOpt {
+func NotificationCreatedAt(createdAt time.Time) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
-		notification.CreatedAt = omit.From(t.UTC())
+		notification.CreatedAt = omit.From(createdAt.UTC())
 	}
 }

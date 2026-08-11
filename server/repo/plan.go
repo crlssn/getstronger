@@ -69,13 +69,13 @@ func (r *repo) validatePlanRoutines(ctx context.Context, userID string, routineI
 }
 
 func (r *repo) replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error {
-	if _, err := r.sqlExec().ExecContext(ctx, `DELETE FROM getstronger.plan_routines WHERE plan_id = $1`, planID); err != nil {
+	if _, err := r.sqlExec().ExecContext(ctx, `DELETE FROM public.plan_routines WHERE plan_id = $1`, planID); err != nil {
 		return fmt.Errorf("plan routines delete: %w", err)
 	}
 
 	for position, routineID := range routineIDs {
 		if _, err := r.sqlExec().ExecContext(ctx, `
-INSERT INTO getstronger.plan_routines (plan_id, routine_id, position)
+INSERT INTO public.plan_routines (plan_id, routine_id, position)
 VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 			return fmt.Errorf("plan routine insert: %w", err)
 		}
@@ -97,7 +97,7 @@ func (r *repo) CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPla
 
 		planID = uuid.NewString()
 		if _, err := tx.exec().ExecContext(ctx, `
-INSERT INTO getstronger.plans (id, user_id, name)
+INSERT INTO public.plans (id, user_id, name)
 VALUES ($1, $2, $3)`, planID, p.UserID, p.Name); err != nil {
 			return fmt.Errorf("plan insert: %w", err)
 		}
@@ -141,7 +141,7 @@ func scanPlanBase(row interface{ Scan(dest ...any) error }) (*TrainingPlan, erro
 func (r *repo) loadPlanRoutines(ctx context.Context, plan *TrainingPlan) error {
 	routineRows, err := r.sqlExec().QueryContext(ctx, `
 SELECT routine_id
-FROM getstronger.plan_routines
+FROM public.plan_routines
 WHERE plan_id = $1
 ORDER BY position`, plan.ID)
 	if err != nil {
@@ -182,7 +182,7 @@ ORDER BY position`, plan.ID)
 
 const selectPlanColumns = `
 SELECT id, user_id, name, active, current_position, created_at, updated_at
-FROM getstronger.plans`
+FROM public.plans`
 
 func (r *repo) GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
 	return r.scanPlan(ctx, r.sqlExec().QueryRowContext(ctx,
@@ -253,7 +253,7 @@ func (r *repo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPla
 		}
 
 		if _, err = tx.exec().ExecContext(ctx, `
-UPDATE getstronger.plans
+UPDATE public.plans
 SET name = $1, current_position = $2, updated_at = (NOW() AT TIME ZONE 'UTC')
 WHERE id = $3 AND user_id = $4`, p.Name, currentPosition, p.ID, p.UserID); err != nil {
 			return fmt.Errorf("plan update: %w", err)
@@ -269,7 +269,7 @@ WHERE id = $3 AND user_id = $4`, p.Name, currentPosition, p.ID, p.UserID); err !
 
 func (r *repo) DeletePlan(ctx context.Context, planID, userID string) error {
 	result, err := r.sqlExec().ExecContext(ctx,
-		`DELETE FROM getstronger.plans WHERE id = $1 AND user_id = $2`, planID, userID)
+		`DELETE FROM public.plans WHERE id = $1 AND user_id = $2`, planID, userID)
 	if err != nil {
 		return fmt.Errorf("plan delete: %w", err)
 	}
@@ -289,11 +289,11 @@ func (r *repo) SetActivePlan(ctx context.Context, planID, userID string) (*Train
 			return fmt.Errorf("plan get before activation: %w", err)
 		}
 		if _, err := tx.exec().ExecContext(ctx,
-			`UPDATE getstronger.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
+			`UPDATE public.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
 			return fmt.Errorf("active plan pause: %w", err)
 		}
 		if _, err := tx.exec().ExecContext(ctx,
-			`UPDATE getstronger.plans SET active = TRUE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE id = $1 AND user_id = $2`, planID, userID); err != nil {
+			`UPDATE public.plans SET active = TRUE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE id = $1 AND user_id = $2`, planID, userID); err != nil {
 			return fmt.Errorf("active plan set: %w", err)
 		}
 		return nil
@@ -306,7 +306,7 @@ func (r *repo) SetActivePlan(ctx context.Context, planID, userID string) (*Train
 
 func (r *repo) PauseActivePlan(ctx context.Context, userID string) error {
 	if _, err := r.sqlExec().ExecContext(ctx,
-		`UPDATE getstronger.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
+		`UPDATE public.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
 		return fmt.Errorf("active plan pause: %w", err)
 	}
 	return nil
@@ -330,7 +330,7 @@ func (r *repo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineI
 
 		nextPosition := (plan.CurrentPosition + 1) % len(plan.Routines)
 		if _, err = tx.exec().ExecContext(ctx, `
-UPDATE getstronger.plans
+UPDATE public.plans
 SET current_position = $1, updated_at = (NOW() AT TIME ZONE 'UTC')
 WHERE id = $2 AND user_id = $3 AND active = TRUE`, nextPosition, planID, userID); err != nil {
 			return fmt.Errorf("plan advance: %w", err)

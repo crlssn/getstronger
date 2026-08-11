@@ -4,20 +4,18 @@ import (
 	"github.com/crlssn/getstronger/server/gen/models/enums"
 )
 
-// Bob names enum types and values after the schema-qualified Postgres type,
-// which reads poorly at call sites (GetstrongerEventTopicFolloweduser). These
-// aliases keep the domain vocabulary readable; they are the only names the rest
-// of the server should use.
+// Keep the domain vocabulary readable at call sites; Bob preserves the database
+// enum value casing when it generates Go identifiers.
 type (
-	EventTopic       = enums.GetstrongerEventTopic
-	NotificationType = enums.GetstrongerNotificationType
+	EventTopic       = enums.EventTopic
+	NotificationType = enums.NotificationType
 )
 
 const (
-	EventTopicFollowedUser         = enums.GetstrongerEventTopicFolloweduser
-	EventTopicRequestTraced        = enums.GetstrongerEventTopicRequesttraced
-	EventTopicWorkoutCommentPosted = enums.GetstrongerEventTopicWorkoutcommentposted
+	EventTopicFollowedUser         = enums.EventTopicFolloweduser
+	EventTopicRequestTraced        = enums.EventTopicRequesttraced
+	EventTopicWorkoutCommentPosted = enums.EventTopicWorkoutcommentposted
 
-	NotificationTypeFollow         = enums.GetstrongerNotificationTypeFollow
-	NotificationTypeWorkoutComment = enums.GetstrongerNotificationTypeWorkoutcomment
+	NotificationTypeFollow         = enums.NotificationTypeFollow
+	NotificationTypeWorkoutComment = enums.NotificationTypeWorkoutcomment
 )

@@ -7,10 +7,10 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/google/uuid"
-	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	bobtypes "github.com/stephenafamo/bob/types"
 
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 )
 
@@ -23,39 +23,59 @@ func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) models.RoutineS
 	return slice
 }
 
-type RoutineOpt func(event *models.RoutineSetter)
+type RoutineOpt func(routine *models.RoutineSetter)
 
 func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
-	m := &models.RoutineSetter{
+	setter := &models.RoutineSetter{
 		ID:    omit.From(uuid.NewString()),
 		Title: omit.From(f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"})),
 	}
-
 	for _, opt := range opts {
-		opt(m)
-	}
-
-	if m.UserID.IsUnset() {
-		m.UserID = omit.From(f.NewUser().ID)
+		opt(setter)
 	}
 
 	ctx := context.Background()
-	routine, err := models.Routines.Insert(m,
-		im.OnConflict(models.Routines.Columns.ID.Name()).
-			DoUpdate(im.SetExcluded(m.SetColumns()...)),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to insert routine: %w", err))
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		var err error
+		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve user: %w", err))
+		}
+	} else {
+		user = f.NewUser()
 	}
 
-	user, err := models.Users.Query(
-		models.SelectWhere.Users.ID.EQ(routine.UserID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	mods := []bobfactory.RoutineMod{bobfactory.RoutineMods.WithExistingUser(userWithoutRelationships(user))}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.RoutineMods.ID(value))
 	}
-	routine.R.User = user
-	routine.R.Loaded.User = true
+	if value, ok := setter.Title.Get(); ok {
+		mods = append(mods, bobfactory.RoutineMods.Title(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.RoutineMods.CreatedAt(value))
+	}
+	if value, ok := setter.DeletedAt.GetNull(); ok {
+		mods = append(mods, bobfactory.RoutineMods.DeletedAt(value))
+	}
+	if value, ok := setter.ExerciseOrder.Get(); ok {
+		mods = append(mods, bobfactory.RoutineMods.ExerciseOrder(value))
+	}
+
+	template := f.generated.NewRoutine(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	routine, err := models.Routines.Insert(
+		setter,
+		im.OnConflict(models.Routines.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
+	if err != nil {
+		panic(fmt.Errorf("failed to create routine with Bob factory: %w", err))
+	}
+	routine.R = built.R
 
 	return routine
 }
@@ -89,20 +109,11 @@ func RoutineExerciseOrder(exerciseIDs []string) RoutineOpt {
 }
 
 func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*models.Exercise) {
-	if len(exercises) == 0 {
-		return
-	}
-
-	links := make([]*models.ExerciseRoutineSetter, 0, len(exercises))
+	ctx := context.Background()
 	for _, exercise := range exercises {
-		links = append(links, &models.ExerciseRoutineSetter{
-			RoutineID:  omit.From(routine.ID),
-			ExerciseID: omit.From(exercise.ID),
-		})
-	}
-
-	if _, err := models.ExerciseRoutines.Insert(bob.ToMods(links...)).
-		Exec(context.Background(), bob.NewDB(f.db)); err != nil {
-		panic(fmt.Errorf("failed to add exercises to routine: %w", err))
+		f.generated.NewExercisesRoutine(
+			bobfactory.ExercisesRoutineMods.WithExistingRoutine(routineWithoutRelationships(routine)),
+			bobfactory.ExercisesRoutineMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
+		).MustCreate(ctx, f.exec)
 	}
 }

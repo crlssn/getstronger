@@ -8,9 +8,9 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	"github.com/google/uuid"
-	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 )
 
@@ -25,40 +25,66 @@ func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) models.WorkoutS
 
 type WorkoutOpt func(workout *models.WorkoutSetter)
 
-func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout {
+func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
 	startedAt := time.Now().UTC()
-	m := &models.WorkoutSetter{
+	setter := &models.WorkoutSetter{
 		ID:         omit.From(uuid.NewString()),
 		Name:       omit.From(f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"})),
 		StartedAt:  omit.From(startedAt),
 		FinishedAt: omit.From(startedAt.Add(time.Hour)),
 	}
-
 	for _, opt := range opts {
-		opt(m)
-	}
-
-	if m.UserID.IsUnset() {
-		m.UserID = omit.From(f.NewUser().ID)
+		opt(setter)
 	}
 
 	ctx := context.Background()
-	workout, err := models.Workouts.Insert(m,
-		im.OnConflict(models.Workouts.Columns.ID.Name()).
-			DoUpdate(im.SetExcluded(m.SetColumns()...)),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to insert workout: %w", err))
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		var err error
+		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve user: %w", err))
+		}
+	} else {
+		user = f.NewUser()
 	}
 
-	user, err := models.Users.Query(
-		models.SelectWhere.Users.ID.EQ(workout.UserID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
+	mods := []bobfactory.WorkoutMod{bobfactory.WorkoutMods.WithExistingUser(userWithoutRelationships(user))}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.ID(value))
 	}
-	workout.R.User = user
-	workout.R.Loaded.User = true
+	if value, ok := setter.FinishedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.FinishedAt(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.CreatedAt(value))
+	}
+	if value, ok := setter.Name.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.Name(value))
+	}
+	if value, ok := setter.StartedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.StartedAt(value))
+	}
+	if value, ok := setter.Note.GetNull(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.Note(value))
+	}
+	if value, ok := setter.RoutineID.GetNull(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.RoutineID(value))
+	}
+
+	template := f.generated.NewWorkout(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	workout, err := models.Workouts.Insert(
+		setter,
+		im.OnConflict(models.Workouts.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
+	if err != nil {
+		panic(fmt.Errorf("failed to create workout with Bob factory: %w", err))
+	}
+	workout.R = built.R
 
 	return workout
 }
@@ -117,49 +143,65 @@ func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) m
 type WorkoutCommentOpt func(comment *models.WorkoutCommentSetter)
 
 func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutComment {
-	m := &models.WorkoutCommentSetter{
+	setter := &models.WorkoutCommentSetter{
 		ID:      omit.From(uuid.NewString()),
 		Comment: omit.From(f.Faker.Sentence(5)), //nolint:mnd
 	}
-
 	for _, opt := range opts {
-		opt(m)
-	}
-
-	if m.UserID.IsUnset() {
-		m.UserID = omit.From(f.NewUser().ID)
-	}
-
-	if m.WorkoutID.IsUnset() {
-		m.WorkoutID = omit.From(f.NewWorkout().ID)
+		opt(setter)
 	}
 
 	ctx := context.Background()
-	comment, err := models.WorkoutComments.Insert(m,
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		var err error
+		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve user: %w", err))
+		}
+	} else {
+		user = f.NewUser()
+	}
+
+	var workout *models.Workout
+	if workoutID, ok := setter.WorkoutID.Get(); ok {
+		var err error
+		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve workout: %w", err))
+		}
+	} else {
+		workout = f.NewWorkout()
+	}
+
+	mods := []bobfactory.WorkoutCommentMod{
+		bobfactory.WorkoutCommentMods.WithExistingUser(userWithoutRelationships(user)),
+		bobfactory.WorkoutCommentMods.WithExistingWorkout(workoutWithoutRelationships(workout)),
+	}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutCommentMods.ID(value))
+	}
+	if value, ok := setter.Comment.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutCommentMods.Comment(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutCommentMods.CreatedAt(value))
+	}
+
+	template := f.generated.NewWorkoutComment(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	setter.WorkoutID = omit.From(built.WorkoutID)
+	comment, err := models.WorkoutComments.Insert(
+		setter,
 		im.OnConflict(models.WorkoutComments.Columns.ID.Name()).
-			DoUpdate(im.SetExcluded(m.SetColumns()...)),
-	).One(ctx, bob.NewDB(f.db))
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to insert workout comment: %w", err))
+		panic(fmt.Errorf("failed to create workout comment with Bob factory: %w", err))
 	}
-
-	user, err := models.Users.Query(
-		models.SelectWhere.Users.ID.EQ(comment.UserID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
-	}
-	comment.R.User = user
-	comment.R.Loaded.User = true
-
-	workout, err := models.Workouts.Query(
-		models.SelectWhere.Workouts.ID.EQ(comment.WorkoutID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve workout: %w", err))
-	}
-	comment.R.Workout = workout
-	comment.R.Loaded.Workout = true
+	comment.R = built.R
 
 	return comment
 }

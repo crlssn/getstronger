@@ -12,7 +12,7 @@ node = "22.23.2"
     depends = ["go"]
 }
 "go:github.com/stephenafamo/bob/gen/bobgen-psql" = {
-    version = "v0.49.0",
+    version = "v0.50.0",
     depends = ["go"]
 }
 "go:go.uber.org/mock/mockgen" = {

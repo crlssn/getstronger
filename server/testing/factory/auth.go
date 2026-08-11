@@ -8,9 +8,9 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	"github.com/google/uuid"
-	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 )
@@ -24,28 +24,58 @@ func (f *Factory) NewAuthSlice(count int, opts ...AuthOpt) models.AuthSlice {
 	return slice
 }
 
-type AuthOpt func(event *models.AuthSetter)
+type AuthOpt func(auth *models.AuthSetter)
 
-func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth {
-	m := &models.AuthSetter{
+func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
+	setter := &models.AuthSetter{
 		ID:    omit.From(uuid.NewString()),
 		Email: omit.From(fmt.Sprintf("%s-%s", uuid.NewString(), f.Faker.Email())),
 	}
-
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
+	}
+	if setter.Password.IsUnset() {
+		setter.Password = omit.From(repo.MustHashPassword("password"))
 	}
 
-	if m.Password.IsUnset() {
-		m.Password = omit.From(repo.MustHashPassword("password"))
+	mods := make([]bobfactory.AuthMod, 0)
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.AuthMods.ID(value))
+	}
+	if value, ok := setter.Email.Get(); ok {
+		mods = append(mods, bobfactory.AuthMods.Email(value))
+	}
+	if value, ok := setter.Password.Get(); ok {
+		mods = append(mods, bobfactory.AuthMods.Password(value))
+	}
+	if value, ok := setter.RefreshToken.GetNull(); ok {
+		mods = append(mods, bobfactory.AuthMods.RefreshToken(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.AuthMods.CreatedAt(value))
+	}
+	if value, ok := setter.EmailVerified.Get(); ok {
+		mods = append(mods, bobfactory.AuthMods.EmailVerified(value))
+	}
+	if value, ok := setter.EmailToken.Get(); ok {
+		mods = append(mods, bobfactory.AuthMods.EmailToken(value))
+	}
+	if value, ok := setter.PasswordResetToken.GetNull(); ok {
+		mods = append(mods, bobfactory.AuthMods.PasswordResetToken(value))
+	}
+	if value, ok := setter.PasswordResetTokenValidUntil.GetNull(); ok {
+		mods = append(mods, bobfactory.AuthMods.PasswordResetTokenValidUntil(value))
 	}
 
-	auth, err := models.Auths.Insert(m,
+	template := f.generated.NewAuth(mods...)
+	setter = template.BuildSetter()
+	auth, err := models.Auths.Insert(
+		setter,
 		im.OnConflict(models.Auths.Columns.ID.Name()).
-			DoUpdate(im.SetExcluded(m.SetColumns()...)),
-	).One(context.Background(), bob.NewDB(f.db))
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(context.Background(), f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to insert user: %w", err))
+		panic(fmt.Errorf("failed to create auth with Bob factory: %w", err))
 	}
 
 	return auth
@@ -84,7 +114,6 @@ func AuthRefreshToken(token string) AuthOpt {
 func AuthPasswordResetToken(token string, ttl time.Duration) AuthOpt {
 	return func(m *models.AuthSetter) {
 		m.PasswordResetToken = omitnull.From(token)
-		// Truncate to microseconds to unify precision across different databases.
 		m.PasswordResetTokenValidUntil = omitnull.From(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))
 	}
 }

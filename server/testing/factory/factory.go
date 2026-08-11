@@ -9,22 +9,58 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stephenafamo/bob"
 
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 )
 
 type Factory struct {
 	Faker *gofakeit.Faker
 
-	db  *sql.DB
-	now time.Time
+	generated *bobfactory.Factory
+	exec      bob.Executor
+	now       time.Time
 }
 
 func NewFactory(db *sql.DB) *Factory {
 	return &Factory{
-		db:    db,
-		Faker: gofakeit.New(0),
+		generated: bobfactory.New(),
+		exec:      bob.NewDB(db),
+		Faker:     gofakeit.New(0),
 	}
+}
+
+// Bob's WithExisting mods copy loaded relationships recursively. Strip the
+// relationship cache so bidirectional models cannot recurse into each other.
+func authWithoutRelationships(model *models.Auth) *models.Auth {
+	copy := *model
+	copy.R = models.Auth{}.R
+	return &copy
+}
+
+func userWithoutRelationships(model *models.User) *models.User {
+	copy := *model
+	copy.R = models.User{}.R
+	return &copy
+}
+
+func routineWithoutRelationships(model *models.Routine) *models.Routine {
+	copy := *model
+	copy.R = models.Routine{}.R
+	return &copy
+}
+
+func exerciseWithoutRelationships(model *models.Exercise) *models.Exercise {
+	copy := *model
+	copy.R = models.Exercise{}.R
+	return &copy
+}
+
+func workoutWithoutRelationships(model *models.Workout) *models.Workout {
+	copy := *model
+	copy.R = models.Workout{}.R
+	return &copy
 }
 
 type SeedUser struct {

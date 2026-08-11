@@ -1,2 +1,2 @@
-ALTER TABLE getstronger.workouts ALTER COLUMN date TYPE TIMESTAMP WITHOUT TIME ZONE;
-ALTER TABLE getstronger.workouts RENAME COLUMN date TO finished_at;
+ALTER TABLE public.workouts ALTER COLUMN date TYPE TIMESTAMP WITHOUT TIME ZONE;
+ALTER TABLE public.workouts RENAME COLUMN date TO finished_at;

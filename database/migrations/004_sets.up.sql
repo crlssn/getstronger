@@ -1,1 +1,1 @@
-ALTER TABLE getstronger.sets ALTER COLUMN weight TYPE REAL;
+ALTER TABLE public.sets ALTER COLUMN weight TYPE REAL;

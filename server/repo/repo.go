@@ -359,8 +359,8 @@ func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 			}
 		}
 
-		if _, err = models.ExerciseRoutines.Delete(
-			models.DeleteWhere.ExerciseRoutines.ExerciseID.EQ(exercise.ID),
+		if _, err = models.ExercisesRoutines.Delete(
+			models.DeleteWhere.ExercisesRoutines.ExerciseID.EQ(exercise.ID),
 		).Exec(ctx, tx.bobExec()); err != nil {
 			return fmt.Errorf("exercise routines set: %w", err)
 		}
@@ -588,8 +588,8 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 // setRoutineExercises replaces a routine's exercise links, the equivalent of
 // SQLBoiler's SetExercises.
 func setRoutineExercises(ctx context.Context, exec bob.Executor, routineID string, exercises models.ExerciseSlice) error {
-	if _, err := models.ExerciseRoutines.Delete(
-		models.DeleteWhere.ExerciseRoutines.RoutineID.EQ(routineID),
+	if _, err := models.ExercisesRoutines.Delete(
+		models.DeleteWhere.ExercisesRoutines.RoutineID.EQ(routineID),
 	).Exec(ctx, exec); err != nil {
 		return fmt.Errorf("routine exercises delete: %w", err)
 	}
@@ -598,15 +598,15 @@ func setRoutineExercises(ctx context.Context, exec bob.Executor, routineID strin
 		return nil
 	}
 
-	links := make([]*models.ExerciseRoutineSetter, 0, len(exercises))
+	links := make([]*models.ExercisesRoutineSetter, 0, len(exercises))
 	for _, exercise := range exercises {
-		links = append(links, &models.ExerciseRoutineSetter{
+		links = append(links, &models.ExercisesRoutineSetter{
 			RoutineID:  omit.From(routineID),
 			ExerciseID: omit.From(exercise.ID),
 		})
 	}
 
-	if _, err := models.ExerciseRoutines.Insert(bob.ToMods(links...)).Exec(ctx, exec); err != nil {
+	if _, err := models.ExercisesRoutines.Insert(bob.ToMods(links...)).Exec(ctx, exec); err != nil {
 		return fmt.Errorf("routine exercises insert: %w", err)
 	}
 
@@ -778,7 +778,7 @@ func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 }
 
 func (r *repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
-	if _, err := models.ExerciseRoutines.Insert(&models.ExerciseRoutineSetter{
+	if _, err := models.ExercisesRoutines.Insert(&models.ExercisesRoutineSetter{
 		RoutineID:  omit.From(routine.ID),
 		ExerciseID: omit.From(exercise.ID),
 	}).Exec(ctx, r.bobExec()); err != nil {
@@ -788,9 +788,9 @@ func (r *repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exerci
 }
 
 func (r *repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
-	if _, err := models.ExerciseRoutines.Delete(
-		models.DeleteWhere.ExerciseRoutines.RoutineID.EQ(routine.ID),
-		models.DeleteWhere.ExerciseRoutines.ExerciseID.EQ(exercise.ID),
+	if _, err := models.ExercisesRoutines.Delete(
+		models.DeleteWhere.ExercisesRoutines.RoutineID.EQ(routine.ID),
+		models.DeleteWhere.ExercisesRoutines.ExerciseID.EQ(exercise.ID),
 	).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("routine exercises remove: %w", err)
 	}
@@ -1067,10 +1067,10 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 
 func (r *repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
 	rawQuery := `
-SELECT id FROM getstronger.sets 
+SELECT id FROM public.sets
 WHERE (exercise_id, workout_id) IN (
 	SELECT DISTINCT ON (exercise_id) exercise_id, workout_id	
-	FROM getstronger.sets
+	FROM public.sets
 	WHERE exercise_id = ANY($1)
 	ORDER BY exercise_id, created_at DESC
 )
@@ -1108,8 +1108,8 @@ func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (models.
 
 	rawQuery := `
 	SELECT DISTINCT ON (sets.exercise_id) sets.id
-	FROM getstronger.sets
-	JOIN getstronger.exercises ON exercises.id = sets.exercise_id
+	FROM public.sets
+	JOIN public.exercises ON exercises.id = sets.exercise_id
 	WHERE sets.workout_id = ANY ($1)
 	ORDER BY
 		sets.exercise_id,

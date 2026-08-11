@@ -97,7 +97,8 @@ BEGIN
     SELECT STRING_AGG(FORMAT('%I.%I', schemaname, tablename), ', ')
     INTO tables_to_truncate
     FROM pg_tables
-    WHERE schemaname = 'getstronger';
+    WHERE schemaname = 'public'
+      AND tablename <> 'schema_migrations';
 
     IF tables_to_truncate IS NOT NULL THEN
         EXECUTE 'TRUNCATE TABLE ' || tables_to_truncate || ' RESTART IDENTITY CASCADE';
@@ -105,7 +106,7 @@ BEGIN
 END $$;`
 
 	if _, err := database.ExecContext(ctx, query); err != nil {
-		return fmt.Errorf("truncate getstronger schema: %w", err)
+		return fmt.Errorf("truncate public schema: %w", err)
 	}
 
 	return nil

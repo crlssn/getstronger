@@ -7,9 +7,9 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/google/uuid"
-	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/safe"
 )
@@ -25,61 +25,88 @@ func (f *Factory) NewSetSlice(count int, opts ...SetOpt) models.SetSlice {
 
 type SetOpt func(set *models.SetSetter)
 
-func (f *Factory) NewSet(opts ...SetOpt) *models.Set {
-	maxReps := 10
-	maxWeight := 100
-
-	m := &models.SetSetter{
+func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
+	const (
+		maxReps   = 10
+		maxWeight = 100
+	)
+	setter := &models.SetSetter{
 		Reps:   omit.From(safe.Int32FromInt(f.Faker.IntRange(1, maxReps))),
 		Weight: omit.From(float64(f.Faker.IntRange(1, maxWeight))),
 	}
-
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
 	}
-
-	if m.ID.IsUnset() {
-		m.ID = omit.From(uuid.NewString())
+	if setter.ID.IsUnset() {
+		setter.ID = omit.From(uuid.NewString())
 	}
-
-	if m.UserID.IsUnset() {
-		m.UserID = omit.From(f.NewUser().ID)
-	}
-
-	if m.WorkoutID.IsUnset() {
-		m.WorkoutID = omit.From(f.NewWorkout().ID)
-	}
-
-	if m.ExerciseID.IsUnset() {
-		m.ExerciseID = omit.From(f.NewExercise().ID)
+	if setter.UserID.IsUnset() {
+		setter.UserID = omit.From(f.NewUser().ID)
 	}
 
 	ctx := context.Background()
-	set, err := models.Sets.Insert(m,
+	var workout *models.Workout
+	if workoutID, ok := setter.WorkoutID.Get(); ok {
+		var err error
+		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve workout: %w", err))
+		}
+	} else {
+		workout = f.NewWorkout()
+	}
+
+	var exercise *models.Exercise
+	if exerciseID, ok := setter.ExerciseID.Get(); ok {
+		var err error
+		exercise, err = models.Exercises.Query(models.SelectWhere.Exercises.ID.EQ(exerciseID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve exercise: %w", err))
+		}
+	} else {
+		exercise = f.NewExercise()
+	}
+
+	mods := []bobfactory.SetMod{
+		bobfactory.SetMods.WithExistingWorkout(workoutWithoutRelationships(workout)),
+		bobfactory.SetMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
+	}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.ID(value))
+	}
+	if value, ok := setter.Weight.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.Weight(value))
+	}
+	if value, ok := setter.Reps.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.Reps(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.CreatedAt(value))
+	}
+	if value, ok := setter.UserID.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.UserID(value))
+	}
+	if value, ok := setter.Distance.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.Distance(value))
+	}
+	if value, ok := setter.DurationSeconds.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.DurationSeconds(value))
+	}
+
+	template := f.generated.NewSet(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.WorkoutID = omit.From(built.WorkoutID)
+	setter.ExerciseID = omit.From(built.ExerciseID)
+	set, err := models.Sets.Insert(
+		setter,
 		im.OnConflict(models.Sets.Columns.ID.Name()).
-			DoUpdate(im.SetExcluded(m.SetColumns()...)),
-	).One(ctx, bob.NewDB(f.db))
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to insert set: %w", err))
+		panic(fmt.Errorf("failed to create set with Bob factory: %w", err))
 	}
-
-	workout, err := models.Workouts.Query(
-		models.SelectWhere.Workouts.ID.EQ(set.WorkoutID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve workout: %w", err))
-	}
-	set.R.Workout = workout
-	set.R.Loaded.Workout = true
-
-	exercise, err := models.Exercises.Query(
-		models.SelectWhere.Exercises.ID.EQ(set.ExerciseID),
-	).One(ctx, bob.NewDB(f.db))
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve exercise: %w", err))
-	}
-	set.R.Exercise = exercise
-	set.R.Loaded.Exercise = true
+	set.R = built.R
 
 	return set
 }

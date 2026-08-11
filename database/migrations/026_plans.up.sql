@@ -1,7 +1,7 @@
-CREATE TABLE getstronger.plans
+CREATE TABLE public.plans
 (
     id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    user_id          UUID             NOT NULL REFERENCES getstronger.users (id),
+    user_id          UUID             NOT NULL REFERENCES public.users (id),
     name             VARCHAR          NOT NULL,
     active           BOOLEAN          NOT NULL DEFAULT FALSE,
     current_position INTEGER          NOT NULL DEFAULT 0 CHECK (current_position >= 0),
@@ -10,16 +10,16 @@ CREATE TABLE getstronger.plans
 );
 
 CREATE UNIQUE INDEX plans_one_active_per_user
-    ON getstronger.plans (user_id)
+    ON public.plans (user_id)
     WHERE active;
 
-CREATE TABLE getstronger.plan_routines
+CREATE TABLE public.plan_routines
 (
-    plan_id    UUID    NOT NULL REFERENCES getstronger.plans (id) ON DELETE CASCADE,
-    routine_id UUID    NOT NULL REFERENCES getstronger.routines (id),
+    plan_id    UUID    NOT NULL REFERENCES public.plans (id) ON DELETE CASCADE,
+    routine_id UUID    NOT NULL REFERENCES public.routines (id),
     position   INTEGER NOT NULL CHECK (position >= 0),
     PRIMARY KEY (plan_id, position),
     UNIQUE (plan_id, routine_id)
 );
 
-CREATE INDEX plan_routines_routine_id_idx ON getstronger.plan_routines (routine_id);
+CREATE INDEX plan_routines_routine_id_idx ON public.plan_routines (routine_id);

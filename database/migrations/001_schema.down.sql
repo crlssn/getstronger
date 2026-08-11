@@ -1,1 +1,17 @@
-DROP SCHEMA IF EXISTS getstronger CASCADE;
+DROP TABLE IF EXISTS public.plan_routines CASCADE;
+DROP TABLE IF EXISTS public.plans CASCADE;
+DROP TABLE IF EXISTS public.events CASCADE;
+DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.traces CASCADE;
+DROP TABLE IF EXISTS public.workout_comments CASCADE;
+DROP TABLE IF EXISTS public.followers CASCADE;
+DROP TABLE IF EXISTS public.sets CASCADE;
+DROP TABLE IF EXISTS public.workouts CASCADE;
+DROP TABLE IF EXISTS public.exercises_routines CASCADE;
+DROP TABLE IF EXISTS public.routine_exercises CASCADE;
+DROP TABLE IF EXISTS public.exercises CASCADE;
+DROP TABLE IF EXISTS public.routines CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
+DROP TABLE IF EXISTS public.auth CASCADE;
+DROP TYPE IF EXISTS public.event_topic;
+DROP TYPE IF EXISTS public.notification_type;
