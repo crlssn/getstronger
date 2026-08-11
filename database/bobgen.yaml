@@ -3,8 +3,6 @@ psql:
   except:
     schema_migrations:
 
-no_tests: true
-
 plugins:
   models:
     destination: server/gen/models
@@ -15,4 +13,4 @@ plugins:
   factory:
     destination: server/gen/factory
   dbinfo:
-    disabled: true
+    destination: server/gen/dbinfo
