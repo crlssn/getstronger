@@ -458,19 +458,22 @@ h2 {
   @apply size-5;
 }
 .empty-card {
-  @apply grid justify-items-start gap-4;
+  @apply grid justify-items-start gap-4 border-transparent bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-lg shadow-indigo-200;
+}
+.empty-card h2 {
+  @apply text-white;
 }
 .empty-icon {
-  @apply grid size-12 place-items-center rounded-2xl bg-indigo-50 text-indigo-600;
+  @apply grid size-12 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/20;
 }
 .empty-icon svg {
   @apply size-6;
 }
 .empty-card p {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-indigo-100;
 }
 .primary-link {
-  @apply inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50;
 }
 .loading-card {
   @apply space-y-4;
