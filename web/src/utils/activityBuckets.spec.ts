@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { DateTime } from 'luxon'
 
-import { activityBucketFor, activityBucketLabelKey, activityBucketOrder } from './activityBuckets'
+import {
+  activityBucketFor,
+  activityBucketLabelKey,
+  activityBucketOrder,
+  routineActivityBucketFor,
+  routineActivityBucketLabelKey,
+  routineActivityBucketOrder,
+} from './activityBuckets'
 import { en, sv } from '@/i18n/messages'
 
 const now = DateTime.fromISO('2026-08-09T12:00:00')
@@ -40,6 +47,27 @@ describe('activityBucketFor', () => {
   it('names every bucket with a key present in both locales', () => {
     for (const bucket of activityBucketOrder) {
       const key = activityBucketLabelKey(bucket).replace('activity.', '')
+      expect(en.activity).toHaveProperty(key)
+      expect(sv.activity).toHaveProperty(key)
+    }
+  })
+})
+
+describe('routineActivityBucketFor', () => {
+  it.each([
+    ['a routine used today', now, 'today'],
+    ['a routine used last week', now.minus({ days: 7 }), 'week'],
+    ['a routine used this month', now.minus({ days: 29 }), 'month'],
+    ['a routine unused for 30 days', now.minus({ days: 30 }), 'revisit'],
+    ['a routine unused for longer', now.minus({ years: 1 }), 'revisit'],
+    ['an untried routine', undefined, 'revisit'],
+  ])('buckets %s as %s', (_label, performedAt, expected) => {
+    expect(routineActivityBucketFor(performedAt, now)).toBe(expected)
+  })
+
+  it('names every routine bucket with a key present in both locales', () => {
+    for (const bucket of routineActivityBucketOrder) {
+      const key = routineActivityBucketLabelKey(bucket).replace('activity.', '')
       expect(en.activity).toHaveProperty(key)
       expect(sv.activity).toHaveProperty(key)
     }

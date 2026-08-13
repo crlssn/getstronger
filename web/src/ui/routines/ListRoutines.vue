@@ -16,10 +16,10 @@ import { useDashboardStore } from '@/stores/dashboard'
 import usePagination from '@/utils/usePagination'
 import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 import {
-  activityBucketFor,
-  activityBucketLabelKey,
-  activityBucketOrder,
-  type ActivityBucket,
+  routineActivityBucketFor,
+  routineActivityBucketLabelKey,
+  routineActivityBucketOrder,
+  type RoutineActivityBucket,
 } from '@/utils/activityBuckets'
 
 const { t } = useI18n()
@@ -52,24 +52,25 @@ const exerciseSummary = (routine: Routine) => {
     : names.join(' · ')
 }
 
-// Grouped by when the routine was last performed, most recent first.
+// Grouped by when the routine was last performed, most recent first. Routines
+// unused for 30 days join untried routines in the final group.
 const groupedRoutines = computed(() => {
-  const buckets = new Map<ActivityBucket, { routine: Routine; performedAt?: number }[]>()
+  const buckets = new Map<RoutineActivityBucket, { routine: Routine; performedAt?: number }[]>()
 
   for (const routine of filteredRoutines.value) {
     const performedAt = activityStore.routineLastPerformedFor(routine.id)
-    const bucket = activityBucketFor(performedAt)
+    const bucket = routineActivityBucketFor(performedAt)
     const entry = { routine, performedAt: performedAt?.toMillis() }
     const group = buckets.get(bucket)
     if (group) group.push(entry)
     else buckets.set(bucket, [entry])
   }
 
-  return activityBucketOrder
+  return routineActivityBucketOrder
     .filter((bucket) => buckets.has(bucket))
     .map((bucket) => ({
       bucket,
-      labelKey: activityBucketLabelKey(bucket),
+      labelKey: routineActivityBucketLabelKey(bucket),
       routines: (buckets.get(bucket) ?? [])
         .sort((first, second) => {
           if (first.performedAt !== second.performedAt) {

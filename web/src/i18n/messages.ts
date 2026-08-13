@@ -230,6 +230,7 @@ export const en = {
     month: 'Last month',
     older: 'Older than a month',
     never: 'Not tried yet',
+    revisit: 'Try or revisit',
   },
   routine: {
     noExercises: 'No exercises yet',
@@ -533,6 +534,7 @@ export const sv = {
     month: 'Senaste månaden',
     older: 'Äldre än en månad',
     never: 'Inte provad än',
+    revisit: 'Prova eller återuppta',
   },
   routine: {
     noExercises: 'Inga övningar än',

@@ -1,11 +1,35 @@
 import { DateTime } from 'luxon'
 
 export type ActivityBucket = 'today' | 'week' | 'month' | 'older' | 'never'
+export type RoutineActivityBucket = 'today' | 'week' | 'month' | 'revisit'
 
 /** Ordered most-recent first; render groups in this order. */
 export const activityBucketOrder: ActivityBucket[] = ['today', 'week', 'month', 'older', 'never']
 
 export const activityBucketLabelKey = (bucket: ActivityBucket) => `activity.${bucket}`
+
+/** Routines unused for 30 calendar days join untried routines in one group. */
+export const routineActivityBucketFor = (
+  performedAt: DateTime | undefined,
+  now: DateTime = DateTime.now(),
+): RoutineActivityBucket => {
+  if (!performedAt?.isValid) return 'revisit'
+
+  const daysAgo = now.startOf('day').diff(performedAt.startOf('day'), 'days').days
+  if (daysAgo >= 30) return 'revisit'
+
+  const bucket = activityBucketFor(performedAt, now)
+  return bucket === 'older' || bucket === 'never' ? 'revisit' : bucket
+}
+
+export const routineActivityBucketOrder: RoutineActivityBucket[] = [
+  'today',
+  'week',
+  'month',
+  'revisit',
+]
+
+export const routineActivityBucketLabelKey = (bucket: RoutineActivityBucket) => `activity.${bucket}`
 
 /**
  * Buckets a last-performed timestamp for grouping.
