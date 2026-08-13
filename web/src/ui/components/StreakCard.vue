@@ -54,7 +54,8 @@ const weekBlocks = computed(() =>
         <strong>{{ title }}</strong>
       </div>
       <span v-if="streak > 0" class="streak-count"
-        ><strong>{{ streak }}</strong><small>{{ streak === 1 ? 'week' : 'weeks' }}</small></span
+        ><strong>{{ streak }}</strong
+        ><small>{{ streak === 1 ? 'week' : 'weeks' }}</small></span
       >
     </header>
 
@@ -71,7 +72,9 @@ const weekBlocks = computed(() =>
         <span v-else aria-hidden="true"></span>
       </span>
     </div>
-    <div class="track-labels" aria-hidden="true"><span>4 weeks ago</span><span>This week</span></div>
+    <div class="track-labels" aria-hidden="true">
+      <span>4 weeks ago</span><span>This week</span>
+    </div>
     <p>{{ message }}</p>
   </section>
 </template>
@@ -89,7 +92,7 @@ const weekBlocks = computed(() =>
   @apply grid size-11 place-items-center rounded-xl bg-slate-100 text-slate-500;
 }
 .streak-card.active .streak-icon {
-  @apply bg-amber-100 text-amber-600;
+  @apply bg-green-100 text-green-800;
 }
 .streak-icon svg {
   @apply size-6;
@@ -111,10 +114,10 @@ const weekBlocks = computed(() =>
   @apply grid h-9 place-items-center rounded-lg bg-stone-200 text-stone-400;
 }
 .week-block.complete {
-  @apply bg-amber-400 text-stone-950;
+  @apply bg-green-800 text-white;
 }
 .week-block.current:not(.complete) {
-  @apply bg-amber-50 ring-2 ring-inset ring-amber-400;
+  @apply bg-green-50 ring-2 ring-inset ring-green-700;
 }
 .week-block > svg {
   @apply size-4 stroke-[2.5];
@@ -129,10 +132,10 @@ const weekBlocks = computed(() =>
   @apply mt-3 text-xs text-slate-500;
 }
 .streak-card.active:not(.safe) > p {
-  @apply font-medium text-amber-700;
+  @apply font-medium text-green-800;
 }
 .streak-count {
-  @apply min-w-12 rounded-xl bg-amber-50 px-2.5 py-1.5 text-center text-amber-800;
+  @apply min-w-12 rounded-xl bg-green-50 px-2.5 py-1.5 text-center text-green-900;
 }
 .streak-count strong {
   @apply text-base font-bold leading-none;
