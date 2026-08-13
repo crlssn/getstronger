@@ -1505,16 +1505,16 @@ func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotification
 	return count, nil
 }
 
-func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID, notificationID string) error {
+func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
 	setReadAt := um.SetCol(models.Notifications.Columns.ReadAt.Name()).ToArg(time.Now().UTC())
 	ownedByUser := models.UpdateWhere.Notifications.UserID.EQ(uuidFromString(userID))
 	unread := models.UpdateWhere.Notifications.ReadAt.IsNull()
 
 	updateMods := []bob.Mod[*dialect.UpdateQuery]{setReadAt, ownedByUser, unread}
-	if notificationID != "" {
+	if notificationID != nil {
 		updateMods = append(
 			updateMods,
-			models.UpdateWhere.Notifications.ID.EQ(uuidFromString(notificationID)),
+			models.UpdateWhere.Notifications.ID.EQ(uuidFromString(*notificationID)),
 		)
 	}
 

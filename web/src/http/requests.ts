@@ -521,7 +521,7 @@ export const listNotifications = async (
 }
 
 export const markNotificationAsRead = async (
-  notificationId = '',
+  notificationId?: string,
   ignoreErrors = false,
 ): Promise<MarkNotificationsAsReadResponse | void> => {
   const req = create(MarkNotificationsAsReadRequestSchema, { notificationId })

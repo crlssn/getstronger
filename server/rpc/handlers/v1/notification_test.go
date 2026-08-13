@@ -62,10 +62,11 @@ func (s *notificationSuite) TestMarkSingleNotificationAsReadNotifiesStreams() {
 
 	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	notificationID := notification.ID.String()
 	res, err := s.handler.MarkNotificationsAsRead(
 		ctx,
 		connect.NewRequest(&apiv1.MarkNotificationsAsReadRequest{
-			NotificationId: notification.ID.String(),
+			NotificationId: &notificationID,
 		}),
 	)
 	s.Require().NoError(err)

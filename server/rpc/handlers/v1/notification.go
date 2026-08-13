@@ -106,7 +106,7 @@ func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, req *
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.MarkNotificationsAsRead(ctx, userID, req.Msg.GetNotificationId()); err != nil {
+	if err := h.repo.MarkNotificationsAsRead(ctx, userID, req.Msg.NotificationId); err != nil {
 		log.Error("failed to mark notifications as read", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

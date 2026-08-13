@@ -7,12 +7,13 @@
 package apiv1
 
 import (
-	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -120,7 +121,7 @@ func (x *ListNotificationsResponse) GetPagination() *PaginationResponse {
 
 type MarkNotificationsAsReadRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	NotificationId string                 `protobuf:"bytes,1,opt,name=notification_id,json=notificationId,proto3" json:"notification_id,omitempty"`
+	NotificationId *string                `protobuf:"bytes,1,opt,name=notification_id,json=notificationId,proto3,oneof" json:"notification_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -156,8 +157,8 @@ func (*MarkNotificationsAsReadRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *MarkNotificationsAsReadRequest) GetNotificationId() string {
-	if x != nil {
-		return x.NotificationId
+	if x != nil && x.NotificationId != nil {
+		return *x.NotificationId
 	}
 	return ""
 }
@@ -574,9 +575,10 @@ const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\rnotifications\x18\x01 \x03(\v2\x14.api.v1.NotificationR\rnotifications\x12:\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1a.api.v1.PaginationResponseR\n" +
-	"pagination\"V\n" +
-	"\x1eMarkNotificationsAsReadRequest\x124\n" +
-	"\x0fnotification_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x02r\x03\xb0\x01\x01R\x0enotificationId\"!\n" +
+	"pagination\"l\n" +
+	"\x1eMarkNotificationsAsReadRequest\x126\n" +
+	"\x0fnotification_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x0enotificationId\x88\x01\x01B\x12\n" +
+	"\x10_notification_id\"!\n" +
 	"\x1fMarkNotificationsAsReadResponse\"#\n" +
 	"!GetUnreadNotificationCountRequest\":\n" +
 	"\"GetUnreadNotificationCountResponse\x12\x14\n" +
@@ -666,6 +668,7 @@ func file_api_v1_notification_service_proto_init() {
 	file_api_v1_options_proto_init()
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
+	file_api_v1_notification_service_proto_msgTypes[2].OneofWrappers = []any{}
 	file_api_v1_notification_service_proto_msgTypes[8].OneofWrappers = []any{
 		(*Notification_UserFollowed_)(nil),
 		(*Notification_WorkoutComment_)(nil),

@@ -667,7 +667,7 @@ func (mr *MockRepoMockRecorder) ListWorkouts(ctx any, opts ...any) *gomock.Call 
 }
 
 // MarkNotificationsAsRead mocks base method.
-func (m *MockRepo) MarkNotificationsAsRead(ctx context.Context, userID, notificationID string) error {
+func (m *MockRepo) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MarkNotificationsAsRead", ctx, userID, notificationID)
 	ret0, _ := ret[0].(error)
@@ -1617,7 +1617,7 @@ func (mr *MockTxMockRecorder) ListWorkouts(ctx any, opts ...any) *gomock.Call {
 }
 
 // MarkNotificationsAsRead mocks base method.
-func (m *MockTx) MarkNotificationsAsRead(ctx context.Context, userID, notificationID string) error {
+func (m *MockTx) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MarkNotificationsAsRead", ctx, userID, notificationID)
 	ret0, _ := ret[0].(error)
@@ -2581,7 +2581,7 @@ func (mr *MockmethodsMockRecorder) ListWorkouts(ctx any, opts ...any) *gomock.Ca
 }
 
 // MarkNotificationsAsRead mocks base method.
-func (m *Mockmethods) MarkNotificationsAsRead(ctx context.Context, userID, notificationID string) error {
+func (m *Mockmethods) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MarkNotificationsAsRead", ctx, userID, notificationID)
 	ret0, _ := ret[0].(error)
@@ -3970,7 +3970,7 @@ func (mr *MocknotificationMethodsMockRecorder) ListNotifications(ctx any, opts .
 }
 
 // MarkNotificationsAsRead mocks base method.
-func (m *MocknotificationMethods) MarkNotificationsAsRead(ctx context.Context, userID, notificationID string) error {
+func (m *MocknotificationMethods) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MarkNotificationsAsRead", ctx, userID, notificationID)
 	ret0, _ := ret[0].(error)

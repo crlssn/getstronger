@@ -34,7 +34,7 @@ describe('markNotificationAsRead', () => {
     await markNotificationAsRead()
 
     expect(markNotificationsAsRead).toHaveBeenCalledWith(
-      expect.objectContaining({ notificationId: '' }),
+      expect.not.objectContaining({ notificationId: expect.anything() }),
     )
   })
 
