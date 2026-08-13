@@ -162,6 +162,11 @@ const isActiveWorkout = computed(
 .bottom-nav a.active {
   @apply text-indigo-700;
 }
+.bottom-nav.joined-to-workout-actions {
+  /* The action dock's outer shadow otherwise washes over this surface and
+     makes two identical white backgrounds look like different colours. */
+  @apply z-40;
+}
 .bottom-nav svg {
   @apply size-6;
 }
