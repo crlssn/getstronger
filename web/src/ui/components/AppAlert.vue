@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts'
-import { computed, nextTick, onUnmounted, watch } from 'vue'
+import { computed, nextTick, watch } from 'vue'
 import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -10,21 +10,6 @@ const alertStore = useAlertStore()
 const props = defineProps<{
   fixed?: boolean
 }>()
-
-let dismissTimer: ReturnType<typeof setTimeout> | undefined
-
-watch(
-  () => alertStore.alert,
-  (alert) => {
-    if (dismissTimer) clearTimeout(dismissTimer)
-    if (alert) dismissTimer = setTimeout(alertStore.clear, 6000)
-  },
-  { immediate: true },
-)
-
-onUnmounted(() => {
-  if (dismissTimer) clearTimeout(dismissTimer)
-})
 
 watch(
   () => route.path,
