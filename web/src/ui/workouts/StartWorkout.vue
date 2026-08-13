@@ -750,7 +750,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 </script>
 
 <template>
-  <form class="workout-shell" novalidate @submit.prevent="onPrimaryAction">
+  <form
+    class="workout-shell"
+    :class="{ resting: restSeconds > 0 }"
+    novalidate
+    @submit.prevent="onPrimaryAction"
+  >
     <!-- Two independent sticky layers, not one block: the header pins until the
          rest bar reaches the top, then the bar rides over and covers it. -->
     <header class="workout-header">
@@ -1128,6 +1133,11 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
 .workout-shell {
   @apply mx-auto max-w-3xl space-y-4 pb-28;
+}
+/* The timer and active-workout header are one piece of session chrome. The
+   shell's usual section gap belongs below the timer, not between these bars. */
+.workout-shell.resting > .workout-header {
+  margin-bottom: 0;
 }
 /* The chrome spans the viewport while its contents stay aligned with the app. */
 /* Pins below the rest bar, so the bar covers it once you scroll. Opaque, or
