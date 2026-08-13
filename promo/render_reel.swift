@@ -5,18 +5,22 @@ import CoreVideo
 let canvasWidth = 1080
 let canvasHeight = 1920
 let framesPerSecond: Int32 = 30
-let duration = 19.0
+let duration = 21.0
 
 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 let sourceDirectory = root.appendingPathComponent("promo/source")
+let assetDirectory = root.appendingPathComponent("promo/assets")
 let outputDirectory = root.appendingPathComponent("promo/output")
 let videoURL = outputDirectory.appendingPathComponent("one-more-rep-promo-reel.mp4")
 let coverURL = outputDirectory.appendingPathComponent("one-more-rep-reel-cover.png")
 
-let homeImage = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 22-34-33 One More Rep.png")
-let workoutImage = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 22-40-55 One More Rep.png")
-let notificationsImage = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 22-34-51 One More Rep.png")
-let progressImage = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 23-45-34 One More Rep.png")
+let homeImageURL = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 22-34-33 One More Rep.png")
+let workoutImageURL = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 22-40-55 One More Rep.png")
+let notificationsImageURL = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 22-34-51 One More Rep.png")
+let progressImageURL = sourceDirectory.appendingPathComponent("Screenshot 2026-08-13 at 23-45-34 One More Rep.png")
+let squatImageURL = assetDirectory.appendingPathComponent("workout-squat.png")
+let deadliftImageURL = assetDirectory.appendingPathComponent("workout-deadlift.png")
+let communityImageURL = assetDirectory.appendingPathComponent("workout-community.png")
 
 struct Palette {
     static let charcoal = NSColor(hex: 0x23272A)
@@ -24,7 +28,6 @@ struct Palette {
     static let gold = NSColor(hex: 0xB58A3A)
     static let sage = NSColor(hex: 0xE8EEE5)
     static let parchment = NSColor(hex: 0xF7F0E2)
-    static let canvas = NSColor(hex: 0xF5F7F8)
     static let slate = NSColor(hex: 0x64748B)
     static let white = NSColor.white
 }
@@ -51,7 +54,7 @@ func smoothstep(_ value: CGFloat) -> CGFloat {
     return t * t * (3 - 2 * t)
 }
 
-func sceneOpacity(localTime: Double, sceneDuration: Double, fade: Double = 0.32) -> CGFloat {
+func sceneOpacity(localTime: Double, sceneDuration: Double, fade: Double = 0.28) -> CGFloat {
     let fadeIn = smoothstep(CGFloat(localTime / fade))
     let fadeOut = smoothstep(CGFloat((sceneDuration - localTime) / fade))
     return min(fadeIn, fadeOut)
@@ -59,6 +62,10 @@ func sceneOpacity(localTime: Double, sceneDuration: Double, fade: Double = 0.32)
 
 func font(size: CGFloat, weight: NSFont.Weight) -> NSFont {
     NSFont.systemFont(ofSize: size, weight: weight)
+}
+
+func monoFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
+    NSFont.monospacedSystemFont(ofSize: size, weight: weight)
 }
 
 func drawText(
@@ -69,7 +76,8 @@ func drawText(
     color: NSColor,
     alignment: NSTextAlignment = .left,
     lineHeight: CGFloat? = nil,
-    tracking: CGFloat = 0
+    tracking: CGFloat = 0,
+    monospaced: Bool = false
 ) {
     let paragraph = NSMutableParagraphStyle()
     paragraph.alignment = alignment
@@ -77,12 +85,18 @@ func drawText(
     paragraph.minimumLineHeight = lineHeight ?? size * 1.12
     paragraph.maximumLineHeight = lineHeight ?? size * 1.12
     let attributes: [NSAttributedString.Key: Any] = [
-        .font: font(size: size, weight: weight),
+        .font: monospaced ? monoFont(size: size, weight: weight) : font(size: size, weight: weight),
         .foregroundColor: color,
         .paragraphStyle: paragraph,
         .kern: tracking,
     ]
-    NSAttributedString(string: text, attributes: attributes).draw(with: rect, options: [.usesLineFragmentOrigin, .usesFontLeading])
+    NSAttributedString(string: text, attributes: attributes)
+        .draw(with: rect, options: [.usesLineFragmentOrigin, .usesFontLeading])
+}
+
+func fillRect(_ rect: CGRect, color: NSColor) {
+    color.setFill()
+    NSBezierPath(rect: rect).fill()
 }
 
 func fillRoundedRect(_ rect: CGRect, radius: CGFloat, color: NSColor) {
@@ -97,29 +111,166 @@ func strokeRoundedRect(_ rect: CGRect, radius: CGFloat, color: NSColor, width: C
     path.stroke()
 }
 
-func drawLightBackground() {
-    Palette.canvas.setFill()
-    NSBezierPath(rect: CGRect(x: 0, y: 0, width: canvasWidth, height: canvasHeight)).fill()
+func drawBrandMark(
+    in rect: CGRect,
+    ringColor: NSColor,
+    oneColor: NSColor,
+    accentColor: NSColor,
+    opacity: CGFloat = 1
+) {
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current?.cgContext.setAlpha(opacity)
 
-    NSColor(hex: 0xDDE8DF, alpha: 0.62).setFill()
-    NSBezierPath(ovalIn: CGRect(x: -260, y: -170, width: 720, height: 720)).fill()
-    NSColor(hex: 0xF3E8D5, alpha: 0.65).setFill()
-    NSBezierPath(ovalIn: CGRect(x: 700, y: 1260, width: 660, height: 660)).fill()
+    let lineScale = rect.width / 128
+    let ringRect = CGRect(
+        x: rect.minX + 19 * lineScale,
+        y: rect.minY + 19 * lineScale,
+        width: 90 * lineScale,
+        height: 90 * lineScale
+    )
+    ringColor.setStroke()
+    let ring = NSBezierPath(ovalIn: ringRect)
+    ring.lineWidth = 14 * lineScale
+    ring.stroke()
+
+    oneColor.setStroke()
+    let one = NSBezierPath()
+    one.move(to: CGPoint(x: rect.minX + 48 * lineScale, y: rect.minY + 49 * lineScale))
+    one.line(to: CGPoint(x: rect.minX + 64 * lineScale, y: rect.minY + 36 * lineScale))
+    one.line(to: CGPoint(x: rect.minX + 64 * lineScale, y: rect.minY + 91 * lineScale))
+    one.lineWidth = 13 * lineScale
+    one.lineCapStyle = .round
+    one.lineJoinStyle = .round
+    one.stroke()
+
+    accentColor.setStroke()
+    let base = NSBezierPath()
+    base.move(to: CGPoint(x: rect.minX + 48 * lineScale, y: rect.minY + 94 * lineScale))
+    base.line(to: CGPoint(x: rect.minX + 80 * lineScale, y: rect.minY + 94 * lineScale))
+    base.lineWidth = 8 * lineScale
+    base.lineCapStyle = .round
+    base.stroke()
+
+    let extraRep = NSBezierPath()
+    extraRep.move(to: CGPoint(x: rect.minX + 90 * lineScale, y: rect.minY + 27 * lineScale))
+    extraRep.curve(
+        to: CGPoint(x: rect.minX + 100 * lineScale, y: rect.minY + 40 * lineScale),
+        controlPoint1: CGPoint(x: rect.minX + 94 * lineScale, y: rect.minY + 30 * lineScale),
+        controlPoint2: CGPoint(x: rect.minX + 98 * lineScale, y: rect.minY + 35 * lineScale)
+    )
+    extraRep.lineWidth = 14 * lineScale
+    extraRep.lineCapStyle = .round
+    extraRep.stroke()
+
+    NSGraphicsContext.restoreGraphicsState()
 }
 
-func drawDarkBackground() {
-    Palette.charcoal.setFill()
-    NSBezierPath(rect: CGRect(x: 0, y: 0, width: canvasWidth, height: canvasHeight)).fill()
-
-    NSColor(hex: 0x365443, alpha: 0.72).setFill()
-    NSBezierPath(ovalIn: CGRect(x: -360, y: -260, width: 900, height: 900)).fill()
-    NSColor(hex: 0x8E6B2D, alpha: 0.28).setFill()
-    NSBezierPath(ovalIn: CGRect(x: 710, y: 1310, width: 640, height: 640)).fill()
+func drawWatermark(opacity: CGFloat) {
+    let pill = CGRect(x: 70, y: 62, width: 390, height: 78)
+    fillRoundedRect(pill, radius: 39, color: NSColor.black.withAlphaComponent(0.26 * opacity))
+    strokeRoundedRect(pill, radius: 39, color: NSColor.white.withAlphaComponent(0.14 * opacity), width: 1)
+    drawBrandMark(
+        in: CGRect(x: 84, y: 69, width: 64, height: 64),
+        ringColor: Palette.white,
+        oneColor: Palette.white,
+        accentColor: Palette.gold,
+        opacity: 0.92 * opacity
+    )
+    drawText(
+        "ONE MORE REP",
+        in: CGRect(x: 154, y: 86, width: 275, height: 34),
+        size: 22,
+        weight: .bold,
+        color: Palette.white.withAlphaComponent(0.92 * opacity),
+        tracking: 2.5,
+        monospaced: true
+    )
 }
 
-func drawBrandEyebrow(color: NSColor) {
-    fillRoundedRect(CGRect(x: 72, y: 70, width: 20, height: 20), radius: 10, color: Palette.gold)
-    drawText("ONE MORE REP", in: CGRect(x: 108, y: 62, width: 650, height: 48), size: 25, weight: .bold, color: color, tracking: 3.2)
+func drawPhotoBackground(
+    _ image: NSImage,
+    progress: CGFloat,
+    darkness: CGFloat,
+    panX: CGFloat = 0,
+    panY: CGFloat = 0
+) {
+    fillRect(CGRect(x: 0, y: 0, width: canvasWidth, height: canvasHeight), color: Palette.charcoal)
+    let zoom = 1.03 + 0.055 * smoothstep(progress)
+    let width = CGFloat(canvasWidth) * zoom
+    let height = CGFloat(canvasHeight) * zoom
+    let rect = CGRect(
+        x: (CGFloat(canvasWidth) - width) / 2 + panX * progress,
+        y: (CGFloat(canvasHeight) - height) / 2 + panY * progress,
+        width: width,
+        height: height
+    )
+    image.draw(
+        in: rect,
+        from: CGRect(origin: .zero, size: image.size),
+        operation: .sourceOver,
+        fraction: 1,
+        respectFlipped: true,
+        hints: [.interpolation: NSImageInterpolation.high]
+    )
+
+    fillRect(
+        CGRect(x: 0, y: 0, width: canvasWidth, height: canvasHeight),
+        color: NSColor.black.withAlphaComponent(darkness)
+    )
+
+    let topShade = NSGradient(colors: [NSColor.black.withAlphaComponent(0.64), .clear])!
+    topShade.draw(in: CGRect(x: 0, y: 0, width: canvasWidth, height: 650), angle: -90)
+    let bottomShade = NSGradient(colors: [.clear, NSColor.black.withAlphaComponent(0.88)])!
+    bottomShade.draw(in: CGRect(x: 0, y: 900, width: canvasWidth, height: 1020), angle: -90)
+}
+
+func drawTransitionVeil(opacity: CGFloat) {
+    fillRect(
+        CGRect(x: 0, y: 0, width: canvasWidth, height: canvasHeight),
+        color: Palette.charcoal.withAlphaComponent(1 - opacity)
+    )
+}
+
+func drawPhotoScene(
+    image: NSImage,
+    headline: String,
+    subheading: String,
+    localTime: Double,
+    sceneDuration: Double,
+    textY: CGFloat,
+    darkness: CGFloat = 0.12,
+    panX: CGFloat = 0,
+    panY: CGFloat = -14
+) {
+    let opacity = sceneOpacity(localTime: localTime, sceneDuration: sceneDuration)
+    let progress = CGFloat(localTime / sceneDuration).clamped(to: 0...1)
+    drawPhotoBackground(image, progress: progress, darkness: darkness, panX: panX, panY: panY)
+    drawTransitionVeil(opacity: opacity)
+
+    let entrance = smoothstep(CGFloat(localTime / 0.65))
+    let rise = 34 * (1 - entrance)
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current?.cgContext.setAlpha(opacity)
+    drawWatermark(opacity: 1)
+    fillRoundedRect(CGRect(x: 72, y: textY - 36 + rise, width: 112, height: 8), radius: 4, color: Palette.gold)
+    drawText(
+        headline,
+        in: CGRect(x: 70, y: textY + rise, width: 940, height: 270),
+        size: 82,
+        weight: .heavy,
+        color: Palette.white,
+        lineHeight: 86,
+        tracking: -1.5
+    )
+    drawText(
+        subheading,
+        in: CGRect(x: 74, y: textY + 250 + rise, width: 890, height: 120),
+        size: 31,
+        weight: .medium,
+        color: Palette.white.withAlphaComponent(0.78),
+        lineHeight: 40
+    )
+    NSGraphicsContext.restoreGraphicsState()
 }
 
 func drawScreenshot(
@@ -127,94 +278,157 @@ func drawScreenshot(
     crop: CGRect?,
     localProgress: CGFloat,
     opacity: CGFloat,
-    baseY: CGFloat = 450
+    y: CGFloat = 405
 ) {
     let eased = smoothstep(localProgress)
-    let width: CGFloat = 908 + 20 * eased
+    let width: CGFloat = 904 + 18 * eased
     let sourceRect = crop ?? CGRect(origin: .zero, size: image.size)
-    let aspect = sourceRect.width / sourceRect.height
-    let height = width / aspect
+    let height = width / (sourceRect.width / sourceRect.height)
     let x = (CGFloat(canvasWidth) - width) / 2
-    let y = baseY - 20 * eased
-    let cardRect = CGRect(x: x, y: y, width: width, height: height)
+    let cardRect = CGRect(x: x, y: y + 24 * (1 - eased), width: width, height: height)
 
     NSGraphicsContext.saveGraphicsState()
     let shadow = NSShadow()
-    shadow.shadowColor = NSColor.black.withAlphaComponent(0.18 * opacity)
-    shadow.shadowBlurRadius = 35
-    shadow.shadowOffset = NSSize(width: 0, height: -12)
+    shadow.shadowColor = NSColor.black.withAlphaComponent(0.42 * opacity)
+    shadow.shadowBlurRadius = 48
+    shadow.shadowOffset = NSSize(width: 0, height: -14)
     shadow.set()
     fillRoundedRect(cardRect, radius: 34, color: Palette.white.withAlphaComponent(opacity))
     NSGraphicsContext.restoreGraphicsState()
 
     NSGraphicsContext.saveGraphicsState()
     NSBezierPath(roundedRect: cardRect, xRadius: 34, yRadius: 34).addClip()
-    image.draw(in: cardRect, from: sourceRect, operation: .sourceOver, fraction: opacity, respectFlipped: true, hints: [.interpolation: NSImageInterpolation.high])
+    image.draw(
+        in: cardRect,
+        from: sourceRect,
+        operation: .sourceOver,
+        fraction: opacity,
+        respectFlipped: true,
+        hints: [.interpolation: NSImageInterpolation.high]
+    )
     NSGraphicsContext.restoreGraphicsState()
 
-    strokeRoundedRect(cardRect, radius: 34, color: NSColor(hex: 0xD8E0E7, alpha: opacity), width: 2)
+    strokeRoundedRect(cardRect, radius: 34, color: NSColor.white.withAlphaComponent(0.34 * opacity), width: 2)
 }
 
-func drawFeatureScene(
-    image: NSImage,
+func drawProductScene(
+    photo: NSImage,
+    screenshot: NSImage,
     crop: CGRect? = nil,
+    eyebrow: String,
     heading: String,
-    subheading: String,
     localTime: Double,
     sceneDuration: Double,
-    imageY: CGFloat = 450
+    screenshotY: CGFloat = 405
 ) {
-    drawLightBackground()
     let opacity = sceneOpacity(localTime: localTime, sceneDuration: sceneDuration)
     let progress = CGFloat(localTime / sceneDuration).clamped(to: 0...1)
-    let rise = 20 * (1 - smoothstep(CGFloat(localTime / 0.5)))
+    drawPhotoBackground(photo, progress: progress, darkness: 0.48, panY: -10)
+    drawTransitionVeil(opacity: opacity)
 
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current?.cgContext.setAlpha(opacity)
-    drawBrandEyebrow(color: Palette.forest)
-    drawText(heading, in: CGRect(x: 72, y: 150 + rise, width: 936, height: 160), size: 68, weight: .bold, color: Palette.charcoal, lineHeight: 72)
-    drawText(subheading, in: CGRect(x: 74, y: 320 + rise, width: 900, height: 80), size: 30, weight: .medium, color: Palette.slate, lineHeight: 38)
+    drawWatermark(opacity: 1)
+    drawText(
+        eyebrow.uppercased(),
+        in: CGRect(x: 72, y: 174, width: 900, height: 40),
+        size: 22,
+        weight: .bold,
+        color: Palette.gold,
+        tracking: 3.2,
+        monospaced: true
+    )
+    drawText(
+        heading,
+        in: CGRect(x: 70, y: 218, width: 930, height: 120),
+        size: 57,
+        weight: .bold,
+        color: Palette.white,
+        lineHeight: 62,
+        tracking: -0.8
+    )
     NSGraphicsContext.restoreGraphicsState()
 
-    drawScreenshot(image, crop: crop, localProgress: progress, opacity: opacity, baseY: imageY)
+    drawScreenshot(
+        screenshot,
+        crop: crop,
+        localProgress: progress,
+        opacity: opacity,
+        y: screenshotY
+    )
 }
 
-func drawIntro(localTime: Double, sceneDuration: Double) {
-    drawDarkBackground()
-    let opacity = sceneOpacity(localTime: localTime, sceneDuration: sceneDuration, fade: 0.28)
-    let entrance = smoothstep(CGFloat(localTime / 0.7))
-
-    NSGraphicsContext.saveGraphicsState()
-    NSGraphicsContext.current?.cgContext.setAlpha(opacity)
-    drawBrandEyebrow(color: Palette.white)
-    drawText("TRAIN\nSMARTER.", in: CGRect(x: 72, y: 470 + 40 * (1 - entrance), width: 936, height: 330), size: 114, weight: .heavy, color: Palette.white, lineHeight: 112)
-    drawText("GET STRONGER.", in: CGRect(x: 76, y: 795 + 25 * (1 - entrance), width: 930, height: 140), size: 68, weight: .bold, color: Palette.sage)
-    fillRoundedRect(CGRect(x: 76, y: 1030, width: 250 * entrance, height: 10), radius: 5, color: Palette.gold)
-    drawText("Routines, progress and community—\nall in one beautifully simple app.", in: CGRect(x: 78, y: 1110, width: 850, height: 160), size: 34, weight: .medium, color: NSColor.white.withAlphaComponent(0.78), lineHeight: 46)
-    NSGraphicsContext.restoreGraphicsState()
-}
-
-func drawOutro(localTime: Double, sceneDuration: Double) {
-    drawDarkBackground()
+func drawOutro(image: NSImage, localTime: Double, sceneDuration: Double) {
     let opacity = sceneOpacity(localTime: localTime, sceneDuration: sceneDuration, fade: 0.35)
+    let progress = CGFloat(localTime / sceneDuration).clamped(to: 0...1)
     let entrance = smoothstep(CGFloat(localTime / 0.8))
+    drawPhotoBackground(image, progress: progress, darkness: 0.45, panX: -12, panY: -18)
+    drawTransitionVeil(opacity: opacity)
 
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current?.cgContext.setAlpha(opacity)
-    drawBrandEyebrow(color: Palette.white)
-    drawText("READY FOR\nONE MORE REP?", in: CGRect(x: 72, y: 480 + 36 * (1 - entrance), width: 936, height: 330), size: 92, weight: .heavy, color: Palette.white, lineHeight: 102)
-    drawText("Train. Track. Repeat.", in: CGRect(x: 76, y: 865, width: 900, height: 100), size: 42, weight: .semibold, color: Palette.sage)
-    fillRoundedRect(CGRect(x: 72, y: 1090, width: 936, height: 126), radius: 38, color: Palette.parchment)
-    drawText("getstronger.pro", in: CGRect(x: 72, y: 1120, width: 936, height: 70), size: 38, weight: .bold, color: Palette.charcoal, alignment: .center, tracking: 0.8)
-    drawText("Built for consistent progress.", in: CGRect(x: 76, y: 1320, width: 900, height: 70), size: 29, weight: .medium, color: NSColor.white.withAlphaComponent(0.66), alignment: .center)
+    drawBrandMark(
+        in: CGRect(x: 400, y: 410 + 28 * (1 - entrance), width: 280, height: 280),
+        ringColor: Palette.white,
+        oneColor: Palette.white,
+        accentColor: Palette.gold
+    )
+    drawText(
+        "ONE MORE REP",
+        in: CGRect(x: 70, y: 730, width: 940, height: 100),
+        size: 54,
+        weight: .bold,
+        color: Palette.white,
+        alignment: .center,
+        tracking: 5.5,
+        monospaced: true
+    )
+    drawText(
+        "YOUR NEXT REP\nSTARTS HERE.",
+        in: CGRect(x: 70, y: 895, width: 940, height: 240),
+        size: 72,
+        weight: .heavy,
+        color: Palette.white,
+        alignment: .center,
+        lineHeight: 78,
+        tracking: -1
+    )
+    fillRoundedRect(CGRect(x: 162, y: 1240, width: 756, height: 118), radius: 38, color: Palette.parchment)
+    drawText(
+        "getstronger.pro",
+        in: CGRect(x: 162, y: 1271, width: 756, height: 60),
+        size: 35,
+        weight: .bold,
+        color: Palette.charcoal,
+        alignment: .center,
+        tracking: 0.6
+    )
+    drawText(
+        "Train. Track. Repeat.",
+        in: CGRect(x: 80, y: 1425, width: 920, height: 60),
+        size: 29,
+        weight: .semibold,
+        color: Palette.white.withAlphaComponent(0.72),
+        alignment: .center
+    )
     NSGraphicsContext.restoreGraphicsState()
 }
 
-let images = [homeImage, workoutImage, notificationsImage, progressImage].compactMap { NSImage(contentsOf: $0) }
-guard images.count == 4 else {
-    fputs("Missing promo source screenshots in promo/source.\n", stderr)
-    exit(1)
+func loadImage(_ url: URL) -> NSImage {
+    guard let image = NSImage(contentsOf: url) else {
+        fputs("Missing promo source: \(url.path)\n", stderr)
+        exit(1)
+    }
+    return image
 }
+
+let homeImage = loadImage(homeImageURL)
+let workoutImage = loadImage(workoutImageURL)
+let notificationsImage = loadImage(notificationsImageURL)
+let progressImage = loadImage(progressImageURL)
+let squatImage = loadImage(squatImageURL)
+let deadliftImage = loadImage(deadliftImageURL)
+let communityImage = loadImage(communityImageURL)
 
 func render(at time: Double, into pixelBuffer: CVPixelBuffer) {
     CVPixelBufferLockBaseAddress(pixelBuffer, [])
@@ -238,45 +452,79 @@ func render(at time: Double, into pixelBuffer: CVPixelBuffer) {
     NSGraphicsContext.current = graphicsContext
 
     switch time {
-    case 0..<2.3:
-        drawIntro(localTime: time, sceneDuration: 2.3)
-    case 2.3..<5.7:
-        drawFeatureScene(
-            image: images[0],
-            heading: "Everything you need\nto train better.",
-            subheading: "Your next workout, streak and community feed.",
-            localTime: time - 2.3,
-            sceneDuration: 3.4
+    case 0..<2.4:
+        drawPhotoScene(
+            image: squatImage,
+            headline: "BUILD THE HABIT.\nBEAT YOUR LAST.",
+            subheading: "Strength is built one honest rep at a time.",
+            localTime: time,
+            sceneDuration: 2.4,
+            textY: 1240,
+            darkness: 0.08
         )
-    case 5.7..<9.2:
-        drawFeatureScene(
-            image: images[1],
-            heading: "Log every set.",
-            subheading: "See PRs, session details and encouragement.",
-            localTime: time - 5.7,
-            sceneDuration: 3.5
+    case 2.4..<5.2:
+        drawProductScene(
+            photo: squatImage,
+            screenshot: homeImage,
+            eyebrow: "Your training, clearly",
+            heading: "Know what’s next.",
+            localTime: time - 2.4,
+            sceneDuration: 2.8
         )
-    case 9.2..<12.2:
-        drawFeatureScene(
-            image: images[2],
-            heading: "Stay connected.",
-            subheading: "Useful updates without all the noise.",
-            localTime: time - 9.2,
-            sceneDuration: 3.0
+    case 5.2..<7.5:
+        drawPhotoScene(
+            image: deadliftImage,
+            headline: "LOG THE WORK.",
+            subheading: "Every set. Every session. Every new best.",
+            localTime: time - 5.2,
+            sceneDuration: 2.3,
+            textY: 250,
+            darkness: 0.08,
+            panX: 12
         )
-    case 12.2..<15.8:
+    case 7.5..<10.3:
+        drawProductScene(
+            photo: deadliftImage,
+            screenshot: workoutImage,
+            eyebrow: "Nothing gets lost",
+            heading: "Track every detail.",
+            localTime: time - 7.5,
+            sceneDuration: 2.8
+        )
+    case 10.3..<12.7:
+        drawPhotoScene(
+            image: communityImage,
+            headline: "BETTER\nTOGETHER.",
+            subheading: "Share the work. Celebrate the progress.",
+            localTime: time - 10.3,
+            sceneDuration: 2.4,
+            textY: 1270,
+            darkness: 0.14,
+            panX: -10
+        )
+    case 12.7..<15.3:
+        drawProductScene(
+            photo: communityImage,
+            screenshot: notificationsImage,
+            eyebrow: "Community without noise",
+            heading: "The updates that matter.",
+            localTime: time - 12.7,
+            sceneDuration: 2.6
+        )
+    case 15.3..<18.1:
         let progressCrop = CGRect(x: 930, y: 0, width: 1500, height: 2088)
-        drawFeatureScene(
-            image: images[3],
+        drawProductScene(
+            photo: squatImage,
+            screenshot: progressImage,
             crop: progressCrop,
-            heading: "See real progress.",
-            subheading: "Volume trends, personal bests and history.",
-            localTime: time - 12.2,
-            sceneDuration: 3.6,
-            imageY: 430
+            eyebrow: "Proof you’re progressing",
+            heading: "See the work add up.",
+            localTime: time - 15.3,
+            sceneDuration: 2.8,
+            screenshotY: 382
         )
     default:
-        drawOutro(localTime: time - 15.8, sceneDuration: 3.2)
+        drawOutro(image: deadliftImage, localTime: time - 18.1, sceneDuration: 2.9)
     }
 
     NSGraphicsContext.restoreGraphicsState()
@@ -370,7 +618,7 @@ guard writer.status == .completed else {
 }
 
 let coverBuffer = makePixelBuffer()
-render(at: 1.1, into: coverBuffer)
+render(at: 1.2, into: coverBuffer)
 try CIContext().writePNGRepresentation(
     of: CIImage(cvPixelBuffer: coverBuffer),
     to: coverURL,
