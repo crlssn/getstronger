@@ -171,7 +171,7 @@ const navigation = computed(() => [
 }
 @media (min-width: 1024px) {
   .bottom-nav {
-    @apply left-1/2 right-auto w-[44rem] -translate-x-1/2 rounded-t-2xl border-x;
+    @apply left-1/2 right-auto w-[48rem] -translate-x-1/2 rounded-t-2xl border-x;
   }
 }
 </style>
