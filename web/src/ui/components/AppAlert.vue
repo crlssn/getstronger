@@ -80,7 +80,7 @@ const containerStyle = computed(() => (props.fixed ? 'fixed inset-x-0 top-16 z-5
 <style scoped>
 @reference '../../assets/base.css';
 
-.alert-region { @apply mx-auto w-full max-w-6xl px-3 pt-3 sm:px-5 lg:px-8; }
+.alert-region { @apply mx-auto w-full max-w-3xl px-3 pt-3 sm:px-5 lg:px-8; }
 .alert-card { @apply flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold shadow-sm; }
 .status-icon { @apply size-5 shrink-0; }
 .alert-card p { @apply min-w-0 flex-1; }

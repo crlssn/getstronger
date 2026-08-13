@@ -39,6 +39,6 @@ const showsTopNavigation = computed(() => !routesWithoutPageNavigation.has(route
   padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
 }
 main {
-  @apply mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 lg:px-8 lg:py-7;
+  @apply mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 lg:px-8 lg:py-7;
 }
 </style>
