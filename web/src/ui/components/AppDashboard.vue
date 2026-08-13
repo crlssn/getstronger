@@ -3,6 +3,7 @@ import { RouterView } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
 import AppNavBottom from '@/ui/components/AppNavBottom.vue'
 import AppNavTop from '@/ui/components/AppNavTop.vue'
+import AppRestTimerBanner from '@/ui/components/AppRestTimerBanner.vue'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -24,6 +25,7 @@ const showsTopNavigation = computed(() => !routesWithoutPageNavigation.has(route
 <template>
   <div class="dashboard-shell">
     <AppAlert />
+    <AppRestTimerBanner />
     <main>
       <AppNavTop v-if="showsTopNavigation" />
       <RouterView />

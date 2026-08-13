@@ -37,12 +37,6 @@ import {
   listExercises,
 } from '@/http/requests'
 import { isNumber } from '@/utils/numbers'
-import {
-  playRestFinishedSound,
-  playRestGetReadySound,
-  shouldPlayRestGetReadySound,
-  unlockRestSound,
-} from '@/utils/restSound'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
 import {
@@ -93,12 +87,8 @@ watch(note, (value) => workoutStore.setNote(routineID, value))
 
 let elapsedInterval: ReturnType<typeof setInterval>
 let restInterval: ReturnType<typeof setInterval> | undefined
-let audioContext: AudioContext | undefined
-let getReadySoundPlayed = false
 
 onMounted(async () => {
-  window.addEventListener('pointerdown', unlockRestAudio)
-  window.addEventListener('keydown', unlockRestAudio)
   await initializeRoutine()
   elapsedSeconds.value = Math.max(
     0,
@@ -110,13 +100,8 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  removeRestAudioUnlockListeners()
   clearInterval(elapsedInterval)
   if (restInterval) clearInterval(restInterval)
-  // Browsers cap concurrent AudioContexts; release ours so later sessions
-  // can still create one.
-  void audioContext?.close().catch(() => undefined)
-  audioContext = undefined
 })
 
 const currentExercise = computed(() => routine.value?.exercises[activeExerciseIndex.value])
@@ -432,71 +417,24 @@ const deleteWorkoutSet = (exerciseID: string, index: number) => {
   })
 }
 
-function removeRestAudioUnlockListeners() {
-  window.removeEventListener('pointerdown', unlockRestAudio)
-  window.removeEventListener('keydown', unlockRestAudio)
-}
-
-function prepareRestSound() {
-  try {
-    audioContext = audioContext ?? new AudioContext()
-    return audioContext
-  } catch {
-    audioContext = undefined
-    return undefined
-  }
-}
-
-// Exercise the context during a real user gesture so mobile autoplay policies
-// permit the timer cues to play later without another tap.
-function unlockRestAudio() {
-  const context = prepareRestSound()
-  if (!context) return
-
-  void unlockRestSound(context).then((unlocked) => {
-    if (unlocked) removeRestAudioUnlockListeners()
-  })
-}
-
-const playGetReadySoundIfNeeded = () => {
-  if (!shouldPlayRestGetReadySound(restSeconds.value, getReadySoundPlayed)) return
-  const context = audioContext
-  if (!context) return
-
-  getReadySoundPlayed = true
-  void playRestGetReadySound(context).then((played) => {
-    // A restored timer may reach ten seconds before the first user gesture.
-    // Let the next tick retry after the browser audio context is unlocked.
-    if (!played && restSeconds.value > 0) getReadySoundPlayed = false
-  })
-}
-
 const clearRestTimer = () => {
   if (restInterval) clearInterval(restInterval)
   restInterval = undefined
   restSeconds.value = 0
   restTotalSeconds.value = 0
-  getReadySoundPlayed = false
   workoutStore.setRestTimer(routineID)
 }
 
 const runRestTimer = (endsAtMs: number, totalSeconds: number) => {
   if (restInterval) clearInterval(restInterval)
-  prepareRestSound()
   restTotalSeconds.value = totalSeconds
-  getReadySoundPlayed = false
 
   const updateRemaining = () => {
     restSeconds.value = Math.max(0, Math.ceil((endsAtMs - Date.now()) / 1000))
-    if (restSeconds.value > 0) {
-      playGetReadySoundIfNeeded()
-      return
-    }
+    if (restSeconds.value > 0) return
 
     if (restInterval) clearInterval(restInterval)
     restInterval = undefined
-    workoutStore.setRestTimer(routineID)
-    if (audioContext) void playRestFinishedSound(audioContext)
     void focusNextSetInput()
   }
 
@@ -527,10 +465,13 @@ const restoreRestTimer = () => {
   if (!savedTimer.endsAt) return
 
   const endsAtMs = Date.parse(savedTimer.endsAt)
-  if (Number.isNaN(endsAtMs) || endsAtMs <= Date.now()) {
+  if (Number.isNaN(endsAtMs)) {
     workoutStore.setRestTimer(routineID)
     return
   }
+  // The dashboard-level timer owns natural expiry so its sound and cleanup
+  // continue even when the user navigates away from this view.
+  if (endsAtMs <= Date.now()) return
 
   const remainingSeconds = Math.ceil((endsAtMs - Date.now()) / 1000)
   runRestTimer(endsAtMs, Math.max(savedTimer.totalSeconds, remainingSeconds))
