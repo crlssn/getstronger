@@ -16,6 +16,9 @@ const waitForPageData = async (page: Page, path: string) => {
   }
 }
 
+const expectPrimaryNavigation = async (page: Page) =>
+  expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
+
 test('keeps the primary authenticated pages accessible @responsive', async ({ page }) => {
   await logIn(page)
 
@@ -23,6 +26,7 @@ test('keeps the primary authenticated pages accessible @responsive', async ({ pa
     if (new URL(page.url()).pathname !== destination.path) await page.goto(destination.path)
     await expect(page.getByRole('heading', { name: destination.ready }).first()).toBeVisible()
     await waitForPageData(page, destination.path)
+    await expectPrimaryNavigation(page)
     await expectAccessible(page)
   }
 })
@@ -34,6 +38,7 @@ test('keeps core layouts inside the viewport @responsive', async ({ page }) => {
     if (new URL(page.url()).pathname !== destination.path) await page.goto(destination.path)
     await expect(page.getByRole('heading', { name: destination.ready }).first()).toBeVisible()
     await waitForPageData(page, destination.path)
+    await expectPrimaryNavigation(page)
     await expect
       .poll(() =>
         page.evaluate(

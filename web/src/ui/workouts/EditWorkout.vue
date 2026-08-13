@@ -55,7 +55,9 @@ const onUpdateWorkout = async () => {
 
   workout.value.exerciseSets = workout.value.exerciseSets
     .map((exerciseSet) => {
-      const sets = exerciseSet.sets.filter((set) => isExerciseSetComplete(set, exerciseSet.exercise))
+      const sets = exerciseSet.sets.filter((set) =>
+        isExerciseSetComplete(set, exerciseSet.exercise),
+      )
       if (!sets.length) return null
       exerciseSet.sets = sets
       return exerciseSet
@@ -244,8 +246,8 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 }
 
 .update-dock {
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:bottom-4 sm:rounded-2xl sm:border sm:pb-3;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:rounded-2xl sm:border;
 }
 
 label {

@@ -28,6 +28,7 @@ test.describe('quick workout lifecycle', () => {
     const note = uniqueName('E2E resumed workout')
     await page.goto('/workouts/quick')
 
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add exercise' })).toHaveCount(0)
     await expect(page.getByLabel('Workout note')).toHaveCount(0)
@@ -82,6 +83,7 @@ test.describe('quick workout lifecycle', () => {
     await finishDialog.getByRole('button', { name: 'Finish and save' }).click()
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Quick Workout', exact: true })).toBeVisible()
     await expect(page.getByText(note, { exact: true })).toBeVisible()
     await expect(page.getByText(firstExercise, { exact: true })).toBeVisible()

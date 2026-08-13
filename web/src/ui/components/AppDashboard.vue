@@ -7,7 +7,6 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const focusedWorkout = computed(() => route.name === 'workout-routine')
 const routesWithoutPageNavigation = new Set([
   'home',
   'workout',
@@ -20,21 +19,16 @@ const routesWithoutPageNavigation = new Set([
   'quick-workout',
 ])
 const showsTopNavigation = computed(() => !routesWithoutPageNavigation.has(route.name as string))
-const hidesBottomNavigation = computed(
-  () =>
-    focusedWorkout.value ||
-    ['routine', 'view-workout', 'edit-workout'].includes(route.name as string),
-)
 </script>
 
 <template>
-  <div class="dashboard-shell" :class="{ 'dashboard-shell--without-tabs': hidesBottomNavigation }">
+  <div class="dashboard-shell">
     <AppAlert />
     <main>
       <AppNavTop v-if="showsTopNavigation" />
       <RouterView />
     </main>
-    <AppNavBottom v-if="!hidesBottomNavigation" />
+    <AppNavBottom />
   </div>
 </template>
 
@@ -43,9 +37,6 @@ const hidesBottomNavigation = computed(
 
 .dashboard-shell {
   padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
-}
-.dashboard-shell--without-tabs {
-  @apply pb-0;
 }
 main {
   @apply mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 lg:px-8 lg:py-7;
