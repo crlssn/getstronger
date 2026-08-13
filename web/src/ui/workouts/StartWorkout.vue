@@ -37,6 +37,7 @@ import {
   listExercises,
 } from '@/http/requests'
 import { isNumber } from '@/utils/numbers'
+import { playRestFinishedSound } from '@/utils/restSound'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
 import {
@@ -423,38 +424,13 @@ const deleteWorkoutSet = (exerciseID: string, index: number) => {
 }
 
 // Create/resume the context during a user gesture so browser autoplay
-// policies allow the beep when the timer later hits zero.
+// policies allow the completion cue when the timer later hits zero.
 const prepareRestSound = () => {
   try {
     audioContext = audioContext ?? new AudioContext()
     if (audioContext.state === 'suspended') void audioContext.resume()
   } catch {
     audioContext = undefined
-  }
-}
-
-const playRestFinishedSound = () => {
-  const context = audioContext
-  if (!context || context.state !== 'running') return
-
-  try {
-    const beep = (offset: number) => {
-      const oscillator = context.createOscillator()
-      const gain = context.createGain()
-      const start = context.currentTime + offset
-      oscillator.type = 'sine'
-      oscillator.frequency.value = 880
-      gain.gain.setValueAtTime(0.0001, start)
-      gain.gain.exponentialRampToValueAtTime(0.35, start + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.3)
-      oscillator.connect(gain).connect(context.destination)
-      oscillator.start(start)
-      oscillator.stop(start + 0.35)
-    }
-    beep(0)
-    beep(0.4)
-  } catch {
-    // Sound is best-effort; never break the workout flow over it.
   }
 }
 
@@ -478,7 +454,7 @@ const runRestTimer = (endsAtMs: number, totalSeconds: number) => {
     if (restInterval) clearInterval(restInterval)
     restInterval = undefined
     workoutStore.setRestTimer(routineID)
-    playRestFinishedSound()
+    if (audioContext) playRestFinishedSound(audioContext)
     void focusNextSetInput()
   }
 
