@@ -31,7 +31,7 @@ const fetchWorkout = async () => {
   <section v-else-if="!loading" class="empty-card">
     <h1>Workout unavailable</h1>
     <p>This workout could not be loaded or no longer exists.</p>
-    <RouterLink to="/workout">Back to workouts</RouterLink>
+    <RouterLink to="/workout">View workouts</RouterLink>
   </section>
 </template>
 

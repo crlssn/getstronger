@@ -44,21 +44,6 @@ export const en = {
     training: 'Training',
     exercises: 'Exercises',
     me: 'Me',
-    // Full phrases rather than "Back to {noun}": other languages inflect the
-    // noun after a preposition, so a template would not translate cleanly.
-    back: {
-      home: 'Back to home',
-      profile: 'Back to profile',
-      workout: 'Back to workout',
-      workouts: 'Back to workouts',
-      training: 'Back to training',
-      plan: 'Back to plan',
-      routine: 'Back to routine',
-      routines: 'Back to routines',
-      exercise: 'Back to exercise',
-      exercises: 'Back to exercises',
-      login: 'Back to log in',
-    },
   },
   update: {
     available: 'A new version is available.',
@@ -363,19 +348,6 @@ export const sv = {
     training: 'Träning',
     exercises: 'Övningar',
     me: 'Jag',
-    back: {
-      home: 'Tillbaka till startsidan',
-      profile: 'Tillbaka till profilen',
-      workout: 'Tillbaka till träningspasset',
-      workouts: 'Tillbaka till träningspassen',
-      training: 'Tillbaka till träning',
-      plan: 'Tillbaka till planen',
-      routine: 'Tillbaka till rutinen',
-      routines: 'Tillbaka till rutinerna',
-      exercise: 'Tillbaka till övningen',
-      exercises: 'Tillbaka till övningarna',
-      login: 'Tillbaka till inloggningen',
-    },
   },
   update: {
     available: 'En ny version finns tillgänglig.',

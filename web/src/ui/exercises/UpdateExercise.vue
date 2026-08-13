@@ -73,7 +73,7 @@ async function onUpdateExercise() {
 
   <section v-else class="form-status">
     <h1>{{ t('exercise.unavailable') }}</h1>
-    <RouterLink to="/exercises">{{ t('nav.back.exercises') }}</RouterLink>
+    <RouterLink to="/exercises">{{ t('common.exercises') }}</RouterLink>
   </section>
 </template>
 

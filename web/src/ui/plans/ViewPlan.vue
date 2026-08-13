@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeftIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 import { getPlan } from '@/http/requests'
 import type { Plan } from '@/proto/api/v1/routine_service_pb'
@@ -46,7 +46,6 @@ const remove = async () => {
 
 <template>
   <div v-if="plan" class="plan-page">
-    <RouterLink to="/plans" class="back-link"><ArrowLeftIcon /> Back to Plans</RouterLink>
     <section class="overview">
       <header>
         <p class="eyebrow">{{ plan.active ? 'Active plan' : 'Training plan' }}</p>
@@ -94,12 +93,6 @@ const remove = async () => {
 
 .plan-page {
   @apply space-y-4;
-}
-.back-link {
-  @apply inline-flex items-center gap-2 text-sm font-semibold text-indigo-600;
-}
-.back-link svg {
-  @apply size-4;
 }
 .overview {
   @apply rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-lg shadow-indigo-200;

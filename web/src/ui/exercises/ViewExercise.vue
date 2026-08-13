@@ -162,7 +162,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   <section v-else class="empty-card">
     <h1>Exercise unavailable</h1>
     <p>This exercise could not be loaded or no longer exists.</p>
-    <RouterLink to="/exercises">Back to exercises</RouterLink>
+    <RouterLink to="/exercises">View exercises</RouterLink>
   </section>
 </template>
 

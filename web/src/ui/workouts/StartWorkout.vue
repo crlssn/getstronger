@@ -10,7 +10,6 @@ import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
-  ArrowLeftIcon,
   CheckIcon,
   ChevronRightIcon,
   ClockIcon,
@@ -785,7 +784,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         :aria-label="t('workout.leaveTitle')"
         @click="cancelWorkout"
       >
-        <ArrowLeftIcon />
+        <XMarkIcon />
       </button>
       <div class="min-w-0">
         <p class="eyebrow">{{ quickWorkout ? t('workout.quick') : t('workout.active') }}</p>
