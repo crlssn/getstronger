@@ -1,29 +1,55 @@
 import { describe, expect, test, vi } from 'vitest'
 
-import { playRestFinishedSound } from '@/utils/restSound'
+import {
+  playRestFinishedSound,
+  playRestGetReadySound,
+  shouldPlayRestGetReadySound,
+  unlockRestSound,
+} from '@/utils/restSound'
 
-const createAudioContext = (state: AudioContextState = 'running') => {
+const createAudioContext = (initialState: AudioContextState = 'running') => {
+  let state = initialState
   const oscillators: Array<{
-    frequency: { exponentialRampToValueAtTime: ReturnType<typeof vi.fn>; setValueAtTime: ReturnType<typeof vi.fn> }
+    frequency: {
+      exponentialRampToValueAtTime: ReturnType<typeof vi.fn>
+      setValueAtTime: ReturnType<typeof vi.fn>
+    }
     start: ReturnType<typeof vi.fn>
     stop: ReturnType<typeof vi.fn>
     type: OscillatorType
   }> = []
+  const gains: Array<{
+    connect: ReturnType<typeof vi.fn>
+    gain: {
+      exponentialRampToValueAtTime: ReturnType<typeof vi.fn>
+      setValueAtTime: ReturnType<typeof vi.fn>
+    }
+  }> = []
+  const resume = vi.fn(async () => {
+    state = 'running'
+  })
 
   const context = {
     currentTime: 10,
     destination: {},
-    state,
-    createGain: () => ({
-      connect: vi.fn().mockReturnValue(undefined),
-      gain: {
-        exponentialRampToValueAtTime: vi.fn(),
-        setValueAtTime: vi.fn(),
-      },
-    }),
+    get state() {
+      return state
+    },
+    resume,
+    createGain: () => {
+      const gain = {
+        connect: vi.fn(),
+        gain: {
+          exponentialRampToValueAtTime: vi.fn(),
+          setValueAtTime: vi.fn(),
+        },
+      }
+      gains.push(gain)
+      return gain
+    },
     createOscillator: () => {
       const oscillator = {
-        connect: vi.fn().mockReturnValue({ connect: vi.fn() }),
+        connect: vi.fn(),
         frequency: {
           exponentialRampToValueAtTime: vi.fn(),
           setValueAtTime: vi.fn(),
@@ -37,15 +63,38 @@ const createAudioContext = (state: AudioContextState = 'running') => {
     },
   } as unknown as AudioContext
 
-  return { context, oscillators }
+  return { context, gains, oscillators, resume }
 }
 
-describe('playRestFinishedSound', () => {
-  test('plays a rising five-tone fanfare with a held final chord', () => {
+describe('rest sounds', () => {
+  test('unlocks suspended mobile audio during a user interaction', async () => {
+    const { context, gains, oscillators, resume } = createAudioContext('suspended')
+
+    await expect(unlockRestSound(context)).resolves.toBe(true)
+
+    expect(resume).toHaveBeenCalledOnce()
+    expect(oscillators).toHaveLength(1)
+    expect(gains).toHaveLength(1)
+    expect(oscillators[0]?.stop).toHaveBeenCalledWith(10.01)
+  })
+
+  test('plays a two-note get-ready cue', async () => {
     const { context, oscillators } = createAudioContext()
 
-    playRestFinishedSound(context)
+    await expect(playRestGetReadySound(context)).resolves.toBe(true)
 
+    expect(
+      oscillators.map(({ frequency }) => frequency.exponentialRampToValueAtTime.mock.calls[0][0]),
+    ).toEqual([440, 659.25])
+    expect(oscillators.map(({ start }) => start.mock.calls[0][0])).toEqual([10, 10.14])
+  })
+
+  test('plays a rising five-tone completion fanfare after resuming audio', async () => {
+    const { context, oscillators, resume } = createAudioContext('suspended')
+
+    await expect(playRestFinishedSound(context)).resolves.toBe(true)
+
+    expect(resume).toHaveBeenCalledOnce()
     expect(oscillators).toHaveLength(5)
     expect(oscillators.every(({ type }) => type === 'triangle')).toBe(true)
     expect(
@@ -57,11 +106,11 @@ describe('playRestFinishedSound', () => {
     expect(oscillators[oscillators.length - 1]?.stop).toHaveBeenCalledWith(10.82)
   })
 
-  test('stays silent until the browser audio context is running', () => {
-    const { context, oscillators } = createAudioContext('suspended')
-
-    playRestFinishedSound(context)
-
-    expect(oscillators).toHaveLength(0)
+  test('only requests the get-ready cue once in the final ten seconds', () => {
+    expect(shouldPlayRestGetReadySound(11, false)).toBe(false)
+    expect(shouldPlayRestGetReadySound(10, false)).toBe(true)
+    expect(shouldPlayRestGetReadySound(1, false)).toBe(true)
+    expect(shouldPlayRestGetReadySound(10, true)).toBe(false)
+    expect(shouldPlayRestGetReadySound(0, false)).toBe(false)
   })
 })
