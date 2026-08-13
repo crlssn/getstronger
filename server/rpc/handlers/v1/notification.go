@@ -110,6 +110,7 @@ func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *co
 		log.Error("failed to mark notifications as read", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
+	h.stream.Notify(userID)
 
 	return &connect.Response[apiv1.MarkNotificationsAsReadResponse]{}, nil
 }
@@ -119,20 +120,21 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 	userID := xcontext.MustExtractUserID(ctx)
 
 	ctx, cancelFunc := context.WithCancel(ctx)
-	h.stream.Add(userID, cancelFunc)
-	defer h.stream.Remove(userID)
+	defer cancelFunc()
+	updates, unsubscribe := h.stream.Subscribe(userID, cancelFunc)
+	defer unsubscribe()
 
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	lastCount, err := h.sendUnreadNotificationCount(ctx, userID, res)
+	if err != nil {
+		return err
+	}
 
-	var lastCount int64
 	for {
 		select {
 		case <-ctx.Done():
-			log.Warn("client disconnected")
-			h.stream.Remove(userID)
+			log.Debug("client disconnected")
 			return nil
-		case <-ticker.C:
+		case <-updates:
 			count, err := h.repo.CountNotifications(
 				ctx,
 				repo.CountNotificationsWithUserID(userID),
@@ -156,4 +158,28 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 			}
 		}
 	}
+}
+
+func (h *notificationHandler) sendUnreadNotificationCount(
+	ctx context.Context,
+	userID string,
+	res *connect.ServerStream[apiv1.UnreadNotificationsResponse],
+) (int64, error) {
+	log := xcontext.MustExtractLogger(ctx)
+	count, err := h.repo.CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(userID),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	if err != nil {
+		log.Error("failed to count notifications", zap.Error(err))
+		return 0, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = res.Send(&apiv1.UnreadNotificationsResponse{Count: count}); err != nil {
+		log.Error("failed to send unread notifications", zap.Error(err))
+		return 0, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return count, nil
 }

@@ -11,7 +11,7 @@ onMounted(async () => {
   authStore.logout()
 
   const notificationStore = useNotificationStore()
-  notificationStore.unreadCount = 0
+  notificationStore.stopUnreadNotifications()
 
   await router.push('/login')
 })

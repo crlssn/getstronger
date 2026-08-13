@@ -18,6 +18,7 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/stream"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -65,7 +66,8 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 	ctx := context.Background()
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
-	handler := handlers.NewWorkoutCommentPosted(zap.NewExample(), repo.New(c.DB))
+	streamManager := stream.NewManager()
+	handler := handlers.NewWorkoutCommentPosted(zap.NewExample(), repo.New(c.DB), streamManager)
 
 	t.Run("ok_workout_comment_posted", func(t *testing.T) {
 		t.Parallel()
@@ -138,7 +140,8 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 
 	controller := gomock.NewController(t)
 	repoMock := repo.NewMockRepo(controller)
-	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock)
+	streamManager := stream.NewManager()
+	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock, streamManager)
 
 	t.Run("ok_user_followed", func(t *testing.T) {
 		t.Parallel()
@@ -159,8 +162,16 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 
 		bytes, err := json.Marshal(payload)
 		require.NoError(t, err)
+		updates, unsubscribe := streamManager.Subscribe(payload.FolloweeID, func() {})
+		defer unsubscribe()
 
 		handler.HandlePayload(string(bytes))
+
+		select {
+		case <-updates:
+		default:
+			t.Fatal("expected notification stream update")
+		}
 	})
 
 	t.Run("ok_invalid_payload", func(t *testing.T) {

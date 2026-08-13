@@ -16,6 +16,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
+	"github.com/crlssn/getstronger/server/stream"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 	"github.com/crlssn/getstronger/server/xcontext"
@@ -25,6 +26,7 @@ type notificationSuite struct {
 	suite.Suite
 
 	handler apiv1connect.NotificationServiceHandler
+	stream  *stream.Manager
 
 	testFactory   *factory.Factory
 	testContainer *container.Container
@@ -39,13 +41,45 @@ func (s *notificationSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = container.NewContainer(ctx)
 	s.testFactory = factory.NewFactory(s.testContainer.DB)
-	s.handler = handlers.NewNotificationHandler(repo.New(s.testContainer.DB), nil)
+	s.stream = stream.NewManager()
+	s.handler = handlers.NewNotificationHandler(repo.New(s.testContainer.DB), s.stream)
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
 			log.Fatalf("failed to clean container: %s", err)
 		}
 	})
+}
+
+func (s *notificationSuite) TestMarkNotificationsAsReadNotifiesStreams() {
+	user := s.testFactory.NewUser()
+	s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
+
+	updates, unsubscribe := s.stream.Subscribe(user.ID.String(), func() {})
+	defer unsubscribe()
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	res, err := s.handler.MarkNotificationsAsRead(
+		ctx,
+		connect.NewRequest(&apiv1.MarkNotificationsAsReadRequest{}),
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+
+	select {
+	case <-updates:
+	default:
+		s.T().Fatal("expected notification stream update")
+	}
+
+	count, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
+	s.Require().Zero(count)
 }
 
 func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table-driven notification states are clearer together.
