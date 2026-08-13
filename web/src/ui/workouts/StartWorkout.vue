@@ -778,25 +778,27 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     <!-- Two independent sticky layers, not one block: the header pins until the
          rest bar reaches the top, then the bar rides over and covers it. -->
     <header class="workout-header">
-      <button
-        type="button"
-        class="leave-workout"
-        :aria-label="t('workout.leaveTitle')"
-        @click="cancelWorkout"
-      >
-        <XMarkIcon />
-      </button>
-      <div class="min-w-0">
-        <p class="eyebrow">{{ quickWorkout ? t('workout.quick') : t('workout.active') }}</p>
-        <h1>{{ routine?.name ?? t('workout.loading') }}</h1>
-        <p class="session-progress">
-          {{ t('workout.completedExercises', completedExerciseCount) }} ·
-          {{ t('workout.loggedSets', loggedSetCount) }}
-        </p>
-      </div>
-      <div class="elapsed">
-        <span>{{ t('workout.elapsed') }}</span>
-        <strong>{{ elapsedLabel }}</strong>
+      <div class="workout-header-inner">
+        <button
+          type="button"
+          class="leave-workout"
+          :aria-label="t('workout.leaveTitle')"
+          @click="cancelWorkout"
+        >
+          <XMarkIcon />
+        </button>
+        <div class="min-w-0">
+          <p class="eyebrow">{{ quickWorkout ? t('workout.quick') : t('workout.active') }}</p>
+          <h1>{{ routine?.name ?? t('workout.loading') }}</h1>
+          <p class="session-progress">
+            {{ t('workout.completedExercises', completedExerciseCount) }} ·
+            {{ t('workout.loggedSets', loggedSetCount) }}
+          </p>
+        </div>
+        <div class="elapsed">
+          <span>{{ t('workout.elapsed') }}</span>
+          <strong>{{ elapsedLabel }}</strong>
+        </div>
       </div>
     </header>
 
@@ -809,16 +811,18 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       :style="{ '--rest-hue': restHue }"
       :aria-label="t('workout.restTimer')"
     >
-      <div class="rest-copy">
-        <p class="rest-label"><ClockIcon /> {{ t('workout.rest') }}</p>
-        <strong aria-hidden="true">{{ restLabel }}</strong>
-      </div>
-      <div class="rest-actions">
-        <button type="button" @click="addRestTime">{{ t('workout.addSeconds') }}</button>
-        <button type="button" @click="skipRest">{{ t('workout.skip') }}</button>
-      </div>
-      <div class="rest-progress" aria-hidden="true">
-        <span :style="{ width: restProgress }"></span>
+      <div class="rest-banner-inner">
+        <div class="rest-copy">
+          <p class="rest-label"><ClockIcon /> {{ t('workout.rest') }}</p>
+          <strong aria-hidden="true">{{ restLabel }}</strong>
+        </div>
+        <div class="rest-actions">
+          <button type="button" @click="addRestTime">{{ t('workout.addSeconds') }}</button>
+          <button type="button" @click="skipRest">{{ t('workout.skip') }}</button>
+        </div>
+        <div class="rest-progress" aria-hidden="true">
+          <span :style="{ width: restProgress }"></span>
+        </div>
       </div>
     </section>
 
@@ -1149,12 +1153,16 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .workout-shell {
   @apply mx-auto max-w-3xl space-y-4 pb-28;
 }
-/* Full-bleed: cancels the shell's page gutters and top padding so the bar
-   spans the viewport where the top navigation used to sit. */
+/* The chrome spans the viewport while its contents stay aligned with the app. */
 /* Pins below the rest bar, so the bar covers it once you scroll. Opaque, or
    scrolled content bleeds through and reads as passing over the header. */
 .workout-header {
-  @apply sticky top-0 z-20 -mx-3 -mt-5 grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-slate-200 bg-white px-3 py-3.5 text-slate-950 sm:-mx-5 lg:-mx-8 lg:-mt-7;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  @apply sticky top-0 z-20 -mt-5 border-b border-slate-200 bg-white text-slate-950 lg:-mt-7;
+}
+.workout-header-inner {
+  @apply mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-3.5 sm:px-5 lg:px-8;
 }
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leave-workout {
@@ -1199,7 +1207,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 /* A square, edge-to-edge band that rides over the header on scroll, so the
    countdown owns the top of the screen while resting. */
 .rest-banner {
-  @apply !mt-0 sticky top-0 z-30 -mx-3 sm:-mx-5 lg:-mx-8;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  @apply !mt-0 sticky top-0 z-30 text-white shadow-lg;
   /* Energy comes from saturation, not lightness: near-full saturation reads
      vivid while staying dark enough for white text. The gradient runs dark at
      the top-left, where the label and countdown sit, out to a bright corner. */
@@ -1210,7 +1220,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     hsl(calc(var(--rest-hue, 165) - 28) 96% 40%) 100%
   );
   transition: --rest-hue 900ms ease;
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 px-4 pb-4 pt-3 text-white shadow-lg;
+}
+.rest-banner-inner {
+  @apply mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-3 px-3 pb-4 pt-3 sm:px-5 lg:px-8;
 }
 /* The last minute goes sunny with dark text: warm hues only read as happy when
    they are bright, and bright needs dark type to stay legible. */
