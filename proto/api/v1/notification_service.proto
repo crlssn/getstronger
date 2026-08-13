@@ -31,7 +31,12 @@ message ListNotificationsResponse {
   PaginationResponse pagination = 2;
 }
 
-message MarkNotificationsAsReadRequest {}
+message MarkNotificationsAsReadRequest {
+  string notification_id = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+    (buf.validate.field).string.uuid = true
+  ];
+}
 message MarkNotificationsAsReadResponse {}
 
 message GetUnreadNotificationCountRequest {}

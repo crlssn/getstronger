@@ -520,9 +520,12 @@ export const listNotifications = async (
   return tryCatch(() => notificationClient.listNotifications(req))
 }
 
-export const markNotificationAsRead = async (): Promise<MarkNotificationsAsReadResponse | void> => {
-  const req = create(MarkNotificationsAsReadRequestSchema, {})
-  return tryCatch(() => notificationClient.markNotificationsAsRead(req))
+export const markNotificationAsRead = async (
+  notificationId = '',
+  ignoreErrors = false,
+): Promise<MarkNotificationsAsReadResponse | void> => {
+  const req = create(MarkNotificationsAsReadRequestSchema, { notificationId })
+  return tryCatch(() => notificationClient.markNotificationsAsRead(req), { ignoreErrors })
 }
 
 export const listWorkouts = async (
@@ -569,6 +572,7 @@ export const getPreviousWorkoutSets = async (
 }
 
 type TryCatchOptions = {
+  ignoreErrors?: boolean
   invalidatesSessionOnNotFound?: boolean
   rethrow?: boolean
 }
@@ -580,6 +584,8 @@ const tryCatch = async <T>(
   try {
     return await fn()
   } catch (error) {
+    if (options.ignoreErrors) return
+
     if (error instanceof ConnectError) {
       if (
         error.code === Code.Unauthenticated ||

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AppList from '@/ui/components/AppList.vue'
 import { listNotifications, markNotificationAsRead } from '@/http/requests.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
@@ -12,11 +12,13 @@ import { useNotificationStore } from '@/stores/notifications'
 const notifications = ref([] as Notification[])
 const notificationStore = useNotificationStore()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
+const markingAllAsRead = ref(false)
+const hasUnreadNotifications = computed(() =>
+  notifications.value.some((notification) => !notification.read),
+)
 
 onMounted(async () => {
   await fetchNotifications()
-  await markNotificationAsRead()
-  notificationStore.unreadCount = 0
 })
 
 const fetchNotifications = async () => {
@@ -26,15 +28,46 @@ const fetchNotifications = async () => {
   notifications.value = [...notifications.value, ...res.notifications]
   pageToken.value = resolvePageToken(res.pagination)
 }
+
+const markAsRead = (notification: Notification) => {
+  if (notification.read) return
+
+  notification.read = true
+  notificationStore.unreadCount = Math.max(0, notificationStore.unreadCount - 1)
+  void markNotificationAsRead(notification.id, true)
+}
+
+const markAllAsRead = async () => {
+  if (!hasUnreadNotifications.value || markingAllAsRead.value) return
+
+  markingAllAsRead.value = true
+  try {
+    const response = await markNotificationAsRead()
+    if (!response) return
+
+    for (const notification of notifications.value) notification.read = true
+    notificationStore.unreadCount = 0
+  } finally {
+    markingAllAsRead.value = false
+  }
+}
 </script>
 
 <template>
+  <div v-if="hasUnreadNotifications" class="notification-actions">
+    <button type="button" :disabled="markingAllAsRead" @click="markAllAsRead">
+      {{
+        markingAllAsRead ? $t('profile.markingNotificationsAsRead') : $t('profile.markAllAsRead')
+      }}
+    </button>
+  </div>
   <AppList :can-fetch="hasMorePages" @fetch="fetchNotifications">
     <AppListItem
       v-for="notification in notifications"
       :key="notification.id"
       class="notification-item"
       :class="{ unread: !notification.read }"
+      @click="markAsRead(notification)"
     >
       <span v-if="!notification.read" class="sr-only">
         {{ $t('profile.unreadNotification') }}
@@ -60,6 +93,12 @@ const fetchNotifications = async () => {
 <style scoped>
 @reference '../../assets/base.css';
 
+.notification-actions {
+  @apply mb-3 flex justify-end;
+}
+.notification-actions button {
+  @apply min-h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-indigo-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 disabled:cursor-wait disabled:text-slate-400;
+}
 .notification-item {
   @apply relative transition-colors duration-200;
 }

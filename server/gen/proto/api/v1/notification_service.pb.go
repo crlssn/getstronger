@@ -119,9 +119,10 @@ func (x *ListNotificationsResponse) GetPagination() *PaginationResponse {
 }
 
 type MarkNotificationsAsReadRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	NotificationId string                 `protobuf:"bytes,1,opt,name=notification_id,json=notificationId,proto3" json:"notification_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *MarkNotificationsAsReadRequest) Reset() {
@@ -152,6 +153,13 @@ func (x *MarkNotificationsAsReadRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use MarkNotificationsAsReadRequest.ProtoReflect.Descriptor instead.
 func (*MarkNotificationsAsReadRequest) Descriptor() ([]byte, []int) {
 	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *MarkNotificationsAsReadRequest) GetNotificationId() string {
+	if x != nil {
+		return x.NotificationId
+	}
+	return ""
 }
 
 type MarkNotificationsAsReadResponse struct {
@@ -566,8 +574,9 @@ const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\rnotifications\x18\x01 \x03(\v2\x14.api.v1.NotificationR\rnotifications\x12:\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1a.api.v1.PaginationResponseR\n" +
-	"pagination\" \n" +
-	"\x1eMarkNotificationsAsReadRequest\"!\n" +
+	"pagination\"V\n" +
+	"\x1eMarkNotificationsAsReadRequest\x124\n" +
+	"\x0fnotification_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x02r\x03\xb0\x01\x01R\x0enotificationId\"!\n" +
 	"\x1fMarkNotificationsAsReadResponse\"#\n" +
 	"!GetUnreadNotificationCountRequest\":\n" +
 	"\"GetUnreadNotificationCountResponse\x12\x14\n" +

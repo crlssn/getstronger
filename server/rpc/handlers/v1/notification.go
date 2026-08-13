@@ -102,11 +102,11 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	}, nil
 }
 
-func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *connect.Request[apiv1.MarkNotificationsAsReadRequest]) (*connect.Response[apiv1.MarkNotificationsAsReadResponse], error) {
+func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, req *connect.Request[apiv1.MarkNotificationsAsReadRequest]) (*connect.Response[apiv1.MarkNotificationsAsReadResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.MarkNotificationsAsRead(ctx, userID); err != nil {
+	if err := h.repo.MarkNotificationsAsRead(ctx, userID, req.Msg.GetNotificationId()); err != nil {
 		log.Error("failed to mark notifications as read", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

@@ -51,9 +51,11 @@ func (s *notificationSuite) SetupSuite() {
 	})
 }
 
-func (s *notificationSuite) TestMarkNotificationsAsReadNotifiesStreams() {
+func (s *notificationSuite) TestMarkSingleNotificationAsReadNotifiesStreams() {
 	user := s.testFactory.NewUser()
+	notification := s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
 	s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
+	otherNotification := s.testFactory.NewNotification()
 
 	updates, unsubscribe := s.stream.Subscribe(user.ID.String(), func() {})
 	defer unsubscribe()
@@ -62,7 +64,9 @@ func (s *notificationSuite) TestMarkNotificationsAsReadNotifiesStreams() {
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	res, err := s.handler.MarkNotificationsAsRead(
 		ctx,
-		connect.NewRequest(&apiv1.MarkNotificationsAsReadRequest{}),
+		connect.NewRequest(&apiv1.MarkNotificationsAsReadRequest{
+			NotificationId: notification.ID.String(),
+		}),
 	)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
@@ -79,7 +83,46 @@ func (s *notificationSuite) TestMarkNotificationsAsReadNotifiesStreams() {
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	s.Require().NoError(err)
+	s.Equal(int64(1), count)
+
+	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(otherNotification.UserID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
+	s.Equal(int64(1), otherCount)
+}
+
+func (s *notificationSuite) TestMarkAllNotificationsAsRead() {
+	user := s.testFactory.NewUser()
+	s.testFactory.NewNotificationSlice(2, factory.NotificationUserID(user.ID.String()))
+	otherNotification := s.testFactory.NewNotification()
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	res, err := s.handler.MarkNotificationsAsRead(
+		ctx,
+		connect.NewRequest(&apiv1.MarkNotificationsAsReadRequest{}),
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+
+	count, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
 	s.Require().Zero(count)
+
+	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(otherNotification.UserID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
+	s.Equal(int64(1), otherCount)
 }
 
 func (s *notificationSuite) TestGetUnreadNotificationCount() {

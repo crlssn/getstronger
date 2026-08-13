@@ -112,7 +112,7 @@ type notificationMethods interface {
 	ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error)
 	CreateNotification(ctx context.Context, p CreateNotificationParams) error
 	CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error)
-	MarkNotificationsAsRead(ctx context.Context, userID string) error
+	MarkNotificationsAsRead(ctx context.Context, userID, notificationID string) error
 }
 
 type pubSubMethods interface {

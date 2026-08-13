@@ -1505,11 +1505,20 @@ func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotification
 	return count, nil
 }
 
-func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID string) error {
-	if _, err := models.Notifications.Update(
-		um.SetCol(models.Notifications.Columns.ReadAt.Name()).ToArg(time.Now().UTC()),
-		models.UpdateWhere.Notifications.UserID.EQ(uuidFromString(userID)),
-	).Exec(ctx, r.bobExec()); err != nil {
+func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID, notificationID string) error {
+	setReadAt := um.SetCol(models.Notifications.Columns.ReadAt.Name()).ToArg(time.Now().UTC())
+	ownedByUser := models.UpdateWhere.Notifications.UserID.EQ(uuidFromString(userID))
+	unread := models.UpdateWhere.Notifications.ReadAt.IsNull()
+
+	updateMods := []bob.Mod[*dialect.UpdateQuery]{setReadAt, ownedByUser, unread}
+	if notificationID != "" {
+		updateMods = append(
+			updateMods,
+			models.UpdateWhere.Notifications.ID.EQ(uuidFromString(notificationID)),
+		)
+	}
+
+	if _, err := models.Notifications.Update(updateMods...).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("notifications update: %w", err)
 	}
 
