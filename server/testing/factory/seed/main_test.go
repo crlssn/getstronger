@@ -29,7 +29,7 @@ func TestSeedJaneDoe(t *testing.T) {
 		factory.UserFirstName("John"),
 		factory.UserLastName("Doe"),
 	)
-	johnWorkouts := f.NewWorkoutSlice(3, factory.WorkoutUserID(john.ID))
+	johnWorkouts := f.NewWorkoutSlice(4, factory.WorkoutUserID(john.ID))
 
 	seedJaneDoe(c.DB, f, john, "password")
 
@@ -76,7 +76,7 @@ func TestSeedJaneDoe(t *testing.T) {
 		models.SelectWhere.WorkoutComments.UserID.EQ(jane.ID),
 	).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
-	require.Len(t, comments, 3)
+	require.Len(t, comments, 4)
 	johnWorkoutIDs := make(map[string]struct{}, len(johnWorkouts))
 	for _, workout := range johnWorkouts {
 		johnWorkoutIDs[workout.ID.String()] = struct{}{}
@@ -92,9 +92,15 @@ func TestSeedJaneDoe(t *testing.T) {
 		models.SelectWhere.Notifications.Type.EQ(repo.NotificationTypeWorkoutComment),
 	).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
-	require.Len(t, notifications, 3)
+	require.Len(t, notifications, 4)
+	readCount := 0
+	unreadCount := 0
 	for _, notification := range notifications {
-		require.True(t, notification.ReadAt.IsNull())
+		if notification.ReadAt.IsNull() {
+			unreadCount++
+		} else {
+			readCount++
+		}
 
 		var payload repo.NotificationPayload
 		require.NoError(t, json.Unmarshal(notification.Payload.Val, &payload))
@@ -102,6 +108,8 @@ func TestSeedJaneDoe(t *testing.T) {
 		_, notifiesAboutJohnWorkout := johnWorkoutIDs[payload.WorkoutID]
 		require.True(t, notifiesAboutJohnWorkout)
 	}
+	require.Equal(t, 2, readCount)
+	require.Equal(t, 2, unreadCount)
 }
 
 func TestTruncateDatabase(t *testing.T) {

@@ -39,7 +39,6 @@ const fetchNotifications = async () => {
       <span v-if="!notification.read" class="sr-only">
         {{ $t('profile.unreadNotification') }}
       </span>
-      <span v-if="!notification.read" class="unread-indicator" aria-hidden="true"></span>
       <NotificationUserFollow
         v-if="notification.type.case === 'userFollowed'"
         :actor="notification.type.value?.actor"
@@ -62,12 +61,21 @@ const fetchNotifications = async () => {
 @reference '../../assets/base.css';
 
 .notification-item {
-  @apply relative transition-colors;
+  @apply relative transition-colors duration-200;
 }
 .notification-item.unread {
-  @apply bg-indigo-50/70;
+  @apply border-l-[3px] border-l-blue-500 bg-gradient-to-r from-blue-50 via-blue-50/60 to-white;
 }
-.unread-indicator {
-  @apply absolute left-1.5 top-1/2 size-2 -translate-y-1/2 rounded-full bg-indigo-600;
+.notification-item.unread:hover {
+  @apply from-blue-100/80 via-blue-50 to-white;
+}
+.notification-item.unread :deep(a > svg) {
+  @apply size-10 rounded-xl bg-blue-100 p-2 text-blue-600 ring-1 ring-blue-200;
+}
+.notification-item.unread :deep(a > div > div) {
+  @apply text-slate-950;
+}
+.notification-item.unread :deep(a > div > p) {
+  @apply font-medium text-blue-600;
 }
 </style>

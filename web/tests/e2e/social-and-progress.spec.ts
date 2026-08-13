@@ -60,7 +60,8 @@ test.describe('profiles and notifications', () => {
   test('loads seeded notifications and follows their destinations @smoke', async ({ page }) => {
     await page.getByRole('link', { name: 'Notifications' }).first().click()
     await expect(page).toHaveURL(/\/notifications$/)
-    await expect(page.locator('.notification-item.unread')).toHaveCount(3)
+    await expect(page.locator('.notification-item.unread')).toHaveCount(2)
+    await expect(page.locator('.notification-item:not(.unread)')).toHaveCount(2)
 
     const janeNotification = page.getByRole('link').filter({ hasText: 'Jane Doe' }).first()
     await expect(janeNotification).toBeVisible()

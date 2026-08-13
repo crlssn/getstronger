@@ -250,11 +250,13 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.U
 	type commentSeed struct {
 		text      string
 		createdAt time.Time
+		read      bool
 	}
 	comments := []commentSeed{
 		{text: "Strong session — those last sets looked solid!", createdAt: now.Add(-22 * time.Minute)},
 		{text: "Nice work! That volume is really adding up.", createdAt: now.Add(-3 * time.Hour)},
-		{text: "Great consistency. How did the final set feel?", createdAt: now.Add(-26 * time.Hour)},
+		{text: "Great consistency. How did the final set feel?", createdAt: now.Add(-26 * time.Hour), read: true},
+		{text: "Another strong workout in the books!", createdAt: now.Add(-50 * time.Hour), read: true},
 	}
 
 	for index, seededComment := range comments {
@@ -269,7 +271,7 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.U
 			factory.WorkoutCommentText(seededComment.text),
 			factory.WorkoutCommentCreatedAt(seededComment.createdAt),
 		)
-		f.NewNotification(
+		notificationOpts := []factory.NotificationOpt{
 			factory.NotificationUserID(john.ID),
 			factory.NotificationType(repo.NotificationTypeWorkoutComment),
 			factory.NotificationPayload(repo.NotificationPayload{
@@ -277,7 +279,11 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.U
 				WorkoutID: workout.ID.String(),
 			}),
 			factory.NotificationCreatedAt(seededComment.createdAt),
-		)
+		}
+		if seededComment.read {
+			notificationOpts = append(notificationOpts, factory.NotificationRead())
+		}
+		f.NewNotification(notificationOpts...)
 	}
 }
 

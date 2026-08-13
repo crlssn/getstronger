@@ -123,7 +123,7 @@ const navigation = computed(() => [
       >
         <span class="nav-icon">
           <component :is="item.active ? item.iconActive : item.icon" />
-          <span v-if="item.badge" class="notification-badge">
+          <span v-if="item.badge && !item.active" class="notification-badge">
             {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
         </span>
@@ -161,7 +161,7 @@ const navigation = computed(() => [
   @apply relative grid place-items-center;
 }
 .notification-badge {
-  @apply absolute -right-3 -top-2 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-red-600 px-1 text-[0.625rem] font-bold leading-none text-white;
+  @apply absolute -right-3 -top-2 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-red-600 px-1 text-[0.6875rem] font-bold leading-none text-white ring-[3px] ring-white;
 }
 .timer-badge {
   @apply whitespace-nowrap rounded-full bg-stone-900 px-2 py-0.5 font-mono text-[0.65rem] font-semibold leading-none text-white;
