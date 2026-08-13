@@ -1495,7 +1495,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 .finish-dock {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:rounded-2xl sm:border;
+  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:border sm:border-b-0 sm:rounded-t-2xl;
 }
 .primary-action {
   @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400;
