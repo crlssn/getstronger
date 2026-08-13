@@ -9,3 +9,5 @@
 /web/.env
 /mise.local.toml
 /mise.*.local.toml
+/promo/output/
+/promo/source/
