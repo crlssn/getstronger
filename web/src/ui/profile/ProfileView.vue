@@ -20,7 +20,11 @@ const dashboardStore = useDashboardStore()
 const notificationStore = useNotificationStore()
 
 onMounted(async () => {
-  const [response] = await Promise.all([getCurrentUser(authStore.userId), dashboardStore.load()])
+  const [response] = await Promise.all([
+    getCurrentUser(authStore.userId),
+    dashboardStore.load(),
+    notificationStore.refreshUnreadNotifications(),
+  ])
   if (response) user.value = response.user
 })
 

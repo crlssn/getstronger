@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/notification_service.proto.
  */
 export const file_api_v1_notification_service: GenFile = /*@__PURE__*/
-  fileDesc("CiFhcGkvdjEvbm90aWZpY2F0aW9uX3NlcnZpY2UucHJvdG8SBmFwaS52MSJRChhMaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QSNQoKcGFnaW5hdGlvbhgBIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBIngKGUxpc3ROb3RpZmljYXRpb25zUmVzcG9uc2USKwoNbm90aWZpY2F0aW9ucxgBIAMoCzIULmFwaS52MS5Ob3RpZmljYXRpb24SLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiIAoeTWFya05vdGlmaWNhdGlvbnNBc1JlYWRSZXF1ZXN0IiEKH01hcmtOb3RpZmljYXRpb25zQXNSZWFkUmVzcG9uc2UiHAoaVW5yZWFkTm90aWZpY2F0aW9uc1JlcXVlc3QiLAobVW5yZWFkTm90aWZpY2F0aW9uc1Jlc3BvbnNlEg0KBWNvdW50GAEgASgDIsQCCgxOb3RpZmljYXRpb24SCgoCaWQYASABKAkSGAoQbm90aWZpZWRfYXRfdW5peBgCIAEoAxI6Cg11c2VyX2ZvbGxvd2VkGAMgASgLMiEuYXBpLnYxLk5vdGlmaWNhdGlvbi5Vc2VyRm9sbG93ZWRIABI+Cg93b3Jrb3V0X2NvbW1lbnQYBCABKAsyIy5hcGkudjEuTm90aWZpY2F0aW9uLldvcmtvdXRDb21tZW50SAASDAoEcmVhZBgFIAEoCBorCgxVc2VyRm9sbG93ZWQSGwoFYWN0b3IYASABKAsyDC5hcGkudjEuVXNlchpPCg5Xb3Jrb3V0Q29tbWVudBIbCgVhY3RvchgBIAEoCzIMLmFwaS52MS5Vc2VyEiAKB3dvcmtvdXQYAiABKAsyDy5hcGkudjEuV29ya291dEIGCgR0eXBlMs8CChNOb3RpZmljYXRpb25TZXJ2aWNlEl4KEUxpc3ROb3RpZmljYXRpb25zEiAuYXBpLnYxLkxpc3ROb3RpZmljYXRpb25zUmVxdWVzdBohLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1Jlc3BvbnNlIgSItRgBEnAKF01hcmtOb3RpZmljYXRpb25zQXNSZWFkEiYuYXBpLnYxLk1hcmtOb3RpZmljYXRpb25zQXNSZWFkUmVxdWVzdBonLmFwaS52MS5NYXJrTm90aWZpY2F0aW9uc0FzUmVhZFJlc3BvbnNlIgSItRgBEmYKE1VucmVhZE5vdGlmaWNhdGlvbnMSIi5hcGkudjEuVW5yZWFkTm90aWZpY2F0aW9uc1JlcXVlc3QaIy5hcGkudjEuVW5yZWFkTm90aWZpY2F0aW9uc1Jlc3BvbnNlIgSItRgBMAFCnAEKCmNvbS5hcGkudjFCGE5vdGlmaWNhdGlvblNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
+  fileDesc("CiFhcGkvdjEvbm90aWZpY2F0aW9uX3NlcnZpY2UucHJvdG8SBmFwaS52MSJRChhMaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QSNQoKcGFnaW5hdGlvbhgBIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBIngKGUxpc3ROb3RpZmljYXRpb25zUmVzcG9uc2USKwoNbm90aWZpY2F0aW9ucxgBIAMoCzIULmFwaS52MS5Ob3RpZmljYXRpb24SLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiIAoeTWFya05vdGlmaWNhdGlvbnNBc1JlYWRSZXF1ZXN0IiEKH01hcmtOb3RpZmljYXRpb25zQXNSZWFkUmVzcG9uc2UiIwohR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnRSZXF1ZXN0IjMKIkdldFVucmVhZE5vdGlmaWNhdGlvbkNvdW50UmVzcG9uc2USDQoFY291bnQYASABKAMiHAoaVW5yZWFkTm90aWZpY2F0aW9uc1JlcXVlc3QiLAobVW5yZWFkTm90aWZpY2F0aW9uc1Jlc3BvbnNlEg0KBWNvdW50GAEgASgDIsQCCgxOb3RpZmljYXRpb24SCgoCaWQYASABKAkSGAoQbm90aWZpZWRfYXRfdW5peBgCIAEoAxI6Cg11c2VyX2ZvbGxvd2VkGAMgASgLMiEuYXBpLnYxLk5vdGlmaWNhdGlvbi5Vc2VyRm9sbG93ZWRIABI+Cg93b3Jrb3V0X2NvbW1lbnQYBCABKAsyIy5hcGkudjEuTm90aWZpY2F0aW9uLldvcmtvdXRDb21tZW50SAASDAoEcmVhZBgFIAEoCBorCgxVc2VyRm9sbG93ZWQSGwoFYWN0b3IYASABKAsyDC5hcGkudjEuVXNlchpPCg5Xb3Jrb3V0Q29tbWVudBIbCgVhY3RvchgBIAEoCzIMLmFwaS52MS5Vc2VyEiAKB3dvcmtvdXQYAiABKAsyDy5hcGkudjEuV29ya291dEIGCgR0eXBlMsoDChNOb3RpZmljYXRpb25TZXJ2aWNlEl4KEUxpc3ROb3RpZmljYXRpb25zEiAuYXBpLnYxLkxpc3ROb3RpZmljYXRpb25zUmVxdWVzdBohLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1Jlc3BvbnNlIgSItRgBEnAKF01hcmtOb3RpZmljYXRpb25zQXNSZWFkEiYuYXBpLnYxLk1hcmtOb3RpZmljYXRpb25zQXNSZWFkUmVxdWVzdBonLmFwaS52MS5NYXJrTm90aWZpY2F0aW9uc0FzUmVhZFJlc3BvbnNlIgSItRgBEnkKGkdldFVucmVhZE5vdGlmaWNhdGlvbkNvdW50EikuYXBpLnYxLkdldFVucmVhZE5vdGlmaWNhdGlvbkNvdW50UmVxdWVzdBoqLmFwaS52MS5HZXRVbnJlYWROb3RpZmljYXRpb25Db3VudFJlc3BvbnNlIgSItRgBEmYKE1VucmVhZE5vdGlmaWNhdGlvbnMSIi5hcGkudjEuVW5yZWFkTm90aWZpY2F0aW9uc1JlcXVlc3QaIy5hcGkudjEuVW5yZWFkTm90aWZpY2F0aW9uc1Jlc3BvbnNlIgSItRgBMAFCnAEKCmNvbS5hcGkudjFCGE5vdGlmaWNhdGlvblNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.ListNotificationsRequest
@@ -84,6 +84,36 @@ export const MarkNotificationsAsReadResponseSchema: GenMessage<MarkNotifications
   messageDesc(file_api_v1_notification_service, 3);
 
 /**
+ * @generated from message api.v1.GetUnreadNotificationCountRequest
+ */
+export type GetUnreadNotificationCountRequest = Message<"api.v1.GetUnreadNotificationCountRequest"> & {
+};
+
+/**
+ * Describes the message api.v1.GetUnreadNotificationCountRequest.
+ * Use `create(GetUnreadNotificationCountRequestSchema)` to create a new message.
+ */
+export const GetUnreadNotificationCountRequestSchema: GenMessage<GetUnreadNotificationCountRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_notification_service, 4);
+
+/**
+ * @generated from message api.v1.GetUnreadNotificationCountResponse
+ */
+export type GetUnreadNotificationCountResponse = Message<"api.v1.GetUnreadNotificationCountResponse"> & {
+  /**
+   * @generated from field: int64 count = 1;
+   */
+  count: bigint;
+};
+
+/**
+ * Describes the message api.v1.GetUnreadNotificationCountResponse.
+ * Use `create(GetUnreadNotificationCountResponseSchema)` to create a new message.
+ */
+export const GetUnreadNotificationCountResponseSchema: GenMessage<GetUnreadNotificationCountResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_notification_service, 5);
+
+/**
  * @generated from message api.v1.UnreadNotificationsRequest
  */
 export type UnreadNotificationsRequest = Message<"api.v1.UnreadNotificationsRequest"> & {
@@ -94,7 +124,7 @@ export type UnreadNotificationsRequest = Message<"api.v1.UnreadNotificationsRequ
  * Use `create(UnreadNotificationsRequestSchema)` to create a new message.
  */
 export const UnreadNotificationsRequestSchema: GenMessage<UnreadNotificationsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 4);
+  messageDesc(file_api_v1_notification_service, 6);
 
 /**
  * @generated from message api.v1.UnreadNotificationsResponse
@@ -111,7 +141,7 @@ export type UnreadNotificationsResponse = Message<"api.v1.UnreadNotificationsRes
  * Use `create(UnreadNotificationsResponseSchema)` to create a new message.
  */
 export const UnreadNotificationsResponseSchema: GenMessage<UnreadNotificationsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 5);
+  messageDesc(file_api_v1_notification_service, 7);
 
 /**
  * @generated from message api.v1.Notification
@@ -157,7 +187,7 @@ export type Notification = Message<"api.v1.Notification"> & {
  * Use `create(NotificationSchema)` to create a new message.
  */
 export const NotificationSchema: GenMessage<Notification> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 6);
+  messageDesc(file_api_v1_notification_service, 8);
 
 /**
  * @generated from message api.v1.Notification.UserFollowed
@@ -174,7 +204,7 @@ export type Notification_UserFollowed = Message<"api.v1.Notification.UserFollowe
  * Use `create(Notification_UserFollowedSchema)` to create a new message.
  */
 export const Notification_UserFollowedSchema: GenMessage<Notification_UserFollowed> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 6, 0);
+  messageDesc(file_api_v1_notification_service, 8, 0);
 
 /**
  * @generated from message api.v1.Notification.WorkoutComment
@@ -196,7 +226,7 @@ export type Notification_WorkoutComment = Message<"api.v1.Notification.WorkoutCo
  * Use `create(Notification_WorkoutCommentSchema)` to create a new message.
  */
 export const Notification_WorkoutCommentSchema: GenMessage<Notification_WorkoutComment> = /*@__PURE__*/
-  messageDesc(file_api_v1_notification_service, 6, 1);
+  messageDesc(file_api_v1_notification_service, 8, 1);
 
 /**
  * @generated from service api.v1.NotificationService
@@ -217,6 +247,14 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof MarkNotificationsAsReadRequestSchema;
     output: typeof MarkNotificationsAsReadResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.NotificationService.GetUnreadNotificationCount
+   */
+  getUnreadNotificationCount: {
+    methodKind: "unary";
+    input: typeof GetUnreadNotificationCountRequestSchema;
+    output: typeof GetUnreadNotificationCountResponseSchema;
   },
   /**
    * @generated from rpc api.v1.NotificationService.UnreadNotifications

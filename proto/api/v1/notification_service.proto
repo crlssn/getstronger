@@ -15,6 +15,9 @@ service NotificationService {
   rpc MarkNotificationsAsRead (MarkNotificationsAsReadRequest) returns (MarkNotificationsAsReadResponse) {
     option (auth) = true;
   }
+  rpc GetUnreadNotificationCount (GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse) {
+    option (auth) = true;
+  }
   rpc UnreadNotifications (UnreadNotificationsRequest) returns (stream UnreadNotificationsResponse) {
     option (auth) = true;
   }
@@ -30,6 +33,11 @@ message ListNotificationsResponse {
 
 message MarkNotificationsAsReadRequest {}
 message MarkNotificationsAsReadResponse {}
+
+message GetUnreadNotificationCountRequest {}
+message GetUnreadNotificationCountResponse {
+  int64 count = 1;
+}
 
 message UnreadNotificationsRequest {}
 message UnreadNotificationsResponse {

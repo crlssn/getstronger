@@ -82,6 +82,24 @@ func (s *notificationSuite) TestMarkNotificationsAsReadNotifiesStreams() {
 	s.Require().Zero(count)
 }
 
+func (s *notificationSuite) TestGetUnreadNotificationCount() {
+	user := s.testFactory.NewUser()
+	s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
+	s.testFactory.NewNotification(
+		factory.NotificationUserID(user.ID.String()),
+		factory.NotificationRead(),
+	)
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	res, err := s.handler.GetUnreadNotificationCount(
+		ctx,
+		connect.NewRequest(&apiv1.GetUnreadNotificationCountRequest{}),
+	)
+	s.Require().NoError(err)
+	s.Equal(int64(1), res.Msg.GetCount())
+}
+
 func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table-driven notification states are clearer together.
 	type expected struct {
 		err error

@@ -58,7 +58,13 @@ test.describe('profiles and notifications', () => {
   test.beforeEach(async ({ page }) => logIn(page))
 
   test('loads seeded notifications and follows their destinations @smoke', async ({ page }) => {
-    await page.getByRole('link', { name: 'Notifications' }).first().click()
+    const meNavigation = page.getByRole('link', { name: /Me$/ })
+    await expect(meNavigation.locator('.notification-badge')).toHaveText('2')
+    await meNavigation.click()
+
+    const notificationsLink = page.getByRole('link', { name: 'Notifications' })
+    await expect(notificationsLink.locator('.notification-badge')).toHaveText('2')
+    await notificationsLink.click()
     await expect(page).toHaveURL(/\/notifications$/)
     await expect(page.locator('.notification-item.unread')).toHaveCount(2)
     await expect(page.locator('.notification-item:not(.unread)')).toHaveCount(2)

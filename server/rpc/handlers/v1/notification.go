@@ -115,6 +115,16 @@ func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *co
 	return &connect.Response[apiv1.MarkNotificationsAsReadResponse]{}, nil
 }
 
+func (h *notificationHandler) GetUnreadNotificationCount(ctx context.Context, _ *connect.Request[apiv1.GetUnreadNotificationCountRequest]) (*connect.Response[apiv1.GetUnreadNotificationCountResponse], error) {
+	userID := xcontext.MustExtractUserID(ctx)
+	count, err := h.countUnreadNotifications(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&apiv1.GetUnreadNotificationCountResponse{Count: count}), nil
+}
+
 func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[apiv1.UnreadNotificationsRequest], res *connect.ServerStream[apiv1.UnreadNotificationsResponse]) error {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
@@ -135,14 +145,9 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 			log.Debug("client disconnected")
 			return nil
 		case <-updates:
-			count, err := h.repo.CountNotifications(
-				ctx,
-				repo.CountNotificationsWithUserID(userID),
-				repo.CountNotificationsWithUnreadOnly(true),
-			)
+			count, err := h.countUnreadNotifications(ctx, userID)
 			if err != nil {
-				log.Error("failed to count notifications", zap.Error(err))
-				return connect.NewError(connect.CodeInternal, nil)
+				return err
 			}
 
 			if count == lastCount {
@@ -165,19 +170,29 @@ func (h *notificationHandler) sendUnreadNotificationCount(
 	userID string,
 	res *connect.ServerStream[apiv1.UnreadNotificationsResponse],
 ) (int64, error) {
-	log := xcontext.MustExtractLogger(ctx)
+	count, err := h.countUnreadNotifications(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	if err = res.Send(&apiv1.UnreadNotificationsResponse{Count: count}); err != nil {
+		log := xcontext.MustExtractLogger(ctx)
+		log.Error("failed to send unread notifications", zap.Error(err))
+		return 0, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return count, nil
+}
+
+func (h *notificationHandler) countUnreadNotifications(ctx context.Context, userID string) (int64, error) {
 	count, err := h.repo.CountNotifications(
 		ctx,
 		repo.CountNotificationsWithUserID(userID),
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	if err != nil {
+		log := xcontext.MustExtractLogger(ctx)
 		log.Error("failed to count notifications", zap.Error(err))
-		return 0, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	if err = res.Send(&apiv1.UnreadNotificationsResponse{Count: count}); err != nil {
-		log.Error("failed to send unread notifications", zap.Error(err))
 		return 0, connect.NewError(connect.CodeInternal, nil)
 	}
 
