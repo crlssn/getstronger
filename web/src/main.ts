@@ -35,8 +35,10 @@ const init = async () => {
   if (authStore.authorised) {
     await refreshAccessTokenOrLogout()
 
-    const notificationStore = useNotificationStore()
-    notificationStore.streamUnreadNotifications()
+    if (authStore.authorised) {
+      const notificationStore = useNotificationStore()
+      notificationStore.streamUnreadNotifications()
+    }
   }
 
   console.log('App initialized')

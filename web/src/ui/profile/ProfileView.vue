@@ -8,7 +8,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 
-import { getUser } from '@/http/requests'
+import { getCurrentUser } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
@@ -20,7 +20,7 @@ const dashboardStore = useDashboardStore()
 const notificationStore = useNotificationStore()
 
 onMounted(async () => {
-  const [response] = await Promise.all([getUser(authStore.userId), dashboardStore.load()])
+  const [response] = await Promise.all([getCurrentUser(authStore.userId), dashboardStore.load()])
   if (response) user.value = response.user
 })
 

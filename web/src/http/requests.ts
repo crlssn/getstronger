@@ -2,7 +2,6 @@ import type { DateTime } from 'luxon'
 import { timestampFromDate, type FieldMask } from '@bufbuild/protobuf/wkt'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb.ts'
 
-import router from '@/router/router.ts'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { Error, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
@@ -125,7 +124,7 @@ import {
   userClient,
   workoutClient,
 } from './clients'
-import { useAuthStore } from '@/stores/auth.ts'
+import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 
 const defaultPageLimit = 25
 
@@ -397,7 +396,9 @@ export const createWorkout = async (
     planId,
     workoutName,
   })
-  return tryCatch(() => workoutClient.createWorkout(req, { timeoutMs: 15_000 }), true)
+  return tryCatch(() => workoutClient.createWorkout(req, { timeoutMs: 15_000 }), {
+    rethrow: true,
+  })
 }
 
 export const updateWorkout = async (workout: Workout): Promise<UpdateWorkoutResponse | void> => {
@@ -433,6 +434,11 @@ export const getUser = async (id: string): Promise<GetUserResponse | void> => {
     id: id,
   })
   return tryCatch(() => userClient.getUser(req))
+}
+
+export const getCurrentUser = async (id: string): Promise<GetUserResponse | void> => {
+  const req = create(GetUserRequestSchema, { id })
+  return tryCatch(() => userClient.getUser(req), { invalidatesSessionOnNotFound: true })
 }
 
 export const searchUsers = async (
@@ -562,29 +568,29 @@ export const getPreviousWorkoutSets = async (
   return tryCatch(() => exerciseClient.getPreviousWorkoutSets(req))
 }
 
-const tryCatch = async <T>(fn: () => Promise<T>, rethrow = false): Promise<T | void> => {
+type TryCatchOptions = {
+  invalidatesSessionOnNotFound?: boolean
+  rethrow?: boolean
+}
+
+const tryCatch = async <T>(
+  fn: () => Promise<T>,
+  options: TryCatchOptions = {},
+): Promise<T | void> => {
   try {
     return await fn()
   } catch (error) {
     if (error instanceof ConnectError) {
-      if (error.code === Code.Unauthenticated) {
-        try {
-          console.warn('user unauthenticated: refreshing token')
-          const req = create(RefreshTokenRequestSchema, {})
-          const res = await authClient.refreshToken(req)
-
-          const authStore = useAuthStore()
-          authStore.setAccessToken(res.accessToken)
-
-          console.log('retrying original request')
-          return await fn()
-        } catch (e) {
-          console.warn('token refresh failed: logging out', e)
-          await router.push('/logout')
-        }
+      if (
+        error.code === Code.Unauthenticated ||
+        (options.invalidatesSessionOnNotFound && error.code === Code.NotFound)
+      ) {
+        console.warn('user session invalid: logging out')
+        await logoutUnauthenticatedUser()
+        return
       }
 
-      if (rethrow) throw error
+      if (options.rethrow) throw error
 
       for (const detail of error.findDetails(ErrorDetailSchema)) {
         switch (detail.error) {
@@ -612,6 +618,6 @@ const tryCatch = async <T>(fn: () => Promise<T>, rethrow = false): Promise<T | v
 
     // TODO: Use custom alert component.
     console.error('request', error)
-    if (rethrow) throw error
+    if (options.rethrow) throw error
   }
 }

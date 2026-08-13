@@ -117,4 +117,33 @@ test.describe('authenticated session routing', () => {
     await page.goto('/profile')
     await expect(page).toHaveURL(/\/login$/)
   })
+
+  test('logs out when a protected endpoint reports an expired session', async ({ page }) => {
+    await page.route('**/api.v1.UserService/GetUser', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'unauthenticated', message: 'session expired' }),
+      })
+    })
+
+    await page.goto('/profile')
+    await expect(page).toHaveURL(/\/login$/)
+
+    await page.goto('/profile')
+    await expect(page).toHaveURL(/\/login$/)
+  })
+
+  test('logs out when the current user no longer exists', async ({ page }) => {
+    await page.route('**/api.v1.UserService/GetUser', async (route) => {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'not_found', message: 'user not found' }),
+      })
+    })
+
+    await page.goto('/profile')
+    await expect(page).toHaveURL(/\/login$/)
+  })
 })
