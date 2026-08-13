@@ -177,7 +177,7 @@ const postComment = async () => {
       class="summary-card detail-summary-card"
       :class="{ 'detail-summary-card--personal-best': personalBestCount > 0 }"
     >
-      <header v-if="!isOwner" class="author-row">
+      <header class="author-row">
         <RouterLink :to="`/users/${workout.user?.id}`" class="avatar large">{{
           initials
         }}</RouterLink>
@@ -185,11 +185,7 @@ const postComment = async () => {
           <RouterLink :to="`/users/${workout.user?.id}`">{{ userName }}</RouterLink>
           <p><CalendarDaysIcon /> {{ finishedDate }}</p>
         </div>
-      </header>
-
-      <header v-else class="owner-summary-row">
-        <p><CalendarDaysIcon /> {{ finishedDate }}</p>
-        <DropdownButton :items="dropdownItems" />
+        <DropdownButton v-if="isOwner" :items="dropdownItems" />
       </header>
 
       <div class="workout-heading">
@@ -321,15 +317,6 @@ const postComment = async () => {
 .author-row,
 .feed-author {
   @apply flex items-center gap-3 border-b border-slate-100 p-4 sm:p-5;
-}
-.owner-summary-row {
-  @apply flex min-h-14 items-center justify-between gap-3 border-b border-slate-100 px-5 py-3;
-}
-.owner-summary-row p {
-  @apply flex items-center gap-2 text-xs text-slate-500;
-}
-.owner-summary-row p svg {
-  @apply size-4;
 }
 .avatar {
   @apply grid size-11 shrink-0 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700;
