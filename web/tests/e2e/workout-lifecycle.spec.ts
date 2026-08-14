@@ -217,7 +217,7 @@ test.describe('weight units', () => {
     await page.goto('/home')
     const currentWeek = page.locator('.week-block.current.complete')
     await expect(currentWeek.locator('svg')).toBeVisible()
-    await expect(currentWeek.locator('.week-workout-count')).toHaveText(/^[2-9]\d*$/)
+    await expect(currentWeek.locator('.week-workout-count')).toHaveText(/^(?:[2-8]|9\+)$/)
   })
 })
 

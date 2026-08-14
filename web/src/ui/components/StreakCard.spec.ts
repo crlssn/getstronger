@@ -34,4 +34,20 @@ describe('StreakCard', () => {
     expect(multipleWorkoutBlock?.get('.week-workout-count').text()).toBe('3')
     expect(multipleWorkoutBlock?.attributes('aria-label')).toContain('3 workouts logged')
   })
+
+  test('caps the visible workout count at 9+ while announcing the actual count', () => {
+    const store = useStreakStore()
+    const currentWeek = `${DateTime.now().weekYear}-${DateTime.now().weekNumber}`
+    store.loaded = true
+    store.streak = 1
+    store.thisWeekLogged = true
+    store.weekWorkoutCounts = { [currentWeek]: 12 }
+    store.load = vi.fn(async () => undefined)
+
+    const wrapper = mount(StreakCard)
+    const currentWeekBlock = wrapper.get('.week-block.current.complete')
+
+    expect(currentWeekBlock.get('.week-workout-count').text()).toBe('9+')
+    expect(currentWeekBlock.attributes('aria-label')).toContain('12 workouts logged')
+  })
 })

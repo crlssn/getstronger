@@ -35,6 +35,7 @@ const weekBlocks = computed(() =>
       complete,
       current: weeksAgo === 0,
       workoutCount,
+      workoutCountDisplay: workoutCount >= 9 ? '9+' : `${workoutCount}`,
       label: weeksAgo === 0 ? 'This week' : `${weeksAgo} ${weeksAgo === 1 ? 'week' : 'weeks'} ago`,
       status: complete
         ? `${completedWorkoutCount} ${completedWorkoutCount === 1 ? 'workout' : 'workouts'} logged`
@@ -76,7 +77,7 @@ const weekBlocks = computed(() =>
         <template v-if="week.complete">
           <CheckIcon />
           <strong v-if="week.workoutCount > 1" class="week-workout-count">
-            {{ week.workoutCount }}
+            {{ week.workoutCountDisplay }}
           </strong>
         </template>
         <span v-else aria-hidden="true"></span>
