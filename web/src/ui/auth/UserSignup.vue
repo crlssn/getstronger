@@ -94,7 +94,7 @@ const onSignup = async () => {
             :class="
               req.weightUnit === WeightUnit.KILOGRAMS
                 ? 'border-stone-900 bg-stone-900 text-white'
-                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                : 'border-slate-200 bg-white text-slate-700'
             "
           >
             <input
@@ -112,7 +112,7 @@ const onSignup = async () => {
             :class="
               req.weightUnit === WeightUnit.POUNDS
                 ? 'border-stone-900 bg-stone-900 text-white'
-                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                : 'border-slate-200 bg-white text-slate-700'
             "
           >
             <input

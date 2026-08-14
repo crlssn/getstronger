@@ -1460,7 +1460,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply grid grid-cols-2 border-l border-slate-200 bg-slate-50;
 }
 .weight-unit-picker button {
-  @apply min-w-0 px-0.5 text-[0.5625rem] font-bold uppercase text-slate-400 transition hover:text-slate-700;
+  @apply min-w-0 px-0.5 text-[0.5625rem] font-bold uppercase text-slate-400 transition;
 }
 .weight-unit-picker button + button {
   @apply border-l border-slate-200;
