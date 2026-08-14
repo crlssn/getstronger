@@ -84,6 +84,7 @@ type SeedUser struct {
 	Password  string
 	FirstName string
 	LastName  string
+	CreatedAt time.Time
 }
 
 type SeedParams struct {
@@ -97,6 +98,7 @@ type SeedParams struct {
 	WorkoutSetsPerExerciseMin int
 	WorkoutSetsPerExerciseMax int
 	WorkoutCommentCount       int
+	WorkoutInterval           time.Duration
 }
 
 func (f *Factory) Seed(p SeedParams) *models.User {
@@ -107,11 +109,15 @@ func (f *Factory) Seed(p SeedParams) *models.User {
 			AuthEmail(p.User.Email),
 			AuthPassword(p.User.Password),
 		)
-		primaryUser = f.NewUser(
+		userOpts := []UserOpt{
 			UserAuthID(auth.ID),
 			UserFirstName(p.User.FirstName),
 			UserLastName(p.User.LastName),
-		)
+		}
+		if !p.User.CreatedAt.IsZero() {
+			userOpts = append(userOpts, UserCreatedAt(p.User.CreatedAt))
+		}
+		primaryUser = f.NewUser(userOpts...)
 		f.seedUser(p, primaryUser)
 	}
 
@@ -135,8 +141,20 @@ func (f *Factory) seedUser(p SeedParams, user *models.User) {
 		f.AddRoutineExercise(routine, randomExercises(exercises)...)
 	}
 
-	for range p.WorkoutCount {
-		workout := f.NewWorkout(WorkoutUserID(user.ID))
+	for workoutIndex := range p.WorkoutCount {
+		workoutOpts := []WorkoutOpt{WorkoutUserID(user.ID)}
+		var startedAt time.Time
+		if p.WorkoutInterval > 0 {
+			startedAt = f.Now().Add(-time.Hour).Add(-time.Duration(workoutIndex) * p.WorkoutInterval)
+			workoutOpts = append(
+				workoutOpts,
+				WorkoutStartedAt(startedAt),
+				WorkoutFinishedAt(startedAt.Add(time.Hour)),
+				WorkoutCreatedAt(startedAt),
+			)
+		}
+		workout := f.NewWorkout(workoutOpts...)
+		setIndex := 0
 
 		if p.WorkoutExerciseCount > 0 && p.WorkoutSetsPerExerciseMin > 0 &&
 			p.WorkoutSetsPerExerciseMax >= p.WorkoutSetsPerExerciseMin {
@@ -146,10 +164,17 @@ func (f *Factory) seedUser(p SeedParams, user *models.User) {
 					p.WorkoutSetsPerExerciseMax,
 				)
 				for range setCount {
-					f.NewSet(
+					setOpts := []SetOpt{
 						SetUserID(user.ID),
 						SetWorkoutID(workout.ID),
 						SetExerciseID(exercise.ID),
+					}
+					if !startedAt.IsZero() {
+						setIndex++
+						setOpts = append(setOpts, SetCreatedAt(startedAt.Add(time.Duration(setIndex)*time.Minute)))
+					}
+					f.NewSet(
+						setOpts...,
 					)
 				}
 			}

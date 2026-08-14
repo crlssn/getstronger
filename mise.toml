@@ -30,10 +30,13 @@ DB_IMAGE = { default = "postgres:16.4" }
 DB_CONTAINER = { default = "getstronger" }
 DB_CONFIG_PATH = { default = "./database/bobgen.yaml" }
 DB_MIGRATIONS_PATH = { default = "database/migrations/" }
-USER_EMAIL = { default = "john@doe.com" }
-USER_PASSWORD = { default = "123" }
-USER_FIRSTNAME = { default = "John" }
-USER_LASTNAME = { default = "Doe" }
+USER_EMAIL = { default = "active@onemorerep.test" }
+USER_PASSWORD = { default = "password123" }
+USER_FIRSTNAME = { default = "Alex" }
+USER_LASTNAME = { default = "Morgan" }
+NEW_USER_EMAIL = { default = "new@onemorerep.test" }
+NEW_USER_FIRSTNAME = { default = "Sam" }
+NEW_USER_LASTNAME = { default = "Taylor" }
 
 # Database tasks
 
@@ -83,7 +86,10 @@ go run server/testing/factory/seed/main.go \
   -email="$USER_EMAIL" \
   -password="$USER_PASSWORD" \
   -firstname="$USER_FIRSTNAME" \
-  -lastname="$USER_LASTNAME"
+  -lastname="$USER_LASTNAME" \
+  -new-email="$NEW_USER_EMAIL" \
+  -new-firstname="$NEW_USER_FIRSTNAME" \
+  -new-lastname="$NEW_USER_LASTNAME"
 '''
 
 # Code generation tasks

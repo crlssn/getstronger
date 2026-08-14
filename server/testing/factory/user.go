@@ -3,6 +3,7 @@ package factory
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aarondl/opt/omit"
 	"github.com/stephenafamo/bob/dialect/psql/im"
@@ -102,6 +103,12 @@ func UserLastName(lastName string) UserOpt {
 func UserFirstName(firstName string) UserOpt {
 	return func(m *models.UserSetter) {
 		m.FirstName = omit.From(firstName)
+	}
+}
+
+func UserCreatedAt(createdAt time.Time) UserOpt {
+	return func(m *models.UserSetter) {
+		m.CreatedAt = omit.From(createdAt)
 	}
 }
 

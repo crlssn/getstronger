@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/stephenafamo/bob"
 
@@ -15,6 +16,98 @@ import (
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
+
+func TestSeedPersonas(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		require.NoError(t, c.Terminate(ctx))
+	})
+	f := factory.NewFactory(c.DB)
+	config := personaConfig{
+		active: factory.SeedUser{
+			Email:     "active@test.local",
+			Password:  "password123",
+			FirstName: "Alex",
+			LastName:  "Morgan",
+		},
+		new: factory.SeedUser{
+			Email:     "new@test.local",
+			Password:  "password123",
+			FirstName: "Sam",
+			LastName:  "Taylor",
+		},
+	}
+
+	active, newlySignedUp := seedPersonas(c.DB, f, config)
+	require.NotNil(t, active)
+	require.NotNil(t, newlySignedUp)
+
+	activeAuth, err := models.Auths.Query(
+		models.SelectWhere.Auths.Email.EQ(config.active.Email),
+	).One(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.NoError(t, bcrypt.CompareHashAndPassword(activeAuth.Password, []byte(config.active.Password)))
+	require.WithinDuration(t, time.Now().UTC().Add(-365*24*time.Hour), active.CreatedAt, 24*time.Hour)
+
+	activeWorkouts, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.UserID.EQ(active.ID),
+	).All(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(activeWorkouts), 52)
+	oldestWorkout := time.Now().UTC()
+	newestWorkout := time.Time{}
+	for _, workout := range activeWorkouts {
+		if workout.FinishedAt.Before(oldestWorkout) {
+			oldestWorkout = workout.FinishedAt
+		}
+		if workout.FinishedAt.After(newestWorkout) {
+			newestWorkout = workout.FinishedAt
+		}
+	}
+	require.WithinRange(t, oldestWorkout, time.Now().UTC().Add(-370*24*time.Hour), time.Now().UTC().Add(-350*24*time.Hour))
+	require.WithinRange(t, newestWorkout, time.Now().UTC().Add(-24*time.Hour), time.Now().UTC())
+
+	followerCount, err := models.Followers.Query(
+		models.SelectWhere.Followers.FolloweeID.EQ(active.ID),
+	).Count(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, followerCount, int64(3))
+	followeeCount, err := models.Followers.Query(
+		models.SelectWhere.Followers.FollowerID.EQ(active.ID),
+	).Count(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, followeeCount, int64(3))
+
+	newAuth, err := models.Auths.Query(
+		models.SelectWhere.Auths.Email.EQ(config.new.Email),
+	).One(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.NoError(t, bcrypt.CompareHashAndPassword(newAuth.Password, []byte(config.new.Password)))
+	require.WithinDuration(t, time.Now().UTC(), newlySignedUp.CreatedAt, time.Minute)
+
+	newWorkoutCount, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.UserID.EQ(newlySignedUp.ID),
+	).Count(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.Zero(t, newWorkoutCount)
+	newExerciseCount, err := models.Exercises.Query(
+		models.SelectWhere.Exercises.UserID.EQ(newlySignedUp.ID),
+	).Count(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.Zero(t, newExerciseCount)
+	newFollowerCount, err := models.Followers.Query(
+		models.SelectWhere.Followers.FolloweeID.EQ(newlySignedUp.ID),
+	).Count(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	newFolloweeCount, err := models.Followers.Query(
+		models.SelectWhere.Followers.FollowerID.EQ(newlySignedUp.ID),
+	).Count(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.Zero(t, newFollowerCount+newFolloweeCount)
+}
 
 func TestSeedJaneDoe(t *testing.T) {
 	t.Parallel()
@@ -31,14 +124,11 @@ func TestSeedJaneDoe(t *testing.T) {
 	)
 	johnWorkouts := f.NewWorkoutSlice(4, factory.WorkoutUserID(john.ID))
 
-	seedJaneDoe(c.DB, f, john, "password")
+	seedJaneDoe(c.DB, f, john)
 
-	janeAuth, err := models.Auths.Query(
-		models.SelectWhere.Auths.Email.EQ("jane@doe.com"),
-	).One(ctx, bob.NewDB(c.DB))
-	require.NoError(t, err)
 	jane, err := models.Users.Query(
-		models.SelectWhere.Users.AuthID.EQ(janeAuth.ID),
+		models.SelectWhere.Users.FirstName.EQ("Jane"),
+		models.SelectWhere.Users.LastName.EQ("Doe"),
 	).One(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Equal(t, "Jane", jane.FirstName)

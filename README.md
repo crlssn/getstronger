@@ -130,7 +130,12 @@ mise installs the project's pinned Go, Node.js, and development tool versions fr
    mise run app:web
    ```
 
-11. Access the web app at [http://localhost:5173](http://localhost:5173). You can now login with email `john@doe.com` and password `123` if you seeded the database.
+11. Access the web app at [http://localhost:5173](http://localhost:5173). If you seeded the database, use either local persona (both use password `password123`):
+
+    | Persona | Email | What it contains |
+    | --- | --- | --- |
+    | Newly signed up — Sam Taylor | `new@onemorerep.test` | An empty, recently created account for onboarding and first-use flows |
+    | Active for a year — Alex Morgan | `active@onemorerep.test` | A year of weekly workouts plus followers, following, routines, and feed activity |
 
 ## Production infrastructure on Scaleway
 
@@ -305,7 +310,7 @@ The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secr
 
 ## End-to-end tests
 
-The browser suite covers release-critical authentication, navigation, training, workout, exercise, progress, and social flows. It uses the local seeded John and Jane Doe accounts and resets the database before every local suite run. The complete suite runs in mobile Chromium, with responsive coverage in desktop Chromium and smoke coverage in Firefox and WebKit.
+The browser suite covers release-critical authentication, navigation, training, workout, exercise, progress, and social flows. It uses the local seeded Sam Taylor and Alex Morgan personas, with Jane Doe and other seeded profiles providing social activity, and resets the database before every local suite run. The complete suite runs in mobile Chromium, with responsive coverage in desktop Chromium and smoke coverage in Firefox and WebKit.
 
 Install the Playwright browser once:
 

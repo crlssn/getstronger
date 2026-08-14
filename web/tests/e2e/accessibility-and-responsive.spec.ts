@@ -6,7 +6,7 @@ const authenticatedPages = [
   { path: '/workout', ready: 'Workout' },
   { path: '/plans', ready: 'Training' },
   { path: '/exercises', ready: 'Exercises' },
-  { path: '/profile', ready: 'John Doe' },
+  { path: '/profile', ready: 'Alex Morgan' },
   { path: '/progress', ready: 'Progress you can read at a glance' },
 ] as const
 

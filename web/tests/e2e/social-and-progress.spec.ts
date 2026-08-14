@@ -111,7 +111,7 @@ test.describe('account progress', () => {
     page,
   }) => {
     await page.goto('/profile')
-    await expect(page.getByRole('heading', { name: 'John Doe' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
     await expect(page.getByLabel('Training summary')).toContainText('workouts')
 
     await page.getByRole('link', { name: /Progress & records/ }).click()

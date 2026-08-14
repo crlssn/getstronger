@@ -1,8 +1,8 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test as base, type Page, type TestInfo } from '@playwright/test'
 
-const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'john@doe.com'
-const password = process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? '123'
+const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'active@onemorerep.test'
+const password = process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? 'password123'
 
 export const test = base.extend<{ runtimeErrors: string[] }>({
   runtimeErrors: [
@@ -49,7 +49,9 @@ export const logIn = async (page: Page) => logInAs(page, email, password)
 
 export const waitForHome = async (page: Page) => {
   await expect(page.locator('.loading-card')).toHaveCount(0)
-  await expect(page.locator('.feed-end, .feed-empty, .feed-error')).toBeVisible()
+  await expect(
+    page.locator('.feed-summary-card, .feed-end, .feed-empty, .feed-error').first(),
+  ).toBeVisible()
 }
 
 export const allowRuntimeErrors = {

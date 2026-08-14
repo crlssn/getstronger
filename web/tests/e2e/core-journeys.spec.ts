@@ -27,7 +27,7 @@ test.describe('authenticated journeys', () => {
     await expect(page.getByRole('heading', { name: 'Exercises', exact: true })).toBeVisible()
 
     await navigation.getByRole('link', { name: 'Me', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'John Doe' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
   })
 
   test('creates, updates, and deletes a tagged exercise @mutation', async ({ page }) => {

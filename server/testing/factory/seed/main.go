@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"slices"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -23,15 +22,26 @@ import (
 )
 
 const (
-	userCount            = 10
-	exerciseCount        = 10
-	routineCount         = 5
-	workoutCount         = 5
-	workoutExerciseCount = 5
-	workoutSetsMin       = 3
-	workoutSetsMax       = 6
-	workoutCommentCount  = 2
+	backgroundUserCount    = 6
+	exerciseCount          = 10
+	routineCount           = 5
+	activeWorkoutCount     = 52
+	backgroundWorkoutCount = 5
+	workoutExerciseCount   = 5
+	workoutSetsMin         = 3
+	workoutSetsMax         = 6
+	workoutCommentCount    = 2
+	activeAccountAge       = 365 * 24 * time.Hour
+	activeWorkoutInterval  = 7 * 24 * time.Hour
+	defaultActiveEmail     = "active@onemorerep.test"
+	defaultNewEmail        = "new@onemorerep.test"
+	defaultSeedPassword    = "password123"
 )
+
+type personaConfig struct {
+	active factory.SeedUser
+	new    factory.SeedUser
+}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -50,10 +60,13 @@ func main() {
 		return
 	}
 
-	email := flag.String("email", "", "the user's email")
-	password := flag.String("password", "", "the user's password")
-	firstname := flag.String("firstname", "", "the user's first name")
-	lastname := flag.String("lastname", "", "the user's last name")
+	email := flag.String("email", defaultActiveEmail, "the active persona's email")
+	password := flag.String("password", defaultSeedPassword, "the seed personas' shared password")
+	firstname := flag.String("firstname", "Alex", "the active persona's first name")
+	lastname := flag.String("lastname", "Morgan", "the active persona's last name")
+	newEmail := flag.String("new-email", defaultNewEmail, "the newly signed-up persona's email")
+	newFirstname := flag.String("new-firstname", "Sam", "the newly signed-up persona's first name")
+	newLastname := flag.String("new-lastname", "Taylor", "the newly signed-up persona's last name")
 	flag.Parse()
 
 	if err = truncateDatabase(context.Background(), database); err != nil {
@@ -61,32 +74,63 @@ func main() {
 		return
 	}
 
-	var user *factory.SeedUser
-	if !empty(*email, *password, *firstname, *lastname) {
-		user = &factory.SeedUser{
+	f := factory.NewFactory(database)
+	active, newlySignedUp := seedPersonas(database, f, personaConfig{
+		active: factory.SeedUser{
 			Email:     *email,
 			Password:  *password,
 			FirstName: *firstname,
 			LastName:  *lastname,
-		}
-	}
+		},
+		new: factory.SeedUser{
+			Email:     *newEmail,
+			Password:  *password,
+			FirstName: *newFirstname,
+			LastName:  *newLastname,
+		},
+	})
+	log.Printf("seeded active persona %s (%s) and new persona %s (%s)", active.FullNameSearch, *email, newlySignedUp.FullNameSearch, *newEmail)
+}
 
-	f := factory.NewFactory(database)
-	john := f.Seed(factory.SeedParams{
-		User:                      user,
-		UserCount:                 userCount,
+func seedPersonas(database *sql.DB, f *factory.Factory, config personaConfig) (*models.User, *models.User) {
+	config.active.CreatedAt = f.Now().Add(-activeAccountAge)
+	active := f.Seed(factory.SeedParams{
+		User:                      &config.active,
 		ExerciseCount:             exerciseCount,
 		RoutineCount:              routineCount,
-		WorkoutCount:              workoutCount,
+		WorkoutCount:              activeWorkoutCount,
+		WorkoutExerciseCount:      workoutExerciseCount,
+		WorkoutSetsPerExerciseMin: workoutSetsMin,
+		WorkoutSetsPerExerciseMax: workoutSetsMax,
+		WorkoutCommentCount:       workoutCommentCount,
+		WorkoutInterval:           activeWorkoutInterval,
+	})
+
+	f.Seed(factory.SeedParams{
+		UserCount:                 backgroundUserCount,
+		ExerciseCount:             exerciseCount,
+		RoutineCount:              routineCount,
+		WorkoutCount:              backgroundWorkoutCount,
 		WorkoutExerciseCount:      workoutExerciseCount,
 		WorkoutSetsPerExerciseMin: workoutSetsMin,
 		WorkoutSetsPerExerciseMax: workoutSetsMax,
 		WorkoutCommentCount:       workoutCommentCount,
 	})
 
-	if john != nil {
-		seedJaneDoe(database, f, john, *password)
-	}
+	newAuth := f.NewAuth(
+		factory.AuthEmailVerified(),
+		factory.AuthEmail(config.new.Email),
+		factory.AuthPassword(config.new.Password),
+	)
+	newlySignedUp := f.NewUser(
+		factory.UserAuthID(newAuth.ID),
+		factory.UserFirstName(config.new.FirstName),
+		factory.UserLastName(config.new.LastName),
+	)
+
+	jane := seedJaneDoe(database, f, active)
+	seedActiveSocialGraph(database, active, newlySignedUp, jane)
+	return active, newlySignedUp
 }
 
 func truncateDatabase(ctx context.Context, database *sql.DB) error {
@@ -113,25 +157,13 @@ END $$;`
 	return nil
 }
 
-func seedJaneDoe(database *sql.DB, f *factory.Factory, john *models.User, password string) {
-	auth := f.NewAuth(
-		factory.AuthEmailVerified(),
-		factory.AuthEmail("jane@doe.com"),
-		factory.AuthPassword(password),
-	)
+func seedJaneDoe(database *sql.DB, f *factory.Factory, active *models.User) *models.User {
 	jane := f.NewUser(
-		factory.UserAuthID(auth.ID),
 		factory.UserFirstName("Jane"),
 		factory.UserLastName("Doe"),
 		factory.UserWeightUnit(weightunit.Pounds),
 	)
-
-	if _, err := models.Followers.Insert(&models.FollowerSetter{
-		FollowerID: omit.From(john.ID),
-		FolloweeID: omit.From(jane.ID),
-	}).Exec(context.Background(), bob.NewDB(database)); err != nil {
-		panic(fmt.Errorf("follow operation from John Doe to Jane Doe: %w", err))
-	}
+	insertFollow(database, active, jane)
 
 	squat := f.NewExercise(
 		factory.ExerciseUserID(jane.ID),
@@ -238,15 +270,50 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, john *models.User, passwo
 		}
 	}
 
-	seedJaneComments(database, f, john, jane, now)
+	seedJaneComments(database, f, active, jane, now)
+	return jane
 }
 
-func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.User, now time.Time) {
-	johnWorkouts, err := models.Workouts.Query(
-		models.SelectWhere.Workouts.UserID.EQ(john.ID),
+func seedActiveSocialGraph(database *sql.DB, active, newlySignedUp, jane *models.User) {
+	users, err := models.Users.Query().All(context.Background(), bob.NewDB(database))
+	if err != nil {
+		panic(fmt.Errorf("retrieve users for active persona social graph: %w", err))
+	}
+
+	var peers models.UserSlice
+	for _, user := range users {
+		if user.ID != active.ID && user.ID != newlySignedUp.ID && user.ID != jane.ID {
+			peers = append(peers, user)
+		}
+	}
+	if len(peers) < 4 {
+		panic(fmt.Errorf("active persona social graph needs at least 4 peers, got %d", len(peers)))
+	}
+
+	for _, followee := range peers[:2] {
+		insertFollow(database, active, followee)
+	}
+	insertFollow(database, jane, active)
+	for _, follower := range peers[2:4] {
+		insertFollow(database, follower, active)
+	}
+}
+
+func insertFollow(database *sql.DB, follower, followee *models.User) {
+	if _, err := models.Followers.Insert(&models.FollowerSetter{
+		FollowerID: omit.From(follower.ID),
+		FolloweeID: omit.From(followee.ID),
+	}).Exec(context.Background(), bob.NewDB(database)); err != nil {
+		panic(fmt.Errorf("follow operation from %s to %s: %w", follower.FullNameSearch, followee.FullNameSearch, err))
+	}
+}
+
+func seedJaneComments(database *sql.DB, f *factory.Factory, active, jane *models.User, now time.Time) {
+	activeWorkouts, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.UserID.EQ(active.ID),
 	).All(context.Background(), bob.NewDB(database))
 	if err != nil {
-		panic(fmt.Errorf("retrieve John Doe workouts for Jane Doe comments: %w", err))
+		panic(fmt.Errorf("retrieve active persona workouts for Jane Doe comments: %w", err))
 	}
 
 	type commentSeed struct {
@@ -262,11 +329,11 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.U
 	}
 
 	for index, seededComment := range comments {
-		if index >= len(johnWorkouts) {
+		if index >= len(activeWorkouts) {
 			break
 		}
 
-		workout := johnWorkouts[index]
+		workout := activeWorkouts[index]
 		f.NewWorkoutComment(
 			factory.WorkoutCommentUserID(jane.ID),
 			factory.WorkoutCommentWorkoutID(workout.ID),
@@ -274,7 +341,7 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.U
 			factory.WorkoutCommentCreatedAt(seededComment.createdAt),
 		)
 		notificationOpts := []factory.NotificationOpt{
-			factory.NotificationUserID(john.ID),
+			factory.NotificationUserID(active.ID),
 			factory.NotificationType(repo.NotificationTypeWorkoutComment),
 			factory.NotificationPayload(repo.NotificationPayload{
 				ActorID:   jane.ID.String(),
@@ -287,8 +354,4 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, john, jane *models.U
 		}
 		f.NewNotification(notificationOpts...)
 	}
-}
-
-func empty(slice ...string) bool {
-	return slices.Contains(slice, "")
 }

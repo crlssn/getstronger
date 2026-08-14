@@ -154,7 +154,7 @@ test.describe('weight units', () => {
   test('cascades unit changes and preserves each entered unit in workout and PB views @mutation', async ({
     page,
   }) => {
-    await logInAs(page, 'jane@doe.com', '123')
+    await logInAs(page, 'active@onemorerep.test', 'password123')
     await page.goto('/workouts/quick')
     const exercise = await addFirstExercise(page)
     const weight = page.getByRole('textbox', {
@@ -163,8 +163,8 @@ test.describe('weight units', () => {
     })
     const unit = page.getByRole('group', { name: `${exercise} set 1 weight unit` })
 
-    await expect(unit.getByRole('button', { name: 'lbs' })).toHaveAttribute('aria-pressed', 'true')
-    await weight.fill('100')
+    await expect(unit.getByRole('button', { name: 'kg' })).toHaveAttribute('aria-pressed', 'true')
+    await weight.fill('45.36')
     await page.getByLabel(`${exercise} set 1 Reps`).fill('8')
     const secondWeight = page.getByRole('textbox', {
       name: `${exercise} set 2 weight`,
@@ -172,32 +172,36 @@ test.describe('weight units', () => {
     })
     const secondUnit = page.getByRole('group', { name: `${exercise} set 2 weight unit` })
 
-    await unit.getByRole('button', { name: 'kg' }).click()
-    await expect(weight).toHaveValue('45.36')
-    await expect(secondUnit.getByRole('button', { name: 'kg' })).toHaveAttribute(
+    await unit.getByRole('button', { name: 'lbs' }).click()
+    await expect(weight).toHaveValue('100')
+    await expect(secondUnit.getByRole('button', { name: 'lbs' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
 
-    await secondWeight.fill('50')
+    await secondWeight.fill('110')
     await page.getByLabel(`${exercise} set 2 Reps`).fill('6')
     const thirdUnit = page.getByRole('group', { name: `${exercise} set 3 weight unit` })
-    await expect(thirdUnit.getByRole('button', { name: 'kg' })).toHaveAttribute(
+    await expect(thirdUnit.getByRole('button', { name: 'lbs' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
 
-    await secondUnit.getByRole('button', { name: 'lbs' }).click()
-    await expect(secondWeight).toHaveValue('110.23')
-    await expect(unit.getByRole('button', { name: 'kg' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(thirdUnit.getByRole('button', { name: 'lbs' })).toHaveAttribute(
+    await secondUnit.getByRole('button', { name: 'kg' }).click()
+    await expect(secondWeight).toHaveValue('49.9')
+    await expect(unit.getByRole('button', { name: 'lbs' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(thirdUnit.getByRole('button', { name: 'kg' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
     await page
       .getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true })
-      .fill('120')
+      .fill('50')
     await page.getByLabel(`${exercise} set 3 Reps`).fill('5')
+    await thirdUnit.getByRole('button', { name: 'lbs' }).click()
+    await expect(
+      page.getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true }),
+    ).toHaveValue('110.23')
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
@@ -207,12 +211,12 @@ test.describe('weight units', () => {
     const notificationBox = await page.locator('.alert-region').boundingBox()
     expect(notificationBox?.x).toBe(0)
     expect(notificationBox?.width).toBe(390)
-    await expect(page.getByText(/45\.36\s*kg/)).toBeVisible()
+    await expect(page.getByText(/100\s*lbs/)).toBeVisible()
+    await expect(page.getByText(/49\.9\s*kg/)).toBeVisible()
     await expect(page.getByText(/110\.23\s*lbs/)).toBeVisible()
-    await expect(page.getByText(/120\s*lbs/)).toBeVisible()
 
     await page.goto('/progress')
-    await expect(page.locator('.record-value').filter({ hasText: /120\s*lbs/ })).toBeVisible()
+    await expect(page.locator('.record-value').filter({ hasText: /110\.23\s*lbs/ })).toBeVisible()
 
     await page.goto('/home')
     const currentWeek = page.locator('.week-block.current.complete')
@@ -286,7 +290,7 @@ test.describe('planned workouts and history', () => {
     ).trim()
     await history.getByRole('link').first().click()
     await expect(page.getByRole('heading', { name: firstWorkoutName, exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'John Doe', exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Alex Morgan', exact: true }).first()).toBeVisible()
     await expect(page.getByText('Completed workout', { exact: true })).toBeVisible()
   })
 })
