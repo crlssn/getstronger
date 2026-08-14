@@ -170,4 +170,39 @@ func TestCheckConstraintErrors(t *testing.T) {
 			t.Fatal("expected ErrCheckSetsDurationSecondsNonNegative.Is not to match different constraint")
 		}
 	})
+	t.Run("Set_ErrCheckSetsWeightUnitCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "sets_weight_unit_check")
+		if !errors.Is(SetErrors.ErrCheckSetsWeightUnitCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckSetsWeightUnitCheck to match constraint %q", "sets_weight_unit_check")
+		}
+		if !SetErrors.ErrCheckSetsWeightUnitCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckSetsWeightUnitCheck.Is to match constraint %q", "sets_weight_unit_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(SetErrors.ErrCheckSetsWeightUnitCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsWeightUnitCheck not to match different constraint")
+		}
+		if SetErrors.ErrCheckSetsWeightUnitCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsWeightUnitCheck.Is not to match different constraint")
+		}
+	})
+
+	t.Run("User_ErrCheckUsersWeightUnitCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "users_weight_unit_check")
+		if !errors.Is(UserErrors.ErrCheckUsersWeightUnitCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckUsersWeightUnitCheck to match constraint %q", "users_weight_unit_check")
+		}
+		if !UserErrors.ErrCheckUsersWeightUnitCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckUsersWeightUnitCheck.Is to match constraint %q", "users_weight_unit_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(UserErrors.ErrCheckUsersWeightUnitCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckUsersWeightUnitCheck not to match different constraint")
+		}
+		if UserErrors.ErrCheckUsersWeightUnitCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckUsersWeightUnitCheck.Is not to match different constraint")
+		}
+	})
 }

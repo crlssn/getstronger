@@ -45,6 +45,7 @@ type SetTemplate struct {
 	UserID          func() uuid.UUID
 	Distance        func() float64
 	DurationSeconds func() int32
+	WeightUnit      func() string
 
 	r setR
 	f *Factory
@@ -132,6 +133,10 @@ func (o SetTemplate) BuildSetter() *models.SetSetter {
 		val := o.DurationSeconds()
 		m.DurationSeconds = omit.From(val)
 	}
+	if o.WeightUnit != nil {
+		val := o.WeightUnit()
+		m.WeightUnit = omit.From(val)
+	}
 
 	return m
 }
@@ -180,6 +185,9 @@ func (o SetTemplate) Build() *models.Set {
 	}
 	if o.DurationSeconds != nil {
 		m.DurationSeconds = o.DurationSeconds()
+	}
+	if o.WeightUnit != nil {
+		m.WeightUnit = o.WeightUnit()
 	}
 
 	o.setModelRels(m)
@@ -405,6 +413,7 @@ func (m setMods) RandomizeAllColumns(f *faker.Faker) SetMod {
 		SetMods.RandomUserID(f),
 		SetMods.RandomDistance(f),
 		SetMods.RandomDurationSeconds(f),
+		SetMods.RandomWeightUnit(f),
 	}
 }
 
@@ -683,6 +692,37 @@ func (m setMods) RandomDurationSeconds(f *faker.Faker) SetMod {
 	return SetModFunc(func(_ context.Context, o *SetTemplate) {
 		o.DurationSeconds = func() int32 {
 			return random_int32(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m setMods) WeightUnit(val string) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WeightUnit = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m setMods) WeightUnitFunc(f func() string) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WeightUnit = f
+	})
+}
+
+// Clear any values for the column
+func (m setMods) UnsetWeightUnit() SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WeightUnit = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m setMods) RandomWeightUnit(f *faker.Faker) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WeightUnit = func() string {
+			return random_string(f, "2")
 		}
 	})
 }

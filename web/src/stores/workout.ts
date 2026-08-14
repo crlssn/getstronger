@@ -4,7 +4,7 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { isNumber } from '@/utils/numbers'
-import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { exerciseMetrics } from '@/utils/exerciseMeasurements'
 
 export const useWorkoutStore = defineStore(
@@ -113,17 +113,18 @@ export const useWorkoutStore = defineStore(
       workout.restTimerTotalSeconds = totalSeconds
     }
 
-    const addEmptySet = (routineID: RoutineID, exerciseID: ExerciseID) => {
+    const addEmptySet = (routineID: RoutineID, exerciseID: ExerciseID, weightUnit?: WeightUnit) => {
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {}
       workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
-      workout.exerciseSets[exerciseID].push({})
+      workout.exerciseSets[exerciseID].push(weightUnit ? { weightUnit } : {})
     }
 
     const addEmptySetIfNone = (
       routineID: RoutineID,
       exerciseID: ExerciseID,
       metrics: ExerciseMetric[] = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+      weightUnit?: WeightUnit,
     ) => {
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {}
@@ -144,8 +145,19 @@ export const useWorkoutStore = defineStore(
         fields.every((field) => isNumber(set[field])),
       )
       if (noEmptySet) {
-        workout.exerciseSets[exerciseID].push({})
+        workout.exerciseSets[exerciseID].push(weightUnit ? { weightUnit } : {})
       }
+    }
+
+    const ensureWeightUnits = (routineID: RoutineID, weightUnit: WeightUnit) => {
+      const workout = workouts.value[routineID]
+      if (!workout?.exerciseSets) return
+
+      Object.values(workout.exerciseSets).forEach((sets) => {
+        sets.forEach((set) => {
+          if (!set.weightUnit) set.weightUnit = weightUnit
+        })
+      })
     }
 
     const deleteSet = (routineID: RoutineID, exerciseID: ExerciseID, index: number) => {
@@ -181,6 +193,7 @@ export const useWorkoutStore = defineStore(
       getRestTimer,
       getSets,
       getStartedAt,
+      ensureWeightUnits,
       initialiseWorkout,
       removeWorkout,
       startQuickWorkoutWithExercise,

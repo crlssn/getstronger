@@ -20,8 +20,10 @@ test.describe('guest authentication and routing', () => {
     await expect(page).toHaveURL(/\/signup$/)
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
     await expect(page.getByText('Track your training. Beat your last.')).toBeVisible()
+    await expect(page.getByRole('radio', { name: /Kilograms/ })).toBeChecked()
+    await expect(page.getByRole('radio', { name: /Pounds/ })).not.toBeChecked()
 
-    await page.getByRole('link', { name: 'Log in' }).click()
+    await page.getByRole('link', { name: 'Log in', exact: true }).click()
     await page.getByRole('link', { name: 'Forgot password?' }).click()
     await expect(page).toHaveURL(/\/forgot-password$/)
     await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible()
@@ -55,7 +57,9 @@ test.describe('guest authentication and routing', () => {
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill('StrongPassword123!')
     await page.getByLabel('Confirm password').fill('StrongPassword123!')
-    await page.getByRole('button', { name: 'Create account' }).click()
+    await page.getByText('Pounds', { exact: true }).click()
+    await expect(page.getByRole('radio', { name: /Pounds/ })).toBeChecked()
+    await page.getByRole('button', { name: 'Create an account' }).click()
 
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.getByRole('status')).toContainText(

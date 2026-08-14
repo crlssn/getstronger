@@ -9,10 +9,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/crlssn/getstronger/server/gen/models"
+	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 type parserSuite struct {
@@ -582,6 +584,17 @@ func (s *parserSuite) TestSet() {
 	mapPersonalBests := map[string]struct{}{set.ID.String(): {}}
 	parsed = parser.Set(set, mapPersonalBests)
 	s.Require().True(parsed.GetMetadata().GetPersonalBest())
+}
+
+func (s *parserSuite) TestSetRestoresEnteredPounds() {
+	set := s.factory.NewSet(
+		factory.SetWeight(45.36),
+		factory.SetWeightUnit(weightunit.Pounds),
+	)
+	parsed := parser.Set(set, nil)
+
+	s.Require().Equal(v1.WeightUnit_WEIGHT_UNIT_POUNDS, parsed.GetWeightUnit())
+	s.Require().InEpsilon(100, parsed.GetWeight(), 0.001)
 }
 
 func (s *parserSuite) TestSetSlice() {

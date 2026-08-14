@@ -6,6 +6,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useAlertStore } from '@/stores/alerts.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
+import { WeightUnit } from '@/proto/api/v1/shared_pb'
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -16,6 +17,7 @@ const req = ref<SignupRequest>({
   lastName: '',
   password: '',
   passwordConfirmation: '',
+  weightUnit: WeightUnit.KILOGRAMS,
 })
 
 const onSignup = async () => {
@@ -82,6 +84,49 @@ const onSignup = async () => {
           />
         </div>
       </div>
+
+      <fieldset>
+        <legend class="auth-label">{{ $t('auth.weightUnit') }}</legend>
+        <p class="mt-1 text-sm text-slate-500">{{ $t('auth.weightUnitHelp') }}</p>
+        <div class="mt-2 grid grid-cols-2 gap-2" aria-label="Preferred weight unit">
+          <label
+            class="flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            :class="
+              req.weightUnit === WeightUnit.KILOGRAMS
+                ? 'border-stone-900 bg-stone-900 text-white'
+                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+            "
+          >
+            <input
+              v-model="req.weightUnit"
+              class="sr-only"
+              type="radio"
+              name="weightUnit"
+              :value="WeightUnit.KILOGRAMS"
+            />
+            <strong>{{ $t('auth.kilograms') }}</strong>
+            <span class="ml-auto text-sm opacity-70">kg</span>
+          </label>
+          <label
+            class="flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            :class="
+              req.weightUnit === WeightUnit.POUNDS
+                ? 'border-stone-900 bg-stone-900 text-white'
+                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+            "
+          >
+            <input
+              v-model="req.weightUnit"
+              class="sr-only"
+              type="radio"
+              name="weightUnit"
+              :value="WeightUnit.POUNDS"
+            />
+            <strong>{{ $t('auth.pounds') }}</strong>
+            <span class="ml-auto text-sm opacity-70">lbs</span>
+          </label>
+        </div>
+      </fieldset>
 
       <div>
         <label for="password" class="auth-label">{{ $t('auth.password') }}</label>

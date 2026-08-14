@@ -8,6 +8,7 @@ import {
   formatMeasurementDuration,
   measurementDefinitions,
 } from '@/utils/exerciseMeasurements'
+import { weightUnitLabel } from '@/utils/weightUnits'
 
 const props = withDefaults(
   defineProps<{
@@ -91,7 +92,9 @@ const columnLabel = (metric: ExerciseMetric) => metricLabels[metric]
         <template v-else>
           <span v-for="measurement in measurements" :key="measurement.field" role="cell">
             <strong>{{ formatValue(set, measurement.field) }}</strong>
-            <small v-if="measurement.field === 'weight'"> kg</small>
+            <small v-if="measurement.field === 'weight'">
+              {{ weightUnitLabel(set.weightUnit) }}
+            </small>
             <small v-else-if="measurement.field === 'distance'"> km</small>
           </span>
         </template>

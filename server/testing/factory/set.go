@@ -11,6 +11,7 @@ import (
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/safe"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 func (f *Factory) NewSetSlice(count int, opts ...SetOpt) models.SetSlice {
@@ -69,6 +70,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 	mods := []bobfactory.SetMod{
 		bobfactory.SetMods.WithExistingWorkout(workoutWithoutRelationships(workout)),
 		bobfactory.SetMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
+		bobfactory.SetMods.WeightUnit(string(weightunit.Kilograms)),
 	}
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.SetMods.ID(value))
@@ -90,6 +92,9 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 	}
 	if value, ok := setter.DurationSeconds.Get(); ok {
 		mods = append(mods, bobfactory.SetMods.DurationSeconds(value))
+	}
+	if value, ok := setter.WeightUnit.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.WeightUnit(value))
 	}
 
 	template := f.generated.NewSet(mods...)
@@ -143,6 +148,12 @@ func SetReps(reps int) SetOpt {
 func SetWeight(weight float64) SetOpt {
 	return func(set *models.SetSetter) {
 		set.Weight = omit.From(weight)
+	}
+}
+
+func SetWeightUnit(unit weightunit.Unit) SetOpt {
+	return func(set *models.SetSetter) {
+		set.WeightUnit = omit.From(string(unit))
 	}
 }
 

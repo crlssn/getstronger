@@ -19,6 +19,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 const (
@@ -122,6 +123,7 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, john *models.User, passwo
 		factory.UserAuthID(auth.ID),
 		factory.UserFirstName("Jane"),
 		factory.UserLastName("Doe"),
+		factory.UserWeightUnit(weightunit.Pounds),
 	)
 
 	if _, err := models.Followers.Insert(&models.FollowerSetter{

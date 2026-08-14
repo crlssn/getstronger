@@ -2,7 +2,7 @@ import { create } from '@bufbuild/protobuf'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, ExerciseSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { useWorkoutStore } from '@/stores/workout'
 
 describe('workout store', () => {
@@ -72,5 +72,14 @@ describe('workout store', () => {
     expect(store.getSets('quick-workout', 'running')).toEqual([{}])
     expect(store.getSets('quick-workout', 'old-exercise')).toEqual([])
     expect(store.getStartedAt('quick-workout')).toBeTruthy()
+  })
+
+  it('applies the user preference to legacy draft sets without a unit', () => {
+    const store = useWorkoutStore()
+    store.workouts['routine-id'] = { exerciseSets: { squat: [{ weight: 100 }] } }
+
+    store.ensureWeightUnits('routine-id', WeightUnit.POUNDS)
+
+    expect(store.getSets('routine-id', 'squat')[0]?.weightUnit).toBe(WeightUnit.POUNDS)
   })
 })

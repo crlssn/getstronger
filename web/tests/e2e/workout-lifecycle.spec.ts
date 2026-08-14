@@ -1,8 +1,8 @@
-import { allowRuntimeErrors, expect, logIn, test, uniqueName } from './fixtures'
+import { allowRuntimeErrors, expect, logIn, logInAs, test, uniqueName } from './fixtures'
 
 const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
   await page.getByRole('button', { name: 'Choose exercise' }).click()
-  const picker = page.getByRole('dialog', { name: 'Add an exercise' })
+  const picker = page.getByRole('dialog', { name: 'Add exercise' })
   const option = picker.locator('.exercise-options button').first()
   const name = (await option.locator('strong').innerText()).trim()
   await option.click()
@@ -71,7 +71,7 @@ test.describe('quick workout lifecycle', () => {
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Add exercise' }).click()
-    const picker = page.getByRole('dialog', { name: 'Add an exercise' })
+    const picker = page.getByRole('dialog', { name: 'Add exercise' })
     const secondOption = picker.locator('.exercise-options button').first()
     const secondExercise = (await secondOption.locator('strong').innerText()).trim()
     await secondOption.click()
@@ -132,6 +132,33 @@ test.describe('quick workout lifecycle', () => {
     await page.unroute('**/api.v1.WorkoutService/CreateWorkout')
     await page.getByRole('button', { name: 'Finish workout' }).click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+  })
+})
+
+test.describe('weight units', () => {
+  test('uses the account default and switches an individual set @mutation', async ({ page }) => {
+    await logInAs(page, 'jane@doe.com', '123')
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+    const weight = page.getByRole('textbox', {
+      name: `${exercise} set 1 weight`,
+      exact: true,
+    })
+    const unit = page.getByRole('group', { name: `${exercise} set 1 weight unit` })
+
+    await expect(unit.getByRole('button', { name: 'lbs' })).toHaveAttribute('aria-pressed', 'true')
+    await weight.fill('100')
+    await unit.getByRole('button', { name: 'kg' }).click()
+    await expect(weight).toHaveValue('45.36')
+    await unit.getByRole('button', { name: 'lbs' }).click()
+    await expect(weight).toHaveValue('100')
+    await page.getByLabel(`${exercise} set 1 Reps`).fill('8')
+
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText(/100\s*lbs/)).toBeVisible()
   })
 })
 

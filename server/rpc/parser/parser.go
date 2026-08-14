@@ -10,6 +10,7 @@ import (
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/safe"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 func Exercise(exercise *models.Exercise) *apiv1.Exercise {
@@ -54,11 +55,12 @@ func UserFollowed(followed bool) UserOpt {
 
 func User(user *models.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
-		Id:        user.ID.String(),
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Followed:  false,
-		Email:     "",
+		Id:         user.ID.String(),
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Followed:   false,
+		Email:      "",
+		WeightUnit: WeightUnitToProto(user.WeightUnit),
 	}
 
 	if user.R.Auth != nil {
@@ -275,6 +277,7 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 				ID:              set.GetId(),
 				Reps:            int(set.GetReps()),
 				Weight:          set.GetWeight(),
+				WeightUnit:      WeightUnitFromProto(set.GetWeightUnit()),
 				Distance:        set.GetDistance(),
 				DurationSeconds: int(set.GetDurationSeconds()),
 			})
@@ -436,7 +439,8 @@ func SetSlice(sets models.SetSlice, personalBests models.SetSlice) []*apiv1.Set 
 func Set(set *models.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 	return &apiv1.Set{
 		Id:              set.ID.String(),
-		Weight:          set.Weight,
+		Weight:          weightunit.FromKilograms(set.Weight, set.WeightUnit),
+		WeightUnit:      WeightUnitToProto(set.WeightUnit),
 		Reps:            set.Reps,
 		Distance:        set.Distance,
 		DurationSeconds: set.DurationSeconds,
@@ -449,6 +453,22 @@ func Set(set *models.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 			}(),
 		},
 	}
+}
+
+func WeightUnitFromProto(unit apiv1.WeightUnit) string {
+	if unit == apiv1.WeightUnit_WEIGHT_UNIT_POUNDS {
+		return string(weightunit.Pounds)
+	}
+
+	return string(weightunit.Kilograms)
+}
+
+func WeightUnitToProto(unit string) apiv1.WeightUnit {
+	if weightunit.Normalize(unit) == weightunit.Pounds {
+		return apiv1.WeightUnit_WEIGHT_UNIT_POUNDS
+	}
+
+	return apiv1.WeightUnit_WEIGHT_UNIT_KILOGRAMS
 }
 
 func parseWithoutOpts[Input any, Output any](input []Input, f func(Input) Output) []Output {

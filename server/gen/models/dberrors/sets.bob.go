@@ -24,6 +24,13 @@ var SetErrors = &setErrors{
 		columns: []string{"duration_seconds"},
 		s:       "sets_duration_seconds_non_negative",
 	},
+
+	ErrCheckSetsWeightUnitCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "sets",
+		columns: []string{"weight_unit"},
+		s:       "sets_weight_unit_check",
+	},
 }
 
 type setErrors struct {
@@ -32,4 +39,6 @@ type setErrors struct {
 	ErrCheckSetsDistanceNonNegative *CheckConstraintError
 
 	ErrCheckSetsDurationSecondsNonNegative *CheckConstraintError
+
+	ErrCheckSetsWeightUnitCheck *CheckConstraintError
 }

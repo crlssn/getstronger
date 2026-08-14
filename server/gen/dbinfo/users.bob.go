@@ -69,6 +69,15 @@ var Users = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		WeightUnit: column{
+			Name:      "weight_unit",
+			DBType:    "character varying",
+			Default:   "'kg'::character varying",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: userIndexes{
 		UsersPkey: index{
@@ -146,7 +155,16 @@ var Users = Table[
 			Comment: "",
 		},
 	},
-
+	Checks: userChecks{
+		UsersWeightUnitCheck: check{
+			constraint: constraint{
+				Name:    "users_weight_unit_check",
+				Columns: []string{"weight_unit"},
+				Comment: "",
+			},
+			Expression: "((weight_unit)::text = ANY ((ARRAY['kg'::character varying, 'lb'::character varying])::text[]))",
+		},
+	},
 	Comment: "",
 }
 
@@ -157,11 +175,12 @@ type userColumns struct {
 	CreatedAt      column
 	FullNameSearch column
 	AuthID         column
+	WeightUnit     column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.FirstName, c.LastName, c.CreatedAt, c.FullNameSearch, c.AuthID,
+		c.ID, c.FirstName, c.LastName, c.CreatedAt, c.FullNameSearch, c.AuthID, c.WeightUnit,
 	}
 }
 
@@ -197,8 +216,12 @@ func (u userUniques) AsSlice() []constraint {
 	}
 }
 
-type userChecks struct{}
+type userChecks struct {
+	UsersWeightUnitCheck check
+}
 
 func (c userChecks) AsSlice() []check {
-	return []check{}
+	return []check{
+		c.UsersWeightUnitCheck,
+	}
 }

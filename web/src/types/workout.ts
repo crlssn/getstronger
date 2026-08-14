@@ -1,4 +1,5 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
+import type { WeightUnit } from '@/proto/api/v1/shared_pb'
 
 export type ExerciseID = string
 export type ExerciseSets = Record<ExerciseID, Set[]>
@@ -11,6 +12,7 @@ export interface Set {
   weight?: number
   distance?: number
   durationSeconds?: number
+  weightUnit?: WeightUnit
 }
 
 export interface Workout {

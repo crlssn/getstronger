@@ -96,6 +96,15 @@ var Sets = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		WeightUnit: column{
+			Name:      "weight_unit",
+			DBType:    "character varying",
+			Default:   "'kg'::character varying",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: setIndexes{
 		SetsPkey: index{
@@ -193,6 +202,14 @@ var Sets = Table[
 			},
 			Expression: "(duration_seconds >= 0)",
 		},
+		SetsWeightUnitCheck: check{
+			constraint: constraint{
+				Name:    "sets_weight_unit_check",
+				Columns: []string{"weight_unit"},
+				Comment: "",
+			},
+			Expression: "((weight_unit)::text = ANY ((ARRAY['kg'::character varying, 'lb'::character varying])::text[]))",
+		},
 	},
 	Comment: "",
 }
@@ -207,11 +224,12 @@ type setColumns struct {
 	UserID          column
 	Distance        column
 	DurationSeconds column
+	WeightUnit      column
 }
 
 func (c setColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.WorkoutID, c.ExerciseID, c.Weight, c.Reps, c.CreatedAt, c.UserID, c.Distance, c.DurationSeconds,
+		c.ID, c.WorkoutID, c.ExerciseID, c.Weight, c.Reps, c.CreatedAt, c.UserID, c.Distance, c.DurationSeconds, c.WeightUnit,
 	}
 }
 
@@ -247,10 +265,11 @@ func (u setUniques) AsSlice() []constraint {
 type setChecks struct {
 	SetsDistanceNonNegative        check
 	SetsDurationSecondsNonNegative check
+	SetsWeightUnitCheck            check
 }
 
 func (c setChecks) AsSlice() []check {
 	return []check{
-		c.SetsDistanceNonNegative, c.SetsDurationSecondsNonNegative,
+		c.SetsDistanceNonNegative, c.SetsDurationSecondsNonNegative, c.SetsWeightUnitCheck,
 	}
 }

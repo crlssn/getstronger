@@ -21,6 +21,7 @@ import (
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
+	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -79,9 +80,10 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		}
 
 		user, err := tx.CreateUser(ctx, repo.CreateUserParams{
-			AuthID:    auth.ID.String(),
-			FirstName: req.Msg.GetFirstName(),
-			LastName:  req.Msg.GetLastName(),
+			AuthID:     auth.ID.String(),
+			FirstName:  req.Msg.GetFirstName(),
+			LastName:   req.Msg.GetLastName(),
+			WeightUnit: parser.WeightUnitFromProto(req.Msg.GetWeightUnit()),
 		})
 		if err != nil {
 			return fmt.Errorf("create user: %w", err)

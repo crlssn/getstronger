@@ -35,15 +35,17 @@ export const test = base.extend<{ runtimeErrors: string[] }>({
 
 export { expect } from '@playwright/test'
 
-export const logIn = async (page: Page) => {
+export const logInAs = async (page: Page, userEmail: string, userPassword: string) => {
   await page.goto('/login')
-  await page.getByLabel('Email address').fill(email)
-  await page.getByLabel('Password', { exact: true }).fill(password)
+  await page.getByLabel('Email address').fill(userEmail)
+  await page.getByLabel('Password', { exact: true }).fill(userPassword)
   await page.getByRole('button', { name: 'Log in' }).click()
   await expect(page).toHaveURL(/\/home$/)
   await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
   await waitForHome(page)
 }
+
+export const logIn = async (page: Page) => logInAs(page, email, password)
 
 export const waitForHome = async (page: Page) => {
   await expect(page.locator('.loading-card')).toHaveCount(0)

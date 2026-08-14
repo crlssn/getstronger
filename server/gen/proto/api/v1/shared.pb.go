@@ -7,14 +7,13 @@
 package apiv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -77,6 +76,55 @@ func (x ExerciseMetric) Number() protoreflect.EnumNumber {
 // Deprecated: Use ExerciseMetric.Descriptor instead.
 func (ExerciseMetric) EnumDescriptor() ([]byte, []int) {
 	return file_api_v1_shared_proto_rawDescGZIP(), []int{0}
+}
+
+type WeightUnit int32
+
+const (
+	WeightUnit_WEIGHT_UNIT_UNSPECIFIED WeightUnit = 0
+	WeightUnit_WEIGHT_UNIT_KILOGRAMS   WeightUnit = 1
+	WeightUnit_WEIGHT_UNIT_POUNDS      WeightUnit = 2
+)
+
+// Enum value maps for WeightUnit.
+var (
+	WeightUnit_name = map[int32]string{
+		0: "WEIGHT_UNIT_UNSPECIFIED",
+		1: "WEIGHT_UNIT_KILOGRAMS",
+		2: "WEIGHT_UNIT_POUNDS",
+	}
+	WeightUnit_value = map[string]int32{
+		"WEIGHT_UNIT_UNSPECIFIED": 0,
+		"WEIGHT_UNIT_KILOGRAMS":   1,
+		"WEIGHT_UNIT_POUNDS":      2,
+	}
+)
+
+func (x WeightUnit) Enum() *WeightUnit {
+	p := new(WeightUnit)
+	*p = x
+	return p
+}
+
+func (x WeightUnit) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WeightUnit) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_shared_proto_enumTypes[1].Descriptor()
+}
+
+func (WeightUnit) Type() protoreflect.EnumType {
+	return &file_api_v1_shared_proto_enumTypes[1]
+}
+
+func (x WeightUnit) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WeightUnit.Descriptor instead.
+func (WeightUnit) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_shared_proto_rawDescGZIP(), []int{1}
 }
 
 type ExerciseSet struct {
@@ -275,6 +323,7 @@ type Set struct {
 	Metadata        *MetadataSet           `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Distance        float64                `protobuf:"fixed64,5,opt,name=distance,proto3" json:"distance,omitempty"`
 	DurationSeconds int32                  `protobuf:"varint,6,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	WeightUnit      WeightUnit             `protobuf:"varint,7,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -351,6 +400,13 @@ func (x *Set) GetDurationSeconds() int32 {
 	return 0
 }
 
+func (x *Set) GetWeightUnit() WeightUnit {
+	if x != nil {
+		return x.WeightUnit
+	}
+	return WeightUnit_WEIGHT_UNIT_UNSPECIFIED
+}
+
 type MetadataSet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	WorkoutId     string                 `protobuf:"bytes,1,opt,name=workout_id,json=workoutId,proto3" json:"workout_id,omitempty"`
@@ -418,6 +474,7 @@ type User struct {
 	LastName      string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
 	Followed      bool                   `protobuf:"varint,5,opt,name=followed,proto3" json:"followed,omitempty"`
+	WeightUnit    WeightUnit             `protobuf:"varint,6,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -485,6 +542,13 @@ func (x *User) GetFollowed() bool {
 		return x.Followed
 	}
 	return false
+}
+
+func (x *User) GetWeightUnit() WeightUnit {
+	if x != nil {
+		return x.WeightUnit
+	}
+	return WeightUnit_WEIGHT_UNIT_UNSPECIFIED
 }
 
 type PaginationRequest struct {
@@ -602,27 +666,31 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
 	"\ametrics\x18\x05 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametrics\x12-\n" +
 	"\frest_seconds\x18\x06 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"\xdb\x01\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"\x9a\x02\n" +
 	"\x03Set\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06weight\x18\x02 \x01(\x01R\x06weight\x12\x1b\n" +
 	"\x04reps\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x04reps\x12/\n" +
 	"\bmetadata\x18\x04 \x01(\v2\x13.api.v1.MetadataSetR\bmetadata\x12*\n" +
 	"\bdistance\x18\x05 \x01(\x01B\x0e\xbaH\v\x12\t)\x00\x00\x00\x00\x00\x00\x00\x00R\bdistance\x122\n" +
-	"\x10duration_seconds\x18\x06 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x0fdurationSeconds\"\x96\x01\n" +
+	"\x10duration_seconds\x18\x06 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x0fdurationSeconds\x12=\n" +
+	"\vweight_unit\x18\a \x01(\x0e2\x12.api.v1.WeightUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
+	"weightUnit\"\x96\x01\n" +
 	"\vMetadataSet\x12'\n" +
 	"\n" +
 	"workout_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tworkoutId\x129\n" +
 	"\n" +
 	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12#\n" +
-	"\rpersonal_best\x18\x03 \x01(\bR\fpersonalBest\"\xa0\x01\n" +
+	"\rpersonal_best\x18\x03 \x01(\bR\fpersonalBest\"\xdf\x01\n" +
 	"\x04User\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12&\n" +
 	"\n" +
 	"first_name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tfirstName\x12$\n" +
 	"\tlast_name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\blastName\x12\x14\n" +
 	"\x05email\x18\x04 \x01(\tR\x05email\x12\x1a\n" +
-	"\bfollowed\x18\x05 \x01(\bR\bfollowed\"\\\n" +
+	"\bfollowed\x18\x05 \x01(\bR\bfollowed\x12=\n" +
+	"\vweight_unit\x18\x06 \x01(\x0e2\x12.api.v1.WeightUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
+	"weightUnit\"\\\n" +
 	"\x11PaginationRequest\x12(\n" +
 	"\n" +
 	"page_limit\x18\x01 \x01(\x05B\t\xbaH\x06\x1a\x04\x18d(\x01R\tpageLimit\x12\x1d\n" +
@@ -635,7 +703,12 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"\x16EXERCISE_METRIC_WEIGHT\x10\x01\x12\x18\n" +
 	"\x14EXERCISE_METRIC_REPS\x10\x02\x12\x1c\n" +
 	"\x18EXERCISE_METRIC_DISTANCE\x10\x03\x12\x18\n" +
-	"\x14EXERCISE_METRIC_TIME\x10\x04B\x8f\x01\n" +
+	"\x14EXERCISE_METRIC_TIME\x10\x04*\\\n" +
+	"\n" +
+	"WeightUnit\x12\x1b\n" +
+	"\x17WEIGHT_UNIT_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15WEIGHT_UNIT_KILOGRAMS\x10\x01\x12\x16\n" +
+	"\x12WEIGHT_UNIT_POUNDS\x10\x02B\x8f\x01\n" +
 	"\n" +
 	"com.api.v1B\vSharedProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -651,33 +724,36 @@ func file_api_v1_shared_proto_rawDescGZIP() []byte {
 	return file_api_v1_shared_proto_rawDescData
 }
 
-var file_api_v1_shared_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_v1_shared_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_api_v1_shared_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_v1_shared_proto_goTypes = []any{
 	(ExerciseMetric)(0),           // 0: api.v1.ExerciseMetric
-	(*ExerciseSet)(nil),           // 1: api.v1.ExerciseSet
-	(*ExerciseSets)(nil),          // 2: api.v1.ExerciseSets
-	(*Exercise)(nil),              // 3: api.v1.Exercise
-	(*Set)(nil),                   // 4: api.v1.Set
-	(*MetadataSet)(nil),           // 5: api.v1.MetadataSet
-	(*User)(nil),                  // 6: api.v1.User
-	(*PaginationRequest)(nil),     // 7: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),    // 8: api.v1.PaginationResponse
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(WeightUnit)(0),               // 1: api.v1.WeightUnit
+	(*ExerciseSet)(nil),           // 2: api.v1.ExerciseSet
+	(*ExerciseSets)(nil),          // 3: api.v1.ExerciseSets
+	(*Exercise)(nil),              // 4: api.v1.Exercise
+	(*Set)(nil),                   // 5: api.v1.Set
+	(*MetadataSet)(nil),           // 6: api.v1.MetadataSet
+	(*User)(nil),                  // 7: api.v1.User
+	(*PaginationRequest)(nil),     // 8: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),    // 9: api.v1.PaginationResponse
+	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
 }
 var file_api_v1_shared_proto_depIdxs = []int32{
-	3, // 0: api.v1.ExerciseSet.exercise:type_name -> api.v1.Exercise
-	4, // 1: api.v1.ExerciseSet.set:type_name -> api.v1.Set
-	3, // 2: api.v1.ExerciseSets.exercise:type_name -> api.v1.Exercise
-	4, // 3: api.v1.ExerciseSets.sets:type_name -> api.v1.Set
-	0, // 4: api.v1.Exercise.metrics:type_name -> api.v1.ExerciseMetric
-	5, // 5: api.v1.Set.metadata:type_name -> api.v1.MetadataSet
-	9, // 6: api.v1.MetadataSet.created_at:type_name -> google.protobuf.Timestamp
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	4,  // 0: api.v1.ExerciseSet.exercise:type_name -> api.v1.Exercise
+	5,  // 1: api.v1.ExerciseSet.set:type_name -> api.v1.Set
+	4,  // 2: api.v1.ExerciseSets.exercise:type_name -> api.v1.Exercise
+	5,  // 3: api.v1.ExerciseSets.sets:type_name -> api.v1.Set
+	0,  // 4: api.v1.Exercise.metrics:type_name -> api.v1.ExerciseMetric
+	6,  // 5: api.v1.Set.metadata:type_name -> api.v1.MetadataSet
+	1,  // 6: api.v1.Set.weight_unit:type_name -> api.v1.WeightUnit
+	10, // 7: api.v1.MetadataSet.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 8: api.v1.User.weight_unit:type_name -> api.v1.WeightUnit
+	9,  // [9:9] is the sub-list for method output_type
+	9,  // [9:9] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_shared_proto_init() }
@@ -690,7 +766,7 @@ func file_api_v1_shared_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_shared_proto_rawDesc), len(file_api_v1_shared_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,

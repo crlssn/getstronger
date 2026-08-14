@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { ExerciseSetsSchema, type Exercise, type ExerciseSets } from '@/proto/api/v1/shared_pb'
+import {
+  ExerciseSetsSchema,
+  WeightUnit,
+  type Exercise,
+  type ExerciseSets,
+} from '@/proto/api/v1/shared_pb'
 import { RoutineSchema, type Routine } from '@/proto/api/v1/routine_service_pb'
 import type { Set } from '@/types/workout'
 
@@ -29,9 +34,11 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useStreakStore } from '@/stores/streak'
 import { useActivityStore } from '@/stores/activity'
+import { useAuthStore } from '@/stores/auth'
 import {
   createWorkout,
   getExercise,
+  getCurrentUser,
   getPreviousWorkoutSets,
   getRoutine,
   listExercises,
@@ -46,6 +53,7 @@ import {
   measurementsForExercise,
   type MeasurementField,
 } from '@/utils/exerciseMeasurements'
+import { convertWeight, normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
 
 const { input: note, textarea } = useTextareaAutosize()
 const { t } = useI18n()
@@ -75,7 +83,9 @@ const exerciseOptions = ref<Exercise[]>([])
 const exerciseSearch = ref('')
 const exercisePageToken = ref<Uint8Array>(new Uint8Array(0))
 const exerciseCard = ref<HTMLElement | null>(null)
+const defaultWeightUnit = ref(WeightUnit.KILOGRAMS)
 
+const authStore = useAuthStore()
 const workoutStore = useWorkoutStore()
 const dashboardStore = useDashboardStore()
 const alertStore = useAlertStore()
@@ -89,6 +99,9 @@ let elapsedInterval: ReturnType<typeof setInterval>
 let restInterval: ReturnType<typeof setInterval> | undefined
 
 onMounted(async () => {
+  const userResponse = await getCurrentUser(authStore.userId)
+  defaultWeightUnit.value = normalizeWeightUnit(userResponse?.user?.weightUnit)
+  workoutStore.ensureWeightUnits(routineID, defaultWeightUnit.value)
   await initializeRoutine()
   elapsedSeconds.value = Math.max(
     0,
@@ -342,14 +355,19 @@ const initializeRoutine = async () => {
 
 const addEmptySetsFromPreviousSession = () => {
   routine.value?.exercises.forEach((exercise) =>
-    workoutStore.addEmptySetIfNone(routineID, exercise.id, exercise.metrics),
+    workoutStore.addEmptySetIfNone(
+      routineID,
+      exercise.id,
+      exercise.metrics,
+      defaultWeightUnit.value,
+    ),
   )
 
   prevExerciseSets.value.forEach((exerciseSets) => {
     if (!exerciseSets.exercise) return
     const currentLength = workoutStore.getSets(routineID, exerciseSets.exercise.id).length
     for (let index = currentLength; index < exerciseSets.sets.length; index += 1) {
-      workoutStore.addEmptySet(routineID, exerciseSets.exercise.id)
+      workoutStore.addEmptySet(routineID, exerciseSets.exercise.id, defaultWeightUnit.value)
     }
   })
 }
@@ -383,7 +401,12 @@ const syncSetCompletion = (exerciseID: string, set: Set, index: number) => {
 
 const onSetInput = (exerciseID: string, set: Set, index: number) => {
   finishError.value = ''
-  workoutStore.addEmptySetIfNone(routineID, exerciseID, exerciseByID(exerciseID)?.metrics)
+  workoutStore.addEmptySetIfNone(
+    routineID,
+    exerciseID,
+    exerciseByID(exerciseID)?.metrics,
+    defaultWeightUnit.value,
+  )
   syncSetCompletion(exerciseID, set, index)
 }
 
@@ -399,11 +422,43 @@ const copyPreviousValue = async (
     previousSet(exerciseId, index) ?? workoutStore.getSets(routineID, exerciseId)[index - 1]
   if (!previous) return
 
-  set[field] = previous[field]
-  workoutStore.addEmptySetIfNone(routineID, exerciseId, exerciseByID(exerciseId)?.metrics)
+  const previousWeight = previous.weight
+  if (field === 'weight' && typeof previousWeight === 'number' && !Number.isNaN(previousWeight)) {
+    set.weight = convertWeight(
+      previousWeight,
+      normalizeWeightUnit(previous.weightUnit),
+      normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
+    )
+  } else {
+    set[field] = previous[field]
+  }
+  workoutStore.addEmptySetIfNone(
+    routineID,
+    exerciseId,
+    exerciseByID(exerciseId)?.metrics,
+    defaultWeightUnit.value,
+  )
   syncSetCompletion(exerciseId, set, index)
   await nextTick()
   ;(event.target as HTMLInputElement).select()
+}
+
+const changeSetWeightUnit = (
+  exerciseID: string,
+  set: Set,
+  index: number,
+  weightUnit: WeightUnit,
+) => {
+  const previousUnit = normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value)
+  const nextUnit = normalizeWeightUnit(weightUnit)
+  if (previousUnit === nextUnit) return
+
+  const currentWeight = set.weight
+  if (typeof currentWeight === 'number' && !Number.isNaN(currentWeight)) {
+    set.weight = convertWeight(currentWeight, previousUnit, nextUnit)
+  }
+  set.weightUnit = nextUnit
+  onSetInput(exerciseID, set, index)
 }
 
 const deleteWorkoutSet = (exerciseID: string, index: number) => {
@@ -559,6 +614,7 @@ const buildWorkoutSets = () => {
           weight: set.weight as number,
           distance: set.distance ?? 0,
           durationSeconds: set.durationSeconds ?? 0,
+          weightUnit: normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
         })),
       })
     })
@@ -721,7 +777,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
   routine.value.exercises.push(exercise)
   workoutStore.addWorkoutExercise(routineID, exercise)
-  workoutStore.addEmptySetIfNone(routineID, exercise.id, exercise.metrics)
+  workoutStore.addEmptySetIfNone(routineID, exercise.id, exercise.metrics, defaultWeightUnit.value)
   closeExercisePicker()
 
   const previousResponse = await getPreviousWorkoutSets([exercise.id])
@@ -875,6 +931,44 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                   copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
                 "
               />
+              <div v-else-if="measurement.field === 'weight'" class="weight-entry">
+                <input
+                  v-model.number="set.weight"
+                  type="text"
+                  inputmode="decimal"
+                  :aria-label="`${currentExercise.name} set ${setIndex + 1} weight`"
+                  @input="onSetInput(currentExercise.id, set, setIndex)"
+                  @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'weight')"
+                />
+                <div
+                  class="weight-unit-picker"
+                  role="group"
+                  :aria-label="`${currentExercise.name} set ${setIndex + 1} weight unit`"
+                >
+                  <button
+                    type="button"
+                    :aria-pressed="normalizeWeightUnit(set.weightUnit) === WeightUnit.KILOGRAMS"
+                    :class="{
+                      active: normalizeWeightUnit(set.weightUnit) === WeightUnit.KILOGRAMS,
+                    }"
+                    @click="
+                      changeSetWeightUnit(currentExercise.id, set, setIndex, WeightUnit.KILOGRAMS)
+                    "
+                  >
+                    kg
+                  </button>
+                  <button
+                    type="button"
+                    :aria-pressed="normalizeWeightUnit(set.weightUnit) === WeightUnit.POUNDS"
+                    :class="{ active: normalizeWeightUnit(set.weightUnit) === WeightUnit.POUNDS }"
+                    @click="
+                      changeSetWeightUnit(currentExercise.id, set, setIndex, WeightUnit.POUNDS)
+                    "
+                  >
+                    lbs
+                  </button>
+                </div>
+              </div>
               <input
                 v-else
                 v-model.number="set[measurement.field]"
@@ -927,7 +1021,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                 {{ exerciseLoggedSetCount(entry.exercise.id) === 1 ? 'set' : 'sets' }} logged
               </small>
               <small v-else-if="previousSet(entry.exercise.id, 0)">
-                Previous {{ previousSet(entry.exercise.id, 0)?.weight }} ×
+                Previous {{ previousSet(entry.exercise.id, 0)?.weight }}
+                {{ weightUnitLabel(previousSet(entry.exercise.id, 0)?.weightUnit) }} ×
                 {{ previousSet(entry.exercise.id, 0)?.reps }}
               </small>
               <small v-else>{{ t('workout.notStarted') }}</small>
@@ -1355,6 +1450,24 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .set-row input {
   @apply min-w-0 rounded-xl border-slate-200 px-2 py-2 text-center font-semibold shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
 }
+.weight-entry {
+  @apply grid min-w-0 grid-cols-[minmax(2.75rem,1fr)_2.75rem] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500;
+}
+.weight-entry > input {
+  @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
+}
+.weight-unit-picker {
+  @apply grid grid-cols-2 border-l border-slate-200 bg-slate-50;
+}
+.weight-unit-picker button {
+  @apply min-w-0 px-0.5 text-[0.5625rem] font-bold uppercase text-slate-400 transition hover:text-slate-700;
+}
+.weight-unit-picker button + button {
+  @apply border-l border-slate-200;
+}
+.weight-unit-picker button.active {
+  @apply bg-stone-900 text-white;
+}
 .remove-set {
   @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600;
 }
@@ -1564,7 +1677,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     @apply gap-1.5;
     grid-template-columns: 1.5rem minmax(4.5rem, 1fr) repeat(
         var(--metric-count),
-        minmax(4rem, 0.75fr)
+        minmax(5.5rem, 0.75fr)
       );
   }
   .set-labels {

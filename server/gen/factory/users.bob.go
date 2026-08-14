@@ -42,6 +42,7 @@ type UserTemplate struct {
 	CreatedAt      func() time.Time
 	FullNameSearch func() string
 	AuthID         func() uuid.UUID
+	WeightUnit     func() string
 
 	r userR
 	f *Factory
@@ -237,6 +238,10 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		val := o.AuthID()
 		m.AuthID = omit.From(val)
 	}
+	if o.WeightUnit != nil {
+		val := o.WeightUnit()
+		m.WeightUnit = omit.From(val)
+	}
 
 	return m
 }
@@ -276,6 +281,9 @@ func (o UserTemplate) Build() *models.User {
 	}
 	if o.AuthID != nil {
 		m.AuthID = o.AuthID()
+	}
+	if o.WeightUnit != nil {
+		m.WeightUnit = o.WeightUnit()
 	}
 
 	o.setModelRels(m)
@@ -614,6 +622,7 @@ func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 		UserMods.RandomCreatedAt(f),
 		UserMods.RandomFullNameSearch(f),
 		UserMods.RandomAuthID(f),
+		UserMods.RandomWeightUnit(f),
 	}
 }
 
@@ -799,6 +808,37 @@ func (m userMods) RandomAuthID(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.AuthID = func() uuid.UUID {
 			return random_uuid_UUID(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) WeightUnit(val string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.WeightUnit = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) WeightUnitFunc(f func() string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.WeightUnit = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetWeightUnit() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.WeightUnit = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomWeightUnit(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.WeightUnit = func() string {
+			return random_string(f, "2")
 		}
 	})
 }

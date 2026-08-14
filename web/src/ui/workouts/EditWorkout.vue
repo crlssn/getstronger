@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { timestampFromDate, type Timestamp } from '@bufbuild/protobuf/wkt'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
-import type { ExerciseSets, Set } from '@/proto/api/v1/shared_pb'
+import { WeightUnit, type ExerciseSets, type Set } from '@/proto/api/v1/shared_pb'
 
 import { DateTime } from 'luxon'
 import { computed, onMounted, ref } from 'vue'
@@ -23,6 +23,7 @@ import {
   isExerciseSetComplete,
   measurementsForExercise,
 } from '@/utils/exerciseMeasurements'
+import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 
 const route = useRoute()
 const workout = ref<Workout>()
@@ -80,7 +81,18 @@ const addEmptySet = (exerciseId: string) => {
     .find((es: ExerciseSets) => es.exercise?.id === exerciseId)
     ?.sets.push({
       $typeName: 'api.v1.Set',
+      weightUnit: normalizeWeightUnit(workout.value.user?.weightUnit),
     } as Set)
+}
+
+const changeWeightUnit = (set: Set, event: Event) => {
+  const select = event.target as HTMLSelectElement
+  const previous = normalizeWeightUnit(set.weightUnit)
+  const next = normalizeWeightUnit(Number(select.value) as WeightUnit)
+  if (previous === next) return
+
+  if (Number.isFinite(set.weight)) set.weight = convertWeight(set.weight, previous, next)
+  set.weightUnit = next
 }
 
 const deleteSet = (exerciseId: string, index: number) => {
@@ -171,6 +183,25 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                   v-model="set.durationSeconds"
                   :required="hasAnyExerciseSetValue(set, es.exercise)"
                 />
+                <div v-else-if="measurement.field === 'weight'" class="flex gap-2">
+                  <input
+                    v-model.number="set.weight"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="any"
+                    :placeholder="measurement.label"
+                    :required="hasAnyExerciseSetValue(set, es.exercise)"
+                  />
+                  <select
+                    :value="normalizeWeightUnit(set.weightUnit)"
+                    :aria-label="`Set ${index + 1} weight unit`"
+                    @change="changeWeightUnit(set, $event)"
+                  >
+                    <option :value="WeightUnit.KILOGRAMS">kg</option>
+                    <option :value="WeightUnit.POUNDS">lbs</option>
+                  </select>
+                </div>
                 <input
                   v-else
                   v-model.number="set[measurement.field]"

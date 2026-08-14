@@ -35,6 +35,7 @@ type User struct {
 	CreatedAt      time.Time `db:"created_at" `
 	FullNameSearch string    `db:"full_name_search,generated" `
 	AuthID         uuid.UUID `db:"auth_id" `
+	WeightUnit     string    `db:"weight_unit" `
 
 	R userR `db:"-" `
 
@@ -81,7 +82,7 @@ type userRLoaded struct {
 
 func buildUserColumns(tableName string) userColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "first_name", "last_name", "created_at", "full_name_search", "auth_id",
+		"id", "first_name", "last_name", "created_at", "full_name_search", "auth_id", "weight_unit",
 	)
 
 	if tableName != "" {
@@ -97,6 +98,7 @@ func buildUserColumns(tableName string) userColumns {
 		CreatedAt:      buildUserColumn(tableName, "created_at"),
 		FullNameSearch: buildUserColumn(tableName, "full_name_search"),
 		AuthID:         buildUserColumn(tableName, "auth_id"),
+		WeightUnit:     buildUserColumn(tableName, "weight_unit"),
 	}
 }
 
@@ -109,6 +111,7 @@ type userColumns struct {
 	CreatedAt      userColumn
 	FullNameSearch userColumn
 	AuthID         userColumn
+	WeightUnit     userColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -154,15 +157,16 @@ func (c userColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type UserSetter struct {
-	ID        omit.Val[uuid.UUID] `db:"id,pk" `
-	FirstName omit.Val[string]    `db:"first_name" `
-	LastName  omit.Val[string]    `db:"last_name" `
-	CreatedAt omit.Val[time.Time] `db:"created_at" `
-	AuthID    omit.Val[uuid.UUID] `db:"auth_id" `
+	ID         omit.Val[uuid.UUID] `db:"id,pk" `
+	FirstName  omit.Val[string]    `db:"first_name" `
+	LastName   omit.Val[string]    `db:"last_name" `
+	CreatedAt  omit.Val[time.Time] `db:"created_at" `
+	AuthID     omit.Val[uuid.UUID] `db:"auth_id" `
+	WeightUnit omit.Val[string]    `db:"weight_unit" `
 }
 
 func (s UserSetter) SetColumns() []string {
-	vals := make([]string, 0, 5)
+	vals := make([]string, 0, 6)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -177,6 +181,9 @@ func (s UserSetter) SetColumns() []string {
 	}
 	if s.AuthID.IsValue() {
 		vals = append(vals, "auth_id")
+	}
+	if s.WeightUnit.IsValue() {
+		vals = append(vals, "weight_unit")
 	}
 	return vals
 }
@@ -196,6 +203,9 @@ func (s UserSetter) Overwrite(t *User) {
 	}
 	if s.AuthID.IsValue() {
 		t.AuthID = s.AuthID.MustGet()
+	}
+	if s.WeightUnit.IsValue() {
+		t.WeightUnit = s.WeightUnit.MustGet()
 	}
 }
 
@@ -230,6 +240,11 @@ func (s *UserSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.AuthID.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.WeightUnit.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.WeightUnit.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -238,7 +253,7 @@ func (s UserSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 5)
+	exprs := make([]bob.Expression, 0, 6)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -275,6 +290,13 @@ func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.WeightUnit.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "weight_unit")...),
+			psql.Arg(s.WeightUnit),
+		}})
+	}
+
 	return exprs
 }
 
@@ -285,7 +307,7 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 		idx int
 		dst func(o *User) any
 	}
-	targets := make([]target, 0, 6)
+	targets := make([]target, 0, 7)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -300,6 +322,8 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 			targets = append(targets, target{i, func(o *User) any { return &o.FullNameSearch }})
 		case "auth_id":
 			targets = append(targets, target{i, func(o *User) any { return &o.AuthID }})
+		case "weight_unit":
+			targets = append(targets, target{i, func(o *User) any { return &o.WeightUnit }})
 		}
 	}
 
@@ -1302,6 +1326,7 @@ type userWhere[Q psql.Filterable] struct {
 	CreatedAt      psql.WhereMod[Q, time.Time]
 	FullNameSearch psql.WhereMod[Q, string]
 	AuthID         psql.WhereMod[Q, uuid.UUID]
+	WeightUnit     psql.WhereMod[Q, string]
 	R              userWhereR[Q]
 }
 
@@ -1318,6 +1343,7 @@ func buildUserWhere[Q psql.Filterable](cols userColumns) userWhere[Q] {
 		CreatedAt:      psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		FullNameSearch: psql.Where[Q, string](cols.FullNameSearch.Expression),
 		AuthID:         psql.Where[Q, uuid.UUID](cols.AuthID.Expression),
+		WeightUnit:     psql.Where[Q, string](cols.WeightUnit.Expression),
 		R:              userWhereR[Q]{cols: cols},
 	}
 }
@@ -1457,6 +1483,7 @@ type userPreloadBuf struct {
 	CreatedAt      null.Val[time.Time]
 	FullNameSearch null.Val[string]
 	AuthID         null.Val[uuid.UUID]
+	WeightUnit     null.Val[string]
 }
 
 // userScanMapperNullable maps the preloaded user
@@ -1471,7 +1498,7 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 			idx int
 			dst func(b *userPreloadBuf) any
 		}
-		targets := make([]target, 0, 6)
+		targets := make([]target, 0, 7)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1490,6 +1517,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FullNameSearch }})
 			case "auth_id":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.AuthID }})
+			case "weight_unit":
+				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.WeightUnit }})
 			}
 		}
 
@@ -1517,7 +1546,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 					!(buf.LastName.IsValue()) &&
 					!(buf.CreatedAt.IsValue()) &&
 					!(buf.FullNameSearch.IsValue()) &&
-					!(buf.AuthID.IsValue()) {
+					!(buf.AuthID.IsValue()) &&
+					!(buf.WeightUnit.IsValue()) {
 					return nil, nil
 				}
 
@@ -1539,6 +1569,9 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				}
 				if buf.AuthID.IsValue() {
 					o.AuthID = buf.AuthID.MustGet()
+				}
+				if buf.WeightUnit.IsValue() {
+					o.WeightUnit = buf.WeightUnit.MustGet()
 				}
 				return o, nil
 			}

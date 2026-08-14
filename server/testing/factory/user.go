@@ -9,6 +9,7 @@ import (
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 func (f *Factory) NewUserSlice(count int, opts ...UserOpt) models.UserSlice {
@@ -43,7 +44,10 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 		auth = f.NewAuth()
 	}
 
-	mods := []bobfactory.UserMod{bobfactory.UserMods.WithExistingAuth(authWithoutRelationships(auth))}
+	mods := []bobfactory.UserMod{
+		bobfactory.UserMods.WithExistingAuth(authWithoutRelationships(auth)),
+		bobfactory.UserMods.WeightUnit(string(weightunit.Kilograms)),
+	}
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.ID(value))
 	}
@@ -55,6 +59,9 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 	}
 	if value, ok := setter.CreatedAt.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.CreatedAt(value))
+	}
+	if value, ok := setter.WeightUnit.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.WeightUnit(value))
 	}
 
 	template := f.generated.NewUser(mods...)
@@ -95,5 +102,11 @@ func UserLastName(lastName string) UserOpt {
 func UserFirstName(firstName string) UserOpt {
 	return func(m *models.UserSetter) {
 		m.FirstName = omit.From(firstName)
+	}
+}
+
+func UserWeightUnit(unit weightunit.Unit) UserOpt {
+	return func(m *models.UserSetter) {
+		m.WeightUnit = omit.From(string(unit))
 	}
 }

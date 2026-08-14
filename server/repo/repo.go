@@ -24,6 +24,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/safe"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 type order string
@@ -270,16 +271,18 @@ func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (boo
 }
 
 type CreateUserParams struct {
-	AuthID    string
-	FirstName string
-	LastName  string
+	AuthID     string
+	FirstName  string
+	LastName   string
+	WeightUnit string
 }
 
 func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	user, err := models.Users.Insert(&models.UserSetter{
-		AuthID:    omit.From(uuidFromString(p.AuthID)),
-		FirstName: omit.From(p.FirstName),
-		LastName:  omit.From(p.LastName),
+		AuthID:     omit.From(uuidFromString(p.AuthID)),
+		FirstName:  omit.From(p.FirstName),
+		LastName:   omit.From(p.LastName),
+		WeightUnit: omit.From(string(weightunit.Normalize(p.WeightUnit))),
 	}).One(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("user insert: %w", err)
@@ -906,6 +909,7 @@ type Set struct {
 	Weight          float64
 	Distance        float64
 	DurationSeconds int
+	WeightUnit      string
 }
 
 func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
@@ -930,7 +934,8 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 			for _, set := range exerciseSet.Sets {
 				sets = append(sets, &models.SetSetter{
 					Reps:            omit.From(safe.Int32FromInt(set.Reps)),
-					Weight:          omit.From(set.Weight),
+					Weight:          omit.From(weightunit.ToKilograms(set.Weight, set.WeightUnit)),
+					WeightUnit:      omit.From(string(weightunit.Normalize(set.WeightUnit))),
 					Distance:        omit.From(set.Distance),
 					DurationSeconds: omit.From(safe.Int32FromInt(set.DurationSeconds)),
 					UserID:          omit.From(uuidFromString(p.UserID)),
@@ -1757,7 +1762,8 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 					WorkoutID:       omit.From(workout.ID),
 					ExerciseID:      omit.From(uuidFromString(exerciseSet.ExerciseID)),
 					Reps:            omit.From(safe.Int32FromInt(set.Reps)),
-					Weight:          omit.From(set.Weight),
+					Weight:          omit.From(weightunit.ToKilograms(set.Weight, set.WeightUnit)),
+					WeightUnit:      omit.From(string(weightunit.Normalize(set.WeightUnit))),
 					Distance:        omit.From(set.Distance),
 					DurationSeconds: omit.From(safe.Int32FromInt(set.DurationSeconds)),
 					CreatedAt:       omit.From(setCreatedAt),

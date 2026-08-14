@@ -14,6 +14,7 @@ import {
   Tooltip,
 } from 'chart.js'
 import { exerciseMetrics, formatMeasurementDuration } from '@/utils/exerciseMeasurements'
+import { weightInKilograms } from '@/utils/weightUnits'
 
 ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
 
@@ -93,9 +94,10 @@ const dailyMetrics = computed(() => {
       distance: 0,
       durationSeconds: 0,
     }
-    existing.oneRm = Math.max(existing.oneRm, calc1RM(set.weight, set.reps))
-    existing.weight = Math.max(existing.weight, set.weight)
-    existing.volume += set.weight * set.reps
+    const weight = weightInKilograms(set.weight, set.weightUnit)
+    existing.oneRm = Math.max(existing.oneRm, calc1RM(weight, set.reps))
+    existing.weight = Math.max(existing.weight, weight)
+    existing.volume += weight * set.reps
     existing.reps = Math.max(existing.reps, set.reps)
     existing.distance = Math.max(existing.distance, set.distance)
     existing.durationSeconds = Math.max(existing.durationSeconds, set.durationSeconds)
@@ -171,9 +173,7 @@ const options = computed(() => ({
     <header>
       <div>
         <small>{{ metricDetails[metric].heading }}</small>
-        <strong
-          >{{ formattedLatestValue }}</strong
-        >
+        <strong>{{ formattedLatestValue }}</strong>
       </div>
       <span v-if="change">{{ change }}</span>
     </header>
