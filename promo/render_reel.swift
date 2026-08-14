@@ -395,7 +395,7 @@ func drawOutro(image: NSImage, localTime: Double, sceneDuration: Double) {
     )
     fillRoundedRect(CGRect(x: 162, y: 1240, width: 756, height: 118), radius: 38, color: Palette.parchment)
     drawText(
-        "getstronger.pro",
+        "getstronger.studio",
         in: CGRect(x: 162, y: 1271, width: 756, height: 60),
         size: 35,
         weight: .bold,

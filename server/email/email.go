@@ -29,7 +29,7 @@ func New(c *config.Config) (Email, error) {
 }
 
 const (
-	fromEmail = "noreply@getstronger.pro"
+	fromEmail = "noreply@getstronger.studio"
 	fromName  = "One More Rep"
 
 	subjectSendVerification  = "[One More Rep] Verify your email"

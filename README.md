@@ -19,7 +19,7 @@
 ## Live Demo
 
 Experience the app firsthand:
-[**Visit One More Rep**](https://www.getstronger.pro)
+[**Visit One More Rep**](https://www.getstronger.studio)
 
 Use the demo account to explore all features:
 
@@ -230,7 +230,7 @@ COOKIE_DOMAIN=.example.com
 JWT_ACCESS_TOKEN_KEY=<long-random-secret>
 JWT_REFRESH_TOKEN_KEY=<different-long-random-secret>
 EMAIL_PROVIDER=scaleway
-EMAIL_FROM_ADDRESS=noreply@getstronger.pro
+EMAIL_FROM_ADDRESS=noreply@getstronger.studio
 SCW_PROJECT_ID=<production-project-id>
 SCW_TEM_REGION=fr-par
 SCW_TEM_SECRET_KEY=<email-iam-secret-key>
