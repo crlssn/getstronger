@@ -104,4 +104,20 @@ describe('AppRestTimerBanner', () => {
 
     wrapper.unmount()
   })
+
+  test('returns to the active workout when the rest timer ends on another page', async () => {
+    const router = createTestRouter()
+    await router.push('/home')
+    seedActiveWorkout(new Date(Date.now() + 1_000).toISOString(), 1)
+
+    const wrapper = mount(AppRestTimerBanner, {
+      global: { plugins: [i18n, router] },
+    })
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    await flushPromises()
+
+    expect(router.currentRoute.value.fullPath).toBe('/workouts/routine/routine-id')
+    wrapper.unmount()
+  })
 })

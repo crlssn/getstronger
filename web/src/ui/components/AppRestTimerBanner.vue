@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { BoltIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
 import { useWorkoutStore } from '@/stores/workout'
@@ -14,6 +14,7 @@ import {
 import useActiveWorkout from '@/utils/useActiveWorkout'
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 const workoutStore = useWorkoutStore()
 const { savedHref, savedWorkout } = useActiveWorkout()
@@ -106,7 +107,10 @@ const updateTimer = () => {
 
   const workoutId = activeWorkoutId.value
   if (workoutId && restTimerEndsAtMs.value === endsAtMs) {
+    const returnToWorkout = !isActiveWorkoutRoute.value
+    const workoutHref = savedHref.value
     workoutStore.setRestTimer(workoutId)
+    if (returnToWorkout) void router.push(workoutHref)
   }
 }
 
