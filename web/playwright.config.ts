@@ -1,10 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
 import { fileURLToPath } from 'node:url'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const webRoot = fileURLToPath(new URL('.', import.meta.url))
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url))
 const localBaseURL = 'http://localhost:15173'
-const localBackendURL = 'http://localhost:18080'
+const localBackendURL = 'http://localhost:18180'
 const baseURL = process.env.E2E_BASE_URL ?? localBaseURL
 const remoteTarget = process.env.E2E_BASE_URL !== undefined
 
@@ -64,10 +66,11 @@ export default defineConfig({
           env: {
             CORS_ALLOWED_ORIGIN: localBaseURL,
             EMAIL_PROVIDER: 'noop',
+            GOCACHE: join(tmpdir(), 'getstronger-go-cache'),
             SERVER_CERT_PATH: '',
             SERVER_KEY_PATH: '',
-            SERVER_PORT: '18080',
-            SSE_PORT: '18081',
+            SERVER_PORT: '18180',
+            SSE_PORT: '18181',
           },
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
