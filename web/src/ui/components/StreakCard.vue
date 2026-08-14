@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { DateTime } from 'luxon'
 import { CheckIcon, FireIcon } from '@heroicons/vue/24/outline'
 
 import { useStreakStore } from '@/stores/streak'
@@ -23,16 +24,20 @@ const message = computed(() => {
 const weekBlocks = computed(() =>
   Array.from({ length: 5 }, (_, index) => {
     const weeksAgo = 4 - index
+    const week = DateTime.now().startOf('week').minus({ weeks: weeksAgo })
+    const workoutCount = streakStore.weekWorkoutCounts[`${week.weekYear}-${week.weekNumber}`] ?? 0
     const complete = thisWeekLogged.value
       ? weeksAgo < streak.value
       : weeksAgo > 0 && weeksAgo <= streak.value
+    const completedWorkoutCount = Math.max(1, workoutCount)
 
     return {
       complete,
       current: weeksAgo === 0,
+      workoutCount,
       label: weeksAgo === 0 ? 'This week' : `${weeksAgo} ${weeksAgo === 1 ? 'week' : 'weeks'} ago`,
       status: complete
-        ? 'workout logged'
+        ? `${completedWorkoutCount} ${completedWorkoutCount === 1 ? 'workout' : 'workouts'} logged`
         : weeksAgo === 0
           ? 'workout still needed'
           : 'outside current streak',
@@ -68,7 +73,12 @@ const weekBlocks = computed(() =>
         :class="{ complete: week.complete, current: week.current }"
         :aria-label="`${week.label}: ${week.status}`"
       >
-        <CheckIcon v-if="week.complete" />
+        <template v-if="week.complete">
+          <CheckIcon />
+          <strong v-if="week.workoutCount > 1" class="week-workout-count">
+            {{ week.workoutCount }}
+          </strong>
+        </template>
         <span v-else aria-hidden="true"></span>
       </span>
     </div>
@@ -111,7 +121,7 @@ const weekBlocks = computed(() =>
   @apply mt-4 grid grid-cols-5 gap-1 rounded-xl bg-stone-100 p-1;
 }
 .week-block {
-  @apply grid h-9 place-items-center rounded-lg bg-stone-200 text-stone-400;
+  @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-stone-200 text-stone-400;
 }
 .week-block.complete {
   @apply bg-green-800 text-white;
@@ -121,6 +131,9 @@ const weekBlocks = computed(() =>
 }
 .week-block > svg {
   @apply size-4 stroke-[2.5];
+}
+.week-workout-count {
+  @apply text-xs font-bold tabular-nums;
 }
 .week-block > span {
   @apply size-1.5 rounded-full bg-current;

@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 import {
   playRestFinishedSound,
   playRestGetReadySound,
+  playWorkoutFinishedSound,
   shouldPlayRestGetReadySound,
   unlockRestSound,
 } from '@/utils/restSound'
@@ -104,6 +105,16 @@ describe('rest sounds', () => {
       10, 10.12, 10.24, 10.38, 10.38,
     ])
     expect(oscillators[oscillators.length - 1]?.stop).toHaveBeenCalledWith(10.82)
+  })
+
+  test('plays a distinct resolved chord when a workout is saved', async () => {
+    const { context, oscillators } = createAudioContext()
+
+    await expect(playWorkoutFinishedSound(context)).resolves.toBe(true)
+
+    expect(
+      oscillators.map(({ frequency }) => frequency.exponentialRampToValueAtTime.mock.calls[0][0]),
+    ).toEqual([261.63, 392, 523.25])
   })
 
   test('only requests the get-ready cue once in the final ten seconds', () => {

@@ -24,6 +24,7 @@ const computeStreak = (weeks: Set<string>) => {
 export const useStreakStore = defineStore('streak', () => {
   const streak = ref(0)
   const thisWeekLogged = ref(false)
+  const weekWorkoutCounts = ref<Record<string, number>>({})
   const loaded = ref(false)
   const failed = ref(false)
   const computedForWeek = ref('')
@@ -34,6 +35,7 @@ export const useStreakStore = defineStore('streak', () => {
     if (!authStore.userId) return
 
     const weeks = new Set<string>()
+    const workoutCounts = new Map<string, number>()
     let oldestWeek: DateTime | undefined
     let pageToken: Uint8Array = new Uint8Array(0)
     let requestFailed = false
@@ -48,7 +50,9 @@ export const useStreakStore = defineStore('streak', () => {
       for (const workout of response.workouts) {
         if (!workout.finishedAt) continue
         const finished = DateTime.fromSeconds(Number(workout.finishedAt.seconds)).startOf('week')
-        weeks.add(weekKey(finished))
+        const finishedWeek = weekKey(finished)
+        weeks.add(finishedWeek)
+        workoutCounts.set(finishedWeek, (workoutCounts.get(finishedWeek) ?? 0) + 1)
         if (!oldestWeek || finished < oldestWeek) oldestWeek = finished
       }
 
@@ -71,6 +75,7 @@ export const useStreakStore = defineStore('streak', () => {
 
     streak.value = computeStreak(weeks).count
     thisWeekLogged.value = weeks.has(currentWeek)
+    weekWorkoutCounts.value = Object.fromEntries(workoutCounts)
     computedForWeek.value = currentWeek
     loaded.value = true
   }
@@ -94,5 +99,14 @@ export const useStreakStore = defineStore('streak', () => {
     failed.value = false
   }
 
-  return { computedForWeek, failed, load, loaded, reset, streak, thisWeekLogged }
+  return {
+    computedForWeek,
+    failed,
+    load,
+    loaded,
+    reset,
+    streak,
+    thisWeekLogged,
+    weekWorkoutCounts,
+  }
 })

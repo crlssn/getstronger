@@ -37,6 +37,7 @@ describe('AppAlert', () => {
 
     alertStore.setSuccessWithoutPageRefresh('Workout saved')
     await flushPromises()
+    expect(wrapper.get('.alert-region').classes()).toContain('full-width')
     expect(wrapper.get('[role="status"]').text()).toContain('Workout saved')
 
     await vi.advanceTimersByTimeAsync(60_000)

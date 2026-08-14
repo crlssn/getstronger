@@ -54,6 +54,10 @@ import {
   type MeasurementField,
 } from '@/utils/exerciseMeasurements'
 import { convertWeight, normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
+import {
+  playWorkoutFinishedSound,
+  unlockRestSound,
+} from '@/utils/restSound'
 
 const { input: note, textarea } = useTextareaAutosize()
 const { t } = useI18n()
@@ -97,6 +101,7 @@ watch(note, (value) => workoutStore.setNote(routineID, value))
 
 let elapsedInterval: ReturnType<typeof setInterval>
 let restInterval: ReturnType<typeof setInterval> | undefined
+let completionAudioContext: AudioContext | undefined
 
 onMounted(async () => {
   const userResponse = await getCurrentUser(authStore.userId)
@@ -405,7 +410,7 @@ const onSetInput = (exerciseID: string, set: Set, index: number) => {
     routineID,
     exerciseID,
     exerciseByID(exerciseID)?.metrics,
-    defaultWeightUnit.value,
+    normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
   )
   syncSetCompletion(exerciseID, set, index)
 }
@@ -436,7 +441,7 @@ const copyPreviousValue = async (
     routineID,
     exerciseId,
     exerciseByID(exerciseId)?.metrics,
-    defaultWeightUnit.value,
+    normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
   )
   syncSetCompletion(exerciseId, set, index)
   await nextTick()
@@ -453,12 +458,24 @@ const changeSetWeightUnit = (
   const nextUnit = normalizeWeightUnit(weightUnit)
   if (previousUnit === nextUnit) return
 
-  const currentWeight = set.weight
-  if (typeof currentWeight === 'number' && !Number.isNaN(currentWeight)) {
-    set.weight = convertWeight(currentWeight, previousUnit, nextUnit)
-  }
-  set.weightUnit = nextUnit
+  workoutStore.changeWeightUnitFrom(
+    routineID,
+    (routine.value?.exercises ?? []).map((exercise) => exercise.id),
+    exerciseID,
+    index,
+    nextUnit,
+  )
+  defaultWeightUnit.value = nextUnit
   onSetInput(exerciseID, set, index)
+}
+
+const prepareWorkoutCompletionSound = () => {
+  try {
+    completionAudioContext = completionAudioContext ?? new AudioContext()
+    void unlockRestSound(completionAudioContext)
+  } catch {
+    completionAudioContext = undefined
+  }
 }
 
 const deleteWorkoutSet = (exerciseID: string, index: number) => {
@@ -679,6 +696,7 @@ const onFinishWorkout = async () => {
     }
 
     savedWorkoutId.value = workoutId
+    if (completionAudioContext) void playWorkoutFinishedSound(completionAudioContext)
     alertStore.setSuccess('Workout saved')
     await openSavedWorkout(workoutId)
   } catch (error) {
@@ -709,6 +727,8 @@ const requestFinishWorkout = async () => {
     return
   }
 
+  prepareWorkoutCompletionSound()
+
   if (unfinishedExerciseCount.value > 0) {
     finishDialogOpen.value = true
     return
@@ -718,6 +738,7 @@ const requestFinishWorkout = async () => {
 }
 
 const confirmFinishWorkout = async () => {
+  prepareWorkoutCompletionSound()
   finishDialogOpen.value = false
   await onFinishWorkout()
 }

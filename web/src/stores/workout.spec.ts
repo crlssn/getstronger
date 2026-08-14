@@ -82,4 +82,37 @@ describe('workout store', () => {
 
     expect(store.getSets('routine-id', 'squat')[0]?.weightUnit).toBe(WeightUnit.POUNDS)
   })
+
+  it('changes the selected set and every following set without changing earlier sets', () => {
+    const store = useWorkoutStore()
+    store.workouts['routine-id'] = {
+      exerciseSets: {
+        squat: [
+          { weight: 100, weightUnit: WeightUnit.POUNDS },
+          { weight: 110, weightUnit: WeightUnit.POUNDS },
+        ],
+        deadlift: [
+          { weight: 200, weightUnit: WeightUnit.POUNDS },
+          { weightUnit: WeightUnit.POUNDS },
+        ],
+      },
+    }
+
+    store.changeWeightUnitFrom(
+      'routine-id',
+      ['squat', 'deadlift'],
+      'squat',
+      1,
+      WeightUnit.KILOGRAMS,
+    )
+
+    expect(store.getSets('routine-id', 'squat')).toEqual([
+      { weight: 100, weightUnit: WeightUnit.POUNDS },
+      { weight: 49.9, weightUnit: WeightUnit.KILOGRAMS },
+    ])
+    expect(store.getSets('routine-id', 'deadlift')).toEqual([
+      { weight: 90.72, weightUnit: WeightUnit.KILOGRAMS },
+      { weightUnit: WeightUnit.KILOGRAMS },
+    ])
+  })
 })

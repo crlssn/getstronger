@@ -24,6 +24,15 @@ const finishedFanfare: Tone[] = [
   { frequency: 987.77, offset: 0.38, duration: 0.42, volume: 0.1 },
 ]
 
+// A warmer, shorter resolution than the rest alarm. It acknowledges the
+// completed session without competing with music or sounding like another
+// countdown cue.
+const workoutFinishedChord: Tone[] = [
+  { frequency: 261.63, offset: 0, duration: 0.42, volume: 0.12 },
+  { frequency: 392, offset: 0.08, duration: 0.48, volume: 0.14 },
+  { frequency: 523.25, offset: 0.18, duration: 0.58, volume: 0.16 },
+]
+
 const resumeAudio = async (context: AudioContext) => {
   try {
     if (context.state === 'closed') return false
@@ -93,3 +102,6 @@ export const playRestGetReadySound = async (context: AudioContext) =>
 
 export const playRestFinishedSound = async (context: AudioContext) =>
   (await resumeAudio(context)) && playTones(context, finishedFanfare)
+
+export const playWorkoutFinishedSound = async (context: AudioContext) =>
+  (await resumeAudio(context)) && playTones(context, workoutFinishedChord)
