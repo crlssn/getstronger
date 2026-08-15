@@ -1,4 +1,6 @@
-import { expect, logIn, test } from './fixtures'
+import { expect, logIn, openProfileActions, resetSeedData, test } from './fixtures'
+
+test.beforeAll(resetSeedData)
 
 test('redirects protected routes to login @smoke', async ({ page }) => {
   await page.goto('/profile')
@@ -26,7 +28,9 @@ test.describe('authenticated journeys', () => {
     await navigation.getByRole('link', { name: 'Exercises' }).click()
     await expect(page.getByRole('heading', { name: 'Exercises', exact: true })).toBeVisible()
 
-    await navigation.getByRole('link', { name: 'Me', exact: true }).click()
+    // The unread-notification badge sits inside the link, so its accessible
+    // name reads "2 Me" whenever the seeded notifications are still unread.
+    await navigation.getByRole('link', { name: /(^|\s)Me$/ }).click()
     await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
   })
 
@@ -66,13 +70,15 @@ test.describe('authenticated journeys', () => {
     await page.goto('/workouts/quick')
     await page.getByRole('button', { name: 'Choose exercise' }).click()
 
-    const picker = page.getByRole('dialog', { name: 'Add an exercise' })
+    const picker = page.getByRole('dialog', { name: 'Add exercise' })
     const firstExercise = picker.locator('.exercise-options button').first()
     const exerciseName = (await firstExercise.locator('strong').innerText()).trim()
     await firstExercise.click()
 
-    await page.getByLabel(`${exerciseName} set 1 weight`).fill('25')
-    await page.getByLabel(`${exerciseName} set 1 repetitions`).fill('8')
+    await page
+      .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
+      .fill('25')
+    await page.getByRole('textbox', { name: `${exerciseName} set 1 Reps`, exact: true }).fill('8')
     await page.getByLabel('Workout note').fill('Completed by the E2E suite.')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
@@ -88,7 +94,9 @@ test.describe('authenticated journeys', () => {
     await page.goto('/home')
     await page.getByRole('link', { name: 'Jane Doe', exact: true }).first().click()
 
-    await expect(page.getByRole('button', { name: 'Unfollow Jane' })).toBeVisible()
+    await openProfileActions(page)
+    await expect(page.getByRole('menuitem', { name: 'Unfollow Jane' })).toBeVisible()
+    await page.keyboard.press('Escape')
     const profileTabs = page.getByRole('navigation', { name: 'Profile sections' })
     await expect(profileTabs.getByRole('link', { name: 'Workouts' })).toBeVisible()
     await expect(profileTabs.getByRole('link', { name: 'Personal Bests' })).toBeVisible()

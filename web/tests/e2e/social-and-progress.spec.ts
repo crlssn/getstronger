@@ -1,14 +1,28 @@
-import { allowRuntimeErrors, expect, logIn, test, uniqueName } from './fixtures'
+import {
+  allowRuntimeErrors,
+  expect,
+  logIn,
+  openProfileActions,
+  resetSeedData,
+  scrollToListEnd,
+  test,
+  uniqueName,
+} from './fixtures'
+
+test.beforeAll(resetSeedData)
 
 test.describe('social feed and discovery', () => {
   test.beforeEach(async ({ page }) => logIn(page))
 
   test('searches for people and navigates to their profile @smoke', async ({ page }) => {
-    await page.getByRole('button', { name: 'Search people' }).click()
-    const search = page.getByRole('searchbox', { name: 'Search people' })
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
+    const search = page.getByRole('searchbox', {
+      name: 'Search people, routines, plans, exercises',
+      exact: true,
+    })
 
     await search.fill('Ja')
-    await expect(page.getByText('Type at least 3 characters to find someone.')).toBeVisible()
+    await expect(page.getByText('Type at least 3 characters to search.')).toBeVisible()
     await search.fill('Jane')
     await page
       .locator('.search-panel')
@@ -16,7 +30,7 @@ test.describe('social feed and discovery', () => {
       .click()
 
     await expect(page).toHaveURL(/\/users\/[0-9a-f-]+$/)
-    await expect(page.getByRole('button', { name: 'Unfollow Jane' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Profile actions' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Profile sections' })).toBeVisible()
   })
 
@@ -50,6 +64,7 @@ test.describe('social feed and discovery', () => {
     await expect(page.getByRole('alert')).toContainText('Latest workouts could not be loaded')
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.locator('.feed-summary-card').first()).toBeVisible()
+    await scrollToListEnd(page, '.feed-end')
     await expect(page.getByText("You're all caught up")).toBeVisible()
   })
 })
@@ -89,12 +104,11 @@ test.describe('profiles and notifications', () => {
     await page.goto('/home')
     await page.getByRole('link', { name: 'Jane Doe', exact: true }).first().click()
 
-    const unfollow = page.getByRole('button', { name: 'Unfollow Jane' })
-    await expect(unfollow).toBeVisible()
-    await unfollow.click()
+    await openProfileActions(page)
+    await page.getByRole('menuitem', { name: 'Unfollow Jane' }).click()
     await expect(page.getByRole('button', { name: 'Follow Jane' })).toBeVisible()
     await page.getByRole('button', { name: 'Follow Jane' }).click()
-    await expect(page.getByRole('button', { name: 'Unfollow Jane' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Profile actions' })).toBeVisible()
 
     const tabs = page.getByRole('navigation', { name: 'Profile sections' })
     for (const tab of ['Personal Bests', 'Follows', 'Followers', 'Workouts']) {

@@ -1,4 +1,15 @@
-import { allowRuntimeErrors, expect, logIn, logInAs, test, uniqueName } from './fixtures'
+import {
+  allowRuntimeErrors,
+  expect,
+  logIn,
+  logInAs,
+  resetSeedData,
+  scrollToListEnd,
+  test,
+  uniqueName,
+} from './fixtures'
+
+test.beforeAll(resetSeedData)
 
 const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
   await page.getByRole('button', { name: 'Choose exercise' }).click()
@@ -192,12 +203,15 @@ test.describe('weight units', () => {
       'aria-pressed',
       'true',
     )
-    await page.getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true }).fill('50')
+    // Heavier than anything seeded so this set becomes the exercise's personal
+    // best and the records view has to render it back in the unit it was
+    // entered in.
+    await page.getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true }).fill('150')
     await page.getByLabel(`${exercise} set 3 Reps`).fill('5')
     await thirdUnit.getByRole('button', { name: 'lbs' }).click()
     await expect(
       page.getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true }),
-    ).toHaveValue('110.23')
+    ).toHaveValue('330.69')
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
@@ -209,10 +223,10 @@ test.describe('weight units', () => {
     expect(notificationBox?.width).toBe(390)
     await expect(page.getByText(/100\s*lbs/)).toBeVisible()
     await expect(page.getByText(/49\.9\s*kg/)).toBeVisible()
-    await expect(page.getByText(/110\.23\s*lbs/)).toBeVisible()
+    await expect(page.getByText(/330\.69\s*lbs/)).toBeVisible()
 
     await page.goto('/progress')
-    await expect(page.locator('.record-value').filter({ hasText: /110\.23\s*lbs/ })).toBeVisible()
+    await expect(page.locator('.record-value').filter({ hasText: /330\.69\s*lbs/ })).toBeVisible()
 
     await page.goto('/home')
     const currentWeek = page.locator('.week-block.current.complete')
@@ -252,9 +266,19 @@ test.describe('planned workouts and history', () => {
     const exercise = (await page.locator('.exercise-card h2').innerText()).trim()
     await logFirstSet(page, exercise, '30', '6')
     await page.getByRole('button', { name: /Next exercise|Complete exercise/ }).click()
-    await page.getByRole('button', { name: 'Remove set 1' }).click()
-    await expect(page.getByRole('button', { name: 'Finish workout' })).toBeEnabled()
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+
+    // Seeded routines vary in length. One with a further exercise opens it on
+    // an empty set that blocks finishing until it is removed; a single-exercise
+    // routine is already finishable.
+    const finishWorkout = page.getByRole('button', { name: 'Finish workout' })
+    const removeFirstSet = page.getByRole('button', { name: 'Remove set 1' })
+    await expect
+      .poll(async () => (await removeFirstSet.count()) > 0 || (await finishWorkout.isEnabled()))
+      .toBe(true)
+    if ((await removeFirstSet.count()) > 0) await removeFirstSet.click()
+
+    await expect(finishWorkout).toBeEnabled()
+    await finishWorkout.click()
     const finishDialog = page.getByRole('dialog', { name: 'Finish workout early?' })
     if (await finishDialog.isVisible()) {
       await finishDialog.getByRole('button', { name: 'Finish and save' }).click()
@@ -279,6 +303,7 @@ test.describe('planned workouts and history', () => {
     const history = page.locator('.workout-history')
     await expect(history.getByRole('heading', { name: 'Previous workouts' })).toBeVisible()
     await expect(history.getByRole('link')).not.toHaveCount(0)
+    await scrollToListEnd(page, '.history-end')
     await expect(history.getByRole('status')).toContainText('reached the end')
 
     const firstWorkoutName = (
