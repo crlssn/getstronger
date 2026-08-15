@@ -211,7 +211,7 @@ jobs:
             endpoint_url = https://s3.${{ vars.SCW_REGION }}.scw.cloud
           " >> ~/.aws/config
           cat ~/.aws/config
-          aws s3 sync ./dist "s3:// ${{ vars.SCW_BUCKET_NAME }}" \
+          aws s3 sync ./dist "s3://${{ vars.SCW_BUCKET_NAME }}" \
             --delete \
             --endpoint-url "https://${{ vars.SCW_BUCKET_NAME }}.s3.${{ vars.SCW_REGION }}.scw.cloud"
 
