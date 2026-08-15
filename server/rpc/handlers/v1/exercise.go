@@ -176,8 +176,7 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 	for _, path := range req.Msg.GetUpdateMask().GetPaths() {
 		opt, errOpt := h.pathToUpdateExerciseOpt(path, req.Msg.GetExercise())
 		if errOpt != nil {
-			log.With(zap.Error(errOpt)).Error("invalid path")
-			continue
+			return nil, connect.NewError(connect.CodeInvalidArgument, errOpt)
 		}
 		opts = append(opts, opt)
 	}
