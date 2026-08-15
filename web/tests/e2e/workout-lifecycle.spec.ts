@@ -45,9 +45,7 @@ test.describe('quick workout lifecycle', () => {
     await expect(
       page.getByRole('button', { name: 'Finish workout: Complete 1 partial set' }),
     ).toBeDisabled()
-    await page
-      .getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true })
-      .fill('8')
+    await page.getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true }).fill('8')
 
     await expect(page.getByRole('region', { name: 'Rest timer' })).toBeVisible()
     const initialTimer = await page.locator('.rest-banner p').innerText()
@@ -194,9 +192,7 @@ test.describe('weight units', () => {
       'aria-pressed',
       'true',
     )
-    await page
-      .getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true })
-      .fill('50')
+    await page.getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true }).fill('50')
     await page.getByLabel(`${exercise} set 3 Reps`).fill('5')
     await thirdUnit.getByRole('button', { name: 'lbs' }).click()
     await expect(

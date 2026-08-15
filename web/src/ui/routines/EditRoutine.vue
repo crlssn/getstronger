@@ -38,7 +38,10 @@ const onSave = async (updatedName: string, updatedExerciseIds: string[]) => {
 </script>
 
 <template>
-  <div v-if="loading" class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+  <div
+    v-if="loading"
+    class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500"
+  >
     Loading routine…
   </div>
   <RoutineForm

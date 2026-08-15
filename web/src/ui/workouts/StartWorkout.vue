@@ -54,10 +54,7 @@ import {
   type MeasurementField,
 } from '@/utils/exerciseMeasurements'
 import { convertWeight, normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
-import {
-  playWorkoutFinishedSound,
-  unlockRestSound,
-} from '@/utils/restSound'
+import { playWorkoutFinishedSound, unlockRestSound } from '@/utils/restSound'
 
 const { input: note, textarea } = useTextareaAutosize()
 const { t } = useI18n()

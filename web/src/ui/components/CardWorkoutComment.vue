@@ -18,12 +18,18 @@ const initials = computed(
 
 <template>
   <article class="comment-row">
-    <RouterLink :to="`/users/${user?.id}`" class="comment-avatar" :aria-label="`View ${user?.firstName} ${user?.lastName}'s profile`">
+    <RouterLink
+      :to="`/users/${user?.id}`"
+      class="comment-avatar"
+      :aria-label="`View ${user?.firstName} ${user?.lastName}'s profile`"
+    >
       {{ initials }}
     </RouterLink>
     <div class="comment-content">
       <div class="comment-meta">
-        <RouterLink :to="`/users/${user?.id}`">{{ user?.firstName }} {{ user?.lastName }}</RouterLink>
+        <RouterLink :to="`/users/${user?.id}`"
+          >{{ user?.firstName }} {{ user?.lastName }}</RouterLink
+        >
         <time>{{ formatToRelativeDateTime(timestamp) }}</time>
       </div>
       <p>{{ comment }}</p>
@@ -34,11 +40,25 @@ const initials = computed(
 <style scoped>
 @reference '../../assets/base.css';
 
-.comment-row { @apply grid grid-cols-[auto_1fr] gap-3 py-4 first:pt-0 last:pb-0; }
-.comment-avatar { @apply grid size-10 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700; }
-.comment-content { @apply min-w-0; }
-.comment-meta { @apply flex flex-wrap items-baseline gap-x-2; }
-.comment-meta a { @apply text-sm font-semibold text-slate-900 hover:text-indigo-700; }
-.comment-meta time { @apply text-xs text-slate-400; }
-.comment-content p { @apply mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700; }
+.comment-row {
+  @apply grid grid-cols-[auto_1fr] gap-3 py-4 first:pt-0 last:pb-0;
+}
+.comment-avatar {
+  @apply grid size-10 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700;
+}
+.comment-content {
+  @apply min-w-0;
+}
+.comment-meta {
+  @apply flex flex-wrap items-baseline gap-x-2;
+}
+.comment-meta a {
+  @apply text-sm font-semibold text-slate-900 hover:text-indigo-700;
+}
+.comment-meta time {
+  @apply text-xs text-slate-400;
+}
+.comment-content p {
+  @apply mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700;
+}
 </style>

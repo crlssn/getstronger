@@ -23,6 +23,10 @@ const onClick = async () => {
 <style scoped>
 @reference '../../assets/base.css';
 
-button { @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700; }
-svg { @apply size-5; }
+button {
+  @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700;
+}
+svg {
+  @apply size-5;
+}
 </style>

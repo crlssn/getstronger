@@ -67,11 +67,25 @@ const containerStyle = computed(() => (props.fixed ? 'fixed inset-x-0 top-16 z-5
 <style scoped>
 @reference '../../assets/base.css';
 
-.alert-region { @apply w-full; }
-.alert-card { @apply border-y text-sm font-semibold shadow-sm; }
-.alert-card-inner { @apply mx-auto flex min-h-14 w-full max-w-3xl items-center gap-3 px-3 py-3 sm:px-5 lg:px-8; }
-.status-icon { @apply size-5 shrink-0; }
-.alert-card-inner p { @apply min-w-0 flex-1; }
-.alert-card-inner button { @apply grid size-8 shrink-0 place-items-center rounded-lg transition hover:bg-black/5; }
-.alert-card button svg { @apply size-4; }
+.alert-region {
+  @apply w-full;
+}
+.alert-card {
+  @apply border-y text-sm font-semibold shadow-sm;
+}
+.alert-card-inner {
+  @apply mx-auto flex min-h-14 w-full max-w-3xl items-center gap-3 px-3 py-3 sm:px-5 lg:px-8;
+}
+.status-icon {
+  @apply size-5 shrink-0;
+}
+.alert-card-inner p {
+  @apply min-w-0 flex-1;
+}
+.alert-card-inner button {
+  @apply grid size-8 shrink-0 place-items-center rounded-lg transition hover:bg-black/5;
+}
+.alert-card button svg {
+  @apply size-4;
+}
 </style>
