@@ -70,5 +70,14 @@ const onLogin = async () => {
       {{ $t('auth.newMember', { brand: brandName }) }}
       <RouterLink to="/signup" class="auth-link">{{ $t('auth.createAccount') }}</RouterLink>
     </p>
+
+    <!-- A permanent way back to the pending state, so that a dismissed notice
+         or a reload never strands an unverified account. -->
+    <p class="auth-footer">
+      {{ $t('auth.verification.loginPrompt') }}
+      <RouterLink :to="{ name: 'verify-email-pending' }" class="auth-link">{{
+        $t('auth.verification.loginLink')
+      }}</RouterLink>
+    </p>
   </section>
 </template>

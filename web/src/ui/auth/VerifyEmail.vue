@@ -3,14 +3,19 @@ import { onMounted } from 'vue'
 import { verifyEmail } from '@/http/requests'
 import { useRoute, useRouter } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts.ts'
+import { useEmailVerificationStore } from '@/stores/emailVerification.ts'
 
 const route = useRoute()
 const router = useRouter()
 const alertStore = useAlertStore()
+const emailVerificationStore = useEmailVerificationStore()
 
 onMounted(async () => {
   const res = await verifyEmail(route.query.token as string)
   if (!res) return
+  // Nothing is pending any more, so the recovery page no longer has an address
+  // to offer.
+  emailVerificationStore.clear()
   alertStore.setSuccess('Thank you for verifying your email')
   await router.push('/login')
 })

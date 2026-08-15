@@ -212,6 +212,13 @@ const router: Router = createRouter({
     },
     {
       beforeEnter: [guest],
+      component: () => import('@/ui/auth/VerifyEmailPending.vue'),
+      meta: { title: 'Verify your email' },
+      name: 'verify-email-pending',
+      path: '/verify-email/pending',
+    },
+    {
+      beforeEnter: [guest],
       component: () => import('@/ui/auth/ForgotPassword.vue'),
       meta: { title: 'Reset password' },
       name: 'forgot-password',
