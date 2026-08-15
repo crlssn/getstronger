@@ -140,7 +140,8 @@ const weekBlocks = computed(() =>
   @apply size-1.5 rounded-full bg-current;
 }
 .track-labels {
-  @apply mt-1.5 flex justify-between text-[0.65rem] font-medium text-slate-400;
+  /* slate-400 only reaches 2.6:1 against the card at this size. */
+  @apply mt-1.5 flex justify-between text-[0.65rem] font-medium text-slate-500;
 }
 .streak-card > p {
   @apply mt-3 text-xs text-slate-500;
