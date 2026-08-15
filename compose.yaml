@@ -2,9 +2,7 @@ name: getstronger
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: getstronger-api:latest
     container_name: getstronger-api
     restart: unless-stopped
     env_file:

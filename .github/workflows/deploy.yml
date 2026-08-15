@@ -104,6 +104,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Build API image
+        run: docker build --platform linux/amd64 --tag getstronger-api:latest .
+
       - name: Create deployment bundle
         env:
           API_DOMAIN: ${{ vars.API_DOMAIN }}
@@ -124,8 +127,8 @@ jobs:
           SCW_TEM_SECRET_KEY: ${{ secrets.SCW_TEM_SECRET_KEY }}
         run: |
           mkdir deployment
-          cp Dockerfile .dockerignore Caddyfile compose.yaml go.mod go.sum deployment/
-          cp -R server deployment/server
+          cp Caddyfile compose.yaml deployment/
+          docker save getstronger-api:latest | gzip -1 > deployment/getstronger-api.tar.gz
 
           {
             printf 'API_DOMAIN=%s\n' "$API_DOMAIN"
@@ -158,7 +161,7 @@ jobs:
           SOURCE: 'deployment/'
           TARGET: ${{ vars.SCW_INSTANCE_APP_DIR }}
 
-      - name: Build and restart containers
+      - name: Load and restart containers
         uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ vars.SCW_INSTANCE_HOST }}
@@ -169,9 +172,12 @@ jobs:
             set -eu
             cd "${{ vars.SCW_INSTANCE_APP_DIR }}"
             chmod 600 .env
+            previous_api_image="$(docker image inspect --format='{{.Id}}' getstronger-api:latest 2>/dev/null || true)"
+            gzip --decompress --stdout getstronger-api.tar.gz | docker load
+            current_api_image="$(docker image inspect --format='{{.Id}}' getstronger-api:latest)"
             docker compose config --quiet
             docker compose pull caddy
-            docker compose up --detach --build --remove-orphans
+            docker compose up --detach --force-recreate --remove-orphans
 
             attempts=0
             status=starting
@@ -207,6 +213,10 @@ jobs:
             if [ "$caddy_running" != true ]; then
               docker compose logs --no-color caddy
               exit 1
+            fi
+
+            if [ -n "$previous_api_image" ] && [ "$previous_api_image" != "$current_api_image" ]; then
+              docker image rm "$previous_api_image" || true
             fi
 
   web:

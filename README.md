@@ -211,7 +211,7 @@ The connection format and mandatory `sslmode=require` setting are documented in 
    - TCP `443` from anywhere, for the public API.
 4. Keep outbound traffic allowed and leave database port `5432` closed inbound on the Instance. The API connects outbound to the Serverless SQL hostname.
 5. Connect over SSH and verify that `docker version` and `docker compose version` both succeed for `SCW_INSTANCE_USER`.
-6. Set `SCW_INSTANCE_APP_DIR` to a dedicated directory that this SSH user can write to. The deployment workflow transfers a minimal build context there, builds the API image natively for the Instance architecture, and starts the stack with Docker Compose.
+6. Set `SCW_INSTANCE_APP_DIR` to a dedicated directory that this SSH user can write to. The deployment workflow builds the `linux/amd64` API image on GitHub's runner, transfers the compressed image, loads it on the `x86_64` Instance, and starts the stack with Docker Compose.
 7. The Compose stack keeps the API private on its Docker network and exposes only Caddy on ports `80` and `443`. Caddy obtains and renews the certificate for `API_DOMAIN`; its certificate state is retained in named Docker volumes across deployments.
 8. The workflow writes the backend `.env` into `SCW_INSTANCE_APP_DIR` with mode `0600`. Do not place unrelated files in this deployment directory.
 
@@ -281,7 +281,7 @@ The DNS console flow is described in [Configure DNS zones](https://www.scaleway.
 
 ### 7. Connect the deployment workflow
 
-The GitHub Actions deployment workflow uploads the API's Docker build context over SSH, builds and health-checks the Compose stack on the Instance, and uses Scaleway Object Storage's S3-compatible endpoint for the web build. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`, give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` on the production Project, and set that Project as the API key's preferred Object Storage Project.
+The GitHub Actions deployment workflow builds the API's `linux/amd64` Docker image on its runner, uploads and loads that image over SSH, health-checks the Compose stack on the Instance, and uses Scaleway Object Storage's S3-compatible endpoint for the web build. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`, give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` on the production Project, and set that Project as the API key's preferred Object Storage Project.
 
 Configure these GitHub repository variables:
 
