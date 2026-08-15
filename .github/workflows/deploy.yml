@@ -66,6 +66,16 @@ jobs:
     needs: init
     runs-on: ubuntu-latest
     if: needs.init.outputs.database == 'true' || (github.event_name == 'workflow_dispatch' && inputs.migrate)
+    env:
+      DB_HOST: ${{ vars.DB_HOST }}
+      DB_PORT: ${{ vars.DB_PORT }}
+      DB_NAME: ${{ vars.DB_NAME }}
+      DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
+      DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      SCW_BUCKET: ${{ vars.SCW_BUCKET }}
+      SCW_REGION: ${{ vars.SCW_REGION }}
 
     steps:
       - name: Checkout code
@@ -77,16 +87,16 @@ jobs:
           sudo dpkg -i migrate.linux-amd64.deb
 
       - name: Run migration
-        env:
-          DB_HOST: ${{ vars.DB_HOST }}
-          DB_PORT: ${{ vars.DB_PORT }}
-          DB_NAME: ${{ vars.DB_NAME }}
-          DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
-          DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
         run: |
           migrate -path database/migrations/ \
             -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
             -verbose up
+
+      - name: Test Scaleway connection
+        run: |
+          aws s3 ls "s3://${SCW_BUCKET}" \
+          --endpoint-url "https://s3.${SCW_REGION}.scw.cloud" \
+          --region "${SCW_REGION}"
 
   server:
     needs: [init, database]
