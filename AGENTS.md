@@ -5,6 +5,8 @@
 Several agents may work on different features at the same time, each in its own
 worktree. The local stack is not shared, so set it up before running anything.
 
+- When creating a new worktree, always fetch the latest `main` first and branch
+  out from it, so the new workspace starts from up-to-date code.
 - Run `mise run worktree:env` once per worktree before the first build, test, or
   server start. It assigns this worktree its own database container, database
   port, backend port, SSE port, web port, MailHog ports, and end-to-end test
