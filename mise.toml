@@ -2,7 +2,7 @@ min_version = "2026.8.2"
 
 [tools]
 buf = "1.50.0"
-go = "1.25.4"
+go = "1.26.6"
 gofumpt = "0.10.0"
 golangci-lint = "2.12.2"
 node = "22.23.2"
@@ -25,9 +25,18 @@ node = "22.23.2"
 }
 
 [env]
+# Worktrees override the container names and ports below in mise.local.toml so
+# that parallel checkouts never share state. See 'mise run worktree:env'.
 DB_SSL_MODE = { default = "disable" }
 DB_IMAGE = { default = "postgres:16.4" }
 DB_CONTAINER = { default = "getstronger" }
+MAILHOG_CONTAINER = { default = "getstronger-mailhog" }
+MAILHOG_SMTP_PORT = { default = "1025" }
+MAILHOG_HTTP_PORT = { default = "8025" }
+WEB_DEV_PORT = { default = "5173" }
+E2E_WEB_PORT = { default = "15173" }
+E2E_SERVER_PORT = { default = "18180" }
+E2E_SSE_PORT = { default = "18181" }
 DB_CONFIG_PATH = { default = "./database/bobgen.yaml" }
 DB_MIGRATIONS_PATH = { default = "database/migrations/" }
 USER_EMAIL = { default = "active@onemorerep.test" }
@@ -119,8 +128,8 @@ openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
   )
 
 echo "✅  Appending cert and key paths to .env file"
-echo "SERVER_KEY_PATH=$PWD/.secrets/localhost.key" >> .env
-echo "SERVER_CERT_PATH=$PWD/.secrets/localhost.crt" >> .env
+grep -q '^SERVER_KEY_PATH=' .env || echo "SERVER_KEY_PATH=$PWD/.secrets/localhost.key" >> .env
+grep -q '^SERVER_CERT_PATH=' .env || echo "SERVER_CERT_PATH=$PWD/.secrets/localhost.crt" >> .env
 echo "⚠️ Restart the server and visit the following link to trust the certificate in your browser: https://localhost:$SERVER_PORT"
 '''
 
@@ -194,8 +203,8 @@ run = ["npm install", "npm run dev"]
 alias = "app_email"
 description = "Run MailHog"
 run = [
-    "docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog",
-    '''echo "The email app is running at http://localhost:8025"''',
+    '''docker start "$MAILHOG_CONTAINER" 2>/dev/null || docker run -d --name "$MAILHOG_CONTAINER" -p "$MAILHOG_SMTP_PORT:1025" -p "$MAILHOG_HTTP_PORT:8025" mailhog/mailhog''',
+    '''echo "The email app is running at http://localhost:$MAILHOG_HTTP_PORT"''',
 ]
 
 [tasks."app:backend"]
@@ -298,7 +307,14 @@ run = "mise install"
 alias = "install_hooks"
 description = "Install the pre-push Git hook"
 run = [
-    "cp ./scripts/pre_push_hook.sh .git/hooks/pre-push",
+    # Resolve the hook directory via Git so this also works from a worktree,
+    # where .git is a file rather than a directory.
+    '''
+    hooks="$(git rev-parse --git-path hooks)"
+    mkdir -p "$hooks"
+    cp ./scripts/pre_push_hook.sh "$hooks/pre-push"
+    chmod +x "$hooks/pre-push"
+    ''',
     '''echo "✅  Installed pre-push hook"''',
 ]
 
@@ -309,7 +325,12 @@ description = "Create local environment files when missing"
 run = [
     "test -f .env || cp .env.example .env",
     "test -f web/.env || cp web/.env.example web/.env",
+    { task = "worktree:env" },
 ]
+
+[tasks."worktree:env"]
+description = "Give this worktree its own ports, database, and containers"
+run = "./scripts/worktree_env.sh"
 
 [tasks.setup]
 description = "Set up and run the local development environment"
@@ -328,7 +349,11 @@ run = [
 
 [tasks.clean]
 description = "Remove local development resources"
-run = [{ task = "db:clean" }]
+run = [{ task = "db:clean" }, { task = "email:clean" }]
+
+[tasks."email:clean"]
+description = "Remove the local MailHog container"
+run = 'docker rm -f "$MAILHOG_CONTAINER" || true'
 
 [tasks."db:clean"]
 alias = "clean_db"

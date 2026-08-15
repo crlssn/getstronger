@@ -5,8 +5,13 @@ import { join } from 'node:path'
 
 const webRoot = fileURLToPath(new URL('.', import.meta.url))
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url))
-const localBaseURL = 'http://localhost:15173'
-const localBackendURL = 'http://localhost:18180'
+// Ports are per worktree so that parallel runs never share a server. See
+// 'mise run worktree:env'.
+const webPort = process.env.E2E_WEB_PORT ?? '15173'
+const serverPort = process.env.E2E_SERVER_PORT ?? '18180'
+const ssePort = process.env.E2E_SSE_PORT ?? '18181'
+const localBaseURL = `http://localhost:${webPort}`
+const localBackendURL = `http://localhost:${serverPort}`
 const baseURL = process.env.E2E_BASE_URL ?? localBaseURL
 const remoteTarget = process.env.E2E_BASE_URL !== undefined
 
@@ -69,18 +74,20 @@ export default defineConfig({
             GOCACHE: join(tmpdir(), 'getstronger-go-cache'),
             SERVER_CERT_PATH: '',
             SERVER_KEY_PATH: '',
-            SERVER_PORT: '18180',
-            SSE_PORT: '18181',
+            SERVER_PORT: serverPort,
+            SSE_PORT: ssePort,
           },
-          reuseExistingServer: !process.env.CI,
+          // Never reuse a server: it may belong to another worktree, which
+          // would silently run these tests against different code.
+          reuseExistingServer: false,
           timeout: 120_000,
           url: `${localBackendURL}/healthz`,
         },
         {
-          command: 'npm run dev -- --host localhost --port 15173',
+          command: `npm run dev -- --host localhost --port ${webPort}`,
           cwd: webRoot,
           env: { VITE_API_URL: localBackendURL, VITE_ENABLE_DEVTOOLS: 'false' },
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: false,
           timeout: 120_000,
           url: localBaseURL,
         },

@@ -47,7 +47,10 @@ export default defineConfig({
   ].filter((plugin) => plugin !== undefined),
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    // Set per worktree by 'mise run worktree:env'. strictPort keeps a busy port
+    // a visible failure instead of silently drifting onto another one.
+    port: Number(process.env.WEB_DEV_PORT ?? 5173),
+    strictPort: true,
     allowedHosts: ['carl.local'],
   },
   resolve: {

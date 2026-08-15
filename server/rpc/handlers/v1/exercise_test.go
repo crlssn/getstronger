@@ -815,6 +815,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 						s.factory.NewSet(
 							factory.SetUserID(user.ID),
 							factory.SetExerciseID(exercise.GetId()),
+							factory.SetCreatedAt(s.factory.Now().Add(-time.Hour)),
 						)
 					}
 				}
