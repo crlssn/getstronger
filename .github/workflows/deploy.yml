@@ -196,27 +196,8 @@ jobs:
           SCW_REGION: ${{ vars.SCW_REGION }}
           SCW_BUCKET_NAME: ${{ vars.SCW_BUCKET_NAME }}
         run: |
-          mkdir ~/.aws
-          echo "[default]
-          aws_access_key_id = ${{ secrets.SCW_ACCESS_KEY_ID }}
-          aws_secret_access_key = ${{ secrets.SCW_SECRET_KEY }}
-          " >> ~/.aws/credentials
-          cat ~/.aws/credentials
-          echo "
-          [default]
-          region = ${{ vars.SCW_REGION }}
-          output = json
-          
-          s3 =
-            max_concurrent_requests = 100
-            max_queue_size = 1000
-            multipart_threshold = 50 MB
-            multipart_chunksize = 10 MB
-            endpoint_url = https://s3.${{ vars.SCW_REGION }}.scw.cloud
-          " >> ~/.aws/config
-          cat ~/.aws/config
-          echo aws s3 sync ./dist "s3://${{ vars.SCW_BUCKET_NAME }}" --endpoint-url "https://${{ vars.SCW_BUCKET_NAME }}.s3.${{ vars.SCW_REGION }}.scw.cloud"
-          aws s3 sync ./dist "s3://${{ vars.SCW_BUCKET_NAME }}" --endpoint-url "https://${{ vars.SCW_BUCKET_NAME }}.s3.${{ vars.SCW_REGION }}.scw.cloud"
+          aws s3 sync ./dist "s3://${SCW_BUCKET_NAME}" \
+            --endpoint-url "https://s3.${SCW_REGION}.scw.cloud"
 
   cleanup:
     needs: [init, database, server, web]
