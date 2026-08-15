@@ -1,4 +1,6 @@
-import { expect, logInAs, test } from './fixtures'
+import { expect, logInAs, resetSeedData, test } from './fixtures'
+
+test.beforeAll(resetSeedData)
 
 test.describe('seed personas', () => {
   test('offers an empty new account and a socially active established account', async ({

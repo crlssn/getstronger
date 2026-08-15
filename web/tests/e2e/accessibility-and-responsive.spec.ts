@@ -1,5 +1,7 @@
-import { expect, expectAccessible, logIn, test } from './fixtures'
+import { expect, expectAccessible, logIn, resetSeedData, scrollToListEnd, test } from './fixtures'
 import type { Page } from '@playwright/test'
+
+test.beforeAll(resetSeedData)
 
 const authenticatedPages = [
   { path: '/home', ready: /Good (morning|afternoon|evening)/ },
@@ -12,7 +14,7 @@ const authenticatedPages = [
 
 const waitForPageData = async (page: Page, path: string) => {
   if (path === '/workout') {
-    await expect(page.locator('.history-end, .history-empty, .history-error')).toBeVisible()
+    await scrollToListEnd(page, '.history-end, .history-empty, .history-error')
   }
 }
 

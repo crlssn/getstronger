@@ -1,4 +1,16 @@
-import { expect, expectAccessible, logIn, test, uniqueName } from './fixtures'
+import { expect, expectAccessible, logIn, resetSeedData, test, uniqueName } from './fixtures'
+
+test.beforeAll(resetSeedData)
+
+// The library groups by when an exercise was last performed, most recent
+// bucket first, so this is the order the headings must appear in.
+const activityBucketLabels = [
+  'Today',
+  'Last week',
+  'Last month',
+  'Older than a month',
+  'Not tried yet',
+]
 
 const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) => {
   await page.goto('/exercises')
@@ -14,13 +26,12 @@ const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) =
 test.describe('exercise library', () => {
   test.beforeEach(async ({ page }) => logIn(page))
 
-  test('sorts and groups exercises alphabetically and searches names and tags', async ({
-    page,
-  }) => {
+  test('groups exercises by recent activity and searches names and tags', async ({ page }) => {
     await page.goto('/exercises')
-    const letters = await page.locator('.exercise-group > h2').allTextContents()
-    const sorted = [...letters].sort((left, right) => left.localeCompare(right))
-    expect(letters).toEqual(sorted)
+    // allTextContents does not retry, so wait for the list before reading it.
+    await expect(page.locator('.exercise-group').first()).toBeVisible()
+    const groups = await page.locator('.exercise-group > h2').allTextContents()
+    expect(groups).toEqual(activityBucketLabels.filter((label) => groups.includes(label)))
 
     const firstExercise = page.locator('.exercise-group-card a').first()
     const firstExerciseName = (await firstExercise.locator('strong').innerText()).trim()

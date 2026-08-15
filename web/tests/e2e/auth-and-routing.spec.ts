@@ -3,10 +3,13 @@ import {
   expect,
   expectAccessible,
   logIn,
+  resetSeedData,
   test,
   uniqueName,
   waitForHome,
 } from './fixtures'
+
+test.beforeAll(resetSeedData)
 
 test.describe('guest authentication and routing', () => {
   test('routes guests through the public authentication pages @smoke', async ({ page }) => {
@@ -123,6 +126,7 @@ test.describe('authenticated session routing', () => {
   })
 
   test('logs out when a protected endpoint reports an expired session', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
     await page.route('**/api.v1.UserService/GetUser', async (route) => {
       await route.fulfill({
         status: 401,
@@ -139,6 +143,7 @@ test.describe('authenticated session routing', () => {
   })
 
   test('logs out when the current user no longer exists', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
     await page.route('**/api.v1.UserService/GetUser', async (route) => {
       await route.fulfill({
         status: 404,
