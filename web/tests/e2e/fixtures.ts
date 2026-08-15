@@ -3,7 +3,7 @@ import { expect, test as base, type Page, type TestInfo } from '@playwright/test
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
-const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'active@onemorerep.test'
+const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'active@getstronger.test'
 const password = process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? 'password123'
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url))
 

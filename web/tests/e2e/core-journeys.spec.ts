@@ -6,7 +6,7 @@ test('redirects protected routes to login @smoke', async ({ page }) => {
   await page.goto('/profile')
 
   await expect(page).toHaveURL(/\/login$/)
-  await expect(page.getByRole('heading', { name: 'Log in to One More Rep' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Log in to GetStronger' })).toBeVisible()
 })
 
 test.describe('authenticated journeys', () => {

@@ -163,7 +163,7 @@ test.describe('weight units', () => {
   test('cascades unit changes and preserves each entered unit in workout and PB views @mutation', async ({
     page,
   }) => {
-    await logInAs(page, 'active@onemorerep.test', 'password123')
+    await logInAs(page, 'active@getstronger.test', 'password123')
     await page.goto('/workouts/quick')
     const exercise = await addFirstExercise(page)
     const weight = page.getByRole('textbox', {

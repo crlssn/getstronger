@@ -33,8 +33,8 @@ const (
 	workoutCommentCount    = 2
 	activeAccountAge       = 365 * 24 * time.Hour
 	activeWorkoutInterval  = 7 * 24 * time.Hour
-	defaultActiveEmail     = "active@onemorerep.test"
-	defaultNewEmail        = "new@onemorerep.test"
+	defaultActiveEmail     = "active@getstronger.test"
+	defaultNewEmail        = "new@getstronger.test"
 	defaultSeedPassword    = "password123"
 )
 
