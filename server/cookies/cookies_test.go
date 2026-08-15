@@ -35,6 +35,20 @@ func TestCookies_RefreshToken(t *testing.T) {
 
 	cfg.Server.KeyPath = ""
 	cfg.Server.CertPath = ""
+	cfg.Environment = config.EnvironmentProduction
+
+	require.Equal(t, &http.Cookie{
+		Name:     cookies.CookieNameRefreshToken,
+		Value:    "value",
+		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
+		Domain:   cfg.Server.CookieDomain,
+		MaxAge:   int(jwt.ExpiryTimeRefresh),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	}, cookie.RefreshToken("value"))
+
+	cfg.Environment = config.EnvironmentLocal
 
 	require.Equal(t, &http.Cookie{
 		Name:     cookies.CookieNameRefreshToken,
@@ -70,6 +84,20 @@ func TestCookies_ExpiredRefreshToken(t *testing.T) {
 
 	cfg.Server.KeyPath = ""
 	cfg.Server.CertPath = ""
+	cfg.Environment = config.EnvironmentProduction
+
+	require.Equal(t, &http.Cookie{
+		Name:     cookies.CookieNameRefreshToken,
+		Value:    "",
+		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
+		Domain:   cfg.Server.CookieDomain,
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	}, cookie.ExpiredRefreshToken())
+
+	cfg.Environment = config.EnvironmentLocal
 
 	require.Equal(t, &http.Cookie{
 		Name:     cookies.CookieNameRefreshToken,

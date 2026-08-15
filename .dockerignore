@@ -1,0 +1,7 @@
+.git
+.github
+.secrets
+.env
+database
+web
+**/*_test.go

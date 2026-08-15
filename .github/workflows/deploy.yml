@@ -54,16 +54,28 @@ jobs:
       - name: Check for changes
         id: changes
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
         with:
           filters: |
             web: ['web/**']
-            server: ['server/**', 'go.mod', 'go.sum', 'mise.toml']
+            server: ['server/**', 'Dockerfile', '.dockerignore', 'Caddyfile', 'compose.yaml', 'go.mod', 'go.sum', 'mise.toml']
             database: ['database/**']
 
   database:
     needs: init
     runs-on: ubuntu-latest
     if: needs.init.outputs.database == 'true' || (github.event_name == 'workflow_dispatch' && inputs.migrate)
+    env:
+      DB_HOST: ${{ vars.DB_HOST }}
+      DB_PORT: ${{ vars.DB_PORT }}
+      DB_NAME: ${{ vars.DB_NAME }}
+      DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
+      DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      SCW_BUCKET: ${{ vars.SCW_BUCKET }}
+      SCW_REGION: ${{ vars.SCW_REGION }}
 
     steps:
       - name: Checkout code
@@ -75,12 +87,6 @@ jobs:
           sudo dpkg -i migrate.linux-amd64.deb
 
       - name: Run migration
-        env:
-          DB_HOST: ${{ vars.DB_HOST }}
-          DB_PORT: ${{ vars.DB_PORT }}
-          DB_NAME: ${{ vars.DB_NAME }}
-          DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
-          DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
         run: |
           migrate -path database/migrations/ \
             -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
@@ -98,40 +104,53 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
+      - name: Build API image
+        run: docker build --platform linux/amd64 --tag getstronger-api:latest .
 
-      - name: Build binary
-        working-directory: ./server
+      - name: Create deployment bundle
+        env:
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_PORT: ${{ vars.DB_PORT }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          CORS_ALLOWED_ORIGIN: ${{ vars.CORS_ALLOWED_ORIGIN }}
+          SERVER_PORT: ${{ vars.SERVER_PORT }}
+          COOKIE_DOMAIN: ${{ vars.COOKIE_DOMAIN }}
+          JWT_ACCESS_TOKEN_KEY: ${{ secrets.JWT_ACCESS_TOKEN_KEY }}
+          JWT_REFRESH_TOKEN_KEY: ${{ secrets.JWT_REFRESH_TOKEN_KEY }}
+          EMAIL_PROVIDER: ${{ vars.EMAIL_PROVIDER }}
+          EMAIL_FROM_ADDRESS: ${{ vars.EMAIL_FROM_ADDRESS }}
+          SCW_PROJECT_ID: ${{ vars.SCW_PROJECT_ID }}
+          SCW_TEM_REGION: ${{ vars.SCW_TEM_REGION }}
+          SCW_TEM_SECRET_KEY: ${{ secrets.SCW_TEM_SECRET_KEY }}
         run: |
-          go mod download
-          GOOS=linux go build -o bin/app cmd/main.go
+          mkdir deployment
+          cp Caddyfile compose.yaml deployment/
+          docker save getstronger-api:latest | gzip -1 > deployment/getstronger-api.tar.gz
 
-      - name: Create env file
-        working-directory: ./server/bin
-        run: |
           {
-            echo ENV=production
-            echo DB_HOST=${{ vars.DB_HOST }}
-            echo DB_PORT=${{ vars.DB_PORT }}
-            echo DB_USER=${{ vars.DB_USER }}
-            echo DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            echo DB_NAME=${{ vars.DB_NAME }}
-            echo CORS_ALLOWED_ORIGIN=${{ vars.CORS_ALLOWED_ORIGIN }}
-            echo SERVER_PORT=${{ vars.SERVER_PORT }}
-            echo SERVER_CERT_PATH=${{ vars.SERVER_CERT_PATH }}
-            echo SERVER_KEY_PATH=${{ vars.SERVER_KEY_PATH }}
-            echo COOKIE_DOMAIN=${{ vars.COOKIE_DOMAIN }}
-            echo JWT_ACCESS_TOKEN_KEY=${{ secrets.JWT_ACCESS_TOKEN_KEY }}
-            echo JWT_REFRESH_TOKEN_KEY=${{ secrets.JWT_REFRESH_TOKEN_KEY }}
-            echo EMAIL_PROVIDER=${{ vars.EMAIL_PROVIDER }}
-            echo EMAIL_FROM_ADDRESS=${{ vars.EMAIL_FROM_ADDRESS }}
-            echo SCW_PROJECT_ID=${{ vars.SCW_PROJECT_ID }}
-            echo SCW_TEM_REGION=${{ vars.SCW_TEM_REGION }}
-            echo SCW_TEM_SECRET_KEY=${{ secrets.SCW_TEM_SECRET_KEY }}
-          } >> .env
+            printf 'API_DOMAIN=%s\n' "$API_DOMAIN"
+            printf 'ENV=production\n'
+            printf 'DB_HOST=%s\n' "$DB_HOST"
+            printf 'DB_PORT=%s\n' "$DB_PORT"
+            printf 'DB_USER=%s\n' "$DB_USER"
+            printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
+            printf 'DB_NAME=%s\n' "$DB_NAME"
+            printf 'CORS_ALLOWED_ORIGIN=%s\n' "$CORS_ALLOWED_ORIGIN"
+            printf 'SERVER_PORT=%s\n' "$SERVER_PORT"
+            printf 'COOKIE_DOMAIN=%s\n' "$COOKIE_DOMAIN"
+            printf 'JWT_ACCESS_TOKEN_KEY=%s\n' "$JWT_ACCESS_TOKEN_KEY"
+            printf 'JWT_REFRESH_TOKEN_KEY=%s\n' "$JWT_REFRESH_TOKEN_KEY"
+            printf 'EMAIL_PROVIDER=%s\n' "$EMAIL_PROVIDER"
+            printf 'EMAIL_FROM_ADDRESS=%s\n' "$EMAIL_FROM_ADDRESS"
+            printf 'SCW_PROJECT_ID=%s\n' "$SCW_PROJECT_ID"
+            printf 'SCW_TEM_REGION=%s\n' "$SCW_TEM_REGION"
+            printf 'SCW_TEM_SECRET_KEY=%s\n' "$SCW_TEM_SECRET_KEY"
+          } > deployment/.env
+
+          chmod 600 deployment/.env
 
       - name: Deploy to Scaleway Instance
         uses: easingthemes/ssh-deploy@ece05a22752e524363164bfb2f69a5ba4f8ded0d # v5.1.0
@@ -139,10 +158,10 @@ jobs:
           REMOTE_HOST: ${{ vars.SCW_INSTANCE_HOST }}
           REMOTE_USER: ${{ vars.SCW_INSTANCE_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.SCW_INSTANCE_SSH_KEY }}
-          SOURCE: 'server/bin/'
+          SOURCE: 'deployment/'
           TARGET: ${{ vars.SCW_INSTANCE_APP_DIR }}
 
-      - name: Restart service
+      - name: Load and restart containers
         uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ vars.SCW_INSTANCE_HOST }}
@@ -150,8 +169,55 @@ jobs:
           key: ${{ secrets.SCW_INSTANCE_SSH_KEY }}
           port: 22
           script: |
+            set -eu
             cd "${{ vars.SCW_INSTANCE_APP_DIR }}"
-            sudo systemctl restart app.service
+            chmod 600 .env
+            previous_api_image="$(docker image inspect --format='{{.Id}}' getstronger-api:latest 2>/dev/null || true)"
+            gzip --decompress --stdout getstronger-api.tar.gz | docker load
+            current_api_image="$(docker image inspect --format='{{.Id}}' getstronger-api:latest)"
+            docker compose config --quiet
+            docker compose pull caddy
+            docker compose up --detach --force-recreate --remove-orphans
+
+            attempts=0
+            status=starting
+            while [ "$attempts" -lt 30 ]; do
+              status="$(docker inspect --format='{{.State.Health.Status}}' getstronger-api 2>/dev/null || true)"
+              if [ "$status" = healthy ]; then
+                break
+              fi
+              if [ "$status" = unhealthy ]; then
+                docker compose logs --no-color api
+                exit 1
+              fi
+              attempts=$((attempts + 1))
+              sleep 2
+            done
+
+            if [ "$status" != healthy ]; then
+              docker compose logs --no-color api
+              exit 1
+            fi
+
+            attempts=0
+            caddy_running=false
+            while [ "$attempts" -lt 15 ]; do
+              caddy_running="$(docker inspect --format='{{.State.Running}}' getstronger-caddy 2>/dev/null || true)"
+              if [ "$caddy_running" = true ]; then
+                break
+              fi
+              attempts=$((attempts + 1))
+              sleep 2
+            done
+
+            if [ "$caddy_running" != true ]; then
+              docker compose logs --no-color caddy
+              exit 1
+            fi
+
+            if [ -n "$previous_api_image" ] && [ "$previous_api_image" != "$current_api_image" ]; then
+              docker image rm "$previous_api_image" || true
+            fi
 
   web:
     needs: [init, server]
@@ -168,7 +234,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install dependencies
         working-directory: ./web
@@ -190,8 +256,7 @@ jobs:
           SCW_REGION: ${{ vars.SCW_REGION }}
           SCW_BUCKET_NAME: ${{ vars.SCW_BUCKET_NAME }}
         run: |
-          aws s3 sync ./dist "s3://$SCW_BUCKET_NAME" \
-            --delete \
+          aws s3 sync ./dist "s3://${SCW_BUCKET_NAME}" \
             --endpoint-url "https://s3.${SCW_REGION}.scw.cloud"
 
   cleanup:
