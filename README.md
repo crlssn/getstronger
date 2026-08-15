@@ -203,19 +203,22 @@ The connection format and mandatory `sslmode=require` setting are documented in 
 
 ### 3. Create the API Instance
 
-1. Open **Compute > CPU & GPU Instances** and create an Ubuntu LTS Instance in the chosen Availability Zone. Start with the smallest development or general-purpose size that comfortably runs the Go API; resize after observing real usage.
+1. Open **Compute > CPU & GPU Instances**, create an Instance in the chosen Availability Zone, and select the **Docker InstantApp** image. Start with the smallest development or general-purpose size that comfortably runs the Go API and Caddy; resize after observing real usage.
 2. Attach a flexible public IPv4 address and your administrator SSH key.
 3. Create a dedicated security group with these inbound rules:
    - TCP `22` from administrator IP ranges only;
    - TCP `80` from anywhere, for HTTP-to-HTTPS redirects and certificate issuance; and
    - TCP `443` from anywhere, for the public API.
 4. Keep outbound traffic allowed and leave database port `5432` closed inbound on the Instance. The API connects outbound to the Serverless SQL hostname.
-5. Install the API as a system service and put a TLS-terminating reverse proxy such as Caddy or nginx in front of it. Keep the application bound to a non-public port such as `8080`, configure a health check against `/healthz`, and provide the backend with certificate and key paths so it emits secure authentication cookies.
-6. Store the backend `.env` beside the deployed binary with permissions limited to the service account. The application requires this file at startup.
+5. Connect over SSH and verify that `docker version` and `docker compose version` both succeed for `SCW_INSTANCE_USER`.
+6. Set `SCW_INSTANCE_APP_DIR` to a dedicated directory that this SSH user can write to. The deployment workflow transfers a minimal build context there, builds the API image natively for the Instance architecture, and starts the stack with Docker Compose.
+7. The Compose stack keeps the API private on its Docker network and exposes only Caddy on ports `80` and `443`. Caddy obtains and renews the certificate for `API_DOMAIN`; its certificate state is retained in named Docker volumes across deployments.
+8. The workflow writes the backend `.env` into `SCW_INSTANCE_APP_DIR` with mode `0600`. Do not place unrelated files in this deployment directory.
 
 At minimum, configure:
 
 ```dotenv
+API_DOMAIN=api.example.com
 ENV=production
 DB_HOST=<database-hostname>
 DB_PORT=5432
@@ -224,8 +227,6 @@ DB_USER=<runtime-iam-application-id>
 DB_PASSWORD=<runtime-iam-secret-key>
 CORS_ALLOWED_ORIGIN=https://www.example.com
 SERVER_PORT=8080
-SERVER_CERT_PATH=<path-to-backend-certificate>
-SERVER_KEY_PATH=<path-to-backend-private-key>
 COOKIE_DOMAIN=.example.com
 JWT_ACCESS_TOKEN_KEY=<long-random-secret>
 JWT_REFRESH_TOKEN_KEY=<different-long-random-secret>
@@ -280,13 +281,13 @@ The DNS console flow is described in [Configure DNS zones](https://www.scaleway.
 
 ### 7. Connect the deployment workflow
 
-The GitHub Actions deployment workflow uploads the API over SSH and uses Scaleway Object Storage's S3-compatible endpoint for the web build. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`, give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` on the production Project, and set that Project as the API key's preferred Object Storage Project.
+The GitHub Actions deployment workflow uploads the API's Docker build context over SSH, builds and health-checks the Compose stack on the Instance, and uses Scaleway Object Storage's S3-compatible endpoint for the web build. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`, give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` on the production Project, and set that Project as the API key's preferred Object Storage Project.
 
 Configure these GitHub repository variables:
 
 ```text
 DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_MIGRATION_USER
-CORS_ALLOWED_ORIGIN, SERVER_PORT, SERVER_CERT_PATH, SERVER_KEY_PATH
+API_DOMAIN, CORS_ALLOWED_ORIGIN, SERVER_PORT
 COOKIE_DOMAIN, EMAIL_PROVIDER, EMAIL_FROM_ADDRESS, VITE_API_URL
 SCW_PROJECT_ID, SCW_TEM_REGION
 SCW_INSTANCE_HOST, SCW_INSTANCE_USER, SCW_INSTANCE_APP_DIR

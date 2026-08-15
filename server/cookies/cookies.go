@@ -20,33 +20,41 @@ func New(c *config.Config) *Cookies {
 const CookieNameRefreshToken = "refreshToken"
 
 func (c *Cookies) RefreshToken(value string) *http.Cookie {
-	return &http.Cookie{ //nolint:gosec // Secure and SameSite intentionally follow local TLS availability.
+	secure := c.usesSecureCookies()
+
+	return &http.Cookie{ //nolint:gosec // Secure and SameSite follow production or local TLS configuration.
 		Name:     CookieNameRefreshToken,
 		Value:    value,
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   c.config.Server.CookieDomain,
 		MaxAge:   int(jwt.ExpiryTimeRefresh),
-		Secure:   c.config.Server.HasCertificate(),
+		Secure:   secure,
 		HttpOnly: true,
-		SameSite: c.sameSiteMode(),
+		SameSite: sameSiteMode(secure),
 	}
 }
 
 func (c *Cookies) ExpiredRefreshToken() *http.Cookie {
-	return &http.Cookie{ //nolint:gosec // Secure and SameSite intentionally follow local TLS availability.
+	secure := c.usesSecureCookies()
+
+	return &http.Cookie{ //nolint:gosec // Secure and SameSite follow production or local TLS configuration.
 		Name:     CookieNameRefreshToken,
 		Value:    "",
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   c.config.Server.CookieDomain,
 		MaxAge:   -1,
-		Secure:   c.config.Server.HasCertificate(),
+		Secure:   secure,
 		HttpOnly: true,
-		SameSite: c.sameSiteMode(),
+		SameSite: sameSiteMode(secure),
 	}
 }
 
-func (c *Cookies) sameSiteMode() http.SameSite {
-	if c.config.Server.HasCertificate() {
+func (c *Cookies) usesSecureCookies() bool {
+	return c.config.Environment == config.EnvironmentProduction || c.config.Server.HasCertificate()
+}
+
+func sameSiteMode(secure bool) http.SameSite {
+	if secure {
 		return http.SameSiteNoneMode
 	}
 

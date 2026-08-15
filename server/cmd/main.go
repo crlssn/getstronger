@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"buf.build/go/protovalidate"
 	"github.com/joho/godotenv"
@@ -21,11 +23,20 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("failed to load .env file: %w", err))
+	if err := loadEnvironment(); err != nil {
+		panic(err)
 	}
 
 	fx.New(options()...).Run()
+}
+
+func loadEnvironment() error {
+	err := godotenv.Load()
+	if err == nil || (errors.Is(err, os.ErrNotExist) && os.Getenv("ENV") != "") {
+		return nil
+	}
+
+	return fmt.Errorf("failed to load .env file: %w", err)
 }
 
 func options() []fx.Option {

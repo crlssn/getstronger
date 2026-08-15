@@ -46,7 +46,10 @@ type Config struct {
 
 type Environment string
 
-const EnvironmentLocal = "local"
+const (
+	EnvironmentLocal      Environment = "local"
+	EnvironmentProduction Environment = "production"
+)
 
 type DB struct {
 	Host     string
