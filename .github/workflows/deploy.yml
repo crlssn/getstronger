@@ -151,7 +151,7 @@ jobs:
           port: 22
           script: |
             cd "${{ vars.SCW_INSTANCE_APP_DIR }}"
-            sudo systemctl restart app.service
+            ./app
 
   web:
     needs: [init, server]
