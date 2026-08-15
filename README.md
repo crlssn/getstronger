@@ -1,8 +1,8 @@
-# One More Rep
+# GetStronger
 
 **Track your training. Beat your last.**
 
-**One More Rep** is an open-source gym workout application designed to help users track strength training routines, monitor progress, and connect with others in the fitness community.
+**GetStronger** is an open-source gym workout application designed to help users track strength training routines, monitor progress, and connect with others in the fitness community.
 
 ---
 
@@ -19,7 +19,7 @@
 ## Live Demo
 
 Experience the app firsthand:
-[**Visit One More Rep**](https://www.getstronger.studio)
+[**Visit GetStronger**](https://www.getstronger.studio)
 
 Use the demo account to explore all features:
 
