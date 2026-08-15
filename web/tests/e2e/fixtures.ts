@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test as base, type Page, type TestInfo } from '@playwright/test'
 
-const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'active@onemorerep.test'
+const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'active@getstronger.test'
 const password = process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? 'password123'
 
 export const test = base.extend<{ runtimeErrors: string[] }>({

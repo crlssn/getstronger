@@ -39,11 +39,11 @@ E2E_SERVER_PORT = { default = "18180" }
 E2E_SSE_PORT = { default = "18181" }
 DB_CONFIG_PATH = { default = "./database/bobgen.yaml" }
 DB_MIGRATIONS_PATH = { default = "database/migrations/" }
-USER_EMAIL = { default = "active@onemorerep.test" }
+USER_EMAIL = { default = "active@getstronger.test" }
 USER_PASSWORD = { default = "password123" }
 USER_FIRSTNAME = { default = "Alex" }
 USER_LASTNAME = { default = "Morgan" }
-NEW_USER_EMAIL = { default = "new@onemorerep.test" }
+NEW_USER_EMAIL = { default = "new@getstronger.test" }
 NEW_USER_FIRSTNAME = { default = "Sam" }
 NEW_USER_LASTNAME = { default = "Taylor" }
 

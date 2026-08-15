@@ -134,8 +134,8 @@ mise installs the project's pinned Go, Node.js, and development tool versions fr
 
     | Persona | Email | What it contains |
     | --- | --- | --- |
-    | Newly signed up — Sam Taylor | `new@onemorerep.test` | An empty, recently created account for onboarding and first-use flows |
-    | Active for a year — Alex Morgan | `active@onemorerep.test` | A year of weekly workouts plus followers, following, routines, and feed activity |
+    | Newly signed up — Sam Taylor | `new@getstronger.test` | An empty, recently created account for onboarding and first-use flows |
+    | Active for a year — Alex Morgan | `active@getstronger.test` | A year of weekly workouts plus followers, following, routines, and feed activity |
 
 ## Production infrastructure on Scaleway
 

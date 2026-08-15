@@ -40,7 +40,7 @@ jobs:
       JWT_REFRESH_TOKEN_KEY: e2e-refresh-key
       SERVER_PORT: 8080
       SSE_PORT: 8081
-      USER_EMAIL: active@onemorerep.test
+      USER_EMAIL: active@getstronger.test
       USER_FIRSTNAME: Alex
       USER_LASTNAME: Morgan
       USER_PASSWORD: password123
