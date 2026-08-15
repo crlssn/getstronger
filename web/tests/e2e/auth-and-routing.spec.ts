@@ -6,6 +6,7 @@ import {
   resetSeedData,
   test,
   uniqueName,
+  verificationToken,
   waitForHome,
 } from './fixtures'
 
@@ -50,36 +51,70 @@ test.describe('guest authentication and routing', () => {
     await expect(page).toHaveURL(/\/login$/)
   })
 
-  test('creates an account and requires email verification @mutation', async ({ page }) => {
+  test('signs up, resends the verification link, verifies and logs in @mutation', async ({
+    page,
+  }) => {
+    // The flow spans signup, a login attempt, a resend and the verification
+    // link, and reads the token straight from the database.
+    test.slow()
     test.info().annotations.push(allowRuntimeErrors)
     const email = `${uniqueName('e2e-signup').replaceAll(' ', '-')}@example.com`.toLowerCase()
+    const password = 'StrongPassword123!'
 
     await page.goto('/signup')
     await page.getByLabel('First name').fill('E2E')
     await page.getByLabel('Last name').fill('Member')
     await page.getByLabel('Email address').fill(email)
-    await page.getByLabel('Password', { exact: true }).fill('StrongPassword123!')
-    await page.getByLabel('Confirm password').fill('StrongPassword123!')
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByLabel('Confirm password').fill(password)
     await page.getByText('Pounds', { exact: true }).click()
     await expect(page.getByRole('radio', { name: /Pounds/ })).toBeChecked()
     await page.getByRole('button', { name: 'Create an account' }).click()
 
+    // The notice says the link was sent, not that the account is verified.
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible()
+    await expect(page.getByText('Waiting for verification')).toBeVisible()
+    await expect(page.getByText('Your account is not verified yet')).toBeVisible()
+    // The destination is masked rather than printed in full.
+    await expect(page.getByText(`@${email.split('@')[1]}.`)).toBeVisible()
+    await expect(page.getByText(email, { exact: true })).toHaveCount(0)
+    // The signup email already counts towards the resend rate limit.
+    await expect(page.getByRole('button', { name: /Send again in \d+s/ })).toBeDisabled()
+    await expectAccessible(page)
+
+    // Logging in before verifying returns to the same actionable state.
+    await page.goto('/login')
+    await page.getByLabel('Email address').fill(email)
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByRole('button', { name: 'Log in' }).click()
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
+
+    // A reload without the stored address still offers a way to resend.
+    await page.evaluate(() => sessionStorage.clear())
+    await page.reload()
+    await page.getByLabel('Email address').fill(email)
+    await page.getByRole('button', { name: 'Send a new link' }).click()
+    await expect(page.getByRole('status')).toContainText('a new link is on its way')
+    await expect(page.getByRole('button', { name: /Send again in \d+s/ })).toBeDisabled()
+
+    await page.goto(`/verify-email?token=${verificationToken(email)}`)
     await expect(page).toHaveURL(/\/login$/)
-    await expect(page.getByRole('status')).toContainText(
-      'Please check your inbox to verify your email',
-    )
+    await expect(page.getByRole('status')).toContainText('Thank you for verifying your email')
 
     await page.getByLabel('Email address').fill(email)
-    await page.getByLabel('Password', { exact: true }).fill('StrongPassword123!')
-    const verificationMessage = new Promise<string>((resolve) =>
-      page.once('dialog', async (dialog) => {
-        resolve(dialog.message())
-        await dialog.dismiss()
-      }),
-    )
+    await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Log in' }).click()
-    await expect.poll(() => verificationMessage).toContain('verify your email')
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/home$/)
+  })
+
+  test('keeps a verification recovery path on the login page', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByRole('link', { name: 'Send a new link' }).click()
+
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible()
+    await expect(page.getByLabel('Email address')).toBeVisible()
   })
 
   test('accepts password reset requests without exposing account existence', async ({ page }) => {

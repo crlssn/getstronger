@@ -58,6 +58,15 @@ export const resetSeedData = () => {
   )
 }
 
+// End-to-end runs use the noop email provider, so the verification link has to
+// be read from the database instead of an inbox.
+export const verificationToken = (userEmail: string) =>
+  execFileSync('go', ['run', 'server/testing/factory/emailtoken/main.go', `-email=${userEmail}`], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    stdio: 'pipe',
+  }).trim()
+
 export const logInAs = async (page: Page, userEmail: string, userPassword: string) => {
   await page.goto('/login')
   await page.getByLabel('Email address').fill(userEmail)

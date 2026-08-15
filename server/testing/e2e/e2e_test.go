@@ -52,6 +52,10 @@ func TestE2E(t *testing.T) {
 		Signup(ctx, func(_ *connect.Response[apiv1.SignupResponse], err error) {
 			require.NoError(t, err)
 		}).
+		ResendVerificationEmail(ctx, func(c *connect.Response[apiv1.ResendVerificationEmailResponse], err error) {
+			require.NoError(t, err)
+			require.Positive(t, c.Msg.GetRetryAfterSeconds())
+		}).
 		VerifyEmail(ctx, func(_ *connect.Response[apiv1.VerifyEmailResponse], err error) {
 			require.NoError(t, err)
 		}).

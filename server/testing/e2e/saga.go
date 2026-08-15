@@ -93,6 +93,17 @@ func (s *Saga) Signup(ctx context.Context, f func(*connect.Response[apiv1.Signup
 	return s
 }
 
+func (s *Saga) ResendVerificationEmail(ctx context.Context, f func(*connect.Response[apiv1.ResendVerificationEmailResponse], error)) *Saga {
+	client := apiv1connect.NewAuthServiceClient(s.client(), s.baseURL)
+	f(client.ResendVerificationEmail(ctx, &connect.Request[apiv1.ResendVerificationEmailRequest]{
+		Msg: &apiv1.ResendVerificationEmailRequest{
+			Email: s.auth.email,
+		},
+	}))
+
+	return s
+}
+
 func (s *Saga) VerifyEmail(ctx context.Context, f func(*connect.Response[apiv1.VerifyEmailResponse], error)) *Saga {
 	a, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(s.auth.email)).One(ctx, bob.NewDB(s.db))
 	if err != nil {
