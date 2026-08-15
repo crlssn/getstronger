@@ -19,6 +19,9 @@ on:
       - 'go.sum'
       - 'mise.toml'
 
+permissions:
+  contents: read
+
 jobs:
   browser:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
