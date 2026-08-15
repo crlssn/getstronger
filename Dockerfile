@@ -1,4 +1,4 @@
-FROM golang:1.25.12-alpine3.23 AS build
+FROM golang:1.26.6-alpine3.23 AS build
 
 WORKDIR /src
 
