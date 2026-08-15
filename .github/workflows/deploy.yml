@@ -193,11 +193,11 @@ jobs:
           SCW_BUCKET_NAME: ${{ vars.SCW_BUCKET_NAME }}
         run: |
           mkdir ~/.aws
-          {
-          [default]
+          echo "[default]
           aws_access_key_id = $AWS_ACCESS_KEY_ID
           aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
-          } >> ~/.aws/credentials
+          " >> ~/.aws/credentials
+          {
           [default]
           region = fr-par
           output = json
