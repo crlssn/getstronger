@@ -192,6 +192,7 @@ jobs:
           SCW_REGION: ${{ vars.SCW_REGION }}
           SCW_BUCKET_NAME: ${{ vars.SCW_BUCKET_NAME }}
         run: |
+          mkdir ~/.aws
           {
           [default]
           aws_access_key_id = $AWS_ACCESS_KEY_ID
