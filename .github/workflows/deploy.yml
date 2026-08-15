@@ -194,11 +194,11 @@ jobs:
         run: |
           mkdir ~/.aws
           echo "[default]
-          aws_access_key_id = ${{ AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key = ${{ AWS_SECRET_ACCESS_KEY }}
+          aws_access_key_id = ${{ secrets.SCW_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.SCW_SECRET_KEY }}
           " >> ~/.aws/credentials
           cat ~/.aws/credentials
-          {
+          echo "
           [default]
           region = fr-par
           output = json
@@ -209,10 +209,11 @@ jobs:
             multipart_threshold = 50 MB
             multipart_chunksize = 10 MB
             endpoint_url = https://s3.$SCW_REGION.scw.cloud
-          } >> ~/.aws/config
-          aws s3 sync ./dist "s3://$SCW_BUCKET_NAME" \
+          " >> ~/.aws/config
+          cat ~/.aws/config
+          aws s3 sync ./dist "s3:// ${{ secrets.SCW_BUCKET_NAME }}" \
             --delete \
-            --endpoint-url "https://$SCW_BUCKET_NAME.s3.$SCW_REGION.scw.cloud"
+            --endpoint-url "https://${{ secrets.SCW_BUCKET_NAME }}.s3.${{ secrets.SCW_REGION }}.scw.cloud"
 
   cleanup:
     needs: [init, database, server, web]
