@@ -30,10 +30,10 @@ func New(c *config.Config) (Email, error) {
 
 const (
 	fromEmail = "noreply@getstronger.studio"
-	fromName  = "One More Rep"
+	fromName  = "GetStronger"
 
-	subjectSendVerification  = "[One More Rep] Verify your email"
-	subjectSendPasswordReset = "[One More Rep] Reset your password" //nolint:gosec
+	subjectSendVerification  = "[GetStronger] Verify your email"
+	subjectSendPasswordReset = "[GetStronger] Reset your password" //nolint:gosec
 )
 
 type SendVerification struct {
