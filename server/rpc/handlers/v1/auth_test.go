@@ -154,6 +154,9 @@ func (s *authSuite) TestSignup() {
 			s.Require().NoError(err)
 			s.Require().False(auth.EmailVerified)
 
+			// The signup email counts towards the resend rate limit.
+			s.Require().False(auth.EmailVerificationSentAt.IsNull())
+
 			user, err := auth.User().One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 
@@ -469,6 +472,135 @@ func (s *authSuite) TestVerifyEmail() {
 			auth, err := models.Auths.Query(models.SelectWhere.Auths.EmailToken.EQ(nativeUUID(t.req.Msg.GetToken()))).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().True(auth.EmailVerified)
+		})
+	}
+}
+
+func (s *authSuite) TestResendVerificationEmail() {
+	type test struct {
+		name     string
+		req      *connect.Request[v1.ResendVerificationEmailRequest]
+		init     func(t test)
+		emailled bool
+	}
+
+	tests := []test{
+		{
+			name: "ok_verification_email_resent",
+			req: &connect.Request[v1.ResendVerificationEmailRequest]{
+				Msg: &v1.ResendVerificationEmailRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+				)
+				user := s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+
+				s.mocks.email.EXPECT().
+					SendVerification(gomock.Any(), gomock.Any()).
+					Do(func(_ context.Context, req email.SendVerification) {
+						s.Require().Equal(user.FirstName, req.Name)
+						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
+						s.Require().Equal(auth.EmailToken.String(), req.Token)
+					})
+			},
+			emailled: true,
+		},
+		{
+			name: "ok_cooldown_elapsed_verification_email_resent",
+			req: &connect.Request[v1.ResendVerificationEmailRequest]{
+				Msg: &v1.ResendVerificationEmailRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthEmailVerificationSentAt(time.Now().UTC().Add(-handlers.ResendVerificationEmailCooldown-time.Minute)),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+
+				s.mocks.email.EXPECT().
+					SendVerification(gomock.Any(), gomock.Any())
+			},
+			emailled: true,
+		},
+		{
+			name: "ok_email_not_found_no_exposure",
+			req: &connect.Request[v1.ResendVerificationEmailRequest]{
+				Msg: &v1.ResendVerificationEmailRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init:     func(_ test) {},
+			emailled: false,
+		},
+		{
+			name: "ok_email_already_verified_no_exposure",
+			req: &connect.Request[v1.ResendVerificationEmailRequest]{
+				Msg: &v1.ResendVerificationEmailRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthEmailVerified(),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+			},
+			emailled: false,
+		},
+		{
+			name: "ok_rate_limited_no_exposure",
+			req: &connect.Request[v1.ResendVerificationEmailRequest]{
+				Msg: &v1.ResendVerificationEmailRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthEmailVerificationSentAt(time.Now().UTC()),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+			},
+			emailled: false,
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(t)
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			res, err := s.handler.ResendVerificationEmail(ctx, t.req)
+			s.Require().NoError(err)
+
+			// The response must be identical for every address so that it never
+			// discloses whether an account exists or is already verified.
+			s.Require().Equal(&v1.ResendVerificationEmailResponse{
+				RetryAfterSeconds: int32(handlers.ResendVerificationEmailCooldown.Seconds()),
+			}, res.Msg)
+
+			if !t.emailled {
+				return
+			}
+
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(t.req.Msg.GetEmail())).One(ctx, bob.NewDB(s.container.DB))
+			s.Require().NoError(err)
+			s.Require().False(auth.EmailVerificationSentAt.IsNull())
+			s.Require().WithinDuration(time.Now().UTC(), auth.EmailVerificationSentAt.GetOrZero(), time.Minute)
 		})
 	}
 }

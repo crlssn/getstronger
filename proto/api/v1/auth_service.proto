@@ -11,6 +11,7 @@ service AuthService {
   rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {}
   rpc Logout (LogoutRequest) returns (LogoutResponse) {}
   rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {}
+  rpc ResendVerificationEmail (ResendVerificationEmailRequest) returns (ResendVerificationEmailResponse) {}
   rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse) {}
   rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {}
 }
@@ -45,6 +46,15 @@ message VerifyEmailRequest {
   string token = 1 [(buf.validate.field).string.min_len = 1];
 }
 message VerifyEmailResponse {}
+
+message ResendVerificationEmailRequest {
+  string email = 1 [(buf.validate.field).string.email = true];
+}
+// The response is deliberately identical for every request so that it never
+// discloses whether an email address is registered or already verified.
+message ResendVerificationEmailResponse {
+  int32 retry_after_seconds = 1;
+}
 
 message ResetPasswordRequest {
   string email = 1 [(buf.validate.field).string.email = true];

@@ -65,6 +65,9 @@ func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth { //nolint:cyclop // Map
 	if value, ok := setter.PasswordResetTokenValidUntil.GetNull(); ok {
 		mods = append(mods, bobfactory.AuthMods.PasswordResetTokenValidUntil(value))
 	}
+	if value, ok := setter.EmailVerificationSentAt.GetNull(); ok {
+		mods = append(mods, bobfactory.AuthMods.EmailVerificationSentAt(value))
+	}
 
 	template := f.generated.NewAuth(mods...)
 	setter = template.BuildSetter()
@@ -114,6 +117,12 @@ func AuthPasswordResetToken(token string, ttl time.Duration) AuthOpt {
 	return func(m *models.AuthSetter) {
 		m.PasswordResetToken = omitnull.From(nativeUUID(token))
 		m.PasswordResetTokenValidUntil = omitnull.From(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))
+	}
+}
+
+func AuthEmailVerificationSentAt(sentAt time.Time) AuthOpt {
+	return func(m *models.AuthSetter) {
+		m.EmailVerificationSentAt = omitnull.From(sentAt.UTC().Truncate(time.Microsecond))
 	}
 }
 

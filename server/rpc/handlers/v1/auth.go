@@ -97,6 +97,11 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 			return fmt.Errorf("send verification email: %w", err)
 		}
 
+		// Record the send so that it counts towards the resend rate limit.
+		if err = tx.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthEmailVerificationSentAt()); err != nil {
+			return fmt.Errorf("update email verification sent at: %w", err)
+		}
+
 		return nil
 	}); err != nil {
 		log.Error("signup failed", zap.Error(err))
@@ -256,6 +261,67 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv
 
 	log.Info("email verified")
 	return connect.NewResponse(&apiv1.VerifyEmailResponse{}), nil
+}
+
+// ResendVerificationEmailCooldown throttles how often the same address may be
+// sent a verification email.
+const ResendVerificationEmailCooldown = time.Minute
+
+func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.Request[apiv1.ResendVerificationEmailRequest]) (*connect.Response[apiv1.ResendVerificationEmailResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+
+	// The same response is returned for every address so that the endpoint
+	// never discloses whether an account exists or is already verified.
+	res := connect.NewResponse(&apiv1.ResendVerificationEmailResponse{
+		RetryAfterSeconds: int32(ResendVerificationEmailCooldown.Seconds()),
+	})
+
+	address := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
+	auth, err := h.repo.GetAuth(
+		ctx,
+		repo.GetAuthByEmail(address),
+		repo.GetAuthWithUser(),
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Do not expose information about the email not existing.
+			log.Warn("auth not found")
+			return res, nil
+		}
+
+		log.Error("auth fetch failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if auth.EmailVerified {
+		// Do not expose information about the email already being verified.
+		log.Warn("email already verified")
+		return res, nil
+	}
+
+	sentAt := auth.EmailVerificationSentAt
+	if !sentAt.IsNull() && time.Now().UTC().Sub(sentAt.GetOrZero()) < ResendVerificationEmailCooldown {
+		// Do not expose information about the address being rate limited.
+		log.Warn("verification email rate limited")
+		return res, nil
+	}
+
+	if err = h.email.SendVerification(ctx, email.SendVerification{
+		Name:  auth.R.User.FirstName,
+		Email: auth.Email,
+		Token: auth.EmailToken.String(),
+	}); err != nil {
+		log.Error("verification email failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthEmailVerificationSentAt()); err != nil {
+		log.Error("email verification sent at update failed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("verification email resent")
+	return res, nil
 }
 
 func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[apiv1.ResetPasswordRequest]) (*connect.Response[apiv1.ResetPasswordResponse], error) {

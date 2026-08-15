@@ -192,6 +192,12 @@ func UpdateAuthEmailVerified() UpdateAuthOpt {
 	}
 }
 
+func UpdateAuthEmailVerificationSentAt() UpdateAuthOpt {
+	return func() (columns, error) {
+		return columns{models.Auths.Columns.EmailVerificationSentAt.Name(): time.Now().UTC()}, nil
+	}
+}
+
 func UpdateAuthDeleteRefreshToken() UpdateAuthOpt {
 	return func() (columns, error) {
 		return columns{models.Auths.Columns.RefreshToken.Name(): nil}, nil

@@ -47,6 +47,7 @@ type AuthTemplate struct {
 	EmailToken                   func() uuid.UUID
 	PasswordResetToken           func() null.Val[uuid.UUID]
 	PasswordResetTokenValidUntil func() null.Val[time.Time]
+	EmailVerificationSentAt      func() null.Val[time.Time]
 
 	r authR
 	f *Factory
@@ -123,6 +124,10 @@ func (o AuthTemplate) BuildSetter() *models.AuthSetter {
 		val := o.PasswordResetTokenValidUntil()
 		m.PasswordResetTokenValidUntil = omitnull.FromNull(val)
 	}
+	if o.EmailVerificationSentAt != nil {
+		val := o.EmailVerificationSentAt()
+		m.EmailVerificationSentAt = omitnull.FromNull(val)
+	}
 
 	return m
 }
@@ -171,6 +176,9 @@ func (o AuthTemplate) Build() *models.Auth {
 	}
 	if o.PasswordResetTokenValidUntil != nil {
 		m.PasswordResetTokenValidUntil = o.PasswordResetTokenValidUntil()
+	}
+	if o.EmailVerificationSentAt != nil {
+		m.EmailVerificationSentAt = o.EmailVerificationSentAt()
 	}
 
 	o.setModelRels(m)
@@ -346,6 +354,7 @@ func (m authMods) RandomizeAllColumns(f *faker.Faker) AuthMod {
 		AuthMods.RandomEmailToken(f),
 		AuthMods.RandomPasswordResetToken(f),
 		AuthMods.RandomPasswordResetTokenValidUntil(f),
+		AuthMods.RandomEmailVerificationSentAt(f),
 	}
 }
 
@@ -684,6 +693,59 @@ func (m authMods) RandomPasswordResetTokenValidUntil(f *faker.Faker) AuthMod {
 func (m authMods) RandomPasswordResetTokenValidUntilNotNull(f *faker.Faker) AuthMod {
 	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
 		o.PasswordResetTokenValidUntil = func() null.Val[time.Time] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_time_Time(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m authMods) EmailVerificationSentAt(val null.Val[time.Time]) AuthMod {
+	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
+		o.EmailVerificationSentAt = func() null.Val[time.Time] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m authMods) EmailVerificationSentAtFunc(f func() null.Val[time.Time]) AuthMod {
+	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
+		o.EmailVerificationSentAt = f
+	})
+}
+
+// Clear any values for the column
+func (m authMods) UnsetEmailVerificationSentAt() AuthMod {
+	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
+		o.EmailVerificationSentAt = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is sometimes null
+func (m authMods) RandomEmailVerificationSentAt(f *faker.Faker) AuthMod {
+	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
+		o.EmailVerificationSentAt = func() null.Val[time.Time] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_time_Time(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is never null
+func (m authMods) RandomEmailVerificationSentAtNotNull(f *faker.Faker) AuthMod {
+	return AuthModFunc(func(_ context.Context, o *AuthTemplate) {
+		o.EmailVerificationSentAt = func() null.Val[time.Time] {
 			if f == nil {
 				f = &defaultFaker
 			}
