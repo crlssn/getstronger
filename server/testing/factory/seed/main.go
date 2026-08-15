@@ -287,7 +287,7 @@ func seedActiveSocialGraph(database *sql.DB, active, newlySignedUp, jane *models
 		}
 	}
 	if len(peers) < 4 {
-		panic(fmt.Errorf("active persona social graph needs at least 4 peers, got %d", len(peers)))
+		panic(fmt.Errorf("active persona social graph needs at least 4 peers, got %d", len(peers))) //nolint:err113
 	}
 
 	for _, followee := range peers[:2] {
