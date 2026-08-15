@@ -200,7 +200,7 @@ jobs:
           cat ~/.aws/credentials
           echo "
           [default]
-          region = fr-par
+          region = ${{ vars.SCW_REGION }}
           output = json
           
           s3 =
@@ -208,12 +208,12 @@ jobs:
             max_queue_size = 1000
             multipart_threshold = 50 MB
             multipart_chunksize = 10 MB
-            endpoint_url = https://s3.$SCW_REGION.scw.cloud
+            endpoint_url = https://s3.${{ vars.SCW_REGION }}.scw.cloud
           " >> ~/.aws/config
           cat ~/.aws/config
-          aws s3 sync ./dist "s3:// ${{ secrets.SCW_BUCKET_NAME }}" \
+          aws s3 sync ./dist "s3:// ${{ vars.SCW_BUCKET_NAME }}" \
             --delete \
-            --endpoint-url "https://${{ secrets.SCW_BUCKET_NAME }}.s3.${{ secrets.SCW_REGION }}.scw.cloud"
+            --endpoint-url "https://${{ vars.SCW_BUCKET_NAME }}.s3.${{ vars.SCW_REGION }}.scw.cloud"
 
   cleanup:
     needs: [init, database, server, web]
