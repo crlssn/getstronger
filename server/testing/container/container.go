@@ -27,14 +27,16 @@ const (
 )
 
 func NewContainer(ctx context.Context) *Container {
-	container, err := postgres.Run(ctx, "postgres:16.4-alpine",
+	container, err := postgres.Run(
+		ctx, "postgres:16.4-alpine",
 		postgres.WithInitScripts(migrationFiles()...),
 		postgres.WithDatabase("test-db"),
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("postgres"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(occurrence).WithStartupTimeout(startTimeout)),
+				WithOccurrence(occurrence).WithStartupTimeout(startTimeout),
+		),
 	)
 	if err != nil {
 		panic(fmt.Errorf("could not start postgres container: %w", err))

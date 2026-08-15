@@ -2,12 +2,13 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -32,7 +33,8 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	userID := xcontext.MustExtractUserID(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	notifications, err := h.repo.ListNotifications(ctx,
+	notifications, err := h.repo.ListNotifications(
+		ctx,
 		repo.ListNotificationsWithLimit(limit+1),
 		repo.ListNotificationsWithUserID(userID),
 		repo.ListNotificationsWithPageToken(req.Msg.GetPagination().GetPageToken()),
@@ -42,7 +44,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(notifications, limit, func(n *orm.Notification) time.Time {
+	paginated, err := repo.PaginateSlice(notifications, limit, func(n *models.Notification) time.Time {
 		return n.CreatedAt
 	})
 	if err != nil {
@@ -55,7 +57,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 
 	for _, n := range paginated.Items {
 		var payload repo.NotificationPayload
-		if err = n.Payload.Unmarshal(&payload); err != nil {
+		if err = json.Unmarshal(n.Payload.Val, &payload); err != nil {
 			log.Error("failed to unmarshal notification payload", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
@@ -74,7 +76,8 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workouts, err := h.repo.ListWorkouts(ctx,
+	workouts, err := h.repo.ListWorkouts(
+		ctx,
 		repo.ListWorkoutsWithIDs(workoutIDs),
 		repo.ListWorkoutsLoadUser(),
 	)
@@ -99,16 +102,27 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	}, nil
 }
 
-func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, _ *connect.Request[apiv1.MarkNotificationsAsReadRequest]) (*connect.Response[apiv1.MarkNotificationsAsReadResponse], error) {
+func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, req *connect.Request[apiv1.MarkNotificationsAsReadRequest]) (*connect.Response[apiv1.MarkNotificationsAsReadResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.MarkNotificationsAsRead(ctx, userID); err != nil {
+	if err := h.repo.MarkNotificationsAsRead(ctx, userID, req.Msg.NotificationId); err != nil {
 		log.Error("failed to mark notifications as read", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
+	h.stream.Notify(userID)
 
 	return &connect.Response[apiv1.MarkNotificationsAsReadResponse]{}, nil
+}
+
+func (h *notificationHandler) GetUnreadNotificationCount(ctx context.Context, _ *connect.Request[apiv1.GetUnreadNotificationCountRequest]) (*connect.Response[apiv1.GetUnreadNotificationCountResponse], error) {
+	userID := xcontext.MustExtractUserID(ctx)
+	count, err := h.countUnreadNotifications(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&apiv1.GetUnreadNotificationCountResponse{Count: count}), nil
 }
 
 func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[apiv1.UnreadNotificationsRequest], res *connect.ServerStream[apiv1.UnreadNotificationsResponse]) error {
@@ -116,27 +130,24 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 	userID := xcontext.MustExtractUserID(ctx)
 
 	ctx, cancelFunc := context.WithCancel(ctx)
-	h.stream.Add(userID, cancelFunc)
-	defer h.stream.Remove(userID)
+	defer cancelFunc()
+	updates, unsubscribe := h.stream.Subscribe(userID, cancelFunc)
+	defer unsubscribe()
 
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	lastCount, err := h.sendUnreadNotificationCount(ctx, userID, res)
+	if err != nil {
+		return err
+	}
 
-	var lastCount int64
 	for {
 		select {
 		case <-ctx.Done():
-			log.Warn("client disconnected")
-			h.stream.Remove(userID)
+			log.Debug("client disconnected")
 			return nil
-		case <-ticker.C:
-			count, err := h.repo.CountNotifications(ctx,
-				repo.CountNotificationsWithUserID(userID),
-				repo.CountNotificationsWithUnreadOnly(true),
-			)
+		case <-updates:
+			count, err := h.countUnreadNotifications(ctx, userID)
 			if err != nil {
-				log.Error("failed to count notifications", zap.Error(err))
-				return connect.NewError(connect.CodeInternal, nil)
+				return err
 			}
 
 			if count == lastCount {
@@ -152,4 +163,38 @@ func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connec
 			}
 		}
 	}
+}
+
+func (h *notificationHandler) sendUnreadNotificationCount(
+	ctx context.Context,
+	userID string,
+	res *connect.ServerStream[apiv1.UnreadNotificationsResponse],
+) (int64, error) {
+	count, err := h.countUnreadNotifications(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	if err = res.Send(&apiv1.UnreadNotificationsResponse{Count: count}); err != nil {
+		log := xcontext.MustExtractLogger(ctx)
+		log.Error("failed to send unread notifications", zap.Error(err))
+		return 0, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return count, nil
+}
+
+func (h *notificationHandler) countUnreadNotifications(ctx context.Context, userID string) (int64, error) {
+	count, err := h.repo.CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(userID),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	if err != nil {
+		log := xcontext.MustExtractLogger(ctx)
+		log.Error("failed to count notifications", zap.Error(err))
+		return 0, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return count, nil
 }

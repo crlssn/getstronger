@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Timestamp } from '@bufbuild/protobuf/wkt'
+import { timestampFromDate, type Timestamp } from '@bufbuild/protobuf/wkt'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
-import type { ExerciseSets, Set } from '@/proto/api/v1/shared_pb'
+import { WeightUnit, type ExerciseSets, type Set } from '@/proto/api/v1/shared_pb'
 
 import { DateTime } from 'luxon'
 import { computed, onMounted, ref } from 'vue'
@@ -16,7 +16,14 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { getWorkout, updateWorkout } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
-import { isNumber } from '@/utils/numbers.ts'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import DurationInput from '@/ui/workouts/DurationInput.vue'
+import {
+  hasAnyExerciseSetValue,
+  isExerciseSetComplete,
+  measurementsForExercise,
+} from '@/utils/exerciseMeasurements'
+import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 
 const route = useRoute()
 const workout = ref<Workout>()
@@ -49,7 +56,9 @@ const onUpdateWorkout = async () => {
 
   workout.value.exerciseSets = workout.value.exerciseSets
     .map((exerciseSet) => {
-      const sets = exerciseSet.sets.filter((set) => isNumber(set.reps) && isNumber(set.weight))
+      const sets = exerciseSet.sets.filter((set) =>
+        isExerciseSetComplete(set, exerciseSet.exercise),
+      )
       if (!sets.length) return null
       exerciseSet.sets = sets
       return exerciseSet
@@ -72,7 +81,18 @@ const addEmptySet = (exerciseId: string) => {
     .find((es: ExerciseSets) => es.exercise?.id === exerciseId)
     ?.sets.push({
       $typeName: 'api.v1.Set',
+      weightUnit: normalizeWeightUnit(workout.value.user?.weightUnit),
     } as Set)
+}
+
+const changeWeightUnit = (set: Set, event: Event) => {
+  const select = event.target as HTMLSelectElement
+  const previous = normalizeWeightUnit(set.weightUnit)
+  const next = normalizeWeightUnit(Number(select.value) as WeightUnit)
+  if (previous === next) return
+
+  if (Number.isFinite(set.weight)) set.weight = convertWeight(set.weight, previous, next)
+  set.weightUnit = next
 }
 
 const deleteSet = (exerciseId: string, index: number) => {
@@ -88,18 +108,14 @@ const deleteSet = (exerciseId: string, index: number) => {
 const setStartDateTime = (value: string) => {
   workout.value = {
     ...workout.value,
-    startedAt: {
-      seconds: BigInt(DateTime.fromISO(value).toSeconds()),
-    } as Timestamp,
+    startedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()),
   } as Workout
 }
 
 const setEndDateTime = (value: string) => {
   workout.value = {
     ...workout.value,
-    finishedAt: {
-      seconds: BigInt(DateTime.fromISO(value).toSeconds()),
-    } as Timestamp,
+    finishedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()),
   } as Workout
 }
 
@@ -127,10 +143,13 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 </script>
 
 <template>
-  <form @submit.prevent="onUpdateWorkout">
+  <form class="edit-workout-form" @submit.prevent="onUpdateWorkout">
     <template v-for="(es, index) in workout?.exerciseSets" :key="es.exercise?.id">
       <div class="flex justify-between pr-4">
-        <h6>{{ es.exercise?.name }}</h6>
+        <div>
+          <h6>{{ es.exercise?.name }}</h6>
+          <ExerciseTags compact :tags="es.exercise?.tags" />
+        </div>
         <div class="flex gap-x-1">
           <ChevronUpIcon
             v-if="index > 0"
@@ -149,28 +168,53 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
         <AppListItem class="flex flex-col">
           <div v-for="(set, index) in es.sets" :key="index" class="w-full">
             <label>Set {{ index + 1 }}</label>
-            <div class="flex items-center gap-x-4 mb-4">
-              <div class="w-full">
-                <input
-                  v-model.number="set.weight"
-                  type="text"
-                  inputmode="decimal"
-                  placeholder="Weight"
-                  :required="isNumber(set.reps)"
+            <div
+              class="measurement-row"
+              :style="{ '--metric-count': measurementsForExercise(es.exercise).length }"
+            >
+              <div
+                v-for="measurement in measurementsForExercise(es.exercise)"
+                :key="measurement.field"
+                class="measurement-input"
+              >
+                <span>{{ measurement.label }}</span>
+                <DurationInput
+                  v-if="measurement.field === 'durationSeconds'"
+                  v-model="set.durationSeconds"
+                  :required="hasAnyExerciseSetValue(set, es.exercise)"
                 />
-              </div>
-              <span class="text-gray-500 font-medium">x</span>
-              <div class="w-full">
+                <div v-else-if="measurement.field === 'weight'" class="flex gap-2">
+                  <input
+                    v-model.number="set.weight"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="any"
+                    :placeholder="measurement.label"
+                    :required="hasAnyExerciseSetValue(set, es.exercise)"
+                  />
+                  <select
+                    :value="normalizeWeightUnit(set.weightUnit)"
+                    :aria-label="`Set ${index + 1} weight unit`"
+                    @change="changeWeightUnit(set, $event)"
+                  >
+                    <option :value="WeightUnit.KILOGRAMS">kg</option>
+                    <option :value="WeightUnit.POUNDS">lbs</option>
+                  </select>
+                </div>
                 <input
-                  v-model.number="set.reps"
-                  type="text"
-                  inputmode="numeric"
-                  placeholder="Reps"
-                  :required="isNumber(set.weight)"
+                  v-else
+                  v-model.number="set[measurement.field]"
+                  type="number"
+                  :inputmode="measurement.inputmode"
+                  min="0"
+                  :step="measurement.field === 'reps' ? 1 : 'any'"
+                  :placeholder="measurement.label"
+                  :required="hasAnyExerciseSetValue(set, es.exercise)"
                 />
               </div>
               <MinusCircleIcon
-                class="cursor-pointer"
+                class="remove-set"
                 @click="deleteSet(es.exercise?.id as string, index)"
               />
             </div>
@@ -216,19 +260,51 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       placeholder="How was it?"
     />
 
-    <AppButton type="submit" colour="primary" class="mb-2">Update Workout</AppButton>
-    <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
-      Cancel Update
-    </AppButton>
+    <footer class="update-dock">
+      <AppButton type="submit" colour="primary">Update Workout</AppButton>
+      <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
+        Cancel Update
+      </AppButton>
+    </footer>
   </form>
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
+.edit-workout-form {
+  @apply pb-32;
+}
+
+.update-dock {
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:rounded-2xl sm:border;
+}
+
 label {
   @apply block text-sm font-semibold text-gray-600 uppercase mb-2;
 }
 
 input {
   @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 font-medium;
+}
+
+.measurement-row {
+  grid-template-columns: repeat(var(--metric-count), minmax(0, 1fr)) auto;
+  @apply mb-4 grid items-end gap-3;
+}
+
+.measurement-input > span {
+  @apply mb-1 block text-xs font-semibold text-slate-500;
+}
+
+.remove-set {
+  @apply mb-3 size-7 cursor-pointer text-slate-500;
+}
+
+@media (max-width: 520px) {
+  .measurement-row {
+    @apply gap-2;
+  }
 }
 </style>

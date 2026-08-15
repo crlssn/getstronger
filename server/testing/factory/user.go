@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/opt/omit"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
+	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
-func (f *Factory) NewUserSlice(count int, opts ...UserOpt) orm.UserSlice {
-	var slice orm.UserSlice
+func (f *Factory) NewUserSlice(count int, opts ...UserOpt) models.UserSlice {
+	slice := make(models.UserSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewUser(opts...))
 	}
@@ -19,63 +22,98 @@ func (f *Factory) NewUserSlice(count int, opts ...UserOpt) orm.UserSlice {
 	return slice
 }
 
-type UserOpt func(event *orm.User)
+type UserOpt func(user *models.UserSetter)
 
-func (f *Factory) NewUser(opts ...UserOpt) *orm.User {
-	m := &orm.User{
-		AuthID:    "",
-		FirstName: f.Faker.FirstName(),
-		LastName:  f.Faker.LastName(),
-		CreatedAt: time.Time{},
+func (f *Factory) NewUser(opts ...UserOpt) *models.User {
+	setter := &models.UserSetter{
+		FirstName: omit.From(f.Faker.FirstName()),
+		LastName:  omit.From(f.Faker.LastName()),
 	}
-
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
 	}
 
-	if m.AuthID == "" {
-		m.AuthID = f.NewAuth().ID
+	ctx := context.Background()
+	var auth *models.Auth
+	if authID, ok := setter.AuthID.Get(); ok {
+		var err error
+		auth, err = models.Auths.Query(models.SelectWhere.Auths.ID.EQ(authID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve auth: %w", err))
+		}
+	} else {
+		auth = f.NewAuth()
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.UserColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
-		panic(fmt.Errorf("failed to insert user: %w", err))
+	mods := []bobfactory.UserMod{
+		bobfactory.UserMods.WithExistingAuth(authWithoutRelationships(auth)),
+		bobfactory.UserMods.WeightUnit(string(weightunit.Kilograms)),
+	}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.ID(value))
+	}
+	if value, ok := setter.FirstName.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.FirstName(value))
+	}
+	if value, ok := setter.LastName.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.LastName(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.CreatedAt(value))
+	}
+	if value, ok := setter.WeightUnit.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.WeightUnit(value))
 	}
 
-	auth, err := m.Auth().One(context.Background(), f.db)
+	template := f.generated.NewUser(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.AuthID = omit.From(built.AuthID)
+	user, err := models.Users.Insert(
+		setter,
+		im.OnConflict(models.Users.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to retrieve auth: %w", err))
+		panic(fmt.Errorf("failed to create user with Bob factory: %w", err))
 	}
+	user.R = built.R
 
-	if err = m.SetAuth(context.Background(), f.db, false, auth); err != nil {
-		panic(fmt.Errorf("failed to set auth: %w", err))
-	}
-
-	return m
+	return user
 }
 
-func UserID(id string) UserOpt {
-	return func(m *orm.User) {
-		m.ID = id
+func UserID(id any) UserOpt {
+	return func(m *models.UserSetter) {
+		m.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func UserAuthID(authID string) UserOpt {
-	return func(m *orm.User) {
-		m.AuthID = authID
+func UserAuthID(authID any) UserOpt {
+	return func(m *models.UserSetter) {
+		m.AuthID = omit.From(nativeUUID(authID))
 	}
 }
 
 func UserLastName(lastName string) UserOpt {
-	return func(m *orm.User) {
-		m.LastName = lastName
+	return func(m *models.UserSetter) {
+		m.LastName = omit.From(lastName)
 	}
 }
 
 func UserFirstName(firstName string) UserOpt {
-	return func(m *orm.User) {
-		m.FirstName = firstName
+	return func(m *models.UserSetter) {
+		m.FirstName = omit.From(firstName)
+	}
+}
+
+func UserCreatedAt(createdAt time.Time) UserOpt {
+	return func(m *models.UserSetter) {
+		m.CreatedAt = omit.From(createdAt)
+	}
+}
+
+func UserWeightUnit(unit weightunit.Unit) UserOpt {
+	return func(m *models.UserSetter) {
+		m.WeightUnit = omit.From(string(unit))
 	}
 }

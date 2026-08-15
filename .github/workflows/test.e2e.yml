@@ -1,0 +1,121 @@
+name: e2e
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths:
+      - '.github/workflows/test.e2e.yml'
+      - 'database/migrations/**'
+      - 'server/**'
+      - 'web/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'mise.toml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      CORS_ALLOWED_ORIGIN: http://localhost:5173
+      DB_HOST: 127.0.0.1
+      DB_NAME: postgres
+      DB_PASSWORD: root
+      DB_PORT: 5433
+      DB_SSL_MODE: disable
+      DB_USER: root
+      EMAIL_PROVIDER: local
+      ENV: local
+      JWT_ACCESS_TOKEN_KEY: e2e-access-key
+      JWT_REFRESH_TOKEN_KEY: e2e-refresh-key
+      SERVER_PORT: 8080
+      SSE_PORT: 8081
+      USER_EMAIL: active@onemorerep.test
+      USER_FIRSTNAME: Alex
+      USER_LASTNAME: Morgan
+      USER_PASSWORD: password123
+      VITE_API_URL: http://localhost:8080
+      VITE_ENABLE_GOOGLE_ANALYTICS: 'false'
+
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: root
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U root -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.4'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+          node-version: '22'
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: web
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Install database migration tool
+        run: go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+
+      - name: Create server environment
+        run: |
+          touch .env
+
+      - name: Migrate database
+        run: >-
+          migrate -path database/migrations/
+          -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
+          -verbose up
+
+      - name: Seed test data
+        run: >-
+          go run server/testing/factory/seed/main.go
+          -email="${USER_EMAIL}"
+          -password="${USER_PASSWORD}"
+          -firstname="${USER_FIRSTNAME}"
+          -lastname="${USER_LASTNAME}"
+
+      - name: Run end-to-end tests
+        working-directory: web
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          name: playwright-report
+          path: web/playwright-report/
+          retention-days: 14

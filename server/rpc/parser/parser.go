@@ -1,26 +1,47 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/safe"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
-func Exercise(exercise *orm.Exercise) *apiv1.Exercise {
+func Exercise(exercise *models.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
-		Id:     exercise.ID,
-		UserId: exercise.UserID,
-		Name:   exercise.Title,
-		Label:  exercise.SubTitle.String,
+		Id:          exercise.ID.String(),
+		UserId:      exercise.UserID.String(),
+		Name:        exercise.Title,
+		Tags:        []string(exercise.Tags),
+		Metrics:     exerciseMetricsFromDB(exercise.Metrics),
+		RestSeconds: exercise.RestSeconds,
 	}
 }
 
-func ExerciseSlice(exercises orm.ExerciseSlice) []*apiv1.Exercise {
+func exerciseMetricsFromDB(metrics []string) []apiv1.ExerciseMetric {
+	parsed := make([]apiv1.ExerciseMetric, 0, len(metrics))
+	for _, metric := range metrics {
+		switch metric {
+		case "weight":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_WEIGHT)
+		case "reps":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_REPS)
+		case "distance":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_DISTANCE)
+		case "time":
+			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_TIME)
+		}
+	}
+	return parsed
+}
+
+func ExerciseSlice(exercises models.ExerciseSlice) []*apiv1.Exercise {
 	return parseWithoutOpts(exercises, Exercise)
 }
 
@@ -32,19 +53,18 @@ func UserFollowed(followed bool) UserOpt {
 	}
 }
 
-func User(user *orm.User, opts ...UserOpt) *apiv1.User {
+func User(user *models.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
-		Id:        user.ID,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Followed:  false,
-		Email:     "",
+		Id:         user.ID.String(),
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Followed:   false,
+		Email:      "",
+		WeightUnit: WeightUnitToProto(user.WeightUnit),
 	}
 
-	if user.R != nil {
-		if user.R.Auth != nil {
-			u.Email = user.R.GetAuth().Email
-		}
+	if user.R.Auth != nil {
+		u.Email = user.R.Auth.Email
 	}
 
 	for _, opt := range opts {
@@ -54,39 +74,59 @@ func User(user *orm.User, opts ...UserOpt) *apiv1.User {
 	return u
 }
 
-func UserSlice(users orm.UserSlice) []*apiv1.User {
+func UserSlice(users models.UserSlice) []*apiv1.User {
 	return parseWithEmptyOpts(users, User)
 }
 
-func Routine(routine *orm.Routine) *apiv1.Routine {
+func Routine(routine *models.Routine) *apiv1.Routine {
 	r := &apiv1.Routine{
-		Id:        routine.ID,
+		Id:        routine.ID.String(),
 		Name:      routine.Title,
 		Exercises: nil,
 	}
 
-	if routine.R != nil {
-		if routine.R.Exercises != nil {
-			r.Exercises = parseWithoutOpts(routine.R.GetExercises(), Exercise)
-		}
+	if routine.R.Exercises != nil {
+		r.Exercises = parseWithoutOpts(routine.R.Exercises, Exercise)
 	}
 
 	return r
 }
 
-func RoutineSlice(routines orm.RoutineSlice) []*apiv1.Routine {
+func RoutineSlice(routines models.RoutineSlice) []*apiv1.Routine {
 	return parseWithoutOpts(routines, Routine)
+}
+
+func Plan(plan *repo.TrainingPlan) *apiv1.Plan {
+	if plan == nil {
+		return nil
+	}
+
+	return &apiv1.Plan{
+		Id:              plan.ID,
+		Name:            plan.Name,
+		Routines:        RoutineSlice(plan.Routines),
+		CurrentPosition: safe.Int32FromInt(plan.CurrentPosition),
+		Active:          plan.Active,
+	}
+}
+
+func PlanSlice(plans []*repo.TrainingPlan) []*apiv1.Plan {
+	parsed := make([]*apiv1.Plan, 0, len(plans))
+	for _, plan := range plans {
+		parsed = append(parsed, Plan(plan))
+	}
+	return parsed
 }
 
 type WorkoutOpt func(*apiv1.Workout)
 
-func WorkoutExerciseSets(sets orm.SetSlice, personalBests orm.SetSlice) WorkoutOpt {
+func WorkoutExerciseSets(sets models.SetSlice, personalBests models.SetSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
 		w.ExerciseSets = ExerciseSetsSlice(sets, ExerciseSetsPersonalBests(personalBests))
 	}
 }
 
-func WorkoutIntensity(sets orm.SetSlice) WorkoutOpt {
+func WorkoutIntensity(sets models.SetSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
 		var intensity float64
 		for _, set := range sets {
@@ -97,9 +137,14 @@ func WorkoutIntensity(sets orm.SetSlice) WorkoutOpt {
 	}
 }
 
-func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
+func Workout(workout *models.Workout, opts ...WorkoutOpt) *apiv1.Workout {
+	routineID := ""
+	if !workout.RoutineID.IsNull() {
+		routineID = workout.RoutineID.GetOrZero().String()
+	}
+
 	w := &apiv1.Workout{
-		Id:           workout.ID,
+		Id:           workout.ID.String(),
 		Name:         workout.Name,
 		StartedAt:    timestamppb.New(workout.StartedAt),
 		FinishedAt:   timestamppb.New(workout.FinishedAt),
@@ -107,17 +152,16 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 		Comments:     nil,
 		ExerciseSets: nil,
 		Intensity:    0,
-		Note:         workout.Note.String,
+		Note:         workout.Note.GetOrZero(),
+		RoutineId:    routineID,
 	}
 
-	if workout.R != nil {
-		if workout.R.User != nil {
-			w.User = User(workout.R.GetUser())
-		}
+	if workout.R.User != nil {
+		w.User = User(workout.R.User)
+	}
 
-		for _, comment := range workout.R.GetWorkoutComments() {
-			w.Comments = append(w.Comments, WorkoutComment(comment))
-		}
+	for _, comment := range workout.R.WorkoutComments {
+		w.Comments = append(w.Comments, WorkoutComment(comment))
 	}
 
 	for _, opt := range opts {
@@ -127,19 +171,15 @@ func Workout(workout *orm.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	return w
 }
 
-func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.Workout, error) {
+func WorkoutSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) ([]*apiv1.Workout, error) {
 	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
 	for _, workout := range workouts {
-		if workout.R == nil {
-			workoutSlice = append(workoutSlice, Workout(workout))
-			continue
-		}
-
 		var workoutOpts []WorkoutOpt
-		if workout.R.GetSets() != nil {
-			workoutOpts = append(workoutOpts,
-				WorkoutIntensity(workout.R.GetSets()),
-				WorkoutExerciseSets(workout.R.GetSets(), personalBests),
+		if workout.R.Sets != nil {
+			workoutOpts = append(
+				workoutOpts,
+				WorkoutIntensity(workout.R.Sets),
+				WorkoutExerciseSets(workout.R.Sets, personalBests),
 			)
 		}
 
@@ -149,20 +189,16 @@ func WorkoutSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*api
 	return workoutSlice, nil
 }
 
-func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
+func WorkoutComment(comment *models.WorkoutComment) *apiv1.WorkoutComment {
 	c := &apiv1.WorkoutComment{
-		Id:        comment.ID,
+		Id:        comment.ID.String(),
 		Comment:   comment.Comment,
 		CreatedAt: timestamppb.New(comment.CreatedAt),
 		User:      nil,
 	}
 
-	if comment.R == nil {
-		return c
-	}
-
 	if comment.R.User != nil {
-		c.User = User(comment.R.GetUser())
+		c.User = User(comment.R.User)
 	}
 
 	return c
@@ -170,11 +206,11 @@ func WorkoutComment(comment *orm.WorkoutComment) *apiv1.WorkoutComment {
 
 type ExerciseSetsSliceOpt func(*apiv1.ExerciseSets)
 
-func ExerciseSetsPersonalBests(personalBests orm.SetSlice) ExerciseSetsSliceOpt {
+func ExerciseSetsPersonalBests(personalBests models.SetSlice) ExerciseSetsSliceOpt {
 	return func(s *apiv1.ExerciseSets) {
 		mapPersonalBests := make(map[string]struct{}, len(personalBests))
 		for _, set := range personalBests {
-			mapPersonalBests[set.ID] = struct{}{}
+			mapPersonalBests[set.ID.String()] = struct{}{}
 		}
 
 		for _, set := range s.GetSets() {
@@ -188,14 +224,15 @@ func ExerciseSetsPersonalBests(personalBests orm.SetSlice) ExerciseSetsSliceOpt 
 	}
 }
 
-func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1.ExerciseSets {
+func ExerciseSetsSlice(sets models.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1.ExerciseSets {
 	exerciseOrder := make([]string, 0, len(sets))
 	mapExerciseSets := make(map[string]*apiv1.ExerciseSets)
 	for _, set := range sets {
-		exercise := set.R.GetExercise()
-		if _, ok := mapExerciseSets[exercise.ID]; !ok {
-			exerciseOrder = append(exerciseOrder, exercise.ID)
-			mapExerciseSets[exercise.ID] = &apiv1.ExerciseSets{
+		exercise := set.R.Exercise
+		exerciseID := exercise.ID.String()
+		if _, ok := mapExerciseSets[exerciseID]; !ok {
+			exerciseOrder = append(exerciseOrder, exerciseID)
+			mapExerciseSets[exerciseID] = &apiv1.ExerciseSets{
 				Exercise: Exercise(exercise),
 				Sets:     []*apiv1.Set{Set(set, nil)},
 			}
@@ -203,7 +240,7 @@ func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1
 			continue
 		}
 
-		mapExerciseSets[exercise.ID].Sets = append(mapExerciseSets[exercise.ID].Sets, Set(set, nil))
+		mapExerciseSets[exerciseID].Sets = append(mapExerciseSets[exerciseID].Sets, Set(set, nil))
 	}
 
 	sliceExerciseSets := make([]*apiv1.ExerciseSets, 0, len(mapExerciseSets))
@@ -219,11 +256,11 @@ func ExerciseSetsSlice(sets orm.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1
 	return sliceExerciseSets
 }
 
-func ExerciseSetSlice(sets orm.SetSlice) []*apiv1.ExerciseSet {
+func ExerciseSetSlice(sets models.SetSlice) []*apiv1.ExerciseSet {
 	exerciseSets := make([]*apiv1.ExerciseSet, 0, len(sets))
 	for _, set := range sets {
 		exerciseSets = append(exerciseSets, &apiv1.ExerciseSet{
-			Exercise: Exercise(set.R.GetExercise()),
+			Exercise: Exercise(set.R.Exercise),
 			Set:      Set(set, nil),
 		})
 	}
@@ -237,9 +274,12 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
 		for _, set := range exerciseSet.GetSets() {
 			sets = append(sets, repo.Set{
-				ID:     set.GetId(),
-				Reps:   int(set.GetReps()),
-				Weight: set.GetWeight(),
+				ID:              set.GetId(),
+				Reps:            int(set.GetReps()),
+				Weight:          set.GetWeight(),
+				WeightUnit:      WeightUnitFromProto(set.GetWeightUnit()),
+				Distance:        set.GetDistance(),
+				DurationSeconds: int(set.GetDurationSeconds()),
 			})
 		}
 
@@ -254,14 +294,14 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 
 type NotificationOpt func(*apiv1.Notification)
 
-func NotificationActor(nType orm.NotificationType, actor *orm.User) NotificationOpt {
+func NotificationActor(nType repo.NotificationType, actor *models.User) NotificationOpt {
 	return func(n *apiv1.Notification) {
 		if actor == nil {
 			return
 		}
 
 		switch nType {
-		case orm.NotificationTypeFollow:
+		case repo.NotificationTypeFollow:
 			if _, ok := n.GetType().(*apiv1.Notification_UserFollowed_); !ok {
 				n.Type = &apiv1.Notification_UserFollowed_{
 					UserFollowed: &apiv1.Notification_UserFollowed{
@@ -271,7 +311,7 @@ func NotificationActor(nType orm.NotificationType, actor *orm.User) Notification
 			}
 
 			n.GetType().(*apiv1.Notification_UserFollowed_).UserFollowed.Actor = User(actor) //nolint:forcetypeassert
-		case orm.NotificationTypeWorkoutComment:
+		case repo.NotificationTypeWorkoutComment:
 			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
 				n.Type = &apiv1.Notification_WorkoutComment_{
 					WorkoutComment: &apiv1.Notification_WorkoutComment{
@@ -286,9 +326,9 @@ func NotificationActor(nType orm.NotificationType, actor *orm.User) Notification
 	}
 }
 
-func NotificationWorkout(nType orm.NotificationType, workout *orm.Workout) NotificationOpt {
+func NotificationWorkout(nType repo.NotificationType, workout *models.Workout) NotificationOpt {
 	return func(n *apiv1.Notification) {
-		if nType != orm.NotificationTypeWorkoutComment || workout == nil {
+		if nType != repo.NotificationTypeWorkoutComment || workout == nil {
 			return
 		}
 
@@ -305,10 +345,11 @@ func NotificationWorkout(nType orm.NotificationType, workout *orm.Workout) Notif
 	}
 }
 
-func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv1.Notification {
+func Notification(notification *models.Notification, opts ...NotificationOpt) *apiv1.Notification {
 	n := &apiv1.Notification{
-		Id:             notification.ID,
+		Id:             notification.ID.String(),
 		NotifiedAtUnix: notification.CreatedAt.Unix(),
+		Read:           !notification.ReadAt.IsNull(),
 		Type:           nil,
 	}
 
@@ -319,21 +360,21 @@ func Notification(notification *orm.Notification, opts ...NotificationOpt) *apiv
 	return n
 }
 
-func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice, workouts orm.WorkoutSlice) ([]*apiv1.Notification, error) {
-	mapActors := make(map[string]*orm.User)
+func NotificationSlice(notifications models.NotificationSlice, actors models.UserSlice, workouts models.WorkoutSlice) ([]*apiv1.Notification, error) {
+	mapActors := make(map[string]*models.User)
 	for _, a := range actors {
-		mapActors[a.ID] = a
+		mapActors[a.ID.String()] = a
 	}
 
-	mapWorkouts := make(map[string]*orm.Workout)
+	mapWorkouts := make(map[string]*models.Workout)
 	for _, w := range workouts {
-		mapWorkouts[w.ID] = w
+		mapWorkouts[w.ID.String()] = w
 	}
 
 	nSlice := make([]*apiv1.Notification, 0, len(notifications))
 	for _, n := range notifications {
 		var p repo.NotificationPayload
-		if err := n.Payload.Unmarshal(&p); err != nil {
+		if err := json.Unmarshal(n.Payload.Val, &p); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
 		}
 
@@ -341,15 +382,17 @@ func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice
 		workout, workoutExists := mapWorkouts[p.WorkoutID]
 
 		switch n.Type {
-		case orm.NotificationTypeFollow:
+		case repo.NotificationTypeFollow:
 			if actorExists {
-				nSlice = append(nSlice, Notification(n,
+				nSlice = append(nSlice, Notification(
+					n,
 					NotificationActor(n.Type, actor),
 				))
 			}
-		case orm.NotificationTypeWorkoutComment:
+		case repo.NotificationTypeWorkoutComment:
 			if actorExists && workoutExists {
-				nSlice = append(nSlice, Notification(n,
+				nSlice = append(nSlice, Notification(
+					n,
 					NotificationActor(n.Type, actor),
 					NotificationWorkout(n.Type, workout),
 				))
@@ -360,7 +403,7 @@ func NotificationSlice(notifications orm.NotificationSlice, actors orm.UserSlice
 	return nSlice, nil
 }
 
-func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*apiv1.FeedItem, error) {
+func FeedItemSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) ([]*apiv1.FeedItem, error) {
 	items := make([]*apiv1.FeedItem, 0, len(workouts))
 
 	workoutSlice, err := WorkoutSlice(workouts, personalBests)
@@ -379,10 +422,10 @@ func FeedItemSlice(workouts orm.WorkoutSlice, personalBests orm.SetSlice) ([]*ap
 	return items, nil
 }
 
-func SetSlice(sets orm.SetSlice, personalBests orm.SetSlice) []*apiv1.Set {
+func SetSlice(sets models.SetSlice, personalBests models.SetSlice) []*apiv1.Set {
 	mapPersonalBests := make(map[string]struct{}, len(personalBests))
 	for _, set := range personalBests {
-		mapPersonalBests[set.ID] = struct{}{}
+		mapPersonalBests[set.ID.String()] = struct{}{}
 	}
 
 	slice := make([]*apiv1.Set, 0, len(sets))
@@ -393,20 +436,39 @@ func SetSlice(sets orm.SetSlice, personalBests orm.SetSlice) []*apiv1.Set {
 	return slice
 }
 
-func Set(set *orm.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
+func Set(set *models.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 	return &apiv1.Set{
-		Id:     set.ID,
-		Weight: set.Weight,
-		Reps:   int32(set.Reps), //nolint:gosec
+		Id:              set.ID.String(),
+		Weight:          weightunit.FromKilograms(set.Weight, set.WeightUnit),
+		WeightUnit:      WeightUnitToProto(set.WeightUnit),
+		Reps:            set.Reps,
+		Distance:        set.Distance,
+		DurationSeconds: set.DurationSeconds,
 		Metadata: &apiv1.MetadataSet{
-			WorkoutId: set.WorkoutID,
+			WorkoutId: set.WorkoutID.String(),
 			CreatedAt: timestamppb.New(set.CreatedAt),
 			PersonalBest: func() bool {
-				_, yes := mapPersonalBests[set.ID]
+				_, yes := mapPersonalBests[set.ID.String()]
 				return yes
 			}(),
 		},
 	}
+}
+
+func WeightUnitFromProto(unit apiv1.WeightUnit) string {
+	if unit == apiv1.WeightUnit_WEIGHT_UNIT_POUNDS {
+		return string(weightunit.Pounds)
+	}
+
+	return string(weightunit.Kilograms)
+}
+
+func WeightUnitToProto(unit string) apiv1.WeightUnit {
+	if weightunit.Normalize(unit) == weightunit.Pounds {
+		return apiv1.WeightUnit_WEIGHT_UNIT_POUNDS
+	}
+
+	return apiv1.WeightUnit_WEIGHT_UNIT_KILOGRAMS
 }
 
 func parseWithoutOpts[Input any, Output any](input []Input, f func(Input) Output) []Output {

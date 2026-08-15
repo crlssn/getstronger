@@ -19,14 +19,45 @@ message Exercise {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2;
   string name = 3;
-  string label = 4;
+  repeated string tags = 4 [(buf.validate.field).repeated = {
+    max_items: 10
+    unique: true
+    items: {
+      string: {
+        min_len: 1
+        max_len: 64
+      }
+    }
+  }];
+  repeated ExerciseMetric metrics = 5 [(buf.validate.field).repeated = {
+    unique: true
+    items: { enum: { defined_only: true not_in: [0] } }
+  }];
+  int32 rest_seconds = 6 [(buf.validate.field).int32 = { gte: 0, lte: 3600 }];
+}
+
+enum ExerciseMetric {
+  EXERCISE_METRIC_UNSPECIFIED = 0;
+  EXERCISE_METRIC_WEIGHT = 1;
+  EXERCISE_METRIC_REPS = 2;
+  EXERCISE_METRIC_DISTANCE = 3;
+  EXERCISE_METRIC_TIME = 4;
+}
+
+enum WeightUnit {
+  WEIGHT_UNIT_UNSPECIFIED = 0;
+  WEIGHT_UNIT_KILOGRAMS = 1;
+  WEIGHT_UNIT_POUNDS = 2;
 }
 
 message Set {
   string id = 1;
   double weight = 2; // The weight can be less than zero.
-  int32 reps = 3 [(buf.validate.field).int32 = { gte: 1 }];
+  int32 reps = 3 [(buf.validate.field).int32 = { gte: 0 }];
   MetadataSet metadata = 4;
+  double distance = 5 [(buf.validate.field).double = { gte: 0 }];
+  int32 duration_seconds = 6 [(buf.validate.field).int32 = { gte: 0 }];
+  WeightUnit weight_unit = 7 [(buf.validate.field).enum.defined_only = true];
 }
 
 message MetadataSet {
@@ -41,6 +72,7 @@ message User {
   string last_name = 3 [(buf.validate.field).string.min_len = 1];
   string email = 4;
   bool followed = 5;
+  WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];
 }
 
 message PaginationRequest {

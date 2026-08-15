@@ -15,6 +15,7 @@ linters:
     - perfsprint
     - varnamelen
     - wsl
+    - gomodguard
   exclusions:
     generated: lax
     presets:
@@ -26,6 +27,20 @@ linters:
       - third_party$
       - builtin$
       - examples$
+    rules:
+      # Internal-package tests intentionally exercise unexported helpers. Requiring
+      # external test packages or parallel subtests would make those tests less clear.
+      - path: _test\.go
+        linters:
+          - goconst
+          - gosec
+          - paralleltest
+          - testpackage
+          - tparallel
+      # Seed data is made of representative literal weights and repetition counts.
+      - path: server/testing/factory/seed/main\.go
+        linters:
+          - mnd
 formatters:
   enable:
     - gofmt

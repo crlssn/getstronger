@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { resetRequest } from '@/utils/request'
 import { resetPassword } from '@/http/requests'
-import AppButton from '@/ui/components/AppButton.vue'
-import { RouterLink } from 'vue-router'
 import { type ResetPasswordRequest } from '@/proto/api/v1/auth_service_pb'
 import { useAlertStore } from '@/stores/alerts.ts'
+import { resetRequest } from '@/utils/request'
+import AppButton from '@/ui/components/AppButton.vue'
+import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const alertStore = useAlertStore()
 
@@ -23,35 +23,35 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <form class="space-y-6" method="POST" @submit.prevent="onSubmit">
-    <div>
-      <label for="email" class="block font-medium text-gray-900">Email address</label>
-      <div class="mt-2">
-        <input
-          id="email"
-          v-model="req.email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          required
-        />
+  <section class="auth-view">
+    <header class="auth-intro">
+      <p class="auth-eyebrow">Account recovery</p>
+      <h1>Reset your password</h1>
+      <p>Enter your email and we’ll send you a secure reset link.</p>
+    </header>
+
+    <form class="auth-form" method="POST" @submit.prevent="onSubmit">
+      <div>
+        <label for="email" class="auth-label">Email address</label>
+        <div class="mt-2">
+          <input
+            id="email"
+            v-model="req.email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            class="auth-input"
+            inputmode="email"
+            required
+          />
+        </div>
       </div>
-    </div>
-    <div>
-      <AppButton type="submit" colour="primary">Reset Password</AppButton>
-    </div>
-  </form>
+      <AppButton type="submit" colour="primary" class="auth-submit">Send reset link</AppButton>
+    </form>
 
-  <p class="mt-6 text-center text-gray-400">
-    Remember your password?
-    <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
-      Login
-    </RouterLink>
-  </p>
+    <p class="auth-footer">
+      Remember your password?
+      <RouterLink to="/login" class="auth-link">Log in</RouterLink>
+    </p>
+  </section>
 </template>
-
-<style scoped>
-input {
-  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
-}
-</style>

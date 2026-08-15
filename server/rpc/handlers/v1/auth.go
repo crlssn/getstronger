@@ -21,6 +21,7 @@ import (
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
+	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -79,9 +80,10 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		}
 
 		user, err := tx.CreateUser(ctx, repo.CreateUserParams{
-			AuthID:    auth.ID,
-			FirstName: req.Msg.GetFirstName(),
-			LastName:  req.Msg.GetLastName(),
+			AuthID:     auth.ID.String(),
+			FirstName:  req.Msg.GetFirstName(),
+			LastName:   req.Msg.GetLastName(),
+			WeightUnit: parser.WeightUnitFromProto(req.Msg.GetWeightUnit()),
 		})
 		if err != nil {
 			return fmt.Errorf("create user: %w", err)
@@ -90,7 +92,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		if err = h.email.SendVerification(ctx, email.SendVerification{
 			Name:  user.FirstName,
 			Email: auth.Email,
-			Token: auth.EmailToken,
+			Token: auth.EmailToken.String(),
 		}); err != nil {
 			return fmt.Errorf("send verification email: %w", err)
 		}
@@ -115,7 +117,8 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
 
-	auth, err := h.repo.GetAuth(ctx,
+	auth, err := h.repo.GetAuth(
+		ctx,
 		repo.GetAuthByEmail(req.Msg.GetEmail()),
 		repo.GetAuthWithUser(),
 	)
@@ -134,21 +137,21 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 		return nil, rpc.Error(connect.CodeFailedPrecondition, apiv1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	}
 
-	accessToken, err := h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeAccess)
+	accessToken, err := h.jwt.CreateToken(auth.R.User.ID.String(), jwt.TokenTypeAccess)
 	if err != nil {
 		log.Error("token generation failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	refreshToken := auth.RefreshToken.String
-	if !auth.RefreshToken.Valid {
-		refreshToken, err = h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeRefresh)
+	refreshToken := auth.RefreshToken.GetOrZero()
+	if auth.RefreshToken.IsNull() {
+		refreshToken, err = h.jwt.CreateToken(auth.R.User.ID.String(), jwt.TokenTypeRefresh)
 		if err != nil {
 			log.Error("token generation failed", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
-		if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthRefreshToken(refreshToken)); err != nil {
+		if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthRefreshToken(refreshToken)); err != nil {
 			log.Error("refresh token update failed", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
@@ -218,7 +221,7 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.Logou
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthDeleteRefreshToken()); err != nil {
+		if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthDeleteRefreshToken()); err != nil {
 			log.Error("refresh token deletion failed", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
@@ -246,7 +249,7 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthEmailVerified()); err != nil {
+	if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthEmailVerified()); err != nil {
 		log.Error("email verification failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -257,7 +260,8 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv
 
 func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[apiv1.ResetPasswordRequest]) (*connect.Response[apiv1.ResetPasswordResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	auth, err := h.repo.GetAuth(ctx,
+	auth, err := h.repo.GetAuth(
+		ctx,
 		repo.GetAuthByEmail(req.Msg.GetEmail()),
 		repo.GetAuthWithUser(),
 	)
@@ -273,7 +277,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 	}
 
 	token := uuid.NewString()
-	if err = h.repo.UpdateAuth(ctx, auth.ID, repo.UpdateAuthPasswordResetToken(token)); err != nil {
+	if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthPasswordResetToken(token)); err != nil {
 		log.Error("password reset token update failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -309,12 +313,13 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if auth.PasswordResetTokenValidUntil.Valid && auth.PasswordResetTokenValidUntil.Time.Before(time.Now().UTC()) {
+	if !auth.PasswordResetTokenValidUntil.IsNull() && auth.PasswordResetTokenValidUntil.GetOrZero().Before(time.Now().UTC()) {
 		log.Warn("password reset token expired")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}
 
-	if err = h.repo.UpdateAuth(ctx, auth.ID,
+	if err = h.repo.UpdateAuth(
+		ctx, auth.ID.String(),
 		repo.UpdateAuthPassword(req.Msg.GetPassword()),
 		repo.UpdateAuthDeletePasswordResetToken(),
 	); err != nil {

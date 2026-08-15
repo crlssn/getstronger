@@ -1,3 +1,3 @@
-ALTER TABLE getstronger.sets ADD COLUMN user_id UUID NULL;
-UPDATE getstronger.sets SET user_id = (SELECT user_id FROM getstronger.workouts WHERE getstronger.workouts.id = getstronger.sets.workout_id);
-ALTER TABLE getstronger.sets ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.sets ADD COLUMN user_id UUID NULL;
+UPDATE public.sets SET user_id = (SELECT user_id FROM public.workouts WHERE public.workouts.id = public.sets.workout_id);
+ALTER TABLE public.sets ALTER COLUMN user_id SET NOT NULL;

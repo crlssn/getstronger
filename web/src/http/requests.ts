@@ -1,8 +1,7 @@
-import type { DateTimeMaybeValid } from 'luxon/src/datetime'
-import type { FieldMask, Timestamp } from '@bufbuild/protobuf/wkt'
+import type { DateTime } from 'luxon'
+import { timestampFromDate, type FieldMask } from '@bufbuild/protobuf/wkt'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb.ts'
 
-import router from '@/router/router.ts'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { Error, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
@@ -31,16 +30,34 @@ import {
   type UnfollowUserResponse,
 } from '@/proto/api/v1/user_service_pb.ts'
 import {
+  CreatePlanRequestSchema,
+  type CreatePlanResponse,
   CreateRoutineRequestSchema,
   type CreateRoutineResponse,
+  DeletePlanRequestSchema,
+  type DeletePlanResponse,
   DeleteRoutineRequestSchema,
   type DeleteRoutineResponse,
+  GetDashboardRequestSchema,
+  type GetDashboardResponse,
+  GetPlanRequestSchema,
+  type GetPlanResponse,
   GetRoutineRequestSchema,
   type GetRoutineResponse,
+  ListPlansRequestSchema,
+  type ListPlansResponse,
   ListRoutinesRequestSchema,
   type ListRoutinesResponse,
+  PauseActivePlanRequestSchema,
+  type PauseActivePlanResponse,
+  SetActivePlanRequestSchema,
+  type SetActivePlanResponse,
+  SkipPlanRoutineRequestSchema,
+  type SkipPlanRoutineResponse,
   UpdateExerciseOrderRequestSchema,
   type UpdateExerciseOrderResponse,
+  UpdatePlanRequestSchema,
+  type UpdatePlanResponse,
   UpdateRoutineRequestSchema,
   type UpdateRoutineResponse,
 } from '@/proto/api/v1/routine_service_pb'
@@ -107,7 +124,7 @@ import {
   userClient,
   workoutClient,
 } from './clients'
-import { useAuthStore } from '@/stores/auth.ts'
+import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 
 const defaultPageLimit = 25
 
@@ -133,6 +150,11 @@ export const deleteRoutine = async (id: string): Promise<DeleteRoutineResponse |
   })
 
   return tryCatch(() => routineClient.deleteRoutine(req))
+}
+
+export const deletePlan = async (id: string): Promise<DeletePlanResponse | void> => {
+  const req = create(DeletePlanRequestSchema, { id })
+  return tryCatch(() => routineClient.deletePlan(req))
 }
 
 export const login = async (email: string, password: string): Promise<LoginResponse | void> => {
@@ -219,18 +241,66 @@ export const getRoutine = async (id: string): Promise<GetRoutineResponse | void>
   return tryCatch(() => routineClient.getRoutine(req))
 }
 
+export const getPlan = async (id: string): Promise<GetPlanResponse | void> => {
+  const req = create(GetPlanRequestSchema, { id })
+  return tryCatch(() => routineClient.getPlan(req))
+}
+
+export const listPlans = async (): Promise<ListPlansResponse | void> => {
+  const req = create(ListPlansRequestSchema, {})
+  return tryCatch(() => routineClient.listPlans(req))
+}
+
+export const getDashboard = async (
+  preferredRoutineId: string,
+): Promise<GetDashboardResponse | void> => {
+  const req = create(GetDashboardRequestSchema, {
+    preferredRoutineId,
+  })
+  return tryCatch(() => routineClient.getDashboard(req))
+}
+
 export const listExercises = async (
   pageToken: Uint8Array,
+  name = '',
 ): Promise<ListExercisesResponse | void> => {
   const req = create(ListExercisesRequestSchema, {
     exerciseIds: [],
-    name: '',
+    name: name,
     pagination: {
       pageLimit: defaultPageLimit,
       pageToken: pageToken,
     },
   })
   return tryCatch(() => exerciseClient.listExercises(req))
+}
+
+export const listExerciseTags = async (): Promise<string[]> => {
+  const tags = new Map<string, string>()
+  const seenPageTokens = new Set<string>()
+  let pageToken: Uint8Array = new Uint8Array(0)
+
+  while (true) {
+    const response = await listExercises(pageToken)
+    if (!response) break
+
+    for (const exercise of response.exercises) {
+      for (const tag of exercise.tags) {
+        const normalized = tag.trim()
+        if (normalized) tags.set(normalized.toLowerCase(), normalized)
+      }
+    }
+
+    const nextPageToken = response.pagination?.nextPageToken ?? new Uint8Array(0)
+    if (!nextPageToken.length) break
+
+    const tokenKey = Array.from(nextPageToken).join(',')
+    if (seenPageTokens.has(tokenKey)) break
+    seenPageTokens.add(tokenKey)
+    pageToken = nextPageToken
+  }
+
+  return [...tags.values()].sort((left, right) => left.localeCompare(right))
 }
 
 export const createRoutine = async (
@@ -242,6 +312,42 @@ export const createRoutine = async (
     name: name,
   })
   return tryCatch(() => routineClient.createRoutine(req))
+}
+
+export const createPlan = async (
+  name: string,
+  routineIds: string[],
+): Promise<CreatePlanResponse | void> => {
+  const req = create(CreatePlanRequestSchema, { name, routineIds })
+  return tryCatch(() => routineClient.createPlan(req))
+}
+
+export const updatePlan = async (
+  id: string,
+  name: string,
+  routineIds: string[],
+): Promise<UpdatePlanResponse | void> => {
+  const req = create(UpdatePlanRequestSchema, {
+    id,
+    name,
+    routineIds,
+  })
+  return tryCatch(() => routineClient.updatePlan(req))
+}
+
+export const setActivePlan = async (id: string): Promise<SetActivePlanResponse | void> => {
+  const req = create(SetActivePlanRequestSchema, { id })
+  return tryCatch(() => routineClient.setActivePlan(req))
+}
+
+export const pauseActivePlan = async (): Promise<PauseActivePlanResponse | void> => {
+  const req = create(PauseActivePlanRequestSchema, {})
+  return tryCatch(() => routineClient.pauseActivePlan(req))
+}
+
+export const skipPlanRoutine = async (id: string): Promise<SkipPlanRoutineResponse | void> => {
+  const req = create(SkipPlanRoutineRequestSchema, { id })
+  return tryCatch(() => routineClient.skipPlanRoutine(req))
 }
 
 export const updateRoutine = async (
@@ -261,18 +367,12 @@ export const updateRoutine = async (
 }
 
 export const updateExercise = async (
-  id: string,
-  name: string,
-  label: string,
+  exercise: Exercise,
 ): Promise<UpdateExerciseResponse | void> => {
   const req = create(UpdateExerciseRequestSchema, {
-    exercise: {
-      id: id,
-      label: label,
-      name: name,
-    } as Exercise,
+    exercise,
     updateMask: {
-      paths: ['name', 'label'],
+      paths: ['name', 'tags', 'metrics', 'rest_seconds'],
     } as FieldMask,
   })
   return tryCatch(() => exerciseClient.updateExercise(req))
@@ -281,22 +381,24 @@ export const updateExercise = async (
 export const createWorkout = async (
   routineId: string,
   exerciseSets: ExerciseSets[],
-  startedAt: DateTimeMaybeValid,
-  finishedAt: DateTimeMaybeValid,
+  startedAt: DateTime<boolean>,
+  finishedAt: DateTime<boolean>,
   note: string,
+  planId = '',
+  workoutName = '',
 ): Promise<CreateWorkoutResponse | void> => {
   const req = create(CreateWorkoutRequestSchema, {
     exerciseSets: exerciseSets,
-    finishedAt: {
-      seconds: BigInt(finishedAt.toSeconds()),
-    } as Timestamp,
+    finishedAt: timestampFromDate(finishedAt.toJSDate()),
     routineId: routineId,
-    startedAt: {
-      seconds: BigInt(startedAt.toSeconds()),
-    } as Timestamp,
+    startedAt: timestampFromDate(startedAt.toJSDate()),
     note: note,
+    planId,
+    workoutName,
   })
-  return tryCatch(() => workoutClient.createWorkout(req))
+  return tryCatch(() => workoutClient.createWorkout(req, { timeoutMs: 15_000 }), {
+    rethrow: true,
+  })
 }
 
 export const updateWorkout = async (workout: Workout): Promise<UpdateWorkoutResponse | void> => {
@@ -332,6 +434,11 @@ export const getUser = async (id: string): Promise<GetUserResponse | void> => {
     id: id,
   })
   return tryCatch(() => userClient.getUser(req))
+}
+
+export const getCurrentUser = async (id: string): Promise<GetUserResponse | void> => {
+  const req = create(GetUserRequestSchema, { id })
+  return tryCatch(() => userClient.getUser(req), { invalidatesSessionOnNotFound: true })
 }
 
 export const searchUsers = async (
@@ -376,9 +483,12 @@ export const unfollowUser = async (unfollowId: string): Promise<UnfollowUserResp
   return tryCatch(() => userClient.unfollowUser(req))
 }
 
-export const listRoutines = async (pageToken: Uint8Array): Promise<ListRoutinesResponse | void> => {
+export const listRoutines = async (
+  pageToken: Uint8Array,
+  name = '',
+): Promise<ListRoutinesResponse | void> => {
   const req = create(ListRoutinesRequestSchema, {
-    name: '',
+    name: name,
     pagination: {
       pageLimit: defaultPageLimit,
       pageToken: pageToken,
@@ -410,9 +520,12 @@ export const listNotifications = async (
   return tryCatch(() => notificationClient.listNotifications(req))
 }
 
-export const markNotificationAsRead = async (): Promise<MarkNotificationsAsReadResponse | void> => {
-  const req = create(MarkNotificationsAsReadRequestSchema, {})
-  return tryCatch(() => notificationClient.markNotificationsAsRead(req))
+export const markNotificationAsRead = async (
+  notificationId?: string,
+  ignoreErrors = false,
+): Promise<MarkNotificationsAsReadResponse | void> => {
+  const req = create(MarkNotificationsAsReadRequestSchema, { notificationId })
+  return tryCatch(() => notificationClient.markNotificationsAsRead(req), { ignoreErrors })
 }
 
 export const listWorkouts = async (
@@ -458,27 +571,32 @@ export const getPreviousWorkoutSets = async (
   return tryCatch(() => exerciseClient.getPreviousWorkoutSets(req))
 }
 
-const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
+type TryCatchOptions = {
+  ignoreErrors?: boolean
+  invalidatesSessionOnNotFound?: boolean
+  rethrow?: boolean
+}
+
+const tryCatch = async <T>(
+  fn: () => Promise<T>,
+  options: TryCatchOptions = {},
+): Promise<T | void> => {
   try {
     return await fn()
   } catch (error) {
+    if (options.ignoreErrors) return
+
     if (error instanceof ConnectError) {
-      if (error.code === Code.Unauthenticated) {
-        try {
-          console.warn('user unauthenticated: refreshing token')
-          const req = create(RefreshTokenRequestSchema, {})
-          const res = await authClient.refreshToken(req)
-
-          const authStore = useAuthStore()
-          authStore.setAccessToken(res.accessToken)
-
-          console.log('retrying original request')
-          return await fn()
-        } catch (e) {
-          console.warn('token refresh failed: logging out', e)
-          await router.push('/logout')
-        }
+      if (
+        error.code === Code.Unauthenticated ||
+        (options.invalidatesSessionOnNotFound && error.code === Code.NotFound)
+      ) {
+        console.warn('user session invalid: logging out')
+        await logoutUnauthenticatedUser()
+        return
       }
+
+      if (options.rethrow) throw error
 
       for (const detail of error.findDetails(ErrorDetailSchema)) {
         switch (detail.error) {
@@ -506,5 +624,6 @@ const tryCatch = async <T>(fn: () => Promise<T>): Promise<T | void> => {
 
     // TODO: Use custom alert component.
     console.error('request', error)
+    if (options.rethrow) throw error
   }
 }

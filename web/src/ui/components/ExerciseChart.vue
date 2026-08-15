@@ -1,142 +1,256 @@
 <script setup lang="ts">
-import type { Set } from '@/proto/api/v1/shared_pb.ts'
-import { computed } from 'vue'
+import { ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
+
+import { computed, ref } from 'vue'
+import { DateTime } from 'luxon'
 import { Line as LineChart } from 'vue-chartjs'
-import { formatToShortDateTime } from '@/utils/datetime.ts'
 import {
   CategoryScale,
   Chart as ChartJS,
   Filler,
-  Legend,
   LinearScale,
   LineElement,
   PointElement,
-  Title,
   Tooltip,
-  Scale,
 } from 'chart.js'
+import { exerciseMetrics, formatMeasurementDuration } from '@/utils/exerciseMeasurements'
+import { weightInKilograms } from '@/utils/weightUnits'
 
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  Filler,
-  PointElement,
-)
+ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
 
 const props = defineProps<{
   sets: Set[]
+  exercise: Pick<Exercise, 'metrics'>
 }>()
 
-const options = {
-  maintainAspectRatio: true,
-  responsive: true,
-  scales: {
-    x: {
-      grid: {
-        display: false,
-        drawBorder: true,
-      },
-      ticks: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
-    },
-    y: {
-      grid: {
-        display: false,
-        drawBorder: false,
-      },
-      ticks: {
-        display: true,
-      },
-      title: {
-        display: false,
-      },
-    },
-    yWeight: {
-      position: 'right',
-      grid: {
-        display: false,
-        drawBorder: false,
-      },
-      afterBuildTicks: (axis: Scale) => {
-        axis.ticks = [...axis.chart.scales.y.ticks]
-        axis.min = axis.chart.scales.y.min
-        axis.max = axis.chart.scales.y.max
-      },
-    },
-  },
+type Metric = 'oneRm' | 'weight' | 'volume' | 'reps' | 'distance' | 'durationSeconds'
+
+const selectedMetrics = computed(() => exerciseMetrics(props.exercise))
+const hasWeightAndReps = computed(
+  () =>
+    selectedMetrics.value.includes(ExerciseMetric.WEIGHT) &&
+    selectedMetrics.value.includes(ExerciseMetric.REPS),
+)
+const metricOptions = computed<Array<{ key: Metric; label: string }>>(() => {
+  const options: Array<{ key: Metric; label: string }> = []
+  if (hasWeightAndReps.value) options.push({ key: 'oneRm', label: 'Est. 1RM' })
+  if (selectedMetrics.value.includes(ExerciseMetric.WEIGHT))
+    options.push({ key: 'weight', label: 'Weight' })
+  if (selectedMetrics.value.includes(ExerciseMetric.REPS))
+    options.push({ key: 'reps', label: 'Reps' })
+  if (selectedMetrics.value.includes(ExerciseMetric.DISTANCE))
+    options.push({ key: 'distance', label: 'Distance' })
+  if (selectedMetrics.value.includes(ExerciseMetric.TIME))
+    options.push({ key: 'durationSeconds', label: 'Time' })
+  if (hasWeightAndReps.value) options.push({ key: 'volume', label: 'Volume' })
+  return options
+})
+const metric = ref<Metric>(metricOptions.value[0]?.key ?? 'weight')
+
+const metricDetails: Record<Metric, { heading: string; unit: string }> = {
+  oneRm: { heading: 'Estimated 1RM', unit: 'kg' },
+  weight: { heading: 'Working weight', unit: 'kg' },
+  volume: { heading: 'Daily volume', unit: 'kg' },
+  reps: { heading: 'Most reps', unit: 'reps' },
+  distance: { heading: 'Longest distance', unit: 'km' },
+  durationSeconds: { heading: 'Longest time', unit: '' },
 }
 
 const calc1RM = (weight: number, reps: number): number => {
-  if (reps === 1) {
-    return weight
-  }
-
+  if (reps === 1) return weight
   return weight * (1 + reps / 30)
 }
 
-const sets = computed(() => [...props.sets].reverse())
+const dailyMetrics = computed(() => {
+  const buckets = new Map<
+    string,
+    {
+      label: string
+      timestamp: number
+      oneRm: number
+      weight: number
+      volume: number
+      reps: number
+      distance: number
+      durationSeconds: number
+    }
+  >()
 
-const data = computed(() => {
-  const labels: string[] = []
-  const weights: number[] = []
-  const reps: number[] = []
-  const oneRM: number[] = []
+  props.sets.forEach((set) => {
+    const createdAt = set.metadata?.createdAt
+    if (!createdAt) return
+    const date = DateTime.fromSeconds(Number(createdAt.seconds))
+    if (!date.isValid) return
+    const key = date.toISODate()
+    if (!key) return
 
-  sets.value.map((set) => {
-    labels.push(formatToShortDateTime(set.metadata?.createdAt))
-    weights.push(set.weight)
-    reps.push(set.reps)
-    oneRM.push(calc1RM(set.weight, set.reps))
+    const existing = buckets.get(key) ?? {
+      label: date.toFormat('d LLL'),
+      timestamp: date.toMillis(),
+      oneRm: 0,
+      weight: 0,
+      volume: 0,
+      reps: 0,
+      distance: 0,
+      durationSeconds: 0,
+    }
+    const weight = weightInKilograms(set.weight, set.weightUnit)
+    existing.oneRm = Math.max(existing.oneRm, calc1RM(weight, set.reps))
+    existing.weight = Math.max(existing.weight, weight)
+    existing.volume += weight * set.reps
+    existing.reps = Math.max(existing.reps, set.reps)
+    existing.distance = Math.max(existing.distance, set.distance)
+    existing.durationSeconds = Math.max(existing.durationSeconds, set.durationSeconds)
+    buckets.set(key, existing)
   })
 
-  return {
-    datasets: [
-      {
-        borderColor: '#818cf8',
-        borderWidth: 1,
-        backgroundColor: '#818cf8',
-        data: reps,
-        label: 'Reps',
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true,
-      },
-      {
-        borderColor: '#6366f1',
-        borderWidth: 1,
-        backgroundColor: '#6366f1',
-        data: weights,
-        label: 'Weight',
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true,
-      },
-      {
-        borderColor: '#4f46e5',
-        borderWidth: 1,
-        backgroundColor: '#4f46e5',
-        data: oneRM,
-        label: '1RM',
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true,
-      },
-    ],
-    labels: labels,
-  }
+  return [...buckets.values()].sort((first, second) => first.timestamp - second.timestamp)
 })
+
+const values = computed(() => dailyMetrics.value.map((day) => day[metric.value]))
+const latestValue = computed(() => values.value[values.value.length - 1] ?? 0)
+const formattedLatestValue = computed(() =>
+  metric.value === 'durationSeconds'
+    ? formatMeasurementDuration(latestValue.value)
+    : `${Math.round(latestValue.value).toLocaleString()} ${metricDetails[metric.value].unit}`.trim(),
+)
+const hasTrend = computed(() => dailyMetrics.value.length > 1)
+const change = computed(() => {
+  const first = values.value[0]
+  const last = values.value[values.value.length - 1]
+  if (!first || last === undefined || values.value.length < 2) return ''
+  const percentage = Math.round(((last - first) / first) * 100)
+  if (!percentage) return 'No change'
+  return `${percentage > 0 ? '+' : ''}${percentage}%`
+})
+
+const data = computed(() => ({
+  datasets: [
+    {
+      backgroundColor: 'rgba(37, 40, 45, 0.10)',
+      borderColor: '#25282d',
+      borderWidth: 3,
+      data: values.value,
+      fill: true,
+      label: metricDetails[metric.value].heading,
+      pointBackgroundColor: '#ffffff',
+      pointBorderColor: '#25282d',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      tension: 0.35,
+    },
+  ],
+  labels: dailyMetrics.value.map((day) => day.label),
+}))
+
+const options = computed(() => ({
+  maintainAspectRatio: false,
+  responsive: true,
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: '#64748b', maxTicksLimit: 6 },
+    },
+    y: {
+      beginAtZero: false,
+      grid: { color: '#e2e8f0' },
+      ticks: { color: '#64748b' },
+      title: {
+        color: '#64748b',
+        display: true,
+        text: metricDetails[metric.value].unit,
+      },
+    },
+  },
+  plugins: {
+    legend: { display: false },
+  },
+}))
 </script>
 
 <template>
-  <LineChart :data="data" :options="options as any" />
+  <div class="exercise-chart">
+    <header>
+      <div>
+        <small>{{ metricDetails[metric].heading }}</small>
+        <strong>{{ formattedLatestValue }}</strong>
+      </div>
+      <span v-if="change">{{ change }}</span>
+    </header>
+
+    <div class="metric-picker" aria-label="Exercise progress metric">
+      <button
+        v-for="option in metricOptions"
+        :key="option.key"
+        type="button"
+        :class="{ active: metric === option.key }"
+        @click="metric = option.key"
+      >
+        {{ option.label }}
+      </button>
+    </div>
+
+    <div v-if="hasTrend" class="chart-frame">
+      <LineChart :data="data" :options="options as any" />
+    </div>
+    <div v-else class="first-result" role="status">
+      <span aria-hidden="true"></span>
+      <strong>{{ dailyMetrics.length ? 'First result logged' : 'No results yet' }}</strong>
+      <p>
+        {{
+          dailyMetrics.length
+            ? 'Log this exercise on another day to start seeing your trend.'
+            : 'Your progress will appear after you log this exercise.'
+        }}
+      </p>
+    </div>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+@reference '../../assets/base.css';
+
+.exercise-chart {
+  @apply space-y-4;
+}
+.exercise-chart header {
+  @apply flex items-end justify-between gap-3;
+}
+.exercise-chart header > div {
+  @apply grid gap-1;
+}
+.exercise-chart header small {
+  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+}
+.exercise-chart header strong {
+  @apply text-xl font-semibold tracking-tight text-slate-950;
+}
+.exercise-chart header > span {
+  @apply rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
+}
+.metric-picker {
+  @apply grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1;
+}
+.metric-picker button {
+  @apply min-h-10 rounded-lg text-xs font-semibold text-slate-500 transition hover:text-indigo-700;
+}
+.metric-picker button.active {
+  @apply bg-indigo-100 text-indigo-800 shadow-sm;
+}
+.chart-frame {
+  @apply h-64;
+}
+.first-result {
+  @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center;
+}
+.first-result > span {
+  @apply mb-2 size-4 rounded-full border-4 border-indigo-600 bg-white;
+  box-shadow: 0 0 0 8px theme('colors.indigo.100');
+}
+.first-result strong {
+  @apply text-base font-semibold text-slate-950;
+}
+.first-result p {
+  @apply max-w-sm text-sm leading-6 text-slate-500;
+}
+</style>

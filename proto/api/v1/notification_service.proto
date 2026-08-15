@@ -15,6 +15,9 @@ service NotificationService {
   rpc MarkNotificationsAsRead (MarkNotificationsAsReadRequest) returns (MarkNotificationsAsReadResponse) {
     option (auth) = true;
   }
+  rpc GetUnreadNotificationCount (GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse) {
+    option (auth) = true;
+  }
   rpc UnreadNotifications (UnreadNotificationsRequest) returns (stream UnreadNotificationsResponse) {
     option (auth) = true;
   }
@@ -28,8 +31,15 @@ message ListNotificationsResponse {
   PaginationResponse pagination = 2;
 }
 
-message MarkNotificationsAsReadRequest {}
+message MarkNotificationsAsReadRequest {
+  optional string notification_id = 1 [(buf.validate.field).string.uuid = true];
+}
 message MarkNotificationsAsReadResponse {}
+
+message GetUnreadNotificationCountRequest {}
+message GetUnreadNotificationCountResponse {
+  int64 count = 1;
+}
 
 message UnreadNotificationsRequest {}
 message UnreadNotificationsResponse {
@@ -52,4 +62,5 @@ message Notification {
     UserFollowed user_followed = 3;
     WorkoutComment workout_comment = 4;
   }
+  bool read = 5;
 }

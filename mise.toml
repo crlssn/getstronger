@@ -1,0 +1,336 @@
+min_version = "2026.8.2"
+
+[tools]
+buf = "1.50.0"
+go = "1.25.4"
+gofumpt = "0.10.0"
+golangci-lint = "2.12.2"
+node = "22.23.2"
+"go:github.com/golang-migrate/migrate/v4/cmd/migrate" = {
+    version = "v4.19.1",
+    tags = "postgres",
+    depends = ["go"]
+}
+"go:github.com/stephenafamo/bob/gen/bobgen-psql" = {
+    version = "v0.50.0",
+    depends = ["go"]
+}
+"go:go.uber.org/mock/mockgen" = {
+    version = "v0.6.0",
+    depends = ["go"]
+}
+"go:golang.org/x/tools/cmd/goimports" = {
+    version = "v0.48.0",
+    depends = ["go"]
+}
+
+[env]
+DB_SSL_MODE = { default = "disable" }
+DB_IMAGE = { default = "postgres:16.4" }
+DB_CONTAINER = { default = "getstronger" }
+DB_CONFIG_PATH = { default = "./database/bobgen.yaml" }
+DB_MIGRATIONS_PATH = { default = "database/migrations/" }
+USER_EMAIL = { default = "active@onemorerep.test" }
+USER_PASSWORD = { default = "password123" }
+USER_FIRSTNAME = { default = "Alex" }
+USER_LASTNAME = { default = "Morgan" }
+NEW_USER_EMAIL = { default = "new@onemorerep.test" }
+NEW_USER_FIRSTNAME = { default = "Sam" }
+NEW_USER_LASTNAME = { default = "Taylor" }
+
+# Database tasks
+
+[tasks."db:init"]
+alias = "db_init"
+description = "Recreate the local PostgreSQL container"
+env = { _.file = ".env" }
+run = [{ task = "db:clean" }, '''
+  docker run --name "$DB_CONTAINER" -d -p "$DB_PORT:5432" \
+    -e POSTGRES_DB="$DB_NAME" \
+    -e POSTGRES_USER="$DB_USER" \
+    -e POSTGRES_HOST_AUTH_METHOD=trust \
+    "$DB_IMAGE"
+  ''']
+
+[tasks."db:start"]
+alias = "db_start"
+description = "Start the local PostgreSQL container"
+run = 'docker start "$DB_CONTAINER"'
+
+[tasks."db:reset"]
+alias = "db_migrate"
+description = "Reset migrations and regenerate the database models"
+env = { _.file = ".env" }
+run = [
+    'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose down --all',
+    'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
+    'bobgen-psql -c "$DB_CONFIG_PATH"',
+    'git apply --ignore-space-change database/bobgen-v0.50.0.patch',
+]
+
+[tasks."db:migrate"]
+alias = ["db_migrate_up", "db:migrate:up"]
+description = "Apply pending migrations and regenerate the database models"
+env = { _.file = ".env" }
+run = [
+    'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
+    'bobgen-psql -c "$DB_CONFIG_PATH"',
+    'git apply --ignore-space-change database/bobgen-v0.50.0.patch',
+]
+
+[tasks."db:seed"]
+alias = "db_seed"
+description = "Seed the local database"
+run = '''
+go run server/testing/factory/seed/main.go \
+  -email="$USER_EMAIL" \
+  -password="$USER_PASSWORD" \
+  -firstname="$USER_FIRSTNAME" \
+  -lastname="$USER_LASTNAME" \
+  -new-email="$NEW_USER_EMAIL" \
+  -new-firstname="$NEW_USER_FIRSTNAME" \
+  -new-lastname="$NEW_USER_LASTNAME"
+'''
+
+# Code generation tasks
+
+[tasks.gen]
+description = "Generate all code and local certificates"
+run = [{ task = "gen:go" }, { task = "gen:certs" }, { task = "gen:protos" }]
+
+[tasks."gen:go"]
+alias = "gen_go"
+description = "Run Go code generation"
+run = "go generate ./..."
+
+[tasks."gen:certs"]
+alias = "gen_certs"
+description = "Generate self-signed certificates for local HTTPS"
+env = { _.file = ".env" }
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p .secrets
+openssl req -x509 -out .secrets/localhost.crt -keyout .secrets/localhost.key \
+  -newkey rsa:2048 -nodes -sha256 \
+  -subj "/CN=localhost" -extensions EXT -config <(
+    printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth"
+  )
+
+echo "✅  Appending cert and key paths to .env file"
+echo "SERVER_KEY_PATH=$PWD/.secrets/localhost.key" >> .env
+echo "SERVER_CERT_PATH=$PWD/.secrets/localhost.crt" >> .env
+echo "⚠️ Restart the server and visit the following link to trust the certificate in your browser: https://localhost:$SERVER_PORT"
+'''
+
+[tasks."gen:protos"]
+alias = "gen_protos"
+description = "Generate and format Protocol Buffer code"
+run = ["buf generate", { task = "format:backend" }]
+
+# Test tasks
+
+[tasks.test]
+description = "Run all tests"
+run = [{ task = "test:web" }, { task = "test:backend" }]
+
+[tasks."test:web"]
+alias = "test_web"
+description = "Build and test the web application"
+dir = "web"
+run = [
+    "npm run build",
+    # "npm run test:unit",
+]
+
+[tasks."test:backend"]
+alias = "test_backend"
+description = "Run backend tests"
+run = "go test ./..."
+
+[tasks."test:e2e"]
+alias = "test_e2e"
+description = "Reset seeded data and run browser end-to-end tests"
+run = [
+    { task = "db:seed" },
+    "cd web && npm run test:e2e",
+    'echo "Open the report with: mise run test:e2e:report"',
+]
+
+[tasks."test:e2e:headed"]
+description = "Reset seeded data and run visible browser end-to-end tests"
+run = [{ task = "db:seed" }, "cd web && npm run test:e2e:headed"]
+
+[tasks."test:e2e:live"]
+description = "Run the non-mutating browser smoke suite against E2E_BASE_URL"
+dir = "web"
+run = [
+    'test -n "$E2E_BASE_URL" || (echo "E2E_BASE_URL is required" && exit 1)',
+    "npm run test:e2e:live",
+]
+
+[tasks."test:e2e:report"]
+description = "Open the latest browser end-to-end test report"
+run = "cd web && npm run test:e2e:report"
+
+[tasks."test:e2e:ui"]
+description = "Reset seeded data and open the Playwright test UI"
+run = [{ task = "db:seed" }, "cd web && npm run test:e2e:ui"]
+
+# Application tasks
+
+[tasks.app]
+description = "Run the web, email, and backend applications"
+run = [{ tasks = ["app:web", "app:email", "app:backend"] }]
+
+[tasks."app:web"]
+alias = "app_web"
+description = "Run the web development server"
+dir = "web"
+run = ["npm install", "npm run dev"]
+
+[tasks."app:email"]
+alias = "app_email"
+description = "Run MailHog"
+run = [
+    "docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog",
+    '''echo "The email app is running at http://localhost:8025"''',
+]
+
+[tasks."app:backend"]
+alias = "app_backend"
+description = "Run the backend server"
+run = "go run ./server/cmd/main.go"
+
+# Code quality tasks
+
+[tasks.format]
+description = "Format all code"
+run = [
+    { task = "format:web" },
+    { task = "format:backend" },
+]
+
+[tasks."format:web"]
+alias = "format_web"
+description = "Format web code"
+dir = "web"
+run = ["npx sort-package-json", "npm run format"]
+
+[tasks."format:backend"]
+alias = "format_backend"
+description = "Format backend code"
+run = ["goimports -w .", "gofumpt -l -w ."]
+
+[tasks.lint]
+description = "Lint all code"
+run = [
+    { task = "lint:web" },
+    { task = "lint:protos" },
+    { task = "lint:backend" },
+]
+
+[tasks."lint:web"]
+alias = "lint_web"
+description = "Lint web code"
+dir = "web"
+run = "npm run lint"
+
+[tasks."lint:protos"]
+alias = "lint_protos"
+description = "Lint Protocol Buffer definitions"
+run = "buf lint"
+
+[tasks."lint:backend"]
+alias = "lint_backend"
+description = "Lint backend code"
+run = "golangci-lint run"
+
+[tasks.vet]
+description = "Vet all code"
+run = [{ task = "vet:go" }]
+
+[tasks."vet:go"]
+alias = "vet_go"
+description = "Vet Go code"
+run = "go vet ./..."
+
+# Installation tasks
+
+[tasks.install]
+description = "Install dependencies, tools, and Git hooks"
+run = [
+    { task = "install:tools" },
+    { task = "install:go" },
+    { task = "install:js" },
+    { task = "install:hooks" },
+]
+
+[tasks."install:go"]
+alias = "install_go"
+description = "Install Go dependencies"
+run = ["go mod download", "go mod tidy"]
+
+[tasks."install:js"]
+alias = "install_js"
+description = "Install JavaScript dependencies"
+run = ["npm install", { task = "install:js:web" }]
+
+[tasks."install:js:web"]
+alias = "install_js_web"
+description = "Install web dependencies"
+hide = true
+dir = "web"
+run = "npm install"
+
+[tasks."install:e2e"]
+description = "Install the browsers used by end-to-end tests"
+dir = "web"
+run = "npx playwright install chromium firefox webkit"
+
+[tasks."install:tools"]
+alias = "install_tools"
+description = "Install the tools configured in mise.toml"
+run = "mise install"
+
+[tasks."install:hooks"]
+alias = "install_hooks"
+description = "Install the pre-push Git hook"
+run = [
+    "cp ./scripts/pre_push_hook.sh .git/hooks/pre-push",
+    '''echo "✅  Installed pre-push hook"''',
+]
+
+# Local development tasks
+
+[tasks.env]
+description = "Create local environment files when missing"
+run = [
+    "test -f .env || cp .env.example .env",
+    "test -f web/.env || cp web/.env.example web/.env",
+]
+
+[tasks.setup]
+description = "Set up and run the local development environment"
+run = [
+    { task = "install" },
+    { task = "env" },
+    { task = "gen:certs" },
+    { task = "db:init" },
+    "sleep 1",
+    { task = "db:migrate" },
+    { task = "db:seed" },
+    { task = "app" },
+]
+
+# Cleanup tasks
+
+[tasks.clean]
+description = "Remove local development resources"
+run = [{ task = "db:clean" }]
+
+[tasks."db:clean"]
+alias = "clean_db"
+description = "Remove the local PostgreSQL container"
+run = 'docker rm -f "$DB_CONTAINER" || true'

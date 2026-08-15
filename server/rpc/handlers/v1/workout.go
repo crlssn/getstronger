@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
@@ -40,46 +41,120 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
 	}
 
-	routine, err := h.repo.GetRoutine(ctx,
-		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
-		repo.GetRoutineWithUserID(userID),
-	)
+	workoutName, err := h.resolveWorkoutName(ctx, req.Msg, userID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("routine not found")
-			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
-		}
-
-		log.Error("failed to get routine", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
+		return nil, err
 	}
 
-	workout, err := h.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
-		Name:         routine.Title,
-		Note:         req.Msg.GetNote(),
-		UserID:       userID,
-		StartedAt:    req.Msg.GetStartedAt().AsTime(),
-		FinishedAt:   req.Msg.GetFinishedAt().AsTime(),
-		ExerciseSets: parser.ExerciseSetsFromPB(req.Msg.GetExerciseSets()),
-	})
+	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, userID, workoutName)
 	if err != nil {
 		log.Error("failed to create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	if planAdvanceSkipped != nil {
+		log.Warn(
+			"workout saved without advancing plan",
+			zap.String("plan_id", req.Msg.GetPlanId()),
+			zap.String("routine_id", req.Msg.GetRoutineId()),
+			zap.Error(planAdvanceSkipped),
+		)
 	}
 
 	log.Info("workout finished")
 	return &connect.Response[apiv1.CreateWorkoutResponse]{
 		Msg: &apiv1.CreateWorkoutResponse{
-			WorkoutId: workout.ID,
+			WorkoutId: workout.ID.String(),
 		},
 	}, nil
+}
+
+func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.CreateWorkoutRequest, userID string) (string, error) {
+	log := xcontext.MustExtractLogger(ctx)
+	if request.GetRoutineId() == "" {
+		if request.GetPlanId() != "" {
+			log.Warn("plan workout is missing a routine")
+			return "", connect.NewError(connect.CodeInvalidArgument, nil)
+		}
+
+		if request.GetWorkoutName() != "" {
+			return request.GetWorkoutName(), nil
+		}
+
+		return "Quick Workout", nil
+	}
+
+	routine, err := h.repo.GetRoutine(
+		ctx,
+		repo.GetRoutineWithID(request.GetRoutineId()),
+		repo.GetRoutineWithUserID(userID),
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("routine not found")
+			return "", connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
+		log.Error("failed to get routine", zap.Error(err))
+		return "", connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return routine.Title, nil
+}
+
+func (h *workoutHandler) createWorkout(
+	ctx context.Context,
+	request *apiv1.CreateWorkoutRequest,
+	userID string,
+	workoutName string,
+) (*models.Workout, error, error) {
+	var workout *models.Workout
+	var planAdvanceSkipped error
+	err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
+		createdWorkout, createErr := tx.CreateWorkout(ctx, repo.CreateWorkoutParams{
+			Name:         workoutName,
+			Note:         request.GetNote(),
+			UserID:       userID,
+			RoutineID:    request.GetRoutineId(),
+			StartedAt:    request.GetStartedAt().AsTime(),
+			FinishedAt:   request.GetFinishedAt().AsTime(),
+			ExerciseSets: parser.ExerciseSetsFromPB(request.GetExerciseSets()),
+		})
+		if createErr != nil {
+			return fmt.Errorf("create workout: %w", createErr)
+		}
+		workout = createdWorkout
+
+		if request.GetPlanId() == "" {
+			return nil
+		}
+
+		_, advanceErr := tx.AdvancePlan(ctx, request.GetPlanId(), userID, request.GetRoutineId())
+		if advanceErr == nil {
+			return nil
+		}
+		if isPlanAdvanceSkippable(advanceErr) {
+			planAdvanceSkipped = advanceErr
+			return nil
+		}
+
+		return fmt.Errorf("advance plan: %w", advanceErr)
+	})
+
+	return workout, planAdvanceSkipped, err
+}
+
+func isPlanAdvanceSkippable(err error) bool {
+	return errors.Is(err, repo.ErrPlanNotActive) ||
+		errors.Is(err, repo.ErrPlanUnexpectedRoutine) ||
+		errors.Is(err, sql.ErrNoRows)
 }
 
 func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[apiv1.GetWorkoutRequest]) (*connect.Response[apiv1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	// TODO: Analyse query performance.
-	workout, err := h.repo.GetWorkout(ctx,
+	workout, err := h.repo.GetWorkout(
+		ctx,
 		repo.GetWorkoutWithID(req.Msg.GetId()),
 		repo.GetWorkoutLoadSets(),
 		repo.GetWorkoutLoadUser(),
@@ -97,7 +172,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID)
+	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID.String())
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -106,9 +181,10 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	log.Info("workout fetched")
 	return &connect.Response[apiv1.GetWorkoutResponse]{
 		Msg: &apiv1.GetWorkoutResponse{
-			Workout: parser.Workout(workout,
-				parser.WorkoutIntensity(workout.R.GetSets()),
-				parser.WorkoutExerciseSets(workout.R.GetSets(), personalBests),
+			Workout: parser.Workout(
+				workout,
+				parser.WorkoutIntensity(workout.R.Sets),
+				parser.WorkoutExerciseSets(workout.R.Sets, personalBests),
 			),
 		},
 	}, nil
@@ -118,7 +194,8 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	workouts, err := h.repo.ListWorkouts(ctx,
+	workouts, err := h.repo.ListWorkouts(
+		ctx,
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadExercises(),
@@ -131,7 +208,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *orm.Workout) time.Time {
+	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) time.Time {
 		return workout.CreatedAt
 	})
 	if err != nil {
@@ -166,7 +243,8 @@ func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.DeleteWorkout(ctx,
+	if err := h.repo.DeleteWorkout(
+		ctx,
 		repo.DeleteWorkoutWithID(req.Msg.GetId()),
 		repo.DeleteWorkoutWithUserID(userID),
 	); err != nil {
@@ -197,8 +275,9 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.pubSub.Publish(ctx, orm.EventTopicWorkoutCommentPosted, payloads.WorkoutCommentPosted{
-		CommentID: comment.ID,
+	h.pubSub.Publish(ctx, repo.EventTopicWorkoutCommentPosted, payloads.WorkoutCommentPosted{
+		CommentID: comment.ID.String(),
+		EventID:   uuid.NewString(),
 	})
 
 	log.Info("workout comment posted")
@@ -231,13 +310,14 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if workout.UserID != userID {
+	if workout.UserID.String() != userID {
 		log.Error("workout does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
 	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
-		if err = tx.UpdateWorkout(ctx, workout.ID,
+		if err = tx.UpdateWorkout(
+			ctx, workout.ID.String(),
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
 			repo.UpdateWorkoutNote(req.Msg.GetWorkout().GetNote()),
 			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
@@ -248,7 +328,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 		exerciseSets := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
 		if err = tx.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
-			WorkoutID:    workout.ID,
+			WorkoutID:    workout.ID.String(),
 			ExerciseSets: exerciseSets,
 		}); err != nil {
 			return fmt.Errorf("failed to update workout sets: %w", err)

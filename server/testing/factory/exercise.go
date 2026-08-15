@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
+	"github.com/lib/pq"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
+	"github.com/crlssn/getstronger/server/gen/models"
 )
 
-func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) orm.ExerciseSlice {
-	var slice orm.ExerciseSlice
+func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) models.ExerciseSlice {
+	slice := make(models.ExerciseSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewExercise(opts...))
 	}
@@ -21,77 +23,102 @@ func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) orm.ExerciseS
 	return slice
 }
 
-type ExerciseOpt func(event *orm.Exercise)
+type ExerciseOpt func(exercise *models.ExerciseSetter)
 
-func (f *Factory) NewExercise(opts ...ExerciseOpt) *orm.Exercise {
-	m := &orm.Exercise{
-		ID:        uuid.NewString(),
-		UserID:    "",
-		Title:     f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"}),
-		SubTitle:  null.String{},
-		CreatedAt: time.Time{},
-		DeletedAt: null.Time{},
+func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
+	setter := &models.ExerciseSetter{
+		ID:    omit.From(newUUID()),
+		Title: omit.From(f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"})),
+		Tags:  omit.From(pq.StringArray{}),
 	}
-
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	ctx := context.Background()
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		var err error
+		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve user: %w", err))
+		}
+	} else {
+		user = f.NewUser()
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.ExerciseColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
-		panic(fmt.Errorf("failed to insert exercise: %w", err))
+	mods := []bobfactory.ExerciseMod{bobfactory.ExerciseMods.WithExistingUser(userWithoutRelationships(user))}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.ExerciseMods.ID(value))
+	}
+	if value, ok := setter.Title.Get(); ok {
+		mods = append(mods, bobfactory.ExerciseMods.Title(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.ExerciseMods.CreatedAt(value))
+	}
+	if value, ok := setter.DeletedAt.GetNull(); ok {
+		mods = append(mods, bobfactory.ExerciseMods.DeletedAt(value))
+	}
+	if value, ok := setter.Tags.Get(); ok {
+		mods = append(mods, bobfactory.ExerciseMods.Tags(value))
+	}
+	if value, ok := setter.Metrics.Get(); ok {
+		mods = append(mods, bobfactory.ExerciseMods.Metrics(value))
+	}
+	if value, ok := setter.RestSeconds.Get(); ok {
+		mods = append(mods, bobfactory.ExerciseMods.RestSeconds(value))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	template := f.generated.NewExercise(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	exercise, err := models.Exercises.Insert(
+		setter,
+		im.OnConflict(models.Exercises.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
+		panic(fmt.Errorf("failed to create exercise with Bob factory: %w", err))
 	}
+	exercise.R = built.R
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return exercise
 }
 
-func ExerciseID(id string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.ID = id
+func ExerciseID(id any) ExerciseOpt {
+	return func(m *models.ExerciseSetter) {
+		m.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func ExerciseUserID(userID string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.UserID = userID
+func ExerciseUserID(userID any) ExerciseOpt {
+	return func(m *models.ExerciseSetter) {
+		m.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
 func ExerciseTitle(title string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.Title = title
+	return func(m *models.ExerciseSetter) {
+		m.Title = omit.From(title)
 	}
 }
 
-func ExerciseSubTitle(subTitle string) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.SubTitle = null.StringFrom(subTitle)
+func ExerciseTags(tags ...string) ExerciseOpt {
+	return func(m *models.ExerciseSetter) {
+		m.Tags = omit.From(pq.StringArray(tags))
 	}
 }
 
 func ExerciseCreatedAt(t time.Time) ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.CreatedAt = t.UTC()
+	return func(m *models.ExerciseSetter) {
+		m.CreatedAt = omit.From(t.UTC())
 	}
 }
 
 func ExerciseDeleted() ExerciseOpt {
-	return func(m *orm.Exercise) {
-		m.DeletedAt = null.TimeFrom(time.Now().UTC())
+	return func(m *models.ExerciseSetter) {
+		m.DeletedAt = omitnull.From(time.Now().UTC())
 	}
 }

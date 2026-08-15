@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW getstronger.personal_bests AS
+CREATE OR REPLACE VIEW public.personal_bests AS
 SELECT
     uuid_generate_v5(
             '00000000-0000-0000-0000-000000000000',
@@ -18,11 +18,11 @@ FROM (
              sets.weight,
              sets.reps,
              sets.created_at
-         FROM getstronger.sets
-            INNER JOIN getstronger.workouts w ON w.id = sets.workout_id
+         FROM public.sets
+            INNER JOIN public.workouts w ON w.id = sets.workout_id
          WHERE sets.weight = (
              SELECT MAX(s.weight)
-             FROM getstronger.sets s
+             FROM public.sets s
              WHERE s.exercise_id = sets.exercise_id
          )
          ORDER BY sets.exercise_id, sets.created_at

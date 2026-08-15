@@ -1,50 +1,68 @@
 <script setup lang="ts">
-import { type DropdownItem } from '@/types/dropdown.ts'
-import AppButton from '@/ui/components/AppButton.vue'
-import AppBackdrop from '@/ui/components/AppBackdrop.vue'
-import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid'
+import type { DropdownItem } from '@/types/dropdown'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 
-interface Props {
-  items: Array<DropdownItem>
-}
-
-const props = defineProps<Props>()
+withDefaults(defineProps<{ items: DropdownItem[]; label?: string }>(), {
+  label: 'Workout actions',
+})
 </script>
 
 <template>
-  <Menu v-slot="{ open }" as="div" class="relative inline-block text-left">
-    <div>
-      <MenuButton
-        class="flex items-center rounded-full text-gray-400 hover:text-gray-600 focus:outline-none"
-      >
-        <EllipsisVerticalIcon class="size-6 text-gray-500" />
-      </MenuButton>
-    </div>
-
-    <AppBackdrop v-if="open" :open="true" />
+  <Menu as="div" class="relative inline-block text-left">
+    <MenuButton class="menu-trigger" :aria-label="label">
+      <EllipsisHorizontalIcon />
+    </MenuButton>
     <transition
-      enter-active-class="transition ease-out duration-300"
-      enter-from-class="transform translate-y-full"
-      enter-to-class="transform translate-y-0"
-      leave-active-class="transition ease-in duration-200"
-      leave-from-class="transform translate-y-0"
-      leave-to-class="transform translate-y-full"
+      enter-active-class="transition duration-100 ease-out"
+      enter-from-class="scale-95 opacity-0"
+      enter-to-class="scale-100 opacity-100"
+      leave-active-class="transition duration-75 ease-in"
+      leave-from-class="scale-100 opacity-100"
+      leave-to-class="scale-95 opacity-0"
     >
-      <MenuItems
-        class="max-w-4xl mx-auto shadow-2xl fixed right-0 bottom-0 left-0 w-full z-50 origin-top-right rounded-t-2xl overflow-hidden bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-      >
-        <div class="py-8 px-8">
-          <MenuItem v-for="(item, index) in props.items" :key="index" as="div">
-            <AppButton v-if="item.href" colour="primary" type="link" :to="item.href" class="mb-4">
-              {{ item.title }}
-            </AppButton>
-            <AppButton v-if="item.func" colour="gray" type="button" @click="item.func">
-              {{ item.title }}
-            </AppButton>
-          </MenuItem>
-        </div>
+      <MenuItems class="menu-items">
+        <MenuItem v-for="item in items" :key="item.title" v-slot="{ active }">
+          <RouterLink v-if="item.href" :to="item.href" class="menu-item" :class="{ active }">
+            {{ item.title }}
+          </RouterLink>
+          <button
+            v-else
+            type="button"
+            class="menu-item danger"
+            :class="{ active }"
+            @click="item.func"
+          >
+            {{ item.title }}
+          </button>
+        </MenuItem>
       </MenuItems>
     </transition>
   </Menu>
 </template>
+
+<style scoped>
+@reference '../../assets/base.css';
+
+.menu-trigger {
+  @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700;
+}
+.menu-trigger svg {
+  @apply size-5;
+}
+.menu-items {
+  @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl focus:outline-none;
+}
+.menu-item {
+  @apply block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700;
+}
+.menu-item.active {
+  @apply bg-slate-50;
+}
+.menu-item.danger {
+  @apply text-red-600;
+}
+.menu-item.danger.active {
+  @apply bg-red-50;
+}
+</style>

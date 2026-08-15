@@ -8,9 +8,11 @@ type RequestTraced struct {
 
 type WorkoutCommentPosted struct {
 	CommentID string `json:"commentId"`
+	EventID   string `json:"eventId"`
 }
 
 type UserFollowed struct {
 	FollowerID string `json:"followerId"`
 	FolloweeID string `json:"followeeId"`
+	EventID    string `json:"eventId"`
 }

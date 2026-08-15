@@ -3,13 +3,31 @@ import { RouterView } from 'vue-router'
 import AppAlert from '@/ui/components/AppAlert.vue'
 import AppNavBottom from '@/ui/components/AppNavBottom.vue'
 import AppNavTop from '@/ui/components/AppNavTop.vue'
+import AppRestTimerBanner from '@/ui/components/AppRestTimerBanner.vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const routesWithoutPageNavigation = new Set([
+  'home',
+  'workout',
+  'plans',
+  'routines',
+  'exercises',
+  'profile',
+  // Active sessions render their own sticky timer bar in place of the top nav.
+  'workout-routine',
+  'quick-workout',
+])
+const showsTopNavigation = computed(() => !routesWithoutPageNavigation.has(route.name as string))
 </script>
 
 <template>
-  <div class="pb-12">
-    <AppNavTop />
+  <div class="dashboard-shell">
     <AppAlert />
+    <AppRestTimerBanner />
     <main>
+      <AppNavTop v-if="showsTopNavigation" />
       <RouterView />
     </main>
     <AppNavBottom />
@@ -17,7 +35,12 @@ import AppNavTop from '@/ui/components/AppNavTop.vue'
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
+.dashboard-shell {
+  padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
+}
 main {
-  @apply mx-auto max-w-4xl bg-gray-100 pt-4 pb-8 px-2;
+  @apply mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 lg:px-8 lg:py-7;
 }
 </style>

@@ -1,0 +1,20 @@
+psql:
+  dsn: "postgres://root:root@localhost:5433/postgres?sslmode=disable"
+  except:
+    schema_migrations:
+
+types:
+  int32:
+    random_expr: "return f.Int32Between(0, 3600)"
+
+plugins:
+  models:
+    destination: server/gen/models
+  enums:
+    destination: server/gen/models/enums
+  dberrors:
+    destination: server/gen/models/dberrors
+  factory:
+    destination: server/gen/factory
+  dbinfo:
+    destination: server/gen/dbinfo

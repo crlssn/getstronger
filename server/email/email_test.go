@@ -33,7 +33,10 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 	c := new(config.Config)
 
-	c.Email.Provider = config.EmailProviderSES
+	c.Email.Provider = config.EmailProviderScaleway
+	c.Email.ScalewayProjectID = "project-id"
+	c.Email.ScalewaySecretKey = "secret-key"
+	c.Server.AllowedOrigins = []string{"https://example.com"}
 	_, err := email.New(c)
 	require.NoError(t, err)
 

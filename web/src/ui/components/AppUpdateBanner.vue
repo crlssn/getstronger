@@ -1,0 +1,62 @@
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { ArrowPathIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+
+import { useAppVersionStore } from '@/stores/appVersion'
+
+// Prompts rather than reloading on its own: a reload mid-set would interrupt a
+// workout the user is in the middle of logging.
+const versionStore = useAppVersionStore()
+
+onMounted(() => versionStore.start())
+onUnmounted(() => versionStore.stop())
+</script>
+
+<template>
+  <div v-if="versionStore.updateAvailable" class="update-banner" role="status">
+    <ArrowPathIcon />
+    <p>{{ $t('update.available') }}</p>
+    <button type="button" class="refresh" @click="versionStore.refresh()">
+      {{ $t('update.refresh') }}
+    </button>
+    <button
+      type="button"
+      class="dismiss"
+      :aria-label="$t('common.close')"
+      @click="versionStore.dismiss()"
+    >
+      <XMarkIcon />
+    </button>
+  </div>
+</template>
+
+<style scoped>
+@reference '../../assets/base.css';
+
+/* Sits above the bottom navigation and the workout dock. */
+.update-banner {
+  bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  @apply fixed inset-x-0 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-stone-900 px-4 py-3 text-white shadow-xl;
+  margin-inline: 0.75rem;
+}
+.update-banner > svg {
+  @apply size-5 shrink-0;
+}
+.update-banner p {
+  @apply min-w-0 flex-1 text-sm font-medium;
+}
+.refresh {
+  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-stone-900 transition hover:bg-stone-100;
+}
+.dismiss {
+  @apply grid size-9 shrink-0 place-items-center rounded-lg text-stone-400 transition hover:bg-white/10 hover:text-white;
+}
+.dismiss svg {
+  @apply size-5;
+}
+@media (min-width: 640px) {
+  .update-banner {
+    margin-inline: auto;
+  }
+}
+</style>

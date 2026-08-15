@@ -7,7 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -48,7 +48,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 
 		followeeIDs := make([]string, 0, len(followees))
 		for _, follower := range followees {
-			followeeIDs = append(followeeIDs, follower.ID)
+			followeeIDs = append(followeeIDs, follower.ID.String())
 		}
 
 		opts = append(opts, repo.ListWorkoutsWithUserIDs(append(followeeIDs, userID)...))
@@ -60,7 +60,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *orm.Workout) time.Time {
+	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) time.Time {
 		return workout.CreatedAt
 	})
 	if err != nil {

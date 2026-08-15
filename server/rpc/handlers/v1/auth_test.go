@@ -9,8 +9,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
-	"github.com/volatiletech/null/v8"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -18,7 +18,8 @@ import (
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/cookies"
 	"github.com/crlssn/getstronger/server/email"
-	"github.com/crlssn/getstronger/server/gen/orm"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/jwt"
@@ -95,6 +96,7 @@ func (s *authSuite) TestSignup() {
 					PasswordConfirmation: "password",
 					FirstName:            gofakeit.FirstName(),
 					LastName:             gofakeit.LastName(),
+					WeightUnit:           v1.WeightUnit_WEIGHT_UNIT_POUNDS,
 				},
 			},
 			init: func(t test) {
@@ -148,15 +150,16 @@ func (s *authSuite) TestSignup() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			auth, err := orm.Auths(orm.AuthWhere.Email.EQ(t.req.Msg.GetEmail())).One(ctx, s.container.DB)
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(t.req.Msg.GetEmail())).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(auth.EmailVerified)
 
-			user, err := auth.User().One(ctx, s.container.DB)
+			user, err := auth.User().One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 
 			s.Require().Equal(t.req.Msg.GetFirstName(), user.FirstName)
 			s.Require().Equal(t.req.Msg.GetLastName(), user.LastName)
+			s.Require().Equal("lb", user.WeightUnit)
 		})
 	}
 }
@@ -250,9 +253,9 @@ func (s *authSuite) TestLogin() {
 			s.Require().NotNil(res)
 			s.Require().NotEmpty(res.Msg.GetAccessToken())
 
-			auth, err := orm.Auths(orm.AuthWhere.Email.EQ(t.req.Msg.GetEmail())).One(ctx, s.container.DB)
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(t.req.Msg.GetEmail())).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
-			s.Require().True(auth.RefreshToken.Valid)
+			s.Require().False(auth.RefreshToken.IsNull())
 		})
 	}
 }
@@ -347,7 +350,7 @@ func (s *authSuite) TestLogout() {
 			init: func(t test) context.Context {
 				auth := s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithRefreshToken(ctx, auth.RefreshToken.String)
+				return xcontext.WithRefreshToken(ctx, auth.RefreshToken.GetOrZero())
 			},
 			expected: expected{
 				err: nil,
@@ -395,7 +398,7 @@ func (s *authSuite) TestLogout() {
 			s.Require().Contains(cookie, "HttpOnly")
 			s.Require().Contains(cookie, "Max-Age=0")
 
-			exists, existsErr := orm.Auths(orm.AuthWhere.RefreshToken.EQ(null.StringFrom(t.token))).Exists(ctx, s.container.DB)
+			exists, existsErr := models.Auths.Query(models.SelectWhere.Auths.RefreshToken.EQ(t.token)).Exists(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(existsErr)
 			s.Require().False(exists)
 		})
@@ -463,7 +466,7 @@ func (s *authSuite) TestVerifyEmail() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			auth, err := orm.Auths(orm.AuthWhere.EmailToken.EQ(t.req.Msg.GetToken())).One(ctx, s.container.DB)
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.EmailToken.EQ(nativeUUID(t.req.Msg.GetToken()))).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().True(auth.EmailVerified)
 		})
@@ -634,11 +637,9 @@ func (s *authSuite) TestUpdatePassword() {
 			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 
 			var err error
-			var auth *orm.Auth
+			var auth *models.Auth
 			if t.expected.err == nil {
-				auth, err = orm.Auths(
-					orm.AuthWhere.PasswordResetToken.EQ(null.StringFrom(t.req.Msg.GetToken())),
-				).One(ctx, s.container.DB)
+				auth, err = models.Auths.Query(models.SelectWhere.Auths.PasswordResetToken.EQ(nativeUUID(t.req.Msg.GetToken()))).One(ctx, bob.NewDB(s.container.DB))
 				s.Require().NoError(err)
 			}
 
@@ -652,8 +653,8 @@ func (s *authSuite) TestUpdatePassword() {
 
 			s.Require().NotNil(res)
 			s.Require().NoError(err)
-			s.Require().NoError(auth.Reload(ctx, s.container.DB))
-			s.Require().Empty(auth.PasswordResetToken.String)
+			s.Require().NoError(auth.Reload(ctx, bob.NewDB(s.container.DB)))
+			s.Require().Empty(auth.PasswordResetToken.GetOrZero())
 			s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.req.Msg.GetPassword())))
 		})
 	}

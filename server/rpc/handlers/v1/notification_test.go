@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
+	"github.com/crlssn/getstronger/server/stream"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 	"github.com/crlssn/getstronger/server/xcontext"
@@ -26,6 +26,7 @@ type notificationSuite struct {
 	suite.Suite
 
 	handler apiv1connect.NotificationServiceHandler
+	stream  *stream.Manager
 
 	testFactory   *factory.Factory
 	testContainer *container.Container
@@ -40,7 +41,8 @@ func (s *notificationSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = container.NewContainer(ctx)
 	s.testFactory = factory.NewFactory(s.testContainer.DB)
-	s.handler = handlers.NewNotificationHandler(repo.New(s.testContainer.DB), nil)
+	s.stream = stream.NewManager()
+	s.handler = handlers.NewNotificationHandler(repo.New(s.testContainer.DB), s.stream)
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
@@ -49,7 +51,100 @@ func (s *notificationSuite) SetupSuite() {
 	})
 }
 
-func (s *notificationSuite) TestListNotifications() {
+func (s *notificationSuite) TestMarkSingleNotificationAsReadNotifiesStreams() {
+	user := s.testFactory.NewUser()
+	notification := s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
+	s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
+	otherNotification := s.testFactory.NewNotification()
+
+	updates, unsubscribe := s.stream.Subscribe(user.ID.String(), func() {})
+	defer unsubscribe()
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	notificationID := notification.ID.String()
+	res, err := s.handler.MarkNotificationsAsRead(
+		ctx,
+		connect.NewRequest(&apiv1.MarkNotificationsAsReadRequest{
+			NotificationId: &notificationID,
+		}),
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+
+	select {
+	case <-updates:
+	default:
+		s.T().Fatal("expected notification stream update")
+	}
+
+	count, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
+	s.Equal(int64(1), count)
+
+	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(otherNotification.UserID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
+	s.Equal(int64(1), otherCount)
+}
+
+func (s *notificationSuite) TestMarkAllNotificationsAsRead() {
+	user := s.testFactory.NewUser()
+	s.testFactory.NewNotificationSlice(2, factory.NotificationUserID(user.ID.String()))
+	otherNotification := s.testFactory.NewNotification()
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	res, err := s.handler.MarkNotificationsAsRead(
+		ctx,
+		connect.NewRequest(&apiv1.MarkNotificationsAsReadRequest{}),
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+
+	count, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
+	s.Require().Zero(count)
+
+	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
+		ctx,
+		repo.CountNotificationsWithUserID(otherNotification.UserID.String()),
+		repo.CountNotificationsWithUnreadOnly(true),
+	)
+	s.Require().NoError(err)
+	s.Equal(int64(1), otherCount)
+}
+
+func (s *notificationSuite) TestGetUnreadNotificationCount() {
+	user := s.testFactory.NewUser()
+	s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
+	s.testFactory.NewNotification(
+		factory.NotificationUserID(user.ID.String()),
+		factory.NotificationRead(),
+	)
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	res, err := s.handler.GetUnreadNotificationCount(
+		ctx,
+		connect.NewRequest(&apiv1.GetUnreadNotificationCountRequest{}),
+	)
+	s.Require().NoError(err)
+	s.Equal(int64(1), res.Msg.GetCount())
+}
+
+func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table-driven notification states are clearer together.
 	type expected struct {
 		err error
 		res *connect.Response[apiv1.ListNotificationsResponse]
@@ -115,12 +210,12 @@ func (s *notificationSuite) TestListNotifications() {
 					)
 					s.testFactory.NewNotification(
 						factory.NotificationID(n.GetId()),
-						factory.NotificationType(orm.NotificationTypeWorkoutComment),
+						factory.NotificationType(repo.NotificationTypeWorkoutComment),
 						factory.NotificationUserID(userID),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						factory.NotificationPayload(repo.NotificationPayload{
-							ActorID:   comment.UserID,
-							WorkoutID: workout.ID,
+							ActorID:   comment.UserID.String(),
+							WorkoutID: workout.ID.String(),
 						}),
 					)
 				}
@@ -171,7 +266,7 @@ func (s *notificationSuite) TestListNotifications() {
 				for _, n := range test.expected.res.Msg.GetNotifications() {
 					s.testFactory.NewNotification(
 						factory.NotificationID(n.GetId()),
-						factory.NotificationType(orm.NotificationTypeFollow),
+						factory.NotificationType(repo.NotificationTypeFollow),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						factory.NotificationUserID(userID),
 						factory.NotificationPayload(repo.NotificationPayload{
@@ -179,7 +274,7 @@ func (s *notificationSuite) TestListNotifications() {
 								factory.UserID(n.GetUserFollowed().GetActor().GetId()),
 								factory.UserLastName(n.GetUserFollowed().GetActor().GetLastName()),
 								factory.UserFirstName(n.GetUserFollowed().GetActor().GetFirstName()),
-							).ID,
+							).ID.String(),
 						}),
 					)
 				}
@@ -219,10 +314,10 @@ func (s *notificationSuite) TestListNotifications() {
 			},
 			init: func(_ test, userID string) {
 				s.testFactory.NewNotification(
-					factory.NotificationType(orm.NotificationTypeWorkoutComment),
+					factory.NotificationType(repo.NotificationTypeWorkoutComment),
 					factory.NotificationUserID(userID),
 					factory.NotificationPayload(repo.NotificationPayload{
-						ActorID:   s.testFactory.NewUser().ID,
+						ActorID:   s.testFactory.NewUser().ID.String(),
 						WorkoutID: uuid.NewString(),
 					}),
 				)
@@ -241,10 +336,10 @@ func (s *notificationSuite) TestListNotifications() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			user := s.testFactory.NewUser()
-			ctx := xcontext.WithUserID(context.Background(), user.ID)
+			ctx := xcontext.WithUserID(context.Background(), user.ID.String())
 			ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
-			t.init(t, user.ID)
+			t.init(t, user.ID.String())
 			res, err := s.handler.ListNotifications(ctx, t.req)
 			if t.expected.err != nil {
 				s.Require().Nil(res)

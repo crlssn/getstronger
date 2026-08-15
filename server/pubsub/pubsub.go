@@ -10,7 +10,6 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/repo"
 )
@@ -20,7 +19,7 @@ type PubSub struct {
 	log      *zap.Logger
 	repo     repo.Repo
 	listener *pq.Listener
-	handlers map[orm.EventTopic]handlers.Handler
+	handlers map[repo.EventTopic]handlers.Handler
 }
 
 type Params struct {
@@ -36,11 +35,11 @@ func New(p Params) *PubSub {
 		log:      p.Log,
 		repo:     p.Repo,
 		listener: p.Listener,
-		handlers: make(map[orm.EventTopic]handlers.Handler),
+		handlers: make(map[repo.EventTopic]handlers.Handler),
 	}
 }
 
-func (ps *PubSub) Publish(ctx context.Context, topic orm.EventTopic, payload any) {
+func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload any) {
 	p, err := json.Marshal(payload)
 	if err != nil {
 		ps.log.Error("failed to marshal payload", zap.Error(err))
@@ -55,7 +54,7 @@ func (ps *PubSub) Publish(ctx context.Context, topic orm.EventTopic, payload any
 
 const workers = 10
 
-func (ps *PubSub) Subscribe(handlers map[orm.EventTopic]handlers.Handler) error {
+func (ps *PubSub) Subscribe(handlers map[repo.EventTopic]handlers.Handler) error {
 	for topic, handler := range handlers {
 		ps.handlers[topic] = handler
 		if err := ps.listener.Listen(topic.String()); err != nil {
@@ -82,7 +81,7 @@ func (ps *PubSub) startWorker() {
 		log.Info("received event")
 
 		ps.mu.RLock()
-		handler, ok := ps.handlers[orm.EventTopic(event.Channel)]
+		handler, ok := ps.handlers[repo.EventTopic(event.Channel)]
 		ps.mu.RUnlock()
 
 		if !ok {

@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
@@ -34,7 +35,8 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	user, err := h.repo.GetUser(ctx,
+	user, err := h.repo.GetUser(
+		ctx,
 		repo.GetUserWithID(req.Msg.GetId()),
 		repo.GetUserLoadAuth(),
 	)
@@ -65,7 +67,8 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
-	users, err := h.repo.ListUsers(ctx,
+	users, err := h.repo.ListUsers(
+		ctx,
 		repo.ListUsersWithLimit(limit+1),
 		repo.ListUsersWithNameMatching(req.Msg.GetQuery()),
 	)
@@ -74,7 +77,7 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(users, limit, func(user *orm.User) time.Time {
+	pagination, err := repo.PaginateSlice(users, limit, func(user *models.User) time.Time {
 		return user.CreatedAt
 	})
 	if err != nil {
@@ -105,9 +108,10 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.pubSub.Publish(ctx, orm.EventTopicFollowedUser, payloads.UserFollowed{
+	h.pubSub.Publish(ctx, repo.EventTopicFollowedUser, payloads.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
+		EventID:    uuid.NewString(),
 	})
 
 	return &connect.Response[apiv1.FollowUserResponse]{

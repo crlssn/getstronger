@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/stephenafamo/bob"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -31,7 +33,7 @@ func TestFactory_Workout(t *testing.T) {
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewWorkout()
-		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkout(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, expected.ID, created.ID)
 		require.Equal(t, expected.UserID, created.UserID)
@@ -46,16 +48,16 @@ func TestFactory_Workout(t *testing.T) {
 		t.Parallel()
 		id := uuid.NewString()
 		expected := f.NewWorkout(factory.WorkoutID(id))
-		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkout(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("WorkoutUserID", func(t *testing.T) {
 		t.Parallel()
 		userID := f.NewUser().ID
 		expected := f.NewWorkout(factory.WorkoutUserID(userID))
-		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkout(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, userID, created.UserID)
 	})
@@ -64,7 +66,7 @@ func TestFactory_Workout(t *testing.T) {
 		t.Parallel()
 		name := gofakeit.Name()
 		expected := f.NewWorkout(factory.WorkoutName(name))
-		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkout(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, name, created.Name)
 	})
@@ -73,16 +75,16 @@ func TestFactory_Workout(t *testing.T) {
 		t.Parallel()
 		note := gofakeit.Word()
 		expected := f.NewWorkout(factory.WorkoutNote(note))
-		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkout(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, note, created.Note.String)
+		require.Equal(t, note, created.Note.GetOrZero())
 	})
 
 	t.Run("WorkoutCreatedAt", func(t *testing.T) {
 		t.Parallel()
 		createdAt := time.Now().Add(-24 * time.Hour).UTC()
 		expected := f.NewWorkout(factory.WorkoutCreatedAt(createdAt))
-		created, err := orm.FindWorkout(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkout(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.WithinDuration(t, createdAt, created.CreatedAt, time.Second)
 	})
@@ -108,7 +110,7 @@ func TestFactory_WorkoutComment(t *testing.T) {
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewWorkoutComment()
-		created, err := orm.FindWorkoutComment(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkoutComment(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, expected.ID, created.ID)
 		require.Equal(t, expected.UserID, created.UserID)
@@ -121,16 +123,16 @@ func TestFactory_WorkoutComment(t *testing.T) {
 		t.Parallel()
 		id := uuid.NewString()
 		expected := f.NewWorkoutComment(factory.WorkoutCommentID(id))
-		created, err := orm.FindWorkoutComment(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkoutComment(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, id, created.ID)
+		require.Equal(t, id, created.ID.String())
 	})
 
 	t.Run("WorkoutCommentUserID", func(t *testing.T) {
 		t.Parallel()
 		userID := f.NewUser().ID
 		expected := f.NewWorkoutComment(factory.WorkoutCommentUserID(userID))
-		created, err := orm.FindWorkoutComment(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkoutComment(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, userID, created.UserID)
 	})
@@ -139,7 +141,7 @@ func TestFactory_WorkoutComment(t *testing.T) {
 		t.Parallel()
 		workoutID := f.NewWorkout().ID
 		expected := f.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workoutID))
-		created, err := orm.FindWorkoutComment(ctx, c.DB, expected.ID)
+		created, err := models.FindWorkoutComment(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, workoutID, created.WorkoutID)
 	})

@@ -1,107 +1,37 @@
 <script setup lang="ts">
-import { type User } from '@/proto/api/v1/shared_pb.ts'
-import { nextTick, ref } from 'vue'
-import { searchUsers } from '@/http/requests.ts'
-import { usePageTitleStore } from '@/stores/pageTitle.ts'
-import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { usePageTitleStore } from '@/stores/pageTitle'
 import ActionButton from '@/ui/components/ActionButton.vue'
-import { useActionButton } from '@/stores/actionButton.ts'
-import { useNavTabs } from '@/stores/navTabs.ts'
-import AppNavTabs from '@/ui/components/AppNavTabs.vue'
+import { useActionButton } from '@/stores/actionButton'
 
-const input = ref<HTMLInputElement | null>(null)
-const users = ref(Array<User>())
-const searchBarOpen = ref(false)
-
-const navTabs = useNavTabs()
 const actionButton = useActionButton()
 const pageTitleStore = usePageTitleStore()
-
-const openSearchBar = () => {
-  searchBarOpen.value = true
-  nextTick(() => {
-    input.value?.focus()
-  })
-}
-
-const closeSearchBar = () => {
-  users.value = []
-  searchBarOpen.value = false
-}
-
-const onSearchUsers = async () => {
-  if (!input.value) return
-
-  if ((input.value.value?.length ?? 0) < 3) {
-    users.value = []
-    return
-  }
-
-  const res = await searchUsers(input.value.value, new Uint8Array(0))
-  if (!res) return
-
-  users.value = res.users
-}
 </script>
 
 <template>
-  <nav :class="navTabs.active ? 'border-b-0' : 'border-b-2'">
-    <div class="container">
-      <template v-if="searchBarOpen">
-        <form class="w-full">
-          <input
-            ref="input"
-            type="text"
-            class="w-full text-sm border-none focus:ring-0"
-            placeholder="Search users"
-            @keyup="onSearchUsers"
-          />
-        </form>
-        <ul
-          v-if="users.length > 0"
-          class="absolute bg-gray-100 border-b-white border-b-2 left-0 right-0 top-16 divide-y divide-white max-w-4xl mx-auto lg:rounded-b-md z-50"
-        >
-          <li v-for="user in users" :key="user.id" @click="closeSearchBar">
-            <RouterLink :to="`/users/${user.id}`" class="block px-5 py-5 text-sm font-medium">
-              {{ user.firstName }} {{ user.lastName }}
-            </RouterLink>
-          </li>
-        </ul>
-        <XMarkIcon class="w-8 h-6 cursor-pointer" @click="closeSearchBar" />
-      </template>
-      <template v-else>
-        <RouterLink to="/home">
-          <img class="h-auto w-8" src="/favicon.png" />
-        </RouterLink>
-        <div class="flex flex-1 gap-x-4 justify-center">
-          <p class="uppercase text-sm font-semibold text-gray-900">
-            {{ pageTitleStore.pageTitle }}
-          </p>
-        </div>
-        <ActionButton
-          v-if="actionButton.active"
-          :action="actionButton.action"
-          :icon="actionButton.icon"
-        />
-        <ActionButton v-else :action="openSearchBar" :icon="MagnifyingGlassIcon" />
-      </template>
+  <header class="page-nav">
+    <span aria-hidden="true"></span>
+    <p>{{ pageTitleStore.pageTitle }}</p>
+    <!-- Views can Teleport their own action (e.g. a dropdown) into this slot. -->
+    <div id="page-nav-action" class="page-action">
+      <ActionButton
+        v-if="actionButton.active"
+        :action="actionButton.action"
+        :icon="actionButton.icon"
+      />
     </div>
-    <AppNavTabs v-if="navTabs.active" />
-  </nav>
-  <div
-    v-if="searchBarOpen"
-    class="fixed z-20 top-0 left-0 right-0 bottom-0 bg-black opacity-50"
-    @click="closeSearchBar"
-  />
+  </header>
 </template>
 
 <style scoped>
-nav {
-  @apply sticky top-0 z-30  border-gray-200 bg-white;
+@reference '../../assets/base.css';
 
-  .container {
-    @apply flex items-center justify-between max-w-4xl mx-auto  gap-x-4  px-4 h-16;
-  }
+.page-nav {
+  @apply mb-5 grid min-h-11 grid-cols-[2.75rem_1fr_2.75rem] items-center gap-3 px-1;
+}
+.page-nav > p {
+  @apply truncate text-center text-sm font-semibold text-slate-900 sm:text-base;
+}
+.page-action {
+  @apply flex min-h-11 items-center justify-end;
 }
 </style>

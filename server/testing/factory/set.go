@@ -1,4 +1,3 @@
-//nolint:cyclop
 package factory
 
 import (
@@ -6,14 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/opt/omit"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
+	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/safe"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
-func (f *Factory) NewSetSlice(count int, opts ...SetOpt) orm.SetSlice {
-	var slice orm.SetSlice
+func (f *Factory) NewSetSlice(count int, opts ...SetOpt) models.SetSlice {
+	slice := make(models.SetSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewSet(opts...))
 	}
@@ -21,108 +23,142 @@ func (f *Factory) NewSetSlice(count int, opts ...SetOpt) orm.SetSlice {
 	return slice
 }
 
-type SetOpt func(set *orm.Set)
+type SetOpt func(set *models.SetSetter)
 
-func (f *Factory) NewSet(opts ...SetOpt) *orm.Set {
-	maxReps := 10
-	maxWeight := 100
-
-	m := &orm.Set{
-		ID:         "",
-		UserID:     "",
-		WorkoutID:  "",
-		ExerciseID: "",
-		Reps:       f.Faker.IntRange(1, maxReps),
-		Weight:     float64(f.Faker.IntRange(1, maxWeight)),
-		CreatedAt:  time.Time{},
+func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
+	const (
+		maxReps   = 10
+		maxWeight = 100
+	)
+	setter := &models.SetSetter{
+		Reps:   omit.From(safe.Int32FromInt(f.Faker.IntRange(1, maxReps))),
+		Weight: omit.From(float64(f.Faker.IntRange(1, maxWeight))),
 	}
-
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
+	}
+	if setter.ID.IsUnset() {
+		setter.ID = omit.From(newUUID())
+	}
+	if setter.UserID.IsUnset() {
+		setter.UserID = omit.From(f.NewUser().ID)
 	}
 
-	if m.ID == "" {
-		m.ID = uuid.NewString()
+	ctx := context.Background()
+	var workout *models.Workout
+	if workoutID, ok := setter.WorkoutID.Get(); ok {
+		var err error
+		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve workout: %w", err))
+		}
+	} else {
+		workout = f.NewWorkout()
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	var exercise *models.Exercise
+	if exerciseID, ok := setter.ExerciseID.Get(); ok {
+		var err error
+		exercise, err = models.Exercises.Query(models.SelectWhere.Exercises.ID.EQ(exerciseID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve exercise: %w", err))
+		}
+	} else {
+		exercise = f.NewExercise()
 	}
 
-	if m.WorkoutID == "" {
-		m.WorkoutID = f.NewWorkout().ID
+	mods := []bobfactory.SetMod{
+		bobfactory.SetMods.WithExistingWorkout(workoutWithoutRelationships(workout)),
+		bobfactory.SetMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
+		bobfactory.SetMods.WeightUnit(string(weightunit.Kilograms)),
+	}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.ID(value))
+	}
+	if value, ok := setter.Weight.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.Weight(value))
+	}
+	if value, ok := setter.Reps.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.Reps(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.CreatedAt(value))
+	}
+	if value, ok := setter.UserID.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.UserID(value))
+	}
+	if value, ok := setter.Distance.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.Distance(value))
+	}
+	if value, ok := setter.DurationSeconds.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.DurationSeconds(value))
+	}
+	if value, ok := setter.WeightUnit.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.WeightUnit(value))
 	}
 
-	if m.ExerciseID == "" {
-		m.ExerciseID = f.NewExercise().ID
-	}
-
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.SetColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
-		panic(fmt.Errorf("failed to insert set: %w", err))
-	}
-
-	workout, err := m.Workout().One(context.Background(), f.db)
+	template := f.generated.NewSet(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.WorkoutID = omit.From(built.WorkoutID)
+	setter.ExerciseID = omit.From(built.ExerciseID)
+	set, err := models.Sets.Insert(
+		setter,
+		im.OnConflict(models.Sets.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to retrieve workout: %w", err))
+		panic(fmt.Errorf("failed to create set with Bob factory: %w", err))
 	}
+	set.R = built.R
 
-	if err = m.SetWorkout(context.Background(), f.db, false, workout); err != nil {
-		panic(fmt.Errorf("failed to set workout: %w", err))
-	}
-
-	exercise, err := m.Exercise().One(context.Background(), f.db)
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve exercise: %w", err))
-	}
-
-	if err = m.SetExercise(context.Background(), f.db, false, exercise); err != nil {
-		panic(fmt.Errorf("failed to set exercise: %w", err))
-	}
-
-	return m
+	return set
 }
 
-func SetID(id string) SetOpt {
-	return func(set *orm.Set) {
-		set.ID = id
+func SetID(id any) SetOpt {
+	return func(set *models.SetSetter) {
+		set.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func SetUserID(userID string) SetOpt {
-	return func(set *orm.Set) {
-		set.UserID = userID
+func SetUserID(userID any) SetOpt {
+	return func(set *models.SetSetter) {
+		set.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
-func SetExerciseID(exerciseID string) SetOpt {
-	return func(set *orm.Set) {
-		set.ExerciseID = exerciseID
+func SetExerciseID(exerciseID any) SetOpt {
+	return func(set *models.SetSetter) {
+		set.ExerciseID = omit.From(nativeUUID(exerciseID))
 	}
 }
 
-func SetWorkoutID(workoutID string) SetOpt {
-	return func(set *orm.Set) {
-		set.WorkoutID = workoutID
+func SetWorkoutID(workoutID any) SetOpt {
+	return func(set *models.SetSetter) {
+		set.WorkoutID = omit.From(nativeUUID(workoutID))
 	}
 }
 
 func SetReps(reps int) SetOpt {
-	return func(set *orm.Set) {
-		set.Reps = reps
+	return func(set *models.SetSetter) {
+		set.Reps = omit.From(safe.Int32FromInt(reps))
 	}
 }
 
 func SetWeight(weight float64) SetOpt {
-	return func(set *orm.Set) {
-		set.Weight = weight
+	return func(set *models.SetSetter) {
+		set.Weight = omit.From(weight)
+	}
+}
+
+func SetWeightUnit(unit weightunit.Unit) SetOpt {
+	return func(set *models.SetSetter) {
+		set.WeightUnit = omit.From(string(unit))
 	}
 }
 
 func SetCreatedAt(createdAt time.Time) SetOpt {
-	return func(set *orm.Set) {
-		set.CreatedAt = createdAt
+	return func(set *models.SetSetter) {
+		set.CreatedAt = omit.From(createdAt)
 	}
 }

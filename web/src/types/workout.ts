@@ -1,3 +1,6 @@
+import type { Exercise } from '@/proto/api/v1/shared_pb'
+import type { WeightUnit } from '@/proto/api/v1/shared_pb'
+
 export type ExerciseID = string
 export type ExerciseSets = Record<ExerciseID, Set[]>
 
@@ -7,8 +10,18 @@ export type RoutineWorkout = Record<RoutineID, Workout>
 export interface Set {
   reps?: number
   weight?: number
+  distance?: number
+  durationSeconds?: number
+  weightUnit?: WeightUnit
 }
 
 export interface Workout {
+  addedExercises?: Exercise[]
+  completedExerciseIds?: ExerciseID[]
   exerciseSets?: ExerciseSets
+  note?: string
+  planId?: string
+  restTimerEndsAt?: string
+  restTimerTotalSeconds?: number
+  startedAt?: string
 }

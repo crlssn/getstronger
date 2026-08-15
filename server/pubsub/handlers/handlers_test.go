@@ -7,15 +7,18 @@ import (
 	"fmt"
 	"testing"
 
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/stream"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -63,12 +66,14 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 	ctx := context.Background()
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
-	handler := handlers.NewWorkoutCommentPosted(zap.NewExample(), repo.New(c.DB))
+	streamManager := stream.NewManager()
+	handler := handlers.NewWorkoutCommentPosted(zap.NewExample(), repo.New(c.DB), streamManager)
 
 	t.Run("ok_workout_comment_posted", func(t *testing.T) {
 		t.Parallel()
 		payload := payloads.WorkoutCommentPosted{
 			CommentID: uuid.NewString(),
+			EventID:   uuid.NewString(),
 		}
 
 		f.NewUser(factory.UserID(factory.UUID(0)))
@@ -101,14 +106,19 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 		require.NoError(t, err)
 
 		handler.HandlePayload(string(bytes))
+		handler.HandlePayload(string(bytes))
 
-		count, err := orm.Notifications(orm.NotificationWhere.UserID.IN(
-			[]string{factory.UUID(0), factory.UUID(1), factory.UUID(2)},
-		)).Count(ctx, c.DB)
+		count, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.In(
+			gofrsuuid.FromStringOrNil(factory.UUID(0)),
+			gofrsuuid.FromStringOrNil(factory.UUID(1)),
+			gofrsuuid.FromStringOrNil(factory.UUID(2)),
+		)).Count(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.Equal(t, 3, int(count))
 
-		exists, err := orm.Notifications(orm.NotificationWhere.UserID.EQ(factory.UUID(3))).Exists(ctx, c.DB)
+		exists, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.EQ(
+			gofrsuuid.FromStringOrNil(factory.UUID(3)),
+		)).Exists(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.False(t, exists)
 	})
@@ -130,27 +140,38 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 
 	controller := gomock.NewController(t)
 	repoMock := repo.NewMockRepo(controller)
-	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock)
+	streamManager := stream.NewManager()
+	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock, streamManager)
 
 	t.Run("ok_user_followed", func(t *testing.T) {
 		t.Parallel()
 		payload := payloads.UserFollowed{
 			FollowerID: "follower_id",
 			FolloweeID: "followee_id",
+			EventID:    "event_id",
 		}
 
 		repoMock.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
-			Type:   orm.NotificationTypeFollow,
+			Type:   repo.NotificationTypeFollow,
 			UserID: payload.FolloweeID,
 			Payload: repo.NotificationPayload{
 				ActorID: payload.FollowerID,
+				EventID: payload.EventID,
 			},
 		})
 
 		bytes, err := json.Marshal(payload)
 		require.NoError(t, err)
+		updates, unsubscribe := streamManager.Subscribe(payload.FolloweeID, func() {})
+		defer unsubscribe()
 
 		handler.HandlePayload(string(bytes))
+
+		select {
+		case <-updates:
+		default:
+			t.Fatal("expected notification stream update")
+		}
 	})
 
 	t.Run("ok_invalid_payload", func(t *testing.T) {

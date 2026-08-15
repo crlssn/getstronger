@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
+	"github.com/crlssn/getstronger/server/gen/models"
 )
 
-func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) orm.WorkoutSlice {
-	var slice orm.WorkoutSlice
+func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) models.WorkoutSlice {
+	slice := make(models.WorkoutSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewWorkout(opts...))
 	}
@@ -21,79 +22,116 @@ func (f *Factory) NewWorkoutSlice(count int, opts ...WorkoutOpt) orm.WorkoutSlic
 	return slice
 }
 
-type WorkoutOpt func(workout *orm.Workout)
+type WorkoutOpt func(workout *models.WorkoutSetter)
 
-func (f *Factory) NewWorkout(opts ...WorkoutOpt) *orm.Workout {
+func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
 	startedAt := time.Now().UTC()
-	m := &orm.Workout{
-		ID:         uuid.NewString(),
-		Name:       f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"}),
-		UserID:     "",
-		StartedAt:  startedAt,
-		FinishedAt: startedAt.Add(time.Hour),
-		CreatedAt:  time.Time{},
-		Note:       null.String{},
+	setter := &models.WorkoutSetter{
+		ID:         omit.From(newUUID()),
+		Name:       omit.From(f.Faker.RandomString([]string{"Legs", "Chest", "Back", "Shoulders", "Arms", "Push", "Pull", "Upper Body", "Lower Body", "Full Body"})),
+		StartedAt:  omit.From(startedAt),
+		FinishedAt: omit.From(startedAt.Add(time.Hour)),
 	}
-
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	ctx := context.Background()
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		var err error
+		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve user: %w", err))
+		}
+	} else {
+		user = f.NewUser()
 	}
 
-	updateColumns := boil.Infer()
-	insertColumns := boil.Infer()
-	conflictColumns := []string{orm.WorkoutColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
-		panic(fmt.Errorf("failed to insert workout: %w", err))
+	mods := []bobfactory.WorkoutMod{bobfactory.WorkoutMods.WithExistingUser(userWithoutRelationships(user))}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.ID(value))
+	}
+	if value, ok := setter.FinishedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.FinishedAt(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.CreatedAt(value))
+	}
+	if value, ok := setter.Name.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.Name(value))
+	}
+	if value, ok := setter.StartedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.StartedAt(value))
+	}
+	if value, ok := setter.Note.GetNull(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.Note(value))
+	}
+	if value, ok := setter.RoutineID.GetNull(); ok {
+		mods = append(mods, bobfactory.WorkoutMods.RoutineID(value))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	template := f.generated.NewWorkout(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	workout, err := models.Workouts.Insert(
+		setter,
+		im.OnConflict(models.Workouts.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
+		panic(fmt.Errorf("failed to create workout with Bob factory: %w", err))
 	}
+	workout.R = built.R
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return workout
 }
 
-func WorkoutID(workoutID string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.ID = workoutID
+func WorkoutID(workoutID any) WorkoutOpt {
+	return func(workout *models.WorkoutSetter) {
+		workout.ID = omit.From(nativeUUID(workoutID))
 	}
 }
 
-func WorkoutUserID(userID string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.UserID = userID
+func WorkoutUserID(userID any) WorkoutOpt {
+	return func(workout *models.WorkoutSetter) {
+		workout.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
 func WorkoutName(name string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.Name = name
+	return func(workout *models.WorkoutSetter) {
+		workout.Name = omit.From(name)
 	}
 }
 
 func WorkoutNote(note string) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.Note = null.StringFrom(note)
+	return func(workout *models.WorkoutSetter) {
+		workout.Note = omitnull.From(note)
 	}
 }
 
 func WorkoutCreatedAt(createdAt time.Time) WorkoutOpt {
-	return func(workout *orm.Workout) {
-		workout.CreatedAt = createdAt
+	return func(workout *models.WorkoutSetter) {
+		workout.CreatedAt = omit.From(createdAt)
 	}
 }
 
-func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) orm.WorkoutCommentSlice {
-	var slice orm.WorkoutCommentSlice
+func WorkoutStartedAt(startedAt time.Time) WorkoutOpt {
+	return func(workout *models.WorkoutSetter) {
+		workout.StartedAt = omit.From(startedAt)
+	}
+}
+
+func WorkoutFinishedAt(finishedAt time.Time) WorkoutOpt {
+	return func(workout *models.WorkoutSetter) {
+		workout.FinishedAt = omit.From(finishedAt)
+	}
+}
+
+func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) models.WorkoutCommentSlice {
+	slice := make(models.WorkoutCommentSlice, 0, count)
 	for range count {
 		slice = append(slice, f.NewWorkoutComment(opts...))
 	}
@@ -101,71 +139,98 @@ func (f *Factory) NewWorkoutCommentSlice(count int, opts ...WorkoutCommentOpt) o
 	return slice
 }
 
-type WorkoutCommentOpt func(comment *orm.WorkoutComment)
+type WorkoutCommentOpt func(comment *models.WorkoutCommentSetter)
 
-func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *orm.WorkoutComment {
-	m := &orm.WorkoutComment{
-		ID:        uuid.NewString(),
-		UserID:    "",
-		WorkoutID: "",
-		Comment:   f.Faker.Sentence(5), //nolint:mnd
-		CreatedAt: time.Time{},
+func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutComment {
+	setter := &models.WorkoutCommentSetter{
+		ID:      omit.From(newUUID()),
+		Comment: omit.From(f.Faker.Sentence(5)), //nolint:mnd
 	}
-
 	for _, opt := range opts {
-		opt(m)
+		opt(setter)
 	}
 
-	if m.UserID == "" {
-		m.UserID = f.NewUser().ID
+	ctx := context.Background()
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		var err error
+		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve user: %w", err))
+		}
+	} else {
+		user = f.NewUser()
 	}
 
-	if m.WorkoutID == "" {
-		m.WorkoutID = f.NewWorkout().ID
+	var workout *models.Workout
+	if workoutID, ok := setter.WorkoutID.Get(); ok {
+		var err error
+		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
+		if err != nil {
+			panic(fmt.Errorf("failed to retrieve workout: %w", err))
+		}
+	} else {
+		workout = f.NewWorkout()
 	}
 
-	insertColumns := boil.Infer()
-	updateColumns := boil.Infer()
-	conflictColumns := []string{orm.WorkoutCommentColumns.ID}
-	if err := m.Upsert(context.Background(), f.db, true, conflictColumns, updateColumns, insertColumns); err != nil {
-		panic(fmt.Errorf("failed to insert workout comment: %w", err))
+	mods := []bobfactory.WorkoutCommentMod{
+		bobfactory.WorkoutCommentMods.WithExistingUser(userWithoutRelationships(user)),
+		bobfactory.WorkoutCommentMods.WithExistingWorkout(workoutWithoutRelationships(workout)),
+	}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutCommentMods.ID(value))
+	}
+	if value, ok := setter.Comment.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutCommentMods.Comment(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutCommentMods.CreatedAt(value))
 	}
 
-	user, err := m.User().One(context.Background(), f.db)
+	template := f.generated.NewWorkoutComment(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	setter.WorkoutID = omit.From(built.WorkoutID)
+	comment, err := models.WorkoutComments.Insert(
+		setter,
+		im.OnConflict(models.WorkoutComments.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
+		panic(fmt.Errorf("failed to create workout comment with Bob factory: %w", err))
 	}
+	comment.R = built.R
 
-	if err = m.SetUser(context.Background(), f.db, false, user); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	workout, err := m.Workout().One(context.Background(), f.db)
-	if err != nil {
-		panic(fmt.Errorf("failed to retrieve user: %w", err))
-	}
-
-	if err = m.SetWorkout(context.Background(), f.db, false, workout); err != nil {
-		panic(fmt.Errorf("failed to set user: %w", err))
-	}
-
-	return m
+	return comment
 }
 
-func WorkoutCommentID(id string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.ID = id
+func WorkoutCommentID(id any) WorkoutCommentOpt {
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.ID = omit.From(nativeUUID(id))
 	}
 }
 
-func WorkoutCommentUserID(userID string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.UserID = userID
+func WorkoutCommentUserID(userID any) WorkoutCommentOpt {
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.UserID = omit.From(nativeUUID(userID))
 	}
 }
 
-func WorkoutCommentWorkoutID(workoutID string) WorkoutCommentOpt {
-	return func(comment *orm.WorkoutComment) {
-		comment.WorkoutID = workoutID
+func WorkoutCommentWorkoutID(workoutID any) WorkoutCommentOpt {
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.WorkoutID = omit.From(nativeUUID(workoutID))
+	}
+}
+
+func WorkoutCommentText(text string) WorkoutCommentOpt {
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.Comment = omit.From(text)
+	}
+}
+
+func WorkoutCommentCreatedAt(createdAt time.Time) WorkoutCommentOpt {
+	return func(comment *models.WorkoutCommentSetter) {
+		comment.CreatedAt = omit.From(createdAt.UTC())
 	}
 }

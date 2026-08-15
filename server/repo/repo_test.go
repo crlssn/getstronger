@@ -11,15 +11,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/brianvoe/gofakeit/v7"
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
+	bobtypes "github.com/stephenafamo/bob/types"
+
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -94,13 +99,13 @@ func (s *repoSuite) TestNewTx() {
 			if t.expected.err != nil {
 				s.Require().Error(err)
 				s.Require().ErrorIs(err, t.expected.err)
-				exists, existsErr := orm.Auths(orm.AuthWhere.Email.EQ(emailNotCreated)).Exists(context.Background(), s.container.DB)
+				exists, existsErr := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(emailNotCreated)).Exists(context.Background(), bob.NewDB(s.container.DB))
 				s.Require().NoError(existsErr)
 				s.Require().False(exists)
 				return
 			}
 			s.Require().NoError(err)
-			exists, err := orm.Auths(orm.AuthWhere.Email.EQ(emailCreated)).Exists(context.Background(), s.container.DB)
+			exists, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(emailCreated)).Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})
@@ -164,7 +169,7 @@ func (s *repoSuite) TestCreateAuth() {
 func (s *repoSuite) TestUpdateAuth() {
 	type expected struct {
 		err      error
-		auth     *orm.Auth
+		auth     *models.Auth
 		password string
 	}
 
@@ -231,8 +236,8 @@ func (s *repoSuite) TestUpdateAuth() {
 				t.expected.auth = s.factory.NewAuth(
 					factory.AuthID(t.authID),
 				)
-				t.expected.auth.PasswordResetToken = null.String{}
-				t.expected.auth.PasswordResetTokenValidUntil = null.Time{}
+				t.expected.auth.PasswordResetToken = null.Val[gofrsuuid.UUID]{}
+				t.expected.auth.PasswordResetTokenValidUntil = null.Val[time.Time]{}
 			},
 			expected: expected{
 				err: nil,
@@ -246,7 +251,7 @@ func (s *repoSuite) TestUpdateAuth() {
 			},
 			init: func(t *test) {
 				t.expected.auth = s.factory.NewAuth(factory.AuthID(t.authID))
-				t.expected.auth.RefreshToken = null.StringFrom("refresh_token")
+				t.expected.auth.RefreshToken = null.From("refresh_token")
 			},
 			expected: expected{
 				err: nil,
@@ -263,8 +268,8 @@ func (s *repoSuite) TestUpdateAuth() {
 					factory.AuthID(t.authID),
 					factory.AuthRefreshToken("refresh_token"),
 				)
-				t.expected.auth.RefreshToken = null.String{}
-				t.expected.auth.PasswordResetTokenValidUntil = null.Time{}
+				t.expected.auth.RefreshToken = null.Val[string]{}
+				t.expected.auth.PasswordResetTokenValidUntil = null.Val[time.Time]{}
 			},
 			expected: expected{
 				err: nil,
@@ -315,16 +320,20 @@ func (s *repoSuite) TestUpdateAuth() {
 			}
 			s.Require().NoError(err)
 
-			auth, err := orm.FindAuth(context.Background(), s.container.DB, t.authID)
+			auth, err := models.FindAuth(context.Background(), bob.NewDB(s.container.DB), nativeUUID(t.authID))
 			s.Require().NoError(err)
 			s.Require().Equal(t.expected.auth.Email, auth.Email)
 			s.Require().Equal(t.expected.auth.EmailVerified, auth.EmailVerified)
-			s.Require().Equal(t.expected.auth.RefreshToken.Valid, auth.RefreshToken.Valid)
-			s.Require().Equal(t.expected.auth.RefreshToken.String, auth.RefreshToken.String)
-			s.Require().Equal(t.expected.auth.PasswordResetToken.Valid, auth.PasswordResetToken.Valid)
-			s.Require().Equal(t.expected.auth.PasswordResetToken.String, auth.PasswordResetToken.String)
-			s.Require().Equal(t.expected.auth.PasswordResetTokenValidUntil.Valid, auth.PasswordResetTokenValidUntil.Valid)
-			s.Require().True(t.expected.auth.PasswordResetTokenValidUntil.Time.Round(time.Second).Equal(auth.PasswordResetTokenValidUntil.Time.Round(time.Second)))
+			s.Require().Equal(t.expected.auth.RefreshToken.IsNull(), auth.RefreshToken.IsNull())
+			s.Require().Equal(t.expected.auth.RefreshToken.GetOrZero(), auth.RefreshToken.GetOrZero())
+			s.Require().Equal(t.expected.auth.PasswordResetToken.IsNull(), auth.PasswordResetToken.IsNull())
+			s.Require().Equal(t.expected.auth.PasswordResetToken.GetOrZero(), auth.PasswordResetToken.GetOrZero())
+			s.Require().Equal(t.expected.auth.PasswordResetTokenValidUntil.IsNull(), auth.PasswordResetTokenValidUntil.IsNull())
+			s.Require().WithinDuration(
+				t.expected.auth.PasswordResetTokenValidUntil.GetOrZero(),
+				auth.PasswordResetTokenValidUntil.GetOrZero(),
+				time.Second,
+			)
 			if t.expected.password != "" {
 				s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.expected.password)))
 			}
@@ -454,7 +463,7 @@ func (s *repoSuite) TestRefreshTokenExists() {
 
 func (s *repoSuite) TestCreateUser() {
 	type expected struct {
-		user *orm.User
+		user *models.User
 		err  error
 	}
 
@@ -469,13 +478,13 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "ok_user_created",
 			params: repo.CreateUserParams{
-				AuthID:    s.factory.NewAuth().ID,
+				AuthID:    s.factory.NewAuth().ID.String(),
 				FirstName: "John",
 				LastName:  "Doe",
 			},
 			init: func(_ test) {},
 			expected: expected{
-				user: &orm.User{
+				user: &models.User{
 					FirstName: "John",
 					LastName:  "Doe",
 				},
@@ -492,7 +501,7 @@ func (s *repoSuite) TestCreateUser() {
 			init: func(_ test) {},
 			expected: expected{
 				user: nil,
-				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: invalid input syntax for type uuid: \"\" (SQLSTATE 22P02)"),
+				err:  fmt.Errorf("user insert: ERROR: insert or update on table \"users\" violates foreign key constraint \"users_auth_id_fkey\" (SQLSTATE 23503)"),
 			},
 		},
 		{
@@ -505,7 +514,7 @@ func (s *repoSuite) TestCreateUser() {
 			init: func(_ test) {},
 			expected: expected{
 				user: nil,
-				err:  fmt.Errorf("user insert: orm: unable to insert into users: ERROR: insert or update on table \"users\" violates foreign key constraint \"users_auth_id_fkey\" (SQLSTATE 23503)"),
+				err:  fmt.Errorf("user insert: ERROR: insert or update on table \"users\" violates foreign key constraint \"users_auth_id_fkey\" (SQLSTATE 23503)"),
 			},
 		},
 	}
@@ -524,7 +533,7 @@ func (s *repoSuite) TestCreateUser() {
 
 			s.Require().NoError(err)
 			s.Require().NotNil(user)
-			s.Require().Equal(t.params.AuthID, user.AuthID)
+			s.Require().Equal(t.params.AuthID, user.AuthID.String())
 			s.Require().Equal(t.expected.user.FirstName, user.FirstName)
 			s.Require().Equal(t.expected.user.LastName, user.LastName)
 		})
@@ -533,7 +542,7 @@ func (s *repoSuite) TestCreateUser() {
 
 func (s *repoSuite) TestCreateExercise() {
 	type expected struct {
-		exercise *orm.Exercise
+		exercise *models.Exercise
 		err      error
 	}
 
@@ -546,33 +555,33 @@ func (s *repoSuite) TestCreateExercise() {
 
 	tests := []test{
 		{
-			name: "ok_exercise_created_with_label",
+			name: "ok_exercise_created_with_tags",
 			params: repo.CreateExerciseParams{
-				UserID: s.factory.NewUser().ID,
+				UserID: s.factory.NewUser().ID.String(),
 				Name:   "Bench Press",
-				Label:  "Chest",
+				Tags:   []string{"Chest", "Barbell"},
 			},
 			init: func(_ test) {},
 			expected: expected{
-				exercise: &orm.Exercise{
-					Title:    "Bench Press",
-					SubTitle: null.NewString("Chest", true),
+				exercise: &models.Exercise{
+					Title: "Bench Press",
+					Tags:  pq.StringArray{"Chest", "Barbell"},
 				},
 				err: nil,
 			},
 		},
 		{
-			name: "ok_exercise_created_without_label",
+			name: "ok_exercise_created_without_tags",
 			params: repo.CreateExerciseParams{
-				UserID: s.factory.NewUser().ID,
+				UserID: s.factory.NewUser().ID.String(),
 				Name:   "Squat",
-				Label:  "",
+				Tags:   nil,
 			},
 			init: func(_ test) {},
 			expected: expected{
-				exercise: &orm.Exercise{
-					Title:    "Squat",
-					SubTitle: null.NewString("", false),
+				exercise: &models.Exercise{
+					Title: "Squat",
+					Tags:  pq.StringArray{},
 				},
 				err: nil,
 			},
@@ -582,7 +591,7 @@ func (s *repoSuite) TestCreateExercise() {
 			params: repo.CreateExerciseParams{
 				UserID: uuid.NewString(),
 				Name:   "Deadlift",
-				Label:  "Back",
+				Tags:   []string{"Back"},
 			},
 			init: func(_ test) {},
 			expected: expected{
@@ -606,9 +615,9 @@ func (s *repoSuite) TestCreateExercise() {
 
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
-			s.Require().Equal(t.params.UserID, exercise.UserID)
+			s.Require().Equal(t.params.UserID, exercise.UserID.String())
 			s.Require().Equal(t.expected.exercise.Title, exercise.Title)
-			s.Require().Equal(t.expected.exercise.SubTitle, exercise.SubTitle)
+			s.Require().ElementsMatch(t.expected.exercise.Tags, exercise.Tags)
 		})
 	}
 }
@@ -621,7 +630,7 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 	type test struct {
 		name     string
 		params   repo.SoftDeleteExerciseParams
-		init     func(test) orm.RoutineSlice
+		init     func(test) models.RoutineSlice
 		expected expected
 	}
 
@@ -629,11 +638,11 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "ok_soft_delete_exercise_with_routines",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.factory.NewUser().ID,
+				UserID:     s.factory.NewUser().ID.String(),
 				ExerciseID: uuid.NewString(),
 			},
-			init: func(t test) orm.RoutineSlice {
-				exercises := orm.ExerciseSlice{
+			init: func(t test) models.RoutineSlice {
+				exercises := models.ExerciseSlice{
 					s.factory.NewExercise(
 						factory.ExerciseID(t.params.ExerciseID),
 						factory.ExerciseUserID(t.params.UserID),
@@ -643,15 +652,15 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 					),
 				}
 
-				routines := orm.RoutineSlice{
+				routines := models.RoutineSlice{
 					s.factory.NewRoutine(
 						factory.RoutineExerciseOrder([]string{
-							exercises[0].ID, exercises[1].ID,
+							exercises[0].ID.String(), exercises[1].ID.String(),
 						}),
 					),
 					s.factory.NewRoutine(
 						factory.RoutineExerciseOrder([]string{
-							exercises[0].ID, exercises[1].ID,
+							exercises[0].ID.String(), exercises[1].ID.String(),
 						}),
 					),
 				}
@@ -668,10 +677,10 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "ok_soft_delete_exercise_without_routines",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.factory.NewUser().ID,
+				UserID:     s.factory.NewUser().ID.String(),
 				ExerciseID: uuid.NewString(),
 			},
-			init: func(t test) orm.RoutineSlice {
+			init: func(t test) models.RoutineSlice {
 				s.factory.NewExercise(
 					factory.ExerciseID(t.params.ExerciseID),
 					factory.ExerciseUserID(t.params.UserID),
@@ -685,7 +694,7 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "err_exercise_not_found",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.factory.NewUser().ID,
+				UserID:     s.factory.NewUser().ID.String(),
 				ExerciseID: uuid.NewString(),
 			},
 			expected: expected{
@@ -696,7 +705,7 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			var routines orm.RoutineSlice
+			var routines models.RoutineSlice
 			if t.init != nil {
 				routines = t.init(t)
 			}
@@ -709,24 +718,24 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 			}
 			s.Require().NoError(err)
 
-			exists, err := orm.Exercises(
-				orm.ExerciseWhere.ID.EQ(t.params.ExerciseID),
-				orm.ExerciseWhere.DeletedAt.IsNull(),
-			).Exists(context.Background(), s.container.DB)
+			exists, err := models.Exercises.Query(
+				models.SelectWhere.Exercises.ID.EQ(nativeUUID(t.params.ExerciseID)),
+				models.SelectWhere.Exercises.DeletedAt.IsNull(),
+			).Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
-			s.Require().NoError(routines.ReloadAll(context.Background(), s.container.DB))
+			s.Require().NoError(routines.ReloadAll(context.Background(), bob.NewDB(s.container.DB)))
 			for _, routine := range routines {
-				exercises, exercisesErr := routine.Exercises().All(context.Background(), s.container.DB)
+				exercises, exercisesErr := routine.Exercises().All(context.Background(), bob.NewDB(s.container.DB))
 				s.Require().NoError(exercisesErr)
 
 				for _, exercise := range exercises {
-					s.Require().NotEqual(t.params.ExerciseID, exercise.ID, "Exercise should have been removed from the routine")
+					s.Require().NotEqual(t.params.ExerciseID, exercise.ID.String(), "Exercise should have been removed from the routine")
 				}
 
 				var exerciseIDs []string
-				s.Require().NoError(json.Unmarshal(routine.ExerciseOrder, &exerciseIDs))
+				s.Require().NoError(json.Unmarshal(routine.ExerciseOrder.Val, &exerciseIDs))
 				for _, id := range exerciseIDs {
 					s.Require().NotEqual(t.params.ExerciseID, id, "Exercise should have been removed from the routine's exercise order")
 				}
@@ -755,7 +764,7 @@ func (s *repoSuite) TestListExercises() {
 		{
 			name: "ok_valid_access_token",
 			opts: []repo.ListExercisesOpt{
-				repo.ListExercisesWithUserID(user.ID),
+				repo.ListExercisesWithUserID(user.ID.String()),
 				repo.ListExercisesWithLimit(2),
 			},
 			init: func(_ test) {
@@ -878,7 +887,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 func (s *repoSuite) TestGetPreviousWorkoutSets() {
 	type expected struct {
 		err  error
-		sets orm.SetSlice
+		sets models.SetSlice
 	}
 
 	type test struct {
@@ -921,7 +930,7 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 					s.factory.NewSet(
 						factory.SetWorkoutID(set.WorkoutID),
 						factory.SetExerciseID(set.ExerciseID),
-						factory.SetReps(set.Reps),
+						factory.SetReps(int(set.Reps)),
 						factory.SetWeight(set.Weight),
 						factory.SetCreatedAt(set.CreatedAt),
 					)
@@ -929,31 +938,31 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 			},
 			expected: expected{
 				err: nil,
-				sets: orm.SetSlice{
+				sets: models.SetSlice{
 					{
-						WorkoutID:  workoutIDs[0],
-						ExerciseID: exerciseIDs[0],
+						WorkoutID:  nativeUUID(workoutIDs[0]),
+						ExerciseID: nativeUUID(exerciseIDs[0]),
 						Reps:       1,
 						Weight:     1,
 						CreatedAt:  s.factory.Now(),
 					},
 					{
-						WorkoutID:  workoutIDs[0],
-						ExerciseID: exerciseIDs[0],
+						WorkoutID:  nativeUUID(workoutIDs[0]),
+						ExerciseID: nativeUUID(exerciseIDs[0]),
 						Reps:       2,
 						Weight:     2,
 						CreatedAt:  s.factory.Now().Add(time.Second),
 					},
 					{
-						WorkoutID:  workoutIDs[1],
-						ExerciseID: exerciseIDs[1],
+						WorkoutID:  nativeUUID(workoutIDs[1]),
+						ExerciseID: nativeUUID(exerciseIDs[1]),
 						Reps:       3,
 						Weight:     3,
 						CreatedAt:  s.factory.Now().Add(2 * time.Second),
 					},
 					{
-						WorkoutID:  workoutIDs[1],
-						ExerciseID: exerciseIDs[1],
+						WorkoutID:  nativeUUID(workoutIDs[1]),
+						ExerciseID: nativeUUID(exerciseIDs[1]),
 						Reps:       4,
 						Weight:     4,
 						CreatedAt:  s.factory.Now().Add(3 * time.Second),
@@ -995,7 +1004,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 	type test struct {
 		name     string
 		opts     []repo.DeleteWorkoutOpt
-		init     func(test) *orm.Workout
+		init     func(test) *models.Workout
 		expected expected
 	}
 
@@ -1008,7 +1017,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 			opts: []repo.DeleteWorkoutOpt{
 				repo.DeleteWorkoutWithID(workoutID),
 			},
-			init: func(_ test) *orm.Workout {
+			init: func(_ test) *models.Workout {
 				workout := s.factory.NewWorkout(factory.WorkoutID(workoutID))
 				s.factory.NewSet(factory.SetWorkoutID(workoutID))
 				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workoutID))
@@ -1027,13 +1036,13 @@ func (s *repoSuite) TestDeleteWorkout() {
 			opts: []repo.DeleteWorkoutOpt{
 				repo.DeleteWorkoutWithUserID(userID),
 			},
-			init: func(_ test) *orm.Workout {
+			init: func(_ test) *models.Workout {
 				user := s.factory.NewUser(factory.UserID(userID))
 				workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
 				s.factory.NewSet(factory.SetWorkoutID(workout.ID))
 				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID))
 				s.factory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
-					WorkoutID: workout.ID,
+					WorkoutID: workout.ID.String(),
 				}))
 
 				return workout
@@ -1050,23 +1059,23 @@ func (s *repoSuite) TestDeleteWorkout() {
 			err := s.repo.DeleteWorkout(context.Background(), t.opts...)
 			s.Require().ErrorIs(err, t.expected.err)
 
-			exists, err := orm.Workouts(orm.WorkoutWhere.ID.EQ(workout.ID)).
-				Exists(context.Background(), s.container.DB)
+			exists, err := models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workout.ID)).
+				Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
-			exists, err = orm.Sets(orm.SetWhere.WorkoutID.EQ(workout.ID)).
-				Exists(context.Background(), s.container.DB)
+			exists, err = models.Sets.Query(models.SelectWhere.Sets.WorkoutID.EQ(workout.ID)).
+				Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
-			exists, err = orm.WorkoutComments(orm.WorkoutCommentWhere.WorkoutID.EQ(workout.ID)).
-				Exists(context.Background(), s.container.DB)
+			exists, err = models.WorkoutComments.Query(models.SelectWhere.WorkoutComments.WorkoutID.EQ(workout.ID)).
+				Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
-			exists, err = orm.Notifications(qm.Where("payload ->> 'workoutId' = ?", workout.ID)).
-				Exists(context.Background(), s.container.DB)
+			exists, err = models.Notifications.Query(sm.Where(psql.Raw("payload ->> 'workoutId' = ?", workout.ID))).
+				Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(exists)
 		})
@@ -1135,12 +1144,12 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 			}
 
 			s.Require().NoError(err)
-			workout, err := orm.FindWorkout(context.Background(), s.container.DB, t.params.WorkoutID)
+			workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), nativeUUID(t.params.WorkoutID))
 			s.Require().NoError(err)
 
 			sets, err := workout.Sets(
-				qm.OrderBy(orm.SetColumns.CreatedAt),
-			).All(context.Background(), s.container.DB)
+				sm.OrderBy(models.Sets.Columns.CreatedAt),
+			).All(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 
 			for i, set := range sets {
@@ -1154,9 +1163,9 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 				mapExpectedExerciseSets[exerciseSet.ExerciseID] = exerciseSet.Sets
 			}
 
-			mapReceivedExerciseSets := make(map[string]orm.SetSlice)
+			mapReceivedExerciseSets := make(map[string]models.SetSlice)
 			for _, set := range sets {
-				mapReceivedExerciseSets[set.ExerciseID] = append(mapReceivedExerciseSets[set.ExerciseID], set)
+				mapReceivedExerciseSets[set.ExerciseID.String()] = append(mapReceivedExerciseSets[set.ExerciseID.String()], set)
 			}
 
 			s.Require().Len(sets, setCount)
@@ -1167,7 +1176,7 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 				s.Require().True(ok)
 
 				for i, receivedSet := range receivedSets {
-					s.Require().Equal(expectedSets[i].Reps, receivedSet.Reps)
+					s.Require().Equal(int32(expectedSets[i].Reps), receivedSet.Reps)
 					s.Require().InEpsilon(expectedSets[i].Weight, receivedSet.Weight, 0)
 				}
 			}
@@ -1182,7 +1191,7 @@ func (s *repoSuite) TestPublishEvent() {
 
 	type test struct {
 		name     string
-		topic    orm.EventTopic
+		topic    repo.EventTopic
 		payload  []byte
 		expected expected
 	}
@@ -1190,7 +1199,7 @@ func (s *repoSuite) TestPublishEvent() {
 	tests := []test{
 		{
 			name:    "ok_publish_event_with_notify",
-			topic:   orm.EventTopicWorkoutCommentPosted,
+			topic:   repo.EventTopicWorkoutCommentPosted,
 			payload: []byte("{}"),
 			expected: expected{
 				err: nil,
@@ -1198,7 +1207,7 @@ func (s *repoSuite) TestPublishEvent() {
 		},
 		{
 			name:    "err_invalid_topic",
-			topic:   orm.EventTopic("not_found"),
+			topic:   repo.EventTopic("not_found"),
 			payload: nil,
 			expected: expected{
 				err: repo.ErrInvalidTopic,
@@ -1206,7 +1215,7 @@ func (s *repoSuite) TestPublishEvent() {
 		},
 		{
 			name:    "err_empty_payload",
-			topic:   orm.EventTopicWorkoutCommentPosted,
+			topic:   repo.EventTopicWorkoutCommentPosted,
 			payload: nil,
 			expected: expected{
 				err: repo.ErrEmptyPayload,
@@ -1217,7 +1226,7 @@ func (s *repoSuite) TestPublishEvent() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			var listener *pq.Listener
-			if t.topic.IsValid() == nil {
+			if t.topic.Valid() {
 				listener = pq.NewListener(s.container.Connection, time.Second, time.Minute, nil)
 				s.Require().NoError(listener.Listen(t.topic.String()))
 			}
@@ -1234,10 +1243,10 @@ func (s *repoSuite) TestPublishEvent() {
 			s.Require().Equal(t.topic.String(), notification.Channel)
 			s.Require().Equal(string(t.payload), notification.Extra)
 
-			exists, err := orm.Events(
-				orm.EventWhere.Topic.EQ(t.topic),
-				orm.EventWhere.Payload.EQ(t.payload),
-			).Exists(context.Background(), s.container.DB)
+			exists, err := models.Events.Query(
+				models.SelectWhere.Events.Topic.EQ(t.topic),
+				models.SelectWhere.Events.Payload.EQ(bobtypes.NewJSON[json.RawMessage](t.payload)),
+			).Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})
@@ -1247,13 +1256,13 @@ func (s *repoSuite) TestPublishEvent() {
 func (s *repoSuite) TestUpdateWorkout() {
 	type expected struct {
 		err     error
-		workout *orm.Workout
-		columns orm.M
+		workout *models.Workout
+		columns map[string]any
 	}
 
 	type test struct {
 		name     string
-		workout  *orm.Workout
+		workout  *models.Workout
 		opts     []repo.UpdateWorkoutOpt
 		expected expected
 	}
@@ -1267,8 +1276,8 @@ func (s *repoSuite) TestUpdateWorkout() {
 			},
 			expected: expected{
 				err: nil,
-				columns: orm.M{
-					orm.WorkoutColumns.Name: "New",
+				columns: map[string]any{
+					models.Workouts.Columns.Name.Name(): "New",
 				},
 			},
 		},
@@ -1280,8 +1289,8 @@ func (s *repoSuite) TestUpdateWorkout() {
 			},
 			expected: expected{
 				err: nil,
-				columns: orm.M{
-					orm.WorkoutColumns.Note: null.NewString("Note", true),
+				columns: map[string]any{
+					models.Workouts.Columns.Note.Name(): "Note",
 				},
 			},
 		},
@@ -1293,8 +1302,8 @@ func (s *repoSuite) TestUpdateWorkout() {
 			},
 			expected: expected{
 				err: nil,
-				columns: orm.M{
-					orm.WorkoutColumns.StartedAt: s.factory.Now().Add(-1 * time.Hour),
+				columns: map[string]any{
+					models.Workouts.Columns.StartedAt.Name(): s.factory.Now().Add(-1 * time.Hour),
 				},
 			},
 		},
@@ -1307,16 +1316,16 @@ func (s *repoSuite) TestUpdateWorkout() {
 			},
 			expected: expected{
 				err: nil,
-				columns: orm.M{
-					orm.WorkoutColumns.Name: "Name",
-					orm.WorkoutColumns.Note: null.NewString("Note", true),
+				columns: map[string]any{
+					models.Workouts.Columns.Name.Name(): "Name",
+					models.Workouts.Columns.Note.Name(): "Note",
 				},
 			},
 		},
 		{
 			name: "err_not_found",
-			workout: &orm.Workout{
-				ID: uuid.NewString(),
+			workout: &models.Workout{
+				ID: nativeUUID(uuid.NewString()),
 			},
 			opts: []repo.UpdateWorkoutOpt{
 				repo.UpdateWorkoutName("Name"),
@@ -1337,7 +1346,7 @@ func (s *repoSuite) TestUpdateWorkout() {
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			err := s.repo.UpdateWorkout(context.Background(), t.workout.ID, t.opts...)
+			err := s.repo.UpdateWorkout(context.Background(), t.workout.ID.String(), t.opts...)
 			if t.expected.err != nil {
 				s.Require().Error(err)
 				s.Require().ErrorIs(err, t.expected.err)
@@ -1345,20 +1354,46 @@ func (s *repoSuite) TestUpdateWorkout() {
 			}
 			s.Require().NoError(err)
 
-			workout, err := orm.FindWorkout(context.Background(), s.container.DB, t.workout.ID)
+			workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), t.workout.ID)
 			s.Require().NoError(err)
 			for column, value := range t.expected.columns {
 				switch column {
-				case orm.WorkoutColumns.Name:
+				case models.Workouts.Columns.Name.Name():
 					s.Require().Equal(value, workout.Name)
-				case orm.WorkoutColumns.Note:
-					s.Require().Equal(value, workout.Note)
-				case orm.WorkoutColumns.StartedAt:
+				case models.Workouts.Columns.Note.Name():
+					s.Require().Equal(value, workout.Note.GetOrZero())
+				case models.Workouts.Columns.StartedAt.Name():
 					s.Require().True(value.(time.Time).Equal(workout.StartedAt))
-				case orm.WorkoutColumns.FinishedAt:
+				case models.Workouts.Columns.FinishedAt.Name():
 					s.Require().True(value.(time.Time).Equal(workout.FinishedAt))
 				}
 			}
 		})
 	}
+}
+
+func (s *repoSuite) TestListFollowersAndFollowees() {
+	ctx := context.Background()
+	follower := s.factory.NewUser()
+	user := s.factory.NewUser()
+	followee := s.factory.NewUser()
+
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: follower.ID.String(),
+		FolloweeID: user.ID.String(),
+	}))
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: user.ID.String(),
+		FolloweeID: followee.ID.String(),
+	}))
+
+	followers, err := s.repo.ListFollowers(ctx, user.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(followers, 1)
+	s.Require().Equal(follower.ID, followers[0].ID)
+
+	followees, err := s.repo.ListFollowees(ctx, user.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(followees, 1)
+	s.Require().Equal(followee.ID, followees[0].ID)
 }

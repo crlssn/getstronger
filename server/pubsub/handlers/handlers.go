@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/orm"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/stream"
 )
 
 const timeout = 5 * time.Second
@@ -54,12 +55,13 @@ func (h *RequestTraced) HandlePayload(payload string) {
 }
 
 type WorkoutCommentPosted struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log    *zap.Logger
+	repo   repo.Repo
+	stream *stream.Manager
 }
 
-func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo) *WorkoutCommentPosted {
-	return &WorkoutCommentPosted{log, repo}
+func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo, stream *stream.Manager) *WorkoutCommentPosted {
+	return &WorkoutCommentPosted{log, repo, stream}
 }
 
 func (w *WorkoutCommentPosted) HandlePayload(payload string) {
@@ -71,8 +73,13 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 		w.log.Error("unmarshal payload", zap.Error(err))
 		return
 	}
+	if p.EventID == "" {
+		w.log.Error("workout comment event is missing an ID")
+		return
+	}
 
-	comment, err := w.repo.GetWorkoutComment(ctx,
+	comment, err := w.repo.GetWorkoutComment(
+		ctx,
 		repo.GetWorkoutCommentWithID(p.CommentID),
 	)
 	if err != nil {
@@ -80,8 +87,9 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 		return
 	}
 
-	workout, err := w.repo.GetWorkout(ctx,
-		repo.GetWorkoutWithID(comment.WorkoutID),
+	workout, err := w.repo.GetWorkout(
+		ctx,
+		repo.GetWorkoutWithID(comment.WorkoutID.String()),
 		repo.GetWorkoutLoadComments(),
 	)
 	if err != nil {
@@ -89,7 +97,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 		return
 	}
 
-	mapUserIDs := make(map[string]struct{})
+	mapUserIDs := make(map[uuid.UUID]struct{})
 	if comment.UserID != workout.UserID {
 		mapUserIDs[workout.UserID] = struct{}{}
 	}
@@ -103,25 +111,29 @@ func (w *WorkoutCommentPosted) HandlePayload(payload string) {
 
 	for userID := range mapUserIDs {
 		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-			Type:   orm.NotificationTypeWorkoutComment,
-			UserID: userID,
+			Type:   repo.NotificationTypeWorkoutComment,
+			UserID: userID.String(),
 			Payload: repo.NotificationPayload{
-				ActorID:   comment.UserID,
-				WorkoutID: comment.WorkoutID,
+				ActorID:   comment.UserID.String(),
+				EventID:   p.EventID,
+				WorkoutID: comment.WorkoutID.String(),
 			},
 		}); err != nil {
 			w.log.Error("create notification", zap.Error(err))
+			continue
 		}
+		w.stream.Notify(userID.String())
 	}
 }
 
 type FollowedUser struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log    *zap.Logger
+	repo   repo.Repo
+	stream *stream.Manager
 }
 
-func NewFollowedUser(log *zap.Logger, repo repo.Repo) *FollowedUser {
-	return &FollowedUser{log, repo}
+func NewFollowedUser(log *zap.Logger, repo repo.Repo, stream *stream.Manager) *FollowedUser {
+	return &FollowedUser{log, repo, stream}
 }
 
 func (u *FollowedUser) HandlePayload(payload string) {
@@ -133,14 +145,21 @@ func (u *FollowedUser) HandlePayload(payload string) {
 		u.log.Error("unmarshal payload", zap.Error(err))
 		return
 	}
+	if p.EventID == "" {
+		u.log.Error("followed user event is missing an ID")
+		return
+	}
 
 	if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-		Type:   orm.NotificationTypeFollow,
+		Type:   repo.NotificationTypeFollow,
 		UserID: p.FolloweeID,
 		Payload: repo.NotificationPayload{
 			ActorID: p.FollowerID,
+			EventID: p.EventID,
 		},
 	}); err != nil {
 		u.log.Error("create notification", zap.Error(err))
+		return
 	}
+	u.stream.Notify(p.FolloweeID)
 }

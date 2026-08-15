@@ -20,7 +20,7 @@ func New(c *config.Config) *Cookies {
 const CookieNameRefreshToken = "refreshToken"
 
 func (c *Cookies) RefreshToken(value string) *http.Cookie {
-	return &http.Cookie{
+	return &http.Cookie{ //nolint:gosec // Secure and SameSite intentionally follow local TLS availability.
 		Name:     CookieNameRefreshToken,
 		Value:    value,
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
@@ -33,7 +33,7 @@ func (c *Cookies) RefreshToken(value string) *http.Cookie {
 }
 
 func (c *Cookies) ExpiredRefreshToken() *http.Cookie {
-	return &http.Cookie{
+	return &http.Cookie{ //nolint:gosec // Secure and SameSite intentionally follow local TLS availability.
 		Name:     CookieNameRefreshToken,
 		Value:    "",
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),

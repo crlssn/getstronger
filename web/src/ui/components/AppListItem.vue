@@ -11,14 +11,20 @@ const props = defineProps<{
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 li {
-  @apply flex justify-between items-center gap-x-6 px-4 py-5 text-gray-900 font-medium;
+  @apply flex items-center justify-between gap-x-6 px-4 py-5 font-medium text-slate-900;
 
   &.danger {
-    @apply text-red-500;
+    @apply text-red-600;
   }
   &.header {
-    @apply block text-sm font-semibold text-gray-600 uppercase;
+    @apply block text-sm font-semibold text-slate-600;
   }
+}
+
+li > :deep(svg) {
+  @apply size-5 shrink-0;
 }
 </style>

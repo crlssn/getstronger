@@ -1,0 +1,14 @@
+diff --git a/server/gen/factory/users.bob.go b/server/gen/factory/users.bob.go
+--- a/server/gen/factory/users.bob.go
++++ b/server/gen/factory/users.bob.go
+@@ -490,6 +490,10 @@ func (o *UserTemplate) Create(ctx context.Context, exec bob.Executor) (*models.U
+        if o.r.Auth.o.alreadyPersisted {
+            rel5 = o.r.Auth.o.Build()
+        } else {
++			// A user's required auth parent has an optional inverse user relation.
++			// Clear it before creating the parent so a cascading factory does not
++			// insert a second user for the same unique auth ID.
++			AuthMods.WithoutUser().Apply(ctx, o.r.Auth.o)
+            rel5, err = o.r.Auth.o.Create(ctx, exec)
+            if err != nil {
+                return nil, err

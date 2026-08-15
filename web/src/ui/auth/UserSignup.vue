@@ -5,6 +5,8 @@ import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useAlertStore } from '@/stores/alerts.ts'
+import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
+import { WeightUnit } from '@/proto/api/v1/shared_pb'
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -15,6 +17,7 @@ const req = ref<SignupRequest>({
   lastName: '',
   password: '',
   passwordConfirmation: '',
+  weightUnit: WeightUnit.KILOGRAMS,
 })
 
 const onSignup = async () => {
@@ -26,89 +29,139 @@ const onSignup = async () => {
 </script>
 
 <template>
-  <form class="space-y-6" method="POST" @submit.prevent="onSignup">
-    <div>
-      <label for="email" class="block font-medium text-gray-900">First name</label>
-      <div class="mt-2">
-        <input
-          id="firstname"
-          v-model="req.firstName"
-          name="firstname"
-          type="text"
-          required
-          class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
-        />
-      </div>
-    </div>
+  <section class="auth-view">
+    <header class="auth-intro">
+      <p class="auth-eyebrow">{{ $t('auth.startTraining') }}</p>
+      <h1>{{ $t('auth.signupTitle') }}</h1>
+      <p>{{ $t('auth.signupSubtitle') }}</p>
+    </header>
 
-    <div>
-      <label for="email" class="block font-medium text-gray-900">Last name</label>
-      <div class="mt-2">
-        <input v-model="req.lastName" name="lastname" type="text" required />
-      </div>
-    </div>
+    <form class="auth-form" method="POST" @submit.prevent="onSignup">
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="firstname" class="auth-label">{{ $t('auth.firstName') }}</label>
+          <div class="mt-2">
+            <input
+              id="firstname"
+              v-model="req.firstName"
+              name="firstname"
+              type="text"
+              autocomplete="given-name"
+              class="auth-input"
+              required
+            />
+          </div>
+        </div>
 
-    <div>
-      <label for="email" class="block font-medium text-gray-900">Email address</label>
-      <div class="mt-2">
-        <input
-          id="email"
-          v-model="req.email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          required
-        />
+        <div>
+          <label for="lastname" class="auth-label">{{ $t('auth.lastName') }}</label>
+          <div class="mt-2">
+            <input
+              id="lastname"
+              v-model="req.lastName"
+              name="lastname"
+              type="text"
+              autocomplete="family-name"
+              class="auth-input"
+              required
+            />
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <div class="flex items-center justify-between">
-        <label for="password" class="block font-medium text-gray-900">Password</label>
+      <div>
+        <label for="email" class="auth-label">{{ $t('auth.email') }}</label>
+        <div class="mt-2">
+          <input
+            id="email"
+            v-model="req.email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            class="auth-input"
+            inputmode="email"
+            required
+          />
+        </div>
       </div>
-      <div class="mt-2">
-        <input
-          id="password"
-          v-model="req.password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
-    </div>
 
-    <div>
-      <div class="flex items-center justify-between">
-        <label for="password" class="block font-medium text-gray-900"> Confirm Password </label>
-      </div>
-      <div class="mt-2">
-        <input
-          id="passwordConfirmation"
-          v-model="req.passwordConfirmation"
-          name="passwordConfirmation"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
-    </div>
+      <fieldset>
+        <legend class="auth-label">{{ $t('auth.weightUnit') }}</legend>
+        <p class="mt-1 text-sm text-slate-500">{{ $t('auth.weightUnitHelp') }}</p>
+        <div class="mt-2 grid grid-cols-2 gap-2" aria-label="Preferred weight unit">
+          <label
+            class="flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            :class="
+              req.weightUnit === WeightUnit.KILOGRAMS
+                ? 'border-stone-900 bg-stone-900 text-white'
+                : 'border-slate-200 bg-white text-slate-700'
+            "
+          >
+            <input
+              v-model="req.weightUnit"
+              class="sr-only"
+              type="radio"
+              name="weightUnit"
+              :value="WeightUnit.KILOGRAMS"
+            />
+            <strong>{{ $t('auth.kilograms') }}</strong>
+            <span class="ml-auto text-sm opacity-70">kg</span>
+          </label>
+          <label
+            class="flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            :class="
+              req.weightUnit === WeightUnit.POUNDS
+                ? 'border-stone-900 bg-stone-900 text-white'
+                : 'border-slate-200 bg-white text-slate-700'
+            "
+          >
+            <input
+              v-model="req.weightUnit"
+              class="sr-only"
+              type="radio"
+              name="weightUnit"
+              :value="WeightUnit.POUNDS"
+            />
+            <strong>{{ $t('auth.pounds') }}</strong>
+            <span class="ml-auto text-sm opacity-70">lbs</span>
+          </label>
+        </div>
+      </fieldset>
 
-    <div>
-      <AppButton type="submit" colour="primary">Sign up</AppButton>
-    </div>
-  </form>
+      <div>
+        <label for="password" class="auth-label">{{ $t('auth.password') }}</label>
+        <div class="mt-2">
+          <AuthPasswordInput
+            id="password"
+            v-model="req.password"
+            name="password"
+            autocomplete="new-password"
+          />
+        </div>
+      </div>
 
-  <p class="mt-6 text-center text-gray-400">
-    Already a member?
-    <RouterLink to="/login" class="font-semibold text-indigo-600 hover:text-indigo-500">
-      Login
-    </RouterLink>
-  </p>
+      <div>
+        <label for="passwordConfirmation" class="auth-label">{{
+          $t('auth.confirmPassword')
+        }}</label>
+        <div class="mt-2">
+          <AuthPasswordInput
+            id="passwordConfirmation"
+            v-model="req.passwordConfirmation"
+            name="passwordConfirmation"
+            autocomplete="new-password"
+          />
+        </div>
+      </div>
+
+      <AppButton type="submit" colour="primary" class="auth-submit">{{
+        $t('auth.createAccount')
+      }}</AppButton>
+    </form>
+
+    <p class="auth-footer">
+      {{ $t('auth.alreadyMember') }}
+      <RouterLink to="/login" class="auth-link">{{ $t('auth.login') }}</RouterLink>
+    </p>
+  </section>
 </template>
-
-<style scoped>
-input {
-  @apply block w-full rounded-md border-0 bg-white py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
-}
-</style>

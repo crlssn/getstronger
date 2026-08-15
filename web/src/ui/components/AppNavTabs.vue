@@ -22,6 +22,8 @@ const navTabs = useNavTabs()
 </template>
 
 <style scoped>
+@reference '../../assets/base.css';
+
 nav {
   @apply bg-white w-full border-b-2 border-gray-200;
 

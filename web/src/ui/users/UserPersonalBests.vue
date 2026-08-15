@@ -8,6 +8,8 @@ import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
 const props = defineProps<{
   id: string
@@ -43,14 +45,12 @@ const fetchPersonalBests = async () => {
     >
       <div class="font-semibold">
         {{ pb.exercise?.name }}
-        <small v-if="pb.exercise?.label">
-          {{ pb.exercise.label }}
-        </small>
+        <ExerciseTags compact :tags="pb.exercise?.tags" />
         <p class="text-sm text-gray-700 mt-1 font-normal">
           {{ formatToRelativeDateTime(pb.set?.metadata?.createdAt) }}
         </p>
       </div>
-      {{ pb.set?.weight }} kg x {{ pb.set?.reps }}
+      {{ pb.set ? formatExerciseSet(pb.set, pb.exercise) : '' }}
     </AppListItemLink>
   </AppList>
 </template>

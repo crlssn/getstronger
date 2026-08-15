@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package api.v1;
 
+import "api/v1/shared.proto";
 import "buf/validate/validate.proto";
 
 service AuthService {
@@ -20,6 +21,7 @@ message SignupRequest {
   string password_confirmation = 3;
   string first_name = 4 [(buf.validate.field).string.min_len = 1];
   string last_name = 5 [(buf.validate.field).string.min_len = 1];
+  WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];
 }
 message SignupResponse {}
 
