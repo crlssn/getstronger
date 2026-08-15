@@ -194,7 +194,7 @@ jobs:
         run: |
           aws s3 sync ./dist "s3://$SCW_BUCKET_NAME" \
             --delete \
-            --endpoint-url "https://s3.${SCW_REGION}.scw.cloud"
+            --endpoint-url "https://$SCW_BUCKET_NAME.s3.$SCW_REGION.scw.cloud"
 
   cleanup:
     needs: [init, database, server, web]
