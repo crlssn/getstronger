@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { relative } from 'node:path'
 import { authenticatedPages, guestPages, personas, type PageEntry } from './catalogue'
+import { flowRecords } from './flows'
 import { changesSince } from './diff'
 import {
   changesRoot,
@@ -14,7 +15,13 @@ import {
   type PageRecord,
 } from './paths'
 
-type Audience = { description: string; email?: string; name: string; pages: PageEntry[] }
+// Ordering only needs each page's name, and a flow step has no route of its own.
+type Audience = {
+  description: string
+  email?: string
+  name: string
+  pages: (PageEntry | { name: string })[]
+}
 
 const audiences: Audience[] = [
   { description: 'Pages a signed-out visitor sees', name: 'guest', pages: guestPages },
@@ -22,7 +29,7 @@ const audiences: Audience[] = [
     description: persona.description,
     email: persona.email,
     name: persona.name,
-    pages: authenticatedPages,
+    pages: [...authenticatedPages, ...flowRecords],
   })),
 ]
 
