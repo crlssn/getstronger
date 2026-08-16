@@ -178,7 +178,7 @@ h2 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
 .page-intro > a {
-  @apply inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
 }
 .page-intro svg {
   @apply size-5;
@@ -247,7 +247,7 @@ h2 {
   @apply mt-5 text-xs leading-5 text-slate-500;
 }
 .first-plan-button {
-  @apply mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700;
+  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700;
 }
 .first-plan-button svg {
   @apply size-5;
@@ -296,7 +296,7 @@ h2 {
 }
 .active-plan footer a,
 .active-plan footer button {
-  @apply min-h-10 rounded-xl px-4 text-sm font-semibold;
+  @apply min-h-(--size-control-sm) rounded-xl px-4 text-sm font-semibold;
 }
 .active-plan footer a {
   @apply inline-flex items-center bg-indigo-600 text-white;

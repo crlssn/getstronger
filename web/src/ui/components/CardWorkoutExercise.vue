@@ -116,7 +116,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply flex min-w-0 items-center gap-2;
 }
 .exercise-block > header a {
-  @apply truncate text-base font-semibold text-slate-950 transition hover:text-indigo-700;
+  @apply -mx-1.5 -my-2.5 inline-flex min-h-(--size-control-sm) items-center truncate px-1.5 py-2.5 text-base font-semibold text-slate-950 transition hover:text-indigo-700;
 }
 .set-count {
   @apply shrink-0 text-xs font-medium text-slate-500;

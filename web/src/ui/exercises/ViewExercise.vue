@@ -264,7 +264,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500;
 }
 .load-more {
-  @apply mt-3 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply mt-3 min-h-(--size-control) w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50;
 }
 .manage-heading {
   @apply p-5;
@@ -277,7 +277,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 }
 .manage-actions a,
 .manage-actions button {
-  @apply flex min-h-14 w-full items-center gap-3 px-5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply flex min-h-(--size-control-lg) w-full items-center gap-3 px-5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50;
 }
 .manage-actions a svg,
 .manage-actions button svg {
@@ -293,6 +293,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-2 text-sm text-slate-500;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
 }
 </style>

@@ -249,7 +249,7 @@ h1 {
   @apply bg-stone-900 text-white;
 }
 .logout-link {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
 }
 .logout-link svg {
   @apply size-5;

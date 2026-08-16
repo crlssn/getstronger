@@ -198,7 +198,7 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-trigger {
-  @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-900;
+  @apply grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-900;
 }
 .search-trigger svg {
   @apply size-5;

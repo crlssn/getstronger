@@ -133,7 +133,7 @@ const remove = async () => {
 }
 .overview-actions a,
 .overview-actions button {
-  @apply inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control) items-center gap-2 rounded-xl px-4 text-sm font-semibold;
 }
 .overview-actions a {
   @apply bg-white text-indigo-700;
@@ -182,7 +182,7 @@ const remove = async () => {
   @apply border-t border-slate-200 bg-slate-50 p-4 text-sm text-slate-600;
 }
 .delete-plan {
-  @apply inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+  @apply inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-xl px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
 }
 .delete-plan svg {
   @apply size-5;

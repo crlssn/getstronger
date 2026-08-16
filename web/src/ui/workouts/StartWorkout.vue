@@ -1188,7 +1188,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leave-workout {
-  @apply -ml-1 grid size-10 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900;
+  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900;
 }
 .leave-workout svg {
   @apply size-5;
@@ -1345,7 +1345,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply max-w-sm text-sm text-slate-500;
 }
 .quick-empty button {
-  @apply mt-2 inline-flex min-h-14 w-full items-center justify-center gap-2 justify-self-stretch rounded-xl bg-indigo-600 px-4 text-base font-semibold text-white transition hover:bg-indigo-700;
+  @apply mt-2 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 justify-self-stretch rounded-xl bg-indigo-600 px-4 text-base font-semibold text-white transition hover:bg-indigo-700;
 }
 .quick-empty button svg {
   @apply size-5;
@@ -1528,12 +1528,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply pointer-events-auto flex w-full max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:border sm:rounded-2xl;
 }
 .primary-action {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400;
 }
 /* Mirrors the leave dialog's secondary button, so the dock and the dialog
    speak the same language. */
 .finish-early {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
 }
 .finish-dock svg {
   @apply size-5;
@@ -1551,7 +1551,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-1 text-xl font-semibold text-slate-950;
 }
 .exercise-picker header button {
-  @apply grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-500;
+  @apply grid size-11 place-items-center rounded-xl border border-slate-200 text-slate-500;
 }
 .exercise-picker header button svg {
   @apply size-5;
@@ -1569,7 +1569,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .exercise-options button {
-  @apply flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50;
+  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50;
 }
 .exercise-options strong,
 .exercise-options small {
@@ -1588,7 +1588,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500;
 }
 .load-more {
-  @apply mt-4 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400;
+  @apply mt-4 min-h-(--size-control) w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400;
 }
 .finish-dialog {
   @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 text-left shadow-2xl sm:rounded-3xl;
@@ -1603,7 +1603,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-2 text-sm leading-6 text-slate-500;
 }
 .finish-dialog button {
-  @apply mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
+  @apply mt-3 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
 }
 .finish-dialog button svg {
   @apply size-5;

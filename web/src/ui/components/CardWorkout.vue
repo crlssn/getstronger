@@ -334,9 +334,11 @@ const postComment = async () => {
 .author-copy {
   @apply min-w-0 flex-1;
 }
+/* A name in a card is a link, and the type size is right. What it lacked was
+   somewhere for a thumb to land, so it gains a hit area rather than a font. */
 .author-copy > a,
 .feed-author > div > a:first-child {
-  @apply block truncate text-sm font-semibold text-slate-950 hover:text-indigo-700;
+  @apply -my-3 block truncate py-3 text-sm font-semibold text-slate-950 hover:text-indigo-700;
 }
 .author-copy p {
   @apply mt-1 flex items-center gap-1.5 text-xs text-slate-500;
@@ -431,7 +433,7 @@ const postComment = async () => {
   @apply pl-2 text-xs text-slate-400;
 }
 .comment-form button {
-  @apply inline-flex min-h-10 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
 }
 .feed-summary-card {
   @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md;

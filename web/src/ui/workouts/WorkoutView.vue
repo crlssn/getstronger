@@ -242,13 +242,13 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
 }
 .active-actions > a svg {
   @apply size-5;
 }
 .active-actions > button {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
 }
 .active-actions > button svg {
   @apply size-4;
@@ -275,13 +275,13 @@ h2 {
   @apply font-semibold text-white;
 }
 .next-card > a {
-  @apply mt-5 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-indigo-700;
+  @apply mt-5 flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-indigo-700;
 }
 .next-card > a svg {
   @apply size-5;
 }
 .skip-button {
-  @apply mt-2 min-h-10 w-full text-sm font-semibold text-indigo-100;
+  @apply mt-2 min-h-(--size-control-sm) w-full text-sm font-semibold text-indigo-100;
 }
 .empty-card {
   @apply card p-5;
@@ -290,7 +290,7 @@ h2 {
   @apply mt-1 text-sm text-slate-500;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
 }
 .quick-card {
   @apply grid-cols-[3rem_1fr_auto];

@@ -245,7 +245,7 @@ h1 {
   @apply rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500;
 }
 .load-more {
-  @apply mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50;
 }
 .load-more svg {
   @apply size-4;
@@ -254,9 +254,9 @@ h1 {
   @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur md:bottom-4;
 }
 .cancel-link {
-  @apply inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50;
+  @apply inline-flex min-h-(--size-control) items-center rounded-xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50;
 }
 .save-button {
-  @apply inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
 }
 </style>

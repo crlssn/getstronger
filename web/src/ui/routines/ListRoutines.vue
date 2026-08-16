@@ -205,7 +205,7 @@ h1 {
   @apply mt-1 max-w-xl text-sm text-slate-500;
 }
 .create-link {
-  @apply inline-flex min-h-11 w-max items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700;
+  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700;
 }
 .create-link svg {
   @apply size-5;
@@ -257,7 +257,7 @@ h1 {
 }
 .routine-actions a,
 .routine-actions button {
-  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold;
 }
 .routine-actions svg {
   @apply size-4;
@@ -272,7 +272,7 @@ h1 {
   @apply relative ml-auto;
 }
 .routine-menu summary {
-  @apply grid size-10 cursor-pointer list-none place-items-center rounded-xl text-slate-500 hover:bg-slate-100;
+  @apply grid size-11 cursor-pointer list-none place-items-center rounded-xl text-slate-500 hover:bg-slate-100;
 }
 .routine-menu summary::-webkit-details-marker {
   @apply hidden;
@@ -285,7 +285,7 @@ h1 {
 }
 .routine-menu > div a,
 .routine-menu > div button {
-  @apply flex min-h-10 w-full justify-start rounded-lg px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50;
+  @apply flex min-h-(--size-control-sm) items-center w-full justify-start rounded-lg px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50;
 }
 @media (max-width: 520px) {
   .page-intro {

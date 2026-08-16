@@ -90,7 +90,7 @@ async function onUpdateExercise() {
   @apply text-xl font-semibold text-slate-950;
 }
 .form-status a {
-  @apply mt-3 inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-3 inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
 }
 .form-actions {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));

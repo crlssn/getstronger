@@ -175,7 +175,7 @@ h1 {
 }
 .hero-actions a,
 .hero-actions button {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
 }
 .hero-actions svg {
   @apply size-5;
@@ -202,7 +202,7 @@ h1 {
   @apply mt-1 text-sm text-slate-500;
 }
 .section-heading a {
-  @apply inline-flex w-max items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50;
+  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-xl px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50;
 }
 .section-heading svg {
   @apply size-4;
@@ -226,7 +226,7 @@ h1 {
   @apply mt-0.5 block text-xs text-slate-500;
 }
 .drag-handle {
-  @apply grid size-10 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing;
+  @apply grid size-11 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing;
 }
 .drag-handle svg {
   @apply size-5;
@@ -241,7 +241,7 @@ h1 {
   @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
 .danger-zone button {
-  @apply inline-flex min-h-11 w-max items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
 }
 .danger-zone svg {
   @apply size-5;

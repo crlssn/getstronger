@@ -251,7 +251,7 @@ h2 {
   @apply grid gap-2 text-sm font-semibold text-slate-600;
 }
 .name-field input {
-  @apply min-h-12 px-4 text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500;
+  @apply min-h-(--size-control) px-4 text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500;
 }
 .loop-note,
 .edit-note {
@@ -313,7 +313,7 @@ h2 {
   @apply size-4;
 }
 .add-routine {
-  @apply m-4 flex min-h-11 w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-300 bg-indigo-50 text-sm font-semibold text-indigo-700;
+  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-300 bg-indigo-50 text-sm font-semibold text-indigo-700;
 }
 .add-routine svg {
   @apply size-5;
@@ -328,7 +328,7 @@ h2 {
   @apply text-center text-xs text-slate-500;
 }
 .save-area button {
-  @apply min-h-12 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white disabled:bg-indigo-100 disabled:text-slate-400;
+  @apply min-h-(--size-control) rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white disabled:bg-indigo-100 disabled:text-slate-400;
 }
 .picker-backdrop {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 sm:items-center sm:p-6;

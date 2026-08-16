@@ -202,7 +202,7 @@ const removeTag = (index: number) => {
 }
 /* The wrapper is already the field; a ringed input inside it double-boxes. */
 .tag-input input {
-  @apply block min-h-9 w-full border-0 bg-transparent p-0 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0;
+  @apply block min-h-(--size-control-sm) w-full border-0 bg-transparent p-0 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0;
 }
 .tag-suggestions {
   @apply -mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg;

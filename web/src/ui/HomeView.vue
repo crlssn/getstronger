@@ -307,10 +307,10 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
 }
 .active-actions > button {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
 }
 .active-actions svg {
   @apply size-5;
@@ -350,7 +350,7 @@ h2 {
 }
 .start-button,
 .choose-button {
-  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition;
 }
 .start-button {
   @apply bg-white text-indigo-700 hover:bg-indigo-50;
@@ -398,7 +398,7 @@ h2 {
   @apply flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 text-sm text-red-700;
 }
 .feed-error button {
-  @apply min-h-10 shrink-0 rounded-xl px-3 font-semibold hover:bg-red-100;
+  @apply min-h-(--size-control-sm) shrink-0 rounded-xl px-3 font-semibold hover:bg-red-100;
 }
 .feed-end {
   @apply flex items-center justify-center gap-3 py-5 text-slate-600;
@@ -473,7 +473,7 @@ h2 {
   @apply mt-1 text-sm text-indigo-100;
 }
 .primary-link {
-  @apply inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50;
+  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-white px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50;
 }
 .loading-card {
   @apply space-y-4;
