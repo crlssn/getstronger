@@ -1,23 +1,40 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+
+const { t } = useI18n()
 
 const metrics = defineModel<ExerciseMetric[]>('metrics', { required: true })
 const restSeconds = defineModel<number>('restSeconds', { required: true })
 
-const measurements = [
-  { value: ExerciseMetric.WEIGHT, label: 'Weight', unit: 'kg' },
-  { value: ExerciseMetric.REPS, label: 'Reps', unit: 'count' },
-  { value: ExerciseMetric.DISTANCE, label: 'Distance', unit: 'km' },
-  { value: ExerciseMetric.TIME, label: 'Time', unit: 'min : sec' },
-]
+const measurements = computed(() => [
+  { value: ExerciseMetric.WEIGHT, label: t('common.weight'), unit: t('common.kg') },
+  {
+    value: ExerciseMetric.REPS,
+    label: t('common.reps'),
+    unit: t('exercise.measurements.unitCount'),
+  },
+  { value: ExerciseMetric.DISTANCE, label: t('common.distance'), unit: 'km' },
+  {
+    value: ExerciseMetric.TIME,
+    label: t('common.time'),
+    unit: t('exercise.measurements.unitMinSec'),
+  },
+])
 
-const presets = [
-  { label: 'Weight × reps', values: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS] },
-  { label: 'Distance × time', values: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME] },
-  { label: 'Reps only', values: [ExerciseMetric.REPS] },
-  { label: 'Timed', values: [ExerciseMetric.TIME] },
-]
+const presets = computed(() => [
+  {
+    label: t('exercise.measurements.presetWeightReps'),
+    values: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+  },
+  {
+    label: t('exercise.measurements.presetDistanceTime'),
+    values: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
+  },
+  { label: t('exercise.measurements.presetRepsOnly'), values: [ExerciseMetric.REPS] },
+  { label: t('exercise.measurements.presetTimed'), values: [ExerciseMetric.TIME] },
+])
 
 const restEnabled = computed({
   get: () => restSeconds.value > 0,
@@ -48,11 +65,11 @@ function toggleMetric(metric: ExerciseMetric) {
 <template>
   <section class="measurement-settings">
     <div>
-      <h3>How do you track it?</h3>
-      <p>Choose a starting point, then mix any measurements you need.</p>
+      <h3>{{ t('exercise.measurements.heading') }}</h3>
+      <p>{{ t('exercise.measurements.help') }}</p>
     </div>
 
-    <div class="presets" aria-label="Common measurement combinations">
+    <div class="presets" :aria-label="t('exercise.measurements.presetsAria')">
       <button
         v-for="preset in presets"
         :key="preset.label"
@@ -84,15 +101,15 @@ function toggleMetric(metric: ExerciseMetric) {
 
     <div class="rest-setting">
       <div>
-        <strong>Rest timer</strong>
-        <small>Starts after every completed set</small>
+        <strong>{{ t('exercise.restTimer') }}</strong>
+        <small>{{ t('exercise.measurements.restHelp') }}</small>
       </div>
       <button
         type="button"
         role="switch"
         class="switch"
         :aria-checked="restEnabled"
-        aria-label="Rest timer"
+        :aria-label="t('exercise.restTimer')"
         @click="restEnabled = !restEnabled"
       >
         <span class="knob"></span>

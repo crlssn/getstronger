@@ -859,7 +859,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               v-for="measurement in measurementsForExercise(currentExercise)"
               :key="measurement.metric"
             >
-              {{ measurement.label }}
+              {{ t(measurement.labelKey) }}
             </span>
           </div>
           <div
@@ -908,7 +908,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                 v-model.number="set[measurement.field]"
                 type="text"
                 :inputmode="measurement.inputmode"
-                :aria-label="`${currentExercise.name} set ${setIndex + 1} ${measurement.label}`"
+                :aria-label="`${currentExercise.name} set ${setIndex + 1} ${t(measurement.labelKey)}`"
                 @input="onSetInput(currentExercise.id, set, setIndex)"
                 @focus="
                   copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
@@ -951,11 +951,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               <strong>{{ entry.exercise.name }}</strong>
               <ExerciseTags compact :tags="entry.exercise.tags" />
               <small v-if="exerciseLoggedSetCount(entry.exercise.id)">
-                {{ exerciseLoggedSetCount(entry.exercise.id) }}
-                {{ exerciseLoggedSetCount(entry.exercise.id) === 1 ? 'set' : 'sets' }} logged
+                {{ t('workout.loggedSets', exerciseLoggedSetCount(entry.exercise.id)) }}
               </small>
               <small v-else-if="previousSet(entry.exercise.id, 0)">
-                Previous {{ previousSet(entry.exercise.id, 0)?.weight }}
+                {{ t('common.previous') }} {{ previousSet(entry.exercise.id, 0)?.weight }}
                 {{ weightUnitLabel(previousSet(entry.exercise.id, 0)?.weightUnit) }} ×
                 {{ previousSet(entry.exercise.id, 0)?.reps }}
               </small>
