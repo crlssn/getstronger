@@ -305,25 +305,26 @@ func UpdateUserWeightUnit(unit string) UpdateUserOpt {
 	}
 }
 
+// The update is a single statement, which is atomic on its own, and the
+// primary-key predicate limits the row count to 0 or 1, so there is nothing an
+// explicit transaction could roll back. bobExec still joins an enclosing one.
 func (r *repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("user update columns: %w", err)
 	}
 
-	return r.NewTx(ctx, func(tx Tx) error {
-		mods := append(cols.updateMods(), models.UpdateWhere.Users.ID.EQ(uuidFromString(userID)))
-		rows, rowsErr := models.Users.Update(mods...).Exec(ctx, tx.bobExec())
-		if rowsErr != nil {
-			return fmt.Errorf("user update: %w", rowsErr)
-		}
+	mods := append(cols.updateMods(), models.UpdateWhere.Users.ID.EQ(uuidFromString(userID)))
+	rows, err := models.Users.Update(mods...).Exec(ctx, r.bobExec())
+	if err != nil {
+		return fmt.Errorf("user update: %w", err)
+	}
 
-		if rows != 1 {
-			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
-		}
+	if rows != 1 {
+		return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+	}
 
-		return nil
-	})
+	return nil
 }
 
 type CreateExerciseParams struct {
