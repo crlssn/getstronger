@@ -16,6 +16,7 @@ import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import usePagination from '@/utils/usePagination'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 import {
   routineActivityBucketFor,
@@ -45,6 +46,13 @@ const filteredRoutines = computed(() => {
 })
 
 const maxNamedExercises = 3
+const routineTags = (routine: Routine) => [
+  ...new Set(routine.exercises.flatMap((exercise) => exercise.tags)),
+]
+
+const lastPerformed = (routine: Routine) =>
+  activityStore.routineLastPerformedFor(routine.id)?.toRelative() ?? ''
+
 const exerciseSummary = (routine: Routine) => {
   const names = routine.exercises.slice(0, maxNamedExercises).map((exercise) => exercise.name)
   const remaining = routine.exercises.length - names.length
@@ -131,12 +139,19 @@ const makeUpNext = async (routineId: string) => {
                   t('home.upNext')
                 }}</span>
                 <h3>{{ routine.name }}</h3>
-                <p class="routine-exercises">{{ exerciseSummary(routine) }}</p>
+                <ExerciseTags
+                  v-if="routineTags(routine).length"
+                  compact
+                  class="routine-tags"
+                  :tags="routineTags(routine)"
+                />
+                <p v-else class="routine-exercises">{{ exerciseSummary(routine) }}</p>
                 <p class="routine-meta">
-                  {{ t('home.exerciseCount', routine.exercises.length) }} ·
-                  {{
+                  <span>{{ t('home.exerciseCount', routine.exercises.length) }}</span>
+                  <span>{{
                     t('home.aboutMinutes', { count: Math.max(30, routine.exercises.length * 8) })
-                  }}
+                  }}</span>
+                  <span v-if="lastPerformed(routine)">{{ lastPerformed(routine) }}</span>
                 </p>
               </RouterLink>
               <ChevronRightIcon />
@@ -244,8 +259,14 @@ h1 {
 .routine-heading h3 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
+.routine-tags {
+  @apply mt-1;
+}
 .routine-exercises {
   @apply mt-1 text-sm text-slate-700;
+}
+.routine-meta span + span::before {
+  @apply mx-1 content-['·'];
 }
 .routine-meta {
   @apply mt-0.5 text-xs text-slate-500;

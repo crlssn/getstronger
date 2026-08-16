@@ -14,8 +14,15 @@ import {
   TrashIcon,
 } from '@heroicons/vue/24/outline'
 
-import { deleteRoutine, getRoutine, updateExerciseOrder } from '@/http/requests'
+import {
+  deleteRoutine,
+  getPreviousWorkoutSets,
+  getRoutine,
+  updateExerciseOrder,
+} from '@/http/requests'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import type { ExerciseSets } from '@/proto/api/v1/shared_pb'
+import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { useAlertStore } from '@/stores/alerts'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -30,6 +37,20 @@ const router = useRouter()
 const pageTitleStore = usePageTitleStore()
 const alertStore = useAlertStore()
 const dashboardStore = useDashboardStore()
+const previousSets = ref<ExerciseSets[]>([])
+
+// Ten rows of Plank / Rows / Rows with no numbers on them is a list nobody can
+// scan, and two routines both called Arms are indistinguishable until you open
+// them. What someone is looking for here is the load, so the row carries it.
+const lastSession = (exerciseId: string) => {
+  const entry = previousSets.value.find((previous) => previous.exercise?.id === exerciseId)
+  const sets = entry?.sets ?? []
+  if (!sets.length) return ''
+
+  const heaviest = sets.reduce((top, set) => (Number(set.weight) > Number(top.weight) ? set : top))
+  const count = `${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`
+  return `${count} · last ${formatExerciseSet(heaviest, entry?.exercise)}`
+}
 
 onMounted(async () => {
   const response = await getRoutine(route.params.id as string)
@@ -38,6 +59,8 @@ onMounted(async () => {
   loading.value = false
 
   if (!routine.value) return
+  const previous = await getPreviousWorkoutSets(routine.value.exercises.map(({ id }) => id))
+  if (previous) previousSets.value = previous.exerciseSets
   await nextTick()
   useSortable(listElement, routine.value.exercises, {
     chosenClass: 'sortable-chosen',
@@ -125,10 +148,11 @@ const onDeleteRoutine = async () => {
           :data-id="exercise.id"
         >
           <span class="number">{{ index + 1 }}</span>
-          <span class="exercise-copy"
-            ><strong>{{ exercise.name }}</strong
-            ><ExerciseTags compact :tags="exercise.tags"
-          /></span>
+          <span class="exercise-copy">
+            <strong>{{ exercise.name }}</strong>
+            <small v-if="lastSession(exercise.id)">{{ lastSession(exercise.id) }}</small>
+            <ExerciseTags v-else compact :tags="exercise.tags" />
+          </span>
           <button type="button" class="drag-handle" :aria-label="t('routine.view.reorderAria')">
             <Bars3Icon />
           </button>
@@ -219,7 +243,7 @@ const onDeleteRoutine = async () => {
   @apply block text-sm font-semibold text-slate-900;
 }
 .exercise-copy small {
-  @apply mt-0.5 block text-xs text-text-muted;
+  @apply mt-0.5 block text-meta tabular-nums text-text-muted;
 }
 .drag-handle {
   @apply grid size-11 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing;
