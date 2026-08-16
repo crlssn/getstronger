@@ -4,4 +4,4 @@
  * cannot render them into another language by mistake.
  */
 export const brandName = 'GetStronger'
-export const brandSlogan = 'Track your training. Beat your last.'
+export const brandSlogan = 'Log it. Lift it. Beat it.'
