@@ -311,6 +311,33 @@ alias = "app_backend"
 description = "Run the backend server"
 run = "go run ./server/cmd/main.go"
 
+# Native app tasks. The Capacitor projects in mobile/ wrap the built web
+# bundle, so every sync rebuilds web/dist first. Set VITE_API_URL when the
+# WebView should talk to a non-local API, e.g. the production one.
+
+[tasks."mobile:sync"]
+alias = "mobile_sync"
+description = "Build the web app and copy it into the native projects"
+dir = "mobile"
+run = [
+    "npm install",
+    "npm --prefix ../web install",
+    "npm --prefix ../web run build-only",
+    "npx cap sync",
+]
+
+[tasks."app:ios"]
+alias = "app_ios"
+description = "Build and launch the iOS app in a simulator"
+dir = "mobile"
+run = [{ task = "mobile:sync" }, "npx cap run ios"]
+
+[tasks."app:android"]
+alias = "app_android"
+description = "Build and launch the Android app in an emulator"
+dir = "mobile"
+run = [{ task = "mobile:sync" }, "npx cap run android"]
+
 # Code quality tasks
 
 [tasks.format]
@@ -385,13 +412,20 @@ run = ["go mod download", "go mod tidy"]
 [tasks."install:js"]
 alias = "install_js"
 description = "Install JavaScript dependencies"
-run = ["npm install", { task = "install:js:web" }]
+run = ["npm install", { task = "install:js:web" }, { task = "install:js:mobile" }]
 
 [tasks."install:js:web"]
 alias = "install_js_web"
 description = "Install web dependencies"
 hide = true
 dir = "web"
+run = "npm install"
+
+[tasks."install:js:mobile"]
+alias = "install_js_mobile"
+description = "Install mobile dependencies"
+hide = true
+dir = "mobile"
 run = "npm install"
 
 [tasks."install:e2e"]

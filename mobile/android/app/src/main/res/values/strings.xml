@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GetStronger</string>
+    <string name="title_activity_main">GetStronger</string>
+    <string name="package_name">com.getstronger.app</string>
+    <string name="custom_url_scheme">com.getstronger.app</string>
+</resources>

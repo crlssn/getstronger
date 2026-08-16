@@ -58,6 +58,7 @@ Use the demo account to explore all features:
 ## Tech Stack
 
 - **Web**: TypeScript (Vue.js, Tailwind CSS)
+- **Mobile**: Capacitor (native iOS and Android wrappers around the web app)
 - **Backend**: Golang
 - **Database**: PostgreSQL
 - **APIs**: gRPC-compatible, Protocol Buffers
@@ -136,6 +137,35 @@ mise installs the project's pinned Go, Node.js, and development tool versions fr
     | --- | --- | --- |
     | Newly signed up — Sam Taylor | `new@getstronger.test` | An empty, recently created account for onboarding and first-use flows |
     | Active for a year — Alex Morgan | `active@getstronger.test` | A year of weekly workouts plus followers, following, routines, and feed activity |
+
+## Native mobile apps
+
+The iOS and Android apps are [Capacitor](https://capacitorjs.com) projects in `mobile/` that wrap the built web bundle from `web/dist`, so the Vue codebase in `web/` stays the single source of truth. The checked-in `mobile/ios` and `mobile/android` directories are ordinary Xcode and Android Studio projects; iOS dependencies are managed with Swift Package Manager, so CocoaPods is not required.
+
+### Prerequisites
+
+- **iOS**: Xcode with the iOS simulator platform installed (`xcodebuild -downloadPlatform iOS`)
+- **Android**: Android Studio (or the Android SDK plus a JDK) with an emulator or connected device
+
+### Workflow
+
+Build and launch the app in a simulator or emulator:
+
+```bash
+mise run app:ios
+```
+
+```bash
+mise run app:android
+```
+
+Both tasks first run `mise run mobile:sync`, which rebuilds the web bundle and copies it into the native projects. Run the sync on its own after changing anything in `web/` while working in Xcode or Android Studio:
+
+```bash
+mise run mobile:sync
+```
+
+The WebView loads the bundled assets, so it has no dev-server proxy: set `VITE_API_URL` before syncing to point the app at an API, e.g. `VITE_API_URL=https://api.example.com mise run mobile:sync`. Authentication inside the WebView is not functional yet — the refresh-token cookie flow assumes a browser origin and is being reworked for native in [#1029](https://github.com/crlssn/getstronger/issues/1029).
 
 ## Production infrastructure on Scaleway
 
