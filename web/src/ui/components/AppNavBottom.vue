@@ -108,7 +108,6 @@ const navigation = computed(() => [
     timer: '',
   },
 ])
-
 </script>
 
 <template>

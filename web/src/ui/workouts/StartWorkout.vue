@@ -1197,28 +1197,28 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <!-- Advancing remains the primary action while exercises are unfinished,
            but finishing stays visible for the entire session. -->
       <footer class="finish-dock">
-      <strong v-if="finishError || primaryStatus" :class="{ 'text-red-600': finishError }">{{
-        finishError || primaryStatus
-      }}</strong>
-      <button type="submit" class="primary-action" :disabled="!canRunPrimaryAction">
-        <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
-        {{ primaryActionLabel }}
-      </button>
-      <!-- Keep the escape hatch in a stable position even when a partial set
+        <strong v-if="finishError || primaryStatus" :class="{ 'text-red-600': finishError }">{{
+          finishError || primaryStatus
+        }}</strong>
+        <button type="submit" class="primary-action" :disabled="!canRunPrimaryAction">
+          <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
+          {{ primaryActionLabel }}
+        </button>
+        <!-- Keep the escape hatch in a stable position even when a partial set
            temporarily prevents saving the workout. -->
-      <button
-        v-if="!allExercisesComplete"
-        type="button"
-        class="finish-early"
-        :disabled="!canFinish"
-        :title="!canFinish ? finishStatus : undefined"
-        :aria-label="
-          !canFinish && finishStatus ? `Finish workout: ${finishStatus}` : 'Finish workout'
-        "
-        @click="requestFinishWorkout"
-      >
-        <FlagIcon /> Finish workout
-      </button>
+        <button
+          v-if="!allExercisesComplete"
+          type="button"
+          class="finish-early"
+          :disabled="!canFinish"
+          :title="!canFinish ? finishStatus : undefined"
+          :aria-label="
+            !canFinish && finishStatus ? `Finish workout: ${finishStatus}` : 'Finish workout'
+          "
+          @click="requestFinishWorkout"
+        >
+          <FlagIcon /> Finish workout
+        </button>
       </footer>
     </div>
   </form>
