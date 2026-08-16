@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { i18n } from '@/i18n'
 import { WeightUnit } from '@/proto/api/v1/shared_pb'
+import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
 import ProfileView from '@/ui/profile/ProfileView.vue'
@@ -81,10 +82,11 @@ describe('ProfileView', () => {
     expect(lbs.attributes('aria-pressed')).toBe('true')
   })
 
-  test('reverts the optimistic update if the request fails', async () => {
+  test('reverts the optimistic update and says so if the request fails', async () => {
     updateUserWeightUnit.mockResolvedValue(undefined)
     const wrapper = await mountProfile()
     const preferencesStore = usePreferencesStore()
+    const alertStore = useAlertStore()
 
     await wrapper.get('.weight-unit-picker button:last-of-type').trigger('click')
     await flushPromises()
@@ -92,5 +94,11 @@ describe('ProfileView', () => {
     expect(preferencesStore.weightUnit).toBe(WeightUnit.KILOGRAMS)
     const kg = wrapper.get('.weight-unit-picker button:first-of-type')
     expect(kg.attributes('aria-pressed')).toBe('true')
+    // The request helper is silent for network failures, so without this the
+    // button would appear to snap back on its own.
+    expect(alertStore.alert).toMatchObject({
+      type: 'error',
+      message: 'Could not update weight unit. Please try again.',
+    })
   })
 })

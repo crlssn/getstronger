@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { isNumber } from '@/utils/numbers'
 import { ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { exerciseMetrics } from '@/utils/exerciseMeasurements'
+import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 
 export const useWorkoutStore = defineStore(
   'workouts',
@@ -149,13 +150,31 @@ export const useWorkoutStore = defineStore(
       }
     }
 
-    const ensureWeightUnits = (routineID: RoutineID, weightUnit: WeightUnit) => {
+    // The weight unit is a profile preference rather than a per-set choice, so
+    // a draft saved under an earlier preference is realigned to the current one
+    // here. Values are converted so the number keeps meaning the same weight as
+    // what was originally entered. A set carrying no unit at all predates the
+    // field, and its source is unknown, so it is only tagged.
+    const syncWeightUnits = (routineID: RoutineID, weightUnit: WeightUnit) => {
       const workout = workouts.value[routineID]
       if (!workout?.exerciseSets) return
 
+      const target = normalizeWeightUnit(weightUnit)
       Object.values(workout.exerciseSets).forEach((sets) => {
         sets.forEach((set) => {
-          if (!set.weightUnit) set.weightUnit = weightUnit
+          if (!set.weightUnit) {
+            set.weightUnit = target
+            return
+          }
+
+          const current = normalizeWeightUnit(set.weightUnit)
+          if (current === target) return
+
+          const weight = set.weight
+          if (typeof weight === 'number' && !Number.isNaN(weight)) {
+            set.weight = convertWeight(weight, current, target)
+          }
+          set.weightUnit = target
         })
       })
     }
@@ -193,7 +212,7 @@ export const useWorkoutStore = defineStore(
       getRestTimer,
       getSets,
       getStartedAt,
-      ensureWeightUnits,
+      syncWeightUnits,
       initialiseWorkout,
       removeWorkout,
       startQuickWorkoutWithExercise,

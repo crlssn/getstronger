@@ -1,5 +1,6 @@
 import {
   allowRuntimeErrors,
+  boxOf,
   expect,
   logIn,
   logInAs,
@@ -146,6 +147,18 @@ test.describe('quick workout lifecycle', () => {
     await expect(page.getByText(firstExercise, { exact: true })).toBeVisible()
     await expect(page.getByText('1 exercise', { exact: true })).toBeVisible()
     await expect(page.getByText(/26\s*kg/)).toBeVisible()
+
+    // The save confirmation spans the viewport rather than sitting inset.
+    await expect(page.getByRole('status')).toContainText('Workout saved')
+    const notificationBox = await boxOf(page.locator('.alert-region'))
+    expect(notificationBox.x).toBe(0)
+    expect(notificationBox.width).toBe(390)
+
+    // Finishing a workout marks the current week complete on the home streak.
+    await page.goto('/home')
+    const currentWeek = page.locator('.week-block.current.complete')
+    await expect(currentWeek.locator('svg')).toBeVisible()
+    await expect(currentWeek.locator('.week-workout-count')).toHaveText(/^(?:[2-8]|9\+)$/)
   })
 
   test('promotes previous-session values into the set rows @mutation', async ({ page }) => {
@@ -313,6 +326,52 @@ test.describe('weight units', () => {
         name: 'Kilograms',
       }),
     ).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  // A draft outlives the page: "Save & leave" keeps it in local storage, so the
+  // preference can change before the athlete returns to finish the workout.
+  test('converts an in-progress draft when the preference changes mid-workout @mutation', async ({
+    page,
+  }) => {
+    await logInAs(page, 'active@getstronger.test', 'password123')
+
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+    const weight = page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
+    await weight.fill('100')
+    await page.getByLabel(`${exercise} set 1 Reps`).fill('5')
+
+    await page.getByRole('button', { name: 'Leave workout?' }).click()
+    await page.getByRole('button', { name: 'Save & leave' }).click()
+
+    await page.goto('/profile')
+    await page
+      .getByRole('group', { name: 'Preferred weight unit' })
+      .getByRole('button', { name: 'Pounds' })
+      .click()
+    await expect(page.getByRole('status')).toContainText('Weight unit updated')
+
+    // 100 kg is the same weight as 220.46 lb. The row must never show the old
+    // number beside the new unit, or finishing saves a weight nobody entered.
+    await page.goto('/workouts/quick')
+    await expect(page.locator('.weight-entry .weight-unit-suffix').first()).toHaveText('lbs')
+    await expect(
+      page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }),
+    ).toHaveValue('220.46')
+
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText(/220\.46\s*lbs/)).toBeVisible()
+
+    // Restore the seeded default so the preference does not leak into the
+    // tests that follow.
+    await page.goto('/profile')
+    await page
+      .getByRole('group', { name: 'Preferred weight unit' })
+      .getByRole('button', { name: 'Kilograms' })
+      .click()
+    await expect(page.getByRole('status')).toContainText('Weight unit updated')
   })
 })
 

@@ -50,8 +50,12 @@ const setWeightUnit = async (unit: WeightUnit) => {
   const res = await updateUserWeightUnit(unit)
   updatingWeightUnit.value = false
 
+  // The request helper stays silent for network-level failures (Unavailable,
+  // Unknown, Canceled), which is exactly when this reverts. Say so explicitly,
+  // or the button appears to snap back on its own.
   if (!res) {
     preferencesStore.setWeightUnit(previous)
+    alertStore.setError(t('profile.weightUnitUpdateFailed'))
     return
   }
 

@@ -101,7 +101,7 @@ onMounted(async () => {
     defaultWeightUnit.value = normalizeWeightUnit(userResponse.user.weightUnit)
     preferencesStore.setWeightUnit(userResponse.user.weightUnit)
   }
-  workoutStore.ensureWeightUnits(routineID, defaultWeightUnit.value)
+  workoutStore.syncWeightUnits(routineID, defaultWeightUnit.value)
   await initializeRoutine()
   elapsedSeconds.value = Math.max(
     0,
@@ -424,11 +424,15 @@ const copyPreviousValue = async (
 
   const previousWeight = previous.weight
   if (field === 'weight' && typeof previousWeight === 'number' && !Number.isNaN(previousWeight)) {
+    // The previous set may have been logged under an older preference, so the
+    // value is converted. Write the unit alongside it: a weight and the unit it
+    // is expressed in must never be set independently.
     set.weight = convertWeight(
       previousWeight,
       normalizeWeightUnit(previous.weightUnit),
       defaultWeightUnit.value,
     )
+    set.weightUnit = defaultWeightUnit.value
   } else {
     set[field] = previous[field]
   }

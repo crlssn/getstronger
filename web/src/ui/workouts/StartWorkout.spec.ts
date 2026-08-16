@@ -282,5 +282,26 @@ describe('StartWorkout', () => {
       expect(workoutStore.getSets(routineID, benchPress.id)[0].weightUnit).toBe(WeightUnit.POUNDS)
       wrapper.unmount()
     })
+
+    // A draft outlives the component: leaving a workout keeps it in local
+    // storage, so the preference can change before the athlete comes back.
+    test('converts a resumed draft saved under the previous preference', async () => {
+      const workoutStore = useWorkoutStore()
+      workoutStore.initialiseWorkout(routineID)
+      workoutStore.addEmptySet(routineID, benchPress.id, WeightUnit.POUNDS)
+      workoutStore.getSets(routineID, benchPress.id)[0].weight = 100
+      workoutStore.getSets(routineID, benchPress.id)[0].reps = 8
+
+      getCurrentUser.mockResolvedValue({ user: { weightUnit: WeightUnit.KILOGRAMS } })
+      const wrapper = await mountWorkout()
+
+      // The row must not read "100" beside a "kg" suffix while still being
+      // stored as pounds: that saves a weight the athlete never entered.
+      expect(wrapper.get('.weight-entry .weight-unit-suffix').text()).toBe('kg')
+      const set = workoutStore.getSets(routineID, benchPress.id)[0]
+      expect(set.weight).toBe(45.36)
+      expect(set.weightUnit).toBe(WeightUnit.KILOGRAMS)
+      wrapper.unmount()
+    })
   })
 })
