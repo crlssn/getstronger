@@ -220,10 +220,11 @@ jobs:
             fi
 
   web:
-    needs: [init, server]
+    needs: [init, database, server]
     runs-on: ubuntu-latest
     if: >-
       always() &&
+      (needs.database.result == 'success' || needs.database.result == 'skipped') &&
       (needs.server.result == 'success' || needs.server.result == 'skipped') &&
       (needs.init.outputs.web == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
 
