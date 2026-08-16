@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { nativeFetch } from '@/http/native'
 import { type Client, createClient } from '@connectrpc/connect'
 import { auth, logger, retryUnauthenticated } from '@/http/interceptors'
 import { FeedService } from '@/proto/api/v1/feed_service_pb'
@@ -9,12 +11,17 @@ import { WorkoutService } from '@/proto/api/v1/workout_service_pb'
 import { ExerciseService } from '@/proto/api/v1/exercise_service_pb'
 import { NotificationService } from '@/proto/api/v1/notification_service_pb'
 
+// In the browser the refresh token travels as a cookie, so requests carry
+// credentials. Native builds route through CapacitorHttp instead, where the
+// platform's own cookie jar plays that role; see http/native.ts.
+const browserFetch: typeof globalThis.fetch = (url, options) => {
+  // TODO: Include credentials only on refresh token and logout requests.
+  return fetch(url, { ...options, credentials: 'include' })
+}
+
 const transport = createConnectTransport({
   baseUrl: import.meta.env.VITE_API_URL,
-  fetch: (url, options) => {
-    // TODO: Include credentials only on refresh token and logout requests.
-    return fetch(url, { ...options, credentials: 'include' })
-  },
+  fetch: Capacitor.isNativePlatform() ? nativeFetch : browserFetch,
   // Interceptors run outermost first, so `auth` stays last: it stamps the
   // current access token onto both the original call and any replay.
   interceptors: [logger, retryUnauthenticated, auth],
