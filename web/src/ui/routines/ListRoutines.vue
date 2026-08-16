@@ -206,7 +206,7 @@ h1 {
   @apply mt-1 max-w-xl text-sm text-slate-500;
 }
 .create-link {
-  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700;
+  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .create-link svg {
   @apply size-5;
@@ -264,7 +264,7 @@ h1 {
   @apply size-4;
 }
 .start-link {
-  @apply bg-indigo-600 text-white hover:bg-indigo-700;
+  @apply bg-ink text-white hover:bg-ink-strong;
 }
 .view-link {
   @apply border border-slate-200 text-slate-700 hover:bg-slate-50;

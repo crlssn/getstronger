@@ -97,7 +97,7 @@ const markAllAsRead = async () => {
   @apply mb-3 flex justify-end;
 }
 .notification-actions button {
-  @apply min-h-(--size-control) rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-indigo-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 disabled:cursor-wait disabled:text-slate-400;
+  @apply min-h-(--size-control) rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink-strong shadow-sm transition hover:border-ink-border hover:bg-ink-surface disabled:cursor-wait disabled:text-slate-400;
 }
 .notification-item {
   @apply relative transition-colors duration-200;

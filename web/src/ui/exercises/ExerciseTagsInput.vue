@@ -186,16 +186,16 @@ const removeTag = (index: number) => {
 @reference '../../assets/base.css';
 
 .tag-input {
-  @apply card space-y-3 p-4 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100;
+  @apply card space-y-3 p-4 focus-within:border-ink-border focus-within:ring-2 focus-within:ring-ink-tint;
 }
 .tag-list {
   @apply flex flex-wrap gap-2;
 }
 .tag-list > span {
-  @apply inline-flex min-h-8 items-center gap-1.5 rounded-full bg-indigo-50 py-1 pl-3 pr-1.5 text-sm font-medium text-indigo-700;
+  @apply inline-flex min-h-8 items-center gap-1.5 rounded-full bg-ink-surface py-1 pl-3 pr-1.5 text-sm font-medium text-ink-strong;
 }
 .tag-list button {
-  @apply grid size-6 place-items-center rounded-full text-indigo-500 transition hover:bg-indigo-100 hover:text-indigo-800;
+  @apply grid size-6 place-items-center rounded-full text-ink-muted transition hover:bg-ink-tint hover:text-ink-strong;
 }
 .tag-list svg {
   @apply size-4;
@@ -208,10 +208,10 @@ const removeTag = (index: number) => {
   @apply -mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg;
 }
 .tag-suggestions button {
-  @apply flex min-h-11 w-full items-center justify-between gap-3 border-t border-slate-100 px-3 text-left text-sm font-medium text-slate-700 first:border-t-0 hover:bg-indigo-50 hover:text-indigo-800;
+  @apply flex min-h-11 w-full items-center justify-between gap-3 border-t border-slate-100 px-3 text-left text-sm font-medium text-slate-700 first:border-t-0 hover:bg-ink-surface hover:text-ink-strong;
 }
 .tag-suggestions button.highlighted {
-  @apply bg-indigo-50 text-indigo-800;
+  @apply bg-ink-surface text-ink-strong;
 }
 .tag-suggestions small {
   @apply shrink-0 text-xs font-normal text-text-subtle;
@@ -223,6 +223,6 @@ const removeTag = (index: number) => {
   @apply text-red-600;
 }
 .full {
-  @apply border-indigo-200;
+  @apply border-ink-border;
 }
 </style>

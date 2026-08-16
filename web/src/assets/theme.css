@@ -13,6 +13,12 @@
   --color-ink: #25282d;
   --color-ink-strong: #1f2226;
   --color-ink-muted: #565b61;
+  /* The pale end of the same ramp: a chip, an icon tile or a hover behind ink
+   * text. Same value as --color-surface-track, different job — a groove and a
+   * tint are separable later without hunting through 69 files. */
+  --color-ink-tint: #e8e9e7;
+  --color-ink-surface: #f5f5f2;
+  --color-ink-border: #d4d5d3;
 
   /* Surface. */
   --color-surface: #ffffff;

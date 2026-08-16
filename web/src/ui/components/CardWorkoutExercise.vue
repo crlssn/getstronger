@@ -116,7 +116,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply flex min-w-0 items-center gap-2;
 }
 .exercise-block > header a {
-  @apply -mx-1.5 -my-2.5 inline-flex min-h-(--size-control-sm) items-center truncate px-1.5 py-2.5 text-base font-semibold text-slate-950 transition hover:text-indigo-700;
+  @apply -mx-1.5 -my-2.5 inline-flex min-h-(--size-control-sm) items-center truncate px-1.5 py-2.5 text-base font-semibold text-slate-950 transition hover:text-ink-strong;
 }
 .set-count {
   @apply shrink-0 text-xs font-medium text-slate-500;
@@ -135,7 +135,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply grid size-7 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
 }
 .set-number.personal-best {
-  @apply bg-amber-50 text-amber-700;
+  @apply bg-achievement-50 text-achievement-700;
 }
 .set-number.personal-best svg {
   @apply size-4;
@@ -186,7 +186,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply font-medium;
 }
 .compact-set-value .compact-personal-best {
-  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-amber-50 text-amber-700;
+  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-achievement-50 text-achievement-700;
 }
 .compact-personal-best svg {
   @apply size-4;

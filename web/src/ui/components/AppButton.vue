@@ -44,7 +44,7 @@ button:disabled {
 }
 
 .primary {
-  @apply border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700;
+  @apply border-ink bg-ink text-white hover:bg-ink-strong;
 }
 
 .green {
@@ -56,7 +56,7 @@ button:disabled {
 }
 
 .amber {
-  @apply border-amber-600 bg-amber-600 text-white hover:bg-amber-700;
+  @apply border-achievement-600 bg-achievement-600 text-white hover:bg-achievement-700;
 }
 
 .gray {

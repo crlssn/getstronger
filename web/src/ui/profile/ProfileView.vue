@@ -175,7 +175,7 @@ const weeklyVolume = computed(() =>
   @apply card grid grid-cols-[auto_1fr_auto] items-center gap-4 p-5;
 }
 .avatar {
-  @apply grid size-16 place-items-center rounded-2xl bg-indigo-600 text-xl font-semibold text-white;
+  @apply grid size-16 place-items-center rounded-2xl bg-ink text-xl font-semibold text-white;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
@@ -214,13 +214,13 @@ const weeklyVolume = computed(() =>
   @apply card divide-y divide-slate-100 overflow-hidden;
 }
 .settings-card a {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-slate-50 hover:text-indigo-700;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-slate-50 hover:text-ink-strong;
 }
 .settings-card > a > svg {
   @apply size-5 text-slate-400;
 }
 .settings-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
+  @apply grid size-11 place-items-center rounded-xl bg-ink-tint text-ink-strong;
 }
 .settings-icon svg {
   @apply size-5;

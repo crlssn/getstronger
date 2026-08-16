@@ -184,7 +184,7 @@ h1 {
   @apply mt-2 text-sm text-slate-500;
 }
 .selection-count {
-  @apply w-max rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700;
+  @apply w-max rounded-full bg-ink-surface px-3 py-1.5 text-xs font-semibold text-ink-strong;
 }
 .form-card,
 .exercise-card {
@@ -194,7 +194,7 @@ h1 {
   @apply mb-2 block text-sm font-semibold text-slate-700;
 }
 .name-input {
-  @apply h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-base font-medium text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100;
+  @apply h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-base font-medium text-slate-950 placeholder:text-slate-400 focus:border-ink-muted focus:bg-white focus:ring-2 focus:ring-ink-tint;
 }
 .exercise-toolbar {
   @apply mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
@@ -218,16 +218,16 @@ h1 {
   @apply grid gap-2 sm:grid-cols-2;
 }
 .exercise-option {
-  @apply flex min-h-16 items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50/40;
+  @apply flex min-h-16 items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
 }
 .exercise-option.selected {
-  @apply border-indigo-300 bg-indigo-50;
+  @apply border-ink-border bg-ink-surface;
 }
 .check-box {
   @apply grid size-6 shrink-0 place-items-center rounded-md border-2 border-slate-300 bg-white;
 }
 .selected .check-box {
-  @apply border-indigo-600 bg-indigo-600 text-white;
+  @apply border-ink bg-ink text-white;
 }
 .check-box svg {
   @apply size-4 stroke-[3];
@@ -257,6 +257,6 @@ h1 {
   @apply inline-flex min-h-(--size-control) items-center rounded-xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50;
 }
 .save-button {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-5 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-slate-300;
 }
 </style>

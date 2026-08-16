@@ -198,7 +198,7 @@ const onDeleteRoutine = async () => {
   @apply mt-1 text-sm text-slate-500;
 }
 .section-heading a {
-  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-xl px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50;
+  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-xl px-3 text-sm font-semibold text-ink-strong hover:bg-ink-surface;
 }
 .section-heading svg {
   @apply size-4;
@@ -219,7 +219,7 @@ const onDeleteRoutine = async () => {
   @apply block text-sm font-semibold text-slate-900;
 }
 .exercise-copy small {
-  @apply mt-0.5 block text-xs text-slate-500;
+  @apply mt-0.5 block text-xs text-text-muted;
 }
 .drag-handle {
   @apply grid size-11 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing;
@@ -231,7 +231,7 @@ const onDeleteRoutine = async () => {
   @apply opacity-30;
 }
 .sortable-drag {
-  @apply rounded-xl border border-indigo-200 shadow-lg;
+  @apply rounded-xl border border-ink-border shadow-lg;
 }
 .danger-zone {
   @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;

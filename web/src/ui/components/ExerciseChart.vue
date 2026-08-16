@@ -236,8 +236,8 @@ const options = computed(() => ({
   @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center;
 }
 .first-result > span {
-  @apply mb-2 size-4 rounded-full border-4 border-indigo-600 bg-white;
-  box-shadow: 0 0 0 8px theme('colors.indigo.100');
+  @apply mb-2 size-4 rounded-full border-4 border-ink bg-white;
+  box-shadow: 0 0 0 8px var(--color-ink-tint);
 }
 .first-result strong {
   @apply text-base font-semibold text-slate-950;

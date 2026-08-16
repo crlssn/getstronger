@@ -151,7 +151,7 @@ h1 {
   @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
 }
 .create-link {
-  @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700;
+  @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
 }
 .create-link svg {
   @apply size-5;
@@ -175,7 +175,7 @@ h1 {
   @apply card overflow-hidden;
 }
 .exercise-group-card > a {
-  @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 transition hover:text-indigo-700;
+  @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 transition hover:text-ink-strong;
 }
 .exercise-group-card > a:first-child {
   @apply border-t-0;
@@ -199,7 +199,7 @@ h1 {
   @apply mt-1;
 }
 .load-more {
-  @apply min-h-(--size-control) w-full rounded-xl border border-slate-200 bg-white text-sm font-semibold text-indigo-600 shadow-sm;
+  @apply min-h-(--size-control) w-full rounded-xl border border-slate-200 bg-white text-sm font-semibold text-ink shadow-sm;
 }
 @media (max-width: 420px) {
   .create-link {

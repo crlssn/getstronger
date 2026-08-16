@@ -325,7 +325,7 @@ const postComment = async () => {
   @apply flex items-center gap-3 border-b border-slate-100 p-4 sm:p-5;
 }
 .avatar {
-  @apply grid size-11 shrink-0 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700;
+  @apply grid size-11 shrink-0 place-items-center rounded-xl bg-ink-tint text-xs font-semibold text-ink-strong;
 }
 .avatar.large {
   @apply size-12 text-sm;
@@ -337,7 +337,7 @@ const postComment = async () => {
    somewhere for a thumb to land, so it gains a hit area rather than a font. */
 .author-copy > a,
 .feed-author > div > a:first-child {
-  @apply -my-3 block truncate py-3 text-sm font-semibold text-slate-950 hover:text-indigo-700;
+  @apply -my-3 block truncate py-3 text-sm font-semibold text-slate-950 hover:text-ink-strong;
 }
 .author-copy p {
   @apply mt-1 flex items-center gap-1.5 text-xs text-slate-500;
@@ -352,7 +352,7 @@ const postComment = async () => {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .workout-heading .eyebrow {
-  @apply text-indigo-100;
+  @apply text-ink-tint;
 }
 .workout-heading h2 {
   @apply mt-1 text-2xl font-semibold tracking-tight;
@@ -364,10 +364,10 @@ const postComment = async () => {
   @apply flex items-center gap-3 bg-white p-4;
 }
 .metric-icon {
-  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
+  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-ink-tint text-ink-strong;
 }
 .metric-icon.amber {
-  @apply bg-amber-50 text-amber-600;
+  @apply bg-achievement-50 text-achievement-600;
 }
 .metric-icon svg {
   @apply size-5;
@@ -429,15 +429,15 @@ const postComment = async () => {
   @apply pl-2 text-xs text-text-subtle;
 }
 .comment-form button {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-slate-300;
 }
 .feed-summary-card {
-  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md;
+  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-md;
 }
 .feed-summary-card .workout-heading {
   @apply border-y border-slate-100 bg-slate-50 text-slate-950;
   background-image: none;
-  box-shadow: inset 4px 0 0 theme('colors.indigo.500');
+  box-shadow: inset 4px 0 0 var(--color-ink-muted);
 }
 .feed-summary-card--personal-best {
   @apply border-gold-400 shadow-md;
@@ -455,7 +455,7 @@ const postComment = async () => {
   box-shadow: inset 4px 0 0 theme('colors.gold.500');
 }
 .feed-summary-card .workout-heading .eyebrow {
-  @apply text-indigo-600;
+  @apply text-ink;
 }
 .feed-summary-card--personal-best .workout-heading .eyebrow {
   @apply text-gold-700;

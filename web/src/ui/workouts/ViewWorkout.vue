@@ -68,6 +68,6 @@ const fetchWorkout = async () => {
   @apply mt-2 text-sm text-slate-500;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
 }
 </style>

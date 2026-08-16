@@ -137,7 +137,7 @@ h2 {
   @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
 }
 .record-count {
-  @apply inline-flex w-max items-center gap-2 rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700;
+  @apply inline-flex w-max items-center gap-2 rounded-full bg-achievement-50 px-3 py-2 text-sm font-semibold text-achievement-700;
 }
 .record-count svg {
   @apply size-5;
@@ -150,7 +150,7 @@ h2 {
   @apply mb-5 flex flex-wrap items-end justify-between gap-3;
 }
 .chart-heading > span {
-  @apply inline-flex items-center gap-2 text-sm font-semibold text-indigo-700;
+  @apply inline-flex items-center gap-2 text-sm font-semibold text-ink-strong;
 }
 .chart-heading svg {
   @apply size-5;
@@ -165,10 +165,10 @@ h2 {
   @apply divide-y divide-slate-100;
 }
 .record-list a {
-  @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-indigo-700;
+  @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-ink-strong;
 }
 .record-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-amber-50 text-amber-600;
+  @apply grid size-11 place-items-center rounded-xl bg-achievement-50 text-achievement-600;
 }
 .record-icon svg,
 .chevron {

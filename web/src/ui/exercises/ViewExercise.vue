@@ -236,7 +236,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply -mx-5 divide-y divide-slate-100 border-t border-slate-100;
 }
 .set-list > a {
-  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-3 transition hover:text-indigo-700;
+  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-3 transition hover:text-ink-strong;
 }
 .set-copy {
   @apply min-w-0;
@@ -252,7 +252,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-1 text-xs text-slate-500;
 }
 .record-pill {
-  @apply inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700;
+  @apply inline-flex items-center gap-1 rounded-full bg-achievement-50 px-2.5 py-1 text-xs font-semibold text-achievement-700;
 }
 .record-pill svg,
 .set-list > a > svg {
@@ -294,6 +294,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-2 text-sm text-slate-500;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
 }
 </style>

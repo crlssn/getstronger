@@ -26,7 +26,7 @@ a,
 input,
 textarea,
 select {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-muted focus-visible:ring-offset-2;
 }
 
 /* Loading was a per-screen decision: two lists had a skeleton, most had a
@@ -114,7 +114,7 @@ select {
 }
 
 .auth-eyebrow {
-  @apply text-xs font-semibold uppercase tracking-widest text-indigo-600;
+  @apply text-xs font-semibold uppercase tracking-widest text-ink;
 }
 
 .auth-form {
@@ -126,11 +126,11 @@ select {
 }
 
 .auth-input {
-  @apply block min-h-(--size-control-lg) w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-400 transition hover:border-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
+  @apply block min-h-(--size-control-lg) w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-400 transition hover:border-slate-400 focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
 }
 
 .auth-link {
-  @apply font-semibold text-indigo-600 transition hover:text-indigo-700;
+  @apply font-semibold text-ink transition hover:text-ink-strong;
 }
 
 .auth-submit {

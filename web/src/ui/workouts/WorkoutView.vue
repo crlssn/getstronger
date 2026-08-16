@@ -259,7 +259,7 @@ h2 {
   @apply flex items-center justify-between gap-3;
 }
 .next-card .eyebrow {
-  @apply text-indigo-100;
+  @apply text-ink-tint;
 }
 .next-card > header span {
   @apply rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold;
@@ -268,19 +268,19 @@ h2 {
   @apply mt-3;
 }
 .next-card > p {
-  @apply mt-2 text-sm text-indigo-100;
+  @apply mt-2 text-sm text-ink-tint;
 }
 .next-card .plan-name {
   @apply font-semibold text-white;
 }
 .next-card > a {
-  @apply mt-5 flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-indigo-700;
+  @apply mt-5 flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-ink-strong;
 }
 .next-card > a svg {
   @apply size-5;
 }
 .skip-button {
-  @apply mt-2 min-h-(--size-control-sm) w-full text-sm font-semibold text-indigo-100;
+  @apply mt-2 min-h-(--size-control-sm) w-full text-sm font-semibold text-ink-tint;
 }
 .empty-card {
   @apply card p-5;
@@ -289,13 +289,13 @@ h2 {
   @apply mt-1 text-sm text-slate-500;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
 }
 .quick-card {
   @apply grid-cols-[3rem_1fr_auto];
 }
 .quick-icon {
-  @apply grid size-12 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
+  @apply grid size-12 place-items-center rounded-xl bg-ink-tint text-ink-strong;
 }
 .quick-icon svg {
   @apply size-6;
@@ -313,7 +313,7 @@ h2 {
   @apply card overflow-hidden;
 }
 .history-list > a {
-  @apply flex min-h-16 items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 transition last:border-b-0 hover:text-indigo-700;
+  @apply flex min-h-16 items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 transition last:border-b-0 hover:text-ink-strong;
 }
 .history-list > a > span {
   @apply min-w-0;
@@ -356,7 +356,7 @@ h2 {
   @apply size-4 text-success;
 }
 .history-spinner {
-  @apply size-4 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600;
+  @apply size-4 animate-spin rounded-full border-2 border-slate-200 border-t-ink;
 }
 .history-sentinel {
   @apply h-px;

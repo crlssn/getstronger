@@ -213,7 +213,7 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-field {
-  @apply card flex w-full items-center gap-2 px-4 transition focus-within:border-indigo-500;
+  @apply card flex w-full items-center gap-2 px-4 transition focus-within:border-ink-muted;
 }
 .search-field > svg {
   @apply size-6 shrink-0 text-slate-500;

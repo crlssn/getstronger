@@ -171,13 +171,13 @@ const remove = async () => {
   @apply mt-0.5 text-xs text-slate-500;
 }
 .routine-order li b {
-  @apply text-sm font-semibold text-indigo-600;
+  @apply text-sm font-semibold text-ink;
 }
 .routine-order li.current {
-  @apply bg-indigo-50;
+  @apply bg-ink-surface;
 }
 .routine-order li.current > span {
-  @apply bg-indigo-600 text-white;
+  @apply bg-ink text-white;
 }
 .routine-order footer {
   @apply border-t border-slate-200 bg-slate-50 p-4 text-sm text-slate-600;
