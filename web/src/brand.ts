@@ -5,3 +5,4 @@
  */
 export const brandName = 'GetStronger'
 export const brandSlogan = 'Log it. Lift it. Beat it.'
+export const brandSignupSubtitle = 'Build routines, log workouts, and keep beating your last.'

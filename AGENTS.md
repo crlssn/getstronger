@@ -72,9 +72,10 @@ worktree. The local stack is not shared, so set it up before running anything.
 ## Localisation
 
 Every user-facing string in the web app must go through vue-i18n. Never
-hard-code English text in components — the only exceptions are the brand name
-and the slogan (`auth.signupSubtitle`, which lives in the catalogue but
-intentionally keeps its English value in every locale).
+hard-code English text in components — the only exceptions are the brand
+assets in `web/src/brand.ts` (the product name, slogan, and signup subtitle),
+which read the same in every locale and must never enter the message
+catalogues. `brand.spec.ts` fails if a catalogue value contains any of them.
 
 - Add every new string to `web/src/i18n/messages.ts` in **both** `en` and `sv`,
   and render it with `t()`. The test suite enforces key parity between locales,
