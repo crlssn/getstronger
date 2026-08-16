@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts'
 import { createExercise, listExerciseTags } from '@/http/requests'
@@ -11,6 +12,7 @@ import ExerciseTagsInput from '@/ui/exercises/ExerciseTagsInput.vue'
 import ExerciseMeasurementSettings from '@/ui/exercises/ExerciseMeasurementSettings.vue'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 
+const { t } = useI18n()
 const router = useRouter()
 const alertStore = useAlertStore()
 const tagSuggestions = ref<string[]>([])
@@ -30,29 +32,29 @@ onMounted(async () => {
 const onSubmit = async () => {
   const res = await createExercise(req.value)
   if (!res) return
-  alertStore.setSuccess('Exercise created')
+  alertStore.setSuccess(t('exercise.form.created'))
   await router.push('/exercises')
 }
 </script>
 
 <template>
   <form @submit.prevent="onSubmit">
-    <h6>Name</h6>
+    <h6>{{ t('exercise.name') }}</h6>
     <AppList>
       <AppListItemInput :model="req.name" type="text" required @update="(n) => (req.name = n)" />
     </AppList>
 
-    <h6>Tracking</h6>
+    <h6>{{ t('exercise.form.tracking') }}</h6>
     <ExerciseMeasurementSettings
       v-model:metrics="req.metrics"
       v-model:rest-seconds="req.restSeconds"
     />
 
-    <h6>Tags <small>Optional</small></h6>
+    <h6>{{ t('exercise.form.tags') }} <small>{{ t('common.optional') }}</small></h6>
     <ExerciseTagsInput v-model="req.tags" :suggestions="tagSuggestions" />
 
     <div class="form-actions">
-      <AppButton text="Create" type="submit" colour="primary">Save Exercise</AppButton>
+      <AppButton text="Create" type="submit" colour="primary">{{ t('exercise.save') }}</AppButton>
     </div>
   </form>
 </template>

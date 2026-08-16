@@ -57,12 +57,13 @@ const fetchSets = async () => {
 }
 
 const onDeleteExercise = async () => {
-  if (!confirm(`Delete “${exercise.value?.name ?? 'this exercise'}”? This cannot be undone.`)) {
+  const name = exercise.value?.name ?? t('common.exercise')
+  if (!confirm(t('exercise.view.deleteConfirm', { name }))) {
     return
   }
 
   await deleteExercise(route.params.id as string)
-  alertStore.setError('Exercise deleted')
+  alertStore.setError(t('exercise.view.deleted'))
   await router.push('/exercises')
 }
 
@@ -97,7 +98,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card">Loading exercise…</div>
+  <div v-if="loading" class="loading-card">{{ t('exercise.view.loading') }}</div>
   <div v-else-if="exercise" class="exercise-detail">
     <ExerciseTags :tags="exercise.tags" />
 
@@ -117,27 +118,27 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 
     <section v-if="authStore.userId === exercise.userId" class="manage-card">
       <div class="manage-heading">
-        <p class="eyebrow">Manage exercise</p>
-        <h2>Exercise settings</h2>
+        <p class="eyebrow">{{ t('exercise.manage') }}</p>
+        <h2>{{ t('exercise.settings') }}</h2>
       </div>
       <div class="manage-actions">
         <RouterLink :to="`/exercises/${route.params.id}/edit`">
-          <PencilIcon /> Update exercise <ChevronRightIcon />
+          <PencilIcon /> {{ t('exercise.update') }} <ChevronRightIcon />
         </RouterLink>
-        <button type="button" @click="onDeleteExercise"><TrashIcon /> Delete exercise</button>
+        <button type="button" @click="onDeleteExercise"><TrashIcon /> {{ t('exercise.delete') }}</button>
       </div>
     </section>
 
     <section v-if="sets.length" class="chart-card">
-      <p class="eyebrow">Trend</p>
+      <p class="eyebrow">{{ t('exercise.trend') }}</p>
       <ExerciseChart :sets="downSample(sets, 60)" :exercise="exercise" />
     </section>
 
     <section class="sets-card">
       <header>
         <div>
-          <p class="eyebrow">History</p>
-          <h1>Logged sets</h1>
+          <p class="eyebrow">{{ t('exercise.history') }}</p>
+          <h1>{{ t('exercise.loggedSets') }}</h1>
         </div>
         <span>{{ sets.length }}</span>
       </header>
@@ -148,21 +149,21 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
             <strong>{{ formatExerciseSet(set, exercise) }}</strong>
             <small>{{ formatToShortDateTime(set.metadata?.createdAt) }}</small>
           </span>
-          <span v-if="set.metadata?.personalBest" class="record-pill"><TrophyIcon /> PR</span>
+          <span v-if="set.metadata?.personalBest" class="record-pill"><TrophyIcon /> {{ t('exercise.view.prPill') }}</span>
           <ChevronRightIcon />
         </RouterLink>
       </div>
-      <p v-else class="empty-copy">Log this exercise in a workout to start its history.</p>
+      <p v-else class="empty-copy">{{ t('exercise.view.emptyHistory') }}</p>
 
       <button v-if="hasMorePages" type="button" class="load-more" @click="fetchSets">
-        Load more sets
+        {{ t('exercise.view.loadMoreSets') }}
       </button>
     </section>
   </div>
   <section v-else class="empty-card">
-    <h1>Exercise unavailable</h1>
-    <p>This exercise could not be loaded or no longer exists.</p>
-    <RouterLink to="/exercises">View exercises</RouterLink>
+    <h1>{{ t('exercise.unavailable') }}</h1>
+    <p>{{ t('exercise.view.unavailableBody') }}</p>
+    <RouterLink to="/exercises">{{ t('exercise.view.viewExercises') }}</RouterLink>
   </section>
 </template>
 

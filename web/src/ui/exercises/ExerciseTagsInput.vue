@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
+
+const { t } = useI18n()
 
 const maxTags = 10
 const maxTagLength = 64
@@ -127,10 +130,10 @@ const removeTag = (index: number) => {
 
 <template>
   <div class="tag-input" :class="{ full: modelValue.length >= maxTags }">
-    <div v-if="modelValue.length" class="tag-list" aria-label="Exercise tags">
+    <div v-if="modelValue.length" class="tag-list" :aria-label="t('exercise.tagInput.listAria')">
       <span v-for="(tag, index) in modelValue" :key="tag">
         {{ tag }}
-        <button type="button" :aria-label="`Remove ${tag}`" @click="removeTag(index)">
+        <button type="button" :aria-label="t('exercise.tagInput.remove', { name: tag })" @click="removeTag(index)">
           <XMarkIcon />
         </button>
       </span>
@@ -140,8 +143,8 @@ const removeTag = (index: number) => {
       v-model="draft"
       type="text"
       :maxlength="maxTagLength"
-      placeholder="Add a tag, then press Enter"
-      aria-label="Add exercise tag"
+      :placeholder="t('exercise.addTag')"
+      :aria-label="t('exercise.tagInput.addAria')"
       aria-autocomplete="list"
       :aria-expanded="focused && matchingSuggestions.length > 0"
       @keydown="onKeydown"
@@ -153,7 +156,7 @@ const removeTag = (index: number) => {
       v-if="focused && matchingSuggestions.length"
       class="tag-suggestions"
       role="listbox"
-      aria-label="Existing exercise tags"
+      :aria-label="t('exercise.tagInput.suggestionsAria')"
     >
       <button
         v-for="(suggestion, index) in matchingSuggestions"
@@ -165,11 +168,11 @@ const removeTag = (index: number) => {
         @mousedown.prevent="selectSuggestion(suggestion)"
       >
         {{ suggestion }}
-        <small>Existing tag</small>
+        <small>{{ t('exercise.tagInput.existingTag') }}</small>
       </button>
     </div>
     <div class="tag-help">
-      <small :class="{ error }">{{ error || 'Use Enter or a comma to add each tag.' }}</small>
+      <small :class="{ error }">{{ error || t('exercise.tagHelp') }}</small>
       <small>{{ modelValue.length }}/{{ maxTags }}</small>
     </div>
   </div>
