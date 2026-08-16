@@ -76,7 +76,7 @@ jobs:
         with:
           cache: npm
           cache-dependency-path: web/package-lock.json
-          node-version: '22'
+          node-version: '24'
 
       - name: Install web dependencies
         working-directory: web
