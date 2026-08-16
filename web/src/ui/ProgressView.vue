@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 import { ArrowTrendingUpIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/vue/24/outline'
 
@@ -9,6 +10,7 @@ import { formatToShortDateTime } from '@/utils/datetime'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
+const { t } = useI18n()
 const dashboardStore = useDashboardStore()
 const periodDays = ref(28)
 
@@ -44,22 +46,22 @@ const filteredVolume = computed(() =>
   <div class="progress-stack">
     <section class="progress-intro">
       <div>
-        <p class="eyebrow">Performance</p>
-        <h1>Progress you can read at a glance</h1>
+        <p class="eyebrow">{{ t('progress.eyebrow') }}</p>
+        <h1>{{ t('progress.heading') }}</h1>
       </div>
-      <span class="record-count"><TrophyIcon /> {{ totalRecords }} personal bests</span>
+      <span class="record-count"><TrophyIcon /> {{ t('progress.personalBests', totalRecords) }}</span>
     </section>
 
     <section v-if="filteredWorkouts.length" class="chart-card">
       <div class="chart-heading">
         <div>
-          <p class="eyebrow">Training volume</p>
+          <p class="eyebrow">{{ t('progress.trainingVolume') }}</p>
           <h2>{{ Math.round(filteredVolume).toLocaleString() }} kg</h2>
         </div>
-        <span><ArrowTrendingUpIcon /> Daily totals</span>
+        <span><ArrowTrendingUpIcon /> {{ t('progress.dailyTotals') }}</span>
       </div>
       <WorkoutChart :workouts="filteredWorkouts" />
-      <div class="period-picker" aria-label="Progress period">
+      <div class="period-picker" :aria-label="t('progress.periodAria')">
         <button
           v-for="option in periodOptions"
           :key="option.days"
@@ -75,8 +77,8 @@ const filteredVolume = computed(() =>
     <section class="records-card">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Best lifts</p>
-          <h2>Personal records</h2>
+          <p class="eyebrow">{{ t('progress.bestLifts') }}</p>
+          <h2>{{ t('progress.personalRecords') }}</h2>
         </div>
       </div>
       <div v-if="dashboard?.personalBests.length" class="record-list">
@@ -100,7 +102,7 @@ const filteredVolume = computed(() =>
         </RouterLink>
       </div>
       <p v-else class="empty-copy">
-        Complete workouts to start building your personal-best history.
+        {{ t('progress.emptyBody') }}
       </p>
     </section>
   </div>

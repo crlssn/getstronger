@@ -5,6 +5,7 @@ import { mount } from '@vue/test-utils'
 import { DateTime } from 'luxon'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { i18n } from '@/i18n'
 import { useStreakStore } from '@/stores/streak'
 import StreakCard from '@/ui/components/StreakCard.vue'
 
@@ -25,7 +26,7 @@ describe('StreakCard', () => {
     store.weekWorkoutCounts = { [previousWeekKey]: 1, [currentWeek]: 3 }
     store.load = vi.fn(async () => undefined)
 
-    const wrapper = mount(StreakCard)
+    const wrapper = mount(StreakCard, { global: { plugins: [i18n] } })
     const blocks = wrapper.findAll('.week-block.complete')
     const oneWorkoutBlock = blocks[blocks.length - 2]
     const multipleWorkoutBlock = blocks[blocks.length - 1]
@@ -44,7 +45,7 @@ describe('StreakCard', () => {
     store.weekWorkoutCounts = { [currentWeek]: 12 }
     store.load = vi.fn(async () => undefined)
 
-    const wrapper = mount(StreakCard)
+    const wrapper = mount(StreakCard, { global: { plugins: [i18n] } })
     const currentWeekBlock = wrapper.get('.week-block.current.complete')
 
     expect(currentWeekBlock.get('.week-workout-count').text()).toBe('9+')

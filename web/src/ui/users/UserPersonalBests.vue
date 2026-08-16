@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppList from '@/ui/components/AppList.vue'
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ExerciseSet } from '@/proto/api/v1/shared_pb.ts'
 import { getPersonalBests } from '@/http/requests.ts'
 import { useRoute } from 'vue-router'
@@ -11,6 +12,7 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
+const { t } = useI18n()
 const props = defineProps<{
   id: string
   pageTitle: string
@@ -37,7 +39,7 @@ const fetchPersonalBests = async () => {
 
 <template>
   <AppList v-if="isMounted">
-    <AppListItem v-if="personalBests.length === 0">Nothing here yet...</AppListItem>
+    <AppListItem v-if="personalBests.length === 0">{{ t('common.nothingHere') }}</AppListItem>
     <AppListItemLink
       v-for="pb in personalBests"
       :key="pb.exercise?.id"
