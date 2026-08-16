@@ -109,17 +109,10 @@ const navigation = computed(() => [
   },
 ])
 
-const isActiveWorkout = computed(
-  () => route.name === 'workout-routine' || route.name === 'quick-workout',
-)
 </script>
 
 <template>
-  <nav
-    class="bottom-nav"
-    :class="{ 'joined-to-workout-actions': isActiveWorkout }"
-    :aria-label="$t('nav.primary')"
-  >
+  <nav class="bottom-nav" :aria-label="$t('nav.primary')">
     <div class="bottom-nav-inner">
       <RouterLink
         v-for="item in navigation"
@@ -162,11 +155,6 @@ const isActiveWorkout = computed(
 .bottom-nav a.active {
   @apply text-indigo-700;
 }
-.bottom-nav.joined-to-workout-actions {
-  /* The action dock's outer shadow otherwise washes over this surface and
-     makes two identical white backgrounds look like different colours. */
-  @apply z-40;
-}
 .bottom-nav svg {
   @apply size-6;
 }
@@ -185,12 +173,6 @@ const isActiveWorkout = computed(
 @media (min-width: 1024px) {
   .bottom-nav {
     @apply left-1/2 right-auto w-[48rem] -translate-x-1/2 rounded-t-2xl border-x;
-  }
-  /* Active-workout actions sit immediately above the navigation. Removing the
-     two facing corners makes both regions read as a single anchored control
-     dock, while the divider preserves their separate meanings. */
-  .bottom-nav.joined-to-workout-actions {
-    @apply rounded-t-none;
   }
 }
 </style>

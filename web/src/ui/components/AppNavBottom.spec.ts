@@ -31,22 +31,7 @@ describe('AppNavBottom', () => {
     setActivePinia(createPinia())
   })
 
-  test.each(['/workouts/routine/routine-id', '/workouts/quick'])(
-    'joins the active-workout action dock on %s',
-    async (path) => {
-      const router = createTestRouter()
-      await router.push(path)
-
-      const wrapper = mount(AppNavBottom, {
-        global: { plugins: [i18n, router] },
-      })
-
-      expect(wrapper.get('nav').classes()).toContain('joined-to-workout-actions')
-      wrapper.unmount()
-    },
-  )
-
-  test('keeps its standalone shape outside an active workout', async () => {
+  test('renders the five primary tabs', async () => {
     const router = createTestRouter()
     await router.push('/workout')
 
@@ -54,7 +39,8 @@ describe('AppNavBottom', () => {
       global: { plugins: [i18n, router] },
     })
 
-    expect(wrapper.get('nav').classes()).not.toContain('joined-to-workout-actions')
+    expect(wrapper.get('nav').attributes('aria-label')).toBe('Primary navigation')
+    expect(wrapper.findAll('nav a')).toHaveLength(5)
     wrapper.unmount()
   })
 })
