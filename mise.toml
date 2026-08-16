@@ -312,19 +312,24 @@ description = "Run the backend server"
 run = "go run ./server/cmd/main.go"
 
 # Native app tasks. The Capacitor projects in mobile/ wrap the built web
-# bundle, so every sync rebuilds web/dist first. Set VITE_API_URL when the
-# WebView should talk to a non-local API, e.g. the production one.
+# bundle, so every sync rebuilds web/dist first. The bundle ships inside the
+# binary with no dev-server proxy, so the API must be reachable from the
+# device; syncs default to the production API and VITE_API_URL overrides it,
+# e.g. for a local backend reachable from an emulator.
 
 [tasks."mobile:sync"]
 alias = "mobile_sync"
 description = "Build the web app and copy it into the native projects"
 dir = "mobile"
-run = [
-    "npm install",
-    "npm --prefix ../web install",
-    "npm --prefix ../web run build-only",
-    "npx cap sync",
-]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+npm install
+npm --prefix ../web install
+VITE_API_URL="${VITE_API_URL:-https://api.getstronger.studio}" npm --prefix ../web run build-only
+npx cap sync
+'''
 
 [tasks."app:ios"]
 alias = "app_ios"

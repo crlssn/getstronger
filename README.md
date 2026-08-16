@@ -165,7 +165,9 @@ Both tasks first run `mise run mobile:sync`, which rebuilds the web bundle and c
 mise run mobile:sync
 ```
 
-The WebView loads the bundled assets, so it has no dev-server proxy: set `VITE_API_URL` before syncing to point the app at an API, e.g. `VITE_API_URL=https://api.example.com mise run mobile:sync`. Authentication inside the WebView is not functional yet — the refresh-token cookie flow assumes a browser origin and is being reworked for native in [#1029](https://github.com/crlssn/getstronger/issues/1029).
+The WebView loads the bundled assets, so it has no dev-server proxy: syncs build against the production API by default, and `VITE_API_URL` overrides it, e.g. `VITE_API_URL=http://10.0.2.2:8080 mise run mobile:sync` for a local backend reachable from the Android emulator.
+
+Native builds route unary API calls through Capacitor's native HTTP layer, so they bypass CORS and keep the refresh-token cookie in the platform's cookie jar. Server-streaming calls (the unread-notification stream) still run through the WebView's `fetch`, which means the backend's `CORS_ALLOWED_ORIGIN` must include the native origins `capacitor://localhost` (iOS) and `http://localhost` (Android). Without them the app still works; unread counts then update through polling alone.
 
 ## Production infrastructure on Scaleway
 
