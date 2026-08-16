@@ -202,10 +202,34 @@ run = ["npm install", "npm run dev"]
 [tasks."app:email"]
 alias = "app_email"
 description = "Run MailHog"
-run = [
-    '''docker start "$MAILHOG_CONTAINER" 2>/dev/null || docker run -d --name "$MAILHOG_CONTAINER" -p "$MAILHOG_SMTP_PORT:1025" -p "$MAILHOG_HTTP_PORT:8025" mailhog/mailhog''',
-    '''echo "The email app is running at http://localhost:$MAILHOG_HTTP_PORT"''',
-]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Docker fixes a container's port bindings when it is created, so 'docker start'
+# can never repair one that was created with the wrong ports. Recreate it
+# instead, or the task reports an address nothing is listening on.
+published() {
+  docker port "$MAILHOG_CONTAINER" "$1/tcp" 2>/dev/null | head -1 | sed 's/.*://'
+}
+
+if docker container inspect "$MAILHOG_CONTAINER" >/dev/null 2>&1; then
+  docker start "$MAILHOG_CONTAINER" >/dev/null
+  if [[ "$(published 1025)" != "$MAILHOG_SMTP_PORT" || "$(published 8025)" != "$MAILHOG_HTTP_PORT" ]]; then
+    echo "⚠️ Container '$MAILHOG_CONTAINER' does not publish $MAILHOG_SMTP_PORT and $MAILHOG_HTTP_PORT. Recreating it."
+    docker rm -f "$MAILHOG_CONTAINER" >/dev/null
+  fi
+fi
+
+if ! docker container inspect "$MAILHOG_CONTAINER" >/dev/null 2>&1; then
+  docker run -d --name "$MAILHOG_CONTAINER" \
+    -p "$MAILHOG_SMTP_PORT:1025" \
+    -p "$MAILHOG_HTTP_PORT:8025" \
+    mailhog/mailhog >/dev/null
+fi
+
+echo "The email app is running at http://localhost:$MAILHOG_HTTP_PORT"
+'''
 
 [tasks."app:backend"]
 alias = "app_backend"
