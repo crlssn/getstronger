@@ -859,7 +859,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               v-for="measurement in measurementsForExercise(currentExercise)"
               :key="measurement.metric"
             >
-              {{ measurement.label }}
+              {{ t(measurement.labelKey) }}
             </span>
           </div>
           <div
@@ -908,7 +908,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                 v-model.number="set[measurement.field]"
                 type="text"
                 :inputmode="measurement.inputmode"
-                :aria-label="`${currentExercise.name} set ${setIndex + 1} ${measurement.label}`"
+                :aria-label="`${currentExercise.name} set ${setIndex + 1} ${t(measurement.labelKey)}`"
                 @input="onSetInput(currentExercise.id, set, setIndex)"
                 @focus="
                   copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)

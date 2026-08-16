@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ExerciseMetric, type Set } from '@/proto/api/v1/shared_pb'
+import { useI18n } from 'vue-i18n'
 import { TrophyIcon } from '@heroicons/vue/24/solid'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import {
@@ -9,6 +10,8 @@ import {
   measurementDefinitions,
 } from '@/utils/exerciseMeasurements'
 import { weightUnitLabel } from '@/utils/weightUnits'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -32,13 +35,10 @@ const formatValue = (set: Set, field: (typeof measurementDefinitions)[number]['f
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
 }
 
-const metricLabels: Partial<Record<ExerciseMetric, string>> = {
-  [ExerciseMetric.WEIGHT]: 'Weight',
-  [ExerciseMetric.REPS]: 'Reps',
-  [ExerciseMetric.DISTANCE]: 'Distance',
-  [ExerciseMetric.TIME]: 'Time',
+const columnLabel = (metric: ExerciseMetric) => {
+  const definition = measurementDefinitions.find((measurement) => measurement.metric === metric)
+  return definition ? t(definition.labelKey) : undefined
 }
-const columnLabel = (metric: ExerciseMetric) => metricLabels[metric]
 </script>
 
 <template>

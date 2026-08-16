@@ -5,6 +5,7 @@ import type { ExerciseSets, Set } from '@/proto/api/v1/shared_pb'
 
 import { DateTime } from 'luxon'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import router from '@/router/router'
 import { useAuthStore } from '@/stores/auth.ts'
@@ -25,6 +26,7 @@ import {
 } from '@/utils/exerciseMeasurements'
 import { normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
 
+const { t } = useI18n()
 const route = useRoute()
 const workout = ref<Workout>()
 const alertStore = useAlertStore()
@@ -167,7 +169,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                 :key="measurement.field"
                 class="measurement-input"
               >
-                <span>{{ measurement.label }}</span>
+                <span>{{ t(measurement.labelKey) }}</span>
                 <DurationInput
                   v-if="measurement.field === 'durationSeconds'"
                   v-model="set.durationSeconds"
@@ -180,7 +182,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                     inputmode="decimal"
                     min="0"
                     step="any"
-                    :placeholder="measurement.label"
+                    :placeholder="t(measurement.labelKey)"
                     :required="hasAnyExerciseSetValue(set, es.exercise)"
                   />
                   <span class="weight-unit-suffix">{{ weightUnitLabel(set.weightUnit) }}</span>
@@ -192,7 +194,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                   :inputmode="measurement.inputmode"
                   min="0"
                   :step="measurement.field === 'reps' ? 1 : 'any'"
-                  :placeholder="measurement.label"
+                  :placeholder="t(measurement.labelKey)"
                   :required="hasAnyExerciseSetValue(set, es.exercise)"
                 />
               </div>

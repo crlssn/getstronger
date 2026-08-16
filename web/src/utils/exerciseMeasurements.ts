@@ -4,10 +4,10 @@ import { weightUnitLabel } from '@/utils/weightUnits'
 export type MeasurementField = 'weight' | 'reps' | 'distance' | 'durationSeconds'
 
 export const measurementDefinitions = [
-  { metric: ExerciseMetric.WEIGHT, field: 'weight', label: 'Weight', inputmode: 'decimal' },
-  { metric: ExerciseMetric.REPS, field: 'reps', label: 'Reps', inputmode: 'numeric' },
-  { metric: ExerciseMetric.DISTANCE, field: 'distance', label: 'km', inputmode: 'decimal' },
-  { metric: ExerciseMetric.TIME, field: 'durationSeconds', label: 'Time', inputmode: 'numeric' },
+  { metric: ExerciseMetric.WEIGHT, field: 'weight', labelKey: 'common.weight', inputmode: 'decimal' },
+  { metric: ExerciseMetric.REPS, field: 'reps', labelKey: 'common.reps', inputmode: 'numeric' },
+  { metric: ExerciseMetric.DISTANCE, field: 'distance', labelKey: 'common.distance', inputmode: 'decimal' },
+  { metric: ExerciseMetric.TIME, field: 'durationSeconds', labelKey: 'common.time', inputmode: 'numeric' },
 ] as const
 
 export const exerciseMetrics = (exercise?: Pick<Exercise, 'metrics'>) =>
