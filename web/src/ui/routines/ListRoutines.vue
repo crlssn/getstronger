@@ -98,7 +98,6 @@ const makeUpNext = async (routineId: string) => {
   <div class="routine-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">{{ t('training.eyebrow') }}</p>
         <h1>{{ t('training.heading') }}</h1>
         <p>{{ t('training.routinesDescription') }}</p>
       </div>

@@ -40,6 +40,7 @@ export const en = {
   },
   nav: {
     primary: 'Primary navigation',
+    back: 'Back',
     home: 'Home',
     workout: 'Workout',
     training: 'Training',
@@ -454,6 +455,7 @@ export const en = {
     },
   },
   profile: {
+    heading: 'Me',
     account: 'Your account',
     trainingSummary: 'Training summary',
     workouts: 'workouts',
@@ -553,6 +555,7 @@ export const sv = {
   },
   nav: {
     primary: 'Primär navigering',
+    back: 'Tillbaka',
     home: 'Hem',
     workout: 'Träna',
     training: 'Träning',
@@ -965,6 +968,7 @@ export const sv = {
     },
   },
   profile: {
+    heading: 'Jag',
     account: 'Ditt konto',
     trainingSummary: 'Träningssammanfattning',
     workouts: 'träningspass',

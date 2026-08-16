@@ -99,7 +99,6 @@ const skip = async () => {
 <template>
   <div class="workout-page">
     <header class="page-intro">
-      <p class="eyebrow">{{ t('workout.eyebrow') }}</p>
       <h1>{{ t('workout.heading') }}</h1>
       <p>{{ t('workout.subtitle') }}</p>
     </header>

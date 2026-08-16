@@ -38,7 +38,6 @@ const pause = async () => {
   <div class="plans-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">{{ t('training.eyebrow') }}</p>
         <h1>{{ t('training.heading') }}</h1>
       </div>
       <RouterLink v-if="planStore.plans.length" to="/plans/create"

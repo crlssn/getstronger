@@ -78,7 +78,6 @@ const fetchExercises = async () => {
   <div class="exercise-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">{{ t('exercise.library') }}</p>
         <h1>{{ t('exercise.heading') }}</h1>
       </div>
       <RouterLink to="/exercises/create" class="create-link"

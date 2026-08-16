@@ -76,11 +76,17 @@ const weeklyVolume = computed(() =>
 
 <template>
   <div v-if="user" class="profile-stack">
+    <!-- A tab root opens with its own large title. This one used to open
+         straight onto a card, which left it the only tab without one. -->
+    <header class="page-intro">
+      <h1>{{ $t('profile.heading') }}</h1>
+    </header>
+
     <section class="profile-card">
       <div class="avatar">{{ initials }}</div>
       <div class="min-w-0">
         <p class="eyebrow">{{ $t('profile.account') }}</p>
-        <h1>{{ user.firstName }} {{ user.lastName }}</h1>
+        <h2>{{ user.firstName }} {{ user.lastName }}</h2>
         <p>{{ user.email }}</p>
       </div>
       <RouterLink
@@ -174,8 +180,11 @@ const weeklyVolume = computed(() =>
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
-h1 {
-  @apply mt-1 truncate text-2xl font-semibold tracking-tight text-slate-950;
+.page-intro h1 {
+  @apply px-1 text-2xl font-semibold tracking-tight text-text;
+}
+.profile-card h2 {
+  @apply mt-1 truncate text-2xl font-semibold tracking-tight text-text;
 }
 .profile-card p:last-child {
   @apply mt-1 truncate text-sm text-slate-500;
