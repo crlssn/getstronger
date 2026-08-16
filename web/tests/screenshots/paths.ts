@@ -13,6 +13,22 @@ export const manifestPath = join(outputRoot, 'manifest.json')
 
 export const contactSheetPath = join(outputRoot, 'index.html')
 
+// The set as it was before this run, kept only long enough to compare against.
+// It sits outside the published folder: a copy of a directory cannot be written
+// inside the directory being copied.
+export const baselineRoot = fileURLToPath(new URL('../../.screenshots-baseline/', import.meta.url))
+
+export const changesRoot = join(outputRoot, 'changes')
+
+export type Change = {
+  // What the comparison found: an image only the previous run had, one only
+  // this run has, one whose page grew or shrank, or one whose pixels moved.
+  kind: 'added' | 'changed' | 'removed' | 'resized'
+  detail?: string
+  diff?: string
+  image: string
+}
+
 export type Findings = {
   accessibility: string[]
   clippedText: string[]
@@ -24,6 +40,7 @@ export type Findings = {
 // A page the persona cannot reach is recorded with a reason and no images, so
 // a missing screenshot is never a silent one.
 export type PageRecord = {
+  changes?: Change[]
   component: string
   findings?: Findings
   images: string[]

@@ -49,6 +49,11 @@ worktree. The local stack is not shared, so set it up before running anything.
 - After changing a component, re-photograph only what it affects with
   `mise run screenshots:page <pattern>`, which matches page names and skips
   reseeding.
+- To find out what a change moved rather than assuming, run
+  `mise run screenshots:diff`. It re-photographs against the previous run,
+  names the pages whose pixels changed, and writes a highlighted image of each
+  difference to `web/screenshots/changes/`. Use it to check that a style change
+  reached every page it should and no page it should not.
 - Add a page, or a state that is only reachable by interacting with a page, by
   adding an entry to `web/tests/screenshots/catalogue.ts`.
 

@@ -223,6 +223,14 @@ usage = 'arg "<pattern>" help="Matched against page names, for example routine o
 env = { SCREENSHOT_KEEP = "1" }
 run = 'cd web && npm run screenshots -- --grep "$usage_pattern"'
 
+[tasks."screenshots:diff"]
+description = "Re-capture and report which pages a change moved, compared with the previous run"
+usage = 'arg "<pattern>" help="Pages to re-capture, defaulting to all of them" default="."'
+# The database is left alone: the seed randomises names, so a reseed would move
+# every page and drown out the change being looked at.
+env = { SCREENSHOT_DIFF = "1", SCREENSHOT_KEEP = "1" }
+run = 'cd web && npm run screenshots -- --grep "$usage_pattern"'
+
 [tasks."screenshots:open"]
 description = "Open the latest mobile screenshot contact sheet"
 run = "open web/screenshots/index.html"

@@ -1,12 +1,15 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { relative } from 'node:path'
 import { authenticatedPages, guestPages, personas, type PageEntry } from './catalogue'
+import { changesSince } from './diff'
 import {
+  changesRoot,
   contactSheetPath,
   manifestPath,
   outputRoot,
   recordsPath,
   viewport,
+  type Change,
   type Findings,
   type PageRecord,
 } from './paths'
@@ -48,17 +51,32 @@ const findingLines = (findings: Findings | undefined) =>
 const escapeHtml = (value: string) =>
   value.replace(/[&<>"]/g, (character) => `&#${character.charCodeAt(0)};`)
 
-const figure = (record: PageRecord) => `<figure>
+const changeLines = (changes: Change[] | undefined) =>
+  (changes ?? []).map((change) =>
+    [change.kind, change.image.split('/').pop(), change.detail].filter(Boolean).join(' — '),
+  )
+
+const figure = (record: PageRecord) => `<figure${record.changes ? ' class="changed"' : ''}>
           ${record.images
             .map(
               (image) =>
                 `<a href="${image}"><img src="${image}" alt="${escapeHtml(image)}" loading="lazy" /></a>`,
             )
             .join('\n          ')}
+          ${(record.changes ?? [])
+            .filter((change) => change.diff !== undefined)
+            .map(
+              (change) =>
+                `<a href="${change.diff}"><img class="diff" src="${change.diff}" alt="${escapeHtml(change.image)} diff" loading="lazy" /></a>`,
+            )
+            .join('\n          ')}
           <figcaption>
             <strong>${escapeHtml(record.name)}</strong>
             <span>${escapeHtml(record.route ?? record.reason ?? '')}</span>
             <span>${escapeHtml(record.component)}</span>
+            ${changeLines(record.changes)
+              .map((line) => `<span class="change">${escapeHtml(line)}</span>`)
+              .join('\n            ')}
             ${findingLines(record.findings)
               .map((line) => `<span class="finding">${escapeHtml(line)}</span>`)
               .join('\n            ')}
@@ -94,10 +112,20 @@ export default async () => {
   // A run that matched no page still owns the folder it was asked to publish.
   await mkdir(outputRoot, { recursive: true })
 
+  const changes = process.env.SCREENSHOT_DIFF
+    ? await changesSince(records.flatMap((record) => record.images))
+    : undefined
+
+  for (const record of records) {
+    const own = (changes ?? []).filter((change) => record.images.includes(change.image))
+    if (own.length > 0) record.changes = own
+  }
+
   await writeFile(
     manifestPath,
     `${JSON.stringify(
       {
+        changes,
         foldHeight: viewport.height,
         generatedAt,
         pages: records,
@@ -139,6 +167,9 @@ export default async () => {
       figcaption span { color: color-mix(in srgb, currentColor 60%, transparent); }
       figcaption strong { font-size: 0.9rem; }
       .finding { color: #b45309; }
+      .change { color: #047857; }
+      .changed { outline: 2px solid #047857; border-radius: 14px; outline-offset: 0.75rem; }
+      .diff { background: #000; }
       .skipped { color: color-mix(in srgb, currentColor 60%, transparent); font-size: 0.9rem; }
     </style>
   </head>
@@ -155,9 +186,20 @@ ${sections.join('\n')}
   )
 
   const images = records.reduce((total, record) => total + record.images.length, 0)
+  const moved = records.filter((record) => record.changes !== undefined)
+  const comparison =
+    changes === undefined
+      ? ''
+      : moved.length === 0 && changes.length === 0
+        ? '\n    Nothing moved since the previous run.'
+        : `\n    Changed since the previous run: ${
+            moved.map((record) => `${record.persona}/${record.name}`).join(', ') || 'none'
+          }` + `\n    Highlighted differences: ${relative(process.cwd(), changesRoot)}`
+
   console.log(
     `\n📸  ${images} images of ${records.length} pages written to ${relative(process.cwd(), outputRoot)}` +
       `\n    Manifest: ${relative(process.cwd(), manifestPath)}` +
-      `\n    Contact sheet: open ${relative(process.cwd(), contactSheetPath)}\n`,
+      `\n    Contact sheet: open ${relative(process.cwd(), contactSheetPath)}` +
+      `${comparison}\n`,
   )
 }
