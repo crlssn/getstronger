@@ -68,6 +68,7 @@ type userMethods interface {
 	Unfollow(ctx context.Context, p UnfollowParams) error
 	ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error)
 	CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error)
+	UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error
 	ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error)
 	ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error)
 	IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error)

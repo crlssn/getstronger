@@ -1,0 +1,146 @@
+package v1_test
+
+import (
+	"context"
+	"log"
+	"testing"
+
+	"connectrpc.com/connect"
+	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
+
+	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
+	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
+	"github.com/crlssn/getstronger/server/rpc/parser"
+	"github.com/crlssn/getstronger/server/testing/container"
+	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/weightunit"
+	"github.com/crlssn/getstronger/server/xcontext"
+)
+
+type userSuite struct {
+	suite.Suite
+
+	repo    repo.Repo
+	handler apiv1connect.UserServiceHandler
+
+	factory   *factory.Factory
+	container *container.Container
+}
+
+func TestUserSuite(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, new(userSuite))
+}
+
+func (s *userSuite) SetupSuite() {
+	ctx := context.Background()
+	s.container = container.NewContainer(ctx)
+	s.factory = factory.NewFactory(s.container.DB)
+	s.repo = repo.New(s.container.DB)
+	s.handler = handlers.NewUserHandler(s.repo, nil)
+
+	s.T().Cleanup(func() {
+		if err := s.container.Terminate(ctx); err != nil {
+			log.Fatalf("failed to clean container: %s", err)
+		}
+	})
+}
+
+func (s *userSuite) TestUpdateUserWeightUnit() {
+	type expected struct {
+		err        error
+		weightUnit v1.WeightUnit
+	}
+
+	type test struct {
+		name     string
+		req      *connect.Request[v1.UpdateUserWeightUnitRequest]
+		init     func(t test) context.Context
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_weight_unit_updated_to_pounds",
+			req: &connect.Request[v1.UpdateUserWeightUnitRequest]{
+				Msg: &v1.UpdateUserWeightUnitRequest{
+					WeightUnit: v1.WeightUnit_WEIGHT_UNIT_POUNDS,
+				},
+			},
+			init: func(_ test) context.Context {
+				user := s.factory.NewUser(factory.UserWeightUnit(weightunit.Kilograms))
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID.String())
+			},
+			expected: expected{
+				err:        nil,
+				weightUnit: v1.WeightUnit_WEIGHT_UNIT_POUNDS,
+			},
+		},
+		{
+			name: "ok_weight_unit_updated_to_kilograms",
+			req: &connect.Request[v1.UpdateUserWeightUnitRequest]{
+				Msg: &v1.UpdateUserWeightUnitRequest{
+					WeightUnit: v1.WeightUnit_WEIGHT_UNIT_KILOGRAMS,
+				},
+			},
+			init: func(_ test) context.Context {
+				user := s.factory.NewUser(factory.UserWeightUnit(weightunit.Pounds))
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID.String())
+			},
+			expected: expected{
+				err:        nil,
+				weightUnit: v1.WeightUnit_WEIGHT_UNIT_KILOGRAMS,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := t.init(t)
+			res, err := s.handler.UpdateUserWeightUnit(ctx, t.req)
+
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+			s.Require().Equal(t.expected.weightUnit, res.Msg.GetUser().GetWeightUnit())
+
+			userID := xcontext.MustExtractUserID(ctx)
+			user, err := s.repo.GetUser(ctx, repo.GetUserWithID(userID))
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.weightUnit, parser.WeightUnitToProto(user.WeightUnit))
+		})
+	}
+}
+
+func (s *userSuite) TestUpdateUserWeightUnit_PreservesHistoricalSetUnits() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	user := s.factory.NewUser(factory.UserWeightUnit(weightunit.Kilograms))
+	ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+	set := s.factory.NewSet(
+		factory.SetUserID(user.ID.String()),
+		factory.SetWeightUnit(weightunit.Pounds),
+	)
+
+	_, err := s.handler.UpdateUserWeightUnit(ctx, &connect.Request[v1.UpdateUserWeightUnitRequest]{
+		Msg: &v1.UpdateUserWeightUnitRequest{
+			WeightUnit: v1.WeightUnit_WEIGHT_UNIT_KILOGRAMS,
+		},
+	})
+	s.Require().NoError(err)
+
+	persisted, err := s.repo.ListSets(ctx, repo.ListSetsWithID(set.ID.String()))
+	s.Require().NoError(err)
+	s.Require().Len(persisted, 1)
+	s.Require().Equal(string(weightunit.Pounds), persisted[0].WeightUnit)
+}

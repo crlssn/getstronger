@@ -5,7 +5,7 @@
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_api_v1_options } from "./options_pb";
-import type { PaginationRequest, PaginationResponse, User } from "./shared_pb";
+import type { PaginationRequest, PaginationResponse, User, WeightUnit } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/user_service.proto.
  */
 export const file_api_v1_user_service: GenFile = /*@__PURE__*/
-  fileDesc("ChlhcGkvdjEvdXNlcl9zZXJ2aWNlLnByb3RvEgZhcGkudjEiJgoOR2V0VXNlclJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIi0KD0dldFVzZXJSZXNwb25zZRIaCgR1c2VyGAEgASgLMgwuYXBpLnYxLlVzZXIiMAoRRm9sbG93VXNlclJlcXVlc3QSGwoJZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASIUChJGb2xsb3dVc2VyUmVzcG9uc2UiNAoTVW5mb2xsb3dVc2VyUmVxdWVzdBIdCgt1bmZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiFgoUVW5mb2xsb3dVc2VyUmVzcG9uc2UiNQoUTGlzdEZvbGxvd2Vyc1JlcXVlc3QSHQoLZm9sbG93ZXJfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlcnNSZXNwb25zZRIfCglmb2xsb3dlcnMYASADKAsyDC5hcGkudjEuVXNlciI1ChRMaXN0Rm9sbG93ZWVzUmVxdWVzdBIdCgtmb2xsb3dlZV9pZBgBIAEoCUIIukgFcgOwAQEiOAoVTGlzdEZvbGxvd2Vlc1Jlc3BvbnNlEh8KCWZvbGxvd2VlcxgBIAMoCzIMLmFwaS52MS5Vc2VyImMKElNlYXJjaFVzZXJzUmVxdWVzdBIWCgVxdWVyeRgBIAEoCUIHukgEcgIQAxI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiYgoTU2VhcmNoVXNlcnNSZXNwb25zZRIbCgV1c2VycxgBIAMoCzIMLmFwaS52MS5Vc2VyEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlMuEDCgtVc2VyU2VydmljZRJACgdHZXRVc2VyEhYuYXBpLnYxLkdldFVzZXJSZXF1ZXN0GhcuYXBpLnYxLkdldFVzZXJSZXNwb25zZSIEiLUYARJJCgpGb2xsb3dVc2VyEhkuYXBpLnYxLkZvbGxvd1VzZXJSZXF1ZXN0GhouYXBpLnYxLkZvbGxvd1VzZXJSZXNwb25zZSIEiLUYARJPCgxVbmZvbGxvd1VzZXISGy5hcGkudjEuVW5mb2xsb3dVc2VyUmVxdWVzdBocLmFwaS52MS5VbmZvbGxvd1VzZXJSZXNwb25zZSIEiLUYARJSCg1MaXN0Rm9sbG93ZXJzEhwuYXBpLnYxLkxpc3RGb2xsb3dlcnNSZXF1ZXN0Gh0uYXBpLnYxLkxpc3RGb2xsb3dlcnNSZXNwb25zZSIEiLUYARJSCg1MaXN0Rm9sbG93ZWVzEhwuYXBpLnYxLkxpc3RGb2xsb3dlZXNSZXF1ZXN0Gh0uYXBpLnYxLkxpc3RGb2xsb3dlZXNSZXNwb25zZSIEiLUYARJMCgtTZWFyY2hVc2VycxIaLmFwaS52MS5TZWFyY2hVc2Vyc1JlcXVlc3QaGy5hcGkudjEuU2VhcmNoVXNlcnNSZXNwb25zZSIEiLUYAUKUAQoKY29tLmFwaS52MUIQVXNlclNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
+  fileDesc("ChlhcGkvdjEvdXNlcl9zZXJ2aWNlLnByb3RvEgZhcGkudjEiJgoOR2V0VXNlclJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIi0KD0dldFVzZXJSZXNwb25zZRIaCgR1c2VyGAEgASgLMgwuYXBpLnYxLlVzZXIiMAoRRm9sbG93VXNlclJlcXVlc3QSGwoJZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASIUChJGb2xsb3dVc2VyUmVzcG9uc2UiNAoTVW5mb2xsb3dVc2VyUmVxdWVzdBIdCgt1bmZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiFgoUVW5mb2xsb3dVc2VyUmVzcG9uc2UiNQoUTGlzdEZvbGxvd2Vyc1JlcXVlc3QSHQoLZm9sbG93ZXJfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlcnNSZXNwb25zZRIfCglmb2xsb3dlcnMYASADKAsyDC5hcGkudjEuVXNlciI1ChRMaXN0Rm9sbG93ZWVzUmVxdWVzdBIdCgtmb2xsb3dlZV9pZBgBIAEoCUIIukgFcgOwAQEiOAoVTGlzdEZvbGxvd2Vlc1Jlc3BvbnNlEh8KCWZvbGxvd2VlcxgBIAMoCzIMLmFwaS52MS5Vc2VyImMKElNlYXJjaFVzZXJzUmVxdWVzdBIWCgVxdWVyeRgBIAEoCUIHukgEcgIQAxI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiYgoTU2VhcmNoVXNlcnNSZXNwb25zZRIbCgV1c2VycxgBIAMoCzIMLmFwaS52MS5Vc2VyEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIlMKG1VwZGF0ZVVzZXJXZWlnaHRVbml0UmVxdWVzdBI0Cgt3ZWlnaHRfdW5pdBgBIAEoDjISLmFwaS52MS5XZWlnaHRVbml0Qgu6SAiCAQUQASIBACI6ChxVcGRhdGVVc2VyV2VpZ2h0VW5pdFJlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlcjLKBAoLVXNlclNlcnZpY2USQAoHR2V0VXNlchIWLmFwaS52MS5HZXRVc2VyUmVxdWVzdBoXLmFwaS52MS5HZXRVc2VyUmVzcG9uc2UiBIi1GAESSQoKRm9sbG93VXNlchIZLmFwaS52MS5Gb2xsb3dVc2VyUmVxdWVzdBoaLmFwaS52MS5Gb2xsb3dVc2VyUmVzcG9uc2UiBIi1GAESTwoMVW5mb2xsb3dVc2VyEhsuYXBpLnYxLlVuZm9sbG93VXNlclJlcXVlc3QaHC5hcGkudjEuVW5mb2xsb3dVc2VyUmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VycxIcLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VlcxIcLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVzcG9uc2UiBIi1GAESTAoLU2VhcmNoVXNlcnMSGi5hcGkudjEuU2VhcmNoVXNlcnNSZXF1ZXN0GhsuYXBpLnYxLlNlYXJjaFVzZXJzUmVzcG9uc2UiBIi1GAESZwoUVXBkYXRlVXNlcldlaWdodFVuaXQSIy5hcGkudjEuVXBkYXRlVXNlcldlaWdodFVuaXRSZXF1ZXN0GiQuYXBpLnYxLlVwZGF0ZVVzZXJXZWlnaHRVbml0UmVzcG9uc2UiBIi1GAFClAEKCmNvbS5hcGkudjFCEFVzZXJTZXJ2aWNlUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.GetUserRequest
@@ -223,6 +223,40 @@ export const SearchUsersResponseSchema: GenMessage<SearchUsersResponse> = /*@__P
   messageDesc(file_api_v1_user_service, 11);
 
 /**
+ * @generated from message api.v1.UpdateUserWeightUnitRequest
+ */
+export type UpdateUserWeightUnitRequest = Message<"api.v1.UpdateUserWeightUnitRequest"> & {
+  /**
+   * @generated from field: api.v1.WeightUnit weight_unit = 1;
+   */
+  weightUnit: WeightUnit;
+};
+
+/**
+ * Describes the message api.v1.UpdateUserWeightUnitRequest.
+ * Use `create(UpdateUserWeightUnitRequestSchema)` to create a new message.
+ */
+export const UpdateUserWeightUnitRequestSchema: GenMessage<UpdateUserWeightUnitRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_user_service, 12);
+
+/**
+ * @generated from message api.v1.UpdateUserWeightUnitResponse
+ */
+export type UpdateUserWeightUnitResponse = Message<"api.v1.UpdateUserWeightUnitResponse"> & {
+  /**
+   * @generated from field: api.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message api.v1.UpdateUserWeightUnitResponse.
+ * Use `create(UpdateUserWeightUnitResponseSchema)` to create a new message.
+ */
+export const UpdateUserWeightUnitResponseSchema: GenMessage<UpdateUserWeightUnitResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_user_service, 13);
+
+/**
  * @generated from service api.v1.UserService
  */
 export const UserService: GenService<{
@@ -273,6 +307,14 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof SearchUsersRequestSchema;
     output: typeof SearchUsersResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.UserService.UpdateUserWeightUnit
+   */
+  updateUserWeightUnit: {
+    methodKind: "unary";
+    input: typeof UpdateUserWeightUnitRequestSchema;
+    output: typeof UpdateUserWeightUnitResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_user_service, 0);

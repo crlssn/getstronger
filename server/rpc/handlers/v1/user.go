@@ -152,6 +152,30 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[ap
 	}, nil
 }
 
+func (h *userHandler) UpdateUserWeightUnit(ctx context.Context, req *connect.Request[apiv1.UpdateUserWeightUnitRequest]) (*connect.Response[apiv1.UpdateUserWeightUnitResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	weightUnit := parser.WeightUnitFromProto(req.Msg.GetWeightUnit())
+	if err := h.repo.UpdateUser(ctx, userID, repo.UpdateUserWeightUnit(weightUnit)); err != nil {
+		log.Error("failed to update user weight unit", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(userID))
+	if err != nil {
+		log.Error("failed to get user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("user weight unit updated")
+	return &connect.Response[apiv1.UpdateUserWeightUnitResponse]{
+		Msg: &apiv1.UpdateUserWeightUnitResponse{
+			User: parser.User(user),
+		},
+	}, nil
+}
+
 func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[apiv1.ListFolloweesRequest]) (*connect.Response[apiv1.ListFolloweesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 

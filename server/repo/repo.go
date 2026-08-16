@@ -297,6 +297,35 @@ func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User
 	return user, nil
 }
 
+type UpdateUserOpt func() (columns, error)
+
+func UpdateUserWeightUnit(unit string) UpdateUserOpt {
+	return func() (columns, error) {
+		return columns{models.Users.Columns.WeightUnit.Name(): string(weightunit.Normalize(unit))}, nil
+	}
+}
+
+func (r *repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+	cols, err := updateColumnsFromOpts(opts)
+	if err != nil {
+		return fmt.Errorf("user update columns: %w", err)
+	}
+
+	return r.NewTx(ctx, func(tx Tx) error {
+		mods := append(cols.updateMods(), models.UpdateWhere.Users.ID.EQ(uuidFromString(userID)))
+		rows, rowsErr := models.Users.Update(mods...).Exec(ctx, tx.bobExec())
+		if rowsErr != nil {
+			return fmt.Errorf("user update: %w", rowsErr)
+		}
+
+		if rows != 1 {
+			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+		}
+
+		return nil
+	})
+}
+
 type CreateExerciseParams struct {
 	UserID      string
 	Name        string

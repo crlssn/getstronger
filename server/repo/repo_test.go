@@ -28,6 +28,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 type repoSuite struct {
@@ -536,6 +537,79 @@ func (s *repoSuite) TestCreateUser() {
 			s.Require().Equal(t.params.AuthID, user.AuthID.String())
 			s.Require().Equal(t.expected.user.FirstName, user.FirstName)
 			s.Require().Equal(t.expected.user.LastName, user.LastName)
+		})
+	}
+}
+
+func (s *repoSuite) TestUpdateUser() {
+	type expected struct {
+		err        error
+		weightUnit string
+	}
+
+	type test struct {
+		name     string
+		init     func(*test)
+		opts     []repo.UpdateUserOpt
+		userID   string
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_update_weight_unit_pounds",
+			opts: []repo.UpdateUserOpt{
+				repo.UpdateUserWeightUnit(string(weightunit.Pounds)),
+			},
+			init: func(t *test) {
+				t.userID = s.factory.NewUser(factory.UserWeightUnit(weightunit.Kilograms)).ID.String()
+			},
+			expected: expected{
+				err:        nil,
+				weightUnit: string(weightunit.Pounds),
+			},
+		},
+		{
+			name: "ok_update_weight_unit_normalizes_unknown_value",
+			opts: []repo.UpdateUserOpt{
+				repo.UpdateUserWeightUnit("stone"),
+			},
+			init: func(t *test) {
+				t.userID = s.factory.NewUser(factory.UserWeightUnit(weightunit.Pounds)).ID.String()
+			},
+			expected: expected{
+				err:        nil,
+				weightUnit: string(weightunit.Kilograms),
+			},
+		},
+		{
+			name:   "err_unknown_user_id",
+			userID: uuid.NewString(),
+			opts: []repo.UpdateUserOpt{
+				repo.UpdateUserWeightUnit(string(weightunit.Pounds)),
+			},
+			init: func(_ *test) {},
+			expected: expected{
+				err: repo.ErrUpdateRowsAffected,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			t.init(&t)
+			err := s.repo.UpdateUser(context.Background(), t.userID, t.opts...)
+
+			if t.expected.err != nil {
+				s.Require().Error(err)
+				s.Require().ErrorIs(err, t.expected.err)
+				return
+			}
+
+			s.Require().NoError(err)
+			user, err := models.Users.Query(models.SelectWhere.Users.ID.EQ(gofrsuuid.FromStringOrNil(t.userID))).One(context.Background(), bob.NewDB(s.container.DB))
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.weightUnit, user.WeightUnit)
 		})
 	}
 }
