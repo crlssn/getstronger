@@ -9,6 +9,7 @@ import {
   type Ids,
   type PageEntry,
 } from './catalogue'
+import { flows, recordName } from './flows'
 import { inspect } from './inspect'
 import { outputRoot, recordsPath, viewport, type PageRecord } from './paths'
 
@@ -68,6 +69,27 @@ const record = async (entry: PageRecord) => {
   await appendFile(recordsPath, `${JSON.stringify(entry)}\n`)
 }
 
+const photograph = async (
+  page: Page,
+  persona: string,
+  index: number,
+  name: string,
+  component: string,
+  route?: string,
+) => {
+  await settle(page)
+  const prefix = `${String(index).padStart(2, '0')}-${name}`
+  await record({
+    component,
+    findings: await inspect(page, viewport.width),
+    images: await captureFolds(page, persona, prefix),
+    name,
+    persona,
+    route: route ?? new URL(page.url()).pathname,
+    title: await page.title(),
+  })
+}
+
 const capture = async (
   page: Page,
   persona: string,
@@ -78,18 +100,7 @@ const capture = async (
   await page.goto(route)
   await settle(page)
   if (entry.prepare) await entry.prepare(page)
-  await settle(page)
-
-  const prefix = `${String(index).padStart(2, '0')}-${entry.name}`
-  await record({
-    component: entry.component,
-    findings: await inspect(page, viewport.width),
-    images: await captureFolds(page, persona, prefix),
-    name: entry.name,
-    persona,
-    route,
-    title: await page.title(),
-  })
+  await photograph(page, persona, index, entry.name, entry.component, route)
 }
 
 const logIn = async (page: Page, email: string, password: string) => {
@@ -159,6 +170,34 @@ personas.forEach((persona) => {
         }
 
         await capture(page, persona.name, index + 1, entry, route)
+      })
+    })
+
+    // Flows come last within a persona: they create an exercise, a routine, a
+    // plan, and a workout, and every page above would otherwise show them.
+    const personaFlows = flows.filter((flow) => flow.personas.includes(persona.name))
+
+    personaFlows.forEach((flow, flowIndex) => {
+      test(`${persona.name} flow ${flow.name}`, async () => {
+        const before = personaFlows
+          .slice(0, flowIndex)
+          .reduce((total, earlier) => total + earlier.steps.length, 0)
+
+        try {
+          for (const [stepIndex, step] of flow.steps.entries()) {
+            await step.act(page)
+            await photograph(
+              page,
+              persona.name,
+              authenticatedPages.length + before + stepIndex + 1,
+              recordName(flow, step),
+              flow.component,
+            )
+          }
+        } finally {
+          // A flow that broke halfway still created something.
+          await flow.cleanup?.(page)
+        }
       })
     })
   })

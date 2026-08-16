@@ -372,6 +372,19 @@ mise run screenshots:open
 
 The measurements are leads for a design review rather than assertions, and cover what a screenshot cannot show: horizontal overflow, tap targets under 44 pixels, text under 12 pixels, hard-clipped text, and WCAG A/AA violations from axe.
 
+The pages above show the app at rest. After them, each persona walks the app the way somebody building their training does, and every step is photographed — the form filled in just before submission, and what the app shows once it has been saved:
+
+| Flow     | Captured states                                  |
+| -------- | ------------------------------------------------ |
+| Exercise | filled, saved                                    |
+| Routine  | filled, saved                                    |
+| Plan     | routine picker, filled, saved                    |
+| Workout  | exercise added, set logged, finish dialog, saved |
+
+Flows run last, because they create an exercise, a routine, a plan, and a workout that every page above would otherwise show. Each removes what it created afterwards, so the next run compares against the same starting point rather than accumulating. The newly signed-up account runs only the exercise flow: the others need exercises or routines it does not have. Add or change a flow in `web/tests/screenshots/flows.ts`.
+
+One caveat for comparisons: the workout screen counts the seconds since the workout began, so its four captures differ by the pixels the clock occupies on every run. Everything else is byte-identical between runs.
+
 Pages that need data the persona does not have — Sam has no workouts, and neither persona has a training plan until one is created — are recorded with a reason instead of being captured, so a missing screenshot is never a silent one. Detail pages find their identifiers by reading the links the app renders, so adding a page, or a state that is only reachable by interacting with a page such as the exercise picker, means adding an entry to `web/tests/screenshots/catalogue.ts`.
 
 After changing a component, re-photograph only the pages it affects. This form matches page names, skips reseeding, and leaves the rest of the set in place:

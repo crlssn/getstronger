@@ -55,7 +55,10 @@ worktree. The local stack is not shared, so set it up before running anything.
   difference to `web/screenshots/changes/`. Use it to check that a style change
   reached every page it should and no page it should not.
 - Add a page, or a state that is only reachable by interacting with a page, by
-  adding an entry to `web/tests/screenshots/catalogue.ts`.
+  adding an entry to `web/tests/screenshots/catalogue.ts`. Creating an exercise,
+  a routine, a plan, or a workout is photographed as a flow in
+  `web/tests/screenshots/flows.ts`, which captures each form filled in before
+  submission and the result afterwards, and deletes what it created.
 
 ## Implementing and testing functionality
 
