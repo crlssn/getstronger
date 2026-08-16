@@ -986,7 +986,8 @@ func (s *repoSuite) TestGetRoutineExercisesAreStablyOrdered() {
 	s.factory.AddRoutineExercise(routine, exercises...)
 
 	loadExerciseIDs := func() []string {
-		fetched, err := s.repo.GetRoutine(ctx,
+		fetched, err := s.repo.GetRoutine(
+			ctx,
 			repo.GetRoutineWithID(routineID),
 			repo.GetRoutineWithUserID(userID),
 			repo.GetRoutineWithExercises(),

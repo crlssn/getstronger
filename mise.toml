@@ -25,6 +25,18 @@ node = "22.23.2"
 }
 
 [env]
+# mise APPENDS its tool directories to the end of PATH, so anything installed by
+# Homebrew or 'go install' shadows the versions pinned in [tools] above and the
+# tasks silently run the wrong tool. Observed on a developer machine: Node 26
+# instead of the pinned 22 for every web task, buf 1.72 instead of 1.50, and a
+# bobgen-psql v0.49 that rewrites every generated model under server/gen/.
+#
+# Putting the shims directory first resolves each tool to its pinned version.
+# It also fixes the tools a task invokes indirectly, which naming a binary
+# cannot: npm finds its matching node through PATH, not through its own path.
+# A shims directory that does not exist is simply ignored.
+PATH = "{{ env.MISE_DATA_DIR | default(value=env.HOME ~ '/.local/share/mise') }}/shims:{{ env.PATH }}"
+
 # Worktrees override the container names and ports below in mise.local.toml so
 # that parallel checkouts never share state. See 'mise run worktree:env'.
 DB_SSL_MODE = { default = "disable" }
