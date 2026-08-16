@@ -6,7 +6,6 @@ import { defineStore } from 'pinia'
 import { isNumber } from '@/utils/numbers'
 import { ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { exerciseMetrics } from '@/utils/exerciseMeasurements'
-import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 
 export const useWorkoutStore = defineStore(
   'workouts',
@@ -161,33 +160,6 @@ export const useWorkoutStore = defineStore(
       })
     }
 
-    const changeWeightUnitFrom = (
-      routineID: RoutineID,
-      exerciseIDs: ExerciseID[],
-      exerciseID: ExerciseID,
-      setIndex: number,
-      weightUnit: WeightUnit,
-    ) => {
-      const firstExerciseIndex = exerciseIDs.indexOf(exerciseID)
-      if (firstExerciseIndex < 0) return
-
-      const nextUnit = normalizeWeightUnit(weightUnit)
-      exerciseIDs.slice(firstExerciseIndex).forEach((currentExerciseID, exerciseOffset) => {
-        const firstSetIndex = exerciseOffset === 0 ? setIndex : 0
-        getSets(routineID, currentExerciseID)
-          .slice(firstSetIndex)
-          .forEach((set) => {
-            const previousUnit = normalizeWeightUnit(set.weightUnit)
-            if (previousUnit === nextUnit) return
-            const weight = set.weight
-            if (typeof weight === 'number' && !Number.isNaN(weight)) {
-              set.weight = convertWeight(weight, previousUnit, nextUnit)
-            }
-            set.weightUnit = nextUnit
-          })
-      })
-    }
-
     const deleteSet = (routineID: RoutineID, exerciseID: ExerciseID, index: number) => {
       if (!workouts.value[routineID]) return
       if (!workouts.value[routineID].exerciseSets) return
@@ -212,7 +184,6 @@ export const useWorkoutStore = defineStore(
       addEmptySet,
       addEmptySetIfNone,
       addWorkoutExercise,
-      changeWeightUnitFrom,
       deleteSet,
       getAddedExercises,
       getAllSets,

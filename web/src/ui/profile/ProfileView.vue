@@ -8,16 +8,24 @@ import {
   UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 
-import { getCurrentUser } from '@/http/requests'
+import { getCurrentUser, updateUserWeightUnit } from '@/http/requests'
+import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
-import type { User } from '@/proto/api/v1/shared_pb'
+import { usePreferencesStore } from '@/stores/preferences'
+import { WeightUnit, type User } from '@/proto/api/v1/shared_pb'
+import { normalizeWeightUnit } from '@/utils/weightUnits'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const user = ref<User>()
 const authStore = useAuthStore()
 const dashboardStore = useDashboardStore()
 const notificationStore = useNotificationStore()
+const alertStore = useAlertStore()
+const preferencesStore = usePreferencesStore()
+const updatingWeightUnit = ref(false)
 
 onMounted(async () => {
   const [response] = await Promise.all([
@@ -25,8 +33,31 @@ onMounted(async () => {
     dashboardStore.load(),
     notificationStore.refreshUnreadNotifications(),
   ])
-  if (response) user.value = response.user
+  if (response) {
+    user.value = response.user
+    preferencesStore.setWeightUnit(response.user?.weightUnit)
+  }
 })
+
+const weightUnit = computed(() => preferencesStore.weightUnit)
+
+const setWeightUnit = async (unit: WeightUnit) => {
+  const previous = preferencesStore.weightUnit
+  if (normalizeWeightUnit(previous) === normalizeWeightUnit(unit)) return
+
+  preferencesStore.setWeightUnit(unit)
+  updatingWeightUnit.value = true
+  const res = await updateUserWeightUnit(unit)
+  updatingWeightUnit.value = false
+
+  if (!res) {
+    preferencesStore.setWeightUnit(previous)
+    return
+  }
+
+  if (user.value) user.value.weightUnit = normalizeWeightUnit(res.user?.weightUnit)
+  alertStore.setSuccess(t('profile.weightUnitUpdated'))
+}
 
 const initials = computed(
   () => `${user.value?.firstName.charAt(0) ?? ''}${user.value?.lastName.charAt(0) ?? ''}`,
@@ -89,6 +120,33 @@ const weeklyVolume = computed(() =>
           ><small>{{ $t('profile.publicProfileBody') }}</small></span
         ><ChevronRightIcon
       /></RouterLink>
+    </section>
+
+    <section class="preferences-card">
+      <div>
+        <strong>{{ $t('profile.weightUnit') }}</strong>
+        <small>{{ $t('profile.weightUnitBody') }}</small>
+      </div>
+      <div class="weight-unit-picker" role="group" :aria-label="$t('profile.weightUnit')">
+        <button
+          type="button"
+          :aria-pressed="weightUnit === WeightUnit.KILOGRAMS"
+          :class="{ active: weightUnit === WeightUnit.KILOGRAMS }"
+          :disabled="updatingWeightUnit"
+          @click="setWeightUnit(WeightUnit.KILOGRAMS)"
+        >
+          {{ $t('auth.kilograms') }}
+        </button>
+        <button
+          type="button"
+          :aria-pressed="weightUnit === WeightUnit.POUNDS"
+          :class="{ active: weightUnit === WeightUnit.POUNDS }"
+          :disabled="updatingWeightUnit"
+          @click="setWeightUnit(WeightUnit.POUNDS)"
+        >
+          {{ $t('auth.pounds') }}
+        </button>
+      </div>
     </section>
 
     <RouterLink to="/logout" class="logout-link"
@@ -160,6 +218,31 @@ h1 {
 }
 .settings-card small {
   @apply mt-0.5 text-sm text-slate-500;
+}
+.preferences-card {
+  @apply flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+}
+.preferences-card strong,
+.preferences-card small {
+  @apply block;
+}
+.preferences-card strong {
+  @apply text-base font-semibold text-slate-950;
+}
+.preferences-card small {
+  @apply mt-0.5 text-sm text-slate-500;
+}
+.weight-unit-picker {
+  @apply grid grid-cols-2 overflow-hidden rounded-full border border-slate-200;
+}
+.weight-unit-picker button {
+  @apply min-w-16 px-4 py-2 text-sm font-semibold text-slate-600 transition disabled:opacity-60;
+}
+.weight-unit-picker button + button {
+  @apply border-l border-slate-200;
+}
+.weight-unit-picker button.active {
+  @apply bg-stone-900 text-white;
 }
 .logout-link {
   @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-red-50;

@@ -259,4 +259,28 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
   })
+
+  describe('weight unit', () => {
+    test('shows the unit from the profile preference as a static suffix, not a toggle', async () => {
+      getCurrentUser.mockResolvedValue({ user: { weightUnit: WeightUnit.POUNDS } })
+      const wrapper = await mountWorkout()
+
+      const suffix = wrapper.get('.weight-entry .weight-unit-suffix')
+      expect(suffix.text()).toBe('lbs')
+      expect(wrapper.find('.weight-entry button').exists()).toBe(false)
+      expect(wrapper.find('[role="group"]').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
+    test('logs new sets using the profile preference unit', async () => {
+      getCurrentUser.mockResolvedValue({ user: { weightUnit: WeightUnit.POUNDS } })
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await logFirstSet(wrapper)
+
+      expect(workoutStore.getSets(routineID, benchPress.id)[0].weightUnit).toBe(WeightUnit.POUNDS)
+      wrapper.unmount()
+    })
+  })
 })
