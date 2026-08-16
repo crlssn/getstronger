@@ -28,7 +28,9 @@ const goBack = () => {
     <button type="button" class="back" :aria-label="$t('nav.back')" @click="goBack">
       <ChevronLeftIcon />
     </button>
-    <p>{{ pageTitleStore.pageTitle }}</p>
+    <!-- This is the page's title now, not a label above one: a pushed screen
+         no longer repeats its name in the body. -->
+    <h1>{{ pageTitleStore.pageTitle }}</h1>
     <!-- Views can Teleport their own action (e.g. a dropdown) into this slot. -->
     <div id="page-nav-action" class="page-action">
       <ActionButton
@@ -46,7 +48,7 @@ const goBack = () => {
 .page-nav {
   @apply mb-5 grid min-h-11 grid-cols-[2.75rem_1fr_2.75rem] items-center gap-3 px-1;
 }
-.page-nav > p {
+.page-nav > h1 {
   @apply truncate text-center text-sm font-semibold text-text sm:text-base;
 }
 .back {

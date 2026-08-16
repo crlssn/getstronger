@@ -83,8 +83,6 @@ const onDeleteRoutine = async () => {
         <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill">{{
           t('home.upNext')
         }}</span>
-        <p class="eyebrow">{{ t('routine.view.eyebrow') }}</p>
-        <h1>{{ routine.name }}</h1>
         <p class="summary">
           <ClockIcon /> {{ t('home.exerciseCount', routine.exercises.length) }} ·
           {{ t('home.aboutMinutes', { count: Math.max(30, routine.exercises.length * 8) }) }}
@@ -152,20 +150,16 @@ const onDeleteRoutine = async () => {
 .loading-card {
   @apply card shadow-none p-6 text-sm text-slate-500;
 }
+/* An ordinary card. The inverse surface is reserved for the single next action
+   on a screen, and a routine header is a page title, not an action. */
 .routine-hero {
-  @apply flex flex-col gap-4 overflow-hidden rounded-sheet bg-surface-inverse p-5 text-white shadow-raised sm:flex-row sm:items-end sm:justify-between md:p-6;
+  @apply card flex flex-col gap-4 overflow-hidden p-5 sm:flex-row sm:items-center sm:justify-between md:p-6;
 }
 .status-pill {
-  @apply mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20;
-}
-.eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-indigo-100;
-}
-h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight;
+  @apply mb-3 inline-flex rounded-full bg-success-surface px-3 py-1 text-xs font-semibold text-success;
 }
 .summary {
-  @apply mt-3 flex items-center gap-2 text-sm text-indigo-100;
+  @apply flex items-center gap-2 text-sm text-text-muted;
 }
 .summary svg {
   @apply size-4;
@@ -175,16 +169,16 @@ h1 {
 }
 .hero-actions a,
 .hero-actions button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold;
 }
 .hero-actions svg {
   @apply size-5;
 }
 .start-button {
-  @apply bg-white text-indigo-700 hover:bg-indigo-50;
+  @apply bg-ink text-white transition hover:brightness-125;
 }
 .next-button {
-  @apply bg-indigo-950/20 text-white ring-1 ring-white/30 hover:bg-indigo-950/30;
+  @apply border border-border text-text-muted transition hover:bg-surface-sunken hover:text-text;
 }
 .exercise-section,
 .danger-zone {
@@ -214,7 +208,7 @@ h1 {
   @apply flex min-h-14 items-center gap-3 bg-white px-4 py-2.5;
 }
 .number {
-  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-500;
+  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-info-surface text-sm font-semibold text-text-muted;
 }
 .exercise-copy {
   @apply min-w-0 flex-1;

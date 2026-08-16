@@ -140,7 +140,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
       <header>
         <div>
           <p class="eyebrow">{{ t('exercise.history') }}</p>
-          <h1>{{ t('exercise.loggedSets') }}</h1>
+          <h2>{{ t('exercise.loggedSets') }}</h2>
         </div>
         <span>{{ sets.length }}</span>
       </header>
@@ -223,13 +223,13 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .sets-card > header {
   @apply -mx-5 -mt-5 flex items-end justify-between gap-3 px-5 py-5;
 }
-.sets-card h1,
+.sets-card h2,
 .manage-card h2,
 .empty-card h1 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
 .sets-card > header > span {
-  @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500;
+  @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
 }
 .set-list {
   @apply -mx-5 divide-y divide-slate-100 border-t border-slate-100;

@@ -7,6 +7,7 @@ import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { getPlan } from '@/http/requests'
 import type { Plan } from '@/proto/api/v1/routine_service_pb'
 import { useDashboardStore } from '@/stores/dashboard'
+import { usePageTitleStore } from '@/stores/pageTitle'
 import { usePlanStore } from '@/stores/plans'
 
 const { t } = useI18n()
@@ -14,6 +15,7 @@ const route = useRoute()
 const router = useRouter()
 const planStore = usePlanStore()
 const dashboardStore = useDashboardStore()
+const pageTitleStore = usePageTitleStore()
 const plan = ref<Plan>()
 const planId = route.params.id as string
 
@@ -21,6 +23,7 @@ onMounted(async () => {
   const response = await getPlan(planId)
   if (!response?.plan) return router.replace('/plans')
   plan.value = response.plan
+  pageTitleStore.setPageTitle(response.plan.name)
 })
 
 const activate = async () => {
@@ -55,7 +58,6 @@ const remove = async () => {
         </p>
         <span v-if="plan.active">{{ t('training.active') }}</span>
       </header>
-      <h1>{{ plan.name }}</h1>
       <p>{{ t('training.planView.routinesRepeat', plan.routines.length) }}</p>
       <div class="overview-actions">
         <RouterLink :to="`/plans/${plan.id}/edit`"
@@ -107,8 +109,10 @@ const remove = async () => {
 .plan-page {
   @apply space-y-4;
 }
+/* An ordinary card: the inverse surface is reserved for the single next action
+   on a screen, and this is a page header. */
 .overview {
-  @apply rounded-sheet bg-surface-inverse p-6 text-white shadow-raised;
+  @apply card p-6;
 }
 .overview header {
   @apply flex items-center justify-between gap-3;
@@ -117,16 +121,13 @@ const remove = async () => {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .overview .eyebrow {
-  @apply text-indigo-100;
+  @apply text-text-subtle;
 }
 .overview header span {
-  @apply rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold;
-}
-.overview h1 {
-  @apply mt-3 text-2xl font-semibold tracking-tight;
+  @apply rounded-full bg-success-surface px-3 py-1 text-xs font-semibold text-success;
 }
 .overview > p {
-  @apply mt-2 text-sm text-indigo-100;
+  @apply mt-2 text-sm text-text-muted;
 }
 .overview-actions {
   @apply mt-5 flex flex-wrap gap-2;
@@ -136,10 +137,10 @@ const remove = async () => {
   @apply inline-flex min-h-(--size-control) items-center gap-2 rounded-xl px-4 text-sm font-semibold;
 }
 .overview-actions a {
-  @apply bg-white text-indigo-700;
+  @apply bg-ink text-white transition hover:brightness-125;
 }
 .overview-actions button {
-  @apply border border-white/30 text-white;
+  @apply border border-border text-text-muted transition hover:bg-surface-sunken hover:text-text;
 }
 .overview-actions svg {
   @apply size-4;

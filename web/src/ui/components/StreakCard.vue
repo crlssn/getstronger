@@ -101,7 +101,7 @@ const weekBlocks = computed(() =>
   @apply grid grid-cols-[auto_1fr_auto] items-center gap-3;
 }
 .streak-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-slate-100 text-slate-500;
+  @apply grid size-11 place-items-center rounded-xl bg-info-surface text-text-muted;
 }
 .streak-card.active .streak-icon {
   @apply bg-success-surface text-success;

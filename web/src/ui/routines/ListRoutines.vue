@@ -7,6 +7,7 @@ import {
   MagnifyingGlassIcon,
   PlayIcon,
   PlusIcon,
+  RectangleStackIcon,
 } from '@heroicons/vue/24/outline'
 
 import { listRoutines } from '@/http/requests'
@@ -14,6 +15,7 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import usePagination from '@/utils/usePagination'
+import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 import {
   routineActivityBucketFor,
@@ -169,15 +171,15 @@ const makeUpNext = async (routineId: string) => {
       </section>
     </template>
 
-    <section v-else-if="isMounted" class="empty-state">
-      <h2>{{ search ? t('training.noMatchingRoutines') : t('training.noRoutines') }}</h2>
-      <p>
-        {{ search ? t('exercise.tryAnotherSearch') : t('routine.list.emptyBody') }}
-      </p>
-      <RouterLink v-if="!search" to="/routines/create" class="create-link"
-        ><PlusIcon /> {{ t('home.createRoutine') }}</RouterLink
-      >
-    </section>
+    <AppEmptyState
+      v-else-if="isMounted"
+      :action="search ? 'none' : { label: t('home.createRoutine'), to: '/routines/create' }"
+      :body="search ? t('exercise.tryAnotherSearch') : t('routine.list.emptyBody')"
+      :title="search ? t('training.noMatchingRoutines') : t('training.noRoutines')"
+    >
+      <template #icon><RectangleStackIcon /></template>
+      <template #action-icon><PlusIcon /></template>
+    </AppEmptyState>
 
     <button v-if="hasMorePages" type="button" class="load-more" @click="fetchRoutines">
       {{ t('routine.list.loadMore') }}

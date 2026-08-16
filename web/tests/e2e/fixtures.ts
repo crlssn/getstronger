@@ -89,7 +89,7 @@ export const logIn = async (page: Page) => logInAs(page, email, password)
 export const waitForHome = async (page: Page) => {
   await expect(page.locator('.loading-card')).toHaveCount(0)
   await expect(
-    page.locator('.feed-summary-card, .feed-end, .feed-empty, .feed-error').first(),
+    page.locator('.feed-summary-card, .feed-end, .empty-state, .feed-error').first(),
   ).toBeVisible()
 }
 

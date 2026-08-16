@@ -132,7 +132,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply min-h-9 border-0 text-eyebrow font-semibold uppercase text-text-subtle;
 }
 .set-number {
-  @apply grid size-7 place-items-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500;
+  @apply grid size-7 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
 }
 .set-number.personal-best {
   @apply bg-amber-50 text-amber-700;

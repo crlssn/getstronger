@@ -196,10 +196,9 @@ const postComment = async () => {
 
       <div class="workout-heading">
         <div class="workout-heading-copy">
-          <div>
-            <p class="eyebrow">{{ t('workout.completed') }}</p>
-            <h1>{{ workout.name }}</h1>
-          </div>
+          <!-- The nav bar above already carries this workout's name. The
+               eyebrow stays because it says what the title does not. -->
+          <p class="eyebrow">{{ t('workout.completed') }}</p>
           <span v-if="personalBestCount > 0" class="personal-best-badge">
             <TrophyIcon />
             {{ t('workout.card.prBadge', personalBestCount) }}
@@ -355,9 +354,6 @@ const postComment = async () => {
 .workout-heading .eyebrow {
   @apply text-indigo-100;
 }
-.workout-heading h1 {
-  @apply mt-1 text-3xl font-semibold tracking-tight;
-}
 .workout-heading h2 {
   @apply mt-1 text-2xl font-semibold tracking-tight;
 }
@@ -397,7 +393,7 @@ const postComment = async () => {
   @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
 }
 .section-heading > span {
-  @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500;
+  @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
 }
 .exercise-list {
   @apply divide-y divide-slate-200;

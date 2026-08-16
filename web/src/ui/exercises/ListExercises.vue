@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ChevronRightIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import {
+  BookOpenIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+} from '@heroicons/vue/24/outline'
 
 import { listExercises } from '@/http/requests'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
@@ -13,6 +18,7 @@ import {
   activityBucketOrder,
   type ActivityBucket,
 } from '@/utils/activityBuckets'
+import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 const exercises = ref<Exercise[]>([])
@@ -117,12 +123,15 @@ const fetchExercises = async () => {
         {{ t('exercise.loadMore') }}
       </button>
     </section>
-    <section v-else class="empty-state">
-      <h2>{{ search ? t('exercise.noMatches') : t('exercise.empty') }}</h2>
-      <p>
-        {{ search ? t('exercise.tryAnotherSearch') : t('exercise.emptyBody') }}
-      </p>
-    </section>
+    <AppEmptyState
+      v-else
+      :action="search ? 'none' : { label: t('exercise.new'), to: '/exercises/create' }"
+      :body="search ? t('exercise.tryAnotherSearch') : t('exercise.emptyBody')"
+      :title="search ? t('exercise.noMatches') : t('exercise.empty')"
+    >
+      <template #icon><BookOpenIcon /></template>
+      <template #action-icon><PlusIcon /></template>
+    </AppEmptyState>
   </div>
 </template>
 

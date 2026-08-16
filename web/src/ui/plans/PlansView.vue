@@ -273,7 +273,7 @@ h2 {
   @apply mt-3 flex flex-wrap gap-2;
 }
 .sequence span {
-  @apply grid size-9 place-items-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-500;
+  @apply grid size-9 place-items-center rounded-xl bg-info-surface text-sm font-semibold text-text-muted;
 }
 .sequence span.done {
   @apply bg-success-surface text-success;

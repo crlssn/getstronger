@@ -105,6 +105,7 @@ const profileActions = computed<DropdownItem[]>(() => [
       :key="tab.name"
       :to="tab.href"
       :class="{ 'is-selected': tab.href === activeTab }"
+      :aria-current="tab.href === activeTab ? 'page' : undefined"
     >
       {{ tab.name }}
     </RouterLink>

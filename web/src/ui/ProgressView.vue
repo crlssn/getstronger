@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import { ArrowTrendingUpIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
+import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
@@ -44,11 +45,12 @@ const filteredVolume = computed(() =>
 
 <template>
   <div class="progress-stack">
-    <section class="progress-intro">
-      <div>
-        <p class="eyebrow">{{ t('progress.eyebrow') }}</p>
-        <h1>{{ t('progress.heading') }}</h1>
-      </div>
+    <!-- Progress is a screen pushed onto the Me tab, so the nav bar above
+         carries its title. What is left here is the one thing the title does
+         not say: how many personal bests there are — and only once there are
+         any, because a pill that exists to celebrate should not render in the
+         app's loudest colour to report a zero. -->
+    <section v-if="totalRecords > 0" class="progress-intro">
       <span class="record-count"
         ><TrophyIcon /> {{ t('progress.personalBests', totalRecords) }}</span
       >
@@ -104,9 +106,14 @@ const filteredVolume = computed(() =>
           <ChevronRightIcon class="chevron" />
         </RouterLink>
       </div>
-      <p v-else class="empty-copy">
-        {{ t('progress.emptyBody') }}
-      </p>
+      <AppEmptyState
+        v-else
+        :action="{ label: t('home.startWorkout'), to: '/workout' }"
+        :body="t('progress.emptyBody')"
+        :title="t('progress.emptyTitle')"
+      >
+        <template #icon><TrophyIcon /></template>
+      </AppEmptyState>
     </section>
   </div>
 </template>

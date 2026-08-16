@@ -10,6 +10,7 @@ import {
   FireIcon,
   ListBulletIcon,
   PlayIcon,
+  UsersIcon,
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
@@ -19,6 +20,7 @@ import { listFeedItems } from '@/http/requests'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import useActiveWorkout from '@/utils/useActiveWorkout'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
+import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
 import StreakCard from '@/ui/components/StreakCard.vue'
 import { dateLocale } from '@/i18n'
@@ -29,6 +31,7 @@ const dashboardStore = useDashboardStore()
 const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
   useActiveWorkout()
 const searchOpen = ref(false)
+const openSearch = () => (searchOpen.value = true)
 const routinePickerOpen = ref(false)
 const followedWorkouts = ref<Workout[]>([])
 const feedPageToken = ref<Uint8Array>(new Uint8Array(0))
@@ -183,16 +186,14 @@ const selectRoutine = async (routineId: string) => {
         </div>
       </section>
 
-      <section v-else class="empty-card">
-        <div class="empty-icon"><ListBulletIcon /></div>
-        <div>
-          <h2>{{ $t('home.createFirstRoutine') }}</h2>
-          <p>{{ $t('home.createFirstRoutineBody') }}</p>
-        </div>
-        <RouterLink to="/routines/create" class="primary-link">{{
-          $t('home.createRoutine')
-        }}</RouterLink>
-      </section>
+      <AppEmptyState
+        v-else
+        :action="{ label: $t('home.createRoutine'), to: '/routines/create' }"
+        :body="$t('home.createFirstRoutineBody')"
+        :title="$t('home.createFirstRoutine')"
+      >
+        <template #icon><ListBulletIcon /></template>
+      </AppEmptyState>
 
       <section class="following-feed">
         <header>
@@ -212,9 +213,15 @@ const selectRoutine = async (routineId: string) => {
           <span>{{ $t('home.loadFailed') }}</span>
           <button type="button" @click="loadMoreFeed">{{ $t('common.retry') }}</button>
         </div>
-        <div v-else-if="!followedWorkouts.length" class="feed-empty">
-          {{ $t('home.emptyFeed') }}
-        </div>
+        <AppEmptyState
+          v-else-if="!followedWorkouts.length"
+          :action="{ label: $t('home.emptyFeedAction') }"
+          :body="$t('home.emptyFeed')"
+          :title="$t('home.emptyFeedTitle')"
+          @action="openSearch"
+        >
+          <template #icon><UsersIcon /></template>
+        </AppEmptyState>
         <div v-else-if="feedLoading" class="feed-status" aria-live="polite">
           <span class="feed-spinner"></span> {{ $t('home.loadingMore') }}
         </div>

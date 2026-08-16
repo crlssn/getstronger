@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import {
   BookOpenIcon,
   FireIcon,
@@ -33,11 +33,17 @@ const hasResults = computed(
     exercises.value.length > 0,
 )
 
-const openSearch = async () => {
+const openSearch = () => {
   searchOpen.value = true
+}
+
+// Focus follows the open state rather than the button, so a caller that opens
+// search from elsewhere on the page lands the cursor in the field too.
+watch(searchOpen, async (open) => {
+  if (!open) return
   await nextTick()
   input.value?.focus()
-}
+})
 
 const clearResults = () => {
   users.value = []
