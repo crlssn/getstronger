@@ -362,14 +362,22 @@ The images land in `web/screenshots/`, which Git ignores, one folder per audienc
 - `active/` — Alex Morgan, the established account with a year of training.
 - `new/` — Sam Taylor, the freshly signed-up account with no data of its own.
 
-Each run rewrites the folder from scratch and finishes by writing a contact sheet of every capture:
+Each page is photographed one screenful at a time — `01-home-1.png`, `01-home-2.png`, and so on — up to four screens, so an endless feed never becomes a single unreadable strip and each image shows the sticky header and bottom navigation where a reader sees them. Set `SCREENSHOT_MAX_FOLDS` to capture more or fewer.
+
+A run rewrites the folder from scratch and finishes by publishing what it saw twice over. `manifest.json` maps every image to its route, the component that renders it, and the measurements taken on the page; `index.html` is a contact sheet of the same set:
 
 ```bash
 mise run screenshots:open
 ```
 
-Pages that need data the persona does not have — Sam has no workouts, and neither persona has a training plan until one is created — are reported as skipped by the run and named on the contact sheet instead of being captured. Detail pages find their identifiers by reading the links the app renders, so adding a page only means adding an entry to `web/tests/screenshots/catalogue.ts`.
+The measurements are leads for a design review rather than assertions, and cover what a screenshot cannot show: horizontal overflow, tap targets under 44 pixels, text under 12 pixels, hard-clipped text, and WCAG A/AA violations from axe.
 
-Captures run past the fold and stop at 4000 pixels so an endless feed cannot produce an unreadable image. Set `SCREENSHOT_MAX_HEIGHT` to change that: `844` captures exactly one screen, a large value captures everything.
+Pages that need data the persona does not have — Sam has no workouts, and neither persona has a training plan until one is created — are recorded with a reason instead of being captured, so a missing screenshot is never a silent one. Detail pages find their identifiers by reading the links the app renders, so adding a page, or a state that is only reachable by interacting with a page such as the exercise picker, means adding an entry to `web/tests/screenshots/catalogue.ts`.
+
+After changing a component, re-photograph only the pages it affects. This form matches page names, skips reseeding, and leaves the rest of the set in place:
+
+```bash
+mise run screenshots:page routine
+```
 
 Like the end-to-end suite, the run starts its own backend and web server — on ports `18280` and `15273` by default — so it neither depends on nor disturbs the local development services.

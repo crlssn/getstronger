@@ -1,72 +1,119 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { join, relative } from 'node:path'
-import { personas } from './catalogue'
-import { contactSheetPath, outputRoot, skippedPath } from './paths'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { relative } from 'node:path'
+import { authenticatedPages, guestPages, personas, type PageEntry } from './catalogue'
+import {
+  contactSheetPath,
+  manifestPath,
+  outputRoot,
+  recordsPath,
+  viewport,
+  type Findings,
+  type PageRecord,
+} from './paths'
 
-type Skip = { folder: string; name: string; reason: string }
+type Audience = { description: string; email?: string; name: string; pages: PageEntry[] }
 
-const readSkips = async (): Promise<Skip[]> => {
-  const contents = await readFile(skippedPath, 'utf8').catch(() => '')
-  return contents
-    .split('\n')
-    .filter((line) => line !== '')
-    .map((line) => JSON.parse(line) as Skip)
+const audiences: Audience[] = [
+  { description: 'Pages a signed-out visitor sees', name: 'guest', pages: guestPages },
+  ...personas.map((persona) => ({
+    description: persona.description,
+    email: persona.email,
+    name: persona.name,
+    pages: authenticatedPages,
+  })),
+]
+
+// A re-captured page appends a second line, and the newer one wins.
+const readRecords = async () => {
+  const contents = await readFile(recordsPath, 'utf8').catch(() => '')
+  const records = new Map<string, PageRecord>()
+
+  for (const line of contents.split('\n').filter((value) => value !== '')) {
+    const parsed = JSON.parse(line) as PageRecord
+    records.set(`${parsed.persona}/${parsed.name}`, parsed)
+  }
+
+  return audiences.flatMap(({ name, pages }) =>
+    pages
+      .map((entry) => records.get(`${name}/${entry.name}`))
+      .filter((entry) => entry !== undefined),
+  )
 }
 
-const readImages = async (folder: string) => {
-  const entries = await readdir(join(outputRoot, folder)).catch(() => [])
-  return entries.filter((entry) => entry.endsWith('.png')).sort()
-}
+const findingLines = (findings: Findings | undefined) =>
+  Object.entries(findings ?? {})
+    .filter(([, values]) => values.length > 0)
+    .map(([finding, values]) => `${finding}: ${values.length}`)
 
 const escapeHtml = (value: string) =>
   value.replace(/[&<>"]/g, (character) => `&#${character.charCodeAt(0)};`)
 
-const section = (folder: string, description: string, images: string[], skips: Skip[]) => `
+const figure = (record: PageRecord) => `<figure>
+          ${record.images
+            .map(
+              (image) =>
+                `<a href="${image}"><img src="${image}" alt="${escapeHtml(image)}" loading="lazy" /></a>`,
+            )
+            .join('\n          ')}
+          <figcaption>
+            <strong>${escapeHtml(record.name)}</strong>
+            <span>${escapeHtml(record.route ?? record.reason ?? '')}</span>
+            <span>${escapeHtml(record.component)}</span>
+            ${findingLines(record.findings)
+              .map((line) => `<span class="finding">${escapeHtml(line)}</span>`)
+              .join('\n            ')}
+          </figcaption>
+        </figure>`
+
+const section = (name: string, description: string, records: PageRecord[]) => `
     <section>
-      <h2>${escapeHtml(folder)}</h2>
+      <h2>${escapeHtml(name)}</h2>
       <p class="description">${escapeHtml(description)}</p>
       <div class="grid">
-        ${images
-          .map(
-            (image) => `<figure>
-          <a href="${folder}/${image}"><img src="${folder}/${image}" alt="${escapeHtml(image)}" loading="lazy" /></a>
-          <figcaption>${escapeHtml(image.replace(/^\d+-|\.png$/g, ''))}</figcaption>
-        </figure>`,
-          )
+        ${records
+          .filter((record) => record.images.length > 0)
+          .map(figure)
           .join('\n        ')}
       </div>
-      ${
-        skips.length === 0
+      ${(() => {
+        const skipped = records.filter((record) => record.images.length === 0)
+        return skipped.length === 0
           ? ''
-          : `<p class="skipped">Not captured: ${skips
-              .map((skip) => escapeHtml(skip.name))
-              .join(', ')} — ${escapeHtml(skips[0].reason)}.</p>`
-      }
+          : `<p class="skipped">Not captured: ${skipped
+              .map((record) => escapeHtml(record.name))
+              .join(', ')} — ${escapeHtml(skipped[0].reason ?? 'unreachable')}.</p>`
+      })()}
     </section>`
 
-// The images are only useful if they can be compared side by side, so a run
-// finishes by writing a contact sheet that opens in a browser.
+// The run finishes by publishing what it saw twice over: a manifest that maps
+// every image to its route, its component, and the measurements taken on the
+// page, and a contact sheet that puts the same set in front of a person.
 export default async () => {
-  const skips = await readSkips()
-  const folders = [
-    { description: 'Pages a signed-out visitor sees', name: 'guest' },
-    ...personas.map((persona) => ({ description: persona.description, name: persona.name })),
-  ]
+  const records = await readRecords()
+  const generatedAt = new Date().toISOString()
+  // A run that matched no page still owns the folder it was asked to publish.
+  await mkdir(outputRoot, { recursive: true })
 
-  const captures = await Promise.all(
-    folders.map(async ({ description, name }) => ({
-      description,
-      images: await readImages(name),
-      name,
-    })),
+  await writeFile(
+    manifestPath,
+    `${JSON.stringify(
+      {
+        foldHeight: viewport.height,
+        generatedAt,
+        pages: records,
+        personas: audiences.map(({ description, email, name }) => ({ description, email, name })),
+        viewport,
+      },
+      null,
+      2,
+    )}\n`,
   )
 
-  const sections = captures.map(({ description, images, name }) =>
+  const sections = audiences.map(({ description, name }) =>
     section(
       name,
       description,
-      images,
-      skips.filter((skip) => skip.folder === name),
+      records.filter((record) => record.persona === name),
     ),
   )
 
@@ -86,23 +133,31 @@ export default async () => {
       .description, .generated { color: color-mix(in srgb, currentColor 60%, transparent); margin-top: 0; }
       .grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
       figure { margin: 0; }
-      /* Long pages are cropped to keep the grid scannable; the link opens the whole capture. */
-      img { border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 12px; max-height: 720px; object-fit: cover; object-position: top; width: 100%; }
-      figcaption { font-size: 0.85rem; padding-top: 0.5rem; }
+      img { border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 12px; width: 100%; }
+      img + img { margin-top: 0.5rem; }
+      figcaption { display: flex; flex-direction: column; font-size: 0.8rem; gap: 0.15rem; padding-top: 0.5rem; }
+      figcaption span { color: color-mix(in srgb, currentColor 60%, transparent); }
+      figcaption strong { font-size: 0.9rem; }
+      .finding { color: #b45309; }
       .skipped { color: color-mix(in srgb, currentColor 60%, transparent); font-size: 0.9rem; }
     </style>
   </head>
   <body>
     <h1>Mobile screenshots</h1>
-    <p class="generated">390 px wide at 2× density, generated ${new Date().toLocaleString()}</p>
+    <p class="generated">
+      ${viewport.width} × ${viewport.height} at 2× density, one image per screenful, generated ${new Date(generatedAt).toLocaleString()}.
+      Machine-readable index: <a href="manifest.json">manifest.json</a>.
+    </p>
 ${sections.join('\n')}
   </body>
 </html>
 `,
   )
 
-  const captured = captures.reduce((total, { images }) => total + images.length, 0)
+  const images = records.reduce((total, record) => total + record.images.length, 0)
   console.log(
-    `\n📸  ${captured} screenshots written to ${relative(process.cwd(), outputRoot)}\n    Open the contact sheet: open ${relative(process.cwd(), contactSheetPath)}\n`,
+    `\n📸  ${images} images of ${records.length} pages written to ${relative(process.cwd(), outputRoot)}` +
+      `\n    Manifest: ${relative(process.cwd(), manifestPath)}` +
+      `\n    Contact sheet: open ${relative(process.cwd(), contactSheetPath)}\n`,
   )
 }

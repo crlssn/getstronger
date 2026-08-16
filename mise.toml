@@ -215,6 +215,14 @@ run = [
     'echo "Open the contact sheet with: mise run screenshots:open"',
 ]
 
+[tasks."screenshots:page"]
+description = "Re-capture the pages whose name matches a pattern, keeping the rest of the set"
+usage = 'arg "<pattern>" help="Matched against page names, for example routine or \"active home\""'
+# No reseeding and no wipe, so a design change can be re-photographed in
+# seconds without losing the pages this run does not touch.
+env = { SCREENSHOT_KEEP = "1" }
+run = 'cd web && npm run screenshots -- --grep "$usage_pattern"'
+
 [tasks."screenshots:open"]
 description = "Open the latest mobile screenshot contact sheet"
 run = "open web/screenshots/index.html"
