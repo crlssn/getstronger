@@ -7,7 +7,8 @@ import {
   UnreadNotificationsRequestSchema,
 } from '@/proto/api/v1/notification_service_pb.ts'
 import { Code, ConnectError } from '@connectrpc/connect'
-import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
+import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
+import { useAuthStore } from '@/stores/auth'
 
 const reconciliationIntervalMs = 10 * 60 * 1000
 
@@ -31,6 +32,23 @@ export const useNotificationStore = defineStore('notifications', () => {
     clearReconciliationTimer()
   }
 
+  const endSession = () => {
+    streamingEnabled = false
+    pauseUnreadNotificationStream()
+    unreadCount.value = 0
+  }
+
+  // The access token lives for 15 minutes and the server only checks it when a
+  // request starts, so an open stream outlives its own token. Reconnecting is
+  // what surfaces the expiry, which would otherwise sign the user out for
+  // nothing more than switching back to the tab. Refresh and let the caller
+  // retry; refreshAccessTokenOrLogout redirects to the login page by itself
+  // once the refresh token is gone too.
+  const recoverSession = async (): Promise<boolean> => {
+    await refreshAccessTokenOrLogout()
+    return useAuthStore().authorised
+  }
+
   const refreshUnreadNotifications = async (signal?: AbortSignal) => {
     try {
       const snapshot = await notificationClient.getUnreadNotificationCount(countReq, { signal })
@@ -39,10 +57,7 @@ export const useNotificationStore = defineStore('notifications', () => {
       if (signal?.aborted) return
 
       if (error instanceof ConnectError && error.code === Code.Unauthenticated) {
-        streamingEnabled = false
-        pauseUnreadNotificationStream()
-        unreadCount.value = 0
-        await logoutUnauthenticatedUser()
+        if (!(await recoverSession())) endSession()
         return
       }
 
@@ -74,6 +89,9 @@ export const useNotificationStore = defineStore('notifications', () => {
 
   const runUnreadNotificationStream = async (controller: AbortController) => {
     const streamReq = create(UnreadNotificationsRequestSchema, {})
+    // Guards against refreshing on every retry when the backend keeps rejecting
+    // a token it just issued. Cleared as soon as the stream delivers a message.
+    let recoveryAttempted = false
 
     while (!controller.signal.aborted) {
       try {
@@ -87,20 +105,22 @@ export const useNotificationStore = defineStore('notifications', () => {
           signal: controller.signal,
         })
         for await (const message of stream) {
+          recoveryAttempted = false
           unreadCount.value = Number(message.count)
         }
       } catch (error) {
         if (controller.signal.aborted) return
 
         if (error instanceof ConnectError && error.code === Code.Unauthenticated) {
-          streamingEnabled = false
-          pauseUnreadNotificationStream()
-          unreadCount.value = 0
-          await logoutUnauthenticatedUser()
-          return
-        }
+          if (recoveryAttempted || !(await recoverSession())) {
+            endSession()
+            return
+          }
 
-        console.warn('Stream disconnected, retrying...', error)
+          recoveryAttempted = true
+        } else {
+          console.warn('Stream disconnected, retrying...', error)
+        }
       }
 
       await waitBeforeRetry(controller.signal)
@@ -126,11 +146,7 @@ export const useNotificationStore = defineStore('notifications', () => {
     startStreamIfVisible()
   }
 
-  const stopUnreadNotifications = () => {
-    streamingEnabled = false
-    pauseUnreadNotificationStream()
-    unreadCount.value = 0
-  }
+  const stopUnreadNotifications = endSession
 
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
