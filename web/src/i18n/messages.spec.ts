@@ -20,7 +20,7 @@ describe('messages', () => {
 
     expect(keys).toContain('pendingLabel')
     expect(keys).toContain('resend')
-    expect(keys).toContain('cooldown')
+    expect(keys).toContain('cooldownButton')
     expect(keys).toContain('resendFailed')
     expect(Object.values(messages.auth.verification).every((value) => value !== '')).toBe(true)
   })

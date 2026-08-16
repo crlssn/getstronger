@@ -82,7 +82,7 @@ const onResend = async () => {
       <p v-if="knowsDestination" class="verification-destination">
         {{ t('auth.verification.sentTo', { email: maskedEmail }) }}
       </p>
-      <p v-else>{{ t('auth.verification.sentGeneric') }}</p>
+      <p v-else>{{ t('auth.verification.unknownDestination') }}</p>
     </header>
 
     <div class="verification-pending">
@@ -122,12 +122,11 @@ const onResend = async () => {
         {{ resendLabel }}
       </AppButton>
 
+      <!-- The countdown itself is the button's label, so the live region only
+           reports what changed. -->
       <p class="verification-status" role="status" aria-live="polite">
         <span v-if="status === 'sending'">{{ t('auth.verification.resending') }}</span>
         <span v-else-if="status === 'sent'">{{ t('auth.verification.resent') }}</span>
-        <span v-else-if="cooling">{{
-          t('auth.verification.cooldown', { seconds: secondsRemaining })
-        }}</span>
       </p>
 
       <p v-if="status === 'failed'" class="verification-error" role="alert">

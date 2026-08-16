@@ -79,7 +79,8 @@ export const en = {
       eyebrow: 'One step left',
       title: 'Verify your email',
       sentTo: 'We sent a verification link to {email}.',
-      sentGeneric: 'We sent a verification link to your email address.',
+      unknownDestination:
+        'Enter the address you signed up with and we will send a new verification link.',
       pendingLabel: 'Waiting for verification',
       instructions:
         'Your account is not verified yet. Open the link in that email to finish setting it up.',
@@ -89,7 +90,6 @@ export const en = {
       resent: 'If that address needs verifying, a new link is on its way.',
       resendFailed: 'The link could not be sent. Please try again.',
       cooldownButton: 'Send again in {seconds}s',
-      cooldown: 'You can send another link in {seconds}s.',
       differentEmailHelp: 'Typed the wrong address?',
       differentEmail: 'Sign up with a different email',
       backToLogin: 'Back to log in',
@@ -412,7 +412,8 @@ export const sv = {
       eyebrow: 'Ett steg kvar',
       title: 'Verifiera din e-postadress',
       sentTo: 'Vi har skickat en verifieringslänk till {email}.',
-      sentGeneric: 'Vi har skickat en verifieringslänk till din e-postadress.',
+      unknownDestination:
+        'Ange adressen du registrerade dig med så skickar vi en ny verifieringslänk.',
       pendingLabel: 'Väntar på verifiering',
       instructions:
         'Ditt konto är inte verifierat ännu. Öppna länken i e-postmeddelandet för att slutföra registreringen.',
@@ -422,7 +423,6 @@ export const sv = {
       resent: 'Om adressen behöver verifieras är en ny länk på väg.',
       resendFailed: 'Länken kunde inte skickas. Försök igen.',
       cooldownButton: 'Skicka igen om {seconds} s',
-      cooldown: 'Du kan skicka en ny länk om {seconds} s.',
       differentEmailHelp: 'Skrev du fel adress?',
       differentEmail: 'Registrera dig med en annan e-postadress',
       backToLogin: 'Tillbaka till inloggningen',
