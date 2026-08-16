@@ -117,7 +117,7 @@ const weekBlocks = computed(() =>
   @apply text-sm font-semibold text-slate-950;
 }
 .streak-card .eyebrow {
-  @apply mb-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-500;
+  @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .week-track {
   @apply mt-4 grid grid-cols-5 gap-1 rounded-xl bg-stone-100 p-1;
@@ -141,8 +141,7 @@ const weekBlocks = computed(() =>
   @apply size-1.5 rounded-full bg-current;
 }
 .track-labels {
-  /* slate-400 only reaches 2.6:1 against the card at this size. */
-  @apply mt-1.5 flex justify-between text-[0.65rem] font-medium text-slate-500;
+  @apply mt-1.5 flex justify-between text-eyebrow font-semibold text-text-subtle;
 }
 .streak-card > p {
   @apply mt-3 text-xs text-slate-500;
@@ -157,6 +156,6 @@ const weekBlocks = computed(() =>
   @apply text-base font-bold leading-none;
 }
 .streak-count small {
-  @apply mt-0.5 text-[0.6rem] font-semibold uppercase tracking-wide;
+  @apply mt-0.5 text-eyebrow font-bold uppercase;
 }
 </style>

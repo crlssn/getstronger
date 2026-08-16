@@ -12,7 +12,13 @@ body {
 }
 
 h6 {
-  @apply mb-2 block px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply mb-2 block px-1 text-eyebrow font-semibold uppercase text-text-subtle;
+}
+
+/* A qualifier inside a section label is still a label. Left to the browser,
+   <small> takes 0.8em of an already-12px parent and lands at 9.6px. */
+h6 small {
+  @apply text-eyebrow font-medium;
 }
 
 button,

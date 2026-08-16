@@ -144,7 +144,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply font-semibold text-slate-900;
 }
 .set-row small {
-  @apply font-normal text-slate-500;
+  @apply ml-1 text-meta font-normal text-text-muted;
 }
 .set-volume {
   @apply text-slate-500;
@@ -177,7 +177,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply size-6;
 }
 .compact .set-row small {
-  @apply text-slate-600;
+  @apply text-text-muted;
 }
 .compact-set-value {
   @apply inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-slate-900;

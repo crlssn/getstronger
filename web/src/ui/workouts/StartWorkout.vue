@@ -1629,7 +1629,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       );
   }
   .set-labels {
-    @apply text-[0.65rem];
+    @apply text-eyebrow;
   }
   .set-row input {
     @apply px-1;

@@ -30,6 +30,6 @@ withDefaults(
   @apply gap-1;
 }
 .exercise-tags.compact > span {
-  @apply max-w-28 px-2 py-0.5 text-[0.6875rem];
+  @apply max-w-28 px-2 py-0.5 text-eyebrow tracking-normal;
 }
 </style>
