@@ -77,9 +77,10 @@ assets in `web/src/brand.ts` (the product name, slogan, and signup subtitle),
 which read the same in every locale and must never enter the message
 catalogues. `brand.spec.ts` fails if a catalogue value contains any of them.
 
-- Add every new string to `web/src/i18n/messages.ts` in **both** `en` and `sv`,
-  and render it with `t()`. The test suite enforces key parity between locales,
-  so a key added to one locale only will fail `messages.spec.ts`.
+- Add every new string to `web/src/i18n/messages.ts` in **every supported
+  locale**, and render it with `t()`. The test suite enforces key parity
+  between locales, so a key added to one locale only will fail
+  `messages.spec.ts`.
 - This covers more than template text: aria-labels, input placeholders,
   `confirm()` dialogs, alert toasts, dropdown item titles, page-title fallbacks,
   and strings built in `<script setup>` all count as user-facing.
@@ -89,7 +90,6 @@ catalogues. `brand.spec.ts` fails if a catalogue value contains any of them.
   logged'`) rather than ternaries on `count === 1`.
 - Components using `t()` need the i18n plugin in their specs: mount with
   `global: { plugins: [i18n] }` (import `i18n` from `@/i18n`).
-- Follow the established Swedish terminology: delete = "Ta bort" (never
-  "Radera"), discard a workout = "Glöm", duration and the timed metric = "Tid",
-  reps = "Reps", "ännu" over "än", routine = "pass", workout = "träningspass".
-  Idiomatic gym loanwords are kept as-is: "Reps", "PB", "streak", "Community".
+- When adding or changing translations in a non-English locale, match the
+  terminology and tone already used in that locale's catalogue rather than
+  translating each string in isolation.
