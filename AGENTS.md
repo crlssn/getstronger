@@ -36,6 +36,27 @@ worktree. The local stack is not shared, so set it up before running anything.
 - After completing and verifying a valuable, self-contained change, commit it so the repository history records the progress.
 - Keep unrelated changes in separate commits, and do not commit incomplete or unverified work.
 
+## Pull request descriptions
+
+A PR description has one job: let a reviewer understand the change without
+reverse-engineering the diff. Follow `.github/pull_request_template.md` and
+keep the length proportional to the size and risk of the change — a one-line
+fix needs a sentence, a schema migration needs the full treatment.
+
+- Lead with **why**: the problem being solved and the motivation for solving it
+  now. Link the issue if one exists, but summarise it so the PR stands alone.
+- Describe **what** changed at the level of its shape and the design decisions
+  behind it. Never restate the diff as a file-by-file changelog — the diff
+  already shows that. If you rejected an obvious alternative, say why.
+- State **how it was verified**: tests added, manual checks run. UI changes
+  must include before/after screenshots.
+- Call out only what the reviewer genuinely needs: breaking changes, migration
+  or deploy ordering, deliberately deferred work, and where to start reading if
+  the diff is large.
+- Be concise. Delete template sections that do not apply rather than filling
+  them with "N/A" or padding. Prose the reader must skim past is worse than
+  absence.
+
 ## Reviewing the design
 
 - To see the app rather than reason about its markup, run `mise run screenshots`.
