@@ -211,7 +211,7 @@ h2 {
   @apply mt-1 text-sm text-slate-500;
 }
 .quick-card {
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply card grid grid-cols-[1fr_auto] items-center gap-3 p-4;
 }
 .quick-card > span:nth-child(2) {
   @apply min-w-0;
@@ -284,7 +284,7 @@ h2 {
   @apply mt-2 min-h-10 w-full text-sm font-semibold text-indigo-100;
 }
 .empty-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .empty-card p {
   @apply mt-1 text-sm text-slate-500;
@@ -311,7 +311,7 @@ h2 {
   @apply mt-1 text-xl text-slate-950;
 }
 .history-list {
-  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card overflow-hidden;
 }
 .history-list > a {
   @apply flex min-h-16 items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 transition last:border-b-0 hover:text-indigo-700;

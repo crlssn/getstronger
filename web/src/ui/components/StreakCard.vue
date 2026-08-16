@@ -95,7 +95,7 @@ const weekBlocks = computed(() =>
 @reference '../../assets/base.css';
 
 .streak-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply card p-4;
 }
 .streak-card header {
   @apply grid grid-cols-[auto_1fr_auto] items-center gap-3;

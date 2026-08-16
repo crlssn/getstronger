@@ -181,13 +181,13 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .empty-card,
 .chart-card,
 .sets-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .manage-card {
-  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card overflow-hidden;
 }
 .start-quick-card {
-  @apply flex min-h-20 w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50;
+  @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50;
 }
 .start-quick-icon {
   @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white;

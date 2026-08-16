@@ -242,7 +242,7 @@ h2 {
 .loading-card,
 .name-field input,
 .routine-order {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card;
 }
 .loading-card {
   @apply p-5 text-sm text-slate-500;

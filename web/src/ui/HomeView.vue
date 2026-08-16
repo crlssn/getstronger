@@ -365,7 +365,7 @@ h2 {
 .section-block,
 .empty-card,
 .loading-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .section-heading {
   @apply mb-4 flex items-end justify-between gap-3;

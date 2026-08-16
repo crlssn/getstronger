@@ -151,7 +151,7 @@ const remove = async () => {
   @apply mt-1 text-xl font-semibold tracking-tight;
 }
 .routine-order {
-  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card overflow-hidden;
 }
 .routine-order li {
   @apply grid min-h-20 grid-cols-[2.75rem_1fr_auto] items-center gap-3 border-t border-slate-100 p-4 first:border-t-0;

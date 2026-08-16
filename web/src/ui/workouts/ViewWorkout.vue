@@ -42,7 +42,7 @@ const fetchWorkout = async () => {
 
 .loading-card,
 .empty-card {
-  @apply mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm;
+  @apply card mx-auto max-w-4xl p-6;
 }
 .loading-card {
   @apply space-y-4;

@@ -1330,7 +1330,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply space-y-4;
 }
 .quick-empty {
-  @apply grid justify-items-center gap-3 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm;
+  @apply card grid justify-items-center gap-3 p-8 text-center;
 }
 .quick-empty > span {
   @apply grid size-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600;
@@ -1353,7 +1353,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .exercise-card,
 .note-card,
 .exercise-queue {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card;
 }
 .exercise-card {
   @apply p-4 sm:p-5;
@@ -1496,7 +1496,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 /* A real, solid card: the dashed ghost read as a placeholder. */
 .add-exercise {
-  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/40;
+  @apply card grid w-full grid-cols-[auto_1fr] items-center gap-3 p-4 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40;
 }
 .add-exercise > svg {
   @apply size-11 shrink-0 rounded-xl bg-indigo-600 p-2.5 text-white;

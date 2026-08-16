@@ -136,7 +136,7 @@ h2 {
 }
 .chart-card,
 .records-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .chart-heading {
   @apply mb-5 flex flex-wrap items-end justify-between gap-3;

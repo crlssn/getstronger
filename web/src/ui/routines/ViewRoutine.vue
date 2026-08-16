@@ -150,7 +150,7 @@ const onDeleteRoutine = async () => {
   @apply mx-auto max-w-4xl space-y-5;
 }
 .loading-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500;
+  @apply card shadow-none p-6 text-sm text-slate-500;
 }
 .routine-hero {
   @apply flex flex-col gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 to-violet-600 p-5 text-white shadow-lg sm:flex-row sm:items-end sm:justify-between md:p-6;
@@ -188,7 +188,7 @@ h1 {
 }
 .exercise-section,
 .danger-zone {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .section-heading {
   @apply mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;

@@ -186,7 +186,7 @@ const removeTag = (index: number) => {
 @reference '../../assets/base.css';
 
 .tag-input {
-  @apply space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100;
+  @apply card space-y-3 p-4 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100;
 }
 .tag-list {
   @apply flex flex-wrap gap-2;

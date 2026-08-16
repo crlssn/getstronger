@@ -316,7 +316,7 @@ const postComment = async () => {
 .summary-card,
 .detail-section,
 .comments-card {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card;
 }
 .summary-card {
   @apply overflow-hidden;

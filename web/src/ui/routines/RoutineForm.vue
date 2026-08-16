@@ -188,7 +188,7 @@ h1 {
 }
 .form-card,
 .exercise-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .field-label {
   @apply mb-2 block text-sm font-semibold text-slate-700;

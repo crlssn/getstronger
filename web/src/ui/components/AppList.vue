@@ -26,7 +26,7 @@ const onFetch = async () => {
 @reference '../../assets/base.css';
 
 ul {
-  @apply mb-4 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card mb-4 divide-y divide-slate-100 overflow-hidden;
 
   li.fetching {
     @apply flex h-16 items-center justify-center text-slate-700;

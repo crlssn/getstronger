@@ -192,7 +192,7 @@ h2 {
 .paused-note,
 .empty-plan-state,
 .plan-loading {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .plan-loading {
   @apply space-y-3;

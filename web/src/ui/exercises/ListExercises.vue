@@ -149,7 +149,7 @@ h1 {
   @apply size-5;
 }
 .search-field {
-  @apply flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
+  @apply card flex items-center gap-2 px-4;
 }
 .search-field svg {
   @apply size-5 text-slate-400;
@@ -164,7 +164,7 @@ h1 {
   @apply mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .exercise-group-card {
-  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card overflow-hidden;
 }
 .exercise-group-card > a {
   @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 transition hover:text-indigo-700;

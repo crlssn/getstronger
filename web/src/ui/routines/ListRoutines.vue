@@ -211,7 +211,7 @@ h1 {
   @apply size-5;
 }
 .search-field {
-  @apply flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
+  @apply card flex items-center gap-2 px-4;
 }
 .search-field svg {
   @apply size-5 text-slate-400;
@@ -229,7 +229,7 @@ h1 {
   @apply grid gap-4 md:grid-cols-2;
 }
 .routine-card {
-  @apply flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card flex flex-col gap-4 p-5;
 }
 .routine-heading {
   @apply flex items-start justify-between gap-3;

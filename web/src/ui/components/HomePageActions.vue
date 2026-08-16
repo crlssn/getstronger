@@ -207,7 +207,7 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-field {
-  @apply flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-indigo-500;
+  @apply card flex w-full items-center gap-2 px-4 transition focus-within:border-indigo-500;
 }
 .search-field > svg {
   @apply size-6 shrink-0 text-slate-500;
@@ -222,7 +222,7 @@ const onSearch = async () => {
   @apply size-5;
 }
 .search-results {
-  @apply mt-3 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card mt-3 w-full overflow-hidden;
 }
 .group-label {
   @apply border-b border-slate-100 bg-slate-50/60 px-4 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-500;

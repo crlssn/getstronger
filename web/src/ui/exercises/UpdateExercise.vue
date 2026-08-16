@@ -84,7 +84,7 @@ async function onUpdateExercise() {
 
 /* Sticks above the bottom navigation so saving never needs a scroll. */
 .form-status {
-  @apply rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm;
+  @apply card p-6 text-sm text-slate-500;
 }
 .form-status h1 {
   @apply text-xl font-semibold text-slate-950;

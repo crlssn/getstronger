@@ -166,7 +166,7 @@ const weeklyVolume = computed(() =>
   @apply mx-auto max-w-3xl space-y-5;
 }
 .profile-card {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card grid grid-cols-[auto_1fr_auto] items-center gap-4 p-5;
 }
 .avatar {
   @apply grid size-16 place-items-center rounded-2xl bg-indigo-600 text-xl font-semibold text-white;
@@ -190,7 +190,7 @@ h1 {
   @apply absolute right-1 top-1 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-red-600 px-1 text-[0.6875rem] font-bold leading-none text-white ring-[3px] ring-white;
 }
 .stats-strip {
-  @apply grid grid-cols-3 divide-x divide-slate-200 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply card grid grid-cols-3 divide-x divide-slate-200 p-4;
 }
 .stats-strip article {
   @apply grid min-w-0 gap-1 px-3 first:pl-0 last:pr-0;
@@ -202,7 +202,7 @@ h1 {
   @apply text-xs text-slate-500;
 }
 .settings-card {
-  @apply divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card divide-y divide-slate-100 overflow-hidden;
 }
 .settings-card a {
   @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-slate-50 hover:text-indigo-700;
@@ -224,7 +224,7 @@ h1 {
   @apply mt-0.5 text-sm text-slate-500;
 }
 .preferences-card {
-  @apply flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply card flex items-center justify-between gap-4 p-4;
 }
 .preferences-card strong,
 .preferences-card small {
