@@ -18,6 +18,9 @@
   --color-surface: #ffffff;
   --color-surface-sunken: #f8fafc;
   --color-surface-inverse: #25282d;
+  /* The groove a segmented control's selected pill sits in. It needs to read
+   * against a white card, which --color-surface-sunken does not. */
+  --color-surface-track: #e8e9e7;
   --color-border: #e2e8f0;
   --color-border-strong: #cbd5e1;
 

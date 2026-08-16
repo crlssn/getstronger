@@ -23,6 +23,40 @@ select {
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
 }
 
+/* One segmented control, where the app had six: three track treatments, four
+ * selected states and four radii, all saying "pick one of these".
+ *
+ * White-on-grey for the selected state, because of the four treatments in use
+ * it is the only one that reads as raised rather than as disabled. Auto-width
+ * with horizontal scroll rather than an equal-column grid, so Starta
+ * träningspass and Föredragen viktenhet have somewhere to go.
+ */
+.segmented {
+  @apply flex w-max max-w-full gap-1 overflow-x-auto rounded-card bg-surface-track p-1;
+  /* A scrollbar over a two-item control is louder than the overflow it warns
+   * about, and the items are wide enough to drag. */
+  scrollbar-width: none;
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+
+/* Density is horizontal padding and type size. Height is the tap-target floor,
+ * and there is no density below it. */
+.segmented > * {
+  @apply grid min-h-(--size-control-sm) shrink-0 cursor-pointer place-items-center whitespace-nowrap rounded-control px-5 text-sm font-semibold text-text-muted transition;
+}
+
+.segmented > .is-selected {
+  @apply bg-surface text-ink-strong shadow-card;
+}
+
+/* Numeric labels only — 7D, 4W, 1Y. Nothing long enough to need the room. */
+.segmented.is-compact > * {
+  @apply px-3.5 text-meta;
+}
+
 .auth-view {
   @apply w-full;
 }
