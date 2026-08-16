@@ -104,7 +104,9 @@ test -f "$root/web/.env" || cp "$root/web/.env.example" "$root/web/.env"
 set_env "$root/.env" DB_PORT "$db_port"
 set_env "$root/.env" SERVER_PORT "$server_port"
 set_env "$root/.env" SSE_PORT "$sse_port"
-set_env "$root/.env" CORS_ALLOWED_ORIGIN "http://localhost:$web_port"
+# The capacitor origins keep the native apps' streaming calls working against
+# a worktree backend; see the native mobile apps section in the README.
+set_env "$root/.env" CORS_ALLOWED_ORIGIN "http://localhost:$web_port,capacitor://localhost,http://localhost"
 # The backend reads .env rather than the mise environment, so it needs its own
 # copy of the port this worktree's MailHog publishes.
 set_env "$root/.env" MAILHOG_SMTP_PORT "$mailhog_smtp_port"
