@@ -48,7 +48,9 @@ const onSubmit = async () => {
           />
         </div>
       </div>
-      <AppButton type="submit" colour="primary" class="auth-submit">{{ t('auth.sendResetLink') }}</AppButton>
+      <AppButton type="submit" colour="primary" class="auth-submit">{{
+        t('auth.sendResetLink')
+      }}</AppButton>
     </form>
 
     <p class="auth-footer">

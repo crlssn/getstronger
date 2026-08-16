@@ -50,7 +50,9 @@ const onSubmit = async () => {
       v-model:rest-seconds="req.restSeconds"
     />
 
-    <h6>{{ t('exercise.form.tags') }} <small>{{ t('common.optional') }}</small></h6>
+    <h6>
+      {{ t('exercise.form.tags') }} <small>{{ t('common.optional') }}</small>
+    </h6>
     <ExerciseTagsInput v-model="req.tags" :suggestions="tagSuggestions" />
 
     <div class="form-actions">

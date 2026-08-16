@@ -61,7 +61,9 @@ async function onUpdateExercise() {
       v-model:rest-seconds="exercise.restSeconds"
     />
 
-    <h6>{{ t('exercise.form.tags') }} <small>{{ t('common.optional') }}</small></h6>
+    <h6>
+      {{ t('exercise.form.tags') }} <small>{{ t('common.optional') }}</small>
+    </h6>
     <ExerciseTagsInput v-model="exercise.tags" :suggestions="tagSuggestions" />
 
     <div class="form-actions">

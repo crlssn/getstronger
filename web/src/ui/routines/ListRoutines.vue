@@ -102,7 +102,9 @@ const makeUpNext = async (routineId: string) => {
         <h1>{{ t('training.heading') }}</h1>
         <p>{{ t('training.routinesDescription') }}</p>
       </div>
-      <RouterLink to="/routines/create" class="create-link"><PlusIcon /> {{ t('training.newRoutine') }}</RouterLink>
+      <RouterLink to="/routines/create" class="create-link"
+        ><PlusIcon /> {{ t('training.newRoutine') }}</RouterLink
+      >
     </header>
 
     <TrainingTabs />
@@ -124,14 +126,16 @@ const makeUpNext = async (routineId: string) => {
           <article v-for="routine in group.routines" :key="routine.id" class="routine-card">
             <div class="routine-heading">
               <RouterLink :to="`/routines/${routine.id}`">
-                <span v-if="routine.id === dashboardStore.preferredRoutineId" class="up-next"
-                  >{{ t('home.upNext') }}</span
-                >
+                <span v-if="routine.id === dashboardStore.preferredRoutineId" class="up-next">{{
+                  t('home.upNext')
+                }}</span>
                 <h3>{{ routine.name }}</h3>
                 <p class="routine-exercises">{{ exerciseSummary(routine) }}</p>
                 <p class="routine-meta">
                   {{ t('home.exerciseCount', routine.exercises.length) }} ·
-                  {{ t('home.aboutMinutes', { count: Math.max(30, routine.exercises.length * 8) }) }}
+                  {{
+                    t('home.aboutMinutes', { count: Math.max(30, routine.exercises.length * 8) })
+                  }}
                 </p>
               </RouterLink>
               <ChevronRightIcon />
@@ -140,13 +144,17 @@ const makeUpNext = async (routineId: string) => {
               <RouterLink :to="`/workouts/routine/${routine.id}`" class="start-link"
                 ><PlayIcon /> {{ t('routine.list.start') }}</RouterLink
               >
-              <RouterLink :to="`/routines/${routine.id}`" class="view-link"
-                >{{ t('routine.list.view') }}</RouterLink
-              >
+              <RouterLink :to="`/routines/${routine.id}`" class="view-link">{{
+                t('routine.list.view')
+              }}</RouterLink>
               <details class="routine-menu">
-                <summary :aria-label="t('routine.list.actionsAria')"><EllipsisHorizontalIcon /></summary>
+                <summary :aria-label="t('routine.list.actionsAria')">
+                  <EllipsisHorizontalIcon />
+                </summary>
                 <div>
-                  <RouterLink :to="`/routines/${routine.id}/edit`">{{ t('routine.list.edit') }}</RouterLink>
+                  <RouterLink :to="`/routines/${routine.id}/edit`">{{
+                    t('routine.list.edit')
+                  }}</RouterLink>
                   <button
                     v-if="routine.id !== dashboardStore.preferredRoutineId"
                     type="button"

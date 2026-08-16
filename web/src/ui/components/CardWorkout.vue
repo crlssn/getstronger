@@ -145,25 +145,29 @@ const postComment = async () => {
       <article>
         <span class="metric-icon"><FireIcon /></span>
         <div>
-          <small>{{ t('workout.totalVolume') }}</small><strong>{{ formattedVolume }} kg</strong>
+          <small>{{ t('workout.totalVolume') }}</small
+          ><strong>{{ formattedVolume }} kg</strong>
         </div>
       </article>
       <article>
         <span class="metric-icon"><ClockIcon /></span>
         <div>
-          <small>{{ t('common.duration') }}</small><strong>{{ durationMinutes }} min</strong>
+          <small>{{ t('common.duration') }}</small
+          ><strong>{{ durationMinutes }} min</strong>
         </div>
       </article>
       <article>
         <span class="metric-icon"><RectangleStackIcon /></span>
         <div>
-          <small>{{ t('workout.setsLogged') }}</small><strong>{{ setCount }}</strong>
+          <small>{{ t('workout.setsLogged') }}</small
+          ><strong>{{ setCount }}</strong>
         </div>
       </article>
       <article>
         <span class="metric-icon" :class="{ amber: personalBestCount > 0 }"><TrophyIcon /></span>
         <div>
-          <small>{{ t('workout.personalRecords') }}</small><strong>{{ personalBestCount }}</strong>
+          <small>{{ t('workout.personalRecords') }}</small
+          ><strong>{{ personalBestCount }}</strong>
         </div>
       </article>
     </div>
@@ -207,25 +211,29 @@ const postComment = async () => {
         <article>
           <span class="metric-icon"><FireIcon /></span>
           <div>
-            <small>{{ t('workout.totalVolume') }}</small><strong>{{ formattedVolume }} kg</strong>
+            <small>{{ t('workout.totalVolume') }}</small
+            ><strong>{{ formattedVolume }} kg</strong>
           </div>
         </article>
         <article>
           <span class="metric-icon"><ClockIcon /></span>
           <div>
-            <small>{{ t('common.duration') }}</small><strong>{{ durationMinutes }} min</strong>
+            <small>{{ t('common.duration') }}</small
+            ><strong>{{ durationMinutes }} min</strong>
           </div>
         </article>
         <article>
           <span class="metric-icon"><RectangleStackIcon /></span>
           <div>
-            <small>{{ t('workout.setsLogged') }}</small><strong>{{ setCount }}</strong>
+            <small>{{ t('workout.setsLogged') }}</small
+            ><strong>{{ setCount }}</strong>
           </div>
         </article>
         <article>
           <span class="metric-icon" :class="{ amber: personalBestCount > 0 }"><TrophyIcon /></span>
           <div>
-            <small>{{ t('workout.personalRecords') }}</small><strong>{{ personalBestCount }}</strong>
+            <small>{{ t('workout.personalRecords') }}</small
+            ><strong>{{ personalBestCount }}</strong>
           </div>
         </article>
       </div>

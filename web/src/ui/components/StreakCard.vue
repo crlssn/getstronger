@@ -84,7 +84,8 @@ const weekBlocks = computed(() =>
       </span>
     </div>
     <div class="track-labels" aria-hidden="true">
-      <span>{{ t('streak.weeksAgo', 4) }}</span><span>{{ t('streak.thisWeek') }}</span>
+      <span>{{ t('streak.weeksAgo', 4) }}</span
+      ><span>{{ t('streak.thisWeek') }}</span>
     </div>
     <p>{{ message }}</p>
   </section>

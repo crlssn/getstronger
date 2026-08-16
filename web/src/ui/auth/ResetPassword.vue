@@ -50,7 +50,9 @@ const onSignup = async () => {
       </div>
 
       <div>
-        <label for="passwordConfirmation" class="auth-label">{{ t('auth.recovery.confirmNewPassword') }}</label>
+        <label for="passwordConfirmation" class="auth-label">{{
+          t('auth.recovery.confirmNewPassword')
+        }}</label>
         <div class="mt-2">
           <AuthPasswordInput
             id="passwordConfirmation"
@@ -61,7 +63,9 @@ const onSignup = async () => {
         </div>
       </div>
 
-      <AppButton type="submit" colour="primary" class="auth-submit">{{ t('auth.recovery.updatePassword') }}</AppButton>
+      <AppButton type="submit" colour="primary" class="auth-submit">{{
+        t('auth.recovery.updatePassword')
+      }}</AppButton>
     </form>
   </section>
 </template>

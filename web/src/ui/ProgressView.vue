@@ -49,7 +49,9 @@ const filteredVolume = computed(() =>
         <p class="eyebrow">{{ t('progress.eyebrow') }}</p>
         <h1>{{ t('progress.heading') }}</h1>
       </div>
-      <span class="record-count"><TrophyIcon /> {{ t('progress.personalBests', totalRecords) }}</span>
+      <span class="record-count"
+        ><TrophyIcon /> {{ t('progress.personalBests', totalRecords) }}</span
+      >
     </section>
 
     <section v-if="filteredWorkouts.length" class="chart-card">

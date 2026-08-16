@@ -125,7 +125,9 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
         <RouterLink :to="`/exercises/${route.params.id}/edit`">
           <PencilIcon /> {{ t('exercise.update') }} <ChevronRightIcon />
         </RouterLink>
-        <button type="button" @click="onDeleteExercise"><TrashIcon /> {{ t('exercise.delete') }}</button>
+        <button type="button" @click="onDeleteExercise">
+          <TrashIcon /> {{ t('exercise.delete') }}
+        </button>
       </div>
     </section>
 
@@ -149,7 +151,9 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
             <strong>{{ formatExerciseSet(set, exercise) }}</strong>
             <small>{{ formatToShortDateTime(set.metadata?.createdAt) }}</small>
           </span>
-          <span v-if="set.metadata?.personalBest" class="record-pill"><TrophyIcon /> {{ t('exercise.view.prPill') }}</span>
+          <span v-if="set.metadata?.personalBest" class="record-pill"
+            ><TrophyIcon /> {{ t('exercise.view.prPill') }}</span
+          >
           <ChevronRightIcon />
         </RouterLink>
       </div>

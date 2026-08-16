@@ -50,13 +50,16 @@ const remove = async () => {
   <div v-if="plan" class="plan-page">
     <section class="overview">
       <header>
-        <p class="eyebrow">{{ plan.active ? t('training.activePlan') : t('training.planView.trainingPlan') }}</p>
+        <p class="eyebrow">
+          {{ plan.active ? t('training.activePlan') : t('training.planView.trainingPlan') }}
+        </p>
         <span v-if="plan.active">{{ t('training.active') }}</span>
       </header>
       <h1>{{ plan.name }}</h1>
       <p>{{ t('training.planView.routinesRepeat', plan.routines.length) }}</p>
       <div class="overview-actions">
-        <RouterLink :to="`/plans/${plan.id}/edit`"><PencilIcon /> {{ t('training.planForm.editTitle') }}</RouterLink
+        <RouterLink :to="`/plans/${plan.id}/edit`"
+          ><PencilIcon /> {{ t('training.planForm.editTitle') }}</RouterLink
         ><button v-if="plan.active" type="button" @click="pause">{{ t('training.pause') }}</button
         ><button v-else type="button" @click="activate">{{ t('training.makeActive') }}</button>
       </div>
@@ -92,7 +95,9 @@ const remove = async () => {
         }}
       </footer>
     </ol>
-    <button type="button" class="delete-plan" @click="remove"><TrashIcon /> {{ t('training.planView.delete') }}</button>
+    <button type="button" class="delete-plan" @click="remove">
+      <TrashIcon /> {{ t('training.planView.delete') }}
+    </button>
   </div>
 </template>
 

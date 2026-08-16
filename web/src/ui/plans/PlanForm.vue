@@ -76,7 +76,9 @@ const save = async () => {
   saving.value = false
   if (!plan) return
 
-  alertStore.setSuccess(editing.value ? t('training.planForm.updated') : t('training.planForm.created'))
+  alertStore.setSuccess(
+    editing.value ? t('training.planForm.updated') : t('training.planForm.created'),
+  )
   await router.push(`/plans/${plan.id}`)
 }
 </script>

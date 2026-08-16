@@ -92,7 +92,9 @@ const submit = () => {
         <h1>{{ t('routine.form.title') }}</h1>
         <p>{{ t('routine.form.intro') }}</p>
       </div>
-      <span class="selection-count">{{ t('routine.form.selectedCount', { count: selectedIds.length }) }}</span>
+      <span class="selection-count">{{
+        t('routine.form.selectedCount', { count: selectedIds.length })
+      }}</span>
     </header>
 
     <section class="form-card">

@@ -133,7 +133,11 @@ const removeTag = (index: number) => {
     <div v-if="modelValue.length" class="tag-list" :aria-label="t('exercise.tagInput.listAria')">
       <span v-for="(tag, index) in modelValue" :key="tag">
         {{ tag }}
-        <button type="button" :aria-label="t('exercise.tagInput.remove', { name: tag })" @click="removeTag(index)">
+        <button
+          type="button"
+          :aria-label="t('exercise.tagInput.remove', { name: tag })"
+          @click="removeTag(index)"
+        >
           <XMarkIcon />
         </button>
       </span>

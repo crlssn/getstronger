@@ -80,9 +80,9 @@ const onDeleteRoutine = async () => {
   <div v-else-if="routine" class="routine-detail">
     <section class="routine-hero">
       <div>
-        <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill"
-          >{{ t('home.upNext') }}</span
-        >
+        <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill">{{
+          t('home.upNext')
+        }}</span>
         <p class="eyebrow">{{ t('routine.view.eyebrow') }}</p>
         <h1>{{ routine.name }}</h1>
         <p class="summary">
@@ -111,7 +111,9 @@ const onDeleteRoutine = async () => {
           <h2>{{ t('routine.view.orderTitle') }}</h2>
           <p>{{ t('routine.view.orderHelp') }}</p>
         </div>
-        <RouterLink :to="`/routines/${routine.id}/edit`"><PencilIcon /> {{ t('routine.view.editExercises') }}</RouterLink>
+        <RouterLink :to="`/routines/${routine.id}/edit`"
+          ><PencilIcon /> {{ t('routine.view.editExercises') }}</RouterLink
+        >
       </div>
       <ol ref="listElement" class="exercise-list">
         <li
