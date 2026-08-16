@@ -6,6 +6,18 @@ const config: CapacitorConfig = {
   appId: 'com.getstronger.app',
   appName: 'GetStronger',
   webDir: '../web/dist',
+  plugins: {
+    // Dark icons and clock over the app's light background.
+    StatusBar: {
+      style: 'LIGHT',
+    },
+    // The app hides the splash itself once Vue has mounted; see
+    // web/src/native/platform.ts.
+    SplashScreen: {
+      launchAutoHide: false,
+      backgroundColor: '#25282d',
+    },
+  },
 }
 
 export default config

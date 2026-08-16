@@ -115,7 +115,9 @@ onUnmounted(() => {
   initial-value: 160;
 }
 .rest-banner {
-  @apply sticky top-0 z-30 text-white shadow-lg;
+  @apply sticky z-30 text-white shadow-lg;
+  /* Below the status-bar scrim in the native WebView; zero in browsers. */
+  top: env(safe-area-inset-top);
   background-image: linear-gradient(
     140deg,
     hsl(var(--rest-hue, 165) 95% 21%) 0%,

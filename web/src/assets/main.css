@@ -7,6 +7,14 @@ body {
   @apply min-h-full bg-slate-50 text-slate-950 antialiased;
 }
 
+/* With viewport-fit=cover the page extends under the status bar and Dynamic
+   Island inside the native WebView; this keeps static content below them.
+   Browsers report zero insets, so the web layout is unchanged. Elements that
+   stick to the viewport top handle the inset themselves. */
+body {
+  padding-top: env(safe-area-inset-top);
+}
+
 #app {
   @apply min-h-screen;
 }

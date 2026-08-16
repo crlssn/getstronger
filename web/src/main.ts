@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import { initNativePlatform } from '@/native/platform'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { createGtag } from 'vue-gtag'
 
@@ -43,6 +44,8 @@ const init = async () => {
 
   console.log('App initialized')
   app.mount('#app')
+
+  await initNativePlatform()
 }
 
 init().catch((error) => {

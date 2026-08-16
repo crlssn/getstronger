@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { Capacitor } from '@capacitor/core'
 
 /** How often to re-check while the tab is open. */
 const pollIntervalMs = 5 * 60 * 1000
@@ -49,6 +50,10 @@ export const useAppVersionStore = defineStore('appVersion', () => {
   const start = () => {
     // Dev serves no version.json, and hot reload covers the same ground.
     if (!import.meta.env.PROD || timer) return
+    // Native builds ship their assets inside the binary: a web deploy does not
+    // change what is running, so prompting to "refresh" would mislead. An
+    // app-store update hint is a possible follow-up.
+    if (Capacitor.isNativePlatform()) return
 
     void check()
     timer = setInterval(() => void check(), pollIntervalMs)
