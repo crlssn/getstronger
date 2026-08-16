@@ -128,20 +128,24 @@ describe('StartWorkout', () => {
       const header = wrapper.get('.workout-header')
       expect(header.get('h1').text()).toBe('Push Day')
       expect(header.find('.eyebrow').exists()).toBe(false)
-      const progress = header.get('.session-progress')
-      expect(progress.text()).toContain('0/2')
-      expect(progress.text()).toContain('0 sets')
+      // Where you are, and how long you have been here. Nothing else.
+      expect(header.get('.session-progress').text()).toBe('Exercise 1 of 2')
       expect(header.get('.elapsed strong').text().length).toBeGreaterThan(0)
+      expect(header.find('.session-rail').exists()).toBe(true)
       wrapper.unmount()
     })
 
-    test('updates the compact progress as sets are logged', async () => {
+    test('advances the rail as exercises are completed', async () => {
       const wrapper = await mountWorkout()
 
+      const rail = () => wrapper.get('.workout-header .session-rail span')
+      expect(rail().attributes('style')).toContain('width: 0%')
+
       await logFirstSet(wrapper)
-      const progress = wrapper.get('.workout-header .session-progress')
-      expect(progress.text()).toContain('0/2')
-      expect(progress.text()).toContain('1 set')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      expect(rail().attributes('style')).toContain('width: 50%')
       wrapper.unmount()
     })
   })

@@ -69,6 +69,13 @@ export const verificationToken = (userEmail: string) =>
 
 export const logInAs = async (page: Page, userEmail: string, userPassword: string) => {
   await page.goto('/login')
+  // A preceding test in the same worker may have left this browser signed in,
+  // and /login sends an authenticated visitor straight on to /home. Without
+  // this, whether a test passes depends on whether the one before it did.
+  if (!new URL(page.url()).pathname.startsWith('/login')) {
+    await page.goto('/logout')
+    await expect(page).toHaveURL(/\/login$/)
+  }
   await page.getByLabel('Email address').fill(userEmail)
   await page.getByLabel('Password', { exact: true }).fill(userPassword)
   await page.getByRole('button', { name: 'Log in' }).click()
@@ -82,7 +89,7 @@ export const logIn = async (page: Page) => logInAs(page, email, password)
 export const waitForHome = async (page: Page) => {
   await expect(page.locator('.loading-card')).toHaveCount(0)
   await expect(
-    page.locator('.feed-summary-card, .feed-end, .feed-empty, .feed-error').first(),
+    page.locator('.feed-summary-card, .feed-end, .empty-state, .feed-error').first(),
   ).toBeVisible()
 }
 

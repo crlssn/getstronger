@@ -196,10 +196,9 @@ const postComment = async () => {
 
       <div class="workout-heading">
         <div class="workout-heading-copy">
-          <div>
-            <p class="eyebrow">{{ t('workout.completed') }}</p>
-            <h1>{{ workout.name }}</h1>
-          </div>
+          <!-- The nav bar above already carries this workout's name. The
+               eyebrow stays because it says what the title does not. -->
+          <p class="eyebrow">{{ t('workout.completed') }}</p>
           <span v-if="personalBestCount > 0" class="personal-best-badge">
             <TrophyIcon />
             {{ t('workout.card.prBadge', personalBestCount) }}
@@ -316,7 +315,7 @@ const postComment = async () => {
 .summary-card,
 .detail-section,
 .comments-card {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card;
 }
 .summary-card {
   @apply overflow-hidden;
@@ -326,7 +325,7 @@ const postComment = async () => {
   @apply flex items-center gap-3 border-b border-slate-100 p-4 sm:p-5;
 }
 .avatar {
-  @apply grid size-11 shrink-0 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700;
+  @apply grid size-11 shrink-0 place-items-center rounded-xl bg-ink-tint text-xs font-semibold text-ink-strong;
 }
 .avatar.large {
   @apply size-12 text-sm;
@@ -334,9 +333,11 @@ const postComment = async () => {
 .author-copy {
   @apply min-w-0 flex-1;
 }
+/* A name in a card is a link, and the type size is right. What it lacked was
+   somewhere for a thumb to land, so it gains a hit area rather than a font. */
 .author-copy > a,
 .feed-author > div > a:first-child {
-  @apply block truncate text-sm font-semibold text-slate-950 hover:text-indigo-700;
+  @apply -my-3 block truncate py-3 text-sm font-semibold text-slate-950 hover:text-ink-strong;
 }
 .author-copy p {
   @apply mt-1 flex items-center gap-1.5 text-xs text-slate-500;
@@ -345,16 +346,13 @@ const postComment = async () => {
   @apply size-4;
 }
 .workout-heading {
-  @apply bg-gradient-to-br from-indigo-700 to-violet-600 px-5 py-6 text-white sm:px-6;
+  @apply bg-surface-inverse px-5 py-6 text-white sm:px-6;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .workout-heading .eyebrow {
-  @apply text-indigo-100;
-}
-.workout-heading h1 {
-  @apply mt-1 text-3xl font-semibold tracking-tight;
+  @apply text-ink-tint;
 }
 .workout-heading h2 {
   @apply mt-1 text-2xl font-semibold tracking-tight;
@@ -366,10 +364,10 @@ const postComment = async () => {
   @apply flex items-center gap-3 bg-white p-4;
 }
 .metric-icon {
-  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
+  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-ink-tint text-ink-strong;
 }
 .metric-icon.amber {
-  @apply bg-amber-50 text-amber-600;
+  @apply bg-achievement-50 text-achievement-600;
 }
 .metric-icon svg {
   @apply size-5;
@@ -395,7 +393,7 @@ const postComment = async () => {
   @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
 }
 .section-heading > span {
-  @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500;
+  @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
 }
 .exercise-list {
   @apply divide-y divide-slate-200;
@@ -428,18 +426,18 @@ const postComment = async () => {
   @apply flex items-center justify-between gap-3 border-t border-slate-200 pt-3;
 }
 .comment-form small {
-  @apply pl-2 text-xs text-slate-400;
+  @apply pl-2 text-xs text-text-subtle;
 }
 .comment-form button {
-  @apply inline-flex min-h-10 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-slate-300;
 }
 .feed-summary-card {
-  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md;
+  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-md;
 }
 .feed-summary-card .workout-heading {
   @apply border-y border-slate-100 bg-slate-50 text-slate-950;
   background-image: none;
-  box-shadow: inset 4px 0 0 theme('colors.indigo.500');
+  box-shadow: inset 4px 0 0 var(--color-ink-muted);
 }
 .feed-summary-card--personal-best {
   @apply border-gold-400 shadow-md;
@@ -457,7 +455,7 @@ const postComment = async () => {
   box-shadow: inset 4px 0 0 theme('colors.gold.500');
 }
 .feed-summary-card .workout-heading .eyebrow {
-  @apply text-indigo-600;
+  @apply text-ink;
 }
 .feed-summary-card--personal-best .workout-heading .eyebrow {
   @apply text-gold-700;

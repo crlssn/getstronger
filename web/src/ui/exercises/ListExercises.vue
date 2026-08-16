@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ChevronRightIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import {
+  BookOpenIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+} from '@heroicons/vue/24/outline'
 
 import { listExercises } from '@/http/requests'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
@@ -13,6 +18,7 @@ import {
   activityBucketOrder,
   type ActivityBucket,
 } from '@/utils/activityBuckets'
+import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 const exercises = ref<Exercise[]>([])
@@ -78,7 +84,6 @@ const fetchExercises = async () => {
   <div class="exercise-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">{{ t('exercise.library') }}</p>
         <h1>{{ t('exercise.heading') }}</h1>
       </div>
       <RouterLink to="/exercises/create" class="create-link"
@@ -118,12 +123,15 @@ const fetchExercises = async () => {
         {{ t('exercise.loadMore') }}
       </button>
     </section>
-    <section v-else class="empty-state">
-      <h2>{{ search ? t('exercise.noMatches') : t('exercise.empty') }}</h2>
-      <p>
-        {{ search ? t('exercise.tryAnotherSearch') : t('exercise.emptyBody') }}
-      </p>
-    </section>
+    <AppEmptyState
+      v-else
+      :action="search ? 'none' : { label: t('exercise.new'), to: '/exercises/create' }"
+      :body="search ? t('exercise.tryAnotherSearch') : t('exercise.emptyBody')"
+      :title="search ? t('exercise.noMatches') : t('exercise.empty')"
+    >
+      <template #icon><BookOpenIcon /></template>
+      <template #action-icon><PlusIcon /></template>
+    </AppEmptyState>
   </div>
 </template>
 
@@ -143,13 +151,13 @@ h1 {
   @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
 }
 .create-link {
-  @apply inline-flex min-h-11 w-max items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700;
+  @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
 }
 .create-link svg {
   @apply size-5;
 }
 .search-field {
-  @apply flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
+  @apply card flex items-center gap-2 px-4;
 }
 .search-field svg {
   @apply size-5 text-slate-400;
@@ -164,10 +172,10 @@ h1 {
   @apply mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .exercise-group-card {
-  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card overflow-hidden;
 }
 .exercise-group-card > a {
-  @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 transition hover:text-indigo-700;
+  @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 transition hover:text-ink-strong;
 }
 .exercise-group-card > a:first-child {
   @apply border-t-0;
@@ -191,7 +199,7 @@ h1 {
   @apply mt-1;
 }
 .load-more {
-  @apply min-h-11 w-full rounded-xl border border-slate-200 bg-white text-sm font-semibold text-indigo-600 shadow-sm;
+  @apply min-h-(--size-control) w-full rounded-xl border border-slate-200 bg-white text-sm font-semibold text-ink shadow-sm;
 }
 @media (max-width: 420px) {
   .create-link {

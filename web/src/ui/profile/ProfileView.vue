@@ -76,11 +76,17 @@ const weeklyVolume = computed(() =>
 
 <template>
   <div v-if="user" class="profile-stack">
+    <!-- A tab root opens with its own large title. This one used to open
+         straight onto a card, which left it the only tab without one. -->
+    <header class="page-intro">
+      <h1>{{ $t('profile.heading') }}</h1>
+    </header>
+
     <section class="profile-card">
       <div class="avatar">{{ initials }}</div>
       <div class="min-w-0">
         <p class="eyebrow">{{ $t('profile.account') }}</p>
-        <h1>{{ user.firstName }} {{ user.lastName }}</h1>
+        <h2>{{ user.firstName }} {{ user.lastName }}</h2>
         <p>{{ user.email }}</p>
       </div>
       <RouterLink
@@ -131,11 +137,11 @@ const weeklyVolume = computed(() =>
         <strong>{{ $t('profile.weightUnit') }}</strong>
         <small>{{ $t('profile.weightUnitBody') }}</small>
       </div>
-      <div class="weight-unit-picker" role="group" :aria-label="$t('profile.weightUnit')">
+      <div class="segmented" role="group" :aria-label="$t('profile.weightUnit')">
         <button
           type="button"
           :aria-pressed="weightUnit === WeightUnit.KILOGRAMS"
-          :class="{ active: weightUnit === WeightUnit.KILOGRAMS }"
+          :class="{ 'is-selected': weightUnit === WeightUnit.KILOGRAMS }"
           :disabled="updatingWeightUnit"
           @click="setWeightUnit(WeightUnit.KILOGRAMS)"
         >
@@ -144,7 +150,7 @@ const weeklyVolume = computed(() =>
         <button
           type="button"
           :aria-pressed="weightUnit === WeightUnit.POUNDS"
-          :class="{ active: weightUnit === WeightUnit.POUNDS }"
+          :class="{ 'is-selected': weightUnit === WeightUnit.POUNDS }"
           :disabled="updatingWeightUnit"
           @click="setWeightUnit(WeightUnit.POUNDS)"
         >
@@ -166,16 +172,19 @@ const weeklyVolume = computed(() =>
   @apply mx-auto max-w-3xl space-y-5;
 }
 .profile-card {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card grid grid-cols-[auto_1fr_auto] items-center gap-4 p-5;
 }
 .avatar {
-  @apply grid size-16 place-items-center rounded-2xl bg-indigo-600 text-xl font-semibold text-white;
+  @apply grid size-16 place-items-center rounded-2xl bg-ink text-xl font-semibold text-white;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
-h1 {
-  @apply mt-1 truncate text-2xl font-semibold tracking-tight text-slate-950;
+.page-intro h1 {
+  @apply px-1 text-2xl font-semibold tracking-tight text-text;
+}
+.profile-card h2 {
+  @apply mt-1 truncate text-2xl font-semibold tracking-tight text-text;
 }
 .profile-card p:last-child {
   @apply mt-1 truncate text-sm text-slate-500;
@@ -187,10 +196,10 @@ h1 {
   @apply size-8;
 }
 .notification-badge {
-  @apply absolute right-1 top-1 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-red-600 px-1 text-[0.6875rem] font-bold leading-none text-white ring-[3px] ring-white;
+  @apply absolute right-1 top-1 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold tracking-normal leading-none text-white ring-[3px] ring-white;
 }
 .stats-strip {
-  @apply grid grid-cols-3 divide-x divide-slate-200 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply card grid grid-cols-3 divide-x divide-slate-200 p-4;
 }
 .stats-strip article {
   @apply grid min-w-0 gap-1 px-3 first:pl-0 last:pr-0;
@@ -202,16 +211,16 @@ h1 {
   @apply text-xs text-slate-500;
 }
 .settings-card {
-  @apply divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card divide-y divide-slate-100 overflow-hidden;
 }
 .settings-card a {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-slate-50 hover:text-indigo-700;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-slate-50 hover:text-ink-strong;
 }
 .settings-card > a > svg {
   @apply size-5 text-slate-400;
 }
 .settings-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-indigo-100 text-indigo-700;
+  @apply grid size-11 place-items-center rounded-xl bg-ink-tint text-ink-strong;
 }
 .settings-icon svg {
   @apply size-5;
@@ -223,8 +232,10 @@ h1 {
 .settings-card small {
   @apply mt-0.5 text-sm text-slate-500;
 }
+/* Stacked on a phone. Squeezing a segmented control into what is left of a row
+   hides its second option behind a scroll nobody can see. */
 .preferences-card {
-  @apply flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between;
 }
 .preferences-card strong,
 .preferences-card small {
@@ -236,20 +247,8 @@ h1 {
 .preferences-card small {
   @apply mt-0.5 text-sm text-slate-500;
 }
-.weight-unit-picker {
-  @apply grid grid-cols-2 overflow-hidden rounded-full border border-slate-200;
-}
-.weight-unit-picker button {
-  @apply min-w-16 px-4 py-2 text-sm font-semibold text-slate-600 transition disabled:opacity-60;
-}
-.weight-unit-picker button + button {
-  @apply border-l border-slate-200;
-}
-.weight-unit-picker button.active {
-  @apply bg-stone-900 text-white;
-}
 .logout-link {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
 }
 .logout-link svg {
   @apply size-5;

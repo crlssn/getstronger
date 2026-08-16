@@ -50,7 +50,7 @@ const passwordVisible = ref(false)
   @apply relative;
 }
 .password-toggle {
-  @apply absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-xl text-slate-400 transition hover:text-indigo-600;
+  @apply absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-xl text-slate-400 transition hover:text-ink;
 }
 .password-toggle svg {
   @apply size-5;

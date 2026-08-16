@@ -93,10 +93,10 @@ const onSignup = async () => {
         <p class="mt-1 text-sm text-slate-500">{{ $t('auth.weightUnitHelp') }}</p>
         <div class="mt-2 grid grid-cols-2 gap-2" aria-label="Preferred weight unit">
           <label
-            class="flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
             :class="
               req.weightUnit === WeightUnit.KILOGRAMS
-                ? 'border-stone-900 bg-stone-900 text-white'
+                ? 'border-surface-inverse bg-surface-inverse text-white'
                 : 'border-slate-200 bg-white text-slate-700'
             "
           >
@@ -111,10 +111,10 @@ const onSignup = async () => {
             <span class="ml-auto text-sm opacity-70">kg</span>
           </label>
           <label
-            class="flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
             :class="
               req.weightUnit === WeightUnit.POUNDS
-                ? 'border-stone-900 bg-stone-900 text-white'
+                ? 'border-surface-inverse bg-surface-inverse text-white'
                 : 'border-slate-200 bg-white text-slate-700'
             "
           >

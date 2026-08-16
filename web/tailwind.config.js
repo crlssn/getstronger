@@ -1,20 +1,17 @@
 /** @type {import('tailwindcss').Config} */
 import forms from '@tailwindcss/forms'
 
-const graphite = {
-  50: '#f5f5f2',
-  100: '#e8e9e7',
-  200: '#d4d5d3',
-  300: '#b7b9b7',
-  400: '#898d91',
-  500: '#565b61',
-  600: '#25282d',
-  700: '#1f2226',
-  800: '#191c20',
-  900: '#121417',
-  950: '#0a0b0d',
-}
-
+// What is left here is the identity's ramps, under names that are true.
+//
+// The graphite scale used to be aliased as `indigo`, `violet` and `primary`,
+// and the achievement scale as `amber` — so a developer reaching for "a bit of
+// colour" typed text-indigo-700, got charcoal, decided it looked fine, and
+// moved on. The name taught them nothing. Graphite now lives in theme.css as
+// role-named tokens (--color-ink and its tints); the aliases are gone.
+//
+// The design tokens themselves are in src/assets/theme.css, where they are
+// emitted as real custom properties. Only scales that genuinely need every step
+// belong here.
 const achievement = {
   50: '#fff4ed',
   100: '#ffe4d5',
@@ -48,12 +45,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        amber: achievement,
+        achievement,
         champagne,
         gold,
-        indigo: graphite,
-        primary: graphite[600],
-        violet: graphite,
       },
     },
   },

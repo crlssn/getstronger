@@ -98,7 +98,12 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card">{{ t('exercise.view.loading') }}</div>
+  <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
+    <span class="sr-only">{{ $t('common.loading') }}</span>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line w-full" aria-hidden="true"></div>
+  </div>
   <div v-else-if="exercise" class="exercise-detail">
     <ExerciseTags :tags="exercise.tags" />
 
@@ -140,7 +145,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
       <header>
         <div>
           <p class="eyebrow">{{ t('exercise.history') }}</p>
-          <h1>{{ t('exercise.loggedSets') }}</h1>
+          <h2>{{ t('exercise.loggedSets') }}</h2>
         </div>
         <span>{{ sets.length }}</span>
       </header>
@@ -177,20 +182,19 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .exercise-detail {
   @apply mx-auto max-w-3xl space-y-5;
 }
-.loading-card,
 .empty-card,
 .chart-card,
 .sets-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .manage-card {
-  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card overflow-hidden;
 }
 .start-quick-card {
-  @apply flex min-h-20 w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50;
+  @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50;
 }
 .start-quick-icon {
-  @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white;
+  @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-surface-inverse text-white;
 }
 .start-quick-icon svg {
   @apply size-6;
@@ -211,9 +215,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .start-quick-chevron {
   @apply size-5 shrink-0 text-slate-400;
 }
-.loading-card {
-  @apply text-sm text-slate-500;
-}
 .eyebrow {
   @apply mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
@@ -223,19 +224,19 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .sets-card > header {
   @apply -mx-5 -mt-5 flex items-end justify-between gap-3 px-5 py-5;
 }
-.sets-card h1,
+.sets-card h2,
 .manage-card h2,
 .empty-card h1 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
 .sets-card > header > span {
-  @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500;
+  @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
 }
 .set-list {
   @apply -mx-5 divide-y divide-slate-100 border-t border-slate-100;
 }
 .set-list > a {
-  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-3 transition hover:text-indigo-700;
+  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-3 transition hover:text-ink-strong;
 }
 .set-copy {
   @apply min-w-0;
@@ -251,7 +252,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-1 text-xs text-slate-500;
 }
 .record-pill {
-  @apply inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700;
+  @apply inline-flex items-center gap-1 rounded-full bg-achievement-50 px-2.5 py-1 text-xs font-semibold text-achievement-700;
 }
 .record-pill svg,
 .set-list > a > svg {
@@ -264,7 +265,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500;
 }
 .load-more {
-  @apply mt-3 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply mt-3 min-h-(--size-control) w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50;
 }
 .manage-heading {
   @apply p-5;
@@ -277,7 +278,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 }
 .manage-actions a,
 .manage-actions button {
-  @apply flex min-h-14 w-full items-center gap-3 px-5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply flex min-h-(--size-control-lg) w-full items-center gap-3 px-5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50;
 }
 .manage-actions a svg,
 .manage-actions button svg {
@@ -293,6 +294,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-2 text-sm text-slate-500;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
 }
 </style>

@@ -91,7 +91,12 @@ const save = async () => {
       <p>{{ t('training.planForm.intro') }}</p>
     </header>
 
-    <div v-if="loading" class="loading-card">{{ t('training.planForm.loading') }}</div>
+    <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
+      <span class="sr-only">{{ $t('common.loading') }}</span>
+      <div class="loading-line" aria-hidden="true"></div>
+      <div class="loading-line" aria-hidden="true"></div>
+      <div class="loading-line w-full" aria-hidden="true"></div>
+    </div>
     <template v-else>
       <label class="name-field">
         <span>{{ t('training.planForm.name') }}</span>
@@ -239,32 +244,28 @@ h2 {
 .page-intro > p:last-child {
   @apply mt-2 text-sm text-slate-500;
 }
-.loading-card,
 .name-field input,
 .routine-order {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
-}
-.loading-card {
-  @apply p-5 text-sm text-slate-500;
+  @apply card;
 }
 .name-field {
   @apply grid gap-2 text-sm font-semibold text-slate-600;
 }
 .name-field input {
-  @apply min-h-12 px-4 text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500;
+  @apply min-h-(--size-control) px-4 text-slate-950 placeholder:text-slate-400 focus:border-ink-muted focus:ring-ink-muted;
 }
 .loop-note,
 .edit-note {
   @apply flex gap-3 rounded-2xl border p-4 text-sm;
 }
 .loop-note {
-  @apply border-indigo-200 bg-indigo-50 text-indigo-700;
+  @apply border-ink-border bg-ink-surface text-ink-strong;
 }
 .loop-note svg {
   @apply mt-0.5 size-5 shrink-0;
 }
 .edit-note {
-  @apply border-emerald-200 bg-emerald-50 text-emerald-700;
+  @apply border-success/30 bg-success-surface text-success;
 }
 .routine-order {
   @apply overflow-hidden;
@@ -304,7 +305,7 @@ h2 {
   @apply flex;
 }
 .order-actions button {
-  @apply grid size-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-indigo-600 disabled:opacity-25;
+  @apply grid size-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-ink disabled:opacity-25;
 }
 .order-actions button:last-child {
   @apply hover:text-red-600;
@@ -313,7 +314,7 @@ h2 {
   @apply size-4;
 }
 .add-routine {
-  @apply m-4 flex min-h-11 w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-300 bg-indigo-50 text-sm font-semibold text-indigo-700;
+  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-xl border border-dashed border-ink-border bg-ink-surface text-sm font-semibold text-ink-strong;
 }
 .add-routine svg {
   @apply size-5;
@@ -328,7 +329,7 @@ h2 {
   @apply text-center text-xs text-slate-500;
 }
 .save-area button {
-  @apply min-h-12 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white disabled:bg-indigo-100 disabled:text-slate-400;
+  @apply min-h-(--size-control) rounded-xl bg-ink px-5 text-sm font-semibold text-white disabled:bg-ink-tint disabled:text-slate-400;
 }
 .picker-backdrop {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 sm:items-center sm:p-6;
@@ -362,7 +363,7 @@ h2 {
   @apply mt-1 text-xs text-slate-500;
 }
 .routine-options svg {
-  @apply size-5 shrink-0 text-indigo-600;
+  @apply size-5 shrink-0 text-ink;
 }
 .picker-empty {
   @apply py-6 text-center text-sm text-slate-500;

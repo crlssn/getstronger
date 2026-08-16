@@ -45,14 +45,22 @@ test.describe('quick workout lifecycle', () => {
     await page.goto('/workouts/quick')
 
     // The focused shell takes over: global navigation is gone and the session
-    // chrome is a single line, leaving the viewport to the set rows.
+    // chrome stays one band, now carrying the elapsed time — the one number
+    // read between sets — and a rail for how far through the session you are.
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0)
     const headerBox = await page.locator('.workout-header').boundingBox()
-    expect(headerBox?.height).toBeLessThanOrEqual(64)
+    expect(headerBox?.height).toBeLessThanOrEqual(80)
+    await expect(page.getByRole('progressbar', { name: 'Session progress' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add exercise' })).toHaveCount(0)
     await expect(page.getByLabel('Workout note')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Finish workout' })).toBeDisabled()
+    // Blocked, not disabled: the dominant control stays pressable and names
+    // what is missing, rather than greying out and reading as broken.
+    await expect(page.locator('.primary-action')).toBeEnabled()
+    await page.locator('.primary-action').click()
+    await expect(page.locator('.finish-dock > strong')).toHaveText(
+      'Add an exercise before moving on',
+    )
 
     const firstExercise = await addFirstExercise(page)
     await page

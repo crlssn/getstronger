@@ -95,16 +95,16 @@ const weekBlocks = computed(() =>
 @reference '../../assets/base.css';
 
 .streak-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply card p-4;
 }
 .streak-card header {
   @apply grid grid-cols-[auto_1fr_auto] items-center gap-3;
 }
 .streak-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-slate-100 text-slate-500;
+  @apply grid size-11 place-items-center rounded-xl bg-info-surface text-text-muted;
 }
 .streak-card.active .streak-icon {
-  @apply bg-green-100 text-green-800;
+  @apply bg-success-surface text-success;
 }
 .streak-icon svg {
   @apply size-6;
@@ -117,7 +117,7 @@ const weekBlocks = computed(() =>
   @apply text-sm font-semibold text-slate-950;
 }
 .streak-card .eyebrow {
-  @apply mb-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-500;
+  @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .week-track {
   @apply mt-4 grid grid-cols-5 gap-1 rounded-xl bg-stone-100 p-1;
@@ -126,10 +126,10 @@ const weekBlocks = computed(() =>
   @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-stone-200 text-stone-400;
 }
 .week-block.complete {
-  @apply bg-green-800 text-white;
+  @apply bg-success text-white;
 }
 .week-block.current:not(.complete) {
-  @apply bg-green-50 ring-2 ring-inset ring-green-700;
+  @apply bg-success-surface ring-2 ring-inset ring-success;
 }
 .week-block > svg {
   @apply size-4 stroke-[2.5];
@@ -141,22 +141,21 @@ const weekBlocks = computed(() =>
   @apply size-1.5 rounded-full bg-current;
 }
 .track-labels {
-  /* slate-400 only reaches 2.6:1 against the card at this size. */
-  @apply mt-1.5 flex justify-between text-[0.65rem] font-medium text-slate-500;
+  @apply mt-1.5 flex justify-between text-eyebrow font-semibold text-text-subtle;
 }
 .streak-card > p {
   @apply mt-3 text-xs text-slate-500;
 }
 .streak-card.active:not(.safe) > p {
-  @apply font-medium text-green-800;
+  @apply font-medium text-success;
 }
 .streak-count {
-  @apply min-w-12 rounded-xl bg-green-50 px-2.5 py-1.5 text-center text-green-900;
+  @apply min-w-12 rounded-xl bg-success-surface px-2.5 py-1.5 text-center text-success;
 }
 .streak-count strong {
   @apply text-base font-bold leading-none;
 }
 .streak-count small {
-  @apply mt-0.5 text-[0.6rem] font-semibold uppercase tracking-wide;
+  @apply mt-0.5 text-eyebrow font-bold uppercase;
 }
 </style>

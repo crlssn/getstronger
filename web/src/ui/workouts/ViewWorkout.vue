@@ -28,7 +28,12 @@ const fetchWorkout = async () => {
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card"><span></span><span></span><span></span></div>
+  <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
+    <span class="sr-only">{{ $t('common.loading') }}</span>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line w-full" aria-hidden="true"></div>
+  </div>
   <CardWorkout v-if="workout" :workout="workout" :compact="false" />
   <section v-else-if="!loading" class="empty-card">
     <h1>{{ t('workout.view.unavailable') }}</h1>
@@ -42,7 +47,7 @@ const fetchWorkout = async () => {
 
 .loading-card,
 .empty-card {
-  @apply mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm;
+  @apply card mx-auto max-w-4xl p-6;
 }
 .loading-card {
   @apply space-y-4;
@@ -63,6 +68,6 @@ const fetchWorkout = async () => {
   @apply mt-2 text-sm text-slate-500;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-11 items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
 }
 </style>

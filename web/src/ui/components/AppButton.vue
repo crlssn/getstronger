@@ -32,7 +32,7 @@ const computedClasses = computed(() => {
 
 a,
 button {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition;
 }
 
 .link {
@@ -44,11 +44,11 @@ button:disabled {
 }
 
 .primary {
-  @apply border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700;
+  @apply border-ink bg-ink text-white hover:bg-ink-strong;
 }
 
 .green {
-  @apply border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700;
+  @apply border-success bg-success text-white hover:brightness-95;
 }
 
 .red {
@@ -56,7 +56,7 @@ button:disabled {
 }
 
 .amber {
-  @apply border-amber-600 bg-amber-600 text-white hover:bg-amber-700;
+  @apply border-achievement-600 bg-achievement-600 text-white hover:bg-achievement-700;
 }
 
 .gray {
@@ -64,6 +64,6 @@ button:disabled {
 }
 
 .black {
-  @apply border-slate-900 bg-slate-900 text-white hover:bg-slate-800;
+  @apply border-surface-inverse bg-surface-inverse text-white hover:brightness-125;
 }
 </style>

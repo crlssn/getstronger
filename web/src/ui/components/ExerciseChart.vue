@@ -178,12 +178,13 @@ const options = computed(() => ({
       <span v-if="change">{{ change }}</span>
     </header>
 
-    <div class="metric-picker" aria-label="Exercise progress metric">
+    <div class="segmented" aria-label="Exercise progress metric">
       <button
         v-for="option in metricOptions"
         :key="option.key"
         type="button"
-        :class="{ active: metric === option.key }"
+        :class="{ 'is-selected': metric === option.key }"
+        :aria-pressed="metric === option.key"
         @click="metric = option.key"
       >
         {{ option.label }}
@@ -226,16 +227,7 @@ const options = computed(() => ({
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
 .exercise-chart header > span {
-  @apply rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
-}
-.metric-picker {
-  @apply grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1;
-}
-.metric-picker button {
-  @apply min-h-10 rounded-lg text-xs font-semibold text-slate-500 transition hover:text-indigo-700;
-}
-.metric-picker button.active {
-  @apply bg-indigo-100 text-indigo-800 shadow-sm;
+  @apply rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
 }
 .chart-frame {
   @apply h-64;
@@ -244,8 +236,8 @@ const options = computed(() => ({
   @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center;
 }
 .first-result > span {
-  @apply mb-2 size-4 rounded-full border-4 border-indigo-600 bg-white;
-  box-shadow: 0 0 0 8px theme('colors.indigo.100');
+  @apply mb-2 size-4 rounded-full border-4 border-ink bg-white;
+  box-shadow: 0 0 0 8px var(--color-ink-tint);
 }
 .first-result strong {
   @apply text-base font-semibold text-slate-950;

@@ -45,7 +45,7 @@ withDefaults(defineProps<{ items: DropdownItem[]; label?: string }>(), {
 @reference '../../assets/base.css';
 
 .menu-trigger {
-  @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700;
+  @apply grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
 }
 .menu-trigger svg {
   @apply size-5;
@@ -54,7 +54,7 @@ withDefaults(defineProps<{ items: DropdownItem[]; label?: string }>(), {
   @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl focus:outline-none;
 }
 .menu-item {
-  @apply block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700;
+  @apply flex min-h-(--size-control-sm) w-full items-center rounded-lg px-3 text-left text-sm font-medium text-slate-700;
 }
 .menu-item.active {
   @apply bg-slate-50;

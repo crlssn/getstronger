@@ -44,7 +44,7 @@ const initials = computed(
   @apply grid grid-cols-[auto_1fr] gap-3 py-4 first:pt-0 last:pb-0;
 }
 .comment-avatar {
-  @apply grid size-10 place-items-center rounded-xl bg-indigo-100 text-xs font-semibold text-indigo-700;
+  @apply grid size-11 place-items-center rounded-xl bg-ink-tint text-xs font-semibold text-ink-strong;
 }
 .comment-content {
   @apply min-w-0;
@@ -53,10 +53,10 @@ const initials = computed(
   @apply flex flex-wrap items-baseline gap-x-2;
 }
 .comment-meta a {
-  @apply text-sm font-semibold text-slate-900 hover:text-indigo-700;
+  @apply -my-3 inline-flex min-h-(--size-control-sm) items-center py-3 text-sm font-semibold text-slate-900 hover:text-ink-strong;
 }
 .comment-meta time {
-  @apply text-xs text-slate-400;
+  @apply text-xs text-text-subtle;
 }
 .comment-content p {
   @apply mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import {
   BookOpenIcon,
   FireIcon,
@@ -33,11 +33,17 @@ const hasResults = computed(
     exercises.value.length > 0,
 )
 
-const openSearch = async () => {
+const openSearch = () => {
   searchOpen.value = true
+}
+
+// Focus follows the open state rather than the button, so a caller that opens
+// search from elsewhere on the page lands the cursor in the field too.
+watch(searchOpen, async (open) => {
+  if (!open) return
   await nextTick()
   input.value?.focus()
-}
+})
 
 const clearResults = () => {
   users.value = []
@@ -198,7 +204,7 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-trigger {
-  @apply grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-900;
+  @apply grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-900;
 }
 .search-trigger svg {
   @apply size-5;
@@ -207,7 +213,7 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-field {
-  @apply flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-indigo-500;
+  @apply card flex w-full items-center gap-2 px-4 transition focus-within:border-ink-muted;
 }
 .search-field > svg {
   @apply size-6 shrink-0 text-slate-500;
@@ -222,7 +228,7 @@ const onSearch = async () => {
   @apply size-5;
 }
 .search-results {
-  @apply mt-3 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card mt-3 w-full overflow-hidden;
 }
 .group-label {
   @apply border-b border-slate-100 bg-slate-50/60 px-4 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-500;

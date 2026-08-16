@@ -113,7 +113,10 @@ test.describe('profiles and notifications', () => {
     const tabs = page.getByRole('navigation', { name: 'Profile sections' })
     for (const tab of ['Personal Bests', 'Follows', 'Followers', 'Workouts']) {
       await tabs.getByRole('link', { name: tab, exact: true }).click()
-      await expect(tabs.getByRole('link', { name: tab, exact: true })).toHaveClass(/active/)
+      await expect(tabs.getByRole('link', { name: tab, exact: true })).toHaveAttribute(
+        'aria-current',
+        'page',
+      )
     }
   })
 })
@@ -129,13 +132,14 @@ test.describe('account progress', () => {
     await expect(page.getByLabel('Training summary')).toContainText('workouts')
 
     await page.getByRole('link', { name: /Progress & records/ }).click()
-    await expect(
-      page.getByRole('heading', { name: 'Progress you can read at a glance' }),
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible()
     const periods = page.getByLabel('Progress period')
     for (const period of ['7D', '4W', '3M', '1Y']) {
       await periods.getByRole('button', { name: period }).click()
-      await expect(periods.getByRole('button', { name: period })).toHaveClass(/active/)
+      await expect(periods.getByRole('button', { name: period })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
     }
 
     const firstRecord = page.locator('.record-list a').first()

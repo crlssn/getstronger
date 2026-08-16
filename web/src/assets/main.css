@@ -12,7 +12,13 @@ body {
 }
 
 h6 {
-  @apply mb-2 block px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply mb-2 block px-1 text-eyebrow font-semibold uppercase text-text-subtle;
+}
+
+/* A qualifier inside a section label is still a label. Left to the browser,
+   <small> takes 0.8em of an already-12px parent and lands at 9.6px. */
+h6 small {
+  @apply text-eyebrow font-medium;
 }
 
 button,
@@ -20,7 +26,75 @@ a,
 input,
 textarea,
 select {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-muted focus-visible:ring-offset-2;
+}
+
+/* Loading was a per-screen decision: two lists had a skeleton, most had a
+ * sentence, and several had nothing. The rule is written down here instead —
+ * every list that fetches gets the same three lines, so the next screen is
+ * correct by default.
+ *
+ * The class name is also the screenshot harness's settle sentinel: it waits
+ * for .loading-card to disappear before photographing a page.
+ */
+.loading-card {
+  @apply card space-y-4 p-5;
+}
+
+.loading-line {
+  @apply h-4 animate-pulse rounded-pill bg-info-surface;
+}
+
+.loading-line:first-of-type {
+  @apply w-32;
+}
+
+.loading-line:nth-of-type(2) {
+  @apply w-52;
+}
+
+/* One segmented control, where the app had six: three track treatments, four
+ * selected states and four radii, all saying "pick one of these".
+ *
+ * White-on-grey for the selected state, because of the four treatments in use
+ * it is the only one that reads as raised rather than as disabled. Auto-width
+ * with horizontal scroll rather than an equal-column grid, so Starta
+ * träningspass and Föredragen viktenhet have somewhere to go.
+ */
+.segmented {
+  @apply flex w-max max-w-full gap-1 overflow-x-auto rounded-card bg-surface-track p-1;
+  /* A scrollbar over a two-item control is louder than the overflow it warns
+   * about, and the items are wide enough to drag. */
+  scrollbar-width: none;
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+
+/* Density is horizontal padding and type size. Height is the tap-target floor,
+ * and there is no density below it. */
+.segmented > * {
+  @apply grid min-h-(--size-control-sm) shrink-0 cursor-pointer place-items-center whitespace-nowrap rounded-control px-5 text-sm font-semibold text-text-muted transition;
+}
+
+.segmented > *:hover {
+  @apply text-ink-strong;
+}
+
+.segmented > .is-selected {
+  @apply bg-surface text-ink-strong shadow-card;
+}
+
+.segmented > *:disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+
+/* Numeric labels only — 7D, 4W, 1Y. Nothing long enough to need the room, and
+   a min-width so the narrowest of them still clears the tap floor on both
+   axes: "1Y" at this size is 43px of text and padding. */
+.segmented.is-compact > * {
+  @apply min-w-(--size-control-sm) px-3.5 text-meta;
 }
 
 .auth-view {
@@ -40,7 +114,7 @@ select {
 }
 
 .auth-eyebrow {
-  @apply text-xs font-semibold uppercase tracking-widest text-indigo-600;
+  @apply text-xs font-semibold uppercase tracking-widest text-ink;
 }
 
 .auth-form {
@@ -52,15 +126,15 @@ select {
 }
 
 .auth-input {
-  @apply block min-h-14 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-400 transition hover:border-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
+  @apply block min-h-(--size-control-lg) w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-400 transition hover:border-slate-400 focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
 }
 
 .auth-link {
-  @apply font-semibold text-indigo-600 transition hover:text-indigo-700;
+  @apply font-semibold text-ink transition hover:text-ink-strong;
 }
 
 .auth-submit {
-  @apply mt-2 min-h-14 text-base;
+  @apply mt-2 min-h-(--size-control) text-base;
 }
 
 .auth-footer {

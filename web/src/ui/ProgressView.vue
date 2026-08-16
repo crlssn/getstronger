@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import { ArrowTrendingUpIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
+import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
@@ -44,11 +45,12 @@ const filteredVolume = computed(() =>
 
 <template>
   <div class="progress-stack">
-    <section class="progress-intro">
-      <div>
-        <p class="eyebrow">{{ t('progress.eyebrow') }}</p>
-        <h1>{{ t('progress.heading') }}</h1>
-      </div>
+    <!-- Progress is a screen pushed onto the Me tab, so the nav bar above
+         carries its title. What is left here is the one thing the title does
+         not say: how many personal bests there are — and only once there are
+         any, because a pill that exists to celebrate should not render in the
+         app's loudest colour to report a zero. -->
+    <section v-if="totalRecords > 0" class="progress-intro">
       <span class="record-count"
         ><TrophyIcon /> {{ t('progress.personalBests', totalRecords) }}</span
       >
@@ -63,12 +65,13 @@ const filteredVolume = computed(() =>
         <span><ArrowTrendingUpIcon /> {{ t('progress.dailyTotals') }}</span>
       </div>
       <WorkoutChart :workouts="filteredWorkouts" />
-      <div class="period-picker" :aria-label="t('progress.periodAria')">
+      <div class="period-picker segmented is-compact" :aria-label="t('progress.periodAria')">
         <button
           v-for="option in periodOptions"
           :key="option.days"
           type="button"
-          :class="{ active: periodDays === option.days }"
+          :class="{ 'is-selected': periodDays === option.days }"
+          :aria-pressed="periodDays === option.days"
           @click="periodDays = option.days"
         >
           {{ option.label }}
@@ -103,9 +106,14 @@ const filteredVolume = computed(() =>
           <ChevronRightIcon class="chevron" />
         </RouterLink>
       </div>
-      <p v-else class="empty-copy">
-        {{ t('progress.emptyBody') }}
-      </p>
+      <AppEmptyState
+        v-else
+        :action="{ label: t('home.startWorkout'), to: '/workout' }"
+        :body="t('progress.emptyBody')"
+        :title="t('progress.emptyTitle')"
+      >
+        <template #icon><TrophyIcon /></template>
+      </AppEmptyState>
     </section>
   </div>
 </template>
@@ -129,32 +137,26 @@ h2 {
   @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
 }
 .record-count {
-  @apply inline-flex w-max items-center gap-2 rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700;
+  @apply inline-flex w-max items-center gap-2 rounded-full bg-achievement-50 px-3 py-2 text-sm font-semibold text-achievement-700;
 }
 .record-count svg {
   @apply size-5;
 }
 .chart-card,
 .records-card {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card p-5;
 }
 .chart-heading {
   @apply mb-5 flex flex-wrap items-end justify-between gap-3;
 }
 .chart-heading > span {
-  @apply inline-flex items-center gap-2 text-sm font-semibold text-indigo-700;
+  @apply inline-flex items-center gap-2 text-sm font-semibold text-ink-strong;
 }
 .chart-heading svg {
   @apply size-5;
 }
 .period-picker {
-  @apply mt-4 grid grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1;
-}
-.period-picker button {
-  @apply min-h-10 rounded-lg text-xs font-semibold text-slate-600 transition hover:text-indigo-700;
-}
-.period-picker button.active {
-  @apply bg-white text-indigo-700 shadow-sm;
+  @apply mt-4;
 }
 .section-heading {
   @apply mb-4;
@@ -163,10 +165,10 @@ h2 {
   @apply divide-y divide-slate-100;
 }
 .record-list a {
-  @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-indigo-700;
+  @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-ink-strong;
 }
 .record-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-amber-50 text-amber-600;
+  @apply grid size-11 place-items-center rounded-xl bg-achievement-50 text-achievement-600;
 }
 .record-icon svg,
 .chevron {

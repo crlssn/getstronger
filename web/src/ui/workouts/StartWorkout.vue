@@ -69,6 +69,7 @@ const activeExerciseIndex = ref(0)
 const submitting = ref(false)
 const savedWorkoutId = ref('')
 const finishError = ref('')
+const blockedMessage = ref('')
 const finishDialogOpen = ref(false)
 const exercisePickerOpen = ref(false)
 const leaveDialogOpen = ref(false)
@@ -184,18 +185,31 @@ const canFinish = computed(
     !submitting.value,
 )
 const finishStatus = computed(() => {
-  if (!routine.value) return 'Loading routine…'
+  if (!routine.value) return t('workout.loadingRoutine')
   if (!routine.value.exercises.length) {
-    return quickWorkout ? '' : 'This routine has no exercises'
+    return quickWorkout ? '' : t('workout.noExercises')
   }
   if (incompleteSetCount.value > 0) {
-    return `Complete ${incompleteSetCount.value} partial ${incompleteSetCount.value === 1 ? 'set' : 'sets'}`
+    return t('workout.completePartialSets', incompleteSetCount.value)
   }
-  if (!loggedSetCount.value) return 'Log at least one set to finish'
+  if (!loggedSetCount.value) return t('workout.logOneSetToFinish')
   return ''
 })
 
 const elapsedLabel = computed(() => formatDuration(elapsedSeconds.value))
+const sessionProgress = computed(() => {
+  const total = routine.value?.exercises.length ?? 0
+  return total > 0 ? `${(completedExerciseCount.value / total) * 100}%` : '0%'
+})
+// The set you are about to log. It carries the emphasis so the row you want is
+// findable at arm's length, which is the distance this screen is read from.
+const activeSetIndex = computed(() => {
+  const exercise = currentExercise.value
+  if (!exercise) return -1
+  return workoutStore
+    .getSets(routineID, exercise.id)
+    .findIndex((set) => !isCompleteSet(set, exercise))
+})
 const restLabel = computed(() => formatTimer(restSeconds.value))
 const restFraction = computed(() =>
   restTotalSeconds.value > 0
@@ -233,11 +247,37 @@ const canRunPrimaryAction = computed(() =>
     ? canFinish.value
     : Boolean(currentExercise.value && canCompleteExercise(currentExercise.value.id)),
 )
-// Only the finish-related hints are worth surfacing; while logging, the empty
-// set field is the instruction.
+// Blocked, not disabled. A grey fill on the screen's dominant control reads as
+// broken rather than as waiting for something, so the button stays live and
+// says what is missing when it is pressed.
+const blockedReason = computed(() => {
+  // An empty quick workout counts as "all exercises complete", so this is
+  // checked first or the screen with nothing on it says nothing at all.
+  const exercise = currentExercise.value
+  if (!exercise) return t('workout.blockedNoExercise')
+  if (allExercisesComplete.value) return finishStatus.value
+  if (exerciseHasIncompleteSets(exercise.id)) return t('workout.blockedPartialSet')
+  if (!exerciseLoggedSetCount(exercise.id)) return t('workout.blockedNoSet')
+  return ''
+})
+// Only the finish-related hints are worth surfacing unprompted; while logging,
+// the empty set field is the instruction.
 const primaryStatus = computed(() => (allExercisesComplete.value ? finishStatus.value : ''))
+// A message about what is missing outlives its usefulness the moment it stops
+// being missing. A message about a save that failed does not.
+watch(
+  () => canRunPrimaryAction.value,
+  (runnable) => {
+    if (runnable) blockedMessage.value = ''
+  },
+)
 
 const onPrimaryAction = async () => {
+  if (!canRunPrimaryAction.value) {
+    blockedMessage.value = blockedReason.value
+    return
+  }
+  blockedMessage.value = ''
   if (!allExercisesComplete.value) {
     advanceExercise()
     return
@@ -613,7 +653,7 @@ const openSavedWorkout = async (workoutId: string) => {
     params: { id: workoutId },
   })
   if (navigationFailure) {
-    finishError.value = 'Workout saved, but it could not be opened. Tap Finish workout to retry.'
+    finishError.value = t('workout.savedNotOpened')
     return false
   }
 
@@ -633,7 +673,7 @@ const onFinishWorkout = async () => {
 
   const exerciseSets = buildWorkoutSets()
   if (!exerciseSets.length) {
-    finishError.value = 'Log at least one complete set before finishing'
+    finishError.value = t('workout.logCompleteSet')
     return
   }
 
@@ -654,13 +694,13 @@ const onFinishWorkout = async () => {
       quickWorkout ? 'Quick Workout' : '',
     )
     if (!response) {
-      finishError.value = 'Workout could not be saved. Check your connection and try again.'
+      finishError.value = t('workout.saveFailed')
       return
     }
 
     const workoutId = response.workoutId.trim()
     if (!workoutId) {
-      finishError.value = 'Workout was saved without an ID. Refresh your workouts to open it.'
+      finishError.value = t('workout.savedWithoutId')
       return
     }
 
@@ -670,18 +710,18 @@ const onFinishWorkout = async () => {
   } catch (error) {
     console.error('failed to finish workout', error)
     if (savedWorkoutId.value) {
-      finishError.value = 'Workout saved, but it could not be opened. Tap Finish workout to retry.'
+      finishError.value = t('workout.savedNotOpened')
     } else if (
       quickWorkout &&
       error instanceof ConnectError &&
       error.code === Code.InvalidArgument &&
       error.message.includes('routine_id')
     ) {
-      finishError.value = 'Restart the backend to enable Quick Workout, then try again.'
+      finishError.value = t('workout.quickWorkoutUnavailable')
     } else if (error instanceof ConnectError && error.code === Code.DeadlineExceeded) {
-      finishError.value = 'Saving took too long. Check your connection and try again.'
+      finishError.value = t('workout.saveTimedOut')
     } else {
-      finishError.value = 'Workout could not be saved. Check your connection and try again.'
+      finishError.value = t('workout.saveFailed')
     }
   } finally {
     submitting.value = false
@@ -781,8 +821,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     novalidate
     @submit.prevent="onPrimaryAction"
   >
-    <!-- The focused shell keeps the session chrome to a single sticky line:
-         leave, identity, progress, and elapsed time share one row. -->
+    <!-- The session chrome carries the two things worth glancing at between
+         sets: where you are, and how long you have been here. The elapsed time
+         is the larger of the two because it is the one being read. -->
     <header class="workout-header">
       <div class="workout-header-inner">
         <button
@@ -793,17 +834,33 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         >
           <XMarkIcon />
         </button>
-        <div class="flex min-w-0 items-baseline gap-2">
+        <div class="min-w-0">
           <h1>{{ routine?.name ?? t('workout.loading') }}</h1>
           <p class="session-progress">
-            {{ completedExerciseCount }}/{{ routine?.exercises.length ?? 0 }} ·
-            {{ t('workout.setsCompact', loggedSetCount) }}
+            {{
+              t('workout.exercisePosition', {
+                current: Math.min(activeExerciseIndex + 1, routine?.exercises.length ?? 0),
+                total: routine?.exercises.length ?? 0,
+              })
+            }}
           </p>
         </div>
         <div class="elapsed">
-          <span class="sr-only">{{ t('workout.elapsed') }}</span>
           <strong>{{ elapsedLabel }}</strong>
+          <small>{{ t('workout.elapsed') }}</small>
         </div>
+      </div>
+      <!-- A rail rather than a fraction: between sets it is read at a glance,
+           and a glance does not do arithmetic. -->
+      <div
+        class="session-rail"
+        role="progressbar"
+        :aria-valuenow="completedExerciseCount"
+        :aria-valuemin="0"
+        :aria-valuemax="routine?.exercises.length ?? 0"
+        :aria-label="t('workout.sessionProgress')"
+      >
+        <span :style="{ width: sessionProgress }" />
       </div>
     </header>
 
@@ -820,14 +877,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <section v-if="currentExercise" ref="exerciseCard" class="exercise-card">
         <header class="exercise-heading">
           <div>
-            <p class="eyebrow">
-              {{
-                t('workout.exercisePosition', {
-                  current: activeExerciseIndex + 1,
-                  total: routine?.exercises.length,
-                })
-              }}
-            </p>
+            <!-- The position lives in the header now; saying it twice on one
+                 screen spent a line on nothing. -->
             <h2>{{ currentExercise.name }}</h2>
             <ExerciseTags compact :tags="currentExercise.tags" />
           </div>
@@ -866,7 +917,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
             v-for="(set, setIndex) in workoutStore.getSets(routineID, currentExercise.id)"
             :key="setIndex"
             class="set-grid set-row"
-            :class="{ complete: isCompleteSet(set, currentExercise) }"
+            :class="{
+              complete: isCompleteSet(set, currentExercise),
+              active: setIndex === activeSetIndex,
+            }"
             :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
           >
             <span class="set-number">
@@ -1134,13 +1188,28 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </div>
       </section>
 
-      <!-- Advancing remains the primary action while exercises are unfinished,
-           but finishing stays visible for the entire session. -->
+      <!-- One ranked pair. Advancing is the primary action while exercises are
+           unfinished; finishing stays reachable for the entire session but is
+           demoted to a text button, because two controls of equal weight leave
+           the screen with no ranking at all. -->
       <footer class="finish-dock">
-        <strong v-if="finishError || primaryStatus" :class="{ 'text-red-600': finishError }">{{
-          finishError || primaryStatus
-        }}</strong>
-        <button type="submit" class="primary-action" :disabled="!canRunPrimaryAction">
+        <strong
+          v-if="finishError || blockedMessage || primaryStatus"
+          id="workout-dock-status"
+          :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
+          >{{ finishError || blockedMessage || primaryStatus }}</strong
+        >
+        <!-- Described by the status rather than aria-disabled: the whole point
+             is that this control is pressable, and aria-disabled would announce
+             the same "broken" that the grey fill used to. -->
+        <button
+          type="submit"
+          class="primary-action"
+          :aria-describedby="
+            finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
+          "
+          :disabled="submitting"
+        >
           <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
           {{ primaryActionLabel }}
         </button>
@@ -1153,11 +1222,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           :disabled="!canFinish"
           :title="!canFinish ? finishStatus : undefined"
           :aria-label="
-            !canFinish && finishStatus ? `Finish workout: ${finishStatus}` : 'Finish workout'
+            !canFinish && finishStatus
+              ? `${t('workout.finish')}: ${finishStatus}`
+              : t('workout.finish')
           "
           @click="requestFinishWorkout"
         >
-          <FlagIcon /> Finish workout
+          {{ t('workout.finish') }}
         </button>
       </footer>
     </div>
@@ -1184,11 +1255,11 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply sticky top-0 z-20 -mt-5 border-b border-slate-200 bg-white text-slate-950 lg:-mt-7;
 }
 .workout-header-inner {
-  @apply mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2.5 sm:px-5 lg:px-8;
+  @apply mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2 sm:px-5 lg:px-8;
 }
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leave-workout {
-  @apply -ml-1 grid size-10 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900;
+  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900;
 }
 .leave-workout svg {
   @apply size-5;
@@ -1197,17 +1268,28 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
 .workout-header h1 {
-  @apply truncate text-base font-semibold tracking-tight text-slate-950;
+  @apply truncate text-body-lg font-semibold tracking-tight text-text;
 }
 .session-progress {
-  @apply shrink-0 truncate text-xs text-slate-500;
+  @apply truncate text-meta text-text-subtle;
 }
-/* Secondary to the rest countdown. */
+/* The one thing glanced at between sets, so it outranks everything else in
+   the chrome. Still yields to the rest countdown, which is a live deadline. */
 .elapsed {
   @apply grid shrink-0 justify-items-end;
 }
 .elapsed strong {
-  @apply font-mono text-sm font-semibold leading-none tabular-nums text-slate-600;
+  @apply font-mono text-title font-bold leading-none tabular-nums text-text;
+}
+.elapsed small {
+  @apply mt-0.5 text-eyebrow font-semibold uppercase text-text-subtle;
+}
+/* How far through the session, without asking anyone to do arithmetic. */
+.session-rail {
+  @apply h-1 w-full bg-border;
+}
+.session-rail > span {
+  @apply block h-full bg-success transition-[width] duration-300;
 }
 /* The primary timer while resting: it carries the accent so it outranks the
    header bar, which stays light. The hue is driven by --rest-hue and shifts
@@ -1330,10 +1412,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply space-y-4;
 }
 .quick-empty {
-  @apply grid justify-items-center gap-3 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm;
+  @apply card grid justify-items-center gap-3 p-8 text-center;
 }
 .quick-empty > span {
-  @apply grid size-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600;
+  @apply grid size-14 place-items-center rounded-2xl bg-ink-surface text-ink;
 }
 .quick-empty > span svg {
   @apply size-6;
@@ -1345,7 +1427,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply max-w-sm text-sm text-slate-500;
 }
 .quick-empty button {
-  @apply mt-2 inline-flex min-h-14 w-full items-center justify-center gap-2 justify-self-stretch rounded-xl bg-indigo-600 px-4 text-base font-semibold text-white transition hover:bg-indigo-700;
+  @apply mt-2 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 justify-self-stretch rounded-xl bg-ink px-4 text-base font-semibold text-white transition hover:bg-ink-strong;
 }
 .quick-empty button svg {
   @apply size-5;
@@ -1353,7 +1435,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .exercise-card,
 .note-card,
 .exercise-queue {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  @apply card;
 }
 .exercise-card {
   @apply p-4 sm:p-5;
@@ -1372,7 +1454,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
      and would otherwise paint a scrollbar under every row. */
   scrollbar-width: none;
   @apply grid items-center gap-2 overflow-x-auto;
-  grid-template-columns: 2rem minmax(5.5rem, 1fr) repeat(
+  grid-template-columns: 2.25rem minmax(5.5rem, 1fr) repeat(
       var(--metric-count),
       minmax(4.25rem, 0.75fr)
     );
@@ -1381,16 +1463,27 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   display: none;
 }
 .set-labels {
-  @apply pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500;
+  @apply pb-2 text-eyebrow font-semibold uppercase text-text-subtle;
+}
+.set-labels > span:first-child {
+  @apply text-center;
 }
 .set-row {
   @apply relative border-t border-slate-100 py-2;
 }
 .set-row.complete {
-  @apply text-emerald-700;
+  @apply text-success;
 }
 .set-number {
-  @apply grid size-8 place-items-center text-center text-sm font-semibold;
+  @apply grid size-8 place-items-center justify-self-center rounded-full text-center text-sm font-semibold transition;
+}
+/* The set number carries completion, which frees the row of a second check
+   column and makes the row you are on findable without reading it. */
+.set-row.complete .set-number {
+  @apply bg-success-surface text-success;
+}
+.set-row.active .set-number {
+  @apply bg-surface-inverse text-white;
 }
 .set-number svg {
   @apply size-4;
@@ -1399,7 +1492,15 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply truncate text-sm text-slate-500;
 }
 .set-row input {
-  @apply min-w-0 rounded-xl border-slate-200 px-2 py-2 text-center font-semibold shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
+  @apply min-h-(--size-control) min-w-0 rounded-control border-border px-2 text-center font-semibold shadow-card focus:border-ink focus:ring-ink;
+}
+.set-row.active input,
+.set-row.active .weight-entry {
+  @apply border-ink;
+}
+.set-row.complete input,
+.set-row.complete .weight-entry {
+  @apply bg-surface-sunken;
 }
 /* Focus reveal (and focusNextSetInput) must land above the fixed session dock,
    not behind it. */
@@ -1409,13 +1510,15 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   scroll-margin-bottom: 10rem;
 }
 .weight-entry {
-  @apply grid min-w-0 grid-cols-[minmax(2.75rem,1fr)_2.75rem] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500;
+  @apply grid min-h-(--size-control) min-w-0 grid-cols-[minmax(2.75rem,1fr)_auto] items-center overflow-hidden rounded-control border border-border bg-surface pr-2.5 shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
 }
 .weight-entry > input {
   @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
 }
+/* A unit is a label on the field, not a second control inside it. The old
+   bordered, filled cell read as a button worth pressing. */
 .weight-unit-suffix {
-  @apply grid place-items-center border-l border-slate-200 bg-slate-50 text-xs font-bold uppercase text-slate-400;
+  @apply pointer-events-none select-none text-meta font-medium lowercase text-text-subtle;
 }
 .remove-set {
   @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600;
@@ -1461,10 +1564,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply divide-y divide-slate-100 border-t border-slate-100;
 }
 .exercise-queue button {
-  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr_auto] items-center gap-3 py-2.5 text-left transition hover:text-indigo-700;
+  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr_auto] items-center gap-3 py-2.5 text-left transition hover:text-ink-strong;
 }
 .queue-number {
-  @apply grid size-8 place-items-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500;
+  @apply grid size-8 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
 }
 .queue-number svg {
   @apply size-4;
@@ -1496,10 +1599,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 /* A real, solid card: the dashed ghost read as a placeholder. */
 .add-exercise {
-  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/40;
+  @apply card grid w-full grid-cols-[auto_1fr] items-center gap-3 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
 }
 .add-exercise > svg {
-  @apply size-11 shrink-0 rounded-xl bg-indigo-600 p-2.5 text-white;
+  @apply size-11 shrink-0 rounded-xl bg-ink p-2.5 text-white;
 }
 .add-exercise strong,
 .add-exercise small {
@@ -1525,15 +1628,29 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
 }
 .finish-dock {
-  @apply pointer-events-auto flex w-full max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:border sm:rounded-2xl;
+  @apply pointer-events-auto flex w-full max-w-3xl flex-col items-stretch gap-2 border-t border-border bg-surface px-4 py-3 text-center shadow-overlay sm:rounded-card sm:border;
 }
+/* What is missing, said where the button that is waiting for it lives. */
+.finish-dock > strong {
+  @apply text-meta font-semibold text-text-muted;
+}
+.finish-dock > strong.blocked {
+  @apply text-warning;
+}
+.finish-dock > strong.failed {
+  @apply text-danger;
+}
+/* Blocked, not disabled: it stays filled and live, and says what is missing
+   when pressed. A grey fill on the screen's dominant control reads as broken
+   rather than as waiting for something, and looking different before the tap
+   would put the greying back by another route. */
 .primary-action {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400;
+  @apply inline-flex min-h-(--size-control-lg) w-full items-center justify-center gap-2 rounded-control bg-ink px-5 text-base font-semibold text-white transition hover:brightness-125 disabled:opacity-70;
 }
-/* Mirrors the leave dialog's secondary button, so the dock and the dialog
-   speak the same language. */
+/* Demoted to a text button. It is the escape hatch, not the other half of a
+   pair, and giving it equal weight left the dock with no ranking at all. */
 .finish-early {
-  @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center rounded-control px-4 text-sm font-semibold text-text-muted transition hover:bg-surface-sunken hover:text-text disabled:cursor-not-allowed disabled:opacity-50;
 }
 .finish-dock svg {
   @apply size-5;
@@ -1551,7 +1668,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-1 text-xl font-semibold text-slate-950;
 }
 .exercise-picker header button {
-  @apply grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-500;
+  @apply grid size-11 place-items-center rounded-xl border border-slate-200 text-slate-500;
 }
 .exercise-picker header button svg {
   @apply size-5;
@@ -1569,7 +1686,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .exercise-options button {
-  @apply flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50;
+  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
 }
 .exercise-options strong,
 .exercise-options small {
@@ -1582,13 +1699,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-0.5 text-xs text-slate-500;
 }
 .exercise-options button > svg {
-  @apply size-5 shrink-0 text-indigo-600;
+  @apply size-5 shrink-0 text-ink;
 }
 .picker-empty {
   @apply rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500;
 }
 .load-more {
-  @apply mt-4 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400;
+  @apply mt-4 min-h-(--size-control) w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400;
 }
 .finish-dialog {
   @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 text-left shadow-2xl sm:rounded-3xl;
@@ -1603,13 +1720,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-2 text-sm leading-6 text-slate-500;
 }
 .finish-dialog button {
-  @apply mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
+  @apply mt-3 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
 }
 .finish-dialog button svg {
   @apply size-5;
 }
 .confirm-finish {
-  @apply bg-indigo-600 text-white hover:bg-indigo-700;
+  @apply bg-ink text-white hover:bg-ink-strong;
 }
 .keep-training {
   @apply border border-slate-200 text-slate-700 hover:bg-slate-50;
@@ -1623,13 +1740,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 @media (max-width: 520px) {
   .set-grid {
     @apply gap-1.5;
-    grid-template-columns: 1.5rem minmax(4.5rem, 1fr) repeat(
+    grid-template-columns: 2.25rem minmax(4.5rem, 1fr) repeat(
         var(--metric-count),
         minmax(5.5rem, 0.75fr)
       );
   }
   .set-labels {
-    @apply text-[0.65rem];
+    @apply text-eyebrow;
   }
   .set-row input {
     @apply px-1;

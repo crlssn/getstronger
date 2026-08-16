@@ -1,7 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div class="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div class="card mb-4">
     <slot />
   </div>
 </template>

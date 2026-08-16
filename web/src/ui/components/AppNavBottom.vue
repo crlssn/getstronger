@@ -149,10 +149,10 @@ const navigation = computed(() => [
   @apply mx-auto grid max-w-3xl grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)];
 }
 .bottom-nav a {
-  @apply grid min-w-0 place-items-center content-center gap-1 rounded-xl px-1 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-indigo-700;
+  @apply grid min-w-0 place-items-center content-center gap-1 rounded-xl px-1 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-ink-strong;
 }
 .bottom-nav a.active {
-  @apply text-indigo-700;
+  @apply text-ink-strong;
 }
 .bottom-nav svg {
   @apply size-6;
@@ -161,10 +161,10 @@ const navigation = computed(() => [
   @apply relative grid place-items-center;
 }
 .notification-badge {
-  @apply absolute -right-3 -top-2 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-red-600 px-1 text-[0.6875rem] font-bold leading-none text-white ring-[3px] ring-white;
+  @apply absolute -right-3 -top-2 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold tracking-normal leading-none text-white ring-[3px] ring-white;
 }
 .timer-badge {
-  @apply whitespace-nowrap rounded-full bg-stone-900 px-2 py-0.5 font-mono text-[0.65rem] font-semibold leading-none text-white;
+  @apply whitespace-nowrap rounded-full bg-surface-inverse px-2 py-0.5 font-mono text-eyebrow font-bold leading-none text-white;
 }
 .nav-label {
   @apply truncate;

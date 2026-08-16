@@ -128,7 +128,7 @@ onUnmounted(() => {
   @apply mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-3 px-3 py-3 sm:px-5 lg:px-8;
 }
 .rest-copy p {
-  @apply flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-white/85;
+  @apply flex items-center gap-1.5 text-eyebrow font-bold uppercase text-white/85;
 }
 .rest-copy p svg {
   @apply size-3.5;

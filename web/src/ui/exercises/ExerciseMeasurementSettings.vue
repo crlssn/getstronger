@@ -69,12 +69,13 @@ function toggleMetric(metric: ExerciseMetric) {
       <p>{{ t('exercise.measurements.help') }}</p>
     </div>
 
-    <div class="presets" :aria-label="t('exercise.measurements.presetsAria')">
+    <div class="presets segmented" :aria-label="t('exercise.measurements.presetsAria')">
       <button
         v-for="preset in presets"
         :key="preset.label"
         type="button"
-        :class="{ selected: sameMetrics(preset.values) }"
+        :class="{ 'is-selected': sameMetrics(preset.values) }"
+        :aria-pressed="sameMetrics(preset.values)"
         @click="metrics = [...preset.values]"
       >
         {{ preset.label }}
@@ -144,26 +145,23 @@ p,
 small {
   @apply block text-sm text-slate-500;
 }
-.presets,
 .rest-options {
   @apply flex flex-wrap gap-2;
 }
-.presets button,
 .rest-options button {
-  @apply rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600;
+  @apply inline-flex min-h-(--size-control-sm) items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600;
 }
-.presets button.selected,
 .rest-options button.selected {
-  @apply border-slate-900 bg-slate-900 text-white;
+  @apply border-surface-inverse bg-surface-inverse text-white;
 }
 .measurement-grid {
   @apply grid grid-cols-2 gap-3;
 }
 .measurement {
-  @apply flex items-center gap-3 rounded-2xl border border-slate-200 p-4 text-left;
+  @apply flex min-h-(--size-control-sm) items-center gap-3 rounded-2xl border border-slate-200 p-4 text-left;
 }
 .measurement.selected {
-  @apply border-slate-900 bg-stone-50;
+  @apply border-surface-inverse bg-surface-sunken;
 }
 .measurement strong {
   @apply block text-base text-slate-950;
@@ -172,7 +170,7 @@ small {
   @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold;
 }
 .measurement.selected .check {
-  @apply bg-slate-900 text-white;
+  @apply bg-surface-inverse text-white;
 }
 .rest-setting {
   @apply flex items-center justify-between border-t border-slate-100 pt-5;
@@ -180,15 +178,20 @@ small {
 .rest-setting strong {
   @apply block text-base text-slate-950;
 }
-/* A real track-and-knob switch: the old pill read as a button. */
+/* A real track-and-knob switch: the old pill read as a button. The track is
+   drawn rather than being the button itself, so the control can be the full
+   tap-target height to a thumb while still reading as a 32px switch. */
 .switch {
-  @apply relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full bg-slate-200 transition-colors;
+  @apply relative inline-flex min-h-(--size-control-sm) w-14 shrink-0 cursor-pointer items-center;
 }
-.switch[aria-checked='true'] {
-  @apply bg-slate-900;
+.switch::before {
+  @apply absolute inset-x-0 top-1/2 h-8 -translate-y-1/2 rounded-full bg-slate-200 transition-colors content-[''];
+}
+.switch[aria-checked='true']::before {
+  @apply bg-surface-inverse;
 }
 .knob {
-  @apply absolute left-1 size-6 rounded-full bg-white shadow-sm transition-transform;
+  @apply absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-white shadow-sm transition-transform;
 }
 .switch[aria-checked='true'] .knob {
   @apply translate-x-6;

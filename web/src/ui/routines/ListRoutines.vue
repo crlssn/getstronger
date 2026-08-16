@@ -7,6 +7,7 @@ import {
   MagnifyingGlassIcon,
   PlayIcon,
   PlusIcon,
+  RectangleStackIcon,
 } from '@heroicons/vue/24/outline'
 
 import { listRoutines } from '@/http/requests'
@@ -14,6 +15,8 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import usePagination from '@/utils/usePagination'
+import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 import {
   routineActivityBucketFor,
@@ -43,6 +46,13 @@ const filteredRoutines = computed(() => {
 })
 
 const maxNamedExercises = 3
+const routineTags = (routine: Routine) => [
+  ...new Set(routine.exercises.flatMap((exercise) => exercise.tags)),
+]
+
+const lastPerformed = (routine: Routine) =>
+  activityStore.routineLastPerformedFor(routine.id)?.toRelative() ?? ''
+
 const exerciseSummary = (routine: Routine) => {
   const names = routine.exercises.slice(0, maxNamedExercises).map((exercise) => exercise.name)
   const remaining = routine.exercises.length - names.length
@@ -98,7 +108,6 @@ const makeUpNext = async (routineId: string) => {
   <div class="routine-page">
     <header class="page-intro">
       <div>
-        <p class="eyebrow">{{ t('training.eyebrow') }}</p>
         <h1>{{ t('training.heading') }}</h1>
         <p>{{ t('training.routinesDescription') }}</p>
       </div>
@@ -130,12 +139,19 @@ const makeUpNext = async (routineId: string) => {
                   t('home.upNext')
                 }}</span>
                 <h3>{{ routine.name }}</h3>
-                <p class="routine-exercises">{{ exerciseSummary(routine) }}</p>
+                <ExerciseTags
+                  v-if="routineTags(routine).length"
+                  compact
+                  class="routine-tags"
+                  :tags="routineTags(routine)"
+                />
+                <p v-else class="routine-exercises">{{ exerciseSummary(routine) }}</p>
                 <p class="routine-meta">
-                  {{ t('home.exerciseCount', routine.exercises.length) }} ·
-                  {{
+                  <span>{{ t('home.exerciseCount', routine.exercises.length) }}</span>
+                  <span>{{
                     t('home.aboutMinutes', { count: Math.max(30, routine.exercises.length * 8) })
-                  }}
+                  }}</span>
+                  <span v-if="lastPerformed(routine)">{{ lastPerformed(routine) }}</span>
                 </p>
               </RouterLink>
               <ChevronRightIcon />
@@ -170,15 +186,15 @@ const makeUpNext = async (routineId: string) => {
       </section>
     </template>
 
-    <section v-else-if="isMounted" class="empty-state">
-      <h2>{{ search ? t('training.noMatchingRoutines') : t('training.noRoutines') }}</h2>
-      <p>
-        {{ search ? t('exercise.tryAnotherSearch') : t('routine.list.emptyBody') }}
-      </p>
-      <RouterLink v-if="!search" to="/routines/create" class="create-link"
-        ><PlusIcon /> {{ t('home.createRoutine') }}</RouterLink
-      >
-    </section>
+    <AppEmptyState
+      v-else-if="isMounted"
+      :action="search ? 'none' : { label: t('home.createRoutine'), to: '/routines/create' }"
+      :body="search ? t('exercise.tryAnotherSearch') : t('routine.list.emptyBody')"
+      :title="search ? t('training.noMatchingRoutines') : t('training.noRoutines')"
+    >
+      <template #icon><RectangleStackIcon /></template>
+      <template #action-icon><PlusIcon /></template>
+    </AppEmptyState>
 
     <button v-if="hasMorePages" type="button" class="load-more" @click="fetchRoutines">
       {{ t('routine.list.loadMore') }}
@@ -205,13 +221,13 @@ h1 {
   @apply mt-1 max-w-xl text-sm text-slate-500;
 }
 .create-link {
-  @apply inline-flex min-h-11 w-max items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700;
+  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .create-link svg {
   @apply size-5;
 }
 .search-field {
-  @apply flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm;
+  @apply card flex items-center gap-2 px-4;
 }
 .search-field svg {
   @apply size-5 text-slate-400;
@@ -229,7 +245,7 @@ h1 {
   @apply grid gap-4 md:grid-cols-2;
 }
 .routine-card {
-  @apply flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply card flex flex-col gap-4 p-5;
 }
 .routine-heading {
   @apply flex items-start justify-between gap-3;
@@ -243,27 +259,33 @@ h1 {
 .routine-heading h3 {
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
+.routine-tags {
+  @apply mt-1;
+}
 .routine-exercises {
   @apply mt-1 text-sm text-slate-700;
+}
+.routine-meta span + span::before {
+  @apply mx-1 content-['·'];
 }
 .routine-meta {
   @apply mt-0.5 text-xs text-slate-500;
 }
 .up-next {
-  @apply mb-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
+  @apply mb-2 inline-flex rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
 }
 .routine-actions {
   @apply relative mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4;
 }
 .routine-actions a,
 .routine-actions button {
-  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold;
 }
 .routine-actions svg {
   @apply size-4;
 }
 .start-link {
-  @apply bg-indigo-600 text-white hover:bg-indigo-700;
+  @apply bg-ink text-white hover:bg-ink-strong;
 }
 .view-link {
   @apply border border-slate-200 text-slate-700 hover:bg-slate-50;
@@ -272,7 +294,7 @@ h1 {
   @apply relative ml-auto;
 }
 .routine-menu summary {
-  @apply grid size-10 cursor-pointer list-none place-items-center rounded-xl text-slate-500 hover:bg-slate-100;
+  @apply grid size-11 cursor-pointer list-none place-items-center rounded-xl text-slate-500 hover:bg-slate-100;
 }
 .routine-menu summary::-webkit-details-marker {
   @apply hidden;
@@ -285,7 +307,7 @@ h1 {
 }
 .routine-menu > div a,
 .routine-menu > div button {
-  @apply flex min-h-10 w-full justify-start rounded-lg px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50;
+  @apply flex min-h-(--size-control-sm) items-center w-full justify-start rounded-lg px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50;
 }
 @media (max-width: 520px) {
   .page-intro {

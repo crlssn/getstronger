@@ -74,7 +74,7 @@ const router: Router = createRouter({
     {
       beforeEnter: [auth],
       component: () => import('@/ui/workouts/StartWorkout.vue'),
-      meta: { title: 'Quick Workout' },
+      meta: { focusedShell: true, title: 'Quick Workout' },
       name: 'quick-workout',
       path: '/workouts/quick',
     },
@@ -95,7 +95,7 @@ const router: Router = createRouter({
     {
       beforeEnter: [auth],
       component: () => import('@/ui/workouts/StartWorkout.vue'),
-      meta: { title: '' },
+      meta: { focusedShell: true, title: '' },
       name: 'workout-routine',
       path: '/workouts/routine/:routine_id',
     },
