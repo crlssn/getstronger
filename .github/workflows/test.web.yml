@@ -46,6 +46,10 @@ jobs:
             exit 1
           fi
 
+      - name: Run unit tests
+        working-directory: ./web
+        run: npm run test:unit -- --run
+
       - name: Build the app
         working-directory: ./web
         run: npm run build

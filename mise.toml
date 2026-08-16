@@ -165,7 +165,7 @@ description = "Build and test the web application"
 dir = "web"
 run = [
     "npm run build",
-    # "npm run test:unit",
+    "npm run test:unit -- --run",
 ]
 
 [tasks."test:backend"]
