@@ -61,6 +61,11 @@ type PageToken struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+// The Update* methods built on these opts each issue a single statement keyed
+// by primary key. A single statement is atomic on its own and the predicate
+// limits the row count to 0 or 1, so none of them opens a transaction: there
+// would be nothing for the row-count guard to roll back. They run through
+// bobExec, which still joins an enclosing transaction when there is one.
 type updateOpt interface {
 	UpdateRoutineOpt | UpdateAuthOpt | UpdateExerciseOpt | UpdateWorkoutOpt | UpdateUserOpt
 }
