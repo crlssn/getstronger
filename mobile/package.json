@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@capacitor/android": "8.5.0",
+    "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.0",
-    "@capacitor/ios": "8.5.0"
+    "@capacitor/ios": "8.5.0",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.2"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.0"
