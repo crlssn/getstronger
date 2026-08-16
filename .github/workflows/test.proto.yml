@@ -16,6 +16,10 @@ on:
       - 'buf.gen.yaml'
       - 'package.json'
 
+concurrency:
+  group: test-proto-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   proto:
     if: github.event.pull_request.draft == false

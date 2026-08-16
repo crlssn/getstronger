@@ -10,6 +10,10 @@ on:
     paths:
       - 'database/migrations/**'
 
+concurrency:
+  group: test-database-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: write

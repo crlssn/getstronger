@@ -13,6 +13,10 @@ on:
     paths:
       - .github/workflows/*.yml
 
+concurrency:
+  group: test-workflows-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   workflows:
     if: github.event.pull_request.draft == false
