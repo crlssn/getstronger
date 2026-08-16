@@ -1,5 +1,5 @@
 import { type Client, createClient } from '@connectrpc/connect'
-import { auth, logger } from '@/http/interceptors'
+import { auth, logger, retryUnauthenticated } from '@/http/interceptors'
 import { FeedService } from '@/proto/api/v1/feed_service_pb'
 import { AuthService } from '@/proto/api/v1/auth_service_pb'
 import { UserService } from '@/proto/api/v1/user_service_pb'
@@ -15,7 +15,9 @@ const transport = createConnectTransport({
     // TODO: Include credentials only on refresh token and logout requests.
     return fetch(url, { ...options, credentials: 'include' })
   },
-  interceptors: [logger, auth],
+  // Interceptors run outermost first, so `auth` stays last: it stamps the
+  // current access token onto both the original call and any replay.
+  interceptors: [logger, retryUnauthenticated, auth],
 })
 
 export const authClient: Client<typeof AuthService> = createClient(AuthService, transport)
