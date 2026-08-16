@@ -10,9 +10,17 @@ const restSeconds = defineModel<number>('restSeconds', { required: true })
 
 const measurements = computed(() => [
   { value: ExerciseMetric.WEIGHT, label: t('common.weight'), unit: t('common.kg') },
-  { value: ExerciseMetric.REPS, label: t('common.reps'), unit: t('exercise.measurements.unitCount') },
+  {
+    value: ExerciseMetric.REPS,
+    label: t('common.reps'),
+    unit: t('exercise.measurements.unitCount'),
+  },
   { value: ExerciseMetric.DISTANCE, label: t('common.distance'), unit: 'km' },
-  { value: ExerciseMetric.TIME, label: t('common.time'), unit: t('exercise.measurements.unitMinSec') },
+  {
+    value: ExerciseMetric.TIME,
+    label: t('common.time'),
+    unit: t('exercise.measurements.unitMinSec'),
+  },
 ])
 
 const presets = computed(() => [
