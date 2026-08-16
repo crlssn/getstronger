@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CheckIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 import { listExercises } from '@/http/requests'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 import usePagination from '@/utils/usePagination'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -85,15 +88,15 @@ const submit = () => {
   <form class="routine-form" @submit.prevent="submit">
     <header class="form-intro">
       <div>
-        <p class="eyebrow">Routine builder</p>
-        <h1>Build your routine</h1>
-        <p>Name the session, then choose the exercises in it.</p>
+        <p class="eyebrow">{{ t('routine.form.eyebrow') }}</p>
+        <h1>{{ t('routine.form.title') }}</h1>
+        <p>{{ t('routine.form.intro') }}</p>
       </div>
-      <span class="selection-count">{{ selectedIds.length }} selected</span>
+      <span class="selection-count">{{ t('routine.form.selectedCount', { count: selectedIds.length }) }}</span>
     </header>
 
     <section class="form-card">
-      <label class="field-label" for="routine-name">Routine name</label>
+      <label class="field-label" for="routine-name">{{ t('routine.form.name') }}</label>
       <input
         id="routine-name"
         v-model="name"
@@ -101,28 +104,28 @@ const submit = () => {
         type="text"
         required
         autocomplete="off"
-        placeholder="e.g. Upper body strength"
+        :placeholder="t('routine.form.namePlaceholder')"
       />
     </section>
 
     <section class="exercise-card">
       <div class="exercise-toolbar">
         <div>
-          <h2>Exercises</h2>
-          <p>Select at least one exercise.</p>
+          <h2>{{ t('common.exercises') }}</h2>
+          <p>{{ t('routine.form.selectHelp') }}</p>
         </div>
         <label class="search-field">
           <MagnifyingGlassIcon />
           <input
             v-model="search"
             type="search"
-            placeholder="Search"
-            aria-label="Search exercises"
+            :placeholder="t('common.search')"
+            :aria-label="t('exercise.search')"
           />
         </label>
       </div>
 
-      <div v-if="loading" class="empty-row">Loading exercises…</div>
+      <div v-if="loading" class="empty-row">{{ t('exercise.loading') }}</div>
       <div v-else-if="filteredExercises.length" class="exercise-grid">
         <button
           v-for="exercise in filteredExercises"
@@ -143,22 +146,18 @@ const submit = () => {
         </button>
       </div>
       <div v-else class="empty-row">
-        {{
-          search
-            ? 'No exercises match your search.'
-            : 'Create an exercise before building a routine.'
-        }}
+        {{ search ? t('workout.noExerciseMatches') : t('routine.form.createFirst') }}
       </div>
 
       <button v-if="hasMorePages" class="load-more" type="button" @click="fetchExercises">
-        <PlusIcon /> Load more exercises
+        <PlusIcon /> {{ t('exercise.loadMore') }}
       </button>
     </section>
 
     <div class="form-actions">
-      <RouterLink to="/routines" class="cancel-link">Cancel</RouterLink>
+      <RouterLink to="/routines" class="cancel-link">{{ t('common.cancel') }}</RouterLink>
       <button class="save-button" type="submit" :disabled="!canSubmit">
-        {{ saving ? 'Saving…' : submitLabel }}
+        {{ saving ? t('training.planForm.saving') : submitLabel }}
       </button>
     </div>
   </form>

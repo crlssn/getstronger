@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { getRoutine, updateRoutine } from '@/http/requests'
 import { useAlertStore } from '@/stores/alerts'
 import RoutineForm from '@/ui/routines/RoutineForm.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -29,7 +31,7 @@ const onSave = async (updatedName: string, updatedExerciseIds: string[]) => {
     const response = await updateRoutine(route.params.id as string, updatedName, updatedExerciseIds)
     if (!response) return
 
-    alertStore.setSuccess('Routine updated')
+    alertStore.setSuccess(t('routine.form.updated'))
     await router.push(`/routines/${route.params.id}`)
   } finally {
     saving.value = false
@@ -42,11 +44,11 @@ const onSave = async (updatedName: string, updatedExerciseIds: string[]) => {
     v-if="loading"
     class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500"
   >
-    Loading routine…
+    {{ t('routine.loading') }}
   </div>
   <RoutineForm
     v-else
-    submit-label="Save changes"
+    :submit-label="t('training.planForm.saveChanges')"
     :initial-name="name"
     :initial-exercise-ids="exerciseIds"
     :saving="saving"

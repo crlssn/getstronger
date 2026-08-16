@@ -102,7 +102,7 @@ const makeUpNext = async (routineId: string) => {
         <h1>{{ t('training.heading') }}</h1>
         <p>{{ t('training.routinesDescription') }}</p>
       </div>
-      <RouterLink to="/routines/create" class="create-link"><PlusIcon /> New routine</RouterLink>
+      <RouterLink to="/routines/create" class="create-link"><PlusIcon /> {{ t('training.newRoutine') }}</RouterLink>
     </header>
 
     <TrainingTabs />
@@ -112,8 +112,8 @@ const makeUpNext = async (routineId: string) => {
       <input
         v-model="search"
         type="search"
-        placeholder="Search routines"
-        aria-label="Search routines"
+        :placeholder="t('training.searchRoutines')"
+        :aria-label="t('training.searchRoutines')"
       />
     </label>
 
@@ -125,34 +125,34 @@ const makeUpNext = async (routineId: string) => {
             <div class="routine-heading">
               <RouterLink :to="`/routines/${routine.id}`">
                 <span v-if="routine.id === dashboardStore.preferredRoutineId" class="up-next"
-                  >Up next</span
+                  >{{ t('home.upNext') }}</span
                 >
                 <h3>{{ routine.name }}</h3>
                 <p class="routine-exercises">{{ exerciseSummary(routine) }}</p>
                 <p class="routine-meta">
-                  {{ routine.exercises.length }} exercises · About
-                  {{ Math.max(30, routine.exercises.length * 8) }} min
+                  {{ t('home.exerciseCount', routine.exercises.length) }} ·
+                  {{ t('home.aboutMinutes', { count: Math.max(30, routine.exercises.length * 8) }) }}
                 </p>
               </RouterLink>
               <ChevronRightIcon />
             </div>
             <div class="routine-actions">
               <RouterLink :to="`/workouts/routine/${routine.id}`" class="start-link"
-                ><PlayIcon /> Start</RouterLink
+                ><PlayIcon /> {{ t('routine.list.start') }}</RouterLink
               >
               <RouterLink :to="`/routines/${routine.id}`" class="view-link"
-                >View routine</RouterLink
+                >{{ t('routine.list.view') }}</RouterLink
               >
               <details class="routine-menu">
-                <summary aria-label="Routine actions"><EllipsisHorizontalIcon /></summary>
+                <summary :aria-label="t('routine.list.actionsAria')"><EllipsisHorizontalIcon /></summary>
                 <div>
-                  <RouterLink :to="`/routines/${routine.id}/edit`">Edit routine</RouterLink>
+                  <RouterLink :to="`/routines/${routine.id}/edit`">{{ t('routine.list.edit') }}</RouterLink>
                   <button
                     v-if="routine.id !== dashboardStore.preferredRoutineId"
                     type="button"
                     @click="makeUpNext(routine.id)"
                   >
-                    Make up next
+                    {{ t('routine.makeUpNext') }}
                   </button>
                 </div>
               </details>
@@ -163,17 +163,17 @@ const makeUpNext = async (routineId: string) => {
     </template>
 
     <section v-else-if="isMounted" class="empty-state">
-      <h2>{{ search ? 'No matching routines' : 'No routines yet' }}</h2>
+      <h2>{{ search ? t('training.noMatchingRoutines') : t('training.noRoutines') }}</h2>
       <p>
-        {{ search ? 'Try another search.' : 'Create a routine to make your workouts repeatable.' }}
+        {{ search ? t('exercise.tryAnotherSearch') : t('routine.list.emptyBody') }}
       </p>
       <RouterLink v-if="!search" to="/routines/create" class="create-link"
-        ><PlusIcon /> Create routine</RouterLink
+        ><PlusIcon /> {{ t('home.createRoutine') }}</RouterLink
       >
     </section>
 
     <button v-if="hasMorePages" type="button" class="load-more" @click="fetchRoutines">
-      Load more routines
+      {{ t('routine.list.loadMore') }}
     </button>
   </div>
 </template>
