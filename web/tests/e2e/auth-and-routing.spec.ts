@@ -1,5 +1,6 @@
 import {
   allowRuntimeErrors,
+  boxOf,
   expect,
   expectAccessible,
   logIn,
@@ -128,6 +129,16 @@ test.describe('guest authentication and routing', () => {
       'Please check your inbox to reset your password',
     )
     await expect(page.getByLabel('Email address')).toHaveValue('')
+
+    // The alert sits below the header rather than on top of it, and its
+    // contents line up with the column the page content uses.
+    const header = await boxOf(page.locator('header.guest-header'))
+    const alert = await boxOf(page.getByRole('status'))
+    const alertIcon = await boxOf(page.locator('.alert-card-inner .status-icon'))
+    const heading = await boxOf(page.getByRole('heading', { name: 'Reset your password' }))
+
+    expect(alert.y).toBeGreaterThanOrEqual(header.y + header.height)
+    expect(Math.abs(alertIcon.x - heading.x)).toBeLessThan(2)
   })
 
   test('shows the not-found route', async ({ page }) => {

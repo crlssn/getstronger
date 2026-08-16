@@ -7,10 +7,6 @@ import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/
 const route = useRoute()
 const alertStore = useAlertStore()
 
-const props = defineProps<{
-  fixed?: boolean
-}>()
-
 watch(
   () => route.path,
   () => {
@@ -40,12 +36,10 @@ const alertStyle = computed(() => {
 
   return ''
 })
-
-const containerStyle = computed(() => (props.fixed ? 'fixed inset-x-0 top-16 z-50' : ''))
 </script>
 
 <template>
-  <div v-if="alertStore.alert" :class="containerStyle" class="alert-region full-width">
+  <div v-if="alertStore.alert" class="alert-region full-width">
     <div
       :class="alertStyle"
       :role="alertStore.alert.type === 'error' ? 'alert' : 'status'"
