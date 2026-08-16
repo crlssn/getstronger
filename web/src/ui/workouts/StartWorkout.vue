@@ -1181,7 +1181,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .workout-header {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  @apply sticky top-0 z-20 -mt-5 border-b border-slate-200 bg-white text-slate-950 lg:-mt-7;
+  @apply sticky z-20 -mt-5 border-b border-slate-200 bg-white text-slate-950 lg:-mt-7;
+  /* Below the status-bar scrim in the native WebView; zero in browsers. */
+  top: env(safe-area-inset-top);
 }
 .workout-header-inner {
   @apply mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2.5 sm:px-5 lg:px-8;
