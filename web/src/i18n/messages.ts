@@ -371,7 +371,7 @@ export const sv = {
     weight: 'Vikt',
     reps: 'Reps',
     volume: 'Volym',
-    duration: 'Längd',
+    duration: 'Tid',
     distance: 'Distans',
     time: 'Tid',
     next: 'Nästa',
