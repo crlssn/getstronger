@@ -5,12 +5,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { BoltIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
 import { useWorkoutStore } from '@/stores/workout'
-import {
-  playRestFinishedSound,
-  playRestGetReadySound,
-  shouldPlayRestGetReadySound,
-  unlockRestSound,
-} from '@/utils/restSound'
 import useActiveWorkout from '@/utils/useActiveWorkout'
 
 const route = useRoute()
@@ -21,9 +15,7 @@ const { savedHref, savedWorkout } = useActiveWorkout()
 
 const now = ref(Date.now())
 let timerTick: ReturnType<typeof setInterval> | undefined
-let audioContext: AudioContext | undefined
-let getReadySoundPlayedFor: number | undefined
-let finishedSoundPlayedFor: number | undefined
+let timerExpiryHandledFor: number | undefined
 
 const activeWorkoutId = computed(() => savedWorkout.value?.[0])
 const restTimerEndsAtMs = computed(() => {
@@ -61,49 +53,13 @@ const restFinalCountdown = computed(
   () => remainingSeconds.value > 0 && remainingSeconds.value <= 10,
 )
 
-function removeAudioUnlockListeners() {
-  window.removeEventListener('pointerdown', unlockAudio)
-  window.removeEventListener('keydown', unlockAudio)
-}
-
-function prepareAudio() {
-  try {
-    audioContext = audioContext ?? new AudioContext()
-    return audioContext
-  } catch {
-    audioContext = undefined
-    return undefined
-  }
-}
-
-function unlockAudio() {
-  const context = prepareAudio()
-  if (!context) return
-  void unlockRestSound(context).then((unlocked) => {
-    if (unlocked) removeAudioUnlockListeners()
-  })
-}
-
 const updateTimer = () => {
   now.value = Date.now()
   const endsAtMs = restTimerEndsAtMs.value
   if (!endsAtMs) return
 
-  if (shouldPlayRestGetReadySound(remainingSeconds.value, getReadySoundPlayedFor === endsAtMs)) {
-    const context = audioContext
-    if (context) {
-      getReadySoundPlayedFor = endsAtMs
-      void playRestGetReadySound(context).then((played) => {
-        if (!played && restTimerEndsAtMs.value === endsAtMs) {
-          getReadySoundPlayedFor = undefined
-        }
-      })
-    }
-  }
-
-  if (remainingSeconds.value > 0 || finishedSoundPlayedFor === endsAtMs) return
-  finishedSoundPlayedFor = endsAtMs
-  if (audioContext) void playRestFinishedSound(audioContext)
+  if (remainingSeconds.value > 0 || timerExpiryHandledFor === endsAtMs) return
+  timerExpiryHandledFor = endsAtMs
 
   const workoutId = activeWorkoutId.value
   if (workoutId && restTimerEndsAtMs.value === endsAtMs) {
@@ -115,25 +71,17 @@ const updateTimer = () => {
 }
 
 watch(restTimerEndsAtMs, (endsAtMs, previousEndsAtMs) => {
-  if (endsAtMs !== previousEndsAtMs) {
-    getReadySoundPlayedFor = undefined
-    finishedSoundPlayedFor = undefined
-  }
+  if (endsAtMs !== previousEndsAtMs) timerExpiryHandledFor = undefined
   updateTimer()
 })
 
 onMounted(() => {
-  window.addEventListener('pointerdown', unlockAudio)
-  window.addEventListener('keydown', unlockAudio)
   updateTimer()
   timerTick = setInterval(updateTimer, 1000)
 })
 
 onUnmounted(() => {
-  removeAudioUnlockListeners()
   if (timerTick) clearInterval(timerTick)
-  void audioContext?.close().catch(() => undefined)
-  audioContext = undefined
 })
 </script>
 
