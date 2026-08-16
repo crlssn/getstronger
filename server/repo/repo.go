@@ -662,7 +662,21 @@ func GetRoutineWithUserID(userID string) GetRoutineOpt {
 
 func GetRoutineWithExercises() GetRoutineOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectThenLoad.Routine.Exercises()
+		return models.SelectThenLoad.Routine.Exercises(stableExerciseOrder()...)
+	}
+}
+
+// stableExerciseOrder makes a routine's exercise load deterministic. The relationship table has no
+// position column, so without an ORDER BY Postgres is free to return the rows in whatever order the
+// chosen plan produces: any write to an exercise row moves it within the heap and silently reorders
+// the routine. Titles are not unique, so the ID breaks the tie.
+//
+// Routines that have an exercise_order value are re-sorted by it once loaded; this only fixes the
+// order of the exercises that value omits.
+func stableExerciseOrder() []bob.Mod[*dialect.SelectQuery] {
+	return []bob.Mod[*dialect.SelectQuery]{
+		sm.OrderBy(models.Exercises.Columns.Title).Asc(),
+		sm.OrderBy(models.Exercises.Columns.ID).Asc(),
 	}
 }
 
@@ -747,7 +761,7 @@ func ListRoutinesWithLimit(limit int) ListRoutineOpt {
 func ListRoutinesLoadExercises() ListRoutineOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectThenLoad.Routine.Exercises(),
+			models.SelectThenLoad.Routine.Exercises(stableExerciseOrder()...),
 		}, nil
 	}
 }

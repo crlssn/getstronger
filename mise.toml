@@ -5,7 +5,7 @@ buf = "1.50.0"
 go = "1.26.6"
 gofumpt = "0.10.0"
 golangci-lint = "2.12.2"
-node = "22.23.2"
+node = "24.19.0"
 "go:github.com/golang-migrate/migrate/v4/cmd/migrate" = {
     version = "v4.19.1",
     tags = "postgres",
@@ -25,6 +25,18 @@ node = "22.23.2"
 }
 
 [env]
+# mise APPENDS its tool directories to the end of PATH, so anything installed by
+# Homebrew or 'go install' shadows the versions pinned in [tools] above and the
+# tasks silently run the wrong tool. Observed on a developer machine: Node 26
+# instead of the pinned 22 for every web task, buf 1.72 instead of 1.50, and a
+# bobgen-psql v0.49 that rewrites every generated model under server/gen/.
+#
+# Putting the shims directory first resolves each tool to its pinned version.
+# It also fixes the tools a task invokes indirectly, which naming a binary
+# cannot: npm finds its matching node through PATH, not through its own path.
+# A shims directory that does not exist is simply ignored.
+PATH = "{{ env.MISE_DATA_DIR | default(value=env.HOME ~ '/.local/share/mise') }}/shims:{{ env.PATH }}"
+
 # Worktrees override the container names and ports below in mise.local.toml so
 # that parallel checkouts never share state. See 'mise run worktree:env'.
 DB_SSL_MODE = { default = "disable" }
@@ -77,15 +89,23 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Resolved through mise rather than PATH: mise appends its tool directories to
+# the END of PATH, so a 'go install'-ed migrate or bobgen-psql in ~/go/bin (or a
+# Homebrew one) shadows the versions pinned above. A mismatched bobgen silently
+# rewrites every file under server/gen/ in its own format. Same reasoning as
+# 'lint:backend'.
+migrate="$(mise which migrate)"
+bobgen="$(mise which bobgen-psql)"
+
 # bobgen must read the schema from the same database the migrations were just
 # applied to. Worktrees get their own container and port in .env, so the DSN is
 # built here and handed to bobgen through PSQL_DSN rather than being hardcoded
 # in database/bobgen.yaml. See 'mise run worktree:env'.
 dsn="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
 
-migrate -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose down --all
-migrate -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
-PSQL_DSN="$dsn" bobgen-psql -c "$DB_CONFIG_PATH"
+"$migrate" -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose down --all
+"$migrate" -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
+PSQL_DSN="$dsn" "$bobgen" -c "$DB_CONFIG_PATH"
 git apply --ignore-space-change database/bobgen-v0.50.0.patch
 '''
 
@@ -97,11 +117,14 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 
-# See the note in 'db:reset' on why the DSN is built here.
+# See the notes in 'db:reset' on why the binaries are resolved through mise and
+# why the DSN is built here.
+migrate="$(mise which migrate)"
+bobgen="$(mise which bobgen-psql)"
 dsn="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
 
-migrate -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
-PSQL_DSN="$dsn" bobgen-psql -c "$DB_CONFIG_PATH"
+"$migrate" -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
+PSQL_DSN="$dsn" "$bobgen" -c "$DB_CONFIG_PATH"
 git apply --ignore-space-change database/bobgen-v0.50.0.patch
 '''
 
@@ -109,7 +132,11 @@ git apply --ignore-space-change database/bobgen-v0.50.0.patch
 alias = "db_seed"
 description = "Seed the local database"
 run = '''
-go run server/testing/factory/seed/main.go \
+#!/usr/bin/env bash
+set -euo pipefail
+
+# See the note in 'db:reset' on why the binary is resolved through mise.
+"$(mise which go)" run server/testing/factory/seed/main.go \
   -email="$USER_EMAIL" \
   -password="$USER_PASSWORD" \
   -firstname="$USER_FIRSTNAME" \
