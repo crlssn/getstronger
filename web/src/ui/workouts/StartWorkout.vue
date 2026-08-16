@@ -951,11 +951,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               <strong>{{ entry.exercise.name }}</strong>
               <ExerciseTags compact :tags="entry.exercise.tags" />
               <small v-if="exerciseLoggedSetCount(entry.exercise.id)">
-                {{ exerciseLoggedSetCount(entry.exercise.id) }}
-                {{ exerciseLoggedSetCount(entry.exercise.id) === 1 ? 'set' : 'sets' }} logged
+                {{ t('workout.loggedSets', exerciseLoggedSetCount(entry.exercise.id)) }}
               </small>
               <small v-else-if="previousSet(entry.exercise.id, 0)">
-                Previous {{ previousSet(entry.exercise.id, 0)?.weight }}
+                {{ t('common.previous') }} {{ previousSet(entry.exercise.id, 0)?.weight }}
                 {{ weightUnitLabel(previousSet(entry.exercise.id, 0)?.weightUnit) }} ×
                 {{ previousSet(entry.exercise.id, 0)?.reps }}
               </small>
