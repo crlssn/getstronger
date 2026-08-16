@@ -1,0 +1,64 @@
+name: Change
+description: A feature, fix, or improvement with a stated problem and acceptance criteria.
+title: "<type>: <area>: <short imperative summary>"
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title convention: `feat|fix|test|chore|infra: web|server|mobile|infra|db: summary`.
+        Apply a `P1`/`P2`/`P3`, a `type:` and an `area:` label after opening.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: >
+        What is wrong or missing today, and why it matters. Describe the current
+        behaviour concretely — the screen, the package, the viewport, the failure.
+        State the consequence for a user or an operator, not just the defect.
+      placeholder: |
+        On a 390 × 844 viewport, the header, rest banner and tab bar leave roughly
+        half the screen for logging sets, and global navigation makes accidental
+        mid-workout navigation easy.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: >
+        The intended shape of the solution. Enough for someone else to start, without
+        pinning down decisions that are better made while implementing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: A checklist that makes "done" unambiguous.
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test coverage
+      description: Which tests should exist or change. Write "none" if genuinely not applicable.
+    validations:
+      required: false
+
+  - type: input
+    id: source
+    attributes:
+      label: Source
+      description: Where this came from — a design review, a user report, a PR discussion.
+      placeholder: Design review, 15 August 2026 (seeded local build, Swedish locale)
+    validations:
+      required: false

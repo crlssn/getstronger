@@ -1,0 +1,39 @@
+name: Bug
+description: Something behaves incorrectly and can be reproduced.
+title: "fix: <area>: <short imperative summary>"
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: The observed behaviour, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser or device, viewport, locale, and whether this is local, staging, or production.
+      placeholder: iOS Safari, 390 × 844, sv-SE, production
+    validations:
+      required: false
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots, or trace
+    validations:
+      required: false
