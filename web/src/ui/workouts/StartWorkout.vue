@@ -813,8 +813,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     novalidate
     @submit.prevent="onPrimaryAction"
   >
-    <!-- Two independent sticky layers, not one block: the header pins until the
-         rest bar reaches the top, then the bar rides over and covers it. -->
+    <!-- The focused shell keeps the session chrome to a single sticky line:
+         leave, identity, progress, and elapsed time share one row. -->
     <header class="workout-header">
       <div class="workout-header-inner">
         <button
@@ -825,16 +825,15 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         >
           <XMarkIcon />
         </button>
-        <div class="min-w-0">
-          <p class="eyebrow">{{ quickWorkout ? t('workout.quick') : t('workout.active') }}</p>
+        <div class="flex min-w-0 items-baseline gap-2">
           <h1>{{ routine?.name ?? t('workout.loading') }}</h1>
           <p class="session-progress">
-            {{ t('workout.completedExercises', completedExerciseCount) }} ·
-            {{ t('workout.loggedSets', loggedSetCount) }}
+            {{ completedExerciseCount }}/{{ routine?.exercises.length ?? 0 }} ·
+            {{ t('workout.setsCompact', loggedSetCount) }}
           </p>
         </div>
         <div class="elapsed">
-          <span>{{ t('workout.elapsed') }}</span>
+          <span class="sr-only">{{ t('workout.elapsed') }}</span>
           <strong>{{ elapsedLabel }}</strong>
         </div>
       </div>
@@ -1228,23 +1227,18 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 @reference '../../assets/base.css';
 
 .workout-shell {
-  @apply mx-auto max-w-3xl space-y-4 pb-28;
-}
-/* The timer and active-workout header are one piece of session chrome. The
-   shell's usual section gap belongs below the timer, not between these bars. */
-.workout-shell.resting > .workout-header {
-  margin-bottom: 0;
+  @apply mx-auto max-w-3xl space-y-4 pb-36;
 }
 /* The chrome spans the viewport while its contents stay aligned with the app. */
-/* Pins below the rest bar, so the bar covers it once you scroll. Opaque, or
-   scrolled content bleeds through and reads as passing over the header. */
+/* Opaque, or scrolled content bleeds through and reads as passing over the
+   header. */
 .workout-header {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   @apply sticky top-0 z-20 -mt-5 border-b border-slate-200 bg-white text-slate-950 lg:-mt-7;
 }
 .workout-header-inner {
-  @apply mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-3.5 sm:px-5 lg:px-8;
+  @apply mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2.5 sm:px-5 lg:px-8;
 }
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leave-workout {
@@ -1256,21 +1250,15 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
 }
-.workout-header .eyebrow {
-  @apply text-[0.65rem];
-}
 .workout-header h1 {
-  @apply truncate text-lg font-semibold tracking-tight text-slate-950;
+  @apply truncate text-base font-semibold tracking-tight text-slate-950;
 }
 .session-progress {
-  @apply mt-0.5 truncate text-xs text-slate-500;
+  @apply shrink-0 truncate text-xs text-slate-500;
 }
-/* Secondary to the rest countdown below it. */
+/* Secondary to the rest countdown. */
 .elapsed {
-  @apply grid shrink-0 justify-items-end gap-0.5;
-}
-.elapsed span {
-  @apply text-[0.6rem] font-semibold uppercase tracking-wider text-slate-400;
+  @apply grid shrink-0 justify-items-end;
 }
 .elapsed strong {
   @apply font-mono text-sm font-semibold leading-none tabular-nums text-slate-600;
