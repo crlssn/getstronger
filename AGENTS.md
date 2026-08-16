@@ -36,6 +36,27 @@ worktree. The local stack is not shared, so set it up before running anything.
 - After completing and verifying a valuable, self-contained change, commit it so the repository history records the progress.
 - Keep unrelated changes in separate commits, and do not commit incomplete or unverified work.
 
+## Reviewing the design
+
+- To see the app rather than reason about its markup, run `mise run screenshots`.
+  It reseeds the database and photographs every page at a phone-sized viewport
+  for the signed-out visitor and both seeded personas.
+- Start from `web/screenshots/manifest.json`. Every entry names the route, the
+  component that renders it, the images that show it one screenful at a time,
+  and the measurements taken on the page: horizontal overflow, tap targets under
+  44 px, text under 12 px, hard-clipped text, and WCAG A/AA violations. Read the
+  findings first to decide which images are worth opening.
+- After changing a component, re-photograph only what it affects with
+  `mise run screenshots:page <pattern>`, which matches page names and skips
+  reseeding.
+- To find out what a change moved rather than assuming, run
+  `mise run screenshots:diff`. It re-photographs against the previous run,
+  names the pages whose pixels changed, and writes a highlighted image of each
+  difference to `web/screenshots/changes/`. Use it to check that a style change
+  reached every page it should and no page it should not.
+- Add a page, or a state that is only reachable by interacting with a page, by
+  adding an entry to `web/tests/screenshots/catalogue.ts`.
+
 ## Implementing and testing functionality
 
 - Follow test-driven development when implementing changes: write or update a failing test first, then make the smallest implementation change needed to pass it, and refactor while keeping the test suite green. If TDD is not applicable (for example, documentation-only or purely exploratory work), state why before implementing.

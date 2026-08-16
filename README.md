@@ -345,3 +345,47 @@ mise run test:e2e:report
 ```
 
 Playwright starts isolated HTTP instances of the backend and web app on ports `18080` and `15173`, so it does not depend on or conflict with the normal local TLS services. The fixtures fail on browser console/page errors, failed requests, backend 5xx responses, and WCAG A/AA violations where accessibility assertions are applied. Failed tests retain their screenshot and trace under `web/test-results/`; the HTML report is written to `web/playwright-report/`.
+
+---
+
+## Mobile screenshots
+
+`mise run screenshots` reseeds the database and photographs every page of the app at a phone-sized viewport (390 × 844, retina density) for each seeded persona:
+
+```bash
+mise run screenshots
+```
+
+The images land in `web/screenshots/`, which Git ignores, one folder per audience:
+
+- `guest/` — the pages a signed-out visitor sees.
+- `active/` — Alex Morgan, the established account with a year of training.
+- `new/` — Sam Taylor, the freshly signed-up account with no data of its own.
+
+Each page is photographed one screenful at a time — `01-home-1.png`, `01-home-2.png`, and so on — up to four screens, so an endless feed never becomes a single unreadable strip and each image shows the sticky header and bottom navigation where a reader sees them. Set `SCREENSHOT_MAX_FOLDS` to capture more or fewer.
+
+A run rewrites the folder from scratch and finishes by publishing what it saw twice over. `manifest.json` maps every image to its route, the component that renders it, and the measurements taken on the page; `index.html` is a contact sheet of the same set:
+
+```bash
+mise run screenshots:open
+```
+
+The measurements are leads for a design review rather than assertions, and cover what a screenshot cannot show: horizontal overflow, tap targets under 44 pixels, text under 12 pixels, hard-clipped text, and WCAG A/AA violations from axe.
+
+Pages that need data the persona does not have — Sam has no workouts, and neither persona has a training plan until one is created — are recorded with a reason instead of being captured, so a missing screenshot is never a silent one. Detail pages find their identifiers by reading the links the app renders, so adding a page, or a state that is only reachable by interacting with a page such as the exercise picker, means adding an entry to `web/tests/screenshots/catalogue.ts`.
+
+After changing a component, re-photograph only the pages it affects. This form matches page names, skips reseeding, and leaves the rest of the set in place:
+
+```bash
+mise run screenshots:page routine
+```
+
+To find out what a change actually moved, compare a run against the one before it. The set is copied aside first, and every page is re-photographed and compared pixel by pixel:
+
+```bash
+mise run screenshots:diff
+```
+
+The run reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/changes/`. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does. This form deliberately leaves the database alone: the seed randomises names, so reseeding would move nearly every page and bury the change being looked at.
+
+Like the end-to-end suite, the run starts its own backend and web server — on ports `18280` and `15273` by default — so it neither depends on nor disturbs the local development services.
