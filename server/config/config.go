@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net"
 	"os"
 	"strings"
 )
@@ -21,6 +22,8 @@ func New() *Config {
 		Email: Email{
 			Provider:          EmailProvider(os.Getenv("EMAIL_PROVIDER")),
 			FromAddress:       os.Getenv("EMAIL_FROM_ADDRESS"),
+			SMTPHost:          os.Getenv("MAILHOG_SMTP_HOST"),
+			SMTPPort:          os.Getenv("MAILHOG_SMTP_PORT"),
 			ScalewayProjectID: os.Getenv("SCW_PROJECT_ID"),
 			ScalewayRegion:    os.Getenv("SCW_TEM_REGION"),
 			ScalewaySecretKey: os.Getenv("SCW_TEM_SECRET_KEY"),
@@ -79,9 +82,40 @@ func (s Server) HasCertificate() bool {
 type Email struct {
 	Provider          EmailProvider
 	FromAddress       string
+	SMTPHost          string
+	SMTPPort          string
 	ScalewayProjectID string
 	ScalewayRegion    string
 	ScalewaySecretKey string
+}
+
+// Where MailHog listens when nothing overrides it. Worktrees publish it on
+// their own port, which 'mise run worktree:env' writes to .env.
+const (
+	defaultSMTPHost = "localhost"
+	defaultSMTPPort = "1025"
+)
+
+// SMTPAddr is the address the local email provider delivers to.
+func (e Email) SMTPAddr() string {
+	host, port := e.SMTPHostPort()
+	return net.JoinHostPort(host, port)
+}
+
+// SMTPHostPort resolves the configured SMTP host and port, falling back to the
+// defaults when either is unset.
+func (e Email) SMTPHostPort() (string, string) {
+	host := e.SMTPHost
+	if host == "" {
+		host = defaultSMTPHost
+	}
+
+	port := e.SMTPPort
+	if port == "" {
+		port = defaultSMTPPort
+	}
+
+	return host, port
 }
 
 type EmailProvider string
