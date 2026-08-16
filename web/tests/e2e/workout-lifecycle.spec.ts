@@ -43,7 +43,11 @@ test.describe('quick workout lifecycle', () => {
     const note = uniqueName('E2E resumed workout')
     await page.goto('/workouts/quick')
 
-    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
+    // The focused shell takes over: global navigation is gone and the session
+    // chrome is a single line, leaving the viewport to the set rows.
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0)
+    const headerBox = await page.locator('.workout-header').boundingBox()
+    expect(headerBox?.height).toBeLessThanOrEqual(64)
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add exercise' })).toHaveCount(0)
     await expect(page.getByLabel('Workout note')).toHaveCount(0)
@@ -58,28 +62,51 @@ test.describe('quick workout lifecycle', () => {
     ).toBeDisabled()
     await page.getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true }).fill('8')
 
-    await expect(page.getByRole('region', { name: 'Rest timer' })).toBeVisible()
-    const initialTimer = await page.locator('.rest-banner p').innerText()
+    const restRegion = page.getByRole('region', { name: 'Rest timer' })
+    await expect(restRegion).toBeVisible()
+    const restCountdown = restRegion.locator('strong').first()
+    const initialTimer = await restCountdown.innerText()
+    expect(initialTimer).toMatch(/^\d{2}:\d{2}$/)
+    // The pill floats above the action dock and covers no editable field.
+    const pillBox = await restRegion.boundingBox()
+    const dockBox = await page.locator('.finish-dock').boundingBox()
+    const repsBox = await page
+      .getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true })
+      .boundingBox()
+    expect(pillBox!.y + pillBox!.height).toBeLessThanOrEqual(dockBox!.y)
+    expect(repsBox!.y + repsBox!.height).toBeLessThanOrEqual(pillBox!.y)
+
     await page.getByRole('button', { name: '+30 sec' }).click()
-    await expect(page.locator('.rest-banner p')).not.toHaveText(initialTimer)
-    const extendedTimer = await page.locator('.rest-banner p').innerText()
+    await expect(restCountdown).not.toHaveText(initialTimer)
+    const extendedTimer = await restCountdown.innerText()
 
     await page.getByLabel('Workout note').fill(note)
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     const leaveDialog = page.getByRole('dialog', { name: 'Leave workout?' })
     await expect(leaveDialog).toBeVisible()
-    await leaveDialog.getByRole('button', { name: 'Save & leave' }).click()
+    await leaveDialog.getByRole('button', { name: 'Stay' }).click()
+    await expect(leaveDialog).toHaveCount(0)
+    await expect(page).toHaveURL(/\/workouts\/quick$/)
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Leave workout?' }).click()
+    await page
+      .getByRole('dialog', { name: 'Leave workout?' })
+      .getByRole('button', { name: 'Save & leave' })
+      .click()
 
     await expect(page).toHaveURL(/\/workout$/)
+    // Leaving the session hands the global navigation back.
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
     await page.goto('/home')
     const workoutNavigation = page.locator('.bottom-nav').getByRole('link', { name: 'Workout' })
     await expect(workoutNavigation.locator('.timer-badge')).toHaveText(/^\d+:\d{2}$/)
     await page.waitForTimeout(1100)
     await page.getByRole('link', { name: /Resume workout/ }).click()
-    await expect(page.getByRole('region', { name: 'Rest timer' })).toBeVisible()
-    await expect(page.locator('.rest-banner p')).not.toHaveText(extendedTimer)
+    await expect(restRegion).toBeVisible()
+    await expect(restCountdown).not.toHaveText(extendedTimer)
     await page.getByRole('button', { name: 'Skip', exact: true }).click()
-    await expect(page.getByRole('region', { name: 'Rest timer' })).toHaveCount(0)
+    await expect(restRegion).toHaveCount(0)
     await page.goto('/home')
     await expect(workoutNavigation.locator('.timer-badge')).toHaveText(/^\d+m \d{2}s$/)
     await workoutNavigation.click()
@@ -90,6 +117,14 @@ test.describe('quick workout lifecycle', () => {
       page.getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true }),
     ).toHaveValue('8')
     await expect(page.getByLabel('Workout note')).toHaveValue(note)
+
+    // A completed set stays correctable in place.
+    const weightInput = page.getByRole('textbox', {
+      name: `${firstExercise} set 1 weight`,
+      exact: true,
+    })
+    await weightInput.fill('26')
+    await expect(weightInput).toHaveValue('26')
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Add exercise' }).click()
@@ -110,6 +145,35 @@ test.describe('quick workout lifecycle', () => {
     await expect(page.getByText(note, { exact: true })).toBeVisible()
     await expect(page.getByText(firstExercise, { exact: true })).toBeVisible()
     await expect(page.getByText('1 exercise', { exact: true })).toBeVisible()
+    await expect(page.getByText(/26\s*kg/)).toBeVisible()
+  })
+
+  test('promotes previous-session values into the set rows @mutation', async ({ page }) => {
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+    await logFirstSet(page, exercise, '25', '8')
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+    await page.goto('/workouts/quick')
+    await page.getByRole('button', { name: 'Choose exercise' }).click()
+    const picker = page.getByRole('dialog', { name: 'Add exercise' })
+    await picker.getByRole('searchbox').fill(exercise)
+    await picker.locator('.exercise-options button').first().click()
+
+    const firstRow = page.locator('.set-row').first()
+    await expect(firstRow.locator('.previous-value')).toContainText('25')
+    const weight = page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
+    // Focusing an empty field offers the previous value without retyping.
+    await weight.focus()
+    await expect(weight).toHaveValue('25')
+
+    await page.getByRole('textbox', { name: `${exercise} set 1 Reps`, exact: true }).fill('8')
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText(/25\s*kg/)).toBeVisible()
   })
 
   test('discards local progress without creating a workout @mutation', async ({ page }) => {
