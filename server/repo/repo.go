@@ -236,19 +236,17 @@ func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 		return fmt.Errorf("auth update columns: %w", err)
 	}
 
-	return r.NewTx(ctx, func(tx Tx) error {
-		mods := append(cols.updateMods(), um.Where(models.Auths.Columns.ID.EQ(psql.Arg(authID))))
-		rows, rowsErr := models.Auths.Update(mods...).Exec(ctx, tx.bobExec())
-		if rowsErr != nil {
-			return fmt.Errorf("auth update: %w", rowsErr)
-		}
+	mods := append(cols.updateMods(), um.Where(models.Auths.Columns.ID.EQ(psql.Arg(authID))))
+	rows, err := models.Auths.Update(mods...).Exec(ctx, r.bobExec())
+	if err != nil {
+		return fmt.Errorf("auth update: %w", err)
+	}
 
-		if rows != 1 {
-			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
-		}
+	if rows != 1 {
+		return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+	}
 
-		return nil
-	})
+	return nil
 }
 
 func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
@@ -295,6 +293,33 @@ func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User
 	}
 
 	return user, nil
+}
+
+type UpdateUserOpt func() (columns, error)
+
+func UpdateUserWeightUnit(unit string) UpdateUserOpt {
+	return func() (columns, error) {
+		return columns{models.Users.Columns.WeightUnit.Name(): string(weightunit.Normalize(unit))}, nil
+	}
+}
+
+func (r *repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+	cols, err := updateColumnsFromOpts(opts)
+	if err != nil {
+		return fmt.Errorf("user update columns: %w", err)
+	}
+
+	mods := append(cols.updateMods(), models.UpdateWhere.Users.ID.EQ(uuidFromString(userID)))
+	rows, err := models.Users.Update(mods...).Exec(ctx, r.bobExec())
+	if err != nil {
+		return fmt.Errorf("user update: %w", err)
+	}
+
+	if rows != 1 {
+		return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+	}
+
+	return nil
 }
 
 type CreateExerciseParams struct {
@@ -527,19 +552,17 @@ func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...Up
 		return fmt.Errorf("exercise update columns: %w", err)
 	}
 
-	return r.NewTx(ctx, func(tx Tx) error {
-		mods := append(cols.updateMods(), models.UpdateWhere.Exercises.ID.EQ(uuidFromString(exerciseID)))
-		rows, rowsErr := models.Exercises.Update(mods...).Exec(ctx, tx.bobExec())
-		if rowsErr != nil {
-			return fmt.Errorf("exercise update: %w", err)
-		}
+	mods := append(cols.updateMods(), models.UpdateWhere.Exercises.ID.EQ(uuidFromString(exerciseID)))
+	rows, err := models.Exercises.Update(mods...).Exec(ctx, r.bobExec())
+	if err != nil {
+		return fmt.Errorf("exercise update: %w", err)
+	}
 
-		if rows > 1 {
-			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
-		}
+	if rows > 1 {
+		return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+	}
 
-		return nil
-	})
+	return nil
 }
 
 type CreateRoutineParams struct {
@@ -772,19 +795,17 @@ func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 		return fmt.Errorf("routine update columns: %w", err)
 	}
 
-	return r.NewTx(ctx, func(tx Tx) error {
-		mods := append(cols.updateMods(), models.UpdateWhere.Routines.ID.EQ(uuidFromString(routineID)))
-		rows, rowsErr := models.Routines.Update(mods...).Exec(ctx, tx.bobExec())
-		if rowsErr != nil {
-			return fmt.Errorf("routine update: %w", rowsErr)
-		}
+	mods := append(cols.updateMods(), models.UpdateWhere.Routines.ID.EQ(uuidFromString(routineID)))
+	rows, err := models.Routines.Update(mods...).Exec(ctx, r.bobExec())
+	if err != nil {
+		return fmt.Errorf("routine update: %w", err)
+	}
 
-		if rows > 1 {
-			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
-		}
+	if rows > 1 {
+		return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+	}
 
-		return nil
-	})
+	return nil
 }
 
 func (r *repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
@@ -1722,19 +1743,17 @@ func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 		return fmt.Errorf("workout update columns: %w", err)
 	}
 
-	return r.NewTx(ctx, func(tx Tx) error {
-		mods := append(cols.updateMods(), models.UpdateWhere.Workouts.ID.EQ(uuidFromString(workoutID)))
-		rows, rowsErr := models.Workouts.Update(mods...).Exec(ctx, tx.bobExec())
-		if rowsErr != nil {
-			return fmt.Errorf("workout update: %w", err)
-		}
+	mods := append(cols.updateMods(), models.UpdateWhere.Workouts.ID.EQ(uuidFromString(workoutID)))
+	rows, err := models.Workouts.Update(mods...).Exec(ctx, r.bobExec())
+	if err != nil {
+		return fmt.Errorf("workout update: %w", err)
+	}
 
-		if rows > 1 {
-			return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
-		}
+	if rows > 1 {
+		return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+	}
 
-		return nil
-	})
+	return nil
 }
 
 type UpdateWorkoutSetsParams struct {

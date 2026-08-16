@@ -908,6 +908,25 @@ func (mr *MockRepoMockRecorder) UpdateRoutine(ctx, routineID any, opts ...any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutine", reflect.TypeOf((*MockRepo)(nil).UpdateRoutine), varargs...)
 }
 
+// UpdateUser mocks base method.
+func (m *MockRepo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, userID}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateUser", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockRepoMockRecorder) UpdateUser(ctx, userID any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, userID}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockRepo)(nil).UpdateUser), varargs...)
+}
+
 // UpdateWorkout mocks base method.
 func (m *MockRepo) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
 	m.ctrl.T.Helper()
@@ -1842,6 +1861,25 @@ func (mr *MockTxMockRecorder) UpdateRoutine(ctx, routineID any, opts ...any) *go
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, routineID}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutine", reflect.TypeOf((*MockTx)(nil).UpdateRoutine), varargs...)
+}
+
+// UpdateUser mocks base method.
+func (m *MockTx) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, userID}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateUser", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockTxMockRecorder) UpdateUser(ctx, userID any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, userID}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockTx)(nil).UpdateUser), varargs...)
 }
 
 // UpdateWorkout mocks base method.
@@ -2808,6 +2846,25 @@ func (mr *MockmethodsMockRecorder) UpdateRoutine(ctx, routineID any, opts ...any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutine", reflect.TypeOf((*Mockmethods)(nil).UpdateRoutine), varargs...)
 }
 
+// UpdateUser mocks base method.
+func (m *Mockmethods) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, userID}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateUser", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockmethodsMockRecorder) UpdateUser(ctx, userID any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, userID}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*Mockmethods)(nil).UpdateUser), varargs...)
+}
+
 // UpdateWorkout mocks base method.
 func (m *Mockmethods) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
 	m.ctrl.T.Helper()
@@ -3400,6 +3457,25 @@ func (m *MockuserMethods) Unfollow(ctx context.Context, p UnfollowParams) error 
 func (mr *MockuserMethodsMockRecorder) Unfollow(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unfollow", reflect.TypeOf((*MockuserMethods)(nil).Unfollow), ctx, p)
+}
+
+// UpdateUser mocks base method.
+func (m *MockuserMethods) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, userID}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateUser", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockuserMethodsMockRecorder) UpdateUser(ctx, userID any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, userID}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockuserMethods)(nil).UpdateUser), varargs...)
 }
 
 // MocktraceMethods is a mock of traceMethods interface.

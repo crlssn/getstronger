@@ -1,5 +1,8 @@
+# Paths are matched from the repository root and a '*' does not cross a '/',
+# so patterns for files that live in any package need the '**/' prefix. Without
+# it the generated mocks counted as thousands of uncovered lines.
 ignore:
-  - "*_mock.go"
-  - "*_test.go"
+  - "**/*_mock.go"
+  - "**/*_test.go"
   - "server/gen"
   - "web/src/proto"

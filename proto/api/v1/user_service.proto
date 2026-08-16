@@ -26,6 +26,9 @@ service UserService {
   rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse) {
     option (auth) = true;
   }
+  rpc UpdateUserWeightUnit (UpdateUserWeightUnitRequest) returns (UpdateUserWeightUnitResponse) {
+    option (auth) = true;
+  }
 }
 
 message GetUserRequest {
@@ -66,4 +69,14 @@ message SearchUsersRequest {
 message SearchUsersResponse {
   repeated User users = 1;
   PaginationResponse pagination = 2;
+}
+
+message UpdateUserWeightUnitRequest {
+  WeightUnit weight_unit = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+message UpdateUserWeightUnitResponse {
+  User user = 1;
 }

@@ -1,5 +1,6 @@
 import {
   allowRuntimeErrors,
+  boxOf,
   expect,
   logIn,
   logInAs,
@@ -146,6 +147,18 @@ test.describe('quick workout lifecycle', () => {
     await expect(page.getByText(firstExercise, { exact: true })).toBeVisible()
     await expect(page.getByText('1 exercise', { exact: true })).toBeVisible()
     await expect(page.getByText(/26\s*kg/)).toBeVisible()
+
+    // The save confirmation spans the viewport rather than sitting inset.
+    await expect(page.getByRole('status')).toContainText('Workout saved')
+    const notificationBox = await boxOf(page.locator('.alert-region'))
+    expect(notificationBox.x).toBe(0)
+    expect(notificationBox.width).toBe(390)
+
+    // Finishing a workout marks the current week complete on the home streak.
+    await page.goto('/home')
+    const currentWeek = page.locator('.week-block.current.complete')
+    await expect(currentWeek.locator('svg')).toBeVisible()
+    await expect(currentWeek.locator('.week-workout-count')).toHaveText(/^(?:[2-8]|9\+)$/)
   })
 
   test('promotes previous-session values into the set rows @mutation', async ({ page }) => {
@@ -224,78 +237,141 @@ test.describe('quick workout lifecycle', () => {
 })
 
 test.describe('weight units', () => {
-  test('cascades unit changes and preserves each entered unit in workout and PB views @mutation', async ({
+  test('changing the profile preference sets a static suffix, keeps history correct, and persists across sign-in @mutation', async ({
     page,
   }) => {
     await logInAs(page, 'active@getstronger.test', 'password123')
+
+    // Weight unit is a profile preference, not a per-set choice: a set row
+    // shows a static suffix, not a toggle.
     await page.goto('/workouts/quick')
-    const exercise = await addFirstExercise(page)
-    const weight = page.getByRole('textbox', {
-      name: `${exercise} set 1 weight`,
-      exact: true,
-    })
-    const unit = page.getByRole('group', { name: `${exercise} set 1 weight unit` })
+    let exercise = await addFirstExercise(page)
+    let weightEntry = page.locator('.weight-entry').first()
+    await expect(weightEntry.locator('.weight-unit-suffix')).toHaveText('kg')
+    await expect(weightEntry.getByRole('button')).toHaveCount(0)
+    await expect(page.getByRole('group', { name: /weight unit/ })).toHaveCount(0)
 
-    await expect(unit.getByRole('button', { name: 'kg' })).toHaveAttribute('aria-pressed', 'true')
-    await weight.fill('45.36')
+    await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('60')
     await page.getByLabel(`${exercise} set 1 Reps`).fill('8')
-    const secondWeight = page.getByRole('textbox', {
-      name: `${exercise} set 2 weight`,
-      exact: true,
-    })
-    const secondUnit = page.getByRole('group', { name: `${exercise} set 2 weight unit` })
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText(/60\s*kg/)).toBeVisible()
 
-    await unit.getByRole('button', { name: 'lbs' }).click()
-    await expect(weight).toHaveValue('100')
-    await expect(secondUnit.getByRole('button', { name: 'lbs' })).toHaveAttribute(
+    // Switch the preference from profile settings.
+    await page.goto('/profile')
+    const unit = page.getByRole('group', { name: 'Preferred weight unit' })
+    await expect(unit.getByRole('button', { name: 'Kilograms' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-
-    await secondWeight.fill('110')
-    await page.getByLabel(`${exercise} set 2 Reps`).fill('6')
-    const thirdUnit = page.getByRole('group', { name: `${exercise} set 3 weight unit` })
-    await expect(thirdUnit.getByRole('button', { name: 'lbs' })).toHaveAttribute(
+    await unit.getByRole('button', { name: 'Pounds' }).click()
+    await expect(unit.getByRole('button', { name: 'Pounds' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
+    await expect(page.getByRole('status')).toContainText('Weight unit updated')
 
-    await secondUnit.getByRole('button', { name: 'kg' }).click()
-    await expect(secondWeight).toHaveValue('49.9')
-    await expect(unit.getByRole('button', { name: 'lbs' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(thirdUnit.getByRole('button', { name: 'kg' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
+    // New set inputs pick up the new preference as a static suffix.
+    await page.goto('/workouts/quick')
+    exercise = await addFirstExercise(page)
+    weightEntry = page.locator('.weight-entry').first()
+    await expect(weightEntry.locator('.weight-unit-suffix')).toHaveText('lbs')
+
     // Heavier than anything seeded so this set becomes the exercise's personal
     // best and the records view has to render it back in the unit it was
     // entered in.
-    await page.getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true }).fill('150')
-    await page.getByLabel(`${exercise} set 3 Reps`).fill('5')
-    await thirdUnit.getByRole('button', { name: 'lbs' }).click()
-    await expect(
-      page.getByRole('textbox', { name: `${exercise} set 3 weight`, exact: true }),
-    ).toHaveValue('330.69')
-
+    await page
+      .getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
+      .fill('330.69')
+    await page.getByLabel(`${exercise} set 1 Reps`).fill('5')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByRole('status')).toContainText('Workout saved')
-    const notificationBox = await page.locator('.alert-region').boundingBox()
-    expect(notificationBox?.x).toBe(0)
-    expect(notificationBox?.width).toBe(390)
-    await expect(page.getByText(/100\s*lbs/)).toBeVisible()
-    await expect(page.getByText(/49\.9\s*kg/)).toBeVisible()
     await expect(page.getByText(/330\.69\s*lbs/)).toBeVisible()
 
     await page.goto('/progress')
     await expect(page.locator('.record-value').filter({ hasText: /330\.69\s*lbs/ })).toBeVisible()
 
-    await page.goto('/home')
-    const currentWeek = page.locator('.week-block.current.complete')
-    await expect(currentWeek.locator('svg')).toBeVisible()
-    await expect(currentWeek.locator('.week-workout-count')).toHaveText(/^(?:[2-8]|9\+)$/)
+    // Switching back to kilograms must not rewrite the set logged in pounds:
+    // historical display stays correct even after the preference changes.
+    await page.goto('/profile')
+    const kgAgain = page.getByRole('group', { name: 'Preferred weight unit' })
+    await kgAgain.getByRole('button', { name: 'Kilograms' }).click()
+    await expect(kgAgain.getByRole('button', { name: 'Kilograms' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await page.goto('/progress')
+    await expect(page.locator('.record-value').filter({ hasText: /330\.69\s*lbs/ })).toBeVisible()
+
+    await page.goto('/workouts/quick')
+    exercise = await addFirstExercise(page)
+    weightEntry = page.locator('.weight-entry').first()
+    await expect(weightEntry.locator('.weight-unit-suffix')).toHaveText('kg')
+    await page.getByRole('button', { name: 'Leave workout?' }).click()
+    await page.getByRole('button', { name: 'Discard workout' }).click()
+    await page.getByRole('button', { name: 'Discard workout' }).click()
+
+    // The preference is a signed-in server value, not device-local state: it
+    // survives a fresh sign-in, not just a reload of the current session.
+    await page.goto('/logout')
+    await logInAs(page, 'active@getstronger.test', 'password123')
+    await page.goto('/profile')
+    await expect(
+      page.getByRole('group', { name: 'Preferred weight unit' }).getByRole('button', {
+        name: 'Kilograms',
+      }),
+    ).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  // A draft outlives the page: "Save & leave" keeps it in local storage, so the
+  // preference can change before the athlete returns to finish the workout.
+  test('converts an in-progress draft when the preference changes mid-workout @mutation', async ({
+    page,
+  }) => {
+    await logInAs(page, 'active@getstronger.test', 'password123')
+
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+    const weight = page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
+    await weight.fill('100')
+    await page.getByLabel(`${exercise} set 1 Reps`).fill('5')
+
+    await page.getByRole('button', { name: 'Leave workout?' }).click()
+    await page.getByRole('button', { name: 'Save & leave' }).click()
+
+    await page.goto('/profile')
+    await page
+      .getByRole('group', { name: 'Preferred weight unit' })
+      .getByRole('button', { name: 'Pounds' })
+      .click()
+    await expect(page.getByRole('status')).toContainText('Weight unit updated')
+
+    // 100 kg is the same weight as 220.46 lb. The row must never show the old
+    // number beside the new unit, or finishing saves a weight nobody entered.
+    await page.goto('/workouts/quick')
+    await expect(page.locator('.weight-entry .weight-unit-suffix').first()).toHaveText('lbs')
+    await expect(
+      page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }),
+    ).toHaveValue('220.46')
+
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText(/220\.46\s*lbs/)).toBeVisible()
+
+    // Restore the seeded default so the preference does not leak into the
+    // tests that follow.
+    await page.goto('/profile')
+    await page
+      .getByRole('group', { name: 'Preferred weight unit' })
+      .getByRole('button', { name: 'Kilograms' })
+      .click()
+    await expect(page.getByRole('status')).toContainText('Weight unit updated')
   })
 })
 

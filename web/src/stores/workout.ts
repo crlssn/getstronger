@@ -150,41 +150,32 @@ export const useWorkoutStore = defineStore(
       }
     }
 
-    const ensureWeightUnits = (routineID: RoutineID, weightUnit: WeightUnit) => {
+    // The weight unit is a profile preference rather than a per-set choice, so
+    // a draft saved under an earlier preference is realigned to the current one
+    // here. Values are converted so the number keeps meaning the same weight as
+    // what was originally entered. A set carrying no unit at all predates the
+    // field, and its source is unknown, so it is only tagged.
+    const syncWeightUnits = (routineID: RoutineID, weightUnit: WeightUnit) => {
       const workout = workouts.value[routineID]
       if (!workout?.exerciseSets) return
 
+      const target = normalizeWeightUnit(weightUnit)
       Object.values(workout.exerciseSets).forEach((sets) => {
         sets.forEach((set) => {
-          if (!set.weightUnit) set.weightUnit = weightUnit
+          if (!set.weightUnit) {
+            set.weightUnit = target
+            return
+          }
+
+          const current = normalizeWeightUnit(set.weightUnit)
+          if (current === target) return
+
+          const weight = set.weight
+          if (typeof weight === 'number' && !Number.isNaN(weight)) {
+            set.weight = convertWeight(weight, current, target)
+          }
+          set.weightUnit = target
         })
-      })
-    }
-
-    const changeWeightUnitFrom = (
-      routineID: RoutineID,
-      exerciseIDs: ExerciseID[],
-      exerciseID: ExerciseID,
-      setIndex: number,
-      weightUnit: WeightUnit,
-    ) => {
-      const firstExerciseIndex = exerciseIDs.indexOf(exerciseID)
-      if (firstExerciseIndex < 0) return
-
-      const nextUnit = normalizeWeightUnit(weightUnit)
-      exerciseIDs.slice(firstExerciseIndex).forEach((currentExerciseID, exerciseOffset) => {
-        const firstSetIndex = exerciseOffset === 0 ? setIndex : 0
-        getSets(routineID, currentExerciseID)
-          .slice(firstSetIndex)
-          .forEach((set) => {
-            const previousUnit = normalizeWeightUnit(set.weightUnit)
-            if (previousUnit === nextUnit) return
-            const weight = set.weight
-            if (typeof weight === 'number' && !Number.isNaN(weight)) {
-              set.weight = convertWeight(weight, previousUnit, nextUnit)
-            }
-            set.weightUnit = nextUnit
-          })
       })
     }
 
@@ -212,7 +203,6 @@ export const useWorkoutStore = defineStore(
       addEmptySet,
       addEmptySetIfNone,
       addWorkoutExercise,
-      changeWeightUnitFrom,
       deleteSet,
       getAddedExercises,
       getAllSets,
@@ -222,7 +212,7 @@ export const useWorkoutStore = defineStore(
       getRestTimer,
       getSets,
       getStartedAt,
-      ensureWeightUnits,
+      syncWeightUnits,
       initialiseWorkout,
       removeWorkout,
       startQuickWorkoutWithExercise,

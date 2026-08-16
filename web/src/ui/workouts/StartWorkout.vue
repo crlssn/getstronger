@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  ExerciseSetsSchema,
-  WeightUnit,
-  type Exercise,
-  type ExerciseSets,
-} from '@/proto/api/v1/shared_pb'
+import { ExerciseSetsSchema, type Exercise, type ExerciseSets } from '@/proto/api/v1/shared_pb'
 import { RoutineSchema, type Routine } from '@/proto/api/v1/routine_service_pb'
 import type { Set } from '@/types/workout'
 
@@ -35,6 +30,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { useStreakStore } from '@/stores/streak'
 import { useActivityStore } from '@/stores/activity'
 import { useAuthStore } from '@/stores/auth'
+import { usePreferencesStore } from '@/stores/preferences'
 import {
   createWorkout,
   getExercise,
@@ -83,9 +79,10 @@ const exerciseOptions = ref<Exercise[]>([])
 const exerciseSearch = ref('')
 const exercisePageToken = ref<Uint8Array>(new Uint8Array(0))
 const exerciseCard = ref<HTMLElement | null>(null)
-const defaultWeightUnit = ref(WeightUnit.KILOGRAMS)
 
 const authStore = useAuthStore()
+const preferencesStore = usePreferencesStore()
+const defaultWeightUnit = ref(preferencesStore.weightUnit)
 const workoutStore = useWorkoutStore()
 const dashboardStore = useDashboardStore()
 const alertStore = useAlertStore()
@@ -100,8 +97,11 @@ let restInterval: ReturnType<typeof setInterval> | undefined
 
 onMounted(async () => {
   const userResponse = await getCurrentUser(authStore.userId)
-  defaultWeightUnit.value = normalizeWeightUnit(userResponse?.user?.weightUnit)
-  workoutStore.ensureWeightUnits(routineID, defaultWeightUnit.value)
+  if (userResponse?.user) {
+    defaultWeightUnit.value = normalizeWeightUnit(userResponse.user.weightUnit)
+    preferencesStore.setWeightUnit(userResponse.user.weightUnit)
+  }
+  workoutStore.syncWeightUnits(routineID, defaultWeightUnit.value)
   await initializeRoutine()
   elapsedSeconds.value = Math.max(
     0,
@@ -405,7 +405,7 @@ const onSetInput = (exerciseID: string, set: Set, index: number) => {
     routineID,
     exerciseID,
     exerciseByID(exerciseID)?.metrics,
-    normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
+    defaultWeightUnit.value,
   )
   syncSetCompletion(exerciseID, set, index)
 }
@@ -424,11 +424,15 @@ const copyPreviousValue = async (
 
   const previousWeight = previous.weight
   if (field === 'weight' && typeof previousWeight === 'number' && !Number.isNaN(previousWeight)) {
+    // The previous set may have been logged under an older preference, so the
+    // value is converted. Write the unit alongside it: a weight and the unit it
+    // is expressed in must never be set independently.
     set.weight = convertWeight(
       previousWeight,
       normalizeWeightUnit(previous.weightUnit),
-      normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
+      defaultWeightUnit.value,
     )
+    set.weightUnit = defaultWeightUnit.value
   } else {
     set[field] = previous[field]
   }
@@ -436,32 +440,11 @@ const copyPreviousValue = async (
     routineID,
     exerciseId,
     exerciseByID(exerciseId)?.metrics,
-    normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
+    defaultWeightUnit.value,
   )
   syncSetCompletion(exerciseId, set, index)
   await nextTick()
   ;(event.target as HTMLInputElement).select()
-}
-
-const changeSetWeightUnit = (
-  exerciseID: string,
-  set: Set,
-  index: number,
-  weightUnit: WeightUnit,
-) => {
-  const previousUnit = normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value)
-  const nextUnit = normalizeWeightUnit(weightUnit)
-  if (previousUnit === nextUnit) return
-
-  workoutStore.changeWeightUnitFrom(
-    routineID,
-    (routine.value?.exercises ?? []).map((exercise) => exercise.id),
-    exerciseID,
-    index,
-    nextUnit,
-  )
-  defaultWeightUnit.value = nextUnit
-  onSetInput(exerciseID, set, index)
 }
 
 const deleteWorkoutSet = (exerciseID: string, index: number) => {
@@ -918,34 +901,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                   @input="onSetInput(currentExercise.id, set, setIndex)"
                   @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'weight')"
                 />
-                <div
-                  class="weight-unit-picker"
-                  role="group"
-                  :aria-label="`${currentExercise.name} set ${setIndex + 1} weight unit`"
-                >
-                  <button
-                    type="button"
-                    :aria-pressed="normalizeWeightUnit(set.weightUnit) === WeightUnit.KILOGRAMS"
-                    :class="{
-                      active: normalizeWeightUnit(set.weightUnit) === WeightUnit.KILOGRAMS,
-                    }"
-                    @click="
-                      changeSetWeightUnit(currentExercise.id, set, setIndex, WeightUnit.KILOGRAMS)
-                    "
-                  >
-                    kg
-                  </button>
-                  <button
-                    type="button"
-                    :aria-pressed="normalizeWeightUnit(set.weightUnit) === WeightUnit.POUNDS"
-                    :class="{ active: normalizeWeightUnit(set.weightUnit) === WeightUnit.POUNDS }"
-                    @click="
-                      changeSetWeightUnit(currentExercise.id, set, setIndex, WeightUnit.POUNDS)
-                    "
-                  >
-                    lbs
-                  </button>
-                </div>
+                <span class="weight-unit-suffix">{{ weightUnitLabel(defaultWeightUnit) }}</span>
               </div>
               <input
                 v-else
@@ -1459,17 +1415,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .weight-entry > input {
   @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
 }
-.weight-unit-picker {
-  @apply grid grid-cols-2 border-l border-slate-200 bg-slate-50;
-}
-.weight-unit-picker button {
-  @apply min-w-0 px-0.5 text-[0.5625rem] font-bold uppercase text-slate-400 transition;
-}
-.weight-unit-picker button + button {
-  @apply border-l border-slate-200;
-}
-.weight-unit-picker button.active {
-  @apply bg-stone-900 text-white;
+.weight-unit-suffix {
+  @apply grid place-items-center border-l border-slate-200 bg-slate-50 text-xs font-bold uppercase text-slate-400;
 }
 .remove-set {
   @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600;

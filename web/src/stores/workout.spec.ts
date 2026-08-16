@@ -74,45 +74,51 @@ describe('workout store', () => {
     expect(store.getStartedAt('quick-workout')).toBeTruthy()
   })
 
-  it('applies the user preference to legacy draft sets without a unit', () => {
+  it('tags legacy draft sets that carry no unit without touching their value', () => {
     const store = useWorkoutStore()
     store.workouts['routine-id'] = { exerciseSets: { squat: [{ weight: 100 }] } }
 
-    store.ensureWeightUnits('routine-id', WeightUnit.POUNDS)
+    store.syncWeightUnits('routine-id', WeightUnit.POUNDS)
 
-    expect(store.getSets('routine-id', 'squat')[0]?.weightUnit).toBe(WeightUnit.POUNDS)
+    expect(store.getSets('routine-id', 'squat')[0]).toEqual({
+      weight: 100,
+      weightUnit: WeightUnit.POUNDS,
+    })
   })
 
-  it('changes the selected set and every following set without changing earlier sets', () => {
+  it('converts a draft saved under an earlier preference to the current one', () => {
     const store = useWorkoutStore()
     store.workouts['routine-id'] = {
       exerciseSets: {
-        squat: [
-          { weight: 100, weightUnit: WeightUnit.POUNDS },
-          { weight: 110, weightUnit: WeightUnit.POUNDS },
-        ],
-        deadlift: [
-          { weight: 200, weightUnit: WeightUnit.POUNDS },
-          { weightUnit: WeightUnit.POUNDS },
-        ],
+        squat: [{ weight: 100, weightUnit: WeightUnit.POUNDS }, { weightUnit: WeightUnit.POUNDS }],
+        deadlift: [{ weight: 220.46, weightUnit: WeightUnit.POUNDS }],
       },
     }
 
-    store.changeWeightUnitFrom(
-      'routine-id',
-      ['squat', 'deadlift'],
-      'squat',
-      1,
-      WeightUnit.KILOGRAMS,
-    )
+    store.syncWeightUnits('routine-id', WeightUnit.KILOGRAMS)
 
+    // 100 lb is the same weight as 45.36 kg: the displayed unit and the stored
+    // value must never disagree, or the workout saves a weight nobody entered.
     expect(store.getSets('routine-id', 'squat')).toEqual([
-      { weight: 100, weightUnit: WeightUnit.POUNDS },
-      { weight: 49.9, weightUnit: WeightUnit.KILOGRAMS },
-    ])
-    expect(store.getSets('routine-id', 'deadlift')).toEqual([
-      { weight: 90.72, weightUnit: WeightUnit.KILOGRAMS },
+      { weight: 45.36, weightUnit: WeightUnit.KILOGRAMS },
       { weightUnit: WeightUnit.KILOGRAMS },
     ])
+    expect(store.getSets('routine-id', 'deadlift')).toEqual([
+      { weight: 100, weightUnit: WeightUnit.KILOGRAMS },
+    ])
+  })
+
+  it('leaves a draft alone when it already matches the preference', () => {
+    const store = useWorkoutStore()
+    store.workouts['routine-id'] = {
+      exerciseSets: { squat: [{ weight: 100, weightUnit: WeightUnit.KILOGRAMS }] },
+    }
+
+    store.syncWeightUnits('routine-id', WeightUnit.KILOGRAMS)
+
+    expect(store.getSets('routine-id', 'squat')[0]).toEqual({
+      weight: 100,
+      weightUnit: WeightUnit.KILOGRAMS,
+    })
   })
 })
