@@ -16,8 +16,7 @@ type local struct {
 }
 
 func NewLocal(c *config.Config) Email {
-	host := "localhost"
-	port := "1025"
+	host, port := c.Email.SMTPHostPort()
 
 	return &local{
 		auth:   smtp.PlainAuth("", fromEmail, "", host),
