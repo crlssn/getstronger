@@ -72,6 +72,7 @@ func (f *Factory) fromExistingAuth(ctx context.Context, m *models.Auth) *AuthTem
 	o.EmailToken = func() uuid.UUID { return m.EmailToken }
 	o.PasswordResetToken = func() null.Val[uuid.UUID] { return m.PasswordResetToken }
 	o.PasswordResetTokenValidUntil = func() null.Val[time.Time] { return m.PasswordResetTokenValidUntil }
+	o.EmailVerificationSentAt = func() null.Val[time.Time] { return m.EmailVerificationSentAt }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

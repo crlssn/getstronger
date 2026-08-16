@@ -83,6 +83,8 @@ import {
   type LogoutResponse,
   RefreshTokenRequestSchema,
   type RefreshTokenResponse,
+  ResendVerificationEmailRequestSchema,
+  type ResendVerificationEmailResponse,
   type ResetPasswordRequest,
   ResetPasswordRequestSchema,
   type ResetPasswordResponse,
@@ -125,6 +127,8 @@ import {
   workoutClient,
 } from './clients'
 import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
+import router from '@/router/router'
+import { useEmailVerificationStore } from '@/stores/emailVerification'
 
 const defaultPageLimit = 25
 
@@ -163,7 +167,30 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     password: password,
   })
 
-  return tryCatch(() => authClient.login(req))
+  return tryCatch(() => authClient.login(req), {
+    // An unverified account is not a dead end: send the user to the page that
+    // explains the pending state and can resend the verification email.
+    onEmailNotVerified: () => redirectToPendingVerification(email),
+  })
+}
+
+export const resendVerificationEmail = async (
+  email: string,
+): Promise<ResendVerificationEmailResponse | void> => {
+  const req = create(ResendVerificationEmailRequestSchema, {
+    email: email,
+  })
+
+  // Failures are surfaced by the pending verification page itself, which can
+  // offer a retry instead of interrupting with a native dialog.
+  return tryCatch(() => authClient.resendVerificationEmail(req), { ignoreErrors: true })
+}
+
+const redirectToPendingVerification = async (email: string): Promise<void> => {
+  const emailVerificationStore = useEmailVerificationStore()
+  emailVerificationStore.setPendingEmail(email)
+  if (router.currentRoute.value.name === 'verify-email-pending') return
+  await router.push({ name: 'verify-email-pending' })
 }
 
 export const logout = async (): Promise<LogoutResponse | void> => {
@@ -574,6 +601,7 @@ export const getPreviousWorkoutSets = async (
 type TryCatchOptions = {
   ignoreErrors?: boolean
   invalidatesSessionOnNotFound?: boolean
+  onEmailNotVerified?: () => Promise<void>
   rethrow?: boolean
 }
 
@@ -601,7 +629,7 @@ const tryCatch = async <T>(
       for (const detail of error.findDetails(ErrorDetailSchema)) {
         switch (detail.error) {
           case Error.EMAIL_NOT_VERIFIED:
-            alert('You must verify your email before logging in')
+            await options.onEmailNotVerified?.()
             return
           case Error.PASSWORDS_DO_NOT_MATCH:
             alert('Passwords do not match')

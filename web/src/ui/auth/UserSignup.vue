@@ -4,12 +4,12 @@ import { signup } from '@/http/requests'
 import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
-import { useAlertStore } from '@/stores/alerts.ts'
+import { useEmailVerificationStore } from '@/stores/emailVerification.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
 import { WeightUnit } from '@/proto/api/v1/shared_pb'
 
 const router = useRouter()
-const alertStore = useAlertStore()
+const emailVerificationStore = useEmailVerificationStore()
 const req = ref<SignupRequest>({
   $typeName: 'api.v1.SignupRequest',
   email: '',
@@ -23,8 +23,10 @@ const req = ref<SignupRequest>({
 const onSignup = async () => {
   const res = await signup(req.value)
   if (!res) return
-  alertStore.setSuccess('Please check your inbox to verify your email')
-  await router.push('/login')
+  // Signup sends the first verification email, so the resend cooldown starts
+  // here rather than on the pending page.
+  emailVerificationStore.markSent(req.value.email)
+  await router.push({ name: 'verify-email-pending' })
 }
 </script>
 

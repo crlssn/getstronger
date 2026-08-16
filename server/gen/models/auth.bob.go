@@ -38,6 +38,7 @@ type Auth struct {
 	EmailToken                   uuid.UUID           `db:"email_token" `
 	PasswordResetToken           null.Val[uuid.UUID] `db:"password_reset_token" `
 	PasswordResetTokenValidUntil null.Val[time.Time] `db:"password_reset_token_valid_until" `
+	EmailVerificationSentAt      null.Val[time.Time] `db:"email_verification_sent_at" `
 
 	R authR `db:"-" `
 }
@@ -68,7 +69,7 @@ type authRLoaded struct {
 
 func buildAuthColumns(tableName string) authColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "email", "password", "refresh_token", "created_at", "email_verified", "email_token", "password_reset_token", "password_reset_token_valid_until",
+		"id", "email", "password", "refresh_token", "created_at", "email_verified", "email_token", "password_reset_token", "password_reset_token_valid_until", "email_verification_sent_at",
 	)
 
 	if tableName != "" {
@@ -87,6 +88,7 @@ func buildAuthColumns(tableName string) authColumns {
 		EmailToken:                   buildAuthColumn(tableName, "email_token"),
 		PasswordResetToken:           buildAuthColumn(tableName, "password_reset_token"),
 		PasswordResetTokenValidUntil: buildAuthColumn(tableName, "password_reset_token_valid_until"),
+		EmailVerificationSentAt:      buildAuthColumn(tableName, "email_verification_sent_at"),
 	}
 }
 
@@ -102,6 +104,7 @@ type authColumns struct {
 	EmailToken                   authColumn
 	PasswordResetToken           authColumn
 	PasswordResetTokenValidUntil authColumn
+	EmailVerificationSentAt      authColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -156,10 +159,11 @@ type AuthSetter struct {
 	EmailToken                   omit.Val[uuid.UUID]     `db:"email_token" `
 	PasswordResetToken           omitnull.Val[uuid.UUID] `db:"password_reset_token" `
 	PasswordResetTokenValidUntil omitnull.Val[time.Time] `db:"password_reset_token_valid_until" `
+	EmailVerificationSentAt      omitnull.Val[time.Time] `db:"email_verification_sent_at" `
 }
 
 func (s AuthSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -186,6 +190,9 @@ func (s AuthSetter) SetColumns() []string {
 	}
 	if s.PasswordResetTokenValidUntil.IsValue() || s.PasswordResetTokenValidUntil.IsNull() {
 		vals = append(vals, "password_reset_token_valid_until")
+	}
+	if s.EmailVerificationSentAt.IsValue() || s.EmailVerificationSentAt.IsNull() {
+		vals = append(vals, "email_verification_sent_at")
 	}
 	return vals
 }
@@ -217,6 +224,9 @@ func (s AuthSetter) Overwrite(t *Auth) {
 	}
 	if s.PasswordResetTokenValidUntil.IsValue() || s.PasswordResetTokenValidUntil.IsNull() {
 		t.PasswordResetTokenValidUntil = s.PasswordResetTokenValidUntil.MustGetNull()
+	}
+	if s.EmailVerificationSentAt.IsValue() || s.EmailVerificationSentAt.IsNull() {
+		t.EmailVerificationSentAt = s.EmailVerificationSentAt.MustGetNull()
 	}
 }
 
@@ -271,6 +281,11 @@ func (s *AuthSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.PasswordResetTokenValidUntil.MustGetNull()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.EmailVerificationSentAt.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.EmailVerificationSentAt.MustGetNull()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -279,7 +294,7 @@ func (s AuthSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s AuthSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -344,6 +359,13 @@ func (s AuthSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.EmailVerificationSentAt.IsValue() || s.EmailVerificationSentAt.IsNull() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "email_verification_sent_at")...),
+			psql.Arg(s.EmailVerificationSentAt),
+		}})
+	}
+
 	return exprs
 }
 
@@ -354,7 +376,7 @@ func authScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 		idx int
 		dst func(o *Auth) any
 	}
-	targets := make([]target, 0, 9)
+	targets := make([]target, 0, 10)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -375,6 +397,8 @@ func authScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 			targets = append(targets, target{i, func(o *Auth) any { return &o.PasswordResetToken }})
 		case "password_reset_token_valid_until":
 			targets = append(targets, target{i, func(o *Auth) any { return &o.PasswordResetTokenValidUntil }})
+		case "email_verification_sent_at":
+			targets = append(targets, target{i, func(o *Auth) any { return &o.EmailVerificationSentAt }})
 		}
 	}
 
@@ -742,6 +766,7 @@ type authWhere[Q psql.Filterable] struct {
 	EmailToken                   psql.WhereMod[Q, uuid.UUID]
 	PasswordResetToken           psql.WhereNullMod[Q, uuid.UUID]
 	PasswordResetTokenValidUntil psql.WhereNullMod[Q, time.Time]
+	EmailVerificationSentAt      psql.WhereNullMod[Q, time.Time]
 	R                            authWhereR[Q]
 }
 
@@ -761,6 +786,7 @@ func buildAuthWhere[Q psql.Filterable](cols authColumns) authWhere[Q] {
 		EmailToken:                   psql.Where[Q, uuid.UUID](cols.EmailToken.Expression),
 		PasswordResetToken:           psql.WhereNull[Q, uuid.UUID](cols.PasswordResetToken.Expression),
 		PasswordResetTokenValidUntil: psql.WhereNull[Q, time.Time](cols.PasswordResetTokenValidUntil.Expression),
+		EmailVerificationSentAt:      psql.WhereNull[Q, time.Time](cols.EmailVerificationSentAt.Expression),
 		R:                            authWhereR[Q]{cols: cols},
 	}
 }
@@ -799,6 +825,7 @@ type authPreloadBuf struct {
 	EmailToken                   null.Val[uuid.UUID]
 	PasswordResetToken           null.Val[uuid.UUID]
 	PasswordResetTokenValidUntil null.Val[time.Time]
+	EmailVerificationSentAt      null.Val[time.Time]
 }
 
 // authScanMapperNullable maps the preloaded auth
@@ -813,7 +840,7 @@ func authScanMapperNullable(prefix string) scan.Mapper[*Auth] {
 			idx int
 			dst func(b *authPreloadBuf) any
 		}
-		targets := make([]target, 0, 9)
+		targets := make([]target, 0, 10)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -838,6 +865,8 @@ func authScanMapperNullable(prefix string) scan.Mapper[*Auth] {
 				targets = append(targets, target{i, func(b *authPreloadBuf) any { return &b.PasswordResetToken }})
 			case "password_reset_token_valid_until":
 				targets = append(targets, target{i, func(b *authPreloadBuf) any { return &b.PasswordResetTokenValidUntil }})
+			case "email_verification_sent_at":
+				targets = append(targets, target{i, func(b *authPreloadBuf) any { return &b.EmailVerificationSentAt }})
 			}
 		}
 
@@ -868,7 +897,8 @@ func authScanMapperNullable(prefix string) scan.Mapper[*Auth] {
 					!(buf.EmailVerified.IsValue()) &&
 					!(buf.EmailToken.IsValue()) &&
 					!(buf.PasswordResetToken.IsValue()) &&
-					!(buf.PasswordResetTokenValidUntil.IsValue()) {
+					!(buf.PasswordResetTokenValidUntil.IsValue()) &&
+					!(buf.EmailVerificationSentAt.IsValue()) {
 					return nil, nil
 				}
 
@@ -894,6 +924,7 @@ func authScanMapperNullable(prefix string) scan.Mapper[*Auth] {
 				}
 				o.PasswordResetToken = buf.PasswordResetToken
 				o.PasswordResetTokenValidUntil = buf.PasswordResetTokenValidUntil
+				o.EmailVerificationSentAt = buf.EmailVerificationSentAt
 				return o, nil
 			}
 	}

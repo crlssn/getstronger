@@ -39,6 +39,10 @@ button {
   @apply block text-center py-3;
 }
 
+button:disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+
 .primary {
   @apply border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700;
 }

@@ -45,6 +45,9 @@ const (
 	AuthServiceLogoutProcedure = "/api.v1.AuthService/Logout"
 	// AuthServiceVerifyEmailProcedure is the fully-qualified name of the AuthService's VerifyEmail RPC.
 	AuthServiceVerifyEmailProcedure = "/api.v1.AuthService/VerifyEmail"
+	// AuthServiceResendVerificationEmailProcedure is the fully-qualified name of the AuthService's
+	// ResendVerificationEmail RPC.
+	AuthServiceResendVerificationEmailProcedure = "/api.v1.AuthService/ResendVerificationEmail"
 	// AuthServiceResetPasswordProcedure is the fully-qualified name of the AuthService's ResetPassword
 	// RPC.
 	AuthServiceResetPasswordProcedure = "/api.v1.AuthService/ResetPassword"
@@ -60,6 +63,7 @@ type AuthServiceClient interface {
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	VerifyEmail(context.Context, *connect.Request[v1.VerifyEmailRequest]) (*connect.Response[v1.VerifyEmailResponse], error)
+	ResendVerificationEmail(context.Context, *connect.Request[v1.ResendVerificationEmailRequest]) (*connect.Response[v1.ResendVerificationEmailResponse], error)
 	ResetPassword(context.Context, *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error)
 	UpdatePassword(context.Context, *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error)
 }
@@ -105,6 +109,12 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceMethods.ByName("VerifyEmail")),
 			connect.WithClientOptions(opts...),
 		),
+		resendVerificationEmail: connect.NewClient[v1.ResendVerificationEmailRequest, v1.ResendVerificationEmailResponse](
+			httpClient,
+			baseURL+AuthServiceResendVerificationEmailProcedure,
+			connect.WithSchema(authServiceMethods.ByName("ResendVerificationEmail")),
+			connect.WithClientOptions(opts...),
+		),
 		resetPassword: connect.NewClient[v1.ResetPasswordRequest, v1.ResetPasswordResponse](
 			httpClient,
 			baseURL+AuthServiceResetPasswordProcedure,
@@ -122,13 +132,14 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // authServiceClient implements AuthServiceClient.
 type authServiceClient struct {
-	signup         *connect.Client[v1.SignupRequest, v1.SignupResponse]
-	login          *connect.Client[v1.LoginRequest, v1.LoginResponse]
-	refreshToken   *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
-	logout         *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
-	verifyEmail    *connect.Client[v1.VerifyEmailRequest, v1.VerifyEmailResponse]
-	resetPassword  *connect.Client[v1.ResetPasswordRequest, v1.ResetPasswordResponse]
-	updatePassword *connect.Client[v1.UpdatePasswordRequest, v1.UpdatePasswordResponse]
+	signup                  *connect.Client[v1.SignupRequest, v1.SignupResponse]
+	login                   *connect.Client[v1.LoginRequest, v1.LoginResponse]
+	refreshToken            *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
+	logout                  *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
+	verifyEmail             *connect.Client[v1.VerifyEmailRequest, v1.VerifyEmailResponse]
+	resendVerificationEmail *connect.Client[v1.ResendVerificationEmailRequest, v1.ResendVerificationEmailResponse]
+	resetPassword           *connect.Client[v1.ResetPasswordRequest, v1.ResetPasswordResponse]
+	updatePassword          *connect.Client[v1.UpdatePasswordRequest, v1.UpdatePasswordResponse]
 }
 
 // Signup calls api.v1.AuthService.Signup.
@@ -156,6 +167,11 @@ func (c *authServiceClient) VerifyEmail(ctx context.Context, req *connect.Reques
 	return c.verifyEmail.CallUnary(ctx, req)
 }
 
+// ResendVerificationEmail calls api.v1.AuthService.ResendVerificationEmail.
+func (c *authServiceClient) ResendVerificationEmail(ctx context.Context, req *connect.Request[v1.ResendVerificationEmailRequest]) (*connect.Response[v1.ResendVerificationEmailResponse], error) {
+	return c.resendVerificationEmail.CallUnary(ctx, req)
+}
+
 // ResetPassword calls api.v1.AuthService.ResetPassword.
 func (c *authServiceClient) ResetPassword(ctx context.Context, req *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error) {
 	return c.resetPassword.CallUnary(ctx, req)
@@ -173,6 +189,7 @@ type AuthServiceHandler interface {
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	VerifyEmail(context.Context, *connect.Request[v1.VerifyEmailRequest]) (*connect.Response[v1.VerifyEmailResponse], error)
+	ResendVerificationEmail(context.Context, *connect.Request[v1.ResendVerificationEmailRequest]) (*connect.Response[v1.ResendVerificationEmailResponse], error)
 	ResetPassword(context.Context, *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error)
 	UpdatePassword(context.Context, *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error)
 }
@@ -214,6 +231,12 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceMethods.ByName("VerifyEmail")),
 		connect.WithHandlerOptions(opts...),
 	)
+	authServiceResendVerificationEmailHandler := connect.NewUnaryHandler(
+		AuthServiceResendVerificationEmailProcedure,
+		svc.ResendVerificationEmail,
+		connect.WithSchema(authServiceMethods.ByName("ResendVerificationEmail")),
+		connect.WithHandlerOptions(opts...),
+	)
 	authServiceResetPasswordHandler := connect.NewUnaryHandler(
 		AuthServiceResetPasswordProcedure,
 		svc.ResetPassword,
@@ -238,6 +261,8 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 			authServiceLogoutHandler.ServeHTTP(w, r)
 		case AuthServiceVerifyEmailProcedure:
 			authServiceVerifyEmailHandler.ServeHTTP(w, r)
+		case AuthServiceResendVerificationEmailProcedure:
+			authServiceResendVerificationEmailHandler.ServeHTTP(w, r)
 		case AuthServiceResetPasswordProcedure:
 			authServiceResetPasswordHandler.ServeHTTP(w, r)
 		case AuthServiceUpdatePasswordProcedure:
@@ -269,6 +294,10 @@ func (UnimplementedAuthServiceHandler) Logout(context.Context, *connect.Request[
 
 func (UnimplementedAuthServiceHandler) VerifyEmail(context.Context, *connect.Request[v1.VerifyEmailRequest]) (*connect.Response[v1.VerifyEmailResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.AuthService.VerifyEmail is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) ResendVerificationEmail(context.Context, *connect.Request[v1.ResendVerificationEmailRequest]) (*connect.Response[v1.ResendVerificationEmailResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.AuthService.ResendVerificationEmail is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) ResetPassword(context.Context, *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error) {

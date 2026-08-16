@@ -27,6 +27,9 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      # The web app is linted by eslint. Once its dependencies are installed,
+      # some of them vendor Go sources that this linter would otherwise report.
+      - ^web/
     rules:
       # Internal-package tests intentionally exercise unexported helpers. Requiring
       # external test packages or parallel subtests would make those tests less clear.
@@ -52,3 +55,4 @@ formatters:
       - third_party$
       - builtin$
       - examples$
+      - ^web/

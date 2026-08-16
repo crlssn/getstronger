@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test as base, type Page, type TestInfo } from '@playwright/test'
+import { expect, test as base, type Locator, type Page, type TestInfo } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
@@ -57,6 +57,15 @@ export const resetSeedData = () => {
     { cwd: repositoryRoot, stdio: 'pipe' },
   )
 }
+
+// End-to-end runs use the noop email provider, so the verification link has to
+// be read from the database instead of an inbox.
+export const verificationToken = (userEmail: string) =>
+  execFileSync('go', ['run', 'server/testing/factory/emailtoken/main.go', `-email=${userEmail}`], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    stdio: 'pipe',
+  }).trim()
 
 export const logInAs = async (page: Page, userEmail: string, userPassword: string) => {
   await page.goto('/login')
@@ -130,6 +139,14 @@ export const expectAccessible = async (page: Page) => {
     })),
     'The page should have no WCAG A/AA accessibility violations',
   ).toEqual([])
+}
+
+// Layout assertions need a box, and an element that is missing or not rendered
+// has none. Failing here says which element rather than dereferencing null.
+export const boxOf = async (locator: Locator) => {
+  const box = await locator.boundingBox()
+  expect(box, `${locator} should be visible and have a bounding box`).not.toBeNull()
+  return box as NonNullable<typeof box>
 }
 
 export const uniqueName = (prefix: string) =>

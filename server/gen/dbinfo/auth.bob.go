@@ -96,6 +96,15 @@ var Auths = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		EmailVerificationSentAt: column{
+			Name:      "email_verification_sent_at",
+			DBType:    "timestamp without time zone",
+			Default:   "NULL",
+			Comment:   "",
+			Nullable:  true,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: authIndexes{
 		AuthPkey: index{
@@ -160,11 +169,12 @@ type authColumns struct {
 	EmailToken                   column
 	PasswordResetToken           column
 	PasswordResetTokenValidUntil column
+	EmailVerificationSentAt      column
 }
 
 func (c authColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.Email, c.Password, c.RefreshToken, c.CreatedAt, c.EmailVerified, c.EmailToken, c.PasswordResetToken, c.PasswordResetTokenValidUntil,
+		c.ID, c.Email, c.Password, c.RefreshToken, c.CreatedAt, c.EmailVerified, c.EmailToken, c.PasswordResetToken, c.PasswordResetTokenValidUntil, c.EmailVerificationSentAt,
 	}
 }
 

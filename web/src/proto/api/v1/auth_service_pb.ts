@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/auth_service.proto.
  */
 export const file_api_v1_auth_service: GenFile = /*@__PURE__*/
-  fileDesc("ChlhcGkvdjEvYXV0aF9zZXJ2aWNlLnByb3RvEgZhcGkudjEizQEKDVNpZ251cFJlcXVlc3QSFgoFZW1haWwYASABKAlCB7pIBHICYAESGQoIcGFzc3dvcmQYAiABKAlCB7pIBHICEAYSHQoVcGFzc3dvcmRfY29uZmlybWF0aW9uGAMgASgJEhsKCmZpcnN0X25hbWUYBCABKAlCB7pIBHICEAESGgoJbGFzdF9uYW1lGAUgASgJQge6SARyAhABEjEKC3dlaWdodF91bml0GAYgASgOMhIuYXBpLnYxLldlaWdodFVuaXRCCLpIBYIBAhABIhAKDlNpZ251cFJlc3BvbnNlIkEKDExvZ2luUmVxdWVzdBIWCgVlbWFpbBgBIAEoCUIHukgEcgJgARIZCghwYXNzd29yZBgCIAEoCUIHukgEcgIQASIlCg1Mb2dpblJlc3BvbnNlEhQKDGFjY2Vzc190b2tlbhgBIAEoCSIVChNSZWZyZXNoVG9rZW5SZXF1ZXN0IiwKFFJlZnJlc2hUb2tlblJlc3BvbnNlEhQKDGFjY2Vzc190b2tlbhgBIAEoCSIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIiwKElZlcmlmeUVtYWlsUmVxdWVzdBIWCgV0b2tlbhgBIAEoCUIHukgEcgIQASIVChNWZXJpZnlFbWFpbFJlc3BvbnNlIi4KFFJlc2V0UGFzc3dvcmRSZXF1ZXN0EhYKBWVtYWlsGAEgASgJQge6SARyAmABIhcKFVJlc2V0UGFzc3dvcmRSZXNwb25zZSJqChVVcGRhdGVQYXNzd29yZFJlcXVlc3QSFwoFdG9rZW4YASABKAlCCLpIBXIDsAEBEhkKCHBhc3N3b3JkGAIgASgJQge6SARyAhAGEh0KFXBhc3N3b3JkX2NvbmZpcm1hdGlvbhgDIAEoCSIYChZVcGRhdGVQYXNzd29yZFJlc3BvbnNlMvUDCgtBdXRoU2VydmljZRI5CgZTaWdudXASFS5hcGkudjEuU2lnbnVwUmVxdWVzdBoWLmFwaS52MS5TaWdudXBSZXNwb25zZSIAEjYKBUxvZ2luEhQuYXBpLnYxLkxvZ2luUmVxdWVzdBoVLmFwaS52MS5Mb2dpblJlc3BvbnNlIgASSwoMUmVmcmVzaFRva2VuEhsuYXBpLnYxLlJlZnJlc2hUb2tlblJlcXVlc3QaHC5hcGkudjEuUmVmcmVzaFRva2VuUmVzcG9uc2UiABI5CgZMb2dvdXQSFS5hcGkudjEuTG9nb3V0UmVxdWVzdBoWLmFwaS52MS5Mb2dvdXRSZXNwb25zZSIAEkgKC1ZlcmlmeUVtYWlsEhouYXBpLnYxLlZlcmlmeUVtYWlsUmVxdWVzdBobLmFwaS52MS5WZXJpZnlFbWFpbFJlc3BvbnNlIgASTgoNUmVzZXRQYXNzd29yZBIcLmFwaS52MS5SZXNldFBhc3N3b3JkUmVxdWVzdBodLmFwaS52MS5SZXNldFBhc3N3b3JkUmVzcG9uc2UiABJRCg5VcGRhdGVQYXNzd29yZBIdLmFwaS52MS5VcGRhdGVQYXNzd29yZFJlcXVlc3QaHi5hcGkudjEuVXBkYXRlUGFzc3dvcmRSZXNwb25zZSIAQpQBCgpjb20uYXBpLnYxQhBBdXRoU2VydmljZVByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9nZW4vcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_shared, file_buf_validate_validate]);
+  fileDesc("ChlhcGkvdjEvYXV0aF9zZXJ2aWNlLnByb3RvEgZhcGkudjEizQEKDVNpZ251cFJlcXVlc3QSFgoFZW1haWwYASABKAlCB7pIBHICYAESGQoIcGFzc3dvcmQYAiABKAlCB7pIBHICEAYSHQoVcGFzc3dvcmRfY29uZmlybWF0aW9uGAMgASgJEhsKCmZpcnN0X25hbWUYBCABKAlCB7pIBHICEAESGgoJbGFzdF9uYW1lGAUgASgJQge6SARyAhABEjEKC3dlaWdodF91bml0GAYgASgOMhIuYXBpLnYxLldlaWdodFVuaXRCCLpIBYIBAhABIhAKDlNpZ251cFJlc3BvbnNlIkEKDExvZ2luUmVxdWVzdBIWCgVlbWFpbBgBIAEoCUIHukgEcgJgARIZCghwYXNzd29yZBgCIAEoCUIHukgEcgIQASIlCg1Mb2dpblJlc3BvbnNlEhQKDGFjY2Vzc190b2tlbhgBIAEoCSIVChNSZWZyZXNoVG9rZW5SZXF1ZXN0IiwKFFJlZnJlc2hUb2tlblJlc3BvbnNlEhQKDGFjY2Vzc190b2tlbhgBIAEoCSIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIiwKElZlcmlmeUVtYWlsUmVxdWVzdBIWCgV0b2tlbhgBIAEoCUIHukgEcgIQASIVChNWZXJpZnlFbWFpbFJlc3BvbnNlIjgKHlJlc2VuZFZlcmlmaWNhdGlvbkVtYWlsUmVxdWVzdBIWCgVlbWFpbBgBIAEoCUIHukgEcgJgASI+Ch9SZXNlbmRWZXJpZmljYXRpb25FbWFpbFJlc3BvbnNlEhsKE3JldHJ5X2FmdGVyX3NlY29uZHMYASABKAUiLgoUUmVzZXRQYXNzd29yZFJlcXVlc3QSFgoFZW1haWwYASABKAlCB7pIBHICYAEiFwoVUmVzZXRQYXNzd29yZFJlc3BvbnNlImoKFVVwZGF0ZVBhc3N3b3JkUmVxdWVzdBIXCgV0b2tlbhgBIAEoCUIIukgFcgOwAQESGQoIcGFzc3dvcmQYAiABKAlCB7pIBHICEAYSHQoVcGFzc3dvcmRfY29uZmlybWF0aW9uGAMgASgJIhgKFlVwZGF0ZVBhc3N3b3JkUmVzcG9uc2Uy4wQKC0F1dGhTZXJ2aWNlEjkKBlNpZ251cBIVLmFwaS52MS5TaWdudXBSZXF1ZXN0GhYuYXBpLnYxLlNpZ251cFJlc3BvbnNlIgASNgoFTG9naW4SFC5hcGkudjEuTG9naW5SZXF1ZXN0GhUuYXBpLnYxLkxvZ2luUmVzcG9uc2UiABJLCgxSZWZyZXNoVG9rZW4SGy5hcGkudjEuUmVmcmVzaFRva2VuUmVxdWVzdBocLmFwaS52MS5SZWZyZXNoVG9rZW5SZXNwb25zZSIAEjkKBkxvZ291dBIVLmFwaS52MS5Mb2dvdXRSZXF1ZXN0GhYuYXBpLnYxLkxvZ291dFJlc3BvbnNlIgASSAoLVmVyaWZ5RW1haWwSGi5hcGkudjEuVmVyaWZ5RW1haWxSZXF1ZXN0GhsuYXBpLnYxLlZlcmlmeUVtYWlsUmVzcG9uc2UiABJsChdSZXNlbmRWZXJpZmljYXRpb25FbWFpbBImLmFwaS52MS5SZXNlbmRWZXJpZmljYXRpb25FbWFpbFJlcXVlc3QaJy5hcGkudjEuUmVzZW5kVmVyaWZpY2F0aW9uRW1haWxSZXNwb25zZSIAEk4KDVJlc2V0UGFzc3dvcmQSHC5hcGkudjEuUmVzZXRQYXNzd29yZFJlcXVlc3QaHS5hcGkudjEuUmVzZXRQYXNzd29yZFJlc3BvbnNlIgASUQoOVXBkYXRlUGFzc3dvcmQSHS5hcGkudjEuVXBkYXRlUGFzc3dvcmRSZXF1ZXN0Gh4uYXBpLnYxLlVwZGF0ZVBhc3N3b3JkUmVzcG9uc2UiAEKUAQoKY29tLmFwaS52MUIQQXV0aFNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_shared, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.SignupRequest
@@ -196,6 +196,43 @@ export const VerifyEmailResponseSchema: GenMessage<VerifyEmailResponse> = /*@__P
   messageDesc(file_api_v1_auth_service, 9);
 
 /**
+ * @generated from message api.v1.ResendVerificationEmailRequest
+ */
+export type ResendVerificationEmailRequest = Message<"api.v1.ResendVerificationEmailRequest"> & {
+  /**
+   * @generated from field: string email = 1;
+   */
+  email: string;
+};
+
+/**
+ * Describes the message api.v1.ResendVerificationEmailRequest.
+ * Use `create(ResendVerificationEmailRequestSchema)` to create a new message.
+ */
+export const ResendVerificationEmailRequestSchema: GenMessage<ResendVerificationEmailRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_auth_service, 10);
+
+/**
+ * The response is deliberately identical for every request so that it never
+ * discloses whether an email address is registered or already verified.
+ *
+ * @generated from message api.v1.ResendVerificationEmailResponse
+ */
+export type ResendVerificationEmailResponse = Message<"api.v1.ResendVerificationEmailResponse"> & {
+  /**
+   * @generated from field: int32 retry_after_seconds = 1;
+   */
+  retryAfterSeconds: number;
+};
+
+/**
+ * Describes the message api.v1.ResendVerificationEmailResponse.
+ * Use `create(ResendVerificationEmailResponseSchema)` to create a new message.
+ */
+export const ResendVerificationEmailResponseSchema: GenMessage<ResendVerificationEmailResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_auth_service, 11);
+
+/**
  * @generated from message api.v1.ResetPasswordRequest
  */
 export type ResetPasswordRequest = Message<"api.v1.ResetPasswordRequest"> & {
@@ -210,7 +247,7 @@ export type ResetPasswordRequest = Message<"api.v1.ResetPasswordRequest"> & {
  * Use `create(ResetPasswordRequestSchema)` to create a new message.
  */
 export const ResetPasswordRequestSchema: GenMessage<ResetPasswordRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_auth_service, 10);
+  messageDesc(file_api_v1_auth_service, 12);
 
 /**
  * @generated from message api.v1.ResetPasswordResponse
@@ -223,7 +260,7 @@ export type ResetPasswordResponse = Message<"api.v1.ResetPasswordResponse"> & {
  * Use `create(ResetPasswordResponseSchema)` to create a new message.
  */
 export const ResetPasswordResponseSchema: GenMessage<ResetPasswordResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_auth_service, 11);
+  messageDesc(file_api_v1_auth_service, 13);
 
 /**
  * @generated from message api.v1.UpdatePasswordRequest
@@ -250,7 +287,7 @@ export type UpdatePasswordRequest = Message<"api.v1.UpdatePasswordRequest"> & {
  * Use `create(UpdatePasswordRequestSchema)` to create a new message.
  */
 export const UpdatePasswordRequestSchema: GenMessage<UpdatePasswordRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_auth_service, 12);
+  messageDesc(file_api_v1_auth_service, 14);
 
 /**
  * @generated from message api.v1.UpdatePasswordResponse
@@ -263,7 +300,7 @@ export type UpdatePasswordResponse = Message<"api.v1.UpdatePasswordResponse"> & 
  * Use `create(UpdatePasswordResponseSchema)` to create a new message.
  */
 export const UpdatePasswordResponseSchema: GenMessage<UpdatePasswordResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_auth_service, 13);
+  messageDesc(file_api_v1_auth_service, 15);
 
 /**
  * @generated from service api.v1.AuthService
@@ -308,6 +345,14 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof VerifyEmailRequestSchema;
     output: typeof VerifyEmailResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.AuthService.ResendVerificationEmail
+   */
+  resendVerificationEmail: {
+    methodKind: "unary";
+    input: typeof ResendVerificationEmailRequestSchema;
+    output: typeof ResendVerificationEmailResponseSchema;
   },
   /**
    * @generated from rpc api.v1.AuthService.ResetPassword

@@ -293,7 +293,9 @@ run = "buf lint"
 [tasks."lint:backend"]
 alias = "lint_backend"
 description = "Lint backend code"
-run = "golangci-lint run"
+# Resolved through mise rather than PATH: a system golangci-lint v1 shadows the
+# version pinned above on some machines, and v1 refuses this v2 configuration.
+run = '"$(mise which golangci-lint)" run'
 
 [tasks.vet]
 description = "Vet all code"

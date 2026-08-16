@@ -19,7 +19,7 @@ import { brandName, brandSlogan } from '@/brand'
         </span>
       </RouterLink>
     </header>
-    <AppAlert fixed />
+    <AppAlert />
     <main class="guest-main">
       <RouterView />
     </main>
@@ -55,5 +55,10 @@ import { brandName, brandSlogan } from '@/brand'
 }
 .guest-main {
   @apply mx-auto w-full max-w-lg px-6 py-10 sm:px-8 sm:py-14;
+}
+/* The alert spans the viewport, but its contents belong to the same column as
+   the brand and the form below it. */
+.guest-shell :deep(.alert-card-inner) {
+  @apply max-w-lg px-6 sm:px-8;
 }
 </style>
