@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { brandName, brandSlogan } from './brand'
+import { brandName, brandSignupSubtitle, brandSlogan } from './brand'
 import { en, sv } from '@/i18n/messages'
 
 const catalogues = { en, sv }
@@ -20,6 +20,9 @@ describe('brand', () => {
       for (const [key, value] of flatten(messages)) {
         expect(value, `${locale}.${key} hardcodes the brand name`).not.toContain(brandName)
         expect(value, `${locale}.${key} hardcodes the slogan`).not.toContain(brandSlogan)
+        expect(value, `${locale}.${key} hardcodes the signup subtitle`).not.toContain(
+          brandSignupSubtitle,
+        )
       }
     }
   })

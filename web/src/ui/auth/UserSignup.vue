@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { brandSignupSubtitle } from '@/brand'
 import { signup } from '@/http/requests'
 import { RouterLink, useRouter } from 'vue-router'
 import AppButton from '@/ui/components/AppButton.vue'
@@ -35,7 +36,7 @@ const onSignup = async () => {
     <header class="auth-intro">
       <p class="auth-eyebrow">{{ $t('auth.startTraining') }}</p>
       <h1>{{ $t('auth.signupTitle') }}</h1>
-      <p>{{ $t('auth.signupSubtitle') }}</p>
+      <p>{{ brandSignupSubtitle }}</p>
     </header>
 
     <form class="auth-form" method="POST" @submit.prevent="onSignup">

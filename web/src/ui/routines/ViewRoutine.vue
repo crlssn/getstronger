@@ -2,6 +2,7 @@
 import type { SortableEvent } from 'sortablejs'
 
 import { nextTick, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
@@ -22,6 +23,7 @@ import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 const routine = ref<Routine>()
 const listElement = ref<HTMLElement | null>(null)
+const { t } = useI18n()
 const loading = ref(true)
 const route = useRoute()
 const router = useRouter()
@@ -32,7 +34,7 @@ const dashboardStore = useDashboardStore()
 onMounted(async () => {
   const response = await getRoutine(route.params.id as string)
   routine.value = response?.routine
-  pageTitleStore.setPageTitle(routine.value?.name ?? 'Routine')
+  pageTitleStore.setPageTitle(routine.value?.name ?? t('common.routine'))
   loading.value = false
 
   if (!routine.value) return
@@ -61,36 +63,36 @@ const onReorder = async (event: SortableEvent) => {
 const makeUpNext = async () => {
   if (!routine.value) return
   await dashboardStore.selectRoutine(routine.value.id)
-  alertStore.setSuccess(`${routine.value.name} is up next`)
+  alertStore.setSuccess(t('routine.upNextToast', { name: routine.value.name }))
 }
 
 const onDeleteRoutine = async () => {
-  if (!routine.value || !confirm(`Delete “${routine.value.name}”? This cannot be undone.`)) return
+  if (!routine.value || !confirm(t('routine.deleteConfirm', { name: routine.value.name }))) return
 
   await deleteRoutine(routine.value.id)
-  alertStore.setError('Routine deleted')
+  alertStore.setError(t('routine.deleted'))
   await router.push('/routines')
 }
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card">Loading routine…</div>
+  <div v-if="loading" class="loading-card">{{ t('routine.loading') }}</div>
   <div v-else-if="routine" class="routine-detail">
     <section class="routine-hero">
       <div>
-        <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill"
-          >Up next</span
-        >
-        <p class="eyebrow">Training routine</p>
+        <span v-if="routine.id === dashboardStore.preferredRoutineId" class="status-pill">{{
+          t('home.upNext')
+        }}</span>
+        <p class="eyebrow">{{ t('routine.view.eyebrow') }}</p>
         <h1>{{ routine.name }}</h1>
         <p class="summary">
-          <ClockIcon /> {{ routine.exercises.length }} exercises · About
-          {{ Math.max(30, routine.exercises.length * 8) }} minutes
+          <ClockIcon /> {{ t('home.exerciseCount', routine.exercises.length) }} ·
+          {{ t('home.aboutMinutes', { count: Math.max(30, routine.exercises.length * 8) }) }}
         </p>
       </div>
       <div class="hero-actions">
         <RouterLink :to="`/workouts/routine/${routine.id}`" class="start-button">
-          <PlayIcon /> Start workout
+          <PlayIcon /> {{ t('workout.start') }}
         </RouterLink>
         <button
           v-if="routine.id !== dashboardStore.preferredRoutineId"
@@ -98,7 +100,7 @@ const onDeleteRoutine = async () => {
           class="next-button"
           @click="makeUpNext"
         >
-          <StarIcon /> Make up next
+          <StarIcon /> {{ t('routine.makeUpNext') }}
         </button>
       </div>
     </section>
@@ -106,10 +108,12 @@ const onDeleteRoutine = async () => {
     <section class="exercise-section">
       <div class="section-heading">
         <div>
-          <h2>Exercise order</h2>
-          <p>Drag the handle to reorder your session.</p>
+          <h2>{{ t('routine.view.orderTitle') }}</h2>
+          <p>{{ t('routine.view.orderHelp') }}</p>
         </div>
-        <RouterLink :to="`/routines/${routine.id}/edit`"><PencilIcon /> Edit exercises</RouterLink>
+        <RouterLink :to="`/routines/${routine.id}/edit`"
+          ><PencilIcon /> {{ t('routine.view.editExercises') }}</RouterLink
+        >
       </div>
       <ol ref="listElement" class="exercise-list">
         <li
@@ -122,7 +126,7 @@ const onDeleteRoutine = async () => {
             ><strong>{{ exercise.name }}</strong
             ><ExerciseTags compact :tags="exercise.tags"
           /></span>
-          <button type="button" class="drag-handle" aria-label="Reorder exercise">
+          <button type="button" class="drag-handle" :aria-label="t('routine.view.reorderAria')">
             <Bars3Icon />
           </button>
         </li>
@@ -131,10 +135,10 @@ const onDeleteRoutine = async () => {
 
     <section class="danger-zone">
       <div>
-        <h2>Delete routine</h2>
-        <p>This removes the plan, not your workout history.</p>
+        <h2>{{ t('routine.view.deleteTitle') }}</h2>
+        <p>{{ t('routine.view.deleteBody') }}</p>
       </div>
-      <button type="button" @click="onDeleteRoutine"><TrashIcon /> Delete</button>
+      <button type="button" @click="onDeleteRoutine"><TrashIcon /> {{ t('common.delete') }}</button>
     </section>
   </div>
 </template>

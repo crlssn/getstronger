@@ -68,3 +68,28 @@ worktree. The local stack is not shared, so set it up before running anything.
 - Run the relevant targeted tests, linters, type checks, and builds before considering a change complete.
 - After changing backend code, restart this worktree's backend service after verification so the running app uses the new code.
 - After changing the database schema or database-dependent behavior, add any missing seed data, recreate or restart this worktree's database, apply the migrations, and reseed it before verification.
+
+## Localisation
+
+Every user-facing string in the web app must go through vue-i18n. Never
+hard-code English text in components — the only exceptions are the brand
+assets in `web/src/brand.ts` (the product name, slogan, and signup subtitle),
+which read the same in every locale and must never enter the message
+catalogues. `brand.spec.ts` fails if a catalogue value contains any of them.
+
+- Add every new string to `web/src/i18n/messages.ts` in **every supported
+  locale**, and render it with `t()`. The test suite enforces key parity
+  between locales, so a key added to one locale only will fail
+  `messages.spec.ts`.
+- This covers more than template text: aria-labels, input placeholders,
+  `confirm()` dialogs, alert toasts, dropdown item titles, page-title fallbacks,
+  and strings built in `<script setup>` all count as user-facing.
+- Reuse an existing key when one already says the same thing (check `common.*`
+  first) instead of adding a near-duplicate.
+- Use vue-i18n plural pipes for counts (`'{count} set logged | {count} sets
+  logged'`) rather than ternaries on `count === 1`.
+- Components using `t()` need the i18n plugin in their specs: mount with
+  `global: { plugins: [i18n] }` (import `i18n` from `@/i18n`).
+- When adding or changing translations in a non-English locale, match the
+  terminology and tone already used in that locale's catalogue rather than
+  translating each string in isolation.

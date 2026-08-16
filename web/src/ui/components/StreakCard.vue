@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 import { CheckIcon, FireIcon } from '@heroicons/vue/24/outline'
 
 import { useStreakStore } from '@/stores/streak'
 
+const { t } = useI18n()
 const streakStore = useStreakStore()
 
 onMounted(() => streakStore.load())
@@ -12,14 +14,12 @@ onMounted(() => streakStore.load())
 const streak = computed(() => streakStore.streak)
 const thisWeekLogged = computed(() => streakStore.thisWeekLogged)
 const title = computed(() => {
-  if (!streak.value) return 'Start your streak'
-  return thisWeekLogged.value ? 'Streak secured' : 'Keep your streak alive'
+  if (!streak.value) return t('streak.startTitle')
+  return thisWeekLogged.value ? t('streak.securedTitle') : t('streak.keepAliveTitle')
 })
 const message = computed(() => {
-  if (!streak.value) return 'Log one workout a week to build a streak.'
-  return thisWeekLogged.value
-    ? 'This week is in the bag. Keep it rolling next week.'
-    : 'Log a workout this week to keep your streak alive.'
+  if (!streak.value) return t('streak.startBody')
+  return thisWeekLogged.value ? t('streak.securedBody') : t('streak.keepAliveBody')
 })
 const weekBlocks = computed(() =>
   Array.from({ length: 5 }, (_, index) => {
@@ -36,12 +36,12 @@ const weekBlocks = computed(() =>
       current: weeksAgo === 0,
       workoutCount,
       workoutCountDisplay: workoutCount >= 9 ? '9+' : `${workoutCount}`,
-      label: weeksAgo === 0 ? 'This week' : `${weeksAgo} ${weeksAgo === 1 ? 'week' : 'weeks'} ago`,
+      label: weeksAgo === 0 ? t('streak.thisWeek') : t('streak.weeksAgo', weeksAgo),
       status: complete
-        ? `${completedWorkoutCount} ${completedWorkoutCount === 1 ? 'workout' : 'workouts'} logged`
+        ? t('streak.workoutsLogged', completedWorkoutCount)
         : weeksAgo === 0
-          ? 'workout still needed'
-          : 'outside current streak',
+          ? t('streak.stillNeeded')
+          : t('streak.outsideStreak'),
     }
   }),
 )
@@ -56,16 +56,16 @@ const weekBlocks = computed(() =>
     <header>
       <span class="streak-icon"><FireIcon /></span>
       <div class="min-w-0">
-        <small class="eyebrow">Weekly streak</small>
+        <small class="eyebrow">{{ t('streak.eyebrow') }}</small>
         <strong>{{ title }}</strong>
       </div>
       <span v-if="streak > 0" class="streak-count"
         ><strong>{{ streak }}</strong
-        ><small>{{ streak === 1 ? 'week' : 'weeks' }}</small></span
+        ><small>{{ t('streak.weeks', streak) }}</small></span
       >
     </header>
 
-    <div class="week-track" role="list" aria-label="Your last five training weeks">
+    <div class="week-track" role="list" :aria-label="t('streak.trackAria')">
       <span
         v-for="week in weekBlocks"
         :key="week.label"
@@ -84,7 +84,8 @@ const weekBlocks = computed(() =>
       </span>
     </div>
     <div class="track-labels" aria-hidden="true">
-      <span>4 weeks ago</span><span>This week</span>
+      <span>{{ t('streak.weeksAgo', 4) }}</span
+      ><span>{{ t('streak.thisWeek') }}</span>
     </div>
     <p>{{ message }}</p>
   </section>

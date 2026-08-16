@@ -2,6 +2,7 @@
 import { useAuthStore } from '@/stores/auth.ts'
 import { useRoute } from 'vue-router'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppButton from '@/ui/components/AppButton.vue'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import type { DropdownItem } from '@/types/dropdown'
@@ -12,6 +13,7 @@ import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import AppCard from '@/ui/components/AppCard.vue'
 import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 
+const { t } = useI18n()
 const route = useRoute()
 const authStore = useAuthStore()
 const pageTitleStore = usePageTitleStore()
@@ -20,15 +22,15 @@ const user = ref({} as User)
 const workouts = ref([] as Workout[])
 
 const tabs = computed(() => [
-  { href: `/users/${user.value.id}`, name: 'Workouts' },
-  { href: `/users/${user.value.id}/personal-bests`, name: 'Personal Bests' },
-  { href: `/users/${user.value.id}/follows`, name: 'Follows' },
-  { href: `/users/${user.value.id}/followers`, name: 'Followers' },
+  { href: `/users/${user.value.id}`, name: t('common.workouts') },
+  { href: `/users/${user.value.id}/personal-bests`, name: t('profile.personalBests') },
+  { href: `/users/${user.value.id}/follows`, name: t('profile.follows') },
+  { href: `/users/${user.value.id}/followers`, name: t('profile.followers') },
 ])
 
 const activeTab = computed(() => route.path)
 const pageTitle = computed(() => {
-  if (user.value.id === authStore.userId) return 'Me'
+  if (user.value.id === authStore.userId) return t('nav.me')
   return `${user.value.firstName} ${user.value.lastName}`
 })
 
@@ -74,30 +76,30 @@ const onUnfollowUser = async () => {
 const notMe = computed(() => Boolean(user.value.id) && user.value.id !== authStore.userId)
 const followed = computed(() => user.value.followed)
 const profileActions = computed<DropdownItem[]>(() => [
-  { func: () => onUnfollowUser(), title: `Unfollow ${user.value.firstName}` },
+  { func: () => onUnfollowUser(), title: t('profile.unfollow', { name: user.value.firstName }) },
 ])
 </script>
 
 <template>
   <Teleport v-if="notMe && followed" to="#page-nav-action">
-    <DropdownButton label="Profile actions" :items="profileActions" />
+    <DropdownButton :label="t('profile.actionsLabel')" :items="profileActions" />
   </Teleport>
 
   <div v-if="notMe && !followed" class="profile-action">
     <AppButton colour="primary" type="button" @click="onFollowUser">
-      Follow {{ user.firstName }}
+      {{ t('profile.follow', { name: user.firstName }) }}
     </AppButton>
   </div>
 
   <!-- We need at least two data points to show a trend -->
   <div v-if="workouts.length > 1">
-    <h6>Trend</h6>
+    <h6>{{ t('profile.trend') }}</h6>
     <AppCard class="p-2">
       <WorkoutChart :workouts="workouts" />
     </AppCard>
   </div>
 
-  <nav v-if="user.id" class="profile-tabs" aria-label="Profile sections">
+  <nav v-if="user.id" class="profile-tabs" :aria-label="t('profile.sectionsAria')">
     <RouterLink
       v-for="tab in tabs"
       :key="tab.name"

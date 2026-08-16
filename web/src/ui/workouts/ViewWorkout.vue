@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { getWorkout } from '@/http/requests.ts'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type Workout } from '@/proto/api/v1/workout_service_pb.ts'
 
+const { t } = useI18n()
 const route = useRoute()
 const workout = ref<Workout>()
 const loading = ref(true)
@@ -13,7 +15,7 @@ const pageTitleStore = usePageTitleStore()
 
 onMounted(async () => {
   await fetchWorkout()
-  pageTitleStore.setPageTitle(workout.value?.name ?? 'Workout')
+  pageTitleStore.setPageTitle(workout.value?.name ?? t('common.workout'))
   loading.value = false
 })
 
@@ -29,9 +31,9 @@ const fetchWorkout = async () => {
   <div v-if="loading" class="loading-card"><span></span><span></span><span></span></div>
   <CardWorkout v-if="workout" :workout="workout" :compact="false" />
   <section v-else-if="!loading" class="empty-card">
-    <h1>Workout unavailable</h1>
-    <p>This workout could not be loaded or no longer exists.</p>
-    <RouterLink to="/workout">View workouts</RouterLink>
+    <h1>{{ t('workout.view.unavailable') }}</h1>
+    <p>{{ t('workout.view.unavailableBody') }}</p>
+    <RouterLink to="/workout">{{ t('workout.view.viewWorkouts') }}</RouterLink>
   </section>
 </template>
 

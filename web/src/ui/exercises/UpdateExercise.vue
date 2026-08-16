@@ -38,14 +38,14 @@ async function onUpdateExercise() {
   const res = await updateExercise(exercise.value)
   if (!res) return
 
-  alertStore.setSuccess('Exercise updated')
+  alertStore.setSuccess(t('exercise.form.updated'))
   await router.push(`/exercises/${exercise.value.id}`)
 }
 </script>
 
 <template>
   <form v-if="exercise" @submit.prevent="onUpdateExercise">
-    <h6>Name</h6>
+    <h6>{{ t('exercise.name') }}</h6>
     <AppList>
       <AppListItemInput
         :model="exercise.name"
@@ -55,17 +55,19 @@ async function onUpdateExercise() {
       />
     </AppList>
 
-    <h6>Tracking</h6>
+    <h6>{{ t('exercise.form.tracking') }}</h6>
     <ExerciseMeasurementSettings
       v-model:metrics="exercise.metrics"
       v-model:rest-seconds="exercise.restSeconds"
     />
 
-    <h6>Tags <small>Optional</small></h6>
+    <h6>
+      {{ t('exercise.form.tags') }} <small>{{ t('common.optional') }}</small>
+    </h6>
     <ExerciseTagsInput v-model="exercise.tags" :suggestions="tagSuggestions" />
 
     <div class="form-actions">
-      <AppButton type="submit" colour="primary">Update Exercise</AppButton>
+      <AppButton type="submit" colour="primary">{{ t('exercise.update') }}</AppButton>
     </div>
   </form>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
@@ -8,6 +9,7 @@ import type { Plan } from '@/proto/api/v1/routine_service_pb'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const planStore = usePlanStore()
@@ -22,7 +24,7 @@ onMounted(async () => {
 })
 
 const activate = async () => {
-  if (!confirm('Make this plan active? Your current active plan will be paused.')) return
+  if (!confirm(t('training.activateConfirm'))) return
   const updated = await planStore.activate(planId)
   if (updated) {
     plan.value = updated
@@ -31,7 +33,7 @@ const activate = async () => {
 }
 
 const pause = async () => {
-  if (!confirm('Pause this plan? Its current position will be saved.')) return
+  if (!confirm(t('training.pauseConfirm'))) return
   if (await planStore.pause()) {
     if (plan.value) plan.value.active = false
     await dashboardStore.load()
@@ -39,7 +41,7 @@ const pause = async () => {
 }
 
 const remove = async () => {
-  if (!confirm('Delete this plan? Your routines and workout history will stay intact.')) return
+  if (!confirm(t('training.planView.deleteConfirm'))) return
   if (await planStore.remove(planId)) await router.push('/plans')
 }
 </script>
@@ -48,20 +50,23 @@ const remove = async () => {
   <div v-if="plan" class="plan-page">
     <section class="overview">
       <header>
-        <p class="eyebrow">{{ plan.active ? 'Active plan' : 'Training plan' }}</p>
-        <span v-if="plan.active">Active</span>
+        <p class="eyebrow">
+          {{ plan.active ? t('training.activePlan') : t('training.planView.trainingPlan') }}
+        </p>
+        <span v-if="plan.active">{{ t('training.active') }}</span>
       </header>
       <h1>{{ plan.name }}</h1>
-      <p>{{ plan.routines.length }} routines repeat continuously in this order.</p>
+      <p>{{ t('training.planView.routinesRepeat', plan.routines.length) }}</p>
       <div class="overview-actions">
-        <RouterLink :to="`/plans/${plan.id}/edit`"><PencilIcon /> Edit plan</RouterLink
-        ><button v-if="plan.active" type="button" @click="pause">Pause</button
-        ><button v-else type="button" @click="activate">Make active</button>
+        <RouterLink :to="`/plans/${plan.id}/edit`"
+          ><PencilIcon /> {{ t('training.planForm.editTitle') }}</RouterLink
+        ><button v-if="plan.active" type="button" @click="pause">{{ t('training.pause') }}</button
+        ><button v-else type="button" @click="activate">{{ t('training.makeActive') }}</button>
       </div>
     </section>
     <header class="order-heading">
-      <p class="eyebrow">Routine order</p>
-      <h2>Your repeating sequence</h2>
+      <p class="eyebrow">{{ t('training.planView.orderEyebrow') }}</p>
+      <h2>{{ t('training.planView.orderTitle') }}</h2>
     </header>
     <ol class="routine-order">
       <li
@@ -72,19 +77,27 @@ const remove = async () => {
         <span>{{ index + 1 }}</span>
         <div>
           <small>{{
-            plan.active && index === plan.currentPosition ? 'UP NEXT' : `ROUTINE ${index + 1}`
+            plan.active && index === plan.currentPosition
+              ? t('training.planView.upNextTag')
+              : t('training.planView.routineTag', { number: index + 1 })
           }}</small
           ><strong>{{ routine.name }}</strong
-          ><small>{{ routine.exercises.length }} exercises</small>
+          ><small>{{ t('home.exerciseCount', routine.exercises.length) }}</small>
         </div>
-        <b v-if="plan.active && index === plan.currentPosition">Next</b>
+        <b v-if="plan.active && index === plan.currentPosition">{{ t('common.next') }}</b>
       </li>
       <footer>
-        After {{ plan.routines[plan.routines.length - 1]?.name }}, the sequence returns to
-        {{ plan.routines[0]?.name }}.
+        {{
+          t('training.planForm.loopFooter', {
+            last: plan.routines[plan.routines.length - 1]?.name,
+            first: plan.routines[0]?.name,
+          })
+        }}
       </footer>
     </ol>
-    <button type="button" class="delete-plan" @click="remove"><TrashIcon /> Delete plan</button>
+    <button type="button" class="delete-plan" @click="remove">
+      <TrashIcon /> {{ t('training.planView.delete') }}
+    </button>
   </div>
 </template>
 
