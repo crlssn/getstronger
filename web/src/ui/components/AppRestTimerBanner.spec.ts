@@ -9,22 +9,6 @@ import { i18n } from '@/i18n'
 import { useWorkoutStore } from '@/stores/workout'
 import AppRestTimerBanner from '@/ui/components/AppRestTimerBanner.vue'
 
-const soundMocks = vi.hoisted(() => ({
-  finished: vi.fn(async () => true),
-  getReady: vi.fn(async () => true),
-  unlock: vi.fn(async () => true),
-}))
-
-vi.mock('@/utils/restSound', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@/utils/restSound')>()
-  return {
-    ...original,
-    playRestFinishedSound: soundMocks.finished,
-    playRestGetReadySound: soundMocks.getReady,
-    unlockRestSound: soundMocks.unlock,
-  }
-})
-
 const createTestRouter = () =>
   createRouter({
     history: createMemoryHistory(),
@@ -77,29 +61,18 @@ describe('AppRestTimerBanner', () => {
     wrapper.unmount()
   })
 
-  test('keeps counting and playing cues while hidden on the active workout page', async () => {
+  test('keeps counting while hidden on the active workout page', async () => {
     const router = createTestRouter()
     await router.push('/home')
     const workoutStore = seedActiveWorkout(new Date(Date.now() + 11_000).toISOString(), 11)
-    class AudioContextStub {
-      close = vi.fn(async () => undefined)
-      state = 'running'
-    }
-    vi.stubGlobal('AudioContext', AudioContextStub)
 
     const wrapper = mount(AppRestTimerBanner, {
       global: { plugins: [i18n, router] },
     })
-    window.dispatchEvent(new Event('pointerdown'))
-    await flushPromises()
     await router.push('/workouts/routine/routine-id')
 
     expect(wrapper.find('.rest-banner').exists()).toBe(false)
-    await vi.advanceTimersByTimeAsync(1_000)
-    expect(soundMocks.getReady).toHaveBeenCalledOnce()
-
-    await vi.advanceTimersByTimeAsync(10_000)
-    expect(soundMocks.finished).toHaveBeenCalledOnce()
+    await vi.advanceTimersByTimeAsync(11_000)
     expect(workoutStore.getRestTimer('routine-id').endsAt).toBeUndefined()
 
     wrapper.unmount()

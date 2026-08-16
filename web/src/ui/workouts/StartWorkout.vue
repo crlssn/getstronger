@@ -54,7 +54,6 @@ import {
   type MeasurementField,
 } from '@/utils/exerciseMeasurements'
 import { convertWeight, normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
-import { playWorkoutFinishedSound, unlockRestSound } from '@/utils/restSound'
 
 const { input: note, textarea } = useTextareaAutosize()
 const { t } = useI18n()
@@ -98,7 +97,6 @@ watch(note, (value) => workoutStore.setNote(routineID, value))
 
 let elapsedInterval: ReturnType<typeof setInterval>
 let restInterval: ReturnType<typeof setInterval> | undefined
-let completionAudioContext: AudioContext | undefined
 
 onMounted(async () => {
   const userResponse = await getCurrentUser(authStore.userId)
@@ -466,15 +464,6 @@ const changeSetWeightUnit = (
   onSetInput(exerciseID, set, index)
 }
 
-const prepareWorkoutCompletionSound = () => {
-  try {
-    completionAudioContext = completionAudioContext ?? new AudioContext()
-    void unlockRestSound(completionAudioContext)
-  } catch {
-    completionAudioContext = undefined
-  }
-}
-
 const deleteWorkoutSet = (exerciseID: string, index: number) => {
   workoutStore.deleteSet(routineID, exerciseID, index)
   Object.keys(completedSets.value)
@@ -538,8 +527,8 @@ const restoreRestTimer = () => {
     workoutStore.setRestTimer(routineID)
     return
   }
-  // The dashboard-level timer owns natural expiry so its sound and cleanup
-  // continue even when the user navigates away from this view.
+  // The dashboard-level timer owns natural expiry so its cleanup continues
+  // even when the user navigates away from this view.
   if (endsAtMs <= Date.now()) return
 
   const remainingSeconds = Math.ceil((endsAtMs - Date.now()) / 1000)
@@ -693,7 +682,6 @@ const onFinishWorkout = async () => {
     }
 
     savedWorkoutId.value = workoutId
-    if (completionAudioContext) void playWorkoutFinishedSound(completionAudioContext)
     alertStore.setSuccess('Workout saved')
     await openSavedWorkout(workoutId)
   } catch (error) {
@@ -724,8 +712,6 @@ const requestFinishWorkout = async () => {
     return
   }
 
-  prepareWorkoutCompletionSound()
-
   if (unfinishedExerciseCount.value > 0) {
     finishDialogOpen.value = true
     return
@@ -735,7 +721,6 @@ const requestFinishWorkout = async () => {
 }
 
 const confirmFinishWorkout = async () => {
-  prepareWorkoutCompletionSound()
   finishDialogOpen.value = false
   await onFinishWorkout()
 }
