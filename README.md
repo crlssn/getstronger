@@ -1,6 +1,6 @@
 # GetStronger
 
-**Track your training. Beat your last.**
+**Log it. Lift it. Beat it.**
 
 **GetStronger** is an open-source gym workout application designed to help users track strength training routines, monitor progress, and connect with others in the fitness community.
 
