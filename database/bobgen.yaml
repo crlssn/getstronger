@@ -1,5 +1,9 @@
 psql:
-  dsn: "postgres://root:root@localhost:5433/postgres?sslmode=disable"
+  # The DSN is deliberately not set here. It comes from the PSQL_DSN environment
+  # variable, which the db:migrate and db:reset tasks build from .env so that
+  # bobgen always reads the database the migrations were applied to. Hardcoding
+  # it makes worktrees, which run their own container on their own port,
+  # regenerate against the main checkout's database instead.
   except:
     schema_migrations:
 

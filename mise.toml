@@ -70,22 +70,37 @@ run = 'docker start "$DB_CONTAINER"'
 alias = "db_migrate"
 description = "Reset migrations and regenerate the database models"
 env = { _.file = ".env" }
-run = [
-    'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose down --all',
-    'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
-    'bobgen-psql -c "$DB_CONFIG_PATH"',
-    'git apply --ignore-space-change database/bobgen-v0.50.0.patch',
-]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bobgen must read the schema from the same database the migrations were just
+# applied to. Worktrees get their own container and port in .env, so the DSN is
+# built here and handed to bobgen through PSQL_DSN rather than being hardcoded
+# in database/bobgen.yaml. See 'mise run worktree:env'.
+dsn="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
+
+migrate -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose down --all
+migrate -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
+PSQL_DSN="$dsn" bobgen-psql -c "$DB_CONFIG_PATH"
+git apply --ignore-space-change database/bobgen-v0.50.0.patch
+'''
 
 [tasks."db:migrate"]
 alias = ["db_migrate_up", "db:migrate:up"]
 description = "Apply pending migrations and regenerate the database models"
 env = { _.file = ".env" }
-run = [
-    'migrate -path "$DB_MIGRATIONS_PATH" -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}" -verbose up',
-    'bobgen-psql -c "$DB_CONFIG_PATH"',
-    'git apply --ignore-space-change database/bobgen-v0.50.0.patch',
-]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+# See the note in 'db:reset' on why the DSN is built here.
+dsn="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
+
+migrate -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
+PSQL_DSN="$dsn" bobgen-psql -c "$DB_CONFIG_PATH"
+git apply --ignore-space-change database/bobgen-v0.50.0.patch
+'''
 
 [tasks."db:seed"]
 alias = "db_seed"
