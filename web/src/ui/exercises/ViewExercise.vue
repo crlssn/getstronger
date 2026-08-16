@@ -98,7 +98,12 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card">{{ t('exercise.view.loading') }}</div>
+  <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
+    <span class="sr-only">{{ $t('common.loading') }}</span>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line w-full" aria-hidden="true"></div>
+  </div>
   <div v-else-if="exercise" class="exercise-detail">
     <ExerciseTags :tags="exercise.tags" />
 
@@ -177,7 +182,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .exercise-detail {
   @apply mx-auto max-w-3xl space-y-5;
 }
-.loading-card,
 .empty-card,
 .chart-card,
 .sets-card {
@@ -210,9 +214,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 }
 .start-quick-chevron {
   @apply size-5 shrink-0 text-slate-400;
-}
-.loading-card {
-  @apply text-sm text-slate-500;
 }
 .eyebrow {
   @apply mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500;

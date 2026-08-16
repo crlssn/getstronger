@@ -370,8 +370,7 @@ h2 {
   @apply size-5;
 }
 .section-block,
-.empty-card,
-.loading-card {
+.empty-card {
   @apply card p-5;
 }
 .section-heading {
@@ -481,12 +480,6 @@ h2 {
 }
 .primary-link {
   @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-white px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50;
-}
-.loading-card {
-  @apply space-y-4;
-}
-.loading-line {
-  @apply h-4 animate-pulse rounded-full bg-slate-100;
 }
 .picker-backdrop {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-6;

@@ -62,8 +62,8 @@ describe('ProfileView', () => {
   test('shows the weight unit from the fetched profile as the active preference', async () => {
     const wrapper = await mountProfile()
 
-    const kg = wrapper.get('.weight-unit-picker button:first-of-type')
-    const lbs = wrapper.get('.weight-unit-picker button:last-of-type')
+    const kg = wrapper.get('.segmented button:first-of-type')
+    const lbs = wrapper.get('.segmented button:last-of-type')
     expect(kg.attributes('aria-pressed')).toBe('true')
     expect(lbs.attributes('aria-pressed')).toBe('false')
   })
@@ -73,12 +73,12 @@ describe('ProfileView', () => {
     const wrapper = await mountProfile()
     const preferencesStore = usePreferencesStore()
 
-    await wrapper.get('.weight-unit-picker button:last-of-type').trigger('click')
+    await wrapper.get('.segmented button:last-of-type').trigger('click')
     await flushPromises()
 
     expect(updateUserWeightUnit).toHaveBeenCalledWith(WeightUnit.POUNDS)
     expect(preferencesStore.weightUnit).toBe(WeightUnit.POUNDS)
-    const lbs = wrapper.get('.weight-unit-picker button:last-of-type')
+    const lbs = wrapper.get('.segmented button:last-of-type')
     expect(lbs.attributes('aria-pressed')).toBe('true')
   })
 
@@ -88,11 +88,11 @@ describe('ProfileView', () => {
     const preferencesStore = usePreferencesStore()
     const alertStore = useAlertStore()
 
-    await wrapper.get('.weight-unit-picker button:last-of-type').trigger('click')
+    await wrapper.get('.segmented button:last-of-type').trigger('click')
     await flushPromises()
 
     expect(preferencesStore.weightUnit).toBe(WeightUnit.KILOGRAMS)
-    const kg = wrapper.get('.weight-unit-picker button:first-of-type')
+    const kg = wrapper.get('.segmented button:first-of-type')
     expect(kg.attributes('aria-pressed')).toBe('true')
     // The request helper is silent for network failures, so without this the
     // button would appear to snap back on its own.

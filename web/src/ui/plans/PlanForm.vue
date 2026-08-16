@@ -91,7 +91,12 @@ const save = async () => {
       <p>{{ t('training.planForm.intro') }}</p>
     </header>
 
-    <div v-if="loading" class="loading-card">{{ t('training.planForm.loading') }}</div>
+    <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
+      <span class="sr-only">{{ $t('common.loading') }}</span>
+      <div class="loading-line" aria-hidden="true"></div>
+      <div class="loading-line" aria-hidden="true"></div>
+      <div class="loading-line w-full" aria-hidden="true"></div>
+    </div>
     <template v-else>
       <label class="name-field">
         <span>{{ t('training.planForm.name') }}</span>
@@ -239,13 +244,9 @@ h2 {
 .page-intro > p:last-child {
   @apply mt-2 text-sm text-slate-500;
 }
-.loading-card,
 .name-field input,
 .routine-order {
   @apply card;
-}
-.loading-card {
-  @apply p-5 text-sm text-slate-500;
 }
 .name-field {
   @apply grid gap-2 text-sm font-semibold text-slate-600;

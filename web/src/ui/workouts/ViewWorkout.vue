@@ -28,7 +28,12 @@ const fetchWorkout = async () => {
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card"><span></span><span></span><span></span></div>
+  <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
+    <span class="sr-only">{{ $t('common.loading') }}</span>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line" aria-hidden="true"></div>
+    <div class="loading-line w-full" aria-hidden="true"></div>
+  </div>
   <CardWorkout v-if="workout" :workout="workout" :compact="false" />
   <section v-else-if="!loading" class="empty-card">
     <h1>{{ t('workout.view.unavailable') }}</h1>

@@ -185,14 +185,14 @@ const canFinish = computed(
     !submitting.value,
 )
 const finishStatus = computed(() => {
-  if (!routine.value) return 'Loading routine…'
+  if (!routine.value) return t('workout.loadingRoutine')
   if (!routine.value.exercises.length) {
-    return quickWorkout ? '' : 'This routine has no exercises'
+    return quickWorkout ? '' : t('workout.noExercises')
   }
   if (incompleteSetCount.value > 0) {
-    return `Complete ${incompleteSetCount.value} partial ${incompleteSetCount.value === 1 ? 'set' : 'sets'}`
+    return t('workout.completePartialSets', incompleteSetCount.value)
   }
-  if (!loggedSetCount.value) return 'Log at least one set to finish'
+  if (!loggedSetCount.value) return t('workout.logOneSetToFinish')
   return ''
 })
 
@@ -653,7 +653,7 @@ const openSavedWorkout = async (workoutId: string) => {
     params: { id: workoutId },
   })
   if (navigationFailure) {
-    finishError.value = 'Workout saved, but it could not be opened. Tap Finish workout to retry.'
+    finishError.value = t('workout.savedNotOpened')
     return false
   }
 
@@ -673,7 +673,7 @@ const onFinishWorkout = async () => {
 
   const exerciseSets = buildWorkoutSets()
   if (!exerciseSets.length) {
-    finishError.value = 'Log at least one complete set before finishing'
+    finishError.value = t('workout.logCompleteSet')
     return
   }
 
@@ -694,13 +694,13 @@ const onFinishWorkout = async () => {
       quickWorkout ? 'Quick Workout' : '',
     )
     if (!response) {
-      finishError.value = 'Workout could not be saved. Check your connection and try again.'
+      finishError.value = t('workout.saveFailed')
       return
     }
 
     const workoutId = response.workoutId.trim()
     if (!workoutId) {
-      finishError.value = 'Workout was saved without an ID. Refresh your workouts to open it.'
+      finishError.value = t('workout.savedWithoutId')
       return
     }
 
@@ -710,18 +710,18 @@ const onFinishWorkout = async () => {
   } catch (error) {
     console.error('failed to finish workout', error)
     if (savedWorkoutId.value) {
-      finishError.value = 'Workout saved, but it could not be opened. Tap Finish workout to retry.'
+      finishError.value = t('workout.savedNotOpened')
     } else if (
       quickWorkout &&
       error instanceof ConnectError &&
       error.code === Code.InvalidArgument &&
       error.message.includes('routine_id')
     ) {
-      finishError.value = 'Restart the backend to enable Quick Workout, then try again.'
+      finishError.value = t('workout.quickWorkoutUnavailable')
     } else if (error instanceof ConnectError && error.code === Code.DeadlineExceeded) {
-      finishError.value = 'Saving took too long. Check your connection and try again.'
+      finishError.value = t('workout.saveTimedOut')
     } else {
-      finishError.value = 'Workout could not be saved. Check your connection and try again.'
+      finishError.value = t('workout.saveFailed')
     }
   } finally {
     submitting.value = false

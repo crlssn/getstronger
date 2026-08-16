@@ -6,6 +6,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { beforeEach, describe, expect, test } from 'vitest'
 
 import { i18n } from '@/i18n'
+import appRouter from '@/router/router'
 import AppDashboard from '@/ui/components/AppDashboard.vue'
 
 const createTestRouter = () =>
@@ -16,10 +17,16 @@ const createTestRouter = () =>
       { component: { template: '<div />' }, name: 'workout', path: '/workout' },
       {
         component: { template: '<div />' },
+        meta: { focusedShell: true },
         name: 'workout-routine',
         path: '/workouts/routine/:id',
       },
-      { component: { template: '<div />' }, name: 'quick-workout', path: '/workouts/quick' },
+      {
+        component: { template: '<div />' },
+        meta: { focusedShell: true },
+        name: 'quick-workout',
+        path: '/workouts/quick',
+      },
       { component: { template: '<div />' }, name: 'progress', path: '/progress' },
     ],
   })
@@ -72,5 +79,17 @@ describe('AppDashboard', () => {
 
     expect(wrapper.find('.page-nav').exists()).toBe(true)
     wrapper.unmount()
+  })
+
+  // The shell reads the flag; this is what checks the app's own routes still
+  // set it. Without it the test above would happily pass on a stub router while
+  // the real workout screen grew a tab bar underneath it.
+  test('marks both active-workout routes as the focused shell', () => {
+    const focused = appRouter
+      .getRoutes()
+      .filter((route) => route.meta.focusedShell === true)
+      .map((route) => route.name)
+
+    expect(focused.sort()).toEqual(['quick-workout', 'workout-routine'])
   })
 })

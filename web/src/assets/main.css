@@ -29,6 +29,30 @@ select {
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
 }
 
+/* Loading was a per-screen decision: two lists had a skeleton, most had a
+ * sentence, and several had nothing. The rule is written down here instead —
+ * every list that fetches gets the same three lines, so the next screen is
+ * correct by default.
+ *
+ * The class name is also the screenshot harness's settle sentinel: it waits
+ * for .loading-card to disappear before photographing a page.
+ */
+.loading-card {
+  @apply card space-y-4 p-5;
+}
+
+.loading-line {
+  @apply h-4 animate-pulse rounded-pill bg-info-surface;
+}
+
+.loading-line:first-of-type {
+  @apply w-32;
+}
+
+.loading-line:nth-of-type(2) {
+  @apply w-52;
+}
+
 /* One segmented control, where the app had six: three track treatments, four
  * selected states and four radii, all saying "pick one of these".
  *
