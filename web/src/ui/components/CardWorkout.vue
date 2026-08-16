@@ -4,6 +4,7 @@ import type { DropdownItem } from '@/types/dropdown'
 
 import { DateTime } from 'luxon'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useTextareaAutosize } from '@vueuse/core'
 import {
@@ -26,6 +27,7 @@ const props = defineProps<{
   workout: Workout
 }>()
 
+const { t } = useI18n()
 const { input: commentInput, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
@@ -71,17 +73,17 @@ const formattedVolume = computed(() =>
 )
 
 const dropdownItems: DropdownItem[] = [
-  { href: `/workouts/${props.workout.id}/edit`, title: 'Edit workout' },
-  { func: () => onDeleteWorkout(), title: 'Delete workout' },
+  { href: `/workouts/${props.workout.id}/edit`, title: t('workout.card.editWorkout') },
+  { func: () => onDeleteWorkout(), title: t('workout.card.deleteWorkout') },
 ]
 
 const onDeleteWorkout = async () => {
-  if (!confirm(`Delete “${props.workout.name}”? This cannot be undone.`)) return
+  if (!confirm(t('workout.card.deleteConfirm', { name: props.workout.name }))) return
 
   const response = await deleteWorkout(props.workout.id)
   if (!response) return
 
-  alertStore.setErrorWithoutPageRefresh('Workout deleted')
+  alertStore.setErrorWithoutPageRefresh(t('workout.card.deleted'))
   workoutDeleted.value = true
   if (!props.compact) await router.push('/home')
 }
@@ -112,7 +114,7 @@ const postComment = async () => {
     <RouterLink
       :to="`/workouts/${workout.id}`"
       class="feed-card-link"
-      :aria-label="`View ${workout.name} workout details`"
+      :aria-label="t('workout.card.viewDetails', { name: workout.name })"
     />
 
     <header class="author-row feed-card-control">
@@ -129,12 +131,12 @@ const postComment = async () => {
     <div class="workout-heading">
       <div class="workout-heading-copy">
         <div>
-          <p class="eyebrow">Completed workout</p>
+          <p class="eyebrow">{{ t('workout.completed') }}</p>
           <h2>{{ workout.name }}</h2>
         </div>
         <span v-if="personalBestCount > 0" class="personal-best-badge">
           <TrophyIcon />
-          {{ personalBestCount === 1 ? 'New PR' : `${personalBestCount} new PRs` }}
+          {{ t('workout.card.prBadge', personalBestCount) }}
         </span>
       </div>
     </div>
@@ -143,31 +145,31 @@ const postComment = async () => {
       <article>
         <span class="metric-icon"><FireIcon /></span>
         <div>
-          <small>Total volume</small><strong>{{ formattedVolume }} kg</strong>
+          <small>{{ t('workout.totalVolume') }}</small><strong>{{ formattedVolume }} kg</strong>
         </div>
       </article>
       <article>
         <span class="metric-icon"><ClockIcon /></span>
         <div>
-          <small>Duration</small><strong>{{ durationMinutes }} min</strong>
+          <small>{{ t('common.duration') }}</small><strong>{{ durationMinutes }} min</strong>
         </div>
       </article>
       <article>
         <span class="metric-icon"><RectangleStackIcon /></span>
         <div>
-          <small>Sets logged</small><strong>{{ setCount }}</strong>
+          <small>{{ t('workout.setsLogged') }}</small><strong>{{ setCount }}</strong>
         </div>
       </article>
       <article>
         <span class="metric-icon" :class="{ amber: personalBestCount > 0 }"><TrophyIcon /></span>
         <div>
-          <small>Personal records</small><strong>{{ personalBestCount }}</strong>
+          <small>{{ t('workout.personalRecords') }}</small><strong>{{ personalBestCount }}</strong>
         </div>
       </article>
     </div>
 
     <div v-if="workout.note" class="summary-note summary-note--compact">
-      <p class="eyebrow">Workout note</p>
+      <p class="eyebrow">{{ t('workout.note') }}</p>
       <p>{{ workout.note }}</p>
     </div>
   </article>
@@ -191,12 +193,12 @@ const postComment = async () => {
       <div class="workout-heading">
         <div class="workout-heading-copy">
           <div>
-            <p class="eyebrow">Completed workout</p>
+            <p class="eyebrow">{{ t('workout.completed') }}</p>
             <h1>{{ workout.name }}</h1>
           </div>
           <span v-if="personalBestCount > 0" class="personal-best-badge">
             <TrophyIcon />
-            {{ personalBestCount === 1 ? 'New PR' : `${personalBestCount} new PRs` }}
+            {{ t('workout.card.prBadge', personalBestCount) }}
           </span>
         </div>
       </div>
@@ -205,31 +207,31 @@ const postComment = async () => {
         <article>
           <span class="metric-icon"><FireIcon /></span>
           <div>
-            <small>Total volume</small><strong>{{ formattedVolume }} kg</strong>
+            <small>{{ t('workout.totalVolume') }}</small><strong>{{ formattedVolume }} kg</strong>
           </div>
         </article>
         <article>
           <span class="metric-icon"><ClockIcon /></span>
           <div>
-            <small>Duration</small><strong>{{ durationMinutes }} min</strong>
+            <small>{{ t('common.duration') }}</small><strong>{{ durationMinutes }} min</strong>
           </div>
         </article>
         <article>
           <span class="metric-icon"><RectangleStackIcon /></span>
           <div>
-            <small>Sets logged</small><strong>{{ setCount }}</strong>
+            <small>{{ t('workout.setsLogged') }}</small><strong>{{ setCount }}</strong>
           </div>
         </article>
         <article>
           <span class="metric-icon" :class="{ amber: personalBestCount > 0 }"><TrophyIcon /></span>
           <div>
-            <small>Personal records</small><strong>{{ personalBestCount }}</strong>
+            <small>{{ t('workout.personalRecords') }}</small><strong>{{ personalBestCount }}</strong>
           </div>
         </article>
       </div>
 
       <div v-if="workout.note" class="summary-note">
-        <p class="eyebrow">Workout note</p>
+        <p class="eyebrow">{{ t('workout.note') }}</p>
         <p>{{ workout.note }}</p>
       </div>
     </section>
@@ -237,13 +239,10 @@ const postComment = async () => {
     <section class="detail-section">
       <header class="section-heading">
         <div>
-          <p class="eyebrow">Session details</p>
-          <h2>Exercises</h2>
+          <p class="eyebrow">{{ t('workout.sessionDetails') }}</p>
+          <h2>{{ t('common.exercises') }}</h2>
         </div>
-        <span
-          >{{ workout.exerciseSets.length }}
-          {{ workout.exerciseSets.length === 1 ? 'exercise' : 'exercises' }}</span
-        >
+        <span>{{ t('home.exerciseCount', workout.exerciseSets.length) }}</span>
       </header>
       <div class="exercise-list">
         <CardWorkoutExercise
@@ -262,8 +261,8 @@ const postComment = async () => {
     <section v-if="showComments" class="comments-card">
       <header class="section-heading comments-heading">
         <div>
-          <p class="eyebrow">Community</p>
-          <h2>Comments</h2>
+          <p class="eyebrow">{{ t('workout.card.community') }}</p>
+          <h2>{{ t('workout.card.comments') }}</h2>
         </div>
         <span>{{ comments.length }}</span>
       </header>
@@ -277,22 +276,22 @@ const postComment = async () => {
           :comment="comment.comment"
         />
       </div>
-      <p v-else class="no-comments">No comments yet. Be the first to encourage this workout.</p>
+      <p v-else class="no-comments">{{ t('workout.card.noComments') }}</p>
 
       <form class="comment-form" @submit.prevent="postComment">
-        <label for="workout-comment">Add a comment</label>
+        <label for="workout-comment">{{ t('workout.card.addComment') }}</label>
         <textarea
           id="workout-comment"
           ref="textarea"
           v-model="commentInput"
           maxlength="500"
-          placeholder="Write something encouraging…"
+          :placeholder="t('workout.card.commentPlaceholder')"
           required
         />
         <div>
           <small>{{ commentInput.trim().length }}/500</small>
           <button type="submit" :disabled="!commentInput.trim() || postingComment">
-            {{ postingComment ? 'Posting…' : 'Post comment' }}
+            {{ postingComment ? t('workout.card.posting') : t('workout.card.postComment') }}
           </button>
         </div>
       </form>

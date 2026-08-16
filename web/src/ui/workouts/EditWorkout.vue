@@ -43,7 +43,7 @@ const fetchWorkout = async (id: string) => {
   if (!res) return
 
   if (res.workout?.user?.id !== authStore.userId) {
-    alertStore.setError('You do not have permission to edit this workout')
+    alertStore.setError(t('workout.edit.noPermission'))
     await router.push('/home')
     return
   }
@@ -70,7 +70,7 @@ const onUpdateWorkout = async () => {
   const res = await updateWorkout(workout.value)
   if (!res) return
 
-  alertStore.setSuccess('Workout updated')
+  alertStore.setSuccess(t('workout.edit.updated'))
   await router.push(`/workouts/${workout.value.id}`)
 }
 
@@ -159,7 +159,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       <AppList>
         <AppListItem class="flex flex-col">
           <div v-for="(set, index) in es.sets" :key="index" class="w-full">
-            <label>Set {{ index + 1 }}</label>
+            <label>{{ t('common.set') }} {{ index + 1 }}</label>
             <div
               class="measurement-row"
               :style="{ '--metric-count': measurementsForExercise(es.exercise).length }"
@@ -216,7 +216,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       </AppList>
     </template>
 
-    <h6>Start Time</h6>
+    <h6>{{ t('workout.edit.startTime') }}</h6>
     <AppList>
       <AppListItemInput
         :model="toDateTime(workout?.startedAt)"
@@ -226,7 +226,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       />
     </AppList>
 
-    <h6>End Time</h6>
+    <h6>{{ t('workout.edit.endTime') }}</h6>
     <AppList>
       <AppListItemInput
         :model="toDateTime(workout?.finishedAt)"
@@ -236,19 +236,19 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       />
     </AppList>
 
-    <h6>Note</h6>
+    <h6>{{ t('workout.edit.note') }}</h6>
     <textarea
       v-if="workout"
       ref="textarea"
       v-model="workout.note"
       class="w-full border-gray-200 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-base min-h-20 py-3 mb-4 resize-none overflow-hidden"
-      placeholder="How was it?"
+      :placeholder="t('workout.notePlaceholder')"
     />
 
     <footer class="update-dock">
-      <AppButton type="submit" colour="primary">Update Workout</AppButton>
+      <AppButton type="submit" colour="primary">{{ t('workout.edit.submit') }}</AppButton>
       <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
-        Cancel Update
+        {{ t('common.cancel') }}
       </AppButton>
     </footer>
   </form>
