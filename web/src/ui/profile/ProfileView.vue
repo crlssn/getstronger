@@ -131,11 +131,11 @@ const weeklyVolume = computed(() =>
         <strong>{{ $t('profile.weightUnit') }}</strong>
         <small>{{ $t('profile.weightUnitBody') }}</small>
       </div>
-      <div class="weight-unit-picker" role="group" :aria-label="$t('profile.weightUnit')">
+      <div class="segmented" role="group" :aria-label="$t('profile.weightUnit')">
         <button
           type="button"
           :aria-pressed="weightUnit === WeightUnit.KILOGRAMS"
-          :class="{ active: weightUnit === WeightUnit.KILOGRAMS }"
+          :class="{ 'is-selected': weightUnit === WeightUnit.KILOGRAMS }"
           :disabled="updatingWeightUnit"
           @click="setWeightUnit(WeightUnit.KILOGRAMS)"
         >
@@ -144,7 +144,7 @@ const weeklyVolume = computed(() =>
         <button
           type="button"
           :aria-pressed="weightUnit === WeightUnit.POUNDS"
-          :class="{ active: weightUnit === WeightUnit.POUNDS }"
+          :class="{ 'is-selected': weightUnit === WeightUnit.POUNDS }"
           :disabled="updatingWeightUnit"
           @click="setWeightUnit(WeightUnit.POUNDS)"
         >
@@ -223,8 +223,10 @@ h1 {
 .settings-card small {
   @apply mt-0.5 text-sm text-slate-500;
 }
+/* Stacked on a phone. Squeezing a segmented control into what is left of a row
+   hides its second option behind a scroll nobody can see. */
 .preferences-card {
-  @apply card flex items-center justify-between gap-4 p-4;
+  @apply card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between;
 }
 .preferences-card strong,
 .preferences-card small {
@@ -235,18 +237,6 @@ h1 {
 }
 .preferences-card small {
   @apply mt-0.5 text-sm text-slate-500;
-}
-.weight-unit-picker {
-  @apply grid grid-cols-2 overflow-hidden rounded-full border border-slate-200;
-}
-.weight-unit-picker button {
-  @apply min-w-16 px-4 py-2 text-sm font-semibold text-slate-600 transition disabled:opacity-60;
-}
-.weight-unit-picker button + button {
-  @apply border-l border-slate-200;
-}
-.weight-unit-picker button.active {
-  @apply bg-stone-900 text-white;
 }
 .logout-link {
   @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-red-50;

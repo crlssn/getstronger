@@ -99,12 +99,12 @@ const profileActions = computed<DropdownItem[]>(() => [
     </AppCard>
   </div>
 
-  <nav v-if="user.id" class="profile-tabs" :aria-label="t('profile.sectionsAria')">
+  <nav v-if="user.id" class="profile-tabs segmented" :aria-label="t('profile.sectionsAria')">
     <RouterLink
       v-for="tab in tabs"
       :key="tab.name"
       :to="tab.href"
-      :class="{ active: tab.href === activeTab }"
+      :class="{ 'is-selected': tab.href === activeTab }"
     >
       {{ tab.name }}
     </RouterLink>
@@ -120,16 +120,6 @@ const profileActions = computed<DropdownItem[]>(() => [
   @apply mb-4;
 }
 .profile-tabs {
-  @apply mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1;
-  scrollbar-width: none;
-}
-.profile-tabs::-webkit-scrollbar {
-  display: none;
-}
-.profile-tabs a {
-  @apply flex min-h-11 shrink-0 items-center justify-center rounded-xl px-4 text-sm font-semibold text-slate-500;
-}
-.profile-tabs a.active {
-  @apply bg-indigo-100 text-indigo-800;
+  @apply mb-4;
 }
 </style>

@@ -69,12 +69,13 @@ function toggleMetric(metric: ExerciseMetric) {
       <p>{{ t('exercise.measurements.help') }}</p>
     </div>
 
-    <div class="presets" :aria-label="t('exercise.measurements.presetsAria')">
+    <div class="presets segmented" :aria-label="t('exercise.measurements.presetsAria')">
       <button
         v-for="preset in presets"
         :key="preset.label"
         type="button"
-        :class="{ selected: sameMetrics(preset.values) }"
+        :class="{ 'is-selected': sameMetrics(preset.values) }"
+        :aria-pressed="sameMetrics(preset.values)"
         @click="metrics = [...preset.values]"
       >
         {{ preset.label }}
@@ -144,15 +145,12 @@ p,
 small {
   @apply block text-sm text-slate-500;
 }
-.presets,
 .rest-options {
   @apply flex flex-wrap gap-2;
 }
-.presets button,
 .rest-options button {
   @apply inline-flex min-h-(--size-control-sm) items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600;
 }
-.presets button.selected,
 .rest-options button.selected {
   @apply border-slate-900 bg-slate-900 text-white;
 }

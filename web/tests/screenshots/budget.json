@@ -4,7 +4,7 @@
     "accessibility": 16,
     "clippedText": 0,
     "horizontalOverflow": 0,
-    "smallTapTargets": 12,
+    "smallTapTargets": 5,
     "tinyText": 0
   }
 }

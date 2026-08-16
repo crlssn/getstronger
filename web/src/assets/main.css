@@ -54,13 +54,23 @@ select {
   @apply grid min-h-(--size-control-sm) shrink-0 cursor-pointer place-items-center whitespace-nowrap rounded-control px-5 text-sm font-semibold text-text-muted transition;
 }
 
+.segmented > *:hover {
+  @apply text-ink-strong;
+}
+
 .segmented > .is-selected {
   @apply bg-surface text-ink-strong shadow-card;
 }
 
-/* Numeric labels only — 7D, 4W, 1Y. Nothing long enough to need the room. */
+.segmented > *:disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+
+/* Numeric labels only — 7D, 4W, 1Y. Nothing long enough to need the room, and
+   a min-width so the narrowest of them still clears the tap floor on both
+   axes: "1Y" at this size is 43px of text and padding. */
 .segmented.is-compact > * {
-  @apply px-3.5 text-meta;
+  @apply min-w-(--size-control-sm) px-3.5 text-meta;
 }
 
 .auth-view {

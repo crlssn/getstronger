@@ -63,12 +63,13 @@ const filteredVolume = computed(() =>
         <span><ArrowTrendingUpIcon /> {{ t('progress.dailyTotals') }}</span>
       </div>
       <WorkoutChart :workouts="filteredWorkouts" />
-      <div class="period-picker" :aria-label="t('progress.periodAria')">
+      <div class="period-picker segmented is-compact" :aria-label="t('progress.periodAria')">
         <button
           v-for="option in periodOptions"
           :key="option.days"
           type="button"
-          :class="{ active: periodDays === option.days }"
+          :class="{ 'is-selected': periodDays === option.days }"
+          :aria-pressed="periodDays === option.days"
           @click="periodDays = option.days"
         >
           {{ option.label }}
@@ -148,13 +149,7 @@ h2 {
   @apply size-5;
 }
 .period-picker {
-  @apply mt-4 grid grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1;
-}
-.period-picker button {
-  @apply min-h-10 rounded-lg text-xs font-semibold text-slate-600 transition hover:text-indigo-700;
-}
-.period-picker button.active {
-  @apply bg-white text-indigo-700 shadow-sm;
+  @apply mt-4;
 }
 .section-heading {
   @apply mb-4;

@@ -178,12 +178,13 @@ const options = computed(() => ({
       <span v-if="change">{{ change }}</span>
     </header>
 
-    <div class="metric-picker" aria-label="Exercise progress metric">
+    <div class="segmented" aria-label="Exercise progress metric">
       <button
         v-for="option in metricOptions"
         :key="option.key"
         type="button"
-        :class="{ active: metric === option.key }"
+        :class="{ 'is-selected': metric === option.key }"
+        :aria-pressed="metric === option.key"
         @click="metric = option.key"
       >
         {{ option.label }}
@@ -227,15 +228,6 @@ const options = computed(() => ({
 }
 .exercise-chart header > span {
   @apply rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
-}
-.metric-picker {
-  @apply grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1;
-}
-.metric-picker button {
-  @apply min-h-10 rounded-lg text-xs font-semibold text-slate-500 transition hover:text-indigo-700;
-}
-.metric-picker button.active {
-  @apply bg-indigo-100 text-indigo-800 shadow-sm;
 }
 .chart-frame {
   @apply h-64;
