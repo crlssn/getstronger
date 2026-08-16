@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -956,6 +958,73 @@ func (s *repoSuite) TestUpdateRoutine() {
 			s.Require().ErrorIs(err, t.expected.err)
 		})
 	}
+}
+
+// TestGetRoutineExercisesAreStablyOrdered guards against the routine detail page showing a
+// different exercise order on every load. The relationship table has no position column, so an
+// unordered load leaves Postgres free to return the rows in heap order, and any write to an
+// exercise row relocates it within the heap. The no-op update below changes no data at all, yet is
+// enough to reshuffle an unordered result.
+func (s *repoSuite) TestGetRoutineExercisesAreStablyOrdered() {
+	ctx := context.Background()
+	userID := s.factory.NewUser().ID.String()
+	routineID := uuid.NewString()
+
+	routine := s.factory.NewRoutine(
+		factory.RoutineID(routineID),
+		factory.RoutineUserID(userID),
+	)
+
+	// Duplicate titles are what the seeded data looks like, and they make ties likely.
+	exercises := models.ExerciseSlice{
+		s.factory.NewExercise(factory.ExerciseUserID(userID), factory.ExerciseTitle("Squats")),
+		s.factory.NewExercise(factory.ExerciseUserID(userID), factory.ExerciseTitle("Deadlifts")),
+		s.factory.NewExercise(factory.ExerciseUserID(userID), factory.ExerciseTitle("Squats")),
+		s.factory.NewExercise(factory.ExerciseUserID(userID), factory.ExerciseTitle("Plank")),
+		s.factory.NewExercise(factory.ExerciseUserID(userID), factory.ExerciseTitle("Deadlifts")),
+	}
+	s.factory.AddRoutineExercise(routine, exercises...)
+
+	loadExerciseIDs := func() []string {
+		fetched, err := s.repo.GetRoutine(ctx,
+			repo.GetRoutineWithID(routineID),
+			repo.GetRoutineWithUserID(userID),
+			repo.GetRoutineWithExercises(),
+		)
+		s.Require().NoError(err)
+
+		exerciseIDs := make([]string, 0, len(fetched.R.Exercises))
+		for _, exercise := range fetched.R.Exercises {
+			exerciseIDs = append(exerciseIDs, exercise.ID.String())
+		}
+		return exerciseIDs
+	}
+
+	first := loadExerciseIDs()
+	s.Require().Len(first, len(exercises))
+
+	// Rewriting a single row in place is what moves it relative to the others; touching every row
+	// would leave their relative order intact and prove nothing.
+	_, err := s.container.DB.ExecContext(ctx,
+		`UPDATE public.exercises SET title = title WHERE id = $1`, exercises[1].ID.String())
+	s.Require().NoError(err)
+
+	s.Require().Equal(first, loadExerciseIDs(), "routine exercise order changed between loads")
+
+	// The routine has no exercise_order value, so the load falls back to title then ID.
+	sorted := slices.Clone(exercises)
+	slices.SortFunc(sorted, func(a, b *models.Exercise) int {
+		if a.Title != b.Title {
+			return strings.Compare(a.Title, b.Title)
+		}
+		return strings.Compare(a.ID.String(), b.ID.String())
+	})
+
+	expected := make([]string, 0, len(sorted))
+	for _, exercise := range sorted {
+		expected = append(expected, exercise.ID.String())
+	}
+	s.Require().Equal(expected, first)
 }
 
 func (s *repoSuite) TestGetPreviousWorkoutSets() {
