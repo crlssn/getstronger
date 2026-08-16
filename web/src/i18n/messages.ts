@@ -93,8 +93,6 @@ export const en = {
       differentEmailHelp: 'Typed the wrong address?',
       differentEmail: 'Sign up with a different email',
       backToLogin: 'Back to log in',
-      loginPrompt: 'Waiting for a verification email?',
-      loginLink: 'Send a new link',
     },
   },
   home: {
@@ -426,8 +424,6 @@ export const sv = {
       differentEmailHelp: 'Skrev du fel adress?',
       differentEmail: 'Registrera dig med en annan e-postadress',
       backToLogin: 'Tillbaka till inloggningen',
-      loginPrompt: 'Väntar du på ett verifieringsmejl?',
-      loginLink: 'Skicka en ny länk',
     },
   },
   home: {

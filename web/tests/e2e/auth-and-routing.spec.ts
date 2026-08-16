@@ -109,15 +109,6 @@ test.describe('guest authentication and routing', () => {
     await expect(page).toHaveURL(/\/home$/)
   })
 
-  test('keeps a verification recovery path on the login page', async ({ page }) => {
-    await page.goto('/login')
-    await page.getByRole('link', { name: 'Send a new link' }).click()
-
-    await expect(page).toHaveURL(/\/verify-email\/pending$/)
-    await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible()
-    await expect(page.getByLabel('Email address')).toBeVisible()
-  })
-
   test('accepts password reset requests without exposing account existence', async ({ page }) => {
     await page.goto('/forgot-password')
     await page
