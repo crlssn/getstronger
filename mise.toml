@@ -37,6 +37,9 @@ WEB_DEV_PORT = { default = "5173" }
 E2E_WEB_PORT = { default = "15173" }
 E2E_SERVER_PORT = { default = "18180" }
 E2E_SSE_PORT = { default = "18181" }
+SCREENSHOT_WEB_PORT = { default = "15273" }
+SCREENSHOT_SERVER_PORT = { default = "18280" }
+SCREENSHOT_SSE_PORT = { default = "18281" }
 DB_CONFIG_PATH = { default = "./database/bobgen.yaml" }
 DB_MIGRATIONS_PATH = { default = "database/migrations/" }
 USER_EMAIL = { default = "active@getstronger.test" }
@@ -201,6 +204,20 @@ run = "cd web && npm run test:e2e:report"
 [tasks."test:e2e:ui"]
 description = "Reset seeded data and open the Playwright test UI"
 run = [{ task = "db:seed" }, "cd web && npm run test:e2e:ui"]
+
+# Screenshot tasks
+
+[tasks.screenshots]
+description = "Capture mobile screenshots of every page for the seeded personas"
+run = [
+    { task = "db:seed" },
+    "cd web && npm run screenshots",
+    'echo "Open the contact sheet with: mise run screenshots:open"',
+]
+
+[tasks."screenshots:open"]
+description = "Open the latest mobile screenshot contact sheet"
+run = "open web/screenshots/index.html"
 
 # Application tasks
 

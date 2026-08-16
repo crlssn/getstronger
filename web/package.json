@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "preview": "vite preview",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:live": "playwright test",

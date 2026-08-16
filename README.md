@@ -345,3 +345,31 @@ mise run test:e2e:report
 ```
 
 Playwright starts isolated HTTP instances of the backend and web app on ports `18080` and `15173`, so it does not depend on or conflict with the normal local TLS services. The fixtures fail on browser console/page errors, failed requests, backend 5xx responses, and WCAG A/AA violations where accessibility assertions are applied. Failed tests retain their screenshot and trace under `web/test-results/`; the HTML report is written to `web/playwright-report/`.
+
+---
+
+## Mobile screenshots
+
+`mise run screenshots` reseeds the database and photographs every page of the app at a phone-sized viewport (390 × 844, retina density) for each seeded persona:
+
+```bash
+mise run screenshots
+```
+
+The images land in `web/screenshots/`, which Git ignores, one folder per audience:
+
+- `guest/` — the pages a signed-out visitor sees.
+- `active/` — Alex Morgan, the established account with a year of training.
+- `new/` — Sam Taylor, the freshly signed-up account with no data of its own.
+
+Each run rewrites the folder from scratch and finishes by writing a contact sheet of every capture:
+
+```bash
+mise run screenshots:open
+```
+
+Pages that need data the persona does not have — Sam has no workouts, and neither persona has a training plan until one is created — are reported as skipped by the run and named on the contact sheet instead of being captured. Detail pages find their identifiers by reading the links the app renders, so adding a page only means adding an entry to `web/tests/screenshots/catalogue.ts`.
+
+Captures run past the fold and stop at 4000 pixels so an endless feed cannot produce an unreadable image. Set `SCREENSHOT_MAX_HEIGHT` to change that: `844` captures exactly one screen, a large value captures everything.
+
+Like the end-to-end suite, the run starts its own backend and web server — on ports `18280` and `15273` by default — so it neither depends on nor disturbs the local development services.
