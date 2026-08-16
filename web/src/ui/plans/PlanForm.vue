@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import {
   ArrowDownIcon,
@@ -16,6 +17,7 @@ import { useAlertStore } from '@/stores/alerts'
 import { usePlanStore } from '@/stores/plans'
 
 const props = defineProps<{ planId?: string }>()
+const { t } = useI18n()
 const router = useRouter()
 const planStore = usePlanStore()
 const alertStore = useAlertStore()
@@ -74,7 +76,7 @@ const save = async () => {
   saving.value = false
   if (!plan) return
 
-  alertStore.setSuccess(editing.value ? 'Plan updated' : 'Plan created')
+  alertStore.setSuccess(editing.value ? t('training.planForm.updated') : t('training.planForm.created'))
   await router.push(`/plans/${plan.id}`)
 }
 </script>
@@ -82,51 +84,51 @@ const save = async () => {
 <template>
   <form class="builder-page" @submit.prevent="save">
     <header class="page-intro">
-      <p class="eyebrow">Plan builder</p>
-      <h1>{{ editing ? 'Edit plan' : 'New plan' }}</h1>
-      <p>Choose routines once. The plan repeats them continuously in this order.</p>
+      <p class="eyebrow">{{ t('training.planForm.eyebrow') }}</p>
+      <h1>{{ editing ? t('training.planForm.editTitle') : t('training.newPlan') }}</h1>
+      <p>{{ t('training.planForm.intro') }}</p>
     </header>
 
-    <div v-if="loading" class="loading-card">Loading plan builder…</div>
+    <div v-if="loading" class="loading-card">{{ t('training.planForm.loading') }}</div>
     <template v-else>
       <label class="name-field">
-        <span>Plan name</span>
-        <input v-model="name" type="text" placeholder="e.g. Strength Rotation" />
+        <span>{{ t('training.planForm.name') }}</span>
+        <input v-model="name" type="text" :placeholder="t('training.planForm.namePlaceholder')" />
       </label>
 
       <div class="loop-note">
         <ArrowsUpDownIcon />
-        <span>No dates, weeks, or end date. Completing a workout moves Up Next forward.</span>
+        <span>{{ t('training.planForm.loopNote') }}</span>
       </div>
       <div v-if="editing" class="edit-note">
-        Your current routine remains current when it is still included in the new order.
+        {{ t('training.planForm.editNote') }}
       </div>
 
       <section class="routine-order">
         <header>
           <div>
-            <p class="eyebrow">Repeating order</p>
-            <h2>Routines</h2>
+            <p class="eyebrow">{{ t('training.planForm.orderEyebrow') }}</p>
+            <h2>{{ t('common.routines') }}</h2>
           </div>
-          <span>{{ selected.length }} {{ selected.length === 1 ? 'routine' : 'routines' }}</span>
+          <span>{{ t('training.planForm.routineCount', selected.length) }}</span>
         </header>
 
         <div v-if="!selected.length" class="empty-order">
-          <strong>Add your first routine</strong>
-          <p>It will become the first workout in the loop.</p>
+          <strong>{{ t('training.planForm.emptyTitle') }}</strong>
+          <p>{{ t('training.planForm.emptyBody') }}</p>
         </div>
         <ol v-else>
           <li v-for="(routine, index) in selected" :key="routine.id">
             <span class="position">{{ index + 1 }}</span>
             <div class="routine-copy">
               <strong>{{ routine.name }}</strong>
-              <small>{{ routine.exercises.length }} exercises</small>
+              <small>{{ t('home.exerciseCount', routine.exercises.length) }}</small>
             </div>
             <div class="order-actions">
               <button
                 type="button"
                 :disabled="index === 0"
-                :aria-label="`Move ${routine.name} up`"
+                :aria-label="t('training.planForm.moveUp', { name: routine.name })"
                 @click="moveRoutine(index, -1)"
               >
                 <ArrowUpIcon />
@@ -134,14 +136,14 @@ const save = async () => {
               <button
                 type="button"
                 :disabled="index === selected.length - 1"
-                :aria-label="`Move ${routine.name} down`"
+                :aria-label="t('training.planForm.moveDown', { name: routine.name })"
                 @click="moveRoutine(index, 1)"
               >
                 <ArrowDownIcon />
               </button>
               <button
                 type="button"
-                :aria-label="`Remove ${routine.name}`"
+                :aria-label="t('training.planForm.remove', { name: routine.name })"
                 @click="removeRoutine(index)"
               >
                 <TrashIcon />
@@ -151,22 +153,30 @@ const save = async () => {
         </ol>
 
         <button type="button" class="add-routine" @click="pickerOpen = true">
-          <PlusIcon /> Add routine
+          <PlusIcon /> {{ t('training.planForm.addRoutine') }}
         </button>
         <footer v-if="selected.length">
-          After {{ selected[selected.length - 1]?.name }}, the plan returns to
-          {{ selected[0]?.name }}.
+          {{
+            t('training.planForm.loopFooter', {
+              last: selected[selected.length - 1]?.name,
+              first: selected[0]?.name,
+            })
+          }}
         </footer>
       </section>
 
       <div class="save-area">
         <small>{{
-          editing
-            ? 'The plan keeps its active state and current position.'
-            : 'New plans are created inactive, so Up Next will not change.'
+          editing ? t('training.planForm.saveNoteEditing') : t('training.planForm.saveNoteNew')
         }}</small>
         <button type="submit" :disabled="!canSave || saving">
-          {{ saving ? 'Saving…' : editing ? 'Save changes' : 'Create plan' }}
+          {{
+            saving
+              ? t('training.planForm.saving')
+              : editing
+                ? t('training.planForm.saveChanges')
+                : t('training.planForm.createPlan')
+          }}
         </button>
       </div>
     </template>
@@ -181,10 +191,10 @@ const save = async () => {
     >
       <header>
         <div>
-          <p class="eyebrow">Add to plan</p>
-          <h2 id="routine-picker-title">Choose a routine</h2>
+          <p class="eyebrow">{{ t('training.planForm.pickerEyebrow') }}</p>
+          <h2 id="routine-picker-title">{{ t('training.planForm.pickerTitle') }}</h2>
         </div>
-        <button type="button" aria-label="Close routine picker" @click="pickerOpen = false">
+        <button type="button" :aria-label="t('home.closePicker')" @click="pickerOpen = false">
           <XMarkIcon />
         </button>
       </header>
@@ -197,11 +207,11 @@ const save = async () => {
         >
           <span
             ><strong>{{ routine.name }}</strong
-            ><small>{{ routine.exercises.length }} exercises</small></span
+            ><small>{{ t('home.exerciseCount', routine.exercises.length) }}</small></span
           ><PlusIcon />
         </button>
       </div>
-      <p v-else class="picker-empty">Every routine is already in this plan.</p>
+      <p v-else class="picker-empty">{{ t('training.planForm.pickerEmpty') }}</p>
     </section>
   </div>
 </template>
