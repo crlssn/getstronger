@@ -204,4 +204,59 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
   })
+
+  describe('previous values and set correction', () => {
+    beforeEach(() => {
+      getPreviousWorkoutSets.mockResolvedValue({
+        exerciseSets: [
+          create(ExerciseSetsSchema, {
+            exercise: { id: benchPress.id },
+            sets: [{ reps: 8, weight: 42.5, weightUnit: WeightUnit.KILOGRAMS }],
+          }),
+        ],
+      })
+    })
+
+    test('shows the previous session values inside the set rows', async () => {
+      const wrapper = await mountWorkout()
+
+      const rows = wrapper.findAll('.set-row')
+      expect(rows[0].get('.previous-value').text()).toBe('42.5 kg · 8 reps')
+
+      await logFirstSet(wrapper)
+      const updatedRows = wrapper.findAll('.set-row')
+      expect(updatedRows[1].get('.previous-value').text()).toBe('—')
+      wrapper.unmount()
+    })
+
+    test('copies the previous value into an empty field on focus only', async () => {
+      const wrapper = await mountWorkout()
+
+      const weight = wrapper.get('input[aria-label="Bench Press set 1 weight"]')
+      await weight.trigger('focus')
+      expect((weight.element as HTMLInputElement).value).toBe('42.5')
+
+      await weight.setValue('80')
+      await weight.trigger('focus')
+      expect((weight.element as HTMLInputElement).value).toBe('80')
+      wrapper.unmount()
+    })
+
+    test('corrects a completed set without restarting the rest timer', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+      await logFirstSet(wrapper)
+
+      const endsAt = workoutStore.getRestTimer(routineID).endsAt
+      expect(endsAt).toBeDefined()
+      expect(wrapper.get('.set-row').classes()).toContain('complete')
+
+      await wrapper.get('input[aria-label="Bench Press set 1 weight"]').setValue('85')
+
+      expect(wrapper.get('.set-row').classes()).toContain('complete')
+      expect(workoutStore.getSets(routineID, benchPress.id)[0].weight).toBe(85)
+      expect(workoutStore.getRestTimer(routineID).endsAt).toBe(endsAt)
+      wrapper.unmount()
+    })
+  })
 })
