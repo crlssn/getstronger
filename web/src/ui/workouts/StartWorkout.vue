@@ -1288,7 +1288,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 px-3;
 }
 /* A compact floating pill, not a band: the countdown stays on screen without
-   claiming a row of the workout. */
+   claiming a row of the workout. Large text wraps the actions under the
+   countdown rather than clipping them. */
 .rest-pill {
   /* Energy comes from saturation, not lightness: near-full saturation reads
      vivid while staying dark enough for white text. The gradient runs dark at
@@ -1300,7 +1301,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     hsl(calc(var(--rest-hue, 165) - 28) 96% 40%) 100%
   );
   transition: --rest-hue 900ms ease;
-  @apply pointer-events-auto relative flex max-w-full items-center gap-3 overflow-hidden rounded-full px-4 py-2 text-white shadow-xl;
+  border-radius: 2rem;
+  @apply pointer-events-auto relative flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden px-4 py-2 text-white shadow-xl;
 }
 .rest-pill > svg {
   @apply size-4 shrink-0 text-white/85;
