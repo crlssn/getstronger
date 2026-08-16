@@ -108,6 +108,8 @@ export const en = {
       differentEmailHelp: 'Typed the wrong address?',
       differentEmail: 'Sign up with a different email',
       backToLogin: 'Back to log in',
+      verified: 'Thank you for verifying your email',
+      failed: 'Sorry, we couldn’t verify your email.',
     },
   },
   home: {
@@ -616,6 +618,8 @@ export const sv = {
       differentEmailHelp: 'Skrev du fel adress?',
       differentEmail: 'Registrera dig med en annan e-postadress',
       backToLogin: 'Tillbaka till inloggningen',
+      verified: 'Tack för att du verifierade din e-postadress',
+      failed: 'Tyvärr kunde vi inte verifiera din e-postadress.',
     },
   },
   home: {
