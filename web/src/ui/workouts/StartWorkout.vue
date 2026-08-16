@@ -839,30 +839,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </div>
     </header>
 
-    <!-- The countdown is the focal point while resting; it is aria-hidden so
-           screen readers are not re-announced to every second. -->
-    <section
-      v-if="restSeconds > 0"
-      class="rest-banner"
-      :class="{ final: restFinalCountdown, bright: restFinalMinute }"
-      :style="{ '--rest-hue': restHue }"
-      :aria-label="t('workout.restTimer')"
-    >
-      <div class="rest-banner-inner">
-        <div class="rest-copy">
-          <p class="rest-label"><ClockIcon /> {{ t('workout.rest') }}</p>
-          <strong aria-hidden="true">{{ restLabel }}</strong>
-        </div>
-        <div class="rest-actions">
-          <button type="button" @click="addRestTime">{{ t('workout.addSeconds') }}</button>
-          <button type="button" @click="skipRest">{{ t('workout.skip') }}</button>
-        </div>
-        <div class="rest-progress" aria-hidden="true">
-          <span :style="{ width: restProgress }"></span>
-        </div>
-      </div>
-    </section>
-
     <main class="exercise-stack">
       <section v-if="quickWorkout && !currentExercise" class="quick-empty">
         <span><PlusIcon /></span>
@@ -1194,9 +1170,33 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </section>
     </div>
 
-    <!-- Advancing remains the primary action while exercises are unfinished,
-         but finishing stays visible for the entire session. -->
-    <footer class="finish-dock">
+    <!-- One fixed session region: the rest pill floats above the action dock,
+         so the countdown stays visible without pushing content around and
+         without ever covering an editable field. The countdown is the focal
+         point while resting; it is aria-hidden so screen readers are not
+         re-announced to every second. -->
+    <div class="session-dock">
+      <section
+        v-if="restSeconds > 0"
+        class="rest-pill"
+        :class="{ final: restFinalCountdown, bright: restFinalMinute }"
+        :style="{ '--rest-hue': restHue }"
+        :aria-label="t('workout.restTimer')"
+      >
+        <ClockIcon aria-hidden="true" />
+        <strong aria-hidden="true">{{ restLabel }}</strong>
+        <div class="rest-actions">
+          <button type="button" @click="addRestTime">{{ t('workout.addSeconds') }}</button>
+          <button type="button" @click="skipRest">{{ t('workout.skip') }}</button>
+        </div>
+        <div class="rest-progress" aria-hidden="true">
+          <span :style="{ width: restProgress }"></span>
+        </div>
+      </section>
+
+      <!-- Advancing remains the primary action while exercises are unfinished,
+           but finishing stays visible for the entire session. -->
+      <footer class="finish-dock">
       <strong v-if="finishError || primaryStatus" :class="{ 'text-red-600': finishError }">{{
         finishError || primaryStatus
       }}</strong>
@@ -1219,7 +1219,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       >
         <FlagIcon /> Finish workout
       </button>
-    </footer>
+      </footer>
+    </div>
   </form>
 </template>
 
@@ -1228,6 +1229,11 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
 .workout-shell {
   @apply mx-auto max-w-3xl space-y-4 pb-36;
+}
+/* Reserves the height of the fixed session dock (pill + actions) so the note
+   field and the last set row are never trapped behind it while resting. */
+.workout-shell.resting {
+  padding-bottom: 12.5rem;
 }
 /* The chrome spans the viewport while its contents stay aligned with the app. */
 /* Opaque, or scrolled content bleeds through and reads as passing over the
@@ -1274,15 +1280,19 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   inherits: false;
   initial-value: 160;
 }
-/* A square, edge-to-edge band that rides over the header on scroll, so the
-   countdown owns the top of the screen while resting. */
-.rest-banner {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  @apply !mt-0 sticky top-0 z-30 text-white shadow-lg;
+/* The one fixed region of the session: rest pill stacked on the action dock.
+   It lives outside the flow, so nothing is displaced while resting; taps pass
+   through the gaps to the content behind. */
+.session-dock {
+  padding-bottom: env(safe-area-inset-bottom);
+  @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 px-3;
+}
+/* A compact floating pill, not a band: the countdown stays on screen without
+   claiming a row of the workout. */
+.rest-pill {
   /* Energy comes from saturation, not lightness: near-full saturation reads
      vivid while staying dark enough for white text. The gradient runs dark at
-     the top-left, where the label and countdown sit, out to a bright corner. */
+     the top-left, where the countdown sits, out to a bright corner. */
   background-image: linear-gradient(
     140deg,
     hsl(var(--rest-hue, 165) 95% 21%) 0%,
@@ -1290,13 +1300,31 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     hsl(calc(var(--rest-hue, 165) - 28) 96% 40%) 100%
   );
   transition: --rest-hue 900ms ease;
+  @apply pointer-events-auto relative flex max-w-full items-center gap-3 overflow-hidden rounded-full px-4 py-2 text-white shadow-xl;
 }
-.rest-banner-inner {
-  @apply mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-3 px-3 pb-4 pt-3 sm:px-5 lg:px-8;
+.rest-pill > svg {
+  @apply size-4 shrink-0 text-white/85;
+}
+.rest-pill > strong {
+  @apply font-mono text-xl font-bold leading-none tabular-nums;
+}
+.rest-actions {
+  @apply flex shrink-0 items-center gap-1;
+}
+/* A dark tint keeps the white label high-contrast wherever the chips land on
+   the gradient; a white tint washes out against the bright corner. */
+.rest-pill button {
+  @apply min-h-9 rounded-full bg-black/25 px-3 text-sm font-semibold text-white transition hover:bg-black/40;
+}
+.rest-pill .rest-progress {
+  @apply absolute inset-x-4 bottom-0.5 h-0.5 overflow-hidden rounded-full bg-white/15;
+}
+.rest-pill .rest-progress span {
+  @apply block h-full rounded-full bg-white transition-[width] duration-1000 ease-linear;
 }
 /* The last minute goes sunny with dark text: warm hues only read as happy when
    they are bright, and bright needs dark type to stay legible. */
-.rest-banner.bright {
+.rest-pill.bright {
   background-image: linear-gradient(
     140deg,
     hsl(42 100% 50%) 0%,
@@ -1305,29 +1333,28 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   );
   @apply text-stone-950;
 }
-.rest-banner.bright .rest-label {
+.rest-pill.bright > svg {
   @apply text-stone-900/70;
 }
-.rest-banner.bright .rest-copy strong {
+.rest-pill.bright > strong {
   @apply text-stone-950;
 }
-.rest-banner.bright button {
+.rest-pill.bright button {
   @apply bg-black/15 text-stone-950 hover:bg-black/25;
 }
-.rest-banner.bright .rest-progress {
+.rest-pill.bright .rest-progress {
   @apply bg-black/15;
 }
-.rest-banner.bright .rest-progress span {
+.rest-pill.bright .rest-progress span {
   @apply bg-stone-950;
 }
-/* One beat per second through the last ten: the band itself brightens rather
+/* One beat per second through the last ten: the pill itself brightens rather
    than the digits resizing, so the numbers stay steady and readable. */
-.rest-banner.final {
+.rest-pill.final {
   animation: rest-pulse 1s ease-in-out infinite;
-  @apply shadow-xl;
 }
-/* An already-bright band would blow out on the dark band's pulse range. */
-.rest-banner.final.bright {
+/* An already-bright pill would blow out on the dark pill's pulse range. */
+.rest-pill.final.bright {
   animation: rest-pulse-bright 1s ease-in-out infinite;
 }
 @keyframes rest-pulse-bright {
@@ -1349,37 +1376,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rest-banner.final,
-  .rest-banner.final.bright {
+  .rest-pill {
+    transition: none;
+  }
+  .rest-pill.final,
+  .rest-pill.final.bright {
     animation: none;
   }
-}
-.rest-copy {
-  @apply min-w-0;
-}
-/* White, not grey: a neutral grey washes out against a saturated background. */
-.rest-label {
-  @apply flex items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-wider text-white/85;
-}
-.rest-label svg {
-  @apply size-3.5;
-}
-.rest-copy strong {
-  @apply mt-1 block font-mono text-4xl font-bold leading-none tabular-nums text-white;
-}
-.rest-actions {
-  @apply flex shrink-0 items-center gap-1;
-}
-/* A dark tint keeps the white label high-contrast wherever the chips land on
-   the gradient; a white tint washes out against the bright corner. */
-.rest-banner button {
-  @apply min-h-11 rounded-xl bg-black/25 px-3 text-sm font-semibold text-white transition hover:bg-black/40;
-}
-.rest-progress {
-  @apply col-span-2 h-1.5 overflow-hidden rounded-full bg-white/15;
-}
-.rest-progress span {
-  @apply block h-full rounded-full bg-white transition-[width] duration-1000 ease-linear;
 }
 .exercise-stack {
   @apply space-y-4;
@@ -1455,6 +1458,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 .set-row input {
   @apply min-w-0 rounded-xl border-slate-200 px-2 py-2 text-center font-semibold shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
+}
+/* Focus reveal (and focusNextSetInput) must land above the fixed session dock,
+   not behind it. */
+.set-row input,
+.weight-entry,
+.note-card textarea {
+  scroll-margin-bottom: 10rem;
 }
 .weight-entry {
   @apply grid min-w-0 grid-cols-[minmax(2.75rem,1fr)_2.75rem] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500;
@@ -1582,8 +1592,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
 }
 .finish-dock {
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:border sm:border-b-0 sm:rounded-t-2xl;
+  @apply pointer-events-auto flex w-full max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 text-center shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:border sm:rounded-2xl;
 }
 .primary-action {
   @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400;

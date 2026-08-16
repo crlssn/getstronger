@@ -145,4 +145,63 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
   })
+
+  describe('rest timer pill', () => {
+    const restPill = (wrapper: Awaited<ReturnType<typeof mountWorkout>>) =>
+      wrapper.find('.session-dock .rest-pill[aria-label="Rest timer"]')
+
+    test('floats above the action dock once a set with a rest time completes', async () => {
+      const wrapper = await mountWorkout()
+
+      expect(restPill(wrapper).exists()).toBe(false)
+      await logFirstSet(wrapper)
+
+      const pill = restPill(wrapper)
+      expect(pill.exists()).toBe(true)
+      expect(pill.get('strong').text()).toBe('01:30')
+      expect(wrapper.get('.workout-shell').classes()).toContain('resting')
+      wrapper.unmount()
+    })
+
+    test('extends by thirty seconds and skips', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+      await logFirstSet(wrapper)
+
+      await wrapper.get('.rest-pill button:first-of-type').trigger('click')
+      expect(restPill(wrapper).get('strong').text()).toBe('02:00')
+      const extended = Date.parse(workoutStore.getRestTimer(routineID).endsAt ?? '')
+      expect(extended - Date.now()).toBe(120_000)
+
+      await wrapper.get('.rest-pill button:last-of-type').trigger('click')
+      expect(restPill(wrapper).exists()).toBe(false)
+      expect(workoutStore.getRestTimer(routineID).endsAt).toBeUndefined()
+      expect(wrapper.get('.workout-shell').classes()).not.toContain('resting')
+      wrapper.unmount()
+    })
+
+    test('restores a persisted timer on mount', async () => {
+      const workoutStore = useWorkoutStore()
+      workoutStore.initialiseWorkout(routineID)
+      const endsAt = new Date(Date.now() + 45_000).toISOString()
+      workoutStore.setRestTimer(routineID, endsAt, 90)
+
+      const wrapper = await mountWorkout()
+
+      const pill = restPill(wrapper)
+      expect(pill.exists()).toBe(true)
+      expect(pill.get('strong').text()).toBe('00:45')
+      wrapper.unmount()
+    })
+
+    test('keeps the dock in one fixed region that never enters the flow', async () => {
+      const wrapper = await mountWorkout()
+      await logFirstSet(wrapper)
+
+      const dock = wrapper.get('.session-dock')
+      expect(dock.find('.finish-dock').exists()).toBe(true)
+      expect(dock.find('.rest-pill').exists()).toBe(true)
+      wrapper.unmount()
+    })
+  })
 })
