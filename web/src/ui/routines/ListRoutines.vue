@@ -250,7 +250,7 @@ h1 {
   @apply mt-0.5 text-xs text-slate-500;
 }
 .up-next {
-  @apply mb-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
+  @apply mb-2 inline-flex rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
 }
 .routine-actions {
   @apply relative mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4;

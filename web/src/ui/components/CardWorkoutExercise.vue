@@ -129,7 +129,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply grid min-h-11 items-center gap-2 border-t border-slate-100 text-sm first:border-t-0;
 }
 .table-head {
-  @apply min-h-9 border-0 text-xs font-semibold uppercase tracking-wide text-slate-400;
+  @apply min-h-9 border-0 text-eyebrow font-semibold uppercase text-text-subtle;
 }
 .set-number {
   @apply grid size-7 place-items-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500;

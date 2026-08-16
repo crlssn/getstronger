@@ -152,7 +152,7 @@ small {
   @apply inline-flex min-h-(--size-control-sm) items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600;
 }
 .rest-options button.selected {
-  @apply border-slate-900 bg-slate-900 text-white;
+  @apply border-surface-inverse bg-surface-inverse text-white;
 }
 .measurement-grid {
   @apply grid grid-cols-2 gap-3;
@@ -161,7 +161,7 @@ small {
   @apply flex min-h-(--size-control-sm) items-center gap-3 rounded-2xl border border-slate-200 p-4 text-left;
 }
 .measurement.selected {
-  @apply border-slate-900 bg-stone-50;
+  @apply border-surface-inverse bg-surface-sunken;
 }
 .measurement strong {
   @apply block text-base text-slate-950;
@@ -170,7 +170,7 @@ small {
   @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold;
 }
 .measurement.selected .check {
-  @apply bg-slate-900 text-white;
+  @apply bg-surface-inverse text-white;
 }
 .rest-setting {
   @apply flex items-center justify-between border-t border-slate-100 pt-5;
@@ -188,7 +188,7 @@ small {
   @apply absolute inset-x-0 top-1/2 h-8 -translate-y-1/2 rounded-full bg-slate-200 transition-colors content-[''];
 }
 .switch[aria-checked='true']::before {
-  @apply bg-slate-900;
+  @apply bg-surface-inverse;
 }
 .knob {
   @apply absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-white shadow-sm transition-transform;

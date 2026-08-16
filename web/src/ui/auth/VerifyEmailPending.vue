@@ -157,7 +157,7 @@ const onResend = async () => {
 }
 
 .verification-pending {
-  @apply mb-6 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900;
+  @apply mb-6 flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-surface p-4 text-sm text-warning;
 }
 
 .verification-pending-icon {

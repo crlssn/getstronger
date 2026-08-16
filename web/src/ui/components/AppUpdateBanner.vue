@@ -36,7 +36,7 @@ onUnmounted(() => versionStore.stop())
 /* Sits above the bottom navigation and the workout dock. */
 .update-banner {
   bottom: calc(5.75rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-stone-900 px-4 py-3 text-white shadow-xl;
+  @apply fixed inset-x-0 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-surface-inverse px-4 py-3 text-white shadow-xl;
   margin-inline: 0.75rem;
 }
 .update-banner > svg {
@@ -46,7 +46,7 @@ onUnmounted(() => versionStore.stop())
   @apply min-w-0 flex-1 text-sm font-medium;
 }
 .refresh {
-  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-stone-900 transition hover:bg-stone-100;
+  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-ink transition hover:bg-stone-100;
 }
 .dismiss {
   @apply grid size-9 shrink-0 place-items-center rounded-lg text-stone-400 transition hover:bg-white/10 hover:text-white;

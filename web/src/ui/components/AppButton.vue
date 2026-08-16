@@ -48,7 +48,7 @@ button:disabled {
 }
 
 .green {
-  @apply border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700;
+  @apply border-success bg-success text-white hover:brightness-95;
 }
 
 .red {
@@ -64,6 +64,6 @@ button:disabled {
 }
 
 .black {
-  @apply border-slate-900 bg-slate-900 text-white hover:bg-slate-800;
+  @apply border-surface-inverse bg-surface-inverse text-white hover:brightness-125;
 }
 </style>

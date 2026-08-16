@@ -242,7 +242,7 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
 }
 .active-actions > a svg {
   @apply size-5;
@@ -254,7 +254,7 @@ h2 {
   @apply size-4;
 }
 .next-card {
-  @apply rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-lg shadow-indigo-200;
+  @apply rounded-sheet bg-surface-inverse p-6 text-white shadow-raised;
 }
 .next-card > header {
   @apply flex items-center justify-between gap-3;
@@ -354,7 +354,7 @@ h2 {
   @apply text-slate-600;
 }
 .history-end svg {
-  @apply size-4 text-emerald-600;
+  @apply size-4 text-success;
 }
 .history-spinner {
   @apply size-4 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600;

@@ -264,7 +264,7 @@ h2 {
   @apply mt-0.5 size-5 shrink-0;
 }
 .edit-note {
-  @apply border-emerald-200 bg-emerald-50 text-emerald-700;
+  @apply border-success/30 bg-success-surface text-success;
 }
 .routine-order {
   @apply overflow-hidden;

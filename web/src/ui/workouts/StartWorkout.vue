@@ -1415,7 +1415,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
 }
 .weight-unit-suffix {
-  @apply grid place-items-center border-l border-slate-200 bg-slate-50 text-xs font-bold uppercase text-slate-400;
+  @apply grid place-items-center border-l border-slate-200 bg-slate-50 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .remove-set {
   @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600;

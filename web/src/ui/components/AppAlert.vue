@@ -27,7 +27,7 @@ watch(
 
 const alertStyle = computed(() => {
   if (alertStore.alert?.type === 'success') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    return 'border-success/30 bg-success-surface text-success'
   }
 
   if (alertStore.alert?.type === 'error') {

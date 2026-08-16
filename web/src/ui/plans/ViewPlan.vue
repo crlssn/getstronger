@@ -108,7 +108,7 @@ const remove = async () => {
   @apply space-y-4;
 }
 .overview {
-  @apply rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-lg shadow-indigo-200;
+  @apply rounded-sheet bg-surface-inverse p-6 text-white shadow-raised;
 }
 .overview header {
   @apply flex items-center justify-between gap-3;

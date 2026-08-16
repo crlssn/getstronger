@@ -103,13 +103,13 @@ const markAllAsRead = async () => {
   @apply relative transition-colors duration-200;
 }
 .notification-item.unread {
-  @apply border-l-[3px] border-l-blue-500 bg-gradient-to-r from-blue-50 via-blue-50/60 to-white;
+  @apply border-l-[3px] border-l-info bg-info-surface;
 }
 .notification-item.unread:hover {
   @apply from-blue-100/80 via-blue-50 to-white;
 }
 .notification-item.unread :deep(a > svg) {
-  @apply size-10 rounded-xl bg-blue-100 p-2 text-blue-600 ring-1 ring-blue-200;
+  @apply size-10 rounded-xl bg-info-surface p-2 text-info ring-1 ring-info/20;
 }
 .notification-item.unread :deep(a > div > div) {
   @apply text-slate-950;

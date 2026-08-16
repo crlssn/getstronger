@@ -347,7 +347,7 @@ const postComment = async () => {
   @apply size-4;
 }
 .workout-heading {
-  @apply bg-gradient-to-br from-indigo-700 to-violet-600 px-5 py-6 text-white sm:px-6;
+  @apply bg-surface-inverse px-5 py-6 text-white sm:px-6;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
@@ -430,7 +430,7 @@ const postComment = async () => {
   @apply flex items-center justify-between gap-3 border-t border-slate-200 pt-3;
 }
 .comment-form small {
-  @apply pl-2 text-xs text-slate-400;
+  @apply pl-2 text-xs text-text-subtle;
 }
 .comment-form button {
   @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300;

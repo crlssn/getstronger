@@ -214,10 +214,10 @@ const removeTag = (index: number) => {
   @apply bg-indigo-50 text-indigo-800;
 }
 .tag-suggestions small {
-  @apply shrink-0 text-xs font-normal text-slate-400;
+  @apply shrink-0 text-xs font-normal text-text-subtle;
 }
 .tag-help {
-  @apply flex items-center justify-between gap-3 text-slate-400;
+  @apply flex items-center justify-between gap-3 text-text-subtle;
 }
 .tag-help .error {
   @apply text-red-600;

@@ -307,7 +307,7 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
 }
 .active-actions > button {
   @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
@@ -319,7 +319,7 @@ h2 {
   @apply size-4;
 }
 .next-session {
-  @apply grid gap-5 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-indigo-200 sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
+  @apply grid gap-5 rounded-sheet bg-surface-inverse p-5 text-white shadow-raised sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
 }
 .next-label-row {
   @apply flex items-center justify-between gap-3;
@@ -404,7 +404,7 @@ h2 {
   @apply flex items-center justify-center gap-3 py-5 text-slate-600;
 }
 .feed-end > span {
-  @apply grid size-9 place-items-center rounded-full bg-emerald-50 text-emerald-700;
+  @apply grid size-9 place-items-center rounded-full bg-success-surface text-success;
 }
 .feed-end svg {
   @apply size-5;
@@ -458,7 +458,7 @@ h2 {
   @apply size-5;
 }
 .empty-card {
-  @apply grid justify-items-start gap-4 border-transparent bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-lg shadow-indigo-200;
+  @apply grid justify-items-start gap-4 border-transparent bg-surface-inverse text-white shadow-raised;
 }
 .empty-card h2 {
   @apply text-white;

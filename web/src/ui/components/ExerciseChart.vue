@@ -227,7 +227,7 @@ const options = computed(() => ({
   @apply text-xl font-semibold tracking-tight text-slate-950;
 }
 .exercise-chart header > span {
-  @apply rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
+  @apply rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
 }
 .chart-frame {
   @apply h-64;

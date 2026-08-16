@@ -288,7 +288,7 @@ input {
 }
 
 .weight-unit-suffix {
-  @apply shrink-0 text-xs font-bold uppercase text-slate-400;
+  @apply shrink-0 text-eyebrow font-bold uppercase text-text-subtle;
 }
 
 @media (max-width: 520px) {

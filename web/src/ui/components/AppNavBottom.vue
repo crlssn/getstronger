@@ -161,10 +161,10 @@ const navigation = computed(() => [
   @apply relative grid place-items-center;
 }
 .notification-badge {
-  @apply absolute -right-3 -top-2 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-red-600 px-1 text-eyebrow font-bold tracking-normal leading-none text-white ring-[3px] ring-white;
+  @apply absolute -right-3 -top-2 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold tracking-normal leading-none text-white ring-[3px] ring-white;
 }
 .timer-badge {
-  @apply whitespace-nowrap rounded-full bg-stone-900 px-2 py-0.5 font-mono text-eyebrow font-bold leading-none text-white;
+  @apply whitespace-nowrap rounded-full bg-surface-inverse px-2 py-0.5 font-mono text-eyebrow font-bold leading-none text-white;
 }
 .nav-label {
   @apply truncate;

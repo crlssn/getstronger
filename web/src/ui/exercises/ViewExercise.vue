@@ -190,7 +190,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50;
 }
 .start-quick-icon {
-  @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white;
+  @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-surface-inverse text-white;
 }
 .start-quick-icon svg {
   @apply size-6;

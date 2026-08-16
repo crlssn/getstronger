@@ -153,7 +153,7 @@ const onDeleteRoutine = async () => {
   @apply card shadow-none p-6 text-sm text-slate-500;
 }
 .routine-hero {
-  @apply flex flex-col gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 to-violet-600 p-5 text-white shadow-lg sm:flex-row sm:items-end sm:justify-between md:p-6;
+  @apply flex flex-col gap-4 overflow-hidden rounded-sheet bg-surface-inverse p-5 text-white shadow-raised sm:flex-row sm:items-end sm:justify-between md:p-6;
 }
 .status-pill {
   @apply mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20;

@@ -187,7 +187,7 @@ h1 {
   @apply size-8;
 }
 .notification-badge {
-  @apply absolute right-1 top-1 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-red-600 px-1 text-eyebrow font-bold tracking-normal leading-none text-white ring-[3px] ring-white;
+  @apply absolute right-1 top-1 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold tracking-normal leading-none text-white ring-[3px] ring-white;
 }
 .stats-strip {
   @apply card grid grid-cols-3 divide-x divide-slate-200 p-4;

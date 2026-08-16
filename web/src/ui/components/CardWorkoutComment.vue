@@ -56,7 +56,7 @@ const initials = computed(
   @apply -my-3 inline-flex min-h-(--size-control-sm) items-center py-3 text-sm font-semibold text-slate-900 hover:text-indigo-700;
 }
 .comment-meta time {
-  @apply text-xs text-slate-400;
+  @apply text-xs text-text-subtle;
 }
 .comment-content p {
   @apply mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700;

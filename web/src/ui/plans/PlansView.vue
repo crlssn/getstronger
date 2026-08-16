@@ -256,7 +256,7 @@ h2 {
   @apply flex items-center justify-between gap-3;
 }
 .active-plan > header span {
-  @apply rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700;
+  @apply rounded-full bg-success-surface px-3 py-1 text-xs font-semibold text-success;
 }
 .active-plan > h2 {
   @apply mt-3;
@@ -277,7 +277,7 @@ h2 {
   @apply grid size-9 place-items-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-500;
 }
 .sequence span.done {
-  @apply bg-emerald-50 text-emerald-700;
+  @apply bg-success-surface text-success;
 }
 .sequence span.current {
   @apply bg-indigo-600 text-white;

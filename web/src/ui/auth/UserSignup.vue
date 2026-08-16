@@ -96,7 +96,7 @@ const onSignup = async () => {
             class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
             :class="
               req.weightUnit === WeightUnit.KILOGRAMS
-                ? 'border-stone-900 bg-stone-900 text-white'
+                ? 'border-surface-inverse bg-surface-inverse text-white'
                 : 'border-slate-200 bg-white text-slate-700'
             "
           >
@@ -114,7 +114,7 @@ const onSignup = async () => {
             class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
             :class="
               req.weightUnit === WeightUnit.POUNDS
-                ? 'border-stone-900 bg-stone-900 text-white'
+                ? 'border-surface-inverse bg-surface-inverse text-white'
                 : 'border-slate-200 bg-white text-slate-700'
             "
           >
