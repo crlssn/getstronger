@@ -12,6 +12,9 @@ const serverPort = process.env.SCREENSHOT_SERVER_PORT ?? '18280'
 const ssePort = process.env.SCREENSHOT_SSE_PORT ?? '18281'
 const baseURL = `http://localhost:${webPort}`
 const backendURL = `http://localhost:${serverPort}`
+// Locally the backend is started through mise, which is what supplies this
+// worktree's ports. CI has neither mise nor worktrees, so it names the command.
+const backendCommand = process.env.SCREENSHOT_BACKEND_COMMAND ?? 'mise run app:backend'
 
 export default defineConfig({
   expect: { timeout: 10_000 },
@@ -38,7 +41,7 @@ export default defineConfig({
   use: { baseURL },
   webServer: [
     {
-      command: 'mise run app:backend',
+      command: backendCommand,
       cwd: repositoryRoot,
       env: {
         CORS_ALLOWED_ORIGIN: baseURL,

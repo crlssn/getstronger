@@ -1,0 +1,126 @@
+name: screenshots
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths:
+      - '.github/workflows/test.screenshots.yml'
+      - 'database/migrations/**'
+      - 'server/**'
+      - 'web/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'mise.toml'
+
+permissions:
+  contents: read
+
+jobs:
+  # Photographs every page and measures what a screenshot cannot show:
+  # horizontal overflow, tap targets under 44px, text under 12px, hard-clipped
+  # text and axe violations. The run fails when any of those counts rises above
+  # web/tests/screenshots/budget.json, so a design foundation that took nine
+  # slices to build cannot be given back one screen at a time.
+  measurements:
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      CORS_ALLOWED_ORIGIN: http://localhost:15273
+      DB_HOST: 127.0.0.1
+      DB_NAME: postgres
+      DB_PASSWORD: root
+      DB_PORT: 5433
+      DB_SSL_MODE: disable
+      DB_USER: root
+      EMAIL_PROVIDER: noop
+      ENV: local
+      JWT_ACCESS_TOKEN_KEY: screenshots-access-key
+      JWT_REFRESH_TOKEN_KEY: screenshots-refresh-key
+      SCREENSHOT_BACKEND_COMMAND: go run ./server/cmd/main.go
+      SCREENSHOT_SERVER_PORT: 18280
+      SCREENSHOT_SSE_PORT: 18281
+      SCREENSHOT_WEB_PORT: 15273
+      USER_EMAIL: active@getstronger.test
+      USER_FIRSTNAME: Alex
+      USER_LASTNAME: Morgan
+      USER_PASSWORD: password123
+      VITE_ENABLE_GOOGLE_ANALYTICS: 'false'
+
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: root
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U root -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.6'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+          node-version: '24'
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Install database migration tool
+        run: go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+
+      - name: Create server environment
+        run: touch .env
+
+      - name: Migrate database
+        run: >-
+          migrate -path database/migrations/
+          -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
+          -verbose up
+
+      - name: Seed test data
+        run: >-
+          go run server/testing/factory/seed/main.go
+          -email="${USER_EMAIL}"
+          -password="${USER_PASSWORD}"
+          -firstname="${USER_FIRSTNAME}"
+          -lastname="${USER_LASTNAME}"
+
+      - name: Capture screenshots and check the findings budget
+        working-directory: web
+        run: npm run screenshots
+
+      - name: Upload the contact sheet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          name: screenshots
+          path: web/screenshots/
+          retention-days: 14

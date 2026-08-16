@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { relative } from 'node:path'
+import { compare } from './budget'
 import { authenticatedPages, guestPages, personas, type PageEntry } from './catalogue'
 import { flowRecords } from './flows'
 import { changesSince } from './diff'
@@ -209,4 +210,23 @@ ${sections.join('\n')}
       `\n    Contact sheet: open ${relative(process.cwd(), contactSheetPath)}` +
       `${comparison}\n`,
   )
+
+  const { improved, lines, regressed } = await compare(records)
+  console.log(`📐  Findings against the budget\n${lines.map((line) => `    ${line}`).join('\n')}\n`)
+
+  if (improved.length > 0) {
+    console.log(
+      `✅  Below budget on ${improved.join(', ')}. Lower it in tests/screenshots/budget.json to hold the gain.\n`,
+    )
+  }
+
+  if (regressed.length > 0) {
+    // Without this the numbers drift back up one screen at a time, and the run
+    // above was the last time they were ever this low.
+    console.error(
+      `❌  Over budget on ${regressed.join(', ')}.` +
+        ` Fix the finding, or raise tests/screenshots/budget.json deliberately and say why.\n`,
+    )
+    process.exitCode = 1
+  }
 }
