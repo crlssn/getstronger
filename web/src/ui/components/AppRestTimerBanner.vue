@@ -115,7 +115,7 @@ onUnmounted(() => {
   initial-value: 160;
 }
 .rest-banner {
-  @apply sticky z-30 text-white shadow-lg;
+  @apply sticky z-30 text-white shadow-raised;
   /* Below the status-bar scrim in the native WebView; zero in browsers. */
   top: env(safe-area-inset-top);
   background-image: linear-gradient(
@@ -139,7 +139,7 @@ onUnmounted(() => {
   @apply mt-0.5 block font-mono text-2xl font-bold leading-none tabular-nums;
 }
 .rest-banner a {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black/25 px-4 text-sm font-semibold transition hover:bg-black/40;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-black/25 px-4 text-sm font-semibold transition hover:bg-black/40;
 }
 .rest-banner a svg {
   @apply size-5;
@@ -157,19 +157,19 @@ onUnmounted(() => {
     hsl(50 100% 56%) 55%,
     hsl(70 92% 54%) 100%
   );
-  @apply text-stone-950;
+  @apply text-text;
 }
 .rest-banner.bright .rest-copy p {
-  @apply text-stone-900/70;
+  @apply text-text/70;
 }
 .rest-banner.bright a {
-  @apply bg-black/15 text-stone-950 hover:bg-black/25;
+  @apply bg-black/15 text-text hover:bg-black/25;
 }
 .rest-banner.bright .rest-progress {
   @apply bg-black/15;
 }
 .rest-banner.bright .rest-progress span {
-  @apply bg-stone-950;
+  @apply bg-ink-strong;
 }
 .rest-banner.final {
   animation: rest-pulse 1s ease-in-out infinite;

@@ -322,10 +322,10 @@ const postComment = async () => {
 }
 .author-row,
 .feed-author {
-  @apply flex items-center gap-3 border-b border-slate-100 p-4 sm:p-5;
+  @apply flex items-center gap-3 border-b border-border p-4 sm:p-5;
 }
 .avatar {
-  @apply grid size-11 shrink-0 place-items-center rounded-xl bg-ink-tint text-xs font-semibold text-ink-strong;
+  @apply grid size-11 shrink-0 place-items-center rounded-control bg-ink-tint text-xs font-semibold text-ink-strong;
 }
 .avatar.large {
   @apply size-12 text-sm;
@@ -337,10 +337,10 @@ const postComment = async () => {
    somewhere for a thumb to land, so it gains a hit area rather than a font. */
 .author-copy > a,
 .feed-author > div > a:first-child {
-  @apply -my-3 block truncate py-3 text-sm font-semibold text-slate-950 hover:text-ink-strong;
+  @apply -my-3 block truncate py-3 text-sm font-semibold text-text hover:text-ink-strong;
 }
 .author-copy p {
-  @apply mt-1 flex items-center gap-1.5 text-xs text-slate-500;
+  @apply mt-1 flex items-center gap-1.5 text-xs text-text-subtle;
 }
 .author-copy svg {
   @apply size-4;
@@ -349,25 +349,25 @@ const postComment = async () => {
   @apply bg-surface-inverse px-5 py-6 text-white sm:px-6;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .workout-heading .eyebrow {
   @apply text-ink-tint;
 }
 .workout-heading h2 {
-  @apply mt-1 text-2xl font-semibold tracking-tight;
+  @apply mt-1 text-title font-semibold;
 }
 .metric-grid {
-  @apply grid grid-cols-2 gap-px bg-slate-200 sm:grid-cols-4;
+  @apply grid grid-cols-2 gap-px bg-ink-tint sm:grid-cols-4;
 }
 .metric-grid article {
   @apply flex items-center gap-3 bg-white p-4;
 }
 .metric-icon {
-  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-ink-tint text-ink-strong;
+  @apply grid size-10 shrink-0 place-items-center rounded-control bg-ink-tint text-ink-strong;
 }
 .metric-icon.amber {
-  @apply bg-achievement-50 text-achievement-600;
+  @apply bg-record-surface text-record;
 }
 .metric-icon svg {
   @apply size-5;
@@ -377,10 +377,10 @@ const postComment = async () => {
   @apply block;
 }
 .metric-grid small {
-  @apply text-xs text-slate-500;
+  @apply text-xs text-text-subtle;
 }
 .metric-grid strong {
-  @apply mt-0.5 text-sm font-semibold text-slate-950;
+  @apply mt-0.5 text-sm font-semibold text-text;
 }
 .detail-section,
 .comments-card {
@@ -390,94 +390,94 @@ const postComment = async () => {
   @apply mb-4 flex items-end justify-between gap-3;
 }
 .section-heading h2 {
-  @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-title font-semibold text-text;
 }
 .section-heading > span {
   @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
 }
 .exercise-list {
-  @apply divide-y divide-slate-200;
+  @apply divide-y divide-border;
 }
 .summary-note {
-  @apply border-t border-slate-200 bg-white px-5 py-4 sm:px-6;
+  @apply border-t border-border bg-white px-5 py-4 sm:px-6;
 }
 .summary-note > p:last-child {
-  @apply mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700;
+  @apply mt-2 whitespace-pre-wrap text-sm leading-6 text-text-muted;
 }
 .summary-note--compact > p:last-child {
   @apply line-clamp-2;
 }
 .comment-list {
-  @apply divide-y divide-slate-100;
+  @apply divide-y divide-border;
 }
 .no-comments {
-  @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500;
+  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
 }
 .comment-form {
-  @apply mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-3;
+  @apply mt-5 rounded-card border border-border bg-ink-surface p-3;
 }
 .comment-form label {
   @apply sr-only;
 }
 .comment-form textarea {
-  @apply min-h-24 w-full resize-none border-0 bg-transparent p-2 text-sm leading-6 placeholder:text-slate-400 focus:ring-0;
+  @apply min-h-24 w-full resize-none border-0 bg-transparent p-2 text-sm leading-6 placeholder:text-text-subtle focus:ring-0;
 }
 .comment-form > div {
-  @apply flex items-center justify-between gap-3 border-t border-slate-200 pt-3;
+  @apply flex items-center justify-between gap-3 border-t border-border pt-3;
 }
 .comment-form small {
   @apply pl-2 text-xs text-text-subtle;
 }
 .comment-form button {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
 }
 .feed-summary-card {
-  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-md;
+  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-raised;
 }
 .feed-summary-card .workout-heading {
-  @apply border-y border-slate-100 bg-slate-50 text-slate-950;
+  @apply border-y border-border bg-ink-surface text-text;
   background-image: none;
   box-shadow: inset 4px 0 0 var(--color-ink-muted);
 }
 .feed-summary-card--personal-best {
-  @apply border-gold-400 shadow-md;
+  @apply border-record-border shadow-raised;
 }
 .detail-summary-card--personal-best {
-  @apply border-gold-400 shadow-md;
+  @apply border-record-border shadow-raised;
 }
 .feed-summary-card--personal-best .workout-heading {
-  @apply border-champagne-300 bg-champagne-100;
-  box-shadow: inset 4px 0 0 theme('colors.gold.500');
+  @apply border-record-border bg-record-surface;
+  box-shadow: inset 4px 0 0 var(--color-record);
 }
 .detail-summary-card--personal-best .workout-heading {
-  @apply border-y border-champagne-300 bg-champagne-100 text-slate-950;
+  @apply border-y border-record-border bg-record-surface text-text;
   background-image: none;
-  box-shadow: inset 4px 0 0 theme('colors.gold.500');
+  box-shadow: inset 4px 0 0 var(--color-record);
 }
 .feed-summary-card .workout-heading .eyebrow {
   @apply text-ink;
 }
 .feed-summary-card--personal-best .workout-heading .eyebrow {
-  @apply text-gold-700;
+  @apply text-record-strong;
 }
 .detail-summary-card--personal-best .workout-heading .eyebrow {
-  @apply text-gold-700;
+  @apply text-record-strong;
 }
 .workout-heading-copy {
   @apply flex items-start justify-between gap-4;
 }
 .personal-best-badge {
-  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold-600 bg-gold-500 px-2.5 py-1 text-xs font-semibold text-white shadow-sm;
+  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-record-strong bg-record px-2.5 py-1 text-xs font-semibold text-white shadow-card;
 }
 .personal-best-badge svg {
   @apply size-4;
 }
 .feed-summary-card--personal-best .metric-icon.amber,
 .detail-summary-card--personal-best .metric-icon.amber {
-  @apply bg-champagne-200 text-gold-700;
+  @apply bg-record-surface text-record-strong;
 }
 .feed-card-link {
-  @apply absolute inset-0 z-10 rounded-2xl;
+  @apply absolute inset-0 z-10 rounded-card;
 }
 .feed-card-control {
   @apply pointer-events-none relative z-20;

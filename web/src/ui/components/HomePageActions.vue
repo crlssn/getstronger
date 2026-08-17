@@ -204,7 +204,7 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-trigger {
-  @apply grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-900;
+  @apply grid size-11 place-items-center rounded-control border border-border bg-white text-text-subtle shadow-card transition hover:border-ink-border hover:text-text;
 }
 .search-trigger svg {
   @apply size-5;
@@ -216,13 +216,13 @@ const onSearch = async () => {
   @apply card flex w-full items-center gap-2 px-4 transition focus-within:border-ink-muted;
 }
 .search-field > svg {
-  @apply size-6 shrink-0 text-slate-500;
+  @apply size-6 shrink-0 text-text-subtle;
 }
 .search-field input {
-  @apply h-14 min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-slate-950 placeholder:text-slate-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0;
+  @apply h-14 min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-text placeholder:text-text-subtle focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0;
 }
 .search-field button {
-  @apply grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-200;
+  @apply grid size-9 shrink-0 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint;
 }
 .search-field button svg {
   @apply size-5;
@@ -231,28 +231,28 @@ const onSearch = async () => {
   @apply card mt-3 w-full overflow-hidden;
 }
 .group-label {
-  @apply border-b border-slate-100 bg-slate-50/60 px-4 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply border-b border-border bg-ink-surface/60 px-4 pb-2 pt-3 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .search-results a {
-  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 border-b border-slate-100 p-4 transition last:border-b-0 hover:bg-stone-50;
+  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 border-b border-border p-4 transition last:border-b-0 hover:bg-ink-surface;
 }
 .search-results strong,
 .search-results small {
   @apply block truncate;
 }
 .search-results strong {
-  @apply text-sm text-slate-900;
+  @apply text-sm text-text;
 }
 .search-results small {
-  @apply mt-0.5 text-xs text-slate-500;
+  @apply mt-0.5 text-xs text-text-subtle;
 }
 .avatar {
-  @apply grid size-11 place-items-center rounded-xl bg-stone-200 text-sm font-semibold text-stone-800;
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-text;
 }
 .avatar svg {
   @apply size-5;
 }
 .search-hint {
-  @apply px-1 py-4 text-sm text-slate-500;
+  @apply px-1 py-4 text-sm text-text-subtle;
 }
 </style>

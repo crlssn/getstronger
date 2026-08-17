@@ -54,13 +54,15 @@ const markAllAsRead = async () => {
 </script>
 
 <template>
-  <div v-if="hasUnreadNotifications" class="notification-actions">
-    <button type="button" :disabled="markingAllAsRead" @click="markAllAsRead">
+  <!-- A ghost button in the title row, not a floating pill: pills are for
+       tags, actions are buttons. -->
+  <Teleport v-if="hasUnreadNotifications" to="#page-nav-action">
+    <button type="button" class="mark-all-read" :disabled="markingAllAsRead" @click="markAllAsRead">
       {{
         markingAllAsRead ? $t('profile.markingNotificationsAsRead') : $t('profile.markAllAsRead')
       }}
     </button>
-  </div>
+  </Teleport>
   <AppList :can-fetch="hasMorePages" @fetch="fetchNotifications">
     <AppListItem
       v-for="notification in notifications"
@@ -83,6 +85,7 @@ const markAllAsRead = async () => {
         :workout="notification.type.value?.workout"
         :timestamp="notification.notifiedAtUnix"
       />
+      <span v-if="!notification.read" class="unread-dot" aria-hidden="true"></span>
     </AppListItem>
     <AppListItem v-if="notifications.length === 0">
       Your notifications will appear here
@@ -93,28 +96,31 @@ const markAllAsRead = async () => {
 <style scoped>
 @reference '../../assets/base.css';
 
-.notification-actions {
-  @apply mb-3 flex justify-end;
+.mark-all-read {
+  @apply inline-flex min-h-(--size-control-sm) items-center whitespace-nowrap rounded-control px-3 text-sm font-semibold text-text-muted transition hover:bg-ink-surface hover:text-text disabled:cursor-wait disabled:text-text-subtle;
 }
-.notification-actions button {
-  @apply min-h-(--size-control) rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink-strong shadow-sm transition hover:border-ink-border hover:bg-ink-surface disabled:cursor-wait disabled:text-slate-400;
-}
+/* Unread is a state, not a colour of its own: the standard row with an ink
+   icon tile, full-strength text and a green momentum dot. Read rows keep the
+   same anatomy and simply fade. */
 .notification-item {
   @apply relative transition-colors duration-200;
 }
-.notification-item.unread {
-  @apply border-l-[3px] border-l-info bg-info-surface;
+.notification-item :deep(a > svg) {
+  @apply size-11 shrink-0 rounded-control bg-ink-surface p-2.5 text-text-subtle;
 }
-.notification-item.unread:hover {
-  @apply from-blue-100/80 via-blue-50 to-white;
+.notification-item :deep(a > div > div) {
+  @apply text-text-muted;
+}
+.notification-item :deep(a > div > p) {
+  @apply text-meta text-text-subtle;
 }
 .notification-item.unread :deep(a > svg) {
-  @apply size-10 rounded-xl bg-info-surface p-2 text-info ring-1 ring-info/20;
+  @apply bg-ink-tint text-ink-strong;
 }
 .notification-item.unread :deep(a > div > div) {
-  @apply text-slate-950;
+  @apply text-text;
 }
-.notification-item.unread :deep(a > div > p) {
-  @apply font-medium text-blue-600;
+.unread-dot {
+  @apply size-2 shrink-0 rounded-full bg-success;
 }
 </style>

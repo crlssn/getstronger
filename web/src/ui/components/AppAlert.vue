@@ -31,7 +31,7 @@ const alertStyle = computed(() => {
   }
 
   if (alertStore.alert?.type === 'error') {
-    return 'border-red-200 bg-red-50 text-red-800'
+    return 'border-danger/30 bg-danger-surface text-danger'
   }
 
   return ''
@@ -65,7 +65,7 @@ const alertStyle = computed(() => {
   @apply w-full;
 }
 .alert-card {
-  @apply border-y text-sm font-semibold shadow-sm;
+  @apply border-y text-sm font-semibold shadow-card;
 }
 .alert-card-inner {
   @apply mx-auto flex min-h-14 w-full max-w-3xl items-center gap-3 px-3 py-3 sm:px-5 lg:px-8;

@@ -43,7 +43,7 @@ const workoutOwnership = computed(() => {
         </span>
         workout
       </div>
-      <p class="text-sm text-gray-500">
+      <p class="text-sm text-text-subtle">
         {{ formatUnixToRelativeDateTime(timestamp) }}
       </p>
     </div>

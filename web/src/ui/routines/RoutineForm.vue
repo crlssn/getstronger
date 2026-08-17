@@ -89,7 +89,6 @@ const submit = () => {
     <header class="form-intro">
       <div>
         <p class="eyebrow">{{ t('routine.form.eyebrow') }}</p>
-        <h1>{{ t('routine.form.title') }}</h1>
         <p>{{ t('routine.form.intro') }}</p>
       </div>
       <span class="selection-count">{{
@@ -175,13 +174,10 @@ const submit = () => {
   @apply flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
-}
-h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .form-intro p:last-child {
-  @apply mt-2 text-sm text-slate-500;
+  @apply mt-2 text-sm text-text-subtle;
 }
 .selection-count {
   @apply w-max rounded-full bg-ink-surface px-3 py-1.5 text-xs font-semibold text-ink-strong;
@@ -191,25 +187,25 @@ h1 {
   @apply card p-5;
 }
 .field-label {
-  @apply mb-2 block text-sm font-semibold text-slate-700;
+  @apply mb-2 block text-sm font-semibold text-text-muted;
 }
 .name-input {
-  @apply h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-base font-medium text-slate-950 placeholder:text-slate-400 focus:border-ink-muted focus:bg-white focus:ring-2 focus:ring-ink-tint;
+  @apply h-12 w-full rounded-control border border-border bg-ink-surface px-4 text-base font-medium text-text placeholder:text-text-subtle focus:border-ink-muted focus:bg-surface focus:ring-2 focus:ring-ink-tint;
 }
 .exercise-toolbar {
   @apply mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
 .exercise-toolbar h2 {
-  @apply text-lg font-semibold text-slate-950;
+  @apply text-title font-semibold text-text;
 }
 .exercise-toolbar p {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .search-field {
-  @apply flex min-w-52 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3;
+  @apply flex min-w-52 items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
 }
 .search-field svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .search-field input {
   @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
@@ -218,13 +214,13 @@ h1 {
   @apply grid gap-2 sm:grid-cols-2;
 }
 .exercise-option {
-  @apply flex min-h-16 items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
+  @apply flex min-h-16 items-center gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
 }
 .exercise-option.selected {
   @apply border-ink-border bg-ink-surface;
 }
 .check-box {
-  @apply grid size-6 shrink-0 place-items-center rounded-md border-2 border-slate-300 bg-white;
+  @apply grid size-6 shrink-0 place-items-center rounded-md border-2 border-ink-border bg-white;
 }
 .selected .check-box {
   @apply border-ink bg-ink text-white;
@@ -236,27 +232,27 @@ h1 {
   @apply min-w-0;
 }
 .exercise-copy strong {
-  @apply block truncate text-sm font-semibold text-slate-900;
+  @apply block truncate text-sm font-semibold text-text;
 }
 .exercise-copy small {
-  @apply mt-0.5 block truncate text-xs text-slate-500;
+  @apply mt-0.5 block truncate text-xs text-text-subtle;
 }
 .empty-row {
-  @apply rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500;
+  @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
 }
 .load-more {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-control border border-border px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .load-more svg {
   @apply size-4;
 }
 .form-actions {
-  @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur md:bottom-4;
+  @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-card border border-border bg-white/95 p-3 shadow-raised backdrop-blur md:bottom-4;
 }
 .cancel-link {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50;
+  @apply inline-flex min-h-(--size-control) items-center rounded-control px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .save-button {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-5 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-slate-300;
+  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-5 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
 }
 </style>

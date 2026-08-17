@@ -157,7 +157,7 @@ const onResend = async () => {
 }
 
 .verification-pending {
-  @apply mb-6 flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-surface p-4 text-sm text-warning;
+  @apply mb-6 flex items-start gap-3 rounded-control border border-warning/30 bg-warning-surface p-4 text-sm text-warning;
 }
 
 .verification-pending-icon {
@@ -173,14 +173,14 @@ const onResend = async () => {
 }
 
 .verification-hint {
-  @apply text-sm text-slate-600;
+  @apply text-sm text-text-muted;
 }
 
 .verification-status {
-  @apply text-sm font-semibold text-slate-700;
+  @apply text-sm font-semibold text-text-muted;
 }
 
 .verification-error {
-  @apply rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700;
+  @apply rounded-control border border-danger/30 bg-danger-surface p-3 text-sm font-semibold text-danger;
 }
 </style>

@@ -46,15 +46,14 @@ const filteredVolume = computed(() =>
 <template>
   <div class="progress-stack">
     <!-- Progress is a screen pushed onto the Me tab, so the nav bar above
-         carries its title. What is left here is the one thing the title does
-         not say: how many personal bests there are — and only once there are
-         any, because a pill that exists to celebrate should not render in the
-         app's loudest colour to report a zero. -->
-    <section v-if="totalRecords > 0" class="progress-intro">
+         carries its title; the PB chip joins it in the title row. It only
+         renders once there is something to celebrate, because a chip that
+         exists to celebrate should not report a zero. -->
+    <Teleport v-if="totalRecords > 0" to="#page-nav-action">
       <span class="record-count"
         ><TrophyIcon /> {{ t('progress.personalBests', totalRecords) }}</span
       >
-    </section>
+    </Teleport>
 
     <section v-if="filteredWorkouts.length" class="chart-card">
       <div class="chart-heading">
@@ -124,20 +123,20 @@ const filteredVolume = computed(() =>
 .progress-stack {
   @apply space-y-5;
 }
-.progress-intro {
-  @apply flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between;
-}
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-display font-bold text-text;
 }
 h2 {
-  @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-title font-semibold text-text;
+}
+.chart-heading h2 {
+  @apply text-display font-bold;
 }
 .record-count {
-  @apply inline-flex w-max items-center gap-2 rounded-full bg-achievement-50 px-3 py-2 text-sm font-semibold text-achievement-700;
+  @apply inline-flex w-max items-center gap-1.5 whitespace-nowrap rounded-full border border-record-border bg-record-surface px-3 py-1.5 text-meta font-semibold text-record-strong;
 }
 .record-count svg {
   @apply size-5;
@@ -150,10 +149,10 @@ h2 {
   @apply mb-5 flex flex-wrap items-end justify-between gap-3;
 }
 .chart-heading > span {
-  @apply inline-flex items-center gap-2 text-sm font-semibold text-ink-strong;
+  @apply inline-flex items-center gap-1.5 text-meta font-semibold text-text-subtle;
 }
 .chart-heading svg {
-  @apply size-5;
+  @apply size-4;
 }
 .period-picker {
   @apply mt-4;
@@ -162,13 +161,13 @@ h2 {
   @apply mb-4;
 }
 .record-list {
-  @apply divide-y divide-slate-100;
+  @apply divide-y divide-border;
 }
 .record-list a {
   @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-ink-strong;
 }
 .record-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-achievement-50 text-achievement-600;
+  @apply grid size-11 place-items-center rounded-control bg-record-surface text-record;
 }
 .record-icon svg,
 .chevron {
@@ -179,16 +178,16 @@ h2 {
   @apply block truncate;
 }
 .record-list small {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .record-value {
-  @apply text-right text-sm font-semibold text-slate-900;
+  @apply text-right text-sm font-semibold text-text;
 }
 .chevron {
-  @apply text-slate-400;
+  @apply text-text-subtle;
 }
 .empty-copy {
-  @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500;
+  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
 }
 @media (max-width: 520px) {
   .record-list a {

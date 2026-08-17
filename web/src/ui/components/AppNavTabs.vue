@@ -25,7 +25,7 @@ const navTabs = useNavTabs()
 @reference '../../assets/base.css';
 
 nav {
-  @apply bg-white w-full border-b-2 border-gray-200;
+  @apply bg-white w-full border-b-2 border-border;
 
   .container {
     @apply flex max-w-4xl mx-auto lg:px-2;
@@ -35,7 +35,7 @@ nav {
 
 a {
   @apply w-full border-b-2 pb-4 text-center text-xs font-bold uppercase;
-  @apply border-b-2 border-gray-200 text-gray-500 hover:text-gray-700;
+  @apply border-b-2 border-border text-text-subtle hover:text-text-muted;
 
   &.active {
     @apply border-ink-muted text-ink;

@@ -91,86 +91,56 @@ const onSignup = async () => {
 
       <fieldset>
         <legend class="auth-label">{{ $t('auth.weightUnit') }}</legend>
-        <p class="mt-1 text-sm text-slate-500">{{ $t('auth.weightUnitHelp') }}</p>
-        <div class="mt-2 grid grid-cols-2 gap-2" :aria-label="$t('auth.weightUnit')">
-          <label
-            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
-            :class="
-              req.weightUnit === WeightUnit.KILOGRAMS
-                ? 'border-surface-inverse bg-surface-inverse text-white'
-                : 'border-slate-200 bg-white text-slate-700'
-            "
-          >
+        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.weightUnitHelp') }}</p>
+        <!-- The same segmented control as everywhere else a choice of two is
+             offered; the radios stay for form semantics. -->
+        <div class="segmented mt-2" :aria-label="$t('auth.weightUnit')">
+          <label :class="{ 'is-selected': req.weightUnit === WeightUnit.KILOGRAMS }">
             <input
               v-model="req.weightUnit"
-              class="sr-only"
+              class="segmented-radio"
               type="radio"
               name="weightUnit"
               :value="WeightUnit.KILOGRAMS"
             />
-            <strong>{{ $t('auth.kilograms') }}</strong>
-            <span class="ml-auto text-sm opacity-80">kg</span>
+            {{ $t('auth.kilograms') }}
           </label>
-          <label
-            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
-            :class="
-              req.weightUnit === WeightUnit.POUNDS
-                ? 'border-surface-inverse bg-surface-inverse text-white'
-                : 'border-slate-200 bg-white text-slate-700'
-            "
-          >
+          <label :class="{ 'is-selected': req.weightUnit === WeightUnit.POUNDS }">
             <input
               v-model="req.weightUnit"
-              class="sr-only"
+              class="segmented-radio"
               type="radio"
               name="weightUnit"
               :value="WeightUnit.POUNDS"
             />
-            <strong>{{ $t('auth.pounds') }}</strong>
-            <span class="ml-auto text-sm opacity-80">lbs</span>
+            {{ $t('auth.pounds') }}
           </label>
         </div>
       </fieldset>
 
       <fieldset>
         <legend class="auth-label">{{ $t('auth.distanceUnit') }}</legend>
-        <p class="mt-1 text-sm text-slate-500">{{ $t('auth.distanceUnitHelp') }}</p>
-        <div class="mt-2 grid grid-cols-2 gap-2" :aria-label="$t('auth.distanceUnit')">
-          <label
-            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
-            :class="
-              req.distanceUnit === DistanceUnit.KILOMETERS
-                ? 'border-surface-inverse bg-surface-inverse text-white'
-                : 'border-slate-200 bg-white text-slate-700'
-            "
-          >
+        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.distanceUnitHelp') }}</p>
+        <div class="segmented mt-2" :aria-label="$t('auth.distanceUnit')">
+          <label :class="{ 'is-selected': req.distanceUnit === DistanceUnit.KILOMETERS }">
             <input
               v-model="req.distanceUnit"
-              class="sr-only"
+              class="segmented-radio"
               type="radio"
               name="distanceUnit"
               :value="DistanceUnit.KILOMETERS"
             />
-            <strong>{{ $t('auth.kilometers') }}</strong>
-            <span class="ml-auto text-sm opacity-80">km</span>
+            {{ $t('auth.kilometers') }}
           </label>
-          <label
-            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
-            :class="
-              req.distanceUnit === DistanceUnit.MILES
-                ? 'border-surface-inverse bg-surface-inverse text-white'
-                : 'border-slate-200 bg-white text-slate-700'
-            "
-          >
+          <label :class="{ 'is-selected': req.distanceUnit === DistanceUnit.MILES }">
             <input
               v-model="req.distanceUnit"
-              class="sr-only"
+              class="segmented-radio"
               type="radio"
               name="distanceUnit"
               :value="DistanceUnit.MILES"
             />
-            <strong>{{ $t('auth.miles') }}</strong>
-            <span class="ml-auto text-sm opacity-80">mi</span>
+            {{ $t('auth.miles') }}
           </label>
         </div>
       </fieldset>
@@ -212,3 +182,19 @@ const onSignup = async () => {
     </p>
   </section>
 </template>
+
+<style scoped>
+@reference '../../assets/base.css';
+
+/* The radio fills its label invisibly, so the control itself is the 44px tap
+   target rather than a 1px screen-reader stub. */
+.segmented > label {
+  @apply relative;
+}
+.segmented-radio {
+  @apply absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-control border-0 bg-transparent focus-visible:ring-2 focus-visible:ring-ink-muted;
+  /* The forms plugin paints radios a checked dot via background-image; this
+     input is a hit area, not an indicator. */
+  background-image: none !important;
+}
+</style>

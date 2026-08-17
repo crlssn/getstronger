@@ -68,8 +68,10 @@ export const formatExerciseSet = (set: Partial<Set>, exercise?: Pick<Exercise, '
       switch (field) {
         case 'weight':
           return `${number(value)} ${weightUnitLabel(set.weightUnit)}`
+        // The bare count: "92 kg · 3" — wherever this renders, the column
+        // header or the unit-carrying value beside it already says reps.
         case 'reps':
-          return `${number(value)} reps`
+          return number(value)
         case 'distance':
           return `${number(value)} ${distanceUnitLabel(set.distanceUnit)}`
         case 'durationSeconds':

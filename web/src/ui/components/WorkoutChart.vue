@@ -11,9 +11,51 @@ const props = defineProps<{
   workouts: Workout[]
 }>()
 
+// The chart reads its colours from the token layer rather than repeating hex
+// values that theme.css already owns.
+const token = (name: string, fallback: string) =>
+  (typeof window !== 'undefined' &&
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
+  fallback
+
+const inkColor = token('--color-ink', '#25282d')
+const successColor = token('--color-success', '#047857')
+const subtleColor = token('--color-text-subtle', '#656b71')
+const borderColor = token('--color-border', '#e3e5e0')
+
+// The latest bar carries its value, so the chart has a "today" story without
+// needing a legend.
+const latestValueLabel = {
+  id: 'latestValueLabel',
+  afterDatasetsDraw(chart: ChartJS) {
+    const meta = chart.getDatasetMeta(0)
+    const bar = meta.data[meta.data.length - 1]
+    if (!bar) return
+    const raw = chart.data.datasets[0]?.data[meta.data.length - 1]
+    if (typeof raw !== 'number' || raw <= 0) return
+
+    const { ctx } = chart
+    ctx.save()
+    ctx.font = `700 11px ${getComputedStyle(chart.canvas).fontFamily}`
+    ctx.fillStyle = successColor
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'bottom'
+    ctx.fillText(
+      new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(raw),
+      bar.x,
+      bar.y - 4,
+    )
+    ctx.restore()
+  },
+}
+
 const options = {
   maintainAspectRatio: false,
   responsive: true,
+  layout: {
+    // Room for the value label above the tallest bar.
+    padding: { top: 14 },
+  },
   scales: {
     x: {
       legend: {
@@ -26,7 +68,7 @@ const options = {
       ticks: {
         display: true,
         maxTicksLimit: 7,
-        color: '#64748b',
+        color: subtleColor,
       },
       title: {
         display: false,
@@ -37,17 +79,17 @@ const options = {
         display: false,
       },
       grid: {
-        color: '#e2e8f0',
+        color: borderColor,
         drawBorder: false,
       },
       ticks: {
         display: true,
-        color: '#64748b',
+        color: subtleColor,
       },
       title: {
         display: true,
         text: 'Volume (kg)',
-        color: '#64748b',
+        color: subtleColor,
       },
       beginAtZero: true,
     },
@@ -79,16 +121,20 @@ const dailyVolume = computed(() => {
 })
 
 const data = computed(() => {
+  const days = dailyVolume.value
   return {
     datasets: [
       {
-        backgroundColor: '#25282d',
+        // The most recent day picks up momentum green.
+        backgroundColor: days.map((_, index) =>
+          index === days.length - 1 ? successColor : inkColor,
+        ),
         borderRadius: 8,
-        data: dailyVolume.value.map((day) => day.volume),
+        data: days.map((day) => day.volume),
         label: 'Training volume',
       },
     ],
-    labels: dailyVolume.value.map((day) => day.label),
+    labels: days.map((day) => day.label),
   }
 })
 </script>
@@ -98,6 +144,7 @@ const data = computed(() => {
     <BarChart
       :data="data"
       :options="options as any"
+      :plugins="[latestValueLabel]"
       aria-label="Training volume by day"
       role="img"
     />

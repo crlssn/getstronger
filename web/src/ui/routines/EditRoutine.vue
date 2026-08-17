@@ -40,7 +40,7 @@ const onSave = async (updatedName: string, updatedExerciseIds: string[]) => {
 </script>
 
 <template>
-  <div v-if="loading" class="card shadow-none p-6 text-sm text-slate-500">
+  <div v-if="loading" class="card shadow-none p-6 text-sm text-text-subtle">
     {{ t('routine.loading') }}
   </div>
   <RoutineForm

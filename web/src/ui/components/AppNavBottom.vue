@@ -103,7 +103,10 @@ const navigation = computed(() => [
     icon: UserIcon,
     iconActive: UserIconSolid,
     name: t('nav.me'),
-    active: route.path.startsWith('/profile') || route.path.startsWith('/notifications'),
+    active:
+      route.path.startsWith('/profile') ||
+      route.path.startsWith('/notifications') ||
+      route.path.startsWith('/progress'),
     badge: notificationStore.unreadCount,
     timer: '',
   },
@@ -142,14 +145,14 @@ const navigation = computed(() => [
 @reference '../../assets/base.css';
 
 .bottom-nav {
-  @apply fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white;
+  @apply fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white;
 }
 .bottom-nav-inner {
   min-height: calc(4.5rem + env(safe-area-inset-bottom));
   @apply mx-auto grid max-w-3xl grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)];
 }
 .bottom-nav a {
-  @apply grid min-w-0 place-items-center content-center gap-1 rounded-xl px-1 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-ink-strong;
+  @apply grid min-w-0 place-items-center content-center gap-1 rounded-control px-1 text-xs font-medium text-text-subtle transition hover:bg-ink-surface hover:text-ink-strong;
 }
 .bottom-nav a.active {
   @apply text-ink-strong;
@@ -171,7 +174,7 @@ const navigation = computed(() => [
 }
 @media (min-width: 1024px) {
   .bottom-nav {
-    @apply left-1/2 right-auto w-[48rem] -translate-x-1/2 rounded-t-2xl border-x;
+    @apply left-1/2 right-auto w-[48rem] -translate-x-1/2 rounded-t-card border-x;
   }
 }
 </style>

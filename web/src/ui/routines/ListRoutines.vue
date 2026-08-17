@@ -212,40 +212,42 @@ const makeUpNext = async (routineId: string) => {
   @apply flex items-center justify-between gap-4 px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-display font-bold text-text;
 }
 .page-intro p:last-child {
-  @apply mt-1 max-w-xl text-sm text-slate-500;
+  @apply mt-1 max-w-xl text-sm text-text-subtle;
 }
 .create-link {
-  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink-strong;
+  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .create-link svg {
   @apply size-5;
 }
 .search-field {
-  @apply card flex items-center gap-2 px-4;
+  @apply flex items-center gap-2 rounded-control border border-border bg-surface px-4 shadow-card;
 }
 .search-field svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .search-field input {
-  @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
+  @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
 }
 .routine-group {
   @apply space-y-3;
 }
 .group-heading {
-  @apply px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply px-1 text-eyebrow font-bold uppercase text-text-subtle;
 }
+/* One card with divided rows, not a stack of posters: the same shell as the
+   Exercises list, with an action footer per row. */
 .routine-grid {
-  @apply grid gap-4 md:grid-cols-2;
+  @apply card divide-y divide-border overflow-hidden;
 }
 .routine-card {
-  @apply card flex flex-col gap-4 p-5;
+  @apply flex flex-col gap-3 p-4;
 }
 .routine-heading {
   @apply flex items-start justify-between gap-3;
@@ -254,32 +256,32 @@ h1 {
   @apply min-w-0 flex-1;
 }
 .routine-heading > svg {
-  @apply mt-2 size-5 text-slate-400;
+  @apply mt-1.5 size-5 text-text-subtle;
 }
 .routine-heading h3 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-body-lg font-semibold text-text;
 }
 .routine-tags {
   @apply mt-1;
 }
 .routine-exercises {
-  @apply mt-1 text-sm text-slate-700;
+  @apply mt-1 text-sm text-text-muted;
 }
 .routine-meta span + span::before {
   @apply mx-1 content-['·'];
 }
 .routine-meta {
-  @apply mt-0.5 text-xs text-slate-500;
+  @apply mt-0.5 text-meta text-text-subtle;
 }
 .up-next {
   @apply mb-2 inline-flex rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
 }
 .routine-actions {
-  @apply relative mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4;
+  @apply relative mt-auto flex flex-wrap items-center gap-2;
 }
 .routine-actions a,
 .routine-actions button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control-sm) items-center justify-center gap-2 rounded-control px-3.5 text-sm font-semibold;
 }
 .routine-actions svg {
   @apply size-4;
@@ -288,13 +290,13 @@ h1 {
   @apply bg-ink text-white hover:bg-ink-strong;
 }
 .view-link {
-  @apply border border-slate-200 text-slate-700 hover:bg-slate-50;
+  @apply border border-ink-border bg-white text-text hover:bg-ink-surface;
 }
 .routine-menu {
   @apply relative ml-auto;
 }
 .routine-menu summary {
-  @apply grid size-11 cursor-pointer list-none place-items-center rounded-xl text-slate-500 hover:bg-slate-100;
+  @apply grid size-11 cursor-pointer list-none place-items-center rounded-control text-text-subtle hover:bg-ink-tint;
 }
 .routine-menu summary::-webkit-details-marker {
   @apply hidden;
@@ -303,11 +305,11 @@ h1 {
   @apply size-5;
 }
 .routine-menu > div {
-  @apply absolute bottom-12 right-0 z-10 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg;
+  @apply absolute bottom-12 right-0 z-10 w-40 overflow-hidden rounded-control border border-border bg-white p-1 shadow-raised;
 }
 .routine-menu > div a,
 .routine-menu > div button {
-  @apply flex min-h-(--size-control-sm) items-center w-full justify-start rounded-lg px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50;
+  @apply flex min-h-(--size-control-sm) items-center w-full justify-start rounded-lg px-3 text-left text-sm font-medium text-text-muted hover:bg-ink-surface;
 }
 @media (max-width: 520px) {
   .page-intro {
@@ -320,16 +322,7 @@ h1 {
     @apply shrink-0;
   }
 }
-.empty-state {
-  @apply grid justify-items-start gap-3 rounded-2xl border border-dashed border-slate-300 bg-white p-6;
-}
-.empty-state h2 {
-  @apply text-xl font-semibold;
-}
-.empty-state p {
-  @apply text-sm text-slate-500;
-}
 .load-more {
-  @apply mx-auto block rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700;
+  @apply mx-auto block rounded-control border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted;
 }
 </style>

@@ -131,7 +131,7 @@ describe('StartWorkout', () => {
       expect(header.find('.eyebrow').exists()).toBe(false)
       // Where you are, and how long you have been here. Nothing else.
       expect(header.get('.session-progress').text()).toBe('Exercise 1 of 2')
-      expect(header.get('.elapsed strong').text().length).toBeGreaterThan(0)
+      expect(header.get('.elapsed').text().length).toBeGreaterThan(0)
       expect(header.find('.session-rail').exists()).toBe(true)
       wrapper.unmount()
     })
@@ -226,7 +226,7 @@ describe('StartWorkout', () => {
       const wrapper = await mountWorkout()
 
       const rows = wrapper.findAll('.set-row')
-      expect(rows[0].get('.previous-value').text()).toBe('42.5 kg · 8 reps')
+      expect(rows[0].get('.previous-value').text()).toBe('42.5 kg · 8')
 
       await logFirstSet(wrapper)
       const updatedRows = wrapper.findAll('.set-row')

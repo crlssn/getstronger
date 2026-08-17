@@ -191,10 +191,10 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply card overflow-hidden;
 }
 .start-quick-card {
-  @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50;
+  @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface;
 }
 .start-quick-icon {
-  @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-surface-inverse text-white;
+  @apply flex size-12 shrink-0 items-center justify-center rounded-control bg-surface-inverse text-white;
 }
 .start-quick-icon svg {
   @apply size-6;
@@ -207,16 +207,16 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply block;
 }
 .start-quick-copy strong {
-  @apply text-sm font-semibold text-slate-950;
+  @apply text-sm font-semibold text-text;
 }
 .start-quick-copy small {
-  @apply mt-1 truncate text-xs text-slate-500;
+  @apply mt-1 truncate text-xs text-text-subtle;
 }
 .start-quick-chevron {
-  @apply size-5 shrink-0 text-slate-400;
+  @apply size-5 shrink-0 text-text-subtle;
 }
 .eyebrow {
-  @apply mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply mb-3 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .chart-card {
   @apply space-y-4;
@@ -227,13 +227,13 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .sets-card h2,
 .manage-card h2,
 .empty-card h1 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-title font-semibold text-text;
 }
 .sets-card > header > span {
   @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
 }
 .set-list {
-  @apply -mx-5 divide-y divide-slate-100 border-t border-slate-100;
+  @apply -mx-5 divide-y divide-border border-t border-border;
 }
 .set-list > a {
   @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-3 transition hover:text-ink-strong;
@@ -246,26 +246,26 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply block;
 }
 .set-copy strong {
-  @apply text-sm font-semibold text-slate-950;
+  @apply text-sm font-semibold text-text;
 }
 .set-copy small {
-  @apply mt-1 text-xs text-slate-500;
+  @apply mt-1 text-xs text-text-subtle;
 }
 .record-pill {
-  @apply inline-flex items-center gap-1 rounded-full bg-achievement-50 px-2.5 py-1 text-xs font-semibold text-achievement-700;
+  @apply inline-flex items-center gap-1 rounded-full bg-record-surface px-2.5 py-1 text-xs font-semibold text-record-strong;
 }
 .record-pill svg,
 .set-list > a > svg {
   @apply size-4;
 }
 .set-list > a > svg {
-  @apply text-slate-400;
+  @apply text-text-subtle;
 }
 .empty-copy {
-  @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500;
+  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
 }
 .load-more {
-  @apply mt-3 min-h-(--size-control) w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .manage-heading {
   @apply p-5;
@@ -274,26 +274,26 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mb-1;
 }
 .manage-actions {
-  @apply divide-y divide-slate-100 border-t border-slate-100;
+  @apply divide-y divide-border border-t border-border;
 }
 .manage-actions a,
 .manage-actions button {
-  @apply flex min-h-(--size-control-lg) w-full items-center gap-3 px-5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50;
+  @apply flex min-h-(--size-control-lg) w-full items-center gap-3 px-5 text-left text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .manage-actions a svg,
 .manage-actions button svg {
   @apply size-5;
 }
 .manage-actions a svg:last-child {
-  @apply ml-auto text-slate-400;
+  @apply ml-auto text-text-subtle;
 }
 .manage-actions button {
-  @apply text-red-600 hover:bg-red-50;
+  @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 .empty-card p {
-  @apply mt-2 text-sm text-slate-500;
+  @apply mt-2 text-sm text-text-subtle;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 </style>

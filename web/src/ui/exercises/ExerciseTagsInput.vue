@@ -202,13 +202,13 @@ const removeTag = (index: number) => {
 }
 /* The wrapper is already the field; a ringed input inside it double-boxes. */
 .tag-input input {
-  @apply block min-h-(--size-control-sm) w-full border-0 bg-transparent p-0 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0;
+  @apply block min-h-(--size-control-sm) w-full border-0 bg-transparent p-0 text-sm text-text placeholder:text-text-subtle focus:ring-0;
 }
 .tag-suggestions {
-  @apply -mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg;
+  @apply -mt-1 overflow-hidden rounded-control border border-border bg-white shadow-raised;
 }
 .tag-suggestions button {
-  @apply flex min-h-11 w-full items-center justify-between gap-3 border-t border-slate-100 px-3 text-left text-sm font-medium text-slate-700 first:border-t-0 hover:bg-ink-surface hover:text-ink-strong;
+  @apply flex min-h-11 w-full items-center justify-between gap-3 border-t border-border px-3 text-left text-sm font-medium text-text-muted first:border-t-0 hover:bg-ink-surface hover:text-ink-strong;
 }
 .tag-suggestions button.highlighted {
   @apply bg-ink-surface text-ink-strong;
@@ -220,7 +220,7 @@ const removeTag = (index: number) => {
   @apply flex items-center justify-between gap-3 text-text-subtle;
 }
 .tag-help .error {
-  @apply text-red-600;
+  @apply text-danger;
 }
 .full {
   @apply border-ink-border;

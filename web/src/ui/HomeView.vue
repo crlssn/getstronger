@@ -290,22 +290,22 @@ const selectRoutine = async (routineId: string) => {
   @apply block;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-600;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-display font-bold text-text;
 }
 h2 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-title font-semibold text-text;
 }
 .active-session {
-  @apply grid gap-5 rounded-3xl border border-stone-300 bg-stone-50 p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
+  @apply grid gap-5 rounded-card border border-ink-border bg-ink-surface p-5 shadow-card sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
 }
 .active-session h2 {
   @apply mt-1;
 }
 .active-meta {
-  @apply mt-3 flex items-center gap-2 text-sm text-stone-700;
+  @apply mt-3 flex items-center gap-2 text-sm text-text-muted;
 }
 .active-meta svg {
   @apply size-4;
@@ -314,10 +314,10 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .active-actions > button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
 }
 .active-actions svg {
   @apply size-5;
@@ -344,7 +344,7 @@ h2 {
   @apply size-3.5;
 }
 .next-session h2 {
-  @apply mt-1 text-2xl text-white;
+  @apply mt-1 text-display font-bold text-white;
 }
 .session-meta {
   @apply mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-tint;
@@ -357,7 +357,7 @@ h2 {
 }
 .start-button,
 .choose-button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold transition;
 }
 .start-button {
   @apply bg-white text-ink-strong hover:bg-ink-surface;
@@ -369,8 +369,7 @@ h2 {
 .choose-button svg {
   @apply size-5;
 }
-.section-block,
-.empty-card {
+.section-block {
   @apply card p-5;
 }
 .section-heading {
@@ -391,23 +390,20 @@ h2 {
 .following-feed > header h2 {
   @apply mt-1;
 }
-.feed-empty {
-  @apply rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500;
-}
 .feed-status {
-  @apply flex min-h-14 items-center justify-center gap-3 text-sm font-medium text-slate-500;
+  @apply flex min-h-14 items-center justify-center gap-3 text-sm font-medium text-text-subtle;
 }
 .feed-spinner {
-  @apply size-5 animate-spin rounded-full border-2 border-slate-200 border-t-ink;
+  @apply size-5 animate-spin rounded-full border-2 border-border border-t-ink;
 }
 .feed-error {
-  @apply flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 text-sm text-red-700;
+  @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
 }
 .feed-error button {
-  @apply min-h-(--size-control-sm) shrink-0 rounded-xl px-3 font-semibold hover:bg-red-100;
+  @apply min-h-(--size-control-sm) shrink-0 rounded-control px-3 font-semibold hover:bg-danger-surface hover:text-danger-strong;
 }
 .feed-end {
-  @apply flex items-center justify-center gap-3 py-5 text-slate-600;
+  @apply flex items-center justify-center gap-3 py-5 text-text-muted;
 }
 .feed-end > span {
   @apply grid size-9 place-items-center rounded-full bg-success-surface text-success;
@@ -420,7 +416,7 @@ h2 {
   @apply block;
 }
 .feed-end strong {
-  @apply text-sm font-semibold text-slate-700;
+  @apply text-sm font-semibold text-text-muted;
 }
 .feed-end small {
   @apply mt-0.5 text-xs;
@@ -429,69 +425,51 @@ h2 {
   @apply h-px;
 }
 .momentum-grid {
-  @apply grid grid-cols-3 divide-x divide-slate-200;
+  @apply grid grid-cols-3 divide-x divide-border;
 }
 .momentum-grid > div {
   @apply grid gap-1 px-3 first:pl-0 last:pr-0;
 }
 .momentum-grid strong {
-  @apply text-sm font-semibold text-slate-950 sm:text-base;
+  @apply text-sm font-semibold text-text sm:text-base;
 }
 .momentum-grid small {
-  @apply text-xs text-slate-500;
+  @apply text-xs text-text-subtle;
 }
 .last-session-block .section-heading {
   @apply items-center;
 }
 .last-session-block .section-heading > span {
-  @apply text-xs text-slate-500;
+  @apply text-xs text-text-subtle;
 }
 .last-session-row {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 border-t border-slate-100 pt-4 transition hover:text-ink-strong;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 border-t border-border pt-4 transition hover:text-ink-strong;
 }
 .last-session-row small {
-  @apply mt-1 block text-sm text-slate-500;
+  @apply mt-1 block text-sm text-text-subtle;
 }
 .last-session-row > svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .workout-icon,
 .routine-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-ink-surface text-ink;
+  @apply grid size-11 place-items-center rounded-control bg-ink-surface text-ink;
 }
 .workout-icon svg,
 .routine-icon svg {
   @apply size-5;
 }
-.empty-card {
-  @apply grid justify-items-start gap-4 border-transparent bg-surface-inverse text-white shadow-raised;
-}
-.empty-card h2 {
-  @apply text-white;
-}
-.empty-icon {
-  @apply grid size-12 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/20;
-}
-.empty-icon svg {
-  @apply size-6;
-}
-.empty-card p {
-  @apply mt-1 text-sm text-ink-tint;
-}
-.primary-link {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-white px-4 text-sm font-semibold text-ink-strong transition hover:bg-ink-surface;
-}
 .picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-6;
+  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 p-0 sm:items-center sm:p-6;
 }
 .routine-picker {
-  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
+  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
 }
 .routine-picker header {
   @apply mb-5 flex items-center justify-between gap-4;
 }
 .routine-picker header button {
-  @apply grid size-11 place-items-center rounded-xl border border-slate-200 text-slate-500;
+  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
 }
 .routine-picker header button svg {
   @apply size-5;
@@ -500,7 +478,7 @@ h2 {
   @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .routine-options > button {
-  @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 p-4 text-left hover:border-ink-border hover:bg-ink-surface/50;
+  @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-card border border-border p-4 text-left hover:border-ink-border hover:bg-ink-surface/50;
 }
 .routine-options > button.selected {
   @apply border-ink-muted bg-ink-surface;
@@ -510,10 +488,10 @@ h2 {
   @apply block truncate;
 }
 .routine-options small {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .selection-icon {
-  @apply grid size-8 place-items-center rounded-full bg-slate-100 text-transparent;
+  @apply grid size-8 place-items-center rounded-full bg-ink-tint text-transparent;
 }
 .selection-icon svg {
   @apply size-4;

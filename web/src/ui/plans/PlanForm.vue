@@ -87,7 +87,6 @@ const save = async () => {
   <form class="builder-page" @submit.prevent="save">
     <header class="page-intro">
       <p class="eyebrow">{{ t('training.planForm.eyebrow') }}</p>
-      <h1>{{ editing ? t('training.planForm.editTitle') : t('training.newPlan') }}</h1>
       <p>{{ t('training.planForm.intro') }}</p>
     </header>
 
@@ -233,30 +232,27 @@ const save = async () => {
   @apply px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
-}
-h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h2 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-title font-semibold text-text;
 }
 .page-intro > p:last-child {
-  @apply mt-2 text-sm text-slate-500;
+  @apply mt-2 text-sm text-text-subtle;
 }
 .name-field input,
 .routine-order {
   @apply card;
 }
 .name-field {
-  @apply grid gap-2 text-sm font-semibold text-slate-600;
+  @apply grid gap-2 text-sm font-semibold text-text-muted;
 }
 .name-field input {
-  @apply min-h-(--size-control) px-4 text-slate-950 placeholder:text-slate-400 focus:border-ink-muted focus:ring-ink-muted;
+  @apply min-h-(--size-control) px-4 text-text placeholder:text-text-subtle focus:border-ink-muted focus:ring-ink-muted;
 }
 .loop-note,
 .edit-note {
-  @apply flex gap-3 rounded-2xl border p-4 text-sm;
+  @apply flex gap-3 rounded-card border p-4 text-sm;
 }
 .loop-note {
   @apply border-ink-border bg-ink-surface text-ink-strong;
@@ -274,22 +270,22 @@ h2 {
   @apply flex items-end justify-between gap-3 p-5;
 }
 .routine-order > header > span {
-  @apply text-sm text-slate-500;
+  @apply text-sm text-text-subtle;
 }
 .empty-order {
-  @apply border-t border-slate-100 p-6 text-center;
+  @apply border-t border-border p-6 text-center;
 }
 .empty-order p {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .routine-order ol {
-  @apply divide-y divide-slate-100 border-t border-slate-100;
+  @apply divide-y divide-border border-t border-border;
 }
 .routine-order li {
   @apply grid grid-cols-[2.25rem_1fr_auto] items-center gap-3 p-4;
 }
 .position {
-  @apply grid size-9 place-items-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600;
+  @apply grid size-9 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-text-muted;
 }
 .routine-copy {
   @apply min-w-0;
@@ -299,55 +295,55 @@ h2 {
   @apply block truncate;
 }
 .routine-copy small {
-  @apply mt-1 text-xs text-slate-500;
+  @apply mt-1 text-xs text-text-subtle;
 }
 .order-actions {
   @apply flex;
 }
 .order-actions button {
-  @apply grid size-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-ink disabled:opacity-25;
+  @apply grid size-9 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint hover:text-ink disabled:opacity-25;
 }
 .order-actions button:last-child {
-  @apply hover:text-red-600;
+  @apply hover:text-danger;
 }
 .order-actions svg {
   @apply size-4;
 }
 .add-routine {
-  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-xl border border-dashed border-ink-border bg-ink-surface text-sm font-semibold text-ink-strong;
+  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-control border border-ink-border bg-white text-sm font-semibold text-text transition hover:bg-ink-surface;
 }
 .add-routine svg {
   @apply size-5;
 }
 .routine-order > footer {
-  @apply border-t border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600;
+  @apply border-t border-border bg-ink-surface px-5 py-4 text-sm text-text-muted;
 }
 .save-area {
   @apply grid gap-3;
 }
 .save-area small {
-  @apply text-center text-xs text-slate-500;
+  @apply text-center text-xs text-text-subtle;
 }
 .save-area button {
-  @apply min-h-(--size-control) rounded-xl bg-ink px-5 text-sm font-semibold text-white disabled:bg-ink-tint disabled:text-slate-400;
+  @apply min-h-(--size-control) rounded-control bg-ink px-5 text-sm font-semibold text-white disabled:bg-ink-tint disabled:text-text-subtle;
 }
 .picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 sm:items-center sm:p-6;
+  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
 }
 .routine-picker {
-  @apply w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
+  @apply w-full max-w-lg rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
 }
 .routine-picker > header {
   @apply mb-4 flex items-center justify-between gap-3;
 }
 .routine-picker > header button {
-  @apply grid size-11 place-items-center rounded-xl border border-slate-200 text-slate-500;
+  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
 }
 .routine-picker > header svg {
   @apply size-5;
 }
 .routine-options {
-  @apply divide-y divide-slate-100 border-y border-slate-100;
+  @apply divide-y divide-border border-y border-border;
 }
 .routine-options button {
   @apply flex min-h-16 w-full items-center justify-between gap-3 text-left;
@@ -360,12 +356,12 @@ h2 {
   @apply block truncate;
 }
 .routine-options small {
-  @apply mt-1 text-xs text-slate-500;
+  @apply mt-1 text-xs text-text-subtle;
 }
 .routine-options svg {
   @apply size-5 shrink-0 text-ink;
 }
 .picker-empty {
-  @apply py-6 text-center text-sm text-slate-500;
+  @apply py-6 text-center text-sm text-text-subtle;
 }
 </style>

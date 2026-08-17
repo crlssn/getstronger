@@ -14,13 +14,13 @@ const props = defineProps<{
 @reference '../../assets/base.css';
 
 li {
-  @apply flex items-center justify-between gap-x-6 px-4 py-5 font-medium text-slate-900;
+  @apply flex items-center justify-between gap-x-6 px-4 py-5 font-medium text-text;
 
   &.danger {
-    @apply text-red-600;
+    @apply text-danger;
   }
   &.header {
-    @apply block text-sm font-semibold text-slate-600;
+    @apply block text-sm font-semibold text-text-muted;
   }
 }
 

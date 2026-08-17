@@ -130,17 +130,27 @@ const change = computed(() => {
   return `${percentage > 0 ? '+' : ''}${percentage}%`
 })
 
+// Colours come from the token layer, not hex values repeated in JS.
+const token = (name: string, fallback: string) =>
+  (typeof window !== 'undefined' &&
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
+  fallback
+
+const inkColor = token('--color-ink', '#25282d')
+const subtleColor = token('--color-text-subtle', '#656b71')
+const chartBorderColor = token('--color-border', '#e3e5e0')
+
 const data = computed(() => ({
   datasets: [
     {
       backgroundColor: 'rgba(37, 40, 45, 0.10)',
-      borderColor: '#25282d',
+      borderColor: inkColor,
       borderWidth: 3,
       data: values.value,
       fill: true,
       label: metricDetails[metric.value].heading,
       pointBackgroundColor: '#ffffff',
-      pointBorderColor: '#25282d',
+      pointBorderColor: inkColor,
       pointBorderWidth: 2,
       pointRadius: 4,
       tension: 0.35,
@@ -155,14 +165,14 @@ const options = computed(() => ({
   scales: {
     x: {
       grid: { display: false },
-      ticks: { color: '#64748b', maxTicksLimit: 6 },
+      ticks: { color: subtleColor, maxTicksLimit: 6 },
     },
     y: {
       beginAtZero: false,
-      grid: { color: '#e2e8f0' },
-      ticks: { color: '#64748b' },
+      grid: { color: chartBorderColor },
+      ticks: { color: subtleColor },
       title: {
-        color: '#64748b',
+        color: subtleColor,
         display: true,
         text: metricDetails[metric.value].unit,
       },
@@ -227,10 +237,10 @@ const options = computed(() => ({
   @apply grid gap-1;
 }
 .exercise-chart header small {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .exercise-chart header strong {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-title font-semibold text-text;
 }
 .exercise-chart header > span {
   @apply rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
@@ -239,16 +249,16 @@ const options = computed(() => ({
   @apply h-64;
 }
 .first-result {
-  @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center;
+  @apply grid min-h-52 place-items-center content-center gap-2 rounded-card bg-ink-surface px-6 text-center;
 }
 .first-result > span {
   @apply mb-2 size-4 rounded-full border-4 border-ink bg-white;
   box-shadow: 0 0 0 8px var(--color-ink-tint);
 }
 .first-result strong {
-  @apply text-base font-semibold text-slate-950;
+  @apply text-base font-semibold text-text;
 }
 .first-result p {
-  @apply max-w-sm text-sm leading-6 text-slate-500;
+  @apply max-w-sm text-sm leading-6 text-text-subtle;
 }
 </style>

@@ -101,7 +101,7 @@ const weekBlocks = computed(() =>
   @apply grid grid-cols-[auto_1fr_auto] items-center gap-3;
 }
 .streak-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-info-surface text-text-muted;
+  @apply grid size-11 place-items-center rounded-control bg-info-surface text-text-muted;
 }
 .streak-card.active .streak-icon {
   @apply bg-success-surface text-success;
@@ -114,16 +114,16 @@ const weekBlocks = computed(() =>
   @apply block truncate;
 }
 .streak-card header > div > strong {
-  @apply text-sm font-semibold text-slate-950;
+  @apply text-sm font-semibold text-text;
 }
 .streak-card .eyebrow {
   @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .week-track {
-  @apply mt-4 grid grid-cols-5 gap-1 rounded-xl bg-stone-100 p-1;
+  @apply mt-4 grid grid-cols-5 gap-1 rounded-control bg-ink-surface p-1;
 }
 .week-block {
-  @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-stone-200 text-stone-400;
+  @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-ink-tint text-text-subtle;
 }
 .week-block.complete {
   @apply bg-success text-white;
@@ -144,13 +144,13 @@ const weekBlocks = computed(() =>
   @apply mt-1.5 flex justify-between text-eyebrow font-semibold text-text-subtle;
 }
 .streak-card > p {
-  @apply mt-3 text-xs text-slate-500;
+  @apply mt-3 text-xs text-text-subtle;
 }
 .streak-card.active:not(.safe) > p {
   @apply font-medium text-success;
 }
 .streak-count {
-  @apply min-w-12 rounded-xl bg-success-surface px-2.5 py-1.5 text-center text-success;
+  @apply min-w-12 rounded-control bg-success-surface px-2.5 py-1.5 text-center text-success;
 }
 .streak-count strong {
   @apply text-base font-bold leading-none;

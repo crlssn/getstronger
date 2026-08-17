@@ -53,7 +53,7 @@ const fetchWorkout = async () => {
   @apply space-y-4;
 }
 .loading-card span {
-  @apply block h-4 animate-pulse rounded-full bg-slate-100;
+  @apply block h-4 animate-pulse rounded-full bg-ink-tint;
 }
 .loading-card span:nth-child(1) {
   @apply w-32;
@@ -62,12 +62,12 @@ const fetchWorkout = async () => {
   @apply h-8 w-52;
 }
 .empty-card h1 {
-  @apply text-xl font-semibold text-slate-950;
+  @apply text-title font-semibold text-text;
 }
 .empty-card p {
-  @apply mt-2 text-sm text-slate-500;
+  @apply mt-2 text-sm text-text-subtle;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 </style>

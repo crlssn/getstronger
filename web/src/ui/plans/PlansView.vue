@@ -168,22 +168,22 @@ const pause = async () => {
   @apply grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-display font-bold text-text;
 }
 h2 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-title font-semibold text-text;
 }
 .page-intro > a {
-  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white;
+  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 .page-intro svg {
   @apply size-5;
 }
 .page-intro > p {
-  @apply col-span-2 max-w-none text-sm leading-6 text-slate-500;
+  @apply col-span-2 max-w-none text-sm leading-6 text-text-subtle;
 }
 .active-plan,
 .other-plans,
@@ -197,10 +197,10 @@ h2 {
   @apply space-y-3;
 }
 .plan-loading span {
-  @apply block h-4 animate-pulse rounded-full bg-slate-100;
+  @apply block h-4 animate-pulse rounded-full bg-ink-tint;
 }
 .plan-loading span:first-child {
-  @apply h-12 w-12 rounded-2xl;
+  @apply h-12 w-12 rounded-card;
 }
 .plan-loading span:nth-child(2) {
   @apply w-2/3;
@@ -209,25 +209,25 @@ h2 {
   @apply p-6;
 }
 .empty-plan-icon {
-  @apply mb-5 grid size-12 place-items-center rounded-2xl bg-ink-tint text-ink-strong;
+  @apply mb-5 grid size-12 place-items-center rounded-card bg-ink-tint text-ink-strong;
 }
 .empty-plan-icon svg {
   @apply size-6;
 }
 .empty-plan-state h2 {
-  @apply mt-2 text-2xl;
+  @apply mt-2;
 }
 .empty-plan-copy {
-  @apply mt-2 text-sm leading-6 text-slate-600;
+  @apply mt-2 text-sm leading-6 text-text-muted;
 }
 .plan-steps {
-  @apply mt-6 divide-y divide-slate-100 border-y border-slate-100;
+  @apply mt-6 divide-y divide-border border-y border-border;
 }
 .plan-steps li {
   @apply flex items-center gap-3 py-4;
 }
 .plan-steps li > span {
-  @apply grid size-9 shrink-0 place-items-center rounded-xl bg-ink-surface text-sm font-semibold text-ink-strong;
+  @apply grid size-9 shrink-0 place-items-center rounded-control bg-ink-surface text-sm font-semibold text-ink-strong;
 }
 .plan-steps li > span svg {
   @apply size-4;
@@ -237,16 +237,16 @@ h2 {
   @apply block;
 }
 .plan-steps strong {
-  @apply text-sm font-semibold text-slate-900;
+  @apply text-sm font-semibold text-text;
 }
 .plan-steps small {
-  @apply mt-0.5 text-xs text-slate-500;
+  @apply mt-0.5 text-xs text-text-subtle;
 }
 .active-plan-rule {
-  @apply mt-5 text-xs leading-5 text-slate-500;
+  @apply mt-5 text-xs leading-5 text-text-subtle;
 }
 .first-plan-button {
-  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
+  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
 }
 .first-plan-button svg {
   @apply size-5;
@@ -261,19 +261,19 @@ h2 {
   @apply mt-3;
 }
 .active-plan > p {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .position-row {
-  @apply mt-5 flex justify-between gap-3 text-sm text-slate-500;
+  @apply mt-5 flex justify-between gap-3 text-sm text-text-subtle;
 }
 .position-row strong {
-  @apply text-slate-700;
+  @apply text-text-muted;
 }
 .sequence {
   @apply mt-3 flex flex-wrap gap-2;
 }
 .sequence span {
-  @apply grid size-9 place-items-center rounded-xl bg-info-surface text-sm font-semibold text-text-muted;
+  @apply grid size-9 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
 }
 .sequence span.done {
   @apply bg-success-surface text-success;
@@ -282,7 +282,7 @@ h2 {
   @apply bg-ink text-white;
 }
 .next-row {
-  @apply mt-4 rounded-xl bg-ink-surface p-4;
+  @apply mt-4 rounded-control bg-ink-surface p-4;
 }
 .next-row div {
   @apply grid gap-1;
@@ -291,26 +291,26 @@ h2 {
   @apply text-xs text-ink;
 }
 .active-plan footer {
-  @apply mt-4 flex gap-2 border-t border-slate-100 pt-4;
+  @apply mt-4 flex gap-2 border-t border-border pt-4;
 }
 .active-plan footer a,
 .active-plan footer button {
-  @apply min-h-(--size-control-sm) rounded-xl px-4 text-sm font-semibold;
+  @apply min-h-(--size-control-sm) rounded-control px-4 text-sm font-semibold;
 }
 .active-plan footer a {
   @apply inline-flex items-center bg-ink text-white;
 }
 .active-plan footer button {
-  @apply border border-slate-200 text-slate-600;
+  @apply border border-border text-text-muted;
 }
 .paused-note p {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .other-plans > header {
   @apply mb-2;
 }
 .other-plans article {
-  @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100;
+  @apply flex min-h-16 items-center justify-between gap-3 border-t border-border;
 }
 .other-plans article a {
   @apply min-w-0;
@@ -320,14 +320,14 @@ h2 {
   @apply block truncate;
 }
 .other-plans article small {
-  @apply mt-1 text-xs text-slate-500;
+  @apply mt-1 text-xs text-text-subtle;
 }
 .other-plans article button {
   @apply shrink-0 text-sm font-semibold text-ink;
 }
 .routine-list strong,
 .routine-empty h2 {
-  @apply text-lg font-semibold text-slate-900;
+  @apply text-title font-semibold text-text;
 }
 .routine-empty p {
   @apply mt-1;

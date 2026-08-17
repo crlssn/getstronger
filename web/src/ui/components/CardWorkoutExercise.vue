@@ -113,23 +113,23 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply card shadow-none overflow-hidden;
 }
 .exercise-block > header {
-  @apply flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5;
+  @apply flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5;
 }
 .exercise-block > header > div {
   @apply flex min-w-0 items-center gap-2;
 }
 .exercise-block > header a {
-  @apply -mx-1.5 -my-2.5 inline-flex min-h-(--size-control-sm) items-center truncate px-1.5 py-2.5 text-base font-semibold text-slate-950 transition hover:text-ink-strong;
+  @apply -mx-1.5 -my-2.5 inline-flex min-h-(--size-control-sm) items-center truncate px-1.5 py-2.5 text-base font-semibold text-text transition hover:text-ink-strong;
 }
 .set-count {
-  @apply shrink-0 text-xs font-medium text-slate-500;
+  @apply shrink-0 text-xs font-medium text-text-subtle;
 }
 .set-table {
   @apply px-4 py-2 sm:px-5;
 }
 .set-row {
   grid-template-columns: 2.25rem repeat(var(--metric-count), minmax(4.5rem, 1fr));
-  @apply grid min-h-11 items-center gap-2 border-t border-slate-100 text-sm first:border-t-0;
+  @apply grid min-h-11 items-center gap-2 border-t border-border text-sm first:border-t-0;
 }
 .table-head {
   @apply min-h-9 border-0 text-eyebrow font-semibold uppercase text-text-subtle;
@@ -138,19 +138,19 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply grid size-7 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
 }
 .set-number.personal-best {
-  @apply bg-achievement-50 text-achievement-700;
+  @apply bg-record-surface text-record-strong;
 }
 .set-number.personal-best svg {
   @apply size-4;
 }
 .set-row strong {
-  @apply font-semibold text-slate-900;
+  @apply font-semibold text-text;
 }
 .set-row small {
   @apply ml-1 text-meta font-normal text-text-muted;
 }
 .set-volume {
-  @apply text-slate-500;
+  @apply text-text-subtle;
 }
 .flat {
   @apply rounded-none border-0;
@@ -183,13 +183,13 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply text-text-muted;
 }
 .compact-set-value {
-  @apply inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-slate-900;
+  @apply inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-text;
 }
 .compact-set-value > span {
   @apply font-medium;
 }
 .compact-set-value .compact-personal-best {
-  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-achievement-50 text-achievement-700;
+  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-record-surface text-record-strong;
 }
 .compact-personal-best svg {
   @apply size-4;

@@ -20,21 +20,24 @@
   --color-ink-surface: #f5f5f2;
   --color-ink-border: #d4d5d3;
 
-  /* Surface. */
+  /* Surface. The canvas is ink-warm: the one neutral family everywhere. */
   --color-surface: #ffffff;
-  --color-surface-sunken: #f8fafc;
+  --color-surface-sunken: #f5f5f3;
   --color-surface-inverse: #25282d;
   /* The groove a segmented control's selected pill sits in. It needs to read
    * against a white card, which --color-surface-sunken does not. */
   --color-surface-track: #e8e9e7;
-  --color-border: #e2e8f0;
+  --color-border: #e3e5e0;
   --color-border-strong: #cbd5e1;
 
-  /* Text. slate-400 is deliberately absent: at 2.6:1 on white it may tint a
-   * decorative glyph sitting beside a label, never carry meaning on its own. */
-  --color-text: #020617;
-  --color-text-muted: #475569;
-  --color-text-subtle: #64748b;
+  /* Text. The ink family's own black and greys — no cool cast. A fourth,
+   * paler step is deliberately absent: a low-contrast tint may decorate a
+   * glyph beside a label, never carry meaning on its own.
+   * text-subtle sits at 4.5:1 against --color-surface-sunken, the lightest
+   * thing it is ever read on; anything paler fails WCAG AA on the canvas. */
+  --color-text: #16181b;
+  --color-text-muted: #5b6167;
+  --color-text-subtle: #656b71;
 
   /* State. One green where there were three, an amber that is not the
    * achievement orange, a named informational slate, and a badge colour that
@@ -44,11 +47,19 @@
   --color-warning: #b45309;
   --color-warning-surface: #fffbeb;
   --color-danger: #dc2626;
+  /* Danger text sitting on the danger surface: #dc2626 reads 4.4:1 on that
+   * pink and fails AA, so the hover pair darkens the text a step. */
+  --color-danger-strong: #b91c1c;
   --color-danger-surface: #fef2f2;
   --color-badge: #dc2626;
   --color-info: #334155;
   --color-info-surface: #f1f5f9;
+  /* Gold is for personal records, nowhere else. Champagne surface, its border,
+   * and a darker text step that clears contrast on that surface. */
   --color-record: #ad7b1f;
+  --color-record-surface: #fbf4e6;
+  --color-record-border: #e8d0a2;
+  --color-record-strong: #8b5f18;
 
   /* Control geometry. --size-control-sm is a floor, not a step: nothing
    * tappable goes below it. */

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+// Four roles, not six colours: primary (ink fill), secondary (white with an
+// ink border), ghost (text only) and destructive (danger text, never a red
+// fill). Anything that wants "a bit of colour" has no name to reach for.
 const props = defineProps<{
-  colour: 'amber' | 'gray' | 'green' | 'primary' | 'red' | 'black'
+  colour: 'primary' | 'secondary' | 'ghost' | 'destructive'
   containerClass?: string
   to?: string
   type: 'button' | 'link' | 'submit'
@@ -32,7 +35,7 @@ const computedClasses = computed(() => {
 
 a,
 button {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-transparent px-4 py-3 text-sm font-semibold transition;
 }
 
 .link {
@@ -47,23 +50,15 @@ button:disabled {
   @apply border-ink bg-ink text-white hover:bg-ink-strong;
 }
 
-.green {
-  @apply border-success bg-success text-white hover:brightness-95;
+.secondary {
+  @apply border-ink-border bg-white text-text hover:bg-ink-surface;
 }
 
-.red {
-  @apply border-red-200 bg-white text-red-600 hover:bg-red-50;
+.ghost {
+  @apply text-text-muted hover:bg-ink-surface hover:text-text;
 }
 
-.amber {
-  @apply border-achievement-600 bg-achievement-600 text-white hover:bg-achievement-700;
-}
-
-.gray {
-  @apply border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
-}
-
-.black {
-  @apply border-surface-inverse bg-surface-inverse text-white hover:brightness-125;
+.destructive {
+  @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 </style>
