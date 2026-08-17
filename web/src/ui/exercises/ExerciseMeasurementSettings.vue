@@ -149,8 +149,10 @@ function toggleMetric(metric: ExerciseMetric) {
 <style scoped>
 @reference '../../assets/base.css';
 
+/* Same bottom gap as AppList so the next section label sits where it does
+   under every other card. */
 .measurement-settings {
-  @apply space-y-5 rounded-card border border-border bg-white p-5 shadow-card;
+  @apply mb-4 space-y-5 rounded-card border border-border bg-white p-5 shadow-card;
 }
 h3 {
   @apply text-title font-bold text-text;
