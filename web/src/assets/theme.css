@@ -32,10 +32,12 @@
 
   /* Text. The ink family's own black and greys — no cool slate cast. A
    * slate-400 equivalent is deliberately absent: a low-contrast tint may
-   * decorate a glyph beside a label, never carry meaning on its own. */
+   * decorate a glyph beside a label, never carry meaning on its own.
+   * text-subtle sits at 4.5:1 against --color-surface-sunken, the lightest
+   * thing it is ever read on; anything paler fails WCAG AA on the canvas. */
   --color-text: #16181b;
   --color-text-muted: #5b6167;
-  --color-text-subtle: #6d7379;
+  --color-text-subtle: #656b71;
 
   /* State. One green where there were three, an amber that is not the
    * achievement orange, a named informational slate, and a badge colour that
