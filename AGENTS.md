@@ -16,7 +16,10 @@ worktree. The local stack is not shared, so set it up before running anything.
   server start. It assigns this worktree its own database container, database
   port, backend port, SSE port, web port, MailHog ports, and end-to-end test
   ports, and records them in `.env`, `web/.env`, and `mise.local.toml`. These
-  files are not tracked by Git.
+  files are not tracked by Git. It also seeds `node_modules` from the main
+  checkout, so a fresh worktree needs no `npm install` before linting, testing,
+  or pushing — only rerun `mise run install:js` if a `package-lock.json` has
+  changed since branching.
 - Run every command through `mise run`, never the underlying tool directly.
   Only `mise run` loads the per-worktree ports; `npx playwright test` or
   `npm run dev` on their own fall back to the shared defaults and will collide
