@@ -16,6 +16,9 @@ on:
       - 'buf.gen.yaml'
       - 'package.json'
 
+permissions:
+  contents: read
+
 concurrency:
   group: test-proto-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

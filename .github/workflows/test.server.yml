@@ -15,6 +15,9 @@ on:
       - 'server/**'
       - 'database/migrations/**'
 
+permissions:
+  contents: read
+
 concurrency:
   group: test-server-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
