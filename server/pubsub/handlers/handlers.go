@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -17,7 +16,7 @@ const timeout = 5 * time.Second
 
 //go:generate mockgen -package handlers -source=handlers.go -destination=handlers_mock.go Handler
 type Handler interface {
-	HandlePayload(payload string)
+	HandlePayload(payload any)
 }
 
 var (
@@ -35,13 +34,13 @@ func NewRequestTraced(log *zap.Logger, repo repo.Repo) *RequestTraced {
 	return &RequestTraced{log, repo}
 }
 
-func (h *RequestTraced) HandlePayload(payload string) {
+func (h *RequestTraced) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	var p payloads.RequestTraced
-	if err := json.Unmarshal([]byte(payload), &p); err != nil {
-		h.log.Error("unmarshal payload", zap.Error(err))
+	p, ok := payload.(payloads.RequestTraced)
+	if !ok {
+		h.log.Error("unexpected payload type", zap.Any("payload", payload))
 		return
 	}
 
@@ -64,13 +63,13 @@ func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo, stream *stream.Man
 	return &WorkoutCommentPosted{log, repo, stream}
 }
 
-func (w *WorkoutCommentPosted) HandlePayload(payload string) {
+func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	var p payloads.WorkoutCommentPosted
-	if err := json.Unmarshal([]byte(payload), &p); err != nil {
-		w.log.Error("unmarshal payload", zap.Error(err))
+	p, ok := payload.(payloads.WorkoutCommentPosted)
+	if !ok {
+		w.log.Error("unexpected payload type", zap.Any("payload", payload))
 		return
 	}
 	if p.EventID == "" {
@@ -136,13 +135,13 @@ func NewFollowedUser(log *zap.Logger, repo repo.Repo, stream *stream.Manager) *F
 	return &FollowedUser{log, repo, stream}
 }
 
-func (u *FollowedUser) HandlePayload(payload string) {
+func (u *FollowedUser) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	var p payloads.UserFollowed
-	if err := json.Unmarshal([]byte(payload), &p); err != nil {
-		u.log.Error("unmarshal payload", zap.Error(err))
+	p, ok := payload.(payloads.UserFollowed)
+	if !ok {
+		u.log.Error("unexpected payload type", zap.Any("payload", payload))
 		return
 	}
 	if p.EventID == "" {

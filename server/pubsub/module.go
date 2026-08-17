@@ -21,10 +21,12 @@ func Module() fx.Option {
 			func(lc fx.Lifecycle, pubSub *PubSub, registry *handlers.Registry) {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
-						return pubSub.Subscribe(registry.Handlers())
+						pubSub.Subscribe(registry.Handlers())
+						return nil
 					},
 					OnStop: func(_ context.Context) error {
-						return pubSub.Stop()
+						pubSub.Stop()
+						return nil
 					},
 				})
 			},

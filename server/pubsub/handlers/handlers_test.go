@@ -3,7 +3,6 @@ package handlers_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -43,10 +42,7 @@ func TestRequestTraced_HandlePayload(t *testing.T) {
 			StatusCode: payload.StatusCode,
 		})
 
-		bytes, err := json.Marshal(payload)
-		require.NoError(t, err)
-
-		handler.HandlePayload(string(bytes))
+		handler.HandlePayload(payload)
 	})
 
 	t.Run("ok_invalid_payload", func(t *testing.T) {
@@ -102,11 +98,8 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 			factory.WorkoutCommentWorkoutID(workout.ID),
 		)
 
-		bytes, err := json.Marshal(payload)
-		require.NoError(t, err)
-
-		handler.HandlePayload(string(bytes))
-		handler.HandlePayload(string(bytes))
+		handler.HandlePayload(payload)
+		handler.HandlePayload(payload)
 
 		count, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.In(
 			gofrsuuid.FromStringOrNil(factory.UUID(0)),
@@ -160,12 +153,10 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 			},
 		})
 
-		bytes, err := json.Marshal(payload)
-		require.NoError(t, err)
 		updates, unsubscribe := streamManager.Subscribe(payload.FolloweeID, func() {})
 		defer unsubscribe()
 
-		handler.HandlePayload(string(bytes))
+		handler.HandlePayload(payload)
 
 		select {
 		case <-updates:
