@@ -155,10 +155,10 @@ const fetchExercises = async () => {
   @apply flex items-center justify-between gap-4 px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-display font-bold text-text;
 }
 .create-link {
   @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
@@ -179,7 +179,7 @@ h1 {
   @apply space-y-4;
 }
 .exercise-group h2 {
-  @apply mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply mb-2 px-1 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .exercise-group-card {
   @apply card overflow-hidden;
@@ -206,7 +206,7 @@ h1 {
   @apply card p-6 text-sm text-text-subtle;
 }
 .empty-state h2 {
-  @apply text-lg font-semibold text-text;
+  @apply text-title font-semibold text-text;
 }
 .empty-state p {
   @apply mt-1;

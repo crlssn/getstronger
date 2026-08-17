@@ -212,10 +212,10 @@ const makeUpNext = async (routineId: string) => {
   @apply flex items-center justify-between gap-4 px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-display font-bold text-text;
 }
 .page-intro p:last-child {
   @apply mt-1 max-w-xl text-sm text-text-subtle;
@@ -239,7 +239,7 @@ h1 {
   @apply space-y-3;
 }
 .group-heading {
-  @apply px-1 text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply px-1 text-eyebrow font-bold uppercase text-text-subtle;
 }
 /* One card with divided rows, not a stack of posters: the same shell as the
    Exercises list, with an action footer per row. */

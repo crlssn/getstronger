@@ -87,7 +87,6 @@ const save = async () => {
   <form class="builder-page" @submit.prevent="save">
     <header class="page-intro">
       <p class="eyebrow">{{ t('training.planForm.eyebrow') }}</p>
-      <h1>{{ editing ? t('training.planForm.editTitle') : t('training.newPlan') }}</h1>
       <p>{{ t('training.planForm.intro') }}</p>
     </header>
 
@@ -233,13 +232,10 @@ const save = async () => {
   @apply px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
-}
-h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h2 {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-title font-semibold text-text;
 }
 .page-intro > p:last-child {
   @apply mt-2 text-sm text-text-subtle;

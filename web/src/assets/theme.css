@@ -47,6 +47,9 @@
   --color-warning: #b45309;
   --color-warning-surface: #fffbeb;
   --color-danger: #dc2626;
+  /* Danger text sitting on the danger surface: #dc2626 reads 4.4:1 on that
+   * pink and fails AA, so the hover pair darkens the text a step. */
+  --color-danger-strong: #b91c1c;
   --color-danger-surface: #fef2f2;
   --color-badge: #dc2626;
   --color-info: #334155;

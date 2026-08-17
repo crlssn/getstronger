@@ -46,15 +46,14 @@ const filteredVolume = computed(() =>
 <template>
   <div class="progress-stack">
     <!-- Progress is a screen pushed onto the Me tab, so the nav bar above
-         carries its title. What is left here is the one thing the title does
-         not say: how many personal bests there are — and only once there are
-         any, because a pill that exists to celebrate should not render in the
-         app's loudest colour to report a zero. -->
-    <section v-if="totalRecords > 0" class="progress-intro">
+         carries its title; the PB chip joins it in the title row. It only
+         renders once there is something to celebrate, because a chip that
+         exists to celebrate should not report a zero. -->
+    <Teleport v-if="totalRecords > 0" to="#page-nav-action">
       <span class="record-count"
         ><TrophyIcon /> {{ t('progress.personalBests', totalRecords) }}</span
       >
-    </section>
+    </Teleport>
 
     <section v-if="filteredWorkouts.length" class="chart-card">
       <div class="chart-heading">
@@ -124,23 +123,20 @@ const filteredVolume = computed(() =>
 .progress-stack {
   @apply space-y-5;
 }
-.progress-intro {
-  @apply flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between;
-}
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-display font-bold text-text;
 }
 h2 {
-  @apply mt-1 text-xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-title font-semibold text-text;
 }
 .chart-heading h2 {
   @apply text-display font-bold;
 }
 .record-count {
-  @apply inline-flex w-max items-center gap-2 rounded-full border border-record-border bg-record-surface px-3 py-2 text-sm font-semibold text-record-strong;
+  @apply inline-flex w-max items-center gap-1.5 whitespace-nowrap rounded-full border border-record-border bg-record-surface px-3 py-1.5 text-meta font-semibold text-record-strong;
 }
 .record-count svg {
   @apply size-5;

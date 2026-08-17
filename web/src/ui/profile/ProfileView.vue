@@ -231,13 +231,13 @@ const weeklyVolume = computed(() =>
   @apply grid size-16 place-items-center rounded-card bg-ink text-xl font-semibold text-white;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .page-intro h1 {
-  @apply px-1 text-2xl font-semibold tracking-tight text-text;
+  @apply px-1 text-display font-bold text-text;
 }
 .profile-card h2 {
-  @apply mt-1 truncate text-2xl font-semibold tracking-tight text-text;
+  @apply mt-1 truncate text-title font-semibold text-text;
 }
 .profile-card p:last-child {
   @apply mt-1 truncate text-sm text-text-subtle;
@@ -301,7 +301,7 @@ const weeklyVolume = computed(() =>
   @apply mt-0.5 text-sm text-text-subtle;
 }
 .logout-link {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-danger/30 bg-white px-4 text-sm font-semibold text-danger hover:bg-danger-surface;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-danger/30 bg-white px-4 text-sm font-semibold text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 .logout-link svg {
   @apply size-5;

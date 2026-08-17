@@ -126,7 +126,9 @@ const data = computed(() => {
     datasets: [
       {
         // The most recent day picks up momentum green.
-        backgroundColor: days.map((_, index) => (index === days.length - 1 ? successColor : inkColor)),
+        backgroundColor: days.map((_, index) =>
+          index === days.length - 1 ? successColor : inkColor,
+        ),
         borderRadius: 8,
         data: days.map((day) => day.volume),
         label: 'Training volume',

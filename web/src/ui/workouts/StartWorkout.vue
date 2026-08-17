@@ -1304,7 +1304,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-5;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .workout-header h1 {
   @apply truncate text-body-lg font-semibold tracking-tight text-text;
@@ -1456,7 +1456,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-6;
 }
 .quick-empty h2 {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-title font-semibold text-text;
 }
 .quick-empty p {
   @apply max-w-sm text-sm text-text-subtle;
@@ -1479,7 +1479,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mb-4 flex items-start justify-between gap-3;
 }
 .exercise-heading h2 {
-  @apply mt-1 text-xl font-semibold tracking-tight;
+  @apply mt-1 text-title font-semibold;
 }
 .exercise-heading p:last-child {
   @apply mt-1 text-sm text-text-subtle;
@@ -1556,7 +1556,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply pointer-events-none select-none text-meta font-medium lowercase text-text-subtle;
 }
 .remove-set {
-  @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-ink-tint text-text-subtle opacity-0 transition hover:bg-danger-surface hover:text-danger;
+  @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-ink-tint text-text-subtle opacity-0 transition hover:bg-danger-surface hover:text-danger-strong;
 }
 .set-row:hover .remove-set,
 .remove-set:focus-visible {
@@ -1590,7 +1590,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply flex items-end justify-between gap-3 pb-3;
 }
 .exercise-queue h2 {
-  @apply mt-1 text-lg font-semibold tracking-tight text-text;
+  @apply mt-1 text-title font-semibold text-text;
 }
 .exercise-queue > header > small {
   @apply text-xs text-text-subtle;
@@ -1700,7 +1700,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mb-4 flex items-center justify-between gap-4;
 }
 .exercise-picker header h2 {
-  @apply mt-1 text-xl font-semibold text-text;
+  @apply mt-1 text-title font-semibold text-text;
 }
 .exercise-picker header button {
   @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
@@ -1749,7 +1749,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
 }
 .finish-dialog h2 {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-title font-semibold text-text;
 }
 .finish-dialog p {
   @apply mt-2 text-sm leading-6 text-text-subtle;
@@ -1767,7 +1767,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply border border-border text-text-muted hover:bg-ink-surface;
 }
 .discard-workout {
-  @apply border border-danger/30 text-danger hover:bg-danger-surface;
+  @apply border border-danger/30 text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 .confirm-discard {
   @apply bg-danger text-white hover:bg-danger;

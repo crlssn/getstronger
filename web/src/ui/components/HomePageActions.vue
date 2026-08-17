@@ -231,7 +231,7 @@ const onSearch = async () => {
   @apply card mt-3 w-full overflow-hidden;
 }
 .group-label {
-  @apply border-b border-border bg-ink-surface/60 px-4 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply border-b border-border bg-ink-surface/60 px-4 pb-2 pt-3 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .search-results a {
   @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 border-b border-border p-4 transition last:border-b-0 hover:bg-ink-surface;

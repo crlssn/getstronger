@@ -20,7 +20,7 @@ body {
 }
 
 h6 {
-  @apply mb-2 block px-1 text-eyebrow font-semibold uppercase text-text-subtle;
+  @apply mb-2 block px-1 text-eyebrow font-bold uppercase text-text-subtle;
 }
 
 /* A qualifier inside a section label is still a label. Left to the browser,
@@ -114,7 +114,7 @@ select {
 }
 
 .auth-intro h1 {
-  @apply mt-2 text-3xl font-bold tracking-tight text-text;
+  @apply mt-2 text-display font-bold text-text;
 }
 
 .auth-intro > p:last-child {
@@ -122,7 +122,7 @@ select {
 }
 
 .auth-eyebrow {
-  @apply text-xs font-semibold uppercase tracking-widest text-ink;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 
 .auth-form {
@@ -138,11 +138,11 @@ select {
 }
 
 .auth-link {
-  @apply font-semibold text-ink transition hover:text-ink-strong;
+  @apply font-semibold text-ink underline decoration-ink-border underline-offset-4 transition hover:text-ink-strong hover:decoration-ink-muted;
 }
 
 .auth-submit {
-  @apply mt-2 min-h-(--size-control) text-base;
+  @apply mt-2 min-h-(--size-control-lg) text-base;
 }
 
 .auth-footer {

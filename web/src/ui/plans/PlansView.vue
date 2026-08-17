@@ -168,13 +168,13 @@ const pause = async () => {
   @apply grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-display font-bold text-text;
 }
 h2 {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-title font-semibold text-text;
 }
 .page-intro > a {
   @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white;
@@ -215,7 +215,7 @@ h2 {
   @apply size-6;
 }
 .empty-plan-state h2 {
-  @apply mt-2 text-2xl;
+  @apply mt-2;
 }
 .empty-plan-copy {
   @apply mt-2 text-sm leading-6 text-text-muted;
@@ -327,7 +327,7 @@ h2 {
 }
 .routine-list strong,
 .routine-empty h2 {
-  @apply text-lg font-semibold text-text;
+  @apply text-title font-semibold text-text;
 }
 .routine-empty p {
   @apply mt-1;

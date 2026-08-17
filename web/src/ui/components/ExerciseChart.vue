@@ -237,10 +237,10 @@ const options = computed(() => ({
   @apply grid gap-1;
 }
 .exercise-chart header small {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .exercise-chart header strong {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-title font-semibold text-text;
 }
 .exercise-chart header > span {
   @apply rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;

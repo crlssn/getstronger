@@ -153,7 +153,7 @@ function toggleMetric(metric: ExerciseMetric) {
   @apply space-y-5 rounded-card border border-border bg-white p-5 shadow-card;
 }
 h3 {
-  @apply text-xl font-bold text-text;
+  @apply text-title font-bold text-text;
 }
 p,
 small {

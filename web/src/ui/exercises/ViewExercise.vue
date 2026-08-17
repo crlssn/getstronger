@@ -216,7 +216,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply size-5 shrink-0 text-text-subtle;
 }
 .eyebrow {
-  @apply mb-3 text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply mb-3 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .chart-card {
   @apply space-y-4;
@@ -227,7 +227,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .sets-card h2,
 .manage-card h2,
 .empty-card h1 {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-title font-semibold text-text;
 }
 .sets-card > header > span {
   @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
@@ -288,7 +288,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply ml-auto text-text-subtle;
 }
 .manage-actions button {
-  @apply text-danger hover:bg-danger-surface;
+  @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 .empty-card p {
   @apply mt-2 text-sm text-text-subtle;

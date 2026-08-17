@@ -120,7 +120,7 @@ const remove = async () => {
   @apply flex items-center justify-between gap-3;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .overview .eyebrow {
   @apply text-text-subtle;
@@ -151,7 +151,7 @@ const remove = async () => {
   @apply px-1 pt-2;
 }
 .order-heading h2 {
-  @apply mt-1 text-xl font-semibold tracking-tight;
+  @apply mt-1 text-title font-semibold;
 }
 .routine-order {
   @apply card overflow-hidden;
@@ -190,7 +190,7 @@ const remove = async () => {
 /* Destructive stays a text-only role, but it reads from a card surface: the
    danger red only clears AA contrast on white, not on the sunken canvas. */
 .delete-plan {
-  @apply card inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 px-4 text-sm font-semibold text-danger transition hover:bg-danger-surface;
+  @apply card inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 px-4 text-sm font-semibold text-danger transition hover:bg-danger-surface hover:text-danger-strong;
 }
 .delete-plan svg {
   @apply size-5;

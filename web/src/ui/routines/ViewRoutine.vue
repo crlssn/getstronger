@@ -215,7 +215,7 @@ const onDeleteRoutine = async () => {
 }
 .section-heading h2,
 .danger-zone h2 {
-  @apply text-lg font-semibold text-text;
+  @apply text-title font-semibold text-text;
 }
 .section-heading p,
 .danger-zone p {
@@ -261,7 +261,7 @@ const onDeleteRoutine = async () => {
   @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
 .danger-zone button {
-  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-control border border-danger/30 px-4 text-sm font-semibold text-danger hover:bg-danger-surface;
+  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-control border border-danger/30 px-4 text-sm font-semibold text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 .danger-zone svg {
   @apply size-5;

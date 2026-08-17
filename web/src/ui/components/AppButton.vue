@@ -59,6 +59,6 @@ button:disabled {
 }
 
 .destructive {
-  @apply text-danger hover:bg-danger-surface;
+  @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 </style>

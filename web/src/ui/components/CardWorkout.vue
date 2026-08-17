@@ -349,13 +349,13 @@ const postComment = async () => {
   @apply bg-surface-inverse px-5 py-6 text-white sm:px-6;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .workout-heading .eyebrow {
   @apply text-ink-tint;
 }
 .workout-heading h2 {
-  @apply mt-1 text-2xl font-semibold tracking-tight;
+  @apply mt-1 text-title font-semibold;
 }
 .metric-grid {
   @apply grid grid-cols-2 gap-px bg-ink-tint sm:grid-cols-4;
@@ -390,7 +390,7 @@ const postComment = async () => {
   @apply mb-4 flex items-end justify-between gap-3;
 }
 .section-heading h2 {
-  @apply mt-1 text-xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-title font-semibold text-text;
 }
 .section-heading > span {
   @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;

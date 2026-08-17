@@ -290,13 +290,13 @@ const selectRoutine = async (routineId: string) => {
   @apply block;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-muted;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-display font-bold text-text;
 }
 h2 {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-title font-semibold text-text;
 }
 .active-session {
   @apply grid gap-5 rounded-card border border-ink-border bg-ink-surface p-5 shadow-card sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
@@ -344,7 +344,7 @@ h2 {
   @apply size-3.5;
 }
 .next-session h2 {
-  @apply mt-1 text-2xl text-white;
+  @apply mt-1 text-display font-bold text-white;
 }
 .session-meta {
   @apply mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-tint;
@@ -400,7 +400,7 @@ h2 {
   @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
 }
 .feed-error button {
-  @apply min-h-(--size-control-sm) shrink-0 rounded-control px-3 font-semibold hover:bg-danger-surface;
+  @apply min-h-(--size-control-sm) shrink-0 rounded-control px-3 font-semibold hover:bg-danger-surface hover:text-danger-strong;
 }
 .feed-end {
   @apply flex items-center justify-center gap-3 py-5 text-text-muted;

@@ -54,13 +54,15 @@ const markAllAsRead = async () => {
 </script>
 
 <template>
-  <div v-if="hasUnreadNotifications" class="notification-actions">
-    <button type="button" :disabled="markingAllAsRead" @click="markAllAsRead">
+  <!-- A ghost button in the title row, not a floating pill: pills are for
+       tags, actions are buttons. -->
+  <Teleport v-if="hasUnreadNotifications" to="#page-nav-action">
+    <button type="button" class="mark-all-read" :disabled="markingAllAsRead" @click="markAllAsRead">
       {{
         markingAllAsRead ? $t('profile.markingNotificationsAsRead') : $t('profile.markAllAsRead')
       }}
     </button>
-  </div>
+  </Teleport>
   <AppList :can-fetch="hasMorePages" @fetch="fetchNotifications">
     <AppListItem
       v-for="notification in notifications"
@@ -94,11 +96,8 @@ const markAllAsRead = async () => {
 <style scoped>
 @reference '../../assets/base.css';
 
-.notification-actions {
-  @apply mb-3 flex justify-end;
-}
-.notification-actions button {
-  @apply min-h-(--size-control) rounded-control border border-border bg-white px-4 text-sm font-semibold text-ink-strong shadow-card transition hover:border-ink-border hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
+.mark-all-read {
+  @apply inline-flex min-h-(--size-control-sm) items-center whitespace-nowrap rounded-control px-3 text-sm font-semibold text-text-muted transition hover:bg-ink-surface hover:text-text disabled:cursor-wait disabled:text-text-subtle;
 }
 /* Unread is a state, not a colour of its own: the standard row with an ink
    icon tile, full-strength text and a green momentum dot. Read rows keep the

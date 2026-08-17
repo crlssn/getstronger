@@ -62,7 +62,7 @@ const fetchWorkout = async () => {
   @apply h-8 w-52;
 }
 .empty-card h1 {
-  @apply text-xl font-semibold text-text;
+  @apply text-title font-semibold text-text;
 }
 .empty-card p {
   @apply mt-2 text-sm text-text-subtle;

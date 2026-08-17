@@ -87,7 +87,7 @@ async function onUpdateExercise() {
   @apply card p-6 text-sm text-text-subtle;
 }
 .form-status h1 {
-  @apply text-xl font-semibold text-text;
+  @apply text-title font-semibold text-text;
 }
 .form-status a {
   @apply mt-3 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;

@@ -215,13 +215,13 @@ const skip = async () => {
   @apply px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply mt-1 text-display font-bold text-text;
 }
 h2 {
-  @apply text-2xl font-semibold tracking-tight;
+  @apply text-title font-semibold;
 }
 .page-intro > p:last-child {
   @apply mt-1 text-sm text-text-subtle;
@@ -282,7 +282,7 @@ h2 {
   @apply rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold;
 }
 .next-card h2 {
-  @apply mt-3;
+  @apply mt-3 text-display font-bold;
 }
 .next-card > p {
   @apply mt-2 text-sm text-ink-tint;
@@ -324,7 +324,7 @@ h2 {
   @apply mb-3 px-1;
 }
 .workout-history > header h2 {
-  @apply mt-1 text-xl text-text;
+  @apply mt-1 text-text;
 }
 .history-list {
   @apply card overflow-hidden;

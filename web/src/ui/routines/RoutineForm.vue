@@ -89,7 +89,6 @@ const submit = () => {
     <header class="form-intro">
       <div>
         <p class="eyebrow">{{ t('routine.form.eyebrow') }}</p>
-        <h1>{{ t('routine.form.title') }}</h1>
         <p>{{ t('routine.form.intro') }}</p>
       </div>
       <span class="selection-count">{{
@@ -175,10 +174,7 @@ const submit = () => {
   @apply flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
-}
-h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 .form-intro p:last-child {
   @apply mt-2 text-sm text-text-subtle;
@@ -200,7 +196,7 @@ h1 {
   @apply mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
 .exercise-toolbar h2 {
-  @apply text-lg font-semibold text-text;
+  @apply text-title font-semibold text-text;
 }
 .exercise-toolbar p {
   @apply mt-1 text-sm text-text-subtle;
