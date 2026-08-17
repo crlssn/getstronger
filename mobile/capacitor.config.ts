@@ -15,7 +15,8 @@ const config: CapacitorConfig = {
     // web/src/native/platform.ts.
     SplashScreen: {
       launchAutoHide: false,
-      backgroundColor: '#25282d',
+      // The splash reproduces the login header on its light surface.
+      backgroundColor: '#ffffff',
     },
     // Without the plugin, WKWebView pans the whole page to reveal a focused
     // input, shoving the sticky workout header under the status bar while
