@@ -14,7 +14,7 @@ import (
 
 type event struct {
 	topic   repo.EventTopic
-	payload string
+	payload any
 }
 
 // PubSub routes persisted events to their handlers over an in-process channel.
@@ -61,7 +61,7 @@ func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload an
 	}
 
 	select {
-	case ps.events <- event{topic: topic, payload: string(p)}:
+	case ps.events <- event{topic: topic, payload: payload}:
 	default:
 		// Never block the request path; the event remains persisted in the
 		// events table even when it cannot be dispatched.

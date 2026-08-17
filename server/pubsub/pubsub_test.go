@@ -2,7 +2,6 @@ package pubsub_test
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
 	"testing"
 
@@ -79,11 +78,8 @@ func (s *pubSubSuite) TestPublish() {
 				EventID:    uuid.NewString(),
 			},
 			init: func(t test) {
-				payload, err := json.Marshal(t.payload)
-				s.Require().NoError(err)
-
 				wg.Add(1)
-				s.mocks.handler.EXPECT().HandlePayload(string(payload)).Do(func(_ string) {
+				s.mocks.handler.EXPECT().HandlePayload(t.payload).Do(func(_ any) {
 					wg.Done()
 				})
 			},
@@ -96,10 +92,7 @@ func (s *pubSubSuite) TestPublish() {
 				EventID:   uuid.NewString(),
 			},
 			init: func(t test) {
-				payload, err := json.Marshal(t.payload)
-				s.Require().NoError(err)
-
-				s.mocks.handler.EXPECT().HandlePayload(string(payload)).Times(0)
+				s.mocks.handler.EXPECT().HandlePayload(t.payload).Times(0)
 			},
 		},
 	}

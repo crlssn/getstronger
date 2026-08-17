@@ -40,7 +40,7 @@ func (m *MockHandler) EXPECT() *MockHandlerMockRecorder {
 }
 
 // HandlePayload mocks base method.
-func (m *MockHandler) HandlePayload(payload string) {
+func (m *MockHandler) HandlePayload(payload any) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "HandlePayload", payload)
 }
