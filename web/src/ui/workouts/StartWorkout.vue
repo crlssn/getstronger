@@ -1201,11 +1201,55 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </section>
     </div>
 
-    <!-- One fixed session region: the rest pill floats above the action dock,
-         so the countdown stays visible without pushing content around and
-         without ever covering an editable field. The countdown is the focal
-         point while resting; it is aria-hidden so screen readers are not
-         re-announced to every second. -->
+    <!-- One ranked pair at the end of the session. Advancing is the primary
+         action while exercises are unfinished; finishing stays reachable for
+         the entire session but is demoted to a text button, because two
+         controls of equal weight leave the screen with no ranking at all. -->
+    <footer class="finish-dock">
+      <strong
+        v-if="finishError || blockedMessage || primaryStatus"
+        id="workout-dock-status"
+        :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
+        >{{ finishError || blockedMessage || primaryStatus }}</strong
+      >
+      <!-- Described by the status rather than aria-disabled: the whole point
+           is that this control is pressable, and aria-disabled would announce
+           the same "broken" that the grey fill used to. -->
+      <button
+        type="submit"
+        class="primary-action"
+        :aria-describedby="
+          finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
+        "
+        :disabled="submitting"
+      >
+        <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
+        {{ primaryActionLabel }}
+      </button>
+      <!-- Keep the escape hatch in a stable position even when a partial set
+         temporarily prevents saving the workout. -->
+      <button
+        v-if="!allExercisesComplete"
+        type="button"
+        class="finish-early"
+        :disabled="!canFinish"
+        :title="!canFinish ? finishStatus : undefined"
+        :aria-label="
+          !canFinish && finishStatus
+            ? `${t('workout.finish')}: ${finishStatus}`
+            : t('workout.finish')
+        "
+        @click="requestFinishWorkout"
+      >
+        {{ t('workout.finish') }}
+      </button>
+    </footer>
+
+    <!-- The rest pill floats at the bottom of the viewport, so the countdown
+         stays visible without pushing content around and without ever covering
+         an editable field. The countdown is the focal point while resting; it
+         is aria-hidden so screen readers are not re-announced to every
+         second. -->
     <div class="session-dock">
       <section
         v-if="restSeconds > 0"
@@ -1224,50 +1268,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           <span :style="{ width: restProgress }"></span>
         </div>
       </section>
-
-      <!-- One ranked pair. Advancing is the primary action while exercises are
-           unfinished; finishing stays reachable for the entire session but is
-           demoted to a text button, because two controls of equal weight leave
-           the screen with no ranking at all. -->
-      <footer class="finish-dock">
-        <strong
-          v-if="finishError || blockedMessage || primaryStatus"
-          id="workout-dock-status"
-          :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
-          >{{ finishError || blockedMessage || primaryStatus }}</strong
-        >
-        <!-- Described by the status rather than aria-disabled: the whole point
-             is that this control is pressable, and aria-disabled would announce
-             the same "broken" that the grey fill used to. -->
-        <button
-          type="submit"
-          class="primary-action"
-          :aria-describedby="
-            finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
-          "
-          :disabled="submitting"
-        >
-          <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
-          {{ primaryActionLabel }}
-        </button>
-        <!-- Keep the escape hatch in a stable position even when a partial set
-           temporarily prevents saving the workout. -->
-        <button
-          v-if="!allExercisesComplete"
-          type="button"
-          class="finish-early"
-          :disabled="!canFinish"
-          :title="!canFinish ? finishStatus : undefined"
-          :aria-label="
-            !canFinish && finishStatus
-              ? `${t('workout.finish')}: ${finishStatus}`
-              : t('workout.finish')
-          "
-          @click="requestFinishWorkout"
-        >
-          {{ t('workout.finish') }}
-        </button>
-      </footer>
     </div>
   </form>
 </template>
@@ -1276,12 +1276,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 @reference '../../assets/base.css';
 
 .workout-shell {
-  @apply mx-auto max-w-3xl space-y-4 pb-36;
+  @apply mx-auto max-w-3xl space-y-4 pb-8;
 }
-/* Reserves the height of the fixed session dock (pill + actions) so the note
-   field and the last set row are never trapped behind it while resting. */
+/* Reserves the height of the floating rest pill so the actions and the last
+   set row are never trapped behind it while resting. */
 .workout-shell.resting {
-  padding-bottom: 12.5rem;
+  padding-bottom: 9rem;
 }
 /* The chrome spans the viewport while its contents stay aligned with the app. */
 /* Opaque, or scrolled content bleeds through and reads as passing over the
@@ -1337,9 +1337,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   inherits: false;
   initial-value: 160;
 }
-/* The one fixed region of the session: rest pill stacked on the action dock.
-   It lives outside the flow, so nothing is displaced while resting; taps pass
-   through the gaps to the content behind. */
+/* The one fixed region of the session: the rest pill. It lives outside the
+   flow, so nothing is displaced while resting; taps pass through the gaps to
+   the content behind. */
 .session-dock {
   padding-bottom: env(safe-area-inset-bottom);
   @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 px-3;
@@ -1537,12 +1537,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .set-row.complete .unit-entry {
   @apply bg-surface-sunken;
 }
-/* Focus reveal (and focusNextSetInput) must land above the fixed session dock,
+/* Focus reveal (and focusNextSetInput) must land above the floating rest pill,
    not behind it. */
 .set-row input,
 .unit-entry,
 .note-card textarea {
-  scroll-margin-bottom: 10rem;
+  scroll-margin-bottom: 8rem;
 }
 .unit-entry {
   @apply grid min-h-(--size-control) min-w-0 grid-cols-[minmax(2.75rem,1fr)_auto] items-center overflow-hidden rounded-control border border-border bg-surface pr-2.5 shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
@@ -1662,8 +1662,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .note-card textarea {
   @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
 }
+/* In flow at the end of the session: no container of its own, so the buttons
+   sit on the page background like the rest of the screen. */
 .finish-dock {
-  @apply pointer-events-auto flex w-full max-w-3xl flex-col items-stretch gap-2 border-t border-border bg-surface px-4 py-3 text-center shadow-overlay sm:rounded-card sm:border;
+  @apply flex w-full flex-col items-stretch gap-2 text-center;
 }
 /* What is missing, said where the button that is waiting for it lives. */
 .finish-dock > strong {

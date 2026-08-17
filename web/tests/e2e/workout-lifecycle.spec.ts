@@ -76,13 +76,11 @@ test.describe('quick workout lifecycle', () => {
     const restCountdown = restRegion.locator('strong').first()
     const initialTimer = await restCountdown.innerText()
     expect(initialTimer).toMatch(/^\d{2}:\d{2}$/)
-    // The pill floats above the action dock and covers no editable field.
+    // The pill floats at the bottom of the viewport and covers no editable field.
     const pillBox = await restRegion.boundingBox()
-    const dockBox = await page.locator('.finish-dock').boundingBox()
     const repsBox = await page
       .getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true })
       .boundingBox()
-    expect(pillBox!.y + pillBox!.height).toBeLessThanOrEqual(dockBox!.y)
     expect(repsBox!.y + repsBox!.height).toBeLessThanOrEqual(pillBox!.y)
 
     await page.getByRole('button', { name: '+30 sec' }).click()

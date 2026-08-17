@@ -199,13 +199,14 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
 
-    test('keeps the dock in one fixed region that never enters the flow', async () => {
+    test('keeps only the rest pill in the fixed region; the actions stay in the flow', async () => {
       const wrapper = await mountWorkout()
       await logFirstSet(wrapper)
 
       const dock = wrapper.get('.session-dock')
-      expect(dock.find('.finish-dock').exists()).toBe(true)
       expect(dock.find('.rest-pill').exists()).toBe(true)
+      expect(dock.find('.finish-dock').exists()).toBe(false)
+      expect(wrapper.find('.finish-dock').exists()).toBe(true)
       wrapper.unmount()
     })
   })
