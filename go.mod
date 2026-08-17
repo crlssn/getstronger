@@ -9,7 +9,7 @@ require (
 	connectrpc.com/cors v0.1.0
 	github.com/aarondl/opt v0.0.0-20250607033636-982744e1bd65
 	github.com/brianvoe/gofakeit/v7 v7.15.0
-	github.com/gofrs/uuid/v5 v5.4.0
+	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
