@@ -4,7 +4,6 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
   BoltIcon,
-  CalendarDaysIcon,
   CheckIcon,
   ChevronRightIcon,
   ClockIcon,
@@ -20,6 +19,24 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { formatToShortDateTime } from '@/utils/datetime'
 import useActiveWorkout from '@/utils/useActiveWorkout'
+
+// The row earns its space with the stats that matter: date, volume, duration.
+const workoutMeta = (workout: Workout) => {
+  const parts = [formatToShortDateTime(workout.finishedAt)]
+  if (workout.intensity > 0) {
+    parts.push(
+      `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(workout.intensity)} kg`,
+    )
+  }
+  if (workout.startedAt && workout.finishedAt) {
+    const minutes = Math.max(
+      1,
+      Math.round(Number(workout.finishedAt.seconds - workout.startedAt.seconds) / 60),
+    )
+    parts.push(`${minutes} min`)
+  }
+  return parts.join(' · ')
+}
 
 const authStore = useAuthStore()
 const { t } = useI18n()
@@ -161,7 +178,7 @@ const skip = async () => {
         >
           <span>
             <strong>{{ workout.name }}</strong>
-            <small><CalendarDaysIcon /> {{ formatToShortDateTime(workout.finishedAt) }}</small>
+            <small>{{ workoutMeta(workout) }}</small>
           </span>
           <ChevronRightIcon />
         </RouterLink>
@@ -323,13 +340,10 @@ h2 {
   @apply block truncate;
 }
 .history-list strong {
-  @apply text-sm font-semibold text-text;
+  @apply text-body-lg font-semibold text-text;
 }
 .history-list small {
-  @apply mt-1 flex items-center gap-1.5 text-xs text-text-subtle;
-}
-.history-list small svg {
-  @apply size-4 shrink-0;
+  @apply mt-0.5 text-meta text-text-subtle;
 }
 .history-list > a > svg {
   @apply size-5 shrink-0 text-text-subtle;
@@ -347,7 +361,7 @@ h2 {
   @apply min-h-9 shrink-0 rounded-lg bg-white px-3 font-semibold text-danger;
 }
 .history-empty {
-  @apply border border-dashed border-ink-border bg-white;
+  @apply card;
 }
 .history-end {
   @apply text-text-muted;

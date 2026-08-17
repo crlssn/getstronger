@@ -314,7 +314,7 @@ h2 {
   @apply size-4;
 }
 .add-routine {
-  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-control border border-dashed border-ink-border bg-ink-surface text-sm font-semibold text-ink-strong;
+  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-control border border-ink-border bg-white text-sm font-semibold text-text transition hover:bg-ink-surface;
 }
 .add-routine svg {
   @apply size-5;

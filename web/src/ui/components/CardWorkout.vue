@@ -440,41 +440,41 @@ const postComment = async () => {
   box-shadow: inset 4px 0 0 var(--color-ink-muted);
 }
 .feed-summary-card--personal-best {
-  @apply border-gold-400 shadow-raised;
+  @apply border-record-border shadow-raised;
 }
 .detail-summary-card--personal-best {
-  @apply border-gold-400 shadow-raised;
+  @apply border-record-border shadow-raised;
 }
 .feed-summary-card--personal-best .workout-heading {
-  @apply border-champagne-300 bg-champagne-100;
-  box-shadow: inset 4px 0 0 theme('colors.gold.500');
+  @apply border-record-border bg-record-surface;
+  box-shadow: inset 4px 0 0 var(--color-record);
 }
 .detail-summary-card--personal-best .workout-heading {
-  @apply border-y border-champagne-300 bg-champagne-100 text-text;
+  @apply border-y border-record-border bg-record-surface text-text;
   background-image: none;
-  box-shadow: inset 4px 0 0 theme('colors.gold.500');
+  box-shadow: inset 4px 0 0 var(--color-record);
 }
 .feed-summary-card .workout-heading .eyebrow {
   @apply text-ink;
 }
 .feed-summary-card--personal-best .workout-heading .eyebrow {
-  @apply text-gold-700;
+  @apply text-record-strong;
 }
 .detail-summary-card--personal-best .workout-heading .eyebrow {
-  @apply text-gold-700;
+  @apply text-record-strong;
 }
 .workout-heading-copy {
   @apply flex items-start justify-between gap-4;
 }
 .personal-best-badge {
-  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold-600 bg-gold-500 px-2.5 py-1 text-xs font-semibold text-white shadow-card;
+  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-record-strong bg-record px-2.5 py-1 text-xs font-semibold text-white shadow-card;
 }
 .personal-best-badge svg {
   @apply size-4;
 }
 .feed-summary-card--personal-best .metric-icon.amber,
 .detail-summary-card--personal-best .metric-icon.amber {
-  @apply bg-champagne-200 text-gold-700;
+  @apply bg-record-surface text-record-strong;
 }
 .feed-card-link {
   @apply absolute inset-0 z-10 rounded-card;

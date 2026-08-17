@@ -19,7 +19,7 @@ import {
   type ActivityBucket,
 } from '@/utils/activityBuckets'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
-import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
+import { measurementsForExercise } from '@/utils/exerciseMeasurements'
 
 const exercises = ref<Exercise[]>([])
 const { t } = useI18n()
@@ -71,6 +71,16 @@ const groupedExercises = computed(() => {
     }))
 })
 
+// The row's meta line: how the exercise is tracked, then where it bites —
+// "Weight × Reps · Back, legs". Both halves already live on the exercise.
+const exerciseMeta = (exercise: Exercise) => {
+  const tracking = measurementsForExercise(exercise)
+    .map(({ labelKey }) => t(labelKey))
+    .join(' × ')
+  const tags = exercise.tags.join(', ')
+  return [tracking, tags].filter(Boolean).join(' · ')
+}
+
 const fetchExercises = async () => {
   const response = await listExercises(pageToken.value)
   if (!response) return
@@ -113,7 +123,7 @@ const fetchExercises = async () => {
           >
             <span class="exercise-copy">
               <strong>{{ exercise.name }}</strong>
-              <ExerciseTags compact class="mt-1" :tags="exercise.tags" />
+              <small>{{ exerciseMeta(exercise) }}</small>
             </span>
             <ChevronRightIcon />
           </RouterLink>
@@ -184,13 +194,16 @@ h1 {
   @apply min-w-0;
 }
 .exercise-copy strong {
-  @apply block truncate text-sm font-semibold text-text;
+  @apply block truncate text-body-lg font-semibold text-text;
+}
+.exercise-copy small {
+  @apply mt-0.5 block truncate text-meta text-text-subtle;
 }
 .exercise-group-card > a > svg {
   @apply size-5 shrink-0 text-text-subtle;
 }
 .empty-state {
-  @apply rounded-card border border-dashed border-ink-border bg-white p-6 text-sm text-text-subtle;
+  @apply card p-6 text-sm text-text-subtle;
 }
 .empty-state h2 {
   @apply text-lg font-semibold text-text;

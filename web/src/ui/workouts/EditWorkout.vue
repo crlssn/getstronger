@@ -261,7 +261,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
     <footer class="update-dock">
       <AppButton type="submit" colour="primary">{{ t('workout.edit.submit') }}</AppButton>
-      <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="gray">
+      <AppButton type="link" :to="`/workouts/${workout?.id}`" colour="secondary">
         {{ t('common.cancel') }}
       </AppButton>
     </footer>

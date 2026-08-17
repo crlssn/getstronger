@@ -201,7 +201,15 @@ const finishStatus = computed(() => {
   return ''
 })
 
-const elapsedLabel = computed(() => formatDuration(elapsedSeconds.value))
+// One clock, one costume: the same m:ss the tab bar's timer badge shows.
+const elapsedLabel = computed(() => {
+  const seconds = elapsedSeconds.value
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainder = (seconds % 60).toString().padStart(2, '0')
+  if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${remainder}`
+  return `${minutes}:${remainder}`
+})
 const sessionProgress = computed(() => {
   const total = routine.value?.exercises.length ?? 0
   return total > 0 ? `${(completedExerciseCount.value / total) * 100}%` : '0%'
@@ -304,19 +312,6 @@ const focusNextSetInput = async () => {
       return
     }
   }
-}
-
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const remainder = seconds % 60
-  return [
-    hours > 0 ? `${hours}h` : '',
-    hours > 0 || minutes > 0 ? `${minutes}m` : '',
-    `${remainder}s`,
-  ]
-    .filter(Boolean)
-    .join(' ')
 }
 
 const formatTimer = (seconds: number) => {
@@ -879,10 +874,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
             }}
           </p>
         </div>
-        <div class="elapsed">
-          <strong>{{ elapsedLabel }}</strong>
-          <small>{{ t('workout.elapsed') }}</small>
-        </div>
+        <span class="elapsed" :aria-label="t('workout.elapsed')">{{ elapsedLabel }}</span>
       </div>
       <!-- A rail rather than a fraction: between sets it is read at a glance,
            and a glance does not do arithmetic. -->
@@ -1322,14 +1314,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 /* The one thing glanced at between sets, so it outranks everything else in
    the chrome. Still yields to the rest countdown, which is a live deadline. */
+/* The same mono pill the tab bar uses for this timer — one clock, one
+   costume, sized up for the screen it headlines. */
 .elapsed {
-  @apply grid shrink-0 justify-items-end;
-}
-.elapsed strong {
-  @apply font-mono text-title font-bold leading-none tabular-nums text-text;
-}
-.elapsed small {
-  @apply mt-0.5 text-eyebrow font-semibold uppercase text-text-subtle;
+  @apply shrink-0 whitespace-nowrap rounded-pill bg-surface-inverse px-3 py-1.5 font-mono text-base font-bold leading-none tabular-nums text-white;
 }
 /* How far through the session, without asking anyone to do arithmetic. */
 .session-rail {
@@ -1749,7 +1737,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-5 shrink-0 text-ink;
 }
 .picker-empty {
-  @apply rounded-control border border-dashed border-ink-border p-6 text-center text-sm text-text-subtle;
+  @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
 }
 .load-more {
   @apply mt-4 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;

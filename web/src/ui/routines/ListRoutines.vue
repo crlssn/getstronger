@@ -241,11 +241,13 @@ h1 {
 .group-heading {
   @apply px-1 text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
+/* One card with divided rows, not a stack of posters: the same shell as the
+   Exercises list, with an action footer per row. */
 .routine-grid {
-  @apply grid gap-4 md:grid-cols-2;
+  @apply card divide-y divide-border overflow-hidden;
 }
 .routine-card {
-  @apply card flex flex-col gap-4 p-5;
+  @apply flex flex-col gap-3 p-4;
 }
 .routine-heading {
   @apply flex items-start justify-between gap-3;
@@ -254,10 +256,10 @@ h1 {
   @apply min-w-0 flex-1;
 }
 .routine-heading > svg {
-  @apply mt-2 size-5 text-text-subtle;
+  @apply mt-1.5 size-5 text-text-subtle;
 }
 .routine-heading h3 {
-  @apply text-xl font-semibold tracking-tight text-text;
+  @apply text-body-lg font-semibold text-text;
 }
 .routine-tags {
   @apply mt-1;
@@ -269,17 +271,17 @@ h1 {
   @apply mx-1 content-['·'];
 }
 .routine-meta {
-  @apply mt-0.5 text-xs text-text-subtle;
+  @apply mt-0.5 text-meta text-text-subtle;
 }
 .up-next {
   @apply mb-2 inline-flex rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
 }
 .routine-actions {
-  @apply relative mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-4;
+  @apply relative mt-auto flex flex-wrap items-center gap-2;
 }
 .routine-actions a,
 .routine-actions button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-3 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control-sm) items-center justify-center gap-2 rounded-control px-3.5 text-sm font-semibold;
 }
 .routine-actions svg {
   @apply size-4;
@@ -288,7 +290,7 @@ h1 {
   @apply bg-ink text-white hover:bg-ink-strong;
 }
 .view-link {
-  @apply border border-border text-text-muted hover:bg-ink-surface;
+  @apply border border-ink-border bg-white text-text hover:bg-ink-surface;
 }
 .routine-menu {
   @apply relative ml-auto;
@@ -319,15 +321,6 @@ h1 {
   .create-link {
     @apply shrink-0;
   }
-}
-.empty-state {
-  @apply grid justify-items-start gap-3 rounded-card border border-dashed border-ink-border bg-white p-6;
-}
-.empty-state h2 {
-  @apply text-xl font-semibold;
-}
-.empty-state p {
-  @apply text-sm text-text-subtle;
 }
 .load-more {
   @apply mx-auto block rounded-control border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted;

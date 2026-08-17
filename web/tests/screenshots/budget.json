@@ -1,7 +1,7 @@
 {
   "comment": "The most findings of each kind the screenshot harness may report before the build fails. Lower a number whenever a change earns it; raising one is a decision that belongs in a review, not a commit message. Measured over the full page set, including the create-exercise/routine/plan/workout flows.",
   "budget": {
-    "accessibility": 13,
+    "accessibility": 12,
     "clippedText": 0,
     "horizontalOverflow": 0,
     "smallTapTargets": 14,

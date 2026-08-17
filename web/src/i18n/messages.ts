@@ -394,7 +394,7 @@ export const en = {
     },
     list: {
       start: 'Start',
-      view: 'View routine',
+      view: 'View',
       actionsAria: 'Routine actions',
       edit: 'Edit routine',
       emptyBody: 'Create a routine to make your workouts repeatable.',
@@ -930,7 +930,7 @@ export const sv = {
     },
     list: {
       start: 'Starta',
-      view: 'Visa pass',
+      view: 'Visa',
       actionsAria: 'Passåtgärder',
       edit: 'Redigera pass',
       emptyBody: 'Skapa ett pass för att göra din träning repeterbar.',

@@ -41,11 +41,12 @@ const emit = defineEmits<{ action: [] }>()
 <style scoped>
 @reference '../../assets/base.css';
 
+/* A solid card, never dashed: dashed borders read as drop-zones, not states. */
 .empty-state {
-  @apply grid justify-items-start gap-3 rounded-card border border-dashed border-border-strong bg-surface p-6;
+  @apply card grid justify-items-start gap-3 p-6;
 }
 .empty-icon {
-  @apply grid size-11 place-items-center rounded-control bg-surface-sunken text-text-subtle;
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-text-muted;
 }
 .empty-icon :deep(svg) {
   @apply size-5;
@@ -57,7 +58,7 @@ const emit = defineEmits<{ action: [] }>()
   @apply text-sm leading-6 text-text-muted;
 }
 .empty-action {
-  @apply mt-1 inline-flex min-h-(--size-control) items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:brightness-125;
+  @apply mt-1 inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:brightness-125;
 }
 .empty-action :deep(svg) {
   @apply size-5;

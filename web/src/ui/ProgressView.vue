@@ -136,6 +136,9 @@ h1 {
 h2 {
   @apply mt-1 text-xl font-semibold tracking-tight text-text;
 }
+.chart-heading h2 {
+  @apply text-display font-bold;
+}
 .record-count {
   @apply inline-flex w-max items-center gap-2 rounded-full border border-record-border bg-record-surface px-3 py-2 text-sm font-semibold text-record-strong;
 }
@@ -150,10 +153,10 @@ h2 {
   @apply mb-5 flex flex-wrap items-end justify-between gap-3;
 }
 .chart-heading > span {
-  @apply inline-flex items-center gap-2 text-sm font-semibold text-ink-strong;
+  @apply inline-flex items-center gap-1.5 text-meta font-semibold text-text-subtle;
 }
 .chart-heading svg {
-  @apply size-5;
+  @apply size-4;
 }
 .period-picker {
   @apply mt-4;

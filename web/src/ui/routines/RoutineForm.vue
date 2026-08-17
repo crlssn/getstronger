@@ -242,7 +242,7 @@ h1 {
   @apply mt-0.5 block truncate text-xs text-text-subtle;
 }
 .empty-row {
-  @apply rounded-control border border-dashed border-ink-border p-6 text-center text-sm text-text-subtle;
+  @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
 }
 .load-more {
   @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-control border border-border px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;

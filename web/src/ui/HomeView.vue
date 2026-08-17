@@ -369,8 +369,7 @@ h2 {
 .choose-button svg {
   @apply size-5;
 }
-.section-block,
-.empty-card {
+.section-block {
   @apply card p-5;
 }
 .section-heading {
@@ -390,9 +389,6 @@ h2 {
 }
 .following-feed > header h2 {
   @apply mt-1;
-}
-.feed-empty {
-  @apply rounded-card border border-dashed border-ink-border bg-white p-6 text-sm text-text-subtle;
 }
 .feed-status {
   @apply flex min-h-14 items-center justify-center gap-3 text-sm font-medium text-text-subtle;
@@ -462,24 +458,6 @@ h2 {
 .workout-icon svg,
 .routine-icon svg {
   @apply size-5;
-}
-.empty-card {
-  @apply grid justify-items-start gap-4 border-transparent bg-surface-inverse text-white shadow-raised;
-}
-.empty-card h2 {
-  @apply text-white;
-}
-.empty-icon {
-  @apply grid size-12 place-items-center rounded-card bg-white/10 text-white ring-1 ring-white/20;
-}
-.empty-icon svg {
-  @apply size-6;
-}
-.empty-card p {
-  @apply mt-1 text-sm text-ink-tint;
-}
-.primary-link {
-  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-white px-4 text-sm font-semibold text-ink-strong transition hover:bg-ink-surface;
 }
 .picker-backdrop {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 p-0 sm:items-center sm:p-6;
