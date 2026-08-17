@@ -67,6 +67,6 @@ const onSubmit = async () => {
 /* Sticks above the bottom navigation so saving never needs a scroll. */
 .form-actions {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply sticky z-20 -mx-3 mt-4 border-t border-slate-200 bg-slate-50 px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
+  @apply sticky z-20 -mx-3 mt-4 border-t border-border bg-ink-surface px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
 }
 </style>

@@ -24,7 +24,7 @@ const onClick = async () => {
 @reference '../../assets/base.css';
 
 button {
-  @apply grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
+  @apply grid size-11 place-items-center rounded-xl border border-border bg-white text-text-muted transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
 }
 svg {
   @apply size-5;

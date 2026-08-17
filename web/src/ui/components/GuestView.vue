@@ -30,13 +30,13 @@ import { brandName, brandSlogan } from '@/brand'
 @reference '../../assets/base.css';
 
 .guest-shell {
-  @apply min-h-screen bg-slate-50;
+  @apply min-h-screen bg-surface-sunken;
 }
 .guest-header {
-  @apply border-b border-slate-200 bg-white;
+  @apply border-b border-border bg-white;
 }
 .guest-brand {
-  @apply mx-auto flex min-h-24 max-w-lg items-center justify-start gap-3 px-6 py-4 text-slate-950;
+  @apply mx-auto flex min-h-24 max-w-lg items-center justify-start gap-3 px-6 py-4 text-text;
 }
 .guest-brand-mark {
   @apply grid size-11 place-items-center rounded-xl bg-ink shadow-sm shadow-ink-border;
@@ -51,7 +51,7 @@ import { brandName, brandSlogan } from '@/brand'
   @apply text-lg font-bold leading-6 tracking-tight;
 }
 .guest-brand-copy > span {
-  @apply text-xs font-medium leading-5 text-slate-500;
+  @apply text-xs font-medium leading-5 text-text-subtle;
 }
 .guest-main {
   @apply mx-auto w-full max-w-lg px-6 py-10 sm:px-8 sm:py-14;

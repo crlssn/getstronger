@@ -114,16 +114,16 @@ const weekBlocks = computed(() =>
   @apply block truncate;
 }
 .streak-card header > div > strong {
-  @apply text-sm font-semibold text-slate-950;
+  @apply text-sm font-semibold text-text;
 }
 .streak-card .eyebrow {
   @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
 }
 .week-track {
-  @apply mt-4 grid grid-cols-5 gap-1 rounded-xl bg-stone-100 p-1;
+  @apply mt-4 grid grid-cols-5 gap-1 rounded-xl bg-ink-surface p-1;
 }
 .week-block {
-  @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-stone-200 text-stone-400;
+  @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-ink-tint text-text-subtle;
 }
 .week-block.complete {
   @apply bg-success text-white;
@@ -144,7 +144,7 @@ const weekBlocks = computed(() =>
   @apply mt-1.5 flex justify-between text-eyebrow font-semibold text-text-subtle;
 }
 .streak-card > p {
-  @apply mt-3 text-xs text-slate-500;
+  @apply mt-3 text-xs text-text-subtle;
 }
 .streak-card.active:not(.safe) > p {
   @apply font-medium text-success;

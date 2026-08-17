@@ -31,7 +31,7 @@ const alertStyle = computed(() => {
   }
 
   if (alertStore.alert?.type === 'error') {
-    return 'border-red-200 bg-red-50 text-red-800'
+    return 'border-danger/30 bg-danger-surface text-danger'
   }
 
   return ''

@@ -21,7 +21,7 @@ defineProps<{
         </span>
         followed you
       </div>
-      <p class="text-sm text-gray-500">
+      <p class="text-sm text-text-subtle">
         {{ formatUnixToRelativeDateTime(timestamp) }}
       </p>
     </div>

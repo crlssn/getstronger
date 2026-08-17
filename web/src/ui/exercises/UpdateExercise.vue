@@ -84,19 +84,19 @@ async function onUpdateExercise() {
 
 /* Sticks above the bottom navigation so saving never needs a scroll. */
 .form-status {
-  @apply card p-6 text-sm text-slate-500;
+  @apply card p-6 text-sm text-text-subtle;
 }
 .form-status h1 {
-  @apply text-xl font-semibold text-slate-950;
+  @apply text-xl font-semibold text-text;
 }
 .form-status a {
   @apply mt-3 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
 }
 .form-actions {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply sticky z-20 -mx-3 mt-4 border-t border-slate-200 bg-slate-50 px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
+  @apply sticky z-20 -mx-3 mt-4 border-t border-border bg-ink-surface px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
 }
 input {
-  @apply block w-full border-0 bg-white px-4 py-5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-ink;
+  @apply block w-full border-0 bg-white px-4 py-5 text-text shadow-sm ring-1 ring-inset ring-ink-border placeholder:text-text-subtle focus:ring-2 focus:ring-inset focus:ring-ink;
 }
 </style>

@@ -215,11 +215,11 @@ const onDeleteRoutine = async () => {
 }
 .section-heading h2,
 .danger-zone h2 {
-  @apply text-lg font-semibold text-slate-950;
+  @apply text-lg font-semibold text-text;
 }
 .section-heading p,
 .danger-zone p {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .section-heading a {
   @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-xl px-3 text-sm font-semibold text-ink-strong hover:bg-ink-surface;
@@ -228,7 +228,7 @@ const onDeleteRoutine = async () => {
   @apply size-4;
 }
 .exercise-list {
-  @apply divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200;
+  @apply divide-y divide-border overflow-hidden rounded-xl border border-border;
 }
 .exercise-list li {
   @apply flex min-h-14 items-center gap-3 bg-white px-4 py-2.5;
@@ -240,13 +240,13 @@ const onDeleteRoutine = async () => {
   @apply min-w-0 flex-1;
 }
 .exercise-copy strong {
-  @apply block text-sm font-semibold text-slate-900;
+  @apply block text-sm font-semibold text-text;
 }
 .exercise-copy small {
   @apply mt-0.5 block text-meta tabular-nums text-text-muted;
 }
 .drag-handle {
-  @apply grid size-11 cursor-grab place-items-center rounded-lg text-slate-400 hover:bg-slate-100 active:cursor-grabbing;
+  @apply grid size-11 cursor-grab place-items-center rounded-lg text-text-subtle hover:bg-ink-tint active:cursor-grabbing;
 }
 .drag-handle svg {
   @apply size-5;
@@ -261,7 +261,7 @@ const onDeleteRoutine = async () => {
   @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
 .danger-zone button {
-  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-xl border border-danger/30 px-4 text-sm font-semibold text-danger hover:bg-danger-surface;
 }
 .danger-zone svg {
   @apply size-5;

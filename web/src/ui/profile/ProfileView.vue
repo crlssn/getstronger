@@ -231,7 +231,7 @@ const weeklyVolume = computed(() =>
   @apply grid size-16 place-items-center rounded-2xl bg-ink text-xl font-semibold text-white;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 .page-intro h1 {
   @apply px-1 text-2xl font-semibold tracking-tight text-text;
@@ -240,10 +240,10 @@ const weeklyVolume = computed(() =>
   @apply mt-1 truncate text-2xl font-semibold tracking-tight text-text;
 }
 .profile-card p:last-child {
-  @apply mt-1 truncate text-sm text-slate-500;
+  @apply mt-1 truncate text-sm text-text-subtle;
 }
 .notification-link {
-  @apply relative grid size-14 place-items-center rounded-xl text-stone-700 transition hover:bg-stone-100 hover:text-stone-950;
+  @apply relative grid size-14 place-items-center rounded-xl text-text-muted transition hover:bg-ink-tint hover:text-text;
 }
 .notification-link > svg {
   @apply size-8;
@@ -252,25 +252,25 @@ const weeklyVolume = computed(() =>
   @apply absolute right-1 top-1 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold tracking-normal leading-none text-white ring-[3px] ring-white;
 }
 .stats-strip {
-  @apply card grid grid-cols-3 divide-x divide-slate-200 p-4;
+  @apply card grid grid-cols-3 divide-x divide-border p-4;
 }
 .stats-strip article {
   @apply grid min-w-0 gap-1 px-3 first:pl-0 last:pr-0;
 }
 .stats-strip strong {
-  @apply truncate text-base font-semibold tracking-tight text-slate-950 sm:text-lg;
+  @apply truncate text-base font-semibold tracking-tight text-text sm:text-lg;
 }
 .stats-strip small {
-  @apply text-xs text-slate-500;
+  @apply text-xs text-text-subtle;
 }
 .settings-card {
-  @apply card divide-y divide-slate-100 overflow-hidden;
+  @apply card divide-y divide-border overflow-hidden;
 }
 .settings-card a {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-slate-50 hover:text-ink-strong;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
 }
 .settings-card > a > svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .settings-icon {
   @apply grid size-11 place-items-center rounded-xl bg-ink-tint text-ink-strong;
@@ -283,7 +283,7 @@ const weeklyVolume = computed(() =>
   @apply block;
 }
 .settings-card small {
-  @apply mt-0.5 text-sm text-slate-500;
+  @apply mt-0.5 text-sm text-text-subtle;
 }
 /* Stacked on a phone. Squeezing a segmented control into what is left of a row
    hides its second option behind a scroll nobody can see. */
@@ -295,13 +295,13 @@ const weeklyVolume = computed(() =>
   @apply block;
 }
 .preferences-card strong {
-  @apply text-base font-semibold text-slate-950;
+  @apply text-base font-semibold text-text;
 }
 .preferences-card small {
-  @apply mt-0.5 text-sm text-slate-500;
+  @apply mt-0.5 text-sm text-text-subtle;
 }
 .logout-link {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-white px-4 text-sm font-semibold text-danger hover:bg-danger-surface;
 }
 .logout-link svg {
   @apply size-5;

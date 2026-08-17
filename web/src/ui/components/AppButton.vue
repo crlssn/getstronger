@@ -52,7 +52,7 @@ button:disabled {
 }
 
 .red {
-  @apply border-red-200 bg-white text-red-600 hover:bg-red-50;
+  @apply border-danger/30 bg-white text-danger hover:bg-danger-surface;
 }
 
 .amber {
@@ -60,7 +60,7 @@ button:disabled {
 }
 
 .gray {
-  @apply border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+  @apply border-border bg-white text-text-muted hover:bg-ink-surface;
 }
 
 .black {

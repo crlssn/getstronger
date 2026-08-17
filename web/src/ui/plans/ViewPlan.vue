@@ -70,24 +70,26 @@ const remove = async () => {
       <p class="eyebrow">{{ t('training.planView.orderEyebrow') }}</p>
       <h2>{{ t('training.planView.orderTitle') }}</h2>
     </header>
-    <ol class="routine-order">
-      <li
-        v-for="(routine, index) in plan.routines"
-        :key="routine.id"
-        :class="{ current: plan.active && index === plan.currentPosition }"
-      >
-        <span>{{ index + 1 }}</span>
-        <div>
-          <small>{{
-            plan.active && index === plan.currentPosition
-              ? t('training.planView.upNextTag')
-              : t('training.planView.routineTag', { number: index + 1 })
-          }}</small
-          ><strong>{{ routine.name }}</strong
-          ><small>{{ t('home.exerciseCount', routine.exercises.length) }}</small>
-        </div>
-        <b v-if="plan.active && index === plan.currentPosition">{{ t('common.next') }}</b>
-      </li>
+    <section class="routine-order">
+      <ol>
+        <li
+          v-for="(routine, index) in plan.routines"
+          :key="routine.id"
+          :class="{ current: plan.active && index === plan.currentPosition }"
+        >
+          <span>{{ index + 1 }}</span>
+          <div>
+            <small>{{
+              plan.active && index === plan.currentPosition
+                ? t('training.planView.upNextTag')
+                : t('training.planView.routineTag', { number: index + 1 })
+            }}</small
+            ><strong>{{ routine.name }}</strong
+            ><small>{{ t('home.exerciseCount', routine.exercises.length) }}</small>
+          </div>
+          <b v-if="plan.active && index === plan.currentPosition">{{ t('common.next') }}</b>
+        </li>
+      </ol>
       <footer>
         {{
           t('training.planForm.loopFooter', {
@@ -96,7 +98,7 @@ const remove = async () => {
           })
         }}
       </footer>
-    </ol>
+    </section>
     <button type="button" class="delete-plan" @click="remove">
       <TrashIcon /> {{ t('training.planView.delete') }}
     </button>
@@ -118,7 +120,7 @@ const remove = async () => {
   @apply flex items-center justify-between gap-3;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 .overview .eyebrow {
   @apply text-text-subtle;
@@ -154,11 +156,14 @@ const remove = async () => {
 .routine-order {
   @apply card overflow-hidden;
 }
+.routine-order ol {
+  @apply divide-y divide-border;
+}
 .routine-order li {
-  @apply grid min-h-20 grid-cols-[2.75rem_1fr_auto] items-center gap-3 border-t border-slate-100 p-4 first:border-t-0;
+  @apply grid min-h-20 grid-cols-[2.75rem_1fr_auto] items-center gap-3 p-4;
 }
 .routine-order li > span {
-  @apply grid size-11 place-items-center rounded-xl bg-slate-100 font-semibold text-slate-600;
+  @apply grid size-11 place-items-center rounded-xl bg-ink-tint font-semibold text-text-muted;
 }
 .routine-order li > div {
   @apply min-w-0;
@@ -168,7 +173,7 @@ const remove = async () => {
   @apply block truncate;
 }
 .routine-order li small {
-  @apply mt-0.5 text-xs text-slate-500;
+  @apply mt-0.5 text-xs text-text-subtle;
 }
 .routine-order li b {
   @apply text-sm font-semibold text-ink;
@@ -180,10 +185,12 @@ const remove = async () => {
   @apply bg-ink text-white;
 }
 .routine-order footer {
-  @apply border-t border-slate-200 bg-slate-50 p-4 text-sm text-slate-600;
+  @apply border-t border-border bg-ink-surface p-4 text-sm text-text-muted;
 }
+/* Destructive stays a text-only role, but it reads from a card surface: the
+   danger red only clears AA contrast on white, not on the sunken canvas. */
 .delete-plan {
-  @apply inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-xl px-4 text-sm font-semibold text-red-600 hover:bg-red-50;
+  @apply card inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 px-4 text-sm font-semibold text-danger transition hover:bg-danger-surface;
 }
 .delete-plan svg {
   @apply size-5;

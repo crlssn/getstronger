@@ -128,13 +128,13 @@ const filteredVolume = computed(() =>
   @apply flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
 }
 h2 {
-  @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-xl font-semibold tracking-tight text-text;
 }
 .record-count {
   @apply inline-flex w-max items-center gap-2 rounded-full border border-record-border bg-record-surface px-3 py-2 text-sm font-semibold text-record-strong;
@@ -162,7 +162,7 @@ h2 {
   @apply mb-4;
 }
 .record-list {
-  @apply divide-y divide-slate-100;
+  @apply divide-y divide-border;
 }
 .record-list a {
   @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-ink-strong;
@@ -179,16 +179,16 @@ h2 {
   @apply block truncate;
 }
 .record-list small {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .record-value {
-  @apply text-right text-sm font-semibold text-slate-900;
+  @apply text-right text-sm font-semibold text-text;
 }
 .chevron {
-  @apply text-slate-400;
+  @apply text-text-subtle;
 }
 .empty-copy {
-  @apply rounded-xl bg-slate-50 p-4 text-sm text-slate-500;
+  @apply rounded-xl bg-ink-surface p-4 text-sm text-text-subtle;
 }
 @media (max-width: 520px) {
   .record-list a {

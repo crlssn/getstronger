@@ -227,10 +227,10 @@ const options = computed(() => ({
   @apply grid gap-1;
 }
 .exercise-chart header small {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 .exercise-chart header strong {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-xl font-semibold tracking-tight text-text;
 }
 .exercise-chart header > span {
   @apply rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
@@ -239,16 +239,16 @@ const options = computed(() => ({
   @apply h-64;
 }
 .first-result {
-  @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center;
+  @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-ink-border bg-ink-surface px-6 text-center;
 }
 .first-result > span {
   @apply mb-2 size-4 rounded-full border-4 border-ink bg-white;
   box-shadow: 0 0 0 8px var(--color-ink-tint);
 }
 .first-result strong {
-  @apply text-base font-semibold text-slate-950;
+  @apply text-base font-semibold text-text;
 }
 .first-result p {
-  @apply max-w-sm text-sm leading-6 text-slate-500;
+  @apply max-w-sm text-sm leading-6 text-text-subtle;
 }
 </style>

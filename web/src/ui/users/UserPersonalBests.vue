@@ -48,7 +48,7 @@ const fetchPersonalBests = async () => {
       <div class="font-semibold">
         {{ pb.exercise?.name }}
         <ExerciseTags compact :tags="pb.exercise?.tags" />
-        <p class="text-sm text-gray-700 mt-1 font-normal">
+        <p class="text-sm text-text-muted mt-1 font-normal">
           {{ formatToRelativeDateTime(pb.set?.metadata?.createdAt) }}
         </p>
       </div>

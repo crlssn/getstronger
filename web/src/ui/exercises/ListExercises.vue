@@ -145,10 +145,10 @@ const fetchExercises = async () => {
   @apply flex items-center justify-between gap-4 px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
 }
 .create-link {
   @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
@@ -160,22 +160,22 @@ h1 {
   @apply card flex items-center gap-2 px-4;
 }
 .search-field svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .search-field input {
-  @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
+  @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
 }
 .exercise-list {
   @apply space-y-4;
 }
 .exercise-group h2 {
-  @apply mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 .exercise-group-card {
   @apply card overflow-hidden;
 }
 .exercise-group-card > a {
-  @apply flex min-h-16 items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 transition hover:text-ink-strong;
+  @apply flex min-h-16 items-center justify-between gap-3 border-t border-border px-5 py-3 transition hover:text-ink-strong;
 }
 .exercise-group-card > a:first-child {
   @apply border-t-0;
@@ -184,22 +184,22 @@ h1 {
   @apply min-w-0;
 }
 .exercise-copy strong {
-  @apply block truncate text-sm font-semibold text-slate-950;
+  @apply block truncate text-sm font-semibold text-text;
 }
 .exercise-group-card > a > svg {
-  @apply size-5 shrink-0 text-slate-400;
+  @apply size-5 shrink-0 text-text-subtle;
 }
 .empty-state {
-  @apply rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500;
+  @apply rounded-2xl border border-dashed border-ink-border bg-white p-6 text-sm text-text-subtle;
 }
 .empty-state h2 {
-  @apply text-lg font-semibold text-slate-900;
+  @apply text-lg font-semibold text-text;
 }
 .empty-state p {
   @apply mt-1;
 }
 .load-more {
-  @apply min-h-(--size-control) w-full rounded-xl border border-slate-200 bg-white text-sm font-semibold text-ink shadow-sm;
+  @apply min-h-(--size-control) w-full rounded-xl border border-border bg-white text-sm font-semibold text-ink shadow-sm;
 }
 @media (max-width: 420px) {
   .create-link {

@@ -24,7 +24,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <p class="text-pretty text-lg font-medium text-gray-500">{{ t('auth.verification.failed') }}</p>
+  <p class="text-pretty text-lg font-medium text-text-subtle">{{ t('auth.verification.failed') }}</p>
 </template>
 
 <style scoped></style>

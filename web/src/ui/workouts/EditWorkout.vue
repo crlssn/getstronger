@@ -147,12 +147,12 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
         <div class="flex gap-x-1">
           <ChevronUpIcon
             v-if="index > 0"
-            class="size-5 text-gray-500 cursor-pointer"
+            class="size-5 text-text-subtle cursor-pointer"
             @click="moveExercise(index, 'up')"
           />
           <ChevronDownIcon
             v-if="index < maxExerciseIndex"
-            class="size-5 text-gray-500 cursor-pointer"
+            class="size-5 text-text-subtle cursor-pointer"
             @click="moveExercise(index, 'down')"
           />
         </div>
@@ -255,7 +255,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
       v-if="workout"
       ref="textarea"
       v-model="workout.note"
-      class="w-full border-gray-200 rounded-md focus:ring-ink-muted focus:border-ink-muted text-base min-h-20 py-3 mb-4 resize-none overflow-hidden"
+      class="w-full border-border rounded-md focus:ring-ink-muted focus:border-ink-muted text-base min-h-20 py-3 mb-4 resize-none overflow-hidden"
       :placeholder="t('workout.notePlaceholder')"
     />
 
@@ -277,15 +277,15 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 
 .update-dock {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-slate-200 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:rounded-2xl sm:border;
+  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-border bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] sm:rounded-2xl sm:border;
 }
 
 label {
-  @apply block text-sm font-semibold text-gray-600 uppercase mb-2;
+  @apply block text-sm font-semibold text-text-muted uppercase mb-2;
 }
 
 input {
-  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-ink font-medium;
+  @apply block w-full rounded-md border-0 bg-white px-3 py-3 text-text shadow-sm ring-1 ring-inset ring-ink-border placeholder:text-text-subtle focus:ring-2 focus:ring-inset focus:ring-ink font-medium;
 }
 
 .measurement-row {
@@ -294,11 +294,11 @@ input {
 }
 
 .measurement-input > span {
-  @apply mb-1 block text-xs font-semibold text-slate-500;
+  @apply mb-1 block text-xs font-semibold text-text-subtle;
 }
 
 .remove-set {
-  @apply mb-3 size-7 cursor-pointer text-slate-500;
+  @apply mb-3 size-7 cursor-pointer text-text-subtle;
 }
 
 .unit-suffix {

@@ -150,20 +150,20 @@ function toggleMetric(metric: ExerciseMetric) {
 @reference '../../assets/base.css';
 
 .measurement-settings {
-  @apply space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm;
+  @apply space-y-5 rounded-3xl border border-border bg-white p-5 shadow-sm;
 }
 h3 {
-  @apply text-xl font-bold text-slate-950;
+  @apply text-xl font-bold text-text;
 }
 p,
 small {
-  @apply block text-sm text-slate-500;
+  @apply block text-sm text-text-subtle;
 }
 .rest-options {
   @apply flex flex-wrap gap-2;
 }
 .rest-options button {
-  @apply inline-flex min-h-(--size-control-sm) items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600;
+  @apply inline-flex min-h-(--size-control-sm) items-center rounded-full border border-border bg-white px-4 text-sm font-semibold text-text-muted;
 }
 .rest-options button.selected {
   @apply border-surface-inverse bg-surface-inverse text-white;
@@ -172,25 +172,25 @@ small {
   @apply grid grid-cols-2 gap-3;
 }
 .measurement {
-  @apply flex min-h-(--size-control-sm) items-center gap-3 rounded-2xl border border-slate-200 p-4 text-left;
+  @apply flex min-h-(--size-control-sm) items-center gap-3 rounded-2xl border border-border p-4 text-left;
 }
 .measurement.selected {
   @apply border-surface-inverse bg-surface-sunken;
 }
 .measurement strong {
-  @apply block text-base text-slate-950;
+  @apply block text-base text-text;
 }
 .check {
-  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold;
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-tint font-bold;
 }
 .measurement.selected .check {
   @apply bg-surface-inverse text-white;
 }
 .rest-setting {
-  @apply flex items-center justify-between border-t border-slate-100 pt-5;
+  @apply flex items-center justify-between border-t border-border pt-5;
 }
 .rest-setting strong {
-  @apply block text-base text-slate-950;
+  @apply block text-base text-text;
 }
 /* A real track-and-knob switch: the old pill read as a button. The track is
    drawn rather than being the button itself, so the control can be the full
@@ -199,7 +199,7 @@ small {
   @apply relative inline-flex min-h-(--size-control-sm) w-14 shrink-0 cursor-pointer items-center;
 }
 .switch::before {
-  @apply absolute inset-x-0 top-1/2 h-8 -translate-y-1/2 rounded-full bg-slate-200 transition-colors content-[''];
+  @apply absolute inset-x-0 top-1/2 h-8 -translate-y-1/2 rounded-full bg-ink-tint transition-colors content-[''];
 }
 .switch[aria-checked='true']::before {
   @apply bg-surface-inverse;

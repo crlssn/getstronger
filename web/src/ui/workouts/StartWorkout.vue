@@ -1179,7 +1179,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       >
         <span class="dialog-handle" aria-hidden="true"></span>
         <template v-if="discardConfirmationOpen">
-          <p class="eyebrow text-red-600">{{ t('workout.discard') }}</p>
+          <p class="eyebrow text-danger">{{ t('workout.discard') }}</p>
           <h2 id="leave-dialog-title">{{ t('workout.deleteTitle') }}</h2>
           <p>
             All sets, added exercises, and notes saved on this device will be permanently removed.
@@ -1193,7 +1193,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           </button>
         </template>
         <template v-else>
-          <p class="eyebrow text-emerald-700">{{ t('workout.autosaved') }}</p>
+          <p class="eyebrow text-success">{{ t('workout.autosaved') }}</p>
           <h2 id="leave-dialog-title">{{ t('workout.leaveTitle') }}</h2>
           <p>{{ t('workout.leaveBody') }}</p>
           <button type="button" class="confirm-finish" @click="saveAndLeave">
@@ -1297,7 +1297,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .workout-header {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  @apply sticky z-20 -mt-5 border-b border-slate-200 bg-white text-slate-950 lg:-mt-7;
+  @apply sticky z-20 -mt-5 border-b border-border bg-white text-text lg:-mt-7;
   /* Below the status-bar scrim in the native WebView; zero in browsers. */
   top: env(safe-area-inset-top);
 }
@@ -1306,13 +1306,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leave-workout {
-  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900;
+  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-xl text-text-subtle transition hover:bg-ink-tint hover:text-text;
 }
 .leave-workout svg {
   @apply size-5;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 .workout-header h1 {
   @apply truncate text-body-lg font-semibold tracking-tight text-text;
@@ -1402,22 +1402,22 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     hsl(50 100% 56%) 55%,
     hsl(70 92% 54%) 100%
   );
-  @apply text-stone-950;
+  @apply text-text;
 }
 .rest-pill.bright > svg {
-  @apply text-stone-900/70;
+  @apply text-text/70;
 }
 .rest-pill.bright > strong {
-  @apply text-stone-950;
+  @apply text-text;
 }
 .rest-pill.bright button {
-  @apply bg-black/15 text-stone-950 hover:bg-black/25;
+  @apply bg-black/15 text-text hover:bg-black/25;
 }
 .rest-pill.bright .rest-progress {
   @apply bg-black/15;
 }
 .rest-pill.bright .rest-progress span {
-  @apply bg-stone-950;
+  @apply bg-ink-strong;
 }
 /* One beat per second through the last ten: the pill itself brightens rather
    than the digits resizing, so the numbers stay steady and readable. */
@@ -1468,10 +1468,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-6;
 }
 .quick-empty h2 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-xl font-semibold tracking-tight text-text;
 }
 .quick-empty p {
-  @apply max-w-sm text-sm text-slate-500;
+  @apply max-w-sm text-sm text-text-subtle;
 }
 .quick-empty button {
   @apply mt-2 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 justify-self-stretch rounded-xl bg-ink px-4 text-base font-semibold text-white transition hover:bg-ink-strong;
@@ -1494,7 +1494,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-1 text-xl font-semibold tracking-tight;
 }
 .exercise-heading p:last-child {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .set-grid {
   /* Scrolls for many-metric exercises, but the remove button overhangs by 8px
@@ -1516,7 +1516,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply text-center;
 }
 .set-row {
-  @apply relative border-t border-slate-100 py-2;
+  @apply relative border-t border-border py-2;
 }
 .set-row.complete {
   @apply text-success;
@@ -1536,7 +1536,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-4;
 }
 .previous-value {
-  @apply truncate text-sm text-slate-500;
+  @apply truncate text-sm text-text-subtle;
 }
 .set-row input {
   @apply min-h-(--size-control) min-w-0 rounded-control border-border px-2 text-center font-semibold shadow-card focus:border-ink focus:ring-ink;
@@ -1568,7 +1568,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply pointer-events-none select-none text-meta font-medium lowercase text-text-subtle;
 }
 .remove-set {
-  @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-slate-100 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600;
+  @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-ink-tint text-text-subtle opacity-0 transition hover:bg-danger-surface hover:text-danger;
 }
 .set-row:hover .remove-set,
 .remove-set:focus-visible {
@@ -1578,10 +1578,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-4;
 }
 .completed-exercise {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-800;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl bg-success-surface p-4 text-success;
 }
 .completed-icon {
-  @apply grid size-9 place-items-center rounded-full bg-emerald-100;
+  @apply grid size-9 place-items-center rounded-full bg-success text-white;
 }
 .completed-icon svg {
   @apply size-5;
@@ -1590,10 +1590,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply text-sm font-semibold;
 }
 .completed-exercise p {
-  @apply mt-0.5 text-xs text-emerald-700;
+  @apply mt-0.5 text-xs text-success;
 }
 .completed-exercise button {
-  @apply rounded-lg px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100;
+  @apply rounded-lg px-3 py-2 text-xs font-semibold text-success hover:bg-success/10;
 }
 .exercise-queue {
   @apply overflow-hidden px-4 pb-1 pt-4 sm:px-5;
@@ -1602,13 +1602,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply flex items-end justify-between gap-3 pb-3;
 }
 .exercise-queue h2 {
-  @apply mt-1 text-lg font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-lg font-semibold tracking-tight text-text;
 }
 .exercise-queue > header > small {
-  @apply text-xs text-slate-500;
+  @apply text-xs text-text-subtle;
 }
 .exercise-queue > div {
-  @apply divide-y divide-slate-100 border-t border-slate-100;
+  @apply divide-y divide-border border-t border-border;
 }
 .exercise-queue button {
   @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr_auto] items-center gap-3 py-2.5 text-left transition hover:text-ink-strong;
@@ -1627,19 +1627,19 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply block truncate;
 }
 .queue-copy strong {
-  @apply text-sm font-semibold text-slate-900;
+  @apply text-sm font-semibold text-text;
 }
 .queue-copy small {
-  @apply mt-0.5 text-xs text-slate-500;
+  @apply mt-0.5 text-xs text-text-subtle;
 }
 .exercise-queue button > svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .exercise-queue button.completed .queue-number {
-  @apply bg-emerald-50 text-emerald-700;
+  @apply bg-success-surface text-success;
 }
 .exercise-queue button.completed .queue-copy strong {
-  @apply text-emerald-800;
+  @apply text-success;
 }
 .workout-tools {
   @apply space-y-3;
@@ -1656,23 +1656,23 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply block;
 }
 .add-exercise strong {
-  @apply text-base font-semibold text-slate-950;
+  @apply text-base font-semibold text-text;
 }
 .add-exercise small {
-  @apply mt-0.5 text-xs text-slate-500;
+  @apply mt-0.5 text-xs text-text-subtle;
 }
 .note-card {
   @apply p-4 shadow-none;
 }
 .note-card label {
-  @apply flex items-center justify-between text-sm font-semibold text-slate-900;
+  @apply flex items-center justify-between text-sm font-semibold text-text;
 }
 .note-card label span {
-  @apply font-normal text-slate-500;
+  @apply font-normal text-text-subtle;
 }
 /* The card is already the container; a bordered field inside it double-boxes. */
 .note-card textarea {
-  @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-slate-400 focus:ring-0;
+  @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
 }
 .finish-dock {
   @apply pointer-events-auto flex w-full max-w-3xl flex-col items-stretch gap-2 border-t border-border bg-surface px-4 py-3 text-center shadow-overlay sm:rounded-card sm:border;
@@ -1703,7 +1703,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-5;
 }
 .picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 sm:items-center sm:p-6;
+  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
 }
 .exercise-picker {
   @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
@@ -1712,19 +1712,19 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mb-4 flex items-center justify-between gap-4;
 }
 .exercise-picker header h2 {
-  @apply mt-1 text-xl font-semibold text-slate-950;
+  @apply mt-1 text-xl font-semibold text-text;
 }
 .exercise-picker header button {
-  @apply grid size-11 place-items-center rounded-xl border border-slate-200 text-slate-500;
+  @apply grid size-11 place-items-center rounded-xl border border-border text-text-subtle;
 }
 .exercise-picker header button svg {
   @apply size-5;
 }
 .exercise-search {
-  @apply mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3;
+  @apply mb-4 flex items-center gap-2 rounded-xl border border-border bg-ink-surface px-3;
 }
 .exercise-search svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .exercise-search input {
   @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
@@ -1733,38 +1733,38 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .exercise-options button {
-  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
+  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
 }
 .exercise-options strong,
 .exercise-options small {
   @apply block truncate;
 }
 .exercise-options strong {
-  @apply text-sm font-semibold text-slate-900;
+  @apply text-sm font-semibold text-text;
 }
 .exercise-options small {
-  @apply mt-0.5 text-xs text-slate-500;
+  @apply mt-0.5 text-xs text-text-subtle;
 }
 .exercise-options button > svg {
   @apply size-5 shrink-0 text-ink;
 }
 .picker-empty {
-  @apply rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500;
+  @apply rounded-xl border border-dashed border-ink-border p-6 text-center text-sm text-text-subtle;
 }
 .load-more {
-  @apply mt-4 min-h-(--size-control) w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400;
+  @apply mt-4 min-h-(--size-control) w-full rounded-xl border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
 }
 .finish-dialog {
   @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 text-left shadow-2xl sm:rounded-3xl;
 }
 .dialog-handle {
-  @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-slate-200 sm:hidden;
+  @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
 }
 .finish-dialog h2 {
-  @apply text-xl font-semibold tracking-tight text-slate-950;
+  @apply text-xl font-semibold tracking-tight text-text;
 }
 .finish-dialog p {
-  @apply mt-2 text-sm leading-6 text-slate-500;
+  @apply mt-2 text-sm leading-6 text-text-subtle;
 }
 .finish-dialog button {
   @apply mt-3 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
@@ -1776,13 +1776,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply bg-ink text-white hover:bg-ink-strong;
 }
 .keep-training {
-  @apply border border-slate-200 text-slate-700 hover:bg-slate-50;
+  @apply border border-border text-text-muted hover:bg-ink-surface;
 }
 .discard-workout {
-  @apply border border-red-200 text-red-600 hover:bg-red-50;
+  @apply border border-danger/30 text-danger hover:bg-danger-surface;
 }
 .confirm-discard {
-  @apply bg-red-600 text-white hover:bg-red-700;
+  @apply bg-danger text-white hover:bg-danger;
 }
 @media (max-width: 520px) {
   .set-grid {

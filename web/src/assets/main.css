@@ -114,11 +114,11 @@ select {
 }
 
 .auth-intro h1 {
-  @apply mt-2 text-3xl font-bold tracking-tight text-slate-950;
+  @apply mt-2 text-3xl font-bold tracking-tight text-text;
 }
 
 .auth-intro > p:last-child {
-  @apply mt-3 text-base leading-6 text-slate-600;
+  @apply mt-3 text-base leading-6 text-text-muted;
 }
 
 .auth-eyebrow {
@@ -130,11 +130,11 @@ select {
 }
 
 .auth-label {
-  @apply block text-sm font-semibold text-slate-800;
+  @apply block text-sm font-semibold text-text;
 }
 
 .auth-input {
-  @apply block min-h-(--size-control-lg) w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-400 transition hover:border-slate-400 focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
+  @apply block min-h-(--size-control-lg) w-full rounded-xl border border-ink-border bg-white px-4 py-3 text-base text-text shadow-sm placeholder:text-text-subtle transition hover:border-ink-muted focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
 }
 
 .auth-link {
@@ -146,5 +146,5 @@ select {
 }
 
 .auth-footer {
-  @apply mt-7 text-center text-sm text-slate-600;
+  @apply mt-7 text-center text-sm text-text-muted;
 }

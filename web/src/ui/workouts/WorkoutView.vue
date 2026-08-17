@@ -198,16 +198,16 @@ const skip = async () => {
   @apply px-1;
 }
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
 }
 h1 {
-  @apply mt-1 text-2xl font-semibold tracking-tight text-slate-950;
+  @apply mt-1 text-2xl font-semibold tracking-tight text-text;
 }
 h2 {
   @apply text-2xl font-semibold tracking-tight;
 }
 .page-intro > p:last-child {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .quick-card {
   @apply card grid grid-cols-[1fr_auto] items-center gap-3 p-4;
@@ -220,19 +220,19 @@ h2 {
   @apply block truncate;
 }
 .quick-card small {
-  @apply mt-1 text-xs text-slate-500;
+  @apply mt-1 text-xs text-text-subtle;
 }
 .quick-card > svg {
-  @apply size-5 text-slate-400;
+  @apply size-5 text-text-subtle;
 }
 .active-session {
-  @apply grid gap-5 rounded-3xl border border-stone-300 bg-stone-50 p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
+  @apply grid gap-5 rounded-3xl border border-ink-border bg-ink-surface p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
 }
 .active-session h2 {
   @apply mt-1;
 }
 .active-meta {
-  @apply mt-3 flex items-center gap-2 text-sm text-stone-700;
+  @apply mt-3 flex items-center gap-2 text-sm text-text-muted;
 }
 .active-meta svg {
   @apply size-4;
@@ -241,13 +241,13 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-stone-800;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .active-actions > a svg {
   @apply size-5;
 }
 .active-actions > button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-stone-500 transition hover:bg-stone-200/70 hover:text-red-600;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
 }
 .active-actions > button svg {
   @apply size-4;
@@ -286,7 +286,7 @@ h2 {
   @apply card p-5;
 }
 .empty-card p {
-  @apply mt-1 text-sm text-slate-500;
+  @apply mt-1 text-sm text-text-subtle;
 }
 .empty-card a {
   @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
@@ -307,13 +307,13 @@ h2 {
   @apply mb-3 px-1;
 }
 .workout-history > header h2 {
-  @apply mt-1 text-xl text-slate-950;
+  @apply mt-1 text-xl text-text;
 }
 .history-list {
   @apply card overflow-hidden;
 }
 .history-list > a {
-  @apply flex min-h-16 items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 transition last:border-b-0 hover:text-ink-strong;
+  @apply flex min-h-16 items-center justify-between gap-4 border-b border-border px-4 py-3 transition last:border-b-0 hover:text-ink-strong;
 }
 .history-list > a > span {
   @apply min-w-0;
@@ -323,40 +323,40 @@ h2 {
   @apply block truncate;
 }
 .history-list strong {
-  @apply text-sm font-semibold text-slate-950;
+  @apply text-sm font-semibold text-text;
 }
 .history-list small {
-  @apply mt-1 flex items-center gap-1.5 text-xs text-slate-500;
+  @apply mt-1 flex items-center gap-1.5 text-xs text-text-subtle;
 }
 .history-list small svg {
   @apply size-4 shrink-0;
 }
 .history-list > a > svg {
-  @apply size-5 shrink-0 text-slate-400;
+  @apply size-5 shrink-0 text-text-subtle;
 }
 .history-status,
 .history-error,
 .history-empty,
 .history-end {
-  @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-xl px-4 text-center text-xs text-slate-500;
+  @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-xl px-4 text-center text-xs text-text-subtle;
 }
 .history-error {
-  @apply justify-between border border-red-100 bg-red-50 text-left text-red-700;
+  @apply justify-between border border-danger/20 bg-danger-surface text-left text-danger;
 }
 .history-error button {
-  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 font-semibold text-red-700;
+  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 font-semibold text-danger;
 }
 .history-empty {
-  @apply border border-dashed border-slate-300 bg-white;
+  @apply border border-dashed border-ink-border bg-white;
 }
 .history-end {
-  @apply text-slate-600;
+  @apply text-text-muted;
 }
 .history-end svg {
   @apply size-4 text-success;
 }
 .history-spinner {
-  @apply size-4 animate-spin rounded-full border-2 border-slate-200 border-t-ink;
+  @apply size-4 animate-spin rounded-full border-2 border-border border-t-ink;
 }
 .history-sentinel {
   @apply h-px;

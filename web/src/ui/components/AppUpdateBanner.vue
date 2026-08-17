@@ -46,10 +46,10 @@ onUnmounted(() => versionStore.stop())
   @apply min-w-0 flex-1 text-sm font-medium;
 }
 .refresh {
-  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-ink transition hover:bg-stone-100;
+  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-ink transition hover:bg-ink-tint;
 }
 .dismiss {
-  @apply grid size-9 shrink-0 place-items-center rounded-lg text-stone-400 transition hover:bg-white/10 hover:text-white;
+  @apply grid size-9 shrink-0 place-items-center rounded-lg text-ink-tint transition hover:bg-white/10 hover:text-white;
 }
 .dismiss svg {
   @apply size-5;

@@ -45,24 +45,24 @@ withDefaults(defineProps<{ items: DropdownItem[]; label?: string }>(), {
 @reference '../../assets/base.css';
 
 .menu-trigger {
-  @apply grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
+  @apply grid size-11 place-items-center rounded-xl border border-border bg-white text-text-subtle transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
 }
 .menu-trigger svg {
   @apply size-5;
 }
 .menu-items {
-  @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl focus:outline-none;
+  @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-xl border border-border bg-white p-1.5 shadow-xl focus:outline-none;
 }
 .menu-item {
-  @apply flex min-h-(--size-control-sm) w-full items-center rounded-lg px-3 text-left text-sm font-medium text-slate-700;
+  @apply flex min-h-(--size-control-sm) w-full items-center rounded-lg px-3 text-left text-sm font-medium text-text-muted;
 }
 .menu-item.active {
-  @apply bg-slate-50;
+  @apply bg-ink-surface;
 }
 .menu-item.danger {
-  @apply text-red-600;
+  @apply text-danger;
 }
 .menu-item.danger.active {
-  @apply bg-red-50;
+  @apply bg-danger-surface;
 }
 </style>
