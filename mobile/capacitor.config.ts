@@ -15,7 +15,8 @@ const config: CapacitorConfig = {
     // web/src/native/platform.ts.
     SplashScreen: {
       launchAutoHide: false,
-      backgroundColor: '#25282d',
+      // The splash reproduces the login header on its light surface.
+      backgroundColor: '#ffffff',
     },
   },
 }
