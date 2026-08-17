@@ -29,6 +29,9 @@ service UserService {
   rpc UpdateUserWeightUnit (UpdateUserWeightUnitRequest) returns (UpdateUserWeightUnitResponse) {
     option (auth) = true;
   }
+  rpc UpdateUserDistanceUnit (UpdateUserDistanceUnitRequest) returns (UpdateUserDistanceUnitResponse) {
+    option (auth) = true;
+  }
 }
 
 message GetUserRequest {
@@ -78,5 +81,15 @@ message UpdateUserWeightUnitRequest {
   }];
 }
 message UpdateUserWeightUnitResponse {
+  User user = 1;
+}
+
+message UpdateUserDistanceUnitRequest {
+  DistanceUnit distance_unit = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+message UpdateUserDistanceUnitResponse {
   User user = 1;
 }

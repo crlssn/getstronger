@@ -23,6 +23,7 @@ message SignupRequest {
   string first_name = 4 [(buf.validate.field).string.min_len = 1];
   string last_name = 5 [(buf.validate.field).string.min_len = 1];
   WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];
+  DistanceUnit distance_unit = 7 [(buf.validate.field).enum.defined_only = true];
 }
 message SignupResponse {}
 
