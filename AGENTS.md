@@ -62,6 +62,25 @@ fix needs a sentence, a schema migration needs the full treatment.
   them with "N/A" or padding. Prose the reader must skim past is worse than
   absence.
 
+## Code comments
+
+Readers scan comments rather than study them, so a comment earns its place by
+delivering its point in the first sentence. Keep almost every comment to one to
+three lines; length itself should be information, so a long comment signals a
+genuinely tricky spot.
+
+- Inline comments answer "why is this line surprising?" in one line, two at
+  most. If the explanation needs a paragraph, restructure or rename the code
+  instead.
+- Function and method doc comments take one to four lines, with a first
+  sentence that stands alone as a complete summary, since tooling and readers
+  often see nothing else.
+- Package and file-level docs may run longer, but must put the gist in the
+  first paragraph and keep the detail below it for readers who choose to dig.
+- Reserve comments longer than five lines for subtle invariants and hairy
+  algorithms. Anything else that long belongs in the README, a design doc, or
+  the commit message rather than between lines of code.
+
 ## Reviewing the design
 
 - To see the app rather than reason about its markup, run `mise run screenshots`.
