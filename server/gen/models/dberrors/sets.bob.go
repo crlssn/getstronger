@@ -18,6 +18,13 @@ var SetErrors = &setErrors{
 		s:       "sets_distance_non_negative",
 	},
 
+	ErrCheckSetsDistanceUnitCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "sets",
+		columns: []string{"distance_unit"},
+		s:       "sets_distance_unit_check",
+	},
+
 	ErrCheckSetsDurationSecondsNonNegative: &CheckConstraintError{
 		schema:  "",
 		table:   "sets",
@@ -37,6 +44,8 @@ type setErrors struct {
 	ErrUniqueSetsPkey *UniqueConstraintError
 
 	ErrCheckSetsDistanceNonNegative *CheckConstraintError
+
+	ErrCheckSetsDistanceUnitCheck *CheckConstraintError
 
 	ErrCheckSetsDurationSecondsNonNegative *CheckConstraintError
 

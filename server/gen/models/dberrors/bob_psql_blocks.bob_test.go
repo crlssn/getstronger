@@ -153,6 +153,23 @@ func TestCheckConstraintErrors(t *testing.T) {
 			t.Fatal("expected ErrCheckSetsDistanceNonNegative.Is not to match different constraint")
 		}
 	})
+	t.Run("Set_ErrCheckSetsDistanceUnitCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "sets_distance_unit_check")
+		if !errors.Is(SetErrors.ErrCheckSetsDistanceUnitCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckSetsDistanceUnitCheck to match constraint %q", "sets_distance_unit_check")
+		}
+		if !SetErrors.ErrCheckSetsDistanceUnitCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckSetsDistanceUnitCheck.Is to match constraint %q", "sets_distance_unit_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(SetErrors.ErrCheckSetsDistanceUnitCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsDistanceUnitCheck not to match different constraint")
+		}
+		if SetErrors.ErrCheckSetsDistanceUnitCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsDistanceUnitCheck.Is not to match different constraint")
+		}
+	})
 	t.Run("Set_ErrCheckSetsDurationSecondsNonNegative", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "sets_duration_seconds_non_negative")
 		if !errors.Is(SetErrors.ErrCheckSetsDurationSecondsNonNegative, matchingErr) {
@@ -188,6 +205,23 @@ func TestCheckConstraintErrors(t *testing.T) {
 		}
 	})
 
+	t.Run("User_ErrCheckUsersDistanceUnitCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "users_distance_unit_check")
+		if !errors.Is(UserErrors.ErrCheckUsersDistanceUnitCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckUsersDistanceUnitCheck to match constraint %q", "users_distance_unit_check")
+		}
+		if !UserErrors.ErrCheckUsersDistanceUnitCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckUsersDistanceUnitCheck.Is to match constraint %q", "users_distance_unit_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(UserErrors.ErrCheckUsersDistanceUnitCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckUsersDistanceUnitCheck not to match different constraint")
+		}
+		if UserErrors.ErrCheckUsersDistanceUnitCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckUsersDistanceUnitCheck.Is not to match different constraint")
+		}
+	})
 	t.Run("User_ErrCheckUsersWeightUnitCheck", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "users_weight_unit_check")
 		if !errors.Is(UserErrors.ErrCheckUsersWeightUnitCheck, matchingErr) {

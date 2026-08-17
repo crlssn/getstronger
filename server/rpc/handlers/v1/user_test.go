@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/distanceunit"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -122,14 +123,20 @@ func (s *userSuite) TestUpdateUserWeightUnit() {
 	}
 }
 
-func (s *userSuite) TestUpdateUserWeightUnit_PreservesHistoricalSetUnits() {
+// Changing a unit preference must never rewrite the units historical sets were
+// entered in.
+func (s *userSuite) TestUpdateUserUnitPreferences_PreserveHistoricalSetUnits() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	user := s.factory.NewUser(factory.UserWeightUnit(weightunit.Kilograms))
+	user := s.factory.NewUser(
+		factory.UserWeightUnit(weightunit.Kilograms),
+		factory.UserDistanceUnit(distanceunit.Kilometers),
+	)
 	ctx = xcontext.WithUserID(ctx, user.ID.String())
 
 	set := s.factory.NewSet(
 		factory.SetUserID(user.ID.String()),
 		factory.SetWeightUnit(weightunit.Pounds),
+		factory.SetDistanceUnit(distanceunit.Miles),
 	)
 
 	_, err := s.handler.UpdateUserWeightUnit(ctx, &connect.Request[v1.UpdateUserWeightUnitRequest]{
@@ -139,8 +146,59 @@ func (s *userSuite) TestUpdateUserWeightUnit_PreservesHistoricalSetUnits() {
 	})
 	s.Require().NoError(err)
 
+	_, err = s.handler.UpdateUserDistanceUnit(ctx, &connect.Request[v1.UpdateUserDistanceUnitRequest]{
+		Msg: &v1.UpdateUserDistanceUnitRequest{
+			DistanceUnit: v1.DistanceUnit_DISTANCE_UNIT_KILOMETERS,
+		},
+	})
+	s.Require().NoError(err)
+
 	persisted, err := s.repo.ListSets(ctx, repo.ListSetsWithID(set.ID.String()))
 	s.Require().NoError(err)
 	s.Require().Len(persisted, 1)
 	s.Require().Equal(string(weightunit.Pounds), persisted[0].WeightUnit)
+	s.Require().Equal(string(distanceunit.Miles), persisted[0].DistanceUnit)
+}
+
+func (s *userSuite) TestUpdateUserDistanceUnit() {
+	tests := []struct {
+		name     string
+		current  distanceunit.Unit
+		update   v1.DistanceUnit
+		expected v1.DistanceUnit
+	}{
+		{
+			name:     "ok_distance_unit_updated_to_miles",
+			current:  distanceunit.Kilometers,
+			update:   v1.DistanceUnit_DISTANCE_UNIT_MILES,
+			expected: v1.DistanceUnit_DISTANCE_UNIT_MILES,
+		},
+		{
+			name:     "ok_distance_unit_updated_to_kilometers",
+			current:  distanceunit.Miles,
+			update:   v1.DistanceUnit_DISTANCE_UNIT_KILOMETERS,
+			expected: v1.DistanceUnit_DISTANCE_UNIT_KILOMETERS,
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			user := s.factory.NewUser(factory.UserDistanceUnit(t.current))
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+			res, err := s.handler.UpdateUserDistanceUnit(ctx, &connect.Request[v1.UpdateUserDistanceUnitRequest]{
+				Msg: &v1.UpdateUserDistanceUnitRequest{
+					DistanceUnit: t.update,
+				},
+			})
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+			s.Require().Equal(t.expected, res.Msg.GetUser().GetDistanceUnit())
+
+			persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected, parser.DistanceUnitToProto(persisted.DistanceUnit))
+		})
+	}
 }

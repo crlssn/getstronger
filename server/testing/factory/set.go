@@ -8,6 +8,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
+	"github.com/crlssn/getstronger/server/distanceunit"
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/safe"
@@ -71,6 +72,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 		bobfactory.SetMods.WithExistingWorkout(workoutWithoutRelationships(workout)),
 		bobfactory.SetMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
 		bobfactory.SetMods.WeightUnit(string(weightunit.Kilograms)),
+		bobfactory.SetMods.DistanceUnit(string(distanceunit.Kilometers)),
 	}
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.SetMods.ID(value))
@@ -95,6 +97,9 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 	}
 	if value, ok := setter.WeightUnit.Get(); ok {
 		mods = append(mods, bobfactory.SetMods.WeightUnit(value))
+	}
+	if value, ok := setter.DistanceUnit.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.DistanceUnit(value))
 	}
 
 	template := f.generated.NewSet(mods...)
@@ -154,6 +159,12 @@ func SetWeight(weight float64) SetOpt {
 func SetWeightUnit(unit weightunit.Unit) SetOpt {
 	return func(set *models.SetSetter) {
 		set.WeightUnit = omit.From(string(unit))
+	}
+}
+
+func SetDistanceUnit(unit distanceunit.Unit) SetOpt {
+	return func(set *models.SetSetter) {
+		set.DistanceUnit = omit.From(string(unit))
 	}
 }
 

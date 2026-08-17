@@ -18,6 +18,13 @@ var UserErrors = &userErrors{
 		s:       "users_auth_id_key",
 	},
 
+	ErrCheckUsersDistanceUnitCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "users",
+		columns: []string{"distance_unit"},
+		s:       "users_distance_unit_check",
+	},
+
 	ErrCheckUsersWeightUnitCheck: &CheckConstraintError{
 		schema:  "",
 		table:   "users",
@@ -30,6 +37,8 @@ type userErrors struct {
 	ErrUniqueUsersPkey *UniqueConstraintError
 
 	ErrUniqueUsersAuthIdKey *UniqueConstraintError
+
+	ErrCheckUsersDistanceUnitCheck *CheckConstraintError
 
 	ErrCheckUsersWeightUnitCheck *CheckConstraintError
 }

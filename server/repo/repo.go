@@ -22,6 +22,7 @@ import (
 	bobtypes "github.com/stephenafamo/bob/types"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/safe"
 	"github.com/crlssn/getstronger/server/weightunit"
@@ -275,18 +276,20 @@ func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (boo
 }
 
 type CreateUserParams struct {
-	AuthID     string
-	FirstName  string
-	LastName   string
-	WeightUnit string
+	AuthID       string
+	FirstName    string
+	LastName     string
+	WeightUnit   string
+	DistanceUnit string
 }
 
 func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	user, err := models.Users.Insert(&models.UserSetter{
-		AuthID:     omit.From(uuidFromString(p.AuthID)),
-		FirstName:  omit.From(p.FirstName),
-		LastName:   omit.From(p.LastName),
-		WeightUnit: omit.From(string(weightunit.Normalize(p.WeightUnit))),
+		AuthID:       omit.From(uuidFromString(p.AuthID)),
+		FirstName:    omit.From(p.FirstName),
+		LastName:     omit.From(p.LastName),
+		WeightUnit:   omit.From(string(weightunit.Normalize(p.WeightUnit))),
+		DistanceUnit: omit.From(string(distanceunit.Normalize(p.DistanceUnit))),
 	}).One(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("user insert: %w", err)
@@ -300,6 +303,12 @@ type UpdateUserOpt func() (columns, error)
 func UpdateUserWeightUnit(unit string) UpdateUserOpt {
 	return func() (columns, error) {
 		return columns{models.Users.Columns.WeightUnit.Name(): string(weightunit.Normalize(unit))}, nil
+	}
+}
+
+func UpdateUserDistanceUnit(unit string) UpdateUserOpt {
+	return func() (columns, error) {
+		return columns{models.Users.Columns.DistanceUnit.Name(): string(distanceunit.Normalize(unit))}, nil
 	}
 }
 
@@ -951,6 +960,7 @@ type Set struct {
 	Distance        float64
 	DurationSeconds int
 	WeightUnit      string
+	DistanceUnit    string
 }
 
 func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
@@ -977,7 +987,8 @@ func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 					Reps:            omit.From(safe.Int32FromInt(set.Reps)),
 					Weight:          omit.From(weightunit.ToKilograms(set.Weight, set.WeightUnit)),
 					WeightUnit:      omit.From(string(weightunit.Normalize(set.WeightUnit))),
-					Distance:        omit.From(set.Distance),
+					Distance:        omit.From(distanceunit.ToKilometers(set.Distance, set.DistanceUnit)),
+					DistanceUnit:    omit.From(string(distanceunit.Normalize(set.DistanceUnit))),
 					DurationSeconds: omit.From(safe.Int32FromInt(set.DurationSeconds)),
 					UserID:          omit.From(uuidFromString(p.UserID)),
 					WorkoutID:       omit.From(workout.ID),
@@ -1803,7 +1814,8 @@ func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 					Reps:            omit.From(safe.Int32FromInt(set.Reps)),
 					Weight:          omit.From(weightunit.ToKilograms(set.Weight, set.WeightUnit)),
 					WeightUnit:      omit.From(string(weightunit.Normalize(set.WeightUnit))),
-					Distance:        omit.From(set.Distance),
+					Distance:        omit.From(distanceunit.ToKilometers(set.Distance, set.DistanceUnit)),
+					DistanceUnit:    omit.From(string(distanceunit.Normalize(set.DistanceUnit))),
 					DurationSeconds: omit.From(safe.Int32FromInt(set.DurationSeconds)),
 					CreatedAt:       omit.From(setCreatedAt),
 				})

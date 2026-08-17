@@ -78,6 +78,15 @@ var Users = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		DistanceUnit: column{
+			Name:      "distance_unit",
+			DBType:    "character varying",
+			Default:   "'km'::character varying",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: userIndexes{
 		UsersPkey: index{
@@ -156,6 +165,14 @@ var Users = Table[
 		},
 	},
 	Checks: userChecks{
+		UsersDistanceUnitCheck: check{
+			constraint: constraint{
+				Name:    "users_distance_unit_check",
+				Columns: []string{"distance_unit"},
+				Comment: "",
+			},
+			Expression: "((distance_unit)::text = ANY ((ARRAY['km'::character varying, 'mi'::character varying])::text[]))",
+		},
 		UsersWeightUnitCheck: check{
 			constraint: constraint{
 				Name:    "users_weight_unit_check",
@@ -176,11 +193,12 @@ type userColumns struct {
 	FullNameSearch column
 	AuthID         column
 	WeightUnit     column
+	DistanceUnit   column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.FirstName, c.LastName, c.CreatedAt, c.FullNameSearch, c.AuthID, c.WeightUnit,
+		c.ID, c.FirstName, c.LastName, c.CreatedAt, c.FullNameSearch, c.AuthID, c.WeightUnit, c.DistanceUnit,
 	}
 }
 
@@ -217,11 +235,12 @@ func (u userUniques) AsSlice() []constraint {
 }
 
 type userChecks struct {
-	UsersWeightUnitCheck check
+	UsersDistanceUnitCheck check
+	UsersWeightUnitCheck   check
 }
 
 func (c userChecks) AsSlice() []check {
 	return []check{
-		c.UsersWeightUnitCheck,
+		c.UsersDistanceUnitCheck, c.UsersWeightUnitCheck,
 	}
 }

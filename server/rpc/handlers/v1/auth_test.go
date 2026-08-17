@@ -97,6 +97,7 @@ func (s *authSuite) TestSignup() {
 					FirstName:            gofakeit.FirstName(),
 					LastName:             gofakeit.LastName(),
 					WeightUnit:           v1.WeightUnit_WEIGHT_UNIT_POUNDS,
+					DistanceUnit:         v1.DistanceUnit_DISTANCE_UNIT_MILES,
 				},
 			},
 			init: func(t test) {
@@ -163,6 +164,7 @@ func (s *authSuite) TestSignup() {
 			s.Require().Equal(t.req.Msg.GetFirstName(), user.FirstName)
 			s.Require().Equal(t.req.Msg.GetLastName(), user.LastName)
 			s.Require().Equal("lb", user.WeightUnit)
+			s.Require().Equal("mi", user.DistanceUnit)
 		})
 	}
 }

@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
@@ -55,12 +56,13 @@ func UserFollowed(followed bool) UserOpt {
 
 func User(user *models.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
-		Id:         user.ID.String(),
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
-		Followed:   false,
-		Email:      "",
-		WeightUnit: WeightUnitToProto(user.WeightUnit),
+		Id:           user.ID.String(),
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		Followed:     false,
+		Email:        "",
+		WeightUnit:   WeightUnitToProto(user.WeightUnit),
+		DistanceUnit: DistanceUnitToProto(user.DistanceUnit),
 	}
 
 	if user.R.Auth != nil {
@@ -279,6 +281,7 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 				Weight:          set.GetWeight(),
 				WeightUnit:      WeightUnitFromProto(set.GetWeightUnit()),
 				Distance:        set.GetDistance(),
+				DistanceUnit:    DistanceUnitFromProto(set.GetDistanceUnit()),
 				DurationSeconds: int(set.GetDurationSeconds()),
 			})
 		}
@@ -442,7 +445,8 @@ func Set(set *models.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 		Weight:          weightunit.FromKilograms(set.Weight, set.WeightUnit),
 		WeightUnit:      WeightUnitToProto(set.WeightUnit),
 		Reps:            set.Reps,
-		Distance:        set.Distance,
+		Distance:        distanceunit.FromKilometers(set.Distance, set.DistanceUnit),
+		DistanceUnit:    DistanceUnitToProto(set.DistanceUnit),
 		DurationSeconds: set.DurationSeconds,
 		Metadata: &apiv1.MetadataSet{
 			WorkoutId: set.WorkoutID.String(),
@@ -469,6 +473,22 @@ func WeightUnitToProto(unit string) apiv1.WeightUnit {
 	}
 
 	return apiv1.WeightUnit_WEIGHT_UNIT_KILOGRAMS
+}
+
+func DistanceUnitFromProto(unit apiv1.DistanceUnit) string {
+	if unit == apiv1.DistanceUnit_DISTANCE_UNIT_MILES {
+		return string(distanceunit.Miles)
+	}
+
+	return string(distanceunit.Kilometers)
+}
+
+func DistanceUnitToProto(unit string) apiv1.DistanceUnit {
+	if distanceunit.Normalize(unit) == distanceunit.Miles {
+		return apiv1.DistanceUnit_DISTANCE_UNIT_MILES
+	}
+
+	return apiv1.DistanceUnit_DISTANCE_UNIT_KILOMETERS
 }
 
 func parseWithoutOpts[Input any, Output any](input []Input, f func(Input) Output) []Output {
