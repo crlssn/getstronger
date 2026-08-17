@@ -46,11 +46,12 @@ func (s *pubSubSuite) SetupSuite() {
 	s.mocks.controller = gomock.NewController(s.T())
 	s.mocks.handler = handlers.NewMockHandler(s.mocks.controller)
 
-	s.pubSub.Register(map[repo.EventTopic]handlers.Handler{
+	s.pubSub.Subscribe(map[repo.EventTopic]handlers.Handler{
 		repo.EventTopicFollowedUser: s.mocks.handler,
 	})
 
 	s.T().Cleanup(func() {
+		s.pubSub.Stop()
 		s.mocks.controller.Finish()
 		if err := c.Terminate(ctx); err != nil {
 			s.T().Fatalf("failed to clean container: %s", err)
