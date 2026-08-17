@@ -13,6 +13,9 @@ on:
     paths:
       - .github/workflows/*.yml
 
+permissions:
+  contents: read
+
 concurrency:
   group: test-workflows-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
