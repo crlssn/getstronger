@@ -103,7 +103,10 @@ const navigation = computed(() => [
     icon: UserIcon,
     iconActive: UserIconSolid,
     name: t('nav.me'),
-    active: route.path.startsWith('/profile') || route.path.startsWith('/notifications'),
+    active:
+      route.path.startsWith('/profile') ||
+      route.path.startsWith('/notifications') ||
+      route.path.startsWith('/progress'),
     badge: notificationStore.unreadCount,
     timer: '',
   },

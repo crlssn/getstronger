@@ -27,6 +27,7 @@ export const tabRootFor = (path: string) => {
     exercises: '/exercises',
     notifications: '/profile',
     plans: '/plans',
+    progress: '/profile',
     routines: '/routines',
     users: '/home',
     workouts: '/workout',

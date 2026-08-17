@@ -84,9 +84,9 @@ test.describe('profiles and notifications', () => {
     await expect(page.locator('.notification-item.unread')).toHaveCount(2)
     await expect(page.locator('.notification-item:not(.unread)')).toHaveCount(2)
 
-    await page.getByRole('button', { name: 'Mark all as read' }).click()
+    await page.getByRole('button', { name: 'Mark all read' }).click()
     await expect(page.locator('.notification-item.unread')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Mark all as read' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Mark all read' })).toHaveCount(0)
 
     const janeNotification = page.getByRole('link').filter({ hasText: 'Jane Doe' }).first()
     await expect(janeNotification).toBeVisible()
