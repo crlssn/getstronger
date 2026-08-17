@@ -17,6 +17,13 @@ const config: CapacitorConfig = {
       launchAutoHide: false,
       backgroundColor: '#25282d',
     },
+    // Without the plugin, WKWebView pans the whole page to reveal a focused
+    // input, shoving the sticky workout header under the status bar while
+    // weight and reps are typed. Resizing the WebView instead keeps the
+    // layout anchored and lifts the fixed session dock above the keyboard.
+    Keyboard: {
+      resize: 'native',
+    },
   },
 }
 
