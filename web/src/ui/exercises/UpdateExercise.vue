@@ -82,7 +82,6 @@ async function onUpdateExercise() {
 <style scoped>
 @reference '../../assets/base.css';
 
-/* Sticks above the bottom navigation so saving never needs a scroll. */
 .form-status {
   @apply card p-6 text-sm text-text-subtle;
 }
@@ -93,8 +92,7 @@ async function onUpdateExercise() {
   @apply mt-3 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 .form-actions {
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply sticky z-20 -mx-3 mt-4 border-t border-border bg-ink-surface px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
+  @apply mt-4;
 }
 input {
   @apply block w-full border-0 bg-white px-4 py-5 text-text shadow-card ring-1 ring-inset ring-ink-border placeholder:text-text-subtle focus:ring-2 focus:ring-inset focus:ring-ink;

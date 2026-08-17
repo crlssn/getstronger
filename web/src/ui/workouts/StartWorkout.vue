@@ -890,6 +890,30 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </div>
     </header>
 
+    <!-- The countdown is the focal point while resting; it is aria-hidden so
+         screen readers are not re-announced to every second. -->
+    <section
+      v-if="restSeconds > 0"
+      class="rest-banner"
+      :class="{ final: restFinalCountdown, bright: restFinalMinute }"
+      :style="{ '--rest-hue': restHue }"
+      :aria-label="t('workout.restTimer')"
+    >
+      <div class="rest-banner-inner">
+        <div class="rest-copy">
+          <p class="rest-label"><ClockIcon /> {{ t('workout.rest') }}</p>
+          <strong aria-hidden="true">{{ restLabel }}</strong>
+        </div>
+        <div class="rest-actions">
+          <button type="button" @click="addRestTime">{{ t('workout.addSeconds') }}</button>
+          <button type="button" @click="skipRest">{{ t('workout.skip') }}</button>
+        </div>
+        <div class="rest-progress" aria-hidden="true">
+          <span :style="{ width: restProgress }"></span>
+        </div>
+      </div>
+    </section>
+
     <main class="exercise-stack">
       <section v-if="quickWorkout && !currentExercise" class="quick-empty">
         <span><PlusIcon /></span>
@@ -1201,74 +1225,49 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </section>
     </div>
 
-    <!-- One fixed session region: the rest pill floats above the action dock,
-         so the countdown stays visible without pushing content around and
-         without ever covering an editable field. The countdown is the focal
-         point while resting; it is aria-hidden so screen readers are not
-         re-announced to every second. -->
-    <div class="session-dock">
-      <section
-        v-if="restSeconds > 0"
-        class="rest-pill"
-        :class="{ final: restFinalCountdown, bright: restFinalMinute }"
-        :style="{ '--rest-hue': restHue }"
-        :aria-label="t('workout.restTimer')"
+    <!-- One ranked pair at the end of the session. Advancing is the primary
+         action while exercises are unfinished; finishing stays reachable for
+         the entire session but is demoted to a text button, because two
+         controls of equal weight leave the screen with no ranking at all. -->
+    <footer class="finish-dock">
+      <strong
+        v-if="finishError || blockedMessage || primaryStatus"
+        id="workout-dock-status"
+        :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
+        >{{ finishError || blockedMessage || primaryStatus }}</strong
       >
-        <ClockIcon aria-hidden="true" />
-        <strong aria-hidden="true">{{ restLabel }}</strong>
-        <div class="rest-actions">
-          <button type="button" @click="addRestTime">{{ t('workout.addSeconds') }}</button>
-          <button type="button" @click="skipRest">{{ t('workout.skip') }}</button>
-        </div>
-        <div class="rest-progress" aria-hidden="true">
-          <span :style="{ width: restProgress }"></span>
-        </div>
-      </section>
-
-      <!-- One ranked pair. Advancing is the primary action while exercises are
-           unfinished; finishing stays reachable for the entire session but is
-           demoted to a text button, because two controls of equal weight leave
-           the screen with no ranking at all. -->
-      <footer class="finish-dock">
-        <strong
-          v-if="finishError || blockedMessage || primaryStatus"
-          id="workout-dock-status"
-          :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
-          >{{ finishError || blockedMessage || primaryStatus }}</strong
-        >
-        <!-- Described by the status rather than aria-disabled: the whole point
-             is that this control is pressable, and aria-disabled would announce
-             the same "broken" that the grey fill used to. -->
-        <button
-          type="submit"
-          class="primary-action"
-          :aria-describedby="
-            finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
-          "
-          :disabled="submitting"
-        >
-          <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
-          {{ primaryActionLabel }}
-        </button>
-        <!-- Keep the escape hatch in a stable position even when a partial set
-           temporarily prevents saving the workout. -->
-        <button
-          v-if="!allExercisesComplete"
-          type="button"
-          class="finish-early"
-          :disabled="!canFinish"
-          :title="!canFinish ? finishStatus : undefined"
-          :aria-label="
-            !canFinish && finishStatus
-              ? `${t('workout.finish')}: ${finishStatus}`
-              : t('workout.finish')
-          "
-          @click="requestFinishWorkout"
-        >
-          {{ t('workout.finish') }}
-        </button>
-      </footer>
-    </div>
+      <!-- Described by the status rather than aria-disabled: the whole point
+           is that this control is pressable, and aria-disabled would announce
+           the same "broken" that the grey fill used to. -->
+      <button
+        type="submit"
+        class="primary-action"
+        :aria-describedby="
+          finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
+        "
+        :disabled="submitting"
+      >
+        <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
+        {{ primaryActionLabel }}
+      </button>
+      <!-- Keep the escape hatch in a stable position even when a partial set
+         temporarily prevents saving the workout. -->
+      <button
+        v-if="!allExercisesComplete"
+        type="button"
+        class="finish-early"
+        :disabled="!canFinish"
+        :title="!canFinish ? finishStatus : undefined"
+        :aria-label="
+          !canFinish && finishStatus
+            ? `${t('workout.finish')}: ${finishStatus}`
+            : t('workout.finish')
+        "
+        @click="requestFinishWorkout"
+      >
+        {{ t('workout.finish') }}
+      </button>
+    </footer>
   </form>
 </template>
 
@@ -1276,12 +1275,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 @reference '../../assets/base.css';
 
 .workout-shell {
-  @apply mx-auto max-w-3xl space-y-4 pb-36;
+  @apply mx-auto max-w-3xl space-y-4 pb-8;
 }
-/* Reserves the height of the fixed session dock (pill + actions) so the note
-   field and the last set row are never trapped behind it while resting. */
-.workout-shell.resting {
-  padding-bottom: 12.5rem;
+/* The timer and active-workout header are one piece of session chrome. The
+   shell's usual section gap belongs below the timer, not between these bars. */
+.workout-shell.resting > .workout-header {
+  margin-bottom: 0;
 }
 /* The chrome spans the viewport while its contents stay aligned with the app. */
 /* Opaque, or scrolled content bleeds through and reads as passing over the
@@ -1337,20 +1336,18 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   inherits: false;
   initial-value: 160;
 }
-/* The one fixed region of the session: rest pill stacked on the action dock.
-   It lives outside the flow, so nothing is displaced while resting; taps pass
-   through the gaps to the content behind. */
-.session-dock {
-  padding-bottom: env(safe-area-inset-bottom);
-  @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 px-3;
-}
-/* A compact floating pill, not a band: the countdown stays on screen without
-   claiming a row of the workout. Large text wraps the actions under the
-   countdown rather than clipping them. */
-.rest-pill {
+/* A square, edge-to-edge band that rides over the header on scroll, so the
+   countdown owns the top of the screen while resting. */
+.rest-banner {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  @apply !mt-0 sticky z-30 text-white shadow-overlay;
+  /* Level with the header it covers: below the status-bar scrim in the native
+     WebView, zero in browsers. */
+  top: env(safe-area-inset-top);
   /* Energy comes from saturation, not lightness: near-full saturation reads
      vivid while staying dark enough for white text. The gradient runs dark at
-     the top-left, where the countdown sits, out to a bright corner. */
+     the top-left, where the label and countdown sit, out to a bright corner. */
   background-image: linear-gradient(
     140deg,
     hsl(var(--rest-hue, 165) 95% 21%) 0%,
@@ -1358,32 +1355,40 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     hsl(calc(var(--rest-hue, 165) - 28) 96% 40%) 100%
   );
   transition: --rest-hue 900ms ease;
-  border-radius: 2rem;
-  @apply pointer-events-auto relative flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden px-4 py-2 text-white shadow-overlay;
 }
-.rest-pill > svg {
-  @apply size-4 shrink-0 text-white/85;
+.rest-banner-inner {
+  @apply mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-3 px-3 pb-4 pt-3 sm:px-5 lg:px-8;
 }
-.rest-pill > strong {
-  @apply font-mono text-xl font-bold leading-none tabular-nums;
+.rest-copy {
+  @apply min-w-0;
+}
+/* White, not grey: a neutral grey washes out against a saturated background. */
+.rest-label {
+  @apply flex items-center gap-1.5 text-eyebrow font-bold uppercase text-white/85;
+}
+.rest-label svg {
+  @apply size-3.5;
+}
+.rest-copy strong {
+  @apply mt-1 block font-mono text-4xl font-bold leading-none tabular-nums text-white;
 }
 .rest-actions {
   @apply flex shrink-0 items-center gap-1;
 }
 /* A dark tint keeps the white label high-contrast wherever the chips land on
    the gradient; a white tint washes out against the bright corner. */
-.rest-pill button {
-  @apply min-h-9 rounded-full bg-black/25 px-3 text-sm font-semibold text-white transition hover:bg-black/40;
+.rest-banner button {
+  @apply min-h-(--size-control-sm) rounded-control bg-black/25 px-3 text-sm font-semibold text-white transition hover:bg-black/40;
 }
-.rest-pill .rest-progress {
-  @apply absolute inset-x-4 bottom-0.5 h-0.5 overflow-hidden rounded-full bg-white/15;
+.rest-progress {
+  @apply col-span-2 h-1.5 overflow-hidden rounded-pill bg-white/15;
 }
-.rest-pill .rest-progress span {
-  @apply block h-full rounded-full bg-white transition-[width] duration-1000 ease-linear;
+.rest-progress span {
+  @apply block h-full rounded-pill bg-white transition-[width] duration-1000 ease-linear;
 }
 /* The last minute goes sunny with dark text: warm hues only read as happy when
    they are bright, and bright needs dark type to stay legible. */
-.rest-pill.bright {
+.rest-banner.bright {
   background-image: linear-gradient(
     140deg,
     hsl(42 100% 50%) 0%,
@@ -1392,28 +1397,28 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   );
   @apply text-text;
 }
-.rest-pill.bright > svg {
+.rest-banner.bright .rest-label {
   @apply text-text/70;
 }
-.rest-pill.bright > strong {
+.rest-banner.bright .rest-copy strong {
   @apply text-text;
 }
-.rest-pill.bright button {
+.rest-banner.bright button {
   @apply bg-black/15 text-text hover:bg-black/25;
 }
-.rest-pill.bright .rest-progress {
+.rest-banner.bright .rest-progress {
   @apply bg-black/15;
 }
-.rest-pill.bright .rest-progress span {
+.rest-banner.bright .rest-progress span {
   @apply bg-ink-strong;
 }
-/* One beat per second through the last ten: the pill itself brightens rather
+/* One beat per second through the last ten: the band itself brightens rather
    than the digits resizing, so the numbers stay steady and readable. */
-.rest-pill.final {
+.rest-banner.final {
   animation: rest-pulse 1s ease-in-out infinite;
 }
-/* An already-bright pill would blow out on the dark pill's pulse range. */
-.rest-pill.final.bright {
+/* An already-bright band would blow out on the dark band's pulse range. */
+.rest-banner.final.bright {
   animation: rest-pulse-bright 1s ease-in-out infinite;
 }
 @keyframes rest-pulse-bright {
@@ -1435,11 +1440,11 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rest-pill {
+  .rest-banner {
     transition: none;
   }
-  .rest-pill.final,
-  .rest-pill.final.bright {
+  .rest-banner.final,
+  .rest-banner.final.bright {
     animation: none;
   }
 }
@@ -1537,12 +1542,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .set-row.complete .unit-entry {
   @apply bg-surface-sunken;
 }
-/* Focus reveal (and focusNextSetInput) must land above the fixed session dock,
-   not behind it. */
+/* Focus reveal (and focusNextSetInput) must land below the session chrome —
+   the header, and the rest band that covers it — not behind it. */
 .set-row input,
 .unit-entry,
 .note-card textarea {
-  scroll-margin-bottom: 10rem;
+  scroll-margin-top: 9rem;
 }
 .unit-entry {
   @apply grid min-h-(--size-control) min-w-0 grid-cols-[minmax(2.75rem,1fr)_auto] items-center overflow-hidden rounded-control border border-border bg-surface pr-2.5 shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
@@ -1662,8 +1667,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .note-card textarea {
   @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
 }
+/* In flow at the end of the session: no container of its own, so the buttons
+   sit on the page background like the rest of the screen. */
 .finish-dock {
-  @apply pointer-events-auto flex w-full max-w-3xl flex-col items-stretch gap-2 border-t border-border bg-surface px-4 py-3 text-center shadow-overlay sm:rounded-card sm:border;
+  @apply flex w-full flex-col items-stretch gap-2 text-center;
 }
 /* What is missing, said where the button that is waiting for it lives. */
 .finish-dock > strong {
