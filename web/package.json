@@ -58,7 +58,7 @@
     "@types/pngjs": "6.0.5",
     "@types/sortablejs": "1.15.9",
     "@typescript-eslint/eslint-plugin": "8.66.0",
-    "@typescript-eslint/parser": "8.66.0",
+    "@typescript-eslint/parser": "8.67.0",
     "@vitejs/plugin-vue": "6.0.8",
     "@vitejs/plugin-vue-jsx": "5.1.6",
     "@vitest/eslint-plugin": "1.6.27",
