@@ -252,7 +252,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-1 text-xs text-slate-500;
 }
 .record-pill {
-  @apply inline-flex items-center gap-1 rounded-full bg-achievement-50 px-2.5 py-1 text-xs font-semibold text-achievement-700;
+  @apply inline-flex items-center gap-1 rounded-full bg-record-surface px-2.5 py-1 text-xs font-semibold text-record-strong;
 }
 .record-pill svg,
 .set-list > a > svg {

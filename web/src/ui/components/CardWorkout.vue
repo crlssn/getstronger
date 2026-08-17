@@ -367,7 +367,7 @@ const postComment = async () => {
   @apply grid size-10 shrink-0 place-items-center rounded-xl bg-ink-tint text-ink-strong;
 }
 .metric-icon.amber {
-  @apply bg-achievement-50 text-achievement-600;
+  @apply bg-record-surface text-record;
 }
 .metric-icon svg {
   @apply size-5;

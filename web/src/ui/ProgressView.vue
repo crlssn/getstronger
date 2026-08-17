@@ -137,7 +137,7 @@ h2 {
   @apply mt-1 text-xl font-semibold tracking-tight text-slate-950;
 }
 .record-count {
-  @apply inline-flex w-max items-center gap-2 rounded-full bg-achievement-50 px-3 py-2 text-sm font-semibold text-achievement-700;
+  @apply inline-flex w-max items-center gap-2 rounded-full border border-record-border bg-record-surface px-3 py-2 text-sm font-semibold text-record-strong;
 }
 .record-count svg {
   @apply size-5;
@@ -168,7 +168,7 @@ h2 {
   @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-ink-strong;
 }
 .record-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-achievement-50 text-achievement-600;
+  @apply grid size-11 place-items-center rounded-xl bg-record-surface text-record;
 }
 .record-icon svg,
 .chevron {

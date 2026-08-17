@@ -56,7 +56,7 @@ button:disabled {
 }
 
 .amber {
-  @apply border-achievement-600 bg-achievement-600 text-white hover:bg-achievement-700;
+  @apply border-record bg-record text-white hover:brightness-95;
 }
 
 .gray {

@@ -4,7 +4,7 @@ html,
 body {
   color-scheme: light;
   touch-action: manipulation;
-  @apply min-h-full bg-slate-50 text-slate-950 antialiased;
+  @apply min-h-full bg-surface-sunken text-text antialiased;
 }
 
 /* With viewport-fit=cover the page extends under the status bar and Dynamic

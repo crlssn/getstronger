@@ -138,7 +138,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply grid size-7 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
 }
 .set-number.personal-best {
-  @apply bg-achievement-50 text-achievement-700;
+  @apply bg-record-surface text-record-strong;
 }
 .set-number.personal-best svg {
   @apply size-4;
@@ -189,7 +189,7 @@ const columnLabel = (metric: ExerciseMetric) => {
   @apply font-medium;
 }
 .compact-set-value .compact-personal-best {
-  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-achievement-50 text-achievement-700;
+  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-record-surface text-record-strong;
 }
 .compact-personal-best svg {
   @apply size-4;
