@@ -10,6 +10,7 @@ import {
   measurementDefinitions,
 } from '@/utils/exerciseMeasurements'
 import { weightUnitLabel } from '@/utils/weightUnits'
+import { distanceUnitLabel } from '@/utils/distanceUnits'
 
 const { t } = useI18n()
 
@@ -95,7 +96,9 @@ const columnLabel = (metric: ExerciseMetric) => {
             <small v-if="measurement.field === 'weight'">
               {{ weightUnitLabel(set.weightUnit) }}
             </small>
-            <small v-else-if="measurement.field === 'distance'"> km</small>
+            <small v-else-if="measurement.field === 'distance'">
+              {{ distanceUnitLabel(set.distanceUnit) }}
+            </small>
           </span>
         </template>
       </div>

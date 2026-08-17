@@ -105,6 +105,15 @@ var Sets = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		DistanceUnit: column{
+			Name:      "distance_unit",
+			DBType:    "character varying",
+			Default:   "'km'::character varying",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: setIndexes{
 		SetsPkey: index{
@@ -194,6 +203,14 @@ var Sets = Table[
 			},
 			Expression: "(distance >= (0)::double precision)",
 		},
+		SetsDistanceUnitCheck: check{
+			constraint: constraint{
+				Name:    "sets_distance_unit_check",
+				Columns: []string{"distance_unit"},
+				Comment: "",
+			},
+			Expression: "((distance_unit)::text = ANY ((ARRAY['km'::character varying, 'mi'::character varying])::text[]))",
+		},
 		SetsDurationSecondsNonNegative: check{
 			constraint: constraint{
 				Name:    "sets_duration_seconds_non_negative",
@@ -225,11 +242,12 @@ type setColumns struct {
 	Distance        column
 	DurationSeconds column
 	WeightUnit      column
+	DistanceUnit    column
 }
 
 func (c setColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.WorkoutID, c.ExerciseID, c.Weight, c.Reps, c.CreatedAt, c.UserID, c.Distance, c.DurationSeconds, c.WeightUnit,
+		c.ID, c.WorkoutID, c.ExerciseID, c.Weight, c.Reps, c.CreatedAt, c.UserID, c.Distance, c.DurationSeconds, c.WeightUnit, c.DistanceUnit,
 	}
 }
 
@@ -264,12 +282,13 @@ func (u setUniques) AsSlice() []constraint {
 
 type setChecks struct {
 	SetsDistanceNonNegative        check
+	SetsDistanceUnitCheck          check
 	SetsDurationSecondsNonNegative check
 	SetsWeightUnitCheck            check
 }
 
 func (c setChecks) AsSlice() []check {
 	return []check{
-		c.SetsDistanceNonNegative, c.SetsDurationSecondsNonNegative, c.SetsWeightUnitCheck,
+		c.SetsDistanceNonNegative, c.SetsDistanceUnitCheck, c.SetsDurationSecondsNonNegative, c.SetsWeightUnitCheck,
 	}
 }

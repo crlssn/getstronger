@@ -46,6 +46,7 @@ type SetTemplate struct {
 	Distance        func() float64
 	DurationSeconds func() int32
 	WeightUnit      func() string
+	DistanceUnit    func() string
 
 	r setR
 	f *Factory
@@ -137,6 +138,10 @@ func (o SetTemplate) BuildSetter() *models.SetSetter {
 		val := o.WeightUnit()
 		m.WeightUnit = omit.From(val)
 	}
+	if o.DistanceUnit != nil {
+		val := o.DistanceUnit()
+		m.DistanceUnit = omit.From(val)
+	}
 
 	return m
 }
@@ -188,6 +193,9 @@ func (o SetTemplate) Build() *models.Set {
 	}
 	if o.WeightUnit != nil {
 		m.WeightUnit = o.WeightUnit()
+	}
+	if o.DistanceUnit != nil {
+		m.DistanceUnit = o.DistanceUnit()
 	}
 
 	o.setModelRels(m)
@@ -414,6 +422,7 @@ func (m setMods) RandomizeAllColumns(f *faker.Faker) SetMod {
 		SetMods.RandomDistance(f),
 		SetMods.RandomDurationSeconds(f),
 		SetMods.RandomWeightUnit(f),
+		SetMods.RandomDistanceUnit(f),
 	}
 }
 
@@ -722,6 +731,37 @@ func (m setMods) UnsetWeightUnit() SetMod {
 func (m setMods) RandomWeightUnit(f *faker.Faker) SetMod {
 	return SetModFunc(func(_ context.Context, o *SetTemplate) {
 		o.WeightUnit = func() string {
+			return random_string(f, "2")
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m setMods) DistanceUnit(val string) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.DistanceUnit = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m setMods) DistanceUnitFunc(f func() string) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.DistanceUnit = f
+	})
+}
+
+// Clear any values for the column
+func (m setMods) UnsetDistanceUnit() SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.DistanceUnit = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m setMods) RandomDistanceUnit(f *faker.Faker) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.DistanceUnit = func() string {
 			return random_string(f, "2")
 		}
 	})

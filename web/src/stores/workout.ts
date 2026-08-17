@@ -4,9 +4,10 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { isNumber } from '@/utils/numbers'
-import { ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { exerciseMetrics } from '@/utils/exerciseMeasurements'
 import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
+import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
 
 export const useWorkoutStore = defineStore(
   'workouts',
@@ -114,11 +115,23 @@ export const useWorkoutStore = defineStore(
       workout.restTimerTotalSeconds = totalSeconds
     }
 
-    const addEmptySet = (routineID: RoutineID, exerciseID: ExerciseID, weightUnit?: WeightUnit) => {
+    // A new set carries the preferred units up front so its inputs and the
+    // value eventually typed into them can never disagree about the unit.
+    const emptySet = (weightUnit?: WeightUnit, distanceUnit?: DistanceUnit): Set => ({
+      ...(weightUnit ? { weightUnit } : {}),
+      ...(distanceUnit ? { distanceUnit } : {}),
+    })
+
+    const addEmptySet = (
+      routineID: RoutineID,
+      exerciseID: ExerciseID,
+      weightUnit?: WeightUnit,
+      distanceUnit?: DistanceUnit,
+    ) => {
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {}
       workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
-      workout.exerciseSets[exerciseID].push(weightUnit ? { weightUnit } : {})
+      workout.exerciseSets[exerciseID].push(emptySet(weightUnit, distanceUnit))
     }
 
     const addEmptySetIfNone = (
@@ -126,6 +139,7 @@ export const useWorkoutStore = defineStore(
       exerciseID: ExerciseID,
       metrics: ExerciseMetric[] = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
       weightUnit?: WeightUnit,
+      distanceUnit?: DistanceUnit,
     ) => {
       const workout = workouts.value[routineID]
       workout.exerciseSets = workout.exerciseSets || {}
@@ -146,7 +160,7 @@ export const useWorkoutStore = defineStore(
         fields.every((field) => isNumber(set[field])),
       )
       if (noEmptySet) {
-        workout.exerciseSets[exerciseID].push(weightUnit ? { weightUnit } : {})
+        workout.exerciseSets[exerciseID].push(emptySet(weightUnit, distanceUnit))
       }
     }
 
@@ -175,6 +189,33 @@ export const useWorkoutStore = defineStore(
             set.weight = convertWeight(weight, current, target)
           }
           set.weightUnit = target
+        })
+      })
+    }
+
+    // Same contract as syncWeightUnits for the distance preference: values are
+    // converted so the number keeps meaning the same distance as entered, and
+    // unit-less legacy sets are only tagged.
+    const syncDistanceUnits = (routineID: RoutineID, distanceUnit: DistanceUnit) => {
+      const workout = workouts.value[routineID]
+      if (!workout?.exerciseSets) return
+
+      const target = normalizeDistanceUnit(distanceUnit)
+      Object.values(workout.exerciseSets).forEach((sets) => {
+        sets.forEach((set) => {
+          if (!set.distanceUnit) {
+            set.distanceUnit = target
+            return
+          }
+
+          const current = normalizeDistanceUnit(set.distanceUnit)
+          if (current === target) return
+
+          const distance = set.distance
+          if (typeof distance === 'number' && !Number.isNaN(distance)) {
+            set.distance = convertDistance(distance, current, target)
+          }
+          set.distanceUnit = target
         })
       })
     }
@@ -213,6 +254,7 @@ export const useWorkoutStore = defineStore(
       getSets,
       getStartedAt,
       syncWeightUnits,
+      syncDistanceUnits,
       initialiseWorkout,
       removeWorkout,
       startQuickWorkoutWithExercise,

@@ -43,6 +43,7 @@ type UserTemplate struct {
 	FullNameSearch func() string
 	AuthID         func() uuid.UUID
 	WeightUnit     func() string
+	DistanceUnit   func() string
 
 	r userR
 	f *Factory
@@ -242,6 +243,10 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		val := o.WeightUnit()
 		m.WeightUnit = omit.From(val)
 	}
+	if o.DistanceUnit != nil {
+		val := o.DistanceUnit()
+		m.DistanceUnit = omit.From(val)
+	}
 
 	return m
 }
@@ -284,6 +289,9 @@ func (o UserTemplate) Build() *models.User {
 	}
 	if o.WeightUnit != nil {
 		m.WeightUnit = o.WeightUnit()
+	}
+	if o.DistanceUnit != nil {
+		m.DistanceUnit = o.DistanceUnit()
 	}
 
 	o.setModelRels(m)
@@ -623,6 +631,7 @@ func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 		UserMods.RandomFullNameSearch(f),
 		UserMods.RandomAuthID(f),
 		UserMods.RandomWeightUnit(f),
+		UserMods.RandomDistanceUnit(f),
 	}
 }
 
@@ -838,6 +847,37 @@ func (m userMods) UnsetWeightUnit() UserMod {
 func (m userMods) RandomWeightUnit(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.WeightUnit = func() string {
+			return random_string(f, "2")
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) DistanceUnit(val string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.DistanceUnit = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) DistanceUnitFunc(f func() string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.DistanceUnit = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetDistanceUnit() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.DistanceUnit = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomDistanceUnit(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.DistanceUnit = func() string {
 			return random_string(f, "2")
 		}
 	})

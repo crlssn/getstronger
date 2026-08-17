@@ -2,7 +2,7 @@ import { create } from '@bufbuild/protobuf'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { ExerciseMetric, ExerciseSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, ExerciseMetric, ExerciseSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { useWorkoutStore } from '@/stores/workout'
 
 describe('workout store', () => {
@@ -120,5 +120,55 @@ describe('workout store', () => {
       weight: 100,
       weightUnit: WeightUnit.KILOGRAMS,
     })
+  })
+
+  it('stamps new empty sets with the preferred units', () => {
+    const store = useWorkoutStore()
+    store.initialiseWorkout('quick-workout')
+
+    store.addEmptySetIfNone(
+      'quick-workout',
+      'running',
+      [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
+      WeightUnit.KILOGRAMS,
+      DistanceUnit.MILES,
+    )
+
+    expect(store.getSets('quick-workout', 'running')).toEqual([
+      { weightUnit: WeightUnit.KILOGRAMS, distanceUnit: DistanceUnit.MILES },
+    ])
+  })
+
+  it('tags legacy draft sets that carry no distance unit without touching their value', () => {
+    const store = useWorkoutStore()
+    store.workouts['routine-id'] = { exerciseSets: { running: [{ distance: 5 }] } }
+
+    store.syncDistanceUnits('routine-id', DistanceUnit.MILES)
+
+    expect(store.getSets('routine-id', 'running')[0]).toEqual({
+      distance: 5,
+      distanceUnit: DistanceUnit.MILES,
+    })
+  })
+
+  it('converts draft distances saved under an earlier preference to the current one', () => {
+    const store = useWorkoutStore()
+    store.workouts['routine-id'] = {
+      exerciseSets: {
+        running: [
+          { distance: 10, distanceUnit: DistanceUnit.MILES },
+          { distanceUnit: DistanceUnit.MILES },
+        ],
+      },
+    }
+
+    store.syncDistanceUnits('routine-id', DistanceUnit.KILOMETERS)
+
+    // 10 mi is the same distance as 16.09 km: the displayed unit and the
+    // stored value must never disagree.
+    expect(store.getSets('routine-id', 'running')).toEqual([
+      { distance: 16.09, distanceUnit: DistanceUnit.KILOMETERS },
+      { distanceUnit: DistanceUnit.KILOMETERS },
+    ])
   })
 })

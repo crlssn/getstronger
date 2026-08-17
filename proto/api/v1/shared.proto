@@ -50,6 +50,12 @@ enum WeightUnit {
   WEIGHT_UNIT_POUNDS = 2;
 }
 
+enum DistanceUnit {
+  DISTANCE_UNIT_UNSPECIFIED = 0;
+  DISTANCE_UNIT_KILOMETERS = 1;
+  DISTANCE_UNIT_MILES = 2;
+}
+
 message Set {
   string id = 1;
   double weight = 2; // The weight can be less than zero.
@@ -58,6 +64,7 @@ message Set {
   double distance = 5 [(buf.validate.field).double = { gte: 0 }];
   int32 duration_seconds = 6 [(buf.validate.field).int32 = { gte: 0 }];
   WeightUnit weight_unit = 7 [(buf.validate.field).enum.defined_only = true];
+  DistanceUnit distance_unit = 8 [(buf.validate.field).enum.defined_only = true];
 }
 
 message MetadataSet {
@@ -73,6 +80,7 @@ message User {
   string email = 4;
   bool followed = 5;
   WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];
+  DistanceUnit distance_unit = 7 [(buf.validate.field).enum.defined_only = true];
 }
 
 message PaginationRequest {

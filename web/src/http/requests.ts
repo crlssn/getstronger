@@ -1,6 +1,6 @@
 import type { DateTime } from 'luxon'
 import { timestampFromDate, type FieldMask } from '@bufbuild/protobuf/wkt'
-import type { Exercise, ExerciseSets, WeightUnit } from '@/proto/api/v1/shared_pb.ts'
+import type { DistanceUnit, Exercise, ExerciseSets, WeightUnit } from '@/proto/api/v1/shared_pb.ts'
 
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -28,6 +28,8 @@ import {
   type SearchUsersResponse,
   UnfollowUserRequestSchema,
   type UnfollowUserResponse,
+  UpdateUserDistanceUnitRequestSchema,
+  type UpdateUserDistanceUnitResponse,
   UpdateUserWeightUnitRequestSchema,
   type UpdateUserWeightUnitResponse,
 } from '@/proto/api/v1/user_service_pb.ts'
@@ -475,6 +477,13 @@ export const updateUserWeightUnit = async (
 ): Promise<UpdateUserWeightUnitResponse | void> => {
   const req = create(UpdateUserWeightUnitRequestSchema, { weightUnit })
   return tryCatch(() => userClient.updateUserWeightUnit(req))
+}
+
+export const updateUserDistanceUnit = async (
+  distanceUnit: DistanceUnit,
+): Promise<UpdateUserDistanceUnitResponse | void> => {
+  const req = create(UpdateUserDistanceUnitRequestSchema, { distanceUnit })
+  return tryCatch(() => userClient.updateUserDistanceUnit(req))
 }
 
 export const searchUsers = async (

@@ -7,7 +7,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useEmailVerificationStore } from '@/stores/emailVerification.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
-import { WeightUnit } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 
 const router = useRouter()
 const emailVerificationStore = useEmailVerificationStore()
@@ -19,6 +19,7 @@ const req = ref<SignupRequest>({
   password: '',
   passwordConfirmation: '',
   weightUnit: WeightUnit.KILOGRAMS,
+  distanceUnit: DistanceUnit.KILOMETERS,
 })
 
 const onSignup = async () => {
@@ -91,7 +92,7 @@ const onSignup = async () => {
       <fieldset>
         <legend class="auth-label">{{ $t('auth.weightUnit') }}</legend>
         <p class="mt-1 text-sm text-slate-500">{{ $t('auth.weightUnitHelp') }}</p>
-        <div class="mt-2 grid grid-cols-2 gap-2" aria-label="Preferred weight unit">
+        <div class="mt-2 grid grid-cols-2 gap-2" :aria-label="$t('auth.weightUnit')">
           <label
             class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
             :class="
@@ -108,7 +109,7 @@ const onSignup = async () => {
               :value="WeightUnit.KILOGRAMS"
             />
             <strong>{{ $t('auth.kilograms') }}</strong>
-            <span class="ml-auto text-sm opacity-70">kg</span>
+            <span class="ml-auto text-sm opacity-80">kg</span>
           </label>
           <label
             class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
@@ -126,7 +127,50 @@ const onSignup = async () => {
               :value="WeightUnit.POUNDS"
             />
             <strong>{{ $t('auth.pounds') }}</strong>
-            <span class="ml-auto text-sm opacity-70">lbs</span>
+            <span class="ml-auto text-sm opacity-80">lbs</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="auth-label">{{ $t('auth.distanceUnit') }}</legend>
+        <p class="mt-1 text-sm text-slate-500">{{ $t('auth.distanceUnitHelp') }}</p>
+        <div class="mt-2 grid grid-cols-2 gap-2" :aria-label="$t('auth.distanceUnit')">
+          <label
+            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            :class="
+              req.distanceUnit === DistanceUnit.KILOMETERS
+                ? 'border-surface-inverse bg-surface-inverse text-white'
+                : 'border-slate-200 bg-white text-slate-700'
+            "
+          >
+            <input
+              v-model="req.distanceUnit"
+              class="sr-only"
+              type="radio"
+              name="distanceUnit"
+              :value="DistanceUnit.KILOMETERS"
+            />
+            <strong>{{ $t('auth.kilometers') }}</strong>
+            <span class="ml-auto text-sm opacity-80">km</span>
+          </label>
+          <label
+            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            :class="
+              req.distanceUnit === DistanceUnit.MILES
+                ? 'border-surface-inverse bg-surface-inverse text-white'
+                : 'border-slate-200 bg-white text-slate-700'
+            "
+          >
+            <input
+              v-model="req.distanceUnit"
+              class="sr-only"
+              type="radio"
+              name="distanceUnit"
+              :value="DistanceUnit.MILES"
+            />
+            <strong>{{ $t('auth.miles') }}</strong>
+            <span class="ml-auto text-sm opacity-80">mi</span>
           </label>
         </div>
       </fieldset>

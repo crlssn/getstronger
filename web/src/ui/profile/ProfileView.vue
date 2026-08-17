@@ -8,14 +8,15 @@ import {
   UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 
-import { getCurrentUser, updateUserWeightUnit } from '@/http/requests'
+import { getCurrentUser, updateUserDistanceUnit, updateUserWeightUnit } from '@/http/requests'
 import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
-import { WeightUnit, type User } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, WeightUnit, type User } from '@/proto/api/v1/shared_pb'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
+import { normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -26,6 +27,7 @@ const notificationStore = useNotificationStore()
 const alertStore = useAlertStore()
 const preferencesStore = usePreferencesStore()
 const updatingWeightUnit = ref(false)
+const updatingDistanceUnit = ref(false)
 
 onMounted(async () => {
   const [response] = await Promise.all([
@@ -36,6 +38,7 @@ onMounted(async () => {
   if (response) {
     user.value = response.user
     preferencesStore.setWeightUnit(response.user?.weightUnit)
+    preferencesStore.setDistanceUnit(response.user?.distanceUnit)
   }
 })
 
@@ -61,6 +64,29 @@ const setWeightUnit = async (unit: WeightUnit) => {
 
   if (user.value) user.value.weightUnit = normalizeWeightUnit(res.user?.weightUnit)
   alertStore.setSuccess(t('profile.weightUnitUpdated'))
+}
+
+const distanceUnit = computed(() => preferencesStore.distanceUnit)
+
+const setDistanceUnit = async (unit: DistanceUnit) => {
+  const previous = preferencesStore.distanceUnit
+  if (normalizeDistanceUnit(previous) === normalizeDistanceUnit(unit)) return
+
+  preferencesStore.setDistanceUnit(unit)
+  updatingDistanceUnit.value = true
+  const res = await updateUserDistanceUnit(unit)
+  updatingDistanceUnit.value = false
+
+  // Same contract as the weight unit above: network-level failures resolve to
+  // nothing, so the revert has to explain itself.
+  if (!res) {
+    preferencesStore.setDistanceUnit(previous)
+    alertStore.setError(t('profile.distanceUnitUpdateFailed'))
+    return
+  }
+
+  if (user.value) user.value.distanceUnit = normalizeDistanceUnit(res.user?.distanceUnit)
+  alertStore.setSuccess(t('profile.distanceUnitUpdated'))
 }
 
 const initials = computed(
@@ -155,6 +181,33 @@ const weeklyVolume = computed(() =>
           @click="setWeightUnit(WeightUnit.POUNDS)"
         >
           {{ $t('auth.pounds') }}
+        </button>
+      </div>
+    </section>
+
+    <section class="preferences-card">
+      <div>
+        <strong>{{ $t('profile.distanceUnit') }}</strong>
+        <small>{{ $t('profile.distanceUnitBody') }}</small>
+      </div>
+      <div class="segmented" role="group" :aria-label="$t('profile.distanceUnit')">
+        <button
+          type="button"
+          :aria-pressed="distanceUnit === DistanceUnit.KILOMETERS"
+          :class="{ 'is-selected': distanceUnit === DistanceUnit.KILOMETERS }"
+          :disabled="updatingDistanceUnit"
+          @click="setDistanceUnit(DistanceUnit.KILOMETERS)"
+        >
+          {{ $t('auth.kilometers') }}
+        </button>
+        <button
+          type="button"
+          :aria-pressed="distanceUnit === DistanceUnit.MILES"
+          :class="{ 'is-selected': distanceUnit === DistanceUnit.MILES }"
+          :disabled="updatingDistanceUnit"
+          @click="setDistanceUnit(DistanceUnit.MILES)"
+        >
+          {{ $t('auth.miles') }}
         </button>
       </div>
     </section>

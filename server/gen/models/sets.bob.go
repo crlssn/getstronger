@@ -36,6 +36,7 @@ type Set struct {
 	Distance        float64   `db:"distance" `
 	DurationSeconds int32     `db:"duration_seconds" `
 	WeightUnit      string    `db:"weight_unit" `
+	DistanceUnit    string    `db:"distance_unit" `
 
 	R setR `db:"-" `
 }
@@ -68,7 +69,7 @@ type setRLoaded struct {
 
 func buildSetColumns(tableName string) setColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "workout_id", "exercise_id", "weight", "reps", "created_at", "user_id", "distance", "duration_seconds", "weight_unit",
+		"id", "workout_id", "exercise_id", "weight", "reps", "created_at", "user_id", "distance", "duration_seconds", "weight_unit", "distance_unit",
 	)
 
 	if tableName != "" {
@@ -88,6 +89,7 @@ func buildSetColumns(tableName string) setColumns {
 		Distance:        buildSetColumn(tableName, "distance"),
 		DurationSeconds: buildSetColumn(tableName, "duration_seconds"),
 		WeightUnit:      buildSetColumn(tableName, "weight_unit"),
+		DistanceUnit:    buildSetColumn(tableName, "distance_unit"),
 	}
 }
 
@@ -104,6 +106,7 @@ type setColumns struct {
 	Distance        setColumn
 	DurationSeconds setColumn
 	WeightUnit      setColumn
+	DistanceUnit    setColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -159,10 +162,11 @@ type SetSetter struct {
 	Distance        omit.Val[float64]   `db:"distance" `
 	DurationSeconds omit.Val[int32]     `db:"duration_seconds" `
 	WeightUnit      omit.Val[string]    `db:"weight_unit" `
+	DistanceUnit    omit.Val[string]    `db:"distance_unit" `
 }
 
 func (s SetSetter) SetColumns() []string {
-	vals := make([]string, 0, 10)
+	vals := make([]string, 0, 11)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -192,6 +196,9 @@ func (s SetSetter) SetColumns() []string {
 	}
 	if s.WeightUnit.IsValue() {
 		vals = append(vals, "weight_unit")
+	}
+	if s.DistanceUnit.IsValue() {
+		vals = append(vals, "distance_unit")
 	}
 	return vals
 }
@@ -226,6 +233,9 @@ func (s SetSetter) Overwrite(t *Set) {
 	}
 	if s.WeightUnit.IsValue() {
 		t.WeightUnit = s.WeightUnit.MustGet()
+	}
+	if s.DistanceUnit.IsValue() {
+		t.DistanceUnit = s.DistanceUnit.MustGet()
 	}
 }
 
@@ -285,6 +295,11 @@ func (s *SetSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.WeightUnit.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.DistanceUnit.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.DistanceUnit.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -293,7 +308,7 @@ func (s SetSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s SetSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 10)
+	exprs := make([]bob.Expression, 0, 11)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -365,6 +380,13 @@ func (s SetSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.DistanceUnit.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "distance_unit")...),
+			psql.Arg(s.DistanceUnit),
+		}})
+	}
+
 	return exprs
 }
 
@@ -375,7 +397,7 @@ func setScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(an
 		idx int
 		dst func(o *Set) any
 	}
-	targets := make([]target, 0, 10)
+	targets := make([]target, 0, 11)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -398,6 +420,8 @@ func setScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(an
 			targets = append(targets, target{i, func(o *Set) any { return &o.DurationSeconds }})
 		case "weight_unit":
 			targets = append(targets, target{i, func(o *Set) any { return &o.WeightUnit }})
+		case "distance_unit":
+			targets = append(targets, target{i, func(o *Set) any { return &o.DistanceUnit }})
 		}
 	}
 
@@ -845,6 +869,7 @@ type setWhere[Q psql.Filterable] struct {
 	Distance        psql.WhereMod[Q, float64]
 	DurationSeconds psql.WhereMod[Q, int32]
 	WeightUnit      psql.WhereMod[Q, string]
+	DistanceUnit    psql.WhereMod[Q, string]
 	R               setWhereR[Q]
 }
 
@@ -865,6 +890,7 @@ func buildSetWhere[Q psql.Filterable](cols setColumns) setWhere[Q] {
 		Distance:        psql.Where[Q, float64](cols.Distance.Expression),
 		DurationSeconds: psql.Where[Q, int32](cols.DurationSeconds.Expression),
 		WeightUnit:      psql.Where[Q, string](cols.WeightUnit.Expression),
+		DistanceUnit:    psql.Where[Q, string](cols.DistanceUnit.Expression),
 		R:               setWhereR[Q]{cols: cols},
 	}
 }

@@ -254,8 +254,8 @@ test.describe('weight units', () => {
     // shows a static suffix, not a toggle.
     await page.goto('/workouts/quick')
     let exercise = await addFirstExercise(page)
-    let weightEntry = page.locator('.weight-entry').first()
-    await expect(weightEntry.locator('.weight-unit-suffix')).toHaveText('kg')
+    let weightEntry = page.locator('.unit-entry').first()
+    await expect(weightEntry.locator('.unit-suffix')).toHaveText('kg')
     await expect(weightEntry.getByRole('button')).toHaveCount(0)
     await expect(page.getByRole('group', { name: /weight unit/ })).toHaveCount(0)
 
@@ -283,8 +283,8 @@ test.describe('weight units', () => {
     // New set inputs pick up the new preference as a static suffix.
     await page.goto('/workouts/quick')
     exercise = await addFirstExercise(page)
-    weightEntry = page.locator('.weight-entry').first()
-    await expect(weightEntry.locator('.weight-unit-suffix')).toHaveText('lbs')
+    weightEntry = page.locator('.unit-entry').first()
+    await expect(weightEntry.locator('.unit-suffix')).toHaveText('lbs')
 
     // Heavier than anything seeded so this set becomes the exercise's personal
     // best and the records view has to render it back in the unit it was
@@ -318,8 +318,8 @@ test.describe('weight units', () => {
 
     await page.goto('/workouts/quick')
     exercise = await addFirstExercise(page)
-    weightEntry = page.locator('.weight-entry').first()
-    await expect(weightEntry.locator('.weight-unit-suffix')).toHaveText('kg')
+    weightEntry = page.locator('.unit-entry').first()
+    await expect(weightEntry.locator('.unit-suffix')).toHaveText('kg')
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     await page.getByRole('button', { name: 'Discard workout' }).click()
     await page.getByRole('button', { name: 'Discard workout' }).click()
@@ -362,7 +362,7 @@ test.describe('weight units', () => {
     // 100 kg is the same weight as 220.46 lb. The row must never show the old
     // number beside the new unit, or finishing saves a weight nobody entered.
     await page.goto('/workouts/quick')
-    await expect(page.locator('.weight-entry .weight-unit-suffix').first()).toHaveText('lbs')
+    await expect(page.locator('.unit-entry .unit-suffix').first()).toHaveText('lbs')
     await expect(
       page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }),
     ).toHaveValue('220.46')
@@ -380,6 +380,91 @@ test.describe('weight units', () => {
       .getByRole('button', { name: 'Kilograms' })
       .click()
     await expect(page.getByRole('status')).toContainText('Weight unit updated')
+  })
+
+  test('logs distance and time in the preferred unit and keeps history in the entered unit @mutation', async ({
+    page,
+  }) => {
+    await logInAs(page, 'active@getstronger.test', 'password123')
+    const exerciseName = uniqueName('E2E Evening Run')
+
+    // Creating the exercise shows the account's distance unit on the
+    // measurement card, so the athlete knows what a set will be logged in.
+    await page.goto('/exercises/create')
+    await page.locator('form input[type="text"]').first().fill(exerciseName)
+    await expect(page.locator('.measurement').filter({ hasText: 'Distance' })).toContainText('km')
+    await page.getByRole('button', { name: 'Distance × time' }).click()
+    await page.getByRole('button', { name: 'Save Exercise' }).click()
+    await expect(page).toHaveURL(/\/exercises$/)
+
+    try {
+      await page.goto('/profile')
+      const unit = page.getByRole('group', { name: 'Preferred distance unit' })
+      await expect(unit.getByRole('button', { name: 'Kilometers' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+      await unit.getByRole('button', { name: 'Miles' }).click()
+      await expect(unit.getByRole('button', { name: 'Miles' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+      await expect(page.getByRole('status')).toContainText('Distance unit updated')
+
+      await page.goto('/workouts/quick')
+      await page.getByRole('button', { name: 'Choose exercise' }).click()
+      const picker = page.getByRole('dialog', { name: 'Add exercise' })
+      await picker.getByLabel('Search exercises').fill(exerciseName)
+      await picker.locator('.exercise-options button').first().click()
+
+      // Distance is a decimal field carrying the preference as a static
+      // suffix; time is a stopwatch-style field where bare digits fill in
+      // from the right, so "1230" reads as 12:30.
+      await expect(page.locator('.unit-entry .unit-suffix').first()).toHaveText('mi')
+      await page
+        .getByRole('textbox', { name: `${exerciseName} set 1 distance`, exact: true })
+        .fill('3.5')
+      const time = page.getByRole('textbox', { name: `${exerciseName} set 1 time`, exact: true })
+      await time.fill('1230')
+      await time.blur()
+      await expect(time).toHaveValue('12:30')
+
+      await page.getByRole('button', { name: 'Complete exercise' }).click()
+      await page.getByRole('button', { name: 'Finish workout' }).click()
+      await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+      const workoutUrl = page.url()
+      await expect(page.getByText(/3\.5\s*mi/)).toBeVisible()
+      await expect(page.getByText('12:30')).toBeVisible()
+
+      // Switching back to kilometers must not rewrite the set logged in
+      // miles: historical display stays in the unit it was entered in.
+      await page.goto('/profile')
+      await unit.getByRole('button', { name: 'Kilometers' }).click()
+      await expect(page.getByRole('status')).toContainText('Distance unit updated')
+
+      await page.goto(workoutUrl)
+      await expect(page.getByText(/3\.5\s*mi/)).toBeVisible()
+    } finally {
+      await page.goto('/profile')
+      const unit = page.getByRole('group', { name: 'Preferred distance unit' })
+      if (
+        (await unit.getByRole('button', { name: 'Kilometers' }).getAttribute('aria-pressed')) !==
+        'true'
+      ) {
+        await unit.getByRole('button', { name: 'Kilometers' }).click()
+        await expect(page.getByRole('status')).toContainText('Distance unit updated')
+      }
+
+      await page.goto('/exercises')
+      await page.getByLabel('Search exercises').fill(exerciseName)
+      const link = page.getByRole('link').filter({ hasText: exerciseName }).first()
+      if (await link.isVisible()) {
+        await link.click()
+        page.once('dialog', (dialog) => dialog.accept())
+        await page.getByRole('button', { name: 'Delete exercise' }).click()
+        await expect(page).toHaveURL(/\/exercises$/)
+      }
+    }
   })
 })
 

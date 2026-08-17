@@ -2,20 +2,34 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { usePreferencesStore } from '@/stores/preferences'
+import { weightUnitLabel } from '@/utils/weightUnits'
+import { distanceUnitLabel } from '@/utils/distanceUnits'
 
 const { t } = useI18n()
+const preferencesStore = usePreferencesStore()
 
 const metrics = defineModel<ExerciseMetric[]>('metrics', { required: true })
 const restSeconds = defineModel<number>('restSeconds', { required: true })
 
+// The unit hints reflect the signed-in user's preferences so the card shows
+// what a set of this exercise will actually be logged in.
 const measurements = computed(() => [
-  { value: ExerciseMetric.WEIGHT, label: t('common.weight'), unit: t('common.kg') },
+  {
+    value: ExerciseMetric.WEIGHT,
+    label: t('common.weight'),
+    unit: weightUnitLabel(preferencesStore.weightUnit),
+  },
   {
     value: ExerciseMetric.REPS,
     label: t('common.reps'),
     unit: t('exercise.measurements.unitCount'),
   },
-  { value: ExerciseMetric.DISTANCE, label: t('common.distance'), unit: 'km' },
+  {
+    value: ExerciseMetric.DISTANCE,
+    label: t('common.distance'),
+    unit: distanceUnitLabel(preferencesStore.distanceUnit),
+  },
   {
     value: ExerciseMetric.TIME,
     label: t('common.time'),

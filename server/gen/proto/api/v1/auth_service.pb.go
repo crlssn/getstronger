@@ -31,6 +31,7 @@ type SignupRequest struct {
 	FirstName            string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
 	LastName             string                 `protobuf:"bytes,5,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	WeightUnit           WeightUnit             `protobuf:"varint,6,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
+	DistanceUnit         DistanceUnit           `protobuf:"varint,7,opt,name=distance_unit,json=distanceUnit,proto3,enum=api.v1.DistanceUnit" json:"distance_unit,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -105,6 +106,13 @@ func (x *SignupRequest) GetWeightUnit() WeightUnit {
 		return x.WeightUnit
 	}
 	return WeightUnit_WEIGHT_UNIT_UNSPECIFIED
+}
+
+func (x *SignupRequest) GetDistanceUnit() DistanceUnit {
+	if x != nil {
+		return x.DistanceUnit
+	}
+	return DistanceUnit_DISTANCE_UNIT_UNSPECIFIED
 }
 
 type SignupResponse struct {
@@ -741,7 +749,7 @@ var File_api_v1_auth_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1bbuf/validate/validate.proto\"\x95\x02\n" +
+	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1bbuf/validate/validate.proto\"\xda\x02\n" +
 	"\rSignupRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x06R\bpassword\x123\n" +
@@ -750,7 +758,8 @@ const file_api_v1_auth_service_proto_rawDesc = "" +
 	"first_name\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tfirstName\x12$\n" +
 	"\tlast_name\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\blastName\x12=\n" +
 	"\vweight_unit\x18\x06 \x01(\x0e2\x12.api.v1.WeightUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
-	"weightUnit\"\x10\n" +
+	"weightUnit\x12C\n" +
+	"\rdistance_unit\x18\a \x01(\x0e2\x14.api.v1.DistanceUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdistanceUnit\"\x10\n" +
 	"\x0eSignupResponse\"R\n" +
 	"\fLoginRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
@@ -820,30 +829,32 @@ var file_api_v1_auth_service_proto_goTypes = []any{
 	(*UpdatePasswordRequest)(nil),           // 14: api.v1.UpdatePasswordRequest
 	(*UpdatePasswordResponse)(nil),          // 15: api.v1.UpdatePasswordResponse
 	(WeightUnit)(0),                         // 16: api.v1.WeightUnit
+	(DistanceUnit)(0),                       // 17: api.v1.DistanceUnit
 }
 var file_api_v1_auth_service_proto_depIdxs = []int32{
 	16, // 0: api.v1.SignupRequest.weight_unit:type_name -> api.v1.WeightUnit
-	0,  // 1: api.v1.AuthService.Signup:input_type -> api.v1.SignupRequest
-	2,  // 2: api.v1.AuthService.Login:input_type -> api.v1.LoginRequest
-	4,  // 3: api.v1.AuthService.RefreshToken:input_type -> api.v1.RefreshTokenRequest
-	6,  // 4: api.v1.AuthService.Logout:input_type -> api.v1.LogoutRequest
-	8,  // 5: api.v1.AuthService.VerifyEmail:input_type -> api.v1.VerifyEmailRequest
-	10, // 6: api.v1.AuthService.ResendVerificationEmail:input_type -> api.v1.ResendVerificationEmailRequest
-	12, // 7: api.v1.AuthService.ResetPassword:input_type -> api.v1.ResetPasswordRequest
-	14, // 8: api.v1.AuthService.UpdatePassword:input_type -> api.v1.UpdatePasswordRequest
-	1,  // 9: api.v1.AuthService.Signup:output_type -> api.v1.SignupResponse
-	3,  // 10: api.v1.AuthService.Login:output_type -> api.v1.LoginResponse
-	5,  // 11: api.v1.AuthService.RefreshToken:output_type -> api.v1.RefreshTokenResponse
-	7,  // 12: api.v1.AuthService.Logout:output_type -> api.v1.LogoutResponse
-	9,  // 13: api.v1.AuthService.VerifyEmail:output_type -> api.v1.VerifyEmailResponse
-	11, // 14: api.v1.AuthService.ResendVerificationEmail:output_type -> api.v1.ResendVerificationEmailResponse
-	13, // 15: api.v1.AuthService.ResetPassword:output_type -> api.v1.ResetPasswordResponse
-	15, // 16: api.v1.AuthService.UpdatePassword:output_type -> api.v1.UpdatePasswordResponse
-	9,  // [9:17] is the sub-list for method output_type
-	1,  // [1:9] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	17, // 1: api.v1.SignupRequest.distance_unit:type_name -> api.v1.DistanceUnit
+	0,  // 2: api.v1.AuthService.Signup:input_type -> api.v1.SignupRequest
+	2,  // 3: api.v1.AuthService.Login:input_type -> api.v1.LoginRequest
+	4,  // 4: api.v1.AuthService.RefreshToken:input_type -> api.v1.RefreshTokenRequest
+	6,  // 5: api.v1.AuthService.Logout:input_type -> api.v1.LogoutRequest
+	8,  // 6: api.v1.AuthService.VerifyEmail:input_type -> api.v1.VerifyEmailRequest
+	10, // 7: api.v1.AuthService.ResendVerificationEmail:input_type -> api.v1.ResendVerificationEmailRequest
+	12, // 8: api.v1.AuthService.ResetPassword:input_type -> api.v1.ResetPasswordRequest
+	14, // 9: api.v1.AuthService.UpdatePassword:input_type -> api.v1.UpdatePasswordRequest
+	1,  // 10: api.v1.AuthService.Signup:output_type -> api.v1.SignupResponse
+	3,  // 11: api.v1.AuthService.Login:output_type -> api.v1.LoginResponse
+	5,  // 12: api.v1.AuthService.RefreshToken:output_type -> api.v1.RefreshTokenResponse
+	7,  // 13: api.v1.AuthService.Logout:output_type -> api.v1.LogoutResponse
+	9,  // 14: api.v1.AuthService.VerifyEmail:output_type -> api.v1.VerifyEmailResponse
+	11, // 15: api.v1.AuthService.ResendVerificationEmail:output_type -> api.v1.ResendVerificationEmailResponse
+	13, // 16: api.v1.AuthService.ResetPassword:output_type -> api.v1.ResetPasswordResponse
+	15, // 17: api.v1.AuthService.UpdatePassword:output_type -> api.v1.UpdatePasswordResponse
+	10, // [10:18] is the sub-list for method output_type
+	2,  // [2:10] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_auth_service_proto_init() }

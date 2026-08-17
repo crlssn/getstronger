@@ -8,6 +8,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
+	"github.com/crlssn/getstronger/server/distanceunit"
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/weightunit"
@@ -45,25 +46,11 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 		auth = f.NewAuth()
 	}
 
-	mods := []bobfactory.UserMod{
+	mods := append([]bobfactory.UserMod{
 		bobfactory.UserMods.WithExistingAuth(authWithoutRelationships(auth)),
 		bobfactory.UserMods.WeightUnit(string(weightunit.Kilograms)),
-	}
-	if value, ok := setter.ID.Get(); ok {
-		mods = append(mods, bobfactory.UserMods.ID(value))
-	}
-	if value, ok := setter.FirstName.Get(); ok {
-		mods = append(mods, bobfactory.UserMods.FirstName(value))
-	}
-	if value, ok := setter.LastName.Get(); ok {
-		mods = append(mods, bobfactory.UserMods.LastName(value))
-	}
-	if value, ok := setter.CreatedAt.Get(); ok {
-		mods = append(mods, bobfactory.UserMods.CreatedAt(value))
-	}
-	if value, ok := setter.WeightUnit.Get(); ok {
-		mods = append(mods, bobfactory.UserMods.WeightUnit(value))
-	}
+		bobfactory.UserMods.DistanceUnit(string(distanceunit.Kilometers)),
+	}, userSetterMods(setter)...)
 
 	template := f.generated.NewUser(mods...)
 	built := template.Build()
@@ -80,6 +67,33 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 	user.R = built.R
 
 	return user
+}
+
+// userSetterMods translates the values set through UserOpts into factory mods
+// so they override the defaults above.
+func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
+	const modCount = 6
+	mods := make([]bobfactory.UserMod, 0, modCount)
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.ID(value))
+	}
+	if value, ok := setter.FirstName.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.FirstName(value))
+	}
+	if value, ok := setter.LastName.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.LastName(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.CreatedAt(value))
+	}
+	if value, ok := setter.WeightUnit.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.WeightUnit(value))
+	}
+	if value, ok := setter.DistanceUnit.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.DistanceUnit(value))
+	}
+
+	return mods
 }
 
 func UserID(id any) UserOpt {
@@ -115,5 +129,11 @@ func UserCreatedAt(createdAt time.Time) UserOpt {
 func UserWeightUnit(unit weightunit.Unit) UserOpt {
 	return func(m *models.UserSetter) {
 		m.WeightUnit = omit.From(string(unit))
+	}
+}
+
+func UserDistanceUnit(unit distanceunit.Unit) UserOpt {
+	return func(m *models.UserSetter) {
+		m.DistanceUnit = omit.From(string(unit))
 	}
 }

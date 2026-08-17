@@ -15,6 +15,7 @@ import {
 } from 'chart.js'
 import { exerciseMetrics, formatMeasurementDuration } from '@/utils/exerciseMeasurements'
 import { weightInKilograms } from '@/utils/weightUnits'
+import { distanceInKilometers } from '@/utils/distanceUnits'
 
 ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
 
@@ -99,7 +100,12 @@ const dailyMetrics = computed(() => {
     existing.weight = Math.max(existing.weight, weight)
     existing.volume += weight * set.reps
     existing.reps = Math.max(existing.reps, set.reps)
-    existing.distance = Math.max(existing.distance, set.distance)
+    // Sets may have been logged under different unit preferences over time, so
+    // the chart aggregates in the canonical unit like it does for weight.
+    existing.distance = Math.max(
+      existing.distance,
+      distanceInKilometers(set.distance, set.distanceUnit),
+    )
     existing.durationSeconds = Math.max(existing.durationSeconds, set.durationSeconds)
     buckets.set(key, existing)
   })

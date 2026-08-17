@@ -70,6 +70,8 @@ test.describe('guest authentication and routing', () => {
     await page.getByLabel('Confirm password').fill(password)
     await page.getByText('Pounds', { exact: true }).click()
     await expect(page.getByRole('radio', { name: /Pounds/ })).toBeChecked()
+    await page.getByText('Miles', { exact: true }).click()
+    await expect(page.getByRole('radio', { name: /Miles/ })).toBeChecked()
     await page.getByRole('button', { name: 'Create an account' }).click()
 
     // The notice says the link was sent, not that the account is verified.
@@ -107,6 +109,20 @@ test.describe('guest authentication and routing', () => {
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Log in' }).click()
     await expect(page).toHaveURL(/\/home$/)
+
+    // The units picked at signup are the account's preferences, not defaults
+    // that got lost on the way to the profile.
+    await page.goto('/profile')
+    await expect(
+      page
+        .getByRole('group', { name: 'Preferred weight unit' })
+        .getByRole('button', { name: 'Pounds' }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    await expect(
+      page
+        .getByRole('group', { name: 'Preferred distance unit' })
+        .getByRole('button', { name: 'Miles' }),
+    ).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('accepts password reset requests without exposing account existence', async ({ page }) => {

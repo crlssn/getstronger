@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -153,12 +154,39 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[ap
 }
 
 func (h *userHandler) UpdateUserWeightUnit(ctx context.Context, req *connect.Request[apiv1.UpdateUserWeightUnitRequest]) (*connect.Response[apiv1.UpdateUserWeightUnitResponse], error) {
+	weightUnit := parser.WeightUnitFromProto(req.Msg.GetWeightUnit())
+	user, err := h.updateUserUnitPreference(ctx, "weight unit", repo.UpdateUserWeightUnit(weightUnit))
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[apiv1.UpdateUserWeightUnitResponse]{
+		Msg: &apiv1.UpdateUserWeightUnitResponse{
+			User: user,
+		},
+	}, nil
+}
+
+func (h *userHandler) UpdateUserDistanceUnit(ctx context.Context, req *connect.Request[apiv1.UpdateUserDistanceUnitRequest]) (*connect.Response[apiv1.UpdateUserDistanceUnitResponse], error) {
+	distanceUnit := parser.DistanceUnitFromProto(req.Msg.GetDistanceUnit())
+	user, err := h.updateUserUnitPreference(ctx, "distance unit", repo.UpdateUserDistanceUnit(distanceUnit))
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[apiv1.UpdateUserDistanceUnitResponse]{
+		Msg: &apiv1.UpdateUserDistanceUnitResponse{
+			User: user,
+		},
+	}, nil
+}
+
+func (h *userHandler) updateUserUnitPreference(ctx context.Context, preference string, opt repo.UpdateUserOpt) (*apiv1.User, error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	weightUnit := parser.WeightUnitFromProto(req.Msg.GetWeightUnit())
-	if err := h.repo.UpdateUser(ctx, userID, repo.UpdateUserWeightUnit(weightUnit)); err != nil {
-		log.Error("failed to update user weight unit", zap.Error(err))
+	if err := h.repo.UpdateUser(ctx, userID, opt); err != nil {
+		log.Error(fmt.Sprintf("failed to update user %s", preference), zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -168,12 +196,8 @@ func (h *userHandler) UpdateUserWeightUnit(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("user weight unit updated")
-	return &connect.Response[apiv1.UpdateUserWeightUnitResponse]{
-		Msg: &apiv1.UpdateUserWeightUnitResponse{
-			User: parser.User(user),
-		},
-	}, nil
+	log.Info(fmt.Sprintf("user %s updated", preference))
+	return parser.User(user), nil
 }
 
 func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[apiv1.ListFolloweesRequest]) (*connect.Response[apiv1.ListFolloweesResponse], error) {

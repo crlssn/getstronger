@@ -495,6 +495,7 @@ func (f *Factory) fromExistingSet(ctx context.Context, m *models.Set) *SetTempla
 	o.Distance = func() float64 { return m.Distance }
 	o.DurationSeconds = func() int32 { return m.DurationSeconds }
 	o.WeightUnit = func() string { return m.WeightUnit }
+	o.DistanceUnit = func() string { return m.DistanceUnit }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -577,6 +578,7 @@ func (f *Factory) fromExistingUser(ctx context.Context, m *models.User) *UserTem
 	o.FullNameSearch = func() string { return m.FullNameSearch }
 	o.AuthID = func() uuid.UUID { return m.AuthID }
 	o.WeightUnit = func() string { return m.WeightUnit }
+	o.DistanceUnit = func() string { return m.DistanceUnit }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

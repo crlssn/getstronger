@@ -50,6 +50,7 @@ import {
   type MeasurementField,
 } from '@/utils/exerciseMeasurements'
 import { convertWeight, normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
+import { convertDistance, normalizeDistanceUnit, distanceUnitLabel } from '@/utils/distanceUnits'
 
 const { input: note, textarea } = useTextareaAutosize()
 const { t } = useI18n()
@@ -84,6 +85,7 @@ const exerciseCard = ref<HTMLElement | null>(null)
 const authStore = useAuthStore()
 const preferencesStore = usePreferencesStore()
 const defaultWeightUnit = ref(preferencesStore.weightUnit)
+const defaultDistanceUnit = ref(preferencesStore.distanceUnit)
 const workoutStore = useWorkoutStore()
 const dashboardStore = useDashboardStore()
 const alertStore = useAlertStore()
@@ -101,8 +103,11 @@ onMounted(async () => {
   if (userResponse?.user) {
     defaultWeightUnit.value = normalizeWeightUnit(userResponse.user.weightUnit)
     preferencesStore.setWeightUnit(userResponse.user.weightUnit)
+    defaultDistanceUnit.value = normalizeDistanceUnit(userResponse.user.distanceUnit)
+    preferencesStore.setDistanceUnit(userResponse.user.distanceUnit)
   }
   workoutStore.syncWeightUnits(routineID, defaultWeightUnit.value)
+  workoutStore.syncDistanceUnits(routineID, defaultDistanceUnit.value)
   await initializeRoutine()
   elapsedSeconds.value = Math.max(
     0,
@@ -400,6 +405,7 @@ const addEmptySetsFromPreviousSession = () => {
       exercise.id,
       exercise.metrics,
       defaultWeightUnit.value,
+      defaultDistanceUnit.value,
     ),
   )
 
@@ -407,7 +413,12 @@ const addEmptySetsFromPreviousSession = () => {
     if (!exerciseSets.exercise) return
     const currentLength = workoutStore.getSets(routineID, exerciseSets.exercise.id).length
     for (let index = currentLength; index < exerciseSets.sets.length; index += 1) {
-      workoutStore.addEmptySet(routineID, exerciseSets.exercise.id, defaultWeightUnit.value)
+      workoutStore.addEmptySet(
+        routineID,
+        exerciseSets.exercise.id,
+        defaultWeightUnit.value,
+        defaultDistanceUnit.value,
+      )
     }
   })
 }
@@ -446,6 +457,7 @@ const onSetInput = (exerciseID: string, set: Set, index: number) => {
     exerciseID,
     exerciseByID(exerciseID)?.metrics,
     defaultWeightUnit.value,
+    defaultDistanceUnit.value,
   )
   syncSetCompletion(exerciseID, set, index)
 }
@@ -463,6 +475,7 @@ const copyPreviousValue = async (
   if (!previous) return
 
   const previousWeight = previous.weight
+  const previousDistance = previous.distance
   if (field === 'weight' && typeof previousWeight === 'number' && !Number.isNaN(previousWeight)) {
     // The previous set may have been logged under an older preference, so the
     // value is converted. Write the unit alongside it: a weight and the unit it
@@ -473,6 +486,19 @@ const copyPreviousValue = async (
       defaultWeightUnit.value,
     )
     set.weightUnit = defaultWeightUnit.value
+  } else if (
+    field === 'distance' &&
+    typeof previousDistance === 'number' &&
+    !Number.isNaN(previousDistance)
+  ) {
+    // Same contract as weight: the copied distance is converted into the unit
+    // this set will be logged in.
+    set.distance = convertDistance(
+      previousDistance,
+      normalizeDistanceUnit(previous.distanceUnit),
+      defaultDistanceUnit.value,
+    )
+    set.distanceUnit = defaultDistanceUnit.value
   } else {
     set[field] = previous[field]
   }
@@ -481,6 +507,7 @@ const copyPreviousValue = async (
     exerciseId,
     exerciseByID(exerciseId)?.metrics,
     defaultWeightUnit.value,
+    defaultDistanceUnit.value,
   )
   syncSetCompletion(exerciseId, set, index)
   await nextTick()
@@ -641,6 +668,7 @@ const buildWorkoutSets = () => {
           distance: set.distance ?? 0,
           durationSeconds: set.durationSeconds ?? 0,
           weightUnit: normalizeWeightUnit(set.weightUnit ?? defaultWeightUnit.value),
+          distanceUnit: normalizeDistanceUnit(set.distanceUnit ?? defaultDistanceUnit.value),
         })),
       })
     })
@@ -803,7 +831,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
   routine.value.exercises.push(exercise)
   workoutStore.addWorkoutExercise(routineID, exercise)
-  workoutStore.addEmptySetIfNone(routineID, exercise.id, exercise.metrics, defaultWeightUnit.value)
+  workoutStore.addEmptySetIfNone(
+    routineID,
+    exercise.id,
+    exercise.metrics,
+    defaultWeightUnit.value,
+    defaultDistanceUnit.value,
+  )
   closeExercisePicker()
 
   const previousResponse = await getPreviousWorkoutSets([exercise.id])
@@ -946,7 +980,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                   copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
                 "
               />
-              <div v-else-if="measurement.field === 'weight'" class="weight-entry">
+              <div v-else-if="measurement.field === 'weight'" class="unit-entry">
                 <input
                   v-model.number="set.weight"
                   type="text"
@@ -955,7 +989,18 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                   @input="onSetInput(currentExercise.id, set, setIndex)"
                   @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'weight')"
                 />
-                <span class="weight-unit-suffix">{{ weightUnitLabel(defaultWeightUnit) }}</span>
+                <span class="unit-suffix">{{ weightUnitLabel(defaultWeightUnit) }}</span>
+              </div>
+              <div v-else-if="measurement.field === 'distance'" class="unit-entry">
+                <input
+                  v-model.number="set.distance"
+                  type="text"
+                  inputmode="decimal"
+                  :aria-label="`${currentExercise.name} set ${setIndex + 1} distance`"
+                  @input="onSetInput(currentExercise.id, set, setIndex)"
+                  @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'distance')"
+                />
+                <span class="unit-suffix">{{ distanceUnitLabel(defaultDistanceUnit) }}</span>
               </div>
               <input
                 v-else
@@ -1497,29 +1542,29 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply min-h-(--size-control) min-w-0 rounded-control border-border px-2 text-center font-semibold shadow-card focus:border-ink focus:ring-ink;
 }
 .set-row.active input,
-.set-row.active .weight-entry {
+.set-row.active .unit-entry {
   @apply border-ink;
 }
 .set-row.complete input,
-.set-row.complete .weight-entry {
+.set-row.complete .unit-entry {
   @apply bg-surface-sunken;
 }
 /* Focus reveal (and focusNextSetInput) must land above the fixed session dock,
    not behind it. */
 .set-row input,
-.weight-entry,
+.unit-entry,
 .note-card textarea {
   scroll-margin-bottom: 10rem;
 }
-.weight-entry {
+.unit-entry {
   @apply grid min-h-(--size-control) min-w-0 grid-cols-[minmax(2.75rem,1fr)_auto] items-center overflow-hidden rounded-control border border-border bg-surface pr-2.5 shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
 }
-.weight-entry > input {
+.unit-entry > input {
   @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
 }
 /* A unit is a label on the field, not a second control inside it. The old
    bordered, filled cell read as a button worth pressing. */
-.weight-unit-suffix {
+.unit-suffix {
   @apply pointer-events-none select-none text-meta font-medium lowercase text-text-subtle;
 }
 .remove-set {
