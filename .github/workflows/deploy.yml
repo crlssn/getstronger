@@ -41,6 +41,7 @@ jobs:
   init:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy' && github.actor == 'crlssn')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     outputs:
       web: ${{ steps.changes.outputs.web }}
@@ -65,6 +66,7 @@ jobs:
   database:
     needs: init
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: needs.init.outputs.database == 'true' || (github.event_name == 'workflow_dispatch' && inputs.migrate)
     env:
       DB_HOST: ${{ vars.DB_HOST }}
@@ -95,6 +97,7 @@ jobs:
   server:
     needs: [init, database]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: >-
       always() &&
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
@@ -220,10 +223,12 @@ jobs:
             fi
 
   web:
-    needs: [init, server]
+    needs: [init, database, server]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: >-
       always() &&
+      (needs.database.result == 'success' || needs.database.result == 'skipped') &&
       (needs.server.result == 'success' || needs.server.result == 'skipped') &&
       (needs.init.outputs.web == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
 
@@ -234,11 +239,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+          node-version: '24.19.0'
 
       - name: Install dependencies
         working-directory: ./web
-        run: npm install
+        run: npm ci
 
       - name: Build the app
         working-directory: ./web
@@ -262,6 +269,7 @@ jobs:
   cleanup:
     needs: [init, database, server, web]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: always()
 
     steps:

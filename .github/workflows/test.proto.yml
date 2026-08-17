@@ -16,10 +16,15 @@ on:
       - 'buf.gen.yaml'
       - 'package.json'
 
+concurrency:
+  group: test-proto-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   proto:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -28,10 +33,12 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+          node-version: '24.19.0'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate protos
         run: npx buf generate
@@ -42,10 +49,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
 
       - name: Install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
+        run: go install golang.org/x/tools/cmd/goimports@v0.48.0
 
       - name: Run goimports
         run: goimports -w .
