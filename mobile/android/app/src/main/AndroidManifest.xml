@@ -23,6 +23,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- App Links: verification succeeds once assetlinks.json on the
+                 web domain carries the release signing fingerprint (#1033);
+                 until then these links keep opening in the browser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.getstronger.studio" />
+            </intent-filter>
+
+            <!-- Custom scheme, mainly for development and testing deep links
+                 without domain verification. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="getstronger" />
+            </intent-filter>
+
         </activity>
 
         <provider

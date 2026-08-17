@@ -169,6 +169,15 @@ The WebView loads the bundled assets, so it has no dev-server proxy: syncs build
 
 Native builds route unary API calls through Capacitor's native HTTP layer, so they bypass CORS and keep the refresh-token cookie in the platform's cookie jar. Server-streaming calls (the unread-notification stream) still run through the WebView's `fetch`, which means the backend's `CORS_ALLOWED_ORIGIN` must include the native origins `capacitor://localhost` (iOS) and `http://localhost` (Android). Without them the app still works; unread counts then update through polling alone.
 
+### Deep links
+
+Verification and password-reset emails link to the web domain. The native projects are configured so those links open the app once domain verification is in place: the iOS project declares an Associated Domain (`applinks:www.getstronger.studio`) and the Android manifest carries an `autoVerify` intent filter for the same host. Both platforms fall back to the browser until the two files under `web/public/.well-known/` are filled with the release identities from the store setup:
+
+- `apple-app-site-association` needs the Apple Team ID in `appIDs` — and must be served as `application/json`, which is worth checking on the bucket/CDN.
+- `assetlinks.json` needs the SHA-256 fingerprint of the Android release signing certificate.
+
+The custom `getstronger://` scheme opens the app directly on both platforms without any verification, e.g. `getstronger://verify-email?token=…`, which is useful for testing the routing.
+
 ## Production infrastructure on Scaleway
 
 Production infrastructure is provisioned manually in the [Scaleway console](https://console.scaleway.com/) (ClickOps). The suggested layout is:
