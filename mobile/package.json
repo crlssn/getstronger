@@ -7,7 +7,8 @@
     "ios": "cap run ios",
     "android": "cap run android",
     "open:ios": "cap open ios",
-    "open:android": "cap open android"
+    "open:android": "cap open android",
+    "assets": "node scripts/generate-asset-sources.mjs && capacitor-assets generate --ios --android"
   },
   "dependencies": {
     "@capacitor-community/keep-awake": "8.0.1",
@@ -19,6 +20,7 @@
     "@capacitor/status-bar": "8.0.2"
   },
   "devDependencies": {
+    "@capacitor/assets": "3.0.5",
     "@capacitor/cli": "8.5.0"
   }
 }
