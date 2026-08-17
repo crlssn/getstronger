@@ -1,5 +1,10 @@
 # Project instructions
 
+Tasks are handed to agents as a brief following
+[`AGENT_TASK_TEMPLATE.md`](AGENT_TASK_TEMPLATE.md). The brief describes the
+individual task; this file holds the repository-wide rules that apply to every
+task and take precedence when a brief is silent.
+
 ## Working in a worktree
 
 Several agents may work on different features at the same time, each in its own
