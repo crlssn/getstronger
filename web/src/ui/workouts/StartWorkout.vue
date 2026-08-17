@@ -1306,7 +1306,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leave-workout {
-  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-xl text-text-subtle transition hover:bg-ink-tint hover:text-text;
+  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
 }
 .leave-workout svg {
   @apply size-5;
@@ -1371,7 +1371,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   );
   transition: --rest-hue 900ms ease;
   border-radius: 2rem;
-  @apply pointer-events-auto relative flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden px-4 py-2 text-white shadow-xl;
+  @apply pointer-events-auto relative flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden px-4 py-2 text-white shadow-overlay;
 }
 .rest-pill > svg {
   @apply size-4 shrink-0 text-white/85;
@@ -1462,7 +1462,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply card grid justify-items-center gap-3 p-8 text-center;
 }
 .quick-empty > span {
-  @apply grid size-14 place-items-center rounded-2xl bg-ink-surface text-ink;
+  @apply grid size-14 place-items-center rounded-card bg-ink-surface text-ink;
 }
 .quick-empty > span svg {
   @apply size-6;
@@ -1474,7 +1474,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply max-w-sm text-sm text-text-subtle;
 }
 .quick-empty button {
-  @apply mt-2 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 justify-self-stretch rounded-xl bg-ink px-4 text-base font-semibold text-white transition hover:bg-ink-strong;
+  @apply mt-2 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 justify-self-stretch rounded-control bg-ink px-4 text-base font-semibold text-white transition hover:bg-ink-strong;
 }
 .quick-empty button svg {
   @apply size-5;
@@ -1578,7 +1578,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-4;
 }
 .completed-exercise {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl bg-success-surface p-4 text-success;
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-control bg-success-surface p-4 text-success;
 }
 .completed-icon {
   @apply grid size-9 place-items-center rounded-full bg-success text-white;
@@ -1649,7 +1649,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply card grid w-full grid-cols-[auto_1fr] items-center gap-3 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
 }
 .add-exercise > svg {
-  @apply size-11 shrink-0 rounded-xl bg-ink p-2.5 text-white;
+  @apply size-11 shrink-0 rounded-control bg-ink p-2.5 text-white;
 }
 .add-exercise strong,
 .add-exercise small {
@@ -1706,7 +1706,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
 }
 .exercise-picker {
-  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
+  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
 }
 .exercise-picker header {
   @apply mb-4 flex items-center justify-between gap-4;
@@ -1715,13 +1715,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-1 text-xl font-semibold text-text;
 }
 .exercise-picker header button {
-  @apply grid size-11 place-items-center rounded-xl border border-border text-text-subtle;
+  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
 }
 .exercise-picker header button svg {
   @apply size-5;
 }
 .exercise-search {
-  @apply mb-4 flex items-center gap-2 rounded-xl border border-border bg-ink-surface px-3;
+  @apply mb-4 flex items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
 }
 .exercise-search svg {
   @apply size-5 text-text-subtle;
@@ -1733,7 +1733,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .exercise-options button {
-  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
+  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
 }
 .exercise-options strong,
 .exercise-options small {
@@ -1749,13 +1749,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-5 shrink-0 text-ink;
 }
 .picker-empty {
-  @apply rounded-xl border border-dashed border-ink-border p-6 text-center text-sm text-text-subtle;
+  @apply rounded-control border border-dashed border-ink-border p-6 text-center text-sm text-text-subtle;
 }
 .load-more {
-  @apply mt-4 min-h-(--size-control) w-full rounded-xl border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
+  @apply mt-4 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
 }
 .finish-dialog {
-  @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 text-left shadow-2xl sm:rounded-3xl;
+  @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-sheet bg-white p-5 text-left shadow-overlay sm:rounded-sheet;
 }
 .dialog-handle {
   @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
@@ -1767,7 +1767,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply mt-2 text-sm leading-6 text-text-subtle;
 }
 .finish-dialog button {
-  @apply mt-3 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold;
+  @apply mt-3 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold;
 }
 .finish-dialog button svg {
   @apply size-5;

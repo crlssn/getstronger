@@ -325,7 +325,7 @@ const postComment = async () => {
   @apply flex items-center gap-3 border-b border-border p-4 sm:p-5;
 }
 .avatar {
-  @apply grid size-11 shrink-0 place-items-center rounded-xl bg-ink-tint text-xs font-semibold text-ink-strong;
+  @apply grid size-11 shrink-0 place-items-center rounded-control bg-ink-tint text-xs font-semibold text-ink-strong;
 }
 .avatar.large {
   @apply size-12 text-sm;
@@ -364,7 +364,7 @@ const postComment = async () => {
   @apply flex items-center gap-3 bg-white p-4;
 }
 .metric-icon {
-  @apply grid size-10 shrink-0 place-items-center rounded-xl bg-ink-tint text-ink-strong;
+  @apply grid size-10 shrink-0 place-items-center rounded-control bg-ink-tint text-ink-strong;
 }
 .metric-icon.amber {
   @apply bg-record-surface text-record;
@@ -411,10 +411,10 @@ const postComment = async () => {
   @apply divide-y divide-border;
 }
 .no-comments {
-  @apply rounded-xl bg-ink-surface p-4 text-sm text-text-subtle;
+  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
 }
 .comment-form {
-  @apply mt-5 rounded-2xl border border-border bg-ink-surface p-3;
+  @apply mt-5 rounded-card border border-border bg-ink-surface p-3;
 }
 .comment-form label {
   @apply sr-only;
@@ -429,10 +429,10 @@ const postComment = async () => {
   @apply pl-2 text-xs text-text-subtle;
 }
 .comment-form button {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
+  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
 }
 .feed-summary-card {
-  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-md;
+  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-raised;
 }
 .feed-summary-card .workout-heading {
   @apply border-y border-border bg-ink-surface text-text;
@@ -440,10 +440,10 @@ const postComment = async () => {
   box-shadow: inset 4px 0 0 var(--color-ink-muted);
 }
 .feed-summary-card--personal-best {
-  @apply border-gold-400 shadow-md;
+  @apply border-gold-400 shadow-raised;
 }
 .detail-summary-card--personal-best {
-  @apply border-gold-400 shadow-md;
+  @apply border-gold-400 shadow-raised;
 }
 .feed-summary-card--personal-best .workout-heading {
   @apply border-champagne-300 bg-champagne-100;
@@ -467,7 +467,7 @@ const postComment = async () => {
   @apply flex items-start justify-between gap-4;
 }
 .personal-best-badge {
-  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold-600 bg-gold-500 px-2.5 py-1 text-xs font-semibold text-white shadow-sm;
+  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold-600 bg-gold-500 px-2.5 py-1 text-xs font-semibold text-white shadow-card;
 }
 .personal-best-badge svg {
   @apply size-4;
@@ -477,7 +477,7 @@ const postComment = async () => {
   @apply bg-champagne-200 text-gold-700;
 }
 .feed-card-link {
-  @apply absolute inset-0 z-10 rounded-2xl;
+  @apply absolute inset-0 z-10 rounded-card;
 }
 .feed-card-control {
   @apply pointer-events-none relative z-20;

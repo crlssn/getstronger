@@ -90,13 +90,13 @@ async function onUpdateExercise() {
   @apply text-xl font-semibold text-text;
 }
 .form-status a {
-  @apply mt-3 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
+  @apply mt-3 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 .form-actions {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
   @apply sticky z-20 -mx-3 mt-4 border-t border-border bg-ink-surface px-3 py-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8;
 }
 input {
-  @apply block w-full border-0 bg-white px-4 py-5 text-text shadow-sm ring-1 ring-inset ring-ink-border placeholder:text-text-subtle focus:ring-2 focus:ring-inset focus:ring-ink;
+  @apply block w-full border-0 bg-white px-4 py-5 text-text shadow-card ring-1 ring-inset ring-ink-border placeholder:text-text-subtle focus:ring-2 focus:ring-inset focus:ring-ink;
 }
 </style>

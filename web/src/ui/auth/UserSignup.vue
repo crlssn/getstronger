@@ -94,7 +94,7 @@ const onSignup = async () => {
         <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.weightUnitHelp') }}</p>
         <div class="mt-2 grid grid-cols-2 gap-2" :aria-label="$t('auth.weightUnit')">
           <label
-            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-control border px-4 transition"
             :class="
               req.weightUnit === WeightUnit.KILOGRAMS
                 ? 'border-surface-inverse bg-surface-inverse text-white'
@@ -112,7 +112,7 @@ const onSignup = async () => {
             <span class="ml-auto text-sm opacity-80">kg</span>
           </label>
           <label
-            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
+            class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-control border px-4 transition"
             :class="
               req.weightUnit === WeightUnit.POUNDS
                 ? 'border-surface-inverse bg-surface-inverse text-white'

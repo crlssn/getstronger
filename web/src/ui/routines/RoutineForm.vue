@@ -194,7 +194,7 @@ h1 {
   @apply mb-2 block text-sm font-semibold text-text-muted;
 }
 .name-input {
-  @apply h-12 w-full rounded-xl border border-border bg-ink-surface px-4 text-base font-medium text-text placeholder:text-text-subtle focus:border-ink-muted focus:bg-surface focus:ring-2 focus:ring-ink-tint;
+  @apply h-12 w-full rounded-control border border-border bg-ink-surface px-4 text-base font-medium text-text placeholder:text-text-subtle focus:border-ink-muted focus:bg-surface focus:ring-2 focus:ring-ink-tint;
 }
 .exercise-toolbar {
   @apply mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
@@ -206,7 +206,7 @@ h1 {
   @apply mt-1 text-sm text-text-subtle;
 }
 .search-field {
-  @apply flex min-w-52 items-center gap-2 rounded-xl border border-border bg-ink-surface px-3;
+  @apply flex min-w-52 items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
 }
 .search-field svg {
   @apply size-5 text-text-subtle;
@@ -218,7 +218,7 @@ h1 {
   @apply grid gap-2 sm:grid-cols-2;
 }
 .exercise-option {
-  @apply flex min-h-16 items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
+  @apply flex min-h-16 items-center gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
 }
 .exercise-option.selected {
   @apply border-ink-border bg-ink-surface;
@@ -242,21 +242,21 @@ h1 {
   @apply mt-0.5 block truncate text-xs text-text-subtle;
 }
 .empty-row {
-  @apply rounded-xl border border-dashed border-ink-border p-6 text-center text-sm text-text-subtle;
+  @apply rounded-control border border-dashed border-ink-border p-6 text-center text-sm text-text-subtle;
 }
 .load-more {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-control border border-border px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .load-more svg {
   @apply size-4;
 }
 .form-actions {
-  @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-2xl border border-border bg-white/95 p-3 shadow-lg backdrop-blur md:bottom-4;
+  @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-card border border-border bg-white/95 p-3 shadow-raised backdrop-blur md:bottom-4;
 }
 .cancel-link {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
+  @apply inline-flex min-h-(--size-control) items-center rounded-control px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .save-button {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-5 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
+  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-5 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
 }
 </style>

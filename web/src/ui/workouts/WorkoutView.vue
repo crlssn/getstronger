@@ -226,7 +226,7 @@ h2 {
   @apply size-5 text-text-subtle;
 }
 .active-session {
-  @apply grid gap-5 rounded-3xl border border-ink-border bg-ink-surface p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
+  @apply grid gap-5 rounded-card border border-ink-border bg-ink-surface p-5 shadow-card sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
 }
 .active-session h2 {
   @apply mt-1;
@@ -241,13 +241,13 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .active-actions > a svg {
   @apply size-5;
 }
 .active-actions > button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
 }
 .active-actions > button svg {
   @apply size-4;
@@ -274,7 +274,7 @@ h2 {
   @apply font-semibold text-white;
 }
 .next-card > a {
-  @apply mt-5 flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-ink-strong;
+  @apply mt-5 flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-white px-4 text-sm font-semibold text-ink-strong;
 }
 .next-card > a svg {
   @apply size-5;
@@ -289,13 +289,13 @@ h2 {
   @apply mt-1 text-sm text-text-subtle;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 .quick-card {
   @apply grid-cols-[3rem_1fr_auto];
 }
 .quick-icon {
-  @apply grid size-12 place-items-center rounded-xl bg-ink-tint text-ink-strong;
+  @apply grid size-12 place-items-center rounded-control bg-ink-tint text-ink-strong;
 }
 .quick-icon svg {
   @apply size-6;
@@ -338,7 +338,7 @@ h2 {
 .history-error,
 .history-empty,
 .history-end {
-  @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-xl px-4 text-center text-xs text-text-subtle;
+  @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-control px-4 text-center text-xs text-text-subtle;
 }
 .history-error {
   @apply justify-between border border-danger/20 bg-danger-surface text-left text-danger;

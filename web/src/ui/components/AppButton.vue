@@ -32,7 +32,7 @@ const computedClasses = computed(() => {
 
 a,
 button {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border px-4 py-3 text-sm font-semibold transition;
 }
 
 .link {

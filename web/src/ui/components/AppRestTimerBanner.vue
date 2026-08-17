@@ -115,7 +115,7 @@ onUnmounted(() => {
   initial-value: 160;
 }
 .rest-banner {
-  @apply sticky z-30 text-white shadow-lg;
+  @apply sticky z-30 text-white shadow-raised;
   /* Below the status-bar scrim in the native WebView; zero in browsers. */
   top: env(safe-area-inset-top);
   background-image: linear-gradient(
@@ -139,7 +139,7 @@ onUnmounted(() => {
   @apply mt-0.5 block font-mono text-2xl font-bold leading-none tabular-nums;
 }
 .rest-banner a {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black/25 px-4 text-sm font-semibold transition hover:bg-black/40;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-black/25 px-4 text-sm font-semibold transition hover:bg-black/40;
 }
 .rest-banner a svg {
   @apply size-5;

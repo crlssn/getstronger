@@ -256,7 +256,7 @@ h2 {
 }
 .loop-note,
 .edit-note {
-  @apply flex gap-3 rounded-2xl border p-4 text-sm;
+  @apply flex gap-3 rounded-card border p-4 text-sm;
 }
 .loop-note {
   @apply border-ink-border bg-ink-surface text-ink-strong;
@@ -289,7 +289,7 @@ h2 {
   @apply grid grid-cols-[2.25rem_1fr_auto] items-center gap-3 p-4;
 }
 .position {
-  @apply grid size-9 place-items-center rounded-xl bg-ink-tint text-sm font-semibold text-text-muted;
+  @apply grid size-9 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-text-muted;
 }
 .routine-copy {
   @apply min-w-0;
@@ -314,7 +314,7 @@ h2 {
   @apply size-4;
 }
 .add-routine {
-  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-xl border border-dashed border-ink-border bg-ink-surface text-sm font-semibold text-ink-strong;
+  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-control border border-dashed border-ink-border bg-ink-surface text-sm font-semibold text-ink-strong;
 }
 .add-routine svg {
   @apply size-5;
@@ -329,19 +329,19 @@ h2 {
   @apply text-center text-xs text-text-subtle;
 }
 .save-area button {
-  @apply min-h-(--size-control) rounded-xl bg-ink px-5 text-sm font-semibold text-white disabled:bg-ink-tint disabled:text-text-subtle;
+  @apply min-h-(--size-control) rounded-control bg-ink px-5 text-sm font-semibold text-white disabled:bg-ink-tint disabled:text-text-subtle;
 }
 .picker-backdrop {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
 }
 .routine-picker {
-  @apply w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
+  @apply w-full max-w-lg rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
 }
 .routine-picker > header {
   @apply mb-4 flex items-center justify-between gap-3;
 }
 .routine-picker > header button {
-  @apply grid size-11 place-items-center rounded-xl border border-border text-text-subtle;
+  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
 }
 .routine-picker > header svg {
   @apply size-5;

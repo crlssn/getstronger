@@ -239,7 +239,7 @@ const options = computed(() => ({
   @apply h-64;
 }
 .first-result {
-  @apply grid min-h-52 place-items-center content-center gap-2 rounded-2xl border border-dashed border-ink-border bg-ink-surface px-6 text-center;
+  @apply grid min-h-52 place-items-center content-center gap-2 rounded-card border border-dashed border-ink-border bg-ink-surface px-6 text-center;
 }
 .first-result > span {
   @apply mb-2 size-4 rounded-full border-4 border-ink bg-white;

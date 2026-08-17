@@ -149,7 +149,7 @@ const navigation = computed(() => [
   @apply mx-auto grid max-w-3xl grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)];
 }
 .bottom-nav a {
-  @apply grid min-w-0 place-items-center content-center gap-1 rounded-xl px-1 text-xs font-medium text-text-subtle transition hover:bg-ink-surface hover:text-ink-strong;
+  @apply grid min-w-0 place-items-center content-center gap-1 rounded-control px-1 text-xs font-medium text-text-subtle transition hover:bg-ink-surface hover:text-ink-strong;
 }
 .bottom-nav a.active {
   @apply text-ink-strong;
@@ -171,7 +171,7 @@ const navigation = computed(() => [
 }
 @media (min-width: 1024px) {
   .bottom-nav {
-    @apply left-1/2 right-auto w-[48rem] -translate-x-1/2 rounded-t-2xl border-x;
+    @apply left-1/2 right-auto w-[48rem] -translate-x-1/2 rounded-t-card border-x;
   }
 }
 </style>

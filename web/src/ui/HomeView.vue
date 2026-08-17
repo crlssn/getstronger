@@ -299,7 +299,7 @@ h2 {
   @apply text-xl font-semibold tracking-tight text-text;
 }
 .active-session {
-  @apply grid gap-5 rounded-3xl border border-ink-border bg-ink-surface p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
+  @apply grid gap-5 rounded-card border border-ink-border bg-ink-surface p-5 shadow-card sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
 }
 .active-session h2 {
   @apply mt-1;
@@ -314,10 +314,10 @@ h2 {
   @apply grid gap-1 sm:min-w-48;
 }
 .active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .active-actions > button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
 }
 .active-actions svg {
   @apply size-5;
@@ -357,7 +357,7 @@ h2 {
 }
 .start-button,
 .choose-button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold transition;
 }
 .start-button {
   @apply bg-white text-ink-strong hover:bg-ink-surface;
@@ -392,7 +392,7 @@ h2 {
   @apply mt-1;
 }
 .feed-empty {
-  @apply rounded-2xl border border-dashed border-ink-border bg-white p-6 text-sm text-text-subtle;
+  @apply rounded-card border border-dashed border-ink-border bg-white p-6 text-sm text-text-subtle;
 }
 .feed-status {
   @apply flex min-h-14 items-center justify-center gap-3 text-sm font-medium text-text-subtle;
@@ -401,10 +401,10 @@ h2 {
   @apply size-5 animate-spin rounded-full border-2 border-border border-t-ink;
 }
 .feed-error {
-  @apply flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
+  @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
 }
 .feed-error button {
-  @apply min-h-(--size-control-sm) shrink-0 rounded-xl px-3 font-semibold hover:bg-danger-surface;
+  @apply min-h-(--size-control-sm) shrink-0 rounded-control px-3 font-semibold hover:bg-danger-surface;
 }
 .feed-end {
   @apply flex items-center justify-center gap-3 py-5 text-text-muted;
@@ -457,7 +457,7 @@ h2 {
 }
 .workout-icon,
 .routine-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-ink-surface text-ink;
+  @apply grid size-11 place-items-center rounded-control bg-ink-surface text-ink;
 }
 .workout-icon svg,
 .routine-icon svg {
@@ -470,7 +470,7 @@ h2 {
   @apply text-white;
 }
 .empty-icon {
-  @apply grid size-12 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/20;
+  @apply grid size-12 place-items-center rounded-card bg-white/10 text-white ring-1 ring-white/20;
 }
 .empty-icon svg {
   @apply size-6;
@@ -479,19 +479,19 @@ h2 {
   @apply mt-1 text-sm text-ink-tint;
 }
 .primary-link {
-  @apply inline-flex min-h-(--size-control) items-center rounded-xl bg-white px-4 text-sm font-semibold text-ink-strong transition hover:bg-ink-surface;
+  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-white px-4 text-sm font-semibold text-ink-strong transition hover:bg-ink-surface;
 }
 .picker-backdrop {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 p-0 sm:items-center sm:p-6;
 }
 .routine-picker {
-  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl;
+  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
 }
 .routine-picker header {
   @apply mb-5 flex items-center justify-between gap-4;
 }
 .routine-picker header button {
-  @apply grid size-11 place-items-center rounded-xl border border-border text-text-subtle;
+  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
 }
 .routine-picker header button svg {
   @apply size-5;
@@ -500,7 +500,7 @@ h2 {
   @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
 }
 .routine-options > button {
-  @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-border p-4 text-left hover:border-ink-border hover:bg-ink-surface/50;
+  @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-card border border-border p-4 text-left hover:border-ink-border hover:bg-ink-surface/50;
 }
 .routine-options > button.selected {
   @apply border-ink-muted bg-ink-surface;

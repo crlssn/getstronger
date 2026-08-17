@@ -228,7 +228,7 @@ const weeklyVolume = computed(() =>
   @apply card grid grid-cols-[auto_1fr_auto] items-center gap-4 p-5;
 }
 .avatar {
-  @apply grid size-16 place-items-center rounded-2xl bg-ink text-xl font-semibold text-white;
+  @apply grid size-16 place-items-center rounded-card bg-ink text-xl font-semibold text-white;
 }
 .eyebrow {
   @apply text-xs font-semibold uppercase tracking-wider text-text-subtle;
@@ -243,7 +243,7 @@ const weeklyVolume = computed(() =>
   @apply mt-1 truncate text-sm text-text-subtle;
 }
 .notification-link {
-  @apply relative grid size-14 place-items-center rounded-xl text-text-muted transition hover:bg-ink-tint hover:text-text;
+  @apply relative grid size-14 place-items-center rounded-control text-text-muted transition hover:bg-ink-tint hover:text-text;
 }
 .notification-link > svg {
   @apply size-8;
@@ -273,7 +273,7 @@ const weeklyVolume = computed(() =>
   @apply size-5 text-text-subtle;
 }
 .settings-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-ink-tint text-ink-strong;
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-ink-strong;
 }
 .settings-icon svg {
   @apply size-5;
@@ -301,7 +301,7 @@ const weeklyVolume = computed(() =>
   @apply mt-0.5 text-sm text-text-subtle;
 }
 .logout-link {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-white px-4 text-sm font-semibold text-danger hover:bg-danger-surface;
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-danger/30 bg-white px-4 text-sm font-semibold text-danger hover:bg-danger-surface;
 }
 .logout-link svg {
   @apply size-5;

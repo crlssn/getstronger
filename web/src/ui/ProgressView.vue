@@ -168,7 +168,7 @@ h2 {
   @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 first:pt-0 last:pb-0 transition hover:text-ink-strong;
 }
 .record-icon {
-  @apply grid size-11 place-items-center rounded-xl bg-record-surface text-record;
+  @apply grid size-11 place-items-center rounded-control bg-record-surface text-record;
 }
 .record-icon svg,
 .chevron {
@@ -188,7 +188,7 @@ h2 {
   @apply text-text-subtle;
 }
 .empty-copy {
-  @apply rounded-xl bg-ink-surface p-4 text-sm text-text-subtle;
+  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
 }
 @media (max-width: 520px) {
   .record-list a {

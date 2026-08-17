@@ -39,7 +39,7 @@ import { brandName, brandSlogan } from '@/brand'
   @apply mx-auto flex min-h-24 max-w-lg items-center justify-start gap-3 px-6 py-4 text-text;
 }
 .guest-brand-mark {
-  @apply grid size-11 place-items-center rounded-xl bg-ink shadow-sm shadow-ink-border;
+  @apply grid size-11 place-items-center rounded-control bg-ink shadow-card shadow-ink-border;
 }
 .guest-brand-mark img {
   @apply size-7 brightness-0 invert;

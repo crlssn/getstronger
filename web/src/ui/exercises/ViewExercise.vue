@@ -194,7 +194,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface;
 }
 .start-quick-icon {
-  @apply flex size-12 shrink-0 items-center justify-center rounded-xl bg-surface-inverse text-white;
+  @apply flex size-12 shrink-0 items-center justify-center rounded-control bg-surface-inverse text-white;
 }
 .start-quick-icon svg {
   @apply size-6;
@@ -262,10 +262,10 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply text-text-subtle;
 }
 .empty-copy {
-  @apply rounded-xl bg-ink-surface p-4 text-sm text-text-subtle;
+  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
 }
 .load-more {
-  @apply mt-3 min-h-(--size-control) w-full rounded-xl border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
+  @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .manage-heading {
   @apply p-5;
@@ -294,6 +294,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-2 text-sm text-text-subtle;
 }
 .empty-card a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-xl bg-ink px-4 text-sm font-semibold text-white;
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 </style>

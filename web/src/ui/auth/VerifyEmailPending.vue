@@ -157,7 +157,7 @@ const onResend = async () => {
 }
 
 .verification-pending {
-  @apply mb-6 flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-surface p-4 text-sm text-warning;
+  @apply mb-6 flex items-start gap-3 rounded-control border border-warning/30 bg-warning-surface p-4 text-sm text-warning;
 }
 
 .verification-pending-icon {
@@ -181,6 +181,6 @@ const onResend = async () => {
 }
 
 .verification-error {
-  @apply rounded-xl border border-danger/30 bg-danger-surface p-3 text-sm font-semibold text-danger;
+  @apply rounded-control border border-danger/30 bg-danger-surface p-3 text-sm font-semibold text-danger;
 }
 </style>

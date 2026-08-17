@@ -44,7 +44,7 @@ const initials = computed(
   @apply grid grid-cols-[auto_1fr] gap-3 py-4 first:pt-0 last:pb-0;
 }
 .comment-avatar {
-  @apply grid size-11 place-items-center rounded-xl bg-ink-tint text-xs font-semibold text-ink-strong;
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-xs font-semibold text-ink-strong;
 }
 .comment-content {
   @apply min-w-0;

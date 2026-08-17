@@ -150,7 +150,7 @@ function toggleMetric(metric: ExerciseMetric) {
 @reference '../../assets/base.css';
 
 .measurement-settings {
-  @apply space-y-5 rounded-3xl border border-border bg-white p-5 shadow-sm;
+  @apply space-y-5 rounded-card border border-border bg-white p-5 shadow-card;
 }
 h3 {
   @apply text-xl font-bold text-text;
@@ -163,7 +163,7 @@ small {
   @apply flex flex-wrap gap-2;
 }
 .rest-options button {
-  @apply inline-flex min-h-(--size-control-sm) items-center rounded-full border border-border bg-white px-4 text-sm font-semibold text-text-muted;
+  @apply inline-flex min-h-(--size-control-sm) items-center rounded-control border border-border bg-white px-4 text-sm font-semibold text-text-muted;
 }
 .rest-options button.selected {
   @apply border-surface-inverse bg-surface-inverse text-white;
@@ -172,7 +172,7 @@ small {
   @apply grid grid-cols-2 gap-3;
 }
 .measurement {
-  @apply flex min-h-(--size-control-sm) items-center gap-3 rounded-2xl border border-border p-4 text-left;
+  @apply flex min-h-(--size-control-sm) items-center gap-3 rounded-card border border-border p-4 text-left;
 }
 .measurement.selected {
   @apply border-surface-inverse bg-surface-sunken;
@@ -205,7 +205,7 @@ small {
   @apply bg-surface-inverse;
 }
 .knob {
-  @apply absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-white shadow-sm transition-transform;
+  @apply absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-white shadow-card transition-transform;
 }
 .switch[aria-checked='true'] .knob {
   @apply translate-x-6;

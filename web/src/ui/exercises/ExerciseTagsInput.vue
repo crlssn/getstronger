@@ -205,7 +205,7 @@ const removeTag = (index: number) => {
   @apply block min-h-(--size-control-sm) w-full border-0 bg-transparent p-0 text-sm text-text placeholder:text-text-subtle focus:ring-0;
 }
 .tag-suggestions {
-  @apply -mt-1 overflow-hidden rounded-xl border border-border bg-white shadow-lg;
+  @apply -mt-1 overflow-hidden rounded-control border border-border bg-white shadow-raised;
 }
 .tag-suggestions button {
   @apply flex min-h-11 w-full items-center justify-between gap-3 border-t border-border px-3 text-left text-sm font-medium text-text-muted first:border-t-0 hover:bg-ink-surface hover:text-ink-strong;

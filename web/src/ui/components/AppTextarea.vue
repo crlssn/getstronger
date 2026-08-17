@@ -7,7 +7,7 @@ const props = defineProps<{
 
 <template>
   <textarea
-    class="w-full border border-ink-border rounded-md shadow-sm focus:ring-ink-muted focus:border-ink-muted sm:text-sm mb-1"
+    class="w-full border border-ink-border rounded-control shadow-card focus:ring-ink-muted focus:border-ink-muted sm:text-sm mb-1"
     :placeholder="props.placeholder"
     :rows="props.rows"
   />

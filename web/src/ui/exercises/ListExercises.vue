@@ -151,13 +151,13 @@ h1 {
   @apply mt-1 text-2xl font-semibold tracking-tight text-text;
 }
 .create-link {
-  @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
+  @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
 }
 .create-link svg {
   @apply size-5;
 }
 .search-field {
-  @apply card flex items-center gap-2 px-4;
+  @apply flex items-center gap-2 rounded-control border border-border bg-surface px-4 shadow-card;
 }
 .search-field svg {
   @apply size-5 text-text-subtle;
@@ -190,7 +190,7 @@ h1 {
   @apply size-5 shrink-0 text-text-subtle;
 }
 .empty-state {
-  @apply rounded-2xl border border-dashed border-ink-border bg-white p-6 text-sm text-text-subtle;
+  @apply rounded-card border border-dashed border-ink-border bg-white p-6 text-sm text-text-subtle;
 }
 .empty-state h2 {
   @apply text-lg font-semibold text-text;
@@ -199,7 +199,7 @@ h1 {
   @apply mt-1;
 }
 .load-more {
-  @apply min-h-(--size-control) w-full rounded-xl border border-border bg-white text-sm font-semibold text-ink shadow-sm;
+  @apply min-h-(--size-control) w-full rounded-control border border-border bg-white text-sm font-semibold text-ink shadow-card;
 }
 @media (max-width: 420px) {
   .create-link {

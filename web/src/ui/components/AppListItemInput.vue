@@ -55,6 +55,6 @@ const onKeyup = () => {
 
 input {
   @apply block w-full border-0 bg-white px-4 py-5 text-text focus:ring-0 placeholder:text-text-subtle font-medium;
-  @apply rounded-md;
+  @apply rounded-control;
 }
 </style>

@@ -177,7 +177,7 @@ h2 {
   @apply text-xl font-semibold tracking-tight text-text;
 }
 .page-intro > a {
-  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white;
+  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white;
 }
 .page-intro svg {
   @apply size-5;
@@ -200,7 +200,7 @@ h2 {
   @apply block h-4 animate-pulse rounded-full bg-ink-tint;
 }
 .plan-loading span:first-child {
-  @apply h-12 w-12 rounded-2xl;
+  @apply h-12 w-12 rounded-card;
 }
 .plan-loading span:nth-child(2) {
   @apply w-2/3;
@@ -209,7 +209,7 @@ h2 {
   @apply p-6;
 }
 .empty-plan-icon {
-  @apply mb-5 grid size-12 place-items-center rounded-2xl bg-ink-tint text-ink-strong;
+  @apply mb-5 grid size-12 place-items-center rounded-card bg-ink-tint text-ink-strong;
 }
 .empty-plan-icon svg {
   @apply size-6;
@@ -227,7 +227,7 @@ h2 {
   @apply flex items-center gap-3 py-4;
 }
 .plan-steps li > span {
-  @apply grid size-9 shrink-0 place-items-center rounded-xl bg-ink-surface text-sm font-semibold text-ink-strong;
+  @apply grid size-9 shrink-0 place-items-center rounded-control bg-ink-surface text-sm font-semibold text-ink-strong;
 }
 .plan-steps li > span svg {
   @apply size-4;
@@ -246,7 +246,7 @@ h2 {
   @apply mt-5 text-xs leading-5 text-text-subtle;
 }
 .first-plan-button {
-  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
+  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
 }
 .first-plan-button svg {
   @apply size-5;
@@ -273,7 +273,7 @@ h2 {
   @apply mt-3 flex flex-wrap gap-2;
 }
 .sequence span {
-  @apply grid size-9 place-items-center rounded-xl bg-info-surface text-sm font-semibold text-text-muted;
+  @apply grid size-9 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
 }
 .sequence span.done {
   @apply bg-success-surface text-success;
@@ -282,7 +282,7 @@ h2 {
   @apply bg-ink text-white;
 }
 .next-row {
-  @apply mt-4 rounded-xl bg-ink-surface p-4;
+  @apply mt-4 rounded-control bg-ink-surface p-4;
 }
 .next-row div {
   @apply grid gap-1;
@@ -295,7 +295,7 @@ h2 {
 }
 .active-plan footer a,
 .active-plan footer button {
-  @apply min-h-(--size-control-sm) rounded-xl px-4 text-sm font-semibold;
+  @apply min-h-(--size-control-sm) rounded-control px-4 text-sm font-semibold;
 }
 .active-plan footer a {
   @apply inline-flex items-center bg-ink text-white;

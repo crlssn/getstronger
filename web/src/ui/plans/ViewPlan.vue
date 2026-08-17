@@ -136,7 +136,7 @@ const remove = async () => {
 }
 .overview-actions a,
 .overview-actions button {
-  @apply inline-flex min-h-(--size-control) items-center gap-2 rounded-xl px-4 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control) items-center gap-2 rounded-control px-4 text-sm font-semibold;
 }
 .overview-actions a {
   @apply bg-ink text-white transition hover:brightness-125;
@@ -163,7 +163,7 @@ const remove = async () => {
   @apply grid min-h-20 grid-cols-[2.75rem_1fr_auto] items-center gap-3 p-4;
 }
 .routine-order li > span {
-  @apply grid size-11 place-items-center rounded-xl bg-ink-tint font-semibold text-text-muted;
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint font-semibold text-text-muted;
 }
 .routine-order li > div {
   @apply min-w-0;

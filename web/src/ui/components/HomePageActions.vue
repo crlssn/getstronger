@@ -204,7 +204,7 @@ const onSearch = async () => {
   @apply w-full;
 }
 .search-trigger {
-  @apply grid size-11 place-items-center rounded-xl border border-border bg-white text-text-subtle shadow-sm transition hover:border-ink-border hover:text-text;
+  @apply grid size-11 place-items-center rounded-control border border-border bg-white text-text-subtle shadow-card transition hover:border-ink-border hover:text-text;
 }
 .search-trigger svg {
   @apply size-5;
@@ -247,7 +247,7 @@ const onSearch = async () => {
   @apply mt-0.5 text-xs text-text-subtle;
 }
 .avatar {
-  @apply grid size-11 place-items-center rounded-xl bg-ink-tint text-sm font-semibold text-text;
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-text;
 }
 .avatar svg {
   @apply size-5;

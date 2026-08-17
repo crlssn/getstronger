@@ -98,7 +98,7 @@ const markAllAsRead = async () => {
   @apply mb-3 flex justify-end;
 }
 .notification-actions button {
-  @apply min-h-(--size-control) rounded-xl border border-border bg-white px-4 text-sm font-semibold text-ink-strong shadow-sm transition hover:border-ink-border hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
+  @apply min-h-(--size-control) rounded-control border border-border bg-white px-4 text-sm font-semibold text-ink-strong shadow-card transition hover:border-ink-border hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
 }
 /* Unread is a state, not a colour of its own: the standard row with an ink
    icon tile, full-strength text and a green momentum dot. Read rows keep the

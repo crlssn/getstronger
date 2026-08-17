@@ -221,13 +221,13 @@ h1 {
   @apply mt-1 max-w-xl text-sm text-text-subtle;
 }
 .create-link {
-  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink-strong;
+  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink-strong;
 }
 .create-link svg {
   @apply size-5;
 }
 .search-field {
-  @apply card flex items-center gap-2 px-4;
+  @apply flex items-center gap-2 rounded-control border border-border bg-surface px-4 shadow-card;
 }
 .search-field svg {
   @apply size-5 text-text-subtle;
@@ -279,7 +279,7 @@ h1 {
 }
 .routine-actions a,
 .routine-actions button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-3 text-sm font-semibold;
 }
 .routine-actions svg {
   @apply size-4;
@@ -294,7 +294,7 @@ h1 {
   @apply relative ml-auto;
 }
 .routine-menu summary {
-  @apply grid size-11 cursor-pointer list-none place-items-center rounded-xl text-text-subtle hover:bg-ink-tint;
+  @apply grid size-11 cursor-pointer list-none place-items-center rounded-control text-text-subtle hover:bg-ink-tint;
 }
 .routine-menu summary::-webkit-details-marker {
   @apply hidden;
@@ -303,7 +303,7 @@ h1 {
   @apply size-5;
 }
 .routine-menu > div {
-  @apply absolute bottom-12 right-0 z-10 w-40 overflow-hidden rounded-xl border border-border bg-white p-1 shadow-lg;
+  @apply absolute bottom-12 right-0 z-10 w-40 overflow-hidden rounded-control border border-border bg-white p-1 shadow-raised;
 }
 .routine-menu > div a,
 .routine-menu > div button {
@@ -321,7 +321,7 @@ h1 {
   }
 }
 .empty-state {
-  @apply grid justify-items-start gap-3 rounded-2xl border border-dashed border-ink-border bg-white p-6;
+  @apply grid justify-items-start gap-3 rounded-card border border-dashed border-ink-border bg-white p-6;
 }
 .empty-state h2 {
   @apply text-xl font-semibold;
@@ -330,6 +330,6 @@ h1 {
   @apply text-sm text-text-subtle;
 }
 .load-more {
-  @apply mx-auto block rounded-xl border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted;
+  @apply mx-auto block rounded-control border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted;
 }
 </style>

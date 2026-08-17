@@ -134,7 +134,7 @@ select {
 }
 
 .auth-input {
-  @apply block min-h-(--size-control-lg) w-full rounded-xl border border-ink-border bg-white px-4 py-3 text-base text-text shadow-sm placeholder:text-text-subtle transition hover:border-ink-muted focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
+  @apply block min-h-(--size-control-lg) w-full rounded-control border border-ink-border bg-white px-4 py-3 text-base text-text shadow-card placeholder:text-text-subtle transition hover:border-ink-muted focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
 }
 
 .auth-link {
