@@ -448,9 +448,8 @@ test.describe('weight units', () => {
       await page.goto('/profile')
       const unit = page.getByRole('group', { name: 'Preferred distance unit' })
       if (
-        (await unit
-          .getByRole('button', { name: 'Kilometers' })
-          .getAttribute('aria-pressed')) !== 'true'
+        (await unit.getByRole('button', { name: 'Kilometers' }).getAttribute('aria-pressed')) !==
+        'true'
       ) {
         await unit.getByRole('button', { name: 'Kilometers' }).click()
         await expect(page.getByRole('status')).toContainText('Distance unit updated')

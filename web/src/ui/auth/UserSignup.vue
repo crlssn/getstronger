@@ -109,7 +109,7 @@ const onSignup = async () => {
               :value="WeightUnit.KILOGRAMS"
             />
             <strong>{{ $t('auth.kilograms') }}</strong>
-            <span class="ml-auto text-sm opacity-70">kg</span>
+            <span class="ml-auto text-sm opacity-80">kg</span>
           </label>
           <label
             class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
@@ -127,7 +127,7 @@ const onSignup = async () => {
               :value="WeightUnit.POUNDS"
             />
             <strong>{{ $t('auth.pounds') }}</strong>
-            <span class="ml-auto text-sm opacity-70">lbs</span>
+            <span class="ml-auto text-sm opacity-80">lbs</span>
           </label>
         </div>
       </fieldset>
@@ -152,7 +152,7 @@ const onSignup = async () => {
               :value="DistanceUnit.KILOMETERS"
             />
             <strong>{{ $t('auth.kilometers') }}</strong>
-            <span class="ml-auto text-sm opacity-70">km</span>
+            <span class="ml-auto text-sm opacity-80">km</span>
           </label>
           <label
             class="flex min-h-(--size-control-lg) cursor-pointer items-center gap-3 rounded-xl border px-4 transition"
@@ -170,7 +170,7 @@ const onSignup = async () => {
               :value="DistanceUnit.MILES"
             />
             <strong>{{ $t('auth.miles') }}</strong>
-            <span class="ml-auto text-sm opacity-70">mi</span>
+            <span class="ml-auto text-sm opacity-80">mi</span>
           </label>
         </div>
       </fieldset>
