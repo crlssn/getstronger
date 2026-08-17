@@ -9,6 +9,23 @@ import router from '@/router/router'
 export const isWorkoutRoute = (name: unknown): boolean =>
   name === 'workout-routine' || name === 'quick-workout'
 
+// Maps an incoming deep link to a router path. Universal/App Links arrive as
+// https URLs on the web domain, so their path maps one to one onto the SPA's
+// routes. The custom getstronger:// scheme has no authority part, which makes
+// the URL parser read the first path segment as the host.
+export const deepLinkPath = (url: string): string | undefined => {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return parsed.pathname + parsed.search + parsed.hash
+    }
+
+    return `/${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`
+  } catch {
+    return undefined
+  }
+}
+
 // Wires up behaviour that only exists inside the native app shell. The plugin
 // modules are imported dynamically so browser bundles never execute them.
 export const initNativePlatform = async (): Promise<void> => {
@@ -44,6 +61,14 @@ export const initNativePlatform = async (): Promise<void> => {
     }
 
     void App.minimizeApp()
+  })
+
+  // Universal Links (iOS), App Links (Android), and the getstronger:// scheme
+  // all land here; hand the path to the router so verification and
+  // password-reset emails open on the right view.
+  await App.addListener('appUrlOpen', ({ url }) => {
+    const path = deepLinkPath(url)
+    if (path) void router.push(path)
   })
 
   // The splash screen stays up until the app has mounted (launchAutoHide is
