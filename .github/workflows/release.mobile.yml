@@ -1,0 +1,188 @@
+# Builds the native apps and uploads them to TestFlight and Play internal
+# testing. Manual trigger only: releases are a deliberate act, and the workflow
+# needs the signing secrets documented in the README (Native mobile apps →
+# Releasing) before its first run can succeed.
+name: release-mobile
+
+on:
+  workflow_dispatch:
+    inputs:
+      ios:
+        description: Build and upload iOS to TestFlight
+        required: true
+        default: true
+        type: boolean
+      android:
+        description: Build and upload Android to Play internal testing
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: release-mobile
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build the web bundle
+        working-directory: web
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+        run: npm run build
+
+      - name: Upload web bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          retention-days: 1
+
+  ios:
+    if: inputs.ios
+    needs: web
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+
+      - name: Download web bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Sync the native project
+        working-directory: mobile
+        run: npx cap sync ios
+
+      - name: Write the App Store Connect API key
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/private_keys
+          printf '%s' "$ASC_PRIVATE_KEY" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+
+      - name: Archive
+        working-directory: mobile/ios/App
+        run: |
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" archive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID '${{ secrets.ASC_KEY_ID }}' \
+            -authenticationKeyIssuerID '${{ secrets.ASC_ISSUER_ID }}' \
+            DEVELOPMENT_TEAM='${{ secrets.APPLE_TEAM_ID }}' \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }}
+
+      - name: Upload to TestFlight
+        working-directory: mobile/ios/App
+        run: |
+          cat > "$RUNNER_TEMP/export.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>destination</key>
+            <string>upload</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID '${{ secrets.ASC_KEY_ID }}' \
+            -authenticationKeyIssuerID '${{ secrets.ASC_ISSUER_ID }}'
+
+  android:
+    if: inputs.android
+    needs: web
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download web bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Sync the native project
+        working-directory: mobile
+        run: npx cap sync android
+
+      - name: Build the release bundle
+        working-directory: mobile/android
+        run: ./gradlew bundleRelease -PversionCode=${{ github.run_number }}
+
+      - name: Sign the release bundle
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          jarsigner -keystore "$RUNNER_TEMP/release.keystore" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            mobile/android/app/build/outputs/bundle/release/app-release.aab \
+            "$ANDROID_KEY_ALIAS"
+
+      - name: Upload to Play internal testing
+        uses: r0adkll/upload-google-play@935ef9c68bb393a8e6116b1575626a7f5be3a7fb # v1.1.3
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.getstronger.app
+          releaseFiles: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
