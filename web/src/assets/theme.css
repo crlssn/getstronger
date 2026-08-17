@@ -30,9 +30,9 @@
   --color-border: #e3e5e0;
   --color-border-strong: #cbd5e1;
 
-  /* Text. The ink family's own black and greys — no cool slate cast. A
-   * slate-400 equivalent is deliberately absent: a low-contrast tint may
-   * decorate a glyph beside a label, never carry meaning on its own.
+  /* Text. The ink family's own black and greys — no cool cast. A fourth,
+   * paler step is deliberately absent: a low-contrast tint may decorate a
+   * glyph beside a label, never carry meaning on its own.
    * text-subtle sits at 4.5:1 against --color-surface-sunken, the lightest
    * thing it is ever read on; anything paler fails WCAG AA on the canvas. */
   --color-text: #16181b;
