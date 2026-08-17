@@ -5,7 +5,8 @@ import { join } from 'node:path'
 // The guard that makes the design refactor the last one: theme.css's role
 // tokens are the only colour vocabulary. A raw palette utility appearing
 // anywhere in src is drift, and this test names the exact lines.
-const bannedPattern = /\b(?:[a-z-]+:)*(?:text|bg|border|divide|ring|from|via|to|decoration|fill|stroke|shadow|outline|accent|caret|placeholder)-(?:slate|stone|blue|emerald|amber|gray|zinc|neutral|red|orange|yellow|lime|green|teal|cyan|sky|indigo|violet|purple|fuchsia|pink|rose|achievement|champagne|gold)-[0-9]+(?:\/[0-9]+)?\b/
+const bannedPattern =
+  /\b(?:[a-z-]+:)*(?:text|bg|border|divide|ring|from|via|to|decoration|fill|stroke|shadow|outline|accent|caret|placeholder)-(?:slate|stone|blue|emerald|amber|gray|zinc|neutral|red|orange|yellow|lime|green|teal|cyan|sky|indigo|violet|purple|fuchsia|pink|rose|achievement|champagne|gold)-[0-9]+(?:\/[0-9]+)?\b/
 
 const collectFiles = (directory: string): string[] =>
   readdirSync(directory).flatMap((entry) => {
