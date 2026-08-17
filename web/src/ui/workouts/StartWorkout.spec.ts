@@ -8,6 +8,7 @@ import { create } from '@bufbuild/protobuf'
 
 import { i18n } from '@/i18n'
 import {
+  DistanceUnit,
   ExerciseMetric,
   ExerciseSchema,
   ExerciseSetsSchema,
@@ -269,9 +270,9 @@ describe('StartWorkout', () => {
       getCurrentUser.mockResolvedValue({ user: { weightUnit: WeightUnit.POUNDS } })
       const wrapper = await mountWorkout()
 
-      const suffix = wrapper.get('.weight-entry .weight-unit-suffix')
+      const suffix = wrapper.get('.unit-entry .unit-suffix')
       expect(suffix.text()).toBe('lbs')
-      expect(wrapper.find('.weight-entry button').exists()).toBe(false)
+      expect(wrapper.find('.unit-entry button').exists()).toBe(false)
       expect(wrapper.find('[role="group"]').exists()).toBe(false)
       wrapper.unmount()
     })
@@ -301,10 +302,74 @@ describe('StartWorkout', () => {
 
       // The row must not read "100" beside a "kg" suffix while still being
       // stored as pounds: that saves a weight the athlete never entered.
-      expect(wrapper.get('.weight-entry .weight-unit-suffix').text()).toBe('kg')
+      expect(wrapper.get('.unit-entry .unit-suffix').text()).toBe('kg')
       const set = workoutStore.getSets(routineID, benchPress.id)[0]
       expect(set.weight).toBe(45.36)
       expect(set.weightUnit).toBe(WeightUnit.KILOGRAMS)
+      wrapper.unmount()
+    })
+  })
+
+  describe('distance and time', () => {
+    const running = create(ExerciseSchema, {
+      id: 'exercise-running',
+      name: 'Running',
+      metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
+    })
+
+    beforeEach(() => {
+      getRoutine.mockResolvedValue({
+        routine: create(RoutineSchema, { name: 'Cardio', exercises: [running] }),
+      })
+    })
+
+    test('maps distance to a suffixed decimal input and time to a duration input', async () => {
+      getCurrentUser.mockResolvedValue({
+        user: { weightUnit: WeightUnit.KILOGRAMS, distanceUnit: DistanceUnit.MILES },
+      })
+      const wrapper = await mountWorkout()
+
+      expect(wrapper.get('.unit-entry .unit-suffix').text()).toBe('mi')
+      const distanceInput = wrapper.get('input[aria-label="Running set 1 distance"]')
+      expect(distanceInput.attributes('inputmode')).toBe('decimal')
+      const timeInput = wrapper.get('input[aria-label="Running set 1 time"]')
+      expect(timeInput.attributes('placeholder')).toBe('m:ss')
+      wrapper.unmount()
+    })
+
+    test('logs sets with the preferred distance unit and parsed duration', async () => {
+      getCurrentUser.mockResolvedValue({
+        user: { weightUnit: WeightUnit.KILOGRAMS, distanceUnit: DistanceUnit.MILES },
+      })
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await wrapper.get('input[aria-label="Running set 1 distance"]').setValue('3.5')
+      await wrapper.get('input[aria-label="Running set 1 time"]').setValue('12:30')
+
+      const set = workoutStore.getSets(routineID, running.id)[0]
+      expect(set.distance).toBe(3.5)
+      expect(set.durationSeconds).toBe(750)
+      expect(set.distanceUnit).toBe(DistanceUnit.MILES)
+      wrapper.unmount()
+    })
+
+    test('converts a resumed draft distance saved under the previous preference', async () => {
+      const workoutStore = useWorkoutStore()
+      workoutStore.initialiseWorkout(routineID)
+      workoutStore.addEmptySet(routineID, running.id, WeightUnit.KILOGRAMS, DistanceUnit.MILES)
+      workoutStore.getSets(routineID, running.id)[0].distance = 10
+      workoutStore.getSets(routineID, running.id)[0].durationSeconds = 3600
+
+      getCurrentUser.mockResolvedValue({
+        user: { weightUnit: WeightUnit.KILOGRAMS, distanceUnit: DistanceUnit.KILOMETERS },
+      })
+      const wrapper = await mountWorkout()
+
+      expect(wrapper.get('.unit-entry .unit-suffix').text()).toBe('km')
+      const set = workoutStore.getSets(routineID, running.id)[0]
+      expect(set.distance).toBe(16.09)
+      expect(set.distanceUnit).toBe(DistanceUnit.KILOMETERS)
       wrapper.unmount()
     })
   })

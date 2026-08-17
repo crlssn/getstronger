@@ -25,6 +25,7 @@ import {
   measurementsForExercise,
 } from '@/utils/exerciseMeasurements'
 import { normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
+import { normalizeDistanceUnit, distanceUnitLabel } from '@/utils/distanceUnits'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -84,6 +85,7 @@ const addEmptySet = (exerciseId: string) => {
     ?.sets.push({
       $typeName: 'api.v1.Set',
       weightUnit: normalizeWeightUnit(workout.value.user?.weightUnit),
+      distanceUnit: normalizeDistanceUnit(workout.value.user?.distanceUnit),
     } as Set)
 }
 
@@ -185,7 +187,19 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
                     :placeholder="t(measurement.labelKey)"
                     :required="hasAnyExerciseSetValue(set, es.exercise)"
                   />
-                  <span class="weight-unit-suffix">{{ weightUnitLabel(set.weightUnit) }}</span>
+                  <span class="unit-suffix">{{ weightUnitLabel(set.weightUnit) }}</span>
+                </div>
+                <div v-else-if="measurement.field === 'distance'" class="flex items-center gap-2">
+                  <input
+                    v-model.number="set.distance"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="any"
+                    :placeholder="t(measurement.labelKey)"
+                    :required="hasAnyExerciseSetValue(set, es.exercise)"
+                  />
+                  <span class="unit-suffix">{{ distanceUnitLabel(set.distanceUnit) }}</span>
                 </div>
                 <input
                   v-else
@@ -287,7 +301,7 @@ input {
   @apply mb-3 size-7 cursor-pointer text-slate-500;
 }
 
-.weight-unit-suffix {
+.unit-suffix {
   @apply shrink-0 text-eyebrow font-bold uppercase text-text-subtle;
 }
 

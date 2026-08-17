@@ -1,5 +1,6 @@
 import { ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb'
 import { weightUnitLabel } from '@/utils/weightUnits'
+import { distanceUnitLabel } from '@/utils/distanceUnits'
 
 export type MeasurementField = 'weight' | 'reps' | 'distance' | 'durationSeconds'
 
@@ -70,7 +71,7 @@ export const formatExerciseSet = (set: Partial<Set>, exercise?: Pick<Exercise, '
         case 'reps':
           return `${number(value)} reps`
         case 'distance':
-          return `${number(value)} km`
+          return `${number(value)} ${distanceUnitLabel(set.distanceUnit)}`
         case 'durationSeconds':
           return formatMeasurementDuration(value)
       }
