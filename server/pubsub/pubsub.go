@@ -3,10 +3,8 @@ package pubsub
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 
-	"github.com/lib/pq"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
@@ -18,27 +16,28 @@ type PubSub struct {
 	mu       sync.RWMutex
 	log      *zap.Logger
 	repo     repo.Repo
-	listener *pq.Listener
 	handlers map[repo.EventTopic]handlers.Handler
 }
 
 type Params struct {
 	fx.In
 
-	Log      *zap.Logger
-	Repo     repo.Repo
-	Listener *pq.Listener
+	Log  *zap.Logger
+	Repo repo.Repo
 }
 
 func New(p Params) *PubSub {
 	return &PubSub{
 		log:      p.Log,
 		repo:     p.Repo,
-		listener: p.Listener,
 		handlers: make(map[repo.EventTopic]handlers.Handler),
 	}
 }
 
+// Publish persists the event and dispatches it to the registered handler in
+// process. Events are not routed through Postgres NOTIFY/LISTEN because the
+// production database sits behind a connection pooler that does not guarantee
+// notification delivery.
 func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload any) {
 	p, err := json.Marshal(payload)
 	if err != nil {
@@ -50,55 +49,26 @@ func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload an
 		ps.log.Error("failed to publish event", zap.Error(err))
 		return
 	}
+
+	ps.mu.RLock()
+	handler, ok := ps.handlers[topic]
+	ps.mu.RUnlock()
+
+	if !ok {
+		ps.log.Error("handler not found", zap.String("topic", topic.String()))
+		return
+	}
+
+	ps.log.Info("dispatching event", zap.String("topic", topic.String()))
+	go handler.HandlePayload(string(p))
 }
 
-const workers = 10
+func (ps *PubSub) Register(handlers map[repo.EventTopic]handlers.Handler) {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
 
-func (ps *PubSub) Subscribe(handlers map[repo.EventTopic]handlers.Handler) error {
 	for topic, handler := range handlers {
 		ps.handlers[topic] = handler
-		if err := ps.listener.Listen(topic.String()); err != nil {
-			return fmt.Errorf("failed to listen to event: %w", err)
-		}
-		ps.log.Info("subscribed to topic", zap.String("topic", topic.String()))
+		ps.log.Info("registered handler", zap.String("topic", topic.String()))
 	}
-
-	for range workers {
-		go ps.startWorker()
-	}
-
-	return nil
-}
-
-func (ps *PubSub) startWorker() {
-	for event := range ps.listener.Notify {
-		if event == nil {
-			ps.log.Warn("listener disconnected")
-			return
-		}
-
-		log := ps.log.With(zap.String("topic", event.Channel))
-		log.Info("received event")
-
-		ps.mu.RLock()
-		handler, ok := ps.handlers[repo.EventTopic(event.Channel)]
-		ps.mu.RUnlock()
-
-		if !ok {
-			log.Error("handler not found")
-			continue
-		}
-
-		go handler.HandlePayload(event.Extra)
-	}
-}
-
-func (ps *PubSub) Stop() error {
-	if err := ps.listener.UnlistenAll(); err != nil {
-		return fmt.Errorf("failed to unlisten: %w", err)
-	}
-	if err := ps.listener.Close(); err != nil {
-		return fmt.Errorf("failed to close listener: %w", err)
-	}
-	return nil
 }

@@ -1342,7 +1342,7 @@ func (s *repoSuite) TestPublishEvent() {
 
 	tests := []test{
 		{
-			name:    "ok_publish_event_with_notify",
+			name:    "ok_publish_event",
 			topic:   repo.EventTopicWorkoutCommentPosted,
 			payload: []byte("{}"),
 			expected: expected{
@@ -1369,12 +1369,6 @@ func (s *repoSuite) TestPublishEvent() {
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			var listener *pq.Listener
-			if t.topic.Valid() {
-				listener = pq.NewListener(s.container.Connection, time.Second, time.Minute, nil)
-				s.Require().NoError(listener.Listen(t.topic.String()))
-			}
-
 			err := s.repo.PublishEvent(context.Background(), t.topic, t.payload)
 			if t.expected.err != nil {
 				s.Require().Error(err)
@@ -1382,10 +1376,6 @@ func (s *repoSuite) TestPublishEvent() {
 				return
 			}
 			s.Require().NoError(err)
-
-			notification := <-listener.Notify
-			s.Require().Equal(t.topic.String(), notification.Channel)
-			s.Require().Equal(string(t.payload), notification.Extra)
 
 			exists, err := models.Events.Query(
 				models.SelectWhere.Events.Topic.EQ(t.topic),

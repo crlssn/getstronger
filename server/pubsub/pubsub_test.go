@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -41,22 +39,20 @@ func (s *pubSubSuite) SetupSuite() {
 	c := container.NewContainer(ctx)
 
 	s.pubSub = pubsub.New(pubsub.Params{
-		Log:      zap.NewExample(),
-		Repo:     repo.New(c.DB),
-		Listener: pq.NewListener(c.Connection, time.Second, time.Minute, nil),
+		Log:  zap.NewExample(),
+		Repo: repo.New(c.DB),
 	})
 
 	s.mocks.controller = gomock.NewController(s.T())
 	s.mocks.handler = handlers.NewMockHandler(s.mocks.controller)
 
-	err := s.pubSub.Subscribe(map[repo.EventTopic]handlers.Handler{
+	s.pubSub.Register(map[repo.EventTopic]handlers.Handler{
 		repo.EventTopicFollowedUser: s.mocks.handler,
 	})
-	s.Require().NoError(err)
 
 	s.T().Cleanup(func() {
 		s.mocks.controller.Finish()
-		if err = c.Terminate(ctx); err != nil {
+		if err := c.Terminate(ctx); err != nil {
 			s.T().Fatalf("failed to clean container: %s", err)
 		}
 	})

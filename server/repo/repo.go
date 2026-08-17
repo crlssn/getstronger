@@ -1838,20 +1838,14 @@ func (r *repo) PublishEvent(ctx context.Context, topic EventTopic, payload []byt
 		return ErrEmptyPayload
 	}
 
-	return r.NewTx(ctx, func(tx Tx) error {
-		if _, err := models.Events.Insert(&models.EventSetter{
-			Topic:   omit.From(topic),
-			Payload: omit.From(bobtypes.NewJSON[json.RawMessage](payload)),
-		}).Exec(ctx, tx.bobExec()); err != nil {
-			return fmt.Errorf("event insert: %w", err)
-		}
+	if _, err := models.Events.Insert(&models.EventSetter{
+		Topic:   omit.From(topic),
+		Payload: omit.From(bobtypes.NewJSON[json.RawMessage](payload)),
+	}).Exec(ctx, r.bobExec()); err != nil {
+		return fmt.Errorf("event insert: %w", err)
+	}
 
-		if _, err := tx.exec().ExecContext(ctx, "SELECT pg_notify($1, $2)", topic.String(), payload); err != nil {
-			return fmt.Errorf("pg_notify: %w", err)
-		}
-
-		return nil
-	})
+	return nil
 }
 
 func ListWorkoutsLoadExercises() ListWorkoutsOpt {

@@ -1,8 +1,6 @@
 package pubsub
 
 import (
-	"context"
-
 	"go.uber.org/fx"
 
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
@@ -18,15 +16,8 @@ func Module() fx.Option {
 			handlers.NewWorkoutCommentPosted,
 		),
 		fx.Invoke(
-			func(lc fx.Lifecycle, pubSub *PubSub, registry *handlers.Registry) {
-				lc.Append(fx.Hook{
-					OnStart: func(_ context.Context) error {
-						return pubSub.Subscribe(registry.Handlers())
-					},
-					OnStop: func(_ context.Context) error {
-						return pubSub.Stop()
-					},
-				})
+			func(pubSub *PubSub, registry *handlers.Registry) {
+				pubSub.Register(registry.Handlers())
 			},
 		),
 	))
