@@ -151,19 +151,19 @@ describe('StartWorkout', () => {
     })
   })
 
-  describe('rest timer pill', () => {
-    const restPill = (wrapper: Awaited<ReturnType<typeof mountWorkout>>) =>
-      wrapper.find('.session-dock .rest-pill[aria-label="Rest timer"]')
+  describe('rest timer banner', () => {
+    const restBanner = (wrapper: Awaited<ReturnType<typeof mountWorkout>>) =>
+      wrapper.find('.rest-banner[aria-label="Rest timer"]')
 
-    test('floats above the action dock once a set with a rest time completes', async () => {
+    test('bands the top of the session once a set with a rest time completes', async () => {
       const wrapper = await mountWorkout()
 
-      expect(restPill(wrapper).exists()).toBe(false)
+      expect(restBanner(wrapper).exists()).toBe(false)
       await logFirstSet(wrapper)
 
-      const pill = restPill(wrapper)
-      expect(pill.exists()).toBe(true)
-      expect(pill.get('strong').text()).toBe('01:30')
+      const banner = restBanner(wrapper)
+      expect(banner.exists()).toBe(true)
+      expect(banner.get('strong').text()).toBe('01:30')
       expect(wrapper.get('.workout-shell').classes()).toContain('resting')
       wrapper.unmount()
     })
@@ -173,13 +173,13 @@ describe('StartWorkout', () => {
       const wrapper = await mountWorkout()
       await logFirstSet(wrapper)
 
-      await wrapper.get('.rest-pill button:first-of-type').trigger('click')
-      expect(restPill(wrapper).get('strong').text()).toBe('02:00')
+      await wrapper.get('.rest-banner button:first-of-type').trigger('click')
+      expect(restBanner(wrapper).get('strong').text()).toBe('02:00')
       const extended = Date.parse(workoutStore.getRestTimer(routineID).endsAt ?? '')
       expect(extended - Date.now()).toBe(120_000)
 
-      await wrapper.get('.rest-pill button:last-of-type').trigger('click')
-      expect(restPill(wrapper).exists()).toBe(false)
+      await wrapper.get('.rest-banner button:last-of-type').trigger('click')
+      expect(restBanner(wrapper).exists()).toBe(false)
       expect(workoutStore.getRestTimer(routineID).endsAt).toBeUndefined()
       expect(wrapper.get('.workout-shell').classes()).not.toContain('resting')
       wrapper.unmount()
@@ -193,20 +193,21 @@ describe('StartWorkout', () => {
 
       const wrapper = await mountWorkout()
 
-      const pill = restPill(wrapper)
-      expect(pill.exists()).toBe(true)
-      expect(pill.get('strong').text()).toBe('00:45')
+      const banner = restBanner(wrapper)
+      expect(banner.exists()).toBe(true)
+      expect(banner.get('strong').text()).toBe('00:45')
       wrapper.unmount()
     })
 
-    test('keeps only the rest pill in the fixed region; the actions stay in the flow', async () => {
+    test('sits with the header as session chrome; the actions stay in the flow', async () => {
       const wrapper = await mountWorkout()
       await logFirstSet(wrapper)
 
-      const dock = wrapper.get('.session-dock')
-      expect(dock.find('.rest-pill').exists()).toBe(true)
-      expect(dock.find('.finish-dock').exists()).toBe(false)
-      expect(wrapper.find('.finish-dock').exists()).toBe(true)
+      const children = wrapper.get('.workout-shell').element.children
+      const classes = Array.from(children).map((child) => child.className)
+      expect(classes[0]).toContain('workout-header')
+      expect(classes[1]).toContain('rest-banner')
+      expect(classes[classes.length - 1]).toContain('finish-dock')
       wrapper.unmount()
     })
   })
