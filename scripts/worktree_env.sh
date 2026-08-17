@@ -112,6 +112,22 @@ set_env "$root/.env" CORS_ALLOWED_ORIGIN "http://localhost:$web_port,capacitor:/
 set_env "$root/.env" MAILHOG_SMTP_PORT "$mailhog_smtp_port"
 set_env "$root/web/.env" VITE_API_URL "http://localhost:$server_port"
 
+# Seed node_modules from the main checkout so the first lint, test, or pre-push
+# run works without a full 'npm install'. cp -c clones via APFS copy-on-write,
+# so the copy is nearly instant; other filesystems fall back to a plain copy.
+main_root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+for dir in . web mobile; do
+  src="$main_root/$dir/node_modules"
+  dst="$root/$dir/node_modules"
+  if [[ -d "$src" && ! -d "$dst" ]]; then
+    echo "Seeding $dir/node_modules from the main checkout..."
+    if ! cp -Rc "$src" "$dst" 2>/dev/null; then
+      rm -rf "$dst"
+      cp -R "$src" "$dst"
+    fi
+  fi
+done
+
 cat <<SUMMARY
 ✅  Configured worktree '$name' as slot $slot
 
