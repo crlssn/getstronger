@@ -1,3 +1,4 @@
+# Temporary no-op change to trip the server paths filter for a label-triggered deploy.
 FROM golang:1.26.6-alpine3.23 AS build
 
 WORKDIR /src
