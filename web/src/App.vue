@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
+import AppConfirmDialog from '@/ui/components/AppConfirmDialog.vue'
 import AppDashboard from '@/ui/components/AppDashboard.vue'
 import AppUpdateBanner from '@/ui/components/AppUpdateBanner.vue'
 import GuestView from '@/ui/components/GuestView.vue'
@@ -12,6 +13,7 @@ const authStore = useAuthStore()
   <AppDashboard v-if="authStore.authorised" />
   <GuestView v-else />
   <AppUpdateBanner />
+  <AppConfirmDialog />
 </template>
 
 <style scoped>
