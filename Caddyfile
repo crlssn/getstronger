@@ -1,4 +1,0 @@
-{$API_DOMAIN} {
-	encode zstd gzip
-	reverse_proxy api:{$SERVER_PORT}
-}

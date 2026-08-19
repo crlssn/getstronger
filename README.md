@@ -62,7 +62,7 @@ Use the demo account to explore all features:
 - **Backend**: Golang
 - **Database**: PostgreSQL
 - **APIs**: gRPC-compatible, Protocol Buffers
-- **Infrastructure**: Scaleway (Instances, Serverless SQL Database, Object Storage, Edge Services)
+- **Infrastructure**: Scaleway (Serverless Containers, Serverless SQL Database, Object Storage, Edge Services)
 - **CI/CD**: GitHub Actions
 
 ---
@@ -194,13 +194,13 @@ The `release-mobile` workflow (manual trigger) builds the web bundle, archives b
 
 Production infrastructure is provisioned manually in the [Scaleway console](https://console.scaleway.com/) (ClickOps). The suggested layout is:
 
-- a Scaleway Instance for the Go API;
+- a Serverless Container for the Go API, fed from a Container Registry namespace;
 - a Serverless SQL Database for PostgreSQL;
 - an Object Storage bucket with the Bucket Website feature for the Vue application;
 - Edge Services in front of the bucket for HTTPS and a custom domain; and
 - Scaleway Domains and DNS for the `api` and `www` records.
 
-Choose one region for the regional resources (for example, Paris) and one nearby Availability Zone for the Instance. Resource names below are examples and can be changed.
+Choose one region for the regional resources (for example, Paris). Resource names below are examples and can be changed.
 
 ### 1. Create the project and database identities
 
@@ -254,24 +254,17 @@ migrate -path database/migrations/ \
 
 The connection format and mandatory `sslmode=require` setting are documented in [Connect to a Serverless SQL Database](https://www.scaleway.com/en/docs/serverless-sql-databases/how-to/connect-to-a-database/).
 
-### 3. Create the API Instance
+### 3. Create the API container
 
-1. Open **Compute > CPU & GPU Instances**, create an Instance in the chosen Availability Zone, and select the **Docker InstantApp** image. Start with the smallest development or general-purpose size that comfortably runs the Go API and Caddy; resize after observing real usage.
-2. Attach a flexible public IPv4 address and your administrator SSH key.
-3. Create a dedicated security group with these inbound rules:
-   - TCP `22` from administrator IP ranges only;
-   - TCP `80` from anywhere, for HTTP-to-HTTPS redirects and certificate issuance; and
-   - TCP `443` from anywhere, for the public API.
-4. Keep outbound traffic allowed and leave database port `5432` closed inbound on the Instance. The API connects outbound to the Serverless SQL hostname.
-5. Connect over SSH and verify that `docker version` and `docker compose version` both succeed for `SCW_INSTANCE_USER`.
-6. Set `SCW_INSTANCE_APP_DIR` to a dedicated directory that this SSH user can write to. The deployment workflow builds the `linux/amd64` API image on GitHub's runner, transfers the compressed image, loads it on the `x86_64` Instance, and starts the stack with Docker Compose.
-7. The Compose stack keeps the API private on its Docker network and exposes only Caddy on ports `80` and `443`. Caddy obtains and renews the certificate for `API_DOMAIN`; its certificate state is retained in named Docker volumes across deployments.
-8. The workflow writes the backend `.env` into `SCW_INSTANCE_APP_DIR` with mode `0600`. Do not place unrelated files in this deployment directory.
+1. Open **Containers > Container Registry** and create a namespace named `getstronger` in the chosen region. The deployment workflow pushes the API image to `rg.fr-par.scw.cloud/getstronger/server`, tagged both `latest` and with the deployed commit SHA.
+2. Open **Serverless > Containers**, create a namespace, and create a container from the registry image `getstronger/server:latest`, listening on port `8080` (the port the Dockerfile exposes and `SERVER_PORT` must match).
+3. Resources of `250 mVCPU` and `256 MB` are comfortable for the Go API. For autoscaling, use request concurrency with a minimum of `1` instance to avoid cold starts on a user-facing API. Keep the maximum low: pubsub events are dispatched in-process, so live notifications do not propagate between instances.
+4. Configure the container's environment variables and secrets as listed below. Use the **Secrets** section for credentials; both surface to the process identically, but secrets are stored encrypted and hidden in the console.
+5. Deploy the container and verify `https://<container-endpoint>/healthz` responds before wiring up the custom domain.
 
 At minimum, configure:
 
 ```dotenv
-API_DOMAIN=api.example.com
 ENV=production
 DB_HOST=<database-hostname>
 DB_PORT=5432
@@ -290,7 +283,7 @@ SCW_TEM_REGION=fr-par
 SCW_TEM_SECRET_KEY=<email-iam-secret-key>
 ```
 
-Replace `example.com` with the production domain. The backend supports Scaleway Transactional Email in production, a local SMTP capture service for development, and `noop` when delivery must be disabled. Never commit the production `.env` or IAM secret keys.
+Replace `example.com` with the production domain. The backend supports Scaleway Transactional Email in production, a local SMTP capture service for development, and `noop` when delivery must be disabled. TLS termination is handled by Scaleway's ingress, so no reverse proxy or certificate management is needed in the container. Never commit production configuration or IAM secret keys.
 
 ### 4. Configure Transactional Email
 
@@ -320,7 +313,7 @@ Refer to Scaleway's guides for [creating the bucket](https://www.scaleway.com/en
 ### 6. Configure DNS and validate
 
 1. In **Domains and DNS**, add or open the production DNS zone.
-2. Create an `A` record for `api.example.com` pointing to the Instance's flexible IPv4 address.
+2. Create a `CNAME` record for `api.example.com` pointing to the Serverless Container's endpoint (`…functions.fnc.fr-par.scw.cloud.`), then add `api.example.com` as a custom domain on the container's **Endpoints** tab. Scaleway validates the CNAME and issues a managed Let's Encrypt certificate.
 3. Let the Edge Services custom-domain wizard create the `www.example.com` CNAME automatically when the domain is managed by Scaleway. For an external DNS provider, copy the pipeline endpoint into a CNAME record and use **Verify CNAME** in the wizard.
 4. Wait for DNS and certificates to become active, then verify:
 
@@ -328,35 +321,30 @@ Refer to Scaleway's guides for [creating the bucket](https://www.scaleway.com/en
    curl --fail https://api.example.com/healthz
    ```
 
-5. Open `https://www.example.com`, sign in with a seeded test account, and confirm that authentication and an API-backed page work. If email delivery is configured, also test registration and password reset. Review Serverless SQL metrics, Instance health, and the Scaleway cost estimate after the first deployment.
+5. Open `https://www.example.com`, sign in with a seeded test account, and confirm that authentication and an API-backed page work. If email delivery is configured, also test registration and password reset. Review Serverless SQL metrics, the container's metrics and logs, and the Scaleway cost estimate after the first deployment.
 
 The DNS console flow is described in [Configure DNS zones](https://www.scaleway.com/en/docs/domains-and-dns/how-to/configure-dns-zones/).
 
 ### 7. Connect the deployment workflow
 
-The GitHub Actions deployment workflow builds the API's `linux/amd64` Docker image on its runner, uploads and loads that image over SSH, health-checks the Compose stack on the Instance, and uses Scaleway Object Storage's S3-compatible endpoint for the web build. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`, give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` on the production Project, and set that Project as the API key's preferred Object Storage Project.
+The GitHub Actions deployment workflow builds the API's `linux/amd64` Docker image on its runner, pushes it to the Container Registry, and triggers a new deployment of the Serverless Container, which pulls the fresh `latest` image. The web build is uploaded through Scaleway Object Storage's S3-compatible endpoint. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`; give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` (with the production Project as the API key's preferred Object Storage Project) plus `ContainerRegistryFullAccess` and `ContainersFullAccess` on the production Project.
 
 Configure these GitHub repository variables:
 
 ```text
-DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_MIGRATION_USER
-API_DOMAIN, CORS_ALLOWED_ORIGIN, SERVER_PORT
-COOKIE_DOMAIN, EMAIL_PROVIDER, EMAIL_FROM_ADDRESS, VITE_API_URL
-SCW_PROJECT_ID, SCW_TEM_REGION
-SCW_INSTANCE_HOST, SCW_INSTANCE_USER, SCW_INSTANCE_APP_DIR
-SCW_REGION, SCW_BUCKET_NAME
+DB_HOST, DB_PORT, DB_NAME, DB_MIGRATION_USER
+VITE_API_URL
+SCW_REGION, SCW_BUCKET_NAME, SCW_CONTAINER_ID
 ```
 
 Configure these GitHub repository secrets:
 
 ```text
-DB_PASSWORD, DB_MIGRATION_PASSWORD
-JWT_ACCESS_TOKEN_KEY, JWT_REFRESH_TOKEN_KEY
-SCW_TEM_SECRET_KEY, SCW_INSTANCE_SSH_KEY
+DB_MIGRATION_PASSWORD
 SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
 ```
 
-Set `DB_USER` and `DB_PASSWORD` to the runtime IAM application's ID and secret key. Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key. The workflow uses the migration identity only in the database job and writes only the runtime identity to the API's `.env` file.
+Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key; the workflow uses the migration identity only in the database job. The runtime identity is configured directly on the Serverless Container, not in GitHub. `SCW_CONTAINER_ID` is the Serverless Container's UUID, shown on its **Overview** tab in the console.
 
 For the initial cutover, open the **deploy** workflow in GitHub Actions and choose **Run workflow**. Its manual inputs can independently migrate the Serverless SQL Database, deploy the API, and deploy the web application. This also provides a safe way to migrate a newly created database when no migration file changed in the triggering commit.
 
