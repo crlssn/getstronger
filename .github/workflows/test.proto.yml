@@ -1,4 +1,4 @@
-name: test
+name: test proto
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
       - synchronize
       - ready_for_review
     paths:
+      - '.github/workflows/test.proto.yml'
       - 'proto/**'
       - 'buf.yaml'
       - 'buf.gen.yaml'
@@ -20,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: test-proto-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -50,7 +51,7 @@ jobs:
         run: npx buf lint
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
