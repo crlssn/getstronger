@@ -125,7 +125,7 @@ test.describe('exercise library', () => {
     await page
       .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
       .fill('40')
-    await page.getByRole('textbox', { name: `${exerciseName} set 1 Reps`, exact: true }).fill('5')
+    await page.getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true }).fill('5')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
