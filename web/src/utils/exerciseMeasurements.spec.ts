@@ -69,9 +69,7 @@ describe('formatExerciseSet', () => {
   })
 
   it('leaves other metric combinations without a pace', () => {
-    expect(
-      formatExerciseSet({ weight: 92.5, reps: 3 }, { metrics: [] }),
-    ).toBe('92.5 kg · 3')
+    expect(formatExerciseSet({ weight: 92.5, reps: 3 }, { metrics: [] })).toBe('92.5 kg · 3')
     expect(
       formatExerciseSet(
         { distance: 1, durationSeconds: 90, reps: 4, distanceUnit: DistanceUnit.KILOMETERS },
