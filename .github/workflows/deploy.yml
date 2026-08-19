@@ -211,9 +211,19 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.SCW_REGION }}
           SCW_REGION: ${{ vars.SCW_REGION }}
           SCW_BUCKET_NAME: ${{ vars.SCW_BUCKET_NAME }}
+        # Hashed bundles are uploaded first so index.html never references
+        # missing files, and stale objects are pruned with --delete.
         run: |
+          aws s3 sync ./dist/assets "s3://${SCW_BUCKET_NAME}/assets" \
+            --endpoint-url "https://s3.${SCW_REGION}.scw.cloud" \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable"
+
           aws s3 sync ./dist "s3://${SCW_BUCKET_NAME}" \
-            --endpoint-url "https://s3.${SCW_REGION}.scw.cloud"
+            --endpoint-url "https://s3.${SCW_REGION}.scw.cloud" \
+            --delete \
+            --exclude "assets/*" \
+            --cache-control "no-cache"
 
   cleanup:
     needs: [init, database, server, web]
