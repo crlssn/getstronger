@@ -2,12 +2,13 @@ package factory
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/aarondl/opt/omit"
 	"github.com/stephenafamo/bob/dialect/psql/im"
-	bobtypes "github.com/stephenafamo/bob/types"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -58,10 +59,6 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
 	if value, ok := setter.DeletedAt.GetNull(); ok {
 		mods = append(mods, bobfactory.RoutineMods.DeletedAt(value))
 	}
-	if value, ok := setter.ExerciseOrder.Get(); ok {
-		mods = append(mods, bobfactory.RoutineMods.ExerciseOrder(value))
-	}
-
 	template := f.generated.NewRoutine(mods...)
 	built := template.Build()
 	setter = template.BuildSetter()
@@ -97,22 +94,29 @@ func RoutineName(name string) RoutineOpt {
 	}
 }
 
-func RoutineExerciseOrder(exerciseIDs []string) RoutineOpt {
-	return func(m *models.RoutineSetter) {
-		bytes, err := json.Marshal(exerciseIDs)
-		if err != nil {
-			panic(fmt.Errorf("failed to marshal exercise order: %w", err))
-		}
-		m.ExerciseOrder = omit.From(bobtypes.NewJSON[json.RawMessage](bytes))
-	}
-}
-
+// AddRoutineExercise appends the exercises to the routine, continuing from the
+// routine's current last position so repeated calls keep extending the order.
 func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*models.Exercise) {
 	ctx := context.Background()
+
+	lastLink, err := models.ExercisesRoutines.Query(
+		models.SelectWhere.ExercisesRoutines.RoutineID.EQ(routine.ID),
+		sm.OrderBy(models.ExercisesRoutines.Columns.Position).Desc(),
+		sm.Limit(1),
+	).One(ctx, f.exec)
+	var position int32
+	if err == nil {
+		position = lastLink.Position
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		panic(fmt.Errorf("failed to retrieve last routine exercise position: %w", err))
+	}
+
 	for _, exercise := range exercises {
+		position++
 		f.generated.NewExercisesRoutine(
 			bobfactory.ExercisesRoutineMods.WithExistingRoutine(routineWithoutRelationships(routine)),
 			bobfactory.ExercisesRoutineMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
+			bobfactory.ExercisesRoutineMods.Position(position),
 		).MustCreate(ctx, f.exec)
 	}
 }

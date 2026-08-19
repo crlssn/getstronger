@@ -54,6 +54,20 @@ func TestExerciseHasRelationsEmitExists(t *testing.T) {
 		}
 	})
 
+	t.Run("ExercisesRoutines", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Exercises.NameExpr()),
+			SelectWhere.Exercises.R.HasExercisesRoutines(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasExercisesRoutines: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasExercisesRoutines: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
 	t.Run("Routines", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(Exercises.NameExpr()),
@@ -250,17 +264,17 @@ func TestPlanHasRelationsEmitExists(t *testing.T) {
 func TestRoutineHasRelationsEmitExists(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("Exercises", func(t *testing.T) {
+	t.Run("ExercisesRoutines", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(Routines.NameExpr()),
-			SelectWhere.Routines.R.HasExercises(),
+			SelectWhere.Routines.R.HasExercisesRoutines(),
 		)
 		sql, _, err := bob.Build(ctx, q)
 		if err != nil {
-			t.Fatalf("HasExercises: build error: %v", err)
+			t.Fatalf("HasExercisesRoutines: build error: %v", err)
 		}
 		if !strings.Contains(sql, "EXISTS") {
-			t.Errorf("HasExercises: expected EXISTS in query, got: %s", sql)
+			t.Errorf("HasExercisesRoutines: expected EXISTS in query, got: %s", sql)
 		}
 	})
 
@@ -289,6 +303,20 @@ func TestRoutineHasRelationsEmitExists(t *testing.T) {
 		}
 		if !strings.Contains(sql, "EXISTS") {
 			t.Errorf("HasUser: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("Exercises", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Routines.NameExpr()),
+			SelectWhere.Routines.R.HasExercises(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasExercises: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasExercises: expected EXISTS in query, got: %s", sql)
 		}
 	})
 

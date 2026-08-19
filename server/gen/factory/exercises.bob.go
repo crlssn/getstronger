@@ -55,17 +55,23 @@ type ExerciseTemplate struct {
 }
 
 type exerciseR struct {
-	User     *exerciseRUserR
-	Routines []*exerciseRRoutinesR
-	Sets     []*exerciseRSetsR
+	User              *exerciseRUserR
+	ExercisesRoutines []*exerciseRExercisesRoutinesR
+	Routines          []*exerciseRRoutinesR
+	Sets              []*exerciseRSetsR
 }
 
 type exerciseRUserR struct {
 	o *UserTemplate
 }
-type exerciseRRoutinesR struct {
+type exerciseRExercisesRoutinesR struct {
 	number int
-	o      *RoutineTemplate
+	o      *ExercisesRoutineTemplate
+}
+type exerciseRRoutinesR struct {
+	number           int
+	o                *RoutineTemplate
+	exercisesRoutine *ExercisesRoutineTemplate
 }
 type exerciseRSetsR struct {
 	number int
@@ -88,6 +94,21 @@ func (t ExerciseTemplate) setModelRels(o *models.Exercise) {
 		o.UserID = rel.ID // h2
 		o.R.User = rel
 		o.R.Loaded.User = true
+	}
+
+	if t.r.ExercisesRoutines != nil {
+		rel := models.ExercisesRoutineSlice{}
+		for _, r := range t.r.ExercisesRoutines {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.ExerciseID = o.ID // h2
+				rel.R.Exercise = o
+				rel.R.Loaded.Exercise = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.ExercisesRoutines = rel
+		o.R.Loaded.ExercisesRoutines = true
 	}
 
 	if t.r.Routines != nil {
@@ -238,6 +259,26 @@ func ensureCreatableExercise(m *models.ExerciseSetter) {
 func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models.Exercise) error {
 	var err error
 
+	isExercisesRoutinesDone, _ := exerciseRelExercisesRoutinesCtx.Value(ctx)
+	if !isExercisesRoutinesDone && o.r.ExercisesRoutines != nil {
+		ctx = exerciseRelExercisesRoutinesCtx.WithValue(ctx, true)
+		for _, r := range o.r.ExercisesRoutines {
+			if r.o.alreadyPersisted {
+				m.R.ExercisesRoutines = append(m.R.ExercisesRoutines, r.o.Build())
+			} else {
+				rel1, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachExercisesRoutines(ctx, exec, rel1...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isRoutinesDone, _ := exerciseRelRoutinesCtx.Value(ctx)
 	if !isRoutinesDone && o.r.Routines != nil {
 		ctx = exerciseRelRoutinesCtx.WithValue(ctx, true)
@@ -245,12 +286,16 @@ func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor,
 			if r.o.alreadyPersisted {
 				m.R.Routines = append(m.R.Routines, r.o.Build())
 			} else {
-				rel1, err := r.o.CreateMany(ctx, exec, r.number)
+				exercisesRoutine1, err := r.exercisesRoutine.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+				rel2, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachRoutines(ctx, exec, rel1...)
+				err = m.AttachRoutines(ctx, exec, exercisesRoutine1, rel2...)
 				if err != nil {
 					return err
 				}
@@ -265,12 +310,12 @@ func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor,
 			if r.o.alreadyPersisted {
 				m.R.Sets = append(m.R.Sets, r.o.Build())
 			} else {
-				rel2, err := r.o.CreateMany(ctx, exec, r.number)
+				rel3, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachSets(ctx, exec, rel2...)
+				err = m.AttachSets(ctx, exec, rel3...)
 				if err != nil {
 					return err
 				}
@@ -743,35 +788,89 @@ func (m exerciseMods) WithoutUser() ExerciseMod {
 	})
 }
 
-func (m exerciseMods) WithRoutines(number int, related *RoutineTemplate) ExerciseMod {
+func (m exerciseMods) WithExercisesRoutines(number int, related *ExercisesRoutineTemplate) ExerciseMod {
 	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
-		o.r.Routines = []*exerciseRRoutinesR{{
+		o.r.ExercisesRoutines = []*exerciseRExercisesRoutinesR{{
 			number: number,
 			o:      related,
 		}}
 	})
 }
 
-func (m exerciseMods) WithNewRoutines(number int, mods ...RoutineMod) ExerciseMod {
+func (m exerciseMods) WithNewExercisesRoutines(number int, mods ...ExercisesRoutineMod) ExerciseMod {
 	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
-		related := o.f.NewRoutineWithContext(ctx, mods...)
-		m.WithRoutines(number, related).Apply(ctx, o)
+		related := o.f.NewExercisesRoutineWithContext(ctx, mods...)
+		m.WithExercisesRoutines(number, related).Apply(ctx, o)
 	})
 }
 
-func (m exerciseMods) AddRoutines(number int, related *RoutineTemplate) ExerciseMod {
+func (m exerciseMods) AddExercisesRoutines(number int, related *ExercisesRoutineTemplate) ExerciseMod {
 	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
-		o.r.Routines = append(o.r.Routines, &exerciseRRoutinesR{
+		o.r.ExercisesRoutines = append(o.r.ExercisesRoutines, &exerciseRExercisesRoutinesR{
 			number: number,
 			o:      related,
 		})
 	})
 }
 
+func (m exerciseMods) AddNewExercisesRoutines(number int, mods ...ExercisesRoutineMod) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		related := o.f.NewExercisesRoutineWithContext(ctx, mods...)
+		m.AddExercisesRoutines(number, related).Apply(ctx, o)
+	})
+}
+
+func (m exerciseMods) AddExistingExercisesRoutines(existingModels ...*models.ExercisesRoutine) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		for _, em := range existingModels {
+			o.r.ExercisesRoutines = append(o.r.ExercisesRoutines, &exerciseRExercisesRoutinesR{
+				o: o.f.fromExistingExercisesRoutine(ctx, em),
+			})
+		}
+	})
+}
+
+func (m exerciseMods) WithoutExercisesRoutines() ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.ExercisesRoutines = nil
+	})
+}
+
+func (m exerciseMods) WithRoutines(number int, exercisesRoutine *ExercisesRoutineTemplate, related *RoutineTemplate) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.Routines = []*exerciseRRoutinesR{{
+			number:           number,
+			o:                related,
+			exercisesRoutine: exercisesRoutine,
+		}}
+	})
+}
+
+func (m exerciseMods) WithNewRoutines(number int, mods ...RoutineMod) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		exercisesRoutine1 := o.f.NewExercisesRoutineWithContext(ctx)
+
+		related := o.f.NewRoutineWithContext(ctx, mods...)
+		m.WithRoutines(number, exercisesRoutine1, related).Apply(ctx, o)
+	})
+}
+
+func (m exerciseMods) AddRoutines(number int, exercisesRoutine *ExercisesRoutineTemplate, related *RoutineTemplate) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.Routines = append(o.r.Routines, &exerciseRRoutinesR{
+			number:           number,
+			o:                related,
+			exercisesRoutine: exercisesRoutine,
+		})
+	})
+}
+
 func (m exerciseMods) AddNewRoutines(number int, mods ...RoutineMod) ExerciseMod {
 	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		exercisesRoutine1 := o.f.NewExercisesRoutineWithContext(ctx)
+
 		related := o.f.NewRoutineWithContext(ctx, mods...)
-		m.AddRoutines(number, related).Apply(ctx, o)
+		m.AddRoutines(number, exercisesRoutine1, related).Apply(ctx, o)
 	})
 }
 

@@ -908,6 +908,20 @@ func (mr *MockRepoMockRecorder) UpdateRoutine(ctx, routineID any, opts ...any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutine", reflect.TypeOf((*MockRepo)(nil).UpdateRoutine), varargs...)
 }
 
+// UpdateRoutineExerciseOrder mocks base method.
+func (m *MockRepo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRoutineExerciseOrder", ctx, routineID, exerciseIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateRoutineExerciseOrder indicates an expected call of UpdateRoutineExerciseOrder.
+func (mr *MockRepoMockRecorder) UpdateRoutineExerciseOrder(ctx, routineID, exerciseIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutineExerciseOrder", reflect.TypeOf((*MockRepo)(nil).UpdateRoutineExerciseOrder), ctx, routineID, exerciseIDs)
+}
+
 // UpdateUser mocks base method.
 func (m *MockRepo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
 	m.ctrl.T.Helper()
@@ -1861,6 +1875,20 @@ func (mr *MockTxMockRecorder) UpdateRoutine(ctx, routineID any, opts ...any) *go
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, routineID}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutine", reflect.TypeOf((*MockTx)(nil).UpdateRoutine), varargs...)
+}
+
+// UpdateRoutineExerciseOrder mocks base method.
+func (m *MockTx) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRoutineExerciseOrder", ctx, routineID, exerciseIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateRoutineExerciseOrder indicates an expected call of UpdateRoutineExerciseOrder.
+func (mr *MockTxMockRecorder) UpdateRoutineExerciseOrder(ctx, routineID, exerciseIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutineExerciseOrder", reflect.TypeOf((*MockTx)(nil).UpdateRoutineExerciseOrder), ctx, routineID, exerciseIDs)
 }
 
 // UpdateUser mocks base method.
@@ -2846,6 +2874,20 @@ func (mr *MockmethodsMockRecorder) UpdateRoutine(ctx, routineID any, opts ...any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutine", reflect.TypeOf((*Mockmethods)(nil).UpdateRoutine), varargs...)
 }
 
+// UpdateRoutineExerciseOrder mocks base method.
+func (m *Mockmethods) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRoutineExerciseOrder", ctx, routineID, exerciseIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateRoutineExerciseOrder indicates an expected call of UpdateRoutineExerciseOrder.
+func (mr *MockmethodsMockRecorder) UpdateRoutineExerciseOrder(ctx, routineID, exerciseIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutineExerciseOrder", reflect.TypeOf((*Mockmethods)(nil).UpdateRoutineExerciseOrder), ctx, routineID, exerciseIDs)
+}
+
 // UpdateUser mocks base method.
 func (m *Mockmethods) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
 	m.ctrl.T.Helper()
@@ -3668,6 +3710,20 @@ func (mr *MockroutineMethodsMockRecorder) UpdateRoutine(ctx, routineID any, opts
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, routineID}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutine", reflect.TypeOf((*MockroutineMethods)(nil).UpdateRoutine), varargs...)
+}
+
+// UpdateRoutineExerciseOrder mocks base method.
+func (m *MockroutineMethods) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRoutineExerciseOrder", ctx, routineID, exerciseIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateRoutineExerciseOrder indicates an expected call of UpdateRoutineExerciseOrder.
+func (mr *MockroutineMethodsMockRecorder) UpdateRoutineExerciseOrder(ctx, routineID, exerciseIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRoutineExerciseOrder", reflect.TypeOf((*MockroutineMethods)(nil).UpdateRoutineExerciseOrder), ctx, routineID, exerciseIDs)
 }
 
 // MockworkoutMethods is a mock of workoutMethods interface.

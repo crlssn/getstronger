@@ -37,6 +37,7 @@ func (mods ExercisesRoutineModSlice) Apply(ctx context.Context, n *ExercisesRout
 type ExercisesRoutineTemplate struct {
 	RoutineID  func() uuid.UUID
 	ExerciseID func() uuid.UUID
+	Position   func() int32
 
 	r exercisesRoutineR
 	f *Factory
@@ -68,6 +69,7 @@ func (o *ExercisesRoutineTemplate) Apply(ctx context.Context, mods ...ExercisesR
 func (t ExercisesRoutineTemplate) setModelRels(o *models.ExercisesRoutine) {
 	if t.r.Exercise != nil {
 		rel := t.r.Exercise.o.Build()
+		rel.R.ExercisesRoutines = append(rel.R.ExercisesRoutines, o)
 		o.ExerciseID = rel.ID // h2
 		o.R.Exercise = rel
 		o.R.Loaded.Exercise = true
@@ -75,6 +77,7 @@ func (t ExercisesRoutineTemplate) setModelRels(o *models.ExercisesRoutine) {
 
 	if t.r.Routine != nil {
 		rel := t.r.Routine.o.Build()
+		rel.R.ExercisesRoutines = append(rel.R.ExercisesRoutines, o)
 		o.RoutineID = rel.ID // h2
 		o.R.Routine = rel
 		o.R.Loaded.Routine = true
@@ -93,6 +96,10 @@ func (o ExercisesRoutineTemplate) BuildSetter() *models.ExercisesRoutineSetter {
 	if o.ExerciseID != nil {
 		val := o.ExerciseID()
 		m.ExerciseID = omit.From(val)
+	}
+	if o.Position != nil {
+		val := o.Position()
+		m.Position = omit.From(val)
 	}
 
 	return m
@@ -122,6 +129,9 @@ func (o ExercisesRoutineTemplate) Build() *models.ExercisesRoutine {
 	if o.ExerciseID != nil {
 		m.ExerciseID = o.ExerciseID()
 	}
+	if o.Position != nil {
+		m.Position = o.Position()
+	}
 
 	o.setModelRels(m)
 
@@ -149,6 +159,10 @@ func ensureCreatableExercisesRoutine(m *models.ExercisesRoutineSetter) {
 	if m.ExerciseID.IsUnset() {
 		val := random_uuid_UUID(nil)
 		m.ExerciseID = omit.From(val)
+	}
+	if m.Position.IsUnset() {
+		val := random_int32(nil)
+		m.Position = omit.From(val)
 	}
 }
 
@@ -327,6 +341,7 @@ func (m exercisesRoutineMods) RandomizeAllColumns(f *faker.Faker) ExercisesRouti
 	return ExercisesRoutineModSlice{
 		ExercisesRoutineMods.RandomRoutineID(f),
 		ExercisesRoutineMods.RandomExerciseID(f),
+		ExercisesRoutineMods.RandomPosition(f),
 	}
 }
 
@@ -388,6 +403,37 @@ func (m exercisesRoutineMods) RandomExerciseID(f *faker.Faker) ExercisesRoutineM
 	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
 		o.ExerciseID = func() uuid.UUID {
 			return random_uuid_UUID(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m exercisesRoutineMods) Position(val int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Position = func() int32 { return val }
+	})
+}
+
+// Set the Column from the function
+func (m exercisesRoutineMods) PositionFunc(f func() int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Position = f
+	})
+}
+
+// Clear any values for the column
+func (m exercisesRoutineMods) UnsetPosition() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Position = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m exercisesRoutineMods) RandomPosition(f *faker.Faker) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Position = func() int32 {
+			return random_int32(f)
 		}
 	})
 }

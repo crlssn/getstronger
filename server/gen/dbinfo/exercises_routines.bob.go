@@ -33,6 +33,15 @@ var ExercisesRoutines = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		Position: column{
+			Name:      "position",
+			DBType:    "integer",
+			Default:   "",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: exercisesRoutineIndexes{
 		RoutineExercisesPkey: index{
@@ -90,11 +99,12 @@ var ExercisesRoutines = Table[
 type exercisesRoutineColumns struct {
 	RoutineID  column
 	ExerciseID column
+	Position   column
 }
 
 func (c exercisesRoutineColumns) AsSlice() []column {
 	return []column{
-		c.RoutineID, c.ExerciseID,
+		c.RoutineID, c.ExerciseID, c.Position,
 	}
 }
 

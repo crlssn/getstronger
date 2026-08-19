@@ -11,6 +11,24 @@ types:
   int32:
     random_expr: "return f.Int32Between(0, 3600)"
 
+# Since exercises_routines gained its position column it is no longer a bare
+# join table, so bobgen stops inferring the routines ↔ exercises many-to-many
+# relationship on its own. Declaring it here keeps Routine.R.Exercises (and its
+# reverse) generated; the position column stays available to ORDER BY through
+# the join.
+relationships:
+  routines:
+    - name: routines_exercises
+      sides:
+        - from: routines
+          to: exercises_routines
+          columns:
+            - [id, routine_id]
+        - from: exercises_routines
+          to: exercises
+          columns:
+            - [exercise_id, id]
+
 plugins:
   models:
     destination: server/gen/models
