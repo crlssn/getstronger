@@ -1,4 +1,11 @@
-import { expect, logIn, openProfileActions, resetSeedData, test } from './fixtures'
+import {
+  expect,
+  logIn,
+  openExerciseActions,
+  openProfileActions,
+  resetSeedData,
+  test,
+} from './fixtures'
 
 test.beforeAll(resetSeedData)
 
@@ -55,13 +62,18 @@ test.describe('authenticated journeys', () => {
     await expect(page.getByText('Upper body', { exact: true })).toBeVisible()
     await expect(page.getByText('Pull', { exact: true })).toBeVisible()
 
-    await page.getByRole('link', { name: /Update exercise/ }).click()
+    await openExerciseActions(page)
+    await page.getByRole('menuitem', { name: 'Update exercise' }).click()
     await page.locator('form input[type="text"]').first().fill(updatedName)
     await page.getByRole('button', { name: 'Update Exercise' }).click()
     await expect(page.getByText(updatedName, { exact: true })).toBeVisible()
 
-    page.once('dialog', (dialog) => dialog.accept())
-    await page.getByRole('button', { name: 'Delete exercise' }).click()
+    await openExerciseActions(page)
+    await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+    await page
+      .getByRole('dialog', { name: `Delete “${updatedName}”?` })
+      .getByRole('button', { name: 'Delete exercise' })
+      .click()
     await expect(page).toHaveURL(/\/exercises$/)
     await expect(page.getByText('Exercise deleted')).toBeVisible()
   })

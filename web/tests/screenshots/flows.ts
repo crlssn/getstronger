@@ -62,8 +62,9 @@ export const flows: Flow[] = [
       if (!(await present(exercise))) return
 
       await exercise.click()
-      acceptConfirmation(page)
-      await page.getByRole('button', { name: 'Delete exercise' }).click()
+      await page.getByRole('button', { name: 'Exercise actions' }).click()
+      await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Delete exercise' }).click()
       await expect(page).toHaveURL(/\/exercises$/)
     },
     component: 'src/ui/exercises/CreateExercise.vue',

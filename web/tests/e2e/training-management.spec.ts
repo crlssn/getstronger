@@ -1,4 +1,12 @@
-import { expect, expectAccessible, logIn, resetSeedData, test, uniqueName } from './fixtures'
+import {
+  expect,
+  expectAccessible,
+  logIn,
+  openExerciseActions,
+  resetSeedData,
+  test,
+  uniqueName,
+} from './fixtures'
 
 test.beforeAll(resetSeedData)
 
@@ -18,8 +26,9 @@ const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) =
   const link = page.getByRole('link').filter({ hasText: name }).first()
   if (!(await link.isVisible())) return
   await link.click()
-  page.once('dialog', (dialog) => dialog.accept())
-  await page.getByRole('button', { name: 'Delete exercise' }).click()
+  await openExerciseActions(page)
+  await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete exercise' }).click()
   await expect(page).toHaveURL(/\/exercises$/)
 }
 
@@ -95,6 +104,76 @@ test.describe('exercise library', () => {
       await deleteExercise(page, targetName)
       await deleteExercise(page, sourceName)
     }
+  })
+
+  test('deletes an exercise through the header menu while preserving workout history @mutation', async ({
+    page,
+  }) => {
+    const exerciseName = uniqueName('E2E Deletion target')
+
+    // Create the exercise and log it once so there is history to preserve.
+    await page.goto('/exercises/create')
+    await page.locator('form input[type="text"]').first().fill(exerciseName)
+    await page.getByRole('button', { name: 'Save Exercise' }).click()
+    await expect(page).toHaveURL(/\/exercises$/)
+
+    await page.goto('/workouts/quick')
+    await page.getByRole('button', { name: 'Choose exercise' }).click()
+    const picker = page.getByRole('dialog', { name: 'Add exercise' })
+    await picker.getByLabel('Search exercises').fill(exerciseName)
+    await picker.locator('.exercise-options button').first().click()
+    await page
+      .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
+      .fill('40')
+    await page.getByRole('textbox', { name: `${exerciseName} set 1 Reps`, exact: true }).fill('5')
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    const workoutURL = page.url()
+
+    // The exercise page leads with history; management sits in the header menu.
+    await page.goto('/exercises')
+    await page.getByLabel('Search exercises').fill(exerciseName)
+    await page.getByRole('link').filter({ hasText: exerciseName }).first().click()
+    await expect(page.getByRole('heading', { name: 'Logged sets' })).toBeVisible()
+
+    // The confirmation explains what deleting does before anything happens.
+    await openExerciseActions(page)
+    await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+    const dialog = page.getByRole('dialog', { name: `Delete “${exerciseName}”?` })
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText(
+      'The exercise is removed from your library and from every routine that includes it.',
+    )
+    await expect(dialog).toContainText(
+      'Sets you have already logged are kept in your workout history.',
+    )
+    await expectAccessible(page)
+
+    // Escape backs out from the keyboard, the cancel button by pointer, and
+    // neither deletes anything.
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+    await openExerciseActions(page)
+    await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByRole('heading', { name: 'Logged sets' })).toBeVisible()
+
+    // Confirming deletes, reports success, and removes it from the library.
+    await openExerciseActions(page)
+    await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+    await dialog.getByRole('button', { name: 'Delete exercise' }).click()
+    await expect(page).toHaveURL(/\/exercises$/)
+    await expect(page.getByText('Exercise deleted')).toBeVisible()
+    await page.getByLabel('Search exercises').fill(exerciseName)
+    await expect(page.getByText('No matching exercises')).toBeVisible()
+
+    // The finished workout keeps the deleted exercise and its logged set.
+    await page.goto(workoutURL)
+    await expect(page.getByText(exerciseName, { exact: true })).toBeVisible()
+    const setsTable = page.getByRole('table', { name: `${exerciseName} sets` })
+    await expect(setsTable.getByRole('row', { name: /Set 1.*40\s*(kg|lbs)\s*5/ })).toBeVisible()
   })
 })
 
