@@ -576,10 +576,11 @@ export const markNotificationAsRead = async (
 export const listWorkouts = async (
   userIds: string[],
   pageToken: Uint8Array,
+  pageLimit: number = defaultPageLimit,
 ): Promise<ListWorkoutsResponse | void> => {
   const req = create(ListWorkoutsRequestSchema, {
     pagination: {
-      pageLimit: defaultPageLimit,
+      pageLimit: pageLimit,
       pageToken: pageToken,
     },
     userIds: userIds,

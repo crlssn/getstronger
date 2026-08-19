@@ -134,12 +134,21 @@ test.describe('account progress', () => {
     await page.getByRole('link', { name: /Progress & records/ }).click()
     await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible()
     const periods = page.getByLabel('Progress period')
+    const volumeHeading = page.locator('.chart-heading h2')
+    const volumes: number[] = []
     for (const period of ['7D', '4W', '3M', '1Y']) {
       await periods.getByRole('button', { name: period }).click()
       await expect(periods.getByRole('button', { name: period })).toHaveAttribute(
         'aria-pressed',
         'true',
       )
+      volumes.push(Number((await volumeHeading.innerText()).replace(/[^0-9]/g, '')))
+    }
+    // Each wider range adds workouts on top of the narrower one, so the volume
+    // must grow — a chart stuck on stale data reports the same number four
+    // times (issue #987).
+    for (let i = 1; i < volumes.length; i += 1) {
+      expect(volumes[i]).toBeGreaterThan(volumes[i - 1])
     }
 
     const firstRecord = page.locator('.record-list a').first()
