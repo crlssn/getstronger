@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { brandName, brandSignupSubtitle, brandSlogan } from './brand'
+import { brandName, brandNameParts, brandSignupSubtitle, brandSlogan } from './brand'
 import { en, sv } from '@/i18n/messages'
 
 const catalogues = { en, sv }
@@ -25,6 +25,10 @@ describe('brand', () => {
         )
       }
     }
+  })
+
+  it('keeps the wordmark parts in sync with the name', () => {
+    expect(brandNameParts.join('')).toBe(brandName)
   })
 
   it('interpolates the brand into the strings that mention it', () => {
