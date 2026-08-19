@@ -38,7 +38,7 @@ const tile = async (size, radius) => {
 const lockup = async () => {
   const text = `<svg width="720" height="260">
     <text x="0" y="110" font-family="Helvetica Neue, Arial, sans-serif" font-size="96" font-weight="bold" fill="${TITLE}">GetStronger</text>
-    <text x="4" y="200" font-family="Helvetica Neue, Arial, sans-serif" font-size="52" fill="${SLOGAN}">Log it. Lift it. Beat it.</text>
+    <text x="4" y="200" font-family="Helvetica Neue, Arial, sans-serif" font-size="52" fill="${SLOGAN}">Lift it. Log it. Beat it.</text>
   </svg>`
   return sharp({ create: { width: 1000, height: 260, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([
