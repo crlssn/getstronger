@@ -219,14 +219,11 @@ jobs:
     needs: [init, database, server, web]
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: always()
+    if: always() && github.event_name == 'pull_request' && github.event.label.name == 'deploy'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
       - name: Remove deploy label
-        if: github.event_name == 'pull_request' && github.event.label.name == 'deploy'
         run: gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy"
         env:
+          GH_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
