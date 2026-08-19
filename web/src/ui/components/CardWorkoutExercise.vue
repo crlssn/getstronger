@@ -5,8 +5,10 @@ import { TrophyIcon } from '@heroicons/vue/24/solid'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import {
   exerciseMetrics,
+  formatDurationDisplay,
   formatExerciseSet,
-  formatMeasurementDuration,
+  formatSetPace,
+  isDistanceTimeExercise,
   measurementDefinitions,
 } from '@/utils/exerciseMeasurements'
 import { weightUnitLabel } from '@/utils/weightUnits'
@@ -29,10 +31,11 @@ const props = withDefaults(
 
 const metrics = exerciseMetrics({ metrics: props.metrics ?? [] })
 const measurements = measurementDefinitions.filter(({ metric }) => metrics.includes(metric))
+const showPace = isDistanceTimeExercise({ metrics })
 
 const formatValue = (set: Set, field: (typeof measurementDefinitions)[number]['field']) => {
   const value = set[field]
-  if (field === 'durationSeconds') return formatMeasurementDuration(value)
+  if (field === 'durationSeconds') return formatDurationDisplay(value)
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
 }
 
@@ -58,13 +61,14 @@ const columnLabel = (metric: ExerciseMetric) => {
       class="set-table"
       role="table"
       :aria-label="`${name} sets`"
-      :style="{ '--metric-count': measurements.length }"
+      :style="{ '--metric-count': measurements.length + (showPace ? 1 : 0) }"
     >
       <div v-if="!compact" class="set-row table-head" role="row">
         <span role="columnheader">Set</span>
         <span v-for="measurement in measurements" :key="measurement.field" role="columnheader">
           {{ columnLabel(measurement.metric) }}
         </span>
+        <span v-if="showPace" role="columnheader">{{ t('common.pace') }}</span>
       </div>
       <div v-for="(set, index) in sets" :key="set.id || index" class="set-row" role="row">
         <span
@@ -99,6 +103,9 @@ const columnLabel = (metric: ExerciseMetric) => {
             <small v-else-if="measurement.field === 'distance'">
               {{ distanceUnitLabel(set.distanceUnit) }}
             </small>
+          </span>
+          <span v-if="showPace" class="set-pace" role="cell">
+            {{ formatSetPace(set) ?? '—' }}
           </span>
         </template>
       </div>
@@ -151,6 +158,9 @@ const columnLabel = (metric: ExerciseMetric) => {
 }
 .set-volume {
   @apply text-text-subtle;
+}
+.set-pace {
+  @apply text-text-muted;
 }
 .flat {
   @apply rounded-none border-0;

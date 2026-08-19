@@ -13,7 +13,7 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js'
-import { exerciseMetrics, formatMeasurementDuration } from '@/utils/exerciseMeasurements'
+import { exerciseMetrics, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { weightInKilograms } from '@/utils/weightUnits'
 import { distanceInKilometers } from '@/utils/distanceUnits'
 
@@ -117,7 +117,7 @@ const values = computed(() => dailyMetrics.value.map((day) => day[metric.value])
 const latestValue = computed(() => values.value[values.value.length - 1] ?? 0)
 const formattedLatestValue = computed(() =>
   metric.value === 'durationSeconds'
-    ? formatMeasurementDuration(latestValue.value)
+    ? formatDurationDisplay(latestValue.value)
     : `${Math.round(latestValue.value).toLocaleString()} ${metricDetails[metric.value].unit}`.trim(),
 )
 const hasTrend = computed(() => dailyMetrics.value.length > 1)

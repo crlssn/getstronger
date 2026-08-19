@@ -432,8 +432,11 @@ test.describe('weight units', () => {
       await page.getByRole('button', { name: 'Finish workout' }).click()
       await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
       const workoutUrl = page.url()
+      // The completed view splits the duration into units and derives a pace
+      // from the set's own distance unit: 12:30 over 3.5 mi is 3:34 min/mi.
       await expect(page.getByText(/3\.5\s*mi/)).toBeVisible()
-      await expect(page.getByText('12:30')).toBeVisible()
+      await expect(page.getByText('12 min 30 sec')).toBeVisible()
+      await expect(page.getByText('3:34 min/mi')).toBeVisible()
 
       // Switching back to kilometers must not rewrite the set logged in
       // miles: historical display stays in the unit it was entered in.
