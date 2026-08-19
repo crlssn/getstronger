@@ -30,7 +30,7 @@ func (l *local) SendVerification(_ context.Context, req SendVerification) error 
 	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\n\n%s", fromEmail, req.Email, subjectSendVerification, body)
 
 	if err := smtp.SendMail(l.addr, l.auth, fromEmail, []string{req.Email}, []byte(msg)); err != nil {
-		return fmt.Errorf("failed to send email: %w", err)
+		return fmt.Errorf("send verification email: %w", err)
 	}
 
 	return nil
@@ -41,7 +41,7 @@ func (l *local) SendPasswordReset(_ context.Context, req SendPasswordReset) erro
 	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\n\n%s", fromEmail, req.Email, subjectSendPasswordReset, body)
 
 	if err := smtp.SendMail(l.addr, l.auth, fromEmail, []string{req.Email}, []byte(msg)); err != nil {
-		return fmt.Errorf("failed to send email: %w", err)
+		return fmt.Errorf("send password reset email: %w", err)
 	}
 
 	return nil

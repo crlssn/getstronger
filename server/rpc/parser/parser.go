@@ -378,7 +378,7 @@ func NotificationSlice(notifications models.NotificationSlice, actors models.Use
 	for _, n := range notifications {
 		var p repo.NotificationPayload
 		if err := json.Unmarshal(n.Payload.Val, &p); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal notification payload: %w", err)
+			return nil, fmt.Errorf("unmarshal notification payload: %w", err)
 		}
 
 		actor, actorExists := mapActors[p.ActorID]
@@ -411,7 +411,7 @@ func FeedItemSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) 
 
 	workoutSlice, err := WorkoutSlice(workouts, personalBests)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse workouts: %w", err)
+		return nil, fmt.Errorf("parse workouts: %w", err)
 	}
 
 	for _, workout := range workoutSlice {

@@ -40,7 +40,7 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
 		var err error
 		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve user: %w", err))
+			panic(fmt.Errorf("retrieve user: %w", err))
 		}
 	} else {
 		user = f.NewUser()
@@ -69,7 +69,7 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create routine with Bob factory: %w", err))
+		panic(fmt.Errorf("create routine with Bob factory: %w", err))
 	}
 	routine.R = built.R
 
@@ -108,7 +108,7 @@ func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*mode
 	if err == nil {
 		position = lastLink.Position
 	} else if !errors.Is(err, sql.ErrNoRows) {
-		panic(fmt.Errorf("failed to retrieve last routine exercise position: %w", err))
+		panic(fmt.Errorf("retrieve last routine exercise position: %w", err))
 	}
 
 	for _, exercise := range exercises {

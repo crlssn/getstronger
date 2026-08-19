@@ -51,7 +51,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 		var err error
 		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve workout: %w", err))
+			panic(fmt.Errorf("retrieve workout: %w", err))
 		}
 	} else {
 		workout = f.NewWorkout()
@@ -62,7 +62,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 		var err error
 		exercise, err = models.Exercises.Query(models.SelectWhere.Exercises.ID.EQ(exerciseID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve exercise: %w", err))
+			panic(fmt.Errorf("retrieve exercise: %w", err))
 		}
 	} else {
 		exercise = f.NewExercise()
@@ -113,7 +113,7 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create set with Bob factory: %w", err))
+		panic(fmt.Errorf("create set with Bob factory: %w", err))
 	}
 	set.R = built.R
 

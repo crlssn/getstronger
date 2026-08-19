@@ -41,7 +41,7 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 	items = items[:limit]
 	nextPageToken, err := json.Marshal(PageTokenCreatedAt(createdAt(items[len(items)-1])))
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal page token: %w", err)
+		return nil, fmt.Errorf("marshal page token: %w", err)
 	}
 
 	return &Pagination[Item, Slice]{
@@ -124,7 +124,7 @@ func updateColumnsFromOpts[T updateOpt](opts []T) (columns, error) {
 func hashPassword(password string) ([]byte, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
 	return hash, nil

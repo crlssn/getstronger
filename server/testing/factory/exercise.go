@@ -41,7 +41,7 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:c
 		var err error
 		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve user: %w", err))
+			panic(fmt.Errorf("retrieve user: %w", err))
 		}
 	} else {
 		user = f.NewUser()
@@ -80,7 +80,7 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:c
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create exercise with Bob factory: %w", err))
+		panic(fmt.Errorf("create exercise with Bob factory: %w", err))
 	}
 	exercise.R = built.R
 

@@ -70,7 +70,7 @@ func (a *clientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if a.auth.refreshTokenCookie != "" {
 		cookie, err := http.ParseSetCookie(a.auth.refreshTokenCookie)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse cookie: %w", err)
+			return nil, fmt.Errorf("parse cookie: %w", err)
 		}
 		r.AddCookie(cookie)
 	}
@@ -107,7 +107,7 @@ func (s *Saga) ResendVerificationEmail(ctx context.Context, f func(*connect.Resp
 func (s *Saga) VerifyEmail(ctx context.Context, f func(*connect.Response[apiv1.VerifyEmailResponse], error)) *Saga {
 	a, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(s.auth.email)).One(ctx, bob.NewDB(s.db))
 	if err != nil {
-		f(nil, fmt.Errorf("failed to load auth: %w", err))
+		f(nil, fmt.Errorf("load auth: %w", err))
 		return s
 	}
 
@@ -182,7 +182,7 @@ func (s *Saga) RefreshToken(ctx context.Context, f func(*connect.Response[apiv1.
 func (s *Saga) CreateRoutine(ctx context.Context, f func(*connect.Response[apiv1.CreateRoutineResponse], error)) *Saga {
 	exercises, err := models.Exercises.Query().All(ctx, bob.NewDB(s.db))
 	if err != nil {
-		f(nil, fmt.Errorf("failed to load exercises: %w", err))
+		f(nil, fmt.Errorf("load exercises: %w", err))
 		return s
 	}
 
@@ -205,7 +205,7 @@ func (s *Saga) CreateRoutine(ctx context.Context, f func(*connect.Response[apiv1
 func (s *Saga) CreateWorkout(ctx context.Context, f func(*connect.Response[apiv1.CreateWorkoutResponse], error)) *Saga {
 	routine, err := models.Routines.Query(models.SelectThenLoad.Routine.Exercises()).One(ctx, bob.NewDB(s.db))
 	if err != nil {
-		f(nil, fmt.Errorf("failed to load routines: %w", err))
+		f(nil, fmt.Errorf("load routines: %w", err))
 		return s
 	}
 
@@ -253,7 +253,7 @@ func (s *Saga) ListRoutines(ctx context.Context, f func(*connect.Response[apiv1.
 func (s *Saga) ListWorkouts(ctx context.Context, f func(*connect.Response[apiv1.ListWorkoutsResponse], error)) *Saga {
 	user, err := models.Users.Query().One(ctx, bob.NewDB(s.db))
 	if err != nil {
-		f(nil, fmt.Errorf("failed to load user: %w", err))
+		f(nil, fmt.Errorf("load user: %w", err))
 		return s
 	}
 
@@ -274,7 +274,7 @@ func (s *Saga) ListWorkouts(ctx context.Context, f func(*connect.Response[apiv1.
 func (s *Saga) SearchUsers(ctx context.Context, f func(*connect.Response[apiv1.SearchUsersResponse], error)) *Saga {
 	user, err := models.Users.Query().One(ctx, bob.NewDB(s.db))
 	if err != nil {
-		f(nil, fmt.Errorf("failed to load user: %w", err))
+		f(nil, fmt.Errorf("load user: %w", err))
 		return s
 	}
 
@@ -317,7 +317,7 @@ func (s *Saga) SetRefreshTokenCookie(cookie string) {
 func (s *Saga) GetWorkout(ctx context.Context, f func(*connect.Response[apiv1.GetWorkoutResponse], error)) *Saga {
 	workout, err := models.Workouts.Query().One(ctx, bob.NewDB(s.db))
 	if err != nil {
-		f(nil, fmt.Errorf("failed to load workout: %w", err))
+		f(nil, fmt.Errorf("load workout: %w", err))
 		return s
 	}
 

@@ -23,5 +23,5 @@ func TestLoadEnvironmentRequiresFileWithoutInjectedEnvironment(t *testing.T) {
 	t.Setenv("ENV", "")
 	t.Chdir(t.TempDir())
 
-	require.ErrorContains(t, loadEnvironment(), "failed to load .env file")
+	require.ErrorContains(t, loadEnvironment(), "load .env file")
 }

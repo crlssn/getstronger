@@ -128,12 +128,12 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 			ctx, routine.ID.String(),
 			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
 		); err != nil {
-			return fmt.Errorf("routine update failed: %w", err)
+			return fmt.Errorf("routine update: %w", err)
 		}
 
 		// The exercises were listed by ID set; positions follow the requested order.
 		if err = tx.SetRoutineExercises(ctx, routine, repo.OrderExercisesByIDs(exercises, exerciseIDs)); err != nil {
-			return fmt.Errorf("set routine exercises failed: %w", err)
+			return fmt.Errorf("set routine exercises: %w", err)
 		}
 
 		return nil

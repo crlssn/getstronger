@@ -323,7 +323,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
 			repo.UpdateWorkoutFinishedAt(req.Msg.GetWorkout().GetFinishedAt().AsTime()),
 		); err != nil {
-			return fmt.Errorf("failed to update workout: %w", err)
+			return fmt.Errorf("update workout: %w", err)
 		}
 
 		exerciseSets := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
@@ -331,7 +331,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			WorkoutID:    workout.ID.String(),
 			ExerciseSets: exerciseSets,
 		}); err != nil {
-			return fmt.Errorf("failed to update workout sets: %w", err)
+			return fmt.Errorf("update workout sets: %w", err)
 		}
 
 		return nil

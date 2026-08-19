@@ -39,17 +39,17 @@ func NewContainer(ctx context.Context) *Container {
 		),
 	)
 	if err != nil {
-		panic(fmt.Errorf("could not start postgres container: %w", err))
+		panic(fmt.Errorf("start postgres container: %w", err))
 	}
 
 	connection, err := container.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		panic(fmt.Errorf("could not get connection string: %w", err))
+		panic(fmt.Errorf("get connection string: %w", err))
 	}
 
 	db, err := sql.Open("pgx", connection)
 	if err != nil {
-		panic(fmt.Errorf("could not open connection: %w", err))
+		panic(fmt.Errorf("open connection: %w", err))
 	}
 
 	return &Container{
@@ -67,7 +67,7 @@ func migrationFiles() []string {
 func mustFindProjectRoot() string {
 	currentDir, err := os.Getwd()
 	if err != nil {
-		panic(fmt.Errorf("could not get current directory: %w", err))
+		panic(fmt.Errorf("get current directory: %w", err))
 	}
 	for currentDir != "/" {
 		if _, err = os.Stat(filepath.Join(currentDir, "go.mod")); err == nil {
@@ -82,14 +82,14 @@ func mustFindMigrationFiles(baseDir string) []string {
 	var files []string
 	if err := filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("could not walk directory: %w", err)
+			return fmt.Errorf("walk directory: %w", err)
 		}
 		if !d.IsDir() && filepath.Ext(path) == ".sql" {
 			files = append(files, path)
 		}
 		return nil
 	}); err != nil {
-		panic(fmt.Errorf("could not walk directory: %w", err))
+		panic(fmt.Errorf("walk directory: %w", err))
 	}
 	return files
 }

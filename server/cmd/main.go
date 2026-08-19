@@ -35,7 +35,7 @@ func loadEnvironment() error {
 		return nil
 	}
 
-	return fmt.Errorf("failed to load .env file: %w", err)
+	return fmt.Errorf("load .env file: %w", err)
 }
 
 func options() []fx.Option {

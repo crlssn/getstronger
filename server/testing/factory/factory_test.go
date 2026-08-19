@@ -104,7 +104,7 @@ func TestFactory_Seed(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err = c.Terminate(ctx); err != nil {
-			t.Fatal(fmt.Errorf("failed to terminate container: %w", err))
+			t.Fatal(fmt.Errorf("terminate container: %w", err))
 		}
 	})
 }

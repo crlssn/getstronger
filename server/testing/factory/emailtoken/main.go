@@ -19,7 +19,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("failed to load .env file: %w", err))
+		panic(fmt.Errorf("load .env file: %w", err))
 	}
 
 	c := config.New()
