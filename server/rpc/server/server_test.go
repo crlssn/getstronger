@@ -33,7 +33,6 @@ func TestServesUnencryptedHTTP2(t *testing.T) {
 		Log:    zap.NewNop(),
 		Mux:    NewMultiplexer(nil, nil, nil),
 		Config: &config.Config{},
-		Stream: nil,
 	}).server
 
 	listener, err := new(net.ListenConfig).Listen(t.Context(), "tcp", "127.0.0.1:0")

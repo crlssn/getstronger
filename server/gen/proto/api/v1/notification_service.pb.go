@@ -279,86 +279,6 @@ func (x *GetUnreadNotificationCountResponse) GetCount() int64 {
 	return 0
 }
 
-type UnreadNotificationsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UnreadNotificationsRequest) Reset() {
-	*x = UnreadNotificationsRequest{}
-	mi := &file_api_v1_notification_service_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UnreadNotificationsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UnreadNotificationsRequest) ProtoMessage() {}
-
-func (x *UnreadNotificationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_notification_service_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UnreadNotificationsRequest.ProtoReflect.Descriptor instead.
-func (*UnreadNotificationsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{6}
-}
-
-type UnreadNotificationsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Count         int64                  `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UnreadNotificationsResponse) Reset() {
-	*x = UnreadNotificationsResponse{}
-	mi := &file_api_v1_notification_service_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UnreadNotificationsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UnreadNotificationsResponse) ProtoMessage() {}
-
-func (x *UnreadNotificationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_notification_service_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UnreadNotificationsResponse.ProtoReflect.Descriptor instead.
-func (*UnreadNotificationsResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *UnreadNotificationsResponse) GetCount() int64 {
-	if x != nil {
-		return x.Count
-	}
-	return 0
-}
-
 type Notification struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -376,7 +296,7 @@ type Notification struct {
 
 func (x *Notification) Reset() {
 	*x = Notification{}
-	mi := &file_api_v1_notification_service_proto_msgTypes[8]
+	mi := &file_api_v1_notification_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -388,7 +308,7 @@ func (x *Notification) String() string {
 func (*Notification) ProtoMessage() {}
 
 func (x *Notification) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_notification_service_proto_msgTypes[8]
+	mi := &file_api_v1_notification_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -401,7 +321,7 @@ func (x *Notification) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Notification.ProtoReflect.Descriptor instead.
 func (*Notification) Descriptor() ([]byte, []int) {
-	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{8}
+	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Notification) GetId() string {
@@ -475,7 +395,7 @@ type Notification_UserFollowed struct {
 
 func (x *Notification_UserFollowed) Reset() {
 	*x = Notification_UserFollowed{}
-	mi := &file_api_v1_notification_service_proto_msgTypes[9]
+	mi := &file_api_v1_notification_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -487,7 +407,7 @@ func (x *Notification_UserFollowed) String() string {
 func (*Notification_UserFollowed) ProtoMessage() {}
 
 func (x *Notification_UserFollowed) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_notification_service_proto_msgTypes[9]
+	mi := &file_api_v1_notification_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -500,7 +420,7 @@ func (x *Notification_UserFollowed) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Notification_UserFollowed.ProtoReflect.Descriptor instead.
 func (*Notification_UserFollowed) Descriptor() ([]byte, []int) {
-	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{8, 0}
+	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{6, 0}
 }
 
 func (x *Notification_UserFollowed) GetActor() *User {
@@ -520,7 +440,7 @@ type Notification_WorkoutComment struct {
 
 func (x *Notification_WorkoutComment) Reset() {
 	*x = Notification_WorkoutComment{}
-	mi := &file_api_v1_notification_service_proto_msgTypes[10]
+	mi := &file_api_v1_notification_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -532,7 +452,7 @@ func (x *Notification_WorkoutComment) String() string {
 func (*Notification_WorkoutComment) ProtoMessage() {}
 
 func (x *Notification_WorkoutComment) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_notification_service_proto_msgTypes[10]
+	mi := &file_api_v1_notification_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,7 +465,7 @@ func (x *Notification_WorkoutComment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Notification_WorkoutComment.ProtoReflect.Descriptor instead.
 func (*Notification_WorkoutComment) Descriptor() ([]byte, []int) {
-	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{8, 1}
+	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{6, 1}
 }
 
 func (x *Notification_WorkoutComment) GetActor() *User {
@@ -582,9 +502,6 @@ const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\x1fMarkNotificationsAsReadResponse\"#\n" +
 	"!GetUnreadNotificationCountRequest\":\n" +
 	"\"GetUnreadNotificationCountResponse\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x03R\x05count\"\x1c\n" +
-	"\x1aUnreadNotificationsRequest\"3\n" +
-	"\x1bUnreadNotificationsResponse\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\x03R\x05count\"\x93\x03\n" +
 	"\fNotification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12(\n" +
@@ -597,12 +514,11 @@ const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\x0eWorkoutComment\x12\"\n" +
 	"\x05actor\x18\x01 \x01(\v2\f.api.v1.UserR\x05actor\x12)\n" +
 	"\aworkout\x18\x02 \x01(\v2\x0f.api.v1.WorkoutR\aworkoutB\x06\n" +
-	"\x04type2\xca\x03\n" +
+	"\x04type2\xe2\x02\n" +
 	"\x13NotificationService\x12^\n" +
 	"\x11ListNotifications\x12 .api.v1.ListNotificationsRequest\x1a!.api.v1.ListNotificationsResponse\"\x04\x88\xb5\x18\x01\x12p\n" +
 	"\x17MarkNotificationsAsRead\x12&.api.v1.MarkNotificationsAsReadRequest\x1a'.api.v1.MarkNotificationsAsReadResponse\"\x04\x88\xb5\x18\x01\x12y\n" +
-	"\x1aGetUnreadNotificationCount\x12).api.v1.GetUnreadNotificationCountRequest\x1a*.api.v1.GetUnreadNotificationCountResponse\"\x04\x88\xb5\x18\x01\x12f\n" +
-	"\x13UnreadNotifications\x12\".api.v1.UnreadNotificationsRequest\x1a#.api.v1.UnreadNotificationsResponse\"\x04\x88\xb5\x18\x010\x01B\x9c\x01\n" +
+	"\x1aGetUnreadNotificationCount\x12).api.v1.GetUnreadNotificationCountRequest\x1a*.api.v1.GetUnreadNotificationCountResponse\"\x04\x88\xb5\x18\x01B\x9c\x01\n" +
 	"\n" +
 	"com.api.v1B\x18NotificationServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -618,7 +534,7 @@ func file_api_v1_notification_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_notification_service_proto_rawDescData
 }
 
-var file_api_v1_notification_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_api_v1_notification_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_api_v1_notification_service_proto_goTypes = []any{
 	(*ListNotificationsRequest)(nil),           // 0: api.v1.ListNotificationsRequest
 	(*ListNotificationsResponse)(nil),          // 1: api.v1.ListNotificationsResponse
@@ -626,35 +542,31 @@ var file_api_v1_notification_service_proto_goTypes = []any{
 	(*MarkNotificationsAsReadResponse)(nil),    // 3: api.v1.MarkNotificationsAsReadResponse
 	(*GetUnreadNotificationCountRequest)(nil),  // 4: api.v1.GetUnreadNotificationCountRequest
 	(*GetUnreadNotificationCountResponse)(nil), // 5: api.v1.GetUnreadNotificationCountResponse
-	(*UnreadNotificationsRequest)(nil),         // 6: api.v1.UnreadNotificationsRequest
-	(*UnreadNotificationsResponse)(nil),        // 7: api.v1.UnreadNotificationsResponse
-	(*Notification)(nil),                       // 8: api.v1.Notification
-	(*Notification_UserFollowed)(nil),          // 9: api.v1.Notification.UserFollowed
-	(*Notification_WorkoutComment)(nil),        // 10: api.v1.Notification.WorkoutComment
-	(*PaginationRequest)(nil),                  // 11: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),                 // 12: api.v1.PaginationResponse
-	(*User)(nil),                               // 13: api.v1.User
-	(*Workout)(nil),                            // 14: api.v1.Workout
+	(*Notification)(nil),                       // 6: api.v1.Notification
+	(*Notification_UserFollowed)(nil),          // 7: api.v1.Notification.UserFollowed
+	(*Notification_WorkoutComment)(nil),        // 8: api.v1.Notification.WorkoutComment
+	(*PaginationRequest)(nil),                  // 9: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),                 // 10: api.v1.PaginationResponse
+	(*User)(nil),                               // 11: api.v1.User
+	(*Workout)(nil),                            // 12: api.v1.Workout
 }
 var file_api_v1_notification_service_proto_depIdxs = []int32{
-	11, // 0: api.v1.ListNotificationsRequest.pagination:type_name -> api.v1.PaginationRequest
-	8,  // 1: api.v1.ListNotificationsResponse.notifications:type_name -> api.v1.Notification
-	12, // 2: api.v1.ListNotificationsResponse.pagination:type_name -> api.v1.PaginationResponse
-	9,  // 3: api.v1.Notification.user_followed:type_name -> api.v1.Notification.UserFollowed
-	10, // 4: api.v1.Notification.workout_comment:type_name -> api.v1.Notification.WorkoutComment
-	13, // 5: api.v1.Notification.UserFollowed.actor:type_name -> api.v1.User
-	13, // 6: api.v1.Notification.WorkoutComment.actor:type_name -> api.v1.User
-	14, // 7: api.v1.Notification.WorkoutComment.workout:type_name -> api.v1.Workout
+	9,  // 0: api.v1.ListNotificationsRequest.pagination:type_name -> api.v1.PaginationRequest
+	6,  // 1: api.v1.ListNotificationsResponse.notifications:type_name -> api.v1.Notification
+	10, // 2: api.v1.ListNotificationsResponse.pagination:type_name -> api.v1.PaginationResponse
+	7,  // 3: api.v1.Notification.user_followed:type_name -> api.v1.Notification.UserFollowed
+	8,  // 4: api.v1.Notification.workout_comment:type_name -> api.v1.Notification.WorkoutComment
+	11, // 5: api.v1.Notification.UserFollowed.actor:type_name -> api.v1.User
+	11, // 6: api.v1.Notification.WorkoutComment.actor:type_name -> api.v1.User
+	12, // 7: api.v1.Notification.WorkoutComment.workout:type_name -> api.v1.Workout
 	0,  // 8: api.v1.NotificationService.ListNotifications:input_type -> api.v1.ListNotificationsRequest
 	2,  // 9: api.v1.NotificationService.MarkNotificationsAsRead:input_type -> api.v1.MarkNotificationsAsReadRequest
 	4,  // 10: api.v1.NotificationService.GetUnreadNotificationCount:input_type -> api.v1.GetUnreadNotificationCountRequest
-	6,  // 11: api.v1.NotificationService.UnreadNotifications:input_type -> api.v1.UnreadNotificationsRequest
-	1,  // 12: api.v1.NotificationService.ListNotifications:output_type -> api.v1.ListNotificationsResponse
-	3,  // 13: api.v1.NotificationService.MarkNotificationsAsRead:output_type -> api.v1.MarkNotificationsAsReadResponse
-	5,  // 14: api.v1.NotificationService.GetUnreadNotificationCount:output_type -> api.v1.GetUnreadNotificationCountResponse
-	7,  // 15: api.v1.NotificationService.UnreadNotifications:output_type -> api.v1.UnreadNotificationsResponse
-	12, // [12:16] is the sub-list for method output_type
-	8,  // [8:12] is the sub-list for method input_type
+	1,  // 11: api.v1.NotificationService.ListNotifications:output_type -> api.v1.ListNotificationsResponse
+	3,  // 12: api.v1.NotificationService.MarkNotificationsAsRead:output_type -> api.v1.MarkNotificationsAsReadResponse
+	5,  // 13: api.v1.NotificationService.GetUnreadNotificationCount:output_type -> api.v1.GetUnreadNotificationCountResponse
+	11, // [11:14] is the sub-list for method output_type
+	8,  // [8:11] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -669,7 +581,7 @@ func file_api_v1_notification_service_proto_init() {
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
 	file_api_v1_notification_service_proto_msgTypes[2].OneofWrappers = []any{}
-	file_api_v1_notification_service_proto_msgTypes[8].OneofWrappers = []any{
+	file_api_v1_notification_service_proto_msgTypes[6].OneofWrappers = []any{
 		(*Notification_UserFollowed_)(nil),
 		(*Notification_WorkoutComment_)(nil),
 	}
@@ -679,7 +591,7 @@ func file_api_v1_notification_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_notification_service_proto_rawDesc), len(file_api_v1_notification_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

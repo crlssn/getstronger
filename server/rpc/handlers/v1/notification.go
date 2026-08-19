@@ -13,19 +13,17 @@ import (
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
-	"github.com/crlssn/getstronger/server/stream"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 var _ apiv1connect.NotificationServiceHandler = (*notificationHandler)(nil)
 
 type notificationHandler struct {
-	repo   repo.Repo
-	stream *stream.Manager
+	repo repo.Repo
 }
 
-func NewNotificationHandler(r repo.Repo, s *stream.Manager) apiv1connect.NotificationServiceHandler {
-	return &notificationHandler{r, s}
+func NewNotificationHandler(r repo.Repo) apiv1connect.NotificationServiceHandler {
+	return &notificationHandler{r}
 }
 
 func (h *notificationHandler) ListNotifications(ctx context.Context, req *connect.Request[apiv1.ListNotificationsRequest]) (*connect.Response[apiv1.ListNotificationsResponse], error) {
@@ -110,7 +108,6 @@ func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, req *
 		log.Error("failed to mark notifications as read", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
-	h.stream.Notify(userID)
 
 	return &connect.Response[apiv1.MarkNotificationsAsReadResponse]{}, nil
 }
@@ -123,65 +120,6 @@ func (h *notificationHandler) GetUnreadNotificationCount(ctx context.Context, _ 
 	}
 
 	return connect.NewResponse(&apiv1.GetUnreadNotificationCountResponse{Count: count}), nil
-}
-
-func (h *notificationHandler) UnreadNotifications(ctx context.Context, _ *connect.Request[apiv1.UnreadNotificationsRequest], res *connect.ServerStream[apiv1.UnreadNotificationsResponse]) error {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	ctx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-	updates, unsubscribe := h.stream.Subscribe(userID, cancelFunc)
-	defer unsubscribe()
-
-	lastCount, err := h.sendUnreadNotificationCount(ctx, userID, res)
-	if err != nil {
-		return err
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Debug("client disconnected")
-			return nil
-		case <-updates:
-			count, err := h.countUnreadNotifications(ctx, userID)
-			if err != nil {
-				return err
-			}
-
-			if count == lastCount {
-				continue
-			}
-			lastCount = count
-
-			if err = res.Send(&apiv1.UnreadNotificationsResponse{
-				Count: count,
-			}); err != nil {
-				log.Error("failed to send unread notifications", zap.Error(err))
-				return connect.NewError(connect.CodeInternal, nil)
-			}
-		}
-	}
-}
-
-func (h *notificationHandler) sendUnreadNotificationCount(
-	ctx context.Context,
-	userID string,
-	res *connect.ServerStream[apiv1.UnreadNotificationsResponse],
-) (int64, error) {
-	count, err := h.countUnreadNotifications(ctx, userID)
-	if err != nil {
-		return 0, err
-	}
-
-	if err = res.Send(&apiv1.UnreadNotificationsResponse{Count: count}); err != nil {
-		log := xcontext.MustExtractLogger(ctx)
-		log.Error("failed to send unread notifications", zap.Error(err))
-		return 0, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return count, nil
 }
 
 func (h *notificationHandler) countUnreadNotifications(ctx context.Context, userID string) (int64, error) {

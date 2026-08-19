@@ -19,7 +19,7 @@ const onLogin = async () => {
   const res = await login(email.value, password.value)
   if (!res) return
   authStore.setAccessToken(res.accessToken)
-  notificationStore.streamUnreadNotifications()
+  notificationStore.pollUnreadNotifications()
   await router.push('/home')
 }
 </script>

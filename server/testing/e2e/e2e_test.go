@@ -22,7 +22,6 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/server"
-	"github.com/crlssn/getstronger/server/stream"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/e2e"
 	"github.com/crlssn/getstronger/server/trace"
@@ -136,7 +135,6 @@ func options() []fx.Option {
 			repo.New,
 			email.NewNoop,
 			trace.New,
-			stream.NewManager,
 			cookies.New,
 			protovalidate.New,
 			func() *config.Config {

@@ -34,7 +34,9 @@ const markAsRead = (notification: Notification) => {
 
   notification.read = true
   notificationStore.unreadCount = Math.max(0, notificationStore.unreadCount - 1)
-  void markNotificationAsRead(notification.id, true)
+  void markNotificationAsRead(notification.id, true).then(() =>
+    notificationStore.refreshUnreadNotifications(),
+  )
 }
 
 const markAllAsRead = async () => {
@@ -47,6 +49,7 @@ const markAllAsRead = async () => {
 
     for (const notification of notifications.value) notification.read = true
     notificationStore.unreadCount = 0
+    void notificationStore.refreshUnreadNotifications()
   } finally {
     markingAllAsRead.value = false
   }

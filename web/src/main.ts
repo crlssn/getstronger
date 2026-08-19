@@ -38,7 +38,7 @@ const init = async () => {
 
     if (authStore.authorised) {
       const notificationStore = useNotificationStore()
-      notificationStore.streamUnreadNotifications()
+      notificationStore.pollUnreadNotifications()
     }
   }
 
