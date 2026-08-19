@@ -68,7 +68,17 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
+	workoutUserIDs := make(map[string]struct{}, len(paginated.Items))
+	for _, workout := range paginated.Items {
+		workoutUserIDs[workout.UserID.String()] = struct{}{}
+	}
+
+	personalBestUserIDs := make([]string, 0, len(workoutUserIDs))
+	for id := range workoutUserIDs {
+		personalBestUserIDs = append(personalBestUserIDs, id)
+	}
+
+	personalBests, err := h.repo.GetPersonalBests(ctx, personalBestUserIDs...)
 	if err != nil {
 		log.Error("failed to get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

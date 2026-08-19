@@ -111,6 +111,12 @@ func ExerciseTags(tags ...string) ExerciseOpt {
 	}
 }
 
+func ExerciseMetrics(metrics ...string) ExerciseOpt {
+	return func(m *models.ExerciseSetter) {
+		m.Metrics = omit.From(pq.StringArray(metrics))
+	}
+}
+
 func ExerciseCreatedAt(t time.Time) ExerciseOpt {
 	return func(m *models.ExerciseSetter) {
 		m.CreatedAt = omit.From(t.UTC())
