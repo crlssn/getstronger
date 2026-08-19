@@ -216,7 +216,7 @@ export const flows: Flow[] = [
             .getByRole('textbox', { name: `${chosenExercise} set 1 weight`, exact: true })
             .fill('60')
           await page
-            .getByRole('textbox', { name: `${chosenExercise} set 1 Reps`, exact: true })
+            .getByRole('textbox', { name: `${chosenExercise} set 1 reps`, exact: true })
             .fill('8')
         },
         name: 'set-logged',

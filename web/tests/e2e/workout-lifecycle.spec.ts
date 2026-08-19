@@ -32,7 +32,7 @@ const logFirstSet = async (
     .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
     .fill(weight)
   await page
-    .getByRole('textbox', { name: `${exerciseName} set 1 Reps`, exact: true })
+    .getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true })
     .fill(repetitions)
 }
 
@@ -70,7 +70,7 @@ test.describe('quick workout lifecycle', () => {
     await expect(
       page.getByRole('button', { name: 'Finish workout: Complete 1 partial set' }),
     ).toBeDisabled()
-    await page.getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true }).fill('8')
+    await page.getByRole('textbox', { name: `${firstExercise} set 1 reps`, exact: true }).fill('8')
 
     const restRegion = page.getByRole('region', { name: 'Rest timer' })
     await expect(restRegion).toBeVisible()
@@ -80,7 +80,7 @@ test.describe('quick workout lifecycle', () => {
     // The band owns the top of the screen and covers no editable field.
     const bannerBox = await restRegion.boundingBox()
     const repsBox = await page
-      .getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true })
+      .getByRole('textbox', { name: `${firstExercise} set 1 reps`, exact: true })
       .boundingBox()
     expect(bannerBox!.width).toBeGreaterThanOrEqual(page.viewportSize()!.width)
     expect(bannerBox!.y + bannerBox!.height).toBeLessThanOrEqual(repsBox!.y)
@@ -123,7 +123,7 @@ test.describe('quick workout lifecycle', () => {
       page.getByRole('textbox', { name: `${firstExercise} set 1 weight`, exact: true }),
     ).toHaveValue('25')
     await expect(
-      page.getByRole('textbox', { name: `${firstExercise} set 1 Reps`, exact: true }),
+      page.getByRole('textbox', { name: `${firstExercise} set 1 reps`, exact: true }),
     ).toHaveValue('8')
     await expect(page.getByLabel('Workout note')).toHaveValue(note)
 
@@ -150,7 +150,7 @@ test.describe('quick workout lifecycle', () => {
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Quick Workout', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Quick workout', exact: true })).toBeVisible()
     await expect(page.getByText(note, { exact: true })).toBeVisible()
     await expect(page.getByText(firstExercise, { exact: true })).toBeVisible()
     await expect(page.getByText('1 exercise', { exact: true })).toBeVisible()
@@ -190,7 +190,7 @@ test.describe('quick workout lifecycle', () => {
     await weight.focus()
     await expect(weight).toHaveValue('25')
 
-    await page.getByRole('textbox', { name: `${exercise} set 1 Reps`, exact: true }).fill('8')
+    await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
@@ -260,7 +260,7 @@ test.describe('weight units', () => {
     await expect(page.getByRole('group', { name: /weight unit/ })).toHaveCount(0)
 
     await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('60')
-    await page.getByLabel(`${exercise} set 1 Reps`).fill('8')
+    await page.getByLabel(`${exercise} set 1 reps`).fill('8')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
@@ -292,7 +292,7 @@ test.describe('weight units', () => {
     await page
       .getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
       .fill('330.69')
-    await page.getByLabel(`${exercise} set 1 Reps`).fill('5')
+    await page.getByLabel(`${exercise} set 1 reps`).fill('5')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
 
@@ -347,7 +347,7 @@ test.describe('weight units', () => {
     const exercise = await addFirstExercise(page)
     const weight = page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
     await weight.fill('100')
-    await page.getByLabel(`${exercise} set 1 Reps`).fill('5')
+    await page.getByLabel(`${exercise} set 1 reps`).fill('5')
 
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     await page.getByRole('button', { name: 'Save & leave' }).click()

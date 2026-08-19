@@ -46,7 +46,7 @@ test.describe('the workout dock', () => {
 
     const exercise = await page.locator('.exercise-heading h2').innerText()
     await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('25')
-    await page.getByRole('textbox', { name: `${exercise} set 1 Reps`, exact: true }).fill('8')
+    await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')
 
     await expect(page.locator('.finish-dock > strong.blocked')).toHaveCount(0)
     await expect(page.locator('.primary-action')).not.toHaveAttribute('aria-disabled', 'true')
