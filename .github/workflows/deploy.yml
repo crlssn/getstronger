@@ -89,10 +89,6 @@ jobs:
       DB_NAME: ${{ vars.DB_NAME }}
       DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
       DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
-      SCW_BUCKET: ${{ vars.SCW_BUCKET }}
-      SCW_REGION: ${{ vars.SCW_REGION }}
 
     steps:
       - name: Checkout code
@@ -205,7 +201,6 @@ jobs:
         working-directory: ./web
         run: npm run build
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           VITE_API_URL: ${{ vars.VITE_API_URL }}
 
       - name: Deploy to Scaleway Object Storage
