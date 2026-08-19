@@ -5,6 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
+import { i18n } from '@/i18n'
 import { useAlertStore } from '@/stores/alerts'
 import AppAlert from '@/ui/components/AppAlert.vue'
 
@@ -31,7 +32,7 @@ describe('AppAlert', () => {
     await router.push('/first')
 
     const wrapper = mount(AppAlert, {
-      global: { plugins: [pinia, router] },
+      global: { plugins: [pinia, router, i18n] },
     })
     const alertStore = useAlertStore()
 
@@ -56,7 +57,7 @@ describe('AppAlert', () => {
     await router.push('/first')
 
     const wrapper = mount(AppAlert, {
-      global: { plugins: [pinia, router] },
+      global: { plugins: [pinia, router, i18n] },
     })
     const alertStore = useAlertStore()
 

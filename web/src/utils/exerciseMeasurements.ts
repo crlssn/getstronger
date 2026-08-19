@@ -1,6 +1,7 @@
 import { ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb'
 import { weightUnitLabel } from '@/utils/weightUnits'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
+import { formatNumber } from '@/utils/numbers'
 import { i18n } from '@/i18n'
 
 export type MeasurementField = 'weight' | 'reps' | 'distance' | 'durationSeconds'
@@ -91,8 +92,7 @@ export const formatSetPace = (set: Partial<Set>): string | undefined => {
   return `${minutes}:${remainder.toString().padStart(2, '0')} min/${distanceUnitLabel(set.distanceUnit)}`
 }
 
-const number = (value: number) =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+const number = (value: number) => formatNumber(value, 2)
 
 export const formatExerciseSet = (set: Partial<Set>, exercise?: Pick<Exercise, 'metrics'>) => {
   const formatted = measurementsForExercise(exercise)

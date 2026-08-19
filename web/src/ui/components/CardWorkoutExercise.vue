@@ -13,6 +13,7 @@ import {
 } from '@/utils/exerciseMeasurements'
 import { weightUnitLabel } from '@/utils/weightUnits'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
+import { formatNumber } from '@/utils/numbers'
 
 const { t } = useI18n()
 
@@ -36,7 +37,7 @@ const showPace = isDistanceTimeExercise({ metrics })
 const formatValue = (set: Set, field: (typeof measurementDefinitions)[number]['field']) => {
   const value = set[field]
   if (field === 'durationSeconds') return formatDurationDisplay(value)
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+  return formatNumber(value, 2)
 }
 
 const columnLabel = (metric: ExerciseMetric) => {
@@ -53,18 +54,18 @@ const columnLabel = (metric: ExerciseMetric) => {
         <ExerciseTags compact :tags="tags" />
       </div>
       <span v-if="!compact" class="set-count">
-        {{ sets.length }} {{ sets.length === 1 ? 'set' : 'sets' }}
+        {{ t('workout.setsCompact', sets.length) }}
       </span>
     </header>
 
     <div
       class="set-table"
       role="table"
-      :aria-label="`${name} sets`"
+      :aria-label="t('workout.setsTableAria', { name })"
       :style="{ '--metric-count': measurements.length + (showPace ? 1 : 0) }"
     >
       <div v-if="!compact" class="set-row table-head" role="row">
-        <span role="columnheader">Set</span>
+        <span role="columnheader">{{ t('common.set') }}</span>
         <span v-for="measurement in measurements" :key="measurement.field" role="columnheader">
           {{ columnLabel(measurement.metric) }}
         </span>
@@ -76,7 +77,9 @@ const columnLabel = (metric: ExerciseMetric) => {
           :class="{ 'personal-best': !compact && set.metadata?.personalBest }"
           role="cell"
           :aria-label="
-            set.metadata?.personalBest ? `Set ${index + 1}, personal best` : `Set ${index + 1}`
+            set.metadata?.personalBest
+              ? t('workout.setPersonalBestAria', { number: index + 1 })
+              : t('workout.setNumberAria', { number: index + 1 })
           "
         >
           <template v-if="compact">{{ index + 1 }}</template>
@@ -89,7 +92,7 @@ const columnLabel = (metric: ExerciseMetric) => {
             v-if="set.metadata?.personalBest"
             class="compact-personal-best"
             role="img"
-            aria-label="Personal best"
+            :aria-label="t('workout.personalBest')"
           >
             <TrophyIcon aria-hidden="true" />
           </span>

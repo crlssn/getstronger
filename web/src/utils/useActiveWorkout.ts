@@ -3,6 +3,7 @@ import type { Workout } from '@/types/workout'
 import { computed } from 'vue'
 import { DateTime } from 'luxon'
 
+import { dateLocale, i18n } from '@/i18n'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useWorkoutStore } from '@/stores/workout'
 
@@ -47,20 +48,24 @@ export default function useActiveWorkout() {
   })
 
   const savedRoutineName = computed(() => {
+    const { t } = i18n.global
     const routineId = savedWorkout.value?.[0]
-    if (!routineId) return 'Workout in progress'
-    if (routineId === 'quick-workout') return 'Quick Workout'
+    if (!routineId) return t('workout.inProgress')
+    if (routineId === 'quick-workout') return t('workout.quick')
     return (
       dashboardStore.dashboard?.routines.find((routine) => routine.id === routineId)?.name ??
-      'Workout in progress'
+      t('workout.inProgress')
     )
   })
 
   const savedWorkoutStarted = computed(() => {
+    const { t } = i18n.global
     const startedAt = savedWorkout.value?.[1].startedAt
-    if (!startedAt) return 'Workout in progress'
-    const start = DateTime.fromISO(startedAt)
-    return start.isValid ? `Started ${start.toRelative()}` : 'Workout in progress'
+    if (!startedAt) return t('workout.inProgress')
+    const start = DateTime.fromISO(startedAt).setLocale(dateLocale)
+    return start.isValid
+      ? t('workout.startedAgo', { relative: start.toRelative() })
+      : t('workout.inProgress')
   })
 
   const savedWorkoutStartedAtMs = computed(() => {
@@ -76,7 +81,8 @@ export default function useActiveWorkout() {
   const discardSavedWorkout = () => {
     const routineId = savedWorkout.value?.[0]
     if (!routineId) return
-    if (!confirm(`Discard “${savedRoutineName.value}”? All logged sets will be removed.`)) return
+    if (!confirm(i18n.global.t('workout.discardSavedConfirm', { name: savedRoutineName.value })))
+      return
     workoutStore.removeWorkout(routineId)
   }
 

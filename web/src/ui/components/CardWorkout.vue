@@ -16,6 +16,8 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { deleteWorkout, postWorkoutComment } from '@/http/requests'
+import { dateLocale } from '@/i18n'
+import { formatNumber } from '@/utils/numbers'
 import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
@@ -63,14 +65,12 @@ const durationMinutes = computed(() => {
 })
 const finishedDate = computed(() => {
   if (!props.workout.finishedAt) return ''
-  return DateTime.fromSeconds(Number(props.workout.finishedAt.seconds)).toFormat(
-    'cccc, d LLLL · HH:mm',
-  )
+  return DateTime.fromSeconds(Number(props.workout.finishedAt.seconds))
+    .setLocale(dateLocale)
+    .toFormat('cccc, d LLLL · HH:mm')
 })
 const showComments = computed(() => !isOwner.value || comments.value.length > 0)
-const formattedVolume = computed(() =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(props.workout.intensity),
-)
+const formattedVolume = computed(() => formatNumber(props.workout.intensity))
 
 const dropdownItems: DropdownItem[] = [
   { href: `/workouts/${props.workout.id}/edit`, title: t('workout.card.editWorkout') },
@@ -146,14 +146,14 @@ const postComment = async () => {
         <span class="metric-icon"><FireIcon /></span>
         <div>
           <small>{{ t('workout.totalVolume') }}</small
-          ><strong>{{ formattedVolume }} kg</strong>
+          ><strong>{{ formattedVolume }} {{ t('common.kg') }}</strong>
         </div>
       </article>
       <article>
         <span class="metric-icon"><ClockIcon /></span>
         <div>
           <small>{{ t('common.duration') }}</small
-          ><strong>{{ durationMinutes }} min</strong>
+          ><strong>{{ durationMinutes }} {{ t('common.min') }}</strong>
         </div>
       </article>
       <article>
@@ -211,14 +211,14 @@ const postComment = async () => {
           <span class="metric-icon"><FireIcon /></span>
           <div>
             <small>{{ t('workout.totalVolume') }}</small
-            ><strong>{{ formattedVolume }} kg</strong>
+            ><strong>{{ formattedVolume }} {{ t('common.kg') }}</strong>
           </div>
         </article>
         <article>
           <span class="metric-icon"><ClockIcon /></span>
           <div>
             <small>{{ t('common.duration') }}</small
-            ><strong>{{ durationMinutes }} min</strong>
+            ><strong>{{ durationMinutes }} {{ t('common.min') }}</strong>
           </div>
         </article>
         <article>

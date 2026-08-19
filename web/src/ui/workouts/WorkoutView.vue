@@ -18,22 +18,22 @@ import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { formatToShortDateTime } from '@/utils/datetime'
+import { formatNumber } from '@/utils/numbers'
+import { i18n } from '@/i18n'
 import useActiveWorkout from '@/utils/useActiveWorkout'
 
 // The row earns its space with the stats that matter: date, volume, duration.
 const workoutMeta = (workout: Workout) => {
   const parts = [formatToShortDateTime(workout.finishedAt)]
   if (workout.intensity > 0) {
-    parts.push(
-      `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(workout.intensity)} kg`,
-    )
+    parts.push(`${formatNumber(workout.intensity)} ${i18n.global.t('common.kg')}`)
   }
   if (workout.startedAt && workout.finishedAt) {
     const minutes = Math.max(
       1,
       Math.round(Number(workout.finishedAt.seconds - workout.startedAt.seconds) / 60),
     )
-    parts.push(`${minutes} min`)
+    parts.push(`${minutes} ${i18n.global.t('common.min')}`)
   }
   return parts.join(' · ')
 }

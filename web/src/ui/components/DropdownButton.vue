@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import type { DropdownItem } from '@/types/dropdown'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 
-withDefaults(defineProps<{ items: DropdownItem[]; label?: string }>(), {
-  label: 'Workout actions',
-})
+const { t } = useI18n()
+const props = defineProps<{ items: DropdownItem[]; label?: string }>()
+const menuLabel = computed(() => props.label ?? t('workout.card.actionsAria'))
 </script>
 
 <template>
   <Menu as="div" class="relative inline-block text-left">
-    <MenuButton class="menu-trigger" :aria-label="label">
+    <MenuButton class="menu-trigger" :aria-label="menuLabel">
       <EllipsisHorizontalIcon />
     </MenuButton>
     <transition

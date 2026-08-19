@@ -21,7 +21,7 @@ const initials = computed(
     <RouterLink
       :to="`/users/${user?.id}`"
       class="comment-avatar"
-      :aria-label="`View ${user?.firstName} ${user?.lastName}'s profile`"
+      :aria-label="$t('workout.card.viewProfile', { name: `${user?.firstName} ${user?.lastName}` })"
     >
       {{ initials }}
     </RouterLink>

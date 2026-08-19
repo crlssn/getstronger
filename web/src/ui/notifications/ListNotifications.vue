@@ -91,7 +91,7 @@ const markAllAsRead = async () => {
       <span v-if="!notification.read" class="unread-dot" aria-hidden="true"></span>
     </AppListItem>
     <AppListItem v-if="notifications.length === 0">
-      Your notifications will appear here
+      {{ $t('notifications.empty') }}
     </AppListItem>
   </AppList>
 </template>
