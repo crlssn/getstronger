@@ -141,6 +141,26 @@ adapted to this codebase.
     logging at error level or returning a 5xx-equivalent code; a client
     disconnect must not page anyone.
 
+### Log messages
+
+Log messages follow the same action-naming convention as error messages: the
+level already carries the outcome, so no message starts with "failed to" or
+"could not", and none ends with "failed". Each level has its own shape:
+
+- **Error** names the attempted action that did not succeed, phrased like an
+  error wrap message ("get user", "auth fetch", "publish event"), and carries
+  the cause as `zap.Error(err)`. Reserve it for unexpected failures the
+  request cannot recover from — an error log is a signal someone may need to
+  act on.
+- **Warn** states an expected, handled anomaly as a fact ("routine not
+  found", "request unauthenticated", "event buffer full, dropping event").
+  Add `zap.Error(err)` when a non-sentinel error carries useful detail.
+- **Info** records a completed event as a past-tense fact ("routine created",
+  "request authenticated", "subscribed to topic").
+- **Fatal** is reserved for unrecoverable process-level failures such as
+  startup or listen-and-serve; it exits the process, so it must never appear
+  on a request path.
+
 ## Reviewing the design
 
 - To see the app rather than reason about its markup, run `mise run screenshots`.

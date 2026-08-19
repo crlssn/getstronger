@@ -42,7 +42,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 	if req.Msg.GetFollowedOnly() {
 		followees, err := h.repo.ListFollowees(ctx, userID)
 		if err != nil {
-			log.Error("failed to list followees", zap.Error(err))
+			log.Error("list followees", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
@@ -56,7 +56,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 
 	workouts, err := h.repo.ListWorkouts(ctx, opts...)
 	if err != nil {
-		log.Error("failed to list workouts", zap.Error(err))
+		log.Error("list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -64,7 +64,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return workout.CreatedAt
 	})
 	if err != nil {
-		log.Error("failed to paginate workouts", zap.Error(err))
+		log.Error("paginate workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -80,13 +80,13 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, personalBestUserIDs...)
 	if err != nil {
-		log.Error("failed to get personal bests", zap.Error(err))
+		log.Error("get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	feedItems, err := parser.FeedItemSlice(paginated.Items, personalBests)
 	if err != nil {
-		log.Error("failed to parse feed items", zap.Error(err))
+		log.Error("parse feed items", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

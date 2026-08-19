@@ -124,7 +124,7 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 		RestSeconds: restSeconds,
 	})
 	if err != nil {
-		log.Error("create exercise failed", zap.Error(err))
+		log.Error("create exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -143,7 +143,7 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
-		log.Error("find exercise failed", zap.Error(err))
+		log.Error("find exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -168,7 +168,7 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find exercise failed", zap.Error(err))
+		log.Error("find exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -182,13 +182,13 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 	}
 
 	if err = h.repo.UpdateExercise(ctx, exercise.ID.String(), opts...); err != nil {
-		log.Error("update exercise failed", zap.Error(err))
+		log.Error("update exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	exercise, err = h.repo.GetExercise(ctx, repo.GetExerciseWithID(exercise.ID.String()))
 	if err != nil {
-		log.Error("find exercise failed", zap.Error(err))
+		log.Error("find exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -236,7 +236,7 @@ func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Reque
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find exercise failed", zap.Error(err))
+		log.Error("find exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -244,7 +244,7 @@ func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Reque
 		UserID:     userID,
 		ExerciseID: req.Msg.GetId(),
 	}); err != nil {
-		log.Error("delete exercise failed", zap.Error(err))
+		log.Error("delete exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -275,7 +275,7 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 
 	exercises, err := h.repo.ListExercises(ctx, opts...)
 	if err != nil {
-		log.Error("list exercises failed", zap.Error(err))
+		log.Error("list exercises", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -283,7 +283,7 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 		return exercise.CreatedAt
 	})
 	if err != nil {
-		log.Error("paginate exercises failed", zap.Error(err))
+		log.Error("paginate exercises", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -309,7 +309,7 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 			}, nil
 		}
 
-		log.Error("failed to get previous workout sets", zap.Error(err))
+		log.Error("get previous workout sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -325,7 +325,7 @@ func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Req
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserId())
 	if err != nil {
-		log.Error("list personal bests failed", zap.Error(err))
+		log.Error("list personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -354,7 +354,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 
 	sets, err := h.repo.ListSets(ctx, opts...)
 	if err != nil {
-		log.Error("list sets failed", zap.Error(err))
+		log.Error("list sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -362,7 +362,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return set.CreatedAt
 	})
 	if err != nil {
-		log.Error("paginate sets failed", zap.Error(err))
+		log.Error("paginate sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -373,7 +373,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, userIDs...)
 	if err != nil {
-		log.Error("list personal bests failed", zap.Error(err))
+		log.Error("list personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

@@ -48,7 +48,7 @@ func (h *RequestTraced) HandlePayload(payload any) {
 		DurationMS: p.DurationMS,
 		StatusCode: p.StatusCode,
 	}); err != nil {
-		h.log.Error("trace store failed", zap.Error(err))
+		h.log.Error("trace store", zap.Error(err))
 	}
 }
 

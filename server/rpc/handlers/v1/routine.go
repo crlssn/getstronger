@@ -47,7 +47,7 @@ func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request
 		ExerciseIDs: req.Msg.GetExerciseIds(),
 	})
 	if err != nil {
-		log.Error("create routine failed", zap.Error(err))
+		log.Error("create routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -74,7 +74,7 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
-		log.Error("get routine failed", zap.Error(err))
+		log.Error("get routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -99,7 +99,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("get routine failed", zap.Error(err))
+		log.Error("get routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -114,7 +114,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		repo.ListExercisesWithUserID(userID),
 	)
 	if err != nil {
-		log.Error("list exercises failed", zap.Error(err))
+		log.Error("list exercises", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -138,7 +138,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 
 		return nil
 	}); err != nil {
-		log.Error("update routine failed", zap.Error(err))
+		log.Error("update routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -148,7 +148,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		repo.GetRoutineWithExercises(),
 	)
 	if err != nil {
-		log.Error("get routine failed", zap.Error(err))
+		log.Error("get routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -169,7 +169,7 @@ func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find routine failed", zap.Error(err))
+		log.Error("find routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -179,7 +179,7 @@ func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request
 	}
 
 	if err = h.repo.DeleteRoutine(ctx, req.Msg.GetId()); err != nil {
-		log.Error("delete routine failed", zap.Error(err))
+		log.Error("delete routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -201,7 +201,7 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 		repo.ListRoutinesWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
-		log.Error("list routines failed", zap.Error(err))
+		log.Error("list routines", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -209,7 +209,7 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 		return routine.CreatedAt
 	})
 	if err != nil {
-		log.Error("paginate routines failed", zap.Error(err))
+		log.Error("paginate routines", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -234,13 +234,13 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		repo.ListRoutinesWithPageToken(nil),
 	)
 	if err != nil {
-		log.Error("dashboard routines failed", zap.Error(err))
+		log.Error("dashboard routines", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	activePlan, err := h.repo.GetActivePlan(ctx, userID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Error("dashboard active plan failed", zap.Error(err))
+		log.Error("dashboard active plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -256,13 +256,13 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		repo.ListWorkoutsWithPageToken(nil),
 	)
 	if err != nil {
-		log.Error("dashboard workouts failed", zap.Error(err))
+		log.Error("dashboard workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
 	if err != nil {
-		log.Error("dashboard personal bests failed", zap.Error(err))
+		log.Error("dashboard personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -274,7 +274,7 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 	}
 	parsedWorkouts, err := parser.WorkoutSlice(recentWorkouts, personalBests)
 	if err != nil {
-		log.Error("dashboard workouts parse failed", zap.Error(err))
+		log.Error("dashboard workouts parse", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 	var parsedNextRoutine *apiv1.Routine
@@ -304,7 +304,7 @@ func (h *routineHandler) CreatePlan(ctx context.Context, req *connect.Request[ap
 		RoutineIDs: req.Msg.GetRoutineIds(),
 	})
 	if err != nil {
-		log.Error("create plan failed", zap.Error(err))
+		log.Error("create plan", zap.Error(err))
 		if errors.Is(err, repo.ErrPlanRoutineBelongsToAnotherUser) ||
 			errors.Is(err, repo.ErrPlanRoutineDeleted) ||
 			errors.Is(err, repo.ErrPlanRoutineDuplicate) || errors.Is(err, sql.ErrNoRows) {
@@ -325,7 +325,7 @@ func (h *routineHandler) GetPlan(ctx context.Context, req *connect.Request[apiv1
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
-		log.Error("get plan failed", zap.Error(err))
+		log.Error("get plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -338,7 +338,7 @@ func (h *routineHandler) ListPlans(ctx context.Context, _ *connect.Request[apiv1
 
 	plans, err := h.repo.ListPlans(ctx, userID)
 	if err != nil {
-		log.Error("list plans failed", zap.Error(err))
+		log.Error("list plans", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -356,7 +356,7 @@ func (h *routineHandler) UpdatePlan(ctx context.Context, req *connect.Request[ap
 		RoutineIDs: req.Msg.GetRoutineIds(),
 	})
 	if err != nil {
-		log.Error("update plan failed", zap.Error(err))
+		log.Error("update plan", zap.Error(err))
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
@@ -379,7 +379,7 @@ func (h *routineHandler) DeletePlan(ctx context.Context, req *connect.Request[ap
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
-		log.Error("delete plan failed", zap.Error(err))
+		log.Error("delete plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -395,7 +395,7 @@ func (h *routineHandler) SetActivePlan(ctx context.Context, req *connect.Request
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
-		log.Error("set active plan failed", zap.Error(err))
+		log.Error("set active plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -407,7 +407,7 @@ func (h *routineHandler) PauseActivePlan(ctx context.Context, _ *connect.Request
 	userID := xcontext.MustExtractUserID(ctx)
 
 	if err := h.repo.PauseActivePlan(ctx, userID); err != nil {
-		log.Error("pause active plan failed", zap.Error(err))
+		log.Error("pause active plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -420,7 +420,7 @@ func (h *routineHandler) SkipPlanRoutine(ctx context.Context, req *connect.Reque
 
 	plan, err := h.repo.AdvancePlan(ctx, req.Msg.GetId(), userID, "")
 	if err != nil {
-		log.Error("skip plan routine failed", zap.Error(err))
+		log.Error("skip plan routine", zap.Error(err))
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
@@ -491,7 +491,7 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[a
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find routine failed", zap.Error(err))
+		log.Error("find routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -506,12 +506,12 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[a
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find exercise failed", zap.Error(err))
+		log.Error("find exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if err = h.repo.AddExerciseToRoutine(ctx, exercise, routine); err != nil {
-		log.Error("add exercise to routine failed", zap.Error(err))
+		log.Error("add exercise to routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -534,7 +534,7 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find routine failed", zap.Error(err))
+		log.Error("find routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -549,12 +549,12 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find exercise failed", zap.Error(err))
+		log.Error("find exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if err = h.repo.RemoveExerciseFromRoutine(ctx, exercise, routine); err != nil {
-		log.Error("remove exercise from routine failed", zap.Error(err))
+		log.Error("remove exercise from routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -577,7 +577,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("find routine failed", zap.Error(err))
+		log.Error("find routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -604,7 +604,7 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 	}
 
 	if err = h.repo.UpdateRoutineExerciseOrder(ctx, routine.ID.String(), req.Msg.GetExerciseIds()); err != nil {
-		log.Error("update exercise order failed", zap.Error(err))
+		log.Error("update exercise order", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

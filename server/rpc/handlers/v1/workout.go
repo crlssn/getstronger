@@ -48,7 +48,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 
 	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, userID, workoutName)
 	if err != nil {
-		log.Error("failed to create workout", zap.Error(err))
+		log.Error("create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 	if planAdvanceSkipped != nil {
@@ -94,7 +94,7 @@ func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.
 			return "", connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("failed to get routine", zap.Error(err))
+		log.Error("get routine", zap.Error(err))
 		return "", connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -168,13 +168,13 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
-		log.Error("failed to get workout", zap.Error(err))
+		log.Error("get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID.String())
 	if err != nil {
-		log.Error("failed to get personal bests", zap.Error(err))
+		log.Error("get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -204,7 +204,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
-		log.Error("failed to list workouts", zap.Error(err))
+		log.Error("list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -212,19 +212,19 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return workout.CreatedAt
 	})
 	if err != nil {
-		log.Error("failed to paginate workouts", zap.Error(err))
+		log.Error("paginate workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserIds()...)
 	if err != nil {
-		log.Error("failed to get personal bests", zap.Error(err))
+		log.Error("get personal bests", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	w, err := parser.WorkoutSlice(pagination.Items, personalBests)
 	if err != nil {
-		log.Error("failed to parse workouts", zap.Error(err))
+		log.Error("parse workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -253,7 +253,7 @@ func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("failed to delete workout", zap.Error(err))
+		log.Error("delete workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -271,7 +271,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		Comment:   req.Msg.GetComment(),
 	}, h.repo.PostCreateWorkoutCommentLoadUser(ctx))
 	if err != nil {
-		log.Error("failed to create workout comment", zap.Error(err))
+		log.Error("create workout comment", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -306,7 +306,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("failed to get workout", zap.Error(err))
+		log.Error("get workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -336,7 +336,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 		return nil
 	}); err != nil {
-		log.Error("failed to update workout", zap.Error(err))
+		log.Error("update workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

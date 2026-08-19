@@ -69,7 +69,7 @@ func (s *authSuite) SetupSuite() {
 	s.T().Cleanup(func() {
 		s.mocks.controller.Finish()
 		if err := s.container.Terminate(ctx); err != nil {
-			log.Fatalf("failed to clean container: %s", err)
+			log.Fatalf("clean container: %s", err)
 		}
 	})
 }

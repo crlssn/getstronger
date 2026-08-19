@@ -157,10 +157,10 @@ func randomUnusedPort() string {
 		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port)) //nolint:noctx
 		if err == nil {
 			if err = listener.Close(); err != nil {
-				panic(fmt.Sprintf("could not close listener: %v", err))
+				panic(fmt.Sprintf("close listener: %v", err))
 			}
 			return fmt.Sprintf("%d", port)
 		}
 	}
-	panic("could not find an unused port after 20 attempts")
+	panic("no unused port after 20 attempts")
 }

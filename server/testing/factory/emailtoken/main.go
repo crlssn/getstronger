@@ -38,7 +38,7 @@ func main() {
 
 	database, err := db.New(c)
 	if err != nil {
-		log.Printf("failed to connect to database: %v", err)
+		log.Printf("connect to database: %v", err)
 		return
 	}
 
@@ -46,7 +46,7 @@ func main() {
 		models.SelectWhere.Auths.Email.EQ(*email),
 	).One(context.Background(), bob.NewDB(database))
 	if err != nil {
-		log.Printf("failed to fetch auth: %v", err)
+		log.Printf("fetch auth: %v", err)
 		return
 	}
 

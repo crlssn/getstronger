@@ -54,7 +54,7 @@ func (s *repoSuite) SetupSuite() {
 	s.repo = repo.New(s.container.DB)
 	s.T().Cleanup(func() {
 		if err := s.container.Terminate(ctx); err != nil {
-			log.Fatalf("failed to clean container: %s", err)
+			log.Fatalf("clean container: %s", err)
 		}
 	})
 }

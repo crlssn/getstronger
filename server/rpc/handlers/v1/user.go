@@ -47,13 +47,13 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 
-		log.Error("failed to get user", zap.Error(err))
+		log.Error("get user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	followed, err := h.repo.IsUserFollowedByUserID(ctx, user, userID)
 	if err != nil {
-		log.Error("failed to check if user is followed", zap.Error(err))
+		log.Error("check if user is followed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -74,7 +74,7 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 		repo.ListUsersWithNameMatching(req.Msg.GetQuery()),
 	)
 	if err != nil {
-		log.Error("failed to list users", zap.Error(err))
+		log.Error("list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -82,7 +82,7 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 		return user.CreatedAt
 	})
 	if err != nil {
-		log.Error("failed to paginate users", zap.Error(err))
+		log.Error("paginate users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -105,7 +105,7 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
 	}); err != nil {
-		log.Error("failed to follow user", zap.Error(err))
+		log.Error("follow user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -128,7 +128,7 @@ func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[api
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetUnfollowId(),
 	}); err != nil {
-		log.Error("failed to unfollow user", zap.Error(err))
+		log.Error("unfollow user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -142,7 +142,7 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[ap
 
 	followers, err := h.repo.ListFollowers(ctx, req.Msg.GetFollowerId())
 	if err != nil {
-		log.Error("failed to get followers", zap.Error(err))
+		log.Error("get followers", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -186,13 +186,13 @@ func (h *userHandler) updateUserUnitPreference(ctx context.Context, preference s
 	userID := xcontext.MustExtractUserID(ctx)
 
 	if err := h.repo.UpdateUser(ctx, userID, opt); err != nil {
-		log.Error(fmt.Sprintf("failed to update user %s", preference), zap.Error(err))
+		log.Error(fmt.Sprintf("update user %s", preference), zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(userID))
 	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
+		log.Error("get user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -205,7 +205,7 @@ func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[ap
 
 	followees, err := h.repo.ListFollowees(ctx, req.Msg.GetFolloweeId())
 	if err != nil {
-		log.Error("failed to get followees", zap.Error(err))
+		log.Error("get followees", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

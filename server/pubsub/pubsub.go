@@ -51,12 +51,12 @@ func New(p Params) *PubSub {
 func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload any) {
 	p, err := json.Marshal(payload)
 	if err != nil {
-		ps.log.Error("failed to marshal payload", zap.Error(err))
+		ps.log.Error("marshal payload", zap.Error(err))
 		return
 	}
 
 	if err = ps.repo.PublishEvent(ctx, topic, p); err != nil {
-		ps.log.Error("failed to publish event", zap.Error(err))
+		ps.log.Error("publish event", zap.Error(err))
 		return
 	}
 

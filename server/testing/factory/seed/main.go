@@ -56,7 +56,7 @@ func main() {
 
 	database, err := db.New(c)
 	if err != nil {
-		log.Printf("failed to connect to database: %v", err)
+		log.Printf("connect to database: %v", err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func main() {
 	flag.Parse()
 
 	if err = truncateDatabase(context.Background(), database); err != nil {
-		log.Printf("failed to truncate database before seeding: %v", err)
+		log.Printf("truncate database before seeding: %v", err)
 		return
 	}
 

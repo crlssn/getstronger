@@ -38,7 +38,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		repo.ListNotificationsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
-		log.Error("failed to list notifications", zap.Error(err))
+		log.Error("list notifications", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -46,7 +46,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return n.CreatedAt
 	})
 	if err != nil {
-		log.Error("failed to paginate notifications", zap.Error(err))
+		log.Error("paginate notifications", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -56,7 +56,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	for _, n := range paginated.Items {
 		var payload repo.NotificationPayload
 		if err = json.Unmarshal(n.Payload.Val, &payload); err != nil {
-			log.Error("failed to unmarshal notification payload", zap.Error(err))
+			log.Error("unmarshal notification payload", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
@@ -70,7 +70,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 
 	actors, err := h.repo.ListUsers(ctx, repo.ListUsersWithIDs(actorIDs))
 	if err != nil {
-		log.Error("failed to list users", zap.Error(err))
+		log.Error("list users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -80,13 +80,13 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		repo.ListWorkoutsLoadUser(),
 	)
 	if err != nil {
-		log.Error("failed to list workouts", zap.Error(err))
+		log.Error("list workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	notificationSlice, err := parser.NotificationSlice(paginated.Items, actors, workouts)
 	if err != nil {
-		log.Error("failed to parse notifications", zap.Error(err))
+		log.Error("parse notifications", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -105,7 +105,7 @@ func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, req *
 	userID := xcontext.MustExtractUserID(ctx)
 
 	if err := h.repo.MarkNotificationsAsRead(ctx, userID, req.Msg.NotificationId); err != nil {
-		log.Error("failed to mark notifications as read", zap.Error(err))
+		log.Error("mark notifications as read", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -130,7 +130,7 @@ func (h *notificationHandler) countUnreadNotifications(ctx context.Context, user
 	)
 	if err != nil {
 		log := xcontext.MustExtractLogger(ctx)
-		log.Error("failed to count notifications", zap.Error(err))
+		log.Error("count notifications", zap.Error(err))
 		return 0, connect.NewError(connect.CodeInternal, nil)
 	}
 
