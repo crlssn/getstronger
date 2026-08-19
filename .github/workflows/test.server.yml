@@ -14,6 +14,7 @@ on:
       - 'go.mod'
       - 'server/**'
       - 'database/migrations/**'
+      - '.github/workflows/test.server.yml'
 
 permissions:
   contents: read
@@ -73,7 +74,11 @@ jobs:
           version: v2.12.2
 
       - name: Run tests with coverage
-        run: go test ./... -coverprofile=coverage.out
+        # -coverpkg makes a statement count wherever it is executed, so helpers
+        # exercised only from another package's tests are not reported as 0%.
+        # Scoped to ./server/... because all Go code and tests live there and
+        # ./... would drag in the vendored Go package under web/node_modules.
+        run: go test ./... -coverpkg=./server/... -coverprofile=coverage.out
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
