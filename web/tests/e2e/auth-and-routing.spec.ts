@@ -18,13 +18,13 @@ test.describe('guest authentication and routing', () => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.getByRole('heading', { name: 'Log in to GetStronger' })).toBeVisible()
-    await expect(page.getByText('Log it. Lift it. Beat it.')).toBeVisible()
+    await expect(page.getByText('Lift it. Log it. Beat it.')).toBeVisible()
     await expectAccessible(page)
 
     await page.getByRole('link', { name: 'Create an account' }).click()
     await expect(page).toHaveURL(/\/signup$/)
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
-    await expect(page.getByText('Log it. Lift it. Beat it.')).toBeVisible()
+    await expect(page.getByText('Lift it. Log it. Beat it.')).toBeVisible()
     await expect(page.getByRole('radio', { name: /Kilograms/ })).toBeChecked()
     await expect(page.getByRole('radio', { name: /Pounds/ })).not.toBeChecked()
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppAlert from '@/ui/components/AppAlert.vue'
 import { RouterLink, RouterView } from 'vue-router'
-import { brandName, brandSlogan } from '@/brand'
+import { brandName, brandNameParts, brandSlogan } from '@/brand'
 </script>
 
 <template>
@@ -14,7 +14,10 @@ import { brandName, brandSlogan } from '@/brand'
       >
         <span class="guest-brand-mark"><img src="/favicon.png" alt="" /></span>
         <span class="guest-brand-copy">
-          <strong>{{ brandName }}</strong>
+          <strong
+            ><span>{{ brandNameParts[0] }}</span
+            >{{ brandNameParts[1] }}</strong
+          >
           <span>{{ brandSlogan }}</span>
         </span>
       </RouterLink>
@@ -50,8 +53,11 @@ import { brandName, brandSlogan } from '@/brand'
 .guest-brand-copy strong {
   @apply text-lg font-bold leading-6 tracking-tight;
 }
+.guest-brand-copy strong span {
+  @apply font-semibold;
+}
 .guest-brand-copy > span {
-  @apply text-xs font-medium leading-5 text-text-subtle;
+  @apply text-sm font-bold leading-5 text-text-subtle;
 }
 .guest-main {
   @apply mx-auto w-full max-w-lg px-6 py-10 sm:px-8 sm:py-14;
