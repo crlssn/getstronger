@@ -9,7 +9,6 @@ import (
 
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
-	"github.com/crlssn/getstronger/server/stream"
 )
 
 const timeout = 5 * time.Second
@@ -54,13 +53,12 @@ func (h *RequestTraced) HandlePayload(payload any) {
 }
 
 type WorkoutCommentPosted struct {
-	log    *zap.Logger
-	repo   repo.Repo
-	stream *stream.Manager
+	log  *zap.Logger
+	repo repo.Repo
 }
 
-func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo, stream *stream.Manager) *WorkoutCommentPosted {
-	return &WorkoutCommentPosted{log, repo, stream}
+func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo) *WorkoutCommentPosted {
+	return &WorkoutCommentPosted{log, repo}
 }
 
 func (w *WorkoutCommentPosted) HandlePayload(payload any) {
@@ -119,20 +117,17 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 			},
 		}); err != nil {
 			w.log.Error("create notification", zap.Error(err))
-			continue
 		}
-		w.stream.Notify(userID.String())
 	}
 }
 
 type FollowedUser struct {
-	log    *zap.Logger
-	repo   repo.Repo
-	stream *stream.Manager
+	log  *zap.Logger
+	repo repo.Repo
 }
 
-func NewFollowedUser(log *zap.Logger, repo repo.Repo, stream *stream.Manager) *FollowedUser {
-	return &FollowedUser{log, repo, stream}
+func NewFollowedUser(log *zap.Logger, repo repo.Repo) *FollowedUser {
+	return &FollowedUser{log, repo}
 }
 
 func (u *FollowedUser) HandlePayload(payload any) {
@@ -158,7 +153,5 @@ func (u *FollowedUser) HandlePayload(payload any) {
 		},
 	}); err != nil {
 		u.log.Error("create notification", zap.Error(err))
-		return
 	}
-	u.stream.Notify(p.FolloweeID)
 }

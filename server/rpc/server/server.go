@@ -15,13 +15,11 @@ import (
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/rpc/handlers"
 	"github.com/crlssn/getstronger/server/rpc/middlewares"
-	"github.com/crlssn/getstronger/server/stream"
 )
 
 type Server struct {
 	log    *zap.Logger
 	config *config.Config
-	stream *stream.Manager
 	server *http.Server
 }
 
@@ -31,7 +29,6 @@ type Params struct {
 	Log    *zap.Logger
 	Mux    *http.ServeMux
 	Config *config.Config
-	Stream *stream.Manager
 }
 
 const (
@@ -52,7 +49,6 @@ func NewServer(p Params) *Server {
 	return &Server{
 		log:    p.Log,
 		config: p.Config,
-		stream: p.Stream,
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%s", p.Config.Server.Port),
 			Handler:      p.Mux,
@@ -82,8 +78,6 @@ func (s *Server) ListenAndServe(_ context.Context) error {
 }
 
 func (s *Server) listenAndServe() error {
-	s.server.RegisterOnShutdown(s.stream.Cancel)
-
 	if s.config.Server.HasCertificate() {
 		s.log.Info("server: listening on https")
 		return s.server.ListenAndServeTLS(s.config.Server.CertPath, s.config.Server.KeyPath) //nolint:wrapcheck

@@ -43,9 +43,6 @@ const (
 	// NotificationServiceGetUnreadNotificationCountProcedure is the fully-qualified name of the
 	// NotificationService's GetUnreadNotificationCount RPC.
 	NotificationServiceGetUnreadNotificationCountProcedure = "/api.v1.NotificationService/GetUnreadNotificationCount"
-	// NotificationServiceUnreadNotificationsProcedure is the fully-qualified name of the
-	// NotificationService's UnreadNotifications RPC.
-	NotificationServiceUnreadNotificationsProcedure = "/api.v1.NotificationService/UnreadNotifications"
 )
 
 // NotificationServiceClient is a client for the api.v1.NotificationService service.
@@ -53,7 +50,6 @@ type NotificationServiceClient interface {
 	ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error)
 	MarkNotificationsAsRead(context.Context, *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error)
 	GetUnreadNotificationCount(context.Context, *connect.Request[v1.GetUnreadNotificationCountRequest]) (*connect.Response[v1.GetUnreadNotificationCountResponse], error)
-	UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest]) (*connect.ServerStreamForClient[v1.UnreadNotificationsResponse], error)
 }
 
 // NewNotificationServiceClient constructs a client for the api.v1.NotificationService service. By
@@ -85,12 +81,6 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(notificationServiceMethods.ByName("GetUnreadNotificationCount")),
 			connect.WithClientOptions(opts...),
 		),
-		unreadNotifications: connect.NewClient[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse](
-			httpClient,
-			baseURL+NotificationServiceUnreadNotificationsProcedure,
-			connect.WithSchema(notificationServiceMethods.ByName("UnreadNotifications")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -99,7 +89,6 @@ type notificationServiceClient struct {
 	listNotifications          *connect.Client[v1.ListNotificationsRequest, v1.ListNotificationsResponse]
 	markNotificationsAsRead    *connect.Client[v1.MarkNotificationsAsReadRequest, v1.MarkNotificationsAsReadResponse]
 	getUnreadNotificationCount *connect.Client[v1.GetUnreadNotificationCountRequest, v1.GetUnreadNotificationCountResponse]
-	unreadNotifications        *connect.Client[v1.UnreadNotificationsRequest, v1.UnreadNotificationsResponse]
 }
 
 // ListNotifications calls api.v1.NotificationService.ListNotifications.
@@ -117,17 +106,11 @@ func (c *notificationServiceClient) GetUnreadNotificationCount(ctx context.Conte
 	return c.getUnreadNotificationCount.CallUnary(ctx, req)
 }
 
-// UnreadNotifications calls api.v1.NotificationService.UnreadNotifications.
-func (c *notificationServiceClient) UnreadNotifications(ctx context.Context, req *connect.Request[v1.UnreadNotificationsRequest]) (*connect.ServerStreamForClient[v1.UnreadNotificationsResponse], error) {
-	return c.unreadNotifications.CallServerStream(ctx, req)
-}
-
 // NotificationServiceHandler is an implementation of the api.v1.NotificationService service.
 type NotificationServiceHandler interface {
 	ListNotifications(context.Context, *connect.Request[v1.ListNotificationsRequest]) (*connect.Response[v1.ListNotificationsResponse], error)
 	MarkNotificationsAsRead(context.Context, *connect.Request[v1.MarkNotificationsAsReadRequest]) (*connect.Response[v1.MarkNotificationsAsReadResponse], error)
 	GetUnreadNotificationCount(context.Context, *connect.Request[v1.GetUnreadNotificationCountRequest]) (*connect.Response[v1.GetUnreadNotificationCountResponse], error)
-	UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest], *connect.ServerStream[v1.UnreadNotificationsResponse]) error
 }
 
 // NewNotificationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -155,12 +138,6 @@ func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...conne
 		connect.WithSchema(notificationServiceMethods.ByName("GetUnreadNotificationCount")),
 		connect.WithHandlerOptions(opts...),
 	)
-	notificationServiceUnreadNotificationsHandler := connect.NewServerStreamHandler(
-		NotificationServiceUnreadNotificationsProcedure,
-		svc.UnreadNotifications,
-		connect.WithSchema(notificationServiceMethods.ByName("UnreadNotifications")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/api.v1.NotificationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case NotificationServiceListNotificationsProcedure:
@@ -169,8 +146,6 @@ func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...conne
 			notificationServiceMarkNotificationsAsReadHandler.ServeHTTP(w, r)
 		case NotificationServiceGetUnreadNotificationCountProcedure:
 			notificationServiceGetUnreadNotificationCountHandler.ServeHTTP(w, r)
-		case NotificationServiceUnreadNotificationsProcedure:
-			notificationServiceUnreadNotificationsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -190,8 +165,4 @@ func (UnimplementedNotificationServiceHandler) MarkNotificationsAsRead(context.C
 
 func (UnimplementedNotificationServiceHandler) GetUnreadNotificationCount(context.Context, *connect.Request[v1.GetUnreadNotificationCountRequest]) (*connect.Response[v1.GetUnreadNotificationCountResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.NotificationService.GetUnreadNotificationCount is not implemented"))
-}
-
-func (UnimplementedNotificationServiceHandler) UnreadNotifications(context.Context, *connect.Request[v1.UnreadNotificationsRequest], *connect.ServerStream[v1.UnreadNotificationsResponse]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.NotificationService.UnreadNotifications is not implemented"))
 }
