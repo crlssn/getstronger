@@ -60,15 +60,6 @@ var Routines = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
-		ExerciseOrder: column{
-			Name:      "exercise_order",
-			DBType:    "jsonb",
-			Default:   "'[]'::jsonb",
-			Comment:   "",
-			Nullable:  false,
-			Generated: false,
-			AutoIncr:  false,
-		},
 	},
 	Indexes: routineIndexes{
 		RoutinesPkey: index{
@@ -110,17 +101,16 @@ var Routines = Table[
 }
 
 type routineColumns struct {
-	ID            column
-	UserID        column
-	Title         column
-	CreatedAt     column
-	DeletedAt     column
-	ExerciseOrder column
+	ID        column
+	UserID    column
+	Title     column
+	CreatedAt column
+	DeletedAt column
 }
 
 func (c routineColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.UserID, c.Title, c.CreatedAt, c.DeletedAt, c.ExerciseOrder,
+		c.ID, c.UserID, c.Title, c.CreatedAt, c.DeletedAt,
 	}
 }
 

@@ -27,6 +27,7 @@ import (
 type ExercisesRoutine struct {
 	RoutineID  uuid.UUID `db:"routine_id,pk" `
 	ExerciseID uuid.UUID `db:"exercise_id,pk" `
+	Position   int32     `db:"position" `
 
 	R exercisesRoutineR `db:"-" `
 }
@@ -59,7 +60,7 @@ type exercisesRoutineRLoaded struct {
 
 func buildExercisesRoutineColumns(tableName string) exercisesRoutineColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"routine_id", "exercise_id",
+		"routine_id", "exercise_id", "position",
 	)
 
 	if tableName != "" {
@@ -71,6 +72,7 @@ func buildExercisesRoutineColumns(tableName string) exercisesRoutineColumns {
 		tableAlias:  tableName,
 		RoutineID:   buildExercisesRoutineColumn(tableName, "routine_id"),
 		ExerciseID:  buildExercisesRoutineColumn(tableName, "exercise_id"),
+		Position:    buildExercisesRoutineColumn(tableName, "position"),
 	}
 }
 
@@ -79,6 +81,7 @@ type exercisesRoutineColumns struct {
 	tableAlias string
 	RoutineID  exercisesRoutineColumn
 	ExerciseID exercisesRoutineColumn
+	Position   exercisesRoutineColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -126,15 +129,19 @@ func (c exercisesRoutineColumn) ShouldOmitParens() bool {
 type ExercisesRoutineSetter struct {
 	RoutineID  omit.Val[uuid.UUID] `db:"routine_id,pk" `
 	ExerciseID omit.Val[uuid.UUID] `db:"exercise_id,pk" `
+	Position   omit.Val[int32]     `db:"position" `
 }
 
 func (s ExercisesRoutineSetter) SetColumns() []string {
-	vals := make([]string, 0, 2)
+	vals := make([]string, 0, 3)
 	if s.RoutineID.IsValue() {
 		vals = append(vals, "routine_id")
 	}
 	if s.ExerciseID.IsValue() {
 		vals = append(vals, "exercise_id")
+	}
+	if s.Position.IsValue() {
+		vals = append(vals, "position")
 	}
 	return vals
 }
@@ -145,6 +152,9 @@ func (s ExercisesRoutineSetter) Overwrite(t *ExercisesRoutine) {
 	}
 	if s.ExerciseID.IsValue() {
 		t.ExerciseID = s.ExerciseID.MustGet()
+	}
+	if s.Position.IsValue() {
+		t.Position = s.Position.MustGet()
 	}
 }
 
@@ -164,6 +174,11 @@ func (s *ExercisesRoutineSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.ExerciseID.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Position.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Position.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -172,7 +187,7 @@ func (s ExercisesRoutineSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s ExercisesRoutineSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 2)
+	exprs := make([]bob.Expression, 0, 3)
 
 	if s.RoutineID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -188,6 +203,13 @@ func (s ExercisesRoutineSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.Position.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "position")...),
+			psql.Arg(s.Position),
+		}})
+	}
+
 	return exprs
 }
 
@@ -198,13 +220,15 @@ func exercisesRoutineScanMapper(ctx context.Context, cols []string) (scan.Before
 		idx int
 		dst func(o *ExercisesRoutine) any
 	}
-	targets := make([]target, 0, 2)
+	targets := make([]target, 0, 3)
 	for i, col := range cols {
 		switch col {
 		case "routine_id":
 			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.RoutineID }})
 		case "exercise_id":
 			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.ExerciseID }})
+		case "position":
+			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.Position }})
 		}
 	}
 
@@ -573,6 +597,8 @@ func (exercisesRoutine0 *ExercisesRoutine) InsertExercise(ctx context.Context, e
 	exercisesRoutine0.R.Exercise = exercise1
 	exercisesRoutine0.R.Loaded.Exercise = true
 
+	exercise1.R.ExercisesRoutines = append(exercise1.R.ExercisesRoutines, exercisesRoutine0)
+
 	return nil
 }
 
@@ -586,6 +612,8 @@ func (exercisesRoutine0 *ExercisesRoutine) AttachExercise(ctx context.Context, e
 
 	exercisesRoutine0.R.Exercise = exercise1
 	exercisesRoutine0.R.Loaded.Exercise = true
+
+	exercise1.R.ExercisesRoutines = append(exercise1.R.ExercisesRoutines, exercisesRoutine0)
 
 	return nil
 }
@@ -619,6 +647,8 @@ func (exercisesRoutine0 *ExercisesRoutine) InsertRoutine(ctx context.Context, ex
 	exercisesRoutine0.R.Routine = routine1
 	exercisesRoutine0.R.Loaded.Routine = true
 
+	routine1.R.ExercisesRoutines = append(routine1.R.ExercisesRoutines, exercisesRoutine0)
+
 	return nil
 }
 
@@ -633,6 +663,8 @@ func (exercisesRoutine0 *ExercisesRoutine) AttachRoutine(ctx context.Context, ex
 	exercisesRoutine0.R.Routine = routine1
 	exercisesRoutine0.R.Loaded.Routine = true
 
+	routine1.R.ExercisesRoutines = append(routine1.R.ExercisesRoutines, exercisesRoutine0)
+
 	return nil
 }
 
@@ -640,6 +672,7 @@ type exercisesRoutineWhere[Q psql.Filterable] struct {
 	cols       exercisesRoutineColumns
 	RoutineID  psql.WhereMod[Q, uuid.UUID]
 	ExerciseID psql.WhereMod[Q, uuid.UUID]
+	Position   psql.WhereMod[Q, int32]
 	R          exercisesRoutineWhereR[Q]
 }
 
@@ -652,6 +685,7 @@ func buildExercisesRoutineWhere[Q psql.Filterable](cols exercisesRoutineColumns)
 		cols:       cols,
 		RoutineID:  psql.Where[Q, uuid.UUID](cols.RoutineID.Expression),
 		ExerciseID: psql.Where[Q, uuid.UUID](cols.ExerciseID.Expression),
+		Position:   psql.Where[Q, int32](cols.Position.Expression),
 		R:          exercisesRoutineWhereR[Q]{cols: cols},
 	}
 }
@@ -706,6 +740,9 @@ func (o *ExercisesRoutine) Preload(name string, retrieved any) error {
 		o.R.Exercise = rel
 		o.R.Loaded.Exercise = true
 
+		if rel != nil {
+			rel.R.ExercisesRoutines = ExercisesRoutineSlice{o}
+		}
 		return nil
 	case "Routine":
 		rel, ok := retrieved.(*Routine)
@@ -716,6 +753,9 @@ func (o *ExercisesRoutine) Preload(name string, retrieved any) error {
 		o.R.Routine = rel
 		o.R.Loaded.Routine = true
 
+		if rel != nil {
+			rel.R.ExercisesRoutines = ExercisesRoutineSlice{o}
+		}
 		return nil
 	default:
 		return fmt.Errorf("exercisesRoutine has no relationship %q", name)
@@ -802,6 +842,8 @@ func (o *ExercisesRoutine) LoadExercise(ctx context.Context, exec bob.Executor, 
 		return err
 	}
 
+	related.R.ExercisesRoutines = ExercisesRoutineSlice{o}
+
 	o.R.Exercise = related
 	o.R.Loaded.Exercise = true
 	return nil
@@ -850,6 +892,8 @@ func (os ExercisesRoutineSlice) LoadExercise(ctx context.Context, exec bob.Execu
 				continue
 			}
 
+			rel.R.ExercisesRoutines = append(rel.R.ExercisesRoutines, o)
+
 			o.R.Exercise = rel
 
 		}
@@ -872,6 +916,8 @@ func (o *ExercisesRoutine) LoadRoutine(ctx context.Context, exec bob.Executor, m
 	if err != nil {
 		return err
 	}
+
+	related.R.ExercisesRoutines = ExercisesRoutineSlice{o}
 
 	o.R.Routine = related
 	o.R.Loaded.Routine = true
@@ -920,6 +966,8 @@ func (os ExercisesRoutineSlice) LoadRoutine(ctx context.Context, exec bob.Execut
 			if o.R.Routine != nil {
 				continue
 			}
+
+			rel.R.ExercisesRoutines = append(rel.R.ExercisesRoutines, o)
 
 			o.R.Routine = rel
 

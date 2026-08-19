@@ -13,6 +13,9 @@ func TestExerciseCountStruct(t *testing.T) {
 	var m Exercise
 	_ = m.C // Verify C field exists
 
+	// Verify ExercisesRoutines count field exists and is *int64
+	var _ *int64 = m.C.ExercisesRoutines
+
 	// Verify Routines count field exists and is *int64
 	var _ *int64 = m.C.Routines
 
@@ -25,6 +28,12 @@ func TestExerciseLoadCountMethods(t *testing.T) {
 	var m *Exercise
 	var ms ExerciseSlice
 	ctx := context.Background()
+
+	// Verify LoadCountExercisesRoutines method exists on single model
+	_ = m.LoadCountExercisesRoutines(ctx, nil)
+
+	// Verify LoadCountExercisesRoutines method exists on slice
+	_ = ms.LoadCountExercisesRoutines(ctx, nil)
 
 	// Verify LoadCountRoutines method exists on single model
 	_ = m.LoadCountRoutines(ctx, nil)
@@ -43,6 +52,9 @@ func TestExerciseLoadCountMethods(t *testing.T) {
 func TestSelectThenLoadCountExercise(t *testing.T) {
 	_ = SelectThenLoadCount.Exercise
 
+	// Verify ExercisesRoutines loader exists
+	_ = SelectThenLoadCount.Exercise.ExercisesRoutines
+
 	// Verify Routines loader exists
 	_ = SelectThenLoadCount.Exercise.Routines
 
@@ -54,6 +66,9 @@ func TestSelectThenLoadCountExercise(t *testing.T) {
 func TestPreloadCountExercise(t *testing.T) {
 	_ = PreloadCount.Exercise
 
+	// Verify ExercisesRoutines preloader exists and returns a Preloader
+	_ = PreloadCount.Exercise.ExercisesRoutines()
+
 	// Verify Routines preloader exists and returns a Preloader
 	_ = PreloadCount.Exercise.Routines()
 
@@ -64,6 +79,8 @@ func TestPreloadCountExercise(t *testing.T) {
 // Test that Exercise has PreloadCount method
 func TestExercisePreloadCountMethod(t *testing.T) {
 	var m *Exercise
+
+	_ = m.PreloadCount("ExercisesRoutines", 0)
 
 	_ = m.PreloadCount("Routines", 0)
 
@@ -120,11 +137,14 @@ func TestRoutineCountStruct(t *testing.T) {
 	var m Routine
 	_ = m.C // Verify C field exists
 
-	// Verify Exercises count field exists and is *int64
-	var _ *int64 = m.C.Exercises
+	// Verify ExercisesRoutines count field exists and is *int64
+	var _ *int64 = m.C.ExercisesRoutines
 
 	// Verify PlanRoutines count field exists and is *int64
 	var _ *int64 = m.C.PlanRoutines
+
+	// Verify Exercises count field exists and is *int64
+	var _ *int64 = m.C.Exercises
 
 	// Verify Workouts count field exists and is *int64
 	var _ *int64 = m.C.Workouts
@@ -136,17 +156,23 @@ func TestRoutineLoadCountMethods(t *testing.T) {
 	var ms RoutineSlice
 	ctx := context.Background()
 
-	// Verify LoadCountExercises method exists on single model
-	_ = m.LoadCountExercises(ctx, nil)
+	// Verify LoadCountExercisesRoutines method exists on single model
+	_ = m.LoadCountExercisesRoutines(ctx, nil)
 
-	// Verify LoadCountExercises method exists on slice
-	_ = ms.LoadCountExercises(ctx, nil)
+	// Verify LoadCountExercisesRoutines method exists on slice
+	_ = ms.LoadCountExercisesRoutines(ctx, nil)
 
 	// Verify LoadCountPlanRoutines method exists on single model
 	_ = m.LoadCountPlanRoutines(ctx, nil)
 
 	// Verify LoadCountPlanRoutines method exists on slice
 	_ = ms.LoadCountPlanRoutines(ctx, nil)
+
+	// Verify LoadCountExercises method exists on single model
+	_ = m.LoadCountExercises(ctx, nil)
+
+	// Verify LoadCountExercises method exists on slice
+	_ = ms.LoadCountExercises(ctx, nil)
 
 	// Verify LoadCountWorkouts method exists on single model
 	_ = m.LoadCountWorkouts(ctx, nil)
@@ -159,11 +185,14 @@ func TestRoutineLoadCountMethods(t *testing.T) {
 func TestSelectThenLoadCountRoutine(t *testing.T) {
 	_ = SelectThenLoadCount.Routine
 
-	// Verify Exercises loader exists
-	_ = SelectThenLoadCount.Routine.Exercises
+	// Verify ExercisesRoutines loader exists
+	_ = SelectThenLoadCount.Routine.ExercisesRoutines
 
 	// Verify PlanRoutines loader exists
 	_ = SelectThenLoadCount.Routine.PlanRoutines
+
+	// Verify Exercises loader exists
+	_ = SelectThenLoadCount.Routine.Exercises
 
 	// Verify Workouts loader exists
 	_ = SelectThenLoadCount.Routine.Workouts
@@ -173,11 +202,14 @@ func TestSelectThenLoadCountRoutine(t *testing.T) {
 func TestPreloadCountRoutine(t *testing.T) {
 	_ = PreloadCount.Routine
 
-	// Verify Exercises preloader exists and returns a Preloader
-	_ = PreloadCount.Routine.Exercises()
+	// Verify ExercisesRoutines preloader exists and returns a Preloader
+	_ = PreloadCount.Routine.ExercisesRoutines()
 
 	// Verify PlanRoutines preloader exists and returns a Preloader
 	_ = PreloadCount.Routine.PlanRoutines()
+
+	// Verify Exercises preloader exists and returns a Preloader
+	_ = PreloadCount.Routine.Exercises()
 
 	// Verify Workouts preloader exists and returns a Preloader
 	_ = PreloadCount.Routine.Workouts()
@@ -187,9 +219,11 @@ func TestPreloadCountRoutine(t *testing.T) {
 func TestRoutinePreloadCountMethod(t *testing.T) {
 	var m *Routine
 
-	_ = m.PreloadCount("Exercises", 0)
+	_ = m.PreloadCount("ExercisesRoutines", 0)
 
 	_ = m.PreloadCount("PlanRoutines", 0)
+
+	_ = m.PreloadCount("Exercises", 0)
 
 	_ = m.PreloadCount("Workouts", 0)
 }

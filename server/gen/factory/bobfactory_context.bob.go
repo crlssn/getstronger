@@ -20,7 +20,8 @@ var (
 	// Relationship Contexts for exercises
 	exerciseWithParentsCascadingCtx = newContextual[bool]("exerciseWithParentsCascading")
 	exerciseRelUserCtx              = newContextual[bool]("exercises.users.exercises.exercises_user_id_fkey")
-	exerciseRelRoutinesCtx          = newContextual[bool]("exercises.routines.exercises_routines.routine_exercises_exercise_id_fkeyexercises_routines.routine_exercises_routine_id_fkey")
+	exerciseRelExercisesRoutinesCtx = newContextual[bool]("exercises.exercises_routines.exercises_routines.routine_exercises_exercise_id_fkey")
+	exerciseRelRoutinesCtx          = newContextual[bool]("exercises.routines.routines_exercises")
 	exerciseRelSetsCtx              = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
 
 	// Relationship Contexts for exercises_routines
@@ -49,9 +50,10 @@ var (
 
 	// Relationship Contexts for routines
 	routineWithParentsCascadingCtx = newContextual[bool]("routineWithParentsCascading")
-	routineRelExercisesCtx         = newContextual[bool]("exercises.routines.exercises_routines.routine_exercises_exercise_id_fkeyexercises_routines.routine_exercises_routine_id_fkey")
+	routineRelExercisesRoutinesCtx = newContextual[bool]("exercises_routines.routines.exercises_routines.routine_exercises_routine_id_fkey")
 	routineRelPlanRoutinesCtx      = newContextual[bool]("plan_routines.routines.plan_routines.plan_routines_routine_id_fkey")
 	routineRelUserCtx              = newContextual[bool]("routines.users.routines.routines_user_id_fkey")
+	routineRelExercisesCtx         = newContextual[bool]("exercises.routines.routines_exercises")
 	routineRelWorkoutsCtx          = newContextual[bool]("routines.workouts.workouts.workouts_routine_id_fkey")
 
 	// Relationship Contexts for sets

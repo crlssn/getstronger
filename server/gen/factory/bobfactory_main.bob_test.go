@@ -82,6 +82,44 @@ func TestCreateExercise(t *testing.T) {
 	}
 }
 
+func TestCreateExerciseWithExercisesRoutinesDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Exercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Exercises: %v", err)
+	}
+
+	if _, err := New().NewExerciseWithContext(ctx, ExerciseMods.WithNewExercisesRoutines(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating Exercise with ExercisesRoutines: %v", err)
+	}
+
+	after, err := models.Exercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Exercises: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Exercises to increase by 1, got %d", got)
+	}
+}
+
 func TestCreateExerciseWithSetsDoesNotDuplicateParent(t *testing.T) {
 	if testDB == nil {
 		t.Skip("skipping test, no DSN provided")
@@ -299,6 +337,44 @@ func TestCreateRoutine(t *testing.T) {
 
 	if _, err := New().NewRoutineWithContext(ctx).Create(ctx, tx); err != nil {
 		t.Fatalf("Error creating Routine: %v", err)
+	}
+}
+
+func TestCreateRoutineWithExercisesRoutinesDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Routines.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Routines: %v", err)
+	}
+
+	if _, err := New().NewRoutineWithContext(ctx, RoutineMods.WithNewExercisesRoutines(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating Routine with ExercisesRoutines: %v", err)
+	}
+
+	after, err := models.Routines.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Routines: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Routines to increase by 1, got %d", got)
 	}
 }
 

@@ -8,8 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"slices"
-	"strings"
 	"testing"
 	"time"
 
@@ -706,7 +704,7 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 	type test struct {
 		name     string
 		params   repo.SoftDeleteExerciseParams
-		init     func(test) models.RoutineSlice
+		init     func(test) (models.RoutineSlice, []string)
 		expected expected
 	}
 
@@ -717,8 +715,11 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 				UserID:     s.factory.NewUser().ID.String(),
 				ExerciseID: uuid.NewString(),
 			},
-			init: func(t test) models.RoutineSlice {
+			init: func(t test) (models.RoutineSlice, []string) {
 				exercises := models.ExerciseSlice{
+					s.factory.NewExercise(
+						factory.ExerciseUserID(t.params.UserID),
+					),
 					s.factory.NewExercise(
 						factory.ExerciseID(t.params.ExerciseID),
 						factory.ExerciseUserID(t.params.UserID),
@@ -729,22 +730,16 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 				}
 
 				routines := models.RoutineSlice{
-					s.factory.NewRoutine(
-						factory.RoutineExerciseOrder([]string{
-							exercises[0].ID.String(), exercises[1].ID.String(),
-						}),
-					),
-					s.factory.NewRoutine(
-						factory.RoutineExerciseOrder([]string{
-							exercises[0].ID.String(), exercises[1].ID.String(),
-						}),
-					),
+					s.factory.NewRoutine(),
+					s.factory.NewRoutine(),
 				}
 
+				// The deleted exercise sits between the two survivors so the
+				// order check below proves their relative order is untouched.
 				s.factory.AddRoutineExercise(routines[0], exercises...)
 				s.factory.AddRoutineExercise(routines[1], exercises...)
 
-				return routines
+				return routines, []string{exercises[0].ID.String(), exercises[2].ID.String()}
 			},
 			expected: expected{
 				err: nil,
@@ -756,12 +751,12 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 				UserID:     s.factory.NewUser().ID.String(),
 				ExerciseID: uuid.NewString(),
 			},
-			init: func(t test) models.RoutineSlice {
+			init: func(t test) (models.RoutineSlice, []string) {
 				s.factory.NewExercise(
 					factory.ExerciseID(t.params.ExerciseID),
 					factory.ExerciseUserID(t.params.UserID),
 				)
-				return nil
+				return nil, nil
 			},
 			expected: expected{
 				err: nil,
@@ -782,8 +777,9 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			var routines models.RoutineSlice
+			var remainingIDs []string
 			if t.init != nil {
-				routines = t.init(t)
+				routines, remainingIDs = t.init(t)
 			}
 
 			err := s.repo.SoftDeleteExercise(context.Background(), t.params)
@@ -803,18 +799,18 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 
 			s.Require().NoError(routines.ReloadAll(context.Background(), bob.NewDB(s.container.DB)))
 			for _, routine := range routines {
-				exercises, exercisesErr := routine.Exercises().All(context.Background(), bob.NewDB(s.container.DB))
-				s.Require().NoError(exercisesErr)
+				fetched, fetchErr := s.repo.GetRoutine(
+					context.Background(),
+					repo.GetRoutineWithID(routine.ID.String()),
+					repo.GetRoutineWithExercises(),
+				)
+				s.Require().NoError(fetchErr)
 
-				for _, exercise := range exercises {
-					s.Require().NotEqual(t.params.ExerciseID, exercise.ID.String(), "Exercise should have been removed from the routine")
+				exerciseIDs := make([]string, 0, len(fetched.R.Exercises))
+				for _, exercise := range fetched.R.Exercises {
+					exerciseIDs = append(exerciseIDs, exercise.ID.String())
 				}
-
-				var exerciseIDs []string
-				s.Require().NoError(json.Unmarshal(routine.ExerciseOrder.Val, &exerciseIDs))
-				for _, id := range exerciseIDs {
-					s.Require().NotEqual(t.params.ExerciseID, id, "Exercise should have been removed from the routine's exercise order")
-				}
+				s.Require().Equal(remainingIDs, exerciseIDs, "the remaining exercises should keep their relative order")
 			}
 		})
 	}
@@ -904,40 +900,6 @@ func (s *repoSuite) TestUpdateRoutine() {
 			},
 		},
 		{
-			name:      "ok_update_exercise_order",
-			routineID: uuid.NewString(),
-			opts: []repo.UpdateRoutineOpt{
-				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
-			},
-			init: func(t test) {
-				s.factory.NewRoutine(
-					factory.RoutineID(t.routineID),
-					factory.RoutineExerciseOrder([]string{"2", "1"}),
-				)
-			},
-			expected: expected{
-				err: nil,
-			},
-		},
-		{
-			name:      "ok_update_name_and_exercise_order",
-			routineID: uuid.NewString(),
-			opts: []repo.UpdateRoutineOpt{
-				repo.UpdateRoutineName("new"),
-				repo.UpdateRoutineExerciseOrder([]string{"1", "2"}),
-			},
-			init: func(t test) {
-				s.factory.NewRoutine(
-					factory.RoutineID(t.routineID),
-					factory.RoutineName("old"),
-					factory.RoutineExerciseOrder([]string{"2", "1"}),
-				)
-			},
-			expected: expected{
-				err: nil,
-			},
-		},
-		{
 			name:      "err_duplicate_column_update",
 			routineID: uuid.NewString(),
 			opts: []repo.UpdateRoutineOpt{
@@ -961,10 +923,10 @@ func (s *repoSuite) TestUpdateRoutine() {
 }
 
 // TestGetRoutineExercisesAreStablyOrdered guards against the routine detail page showing a
-// different exercise order on every load. The relationship table has no position column, so an
-// unordered load leaves Postgres free to return the rows in heap order, and any write to an
-// exercise row relocates it within the heap. The no-op update below changes no data at all, yet is
-// enough to reshuffle an unordered result.
+// different exercise order on every load. Without an ORDER BY, Postgres is free to return the rows
+// in heap order, and any write to an exercise row relocates it within the heap. The no-op update
+// below changes no data at all, yet is enough to reshuffle an unordered result; the position
+// column recorded on the relationship table must keep the order fixed.
 func (s *repoSuite) TestGetRoutineExercisesAreStablyOrdered() {
 	ctx := context.Background()
 	userID := s.factory.NewUser().ID.String()
@@ -1012,20 +974,98 @@ func (s *repoSuite) TestGetRoutineExercisesAreStablyOrdered() {
 
 	s.Require().Equal(first, loadExerciseIDs(), "routine exercise order changed between loads")
 
-	// The routine has no exercise_order value, so the load falls back to title then ID.
-	sorted := slices.Clone(exercises)
-	slices.SortFunc(sorted, func(a, b *models.Exercise) int {
-		if a.Title != b.Title {
-			return strings.Compare(a.Title, b.Title)
-		}
-		return strings.Compare(a.ID.String(), b.ID.String())
-	})
-
-	expected := make([]string, 0, len(sorted))
-	for _, exercise := range sorted {
+	// Positions follow the order the exercises were added in.
+	expected := make([]string, 0, len(exercises))
+	for _, exercise := range exercises {
 		expected = append(expected, exercise.ID.String())
 	}
 	s.Require().Equal(expected, first)
+}
+
+// routineExerciseIDs loads the routine's exercises in their recorded order.
+func (s *repoSuite) routineExerciseIDs(routineID string) []string {
+	fetched, err := s.repo.GetRoutine(
+		context.Background(),
+		repo.GetRoutineWithID(routineID),
+		repo.GetRoutineWithExercises(),
+	)
+	s.Require().NoError(err)
+
+	exerciseIDs := make([]string, 0, len(fetched.R.Exercises))
+	for _, exercise := range fetched.R.Exercises {
+		exerciseIDs = append(exerciseIDs, exercise.ID.String())
+	}
+	return exerciseIDs
+}
+
+func (s *repoSuite) TestCreateRoutineKeepsRequestedExerciseOrder() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+
+	// Deliberately not the creation order of the exercises.
+	exerciseIDs := []string{
+		exercises[2].ID.String(),
+		exercises[0].ID.String(),
+		exercises[1].ID.String(),
+	}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID.String(),
+		Name:        "Legs",
+		ExerciseIDs: exerciseIDs,
+	})
+	s.Require().NoError(err)
+	s.Require().Equal(exerciseIDs, s.routineExerciseIDs(routine.ID.String()))
+}
+
+func (s *repoSuite) TestAddExerciseToRoutinePlacesLast() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	s.factory.AddRoutineExercise(routine, exercises...)
+
+	added := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), added, routine))
+
+	s.Require().Equal(
+		[]string{exercises[0].ID.String(), exercises[1].ID.String(), added.ID.String()},
+		s.routineExerciseIDs(routine.ID.String()),
+	)
+
+	// An empty routine gets position one rather than an error from the missing maximum.
+	emptyRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), added, emptyRoutine))
+	s.Require().Equal([]string{added.ID.String()}, s.routineExerciseIDs(emptyRoutine.ID.String()))
+}
+
+func (s *repoSuite) TestRemoveExerciseFromRoutineKeepsRelativeOrder() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	s.factory.AddRoutineExercise(routine, exercises...)
+
+	s.Require().NoError(s.repo.RemoveExerciseFromRoutine(context.Background(), exercises[1], routine))
+
+	s.Require().Equal(
+		[]string{exercises[0].ID.String(), exercises[2].ID.String()},
+		s.routineExerciseIDs(routine.ID.String()),
+	)
+}
+
+func (s *repoSuite) TestUpdateRoutineExerciseOrder() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	s.factory.AddRoutineExercise(routine, exercises...)
+
+	newOrder := []string{
+		exercises[1].ID.String(),
+		exercises[2].ID.String(),
+		exercises[0].ID.String(),
+	}
+	s.Require().NoError(s.repo.UpdateRoutineExerciseOrder(context.Background(), routine.ID.String(), newOrder))
+
+	s.Require().Equal(newOrder, s.routineExerciseIDs(routine.ID.String()))
 }
 
 func (s *repoSuite) TestGetPreviousWorkoutSets() {

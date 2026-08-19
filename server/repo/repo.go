@@ -378,31 +378,14 @@ func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParam
 		exercise, err := models.Exercises.Query(
 			models.SelectWhere.Exercises.ID.EQ(uuidFromString(p.ExerciseID)),
 			models.SelectWhere.Exercises.UserID.EQ(uuidFromString(p.UserID)),
-			models.SelectThenLoad.Exercise.Routines(),
 		).One(ctx, tx.bobExec())
 		if err != nil {
 			return fmt.Errorf("exercise fetch: %w", err)
 		}
 
-		for _, routine := range exercise.R.Routines {
-			var exerciseIDs []string
-			if err = json.Unmarshal(routine.ExerciseOrder.Val, &exerciseIDs); err != nil {
-				return fmt.Errorf("exercise order unmarshal: %w", err)
-			}
-
-			exerciseOrder := make([]string, 0, len(exerciseIDs)-1)
-			for _, exerciseID := range exerciseIDs {
-				if exerciseID == exercise.ID.String() {
-					continue
-				}
-				exerciseOrder = append(exerciseOrder, exerciseID)
-			}
-
-			if err = tx.UpdateRoutine(ctx, routine.ID.String(), UpdateRoutineExerciseOrder(exerciseOrder)); err != nil {
-				return fmt.Errorf("routine update: %w", err)
-			}
-		}
-
+		// Deleting the join rows leaves position gaps in the affected routines,
+		// which the ordered read tolerates: the remaining exercises keep their
+		// relative order.
 		if _, err = models.ExercisesRoutines.Delete(
 			models.DeleteWhere.ExercisesRoutines.ExerciseID.EQ(exercise.ID),
 		).Exec(ctx, tx.bobExec()); err != nil {
@@ -612,12 +595,8 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 			return fmt.Errorf("routine insert: %w", err)
 		}
 
-		if err = setRoutineExercises(ctx, tx.bobExec(), routine.ID, exercises); err != nil {
+		if err = setRoutineExercises(ctx, tx.bobExec(), routine.ID, OrderExercisesByIDs(exercises, p.ExerciseIDs)); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
-		}
-
-		if err = tx.UpdateRoutine(ctx, routine.ID.String(), UpdateRoutineExerciseOrder(p.ExerciseIDs)); err != nil {
-			return fmt.Errorf("routine update: %w", err)
 		}
 		return nil
 	}); err != nil {
@@ -627,8 +606,30 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 	return routine, nil
 }
 
+// OrderExercisesByIDs returns the exercises rearranged to match the order of
+// ids. IDs that match no exercise and duplicate IDs are skipped, as are
+// exercises the ids omit.
+func OrderExercisesByIDs(exercises models.ExerciseSlice, ids []string) models.ExerciseSlice {
+	exercisesByID := make(map[string]*models.Exercise, len(exercises))
+	for _, exercise := range exercises {
+		exercisesByID[exercise.ID.String()] = exercise
+	}
+
+	ordered := make(models.ExerciseSlice, 0, len(exercises))
+	for _, id := range ids {
+		exercise, ok := exercisesByID[id]
+		if !ok {
+			continue
+		}
+		delete(exercisesByID, id)
+		ordered = append(ordered, exercise)
+	}
+
+	return ordered
+}
+
 // setRoutineExercises replaces a routine's exercise links, the equivalent of
-// SQLBoiler's SetExercises.
+// SQLBoiler's SetExercises. Positions follow the slice order.
 func setRoutineExercises(ctx context.Context, exec bob.Executor, routineID uuid.UUID, exercises models.ExerciseSlice) error {
 	if _, err := models.ExercisesRoutines.Delete(
 		models.DeleteWhere.ExercisesRoutines.RoutineID.EQ(routineID),
@@ -641,10 +642,11 @@ func setRoutineExercises(ctx context.Context, exec bob.Executor, routineID uuid.
 	}
 
 	links := make([]*models.ExercisesRoutineSetter, 0, len(exercises))
-	for _, exercise := range exercises {
+	for index, exercise := range exercises {
 		links = append(links, &models.ExercisesRoutineSetter{
 			RoutineID:  omit.From(routineID),
 			ExerciseID: omit.From(exercise.ID),
+			Position:   omit.From(safe.Int32FromInt(index + 1)),
 		})
 	}
 
@@ -675,17 +677,14 @@ func GetRoutineWithExercises() GetRoutineOpt {
 	}
 }
 
-// stableExerciseOrder makes a routine's exercise load deterministic. The relationship table has no
-// position column, so without an ORDER BY Postgres is free to return the rows in whatever order the
-// chosen plan produces: any write to an exercise row moves it within the heap and silently reorders
-// the routine. Titles are not unique, so the ID breaks the tie.
-//
-// Routines that have an exercise_order value are re-sorted by it once loaded; this only fixes the
-// order of the exercises that value omits.
+// stableExerciseOrder orders a routine's exercise load by the position recorded on the
+// relationship table, which the load's join makes available to ORDER BY. Positions may have gaps
+// after removals; only their relative order matters. The exercise ID keeps the sort total in case
+// two rows ever share a position.
 func stableExerciseOrder() []bob.Mod[*dialect.SelectQuery] {
 	return []bob.Mod[*dialect.SelectQuery]{
-		sm.OrderBy(models.Exercises.Columns.Title).Asc(),
-		sm.OrderBy(models.Exercises.Columns.ID).Asc(),
+		sm.OrderBy(models.ExercisesRoutines.Columns.Position).Asc(),
+		sm.OrderBy(models.ExercisesRoutines.Columns.ExerciseID).Asc(),
 	}
 }
 
@@ -801,17 +800,6 @@ func UpdateRoutineName(name string) UpdateRoutineOpt {
 	}
 }
 
-func UpdateRoutineExerciseOrder(exerciseIDs []string) UpdateRoutineOpt {
-	return func() (columns, error) {
-		bytes, err := json.Marshal(exerciseIDs)
-		if err != nil {
-			return nil, fmt.Errorf("exercise IDs marshal: %w", err)
-		}
-
-		return columns{models.Routines.Columns.ExerciseOrder.Name(): bytes}, nil
-	}
-}
-
 func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
@@ -831,11 +819,30 @@ func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 	return nil
 }
 
+// UpdateRoutineExerciseOrder rewrites the positions of a routine's exercises to match the given ID
+// order. The single statement keeps the rewrite atomic; IDs that match no row are ignored, so the
+// caller is expected to have validated the set.
+func (r *repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+	if _, err := r.sqlExec().ExecContext(ctx, `
+UPDATE public.exercises_routines er
+SET position = ordered.position
+FROM unnest($2::uuid[]) WITH ORDINALITY AS ordered(exercise_id, position)
+WHERE er.routine_id = $1
+  AND er.exercise_id = ordered.exercise_id`, routineID, pq.Array(exerciseIDs)); err != nil {
+		return fmt.Errorf("routine exercise order update: %w", err)
+	}
+
+	return nil
+}
+
+// AddExerciseToRoutine appends the exercise to the routine by inserting it after the routine's
+// current last position.
 func (r *repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
-	if _, err := models.ExercisesRoutines.Insert(&models.ExercisesRoutineSetter{
-		RoutineID:  omit.From(routine.ID),
-		ExerciseID: omit.From(exercise.ID),
-	}).Exec(ctx, r.bobExec()); err != nil {
+	if _, err := r.sqlExec().ExecContext(ctx, `
+INSERT INTO public.exercises_routines (routine_id, exercise_id, position)
+SELECT $1, $2, COALESCE(MAX(position), 0) + 1
+FROM public.exercises_routines
+WHERE routine_id = $1`, routine.ID.String(), exercise.ID.String()); err != nil {
 		return fmt.Errorf("routine exercises add: %w", err)
 	}
 	return nil

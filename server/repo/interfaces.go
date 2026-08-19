@@ -84,6 +84,7 @@ type routineMethods interface {
 	CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error)
 	DeleteRoutine(ctx context.Context, routineID string) error
 	UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error
+	UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error
 	SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error
 	AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error
 	RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error

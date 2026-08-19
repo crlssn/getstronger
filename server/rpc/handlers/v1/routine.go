@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -79,13 +78,6 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	orderedExercises, err := reconcileRoutineExercises(routine.R.Exercises, routine.ExerciseOrder.Val)
-	if err != nil {
-		log.Error("unmarshal exercise order failed", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-	routine.R.Exercises = orderedExercises
-
 	log.Info("routine returned")
 	return connect.NewResponse(&apiv1.GetRoutineResponse{
 		Routine: parser.Routine(routine),
@@ -135,12 +127,12 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		if err = tx.UpdateRoutine(
 			ctx, routine.ID.String(),
 			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
-			repo.UpdateRoutineExerciseOrder(exerciseIDs),
 		); err != nil {
 			return fmt.Errorf("routine update failed: %w", err)
 		}
 
-		if err = tx.SetRoutineExercises(ctx, routine, exercises); err != nil {
+		// The exercises were listed by ID set; positions follow the requested order.
+		if err = tx.SetRoutineExercises(ctx, routine, repo.OrderExercisesByIDs(exercises, exerciseIDs)); err != nil {
 			return fmt.Errorf("set routine exercises failed: %w", err)
 		}
 
@@ -484,46 +476,6 @@ func summarizeDashboardWeek(workouts models.WorkoutSlice, weekStart time.Time) (
 	return workoutCount, volume
 }
 
-// reconcileRoutineExercises treats the relationship table as the source of truth and the
-// exercise_order column as an ordering hint. Older routines can have valid relationships with an
-// empty or incomplete order value; appending any omitted exercises keeps those routines usable.
-func reconcileRoutineExercises(exercises models.ExerciseSlice, encodedOrder []byte) (models.ExerciseSlice, error) {
-	var exerciseIDs []string
-	if len(encodedOrder) > 0 {
-		if err := json.Unmarshal(encodedOrder, &exerciseIDs); err != nil {
-			return nil, fmt.Errorf("exercise order unmarshal: %w", err)
-		}
-	}
-
-	exercisesByID := make(map[string]*models.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		exercisesByID[exercise.ID.String()] = exercise
-	}
-
-	ordered := make(models.ExerciseSlice, 0, len(exercises))
-	seen := make(map[string]struct{}, len(exercises))
-	for _, exerciseID := range exerciseIDs {
-		exercise, ok := exercisesByID[exerciseID]
-		if !ok {
-			continue
-		}
-		if _, duplicate := seen[exerciseID]; duplicate {
-			continue
-		}
-		ordered = append(ordered, exercise)
-		seen[exerciseID] = struct{}{}
-	}
-
-	for _, exercise := range exercises {
-		if _, exists := seen[exercise.ID.String()]; exists {
-			continue
-		}
-		ordered = append(ordered, exercise)
-	}
-
-	return ordered, nil
-}
-
 func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
@@ -651,8 +603,8 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		}
 	}
 
-	if err = h.repo.UpdateRoutine(ctx, routine.ID.String(), repo.UpdateRoutineExerciseOrder(req.Msg.GetExerciseIds())); err != nil {
-		log.Error("update routine failed", zap.Error(err))
+	if err = h.repo.UpdateRoutineExerciseOrder(ctx, routine.ID.String(), req.Msg.GetExerciseIds()); err != nil {
+		log.Error("update exercise order failed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 

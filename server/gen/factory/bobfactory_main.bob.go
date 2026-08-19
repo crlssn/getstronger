@@ -163,6 +163,9 @@ func (f *Factory) fromExistingExercise(ctx context.Context, m *models.Exercise) 
 	if m.R.User != nil {
 		ExerciseMods.WithExistingUser(m.R.User).Apply(ctx, o)
 	}
+	if len(m.R.ExercisesRoutines) > 0 {
+		ExerciseMods.AddExistingExercisesRoutines(m.R.ExercisesRoutines...).Apply(ctx, o)
+	}
 	if len(m.R.Routines) > 0 {
 		ExerciseMods.AddExistingRoutines(m.R.Routines...).Apply(ctx, o)
 	}
@@ -200,6 +203,7 @@ func (f *Factory) fromExistingExercisesRoutine(ctx context.Context, m *models.Ex
 
 	o.RoutineID = func() uuid.UUID { return m.RoutineID }
 	o.ExerciseID = func() uuid.UUID { return m.ExerciseID }
+	o.Position = func() int32 { return m.Position }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -435,7 +439,6 @@ func (f *Factory) fromExistingRoutine(ctx context.Context, m *models.Routine) *R
 	o.Title = func() string { return m.Title }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 	o.DeletedAt = func() null.Val[time.Time] { return m.DeletedAt }
-	o.ExerciseOrder = func() types.JSON[json.RawMessage] { return m.ExerciseOrder }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -444,14 +447,17 @@ func (f *Factory) fromExistingRoutine(ctx context.Context, m *models.Routine) *R
 		}
 		visited[ptr] = struct{}{}
 	}
-	if len(m.R.Exercises) > 0 {
-		RoutineMods.AddExistingExercises(m.R.Exercises...).Apply(ctx, o)
+	if len(m.R.ExercisesRoutines) > 0 {
+		RoutineMods.AddExistingExercisesRoutines(m.R.ExercisesRoutines...).Apply(ctx, o)
 	}
 	if len(m.R.PlanRoutines) > 0 {
 		RoutineMods.AddExistingPlanRoutines(m.R.PlanRoutines...).Apply(ctx, o)
 	}
 	if m.R.User != nil {
 		RoutineMods.WithExistingUser(m.R.User).Apply(ctx, o)
+	}
+	if len(m.R.Exercises) > 0 {
+		RoutineMods.AddExistingExercises(m.R.Exercises...).Apply(ctx, o)
 	}
 	if len(m.R.Workouts) > 0 {
 		RoutineMods.AddExistingWorkouts(m.R.Workouts...).Apply(ctx, o)
