@@ -8,6 +8,7 @@ on:
       - synchronize
       - ready_for_review
     paths:
+      - '.github/workflows/test.database.yml'
       - 'database/migrations/**'
 
 concurrency:

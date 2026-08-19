@@ -11,7 +11,10 @@ on:
       - synchronize
       - ready_for_review
     paths:
+      - '.github/workflows/test.server.yml'
+      - '.golangci.yml'
       - 'go.mod'
+      - 'go.sum'
       - 'server/**'
       - 'database/migrations/**'
 
