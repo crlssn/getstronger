@@ -3,6 +3,9 @@ import { ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_p
 
 import { computed, ref } from 'vue'
 import { DateTime } from 'luxon'
+import { useI18n } from 'vue-i18n'
+import { dateLocale } from '@/i18n'
+import { formatNumber } from '@/utils/numbers'
 import { Line as LineChart } from 'vue-chartjs'
 import {
   CategoryScale,
@@ -19,6 +22,8 @@ import { distanceInKilometers } from '@/utils/distanceUnits'
 
 ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
 
+const { t } = useI18n()
+
 const props = defineProps<{
   sets: Set[]
   exercise: Pick<Exercise, 'metrics'>
@@ -34,28 +39,28 @@ const hasWeightAndReps = computed(
 )
 const metricOptions = computed<Array<{ key: Metric; label: string }>>(() => {
   const options: Array<{ key: Metric; label: string }> = []
-  if (hasWeightAndReps.value) options.push({ key: 'oneRm', label: 'Est. 1RM' })
+  if (hasWeightAndReps.value) options.push({ key: 'oneRm', label: t('exercise.chart.oneRmShort') })
   if (selectedMetrics.value.includes(ExerciseMetric.WEIGHT))
-    options.push({ key: 'weight', label: 'Weight' })
+    options.push({ key: 'weight', label: t('common.weight') })
   if (selectedMetrics.value.includes(ExerciseMetric.REPS))
-    options.push({ key: 'reps', label: 'Reps' })
+    options.push({ key: 'reps', label: t('common.reps') })
   if (selectedMetrics.value.includes(ExerciseMetric.DISTANCE))
-    options.push({ key: 'distance', label: 'Distance' })
+    options.push({ key: 'distance', label: t('common.distance') })
   if (selectedMetrics.value.includes(ExerciseMetric.TIME))
-    options.push({ key: 'durationSeconds', label: 'Time' })
-  if (hasWeightAndReps.value) options.push({ key: 'volume', label: 'Volume' })
+    options.push({ key: 'durationSeconds', label: t('common.time') })
+  if (hasWeightAndReps.value) options.push({ key: 'volume', label: t('common.volume') })
   return options
 })
 const metric = ref<Metric>(metricOptions.value[0]?.key ?? 'weight')
 
-const metricDetails: Record<Metric, { heading: string; unit: string }> = {
-  oneRm: { heading: 'Estimated 1RM', unit: 'kg' },
-  weight: { heading: 'Working weight', unit: 'kg' },
-  volume: { heading: 'Daily volume', unit: 'kg' },
-  reps: { heading: 'Most reps', unit: 'reps' },
-  distance: { heading: 'Longest distance', unit: 'km' },
-  durationSeconds: { heading: 'Longest time', unit: '' },
-}
+const metricDetails = computed<Record<Metric, { heading: string; unit: string }>>(() => ({
+  oneRm: { heading: t('exercise.estimated1rm'), unit: t('common.kg') },
+  weight: { heading: t('exercise.chart.workingWeight'), unit: t('common.kg') },
+  volume: { heading: t('exercise.chart.dailyVolume'), unit: t('common.kg') },
+  reps: { heading: t('exercise.chart.mostReps'), unit: t('common.reps').toLocaleLowerCase() },
+  distance: { heading: t('exercise.chart.longestDistance'), unit: 'km' },
+  durationSeconds: { heading: t('exercise.chart.longestTime'), unit: '' },
+}))
 
 const calc1RM = (weight: number, reps: number): number => {
   if (reps === 1) return weight
@@ -86,7 +91,7 @@ const dailyMetrics = computed(() => {
     if (!key) return
 
     const existing = buckets.get(key) ?? {
-      label: date.toFormat('d LLL'),
+      label: date.setLocale(dateLocale).toFormat('d LLL'),
       timestamp: date.toMillis(),
       oneRm: 0,
       weight: 0,
@@ -118,7 +123,7 @@ const latestValue = computed(() => values.value[values.value.length - 1] ?? 0)
 const formattedLatestValue = computed(() =>
   metric.value === 'durationSeconds'
     ? formatDurationDisplay(latestValue.value)
-    : `${Math.round(latestValue.value).toLocaleString()} ${metricDetails[metric.value].unit}`.trim(),
+    : `${formatNumber(latestValue.value)} ${metricDetails.value[metric.value].unit}`.trim(),
 )
 const hasTrend = computed(() => dailyMetrics.value.length > 1)
 const change = computed(() => {
@@ -126,7 +131,7 @@ const change = computed(() => {
   const last = values.value[values.value.length - 1]
   if (!first || last === undefined || values.value.length < 2) return ''
   const percentage = Math.round(((last - first) / first) * 100)
-  if (!percentage) return 'No change'
+  if (!percentage) return t('exercise.chart.noChange')
   return `${percentage > 0 ? '+' : ''}${percentage}%`
 })
 
@@ -148,7 +153,7 @@ const data = computed(() => ({
       borderWidth: 3,
       data: values.value,
       fill: true,
-      label: metricDetails[metric.value].heading,
+      label: metricDetails.value[metric.value].heading,
       pointBackgroundColor: '#ffffff',
       pointBorderColor: inkColor,
       pointBorderWidth: 2,
@@ -174,7 +179,7 @@ const options = computed(() => ({
       title: {
         color: subtleColor,
         display: true,
-        text: metricDetails[metric.value].unit,
+        text: metricDetails.value[metric.value].unit,
       },
     },
   },
@@ -194,7 +199,7 @@ const options = computed(() => ({
       <span v-if="change">{{ change }}</span>
     </header>
 
-    <div class="segmented" aria-label="Exercise progress metric">
+    <div class="segmented" :aria-label="t('exercise.chart.metricAria')">
       <button
         v-for="option in metricOptions"
         :key="option.key"
@@ -212,12 +217,14 @@ const options = computed(() => ({
     </div>
     <div v-else class="first-result" role="status">
       <span aria-hidden="true"></span>
-      <strong>{{ dailyMetrics.length ? 'First result logged' : 'No results yet' }}</strong>
+      <strong>{{
+        dailyMetrics.length ? t('exercise.chart.firstResult') : t('exercise.chart.noResults')
+      }}</strong>
       <p>
         {{
           dailyMetrics.length
-            ? 'Log this exercise on another day to start seeing your trend.'
-            : 'Your progress will appear after you log this exercise.'
+            ? t('exercise.chart.firstResultBody')
+            : t('exercise.chart.noResultsBody')
         }}
       </p>
     </div>

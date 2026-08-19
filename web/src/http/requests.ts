@@ -130,6 +130,7 @@ import {
   userClient,
   workoutClient,
 } from './clients'
+import { i18n } from '@/i18n'
 import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 import router from '@/router/router'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
@@ -651,7 +652,7 @@ const tryCatch = async <T>(
             await options.onEmailNotVerified?.()
             return
           case Error.PASSWORDS_DO_NOT_MATCH:
-            alert('Passwords do not match')
+            alert(i18n.global.t('auth.passwordsDoNotMatch'))
             return
         }
       }

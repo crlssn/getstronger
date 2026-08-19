@@ -50,7 +50,7 @@ const alertStyle = computed(() => {
         <CheckCircleIcon v-if="alertStore.alert.type === 'success'" class="status-icon" />
         <ExclamationTriangleIcon v-else class="status-icon" />
         <p>{{ alertStore.alert.message }}</p>
-        <button type="button" aria-label="Dismiss message" @click="alertStore.clear">
+        <button type="button" :aria-label="$t('common.dismiss')" @click="alertStore.clear">
           <XMarkIcon />
         </button>
       </div>

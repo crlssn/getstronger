@@ -224,7 +224,7 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
             class="w-full"
             @click="addEmptySet(es.exercise?.id as string)"
           >
-            Add Set
+            {{ t('workout.edit.addSet') }}
           </AppButton>
         </AppListItem>
       </AppList>

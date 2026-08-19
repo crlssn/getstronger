@@ -1,3 +1,4 @@
+import { i18n } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
@@ -10,35 +11,35 @@ const router: Router = createRouter({
     {
       beforeEnter: [auth],
       component: () => import('@/ui/HomeView.vue'),
-      meta: { title: 'Home' },
+      meta: { titleKey: 'pages.home' },
       name: 'home',
       path: '/home',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/notifications/ListNotifications.vue'),
-      meta: { title: 'Notifications' },
+      meta: { titleKey: 'pages.notifications' },
       name: 'list-notifications',
       path: '/notifications',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/ProgressView.vue'),
-      meta: { title: 'Progress' },
+      meta: { titleKey: 'pages.progress' },
       name: 'progress',
       path: '/progress',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/profile/ProfileView.vue'),
-      meta: { title: 'Profile' },
+      meta: { titleKey: 'pages.profile' },
       name: 'profile',
       path: '/profile',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/users/UserView.vue'),
-      meta: { title: '' },
+      meta: { titleKey: '' },
       name: 'user-view',
       path: '/users/:id',
       children: [
@@ -67,63 +68,63 @@ const router: Router = createRouter({
     {
       beforeEnter: [auth],
       component: () => import('@/ui/workouts/WorkoutView.vue'),
-      meta: { title: 'Workout' },
+      meta: { titleKey: 'pages.workout' },
       name: 'workout',
       path: '/workout',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/workouts/StartWorkout.vue'),
-      meta: { focusedShell: true, title: 'Quick Workout' },
+      meta: { focusedShell: true, titleKey: 'pages.quickWorkout' },
       name: 'quick-workout',
       path: '/workouts/quick',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/workouts/ViewWorkout.vue'),
-      meta: { title: '' },
+      meta: { titleKey: '' },
       name: 'view-workout',
       path: '/workouts/:id',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/workouts/EditWorkout.vue'),
-      meta: { title: 'Edit Workout' },
+      meta: { titleKey: 'pages.editWorkout' },
       name: 'edit-workout',
       path: '/workouts/:id/edit',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/workouts/StartWorkout.vue'),
-      meta: { focusedShell: true, title: '' },
+      meta: { focusedShell: true, titleKey: '' },
       name: 'workout-routine',
       path: '/workouts/routine/:routine_id',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/plans/PlansView.vue'),
-      meta: { title: 'Training' },
+      meta: { titleKey: 'pages.training' },
       name: 'plans',
       path: '/plans',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/plans/PlanForm.vue'),
-      meta: { title: 'New Plan' },
+      meta: { titleKey: 'pages.newPlan' },
       name: 'create-plan',
       path: '/plans/create',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/plans/ViewPlan.vue'),
-      meta: { title: 'Plan' },
+      meta: { titleKey: 'pages.plan' },
       name: 'plan',
       path: '/plans/:id',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/plans/PlanForm.vue'),
-      meta: { title: 'Edit Plan' },
+      meta: { titleKey: 'pages.editPlan' },
       name: 'edit-plan',
       path: '/plans/:planId/edit',
       props: true,
@@ -131,70 +132,70 @@ const router: Router = createRouter({
     {
       beforeEnter: [auth],
       component: () => import('@/ui/routines/ListRoutines.vue'),
-      meta: { title: 'Routines' },
+      meta: { titleKey: 'pages.routines' },
       name: 'routines',
       path: '/routines',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/routines/CreateRoutine.vue'),
-      meta: { title: 'Create Routine' },
+      meta: { titleKey: 'pages.createRoutine' },
       name: 'create-routine',
       path: '/routines/create',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/routines/ViewRoutine.vue'),
-      meta: { title: 'Routine' },
+      meta: { titleKey: 'pages.routine' },
       name: 'routine',
       path: '/routines/:id',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/routines/EditRoutine.vue'),
-      meta: { title: 'Update Routine' },
+      meta: { titleKey: 'pages.updateRoutine' },
       name: 'edit-routine',
       path: '/routines/:id/edit',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/exercises/ListExercises.vue'),
-      meta: { title: 'Exercises' },
+      meta: { titleKey: 'pages.exercises' },
       name: 'exercises',
       path: '/exercises',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/exercises/CreateExercise.vue'),
-      meta: { title: 'Create Exercise' },
+      meta: { titleKey: 'pages.createExercise' },
       name: 'create-exercise',
       path: '/exercises/create',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/exercises/ViewExercise.vue'),
-      meta: { title: 'View Exercise' },
+      meta: { titleKey: 'pages.viewExercise' },
       name: 'view-exercise',
       path: '/exercises/:id',
     },
     {
       beforeEnter: [auth],
       component: () => import('@/ui/exercises/UpdateExercise.vue'),
-      meta: { title: 'Update Exercise' },
+      meta: { titleKey: 'pages.updateExercise' },
       name: 'update-exercise',
       path: '/exercises/:id/edit',
     },
     {
       beforeEnter: [guest],
       component: () => import('@/ui/auth/UserLogin.vue'),
-      meta: { title: 'Log in' },
+      meta: { titleKey: 'pages.login' },
       name: 'login',
       path: '/login',
     },
     {
       beforeEnter: [guest],
       component: () => import('@/ui/auth/UserSignup.vue'),
-      meta: { title: 'Create account' },
+      meta: { titleKey: 'pages.createAccount' },
       name: 'signup',
       path: '/signup',
     },
@@ -213,21 +214,21 @@ const router: Router = createRouter({
     {
       beforeEnter: [guest],
       component: () => import('@/ui/auth/VerifyEmailPending.vue'),
-      meta: { title: 'Verify your email' },
+      meta: { titleKey: 'pages.verifyEmail' },
       name: 'verify-email-pending',
       path: '/verify-email/pending',
     },
     {
       beforeEnter: [guest],
       component: () => import('@/ui/auth/ForgotPassword.vue'),
-      meta: { title: 'Reset password' },
+      meta: { titleKey: 'pages.resetPassword' },
       name: 'forgot-password',
       path: '/forgot-password',
     },
     {
       beforeEnter: [guest],
       component: () => import('@/ui/auth/ResetPassword.vue'),
-      meta: { title: 'Choose a new password' },
+      meta: { titleKey: 'pages.chooseNewPassword' },
       name: 'reset-password',
       path: '/reset-password',
     },
@@ -241,7 +242,7 @@ const router: Router = createRouter({
     },
     {
       component: () => import('@/ui/NotFound.vue'),
-      meta: { title: 'Not Found' },
+      meta: { titleKey: 'pages.notFound' },
       name: 'not-found',
       path: '/:pathMatch(.*)*',
     },
@@ -257,8 +258,11 @@ router.beforeEach((to, from, next) => {
   const actionButton = useActionButton()
   actionButton.reset()
 
+  // Routes carry catalogue keys, not display strings, so the header follows
+  // the selected locale. Screens with dynamic titles set their own.
   const pageTitleStore = usePageTitleStore()
-  pageTitleStore.setPageTitle(to.meta.title as string)
+  const titleKey = to.meta.titleKey as string
+  pageTitleStore.setPageTitle(titleKey ? i18n.global.t(titleKey) : '')
 
   next()
 })

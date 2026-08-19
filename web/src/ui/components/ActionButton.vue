@@ -15,7 +15,7 @@ const onClick = async () => {
 </script>
 
 <template>
-  <button type="button" aria-label="Page action" @click="onClick">
+  <button type="button" :aria-label="$t('common.pageAction')" @click="onClick">
     <component :is="props.icon" />
   </button>
 </template>

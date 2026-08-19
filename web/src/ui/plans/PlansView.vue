@@ -109,7 +109,7 @@ const pause = async () => {
             })
           }}</strong>
         </div>
-        <div class="sequence" aria-label="Current plan position">
+        <div class="sequence" :aria-label="t('training.planPositionAria')">
           <span
             v-for="(_, index) in activePlan.routines"
             :key="index"

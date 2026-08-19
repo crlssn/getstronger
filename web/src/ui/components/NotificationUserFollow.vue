@@ -14,13 +14,11 @@ defineProps<{
   <RouterLink :to="`/users/${actor?.id}`" class="flex w-full items-center gap-x-3">
     <UserPlusIcon class="size-7" />
     <div class="w-full">
-      <div>
-        <span class="font-semibold">
-          {{ actor?.firstName }}
-          {{ actor?.lastName }}
-        </span>
-        followed you
-      </div>
+      <i18n-t keypath="notifications.followedYou" tag="div" scope="global">
+        <template #name>
+          <span class="font-semibold">{{ actor?.firstName }} {{ actor?.lastName }}</span>
+        </template>
+      </i18n-t>
       <p class="text-sm text-text-subtle">
         {{ formatUnixToRelativeDateTime(timestamp) }}
       </p>

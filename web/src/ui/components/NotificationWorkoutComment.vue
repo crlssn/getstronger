@@ -15,16 +15,18 @@ const props = defineProps<{
   workout?: Workout
 }>()
 
-const workoutOwnership = computed(() => {
+// The owner changes the sentence, not just a word ("din"/"sin" bind to the
+// noun in Swedish), so each ownership case is a complete message.
+const messageKey = computed(() => {
   if (authStore.userId === props.workout?.user?.id) {
-    return 'your'
+    return 'notifications.commentedOnYourWorkout'
   }
 
   if (props.actor?.id === props.workout?.user?.id) {
-    return 'their'
+    return 'notifications.commentedOnTheirWorkout'
   }
 
-  return `${props.workout?.user?.firstName}'s`
+  return 'notifications.commentedOnUsersWorkout'
 })
 </script>
 
@@ -32,17 +34,15 @@ const workoutOwnership = computed(() => {
   <RouterLink :to="`/workouts/${workout?.id}`" class="flex w-full items-center gap-x-3">
     <ChatBubbleLeftRightIcon class="size-7" />
     <div class="w-full font-normal">
-      <div>
-        <span class="font-semibold">
-          {{ actor?.firstName }}
-          {{ actor?.lastName }}
-        </span>
-        commented on {{ workoutOwnership }}
-        <span class="font-semibold">
-          {{ workout?.name }}
-        </span>
-        workout
-      </div>
+      <i18n-t :keypath="messageKey" tag="div" scope="global">
+        <template #name>
+          <span class="font-semibold">{{ actor?.firstName }} {{ actor?.lastName }}</span>
+        </template>
+        <template #owner>{{ workout?.user?.firstName }}</template>
+        <template #workout>
+          <span class="font-semibold">{{ workout?.name }}</span>
+        </template>
+      </i18n-t>
       <p class="text-sm text-text-subtle">
         {{ formatUnixToRelativeDateTime(timestamp) }}
       </p>

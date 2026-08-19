@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Bar as BarChart } from 'vue-chartjs'
 import { DateTime } from 'luxon'
+import { dateLocale } from '@/i18n'
+import { formatNumber } from '@/utils/numbers'
 import { BarElement, Chart as ChartJS, CategoryScale, LinearScale, Tooltip } from 'chart.js'
 
 ChartJS.register(Tooltip, BarElement, CategoryScale, LinearScale)
+
+const { t } = useI18n()
 
 const props = defineProps<{
   workouts: Workout[]
@@ -40,11 +45,7 @@ const latestValueLabel = {
     ctx.fillStyle = successColor
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
-    ctx.fillText(
-      new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(raw),
-      bar.x,
-      bar.y - 4,
-    )
+    ctx.fillText(formatNumber(raw), bar.x, bar.y - 4)
     ctx.restore()
   },
 }
@@ -88,7 +89,7 @@ const options = {
       },
       title: {
         display: true,
-        text: 'Volume (kg)',
+        text: t('progress.volumeAxis'),
         color: subtleColor,
       },
       beginAtZero: true,
@@ -111,7 +112,7 @@ const dailyVolume = computed(() => {
     if (!key) return
     const existing = buckets.get(key)
     buckets.set(key, {
-      label: finishedAt.toFormat('d LLL'),
+      label: finishedAt.setLocale(dateLocale).toFormat('d LLL'),
       timestamp: finishedAt.toMillis(),
       volume: (existing?.volume ?? 0) + workout.intensity,
     })
@@ -131,7 +132,7 @@ const data = computed(() => {
         ),
         borderRadius: 8,
         data: days.map((day) => day.volume),
-        label: 'Training volume',
+        label: t('progress.trainingVolume'),
       },
     ],
     labels: days.map((day) => day.label),
@@ -145,7 +146,7 @@ const data = computed(() => {
       :data="data"
       :options="options as any"
       :plugins="[latestValueLabel]"
-      aria-label="Training volume by day"
+      :aria-label="t('progress.volumeChartAria')"
       role="img"
     />
   </div>

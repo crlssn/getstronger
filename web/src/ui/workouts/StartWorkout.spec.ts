@@ -94,7 +94,7 @@ const mountWorkout = async (path = `/workouts/routine/${routineID}`) => {
 
 const logFirstSet = async (wrapper: Awaited<ReturnType<typeof mountWorkout>>) => {
   await wrapper.get('input[aria-label="Bench Press set 1 weight"]').setValue('80')
-  await wrapper.get('input[aria-label="Bench Press set 1 Reps"]').setValue('8')
+  await wrapper.get('input[aria-label="Bench Press set 1 reps"]').setValue('8')
 }
 
 describe('StartWorkout', () => {

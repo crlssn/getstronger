@@ -9,6 +9,7 @@ import { useProgressStore } from '@/stores/progress'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime'
+import { formatNumber } from '@/utils/numbers'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
@@ -60,7 +61,7 @@ const filteredVolume = computed(() =>
       <div class="chart-heading">
         <div>
           <p class="eyebrow">{{ t('progress.trainingVolume') }}</p>
-          <h2>{{ Math.round(filteredVolume).toLocaleString() }} kg</h2>
+          <h2>{{ formatNumber(filteredVolume) }} {{ t('common.kg') }}</h2>
         </div>
         <span><ArrowTrendingUpIcon /> {{ t('progress.dailyTotals') }}</span>
       </div>

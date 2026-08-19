@@ -246,8 +246,8 @@ const restFinalCountdown = computed(() => restSeconds.value > 0 && restSeconds.v
 const nextActionLabel = computed(() =>
   nextIncompleteExerciseIndex.value >= 0 &&
   nextIncompleteExerciseIndex.value !== activeExerciseIndex.value
-    ? 'Next exercise'
-    : 'Complete exercise',
+    ? t('workout.nextExercise')
+    : t('workout.completeExercise'),
 )
 
 // The dock holds a single forward action: advance while exercises remain,
@@ -255,7 +255,7 @@ const nextActionLabel = computed(() =>
 const allExercisesComplete = computed(() => unfinishedExerciseCount.value === 0)
 const primaryActionLabel = computed(() => {
   if (!allExercisesComplete.value) return nextActionLabel.value
-  return submitting.value ? 'Saving…' : 'Finish workout'
+  return submitting.value ? t('common.saving') : t('workout.finish')
 })
 const canRunPrimaryAction = computed(() =>
   allExercisesComplete.value
@@ -326,8 +326,8 @@ const formatTimer = (seconds: number) => {
 
 const initializeRoutine = async () => {
   if (quickWorkout) {
-    routine.value = create(RoutineSchema, { name: 'Quick Workout', exercises: [] })
-    pageTitleStore.setPageTitle('Quick Workout')
+    routine.value = create(RoutineSchema, { name: t('workout.quick'), exercises: [] })
+    pageTitleStore.setPageTitle(t('workout.quick'))
     workoutStore.initialiseWorkout(routineID)
     const savedExercises = workoutStore.getAddedExercises(routineID)
     const currentExercises = await Promise.all(
@@ -717,7 +717,7 @@ const onFinishWorkout = async () => {
       DateTime.now(),
       note.value,
       quickWorkout ? '' : workoutStore.getPlanId(routineID),
-      quickWorkout ? 'Quick Workout' : '',
+      quickWorkout ? t('workout.quick') : '',
     )
     if (!response) {
       finishError.value = t('workout.saveFailed')
@@ -731,7 +731,7 @@ const onFinishWorkout = async () => {
     }
 
     savedWorkoutId.value = workoutId
-    alertStore.setSuccess('Workout saved')
+    alertStore.setSuccess(t('workout.saved'))
     await openSavedWorkout(workoutId)
   } catch (error) {
     console.error('failed to finish workout', error)
@@ -993,7 +993,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               <DurationInput
                 v-if="measurement.field === 'durationSeconds'"
                 v-model="set.durationSeconds"
-                :aria-label="`${currentExercise.name} set ${setIndex + 1} time`"
+                :aria-label="
+                  t('workout.setFieldAria', {
+                    exercise: currentExercise.name,
+                    number: setIndex + 1,
+                    field: t('common.time').toLocaleLowerCase(),
+                  })
+                "
                 @input="onSetInput(currentExercise.id, set, setIndex)"
                 @focus="
                   copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
@@ -1004,7 +1010,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                   v-model.number="set.weight"
                   type="text"
                   inputmode="decimal"
-                  :aria-label="`${currentExercise.name} set ${setIndex + 1} weight`"
+                  :aria-label="
+                    t('workout.setFieldAria', {
+                      exercise: currentExercise.name,
+                      number: setIndex + 1,
+                      field: t('common.weight').toLocaleLowerCase(),
+                    })
+                  "
                   @input="onSetInput(currentExercise.id, set, setIndex)"
                   @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'weight')"
                 />
@@ -1015,7 +1027,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                   v-model.number="set.distance"
                   type="text"
                   inputmode="decimal"
-                  :aria-label="`${currentExercise.name} set ${setIndex + 1} distance`"
+                  :aria-label="
+                    t('workout.setFieldAria', {
+                      exercise: currentExercise.name,
+                      number: setIndex + 1,
+                      field: t('common.distance').toLocaleLowerCase(),
+                    })
+                  "
                   @input="onSetInput(currentExercise.id, set, setIndex)"
                   @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'distance')"
                 />
@@ -1026,7 +1044,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                 v-model.number="set[measurement.field]"
                 type="text"
                 :inputmode="measurement.inputmode"
-                :aria-label="`${currentExercise.name} set ${setIndex + 1} ${t(measurement.labelKey)}`"
+                :aria-label="
+                  t('workout.setFieldAria', {
+                    exercise: currentExercise.name,
+                    number: setIndex + 1,
+                    field: t(measurement.labelKey).toLocaleLowerCase(),
+                  })
+                "
                 @input="onSetInput(currentExercise.id, set, setIndex)"
                 @focus="
                   copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
@@ -1036,7 +1060,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
             <button
               type="button"
               class="remove-set"
-              :aria-label="`Remove set ${setIndex + 1}`"
+              :aria-label="t('workout.removeSet', { number: setIndex + 1 })"
               @click="deleteWorkoutSet(currentExercise.id, setIndex)"
             >
               <MinusIcon />
@@ -1118,7 +1142,11 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
             <p class="eyebrow">{{ t('workout.onlyThisWorkout') }}</p>
             <h2 id="exercise-picker-title">{{ t('workout.addExercise') }}</h2>
           </div>
-          <button type="button" aria-label="Close exercise picker" @click="closeExercisePicker">
+          <button
+            type="button"
+            :aria-label="t('workout.closeExercisePicker')"
+            @click="closeExercisePicker"
+          >
             <XMarkIcon />
           </button>
         </header>
@@ -1175,11 +1203,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       >
         <span class="dialog-handle" aria-hidden="true"></span>
         <h2 id="finish-dialog-title">{{ t('workout.finishEarly') }}</h2>
-        <p>
-          You still have {{ unfinishedExerciseCount }}
-          {{ unfinishedExerciseCount === 1 ? 'exercise' : 'exercises' }} unfinished. Every logged
-          set will be saved.
-        </p>
+        <p>{{ t('workout.finishEarlyBody', unfinishedExerciseCount) }}</p>
         <button type="button" class="confirm-finish" @click="confirmFinishWorkout">
           <FlagIcon /> {{ t('workout.finishSave') }}
         </button>
@@ -1200,10 +1224,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         <template v-if="discardConfirmationOpen">
           <p class="eyebrow text-danger">{{ t('workout.discard') }}</p>
           <h2 id="leave-dialog-title">{{ t('workout.deleteTitle') }}</h2>
-          <p>
-            All sets, added exercises, and notes saved on this device will be permanently removed.
-            Your active plan will not advance.
-          </p>
+          <p>{{ t('workout.discardBody') }}</p>
           <button type="button" class="confirm-discard" @click="discardWorkout">
             <TrashIcon /> {{ t('workout.discard') }}
           </button>

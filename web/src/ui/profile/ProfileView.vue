@@ -17,6 +17,7 @@ import { usePreferencesStore } from '@/stores/preferences'
 import { DistanceUnit, WeightUnit, type User } from '@/proto/api/v1/shared_pb'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
+import { formatNumber } from '@/utils/numbers'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -93,11 +94,7 @@ const initials = computed(
   () => `${user.value?.firstName.charAt(0) ?? ''}${user.value?.lastName.charAt(0) ?? ''}`,
 )
 const recentWorkoutCount = computed(() => dashboardStore.dashboard?.recentWorkouts.length ?? 0)
-const weeklyVolume = computed(() =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(
-    dashboardStore.dashboard?.volumeThisWeek ?? 0,
-  ),
-)
+const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volumeThisWeek ?? 0))
 </script>
 
 <template>
@@ -137,7 +134,8 @@ const weeklyVolume = computed(() =>
         ><small>{{ $t('profile.records') }}</small>
       </article>
       <article>
-        <strong>{{ weeklyVolume }} kg</strong><small>{{ $t('profile.thisWeek') }}</small>
+        <strong>{{ weeklyVolume }} {{ $t('common.kg') }}</strong
+        ><small>{{ $t('profile.thisWeek') }}</small>
       </article>
     </section>
 

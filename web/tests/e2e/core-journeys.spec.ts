@@ -90,14 +90,14 @@ test.describe('authenticated journeys', () => {
     await page
       .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
       .fill('25')
-    await page.getByRole('textbox', { name: `${exerciseName} set 1 Reps`, exact: true }).fill('8')
+    await page.getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true }).fill('8')
     await page.getByLabel('Workout note').fill('Completed by the E2E suite.')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Finish workout' }).click()
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText('Completed workout', { exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Quick Workout', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Quick workout', exact: true })).toBeVisible()
     await expect(page.getByText('Completed by the E2E suite.')).toBeVisible()
     await expect(page.getByText(exerciseName, { exact: true })).toBeVisible()
   })
