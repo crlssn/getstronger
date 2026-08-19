@@ -143,25 +143,23 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 
     <Dialog :open="deleteDialogOpen" class="delete-dialog" @close="deleteDialogOpen = false">
       <div class="dialog-backdrop" aria-hidden="true" />
-      <div class="dialog-wrap">
-        <DialogPanel class="dialog-panel">
-          <DialogTitle>{{ t('exercise.view.deleteTitle', { name: exercise.name }) }}</DialogTitle>
-          <p>{{ t('exercise.view.deleteBody') }}</p>
-          <div class="dialog-actions">
-            <button type="button" class="dialog-cancel" @click="deleteDialogOpen = false">
-              {{ t('common.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="dialog-delete"
-              :disabled="deleting"
-              @click="onDeleteExercise"
-            >
-              <TrashIcon /> {{ t('exercise.delete') }}
-            </button>
-          </div>
-        </DialogPanel>
-      </div>
+      <DialogPanel class="dialog-panel">
+        <DialogTitle>{{ t('exercise.view.deleteTitle', { name: exercise.name }) }}</DialogTitle>
+        <p>{{ t('exercise.view.deleteBody') }}</p>
+        <div class="dialog-actions">
+          <button type="button" class="dialog-cancel" @click="deleteDialogOpen = false">
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            class="dialog-delete"
+            :disabled="deleting"
+            @click="onDeleteExercise"
+          >
+            <TrashIcon /> {{ t('exercise.delete') }}
+          </button>
+        </div>
+      </DialogPanel>
     </Dialog>
 
     <section v-if="sets.length" class="chart-card">
@@ -292,16 +290,13 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
 .delete-dialog {
-  @apply relative z-50;
+  @apply fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center;
 }
 .dialog-backdrop {
   @apply fixed inset-0 bg-black/50;
 }
-.dialog-wrap {
-  @apply fixed inset-0 flex items-end justify-center p-4 sm:items-center;
-}
 .dialog-panel {
-  @apply w-full max-w-sm rounded-card border border-border bg-white p-5 shadow-overlay;
+  @apply relative w-full max-w-sm rounded-card border border-border bg-white p-5 shadow-overlay;
 }
 .dialog-panel h2 {
   @apply text-title font-semibold text-text;
