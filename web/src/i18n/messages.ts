@@ -409,8 +409,6 @@ export const en = {
     heading: 'Exercises',
     new: 'New exercise',
     search: 'Search exercises',
-    manage: 'Manage exercise',
-    settings: 'Exercise settings',
     update: 'Update exercise',
     delete: 'Delete exercise',
     trend: 'Trend',
@@ -451,7 +449,11 @@ export const en = {
     emptyBody: 'Add your first movement to start building routines.',
     view: {
       loading: 'Loading exercise…',
-      deleteConfirm: 'Delete “{name}”? This cannot be undone.',
+      actionsLabel: 'Exercise actions',
+      deleteTitle: 'Delete “{name}”?',
+      deleteBody:
+        'The exercise is removed from your library and from every routine that includes it. Sets you have already logged are kept in your workout history. This cannot be undone in the app.',
+      deleteFailed: 'The exercise could not be deleted. Try again.',
       deleted: 'Exercise deleted',
       prPill: 'PR',
       emptyHistory: 'Log this exercise in a workout to start its history.',
@@ -948,8 +950,6 @@ export const sv = {
     heading: 'Övningar',
     new: 'Ny övning',
     search: 'Sök övningar',
-    manage: 'Hantera övning',
-    settings: 'Övningsinställningar',
     update: 'Uppdatera övning',
     delete: 'Ta bort övning',
     trend: 'Trend',
@@ -990,7 +990,11 @@ export const sv = {
     emptyBody: 'Lägg till din första övning för att börja bygga pass.',
     view: {
       loading: 'Laddar övningen…',
-      deleteConfirm: 'Ta bort ”{name}”? Det här går inte att ångra.',
+      actionsLabel: 'Övningsåtgärder',
+      deleteTitle: 'Ta bort ”{name}”?',
+      deleteBody:
+        'Övningen tas bort från ditt bibliotek och från alla pass den ingår i. Set du redan har loggat finns kvar i din träningshistorik. Det här går inte att ångra i appen.',
+      deleteFailed: 'Övningen kunde inte tas bort. Försök igen.',
       deleted: 'Övningen togs bort',
       prPill: 'PB',
       emptyHistory: 'Logga övningen i ett träningspass för att börja bygga historik.',

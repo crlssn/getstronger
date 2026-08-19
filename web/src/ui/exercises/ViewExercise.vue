@@ -1,15 +1,11 @@
 <script setup lang="ts">
+import type { DropdownItem } from '@/types/dropdown'
 import { type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
 
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import {
-  BoltIcon,
-  ChevronRightIcon,
-  PencilIcon,
-  TrashIcon,
-  TrophyIcon,
-} from '@heroicons/vue/24/outline'
+import { BoltIcon, ChevronRightIcon, TrashIcon, TrophyIcon } from '@heroicons/vue/24/outline'
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { useI18n } from 'vue-i18n'
 
 import router from '@/router/router'
@@ -17,6 +13,7 @@ import { useAuthStore } from '@/stores/auth.ts'
 import { useAlertStore } from '@/stores/alerts'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
+import DropdownButton from '@/ui/components/DropdownButton.vue'
 import ExerciseChart from '@/ui/components/ExerciseChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime.ts'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
@@ -28,6 +25,8 @@ import useActiveWorkout from '@/utils/useActiveWorkout'
 const sets = ref<Set[]>([])
 const exercise = ref<Exercise>()
 const loading = ref(true)
+const deleteDialogOpen = ref(false)
+const deleting = ref(false)
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -56,15 +55,35 @@ const fetchSets = async () => {
   pageToken.value = resolvePageToken(response.pagination)
 }
 
-const onDeleteExercise = async () => {
-  const name = exercise.value?.name ?? t('common.exercise')
-  if (!confirm(t('exercise.view.deleteConfirm', { name }))) {
-    return
-  }
+const isOwner = computed(() => authStore.userId === exercise.value?.userId)
 
-  await deleteExercise(route.params.id as string)
-  alertStore.setError(t('exercise.view.deleted'))
-  await router.push('/exercises')
+const exerciseActions = computed<DropdownItem[]>(() => [
+  { href: `/exercises/${route.params.id}/edit`, title: t('exercise.update') },
+  {
+    func: async () => {
+      deleteDialogOpen.value = true
+    },
+    title: t('exercise.delete'),
+  },
+])
+
+const onDeleteExercise = async () => {
+  if (deleting.value) return
+  deleting.value = true
+
+  try {
+    const response = await deleteExercise(route.params.id as string)
+    deleteDialogOpen.value = false
+    if (!response) {
+      alertStore.setErrorWithoutPageRefresh(t('exercise.view.deleteFailed'))
+      return
+    }
+
+    alertStore.setSuccess(t('exercise.view.deleted'))
+    await router.push('/exercises')
+  } finally {
+    deleting.value = false
+  }
 }
 
 const onStartQuickWorkout = async () => {
@@ -105,14 +124,15 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
     <div class="loading-line w-full" aria-hidden="true"></div>
   </div>
   <div v-else-if="exercise" class="exercise-detail">
+    <!-- Management stays out of the content flow: edit and delete live in the
+         page header's overflow menu so the trend and history lead the page. -->
+    <Teleport v-if="isOwner" to="#page-nav-action">
+      <DropdownButton :label="t('exercise.view.actionsLabel')" :items="exerciseActions" />
+    </Teleport>
+
     <ExerciseTags :tags="exercise.tags" />
 
-    <button
-      v-if="authStore.userId === exercise.userId"
-      type="button"
-      class="start-quick-card"
-      @click="onStartQuickWorkout"
-    >
+    <button v-if="isOwner" type="button" class="start-quick-card" @click="onStartQuickWorkout">
       <span class="start-quick-icon"><BoltIcon /></span>
       <span class="start-quick-copy">
         <strong>{{ t('exercise.startQuickWorkout') }}</strong>
@@ -121,20 +141,33 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
       <ChevronRightIcon class="start-quick-chevron" />
     </button>
 
-    <section v-if="authStore.userId === exercise.userId" class="manage-card">
-      <div class="manage-heading">
-        <p class="eyebrow">{{ t('exercise.manage') }}</p>
-        <h2>{{ t('exercise.settings') }}</h2>
-      </div>
-      <div class="manage-actions">
-        <RouterLink :to="`/exercises/${route.params.id}/edit`">
-          <PencilIcon /> {{ t('exercise.update') }} <ChevronRightIcon />
-        </RouterLink>
-        <button type="button" @click="onDeleteExercise">
-          <TrashIcon /> {{ t('exercise.delete') }}
-        </button>
-      </div>
-    </section>
+    <!-- The dialog root renders through Headless UI's portal and never picks
+         up this component's scope id, so its layout must be global utilities
+         rather than a scoped class. -->
+    <Dialog
+      :open="deleteDialogOpen"
+      class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+      @close="deleteDialogOpen = false"
+    >
+      <div class="dialog-backdrop" aria-hidden="true" />
+      <DialogPanel class="dialog-panel">
+        <DialogTitle>{{ t('exercise.view.deleteTitle', { name: exercise.name }) }}</DialogTitle>
+        <p>{{ t('exercise.view.deleteBody') }}</p>
+        <div class="dialog-actions">
+          <button type="button" class="dialog-cancel" @click="deleteDialogOpen = false">
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            class="dialog-delete"
+            :disabled="deleting"
+            @click="onDeleteExercise"
+          >
+            <TrashIcon /> {{ t('exercise.delete') }}
+          </button>
+        </div>
+      </DialogPanel>
+    </Dialog>
 
     <section v-if="sets.length" class="chart-card">
       <p class="eyebrow">{{ t('exercise.trend') }}</p>
@@ -187,9 +220,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .sets-card {
   @apply card p-5;
 }
-.manage-card {
-  @apply card overflow-hidden;
-}
 .start-quick-card {
   @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface;
 }
@@ -225,7 +255,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply -mx-5 -mt-5 flex items-end justify-between gap-3 px-5 py-5;
 }
 .sets-card h2,
-.manage-card h2,
 .empty-card h1 {
   @apply text-title font-semibold text-text;
 }
@@ -267,28 +296,33 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 .load-more {
   @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
 }
-.manage-heading {
-  @apply p-5;
+.dialog-backdrop {
+  @apply fixed inset-0 bg-black/50;
 }
-.manage-heading .eyebrow {
-  @apply mb-1;
+.dialog-panel {
+  @apply relative w-full max-w-sm rounded-card border border-border bg-white p-5 shadow-overlay;
 }
-.manage-actions {
-  @apply divide-y divide-border border-t border-border;
+.dialog-panel h2 {
+  @apply text-title font-semibold text-text;
 }
-.manage-actions a,
-.manage-actions button {
-  @apply flex min-h-(--size-control-lg) w-full items-center gap-3 px-5 text-left text-sm font-semibold text-text-muted hover:bg-ink-surface;
+.dialog-panel p {
+  @apply mt-2 text-sm text-text-muted;
 }
-.manage-actions a svg,
-.manage-actions button svg {
+.dialog-actions {
+  @apply mt-5 grid gap-2;
+}
+.dialog-cancel,
+.dialog-delete {
+  @apply flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control text-sm font-semibold;
+}
+.dialog-cancel {
+  @apply border border-border text-text-muted hover:bg-ink-surface;
+}
+.dialog-delete {
+  @apply bg-danger text-white hover:bg-danger-strong disabled:opacity-60;
+}
+.dialog-delete svg {
   @apply size-5;
-}
-.manage-actions a svg:last-child {
-  @apply ml-auto text-text-subtle;
-}
-.manage-actions button {
-  @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 .empty-card p {
   @apply mt-2 text-sm text-text-subtle;

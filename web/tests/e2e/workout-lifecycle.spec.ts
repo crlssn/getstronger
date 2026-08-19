@@ -4,6 +4,7 @@ import {
   expect,
   logIn,
   logInAs,
+  openExerciseActions,
   resetSeedData,
   scrollToListEnd,
   test,
@@ -462,8 +463,9 @@ test.describe('weight units', () => {
       const link = page.getByRole('link').filter({ hasText: exerciseName }).first()
       if (await link.isVisible()) {
         await link.click()
-        page.once('dialog', (dialog) => dialog.accept())
-        await page.getByRole('button', { name: 'Delete exercise' }).click()
+        await openExerciseActions(page)
+        await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+        await page.getByRole('dialog').getByRole('button', { name: 'Delete exercise' }).click()
         await expect(page).toHaveURL(/\/exercises$/)
       }
     }

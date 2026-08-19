@@ -365,6 +365,13 @@ export const ExerciseService: GenService<{
     output: typeof UpdateExerciseResponseSchema;
   },
   /**
+   * DeleteExercise soft-deletes an exercise the caller owns. Product rule:
+   * the exercise disappears from the owner's library and is detached from
+   * every routine that includes it, while previously logged sets and finished
+   * workouts keep referencing it, so training history is preserved unchanged.
+   * The deletion is not reversible through the API; the soft delete exists so
+   * history keeps resolving the exercise, not as a client-facing undo.
+   *
    * @generated from rpc api.v1.ExerciseService.DeleteExercise
    */
   deleteExercise: {

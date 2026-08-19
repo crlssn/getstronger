@@ -65,6 +65,12 @@ type ExerciseServiceClient interface {
 	CreateExercise(context.Context, *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error)
 	GetExercise(context.Context, *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error)
 	UpdateExercise(context.Context, *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error)
+	// DeleteExercise soft-deletes an exercise the caller owns. Product rule:
+	// the exercise disappears from the owner's library and is detached from
+	// every routine that includes it, while previously logged sets and finished
+	// workouts keep referencing it, so training history is preserved unchanged.
+	// The deletion is not reversible through the API; the soft delete exists so
+	// history keeps resolving the exercise, not as a client-facing undo.
 	DeleteExercise(context.Context, *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error)
 	ListExercises(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
 	GetPreviousWorkoutSets(context.Context, *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error)
@@ -191,6 +197,12 @@ type ExerciseServiceHandler interface {
 	CreateExercise(context.Context, *connect.Request[v1.CreateExerciseRequest]) (*connect.Response[v1.CreateExerciseResponse], error)
 	GetExercise(context.Context, *connect.Request[v1.GetExerciseRequest]) (*connect.Response[v1.GetExerciseResponse], error)
 	UpdateExercise(context.Context, *connect.Request[v1.UpdateExerciseRequest]) (*connect.Response[v1.UpdateExerciseResponse], error)
+	// DeleteExercise soft-deletes an exercise the caller owns. Product rule:
+	// the exercise disappears from the owner's library and is detached from
+	// every routine that includes it, while previously logged sets and finished
+	// workouts keep referencing it, so training history is preserved unchanged.
+	// The deletion is not reversible through the API; the soft delete exists so
+	// history keeps resolving the exercise, not as a client-facing undo.
 	DeleteExercise(context.Context, *connect.Request[v1.DeleteExerciseRequest]) (*connect.Response[v1.DeleteExerciseResponse], error)
 	ListExercises(context.Context, *connect.Request[v1.ListExercisesRequest]) (*connect.Response[v1.ListExercisesResponse], error)
 	GetPreviousWorkoutSets(context.Context, *connect.Request[v1.GetPreviousWorkoutSetsRequest]) (*connect.Response[v1.GetPreviousWorkoutSetsResponse], error)

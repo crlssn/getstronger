@@ -100,6 +100,13 @@ export const openProfileActions = async (page: Page) => {
   await expect(page.getByRole('menu')).toBeVisible()
 }
 
+// Exercise management lives in the page header's overflow menu, so edit and
+// delete only exist once that menu is open.
+export const openExerciseActions = async (page: Page) => {
+  await page.getByRole('button', { name: 'Exercise actions' }).click()
+  await expect(page.getByRole('menu')).toBeVisible()
+}
+
 // The feed and the workout history page more as their sentinel scrolls into
 // view, so the end-of-list marker only exists once a reader has travelled the
 // whole list. Scrolling the way a person would is what makes it appear.
