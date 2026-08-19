@@ -110,6 +110,16 @@ jobs:
       - name: Build API image
         run: docker build --platform linux/amd64 --tag getstronger-api:latest .
 
+      - name: Push API image to Scaleway Container Registry
+        env:
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+        run: |
+          docker login rg.fr-par.scw.cloud/getstronger -u nologin --password-stdin <<< "$SCW_SECRET_KEY"
+          docker tag getstronger-api:latest rg.fr-par.scw.cloud/getstronger/getstronger-api:latest
+          docker tag getstronger-api:latest "rg.fr-par.scw.cloud/getstronger/getstronger-api:${GITHUB_SHA}"
+          docker push rg.fr-par.scw.cloud/getstronger/getstronger-api:latest
+          docker push "rg.fr-par.scw.cloud/getstronger/getstronger-api:${GITHUB_SHA}"
+
       - name: Create deployment bundle
         env:
           API_DOMAIN: ${{ vars.API_DOMAIN }}
