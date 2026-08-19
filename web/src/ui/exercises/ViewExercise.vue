@@ -141,7 +141,14 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
       <ChevronRightIcon class="start-quick-chevron" />
     </button>
 
-    <Dialog :open="deleteDialogOpen" class="delete-dialog" @close="deleteDialogOpen = false">
+    <!-- The dialog root renders through Headless UI's portal and never picks
+         up this component's scope id, so its layout must be global utilities
+         rather than a scoped class. -->
+    <Dialog
+      :open="deleteDialogOpen"
+      class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+      @close="deleteDialogOpen = false"
+    >
       <div class="dialog-backdrop" aria-hidden="true" />
       <DialogPanel class="dialog-panel">
         <DialogTitle>{{ t('exercise.view.deleteTitle', { name: exercise.name }) }}</DialogTitle>
@@ -288,9 +295,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 }
 .load-more {
   @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
-}
-.delete-dialog {
-  @apply fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center;
 }
 .dialog-backdrop {
   @apply fixed inset-0 bg-black/50;
