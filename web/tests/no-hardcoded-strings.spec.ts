@@ -24,6 +24,12 @@ const templateOf = (source: string) => {
   return match ? match[1] : ''
 }
 
+// Comments are blanked character by character rather than removed: removal
+// could splice the surrounding text into new token sequences, and blanking
+// keeps every reported line number accurate.
+const blankComments = (template: string) =>
+  template.replace(/<!--[\s\S]*?-->/g, (comment) => comment.replace(/[^\n]/g, ' '))
+
 const lineOf = (haystack: string, index: number) => haystack.slice(0, index).split('\n').length
 
 describe('template copy', () => {
@@ -33,12 +39,10 @@ describe('template copy', () => {
     const offenders: string[] = []
 
     for (const file of files) {
-      const template = templateOf(readFileSync(file, 'utf8'))
-      // Comments may carry prose, interpolations carry expressions, and quoted
+      // Comments carry prose, interpolations carry expressions, and quoted
       // attribute values may carry `>` that would fake a tag boundary. All are
-      // blanked (not removed) so line numbers survive.
-      const scrubbed = template
-        .replace(/<!--[\s\S]*?-->/g, (comment) => comment.replace(/[^\n]/g, ' '))
+      // blanked in place.
+      const scrubbed = blankComments(templateOf(readFileSync(file, 'utf8')))
         .replace(/"[^"]*"/g, (quoted) => quoted.replace(/[^\n]/g, ' '))
         .replace(/\{\{[\s\S]*?\}\}/g, (expression) => expression.replace(/[^\n]/g, ' '))
 
@@ -58,7 +62,7 @@ describe('template copy', () => {
     const offenders: string[] = []
 
     for (const file of files) {
-      const template = templateOf(readFileSync(file, 'utf8')).replace(/<!--[\s\S]*?-->/g, '')
+      const template = blankComments(templateOf(readFileSync(file, 'utf8')))
 
       const attribute = /(?<![:\w-])(aria-label|placeholder|alt|title|label)="([^"]*)"/g
       let match
