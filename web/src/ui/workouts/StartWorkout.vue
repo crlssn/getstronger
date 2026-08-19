@@ -29,6 +29,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useStreakStore } from '@/stores/streak'
 import { useActivityStore } from '@/stores/activity'
+import { useProgressStore } from '@/stores/progress'
 import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
 import {
@@ -92,6 +93,7 @@ const alertStore = useAlertStore()
 const pageTitleStore = usePageTitleStore()
 const streakStore = useStreakStore()
 const activityStore = useActivityStore()
+const progressStore = useProgressStore()
 
 watch(note, (value) => workoutStore.setNote(routineID, value))
 
@@ -684,6 +686,7 @@ const openSavedWorkout = async (workoutId: string) => {
   void dashboardStore.load()
   streakStore.reset()
   activityStore.reset()
+  progressStore.reset()
   return true
 }
 

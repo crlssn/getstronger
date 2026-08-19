@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import { ArrowTrendingUpIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
+import { useProgressStore } from '@/stores/progress'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime'
@@ -13,10 +14,11 @@ import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
 const { t } = useI18n()
 const dashboardStore = useDashboardStore()
+const progressStore = useProgressStore()
 const periodDays = ref(28)
 
 onMounted(async () => {
-  await dashboardStore.load()
+  await Promise.all([dashboardStore.load(), progressStore.load()])
 })
 
 const dashboard = computed(() => dashboardStore.dashboard)
@@ -29,14 +31,10 @@ const periodOptions = [
 ]
 const filteredWorkouts = computed(() => {
   const cutoff = DateTime.now().minus({ days: periodDays.value })
-  return (
-    dashboard.value?.recentWorkouts.filter((workout) => {
-      if (!workout.finishedAt) return false
-      return (
-        DateTime.fromSeconds(Number(workout.finishedAt.seconds)).toMillis() >= cutoff.toMillis()
-      )
-    }) ?? []
-  )
+  return progressStore.workouts.filter((workout) => {
+    if (!workout.finishedAt) return false
+    return DateTime.fromSeconds(Number(workout.finishedAt.seconds)).toMillis() >= cutoff.toMillis()
+  })
 })
 const filteredVolume = computed(() =>
   filteredWorkouts.value.reduce((total, workout) => total + workout.intensity, 0),
@@ -55,7 +53,10 @@ const filteredVolume = computed(() =>
       >
     </Teleport>
 
-    <section v-if="filteredWorkouts.length" class="chart-card">
+    <!-- The card keys off the full year of history, not the selected range, so
+         a range with no data keeps the picker on screen and says so instead of
+         silently unmounting the controls. -->
+    <section v-if="progressStore.workouts.length" class="chart-card">
       <div class="chart-heading">
         <div>
           <p class="eyebrow">{{ t('progress.trainingVolume') }}</p>
@@ -63,7 +64,8 @@ const filteredVolume = computed(() =>
         </div>
         <span><ArrowTrendingUpIcon /> {{ t('progress.dailyTotals') }}</span>
       </div>
-      <WorkoutChart :workouts="filteredWorkouts" />
+      <WorkoutChart v-if="filteredWorkouts.length" :workouts="filteredWorkouts" />
+      <p v-else class="chart-empty">{{ t('progress.emptyRange') }}</p>
       <div class="period-picker segmented is-compact" :aria-label="t('progress.periodAria')">
         <button
           v-for="option in periodOptions"
@@ -156,6 +158,11 @@ h2 {
 }
 .period-picker {
   @apply mt-4;
+}
+/* Same height as the chart frame, so switching to an empty range does not
+   collapse the card under the reader's thumb. */
+.chart-empty {
+  @apply grid h-64 place-items-center text-sm text-text-subtle;
 }
 .section-heading {
   @apply mb-4;
