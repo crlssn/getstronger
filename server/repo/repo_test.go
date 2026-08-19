@@ -4,6 +4,7 @@ package repo_test
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 
@@ -111,6 +113,43 @@ func (s *repoSuite) TestNewTx() {
 			s.Require().True(exists)
 		})
 	}
+}
+
+var errRollbackError = errors.New("rollback error")
+
+// rollbackFailConnector backs a database/sql handle whose transactions
+// cannot roll back, to exercise NewTx's rollback-failure branch.
+type rollbackFailConnector struct{}
+
+func (rollbackFailConnector) Connect(context.Context) (driver.Conn, error) {
+	return rollbackFailConn{}, nil
+}
+func (rollbackFailConnector) Driver() driver.Driver { return nil }
+
+type rollbackFailConn struct{}
+
+func (rollbackFailConn) Prepare(string) (driver.Stmt, error) {
+	return nil, errors.New("not implemented")
+}
+func (rollbackFailConn) Close() error              { return nil }
+func (rollbackFailConn) Begin() (driver.Tx, error) { return rollbackFailTx{}, nil }
+
+type rollbackFailTx struct{}
+
+func (rollbackFailTx) Commit() error   { return nil }
+func (rollbackFailTx) Rollback() error { return errRollbackError }
+
+func TestNewTxRollbackFailure(t *testing.T) {
+	t.Parallel()
+
+	r := repo.New(sql.OpenDB(rollbackFailConnector{}))
+	err := r.NewTx(context.Background(), func(repo.Tx) error {
+		return errTxError
+	})
+
+	// Both the causal error and the rollback error must survive in the chain.
+	require.ErrorIs(t, err, errTxError)
+	require.ErrorIs(t, err, errRollbackError)
 }
 
 func (s *repoSuite) TestCreateAuth() {
