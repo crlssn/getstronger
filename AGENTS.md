@@ -44,6 +44,17 @@ worktree. The local stack is not shared, so set it up before running anything.
 - After completing and verifying a valuable, self-contained change, commit it so the repository history records the progress.
 - Keep unrelated changes in separate commits, and do not commit incomplete or unverified work.
 
+## Pushing
+
+- Always rebase onto the latest `main` before pushing: `git fetch origin` and
+  `git rebase origin/main`. Several agents work in parallel, so `main` has
+  usually moved since branching.
+- Resolve any conflicts locally and rerun the relevant tests, linters, and
+  builds after the rebase — a clean rebase can still break behaviour when the
+  incoming changes interact with yours.
+- Prefer rebasing over merge commits so each branch stays a linear series of
+  commits on top of `main`.
+
 ## Pull request descriptions
 
 A PR description has one job: let a reviewer understand the change without
