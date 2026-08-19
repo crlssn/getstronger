@@ -1,4 +1,4 @@
-name: e2e
+name: test e2e
 
 on:
   push:
@@ -20,7 +20,7 @@ on:
       - 'mise.toml'
 
 concurrency:
-  group: test-e2e-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
