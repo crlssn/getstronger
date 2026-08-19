@@ -1,3 +1,4 @@
+# Built by the deploy workflow and pushed to rg.fr-par.scw.cloud/getstronger/server.
 FROM golang:1.26.6-alpine3.23 AS build
 
 WORKDIR /src
