@@ -95,6 +95,52 @@ genuinely tricky spot.
   algorithms. Anything else that long belongs in the README, a design doc, or
   the commit message rather than between lines of code.
 
+## Go error handling
+
+The server follows the conventions summarised from
+[The 10 Golang Error Handling Commandments](https://preslav.me/2026/05/19/10-golang-error-handling-commandments/),
+adapted to this codebase.
+
+1. **Never ignore an error.** Every fallible call gets a handled error branch.
+   The only tolerated discard is `_ = rows.Close()` in a `defer` on a read path.
+2. **Wrap when crossing a package boundary.** Add the context the caller lacks —
+   the operation, the identifier, the dependency — with
+   `fmt.Errorf("plan insert: %w", err)`.
+3. **Return bare errors within a package.** Inside one package the caller
+   already has the context; `return err` keeps chains short. Don't re-wrap an
+   error that a sibling function in the same package already wrapped.
+4. **Name the attempted action, not the failure.** Write `"plan insert: %w"`,
+   never `"failed to insert plan: %w"` or `"plan insert failed: %w"`. Chains
+   then read as a story: `plan advance transaction: plan get before advance:
+   sql: no rows in result set`.
+5. **Don't repeat what the inner error already says.** If the wrapped error
+   carries the path or detail, add only the higher-level operation.
+6. **Never build behavior on error strings.** Branch with `errors.Is` on
+   sentinels or `errors.As` on typed errors — in production code *and* in
+   tests. Don't assert on the message text of wrapped chains, and never on text
+   owned by a dependency.
+7. **`%w` is an API promise.** Wrapping with `%w` exposes the inner error to
+   `errors.Is`/`errors.As` forever. Use `%v` for third-party errors callers
+   have no business inspecting; reserve `%w` for errors we own or deliberately
+   pass through.
+8. **Translate foreign errors into package-owned sentinels.** The `repo`
+   package owns domain sentinels such as `repo.ErrAuthEmailExists` and
+   `repo.ErrPlanNotActive`; extend that vocabulary rather than leaking
+   library errors to callers. Deliberate exception: `sql.ErrNoRows` is this
+   codebase's not-found signal — `repo` passes it through wrapped, and
+   handlers branch on it with `errors.Is(err, sql.ErrNoRows)`.
+9. **Log or return — never both.** `repo` and other inner layers only return.
+   The RPC handlers are the terminal layer: they log once and return a
+   sanitised `connect.NewError` with no internal detail. Pub/sub handlers log
+   because `HandlePayload` cannot return. No error may produce two log lines.
+10. **No goroutine errors go unheard.** A goroutine cannot return an error to
+    its spawner; hand the error back over a channel (buffered so the goroutine
+    can exit) or an `errgroup`, or handle it terminally inside the goroutine.
+11. **Cancellation is not an application error.** At terminal layers, check
+    `errors.Is(err, context.Canceled)` / `context.DeadlineExceeded` before
+    logging at error level or returning a 5xx-equivalent code; a client
+    disconnect must not page anyone.
+
 ## Reviewing the design
 
 - To see the app rather than reason about its markup, run `mise run screenshots`.
