@@ -21,10 +21,7 @@
 Experience the app firsthand:
 [**Visit GetStronger**](https://www.getstronger.studio)
 
-Use the demo account to explore all features:
-
-- **Email**: `demo@demo.com`
-- **Password**: `demodemo`
+Sign up with your email address to explore all features.
 
 ---
 
