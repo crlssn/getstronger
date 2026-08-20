@@ -102,28 +102,35 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 .sheet-actions {
   @apply mt-4 grid gap-2;
 }
-/* The action ranking is part of the sheet's design, so the button styles live
-   here rather than being restated by every caller: a dark primary, a solid or
-   outlined destructive, and a plain outlined tertiary. */
-.sheet-actions :slotted(button) {
+</style>
+
+<!-- Global on purpose: the action buttons arrive through the slot compiled in
+     the caller's scope, so the sheet's scoped styles cannot reach them. The
+     ranking is part of the sheet's design — a dark primary, a solid or
+     outlined destructive, and a plain outlined tertiary — so it lives here
+     rather than being restated by every caller. -->
+<style>
+@reference '../../assets/base.css';
+
+.sheet-actions > button {
   @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold transition;
 }
-.sheet-actions :slotted(button) svg {
+.sheet-actions > button svg {
   @apply size-5;
 }
-.sheet-actions :slotted(button:disabled) {
+.sheet-actions > button:disabled {
   @apply opacity-60;
 }
-.sheet-actions :slotted(button.primary) {
+.sheet-actions > button.primary {
   @apply bg-ink text-white hover:bg-ink-strong;
 }
-.sheet-actions :slotted(button.danger) {
+.sheet-actions > button.danger {
   @apply bg-danger text-white hover:bg-danger-strong;
 }
-.sheet-actions :slotted(button.danger-outline) {
+.sheet-actions > button.danger-outline {
   @apply border border-danger/30 text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
-.sheet-actions :slotted(button.tertiary) {
+.sheet-actions > button.tertiary {
   @apply border border-border text-text-muted hover:bg-ink-surface;
 }
 </style>
