@@ -1,7 +1,11 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    
+    // Lock the plugin classpath (AGP, google-services) in buildscript-gradle.lockfile.
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
     repositories {
         google()
         mavenCentral()
@@ -26,4 +30,14 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+// Pin dependency versions in app/gradle.lockfile so builds are reproducible
+// and version bumps show up in review. Only :app is locked: the Capacitor
+// projects live under node_modules, so their lockfiles could not be tracked.
+// Refresh with: ./gradlew :app:dependencies --write-locks
+project(':app') {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
 }
