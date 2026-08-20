@@ -145,18 +145,31 @@ adapted to this codebase.
 
 Log messages follow the same action-naming convention as error messages: the
 level already carries the outcome, so no message starts with "failed to" or
-"could not", and none ends with "failed". Each level has its own shape:
+"could not", and none ends with "failed". Beyond that, two rules apply to
+every log message regardless of level:
 
-- **Error** names the attempted action that did not succeed, phrased like an
-  error wrap message ("get user", "auth fetch", "publish event"), and carries
-  the cause as `zap.Error(err)`. Reserve it for unexpected failures the
-  request cannot recover from — an error log is a signal someone may need to
-  act on.
-- **Warn** states an expected, handled anomaly as a fact ("routine not
-  found", "request unauthenticated", "event buffer full, dropping event").
+- **Sentence case.** Messages start with a capital letter ("Get user by ID",
+  "Routine not found"), unlike error strings, which stay lowercase per Go
+  convention. Test-assertion messages (`t.Fatal`, `t.Fatalf`) follow the
+  error-string convention instead and stay lowercase.
+- **Locatable.** A message must be more informative than the error it
+  accompanies: reading it alone should give a fair idea of where in the code
+  and in which flow it originated. Name the flow when the bare operation is
+  ambiguous — "Fetch auth for login" and "Fetch auth for logout", never five
+  call sites all logging "auth fetch". Prefer messages unique to one call
+  site so a log line greps to its origin.
+
+Each level has its own shape:
+
+- **Error** names the attempted action that did not succeed, with its flow
+  context ("Get routine for workout name", "Persist event"), and carries the
+  cause as `zap.Error(err)`. Reserve it for unexpected failures the request
+  cannot recover from — an error log is a signal someone may need to act on.
+- **Warn** states an expected, handled anomaly as a fact ("Routine not
+  found", "Request unauthenticated", "Event buffer full, dropping event").
   Add `zap.Error(err)` when a non-sentinel error carries useful detail.
-- **Info** records a completed event as a past-tense fact ("routine created",
-  "request authenticated", "subscribed to topic").
+- **Info** records a completed event as a past-tense fact ("Routine created",
+  "Request authenticated", "Subscribed to topic").
 - **Fatal** is reserved for unrecoverable process-level failures such as
   startup or listen-and-serve; it exits the process, so it must never appear
   on a request path.

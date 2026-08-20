@@ -43,23 +43,23 @@ func (a *Auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		req connect.AnyRequest,
 	) (connect.AnyResponse, error) {
 		log := a.log.With(xzap.FieldRPC(req.Spec().Procedure))
-		log.Info("request received")
+		log.Info("Request received")
 		ctx = xcontext.WithLogger(ctx, log)
 
 		requiresAuth := a.methods[req.Spec().Procedure]
 		if !requiresAuth {
-			log.Info("request does not require authentication")
+			log.Info("Request does not require authentication")
 			return next(ctx, req)
 		}
 
 		claims, err := a.ClaimsFromHeader(req.Header())
 		if err != nil {
-			log.Warn("request unauthenticated", zap.Error(err))
+			log.Warn("Request unauthenticated", zap.Error(err))
 			return nil, connect.NewError(connect.CodeUnauthenticated, nil)
 		}
 
 		log = log.With(xzap.FieldUserID(claims.UserID))
-		log.Info("request authenticated")
+		log.Info("Request authenticated")
 
 		ctx = xcontext.WithLogger(ctx, log)
 		ctx = xcontext.WithUserID(ctx, claims.UserID)
@@ -82,23 +82,23 @@ func (a *Auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 		conn connect.StreamingHandlerConn,
 	) error {
 		log := a.log.With(xzap.FieldRPC(conn.Spec().Procedure))
-		log.Info("request received")
+		log.Info("Request received")
 		ctx = xcontext.WithLogger(ctx, log)
 
 		requiresAuth := a.methods[conn.Spec().Procedure]
 		if !requiresAuth {
-			log.Info("request does not require authentication")
+			log.Info("Request does not require authentication")
 			return next(ctx, conn)
 		}
 
 		claims, err := a.ClaimsFromHeader(conn.RequestHeader())
 		if err != nil {
-			log.Warn("request unauthenticated", zap.Error(err))
+			log.Warn("Request unauthenticated", zap.Error(err))
 			return connect.NewError(connect.CodeUnauthenticated, nil)
 		}
 
 		log = log.With(xzap.FieldUserID(claims.UserID))
-		log.Info("request authenticated")
+		log.Info("Request authenticated")
 
 		ctx = xcontext.WithLogger(ctx, log)
 		ctx = xcontext.WithUserID(ctx, claims.UserID)

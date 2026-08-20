@@ -46,7 +46,7 @@ func (s *workoutSuite) SetupSuite() {
 
 	s.T().Cleanup(func() {
 		if err := s.container.Terminate(ctx); err != nil {
-			log.Fatalf("clean container: %s", err)
+			log.Fatalf("Clean container: %s", err)
 		}
 	})
 }

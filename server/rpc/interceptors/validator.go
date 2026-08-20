@@ -35,12 +35,12 @@ func (v *validator) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	) (connect.AnyResponse, error) {
 		msg, ok := req.Any().(proto.Message)
 		if !ok {
-			v.log.Warn("request message is not a proto.Message")
+			v.log.Warn("Request message is not a proto.Message")
 			return nil, connect.NewError(connect.CodeInvalidArgument, errRequestMessageNotProtoMessage)
 		}
 
 		if err := v.validator.Validate(msg); err != nil {
-			v.log.Warn("invalid request", zap.Error(err), xzap.FieldRPC(req.Spec().Procedure))
+			v.log.Warn("Invalid request", zap.Error(err), xzap.FieldRPC(req.Spec().Procedure))
 			return nil, connect.NewError(connect.CodeInvalidArgument, err)
 		}
 

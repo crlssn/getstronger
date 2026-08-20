@@ -59,12 +59,12 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 	req.Msg.Email = strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
 	if !strings.Contains(req.Msg.GetEmail(), "@") {
-		log.Warn("invalid email")
+		log.Warn("Invalid email")
 		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidEmail)
 	}
 
 	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
-		log.Warn("passwords do not match")
+		log.Warn("Passwords do not match")
 		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
@@ -72,7 +72,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		auth, err := tx.CreateAuth(ctx, req.Msg.GetEmail(), req.Msg.GetPassword())
 		if err != nil {
 			if errors.Is(err, repo.ErrAuthEmailExists) {
-				log.Warn("email exists")
+				log.Warn("Email already registered")
 				return nil
 			}
 
@@ -105,11 +105,11 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 		return nil
 	}); err != nil {
-		log.Error("signup", zap.Error(err))
+		log.Error("Sign up user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("user signed up")
+	log.Info("User signed up")
 	return connect.NewResponse(&apiv1.SignupResponse{}), nil
 }
 
@@ -119,7 +119,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 	log := xcontext.MustExtractLogger(ctx)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
-		log.Error("credentials invalid", zap.Error(err))
+		log.Error("Invalid credentials", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
 
@@ -130,22 +130,22 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("auth not found", zap.Error(err))
+			log.Warn("Auth not found", zap.Error(err))
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("auth fetch", zap.Error(err))
+		log.Error("Fetch auth for login", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if !auth.EmailVerified {
-		log.Warn("email not verified")
+		log.Warn("Email not verified")
 		return nil, rpc.Error(connect.CodeFailedPrecondition, apiv1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	}
 
 	accessToken, err := h.jwt.CreateToken(auth.R.User.ID.String(), jwt.TokenTypeAccess)
 	if err != nil {
-		log.Error("token generation", zap.Error(err))
+		log.Error("Generate access token for login", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -153,12 +153,12 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 	if auth.RefreshToken.IsNull() {
 		refreshToken, err = h.jwt.CreateToken(auth.R.User.ID.String(), jwt.TokenTypeRefresh)
 		if err != nil {
-			log.Error("token generation", zap.Error(err))
+			log.Error("Generate refresh token for login", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
 		if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthRefreshToken(refreshToken)); err != nil {
-			log.Error("refresh token update", zap.Error(err))
+			log.Error("Store refresh token for login", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 	}
@@ -167,7 +167,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 	cookie := h.cookies.RefreshToken(refreshToken)
 	res.Header().Set("Set-Cookie", cookie.String())
 
-	log.Info("logged in")
+	log.Info("Logged in")
 	return res, nil
 }
 
@@ -180,38 +180,38 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 	log := xcontext.MustExtractLogger(ctx)
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if !ok {
-		log.Warn("refresh token not provided")
+		log.Warn("Refresh token not provided")
 		return nil, connect.NewError(connect.CodeUnauthenticated, http.ErrNoCookie)
 	}
 
 	exists, err := h.repo.RefreshTokenExists(ctx, refreshToken)
 	if err != nil {
-		log.Error("refresh token check", zap.Error(err))
+		log.Error("Check refresh token exists", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 	if !exists {
-		log.Warn("refresh token not found")
+		log.Warn("Refresh token not found")
 		return nil, connect.NewError(connect.CodeUnauthenticated, ErrRefreshTokenNotFound)
 	}
 
 	claims, err := h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
 	if err != nil {
-		log.Error("token parsing", zap.Error(err))
+		log.Error("Parse refresh token", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
 	if err = h.jwt.Validator.Validate(claims); err != nil {
-		log.Error("token validation", zap.Error(err))
+		log.Error("Validate refresh token claims", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
 	accessToken, err := h.jwt.CreateToken(claims.UserID, jwt.TokenTypeAccess)
 	if err != nil {
-		log.Error("token generation", zap.Error(err))
+		log.Error("Generate access token from refresh token", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("token refreshed")
+	log.Info("Token refreshed")
 	return connect.NewResponse(&apiv1.RefreshTokenResponse{
 		AccessToken: accessToken,
 	}), nil
@@ -223,12 +223,12 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.Logou
 	if ok {
 		auth, err := h.repo.GetAuth(ctx, repo.GetAuthByRefreshToken(refreshToken))
 		if err != nil {
-			log.Error("auth fetch", zap.Error(err))
+			log.Error("Fetch auth for logout", zap.Error(err))
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
 		if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthDeleteRefreshToken()); err != nil {
-			log.Error("refresh token deletion", zap.Error(err))
+			log.Error("Delete refresh token for logout", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 	}
@@ -237,7 +237,7 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.Logou
 	cookie := h.cookies.ExpiredRefreshToken()
 	res.Header().Set("Set-Cookie", cookie.String())
 
-	log.Info("logged out")
+	log.Info("Logged out")
 	return res, nil
 }
 
@@ -247,20 +247,20 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv
 	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByEmailToken(req.Msg.GetToken()))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("auth not found")
+			log.Warn("Auth not found")
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("auth fetch", zap.Error(err))
+		log.Error("Fetch auth for email verification", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthEmailVerified()); err != nil {
-		log.Error("email verification", zap.Error(err))
+		log.Error("Mark email as verified", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("email verified")
+	log.Info("Email verified")
 	return connect.NewResponse(&apiv1.VerifyEmailResponse{}), nil
 }
 
@@ -286,24 +286,24 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// Do not expose information about the email not existing.
-			log.Warn("auth not found")
+			log.Warn("Auth not found")
 			return res, nil
 		}
 
-		log.Error("auth fetch", zap.Error(err))
+		log.Error("Fetch auth for verification email resend", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if auth.EmailVerified {
 		// Do not expose information about the email already being verified.
-		log.Warn("email already verified")
+		log.Warn("Email already verified")
 		return res, nil
 	}
 
 	sentAt := auth.EmailVerificationSentAt
 	if !sentAt.IsNull() && time.Now().UTC().Sub(sentAt.GetOrZero()) < ResendVerificationEmailCooldown {
 		// Do not expose information about the address being rate limited.
-		log.Warn("verification email rate limited")
+		log.Warn("Verification email rate limited")
 		return res, nil
 	}
 
@@ -312,16 +312,16 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 		Email: auth.Email,
 		Token: auth.EmailToken.String(),
 	}); err != nil {
-		log.Error("send verification email", zap.Error(err))
+		log.Error("Send verification email", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthEmailVerificationSentAt()); err != nil {
-		log.Error("email verification sent at update", zap.Error(err))
+		log.Error("Update verification email timestamp", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("verification email resent")
+	log.Info("Verification email resent")
 	return res, nil
 }
 
@@ -335,17 +335,17 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// Do not expose information about the email not existing.
-			log.Warn("auth not found")
+			log.Warn("Auth not found")
 			return connect.NewResponse(&apiv1.ResetPasswordResponse{}), nil
 		}
 
-		log.Error("auth fetch", zap.Error(err))
+		log.Error("Fetch auth for password reset request", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	token := uuid.NewString()
 	if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthPasswordResetToken(token)); err != nil {
-		log.Error("password reset token update", zap.Error(err))
+		log.Error("Store password reset token", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -354,34 +354,34 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 		Email: auth.Email,
 		Token: token,
 	}); err != nil {
-		log.Error("send password reset email", zap.Error(err))
+		log.Error("Send password reset email", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("password reset email sent")
+	log.Info("Password reset email sent")
 	return connect.NewResponse(&apiv1.ResetPasswordResponse{}), nil
 }
 
 func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[apiv1.UpdatePasswordRequest]) (*connect.Response[apiv1.UpdatePasswordResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
-		log.Warn("passwords do not match")
+		log.Warn("Passwords do not match")
 		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
 	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByPasswordResetToken(req.Msg.GetToken()))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("auth not found")
+			log.Warn("Auth not found")
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
-		log.Error("auth fetch", zap.Error(err))
+		log.Error("Fetch auth for password reset", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	if !auth.PasswordResetTokenValidUntil.IsNull() && auth.PasswordResetTokenValidUntil.GetOrZero().Before(time.Now().UTC()) {
-		log.Warn("password reset token expired")
+		log.Warn("Password reset token expired")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}
 
@@ -390,10 +390,10 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		repo.UpdateAuthPassword(req.Msg.GetPassword()),
 		repo.UpdateAuthDeletePasswordResetToken(),
 	); err != nil {
-		log.Error("password update", zap.Error(err))
+		log.Error("Update password", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	log.Info("password updated")
+	log.Info("Password updated")
 	return connect.NewResponse(&apiv1.UpdatePasswordResponse{}), nil
 }

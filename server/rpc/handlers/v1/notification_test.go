@@ -43,7 +43,7 @@ func (s *notificationSuite) SetupSuite() {
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
-			log.Fatalf("clean container: %s", err)
+			log.Fatalf("Clean container: %s", err)
 		}
 	})
 }
