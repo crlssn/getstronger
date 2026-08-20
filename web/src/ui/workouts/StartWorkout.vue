@@ -63,6 +63,7 @@ import {
 } from '@/utils/exerciseMeasurements'
 import { convertWeight, normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
 import { convertDistance, normalizeDistanceUnit, distanceUnitLabel } from '@/utils/distanceUnits'
+import posthog from '@/posthog'
 
 const { input: note, textarea } = useTextareaAutosize()
 const { t } = useI18n()
@@ -745,6 +746,11 @@ const onFinishWorkout = async () => {
     }
 
     savedWorkoutId.value = workoutId
+    posthog.capture('workout_completed', {
+      exercise_count: exerciseSets.length,
+      logged_set_count: loggedSetCount.value,
+      workout_type: quickWorkout ? 'quick' : 'routine',
+    })
     alertStore.setSuccess(t('workout.saved'))
     await openSavedWorkout(workoutId)
   } catch (error) {

@@ -13,13 +13,14 @@ import { refreshAccessTokenOrLogout } from './jwt'
 
 const refreshTokenMock = vi.mocked(refreshToken)
 
+// setAccessToken decodes every token, so stubs must be shaped like real JWTs.
+const fakeToken = (userId: string) =>
+  `header.${btoa(JSON.stringify({ userId })).replace(/=+$/, '')}.signature`
+
 describe('refreshAccessTokenOrLogout', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     refreshTokenMock.mockReset()
-
-    // A non-empty user ID keeps setAccessToken from decoding the stub token.
-    useAuthStore().userId = 'user-1'
   })
 
   test('shares one request between concurrent callers', async () => {
@@ -34,31 +35,34 @@ describe('refreshAccessTokenOrLogout', () => {
     const second = refreshAccessTokenOrLogout()
     expect(refreshTokenMock).toHaveBeenCalledTimes(1)
 
-    release({ accessToken: 'fresh-token' })
+    const freshToken = fakeToken('user-1')
+    release({ accessToken: freshToken })
     await Promise.all([first, second])
 
     expect(refreshTokenMock).toHaveBeenCalledTimes(1)
-    expect(useAuthStore().accessToken).toBe('fresh-token')
+    expect(useAuthStore().accessToken).toBe(freshToken)
   })
 
   test('starts a new request once the previous one has settled', async () => {
-    refreshTokenMock.mockResolvedValue({ accessToken: 'first-token' } as never)
+    refreshTokenMock.mockResolvedValue({ accessToken: fakeToken('user-1') } as never)
     await refreshAccessTokenOrLogout()
 
-    refreshTokenMock.mockResolvedValue({ accessToken: 'second-token' } as never)
+    const secondToken = fakeToken('user-1')
+    refreshTokenMock.mockResolvedValue({ accessToken: secondToken } as never)
     await refreshAccessTokenOrLogout()
 
     expect(refreshTokenMock).toHaveBeenCalledTimes(2)
-    expect(useAuthStore().accessToken).toBe('second-token')
+    expect(useAuthStore().accessToken).toBe(secondToken)
   })
 
   test('releases the shared request when it fails', async () => {
     refreshTokenMock.mockRejectedValueOnce(new Error('network down'))
     await expect(refreshAccessTokenOrLogout()).rejects.toThrow('network down')
 
-    refreshTokenMock.mockResolvedValue({ accessToken: 'recovered-token' } as never)
+    const recoveredToken = fakeToken('user-1')
+    refreshTokenMock.mockResolvedValue({ accessToken: recoveredToken } as never)
     await refreshAccessTokenOrLogout()
 
-    expect(useAuthStore().accessToken).toBe('recovered-token')
+    expect(useAuthStore().accessToken).toBe(recoveredToken)
   })
 })

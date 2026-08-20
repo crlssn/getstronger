@@ -8,6 +8,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { useNotificationStore } from '@/stores/notifications.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
 import { brandName } from '@/brand'
+import posthog from '@/posthog'
 
 const email = ref('')
 const password = ref('')
@@ -19,6 +20,7 @@ const onLogin = async () => {
   const res = await login(email.value, password.value)
   if (!res) return
   authStore.setAccessToken(res.accessToken)
+  posthog.capture('user_logged_in')
   notificationStore.pollUnreadNotifications()
   await router.push('/home')
 }

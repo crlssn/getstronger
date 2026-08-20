@@ -7,6 +7,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
+import posthog from '@/posthog'
 
 const { t } = useI18n()
 const alertStore = useAlertStore()
@@ -19,6 +20,7 @@ const req = ref<ResetPasswordRequest>({
 const onSubmit = async () => {
   const res = await resetPassword(req.value)
   if (!res) return
+  posthog.capture('password_reset_requested')
   resetRequest(req)
   alertStore.setSuccessWithoutPageRefresh(t('auth.recovery.linkSent'))
 }

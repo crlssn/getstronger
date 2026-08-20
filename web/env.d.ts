@@ -2,8 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
-  readonly VITE_ENABLE_GOOGLE_ANALYTICS: string
-  readonly VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID: string
+  readonly VITE_POSTHOG_KEY?: string
+  readonly VITE_POSTHOG_HOST?: string
 }
 
 interface ImportMeta {

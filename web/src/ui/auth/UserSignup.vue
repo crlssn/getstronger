@@ -8,6 +8,7 @@ import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useEmailVerificationStore } from '@/stores/emailVerification.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
+import posthog from '@/posthog'
 
 const router = useRouter()
 const emailVerificationStore = useEmailVerificationStore()
@@ -25,6 +26,7 @@ const req = ref<SignupRequest>({
 const onSignup = async () => {
   const res = await signup(req.value)
   if (!res) return
+  posthog.capture('account_signed_up')
   // Signup sends the first verification email, so the resend cooldown starts
   // here rather than on the pending page.
   emailVerificationStore.markSent(req.value.email)

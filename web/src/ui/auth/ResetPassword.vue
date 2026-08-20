@@ -7,6 +7,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
 import { type UpdatePasswordRequest } from '@/proto/api/v1/auth_service_pb'
 import { useAlertStore } from '@/stores/alerts.ts'
+import posthog from '@/posthog'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -23,6 +24,7 @@ const req = ref<UpdatePasswordRequest>({
 const onSignup = async () => {
   const res = await updatePassword(req.value)
   if (!res) return
+  posthog.capture('password_reset_completed')
   alertStore.setSuccess(t('auth.recovery.resetDone'))
   await router.push('/login')
 }

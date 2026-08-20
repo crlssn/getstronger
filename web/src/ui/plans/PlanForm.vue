@@ -16,6 +16,7 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useAlertStore } from '@/stores/alerts'
 import { usePlanStore } from '@/stores/plans'
+import posthog from '@/posthog'
 
 const props = defineProps<{ planId?: string }>()
 const { t } = useI18n()
@@ -77,6 +78,7 @@ const save = async () => {
   saving.value = false
   if (!plan) return
 
+  posthog.capture(editing.value ? 'plan_updated' : 'plan_created')
   alertStore.setSuccess(
     editing.value ? t('training.planForm.updated') : t('training.planForm.created'),
   )
