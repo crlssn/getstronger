@@ -24,6 +24,7 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import type { ExerciseSets } from '@/proto/api/v1/shared_pb'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { useAlertStore } from '@/stores/alerts'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
@@ -36,6 +37,7 @@ const route = useRoute()
 const router = useRouter()
 const pageTitleStore = usePageTitleStore()
 const alertStore = useAlertStore()
+const confirmationStore = useConfirmationStore()
 const dashboardStore = useDashboardStore()
 const previousSets = ref<ExerciseSets[]>([])
 
@@ -90,7 +92,14 @@ const makeUpNext = async () => {
 }
 
 const onDeleteRoutine = async () => {
-  if (!routine.value || !confirm(t('routine.deleteConfirm', { name: routine.value.name }))) return
+  if (!routine.value) return
+  const confirmed = await confirmationStore.confirm({
+    body: t('routine.deleteConfirmBody'),
+    confirmLabel: t('common.delete'),
+    destructive: true,
+    title: t('routine.deleteConfirmTitle', { name: routine.value.name }),
+  })
+  if (!confirmed) return
 
   await deleteRoutine(routine.value.id)
   alertStore.setError(t('routine.deleted'))

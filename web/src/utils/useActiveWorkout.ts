@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { DateTime } from 'luxon'
 
 import { dateLocale, i18n } from '@/i18n'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useWorkoutStore } from '@/stores/workout'
 
@@ -29,6 +30,7 @@ const hasProgress = (workout: Workout) =>
 export default function useActiveWorkout() {
   const workoutStore = useWorkoutStore()
   const dashboardStore = useDashboardStore()
+  const confirmationStore = useConfirmationStore()
 
   const savedWorkout = computed(
     () =>
@@ -78,11 +80,16 @@ export default function useActiveWorkout() {
     return Number.isNaN(time) ? undefined : time
   })
 
-  const discardSavedWorkout = () => {
+  const discardSavedWorkout = async () => {
     const routineId = savedWorkout.value?.[0]
     if (!routineId) return
-    if (!confirm(i18n.global.t('workout.discardSavedConfirm', { name: savedRoutineName.value })))
-      return
+    const confirmed = await confirmationStore.confirm({
+      body: i18n.global.t('workout.discardConfirmBody'),
+      confirmLabel: i18n.global.t('workout.discard'),
+      destructive: true,
+      title: i18n.global.t('workout.discardConfirmTitle', { name: savedRoutineName.value }),
+    })
+    if (!confirmed) return
     workoutStore.removeWorkout(routineId)
   }
 

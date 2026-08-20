@@ -133,6 +133,7 @@ import {
 import { i18n } from '@/i18n'
 import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 import router from '@/router/router'
+import { useAlertStore } from '@/stores/alerts'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 
 const defaultPageLimit = 25
@@ -652,7 +653,7 @@ const tryCatch = async <T>(
             await options.onEmailNotVerified?.()
             return
           case Error.PASSWORDS_DO_NOT_MATCH:
-            alert(i18n.global.t('auth.passwordsDoNotMatch'))
+            useAlertStore().setErrorWithoutPageRefresh(i18n.global.t('auth.passwordsDoNotMatch'))
             return
         }
       }
@@ -665,12 +666,11 @@ const tryCatch = async <T>(
         Code.Unauthenticated,
       ]
       if (!ignoredCodes.includes(error.code)) {
-        alert(error.message)
+        useAlertStore().setErrorWithoutPageRefresh(error.message)
         return
       }
     }
 
-    // TODO: Use custom alert component.
     console.error('request', error)
     if (options.rethrow) throw error
   }

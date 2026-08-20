@@ -6,6 +6,7 @@ import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 import { getPlan } from '@/http/requests'
 import type { Plan } from '@/proto/api/v1/routine_service_pb'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { usePlanStore } from '@/stores/plans'
@@ -14,6 +15,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const planStore = usePlanStore()
+const confirmationStore = useConfirmationStore()
 const dashboardStore = useDashboardStore()
 const pageTitleStore = usePageTitleStore()
 const plan = ref<Plan>()
@@ -27,7 +29,12 @@ onMounted(async () => {
 })
 
 const activate = async () => {
-  if (!confirm(t('training.activateConfirm'))) return
+  const confirmed = await confirmationStore.confirm({
+    body: t('training.activateConfirmBody'),
+    confirmLabel: t('training.makeActive'),
+    title: t('training.activateConfirmTitle'),
+  })
+  if (!confirmed) return
   const updated = await planStore.activate(planId)
   if (updated) {
     plan.value = updated
@@ -36,7 +43,12 @@ const activate = async () => {
 }
 
 const pause = async () => {
-  if (!confirm(t('training.pauseConfirm'))) return
+  const confirmed = await confirmationStore.confirm({
+    body: t('training.pauseConfirmBody'),
+    confirmLabel: t('training.pause'),
+    title: t('training.pauseConfirmTitle'),
+  })
+  if (!confirmed) return
   if (await planStore.pause()) {
     if (plan.value) plan.value.active = false
     await dashboardStore.load()
@@ -44,7 +56,13 @@ const pause = async () => {
 }
 
 const remove = async () => {
-  if (!confirm(t('training.planView.deleteConfirm'))) return
+  const confirmed = await confirmationStore.confirm({
+    body: t('training.planView.deleteConfirmBody'),
+    confirmLabel: t('training.planView.delete'),
+    destructive: true,
+    title: t('training.planView.deleteConfirmTitle'),
+  })
+  if (!confirmed) return
   if (await planStore.remove(planId)) await router.push('/plans')
 }
 </script>

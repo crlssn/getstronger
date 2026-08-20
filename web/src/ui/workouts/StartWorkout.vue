@@ -40,6 +40,7 @@ import {
   getRoutine,
   listExercises,
 } from '@/http/requests'
+import blurActiveElement from '@/utils/blurActiveElement'
 import { isNumber } from '@/utils/numbers'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
@@ -762,6 +763,7 @@ const requestFinishWorkout = async () => {
   }
 
   if (unfinishedExerciseCount.value > 0) {
+    blurActiveElement()
     finishDialogOpen.value = true
     return
   }
@@ -775,6 +777,7 @@ const confirmFinishWorkout = async () => {
 }
 
 const cancelWorkout = () => {
+  blurActiveElement()
   discardConfirmationOpen.value = false
   leaveDialogOpen.value = true
 }
@@ -815,6 +818,7 @@ const loadExerciseOptions = async () => {
 }
 
 const openExercisePicker = async () => {
+  blurActiveElement()
   exercisePickerOpen.value = true
   if (!exerciseOptionsLoaded.value) await loadExerciseOptions()
 }

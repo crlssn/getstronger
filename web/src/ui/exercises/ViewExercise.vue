@@ -11,10 +11,12 @@ import { useI18n } from 'vue-i18n'
 import router from '@/router/router'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useAlertStore } from '@/stores/alerts'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import ExerciseChart from '@/ui/components/ExerciseChart.vue'
+import blurActiveElement from '@/utils/blurActiveElement'
 import { formatToShortDateTime } from '@/utils/datetime.ts'
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
 import usePagination from '@/utils/usePagination'
@@ -32,6 +34,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const pageTitle = usePageTitleStore()
 const alertStore = useAlertStore()
+const confirmationStore = useConfirmationStore()
 const workoutStore = useWorkoutStore()
 const { t } = useI18n()
 const { savedRoutineName, savedWorkout } = useActiveWorkout()
@@ -61,6 +64,7 @@ const exerciseActions = computed<DropdownItem[]>(() => [
   { href: `/exercises/${route.params.id}/edit`, title: t('exercise.update') },
   {
     func: async () => {
+      blurActiveElement()
       deleteDialogOpen.value = true
     },
     title: t('exercise.delete'),
@@ -90,16 +94,14 @@ const onStartQuickWorkout = async () => {
   if (!exercise.value) return
 
   const activeRoutineID = savedWorkout.value?.[0]
-  if (
-    activeRoutineID &&
-    !confirm(
-      t('exercise.replaceWorkoutConfirm', {
-        workout: savedRoutineName.value,
-        exercise: exercise.value.name,
-      }),
-    )
-  ) {
-    return
+  if (activeRoutineID) {
+    const confirmed = await confirmationStore.confirm({
+      body: t('exercise.replaceWorkoutConfirmBody', { exercise: exercise.value.name }),
+      confirmLabel: t('exercise.startQuickWorkout'),
+      destructive: true,
+      title: t('exercise.replaceWorkoutConfirmTitle', { workout: savedRoutineName.value }),
+    })
+    if (!confirmed) return
   }
 
   if (activeRoutineID) workoutStore.removeWorkout(activeRoutineID)
@@ -146,11 +148,12 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
          rather than a scoped class. -->
     <Dialog
       :open="deleteDialogOpen"
-      class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+      class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6"
       @close="deleteDialogOpen = false"
     >
       <div class="dialog-backdrop" aria-hidden="true" />
       <DialogPanel class="dialog-panel">
+        <span class="dialog-handle" aria-hidden="true"></span>
         <DialogTitle>{{ t('exercise.view.deleteTitle', { name: exercise.name }) }}</DialogTitle>
         <p>{{ t('exercise.view.deleteBody') }}</p>
         <div class="dialog-actions">
@@ -300,7 +303,10 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
   @apply fixed inset-0 bg-black/50;
 }
 .dialog-panel {
-  @apply relative w-full max-w-sm rounded-card border border-border bg-white p-5 shadow-overlay;
+  @apply relative w-full rounded-t-sheet bg-white p-5 shadow-overlay sm:max-w-sm sm:rounded-sheet;
+}
+.dialog-handle {
+  @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
 }
 .dialog-panel h2 {
   @apply text-title font-semibold text-text;

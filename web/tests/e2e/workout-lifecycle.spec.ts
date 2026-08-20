@@ -1,4 +1,5 @@
 import {
+  acceptConfirmDialog,
   allowRuntimeErrors,
   boxOf,
   expect,
@@ -491,8 +492,8 @@ test.describe('planned workouts and history', () => {
     await page.getByRole('button', { name: 'Create plan' }).click()
     await expect(page.getByRole('heading', { name: planName })).toBeVisible()
     const planUrl = page.url()
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Make active' }).click()
+    await acceptConfirmDialog(page, 'Make active')
     await expect(page.getByText('Active plan', { exact: true })).toBeVisible()
 
     await page.goto('/workout')
@@ -526,12 +527,12 @@ test.describe('planned workouts and history', () => {
     await expect(page.locator('.next-card')).toContainText('2 of 2')
 
     await page.goto('/plans')
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Pause' }).click()
+    await acceptConfirmDialog(page, 'Pause')
     await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
     await page.goto(planUrl)
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Delete plan' }).click()
+    await acceptConfirmDialog(page, 'Delete plan')
     await expect(page).toHaveURL(/\/plans$/)
   })
 

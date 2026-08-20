@@ -1,4 +1,5 @@
 import {
+  acceptConfirmDialog,
   expect,
   expectAccessible,
   logIn,
@@ -210,8 +211,8 @@ test.describe('routine lifecycle', () => {
     await page.getByRole('button', { name: 'Make up next' }).click()
     await expect(page.getByRole('status')).toContainText(`${updatedName} is up next`)
 
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Delete' }).click()
+    await acceptConfirmDialog(page, 'Delete')
     await expect(page).toHaveURL(/\/routines$/)
     await expect(page.getByRole('alert')).toContainText('Routine deleted')
   })
@@ -254,16 +255,16 @@ test.describe('plan lifecycle', () => {
     await expect(page.locator('.routine-order li').first()).toContainText(secondRoutineName)
     await expect(page.locator('.routine-order li').nth(1)).toContainText(firstRoutineName)
 
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Make active' }).click()
+    await acceptConfirmDialog(page, 'Make active')
     await expect(page.getByText('Active plan', { exact: true })).toBeVisible()
     await expect(page.locator('.routine-order li').first()).toContainText('UP NEXT')
 
     await page.goto('/plans')
     await expect(page.locator('.active-plan')).toContainText(planName)
     await expect(page.locator('.active-plan')).toContainText(secondRoutineName)
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Pause' }).click()
+    await acceptConfirmDialog(page, 'Pause')
     await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
 
     await page.getByRole('link', { name: new RegExp(planName) }).click()
@@ -272,8 +273,8 @@ test.describe('plan lifecycle', () => {
     await page.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByRole('heading', { name: updatedPlanName })).toBeVisible()
 
-    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Delete plan' }).click()
+    await acceptConfirmDialog(page, 'Delete plan')
     await expect(page).toHaveURL(/\/plans$/)
     await expect(page.getByText(updatedPlanName)).toHaveCount(0)
   })

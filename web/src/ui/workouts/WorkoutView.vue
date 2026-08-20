@@ -15,6 +15,7 @@ import { useI18n } from 'vue-i18n'
 
 import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { formatToShortDateTime } from '@/utils/datetime'
@@ -40,6 +41,7 @@ const workoutMeta = (workout: Workout) => {
 
 const authStore = useAuthStore()
 const { t } = useI18n()
+const confirmationStore = useConfirmationStore()
 const dashboardStore = useDashboardStore()
 const planStore = usePlanStore()
 const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
@@ -108,7 +110,12 @@ onMounted(async () => Promise.all([dashboardStore.load(), planStore.load(), load
 
 const skip = async () => {
   if (!activePlan.value || !nextRoutine.value) return
-  if (!confirm(t('workout.skipConfirm', { name: nextRoutine.value.name }))) return
+  const confirmed = await confirmationStore.confirm({
+    body: t('workout.skipConfirmBody'),
+    confirmLabel: t('workout.skip'),
+    title: t('workout.skipConfirmTitle', { name: nextRoutine.value.name }),
+  })
+  if (!confirmed) return
   if (await planStore.skip(activePlan.value.id)) await dashboardStore.load()
 }
 </script>

@@ -165,3 +165,9 @@ export const boxOf = async (locator: Locator) => {
 
 export const uniqueName = (prefix: string) =>
   `${prefix} ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+// The app confirms risky actions with its own sheet dialog rather than the
+// native confirm(), so tests accept it by pressing the named button inside it.
+export const acceptConfirmDialog = async (page: Page, buttonName: string) => {
+  await page.getByRole('dialog').getByRole('button', { name: buttonName, exact: true }).click()
+}
