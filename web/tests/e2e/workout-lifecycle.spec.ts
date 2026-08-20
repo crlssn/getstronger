@@ -62,15 +62,14 @@ test.describe('quick workout lifecycle', () => {
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add exercise' })).toHaveCount(0)
     await expect(page.getByLabel('Workout note')).toHaveCount(0)
+    // Until an exercise exists there is nothing to complete: the empty state
+    // leads with choosing one, and no primary action competes with it.
+    await expect(page.locator('.primary-action')).toHaveCount(0)
+
+    const firstExercise = await addFirstExercise(page)
     // Blocked, not disabled: the dominant control stays pressable and names
     // what is missing, rather than greying out and reading as broken.
     await expect(page.locator('.primary-action')).toBeEnabled()
-    await page.locator('.primary-action').click()
-    await expect(page.locator('.action-block > strong')).toHaveText(
-      'Add an exercise before moving on',
-    )
-
-    const firstExercise = await addFirstExercise(page)
     await page
       .getByRole('textbox', { name: `${firstExercise} set 1 weight`, exact: true })
       .fill('25')

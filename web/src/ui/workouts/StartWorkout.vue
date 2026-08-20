@@ -1101,8 +1101,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         ></div>
       </div>
 
-      <!-- The one forward action lives right under the card it acts on. -->
-      <div class="action-block">
+      <!-- The one forward action lives right under the card it acts on, and
+           only once there is a card to act on: the empty state already leads
+           with choosing an exercise. -->
+      <div v-if="currentExercise" class="action-block">
         <strong
           v-if="finishError || blockedMessage || primaryStatus"
           id="workout-dock-status"
