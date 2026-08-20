@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import AppList from '@/ui/components/AppList.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { listNotifications, markNotificationAsRead } from '@/http/requests.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { type Notification } from '@/proto/api/v1/notification_service_pb.ts'
@@ -12,6 +13,7 @@ import { useNotificationStore } from '@/stores/notifications'
 const notifications = ref([] as Notification[])
 const notificationStore = useNotificationStore()
 const { hasMorePages, pageToken, resolvePageToken } = usePagination()
+const loaded = ref(false)
 const markingAllAsRead = ref(false)
 const hasUnreadNotifications = computed(() =>
   notifications.value.some((notification) => !notification.read),
@@ -19,6 +21,7 @@ const hasUnreadNotifications = computed(() =>
 
 onMounted(async () => {
   await fetchNotifications()
+  loaded.value = true
 })
 
 const fetchNotifications = async () => {
@@ -66,7 +69,8 @@ const markAllAsRead = async () => {
       }}
     </button>
   </Teleport>
-  <AppList :can-fetch="hasMorePages" @fetch="fetchNotifications">
+  <AppSkeleton v-if="!loaded" />
+  <AppList v-else :can-fetch="hasMorePages" @fetch="fetchNotifications">
     <AppListItem
       v-for="notification in notifications"
       :key="notification.id"

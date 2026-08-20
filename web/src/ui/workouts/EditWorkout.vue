@@ -137,7 +137,8 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
 </script>
 
 <template>
-  <form class="edit-workout-form" @submit.prevent="onUpdateWorkout">
+  <AppSkeleton v-if="!workout" />
+  <form v-else class="edit-workout-form" @submit.prevent="onUpdateWorkout">
     <template v-for="(es, index) in workout?.exerciseSets" :key="es.exercise?.id">
       <div class="flex justify-between pr-4">
         <div>

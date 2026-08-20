@@ -9,6 +9,7 @@ import { vInfiniteScroll } from '@vueuse/components'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppList from '@/ui/components/AppList.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 
 const { t } = useI18n()
 const props = defineProps<{
@@ -38,6 +39,7 @@ const fetchWorkouts = async () => {
 </script>
 
 <template>
+  <AppSkeleton v-if="!isMounted" />
   <CardWorkout v-for="workout in workouts" :key="workout.id" compact :workout="workout" />
   <div v-if="hasMorePages" v-infinite-scroll="fetchWorkouts" />
   <AppList v-if="isMounted && workouts.length === 0">

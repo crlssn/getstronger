@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { getRoutine, updateRoutine } from '@/http/requests'
 import { useAlertStore } from '@/stores/alerts'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import RoutineForm from '@/ui/routines/RoutineForm.vue'
 
 const { t } = useI18n()
@@ -40,9 +41,7 @@ const onSave = async (updatedName: string, updatedExerciseIds: string[]) => {
 </script>
 
 <template>
-  <div v-if="loading" class="card shadow-none p-6 text-sm text-text-subtle">
-    {{ t('routine.loading') }}
-  </div>
+  <AppSkeleton v-if="loading" />
   <RoutineForm
     v-else
     :submit-label="t('training.planForm.saveChanges')"

@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAlertStore } from '@/stores/alerts.ts'
 import AppList from '@/ui/components/AppList.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import AppButton from '@/ui/components/AppButton.vue'
 import { getExercise, listExerciseTags, updateExercise } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
@@ -71,7 +72,7 @@ async function onUpdateExercise() {
     </div>
   </form>
 
-  <p v-else-if="loading" class="form-status">{{ t('common.loading') }}</p>
+  <AppSkeleton v-else-if="loading" />
 
   <section v-else class="form-status">
     <h1>{{ t('exercise.unavailable') }}</h1>

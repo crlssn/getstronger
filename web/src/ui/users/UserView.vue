@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '@/ui/components/AppButton.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import type { DropdownItem } from '@/types/dropdown'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
@@ -99,6 +100,7 @@ const profileActions = computed<DropdownItem[]>(() => [
     </AppCard>
   </div>
 
+  <AppSkeleton v-if="!user.id" class="profile-tabs" />
   <nav v-if="user.id" class="profile-tabs segmented" :aria-label="t('profile.sectionsAria')">
     <RouterLink
       v-for="tab in tabs"

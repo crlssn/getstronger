@@ -16,6 +16,7 @@ import { useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import usePagination from '@/utils/usePagination'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 import {
@@ -128,6 +129,7 @@ const makeUpNext = async (routineId: string) => {
       />
     </label>
 
+    <AppSkeleton v-if="!isMounted" />
     <template v-if="isMounted && filteredRoutines.length">
       <section v-for="group in groupedRoutines" :key="group.bucket" class="routine-group">
         <h2 class="group-heading">{{ t(group.labelKey) }}</h2>

@@ -13,6 +13,7 @@ import {
 
 import { getPlan, listRoutines } from '@/http/requests'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useAlertStore } from '@/stores/alerts'
 import { usePlanStore } from '@/stores/plans'
 
@@ -90,12 +91,7 @@ const save = async () => {
       <p>{{ t('training.planForm.intro') }}</p>
     </header>
 
-    <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
-      <span class="sr-only">{{ $t('common.loading') }}</span>
-      <div class="loading-line" aria-hidden="true"></div>
-      <div class="loading-line" aria-hidden="true"></div>
-      <div class="loading-line w-full" aria-hidden="true"></div>
-    </div>
+    <AppSkeleton v-if="loading" />
     <template v-else>
       <label class="name-field">
         <span>{{ t('training.planForm.name') }}</span>

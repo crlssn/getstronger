@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { nativeFetch } from '@/http/native'
 import { type Client, createClient } from '@connectrpc/connect'
 import { auth, logger, retryUnauthenticated } from '@/http/interceptors'
+import { offlineCache } from '@/http/offlineCache'
 import { FeedService } from '@/proto/api/v1/feed_service_pb'
 import { AuthService } from '@/proto/api/v1/auth_service_pb'
 import { UserService } from '@/proto/api/v1/user_service_pb'
@@ -24,7 +25,9 @@ const transport = createConnectTransport({
   fetch: Capacitor.isNativePlatform() ? nativeFetch : browserFetch,
   // Interceptors run outermost first, so `auth` stays last: it stamps the
   // current access token onto both the original call and any replay.
-  interceptors: [logger, retryUnauthenticated, auth],
+  // `offlineCache` sits outermost so it can serve stale reads when every
+  // deeper layer, including the token refresh, is unreachable.
+  interceptors: [offlineCache, logger, retryUnauthenticated, auth],
 })
 
 export const authClient: Client<typeof AuthService> = createClient(AuthService, transport)

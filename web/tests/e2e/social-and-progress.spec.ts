@@ -60,6 +60,13 @@ test.describe('social feed and discovery', () => {
       await route.continue()
     })
 
+    // An unreachable feed with a cached copy silently shows saved data; the
+    // recoverable error is the contract for when nothing is cached yet.
+    await page.evaluate(() => {
+      for (const key of Object.keys(window.localStorage)) {
+        if (key.startsWith('offlineCache:')) window.localStorage.removeItem(key)
+      }
+    })
     await page.reload()
     await expect(page.getByRole('alert')).toContainText('Latest workouts could not be loaded')
     await page.getByRole('button', { name: 'Try again' }).click()

@@ -14,7 +14,9 @@ import {
   ExerciseSetsSchema,
   WeightUnit,
 } from '@/proto/api/v1/shared_pb'
+import { ConnectError } from '@connectrpc/connect'
 import { RoutineSchema } from '@/proto/api/v1/routine_service_pb'
+import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { useWorkoutStore } from '@/stores/workout'
 import StartWorkout from '@/ui/workouts/StartWorkout.vue'
 
@@ -49,6 +51,10 @@ vi.mock('@/http/requests', () => ({
 
 vi.mock('@/router/router', () => ({
   default: { push: routerPush, replace: routerReplace },
+}))
+
+vi.mock('@/http/clients', () => ({
+  workoutClient: { createWorkout: vi.fn() },
 }))
 
 const routineID = 'routine-1'
@@ -263,6 +269,47 @@ describe('StartWorkout', () => {
       expect(wrapper.get('.set-row').classes()).toContain('complete')
       expect(workoutStore.getSets(routineID, benchPress.id)[0].weight).toBe(85)
       expect(workoutStore.getRestTimer(routineID).endsAt).toBe(endsAt)
+      wrapper.unmount()
+    })
+  })
+
+  describe('offline finish', () => {
+    test('queues the workout and clears the draft when the network is unreachable', async () => {
+      getRoutine.mockResolvedValue({
+        routine: create(RoutineSchema, { name: 'Push Day', exercises: [benchPress] }),
+      })
+      createWorkout.mockRejectedValue(ConnectError.from(new TypeError('Failed to fetch')))
+
+      const wrapper = await mountWorkout()
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      const queue = useMutationQueueStore()
+      expect(queue.pending).toHaveLength(1)
+      expect(queue.pending[0].method).toContain('CreateWorkout')
+      expect(useWorkoutStore().workouts[routineID]).toBeUndefined()
+      expect(routerReplace).toHaveBeenCalledWith('/home')
+      wrapper.unmount()
+    })
+
+    test('still reports other failures as errors', async () => {
+      getRoutine.mockResolvedValue({
+        routine: create(RoutineSchema, { name: 'Push Day', exercises: [benchPress] }),
+      })
+      createWorkout.mockRejectedValue(new Error('boom'))
+
+      const wrapper = await mountWorkout()
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      expect(useMutationQueueStore().pending).toHaveLength(0)
+      expect(wrapper.get('.finish-dock strong').text()).toContain('could not be saved')
       wrapper.unmount()
     })
   })

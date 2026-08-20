@@ -56,6 +56,11 @@ export const en = {
     available: 'A new version is available.',
     refresh: 'Refresh',
   },
+  offline: {
+    banner: 'You are offline—showing saved data.',
+    queued:
+      '{count} change will sync when you are back online. | {count} changes will sync when you are back online.',
+  },
   auth: {
     welcomeBack: 'Welcome back',
     loginTitle: 'Log in to {brand}',
@@ -140,7 +145,6 @@ export const en = {
     createRoutine: 'Create routine',
     following: 'Following',
     latestWorkouts: 'Latest workouts',
-    loadingLatest: 'Loading latest workouts…',
     loadingMore: 'Loading more workouts…',
     loadFailed: 'Latest workouts could not be loaded.',
     emptyFeedTitle: 'No workouts from people you follow',
@@ -221,6 +225,7 @@ export const en = {
     quickWorkoutUnavailable: 'Restart the backend to enable Quick Workout, then try again.',
     saveTimedOut: 'Saving took too long. Check your connection and try again.',
     saved: 'Workout saved',
+    savedOffline: 'Workout saved on this device. It will sync when you are back online.',
     inProgress: 'Workout in progress',
     startedAgo: 'Started {relative}',
     closeExercisePicker: 'Close exercise picker',
@@ -258,7 +263,6 @@ export const en = {
     discardConfirmBody: 'All logged sets will be removed.',
     noSelection: 'No workout selected',
     noSelectionBody: 'Create a routine or activate a plan to choose what comes next.',
-    loadingHistory: 'Loading workout history…',
     historyError: 'Workout history could not be loaded.',
     historyEmpty: 'Your completed workouts will appear here.',
     loadingMoreHistory: 'Loading more workouts…',
@@ -404,7 +408,6 @@ export const en = {
   routine: {
     noExercises: 'No exercises yet',
     andMore: '+{count} more',
-    loading: 'Loading routine…',
     makeUpNext: 'Make up next',
     upNextToast: '{name} is up next',
     deleteConfirmTitle: 'Delete “{name}”?',
@@ -479,7 +482,6 @@ export const en = {
     replaceWorkoutConfirmTitle: 'Discard “{workout}”?',
     replaceWorkoutConfirmBody:
       'All logged sets in the active workout will be removed, and a quick workout with “{exercise}” will start.',
-    loading: 'Loading exercises…',
     loadMore: 'Load more exercises',
     noMatches: 'No matching exercises',
     empty: 'No exercises yet',
@@ -683,6 +685,11 @@ export const sv = {
     available: 'En ny version finns tillgänglig.',
     refresh: 'Uppdatera',
   },
+  offline: {
+    banner: 'Du är offline – visar sparade data.',
+    queued:
+      '{count} ändring synkas när du är online igen. | {count} ändringar synkas när du är online igen.',
+  },
   auth: {
     welcomeBack: 'Välkommen tillbaka',
     loginTitle: 'Logga in på {brand}',
@@ -767,7 +774,6 @@ export const sv = {
     createRoutine: 'Skapa pass',
     following: 'Följer',
     latestWorkouts: 'Senaste träningspassen',
-    loadingLatest: 'Laddar senaste träningspassen…',
     loadingMore: 'Laddar fler träningspass…',
     loadFailed: 'Det gick inte att ladda de senaste träningspassen.',
     emptyFeedTitle: 'Inga pass från personer du följer',
@@ -849,6 +855,7 @@ export const sv = {
     quickWorkoutUnavailable: 'Starta om backend för att aktivera snabbpass och försök igen.',
     saveTimedOut: 'Det tog för lång tid att spara. Kontrollera din anslutning och försök igen.',
     saved: 'Träningspasset sparades',
+    savedOffline: 'Träningspasset sparades på den här enheten. Det synkas när du är online igen.',
     inProgress: 'Pågående träningspass',
     startedAgo: 'Startade {relative}',
     closeExercisePicker: 'Stäng övningsväljaren',
@@ -887,7 +894,6 @@ export const sv = {
     noSelection: 'Inget pass valt',
     noSelectionBody:
       'Skapa ett pass eller aktivera en plan för att välja vad som står näst på tur.',
-    loadingHistory: 'Laddar träningshistorik…',
     historyError: 'Det gick inte att ladda träningshistoriken.',
     historyEmpty: 'Dina genomförda träningspass visas här.',
     loadingMoreHistory: 'Laddar fler träningspass…',
@@ -1030,7 +1036,6 @@ export const sv = {
   routine: {
     noExercises: 'Inga övningar ännu',
     andMore: '+{count} till',
-    loading: 'Laddar passet…',
     makeUpNext: 'Gör till nästa pass',
     upNextToast: '{name} är nästa pass',
     deleteConfirmTitle: 'Ta bort ”{name}”?',
@@ -1105,7 +1110,6 @@ export const sv = {
     replaceWorkoutConfirmTitle: 'Glöm ”{workout}”?',
     replaceWorkoutConfirmBody:
       'Alla loggade set i det aktiva passet tas bort och ett snabbpass med ”{exercise}” startas.',
-    loading: 'Laddar övningar…',
     loadMore: 'Ladda fler övningar',
     noMatches: 'Inga matchande övningar',
     empty: 'Inga övningar ännu',

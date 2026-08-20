@@ -2,6 +2,7 @@
 import { useAuthStore } from '@/stores/auth'
 import AppConfirmDialog from '@/ui/components/AppConfirmDialog.vue'
 import AppDashboard from '@/ui/components/AppDashboard.vue'
+import AppOfflineBanner from '@/ui/components/AppOfflineBanner.vue'
 import AppUpdateBanner from '@/ui/components/AppUpdateBanner.vue'
 import GuestView from '@/ui/components/GuestView.vue'
 
@@ -12,6 +13,7 @@ const authStore = useAuthStore()
   <div class="statusbar-scrim" aria-hidden="true"></div>
   <AppDashboard v-if="authStore.authorised" />
   <GuestView v-else />
+  <AppOfflineBanner />
   <AppUpdateBanner />
   <AppConfirmDialog />
 </template>
