@@ -12,6 +12,7 @@ import { createGtag } from 'vue-gtag'
 import App from './App.vue'
 import { appLocale, i18n } from './i18n'
 import router from './router/router'
+import { warmLazyRoutesWhenIdle } from './router/warmRoutes'
 
 const app = createApp(App)
 
@@ -44,6 +45,8 @@ const init = async () => {
 
   console.log('App initialized')
   app.mount('#app')
+  // Warm the remaining route chunks so the whole app stays navigable offline.
+  warmLazyRoutesWhenIdle(router)
 
   await initNativePlatform()
 }
