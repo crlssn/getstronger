@@ -1541,9 +1541,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
      and would otherwise paint a scrollbar under every row. */
   scrollbar-width: none;
   @apply grid items-center gap-2 overflow-x-auto;
-  grid-template-columns: 2.25rem minmax(5.5rem, 1fr) repeat(
+  /* The previous column sizes to its content and every spare pixel goes to
+     the inputs being typed into, so the columns space evenly with no dead
+     stretch in the middle of the row. */
+  grid-template-columns: 2.25rem minmax(5.5rem, max-content) repeat(
       var(--metric-count),
-      minmax(4.25rem, 0.75fr)
+      minmax(4.25rem, 1fr)
     );
 }
 .set-grid::-webkit-scrollbar {
@@ -1781,9 +1784,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 @media (max-width: 520px) {
   .set-grid {
     @apply gap-1.5;
-    grid-template-columns: 2.25rem minmax(4.5rem, 1fr) repeat(
+    grid-template-columns: 2.25rem minmax(4.5rem, max-content) repeat(
         var(--metric-count),
-        minmax(5.5rem, 0.75fr)
+        minmax(5.5rem, 1fr)
       );
   }
   .set-labels {

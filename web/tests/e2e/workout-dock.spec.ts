@@ -1,4 +1,4 @@
-import { expect, logIn, resetSeedData, test } from './fixtures'
+import { boxOf, expect, logIn, resetSeedData, test } from './fixtures'
 
 test.beforeAll(resetSeedData)
 
@@ -68,5 +68,22 @@ test.describe('the workout dock', () => {
     for (const input of await page.locator('.set-row input').all()) {
       expect((await input.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(48)
     }
+  })
+
+  // The row's spare width belongs to the fields being typed into, not to the
+  // read-only previous column: no dead space in the middle of the row.
+  test('lets the measurement inputs take the row’s spare width', async ({ page }) => {
+    const row = page.locator('.set-row').first()
+    const rowBox = await boxOf(row)
+    const previousBox = await boxOf(row.locator('.previous-value'))
+
+    const inputs = [row.locator('.unit-entry').first(), row.locator('input:not(.unit-entry input)')]
+    for (const input of inputs) {
+      expect((await boxOf(input)).width).toBeGreaterThanOrEqual(previousBox.width)
+    }
+
+    // The final column ends at the row's edge rather than leaving a gutter.
+    const lastInput = await boxOf(row.locator('input:not(.unit-entry input)').last())
+    expect(lastInput.x + lastInput.width).toBeGreaterThanOrEqual(rowBox.x + rowBox.width - 4)
   })
 })
