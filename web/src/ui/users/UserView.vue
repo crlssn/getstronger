@@ -13,6 +13,7 @@ import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import AppCard from '@/ui/components/AppCard.vue'
 import type { Workout } from '@/proto/api/v1/workout_service_pb.ts'
+import posthog from '@/posthog'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -65,12 +66,16 @@ const fetchUser = async () => {
 }
 
 const onFollowUser = async () => {
-  await followUser(user.value.id)
+  const response = await followUser(user.value.id)
+  if (!response) return
+  posthog.capture('user_followed')
   await fetchUser()
 }
 
 const onUnfollowUser = async () => {
-  await unfollowUser(user.value.id)
+  const response = await unfollowUser(user.value.id)
+  if (!response) return
+  posthog.capture('user_unfollowed')
   await fetchUser()
 }
 

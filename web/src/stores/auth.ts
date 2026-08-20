@@ -3,6 +3,7 @@ import type { AccessToken } from '@/types/auth.ts'
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
+import { identifyUser, resetUser } from '@/posthog'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -11,14 +12,20 @@ export const useAuthStore = defineStore(
     const accessToken = ref('')
 
     const setAccessToken = (token: string) => {
-      if (userId.value === '') {
-        const claims = jwtDecode(token) as AccessToken
-        userId.value = claims.userId
-      }
+      const claims = jwtDecode(token) as AccessToken
+      const wasAuthorised = authorised.value
+      const isSwitchingAccounts = Boolean(userId.value && userId.value !== claims.userId)
+
+      if (isSwitchingAccounts) resetUser()
+
+      userId.value = claims.userId
       accessToken.value = token
+
+      if (!wasAuthorised || isSwitchingAccounts) identifyUser(userId.value)
     }
 
     const logout = () => {
+      if (authorised.value) resetUser()
       userId.value = ''
       accessToken.value = ''
     }

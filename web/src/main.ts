@@ -9,12 +9,17 @@ import { initNativePlatform } from '@/native/platform'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { createGtag } from 'vue-gtag'
 
+import posthog, { identifyUser } from './posthog'
 import App from './App.vue'
 import { appLocale, i18n } from './i18n'
 import router from './router/router'
 import { warmLazyRoutesWhenIdle } from './router/warmRoutes'
 
 const app = createApp(App)
+
+app.config.errorHandler = (error) => {
+  posthog.captureException(error)
+}
 
 document.documentElement.lang = appLocale
 const pinia = createPinia()
@@ -38,6 +43,7 @@ const init = async () => {
     await refreshAccessTokenOrLogout()
 
     if (authStore.authorised) {
+      identifyUser(authStore.userId)
       const notificationStore = useNotificationStore()
       notificationStore.pollUnreadNotifications()
     }

@@ -11,6 +11,7 @@ import AppButton from '@/ui/components/AppButton.vue'
 import ExerciseTagsInput from '@/ui/exercises/ExerciseTagsInput.vue'
 import ExerciseMeasurementSettings from '@/ui/exercises/ExerciseMeasurementSettings.vue'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import posthog from '@/posthog'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -32,6 +33,7 @@ onMounted(async () => {
 const onSubmit = async () => {
   const res = await createExercise(req.value)
   if (!res) return
+  posthog.capture('exercise_created')
   alertStore.setSuccess(t('exercise.form.created'))
   await router.push('/exercises')
 }
