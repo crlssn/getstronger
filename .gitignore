@@ -11,3 +11,4 @@
 /mise.*.local.toml
 /promo/output/
 /promo/source/
+/.claude/settings.local.json
