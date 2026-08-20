@@ -23,6 +23,7 @@ import StartWorkout from '@/ui/workouts/StartWorkout.vue'
 const {
   createWorkout,
   getCurrentUser,
+  getDashboard,
   getExercise,
   getPreviousWorkoutSets,
   getRoutine,
@@ -32,6 +33,7 @@ const {
 } = vi.hoisted(() => ({
   createWorkout: vi.fn(),
   getCurrentUser: vi.fn(),
+  getDashboard: vi.fn(),
   getExercise: vi.fn(),
   getPreviousWorkoutSets: vi.fn(),
   getRoutine: vi.fn(),
@@ -43,6 +45,7 @@ const {
 vi.mock('@/http/requests', () => ({
   createWorkout,
   getCurrentUser,
+  getDashboard,
   getExercise,
   getPreviousWorkoutSets,
   getRoutine,
@@ -120,7 +123,9 @@ describe('StartWorkout', () => {
       exercise: [benchPress, squat].find((exercise) => exercise.id === id),
     }))
     listExercises.mockResolvedValue({ exercises: [], pagination: {} })
+    createWorkout.mockReset()
     createWorkout.mockResolvedValue({ workoutId: 'workout-1' })
+    getDashboard.mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -357,6 +362,41 @@ describe('StartWorkout', () => {
     })
   })
 
+  describe('finish sheet', () => {
+    test('always confirms through the sheet and collects the note there', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      // No always-visible note card on the page any more.
+      expect(wrapper.find('.note-card').exists()).toBe(false)
+
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
+      await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // Everything is complete, yet finishing still pauses on the sheet so
+      // the note can be written before the save.
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      expect(createWorkout).not.toHaveBeenCalled()
+
+      const noteInput = wrapper.get('.sheet-panel textarea')
+      await noteInput.setValue('Felt strong today.')
+      expect(workoutStore.getNote(routineID)).toBe('Felt strong today.')
+
+      await wrapper.get('.sheet-actions button.primary').trigger('click')
+      await flushPromises()
+
+      expect(createWorkout).toHaveBeenCalledTimes(1)
+      expect(createWorkout.mock.calls[0][0].note).toBe('Felt strong today.')
+      wrapper.unmount()
+    })
+  })
+
   describe('offline finish', () => {
     test('queues the workout and clears the draft when the network is unreachable', async () => {
       getRoutine.mockResolvedValue({
@@ -369,6 +409,8 @@ describe('StartWorkout', () => {
       await wrapper.get('.primary-action').trigger('submit')
       await flushPromises()
       await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('.sheet-actions button.primary').trigger('click')
       await flushPromises()
 
       const queue = useMutationQueueStore()
@@ -390,6 +432,8 @@ describe('StartWorkout', () => {
       await wrapper.get('.primary-action').trigger('submit')
       await flushPromises()
       await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('.sheet-actions button.primary').trigger('click')
       await flushPromises()
 
       expect(useMutationQueueStore().pending).toHaveLength(0)

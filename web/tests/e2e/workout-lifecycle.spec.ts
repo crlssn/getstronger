@@ -23,6 +23,12 @@ const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
   return name
 }
 
+// Finishing always pauses on the confirmation sheet that carries the note.
+const finishAndSave = async (page: Parameters<typeof logIn>[0]) => {
+  await page.getByRole('button', { name: 'Finish workout' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
+}
+
 const logFirstSet = async (
   page: Parameters<typeof logIn>[0],
   exerciseName: string,
@@ -90,7 +96,13 @@ test.describe('quick workout lifecycle', () => {
     await expect(restCountdown).not.toHaveText(initialTimer)
     const extendedTimer = await restCountdown.innerText()
 
-    await page.getByLabel('Workout note').fill(note)
+    // The note lives in the finish sheet; write it there and keep training.
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    const noteDialog = page.getByRole('dialog', { name: 'Finish workout early?' })
+    await noteDialog.getByLabel('Workout note').fill(note)
+    await noteDialog.getByRole('button', { name: 'Keep training' }).click()
+    await expect(noteDialog).toHaveCount(0)
+
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     const leaveDialog = page.getByRole('dialog', { name: 'Leave workout?' })
     await expect(leaveDialog).toBeVisible()
@@ -127,7 +139,10 @@ test.describe('quick workout lifecycle', () => {
     await expect(
       page.getByRole('textbox', { name: `${firstExercise} set 1 reps`, exact: true }),
     ).toHaveValue('8')
+    // The note written before leaving is still waiting in the finish sheet.
+    await page.getByRole('button', { name: 'Finish workout' }).click()
     await expect(page.getByLabel('Workout note')).toHaveValue(note)
+    await page.getByRole('button', { name: 'Keep training' }).click()
 
     // A completed set stays correctable in place.
     const weightInput = page.getByRole('textbox', {
@@ -176,7 +191,7 @@ test.describe('quick workout lifecycle', () => {
     const exercise = await addFirstExercise(page)
     await logFirstSet(page, exercise, '25', '8')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
 
     await page.goto('/workouts/quick')
@@ -194,7 +209,7 @@ test.describe('quick workout lifecycle', () => {
 
     await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText(/25\s*kg/)).toBeVisible()
   })
@@ -203,7 +218,10 @@ test.describe('quick workout lifecycle', () => {
     await page.goto('/workouts/quick')
     const exercise = await addFirstExercise(page)
     await logFirstSet(page, exercise)
+    // Write a note through the finish sheet, then abandon it all.
+    await page.getByRole('button', { name: 'Finish workout' }).click()
     await page.getByLabel('Workout note').fill('This should be discarded.')
+    await page.getByRole('button', { name: 'Keep training' }).click()
 
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     await page
@@ -235,7 +253,7 @@ test.describe('quick workout lifecycle', () => {
     await page.route('**/api.v1.WorkoutService/CreateWorkout', (route) =>
       route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }),
     )
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await finishAndSave(page)
     await expect(
       page.getByText('Workout could not be saved. Check your connection and try again.'),
     ).toBeVisible()
@@ -246,7 +264,7 @@ test.describe('quick workout lifecycle', () => {
     await page.getByRole('button', { name: 'Complete exercise' }).click()
 
     await page.unroute('**/api.v1.WorkoutService/CreateWorkout')
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
   })
 })
@@ -269,7 +287,7 @@ test.describe('weight units', () => {
     await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('60')
     await page.getByLabel(`${exercise} set 1 reps`).fill('8')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText(/60\s*kg/)).toBeVisible()
 
@@ -301,7 +319,7 @@ test.describe('weight units', () => {
       .fill('330.69')
     await page.getByLabel(`${exercise} set 1 reps`).fill('5')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await finishAndSave(page)
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByRole('status')).toContainText('Workout saved')
@@ -375,7 +393,7 @@ test.describe('weight units', () => {
     ).toHaveValue('220.46')
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
-    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText(/220\.46\s*lbs/)).toBeVisible()
 
@@ -437,7 +455,7 @@ test.describe('weight units', () => {
       await expect(time).toHaveValue('12:30')
 
       await page.getByRole('button', { name: 'Complete exercise' }).click()
-      await page.getByRole('button', { name: 'Finish workout' }).click()
+      await finishAndSave(page)
       await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
       const workoutUrl = page.url()
       // The completed view splits the duration into units and derives a pace
@@ -523,10 +541,9 @@ test.describe('planned workouts and history', () => {
 
     await expect(finishWorkout).toBeEnabled()
     await finishWorkout.click()
-    const finishDialog = page.getByRole('dialog', { name: 'Finish workout early?' })
-    if (await finishDialog.isVisible()) {
-      await finishDialog.getByRole('button', { name: 'Finish and save' }).click()
-    }
+    // The finish sheet always confirms — titled "early" only when exercises
+    // remain unfinished.
+    await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
 
     await page.goto('/workout')

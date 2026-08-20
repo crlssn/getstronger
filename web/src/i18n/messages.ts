@@ -233,6 +233,7 @@ export const en = {
     notStarted: 'Not started',
     noExerciseMatches: 'No exercises match your search.',
     allExercisesAdded: 'All available exercises are already in this workout.',
+    finishConfirm: 'Finish workout?',
     finishEarly: 'Finish workout early?',
     finishEarlyBody:
       'You still have {count} exercise unfinished. Every logged set will be saved. | You still have {count} exercises unfinished. Every logged set will be saved.',
@@ -852,6 +853,7 @@ export const sv = {
     notStarted: 'Inte påbörjad',
     noExerciseMatches: 'Inga övningar matchar din sökning.',
     allExercisesAdded: 'Alla tillgängliga övningar finns redan i träningspasset.',
+    finishConfirm: 'Avsluta träningspasset?',
     finishEarly: 'Avsluta träningspasset i förtid?',
     finishEarlyBody:
       'Du har fortfarande {count} övning kvar. Alla loggade set sparas. | Du har fortfarande {count} övningar kvar. Alla loggade set sparas.',

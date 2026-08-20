@@ -773,6 +773,8 @@ const finishWorkoutOffline = (request: CreateWorkoutRequest) => {
   void router.replace('/home')
 }
 
+// Finishing always pauses on the confirmation sheet: it carries the workout
+// note, so the save is never one accidental tap away.
 const requestFinishWorkout = async () => {
   finishError.value = ''
   if (!canFinish.value) {
@@ -780,13 +782,8 @@ const requestFinishWorkout = async () => {
     return
   }
 
-  if (unfinishedExerciseCount.value > 0) {
-    blurActiveElement()
-    finishDialogOpen.value = true
-    return
-  }
-
-  await onFinishWorkout()
+  blurActiveElement()
+  finishDialogOpen.value = true
 }
 
 const confirmFinishWorkout = async () => {
@@ -1172,18 +1169,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           @click="openExercisePicker"
         />
 
-        <section class="note-card">
-          <label for="workout-note"
-            >{{ t('workout.note') }} <span>{{ t('common.optional') }}</span></label
-          >
-          <textarea
-            id="workout-note"
-            ref="textarea"
-            v-model="note"
-            :placeholder="t('workout.notePlaceholder')"
-          ></textarea>
-        </section>
-
         <!-- The escape hatch: quieter than everything above it, but always in
              the same place at the end of the page. -->
         <button
@@ -1253,10 +1238,27 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
     <AppSheet
       v-if="finishDialogOpen"
-      :title="t('workout.finishEarly')"
-      :body="t('workout.finishEarlyBody', unfinishedExerciseCount)"
+      :title="
+        unfinishedExerciseCount > 0 ? t('workout.finishEarly') : t('workout.finishConfirm')
+      "
+      :body="
+        unfinishedExerciseCount > 0
+          ? t('workout.finishEarlyBody', unfinishedExerciseCount)
+          : undefined
+      "
       @close="finishDialogOpen = false"
     >
+      <div class="note-field">
+        <label for="workout-note"
+          >{{ t('workout.note') }} <span>{{ t('common.optional') }}</span></label
+        >
+        <textarea
+          id="workout-note"
+          ref="textarea"
+          v-model="note"
+          :placeholder="t('workout.notePlaceholder')"
+        ></textarea>
+      </div>
       <template #actions>
         <button type="button" class="primary" @click="confirmFinishWorkout">
           <FlagIcon /> {{ t('workout.finishSave') }}
@@ -1511,7 +1513,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-5;
 }
 .exercise-card,
-.note-card,
 .exercise-queue {
   @apply card;
 }
@@ -1586,8 +1587,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 /* Focus reveal (and focusNextSetInput) must land below the session chrome —
    the header, and the rest band that covers it — not behind it. */
 .set-row input,
-.unit-entry,
-.note-card textarea {
+.unit-entry {
   scroll-margin-top: 9rem;
 }
 .unit-entry {
@@ -1672,18 +1672,15 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .workout-tools {
   @apply space-y-3;
 }
-.note-card {
-  @apply p-4 shadow-none;
-}
-.note-card label {
+/* The note rides in the finish sheet, above the confirm action. */
+.note-field label {
   @apply flex items-center justify-between text-sm font-semibold text-text;
 }
-.note-card label span {
+.note-field label span {
   @apply font-normal text-text-subtle;
 }
-/* The card is already the container; a bordered field inside it double-boxes. */
-.note-card textarea {
-  @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
+.note-field textarea {
+  @apply mt-2 min-h-20 w-full resize-none rounded-control border-border text-sm placeholder:text-text-subtle focus:border-ink focus:ring-ink;
 }
 /* Slivers of the neighbouring cards. Decorative: just a card edge, never the
    neighbouring exercise's name. */
