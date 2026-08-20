@@ -1,3 +1,13 @@
+coverage:
+  status:
+    patch:
+      default:
+        # Report patch coverage on every PR without gating on it. Refactors
+        # that touch error branches the integration tests cannot reach (for
+        # example renaming messages in DB-failure paths) would otherwise fail
+        # the check with no proportionate way to pass it.
+        informational: true
+
 # Paths are matched from the repository root and a '*' does not cross a '/',
 # so patterns for files that live in any package need the '**/' prefix. Without
 # it the generated mocks counted as thousands of uncovered lines.
