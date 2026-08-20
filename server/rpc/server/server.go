@@ -51,7 +51,7 @@ func NewServer(p Params) *Server {
 		config: p.Config,
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%s", p.Config.Server.Port),
-			Handler:      p.Mux,
+			Handler:      middlewares.SecurityHeaders(p.Config, p.Mux),
 			Protocols:    protocols,
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,

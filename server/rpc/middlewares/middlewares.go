@@ -34,6 +34,21 @@ func (m *Middleware) Register(h http.Handler) http.Handler {
 	return h
 }
 
+// SecurityHeaders adds Strict-Transport-Security to every response in
+// production. It wraps the whole mux rather than joining Register so paths
+// outside the RPC handlers, such as /healthz and 404s, carry the header too.
+// Local dev is excluded: an HSTS pin on https://localhost would force HTTPS
+// on every localhost port, breaking unrelated local servers.
+func SecurityHeaders(c *config.Config, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if c.Environment == config.EnvironmentProduction {
+			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		}
+
+		h.ServeHTTP(w, r)
+	})
+}
+
 func (m *Middleware) coors(h http.Handler) http.Handler {
 	middleware := cors.New(cors.Options{
 		AllowCredentials: true,
