@@ -228,7 +228,11 @@ test.describe('quick workout lifecycle', () => {
     await logFirstSet(page, exercise)
     await page.getByRole('button', { name: 'Complete exercise' }).click()
 
-    await page.route('**/api.v1.WorkoutService/CreateWorkout', (route) => route.abort())
+    // A rejection from the backend, not a network failure: an unreachable
+    // network queues the save for later instead (see offline.spec.ts).
+    await page.route('**/api.v1.WorkoutService/CreateWorkout', (route) =>
+      route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }),
+    )
     await page.getByRole('button', { name: 'Finish workout' }).click()
     await expect(
       page.getByText('Workout could not be saved. Check your connection and try again.'),
