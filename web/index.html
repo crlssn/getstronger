@@ -23,8 +23,58 @@
     <meta name="twitter:description" content="Lift it. Log it. Beat it." />
     <meta name="twitter:image" content="https://www.getstronger.studio/og-image.png" />
     <title>GetStronger</title>
+    <style>
+      /* Boot splash: painted before any JavaScript runs and swept away when
+         the app mounts into the body. Cold starts wait on a token refresh
+         against a serverless backend, and this keeps that wait from being a
+         blank page. Colours mirror theme.css, which is not loaded yet. */
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #f5f5f3;
+        animation: boot-splash-pulse 2s ease-in-out infinite;
+      }
+      #boot-splash .boot-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #25282d;
+        font-family: system-ui, sans-serif;
+      }
+      #boot-splash .boot-mark {
+        display: grid;
+        place-items: center;
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 0.75rem;
+        background: #25282d;
+      }
+      #boot-splash .boot-mark img {
+        width: 1.75rem;
+        height: 1.75rem;
+        filter: brightness(0) invert(1);
+      }
+      #boot-splash strong {
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+      }
+      @keyframes boot-splash-pulse {
+        50% {
+          opacity: 0.6;
+        }
+      }
+    </style>
   </head>
   <body id="app">
+    <div id="boot-splash" aria-hidden="true">
+      <div class="boot-brand">
+        <span class="boot-mark"><img src="/favicon.png" alt="" /></span>
+        <strong>GetStronger</strong>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

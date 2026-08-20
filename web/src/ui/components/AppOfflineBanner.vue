@@ -33,16 +33,17 @@ onUnmounted(() => connectionStore.stop())
 <style scoped>
 @reference '../../assets/base.css';
 
-/* Sits below the status bar scrim, above page content. */
+/* Floats above the bottom navigation, mirroring the update banner, where it
+   covers no header actions. */
 .offline-banner {
-  top: calc(env(safe-area-inset-top) + 0.75rem);
+  bottom: calc(5.75rem + env(safe-area-inset-bottom));
   @apply fixed inset-x-0 z-40 mx-auto flex w-max max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-pill bg-surface-inverse px-4 py-2 text-white shadow-overlay;
 }
 .offline-banner > svg {
   @apply size-4 shrink-0;
 }
 .offline-banner p {
-  @apply min-w-0 truncate text-xs font-semibold;
+  @apply min-w-0 text-xs font-semibold;
 }
 .offline-banner span {
   @apply font-normal text-ink-tint;
