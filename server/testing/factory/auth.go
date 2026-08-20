@@ -77,7 +77,7 @@ func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth { //nolint:cyclop // Map
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(context.Background(), f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create auth with Bob factory: %w", err))
+		panic(fmt.Errorf("create auth with Bob factory: %w", err))
 	}
 
 	return auth

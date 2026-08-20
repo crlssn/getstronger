@@ -48,7 +48,7 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *models.Notification 
 		var err error
 		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve user: %w", err))
+			panic(fmt.Errorf("retrieve user: %w", err))
 		}
 	} else {
 		user = f.NewUser()
@@ -81,7 +81,7 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *models.Notification 
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create notification with Bob factory: %w", err))
+		panic(fmt.Errorf("create notification with Bob factory: %w", err))
 	}
 	notification.R = built.R
 
@@ -98,7 +98,7 @@ func NotificationPayload(payload repo.NotificationPayload) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
 		value, err := json.Marshal(payload)
 		if err != nil {
-			panic(fmt.Errorf("failed to marshal payload: %w", err))
+			panic(fmt.Errorf("marshal payload: %w", err))
 		}
 
 		notification.Payload = omit.From(bobtypes.NewJSON[json.RawMessage](value))

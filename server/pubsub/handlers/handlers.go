@@ -39,7 +39,7 @@ func (h *RequestTraced) HandlePayload(payload any) {
 
 	p, ok := payload.(payloads.RequestTraced)
 	if !ok {
-		h.log.Error("unexpected payload type", zap.Any("payload", payload))
+		h.log.Error("Unexpected payload type for trace event", zap.Any("payload", payload))
 		return
 	}
 
@@ -48,7 +48,7 @@ func (h *RequestTraced) HandlePayload(payload any) {
 		DurationMS: p.DurationMS,
 		StatusCode: p.StatusCode,
 	}); err != nil {
-		h.log.Error("trace store failed", zap.Error(err))
+		h.log.Error("Store request trace", zap.Error(err))
 	}
 }
 
@@ -67,11 +67,11 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 
 	p, ok := payload.(payloads.WorkoutCommentPosted)
 	if !ok {
-		w.log.Error("unexpected payload type", zap.Any("payload", payload))
+		w.log.Error("Unexpected payload type for workout comment event", zap.Any("payload", payload))
 		return
 	}
 	if p.EventID == "" {
-		w.log.Error("workout comment event is missing an ID")
+		w.log.Error("Workout comment event is missing an ID")
 		return
 	}
 
@@ -80,7 +80,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		repo.GetWorkoutCommentWithID(p.CommentID),
 	)
 	if err != nil {
-		w.log.Error("get workout comment", zap.Error(err))
+		w.log.Error("Get workout comment for notification", zap.Error(err))
 		return
 	}
 
@@ -90,7 +90,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		repo.GetWorkoutLoadComments(),
 	)
 	if err != nil {
-		w.log.Error("get workout", zap.Error(err))
+		w.log.Error("Get workout for comment notification", zap.Error(err))
 		return
 	}
 
@@ -116,7 +116,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 				WorkoutID: comment.WorkoutID.String(),
 			},
 		}); err != nil {
-			w.log.Error("create notification", zap.Error(err))
+			w.log.Error("Create workout comment notification", zap.Error(err))
 		}
 	}
 }
@@ -136,11 +136,11 @@ func (u *FollowedUser) HandlePayload(payload any) {
 
 	p, ok := payload.(payloads.UserFollowed)
 	if !ok {
-		u.log.Error("unexpected payload type", zap.Any("payload", payload))
+		u.log.Error("Unexpected payload type for followed user event", zap.Any("payload", payload))
 		return
 	}
 	if p.EventID == "" {
-		u.log.Error("followed user event is missing an ID")
+		u.log.Error("Followed user event is missing an ID")
 		return
 	}
 
@@ -152,6 +152,6 @@ func (u *FollowedUser) HandlePayload(payload any) {
 			EventID: p.EventID,
 		},
 	}); err != nil {
-		u.log.Error("create notification", zap.Error(err))
+		u.log.Error("Create follow notification", zap.Error(err))
 	}
 }

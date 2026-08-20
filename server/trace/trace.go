@@ -41,7 +41,7 @@ func (m *Tracer) Trace(ctx context.Context, uri string) *Trace {
 	return &Trace{
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
-			m.log.Info("trace", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
+			m.log.Info("Request traced", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
 			m.pubSub.Publish(ctx, repo.EventTopicRequestTraced, payloads.RequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),

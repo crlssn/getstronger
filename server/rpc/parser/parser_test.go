@@ -37,7 +37,7 @@ func (s *parserSuite) SetupSuite() {
 
 	s.T().Cleanup(func() {
 		if err := c.Terminate(ctx); err != nil {
-			s.T().Fatal(fmt.Errorf("failed to terminate container: %w", err))
+			s.T().Fatal(fmt.Errorf("terminate container: %w", err))
 		}
 	})
 }

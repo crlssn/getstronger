@@ -40,7 +40,7 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 		var err error
 		auth, err = models.Auths.Query(models.SelectWhere.Auths.ID.EQ(authID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve auth: %w", err))
+			panic(fmt.Errorf("retrieve auth: %w", err))
 		}
 	} else {
 		auth = f.NewAuth()
@@ -62,7 +62,7 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create user with Bob factory: %w", err))
+		panic(fmt.Errorf("create user with Bob factory: %w", err))
 	}
 	user.R = built.R
 

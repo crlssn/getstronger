@@ -53,7 +53,7 @@ func (s *pubSubSuite) SetupSuite() {
 		s.pubSub.Stop()
 		s.mocks.controller.Finish()
 		if err := c.Terminate(ctx); err != nil {
-			s.T().Fatalf("failed to clean container: %s", err)
+			s.T().Fatalf("Clean container: %s", err)
 		}
 	})
 }

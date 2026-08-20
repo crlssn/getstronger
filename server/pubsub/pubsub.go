@@ -51,12 +51,12 @@ func New(p Params) *PubSub {
 func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload any) {
 	p, err := json.Marshal(payload)
 	if err != nil {
-		ps.log.Error("failed to marshal payload", zap.Error(err))
+		ps.log.Error("Marshal event payload", zap.Error(err))
 		return
 	}
 
 	if err = ps.repo.PublishEvent(ctx, topic, p); err != nil {
-		ps.log.Error("failed to publish event", zap.Error(err))
+		ps.log.Error("Persist event", zap.Error(err))
 		return
 	}
 
@@ -65,7 +65,7 @@ func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload an
 	default:
 		// Never block the request path; the event remains persisted in the
 		// events table even when it cannot be dispatched.
-		ps.log.Error("event buffer full, dropping event", zap.String("topic", topic.String()))
+		ps.log.Error("Event buffer full: dropping event", zap.String("topic", topic.String()))
 	}
 }
 
@@ -75,7 +75,7 @@ func (ps *PubSub) Subscribe(handlers map[repo.EventTopic]handlers.Handler) {
 	ps.mu.Lock()
 	for topic, handler := range handlers {
 		ps.handlers[topic] = handler
-		ps.log.Info("subscribed to topic", zap.String("topic", topic.String()))
+		ps.log.Info("Subscribed to topic", zap.String("topic", topic.String()))
 	}
 	ps.mu.Unlock()
 
@@ -90,14 +90,14 @@ func (ps *PubSub) startWorker() {
 
 	for event := range ps.events {
 		log := ps.log.With(zap.String("topic", event.topic.String()))
-		log.Info("received event")
+		log.Info("Received event")
 
 		ps.mu.RLock()
 		handler, ok := ps.handlers[event.topic]
 		ps.mu.RUnlock()
 
 		if !ok {
-			log.Error("handler not found")
+			log.Error("No handler subscribed to topic")
 			continue
 		}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -65,7 +66,7 @@ func (r *repo) NewTx(ctx context.Context, f func(tx Tx) error) error {
 
 	if err = f(&repo{nil, tx}); err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
-			return fmt.Errorf("rollback tx: %w", errRollback)
+			return fmt.Errorf("rollback tx: %w", errors.Join(err, errRollback))
 		}
 		return fmt.Errorf("repo tx: %w", err)
 	}

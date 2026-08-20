@@ -70,7 +70,7 @@ func (s *Server) ListenAndServe(_ context.Context) error {
 				return
 			}
 
-			s.log.Fatal("server: listen and serve", zap.Error(err))
+			s.log.Fatal("Server: listen and serve", zap.Error(err))
 		}
 	}()
 
@@ -79,11 +79,11 @@ func (s *Server) ListenAndServe(_ context.Context) error {
 
 func (s *Server) listenAndServe() error {
 	if s.config.Server.HasCertificate() {
-		s.log.Info("server: listening on https")
+		s.log.Info("Server: listening on https")
 		return s.server.ListenAndServeTLS(s.config.Server.CertPath, s.config.Server.KeyPath) //nolint:wrapcheck
 	}
 
-	s.log.Info("server: listening on http")
+	s.log.Info("Server: listening on http")
 	return s.server.ListenAndServe() //nolint:wrapcheck
 }
 

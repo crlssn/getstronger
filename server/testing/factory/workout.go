@@ -42,7 +42,7 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cycl
 		var err error
 		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve user: %w", err))
+			panic(fmt.Errorf("retrieve user: %w", err))
 		}
 	} else {
 		user = f.NewUser()
@@ -81,7 +81,7 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cycl
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create workout with Bob factory: %w", err))
+		panic(fmt.Errorf("create workout with Bob factory: %w", err))
 	}
 	workout.R = built.R
 
@@ -156,7 +156,7 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutCo
 		var err error
 		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve user: %w", err))
+			panic(fmt.Errorf("retrieve user: %w", err))
 		}
 	} else {
 		user = f.NewUser()
@@ -167,7 +167,7 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutCo
 		var err error
 		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
 		if err != nil {
-			panic(fmt.Errorf("failed to retrieve workout: %w", err))
+			panic(fmt.Errorf("retrieve workout: %w", err))
 		}
 	} else {
 		workout = f.NewWorkout()
@@ -198,7 +198,7 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutCo
 			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
 	).One(ctx, f.exec)
 	if err != nil {
-		panic(fmt.Errorf("failed to create workout comment with Bob factory: %w", err))
+		panic(fmt.Errorf("create workout comment with Bob factory: %w", err))
 	}
 	comment.R = built.R
 
