@@ -17,7 +17,6 @@ import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
   CheckIcon,
-  ChevronRightIcon,
   ClockIcon,
   FlagIcon,
   MagnifyingGlassIcon,
@@ -51,6 +50,8 @@ import {
 import { isConnectivityError } from '@/http/offlineCache'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { isNumber } from '@/utils/numbers'
+import AppOptionalAction from '@/ui/components/AppOptionalAction.vue'
+import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
@@ -163,15 +164,6 @@ const unfinishedExerciseCount = computed(
     routine.value?.exercises.filter((exercise) => !completedExercises.value[exercise.id]).length ??
     0,
 )
-const nextIncompleteExerciseIndex = computed(() => {
-  const exercises = routine.value?.exercises ?? []
-  const afterCurrent = exercises.findIndex(
-    (exercise, index) =>
-      index > activeExerciseIndex.value && !completedExercises.value[exercise.id],
-  )
-  if (afterCurrent >= 0) return afterCurrent
-  return exercises.findIndex((exercise) => !completedExercises.value[exercise.id])
-})
 const exerciseByID = (exerciseID: string) =>
   routine.value?.exercises.find((exercise) => exercise.id === exerciseID)
 const isCompleteSet = (set: Set, exercise = currentExercise.value) =>
@@ -257,18 +249,11 @@ const restHue = computed(
 // so it should read as energising rather than as a warning.
 const restFinalMinute = computed(() => restSeconds.value > 0 && restSeconds.value < 60)
 const restFinalCountdown = computed(() => restSeconds.value > 0 && restSeconds.value <= 10)
-const nextActionLabel = computed(() =>
-  nextIncompleteExerciseIndex.value >= 0 &&
-  nextIncompleteExerciseIndex.value !== activeExerciseIndex.value
-    ? t('workout.nextExercise')
-    : t('workout.completeExercise'),
-)
-
-// The dock holds a single forward action: advance while exercises remain,
+// One forward action: complete the active exercise while exercises remain,
 // finish once they are all done.
 const allExercisesComplete = computed(() => unfinishedExerciseCount.value === 0)
 const primaryActionLabel = computed(() => {
-  if (!allExercisesComplete.value) return nextActionLabel.value
+  if (!allExercisesComplete.value) return t('workout.completeExercise')
   return submitting.value ? t('common.saving') : t('workout.finish')
 })
 const canRunPrimaryAction = computed(() =>
@@ -788,6 +773,8 @@ const finishWorkoutOffline = (request: CreateWorkoutRequest) => {
   void router.replace('/home')
 }
 
+// Finishing always pauses on the confirmation sheet: it carries the workout
+// note, so the save is never one accidental tap away.
 const requestFinishWorkout = async () => {
   finishError.value = ''
   if (!canFinish.value) {
@@ -795,13 +782,8 @@ const requestFinishWorkout = async () => {
     return
   }
 
-  if (unfinishedExerciseCount.value > 0) {
-    blurActiveElement()
-    finishDialogOpen.value = true
-    return
-  }
-
-  await onFinishWorkout()
+  blurActiveElement()
+  finishDialogOpen.value = true
 }
 
 const confirmFinishWorkout = async () => {
@@ -815,10 +797,12 @@ const cancelWorkout = () => {
   leaveDialogOpen.value = true
 }
 
+// The workout keeps running in the background; home is where the banner and
+// the nav badge that lead back to it live.
 const saveAndLeave = async () => {
   discardConfirmationOpen.value = false
   leaveDialogOpen.value = false
-  await router.push('/workout')
+  await router.push('/home')
 }
 
 const closeLeaveDialog = () => {
@@ -964,7 +948,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </button>
       </section>
 
-      <section v-if="currentExercise" ref="exerciseCard" class="exercise-card">
+      <!-- The active card sits between slivers of its neighbours, so the
+           session reads as a stack of cards without becoming a carousel. The
+           peeks are decorative and never reveal the neighbouring name. -->
+      <div v-if="currentExercise" class="card-carousel">
+        <div v-if="activeExerciseIndex > 0" class="card-peek above" aria-hidden="true"></div>
+        <section ref="exerciseCard" class="exercise-card">
         <header class="exercise-heading">
           <div>
             <!-- The position lives in the header now; saying it twice on one
@@ -974,6 +963,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           </div>
         </header>
 
+        <!-- Ticked off, not hidden: the label sits above the sets so a
+             completed exercise still shows what was logged. -->
         <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
           <span class="completed-icon"><CheckIcon /></span>
           <div>
@@ -988,7 +979,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           </button>
         </div>
 
-        <template v-else>
           <div
             class="set-grid set-labels"
             :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
@@ -1103,24 +1093,54 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               <MinusIcon />
             </button>
           </div>
-        </template>
-      </section>
+        </section>
+        <div
+          v-if="activeExerciseIndex < (routine?.exercises.length ?? 0) - 1"
+          class="card-peek below"
+          aria-hidden="true"
+        ></div>
+      </div>
 
+      <!-- The one forward action lives right under the card it acts on, and
+           only once there is a card to act on: the empty state already leads
+           with choosing an exercise. -->
+      <div v-if="currentExercise" class="action-block">
+        <strong
+          v-if="finishError || blockedMessage || primaryStatus"
+          id="workout-dock-status"
+          :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
+          >{{ finishError || blockedMessage || primaryStatus }}</strong
+        >
+        <!-- Described by the status rather than aria-disabled: the whole point
+             is that this control is pressable, and aria-disabled would announce
+             the same "broken" that a grey fill used to. -->
+        <button
+          type="submit"
+          class="primary-action"
+          :aria-describedby="
+            finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
+          "
+          :disabled="submitting"
+        >
+          {{ primaryActionLabel }}
+        </button>
+      </div>
+
+      <!-- A status list, not a switcher: progression runs through the
+           complete-exercise action, so these rows only report where the other
+           exercises stand. -->
       <section v-if="exerciseQueue.length" class="exercise-queue">
         <header>
           <div>
             <p class="eyebrow">{{ t('workout.session') }}</p>
             <h2>{{ t('workout.queue') }}</h2>
           </div>
-          <small>{{ t('workout.tapSwitch') }}</small>
         </header>
-        <div>
-          <button
+        <ul>
+          <li
             v-for="entry in exerciseQueue"
             :key="entry.exercise.id"
-            type="button"
             :class="{ completed: completedExercises[entry.exercise.id] }"
-            @click="selectExercise(entry.index)"
           >
             <span class="queue-number">
               <CheckIcon v-if="completedExercises[entry.exercise.id]" />
@@ -1139,194 +1159,157 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               </small>
               <small v-else>{{ t('workout.notStarted') }}</small>
             </span>
-            <ChevronRightIcon />
-          </button>
-        </div>
+          </li>
+        </ul>
       </section>
 
       <section v-if="!quickWorkout || (routine?.exercises.length ?? 0) > 0" class="workout-tools">
-        <button type="button" class="add-exercise" @click="openExercisePicker">
-          <PlusIcon />
-          <span
-            ><strong>{{ t('workout.addExercise') }}</strong
-            ><small>{{ t('workout.onlyThisWorkout') }}</small></span
-          >
-        </button>
+        <AppOptionalAction
+          class="add-exercise"
+          :label="t('workout.addExercise')"
+          :hint="t('workout.onlyThisWorkout')"
+          @click="openExercisePicker"
+        />
 
-        <section class="note-card">
-          <label for="workout-note"
-            >{{ t('workout.note') }} <span>{{ t('common.optional') }}</span></label
-          >
-          <textarea
-            id="workout-note"
-            ref="textarea"
-            v-model="note"
-            :placeholder="t('workout.notePlaceholder')"
-          ></textarea>
-        </section>
+        <!-- The escape hatch: quieter than everything above it, but always in
+             the same place at the end of the page. -->
+        <button
+          v-if="!allExercisesComplete"
+          type="button"
+          class="finish-early"
+          :disabled="!canFinish"
+          :title="!canFinish ? finishStatus : undefined"
+          :aria-label="
+            !canFinish && finishStatus
+              ? `${t('workout.finish')}: ${finishStatus}`
+              : t('workout.finish')
+          "
+          @click="requestFinishWorkout"
+        >
+          {{ t('workout.finish') }}
+        </button>
       </section>
     </main>
 
-    <div v-if="exercisePickerOpen" class="picker-backdrop" @click.self="closeExercisePicker">
-      <section
-        class="exercise-picker"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="exercise-picker-title"
-      >
-        <header>
-          <div>
-            <p class="eyebrow">{{ t('workout.onlyThisWorkout') }}</p>
-            <h2 id="exercise-picker-title">{{ t('workout.addExercise') }}</h2>
-          </div>
-          <button
-            type="button"
-            :aria-label="t('workout.closeExercisePicker')"
-            @click="closeExercisePicker"
-          >
-            <XMarkIcon />
-          </button>
-        </header>
+    <AppSheet
+      v-if="exercisePickerOpen"
+      :eyebrow="t('workout.onlyThisWorkout')"
+      :title="t('workout.addExercise')"
+      :close-label="t('workout.closeExercisePicker')"
+      @close="closeExercisePicker"
+    >
+      <label class="exercise-search">
+        <MagnifyingGlassIcon />
+        <input
+          v-model="exerciseSearch"
+          type="search"
+          :placeholder="t('exercise.search')"
+          :aria-label="t('exercise.search')"
+        />
+      </label>
 
-        <label class="exercise-search">
-          <MagnifyingGlassIcon />
-          <input
-            v-model="exerciseSearch"
-            type="search"
-            :placeholder="t('exercise.search')"
-            :aria-label="t('exercise.search')"
-          />
-        </label>
-
-        <AppSkeleton v-if="exercisePickerLoading && !exerciseOptionsLoaded" />
-        <div v-else-if="availableExercises.length" class="exercise-options">
-          <button
-            v-for="exercise in availableExercises"
-            :key="exercise.id"
-            type="button"
-            @click="addExerciseToWorkout(exercise)"
-          >
-            <span class="min-w-0"
-              ><strong>{{ exercise.name }}</strong
-              ><ExerciseTags compact :tags="exercise.tags"
-            /></span>
-            <PlusIcon />
-          </button>
-        </div>
-        <div v-else class="picker-empty">
-          {{ exerciseSearch ? t('workout.noExerciseMatches') : t('workout.allExercisesAdded') }}
-        </div>
-
+      <AppSkeleton v-if="exercisePickerLoading && !exerciseOptionsLoaded" />
+      <div v-else-if="availableExercises.length" class="exercise-options">
         <button
-          v-if="hasMoreExercises"
+          v-for="exercise in availableExercises"
+          :key="exercise.id"
           type="button"
-          class="load-more"
-          :disabled="exercisePickerLoading"
-          @click="loadExerciseOptions"
+          @click="addExerciseToWorkout(exercise)"
         >
-          {{ exercisePickerLoading ? t('common.loading') : t('exercise.loadMore') }}
+          <span class="min-w-0"
+            ><strong>{{ exercise.name }}</strong
+            ><ExerciseTags compact :tags="exercise.tags"
+          /></span>
+          <PlusIcon />
         </button>
-      </section>
-    </div>
+      </div>
+      <div v-else class="picker-empty">
+        {{ exerciseSearch ? t('workout.noExerciseMatches') : t('workout.allExercisesAdded') }}
+      </div>
 
-    <div v-if="finishDialogOpen" class="picker-backdrop" @click.self="finishDialogOpen = false">
-      <section
-        class="finish-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="finish-dialog-title"
+      <button
+        v-if="hasMoreExercises"
+        type="button"
+        class="load-more"
+        :disabled="exercisePickerLoading"
+        @click="loadExerciseOptions"
       >
-        <span class="dialog-handle" aria-hidden="true"></span>
-        <h2 id="finish-dialog-title">{{ t('workout.finishEarly') }}</h2>
-        <p>{{ t('workout.finishEarlyBody', unfinishedExerciseCount) }}</p>
-        <button type="button" class="confirm-finish" @click="confirmFinishWorkout">
+        {{ exercisePickerLoading ? t('common.loading') : t('exercise.loadMore') }}
+      </button>
+    </AppSheet>
+
+    <AppSheet
+      v-if="finishDialogOpen"
+      :title="
+        unfinishedExerciseCount > 0 ? t('workout.finishEarly') : t('workout.finishConfirm')
+      "
+      :body="
+        unfinishedExerciseCount > 0
+          ? t('workout.finishEarlyBody', unfinishedExerciseCount)
+          : undefined
+      "
+      @close="finishDialogOpen = false"
+    >
+      <div class="note-field">
+        <label for="workout-note"
+          >{{ t('workout.note') }} <span>{{ t('common.optional') }}</span></label
+        >
+        <textarea
+          id="workout-note"
+          ref="textarea"
+          v-model="note"
+          :placeholder="t('workout.notePlaceholder')"
+        ></textarea>
+      </div>
+      <template #actions>
+        <button type="button" class="primary" @click="confirmFinishWorkout">
           <FlagIcon /> {{ t('workout.finishSave') }}
         </button>
-        <button type="button" class="keep-training" @click="finishDialogOpen = false">
+        <button type="button" class="tertiary" @click="finishDialogOpen = false">
           {{ t('workout.keepTraining') }}
         </button>
-      </section>
-    </div>
+      </template>
+    </AppSheet>
 
-    <div v-if="leaveDialogOpen" class="picker-backdrop" @click.self="closeLeaveDialog">
-      <section
-        class="finish-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="leave-dialog-title"
-      >
-        <span class="dialog-handle" aria-hidden="true"></span>
-        <template v-if="discardConfirmationOpen">
-          <p class="eyebrow text-danger">{{ t('workout.discard') }}</p>
-          <h2 id="leave-dialog-title">{{ t('workout.deleteTitle') }}</h2>
-          <p>{{ t('workout.discardBody') }}</p>
-          <button type="button" class="confirm-discard" @click="discardWorkout">
-            <TrashIcon /> {{ t('workout.discard') }}
-          </button>
-          <button type="button" class="keep-training" @click="discardConfirmationOpen = false">
-            {{ t('common.back') }}
-          </button>
-        </template>
-        <template v-else>
-          <p class="eyebrow text-success">{{ t('workout.autosaved') }}</p>
-          <h2 id="leave-dialog-title">{{ t('workout.leaveTitle') }}</h2>
-          <p>{{ t('workout.leaveBody') }}</p>
-          <button type="button" class="confirm-finish" @click="saveAndLeave">
-            {{ t('workout.saveLeave') }}
-          </button>
-          <button type="button" class="discard-workout" @click="discardConfirmationOpen = true">
-            {{ t('workout.discard') }}
-          </button>
-          <button type="button" class="keep-training" @click="closeLeaveDialog">
-            {{ t('workout.stay') }}
-          </button>
-        </template>
-      </section>
-    </div>
+    <AppSheet
+      v-if="leaveDialogOpen && discardConfirmationOpen"
+      :eyebrow="t('workout.discard')"
+      eyebrow-tone="danger"
+      :title="t('workout.deleteTitle')"
+      :body="t('workout.discardBody')"
+      @close="closeLeaveDialog"
+    >
+      <template #actions>
+        <button type="button" class="danger" @click="discardWorkout">
+          <TrashIcon /> {{ t('workout.discard') }}
+        </button>
+        <button type="button" class="tertiary" @click="discardConfirmationOpen = false">
+          {{ t('common.back') }}
+        </button>
+      </template>
+    </AppSheet>
 
-    <!-- One ranked pair at the end of the session. Advancing is the primary
-         action while exercises are unfinished; finishing stays reachable for
-         the entire session but is demoted to a text button, because two
-         controls of equal weight leave the screen with no ranking at all. -->
-    <footer class="finish-dock">
-      <strong
-        v-if="finishError || blockedMessage || primaryStatus"
-        id="workout-dock-status"
-        :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
-        >{{ finishError || blockedMessage || primaryStatus }}</strong
-      >
-      <!-- Described by the status rather than aria-disabled: the whole point
-           is that this control is pressable, and aria-disabled would announce
-           the same "broken" that the grey fill used to. -->
-      <button
-        type="submit"
-        class="primary-action"
-        :aria-describedby="
-          finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
-        "
-        :disabled="submitting"
-      >
-        <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
-        {{ primaryActionLabel }}
-      </button>
-      <!-- Keep the escape hatch in a stable position even when a partial set
-         temporarily prevents saving the workout. -->
-      <button
-        v-if="!allExercisesComplete"
-        type="button"
-        class="finish-early"
-        :disabled="!canFinish"
-        :title="!canFinish ? finishStatus : undefined"
-        :aria-label="
-          !canFinish && finishStatus
-            ? `${t('workout.finish')}: ${finishStatus}`
-            : t('workout.finish')
-        "
-        @click="requestFinishWorkout"
-      >
-        {{ t('workout.finish') }}
-      </button>
-    </footer>
+    <AppSheet
+      v-else-if="leaveDialogOpen"
+      :eyebrow="t('workout.autosaved')"
+      eyebrow-tone="success"
+      :title="t('workout.leaveTitle')"
+      :body="t('workout.leaveBody')"
+      @close="closeLeaveDialog"
+    >
+      <template #actions>
+        <button type="button" class="primary" @click="saveAndLeave">
+          {{ t('workout.continueInBackground') }}
+        </button>
+        <button type="button" class="danger-outline" @click="discardConfirmationOpen = true">
+          {{ t('workout.discard') }}
+        </button>
+        <button type="button" class="tertiary" @click="closeLeaveDialog">
+          {{ t('workout.stay') }}
+        </button>
+      </template>
+    </AppSheet>
+
   </form>
 </template>
 
@@ -1532,7 +1515,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-5;
 }
 .exercise-card,
-.note-card,
 .exercise-queue {
   @apply card;
 }
@@ -1553,9 +1535,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
      and would otherwise paint a scrollbar under every row. */
   scrollbar-width: none;
   @apply grid items-center gap-2 overflow-x-auto;
-  grid-template-columns: 2.25rem minmax(5.5rem, 1fr) repeat(
+  /* The previous column sizes to its content and every spare pixel goes to
+     the inputs being typed into, so the columns space evenly with no dead
+     stretch in the middle of the row. */
+  grid-template-columns: 2.25rem minmax(5.5rem, max-content) repeat(
       var(--metric-count),
-      minmax(4.25rem, 0.75fr)
+      minmax(4.25rem, 1fr)
     );
 }
 .set-grid::-webkit-scrollbar {
@@ -1604,8 +1589,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 /* Focus reveal (and focusNextSetInput) must land below the session chrome —
    the header, and the rest band that covers it — not behind it. */
 .set-row input,
-.unit-entry,
-.note-card textarea {
+.unit-entry {
   scroll-margin-top: 9rem;
 }
 .unit-entry {
@@ -1656,14 +1640,11 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .exercise-queue h2 {
   @apply mt-1 text-title font-semibold text-text;
 }
-.exercise-queue > header > small {
-  @apply text-xs text-text-subtle;
-}
-.exercise-queue > div {
+.exercise-queue > ul {
   @apply divide-y divide-border border-t border-border;
 }
-.exercise-queue button {
-  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr_auto] items-center gap-3 py-2.5 text-left transition hover:text-ink-strong;
+.exercise-queue li {
+  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr] items-center gap-3 py-2.5 text-left;
 }
 .queue-number {
   @apply grid size-8 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
@@ -1684,61 +1665,52 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .queue-copy small {
   @apply mt-0.5 text-xs text-text-subtle;
 }
-.exercise-queue button > svg {
-  @apply size-5 text-text-subtle;
-}
-.exercise-queue button.completed .queue-number {
+.exercise-queue li.completed .queue-number {
   @apply bg-success-surface text-success;
 }
-.exercise-queue button.completed .queue-copy strong {
+.exercise-queue li.completed .queue-copy strong {
   @apply text-success;
 }
 .workout-tools {
   @apply space-y-3;
 }
-/* A real, solid card: the dashed ghost read as a placeholder. */
-.add-exercise {
-  @apply card grid w-full grid-cols-[auto_1fr] items-center gap-3 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
-}
-.add-exercise > svg {
-  @apply size-11 shrink-0 rounded-control bg-ink p-2.5 text-white;
-}
-.add-exercise strong,
-.add-exercise small {
-  @apply block;
-}
-.add-exercise strong {
-  @apply text-base font-semibold text-text;
-}
-.add-exercise small {
-  @apply mt-0.5 text-xs text-text-subtle;
-}
-.note-card {
-  @apply p-4 shadow-none;
-}
-.note-card label {
+/* The note rides in the finish sheet, above the confirm action. */
+.note-field label {
   @apply flex items-center justify-between text-sm font-semibold text-text;
 }
-.note-card label span {
+.note-field label span {
   @apply font-normal text-text-subtle;
 }
-/* The card is already the container; a bordered field inside it double-boxes. */
-.note-card textarea {
-  @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
+.note-field textarea {
+  @apply mt-2 min-h-20 w-full resize-none rounded-control border-border text-sm placeholder:text-text-subtle focus:border-ink focus:ring-ink;
 }
-/* In flow at the end of the session: no container of its own, so the buttons
-   sit on the page background like the rest of the screen. */
-.finish-dock {
+/* Slivers of the neighbouring cards. Decorative: just a card edge, never the
+   neighbouring exercise's name. */
+.card-carousel {
+  @apply grid gap-1.5;
+}
+.card-peek {
+  @apply mx-3 h-3 border-x border-border bg-white shadow-card;
+}
+.card-peek.above {
+  @apply rounded-b-card border-b;
+}
+.card-peek.below {
+  @apply rounded-t-card border-t;
+}
+/* In flow right under the exercise card it acts on, so pressing forward never
+   means travelling past the rest of the page. */
+.action-block {
   @apply flex w-full flex-col items-stretch gap-2 text-center;
 }
 /* What is missing, said where the button that is waiting for it lives. */
-.finish-dock > strong {
+.action-block > strong {
   @apply text-meta font-semibold text-text-muted;
 }
-.finish-dock > strong.blocked {
+.action-block > strong.blocked {
   @apply text-warning;
 }
-.finish-dock > strong.failed {
+.action-block > strong.failed {
   @apply text-danger;
 }
 /* Blocked, not disabled: it stays filled and live, and says what is missing
@@ -1753,27 +1725,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .finish-early {
   @apply inline-flex min-h-(--size-control) w-full items-center justify-center rounded-control px-4 text-sm font-semibold text-text-muted transition hover:bg-surface-sunken hover:text-text disabled:cursor-not-allowed disabled:opacity-50;
 }
-.finish-dock svg {
-  @apply size-5;
-}
-.picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
-}
-.exercise-picker {
-  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
-}
-.exercise-picker header {
-  @apply mb-4 flex items-center justify-between gap-4;
-}
-.exercise-picker header h2 {
-  @apply mt-1 text-title font-semibold text-text;
-}
-.exercise-picker header button {
-  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
-}
-.exercise-picker header button svg {
-  @apply size-5;
-}
 .exercise-search {
   @apply mb-4 flex items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
 }
@@ -1784,7 +1735,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
 }
 .exercise-options {
-  @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
+  @apply space-y-2;
 }
 .exercise-options button {
   @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
@@ -1808,42 +1759,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .load-more {
   @apply mt-4 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
 }
-.finish-dialog {
-  @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-sheet bg-white p-5 text-left shadow-overlay sm:rounded-sheet;
-}
-.dialog-handle {
-  @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
-}
-.finish-dialog h2 {
-  @apply text-title font-semibold text-text;
-}
-.finish-dialog p {
-  @apply mt-2 text-sm leading-6 text-text-subtle;
-}
-.finish-dialog button {
-  @apply mt-3 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold;
-}
-.finish-dialog button svg {
-  @apply size-5;
-}
-.confirm-finish {
-  @apply bg-ink text-white hover:bg-ink-strong;
-}
-.keep-training {
-  @apply border border-border text-text-muted hover:bg-ink-surface;
-}
-.discard-workout {
-  @apply border border-danger/30 text-danger hover:bg-danger-surface hover:text-danger-strong;
-}
-.confirm-discard {
-  @apply bg-danger text-white hover:bg-danger;
-}
 @media (max-width: 520px) {
   .set-grid {
     @apply gap-1.5;
-    grid-template-columns: 2.25rem minmax(4.5rem, 1fr) repeat(
+    grid-template-columns: 2.25rem minmax(4.5rem, max-content) repeat(
         var(--metric-count),
-        minmax(5.5rem, 0.75fr)
+        minmax(5.5rem, 1fr)
       );
   }
   .set-labels {

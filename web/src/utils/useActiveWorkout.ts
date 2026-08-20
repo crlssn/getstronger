@@ -1,10 +1,8 @@
 import type { Workout } from '@/types/workout'
 
 import { computed } from 'vue'
-import { DateTime } from 'luxon'
 
-import { dateLocale, i18n } from '@/i18n'
-import { useConfirmationStore } from '@/stores/confirmation'
+import { i18n } from '@/i18n'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useWorkoutStore } from '@/stores/workout'
 
@@ -30,7 +28,6 @@ const hasProgress = (workout: Workout) =>
 export default function useActiveWorkout() {
   const workoutStore = useWorkoutStore()
   const dashboardStore = useDashboardStore()
-  const confirmationStore = useConfirmationStore()
 
   const savedWorkout = computed(
     () =>
@@ -60,16 +57,6 @@ export default function useActiveWorkout() {
     )
   })
 
-  const savedWorkoutStarted = computed(() => {
-    const { t } = i18n.global
-    const startedAt = savedWorkout.value?.[1].startedAt
-    if (!startedAt) return t('workout.inProgress')
-    const start = DateTime.fromISO(startedAt).setLocale(dateLocale)
-    return start.isValid
-      ? t('workout.startedAgo', { relative: start.toRelative() })
-      : t('workout.inProgress')
-  })
-
   const savedWorkoutStartedAtMs = computed(() => {
     const time = Date.parse(savedWorkout.value?.[1].startedAt ?? '')
     return Number.isNaN(time) ? undefined : time
@@ -80,25 +67,10 @@ export default function useActiveWorkout() {
     return Number.isNaN(time) ? undefined : time
   })
 
-  const discardSavedWorkout = async () => {
-    const routineId = savedWorkout.value?.[0]
-    if (!routineId) return
-    const confirmed = await confirmationStore.confirm({
-      body: i18n.global.t('workout.discardConfirmBody'),
-      confirmLabel: i18n.global.t('workout.discard'),
-      destructive: true,
-      title: i18n.global.t('workout.discardConfirmTitle', { name: savedRoutineName.value }),
-    })
-    if (!confirmed) return
-    workoutStore.removeWorkout(routineId)
-  }
-
   return {
-    discardSavedWorkout,
     savedHref,
     savedRoutineName,
     savedWorkout,
-    savedWorkoutStarted,
     savedWorkoutStartedAtMs,
     savedRestTimerEndsAtMs,
   }
