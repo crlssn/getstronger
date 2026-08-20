@@ -11,6 +11,9 @@ export const isPostHogConfigured = Boolean(key && host) && !inTest
 if (key && host && !inTest) {
   posthog.init(key, {
     api_host: host,
+    // Pageviews replace Google Analytics; pin SPA route-change capture
+    // rather than relying on the library default.
+    capture_pageview: 'history_change',
     capture_exceptions: {
       capture_unhandled_errors: true,
       capture_unhandled_rejections: true,

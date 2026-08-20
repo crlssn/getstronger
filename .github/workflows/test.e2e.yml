@@ -75,7 +75,6 @@ jobs:
       USER_LASTNAME: Morgan
       USER_PASSWORD: password123
       VITE_API_URL: http://localhost:8080
-      VITE_ENABLE_GOOGLE_ANALYTICS: 'false'
 
     services:
       postgres:
