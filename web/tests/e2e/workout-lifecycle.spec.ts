@@ -509,7 +509,7 @@ test.describe('planned workouts and history', () => {
 
     const exercise = (await page.locator('.exercise-card h2').innerText()).trim()
     await logFirstSet(page, exercise, '30', '6')
-    await page.getByRole('button', { name: /Next exercise|Complete exercise/ }).click()
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
 
     // Seeded routines vary in length. One with a further exercise opens it on
     // an empty set that blocks finishing until it is removed; a single-exercise

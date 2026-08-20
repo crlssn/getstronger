@@ -218,6 +218,28 @@ describe('StartWorkout', () => {
     })
   })
 
+  describe('exercise progression', () => {
+    test('advances only through the plain-text complete-exercise action', async () => {
+      const wrapper = await mountWorkout()
+
+      const primary = wrapper.get('.primary-action')
+      expect(primary.text()).toBe('Complete exercise')
+      // No icon: the label sits centred on the screen's dominant control.
+      expect(primary.find('svg').exists()).toBe(false)
+
+      // The queue is a status list, not a switcher.
+      const queue = wrapper.get('.exercise-queue')
+      expect(queue.text()).toContain('Squat')
+      expect(queue.find('button').exists()).toBe(false)
+
+      await logFirstSet(wrapper)
+      await primary.trigger('submit')
+      await flushPromises()
+
+      expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
+    })
+  })
+
   describe('previous values and set correction', () => {
     beforeEach(() => {
       getPreviousWorkoutSets.mockResolvedValue({

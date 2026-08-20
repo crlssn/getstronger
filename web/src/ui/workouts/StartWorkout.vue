@@ -17,7 +17,6 @@ import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
   CheckIcon,
-  ChevronRightIcon,
   ClockIcon,
   FlagIcon,
   MagnifyingGlassIcon,
@@ -164,15 +163,6 @@ const unfinishedExerciseCount = computed(
     routine.value?.exercises.filter((exercise) => !completedExercises.value[exercise.id]).length ??
     0,
 )
-const nextIncompleteExerciseIndex = computed(() => {
-  const exercises = routine.value?.exercises ?? []
-  const afterCurrent = exercises.findIndex(
-    (exercise, index) =>
-      index > activeExerciseIndex.value && !completedExercises.value[exercise.id],
-  )
-  if (afterCurrent >= 0) return afterCurrent
-  return exercises.findIndex((exercise) => !completedExercises.value[exercise.id])
-})
 const exerciseByID = (exerciseID: string) =>
   routine.value?.exercises.find((exercise) => exercise.id === exerciseID)
 const isCompleteSet = (set: Set, exercise = currentExercise.value) =>
@@ -258,18 +248,11 @@ const restHue = computed(
 // so it should read as energising rather than as a warning.
 const restFinalMinute = computed(() => restSeconds.value > 0 && restSeconds.value < 60)
 const restFinalCountdown = computed(() => restSeconds.value > 0 && restSeconds.value <= 10)
-const nextActionLabel = computed(() =>
-  nextIncompleteExerciseIndex.value >= 0 &&
-  nextIncompleteExerciseIndex.value !== activeExerciseIndex.value
-    ? t('workout.nextExercise')
-    : t('workout.completeExercise'),
-)
-
-// The dock holds a single forward action: advance while exercises remain,
+// One forward action: complete the active exercise while exercises remain,
 // finish once they are all done.
 const allExercisesComplete = computed(() => unfinishedExerciseCount.value === 0)
 const primaryActionLabel = computed(() => {
-  if (!allExercisesComplete.value) return nextActionLabel.value
+  if (!allExercisesComplete.value) return t('workout.completeExercise')
   return submitting.value ? t('common.saving') : t('workout.finish')
 })
 const canRunPrimaryAction = computed(() =>
@@ -1109,21 +1092,21 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </template>
       </section>
 
+      <!-- A status list, not a switcher: progression runs through the
+           complete-exercise action, so these rows only report where the other
+           exercises stand. -->
       <section v-if="exerciseQueue.length" class="exercise-queue">
         <header>
           <div>
             <p class="eyebrow">{{ t('workout.session') }}</p>
             <h2>{{ t('workout.queue') }}</h2>
           </div>
-          <small>{{ t('workout.tapSwitch') }}</small>
         </header>
-        <div>
-          <button
+        <ul>
+          <li
             v-for="entry in exerciseQueue"
             :key="entry.exercise.id"
-            type="button"
             :class="{ completed: completedExercises[entry.exercise.id] }"
-            @click="selectExercise(entry.index)"
           >
             <span class="queue-number">
               <CheckIcon v-if="completedExercises[entry.exercise.id]" />
@@ -1142,9 +1125,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               </small>
               <small v-else>{{ t('workout.notStarted') }}</small>
             </span>
-            <ChevronRightIcon />
-          </button>
-        </div>
+          </li>
+        </ul>
       </section>
 
       <section v-if="!quickWorkout || (routine?.exercises.length ?? 0) > 0" class="workout-tools">
@@ -1294,7 +1276,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         "
         :disabled="submitting"
       >
-        <component :is="allExercisesComplete ? FlagIcon : CheckIcon" />
         {{ primaryActionLabel }}
       </button>
       <!-- Keep the escape hatch in a stable position even when a partial set
@@ -1647,14 +1628,11 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .exercise-queue h2 {
   @apply mt-1 text-title font-semibold text-text;
 }
-.exercise-queue > header > small {
-  @apply text-xs text-text-subtle;
-}
-.exercise-queue > div {
+.exercise-queue > ul {
   @apply divide-y divide-border border-t border-border;
 }
-.exercise-queue button {
-  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr_auto] items-center gap-3 py-2.5 text-left transition hover:text-ink-strong;
+.exercise-queue li {
+  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr] items-center gap-3 py-2.5 text-left;
 }
 .queue-number {
   @apply grid size-8 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
@@ -1675,13 +1653,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .queue-copy small {
   @apply mt-0.5 text-xs text-text-subtle;
 }
-.exercise-queue button > svg {
-  @apply size-5 text-text-subtle;
-}
-.exercise-queue button.completed .queue-number {
+.exercise-queue li.completed .queue-number {
   @apply bg-success-surface text-success;
 }
-.exercise-queue button.completed .queue-copy strong {
+.exercise-queue li.completed .queue-copy strong {
   @apply text-success;
 }
 .workout-tools {
