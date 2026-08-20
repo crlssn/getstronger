@@ -30,7 +30,7 @@ test.describe('the workout dock', () => {
 
   test('says what is missing when the blocked primary is pressed', async ({ page }) => {
     await page.locator('.primary-action').click()
-    await expect(page.locator('.finish-dock > strong.blocked')).toHaveText(
+    await expect(page.locator('.action-block > strong.blocked')).toHaveText(
       'Log a set before moving on',
     )
     // The button points at the reason, so the two are announced together.
@@ -42,13 +42,13 @@ test.describe('the workout dock', () => {
 
   test('clears the message once the block lifts', async ({ page }) => {
     await page.locator('.primary-action').click()
-    await expect(page.locator('.finish-dock > strong.blocked')).toBeVisible()
+    await expect(page.locator('.action-block > strong.blocked')).toBeVisible()
 
     const exercise = await page.locator('.exercise-heading h2').innerText()
     await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('25')
     await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')
 
-    await expect(page.locator('.finish-dock > strong.blocked')).toHaveCount(0)
+    await expect(page.locator('.action-block > strong.blocked')).toHaveCount(0)
     await expect(page.locator('.primary-action')).not.toHaveAttribute('aria-disabled', 'true')
   })
 

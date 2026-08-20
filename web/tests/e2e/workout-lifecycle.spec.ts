@@ -60,7 +60,7 @@ test.describe('quick workout lifecycle', () => {
     // what is missing, rather than greying out and reading as broken.
     await expect(page.locator('.primary-action')).toBeEnabled()
     await page.locator('.primary-action').click()
-    await expect(page.locator('.finish-dock > strong')).toHaveText(
+    await expect(page.locator('.action-block > strong')).toHaveText(
       'Add an exercise before moving on',
     )
 

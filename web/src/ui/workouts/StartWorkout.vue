@@ -950,7 +950,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </button>
       </section>
 
-      <section v-if="currentExercise" ref="exerciseCard" class="exercise-card">
+      <!-- The active card sits between slivers of its neighbours, so the
+           session reads as a stack of cards without becoming a carousel. The
+           peeks are decorative and never reveal the neighbouring name. -->
+      <div v-if="currentExercise" class="card-carousel">
+        <div v-if="activeExerciseIndex > 0" class="card-peek above" aria-hidden="true"></div>
+        <section ref="exerciseCard" class="exercise-card">
         <header class="exercise-heading">
           <div>
             <!-- The position lives in the header now; saying it twice on one
@@ -960,6 +965,8 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           </div>
         </header>
 
+        <!-- Ticked off, not hidden: the label sits above the sets so a
+             completed exercise still shows what was logged. -->
         <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
           <span class="completed-icon"><CheckIcon /></span>
           <div>
@@ -974,7 +981,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           </button>
         </div>
 
-        <template v-else>
           <div
             class="set-grid set-labels"
             :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
@@ -1089,8 +1095,36 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
               <MinusIcon />
             </button>
           </div>
-        </template>
-      </section>
+        </section>
+        <div
+          v-if="activeExerciseIndex < (routine?.exercises.length ?? 0) - 1"
+          class="card-peek below"
+          aria-hidden="true"
+        ></div>
+      </div>
+
+      <!-- The one forward action lives right under the card it acts on. -->
+      <div class="action-block">
+        <strong
+          v-if="finishError || blockedMessage || primaryStatus"
+          id="workout-dock-status"
+          :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
+          >{{ finishError || blockedMessage || primaryStatus }}</strong
+        >
+        <!-- Described by the status rather than aria-disabled: the whole point
+             is that this control is pressable, and aria-disabled would announce
+             the same "broken" that a grey fill used to. -->
+        <button
+          type="submit"
+          class="primary-action"
+          :aria-describedby="
+            finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
+          "
+          :disabled="submitting"
+        >
+          {{ primaryActionLabel }}
+        </button>
+      </div>
 
       <!-- A status list, not a switcher: progression runs through the
            complete-exercise action, so these rows only report where the other
@@ -1149,6 +1183,24 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
             :placeholder="t('workout.notePlaceholder')"
           ></textarea>
         </section>
+
+        <!-- The escape hatch: quieter than everything above it, but always in
+             the same place at the end of the page. -->
+        <button
+          v-if="!allExercisesComplete"
+          type="button"
+          class="finish-early"
+          :disabled="!canFinish"
+          :title="!canFinish ? finishStatus : undefined"
+          :aria-label="
+            !canFinish && finishStatus
+              ? `${t('workout.finish')}: ${finishStatus}`
+              : t('workout.finish')
+          "
+          @click="requestFinishWorkout"
+        >
+          {{ t('workout.finish') }}
+        </button>
       </section>
     </main>
 
@@ -1254,48 +1306,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </template>
     </AppSheet>
 
-    <!-- One ranked pair at the end of the session. Advancing is the primary
-         action while exercises are unfinished; finishing stays reachable for
-         the entire session but is demoted to a text button, because two
-         controls of equal weight leave the screen with no ranking at all. -->
-    <footer class="finish-dock">
-      <strong
-        v-if="finishError || blockedMessage || primaryStatus"
-        id="workout-dock-status"
-        :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
-        >{{ finishError || blockedMessage || primaryStatus }}</strong
-      >
-      <!-- Described by the status rather than aria-disabled: the whole point
-           is that this control is pressable, and aria-disabled would announce
-           the same "broken" that the grey fill used to. -->
-      <button
-        type="submit"
-        class="primary-action"
-        :aria-describedby="
-          finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
-        "
-        :disabled="submitting"
-      >
-        {{ primaryActionLabel }}
-      </button>
-      <!-- Keep the escape hatch in a stable position even when a partial set
-         temporarily prevents saving the workout. -->
-      <button
-        v-if="!allExercisesComplete"
-        type="button"
-        class="finish-early"
-        :disabled="!canFinish"
-        :title="!canFinish ? finishStatus : undefined"
-        :aria-label="
-          !canFinish && finishStatus
-            ? `${t('workout.finish')}: ${finishStatus}`
-            : t('workout.finish')
-        "
-        @click="requestFinishWorkout"
-      >
-        {{ t('workout.finish') }}
-      </button>
-    </footer>
   </form>
 </template>
 
@@ -1692,19 +1702,33 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .note-card textarea {
   @apply mt-2 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
 }
-/* In flow at the end of the session: no container of its own, so the buttons
-   sit on the page background like the rest of the screen. */
-.finish-dock {
+/* Slivers of the neighbouring cards. Decorative: just a card edge, never the
+   neighbouring exercise's name. */
+.card-carousel {
+  @apply grid gap-1.5;
+}
+.card-peek {
+  @apply mx-3 h-3 border-x border-border bg-white shadow-card;
+}
+.card-peek.above {
+  @apply rounded-b-card border-b;
+}
+.card-peek.below {
+  @apply rounded-t-card border-t;
+}
+/* In flow right under the exercise card it acts on, so pressing forward never
+   means travelling past the rest of the page. */
+.action-block {
   @apply flex w-full flex-col items-stretch gap-2 text-center;
 }
 /* What is missing, said where the button that is waiting for it lives. */
-.finish-dock > strong {
+.action-block > strong {
   @apply text-meta font-semibold text-text-muted;
 }
-.finish-dock > strong.blocked {
+.action-block > strong.blocked {
   @apply text-warning;
 }
-.finish-dock > strong.failed {
+.action-block > strong.failed {
   @apply text-danger;
 }
 /* Blocked, not disabled: it stays filled and live, and says what is missing
@@ -1718,9 +1742,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
    pair, and giving it equal weight left the dock with no ranking at all. */
 .finish-early {
   @apply inline-flex min-h-(--size-control) w-full items-center justify-center rounded-control px-4 text-sm font-semibold text-text-muted transition hover:bg-surface-sunken hover:text-text disabled:cursor-not-allowed disabled:opacity-50;
-}
-.finish-dock svg {
-  @apply size-5;
 }
 .exercise-search {
   @apply mb-4 flex items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
