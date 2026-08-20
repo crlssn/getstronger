@@ -58,7 +58,8 @@ export const en = {
   },
   offline: {
     banner: 'You are offline—showing saved data.',
-    queued: '{count} change will sync when you are back online. | {count} changes will sync when you are back online.',
+    queued:
+      '{count} change will sync when you are back online. | {count} changes will sync when you are back online.',
   },
   auth: {
     welcomeBack: 'Welcome back',
@@ -686,7 +687,8 @@ export const sv = {
   },
   offline: {
     banner: 'Du är offline – visar sparade data.',
-    queued: '{count} ändring synkas när du är online igen. | {count} ändringar synkas när du är online igen.',
+    queued:
+      '{count} ändring synkas när du är online igen. | {count} ändringar synkas när du är online igen.',
   },
   auth: {
     welcomeBack: 'Välkommen tillbaka',

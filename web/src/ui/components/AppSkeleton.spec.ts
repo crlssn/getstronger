@@ -6,8 +6,7 @@ import { mount } from '@vue/test-utils'
 import { i18n } from '@/i18n'
 import AppSkeleton from './AppSkeleton.vue'
 
-const mountSkeleton = (props = {}) =>
-  mount(AppSkeleton, { global: { plugins: [i18n] }, props })
+const mountSkeleton = (props = {}) => mount(AppSkeleton, { global: { plugins: [i18n] }, props })
 
 describe('AppSkeleton', () => {
   test('renders a pulsating card with three lines by default', () => {

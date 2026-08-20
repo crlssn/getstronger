@@ -26,7 +26,9 @@ type Replayer = {
 const replayers: Record<string, Replayer> = {
   [`${WorkoutService.typeName}.CreateWorkout`]: {
     serialize: (message) =>
-      JSON.stringify(toJson(WorkoutService.method.createWorkout.input, message as CreateWorkoutRequest)),
+      JSON.stringify(
+        toJson(WorkoutService.method.createWorkout.input, message as CreateWorkoutRequest),
+      ),
     replay: (request) =>
       workoutClient.createWorkout(
         fromJson(WorkoutService.method.createWorkout.input, JSON.parse(request) as JsonValue),

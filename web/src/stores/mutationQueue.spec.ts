@@ -10,10 +10,7 @@ vi.mock('@/http/clients', () => ({
 }))
 
 import { workoutClient } from '@/http/clients'
-import {
-  CreateWorkoutRequestSchema,
-  WorkoutService,
-} from '@/proto/api/v1/workout_service_pb'
+import { CreateWorkoutRequestSchema, WorkoutService } from '@/proto/api/v1/workout_service_pb'
 import { ExerciseService } from '@/proto/api/v1/exercise_service_pb'
 import { useConnectionStore } from '@/stores/connection'
 import { useMutationQueueStore } from './mutationQueue'
@@ -73,10 +70,7 @@ describe('useMutationQueueStore', () => {
     const store = useMutationQueueStore()
 
     expect(() =>
-      store.enqueue(
-        ExerciseService.method.deleteExercise as never,
-        request('routine-1') as never,
-      ),
+      store.enqueue(ExerciseService.method.deleteExercise as never, request('routine-1') as never),
     ).toThrow(/not queueable/)
   })
 
