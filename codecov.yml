@@ -5,4 +5,7 @@ ignore:
   - "**/*_mock.go"
   - "**/*_test.go"
   - "server/gen"
+  # Test infrastructure (factories, testcontainer setup, the e2e saga) exists
+  # only to support tests; its lines are not product code to be covered.
+  - "server/testing"
   - "web/src/proto"
