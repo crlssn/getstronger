@@ -40,15 +40,9 @@ test.describe('guest authentication and routing', () => {
     await page.getByLabel('Email address').fill('nobody@example.com')
     await page.getByLabel('Password', { exact: true }).fill('not-the-password')
 
-    const dialogMessage = new Promise<string>((resolve) =>
-      page.once('dialog', async (dialog) => {
-        resolve(dialog.message())
-        await dialog.dismiss()
-      }),
-    )
     await page.getByRole('button', { name: 'Log in' }).click()
 
-    await expect.poll(() => dialogMessage).toContain('invalid credentials')
+    await expect(page.getByRole('alert')).toContainText('invalid credentials')
     await expect(page).toHaveURL(/\/login$/)
   })
 
