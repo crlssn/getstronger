@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, type Plugin } from 'vite'
+import { injectContentSecurityPolicy } from './csp.ts'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
@@ -38,6 +39,7 @@ export default defineConfig({
     vue(),
     vueJsx(),
     emitVersionFile(),
+    injectContentSecurityPolicy(),
     process.env.VITE_ENABLE_DEVTOOLS === 'false' ? undefined : vueDevTools(),
     codecovVitePlugin({
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
