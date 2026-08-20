@@ -11,6 +11,7 @@ import { useI18n } from 'vue-i18n'
 import router from '@/router/router'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useAlertStore } from '@/stores/alerts'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
@@ -32,6 +33,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const pageTitle = usePageTitleStore()
 const alertStore = useAlertStore()
+const confirmationStore = useConfirmationStore()
 const workoutStore = useWorkoutStore()
 const { t } = useI18n()
 const { savedRoutineName, savedWorkout } = useActiveWorkout()
@@ -90,16 +92,14 @@ const onStartQuickWorkout = async () => {
   if (!exercise.value) return
 
   const activeRoutineID = savedWorkout.value?.[0]
-  if (
-    activeRoutineID &&
-    !confirm(
-      t('exercise.replaceWorkoutConfirm', {
-        workout: savedRoutineName.value,
-        exercise: exercise.value.name,
-      }),
-    )
-  ) {
-    return
+  if (activeRoutineID) {
+    const confirmed = await confirmationStore.confirm({
+      body: t('exercise.replaceWorkoutConfirmBody', { exercise: exercise.value.name }),
+      confirmLabel: t('exercise.startQuickWorkout'),
+      destructive: true,
+      title: t('exercise.replaceWorkoutConfirmTitle', { workout: savedRoutineName.value }),
+    })
+    if (!confirmed) return
   }
 
   if (activeRoutineID) workoutStore.removeWorkout(activeRoutineID)

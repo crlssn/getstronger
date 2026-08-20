@@ -3,12 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowPathIcon, CheckIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
+import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 
 const planStore = usePlanStore()
 const { t } = useI18n()
+const confirmationStore = useConfirmationStore()
 const dashboardStore = useDashboardStore()
 const plansLoaded = ref(false)
 
@@ -24,12 +26,24 @@ onMounted(async () => {
 })
 
 const activate = async (id: string) => {
-  if (activePlan.value && !confirm(t('training.activateConfirm'))) return
+  if (activePlan.value) {
+    const confirmed = await confirmationStore.confirm({
+      body: t('training.activateConfirmBody'),
+      confirmLabel: t('training.makeActive'),
+      title: t('training.activateConfirmTitle'),
+    })
+    if (!confirmed) return
+  }
   if (await planStore.activate(id)) await dashboardStore.load()
 }
 
 const pause = async () => {
-  if (!confirm(t('training.pauseConfirm'))) return
+  const confirmed = await confirmationStore.confirm({
+    body: t('training.pauseConfirmBody'),
+    confirmLabel: t('training.pause'),
+    title: t('training.pauseConfirmTitle'),
+  })
+  if (!confirmed) return
   if (await planStore.pause()) await dashboardStore.load()
 }
 </script>

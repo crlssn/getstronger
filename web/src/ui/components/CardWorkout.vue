@@ -20,6 +20,7 @@ import { dateLocale } from '@/i18n'
 import { formatNumber } from '@/utils/numbers'
 import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
+import { useConfirmationStore } from '@/stores/confirmation'
 import CardWorkoutComment from '@/ui/components/CardWorkoutComment.vue'
 import CardWorkoutExercise from '@/ui/components/CardWorkoutExercise.vue'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
@@ -33,6 +34,7 @@ const { t } = useI18n()
 const { input: commentInput, textarea } = useTextareaAutosize()
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
+const confirmationStore = useConfirmationStore()
 const router = useRouter()
 const workoutDeleted = ref(false)
 const postingComment = ref(false)
@@ -78,7 +80,13 @@ const dropdownItems: DropdownItem[] = [
 ]
 
 const onDeleteWorkout = async () => {
-  if (!confirm(t('workout.card.deleteConfirm', { name: props.workout.name }))) return
+  const confirmed = await confirmationStore.confirm({
+    body: t('workout.card.deleteConfirmBody'),
+    confirmLabel: t('workout.card.deleteWorkout'),
+    destructive: true,
+    title: t('workout.card.deleteConfirmTitle', { name: props.workout.name }),
+  })
+  if (!confirmed) return
 
   const response = await deleteWorkout(props.workout.id)
   if (!response) return
