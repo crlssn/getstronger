@@ -18,7 +18,6 @@ import { Code, ConnectError } from '@connectrpc/connect'
 import {
   CheckIcon,
   ChevronRightIcon,
-  ClockIcon,
   FlagIcon,
   MagnifyingGlassIcon,
   MinusIcon,
@@ -941,7 +940,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     >
       <div class="rest-banner-inner">
         <div class="rest-copy">
-          <p class="rest-label"><ClockIcon /> {{ t('workout.rest') }}</p>
           <strong aria-hidden="true">{{ restLabel }}</strong>
         </div>
         <div class="rest-actions">
@@ -1400,7 +1398,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .rest-banner {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  @apply !mt-0 sticky z-30 text-white shadow-overlay;
+  @apply !mt-0 sticky z-30 text-white;
   /* Level with the header it covers: below the status-bar scrim in the native
      WebView, zero in browsers. */
   top: env(safe-area-inset-top);
@@ -1421,15 +1419,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .rest-copy {
   @apply min-w-0;
 }
-/* White, not grey: a neutral grey washes out against a saturated background. */
-.rest-label {
-  @apply flex items-center gap-1.5 text-eyebrow font-bold uppercase text-white/85;
-}
-.rest-label svg {
-  @apply size-3.5;
-}
+/* The digits are the whole message now: as tall as the action chips beside
+   them, so the band reads as one row. */
 .rest-copy strong {
-  @apply mt-1 block font-mono text-4xl font-bold leading-none tabular-nums text-white;
+  @apply block font-mono text-(length:--size-control-sm) font-bold leading-none tabular-nums text-white;
 }
 .rest-actions {
   @apply flex shrink-0 items-center gap-1;
@@ -1455,9 +1448,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     hsl(70 92% 54%) 100%
   );
   @apply text-text;
-}
-.rest-banner.bright .rest-label {
-  @apply text-text/70;
 }
 .rest-banner.bright .rest-copy strong {
   @apply text-text;
