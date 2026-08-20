@@ -43,7 +43,7 @@
     "luxon": "3.7.2",
     "pinia": "4.0.3",
     "pinia-plugin-persistedstate": "4.7.1",
-    "posthog-js": "^1.418.6",
+    "posthog-js": "1.418.6",
     "sortablejs": "1.15.7",
     "vue": "3.5.41",
     "vue-chartjs": "5.3.4",
