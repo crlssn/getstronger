@@ -6,6 +6,7 @@ import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 import { getPlan } from '@/http/requests'
 import type { Plan } from '@/proto/api/v1/routine_service_pb'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -68,7 +69,8 @@ const remove = async () => {
 </script>
 
 <template>
-  <div v-if="plan" class="plan-page">
+  <AppSkeleton v-if="!plan" />
+  <div v-else class="plan-page">
     <section class="overview">
       <header>
         <p class="eyebrow">

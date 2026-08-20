@@ -7,6 +7,7 @@ import { ArrowTrendingUpIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/vu
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import WorkoutChart from '@/ui/components/WorkoutChart.vue'
 import { formatToShortDateTime } from '@/utils/datetime'
 import { formatNumber } from '@/utils/numbers'
@@ -57,7 +58,8 @@ const filteredVolume = computed(() =>
     <!-- The card keys off the full year of history, not the selected range, so
          a range with no data keeps the picker on screen and says so instead of
          silently unmounting the controls. -->
-    <section v-if="progressStore.workouts.length" class="chart-card">
+    <AppSkeleton v-if="!progressStore.loaded" />
+    <section v-else-if="progressStore.workouts.length" class="chart-card">
       <div class="chart-heading">
         <div>
           <p class="eyebrow">{{ t('progress.trainingVolume') }}</p>
@@ -81,7 +83,7 @@ const filteredVolume = computed(() =>
       </div>
     </section>
 
-    <section class="records-card">
+    <section v-if="progressStore.loaded" class="records-card">
       <div class="section-heading">
         <div>
           <p class="eyebrow">{{ t('progress.bestLifts') }}</p>

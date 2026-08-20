@@ -14,6 +14,7 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { listWorkouts } from '@/http/requests'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -191,9 +192,7 @@ const skip = async () => {
         </RouterLink>
       </div>
 
-      <div v-if="!historyInitiallyLoaded" class="history-status" aria-live="polite">
-        <span class="history-spinner"></span> {{ t('workout.loadingHistory') }}
-      </div>
+      <AppSkeleton v-if="!historyInitiallyLoaded" />
       <div v-else-if="historyError" class="history-error" role="alert">
         <span>{{ t('workout.historyError') }}</span>
         <button type="button" @click="loadMoreHistory">{{ t('common.retry') }}</button>

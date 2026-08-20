@@ -9,6 +9,7 @@ import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import { formatToRelativeDateTime } from '@/utils/datetime.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
@@ -38,6 +39,7 @@ const fetchPersonalBests = async () => {
 </script>
 
 <template>
+  <AppSkeleton v-if="!isMounted" />
   <AppList v-if="isMounted">
     <AppListItem v-if="personalBests.length === 0">{{ t('common.nothingHere') }}</AppListItem>
     <AppListItemLink

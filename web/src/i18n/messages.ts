@@ -144,7 +144,6 @@ export const en = {
     createRoutine: 'Create routine',
     following: 'Following',
     latestWorkouts: 'Latest workouts',
-    loadingLatest: 'Loading latest workouts…',
     loadingMore: 'Loading more workouts…',
     loadFailed: 'Latest workouts could not be loaded.',
     emptyFeedTitle: 'No workouts from people you follow',
@@ -263,7 +262,6 @@ export const en = {
     discardConfirmBody: 'All logged sets will be removed.',
     noSelection: 'No workout selected',
     noSelectionBody: 'Create a routine or activate a plan to choose what comes next.',
-    loadingHistory: 'Loading workout history…',
     historyError: 'Workout history could not be loaded.',
     historyEmpty: 'Your completed workouts will appear here.',
     loadingMoreHistory: 'Loading more workouts…',
@@ -409,7 +407,6 @@ export const en = {
   routine: {
     noExercises: 'No exercises yet',
     andMore: '+{count} more',
-    loading: 'Loading routine…',
     makeUpNext: 'Make up next',
     upNextToast: '{name} is up next',
     deleteConfirmTitle: 'Delete “{name}”?',
@@ -484,7 +481,6 @@ export const en = {
     replaceWorkoutConfirmTitle: 'Discard “{workout}”?',
     replaceWorkoutConfirmBody:
       'All logged sets in the active workout will be removed, and a quick workout with “{exercise}” will start.',
-    loading: 'Loading exercises…',
     loadMore: 'Load more exercises',
     noMatches: 'No matching exercises',
     empty: 'No exercises yet',
@@ -776,7 +772,6 @@ export const sv = {
     createRoutine: 'Skapa pass',
     following: 'Följer',
     latestWorkouts: 'Senaste träningspassen',
-    loadingLatest: 'Laddar senaste träningspassen…',
     loadingMore: 'Laddar fler träningspass…',
     loadFailed: 'Det gick inte att ladda de senaste träningspassen.',
     emptyFeedTitle: 'Inga pass från personer du följer',
@@ -897,7 +892,6 @@ export const sv = {
     noSelection: 'Inget pass valt',
     noSelectionBody:
       'Skapa ett pass eller aktivera en plan för att välja vad som står näst på tur.',
-    loadingHistory: 'Laddar träningshistorik…',
     historyError: 'Det gick inte att ladda träningshistoriken.',
     historyEmpty: 'Dina genomförda träningspass visas här.',
     loadingMoreHistory: 'Laddar fler träningspass…',
@@ -1040,7 +1034,6 @@ export const sv = {
   routine: {
     noExercises: 'Inga övningar ännu',
     andMore: '+{count} till',
-    loading: 'Laddar passet…',
     makeUpNext: 'Gör till nästa pass',
     upNextToast: '{name} är nästa pass',
     deleteConfirmTitle: 'Ta bort ”{name}”?',
@@ -1115,7 +1108,6 @@ export const sv = {
     replaceWorkoutConfirmTitle: 'Glöm ”{workout}”?',
     replaceWorkoutConfirmBody:
       'Alla loggade set i det aktiva passet tas bort och ett snabbpass med ”{exercise}” startas.',
-    loading: 'Laddar övningar…',
     loadMore: 'Ladda fler övningar',
     noMatches: 'Inga matchande övningar',
     empty: 'Inga övningar ännu',

@@ -21,6 +21,7 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import useActiveWorkout from '@/utils/useActiveWorkout'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
 import StreakCard from '@/ui/components/StreakCard.vue'
 import { dateLocale } from '@/i18n'
@@ -149,11 +150,7 @@ const selectRoutine = async (routineId: string) => {
         </div>
       </section>
 
-      <section v-else-if="dashboardStore.loading && !dashboard" class="loading-card">
-        <div class="loading-line w-32"></div>
-        <div class="loading-line w-52"></div>
-        <div class="loading-line w-full"></div>
-      </section>
+      <AppSkeleton v-else-if="dashboardStore.loading && !dashboard" />
 
       <section v-else-if="nextRoutine" class="next-session">
         <div class="session-copy">
@@ -206,9 +203,7 @@ const selectRoutine = async (routineId: string) => {
           compact
           :workout="workout"
         />
-        <div v-if="!feedInitiallyLoaded" class="feed-status" aria-live="polite">
-          <span class="feed-spinner"></span> {{ $t('home.loadingLatest') }}
-        </div>
+        <AppSkeleton v-if="!feedInitiallyLoaded" />
         <div v-else-if="feedError" class="feed-error" role="alert">
           <span>{{ $t('home.loadFailed') }}</span>
           <button type="button" @click="loadMoreFeed">{{ $t('common.retry') }}</button>

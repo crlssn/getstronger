@@ -6,6 +6,7 @@ import { ArrowPathIcon, CheckIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import TrainingTabs from '@/ui/components/TrainingTabs.vue'
 
 const planStore = usePlanStore()
@@ -62,9 +63,7 @@ const pause = async () => {
 
     <TrainingTabs />
 
-    <section v-if="!plansLoaded" class="plan-loading" aria-live="polite">
-      <span></span><span></span><span></span>
-    </section>
+    <AppSkeleton v-if="!plansLoaded" />
 
     <section v-else-if="!planStore.plans.length" class="empty-plan-state">
       <span class="empty-plan-icon"><ArrowPathIcon /></span>
@@ -203,21 +202,8 @@ h2 {
 .other-plans,
 .routine-list,
 .paused-note,
-.empty-plan-state,
-.plan-loading {
+.empty-plan-state {
   @apply card p-5;
-}
-.plan-loading {
-  @apply space-y-3;
-}
-.plan-loading span {
-  @apply block h-4 animate-pulse rounded-full bg-ink-tint;
-}
-.plan-loading span:first-child {
-  @apply h-12 w-12 rounded-card;
-}
-.plan-loading span:nth-child(2) {
-  @apply w-2/3;
 }
 .empty-plan-state {
   @apply p-6;

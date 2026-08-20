@@ -14,6 +14,7 @@ import { useAlertStore } from '@/stores/alerts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import ExerciseChart from '@/ui/components/ExerciseChart.vue'
 import blurActiveElement from '@/utils/blurActiveElement'
@@ -119,12 +120,7 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
-    <span class="sr-only">{{ $t('common.loading') }}</span>
-    <div class="loading-line" aria-hidden="true"></div>
-    <div class="loading-line" aria-hidden="true"></div>
-    <div class="loading-line w-full" aria-hidden="true"></div>
-  </div>
+  <AppSkeleton v-if="loading" />
   <div v-else-if="exercise" class="exercise-detail">
     <!-- Management stays out of the content flow: edit and delete live in the
          page header's overflow menu so the trend and history lead the page. -->

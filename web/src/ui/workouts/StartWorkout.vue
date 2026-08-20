@@ -51,6 +51,7 @@ import {
 import { isConnectivityError } from '@/http/offlineCache'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { isNumber } from '@/utils/numbers'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
 import {
@@ -1191,9 +1192,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
           />
         </label>
 
-        <div v-if="exercisePickerLoading && !exerciseOptionsLoaded" class="picker-empty">
-          {{ t('exercise.loading') }}
-        </div>
+        <AppSkeleton v-if="exercisePickerLoading && !exerciseOptionsLoaded" />
         <div v-else-if="availableExercises.length" class="exercise-options">
           <button
             v-for="exercise in availableExercises"

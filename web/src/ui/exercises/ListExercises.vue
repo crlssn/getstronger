@@ -19,6 +19,7 @@ import {
   type ActivityBucket,
 } from '@/utils/activityBuckets'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { measurementsForExercise } from '@/utils/exerciseMeasurements'
 
 const exercises = ref<Exercise[]>([])
@@ -111,7 +112,7 @@ const fetchExercises = async () => {
       />
     </label>
 
-    <div v-if="loading" class="empty-state">{{ t('exercise.loading') }}</div>
+    <AppSkeleton v-if="loading" />
     <section v-else-if="filteredExercises.length" class="exercise-list">
       <section v-for="group in groupedExercises" :key="group.bucket" class="exercise-group">
         <h2>{{ t(group.labelKey) }}</h2>

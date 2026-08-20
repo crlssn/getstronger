@@ -6,6 +6,7 @@ import { CheckIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/vue/24/outl
 import { listExercises } from '@/http/requests'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 import usePagination from '@/utils/usePagination'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 
 const { t } = useI18n()
@@ -126,7 +127,7 @@ const submit = () => {
         </label>
       </div>
 
-      <div v-if="loading" class="empty-row">{{ t('exercise.loading') }}</div>
+      <AppSkeleton v-if="loading" />
       <div v-else-if="filteredExercises.length" class="exercise-grid">
         <button
           v-for="exercise in filteredExercises"

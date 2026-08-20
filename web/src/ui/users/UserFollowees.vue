@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import type { User } from '@/proto/api/v1/shared_pb.ts'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 
 const { t } = useI18n()
 const props = defineProps<{
@@ -33,6 +34,7 @@ const fetchFollowees = async () => {
 </script>
 
 <template>
+  <AppSkeleton v-if="!isMounted" />
   <AppList v-if="isMounted">
     <AppListItem v-if="followees.length === 0">{{ t('common.nothingHere') }}</AppListItem>
     <AppListItemLink v-for="followee in followees" :key="followee.id" :to="`/users/${followee.id}`">

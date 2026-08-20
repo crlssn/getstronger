@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { getWorkout } from '@/http/requests.ts'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import { type Workout } from '@/proto/api/v1/workout_service_pb.ts'
 
@@ -28,12 +29,7 @@ const fetchWorkout = async () => {
 </script>
 
 <template>
-  <div v-if="loading" class="loading-card" aria-live="polite" aria-busy="true">
-    <span class="sr-only">{{ $t('common.loading') }}</span>
-    <div class="loading-line" aria-hidden="true"></div>
-    <div class="loading-line" aria-hidden="true"></div>
-    <div class="loading-line w-full" aria-hidden="true"></div>
-  </div>
+  <AppSkeleton v-if="loading" />
   <CardWorkout v-if="workout" :workout="workout" :compact="false" />
   <section v-else-if="!loading" class="empty-card">
     <h1>{{ t('workout.view.unavailable') }}</h1>
@@ -48,18 +44,6 @@ const fetchWorkout = async () => {
 .loading-card,
 .empty-card {
   @apply card mx-auto max-w-4xl p-6;
-}
-.loading-card {
-  @apply space-y-4;
-}
-.loading-card span {
-  @apply block h-4 animate-pulse rounded-full bg-ink-tint;
-}
-.loading-card span:nth-child(1) {
-  @apply w-32;
-}
-.loading-card span:nth-child(2) {
-  @apply h-8 w-52;
 }
 .empty-card h1 {
   @apply text-title font-semibold text-text;

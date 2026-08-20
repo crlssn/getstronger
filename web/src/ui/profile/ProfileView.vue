@@ -9,6 +9,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { getCurrentUser, updateUserDistanceUnit, updateUserWeightUnit } from '@/http/requests'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -98,7 +99,8 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
 </script>
 
 <template>
-  <div v-if="user" class="profile-stack">
+  <AppSkeleton v-if="!user" />
+  <div v-else class="profile-stack">
     <!-- A tab root opens with its own large title. This one used to open
          straight onto a card, which left it the only tab without one. -->
     <header class="page-intro">
