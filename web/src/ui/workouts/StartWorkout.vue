@@ -16,8 +16,6 @@ import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
-  ChevronRightIcon,
-  ClockIcon,
   FlagIcon,
   MagnifyingGlassIcon,
   MinusIcon,
@@ -953,30 +951,30 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <div v-if="currentExercise" class="card-carousel">
         <div v-if="activeExerciseIndex > 0" class="card-peek above" aria-hidden="true"></div>
         <section ref="exerciseCard" class="exercise-card">
-        <header class="exercise-heading">
-          <div>
-            <!-- The position lives in the header now; saying it twice on one
+          <header class="exercise-heading">
+            <div>
+              <!-- The position lives in the header now; saying it twice on one
                  screen spent a line on nothing. -->
-            <h2>{{ currentExercise.name }}</h2>
-            <ExerciseTags compact :tags="currentExercise.tags" />
-          </div>
-        </header>
+              <h2>{{ currentExercise.name }}</h2>
+              <ExerciseTags compact :tags="currentExercise.tags" />
+            </div>
+          </header>
 
-        <!-- Ticked off, not hidden: the label sits above the sets so a
+          <!-- Ticked off, not hidden: the label sits above the sets so a
              completed exercise still shows what was logged. -->
-        <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
-          <span class="completed-icon"><CheckIcon /></span>
-          <div>
-            <strong>{{ t('workout.exerciseCompleted') }}</strong>
-            <p>
-              {{ exerciseLoggedSetCount(currentExercise.id) }}
-              {{ t('workout.loggedSets', exerciseLoggedSetCount(currentExercise.id)) }}
-            </p>
+          <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
+            <span class="completed-icon"><CheckIcon /></span>
+            <div>
+              <strong>{{ t('workout.exerciseCompleted') }}</strong>
+              <p>
+                {{ exerciseLoggedSetCount(currentExercise.id) }}
+                {{ t('workout.loggedSets', exerciseLoggedSetCount(currentExercise.id)) }}
+              </p>
+            </div>
+            <button type="button" @click="reopenExercise(currentExercise.id)">
+              {{ t('workout.reopen') }}
+            </button>
           </div>
-          <button type="button" @click="reopenExercise(currentExercise.id)">
-            {{ t('workout.reopen') }}
-          </button>
-        </div>
 
           <div
             class="set-grid set-labels"
@@ -1239,9 +1237,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
     <AppSheet
       v-if="finishDialogOpen"
-      :title="
-        unfinishedExerciseCount > 0 ? t('workout.finishEarly') : t('workout.finishConfirm')
-      "
+      :title="unfinishedExerciseCount > 0 ? t('workout.finishEarly') : t('workout.finishConfirm')"
       :body="
         unfinishedExerciseCount > 0
           ? t('workout.finishEarlyBody', unfinishedExerciseCount)
@@ -1308,7 +1304,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </button>
       </template>
     </AppSheet>
-
   </form>
 </template>
 

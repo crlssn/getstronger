@@ -158,7 +158,10 @@ const save = async () => {
         </ol>
 
         <div class="add-routine">
-          <AppOptionalAction :label="t('training.planForm.addRoutine')" @click="pickerOpen = true" />
+          <AppOptionalAction
+            :label="t('training.planForm.addRoutine')"
+            @click="pickerOpen = true"
+          />
         </div>
         <footer v-if="selected.length">
           {{
