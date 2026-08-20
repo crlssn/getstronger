@@ -27,8 +27,8 @@ catalogue value contains any of them.
   built in `<script setup>` all count as user-facing.
 - Reuse an existing key when one already says the same thing (check `common.*`
   first) instead of adding a near-duplicate.
-- Use vue-i18n plural pipes for counts (`'{count} set logged | {count} sets
-  logged'`) rather than ternaries on `count === 1`.
+- Use vue-i18n plural pipes for counts rather than ternaries on `count === 1`:
+  `'{count} set logged | {count} sets logged'`.
 - Components using `t()` need the i18n plugin in their specs: mount with
   `global: { plugins: [i18n] }` (import `i18n` from `@/i18n`).
 - When adding or changing translations in a non-English locale, match the
