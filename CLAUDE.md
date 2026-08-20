@@ -1,9 +1,8 @@
 # Project instructions
 
-Tasks are handed to agents as a brief following
-[`AGENT_TASK_TEMPLATE.md`](AGENT_TASK_TEMPLATE.md). The brief describes the
-individual task; this file holds the repository-wide rules that apply to every
-task and take precedence when a brief is silent.
+Tasks arrive as a brief describing that task alone. This file holds the
+repository-wide rules that apply to every task and take precedence when a brief
+is silent.
 
 ## Where the rest of the rules live
 
