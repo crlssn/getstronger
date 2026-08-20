@@ -1,6 +1,5 @@
-import type { DateTime } from 'luxon'
-import { timestampFromDate, type FieldMask } from '@bufbuild/protobuf/wkt'
-import type { DistanceUnit, Exercise, ExerciseSets, WeightUnit } from '@/proto/api/v1/shared_pb.ts'
+import { type FieldMask } from '@bufbuild/protobuf/wkt'
+import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb.ts'
 
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -66,7 +65,7 @@ import {
   type UpdateRoutineResponse,
 } from '@/proto/api/v1/routine_service_pb'
 import {
-  CreateWorkoutRequestSchema,
+  type CreateWorkoutRequest,
   type CreateWorkoutResponse,
   DeleteWorkoutRequestSchema,
   type DeleteWorkoutResponse,
@@ -411,24 +410,11 @@ export const updateExercise = async (
   return tryCatch(() => exerciseClient.updateExercise(req))
 }
 
+// The caller builds the request so a copy of it can be queued for later
+// delivery when the save fails offline.
 export const createWorkout = async (
-  routineId: string,
-  exerciseSets: ExerciseSets[],
-  startedAt: DateTime<boolean>,
-  finishedAt: DateTime<boolean>,
-  note: string,
-  planId = '',
-  workoutName = '',
+  req: CreateWorkoutRequest,
 ): Promise<CreateWorkoutResponse | void> => {
-  const req = create(CreateWorkoutRequestSchema, {
-    exerciseSets: exerciseSets,
-    finishedAt: timestampFromDate(finishedAt.toJSDate()),
-    routineId: routineId,
-    startedAt: timestampFromDate(startedAt.toJSDate()),
-    note: note,
-    planId,
-    workoutName,
-  })
   return tryCatch(() => workoutClient.createWorkout(req, { timeoutMs: 15_000 }), {
     rethrow: true,
   })

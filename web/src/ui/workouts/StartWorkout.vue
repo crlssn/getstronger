@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ExerciseSetsSchema, type Exercise, type ExerciseSets } from '@/proto/api/v1/shared_pb'
 import { RoutineSchema, type Routine } from '@/proto/api/v1/routine_service_pb'
+import {
+  CreateWorkoutRequestSchema,
+  WorkoutService,
+  type CreateWorkoutRequest,
+} from '@/proto/api/v1/workout_service_pb'
 import type { Set } from '@/types/workout'
+import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 
 import { DateTime } from 'luxon'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -24,6 +30,8 @@ import { useTextareaAutosize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
 import { useAlertStore } from '@/stores/alerts'
+import { useConnectionStore } from '@/stores/connection'
+import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { useWorkoutStore } from '@/stores/workout'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -40,6 +48,7 @@ import {
   getRoutine,
   listExercises,
 } from '@/http/requests'
+import { isConnectivityError } from '@/http/offlineCache'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { isNumber } from '@/utils/numbers'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
@@ -90,6 +99,8 @@ const defaultWeightUnit = ref(preferencesStore.weightUnit)
 const defaultDistanceUnit = ref(preferencesStore.distanceUnit)
 const workoutStore = useWorkoutStore()
 const dashboardStore = useDashboardStore()
+const connectionStore = useConnectionStore()
+const mutationQueueStore = useMutationQueueStore()
 const alertStore = useAlertStore()
 const pageTitleStore = usePageTitleStore()
 const streakStore = useStreakStore()
@@ -705,21 +716,22 @@ const onFinishWorkout = async () => {
   }
 
   submitting.value = true
+  const request = create(CreateWorkoutRequestSchema, {
+    exerciseSets: exerciseSets,
+    finishedAt: timestampFromDate(DateTime.now().toJSDate()),
+    routineId: quickWorkout ? '' : routineID,
+    startedAt: timestampFromDate(startedAt.value.toJSDate()),
+    note: note.value,
+    planId: quickWorkout ? '' : workoutStore.getPlanId(routineID),
+    workoutName: quickWorkout ? t('workout.quick') : '',
+  })
   try {
     if (savedWorkoutId.value) {
       await openSavedWorkout(savedWorkoutId.value)
       return
     }
 
-    const response = await createWorkout(
-      quickWorkout ? '' : routineID,
-      exerciseSets,
-      startedAt.value,
-      DateTime.now(),
-      note.value,
-      quickWorkout ? '' : workoutStore.getPlanId(routineID),
-      quickWorkout ? t('workout.quick') : '',
-    )
+    const response = await createWorkout(request)
     if (!response) {
       finishError.value = t('workout.saveFailed')
       return
@@ -736,6 +748,10 @@ const onFinishWorkout = async () => {
     await openSavedWorkout(workoutId)
   } catch (error) {
     console.error('failed to finish workout', error)
+    if (!savedWorkoutId.value && isConnectivityError(error)) {
+      finishWorkoutOffline(request)
+      return
+    }
     if (savedWorkoutId.value) {
       finishError.value = t('workout.savedNotOpened')
     } else if (
@@ -753,6 +769,16 @@ const onFinishWorkout = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+// Finishing must not depend on the network: the request is queued for
+// delivery on reconnect and the workout is treated as saved on this device.
+const finishWorkoutOffline = (request: CreateWorkoutRequest) => {
+  mutationQueueStore.enqueue(WorkoutService.method.createWorkout, request)
+  connectionStore.setOnline(false)
+  workoutStore.removeWorkout(routineID)
+  alertStore.setSuccess(t('workout.savedOffline'))
+  void router.replace('/home')
 }
 
 const requestFinishWorkout = async () => {

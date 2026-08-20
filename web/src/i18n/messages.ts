@@ -56,6 +56,10 @@ export const en = {
     available: 'A new version is available.',
     refresh: 'Refresh',
   },
+  offline: {
+    banner: 'You are offline—showing saved data.',
+    queued: '{count} change will sync when you are back online. | {count} changes will sync when you are back online.',
+  },
   auth: {
     welcomeBack: 'Welcome back',
     loginTitle: 'Log in to {brand}',
@@ -221,6 +225,7 @@ export const en = {
     quickWorkoutUnavailable: 'Restart the backend to enable Quick Workout, then try again.',
     saveTimedOut: 'Saving took too long. Check your connection and try again.',
     saved: 'Workout saved',
+    savedOffline: 'Workout saved on this device. It will sync when you are back online.',
     inProgress: 'Workout in progress',
     startedAgo: 'Started {relative}',
     closeExercisePicker: 'Close exercise picker',
@@ -683,6 +688,10 @@ export const sv = {
     available: 'En ny version finns tillgänglig.',
     refresh: 'Uppdatera',
   },
+  offline: {
+    banner: 'Du är offline – visar sparade data.',
+    queued: '{count} ändring synkas när du är online igen. | {count} ändringar synkas när du är online igen.',
+  },
   auth: {
     welcomeBack: 'Välkommen tillbaka',
     loginTitle: 'Logga in på {brand}',
@@ -849,6 +858,7 @@ export const sv = {
     quickWorkoutUnavailable: 'Starta om backend för att aktivera snabbpass och försök igen.',
     saveTimedOut: 'Det tog för lång tid att spara. Kontrollera din anslutning och försök igen.',
     saved: 'Träningspasset sparades',
+    savedOffline: 'Träningspasset sparades på den här enheten. Det synkas när du är online igen.',
     inProgress: 'Pågående träningspass',
     startedAgo: 'Startade {relative}',
     closeExercisePicker: 'Stäng övningsväljaren',
