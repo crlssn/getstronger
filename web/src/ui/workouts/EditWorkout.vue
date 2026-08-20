@@ -13,6 +13,7 @@ import { useAlertStore } from '@/stores/alerts.ts'
 import AppList from '@/ui/components/AppList.vue'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import AppButton from '@/ui/components/AppButton.vue'
+import AppOptionalAction from '@/ui/components/AppOptionalAction.vue'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { getWorkout, updateWorkout } from '@/http/requests.ts'
@@ -219,14 +220,10 @@ const moveExercise = (index: number, direction: 'up' | 'down') => {
               />
             </div>
           </div>
-          <AppButton
-            colour="primary"
-            type="button"
-            class="w-full"
+          <AppOptionalAction
+            :label="t('workout.edit.addSet')"
             @click="addEmptySet(es.exercise?.id as string)"
-          >
-            {{ t('workout.edit.addSet') }}
-          </AppButton>
+          />
         </AppListItem>
       </AppList>
     </template>

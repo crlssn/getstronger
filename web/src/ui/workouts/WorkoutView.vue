@@ -2,14 +2,7 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
 import { useIntersectionObserver } from '@vueuse/core'
-import {
-  BoltIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  ClockIcon,
-  PlayIcon,
-  TrashIcon,
-} from '@heroicons/vue/24/outline'
+import { BoltIcon, CheckIcon, ChevronRightIcon, PlayIcon } from '@heroicons/vue/24/outline'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -22,7 +15,6 @@ import { usePlanStore } from '@/stores/plans'
 import { formatToShortDateTime } from '@/utils/datetime'
 import { formatNumber } from '@/utils/numbers'
 import { i18n } from '@/i18n'
-import useActiveWorkout from '@/utils/useActiveWorkout'
 
 // The row earns its space with the stats that matter: date, volume, duration.
 const workoutMeta = (workout: Workout) => {
@@ -45,8 +37,6 @@ const { t } = useI18n()
 const confirmationStore = useConfirmationStore()
 const dashboardStore = useDashboardStore()
 const planStore = usePlanStore()
-const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
-  useActiveWorkout()
 const previousWorkouts = ref<Workout[]>([])
 const historyPageToken = ref<Uint8Array>(new Uint8Array(0))
 const historySentinel = ref<HTMLElement | null>(null)
@@ -127,20 +117,7 @@ const skip = async () => {
       <h1>{{ t('workout.heading') }}</h1>
       <p>{{ t('workout.subtitle') }}</p>
     </header>
-    <section v-if="savedWorkout" class="active-session">
-      <div>
-        <p class="eyebrow">{{ t('workout.active') }}</p>
-        <h2>{{ savedRoutineName }}</h2>
-        <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
-      </div>
-      <div class="active-actions">
-        <RouterLink :to="savedHref">{{ t('workout.resume') }} <ChevronRightIcon /></RouterLink>
-        <button type="button" @click="discardSavedWorkout">
-          <TrashIcon /> {{ t('workout.discard') }}
-        </button>
-      </div>
-    </section>
-    <section v-else-if="nextRoutine" class="next-card">
+    <section v-if="nextRoutine" class="next-card">
       <header>
         <p class="eyebrow">{{ activePlan ? t('training.activePlan') : t('home.upNext') }}</p>
         <span v-if="activePlan"
@@ -159,7 +136,7 @@ const skip = async () => {
         {{ t('workout.skipRoutine') }}
       </button>
     </section>
-    <section v-else-if="!savedWorkout" class="empty-card">
+    <section v-else class="empty-card">
       <h2>{{ t('workout.noSelection') }}</h2>
       <p>{{ t('workout.noSelectionBody') }}</p>
       <RouterLink to="/plans">{{ t('home.chooseRoutine') }}</RouterLink>
@@ -247,33 +224,6 @@ h2 {
 }
 .quick-card > svg {
   @apply size-5 text-text-subtle;
-}
-.active-session {
-  @apply grid gap-5 rounded-card border border-ink-border bg-ink-surface p-5 shadow-card sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
-}
-.active-session h2 {
-  @apply mt-1;
-}
-.active-meta {
-  @apply mt-3 flex items-center gap-2 text-sm text-text-muted;
-}
-.active-meta svg {
-  @apply size-4;
-}
-.active-actions {
-  @apply grid gap-1 sm:min-w-48;
-}
-.active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
-}
-.active-actions > a svg {
-  @apply size-5;
-}
-.active-actions > button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
-}
-.active-actions > button svg {
-  @apply size-4;
 }
 .next-card {
   @apply rounded-sheet bg-surface-inverse p-6 text-white shadow-raised;

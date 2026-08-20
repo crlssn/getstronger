@@ -37,7 +37,9 @@ const everybody = ['active', 'new']
 
 // A native confirm() blocks until it is answered, and Playwright dismisses it
 // by default, which would silently cancel the deletion.
-const acceptConfirmation = (page: Page) => page.once('dialog', (dialog) => dialog.accept())
+// Deletions confirm through the app's own sheet (AppConfirmDialog), not a
+// native dialog, so the confirm button is clicked like any other control.
+const acceptConfirmation = (page: Page) => page.locator('.dialog-confirm').click()
 
 // Which exercise the workout picker offered first, carried between two steps,
 // and the workout that was saved, so the cleanup can find it again.
@@ -99,8 +101,8 @@ export const flows: Flow[] = [
       if (!(await present(routine))) return
 
       await routine.click()
-      acceptConfirmation(page)
       await page.getByRole('button', { name: 'Delete' }).click()
+      await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/routines$/)
     },
     component: 'src/ui/routines/RoutineForm.vue',
@@ -138,8 +140,8 @@ export const flows: Flow[] = [
       if (!(await present(plan))) return
 
       await plan.click()
-      acceptConfirmation(page)
       await page.getByRole('button', { name: 'Delete plan' }).click()
+      await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/plans$/)
     },
     component: 'src/ui/plans/PlanForm.vue',
@@ -187,8 +189,8 @@ export const flows: Flow[] = [
       if (!(await present(actions))) return
 
       await actions.click()
-      acceptConfirmation(page)
       await page.getByRole('menuitem', { name: 'Delete workout' }).click()
+      await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/home$/)
       savedWorkout = ''
     },

@@ -5,22 +5,18 @@ import { DateTime } from 'luxon'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
   CheckIcon,
-  ChevronRightIcon,
-  ClockIcon,
   FireIcon,
   ListBulletIcon,
   PlayIcon,
   UsersIcon,
-  TrashIcon,
-  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
 import { listFeedItems } from '@/http/requests'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
-import useActiveWorkout from '@/utils/useActiveWorkout'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
 import StreakCard from '@/ui/components/StreakCard.vue'
@@ -29,8 +25,6 @@ import { dateLocale } from '@/i18n'
 const { t } = useI18n()
 
 const dashboardStore = useDashboardStore()
-const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
-  useActiveWorkout()
 const searchOpen = ref(false)
 const openSearch = () => (searchOpen.value = true)
 const routinePickerOpen = ref(false)
@@ -134,23 +128,7 @@ const selectRoutine = async (routineId: string) => {
     <template v-if="!searchOpen">
       <StreakCard />
 
-      <section v-if="savedWorkout" class="active-session">
-        <div>
-          <p class="eyebrow">{{ $t('home.activeWorkout') }}</p>
-          <h2>{{ savedRoutineName }}</h2>
-          <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
-        </div>
-        <div class="active-actions">
-          <RouterLink :to="savedHref"
-            >{{ $t('home.resumeWorkout') }} <ChevronRightIcon
-          /></RouterLink>
-          <button type="button" @click="discardSavedWorkout">
-            <TrashIcon /> {{ $t('home.discardWorkout') }}
-          </button>
-        </div>
-      </section>
-
-      <AppSkeleton v-else-if="dashboardStore.loading && !dashboard" />
+      <AppSkeleton v-if="dashboardStore.loading && !dashboard" />
 
       <section v-else-if="nextRoutine" class="next-session">
         <div class="session-copy">
@@ -232,44 +210,30 @@ const selectRoutine = async (routineId: string) => {
     </template>
   </div>
 
-  <div v-if="routinePickerOpen" class="picker-backdrop" @click.self="routinePickerOpen = false">
-    <section
-      class="routine-picker"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="routine-picker-title"
-    >
-      <header>
-        <div>
-          <p class="eyebrow">{{ $t('home.changeNext') }}</p>
-          <h2 id="routine-picker-title">{{ $t('home.chooseRoutine') }}</h2>
-        </div>
-        <button
-          type="button"
-          :aria-label="$t('home.closePicker')"
-          @click="routinePickerOpen = false"
-        >
-          <XMarkIcon />
-        </button>
-      </header>
-      <div class="routine-options">
-        <button
-          v-for="routine in dashboard?.routines"
-          :key="routine.id"
-          type="button"
-          :class="{ selected: routine.id === nextRoutine?.id }"
-          @click="selectRoutine(routine.id)"
-        >
-          <span class="routine-icon"><FireIcon /></span>
-          <span class="min-w-0">
-            <strong>{{ routine.name }}</strong>
-            <small>{{ $t('home.exerciseCount', routine.exercises.length) }}</small>
-          </span>
-          <span class="selection-icon"><CheckIcon /></span>
-        </button>
-      </div>
-    </section>
-  </div>
+  <AppSheet
+    v-if="routinePickerOpen"
+    :eyebrow="$t('home.changeNext')"
+    :title="$t('home.chooseRoutine')"
+    :close-label="$t('home.closePicker')"
+    @close="routinePickerOpen = false"
+  >
+    <div class="routine-options">
+      <button
+        v-for="routine in dashboard?.routines"
+        :key="routine.id"
+        type="button"
+        :class="{ selected: routine.id === nextRoutine?.id }"
+        @click="selectRoutine(routine.id)"
+      >
+        <span class="routine-icon"><FireIcon /></span>
+        <span class="min-w-0">
+          <strong>{{ routine.name }}</strong>
+          <small>{{ $t('home.exerciseCount', routine.exercises.length) }}</small>
+        </span>
+        <span class="selection-icon"><CheckIcon /></span>
+      </button>
+    </div>
+  </AppSheet>
 </template>
 
 <style scoped>
@@ -292,33 +256,6 @@ h1 {
 }
 h2 {
   @apply text-title font-semibold text-text;
-}
-.active-session {
-  @apply grid gap-5 rounded-card border border-ink-border bg-ink-surface p-5 shadow-card sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
-}
-.active-session h2 {
-  @apply mt-1;
-}
-.active-meta {
-  @apply mt-3 flex items-center gap-2 text-sm text-text-muted;
-}
-.active-meta svg {
-  @apply size-4;
-}
-.active-actions {
-  @apply grid gap-1 sm:min-w-48;
-}
-.active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
-}
-.active-actions > button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
-}
-.active-actions svg {
-  @apply size-5;
-}
-.active-actions > button svg {
-  @apply size-4;
 }
 .next-session {
   @apply grid gap-5 rounded-sheet bg-surface-inverse p-5 text-white shadow-raised sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
@@ -454,23 +391,8 @@ h2 {
 .routine-icon svg {
   @apply size-5;
 }
-.picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 p-0 sm:items-center sm:p-6;
-}
-.routine-picker {
-  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
-}
-.routine-picker header {
-  @apply mb-5 flex items-center justify-between gap-4;
-}
-.routine-picker header button {
-  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
-}
-.routine-picker header button svg {
-  @apply size-5;
-}
 .routine-options {
-  @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
+  @apply space-y-2;
 }
 .routine-options > button {
   @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-card border border-border p-4 text-left hover:border-ink-border hover:bg-ink-surface/50;

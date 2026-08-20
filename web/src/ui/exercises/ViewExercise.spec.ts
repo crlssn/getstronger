@@ -61,9 +61,8 @@ const createTestRouter = () =>
     ],
   })
 
-// The overflow menu teleports into the page header's action slot, and the
-// confirmation dialog portals to the body, so both are asserted through the
-// document rather than the wrapper.
+// The overflow menu teleports into the page header's action slot, so it and
+// the delete sheet are asserted through the document rather than the wrapper.
 const headerAction = () => document.querySelector('#page-nav-action')
 
 const menuButton = () =>
@@ -71,7 +70,7 @@ const menuButton = () =>
     '#page-nav-action button[aria-label="Exercise actions"]',
   )
 
-const dialogPanel = () => document.querySelector('.dialog-panel')
+const dialogPanel = () => document.querySelector('.sheet-panel')
 
 const click = (element: Element | null) => {
   expect(element).toBeTruthy()
@@ -102,6 +101,7 @@ describe('ViewExercise', () => {
   const mountView = async (userID: string) => {
     useAuthStore().userId = userID
     wrapper = mount(ViewExercise, {
+      attachTo: document.body,
       global: { plugins: [i18n, router] },
     })
     await flushPromises()

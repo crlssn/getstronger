@@ -5,7 +5,6 @@ import { type Exercise, type Set } from '@/proto/api/v1/shared_pb.ts'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { BoltIcon, ChevronRightIcon, TrashIcon, TrophyIcon } from '@heroicons/vue/24/outline'
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { useI18n } from 'vue-i18n'
 
 import router from '@/router/router'
@@ -14,6 +13,7 @@ import { useAlertStore } from '@/stores/alerts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
+import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import DropdownButton from '@/ui/components/DropdownButton.vue'
 import ExerciseChart from '@/ui/components/ExerciseChart.vue'
@@ -139,34 +139,26 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
       <ChevronRightIcon class="start-quick-chevron" />
     </button>
 
-    <!-- The dialog root renders through Headless UI's portal and never picks
-         up this component's scope id, so its layout must be global utilities
-         rather than a scoped class. -->
-    <Dialog
-      :open="deleteDialogOpen"
-      class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6"
+    <AppSheet
+      v-if="deleteDialogOpen"
+      :title="t('exercise.view.deleteTitle', { name: exercise.name })"
+      :body="t('exercise.view.deleteBody')"
       @close="deleteDialogOpen = false"
     >
-      <div class="dialog-backdrop" aria-hidden="true" />
-      <DialogPanel class="dialog-panel">
-        <span class="dialog-handle" aria-hidden="true"></span>
-        <DialogTitle>{{ t('exercise.view.deleteTitle', { name: exercise.name }) }}</DialogTitle>
-        <p>{{ t('exercise.view.deleteBody') }}</p>
-        <div class="dialog-actions">
-          <button type="button" class="dialog-cancel" @click="deleteDialogOpen = false">
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            type="button"
-            class="dialog-delete"
-            :disabled="deleting"
-            @click="onDeleteExercise"
-          >
-            <TrashIcon /> {{ t('exercise.delete') }}
-          </button>
-        </div>
-      </DialogPanel>
-    </Dialog>
+      <template #actions>
+        <button
+          type="button"
+          class="dialog-delete danger"
+          :disabled="deleting"
+          @click="onDeleteExercise"
+        >
+          <TrashIcon /> {{ t('exercise.delete') }}
+        </button>
+        <button type="button" class="dialog-cancel tertiary" @click="deleteDialogOpen = false">
+          {{ t('common.cancel') }}
+        </button>
+      </template>
+    </AppSheet>
 
     <section v-if="sets.length" class="chart-card">
       <p class="eyebrow">{{ t('exercise.trend') }}</p>
@@ -294,37 +286,6 @@ const downSample = (data: Set[], sampleSize: number): Set[] => {
 }
 .load-more {
   @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
-}
-.dialog-backdrop {
-  @apply fixed inset-0 bg-black/50;
-}
-.dialog-panel {
-  @apply relative w-full rounded-t-sheet bg-white p-5 shadow-overlay sm:max-w-sm sm:rounded-sheet;
-}
-.dialog-handle {
-  @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
-}
-.dialog-panel h2 {
-  @apply text-title font-semibold text-text;
-}
-.dialog-panel p {
-  @apply mt-2 text-sm text-text-muted;
-}
-.dialog-actions {
-  @apply mt-5 grid gap-2;
-}
-.dialog-cancel,
-.dialog-delete {
-  @apply flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control text-sm font-semibold;
-}
-.dialog-cancel {
-  @apply border border-border text-text-muted hover:bg-ink-surface;
-}
-.dialog-delete {
-  @apply bg-danger text-white hover:bg-danger-strong disabled:opacity-60;
-}
-.dialog-delete svg {
-  @apply size-5;
 }
 .empty-card p {
   @apply mt-2 text-sm text-text-subtle;

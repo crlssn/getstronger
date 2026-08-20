@@ -23,6 +23,7 @@ import StartWorkout from '@/ui/workouts/StartWorkout.vue'
 const {
   createWorkout,
   getCurrentUser,
+  getDashboard,
   getExercise,
   getPreviousWorkoutSets,
   getRoutine,
@@ -32,6 +33,7 @@ const {
 } = vi.hoisted(() => ({
   createWorkout: vi.fn(),
   getCurrentUser: vi.fn(),
+  getDashboard: vi.fn(),
   getExercise: vi.fn(),
   getPreviousWorkoutSets: vi.fn(),
   getRoutine: vi.fn(),
@@ -43,6 +45,7 @@ const {
 vi.mock('@/http/requests', () => ({
   createWorkout,
   getCurrentUser,
+  getDashboard,
   getExercise,
   getPreviousWorkoutSets,
   getRoutine,
@@ -120,7 +123,9 @@ describe('StartWorkout', () => {
       exercise: [benchPress, squat].find((exercise) => exercise.id === id),
     }))
     listExercises.mockResolvedValue({ exercises: [], pagination: {} })
+    createWorkout.mockReset()
     createWorkout.mockResolvedValue({ workoutId: 'workout-1' })
+    getDashboard.mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -213,8 +218,92 @@ describe('StartWorkout', () => {
       const classes = Array.from(children).map((child) => child.className)
       expect(classes[0]).toContain('workout-header')
       expect(classes[1]).toContain('rest-banner')
-      expect(classes[classes.length - 1]).toContain('finish-dock')
+      expect(classes[classes.length - 1]).toContain('exercise-stack')
       wrapper.unmount()
+    })
+  })
+
+  describe('page order and peeks', () => {
+    test('stacks card, primary action, queue, and tools in reading order', async () => {
+      const wrapper = await mountWorkout()
+
+      const children = Array.from(wrapper.get('.exercise-stack').element.children).map(
+        (child) => child.className,
+      )
+      const indexOf = (name: string) => children.findIndex((cls) => cls.includes(name))
+      expect(indexOf('card-carousel')).toBeGreaterThanOrEqual(0)
+      expect(indexOf('action-block')).toBeGreaterThan(indexOf('card-carousel'))
+      expect(indexOf('exercise-queue')).toBeGreaterThan(indexOf('action-block'))
+      expect(indexOf('workout-tools')).toBeGreaterThan(indexOf('exercise-queue'))
+
+      // The quieter finish action sits below the add-exercise affordance.
+      const tools = Array.from(wrapper.get('.workout-tools').element.children).map(
+        (child) => child.className,
+      )
+      expect(tools.findIndex((cls) => cls.includes('finish-early'))).toBeGreaterThan(
+        tools.findIndex((cls) => cls.includes('add-exercise')),
+      )
+      wrapper.unmount()
+    })
+
+    test('peeks the neighbouring cards without revealing their names', async () => {
+      const wrapper = await mountWorkout()
+
+      // First exercise: nothing above, the next card peeks below.
+      expect(wrapper.find('.card-peek.above').exists()).toBe(false)
+      const below = wrapper.get('.card-peek.below')
+      expect(below.text()).toBe('')
+      expect(below.attributes('aria-hidden')).toBe('true')
+
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // Last exercise: the previous card peeks above, nothing below.
+      expect(wrapper.find('.card-peek.above').exists()).toBe(true)
+      expect(wrapper.find('.card-peek.below').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
+    test('keeps a completed exercise ticked off above its sets', async () => {
+      const wrapper = await mountWorkout()
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // Completing the final exercise keeps its card, now labelled as
+      // completed, with its sets still visible beneath the label.
+      await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
+      await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
+      expect(wrapper.get('.completed-exercise').text()).toContain('Exercise completed')
+      expect(wrapper.find('input[aria-label="Squat set 1 weight"]').exists()).toBe(true)
+      wrapper.unmount()
+    })
+  })
+
+  describe('exercise progression', () => {
+    test('advances only through the plain-text complete-exercise action', async () => {
+      const wrapper = await mountWorkout()
+
+      const primary = wrapper.get('.primary-action')
+      expect(primary.text()).toBe('Complete exercise')
+      // No icon: the label sits centred on the screen's dominant control.
+      expect(primary.find('svg').exists()).toBe(false)
+
+      // The queue is a status list, not a switcher.
+      const queue = wrapper.get('.exercise-queue')
+      expect(queue.text()).toContain('Squat')
+      expect(queue.find('button').exists()).toBe(false)
+
+      await logFirstSet(wrapper)
+      await primary.trigger('submit')
+      await flushPromises()
+
+      expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
     })
   })
 
@@ -273,6 +362,41 @@ describe('StartWorkout', () => {
     })
   })
 
+  describe('finish sheet', () => {
+    test('always confirms through the sheet and collects the note there', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      // No always-visible note card on the page any more.
+      expect(wrapper.find('.note-card').exists()).toBe(false)
+
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
+      await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // Everything is complete, yet finishing still pauses on the sheet so
+      // the note can be written before the save.
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      expect(createWorkout).not.toHaveBeenCalled()
+
+      const noteInput = wrapper.get('.sheet-panel textarea')
+      await noteInput.setValue('Felt strong today.')
+      expect(workoutStore.getNote(routineID)).toBe('Felt strong today.')
+
+      await wrapper.get('.sheet-actions button.primary').trigger('click')
+      await flushPromises()
+
+      expect(createWorkout).toHaveBeenCalledTimes(1)
+      expect(createWorkout.mock.calls[0][0].note).toBe('Felt strong today.')
+      wrapper.unmount()
+    })
+  })
+
   describe('offline finish', () => {
     test('queues the workout and clears the draft when the network is unreachable', async () => {
       getRoutine.mockResolvedValue({
@@ -285,6 +409,8 @@ describe('StartWorkout', () => {
       await wrapper.get('.primary-action').trigger('submit')
       await flushPromises()
       await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('.sheet-actions button.primary').trigger('click')
       await flushPromises()
 
       const queue = useMutationQueueStore()
@@ -307,9 +433,11 @@ describe('StartWorkout', () => {
       await flushPromises()
       await wrapper.get('.primary-action').trigger('submit')
       await flushPromises()
+      await wrapper.get('.sheet-actions button.primary').trigger('click')
+      await flushPromises()
 
       expect(useMutationQueueStore().pending).toHaveLength(0)
-      expect(wrapper.get('.finish-dock strong').text()).toContain('could not be saved')
+      expect(wrapper.get('.action-block strong').text()).toContain('could not be saved')
       wrapper.unmount()
     })
   })

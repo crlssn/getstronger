@@ -8,11 +8,12 @@ import {
   ArrowsUpDownIcon,
   PlusIcon,
   TrashIcon,
-  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 import { getPlan, listRoutines } from '@/http/requests'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import AppOptionalAction from '@/ui/components/AppOptionalAction.vue'
+import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useAlertStore } from '@/stores/alerts'
 import { usePlanStore } from '@/stores/plans'
@@ -156,9 +157,9 @@ const save = async () => {
           </li>
         </ol>
 
-        <button type="button" class="add-routine" @click="pickerOpen = true">
-          <PlusIcon /> {{ t('training.planForm.addRoutine') }}
-        </button>
+        <div class="add-routine">
+          <AppOptionalAction :label="t('training.planForm.addRoutine')" @click="pickerOpen = true" />
+        </div>
         <footer v-if="selected.length">
           {{
             t('training.planForm.loopFooter', {
@@ -186,38 +187,28 @@ const save = async () => {
     </template>
   </form>
 
-  <div v-if="pickerOpen" class="picker-backdrop" @click.self="pickerOpen = false">
-    <section
-      class="routine-picker"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="routine-picker-title"
-    >
-      <header>
-        <div>
-          <p class="eyebrow">{{ t('training.planForm.pickerEyebrow') }}</p>
-          <h2 id="routine-picker-title">{{ t('training.planForm.pickerTitle') }}</h2>
-        </div>
-        <button type="button" :aria-label="t('home.closePicker')" @click="pickerOpen = false">
-          <XMarkIcon />
-        </button>
-      </header>
-      <div v-if="available.length" class="routine-options">
-        <button
-          v-for="routine in available"
-          :key="routine.id"
-          type="button"
-          @click="addRoutine(routine)"
-        >
-          <span
-            ><strong>{{ routine.name }}</strong
-            ><small>{{ t('home.exerciseCount', routine.exercises.length) }}</small></span
-          ><PlusIcon />
-        </button>
-      </div>
-      <p v-else class="picker-empty">{{ t('training.planForm.pickerEmpty') }}</p>
-    </section>
-  </div>
+  <AppSheet
+    v-if="pickerOpen"
+    :eyebrow="t('training.planForm.pickerEyebrow')"
+    :title="t('training.planForm.pickerTitle')"
+    :close-label="t('home.closePicker')"
+    @close="pickerOpen = false"
+  >
+    <div v-if="available.length" class="routine-options">
+      <button
+        v-for="routine in available"
+        :key="routine.id"
+        type="button"
+        @click="addRoutine(routine)"
+      >
+        <span
+          ><strong>{{ routine.name }}</strong
+          ><small>{{ t('home.exerciseCount', routine.exercises.length) }}</small></span
+        ><PlusIcon />
+      </button>
+    </div>
+    <p v-else class="picker-empty">{{ t('training.planForm.pickerEmpty') }}</p>
+  </AppSheet>
 </template>
 
 <style scoped>
@@ -307,11 +298,9 @@ h2 {
 .order-actions svg {
   @apply size-4;
 }
+/* Kept inside the card frame; the look itself comes from AppOptionalAction. */
 .add-routine {
-  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-control border border-ink-border bg-white text-sm font-semibold text-text transition hover:bg-ink-surface;
-}
-.add-routine svg {
-  @apply size-5;
+  @apply p-4;
 }
 .routine-order > footer {
   @apply border-t border-border bg-ink-surface px-5 py-4 text-sm text-text-muted;
@@ -324,21 +313,6 @@ h2 {
 }
 .save-area button {
   @apply min-h-(--size-control) rounded-control bg-ink px-5 text-sm font-semibold text-white disabled:bg-ink-tint disabled:text-text-subtle;
-}
-.picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
-}
-.routine-picker {
-  @apply w-full max-w-lg rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
-}
-.routine-picker > header {
-  @apply mb-4 flex items-center justify-between gap-3;
-}
-.routine-picker > header button {
-  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
-}
-.routine-picker > header svg {
-  @apply size-5;
 }
 .routine-options {
   @apply divide-y divide-border border-y border-border;

@@ -72,6 +72,7 @@ test.describe('offline mode', () => {
       // stored on the device, the draft is gone, and the user is back home.
       await page.locator('.primary-action').click()
       await page.locator('.primary-action').click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
       await expect(page.getByText('Workout saved on this device')).toBeVisible()
       await expect(page).toHaveURL(/\/home$/)
       await expect(offlineBanner(page)).toContainText('1 change will sync')
