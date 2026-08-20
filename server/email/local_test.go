@@ -60,6 +60,37 @@ func TestLocalSendPasswordResetUsesTheConfiguredPort(t *testing.T) {
 	require.Contains(t, delivered.await(t), "http://localhost:20383/reset-password?token=token")
 }
 
+func TestLocalSendFailsWhenTheServerIsUnreachable(t *testing.T) {
+	t.Parallel()
+
+	// Claim a port and release it again so nothing is listening on it.
+	var listenConfig net.ListenConfig
+	listener, err := listenConfig.Listen(t.Context(), "tcp", "localhost:0")
+	require.NoError(t, err)
+	_, port, err := net.SplitHostPort(listener.Addr().String())
+	require.NoError(t, err)
+	require.NoError(t, listener.Close())
+
+	c := new(config.Config)
+	c.Email.Provider = config.EmailProviderLocal
+	c.Email.SMTPPort = port
+	c.Server.AllowedOrigins = []string{"http://localhost:20383"}
+
+	provider, err := email.New(c)
+	require.NoError(t, err)
+
+	require.Error(t, provider.SendVerification(context.Background(), email.SendVerification{
+		Name:  "Alex",
+		Email: "alex@example.com",
+		Token: "token",
+	}))
+	require.Error(t, provider.SendPasswordReset(context.Background(), email.SendPasswordReset{
+		Name:  "Alex",
+		Email: "alex@example.com",
+		Token: "token",
+	}))
+}
+
 // fakeSMTP is the smallest server the standard library's SMTP client will talk
 // to. It stands in for MailHog so that the test can prove the provider dials
 // the configured port rather than a hardcoded one.
