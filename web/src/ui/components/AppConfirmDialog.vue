@@ -1,11 +1,20 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useConfirmationStore } from '@/stores/confirmation'
+import blurActiveElement from '@/utils/blurActiveElement'
 
 const { t } = useI18n()
 const confirmationStore = useConfirmationStore()
+
+watch(
+  () => confirmationStore.confirmation,
+  (confirmation) => {
+    if (confirmation) blurActiveElement()
+  },
+)
 </script>
 
 <template>
@@ -15,11 +24,12 @@ const confirmationStore = useConfirmationStore()
   <Dialog
     v-if="confirmationStore.confirmation"
     :open="true"
-    class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+    class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6"
     @close="confirmationStore.dismiss"
   >
     <div class="dialog-backdrop" aria-hidden="true" />
     <DialogPanel class="dialog-panel">
+      <span class="dialog-handle" aria-hidden="true"></span>
       <DialogTitle>{{ confirmationStore.confirmation.title }}</DialogTitle>
       <p v-if="confirmationStore.confirmation.body">{{ confirmationStore.confirmation.body }}</p>
       <div class="dialog-actions">
@@ -46,7 +56,10 @@ const confirmationStore = useConfirmationStore()
   @apply fixed inset-0 bg-black/50;
 }
 .dialog-panel {
-  @apply relative w-full max-w-sm rounded-card border border-border bg-white p-5 shadow-overlay;
+  @apply relative w-full rounded-t-sheet bg-white p-5 shadow-overlay sm:max-w-sm sm:rounded-sheet;
+}
+.dialog-handle {
+  @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
 }
 .dialog-panel h2 {
   @apply text-title font-semibold text-text;

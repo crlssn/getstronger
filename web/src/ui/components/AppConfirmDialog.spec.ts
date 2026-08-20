@@ -63,6 +63,24 @@ describe('AppConfirmDialog', () => {
     expect(dialogPanel()).toBeNull()
   })
 
+  test('blurs the focused input so the mobile keyboard retracts', async () => {
+    const input = document.createElement('input')
+    document.body.append(input)
+    input.focus()
+    expect(document.activeElement).toBe(input)
+
+    const confirmationStore = useConfirmationStore()
+    const confirmed = confirmationStore.confirm({
+      confirmLabel: 'Discard workout',
+      title: 'Discard “Leg day”?',
+    })
+    await flushPromises()
+
+    expect(document.activeElement).not.toBe(input)
+    confirmationStore.dismiss()
+    await expect(confirmed).resolves.toBe(false)
+  })
+
   test('resolves false when cancelled with the default label', async () => {
     const confirmationStore = useConfirmationStore()
     const confirmed = confirmationStore.confirm({
