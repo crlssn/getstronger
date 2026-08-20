@@ -12,7 +12,6 @@ import {
   PlayIcon,
   UsersIcon,
   TrashIcon,
-  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
@@ -21,6 +20,7 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import useActiveWorkout from '@/utils/useActiveWorkout'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
+import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import HomePageActions from '@/ui/components/HomePageActions.vue'
 import StreakCard from '@/ui/components/StreakCard.vue'
@@ -232,44 +232,30 @@ const selectRoutine = async (routineId: string) => {
     </template>
   </div>
 
-  <div v-if="routinePickerOpen" class="picker-backdrop" @click.self="routinePickerOpen = false">
-    <section
-      class="routine-picker"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="routine-picker-title"
-    >
-      <header>
-        <div>
-          <p class="eyebrow">{{ $t('home.changeNext') }}</p>
-          <h2 id="routine-picker-title">{{ $t('home.chooseRoutine') }}</h2>
-        </div>
-        <button
-          type="button"
-          :aria-label="$t('home.closePicker')"
-          @click="routinePickerOpen = false"
-        >
-          <XMarkIcon />
-        </button>
-      </header>
-      <div class="routine-options">
-        <button
-          v-for="routine in dashboard?.routines"
-          :key="routine.id"
-          type="button"
-          :class="{ selected: routine.id === nextRoutine?.id }"
-          @click="selectRoutine(routine.id)"
-        >
-          <span class="routine-icon"><FireIcon /></span>
-          <span class="min-w-0">
-            <strong>{{ routine.name }}</strong>
-            <small>{{ $t('home.exerciseCount', routine.exercises.length) }}</small>
-          </span>
-          <span class="selection-icon"><CheckIcon /></span>
-        </button>
-      </div>
-    </section>
-  </div>
+  <AppSheet
+    v-if="routinePickerOpen"
+    :eyebrow="$t('home.changeNext')"
+    :title="$t('home.chooseRoutine')"
+    :close-label="$t('home.closePicker')"
+    @close="routinePickerOpen = false"
+  >
+    <div class="routine-options">
+      <button
+        v-for="routine in dashboard?.routines"
+        :key="routine.id"
+        type="button"
+        :class="{ selected: routine.id === nextRoutine?.id }"
+        @click="selectRoutine(routine.id)"
+      >
+        <span class="routine-icon"><FireIcon /></span>
+        <span class="min-w-0">
+          <strong>{{ routine.name }}</strong>
+          <small>{{ $t('home.exerciseCount', routine.exercises.length) }}</small>
+        </span>
+        <span class="selection-icon"><CheckIcon /></span>
+      </button>
+    </div>
+  </AppSheet>
 </template>
 
 <style scoped>
@@ -454,23 +440,8 @@ h2 {
 .routine-icon svg {
   @apply size-5;
 }
-.picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 p-0 sm:items-center sm:p-6;
-}
-.routine-picker {
-  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
-}
-.routine-picker header {
-  @apply mb-5 flex items-center justify-between gap-4;
-}
-.routine-picker header button {
-  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
-}
-.routine-picker header button svg {
-  @apply size-5;
-}
 .routine-options {
-  @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
+  @apply space-y-2;
 }
 .routine-options > button {
   @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-card border border-border p-4 text-left hover:border-ink-border hover:bg-ink-surface/50;

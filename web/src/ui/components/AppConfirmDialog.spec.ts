@@ -2,26 +2,13 @@
 
 import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 import { i18n } from '@/i18n'
 import { useConfirmationStore } from '@/stores/confirmation'
 import AppConfirmDialog from '@/ui/components/AppConfirmDialog.vue'
 
-// Headless UI's dialog observes its panel for resizes; jsdom has no
-// ResizeObserver, so give it an inert one.
-vi.stubGlobal(
-  'ResizeObserver',
-  class {
-    disconnect() {}
-    observe() {}
-    unobserve() {}
-  },
-)
-
-// The dialog portals to the body, so it is asserted through the document
-// rather than the wrapper.
-const dialogPanel = () => document.querySelector('.dialog-panel')
+const dialogPanel = () => document.querySelector('.sheet-panel')
 
 const click = (element: Element | null) => {
   expect(element).toBeTruthy()
@@ -34,7 +21,7 @@ describe('AppConfirmDialog', () => {
 
   beforeEach(() => {
     setActivePinia(createPinia())
-    wrapper = mount(AppConfirmDialog, { global: { plugins: [i18n] } })
+    wrapper = mount(AppConfirmDialog, { attachTo: document.body, global: { plugins: [i18n] } })
   })
 
   afterEach(() => {

@@ -51,6 +51,7 @@ import {
 import { isConnectivityError } from '@/http/offlineCache'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { isNumber } from '@/utils/numbers'
+import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
@@ -1167,122 +1168,107 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </section>
     </main>
 
-    <div v-if="exercisePickerOpen" class="picker-backdrop" @click.self="closeExercisePicker">
-      <section
-        class="exercise-picker"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="exercise-picker-title"
-      >
-        <header>
-          <div>
-            <p class="eyebrow">{{ t('workout.onlyThisWorkout') }}</p>
-            <h2 id="exercise-picker-title">{{ t('workout.addExercise') }}</h2>
-          </div>
-          <button
-            type="button"
-            :aria-label="t('workout.closeExercisePicker')"
-            @click="closeExercisePicker"
-          >
-            <XMarkIcon />
-          </button>
-        </header>
+    <AppSheet
+      v-if="exercisePickerOpen"
+      :eyebrow="t('workout.onlyThisWorkout')"
+      :title="t('workout.addExercise')"
+      :close-label="t('workout.closeExercisePicker')"
+      @close="closeExercisePicker"
+    >
+      <label class="exercise-search">
+        <MagnifyingGlassIcon />
+        <input
+          v-model="exerciseSearch"
+          type="search"
+          :placeholder="t('exercise.search')"
+          :aria-label="t('exercise.search')"
+        />
+      </label>
 
-        <label class="exercise-search">
-          <MagnifyingGlassIcon />
-          <input
-            v-model="exerciseSearch"
-            type="search"
-            :placeholder="t('exercise.search')"
-            :aria-label="t('exercise.search')"
-          />
-        </label>
-
-        <AppSkeleton v-if="exercisePickerLoading && !exerciseOptionsLoaded" />
-        <div v-else-if="availableExercises.length" class="exercise-options">
-          <button
-            v-for="exercise in availableExercises"
-            :key="exercise.id"
-            type="button"
-            @click="addExerciseToWorkout(exercise)"
-          >
-            <span class="min-w-0"
-              ><strong>{{ exercise.name }}</strong
-              ><ExerciseTags compact :tags="exercise.tags"
-            /></span>
-            <PlusIcon />
-          </button>
-        </div>
-        <div v-else class="picker-empty">
-          {{ exerciseSearch ? t('workout.noExerciseMatches') : t('workout.allExercisesAdded') }}
-        </div>
-
+      <AppSkeleton v-if="exercisePickerLoading && !exerciseOptionsLoaded" />
+      <div v-else-if="availableExercises.length" class="exercise-options">
         <button
-          v-if="hasMoreExercises"
+          v-for="exercise in availableExercises"
+          :key="exercise.id"
           type="button"
-          class="load-more"
-          :disabled="exercisePickerLoading"
-          @click="loadExerciseOptions"
+          @click="addExerciseToWorkout(exercise)"
         >
-          {{ exercisePickerLoading ? t('common.loading') : t('exercise.loadMore') }}
+          <span class="min-w-0"
+            ><strong>{{ exercise.name }}</strong
+            ><ExerciseTags compact :tags="exercise.tags"
+          /></span>
+          <PlusIcon />
         </button>
-      </section>
-    </div>
+      </div>
+      <div v-else class="picker-empty">
+        {{ exerciseSearch ? t('workout.noExerciseMatches') : t('workout.allExercisesAdded') }}
+      </div>
 
-    <div v-if="finishDialogOpen" class="picker-backdrop" @click.self="finishDialogOpen = false">
-      <section
-        class="finish-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="finish-dialog-title"
+      <button
+        v-if="hasMoreExercises"
+        type="button"
+        class="load-more"
+        :disabled="exercisePickerLoading"
+        @click="loadExerciseOptions"
       >
-        <span class="dialog-handle" aria-hidden="true"></span>
-        <h2 id="finish-dialog-title">{{ t('workout.finishEarly') }}</h2>
-        <p>{{ t('workout.finishEarlyBody', unfinishedExerciseCount) }}</p>
-        <button type="button" class="confirm-finish" @click="confirmFinishWorkout">
+        {{ exercisePickerLoading ? t('common.loading') : t('exercise.loadMore') }}
+      </button>
+    </AppSheet>
+
+    <AppSheet
+      v-if="finishDialogOpen"
+      :title="t('workout.finishEarly')"
+      :body="t('workout.finishEarlyBody', unfinishedExerciseCount)"
+      @close="finishDialogOpen = false"
+    >
+      <template #actions>
+        <button type="button" class="primary" @click="confirmFinishWorkout">
           <FlagIcon /> {{ t('workout.finishSave') }}
         </button>
-        <button type="button" class="keep-training" @click="finishDialogOpen = false">
+        <button type="button" class="tertiary" @click="finishDialogOpen = false">
           {{ t('workout.keepTraining') }}
         </button>
-      </section>
-    </div>
+      </template>
+    </AppSheet>
 
-    <div v-if="leaveDialogOpen" class="picker-backdrop" @click.self="closeLeaveDialog">
-      <section
-        class="finish-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="leave-dialog-title"
-      >
-        <span class="dialog-handle" aria-hidden="true"></span>
-        <template v-if="discardConfirmationOpen">
-          <p class="eyebrow text-danger">{{ t('workout.discard') }}</p>
-          <h2 id="leave-dialog-title">{{ t('workout.deleteTitle') }}</h2>
-          <p>{{ t('workout.discardBody') }}</p>
-          <button type="button" class="confirm-discard" @click="discardWorkout">
-            <TrashIcon /> {{ t('workout.discard') }}
-          </button>
-          <button type="button" class="keep-training" @click="discardConfirmationOpen = false">
-            {{ t('common.back') }}
-          </button>
-        </template>
-        <template v-else>
-          <p class="eyebrow text-success">{{ t('workout.autosaved') }}</p>
-          <h2 id="leave-dialog-title">{{ t('workout.leaveTitle') }}</h2>
-          <p>{{ t('workout.leaveBody') }}</p>
-          <button type="button" class="confirm-finish" @click="saveAndLeave">
-            {{ t('workout.saveLeave') }}
-          </button>
-          <button type="button" class="discard-workout" @click="discardConfirmationOpen = true">
-            {{ t('workout.discard') }}
-          </button>
-          <button type="button" class="keep-training" @click="closeLeaveDialog">
-            {{ t('workout.stay') }}
-          </button>
-        </template>
-      </section>
-    </div>
+    <AppSheet
+      v-if="leaveDialogOpen && discardConfirmationOpen"
+      :eyebrow="t('workout.discard')"
+      eyebrow-tone="danger"
+      :title="t('workout.deleteTitle')"
+      :body="t('workout.discardBody')"
+      @close="closeLeaveDialog"
+    >
+      <template #actions>
+        <button type="button" class="danger" @click="discardWorkout">
+          <TrashIcon /> {{ t('workout.discard') }}
+        </button>
+        <button type="button" class="tertiary" @click="discardConfirmationOpen = false">
+          {{ t('common.back') }}
+        </button>
+      </template>
+    </AppSheet>
+
+    <AppSheet
+      v-else-if="leaveDialogOpen"
+      :eyebrow="t('workout.autosaved')"
+      eyebrow-tone="success"
+      :title="t('workout.leaveTitle')"
+      :body="t('workout.leaveBody')"
+      @close="closeLeaveDialog"
+    >
+      <template #actions>
+        <button type="button" class="primary" @click="saveAndLeave">
+          {{ t('workout.saveLeave') }}
+        </button>
+        <button type="button" class="danger-outline" @click="discardConfirmationOpen = true">
+          {{ t('workout.discard') }}
+        </button>
+        <button type="button" class="tertiary" @click="closeLeaveDialog">
+          {{ t('workout.stay') }}
+        </button>
+      </template>
+    </AppSheet>
 
     <!-- One ranked pair at the end of the session. Advancing is the primary
          action while exercises are unfinished; finishing stays reachable for
@@ -1756,24 +1742,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .finish-dock svg {
   @apply size-5;
 }
-.picker-backdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
-}
-.exercise-picker {
-  @apply flex max-h-[75vh] w-full max-w-lg flex-col rounded-t-sheet bg-white p-5 shadow-overlay sm:rounded-sheet;
-}
-.exercise-picker header {
-  @apply mb-4 flex items-center justify-between gap-4;
-}
-.exercise-picker header h2 {
-  @apply mt-1 text-title font-semibold text-text;
-}
-.exercise-picker header button {
-  @apply grid size-11 place-items-center rounded-control border border-border text-text-subtle;
-}
-.exercise-picker header button svg {
-  @apply size-5;
-}
 .exercise-search {
   @apply mb-4 flex items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
 }
@@ -1784,7 +1752,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
 }
 .exercise-options {
-  @apply min-h-0 flex-1 space-y-2 overflow-y-auto;
+  @apply space-y-2;
 }
 .exercise-options button {
   @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
@@ -1807,36 +1775,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 .load-more {
   @apply mt-4 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
-}
-.finish-dialog {
-  @apply max-h-[75vh] w-full max-w-lg overflow-y-auto rounded-t-sheet bg-white p-5 text-left shadow-overlay sm:rounded-sheet;
-}
-.dialog-handle {
-  @apply mx-auto mb-4 block h-1 w-12 rounded-full bg-ink-tint sm:hidden;
-}
-.finish-dialog h2 {
-  @apply text-title font-semibold text-text;
-}
-.finish-dialog p {
-  @apply mt-2 text-sm leading-6 text-text-subtle;
-}
-.finish-dialog button {
-  @apply mt-3 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold;
-}
-.finish-dialog button svg {
-  @apply size-5;
-}
-.confirm-finish {
-  @apply bg-ink text-white hover:bg-ink-strong;
-}
-.keep-training {
-  @apply border border-border text-text-muted hover:bg-ink-surface;
-}
-.discard-workout {
-  @apply border border-danger/30 text-danger hover:bg-danger-surface hover:text-danger-strong;
-}
-.confirm-discard {
-  @apply bg-danger text-white hover:bg-danger;
 }
 @media (max-width: 520px) {
   .set-grid {
