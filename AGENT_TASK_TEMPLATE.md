@@ -2,7 +2,7 @@
 
 Copy everything below the line, fill it in, and hand it to the agent as the
 task prompt. The brief describes **this task only** — the repository-wide rules
-in [`AGENTS.md`](AGENTS.md), and in the per-area `AGENTS.md` file for the part
+in [`CLAUDE.md`](CLAUDE.md), and in the per-area `CLAUDE.md` file for the part
 of the tree being changed, apply in full and do not need repeating here.
 
 Keep the brief proportional to the task. A one-line fix needs a task line,
@@ -48,7 +48,7 @@ are for the author and should be deleted as the brief is filled in.
 
 ## Verification
 
-<!-- Only what this task needs beyond the defaults in AGENTS.md (TDD, tests
+<!-- Only what this task needs beyond the defaults in CLAUDE.md (TDD, tests
      for every behaviour, e2e coverage for cross-layer flows, lint/build
      green). Name the specific flows, locales, personas, or viewports that
      must be exercised, e.g. "e2e: finishing a workout as Alex Morgan",
