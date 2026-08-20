@@ -9,8 +9,10 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Overridable so the release workflow can stamp a monotonically
         // increasing build number: gradle -PversionCode=N -PversionName=X.Y
-        versionCode (findProperty('versionCode') ?: '1').toInteger()
-        versionName (findProperty('versionName') ?: '1.0')
+        // Assignment form: 'versionCode (x).toInteger()' would parse as
+        // '(versionCode(x)).toInteger()' and crash on the String argument.
+        versionCode = (findProperty('versionCode') ?: '1').toInteger()
+        versionName = (findProperty('versionName') ?: '1.0')
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
