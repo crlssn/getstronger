@@ -18,6 +18,20 @@ export const isConnectivityError = (error: unknown): boolean => {
 
 const cachePrefix = 'offlineCache:'
 
+/** Removes every cached response, e.g. when the user logs out. */
+export const clearOfflineCache = (): void => {
+  try {
+    const doomed: string[] = []
+    for (let index = 0; index < window.localStorage.length; index++) {
+      const key = window.localStorage.key(index)
+      if (key?.startsWith(cachePrefix)) doomed.push(key)
+    }
+    doomed.forEach((key) => window.localStorage.removeItem(key))
+  } catch {
+    // An unavailable storage holds nothing worth clearing.
+  }
+}
+
 // Reads follow the API's naming convention; anything else is a mutation and
 // must never be replayed from storage.
 const isReadMethod = (name: string) => /^(Get|List|Search)/.test(name)

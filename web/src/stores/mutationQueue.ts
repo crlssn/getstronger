@@ -91,9 +91,14 @@ export const useMutationQueueStore = defineStore(
       }
     }
 
+    /** Drops everything still queued, e.g. when the user logs out. */
+    const clear = () => {
+      pending.value = []
+    }
+
     useConnectionStore().onReconnect(() => void flush())
 
-    return { enqueue, flush, pending }
+    return { clear, enqueue, flush, pending }
   },
   {
     persist: true,

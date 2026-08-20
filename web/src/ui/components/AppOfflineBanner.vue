@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { SignalSlashIcon } from '@heroicons/vue/24/outline'
 
+import { clearOfflineCache } from '@/http/offlineCache'
+import { useAuthStore } from '@/stores/auth'
 import { useConnectionStore } from '@/stores/connection'
 import { useMutationQueueStore } from '@/stores/mutationQueue'
 
 // Owns the app's offline lifecycle: watches connectivity, tells the user when
-// the app is showing saved data, and flushes changes queued while offline.
+// the app is showing saved data, flushes changes queued while offline, and
+// sweeps the offline state away on logout.
+const authStore = useAuthStore()
 const connectionStore = useConnectionStore()
 const mutationQueueStore = useMutationQueueStore()
 
@@ -16,6 +20,18 @@ onMounted(() => {
   void mutationQueueStore.flush()
 })
 onUnmounted(() => connectionStore.stop())
+
+// Cached responses belong to the account that fetched them, and a queued
+// change must never be replayed into whichever account signs in next.
+watch(
+  () => authStore.userId,
+  (userId, previousUserId) => {
+    if (previousUserId && !userId) {
+      clearOfflineCache()
+      mutationQueueStore.clear()
+    }
+  },
+)
 </script>
 
 <template>

@@ -19,7 +19,7 @@ import {
 } from '@/proto/api/v1/workout_service_pb'
 import { useAuthStore } from '@/stores/auth'
 import { useConnectionStore } from '@/stores/connection'
-import { isConnectivityError, offlineCache } from './offlineCache'
+import { clearOfflineCache, isConnectivityError, offlineCache } from './offlineCache'
 
 const networkError = () => ConnectError.from(new TypeError('Failed to fetch'))
 
@@ -52,6 +52,10 @@ Object.defineProperty(window, 'localStorage', {
   value: {
     clear: () => storage.clear(),
     getItem: (key: string) => storage.get(key) ?? null,
+    key: (index: number) => [...storage.keys()][index] ?? null,
+    get length() {
+      return storage.size
+    },
     removeItem: (key: string) => void storage.delete(key),
     setItem: (key: string, value: string) => void storage.set(key, value),
   },
@@ -166,6 +170,20 @@ describe('offlineCache', () => {
     await run(mutation, next)
 
     await expect(run(mutation, next)).rejects.toThrow(ConnectError)
+  })
+
+  test('clearOfflineCache removes cached responses and nothing else', async () => {
+    const next = vi
+      .fn()
+      .mockResolvedValueOnce(listResponse('Bench Press'))
+      .mockRejectedValue(networkError())
+    await run(listRequest(), next)
+    window.localStorage.setItem('unrelated', 'kept')
+
+    clearOfflineCache()
+
+    await expect(run(listRequest(), next)).rejects.toThrow(ConnectError)
+    expect(window.localStorage.getItem('unrelated')).toBe('kept')
   })
 
   test('marks the connection online again after a successful read', async () => {
