@@ -9,7 +9,7 @@ import { initNativePlatform } from '@/native/platform'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { createGtag } from 'vue-gtag'
 
-import posthog, { identifyUser } from './posthog'
+import posthog, { identifyUser, isPostHogConfigured } from './posthog'
 import App from './App.vue'
 import { appLocale, i18n } from './i18n'
 import router from './router/router'
@@ -17,8 +17,10 @@ import { warmLazyRoutesWhenIdle } from './router/warmRoutes'
 
 const app = createApp(App)
 
-app.config.errorHandler = (error) => {
-  posthog.captureException(error)
+// Replacing Vue's default handler silences its console logging, so log first.
+app.config.errorHandler = (error, _instance, info) => {
+  console.error(error, info)
+  if (isPostHogConfigured) posthog.captureException(error)
 }
 
 document.documentElement.lang = appLocale

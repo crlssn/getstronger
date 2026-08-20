@@ -3,9 +3,12 @@ import posthog from 'posthog-js'
 const key = import.meta.env.VITE_POSTHOG_KEY
 const host = import.meta.env.VITE_POSTHOG_HOST
 
-export const isPostHogConfigured = Boolean(key && host)
+// Unit tests import this module transitively and must never send real events.
+const inTest = import.meta.env.MODE === 'test'
 
-if (key && host) {
+export const isPostHogConfigured = Boolean(key && host) && !inTest
+
+if (key && host && !inTest) {
   posthog.init(key, {
     api_host: host,
     capture_exceptions: {
@@ -14,10 +17,9 @@ if (key && host) {
       capture_console_errors: false,
     },
   })
-} else if (import.meta.env.DEV) {
-  const missingVariable = !key ? 'VITE_POSTHOG_KEY' : 'VITE_POSTHOG_HOST'
-  throw new Error(
-    `${missingVariable} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${missingVariable} is configured`,
+} else if (import.meta.env.DEV && !inTest) {
+  console.warn(
+    'PostHog is disabled: set VITE_POSTHOG_KEY and VITE_POSTHOG_HOST in web/.env to capture events.',
   )
 }
 
