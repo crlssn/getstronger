@@ -2,7 +2,8 @@
 
 Copy everything below the line, fill it in, and hand it to the agent as the
 task prompt. The brief describes **this task only** — the repository-wide rules
-in [`AGENTS.md`](AGENTS.md) apply in full and do not need repeating here.
+in [`AGENTS.md`](AGENTS.md), and in the per-area `AGENTS.md` file for the part
+of the tree being changed, apply in full and do not need repeating here.
 
 Keep the brief proportional to the task. A one-line fix needs a task line,
 a problem sentence, and one acceptance criterion; delete every section that

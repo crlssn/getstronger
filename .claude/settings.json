@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./node_modules/**)",
+      "Read(./web/node_modules/**)",
+      "Read(./mobile/node_modules/**)",
+      "Read(./web/dist/**)",
+      "Read(./web/playwright-report/**)",
+      "Read(./web/test-results/**)",
+      "Read(./mobile/ios/App/Pods/**)",
+      "Read(./mobile/android/.gradle/**)",
+      "Read(./.secrets/**)",
+      "Read(./.env)",
+      "Read(./web/.env)"
+    ]
+  }
+}
