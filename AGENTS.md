@@ -158,6 +158,9 @@ every log message regardless of level:
   ambiguous — "Fetch auth for login" and "Fetch auth for logout", never five
   call sites all logging "auth fetch". Prefer messages unique to one call
   site so a log line greps to its origin.
+- **No commas.** When a message needs two clauses, join them with a colon
+  and phrase the second one actively: "Event buffer full: dropping event",
+  not "Event buffer full, dropping event".
 
 Each level has its own shape:
 
@@ -166,7 +169,7 @@ Each level has its own shape:
   cause as `zap.Error(err)`. Reserve it for unexpected failures the request
   cannot recover from — an error log is a signal someone may need to act on.
 - **Warn** states an expected, handled anomaly as a fact ("Routine not
-  found", "Request unauthenticated", "Event buffer full, dropping event").
+  found", "Request unauthenticated", "Event buffer full: dropping event").
   Add `zap.Error(err)` when a non-sentinel error carries useful detail.
 - **Info** records a completed event as a past-tense fact ("Routine created",
   "Request authenticated", "Subscribed to topic").

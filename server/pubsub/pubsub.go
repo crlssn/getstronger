@@ -65,7 +65,7 @@ func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload an
 	default:
 		// Never block the request path; the event remains persisted in the
 		// events table even when it cannot be dispatched.
-		ps.log.Error("Event buffer full, dropping event", zap.String("topic", topic.String()))
+		ps.log.Error("Event buffer full: dropping event", zap.String("topic", topic.String()))
 	}
 }
 
