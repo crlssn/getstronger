@@ -102,17 +102,18 @@ test.describe('quick workout lifecycle', () => {
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     await page
       .getByRole('dialog', { name: 'Leave workout?' })
-      .getByRole('button', { name: 'Save & leave' })
+      .getByRole('button', { name: 'Continue in the background' })
       .click()
 
-    await expect(page).toHaveURL(/\/workout$/)
+    // Continuing in the background lands on home; the workout tab's timer
+    // badge is the way back into the running session.
+    await expect(page).toHaveURL(/\/home$/)
     // Leaving the session hands the global navigation back.
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
-    await page.goto('/home')
     const workoutNavigation = page.locator('.bottom-nav').getByRole('link', { name: 'Workout' })
     await expect(workoutNavigation.locator('.timer-badge')).toHaveText(/^\d+:\d{2}$/)
     await page.waitForTimeout(1100)
-    await page.getByRole('link', { name: /Resume workout/ }).click()
+    await workoutNavigation.click()
     await expect(restRegion).toBeVisible()
     await expect(restCountdown).not.toHaveText(extendedTimer)
     await page.getByRole('button', { name: 'Skip', exact: true }).click()
@@ -215,7 +216,8 @@ test.describe('quick workout lifecycle', () => {
     await discardDialog.getByRole('button', { name: 'Discard workout' }).click()
 
     await expect(page).toHaveURL(/\/workout$/)
-    await expect(page.getByRole('link', { name: /Resume workout/ })).toHaveCount(0)
+    // No draft survives: the workout tab carries no timer badge any more.
+    await expect(page.locator('.bottom-nav .timer-badge')).toHaveCount(0)
     await page.goto('/workouts/quick')
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
     await expect(page.getByText('This should be discarded.')).toHaveCount(0)
@@ -341,8 +343,8 @@ test.describe('weight units', () => {
     ).toHaveAttribute('aria-pressed', 'true')
   })
 
-  // A draft outlives the page: "Save & leave" keeps it in local storage, so the
-  // preference can change before the athlete returns to finish the workout.
+  // A draft outlives the page: continuing in the background keeps it in local
+  // storage, so the preference can change before the athlete returns to it.
   test('converts an in-progress draft when the preference changes mid-workout @mutation', async ({
     page,
   }) => {
@@ -355,7 +357,7 @@ test.describe('weight units', () => {
     await page.getByLabel(`${exercise} set 1 reps`).fill('5')
 
     await page.getByRole('button', { name: 'Leave workout?' }).click()
-    await page.getByRole('button', { name: 'Save & leave' }).click()
+    await page.getByRole('button', { name: 'Continue in the background' }).click()
 
     await page.goto('/profile')
     await page

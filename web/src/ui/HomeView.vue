@@ -5,19 +5,15 @@ import { DateTime } from 'luxon'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
   CheckIcon,
-  ChevronRightIcon,
-  ClockIcon,
   FireIcon,
   ListBulletIcon,
   PlayIcon,
   UsersIcon,
-  TrashIcon,
 } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
 import { listFeedItems } from '@/http/requests'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
-import useActiveWorkout from '@/utils/useActiveWorkout'
 import CardWorkout from '@/ui/components/CardWorkout.vue'
 import AppEmptyState from '@/ui/components/AppEmptyState.vue'
 import AppSheet from '@/ui/components/AppSheet.vue'
@@ -29,8 +25,6 @@ import { dateLocale } from '@/i18n'
 const { t } = useI18n()
 
 const dashboardStore = useDashboardStore()
-const { discardSavedWorkout, savedHref, savedRoutineName, savedWorkout, savedWorkoutStarted } =
-  useActiveWorkout()
 const searchOpen = ref(false)
 const openSearch = () => (searchOpen.value = true)
 const routinePickerOpen = ref(false)
@@ -134,23 +128,7 @@ const selectRoutine = async (routineId: string) => {
     <template v-if="!searchOpen">
       <StreakCard />
 
-      <section v-if="savedWorkout" class="active-session">
-        <div>
-          <p class="eyebrow">{{ $t('home.activeWorkout') }}</p>
-          <h2>{{ savedRoutineName }}</h2>
-          <p class="active-meta"><ClockIcon /> {{ savedWorkoutStarted }}</p>
-        </div>
-        <div class="active-actions">
-          <RouterLink :to="savedHref"
-            >{{ $t('home.resumeWorkout') }} <ChevronRightIcon
-          /></RouterLink>
-          <button type="button" @click="discardSavedWorkout">
-            <TrashIcon /> {{ $t('home.discardWorkout') }}
-          </button>
-        </div>
-      </section>
-
-      <AppSkeleton v-else-if="dashboardStore.loading && !dashboard" />
+      <AppSkeleton v-if="dashboardStore.loading && !dashboard" />
 
       <section v-else-if="nextRoutine" class="next-session">
         <div class="session-copy">
@@ -278,33 +256,6 @@ h1 {
 }
 h2 {
   @apply text-title font-semibold text-text;
-}
-.active-session {
-  @apply grid gap-5 rounded-card border border-ink-border bg-ink-surface p-5 shadow-card sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
-}
-.active-session h2 {
-  @apply mt-1;
-}
-.active-meta {
-  @apply mt-3 flex items-center gap-2 text-sm text-text-muted;
-}
-.active-meta svg {
-  @apply size-4;
-}
-.active-actions {
-  @apply grid gap-1 sm:min-w-48;
-}
-.active-actions > a {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-surface-inverse px-5 text-sm font-semibold text-white transition hover:bg-ink-strong;
-}
-.active-actions > button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold text-text-subtle transition hover:bg-ink-tint/70 hover:text-danger;
-}
-.active-actions svg {
-  @apply size-5;
-}
-.active-actions > button svg {
-  @apply size-4;
 }
 .next-session {
   @apply grid gap-5 rounded-sheet bg-surface-inverse p-5 text-white shadow-raised sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;

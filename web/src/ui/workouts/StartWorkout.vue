@@ -816,10 +816,12 @@ const cancelWorkout = () => {
   leaveDialogOpen.value = true
 }
 
+// The workout keeps running in the background; home is where the banner and
+// the nav badge that lead back to it live.
 const saveAndLeave = async () => {
   discardConfirmationOpen.value = false
   leaveDialogOpen.value = false
-  await router.push('/workout')
+  await router.push('/home')
 }
 
 const closeLeaveDialog = () => {
@@ -1259,7 +1261,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     >
       <template #actions>
         <button type="button" class="primary" @click="saveAndLeave">
-          {{ t('workout.saveLeave') }}
+          {{ t('workout.continueInBackground') }}
         </button>
         <button type="button" class="danger-outline" @click="discardConfirmationOpen = true">
           {{ t('workout.discard') }}
