@@ -1,0 +1,74 @@
+# Catches Android Gradle breakage on pull requests: parse errors in the build
+# scripts and drift from the dependency lockfiles. No Android SDK or signing is
+# needed — the build is only configured and resolved, never executed.
+name: test mobile
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths:
+      - '.github/workflows/test.mobile.yml'
+      - 'mobile/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  android:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+          node-version: '24.19.0'
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      # Regenerates android/capacitor-cordova-android-plugins, which
+      # settings.gradle includes. The update also copies the web bundle, but a
+      # stub index.html satisfies it without building the web app.
+      - name: Sync the native project
+        working-directory: mobile
+        run: |
+          mkdir -p ../web/dist android/app/src/main/assets
+          touch ../web/dist/index.html
+          npx cap update android
+
+      # The dependencies task exits 0 even when a configuration fails to
+      # resolve against the lockfiles, so also grep its report for failures.
+      - name: Resolve locked dependencies
+        working-directory: mobile/android
+        run: |
+          set -o pipefail
+          ./gradlew :app:dependencies | tee dependency-report.txt
+          if grep -q 'FAILED' dependency-report.txt; then
+            echo 'Dependency resolution failed: see the FAILED entries above.'
+            exit 1
+          fi
