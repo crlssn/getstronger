@@ -12,6 +12,7 @@ import {
 
 import { getPlan, listRoutines } from '@/http/requests'
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import AppOptionalAction from '@/ui/components/AppOptionalAction.vue'
 import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useAlertStore } from '@/stores/alerts'
@@ -156,9 +157,9 @@ const save = async () => {
           </li>
         </ol>
 
-        <button type="button" class="add-routine" @click="pickerOpen = true">
-          <PlusIcon /> {{ t('training.planForm.addRoutine') }}
-        </button>
+        <div class="add-routine">
+          <AppOptionalAction :label="t('training.planForm.addRoutine')" @click="pickerOpen = true" />
+        </div>
         <footer v-if="selected.length">
           {{
             t('training.planForm.loopFooter', {
@@ -297,11 +298,9 @@ h2 {
 .order-actions svg {
   @apply size-4;
 }
+/* Kept inside the card frame; the look itself comes from AppOptionalAction. */
 .add-routine {
-  @apply m-4 flex min-h-(--size-control) w-[calc(100%_-_2rem)] items-center justify-center gap-2 rounded-control border border-ink-border bg-white text-sm font-semibold text-text transition hover:bg-ink-surface;
-}
-.add-routine svg {
-  @apply size-5;
+  @apply p-4;
 }
 .routine-order > footer {
   @apply border-t border-border bg-ink-surface px-5 py-4 text-sm text-text-muted;

@@ -50,6 +50,7 @@ import {
 import { isConnectivityError } from '@/http/offlineCache'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { isNumber } from '@/utils/numbers'
+import AppOptionalAction from '@/ui/components/AppOptionalAction.vue'
 import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
@@ -1164,13 +1165,12 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       </section>
 
       <section v-if="!quickWorkout || (routine?.exercises.length ?? 0) > 0" class="workout-tools">
-        <button type="button" class="add-exercise" @click="openExercisePicker">
-          <PlusIcon />
-          <span
-            ><strong>{{ t('workout.addExercise') }}</strong
-            ><small>{{ t('workout.onlyThisWorkout') }}</small></span
-          >
-        </button>
+        <AppOptionalAction
+          class="add-exercise"
+          :label="t('workout.addExercise')"
+          :hint="t('workout.onlyThisWorkout')"
+          @click="openExercisePicker"
+        />
 
         <section class="note-card">
           <label for="workout-note"
@@ -1671,23 +1671,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 }
 .workout-tools {
   @apply space-y-3;
-}
-/* A real, solid card: the dashed ghost read as a placeholder. */
-.add-exercise {
-  @apply card grid w-full grid-cols-[auto_1fr] items-center gap-3 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
-}
-.add-exercise > svg {
-  @apply size-11 shrink-0 rounded-control bg-ink p-2.5 text-white;
-}
-.add-exercise strong,
-.add-exercise small {
-  @apply block;
-}
-.add-exercise strong {
-  @apply text-base font-semibold text-text;
-}
-.add-exercise small {
-  @apply mt-0.5 text-xs text-text-subtle;
 }
 .note-card {
   @apply p-4 shadow-none;
