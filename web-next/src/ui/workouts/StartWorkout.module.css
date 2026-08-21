@@ -1,0 +1,222 @@
+@reference '../../assets/base.css';
+
+.workoutShell {
+  @apply mx-auto max-w-3xl space-y-4 pb-8;
+}
+
+/* The timer and the session header are one piece of chrome. The shell's usual
+   section gap belongs below the timer, not between these bars. */
+.workoutShell.resting > .workoutHeader {
+  margin-bottom: 0;
+}
+
+/* The chrome spans the viewport while its contents stay aligned with the app,
+   and is opaque, or scrolled content bleeds through and reads as passing over
+   the header. */
+.workoutHeader {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  @apply sticky z-20 -mt-5 border-b border-border bg-white text-text lg:-mt-7;
+  /* Below the status-bar scrim in the native WebView; zero in browsers. */
+  top: env(safe-area-inset-top);
+}
+
+.workoutHeaderInner {
+  @apply mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2 sm:px-5 lg:px-8;
+}
+
+/* Leaving lives in the chrome, away from the primary action it would undo. */
+.leaveWorkout {
+  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
+}
+
+.leaveWorkout svg {
+  @apply size-5;
+}
+
+.workoutHeader h1 {
+  @apply truncate text-body-lg font-semibold tracking-tight text-text;
+}
+
+.sessionProgress {
+  @apply truncate text-meta text-text-subtle;
+}
+
+/* The one thing glanced at between sets, so it outranks everything else in the
+   chrome. Still yields to the rest countdown, which is a live deadline. The
+   same mono pill the tab bar uses for this timer — one clock, one costume,
+   sized up for the screen it headlines. */
+.elapsed {
+  @apply shrink-0 whitespace-nowrap rounded-pill bg-surface-inverse px-3 py-1.5 font-mono text-base font-bold leading-none tabular-nums text-white;
+}
+
+.exerciseStack {
+  @apply space-y-4;
+}
+
+.quickEmpty {
+  @apply card grid justify-items-center gap-3 p-8 text-center;
+}
+
+.quickEmpty > span {
+  @apply grid size-14 place-items-center rounded-card bg-ink-surface text-ink;
+}
+
+.quickEmpty > span svg {
+  @apply size-6;
+}
+
+.quickEmpty h2 {
+  @apply text-title font-semibold text-text;
+}
+
+.quickEmpty p {
+  @apply max-w-sm text-sm text-text-subtle;
+}
+
+.quickEmpty button {
+  @apply mt-2 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 justify-self-stretch rounded-control bg-ink px-4 text-base font-semibold text-white transition hover:bg-ink-strong;
+}
+
+.quickEmpty button svg {
+  @apply size-5;
+}
+
+/* One connected list rather than a card per exercise: the session is a single
+   stack, and only the exercise being logged spends the screen's height. */
+.exerciseList {
+  @apply card overflow-hidden;
+}
+
+.exerciseList > ul {
+  @apply divide-y divide-border;
+}
+
+/* The header of the exercise you just opened is scrolled back to, so it must
+   clear the session chrome and the rest band that can cover it. */
+.exerciseItem {
+  scroll-margin-top: 9rem;
+}
+
+.exerciseHeader {
+  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr_auto] items-center gap-3 px-4 py-3 text-left transition sm:px-5;
+}
+
+.exerciseItem:not(.open) .exerciseHeader:hover {
+  @apply bg-ink-surface;
+}
+
+/* The open exercise is where you already are: its header stays as a label. */
+.exerciseItem.open .exerciseHeader {
+  @apply cursor-default;
+}
+
+.exerciseCopy {
+  @apply min-w-0;
+}
+
+.exerciseName {
+  @apply block truncate text-sm font-semibold text-text;
+}
+
+.exerciseItem.open .exerciseName {
+  @apply text-title;
+}
+
+.exerciseCopy small {
+  @apply mt-0.5 block truncate text-xs text-text-subtle;
+}
+
+.exerciseToggle {
+  @apply size-5 shrink-0 text-text-subtle transition;
+}
+
+.exerciseItem.open .exerciseToggle {
+  @apply rotate-180 text-text;
+}
+
+.exercisePanel {
+  @apply px-4 pb-4 sm:px-5 sm:pb-5;
+}
+
+.completedExercise {
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-control bg-success-surface p-4 text-success;
+}
+
+.completedExercise strong {
+  @apply text-sm font-semibold;
+}
+
+.completedExercise p {
+  @apply mt-0.5 text-xs text-success;
+}
+
+.completedExercise button {
+  @apply rounded-lg px-3 py-2 text-xs font-semibold text-success hover:bg-success/10;
+}
+
+/* A number on a neutral tile, in every state. Tinting it for completion put a
+   green disc against each finished exercise and made the column read as a
+   status light; where an exercise stands is said in words on its own line. */
+.exerciseIndex {
+  @apply grid size-8 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
+}
+
+.exerciseItem.completed .exerciseCopy small {
+  @apply text-success;
+}
+
+.workoutTools {
+  @apply space-y-3;
+}
+
+/* The note rides in the finish sheet, above the confirm action. */
+.noteField label {
+  @apply flex items-center justify-between text-sm font-semibold text-text;
+}
+
+.noteField label span {
+  @apply font-normal text-text-subtle;
+}
+
+.noteField textarea {
+  @apply mt-2 min-h-20 w-full resize-none rounded-control border-border text-sm placeholder:text-text-subtle focus:border-ink focus:ring-ink;
+}
+
+/* In flow right under the sets it acts on, so pressing forward never means
+   travelling past the rest of the page. */
+.actionBlock {
+  @apply mt-4 flex w-full flex-col items-stretch gap-2 text-center;
+}
+
+/* What is missing, said where the button that is waiting for it lives. */
+.actionBlock > strong {
+  @apply text-meta font-semibold text-text-muted;
+}
+
+.actionBlock > strong.blocked {
+  @apply text-warning;
+}
+
+.actionBlock > strong.failed {
+  @apply text-danger;
+}
+
+/* Blocked, not disabled: it stays filled and live, and says what is missing
+   when pressed. A grey fill on the screen's dominant control reads as broken
+   rather than as waiting for something, and looking different before the tap
+   would put the greying back by another route. */
+.primaryAction {
+  @apply inline-flex min-h-(--size-control-lg) w-full items-center justify-center gap-2 rounded-control bg-ink px-5 text-base font-semibold text-white transition hover:brightness-125 disabled:opacity-70;
+}
+
+/* Quiet enough to read as a footnote to the button above it. */
+.nextUp {
+  @apply text-meta text-text-subtle;
+}
+
+/* A text button: it is the escape hatch, not the other half of a pair, and
+   giving it equal weight left the tools with no ranking at all. */
+.finishEarly {
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center rounded-control px-4 text-sm font-semibold text-text-muted transition hover:bg-surface-sunken hover:text-text disabled:cursor-not-allowed disabled:opacity-50;
+}

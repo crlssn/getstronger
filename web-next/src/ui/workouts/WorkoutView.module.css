@@ -158,7 +158,7 @@
 }
 
 .historyError button {
-  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 font-semibold text-danger;
+  @apply min-h-(--size-control-sm) shrink-0 rounded-lg bg-white px-3 font-semibold text-danger;
 }
 
 .historyEmpty {

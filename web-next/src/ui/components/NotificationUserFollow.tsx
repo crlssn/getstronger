@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 
 import { RichMessage } from '@/i18n/RichMessage'
 import { formatUnixToRelativeDateTime } from '@/utils/datetime'
+import { handle } from '@/utils/names'
 
 interface Props {
   actor?: User
@@ -19,7 +20,7 @@ export const NotificationUserFollow = ({ actor, timestamp }: Props) => (
       <div>
         <RichMessage
           i18nKey="notifications.followedYou"
-          nodes={{ name: <span className="font-semibold">{actor?.username}</span> }}
+          nodes={{ name: <span className="font-semibold">{handle(actor?.username)}</span> }}
         />
       </div>
       <p className="text-sm text-text-subtle">{formatUnixToRelativeDateTime(timestamp)}</p>

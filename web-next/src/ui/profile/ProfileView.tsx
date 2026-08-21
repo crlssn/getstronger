@@ -17,6 +17,7 @@ import {
   getCurrentUser,
   updateUserAutofillSets,
   updateUserDistanceUnit,
+  updateUserName,
   updateUserUsername,
   updateUserWeightUnit,
 } from '@/http/requests'
@@ -30,7 +31,7 @@ import { cn } from '@/ui/cn'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
-import { initials } from '@/utils/names'
+import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
 import styles from './ProfileView.module.css'
@@ -53,7 +54,8 @@ export const ProfileView = () => {
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
 
   const [user, setUser] = useState<User>()
-  const [saving, setSaving] = useState<'weight' | 'distance' | 'autofill' | 'username'>()
+  const [saving, setSaving] = useState<'weight' | 'distance' | 'autofill' | 'name' | 'username'>()
+  const [nameDraft, setNameDraft] = useState<string>()
   const [usernameDraft, setUsernameDraft] = useState<string>()
 
   useEffect(() => {
@@ -103,6 +105,22 @@ export const ProfileView = () => {
     }
 
     useAlertStore.getState().setSuccess(messages.updated)
+  }
+
+  const saveName = async () => {
+    if (!user || nameDraft === undefined || saving === 'name') return
+
+    setSaving('name')
+    const res = await updateUserName(nameDraft)
+    setSaving(undefined)
+
+    // Failures surface through the request helper's alert, so the sheet stays
+    // open for the draft to be corrected.
+    if (!res) return
+
+    setUser({ ...user, name: res.user?.name ?? nameDraft })
+    setNameDraft(undefined)
+    useAlertStore.getState().setSuccess(t('profile.nameUpdated'))
   }
 
   const saveUsername = async () => {
@@ -165,9 +183,20 @@ export const ProfileView = () => {
         <div className={styles.avatar}>{initials(user.name)}</div>
         <div className="min-w-0">
           <p className={styles.eyebrow}>{t('profile.account')}</p>
-          <h2>{user.name}</h2>
+          {/* The name keeps its own heading element, so the pencil beside it
+              stays out of the heading's accessible name. */}
+          <div className={styles.nameLine}>
+            <h2>{user.name}</h2>
+            <button
+              type="button"
+              aria-label={t('profile.editName')}
+              onClick={() => setNameDraft(user.name)}
+            >
+              <PencilSquareIcon aria-hidden="true" />
+            </button>
+          </div>
           <p className={styles.usernameLine}>
-            <span className="truncate">@{user.username}</span>
+            <span className="truncate">{handle(user.username)}</span>
             <button
               type="button"
               aria-label={t('profile.editUsername')}
@@ -304,6 +333,41 @@ export const ProfileView = () => {
       <Link to="/logout" className={styles.logoutLink}>
         <ArrowRightOnRectangleIcon aria-hidden="true" /> {t('auth.logout')}
       </Link>
+
+      {nameDraft !== undefined && (
+        <AppSheet
+          title={t('profile.editName')}
+          closeLabel={t('common.close')}
+          onClose={() => setNameDraft(undefined)}
+          actions={
+            <SheetAction type="submit" form="name-form" tone="primary" disabled={saving === 'name'}>
+              {t('common.save')}
+            </SheetAction>
+          }
+        >
+          <form
+            id="name-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void saveName()
+            }}
+          >
+            <label htmlFor="edit-name" className="auth-label">
+              {t('auth.name')}
+            </label>
+            <input
+              id="edit-name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              className="auth-input mt-2"
+              required
+              value={nameDraft}
+              onChange={(event) => setNameDraft(event.target.value)}
+            />
+          </form>
+        </AppSheet>
+      )}
 
       {usernameDraft !== undefined && (
         <AppSheet

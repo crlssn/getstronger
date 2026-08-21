@@ -22,7 +22,7 @@ import { CardWorkoutComment } from '@/ui/components/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/components/CardWorkoutExercise'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { autosize } from '@/utils/autosize'
-import { initials } from '@/utils/names'
+import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
 import { workoutSummary } from '@/utils/workoutSummary'
 import styles from './CardWorkout.module.css'
@@ -108,7 +108,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
         {initials(workout.user?.name) || 'GS'}
       </Link>
       <div className={styles.authorCopy}>
-        <Link to={`/users/${workout.user?.id}`}>{workout.user?.username}</Link>
+        <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
         <p>
           <span className="truncate">{workout.user?.name}</span>
           <span aria-hidden="true">·</span>

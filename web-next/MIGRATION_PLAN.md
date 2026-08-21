@@ -13,11 +13,11 @@ The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, every design-system
 primitive, and the shell — the nav bars, the four app-level singletons, and the
-signed-in and signed-out layouts. Phase F is nearly done: every screen is across
-except `StartWorkout`. 1081 tests green, 95% statement / 98% line coverage.
+signed-in and signed-out layouts. Phase F is done: every screen is across,
+`StartWorkout` included. 1156 tests green, 95% statement / 97% line coverage.
 
-What is left is `StartWorkout`, and the two files that can only be written once
-every screen exists: `router.tsx` and `main.tsx`.
+What is left is the two files that could only be written once every screen
+existed — `router.tsx` and `main.tsx` — and then phases G and H.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
@@ -26,7 +26,7 @@ every screen exists: `router.tsx` and `main.tsx`.
 | C     | HTTP layer                                             | done  |
 | D     | Design-system primitives (`AppButton`, `AppCard`, …)   | done  |
 | E     | Shell (`App`, dashboard, nav, banners, dialogs)        | done  |
-| F     | Feature views (auth, workouts, exercises, routines, …) | doing |
+| F     | Feature views (auth, workouts, exercises, routines, …) | done  |
 | G     | e2e + screenshot harness pointed at the React app      | todo  |
 | H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
 
@@ -80,8 +80,6 @@ How each syncs:
     `ExerciseTagsInput.vue` builds those three strings as English literals in
     its script, against the repo's own localisation rule; they are catalogue
     keys here.
-  - `routine.view.lastSession_one` and `_other`, in both locales.
-    `ViewRoutine.vue` builds "2 sets · last …" the same way.
   - `workout.durationPlaceholder`, in both locales. `DurationInput.vue`
     hardcodes its "m:ss" placeholder.
 - **`src/utils/**`, new modules** — usually verbatim.
@@ -95,8 +93,14 @@ two new requests on its own, which is the main reason it exists. #1116 then
 retired one catalogue key. #1120 reshaped `AppRestTimerBanner` — that one had
 to be read rather than copied, because the React port had already landed.
 
+Since then the maintainer has been updating `web-next/` alongside `web/` —
+#1125 and #1126 both did. What those PRs cannot update is a screen that does
+not exist here yet, so the diff still has to be read: #1125's `@handle` change
+and #1126's tap-target floors had to be applied by hand to the screens ported
+after them, and #1128 was `web/`-only for the same reason.
+
 Record the main commit you synced from when you do it, so the next diff has a
-starting point: **last synced `a23fef6`**.
+starting point: **last synced `d5c99ea`**.
 
 ## Decisions already made, and why
 
@@ -269,6 +273,16 @@ ESLint 10.
   screen has not had for some time, and an `input { … }` block in
   `UpdateExercise.vue` that no element in its template could ever match.
 
+- `StartWorkout.vue` renders its set inputs as `type="text"` bound with
+  `v-model.number`, which keeps whatever cannot be parsed as a string in the
+  bound field — a set could hold `"12x"` where a number is expected. The React
+  grid holds the text being typed in the input's own state and writes only a
+  finite number, or nothing, to the store.
+- `StartWorkout.vue`'s remove-set control and the rest banner's actions were
+  fine, but its `focusNextSetInput` reached for `.exercise-panel input` by class
+  from the component. That is a hashed name under CSS modules, so the React
+  version holds a ref to the open panel instead.
+
 ## Bugs found on the way
 
 Porting a module means writing a test for it, and two of those tests failed
@@ -323,19 +337,17 @@ now answers a tab root with itself.
 
 ## What to do next
 
-**Phase F: the screens.** Everything under `web/src/ui/` that is not in
-`components/` — 30-odd views. That is the bulk of the work by volume, and it is
-mostly mechanical now: the stores, the requests, the primitives and the shell
-they lean on are all in place.
-
-Done so far — everything but one screen:
+**Phase F is finished.** Everything under `web/src/ui/` that is not in
+`components/` is across — 30-odd views, plus the components each of them needed.
+Kept here as the inventory to check a rebase against:
 
 - Signed out: `UserLogin`, `UserSignup`, `ForgotPassword`, `ResetPassword`,
   `VerifyEmail`, `VerifyEmailPending`, `UserLogout`, `NotFound`.
 - Home and progress: `HomeView`, `ProgressView`, and `StreakCard`,
   `HomePageActions`, `WorkoutChart`, `PageNavAction`.
-- Workouts: `WorkoutView`, `ViewWorkout`, `EditWorkout`, `DurationInput`,
-  `SetMeasurementInputs`, and the `CardWorkout` family.
+- Workouts: `StartWorkout`, `WorkoutView`, `ViewWorkout`, `EditWorkout`,
+  `DurationInput`, `SetMeasurementInputs`, `WorkoutSetGrid`,
+  `WorkoutRestBanner`, `ExercisePickerSheet`, and the `CardWorkout` family.
 - Exercises: `ListExercises`, `ViewExercise`, `CreateExercise`,
   `UpdateExercise`, `ExerciseForm`, `ExerciseTagsInput`,
   `ExerciseMeasurementSettings`, `ExerciseChart`, `ExerciseTags`.
@@ -344,37 +356,36 @@ Done so far — everything but one screen:
 - Plans: `PlansView`, `ViewPlan`, `PlanForm`.
 - People: `UserView` and its four tabs, `ProfileView`, `ListNotifications`.
 
-**What is left: `StartWorkout`.** It is 1791 lines in `web/` — note that the
-earlier estimate of 636 in this file was stale — and it is the screen the whole
-app exists for. Read it in full before starting; it owns the live workout
-timer, the rest timer, the set grid, the exercise picker, the offline queue
-path, the leave and discard dialogs, and the finish flow. Two pieces of it are
-already ported and should be used rather than rewritten:
-`SetMeasurementInputs` for a set's inputs and `DurationInput` for a duration.
+`StartWorkout` was the last of them, and the only one that could not be
+mechanical. Four decisions in it are worth knowing before touching it again:
 
-Four things to know going in:
+- **Both clocks read off one ticking `now`.** A single one-second interval sets
+  `now`; the elapsed time and the rest countdown are derived from it and from
+  the store, rather than each running an interval of its own. That deleted
+  `runRestTimer`, `restoreRestTimer` and `clearRestTimer` from the Vue version:
+  restoring a persisted rest is now just rendering. The one catch is that a rest
+  starting mid-second would open a second short, so `startRest` resets `now` as
+  it writes the timer.
+- **Set completion is tracked in a ref, not in state.** The only thing the
+  record of completed sets is for is spotting the _crossing_ into complete,
+  which is what starts a rest. Rendering reads completeness from the set itself.
+- **The set grid holds its own text.** `NumberEntry` in `WorkoutSetGrid.tsx`
+  keeps the string being typed and writes the parsed number outward, because a
+  controlled input rendering the parsed number swallows the "." in "3.5".
+- **`blockedMessage` is never cleared by an effect.** The Vue screen watched
+  `canRunPrimaryAction` to clear it; here it is simply not rendered while the
+  action is runnable, which `react-hooks/set-state-in-effect` would have
+  refused anyway.
 
-- A screen that wants an action in the top nav bar renders `<PageNavAction>`.
-  Do not look `#page-nav-action` up from an effect — the bar publishes it to
-  `stores/pageNavAction` from its `ref` callback, and the lint rule that stops
-  the effect version is right to.
-- A sentence with an element in the middle of it — a bolded name inside a
-  translated message — goes through `<RichMessage>`. `<Trans>` cannot do it
-  without tags in the catalogue, and the catalogue is shared with the Vue app.
-- Infinite scroll is `useInfiniteScroll(onReach, enabled, rootMargin?)`. Pass
-  `enabled` as `!loading && !reachedEnd`: flipping it back on is what asks for
-  the next page while the sentinel is still in view, so no screen needs to
-  re-arm its own paging the way the Vue ones did.
-- Workout sets are written through `updateSet(routineID, exerciseID, index,
-changes)`. The Vue screens assigned into the set object they got back from
-  `getSets`, and Immer freezes state, so that throws now. **`StartWorkout`
-  needs this** — it is the one place where the port cannot be mechanical.
-- Drag-to-reorder is `useSortable({ handle, ghostClass, dragClass, onReorder })`.
-  SortableJS moves the DOM itself, so the caller reorders its own state to
-  match; hand it the hashed CSS-module class names.
+Two pieces of the Vue screen were deliberately not carried over. `router.replace`
+in Vue reports a navigation failure and the screen had a retry path for it;
+React Router's `navigate` does not fail that way, so `workout.savedNotOpened`
+now only appears if the navigation promise rejects. And the select-all after an
+autofilled value is deferred with a zero timeout, because the copied value only
+reaches the input on the render that write schedules.
 
-**Then `router.tsx` and `main.tsx`**, which can only be written once there are
-screens to point them at. Both are still placeholders:
+**Next: `router.tsx` and `main.tsx`.** These are the immediate work — nothing
+runs as an app until they exist. Both are still placeholders:
 
 - `router.tsx` turns `routes.ts` into `createBrowserRouter` routes with a lazy
   element each, nests them under `AppDashboard` or `GuestView` by access rule,
@@ -405,10 +416,8 @@ needs to ship _with_ the swap, not after.
 
 The issue asks for 80%+. `npm run test:unit -- --run --coverage` reports it, and
 CI runs it that way so the number moves with each increment rather than being
-discovered at the end. It currently sits at 93% statements / 95% lines.
-
-Expect it to fall once components land — the ported modules are unusually easy
-to cover. `src/proto`, `src/main.tsx` and the specs are excluded in
+discovered at the end. It currently sits at 95% statements / 97% lines across
+1156 tests. `src/proto`, `src/main.tsx` and the specs are excluded in
 `vitest.config.ts`; nothing else is.
 
 `requests.ts` is worth a note, since it is a fifth of the source. Its fifty

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 import { formatToRelativeDateTime } from '@/utils/datetime'
-import { initials } from '@/utils/names'
+import { handle, initials } from '@/utils/names'
 import styles from './CardWorkoutComment.module.css'
 
 interface Props {
@@ -30,7 +30,7 @@ export const CardWorkoutComment = ({ comment, timestamp, user }: Props) => {
       </Link>
       <div className={styles.commentContent}>
         <div className={styles.commentMeta}>
-          <Link to={`/users/${user?.id}`}>{user?.username}</Link>
+          <Link to={`/users/${user?.id}`}>{handle(user?.username)}</Link>
           <time>{formatToRelativeDateTime(timestamp)}</time>
         </div>
         <p>{comment}</p>

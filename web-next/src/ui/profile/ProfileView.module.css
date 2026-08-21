@@ -21,23 +21,31 @@
 }
 
 .profileCard h2 {
-  @apply mt-1 truncate text-title font-semibold text-text;
+  @apply truncate text-title font-semibold text-text;
 }
 
 .profileCard p:last-child {
   @apply mt-1 truncate text-sm text-text-subtle;
 }
 
-/* The pencil is a full-size tap target, so the row's text centers against it
-   with negative margins instead of growing the card. */
+/* Each pencil is a full-size tap target, so its row's text centers against it
+   with negative margins instead of growing the card. The name keeps its own
+   heading element, so the pencil stays out of the heading's accessible name. */
+.nameLine,
 .usernameLine {
-  @apply -my-2 flex items-center gap-0.5 text-sm text-text-muted;
+  @apply -my-2 flex items-center gap-0.5;
 }
 
+.usernameLine {
+  @apply text-sm text-text-muted;
+}
+
+.nameLine button,
 .usernameLine button {
   @apply grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
 }
 
+.nameLine button svg,
 .usernameLine button svg {
   @apply size-4;
 }

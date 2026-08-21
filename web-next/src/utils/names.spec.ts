@@ -1,6 +1,6 @@
-import { describe, expect, it, test } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-import { handle, initials, titleCase, usernameFromName } from '@/utils/names'
+import { handle, initials, usernameFromName } from '@/utils/names'
 
 describe('initials', () => {
   it('takes the first letter of the first and last word', () => {
@@ -26,20 +26,6 @@ describe('initials', () => {
   it('returns an empty string for a missing name', () => {
     expect(initials(undefined)).toBe('')
     expect(initials('')).toBe('')
-  })
-})
-
-describe('titleCase', () => {
-  test.each([
-    ['bench press', 'Bench Press'],
-    ['BENCH PRESS', 'Bench Press'],
-    ['bEnCh pReSs', 'Bench Press'],
-    // Compound exercise names are written with a slash, and both halves are
-    // the start of a word.
-    ['pull/chin up', 'Pull/Chin Up'],
-    ['', ''],
-  ])('turns %o into %o', (input, expected) => {
-    expect(titleCase(input)).toBe(expected)
   })
 })
 

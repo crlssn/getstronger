@@ -98,16 +98,16 @@ describe('ListNotifications', () => {
     render()
 
     const row = await screen.findByRole('link')
-    expect(row).toHaveTextContent('alex followed you')
+    expect(row).toHaveTextContent('@alex followed you')
     expect(row).toHaveAttribute('href', '/users/u2')
   })
 
   // The owner changes the sentence, not just a word, so each case is its own
   // message rather than a name slotted into one.
   test.each([
-    ['me', 'alex commented on your Leg day workout'],
-    ['u2', 'alex commented on their Leg day workout'],
-    ['someone-else', 'alex commented on sam’s Leg day workout'],
+    ['me', '@alex commented on your Leg day workout'],
+    ['u2', '@alex commented on their Leg day workout'],
+    ['someone-else', 'alex commented on @sam’s Leg day workout'],
   ])('tells a comment on a %s workout apart', async (ownerId, expected) => {
     mocked.listNotifications.mockResolvedValue(page([comment('n1', ownerId)]))
     render()
