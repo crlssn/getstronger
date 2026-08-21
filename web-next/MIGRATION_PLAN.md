@@ -36,12 +36,16 @@ bug fix — see "Bugs found on the way"), and `router/tabs.ts` (one guard added,
 same section).
 
 Stores on Zustand: `auth`, `connection`, `alerts`, `confirmation`, `pageTitle`,
-`navTabs`, `actionButton`, `preferences`. The conventions they establish are in
-`src/stores/README.md` — read that before adding the ninth.
+`navTabs`, `actionButton`, `preferences`, `appVersion`, `emailVerification`. The
+conventions they establish are in `src/stores/README.md` — read that before
+adding the eleventh.
 
-Still on Pinia in `web/`, not yet ported: `activity`, `appVersion`, `dashboard`,
-`emailVerification`, `mutationQueue`, `notifications`, `plans`, `progress`,
-`streak`, `workout`.
+Not yet ported, all of them blocked on `http/requests.ts`: `activity`,
+`dashboard`, `mutationQueue`, `notifications`, `plans`, `progress`, `streak`,
+`workout`.
+
+Also ported: `router/navigation.ts` and `http/unauthenticated.ts` — see the
+routing decision below for why those two came before the router itself.
 
 Verify with, from `web-next/`:
 
@@ -109,6 +113,22 @@ global `beforeEach` that sets the page title from `meta.titleKey` and resets the
 nav-tab and action-button stores on navigation. `router/tabs.ts` is pure data and
 already ported.
 
+**The HTTP layer redirects through `router/navigation.ts`, not the router.**
+`http/unauthenticated.ts` has to send an expired session back to the login
+screen. In `web/` it imports the router object to do it, which closes a cycle —
+the routes lazily import the views, and the views call the HTTP layer. Vue only
+survives it because the view imports are dynamic.
+
+Rather than reproduce that, the app registers the router's `navigate` via
+`setNavigator` at mount, and the HTTP layer depends on the small `navigation`
+module instead of on the route table. This is what lets the whole HTTP layer be
+built before a single route component exists, which is the ordering the rest of
+phase C needs. `goTo` falls back to a document load when nothing is registered
+yet, so a redirect from a request that beat the router to mount is not lost.
+
+Whatever creates the router must call `setNavigator(router.navigate)`. Nothing
+does yet, because no router exists — that is the first line of the routing work.
+
 **ESLint without `eslint-plugin-react`.** Its recommended set targets prop-types
 and the pre-17 JSX runtime, both already covered here, and it has no ESLint 10
 peer support — including it would force `legacy-peer-deps` on the whole install.
@@ -172,32 +192,39 @@ now answers a tab root with itself.
   `index.html` differs here; `base.css` still styles `#app`, which stays as the
   body id. Check this when porting the shell.
 
-## Phase B — what to do next
+## What to do next
 
-i18n is done and the store pattern is settled (`src/stores/README.md`). Ten
-stores remain, then routing.
+Every remaining store reads from `http/requests.ts`, so **phase C comes before
+the rest of phase B**. The dependency order is fixed and worth following:
 
-1. `appVersion` and `streak` next — both have specs in `web/` and few
-   dependencies, so they extend the pattern without new decisions.
-2. Then `mutationQueue`, the one with a real design question. It calls
+1. **`http/requests.ts`** — 663 lines, and the gate on everything else. It is
+   mostly thin wrappers over the generated Connect clients, so the work is bulk
+   rather than difficulty. Its dependencies are all in place now except
+   `http/clients.ts`, which needs `interceptors` and `offlineCache`.
+2. **`http/clients.ts`, `http/interceptors.ts`, `http/offlineCache.ts`** — port
+   alongside it, with the three specs from `web/src/http/`. `interceptors.ts`
+   and `offlineCache.ts` read the auth and connection stores, both of which are
+   ported, so this is a `useXStore()` → `useXStore.getState()` change and
+   nothing more.
+3. **`jwt/jwt.ts`** — small, but it closes the loop: `interceptors` calls it and
+   it calls `requests.refreshToken`.
+4. **The request-backed stores**: `streak`, `notifications`, `activity`,
+   `dashboard`, `plans`, `progress`. Before porting these as-is, check whether
+   they are really server cache rather than client state — several would be
+   plainer as a data-fetching hook, and this is the moment to decide that, not
+   after 20 components depend on the store shape.
+5. **`mutationQueue`** — the one with a real design question. It calls
    `useConnectionStore().onReconnect(…)` at module-init time, so importing the
    store has a side effect. In React that wiring belongs in an app-level effect;
-   decide where, and write it down here, because `notifications` polling has the
+   decide where and write it down here, because `notifications` polling has the
    same shape.
-3. Then `activity`, `dashboard`, `emailVerification`, `notifications`, `plans`,
-   `progress` — mostly request-and-cache stores. Check whether they are really
-   server cache rather than client state before porting them as-is; several
-   would be plainer as a data-fetching hook, and this is the moment to decide
-   that rather than after 20 components depend on the store shape.
-4. `workout` last — a deep nested map mutated by path, and the reason Immer is
-   already a dependency. Port it with the Immer middleware, and lean on
+6. **`workout`** last — a deep nested map mutated by path, and the reason Immer
+   is already a dependency. Port it with the Immer middleware, and lean on
    `web/src/stores/workout.spec.ts`, which is thorough.
-5. Port each store's spec alongside it. `mutationQueue`, `notifications`,
-   `streak`, `appVersion` and `workout` all have specs in `web/` that should
-   survive with only the store API changing.
 
-Routing comes after the stores, since the global navigation guard resets
-`navTabs` and `actionButton` and so needs both to exist.
+Then routing: the route table, the three guards, and the global navigation
+effect that sets the page title and resets `navTabs` and `actionButton`.
+Whatever creates the router must also call `setNavigator(router.navigate)`.
 
 ## Phase H — do not forget
 
