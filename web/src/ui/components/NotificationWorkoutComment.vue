@@ -36,9 +36,9 @@ const messageKey = computed(() => {
     <div class="w-full font-normal">
       <i18n-t :keypath="messageKey" tag="div" scope="global">
         <template #name>
-          <span class="font-semibold">{{ actor?.firstName }} {{ actor?.lastName }}</span>
+          <span class="font-semibold">{{ actor?.name }}</span>
         </template>
-        <template #owner>{{ workout?.user?.firstName }}</template>
+        <template #owner>{{ workout?.user?.name }}</template>
         <template #workout>
           <span class="font-semibold">{{ workout?.name }}</span>
         </template>

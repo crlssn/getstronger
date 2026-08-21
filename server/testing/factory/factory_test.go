@@ -33,10 +33,9 @@ func TestFactory_Seed(t *testing.T) {
 	f := factory.NewFactory(c.DB)
 	f.Seed(factory.SeedParams{
 		User: &factory.SeedUser{
-			Email:     email,
-			Password:  "password",
-			FirstName: gofakeit.FirstName(),
-			LastName:  gofakeit.LastName(),
+			Email:    email,
+			Password: "password",
+			Name:     gofakeit.Name(),
 		},
 		UserCount:           1,
 		ExerciseCount:       1,
@@ -76,10 +75,9 @@ func TestFactory_Seed(t *testing.T) {
 
 	rangedUser := f.Seed(factory.SeedParams{
 		User: &factory.SeedUser{
-			Email:     gofakeit.Email(),
-			Password:  "password",
-			FirstName: gofakeit.FirstName(),
-			LastName:  gofakeit.LastName(),
+			Email:    gofakeit.Email(),
+			Password: "password",
+			Name:     gofakeit.Name(),
 		},
 		ExerciseCount:             4,
 		WorkoutCount:              1,

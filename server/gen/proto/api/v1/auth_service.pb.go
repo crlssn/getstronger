@@ -28,8 +28,7 @@ type SignupRequest struct {
 	Email                string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Password             string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	PasswordConfirmation string                 `protobuf:"bytes,3,opt,name=password_confirmation,json=passwordConfirmation,proto3" json:"password_confirmation,omitempty"`
-	FirstName            string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
-	LastName             string                 `protobuf:"bytes,5,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	Name                 string                 `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
 	WeightUnit           WeightUnit             `protobuf:"varint,6,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
 	DistanceUnit         DistanceUnit           `protobuf:"varint,7,opt,name=distance_unit,json=distanceUnit,proto3,enum=api.v1.DistanceUnit" json:"distance_unit,omitempty"`
 	unknownFields        protoimpl.UnknownFields
@@ -87,16 +86,9 @@ func (x *SignupRequest) GetPasswordConfirmation() string {
 	return ""
 }
 
-func (x *SignupRequest) GetFirstName() string {
+func (x *SignupRequest) GetName() string {
 	if x != nil {
-		return x.FirstName
-	}
-	return ""
-}
-
-func (x *SignupRequest) GetLastName() string {
-	if x != nil {
-		return x.LastName
+		return x.Name
 	}
 	return ""
 }
@@ -749,17 +741,16 @@ var File_api_v1_auth_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1bbuf/validate/validate.proto\"\xda\x02\n" +
+	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1bbuf/validate/validate.proto\"\xcc\x02\n" +
 	"\rSignupRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x06R\bpassword\x123\n" +
-	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\x12&\n" +
-	"\n" +
-	"first_name\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tfirstName\x12$\n" +
-	"\tlast_name\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\blastName\x12=\n" +
+	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\x12\x1b\n" +
+	"\x04name\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12=\n" +
 	"\vweight_unit\x18\x06 \x01(\x0e2\x12.api.v1.WeightUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
 	"weightUnit\x12C\n" +
-	"\rdistance_unit\x18\a \x01(\x0e2\x14.api.v1.DistanceUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdistanceUnit\"\x10\n" +
+	"\rdistance_unit\x18\a \x01(\x0e2\x14.api.v1.DistanceUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdistanceUnitJ\x04\b\x04\x10\x05J\x04\b\x05\x10\x06R\n" +
+	"first_nameR\tlast_name\"\x10\n" +
 	"\x0eSignupResponse\"R\n" +
 	"\fLoginRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +

@@ -132,7 +132,7 @@ func (s *notificationSuite) TestGetUnreadNotificationCount() {
 	s.Equal(int64(1), res.Msg.GetCount())
 }
 
-func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table-driven notification states are clearer together.
+func (s *notificationSuite) TestListNotifications() {
 	type expected struct {
 		err error
 		res *connect.Response[apiv1.ListNotificationsResponse]
@@ -184,15 +184,13 @@ func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table
 						factory.WorkoutName(n.GetWorkoutComment().GetWorkout().GetName()),
 						factory.WorkoutUserID(s.testFactory.NewUser(
 							factory.UserID(n.GetWorkoutComment().GetWorkout().GetUser().GetId()),
-							factory.UserLastName(n.GetWorkoutComment().GetWorkout().GetUser().GetLastName()),
-							factory.UserFirstName(n.GetWorkoutComment().GetWorkout().GetUser().GetFirstName()),
+							factory.UserName(n.GetWorkoutComment().GetWorkout().GetUser().GetName()),
 						).ID),
 					)
 					comment := s.testFactory.NewWorkoutComment(
 						factory.WorkoutCommentUserID(s.testFactory.NewUser(
 							factory.UserID(n.GetWorkoutComment().GetActor().GetId()),
-							factory.UserLastName(n.GetWorkoutComment().GetActor().GetLastName()),
-							factory.UserFirstName(n.GetWorkoutComment().GetActor().GetFirstName()),
+							factory.UserName(n.GetWorkoutComment().GetActor().GetName()),
 						).ID),
 						factory.WorkoutCommentWorkoutID(workout.ID),
 					)
@@ -219,17 +217,15 @@ func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table
 								Type: &apiv1.Notification_WorkoutComment_{
 									WorkoutComment: &apiv1.Notification_WorkoutComment{
 										Actor: &apiv1.User{
-											Id:        uuid.NewString(),
-											FirstName: gofakeit.FirstName(),
-											LastName:  gofakeit.LastName(),
+											Id:   uuid.NewString(),
+											Name: gofakeit.Name(),
 										},
 										Workout: &apiv1.Workout{
 											Id:   uuid.NewString(),
 											Name: gofakeit.Name(),
 											User: &apiv1.User{
-												Id:        uuid.NewString(),
-												FirstName: gofakeit.FirstName(),
-												LastName:  gofakeit.LastName(),
+												Id:   uuid.NewString(),
+												Name: gofakeit.Name(),
 											},
 										},
 									},
@@ -260,8 +256,7 @@ func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table
 						factory.NotificationPayload(repo.NotificationPayload{
 							ActorID: s.testFactory.NewUser(
 								factory.UserID(n.GetUserFollowed().GetActor().GetId()),
-								factory.UserLastName(n.GetUserFollowed().GetActor().GetLastName()),
-								factory.UserFirstName(n.GetUserFollowed().GetActor().GetFirstName()),
+								factory.UserName(n.GetUserFollowed().GetActor().GetName()),
 							).ID.String(),
 						}),
 					)
@@ -278,9 +273,8 @@ func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table
 								Type: &apiv1.Notification_UserFollowed_{
 									UserFollowed: &apiv1.Notification_UserFollowed{
 										Actor: &apiv1.User{
-											Id:        uuid.NewString(),
-											FirstName: gofakeit.FirstName(),
-											LastName:  gofakeit.LastName(),
+											Id:   uuid.NewString(),
+											Name: gofakeit.Name(),
 										},
 									},
 								},
@@ -351,22 +345,19 @@ func (s *notificationSuite) TestListNotifications() { //nolint:maintidx // Table
 				actualActor := actualNotification.GetUserFollowed().GetActor()
 
 				s.Require().Equal(expectedActor.GetId(), actualActor.GetId())
-				s.Require().Equal(expectedActor.GetLastName(), actualActor.GetLastName())
-				s.Require().Equal(expectedActor.GetFirstName(), actualActor.GetFirstName())
+				s.Require().Equal(expectedActor.GetName(), actualActor.GetName())
 
 				expectedComment := expectedNotification.GetWorkoutComment()
 				actualComment := actualNotification.GetWorkoutComment()
 
 				s.Require().Equal(expectedComment.GetActor().GetId(), actualComment.GetActor().GetId())
-				s.Require().Equal(expectedComment.GetActor().GetLastName(), actualComment.GetActor().GetLastName())
-				s.Require().Equal(expectedComment.GetActor().GetFirstName(), actualComment.GetActor().GetFirstName())
+				s.Require().Equal(expectedComment.GetActor().GetName(), actualComment.GetActor().GetName())
 
 				s.Require().Equal(expectedComment.GetWorkout().GetId(), actualComment.GetWorkout().GetId())
 				s.Require().Equal(expectedComment.GetWorkout().GetName(), actualComment.GetWorkout().GetName())
 
 				s.Require().Equal(expectedComment.GetWorkout().GetUser().GetId(), actualComment.GetWorkout().GetUser().GetId())
-				s.Require().Equal(expectedComment.GetWorkout().GetUser().GetLastName(), actualComment.GetWorkout().GetUser().GetLastName())
-				s.Require().Equal(expectedComment.GetWorkout().GetUser().GetFirstName(), actualComment.GetWorkout().GetUser().GetFirstName())
+				s.Require().Equal(expectedComment.GetWorkout().GetUser().GetName(), actualComment.GetWorkout().GetUser().GetName())
 			}
 		})
 	}

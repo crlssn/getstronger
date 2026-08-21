@@ -94,8 +94,7 @@ func (s *authSuite) TestSignup() {
 					Email:                gofakeit.Email(),
 					Password:             "password",
 					PasswordConfirmation: "password",
-					FirstName:            gofakeit.FirstName(),
-					LastName:             gofakeit.LastName(),
+					Name:                 gofakeit.Name(),
 					WeightUnit:           v1.WeightUnit_WEIGHT_UNIT_POUNDS,
 					DistanceUnit:         v1.DistanceUnit_DISTANCE_UNIT_MILES,
 				},
@@ -105,7 +104,7 @@ func (s *authSuite) TestSignup() {
 					SendVerification(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, req email.SendVerification) {
 						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
-						s.Require().Equal(t.req.Msg.GetFirstName(), req.Name)
+						s.Require().Equal(t.req.Msg.GetName(), req.Name)
 						_, err := uuid.Parse(req.Token)
 						s.Require().NoError(err)
 					})
@@ -121,8 +120,7 @@ func (s *authSuite) TestSignup() {
 					Email:                gofakeit.Email(),
 					Password:             "pass",
 					PasswordConfirmation: "password",
-					FirstName:            gofakeit.FirstName(),
-					LastName:             gofakeit.LastName(),
+					Name:                 gofakeit.Name(),
 				},
 			},
 			init: func(_ test) {
@@ -161,8 +159,7 @@ func (s *authSuite) TestSignup() {
 			user, err := auth.User().One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 
-			s.Require().Equal(t.req.Msg.GetFirstName(), user.FirstName)
-			s.Require().Equal(t.req.Msg.GetLastName(), user.LastName)
+			s.Require().Equal(t.req.Msg.GetName(), user.Name)
 			s.Require().Equal("lb", user.WeightUnit)
 			s.Require().Equal("mi", user.DistanceUnit)
 		})
@@ -505,7 +502,7 @@ func (s *authSuite) TestResendVerificationEmail() {
 				s.mocks.email.EXPECT().
 					SendVerification(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, req email.SendVerification) {
-						s.Require().Equal(user.FirstName, req.Name)
+						s.Require().Equal(user.Name, req.Name)
 						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
 						s.Require().Equal(auth.EmailToken.String(), req.Token)
 					})
@@ -639,7 +636,7 @@ func (s *authSuite) TestResetPassword() {
 				s.mocks.email.EXPECT().
 					SendPasswordReset(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, req email.SendPasswordReset) {
-						s.Require().Equal(user.FirstName, req.Name)
+						s.Require().Equal(user.Name, req.Name)
 						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
 						_, err := uuid.Parse(req.Token)
 						s.Require().NoError(err)

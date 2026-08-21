@@ -30,13 +30,12 @@ import (
 // User is an object representing the database table.
 type User struct {
 	ID             uuid.UUID `db:"id,pk" `
-	FirstName      string    `db:"first_name" `
-	LastName       string    `db:"last_name" `
 	CreatedAt      time.Time `db:"created_at" `
-	FullNameSearch string    `db:"full_name_search,generated" `
 	AuthID         uuid.UUID `db:"auth_id" `
 	WeightUnit     string    `db:"weight_unit" `
 	DistanceUnit   string    `db:"distance_unit" `
+	Name           string    `db:"name" `
+	FullNameSearch string    `db:"full_name_search,generated" `
 
 	R userR `db:"-" `
 
@@ -83,7 +82,7 @@ type userRLoaded struct {
 
 func buildUserColumns(tableName string) userColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "first_name", "last_name", "created_at", "full_name_search", "auth_id", "weight_unit", "distance_unit",
+		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search",
 	)
 
 	if tableName != "" {
@@ -94,13 +93,12 @@ func buildUserColumns(tableName string) userColumns {
 		ColumnsExpr:    columnsExpr,
 		tableAlias:     tableName,
 		ID:             buildUserColumn(tableName, "id"),
-		FirstName:      buildUserColumn(tableName, "first_name"),
-		LastName:       buildUserColumn(tableName, "last_name"),
 		CreatedAt:      buildUserColumn(tableName, "created_at"),
-		FullNameSearch: buildUserColumn(tableName, "full_name_search"),
 		AuthID:         buildUserColumn(tableName, "auth_id"),
 		WeightUnit:     buildUserColumn(tableName, "weight_unit"),
 		DistanceUnit:   buildUserColumn(tableName, "distance_unit"),
+		Name:           buildUserColumn(tableName, "name"),
+		FullNameSearch: buildUserColumn(tableName, "full_name_search"),
 	}
 }
 
@@ -108,13 +106,12 @@ type userColumns struct {
 	expr.ColumnsExpr
 	tableAlias     string
 	ID             userColumn
-	FirstName      userColumn
-	LastName       userColumn
 	CreatedAt      userColumn
-	FullNameSearch userColumn
 	AuthID         userColumn
 	WeightUnit     userColumn
 	DistanceUnit   userColumn
+	Name           userColumn
+	FullNameSearch userColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -161,24 +158,17 @@ func (c userColumn) ShouldOmitParens() bool {
 // Generated columns are not included
 type UserSetter struct {
 	ID           omit.Val[uuid.UUID] `db:"id,pk" `
-	FirstName    omit.Val[string]    `db:"first_name" `
-	LastName     omit.Val[string]    `db:"last_name" `
 	CreatedAt    omit.Val[time.Time] `db:"created_at" `
 	AuthID       omit.Val[uuid.UUID] `db:"auth_id" `
 	WeightUnit   omit.Val[string]    `db:"weight_unit" `
 	DistanceUnit omit.Val[string]    `db:"distance_unit" `
+	Name         omit.Val[string]    `db:"name" `
 }
 
 func (s UserSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 6)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
-	}
-	if s.FirstName.IsValue() {
-		vals = append(vals, "first_name")
-	}
-	if s.LastName.IsValue() {
-		vals = append(vals, "last_name")
 	}
 	if s.CreatedAt.IsValue() {
 		vals = append(vals, "created_at")
@@ -192,18 +182,15 @@ func (s UserSetter) SetColumns() []string {
 	if s.DistanceUnit.IsValue() {
 		vals = append(vals, "distance_unit")
 	}
+	if s.Name.IsValue() {
+		vals = append(vals, "name")
+	}
 	return vals
 }
 
 func (s UserSetter) Overwrite(t *User) {
 	if s.ID.IsValue() {
 		t.ID = s.ID.MustGet()
-	}
-	if s.FirstName.IsValue() {
-		t.FirstName = s.FirstName.MustGet()
-	}
-	if s.LastName.IsValue() {
-		t.LastName = s.LastName.MustGet()
 	}
 	if s.CreatedAt.IsValue() {
 		t.CreatedAt = s.CreatedAt.MustGet()
@@ -216,6 +203,9 @@ func (s UserSetter) Overwrite(t *User) {
 	}
 	if s.DistanceUnit.IsValue() {
 		t.DistanceUnit = s.DistanceUnit.MustGet()
+	}
+	if s.Name.IsValue() {
+		t.Name = s.Name.MustGet()
 	}
 }
 
@@ -230,16 +220,6 @@ func (s *UserSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.ID.MustGet()).WriteSQL(ctx, w, d, start)
-		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-			if s.FirstName.IsUnset() {
-				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
-			}
-			return psql.Arg(s.FirstName.MustGet()).WriteSQL(ctx, w, d, start)
-		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-			if s.LastName.IsUnset() {
-				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
-			}
-			return psql.Arg(s.LastName.MustGet()).WriteSQL(ctx, w, d, start)
 		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
 			if s.CreatedAt.IsUnset() {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
@@ -260,6 +240,11 @@ func (s *UserSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.DistanceUnit.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Name.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Name.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -268,26 +253,12 @@ func (s UserSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 6)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "id")...),
 			psql.Arg(s.ID),
-		}})
-	}
-
-	if s.FirstName.IsValue() {
-		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
-			psql.Quote(append(prefix, "first_name")...),
-			psql.Arg(s.FirstName),
-		}})
-	}
-
-	if s.LastName.IsValue() {
-		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
-			psql.Quote(append(prefix, "last_name")...),
-			psql.Arg(s.LastName),
 		}})
 	}
 
@@ -319,6 +290,13 @@ func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.Name.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "name")...),
+			psql.Arg(s.Name),
+		}})
+	}
+
 	return exprs
 }
 
@@ -329,25 +307,23 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 		idx int
 		dst func(o *User) any
 	}
-	targets := make([]target, 0, 8)
+	targets := make([]target, 0, 7)
 	for i, col := range cols {
 		switch col {
 		case "id":
 			targets = append(targets, target{i, func(o *User) any { return &o.ID }})
-		case "first_name":
-			targets = append(targets, target{i, func(o *User) any { return &o.FirstName }})
-		case "last_name":
-			targets = append(targets, target{i, func(o *User) any { return &o.LastName }})
 		case "created_at":
 			targets = append(targets, target{i, func(o *User) any { return &o.CreatedAt }})
-		case "full_name_search":
-			targets = append(targets, target{i, func(o *User) any { return &o.FullNameSearch }})
 		case "auth_id":
 			targets = append(targets, target{i, func(o *User) any { return &o.AuthID }})
 		case "weight_unit":
 			targets = append(targets, target{i, func(o *User) any { return &o.WeightUnit }})
 		case "distance_unit":
 			targets = append(targets, target{i, func(o *User) any { return &o.DistanceUnit }})
+		case "name":
+			targets = append(targets, target{i, func(o *User) any { return &o.Name }})
+		case "full_name_search":
+			targets = append(targets, target{i, func(o *User) any { return &o.FullNameSearch }})
 		}
 	}
 
@@ -1345,13 +1321,12 @@ func (user0 *User) AttachWorkouts(ctx context.Context, exec bob.Executor, relate
 type userWhere[Q psql.Filterable] struct {
 	cols           userColumns
 	ID             psql.WhereMod[Q, uuid.UUID]
-	FirstName      psql.WhereMod[Q, string]
-	LastName       psql.WhereMod[Q, string]
 	CreatedAt      psql.WhereMod[Q, time.Time]
-	FullNameSearch psql.WhereMod[Q, string]
 	AuthID         psql.WhereMod[Q, uuid.UUID]
 	WeightUnit     psql.WhereMod[Q, string]
 	DistanceUnit   psql.WhereMod[Q, string]
+	Name           psql.WhereMod[Q, string]
+	FullNameSearch psql.WhereMod[Q, string]
 	R              userWhereR[Q]
 }
 
@@ -1363,13 +1338,12 @@ func buildUserWhere[Q psql.Filterable](cols userColumns) userWhere[Q] {
 	return userWhere[Q]{
 		cols:           cols,
 		ID:             psql.Where[Q, uuid.UUID](cols.ID.Expression),
-		FirstName:      psql.Where[Q, string](cols.FirstName.Expression),
-		LastName:       psql.Where[Q, string](cols.LastName.Expression),
 		CreatedAt:      psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		FullNameSearch: psql.Where[Q, string](cols.FullNameSearch.Expression),
 		AuthID:         psql.Where[Q, uuid.UUID](cols.AuthID.Expression),
 		WeightUnit:     psql.Where[Q, string](cols.WeightUnit.Expression),
 		DistanceUnit:   psql.Where[Q, string](cols.DistanceUnit.Expression),
+		Name:           psql.Where[Q, string](cols.Name.Expression),
+		FullNameSearch: psql.Where[Q, string](cols.FullNameSearch.Expression),
 		R:              userWhereR[Q]{cols: cols},
 	}
 }
@@ -1504,13 +1478,12 @@ func (w userWhereR[Q]) HasUsers(filters ...bob.Mod[*dialect.SelectQuery]) mods.W
 // nullable version of the column type even when the column itself is NOT NULL.
 type userPreloadBuf struct {
 	ID             null.Val[uuid.UUID]
-	FirstName      null.Val[string]
-	LastName       null.Val[string]
 	CreatedAt      null.Val[time.Time]
-	FullNameSearch null.Val[string]
 	AuthID         null.Val[uuid.UUID]
 	WeightUnit     null.Val[string]
 	DistanceUnit   null.Val[string]
+	Name           null.Val[string]
+	FullNameSearch null.Val[string]
 }
 
 // userScanMapperNullable maps the preloaded user
@@ -1525,7 +1498,7 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 			idx int
 			dst func(b *userPreloadBuf) any
 		}
-		targets := make([]target, 0, 8)
+		targets := make([]target, 0, 7)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1534,20 +1507,18 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 			switch name {
 			case "id":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.ID }})
-			case "first_name":
-				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FirstName }})
-			case "last_name":
-				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.LastName }})
 			case "created_at":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.CreatedAt }})
-			case "full_name_search":
-				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FullNameSearch }})
 			case "auth_id":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.AuthID }})
 			case "weight_unit":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.WeightUnit }})
 			case "distance_unit":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.DistanceUnit }})
+			case "name":
+				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.Name }})
+			case "full_name_search":
+				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FullNameSearch }})
 			}
 		}
 
@@ -1571,13 +1542,12 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				// not selected by the query are never scanned and stay invalid,
 				// so this check also matches when only a subset is selected.
 				if !(buf.ID.IsValue()) &&
-					!(buf.FirstName.IsValue()) &&
-					!(buf.LastName.IsValue()) &&
 					!(buf.CreatedAt.IsValue()) &&
-					!(buf.FullNameSearch.IsValue()) &&
 					!(buf.AuthID.IsValue()) &&
 					!(buf.WeightUnit.IsValue()) &&
-					!(buf.DistanceUnit.IsValue()) {
+					!(buf.DistanceUnit.IsValue()) &&
+					!(buf.Name.IsValue()) &&
+					!(buf.FullNameSearch.IsValue()) {
 					return nil, nil
 				}
 
@@ -1585,17 +1555,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				if buf.ID.IsValue() {
 					o.ID = buf.ID.MustGet()
 				}
-				if buf.FirstName.IsValue() {
-					o.FirstName = buf.FirstName.MustGet()
-				}
-				if buf.LastName.IsValue() {
-					o.LastName = buf.LastName.MustGet()
-				}
 				if buf.CreatedAt.IsValue() {
 					o.CreatedAt = buf.CreatedAt.MustGet()
-				}
-				if buf.FullNameSearch.IsValue() {
-					o.FullNameSearch = buf.FullNameSearch.MustGet()
 				}
 				if buf.AuthID.IsValue() {
 					o.AuthID = buf.AuthID.MustGet()
@@ -1605,6 +1566,12 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				}
 				if buf.DistanceUnit.IsValue() {
 					o.DistanceUnit = buf.DistanceUnit.MustGet()
+				}
+				if buf.Name.IsValue() {
+					o.Name = buf.Name.MustGet()
+				}
+				if buf.FullNameSearch.IsValue() {
+					o.FullNameSearch = buf.FullNameSearch.MustGet()
 				}
 				return o, nil
 			}

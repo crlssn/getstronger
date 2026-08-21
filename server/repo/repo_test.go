@@ -518,15 +518,13 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "ok_user_created",
 			params: repo.CreateUserParams{
-				AuthID:    s.factory.NewAuth().ID.String(),
-				FirstName: "John",
-				LastName:  "Doe",
+				AuthID: s.factory.NewAuth().ID.String(),
+				Name:   "John Doe",
 			},
 			init: func(_ test) {},
 			expected: expected{
 				user: &models.User{
-					FirstName: "John",
-					LastName:  "Doe",
+					Name: "John Doe",
 				},
 				err: nil,
 			},
@@ -534,9 +532,8 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "err_auth_id_missing",
 			params: repo.CreateUserParams{
-				AuthID:    "",
-				FirstName: "John",
-				LastName:  "Doe",
+				AuthID: "",
+				Name:   "John Doe",
 			},
 			init: func(_ test) {},
 			expected: expected{
@@ -547,9 +544,8 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "err_unknown_auth_id",
 			params: repo.CreateUserParams{
-				AuthID:    uuid.NewString(),
-				FirstName: "Jane",
-				LastName:  "Doe",
+				AuthID: uuid.NewString(),
+				Name:   "Jane Doe",
 			},
 			init: func(_ test) {},
 			expected: expected{
@@ -574,8 +570,7 @@ func (s *repoSuite) TestCreateUser() {
 			s.Require().NoError(err)
 			s.Require().NotNil(user)
 			s.Require().Equal(t.params.AuthID, user.AuthID.String())
-			s.Require().Equal(t.expected.user.FirstName, user.FirstName)
-			s.Require().Equal(t.expected.user.LastName, user.LastName)
+			s.Require().Equal(t.expected.user.Name, user.Name)
 		})
 	}
 }

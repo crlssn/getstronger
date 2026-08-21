@@ -15,8 +15,7 @@ const emailVerificationStore = useEmailVerificationStore()
 const req = ref<SignupRequest>({
   $typeName: 'api.v1.SignupRequest',
   email: '',
-  firstName: '',
-  lastName: '',
+  name: '',
   password: '',
   passwordConfirmation: '',
   weightUnit: WeightUnit.KILOGRAMS,
@@ -43,35 +42,18 @@ const onSignup = async () => {
     </header>
 
     <form class="auth-form" method="POST" @submit.prevent="onSignup">
-      <div class="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label for="firstname" class="auth-label">{{ $t('auth.firstName') }}</label>
-          <div class="mt-2">
-            <input
-              id="firstname"
-              v-model="req.firstName"
-              name="firstname"
-              type="text"
-              autocomplete="given-name"
-              class="auth-input"
-              required
-            />
-          </div>
-        </div>
-
-        <div>
-          <label for="lastname" class="auth-label">{{ $t('auth.lastName') }}</label>
-          <div class="mt-2">
-            <input
-              id="lastname"
-              v-model="req.lastName"
-              name="lastname"
-              type="text"
-              autocomplete="family-name"
-              class="auth-input"
-              required
-            />
-          </div>
+      <div>
+        <label for="name" class="auth-label">{{ $t('auth.name') }}</label>
+        <div class="mt-2">
+          <input
+            id="name"
+            v-model="req.name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            class="auth-input"
+            required
+          />
         </div>
       </div>
 

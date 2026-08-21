@@ -57,8 +57,7 @@ func UserFollowed(followed bool) UserOpt {
 func User(user *models.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
 		Id:           user.ID.String(),
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
+		Name:         user.Name,
 		Followed:     false,
 		Email:        "",
 		WeightUnit:   WeightUnitToProto(user.WeightUnit),

@@ -57,8 +57,7 @@ test.describe('guest authentication and routing', () => {
     const password = 'StrongPassword123!'
 
     await page.goto('/signup')
-    await page.getByLabel('First name').fill('E2E')
-    await page.getByLabel('Last name').fill('Member')
+    await page.getByLabel('Name', { exact: true }).fill('E2E Member')
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByLabel('Confirm password').fill(password)

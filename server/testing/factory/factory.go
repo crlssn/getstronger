@@ -82,8 +82,7 @@ func workoutWithoutRelationships(model *models.Workout) *models.Workout {
 type SeedUser struct {
 	Email     string
 	Password  string
-	FirstName string
-	LastName  string
+	Name      string
 	CreatedAt time.Time
 }
 
@@ -111,8 +110,7 @@ func (f *Factory) Seed(p SeedParams) *models.User {
 		)
 		userOpts := []UserOpt{
 			UserAuthID(auth.ID),
-			UserFirstName(p.User.FirstName),
-			UserLastName(p.User.LastName),
+			UserName(p.User.Name),
 		}
 		if !p.User.CreatedAt.IsZero() {
 			userOpts = append(userOpts, UserCreatedAt(p.User.CreatedAt))

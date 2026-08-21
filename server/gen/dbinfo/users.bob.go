@@ -24,24 +24,6 @@ var Users = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
-		FirstName: column{
-			Name:      "first_name",
-			DBType:    "character varying",
-			Default:   "",
-			Comment:   "",
-			Nullable:  false,
-			Generated: false,
-			AutoIncr:  false,
-		},
-		LastName: column{
-			Name:      "last_name",
-			DBType:    "character varying",
-			Default:   "",
-			Comment:   "",
-			Nullable:  false,
-			Generated: false,
-			AutoIncr:  false,
-		},
 		CreatedAt: column{
 			Name:      "created_at",
 			DBType:    "timestamp without time zone",
@@ -49,15 +31,6 @@ var Users = Table[
 			Comment:   "",
 			Nullable:  false,
 			Generated: false,
-			AutoIncr:  false,
-		},
-		FullNameSearch: column{
-			Name:      "full_name_search",
-			DBType:    "text",
-			Default:   "GENERATED",
-			Comment:   "",
-			Nullable:  false,
-			Generated: true,
 			AutoIncr:  false,
 		},
 		AuthID: column{
@@ -85,6 +58,24 @@ var Users = Table[
 			Comment:   "",
 			Nullable:  false,
 			Generated: false,
+			AutoIncr:  false,
+		},
+		Name: column{
+			Name:      "name",
+			DBType:    "character varying",
+			Default:   "",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		FullNameSearch: column{
+			Name:      "full_name_search",
+			DBType:    "text",
+			Default:   "GENERATED",
+			Comment:   "",
+			Nullable:  false,
+			Generated: true,
 			AutoIncr:  false,
 		},
 	},
@@ -187,18 +178,17 @@ var Users = Table[
 
 type userColumns struct {
 	ID             column
-	FirstName      column
-	LastName       column
 	CreatedAt      column
-	FullNameSearch column
 	AuthID         column
 	WeightUnit     column
 	DistanceUnit   column
+	Name           column
+	FullNameSearch column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.FirstName, c.LastName, c.CreatedAt, c.FullNameSearch, c.AuthID, c.WeightUnit, c.DistanceUnit,
+		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch,
 	}
 }
 

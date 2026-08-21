@@ -33,7 +33,7 @@ const tabs = computed(() => [
 const activeTab = computed(() => route.path)
 const pageTitle = computed(() => {
   if (user.value.id === authStore.userId) return t('nav.me')
-  return `${user.value.firstName} ${user.value.lastName}`
+  return user.value.name
 })
 
 watch(
@@ -88,7 +88,7 @@ const onUnfollowUser = async () => {
 const notMe = computed(() => Boolean(user.value.id) && user.value.id !== authStore.userId)
 const followed = computed(() => user.value.followed)
 const profileActions = computed<DropdownItem[]>(() => [
-  { func: () => onUnfollowUser(), title: t('profile.unfollow', { name: user.value.firstName }) },
+  { func: () => onUnfollowUser(), title: t('profile.unfollow', { name: user.value.name }) },
 ])
 </script>
 
@@ -99,7 +99,7 @@ const profileActions = computed<DropdownItem[]>(() => [
 
   <div v-if="notMe && !followed" class="profile-action">
     <AppButton colour="primary" type="button" @click="onFollowUser">
-      {{ t('profile.follow', { name: user.firstName }) }}
+      {{ t('profile.follow', { name: user.name }) }}
     </AppButton>
   </div>
 

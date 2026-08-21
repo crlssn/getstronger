@@ -528,8 +528,7 @@ func (x *MetadataSet) GetPersonalBest() bool {
 type User struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FirstName     string                 `protobuf:"bytes,2,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
-	LastName      string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	Name          string                 `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
 	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
 	Followed      bool                   `protobuf:"varint,5,opt,name=followed,proto3" json:"followed,omitempty"`
 	WeightUnit    WeightUnit             `protobuf:"varint,6,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
@@ -575,16 +574,9 @@ func (x *User) GetId() string {
 	return ""
 }
 
-func (x *User) GetFirstName() string {
+func (x *User) GetName() string {
 	if x != nil {
-		return x.FirstName
-	}
-	return ""
-}
-
-func (x *User) GetLastName() string {
-	if x != nil {
-		return x.LastName
+		return x.Name
 	}
 	return ""
 }
@@ -748,17 +740,16 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"workout_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tworkoutId\x129\n" +
 	"\n" +
 	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12#\n" +
-	"\rpersonal_best\x18\x03 \x01(\bR\fpersonalBest\"\xa4\x02\n" +
+	"\rpersonal_best\x18\x03 \x01(\bR\fpersonalBest\"\x96\x02\n" +
 	"\x04User\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12&\n" +
-	"\n" +
-	"first_name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tfirstName\x12$\n" +
-	"\tlast_name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\blastName\x12\x14\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
+	"\x04name\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x14\n" +
 	"\x05email\x18\x04 \x01(\tR\x05email\x12\x1a\n" +
 	"\bfollowed\x18\x05 \x01(\bR\bfollowed\x12=\n" +
 	"\vweight_unit\x18\x06 \x01(\x0e2\x12.api.v1.WeightUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
 	"weightUnit\x12C\n" +
-	"\rdistance_unit\x18\a \x01(\x0e2\x14.api.v1.DistanceUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdistanceUnit\"\\\n" +
+	"\rdistance_unit\x18\a \x01(\x0e2\x14.api.v1.DistanceUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdistanceUnitJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\n" +
+	"first_nameR\tlast_name\"\\\n" +
 	"\x11PaginationRequest\x12(\n" +
 	"\n" +
 	"page_limit\x18\x01 \x01(\x05B\t\xbaH\x06\x1a\x04\x18d(\x01R\tpageLimit\x12\x1d\n" +

@@ -28,16 +28,14 @@ func TestSeedPersonas(t *testing.T) {
 	f := factory.NewFactory(c.DB)
 	config := personaConfig{
 		active: factory.SeedUser{
-			Email:     "active@test.local",
-			Password:  "password123",
-			FirstName: "Alex",
-			LastName:  "Morgan",
+			Email:    "active@test.local",
+			Password: "password123",
+			Name:     "Alex Morgan",
 		},
 		new: factory.SeedUser{
-			Email:     "new@test.local",
-			Password:  "password123",
-			FirstName: "Sam",
-			LastName:  "Taylor",
+			Email:    "new@test.local",
+			Password: "password123",
+			Name:     "Sam Taylor",
 		},
 	}
 
@@ -119,20 +117,17 @@ func TestSeedJaneDoe(t *testing.T) {
 	})
 	f := factory.NewFactory(c.DB)
 	john := f.NewUser(
-		factory.UserFirstName("John"),
-		factory.UserLastName("Doe"),
+		factory.UserName("John Doe"),
 	)
 	johnWorkouts := f.NewWorkoutSlice(4, factory.WorkoutUserID(john.ID))
 
 	seedJaneDoe(c.DB, f, john)
 
 	jane, err := models.Users.Query(
-		models.SelectWhere.Users.FirstName.EQ("Jane"),
-		models.SelectWhere.Users.LastName.EQ("Doe"),
+		models.SelectWhere.Users.Name.EQ("Jane Doe"),
 	).One(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
-	require.Equal(t, "Jane", jane.FirstName)
-	require.Equal(t, "Doe", jane.LastName)
+	require.Equal(t, "Jane Doe", jane.Name)
 
 	followsJane, err := models.Followers.Query(
 		models.SelectWhere.Followers.FollowerID.EQ(john.ID),

@@ -85,8 +85,7 @@ func (s *Saga) Signup(ctx context.Context, f func(*connect.Response[apiv1.Signup
 			Email:                s.auth.email,
 			Password:             s.auth.password,
 			PasswordConfirmation: s.auth.password,
-			FirstName:            gofakeit.FirstName(),
-			LastName:             gofakeit.LastName(),
+			Name:                 gofakeit.Name(),
 		},
 	}))
 
@@ -281,7 +280,7 @@ func (s *Saga) SearchUsers(ctx context.Context, f func(*connect.Response[apiv1.S
 	client := apiv1connect.NewUserServiceClient(s.client(), s.baseURL)
 	f(client.SearchUsers(ctx, &connect.Request[apiv1.SearchUsersRequest]{
 		Msg: &apiv1.SearchUsersRequest{
-			Query: user.FirstName,
+			Query: user.Name,
 			Pagination: &apiv1.PaginationRequest{
 				PageLimit: 100, //nolint:mnd
 				PageToken: nil,

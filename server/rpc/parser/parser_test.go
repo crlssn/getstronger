@@ -76,8 +76,7 @@ func (s *parserSuite) TestUser() {
 	user.R.Auth = nil
 	parsed = parser.User(user)
 	s.Require().Equal(user.ID.String(), parsed.GetId())
-	s.Require().Equal(user.FirstName, parsed.GetFirstName())
-	s.Require().Equal(user.LastName, parsed.GetLastName())
+	s.Require().Equal(user.Name, parsed.GetName())
 	s.Require().False(parsed.GetFollowed())
 	s.Require().Empty(parsed.GetEmail())
 }
@@ -89,8 +88,7 @@ func (s *parserSuite) TestUserSlice() {
 	s.Require().Len(parsed, len(users))
 	for i, user := range users {
 		s.Require().Equal(user.ID.String(), parsed[i].GetId())
-		s.Require().Equal(user.FirstName, parsed[i].GetFirstName())
-		s.Require().Equal(user.LastName, parsed[i].GetLastName())
+		s.Require().Equal(user.Name, parsed[i].GetName())
 		s.Require().Equal(user.R.Auth.Email, parsed[i].GetEmail())
 		s.Require().False(parsed[i].GetFollowed())
 	}
@@ -142,8 +140,7 @@ func (s *parserSuite) TestWorkout() {
 	workout = s.factory.NewWorkout()
 	parsed = parser.Workout(workout)
 	s.Require().Equal(workout.R.User.ID.String(), parsed.GetUser().GetId())
-	s.Require().Equal(workout.R.User.FirstName, parsed.GetUser().GetFirstName())
-	s.Require().Equal(workout.R.User.LastName, parsed.GetUser().GetLastName())
+	s.Require().Equal(workout.R.User.Name, parsed.GetUser().GetName())
 	s.Require().False(parsed.GetUser().GetFollowed())
 	s.Require().Empty(parsed.GetUser().GetEmail())
 
@@ -219,8 +216,7 @@ func (s *parserSuite) TestWorkoutSlice() {
 
 			s.Require().NotNil(workout.GetUser())
 			s.Require().Equal(workouts[i].R.User.ID.String(), workout.GetUser().GetId())
-			s.Require().Equal(workouts[i].R.User.FirstName, workout.GetUser().GetFirstName())
-			s.Require().Equal(workouts[i].R.User.LastName, workout.GetUser().GetLastName())
+			s.Require().Equal(workouts[i].R.User.Name, workout.GetUser().GetName())
 
 			s.Require().NotNil(workout.GetExerciseSets())
 			for j, exerciseSet := range workout.GetExerciseSets() {
@@ -256,8 +252,7 @@ func (s *parserSuite) TestWorkoutComment() {
 	comment := s.factory.NewWorkoutComment()
 	parsed := parser.WorkoutComment(comment)
 	s.Require().Equal(comment.R.User.ID.String(), parsed.GetUser().GetId())
-	s.Require().Equal(comment.R.User.FirstName, parsed.GetUser().GetFirstName())
-	s.Require().Equal(comment.R.User.LastName, parsed.GetUser().GetLastName())
+	s.Require().Equal(comment.R.User.Name, parsed.GetUser().GetName())
 	s.Require().Empty(parsed.GetUser().GetEmail())
 	s.Require().False(parsed.GetUser().GetFollowed())
 
@@ -359,8 +354,7 @@ func (s *parserSuite) TestNotification() {
 
 	s.Require().NotNil(parsed.GetWorkoutComment().GetActor())
 	s.Require().Equal(actor.ID.String(), parsed.GetWorkoutComment().GetActor().GetId())
-	s.Require().Equal(actor.FirstName, parsed.GetWorkoutComment().GetActor().GetFirstName())
-	s.Require().Equal(actor.LastName, parsed.GetWorkoutComment().GetActor().GetLastName())
+	s.Require().Equal(actor.Name, parsed.GetWorkoutComment().GetActor().GetName())
 	s.Require().Empty(parsed.GetUserFollowed().GetActor().GetEmail())
 	s.Require().False(parsed.GetWorkoutComment().GetActor().GetFollowed())
 
@@ -378,8 +372,7 @@ func (s *parserSuite) TestNotification() {
 
 	s.Require().NotNil(parsed.GetWorkoutComment().GetWorkout().GetUser())
 	s.Require().Equal(workout.R.User.ID.String(), parsed.GetWorkoutComment().GetWorkout().GetUser().GetId())
-	s.Require().Equal(workout.R.User.FirstName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetFirstName())
-	s.Require().Equal(workout.R.User.LastName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetLastName())
+	s.Require().Equal(workout.R.User.Name, parsed.GetWorkoutComment().GetWorkout().GetUser().GetName())
 	s.Require().Empty(parsed.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
 	s.Require().False(parsed.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
 
@@ -395,8 +388,7 @@ func (s *parserSuite) TestNotification() {
 
 	s.Require().NotNil(actor.ID, parsed.GetWorkoutComment().GetActor())
 	s.Require().Equal(actor.ID.String(), parsed.GetWorkoutComment().GetActor().GetId())
-	s.Require().Equal(actor.FirstName, parsed.GetWorkoutComment().GetActor().GetFirstName())
-	s.Require().Equal(actor.LastName, parsed.GetWorkoutComment().GetActor().GetLastName())
+	s.Require().Equal(actor.Name, parsed.GetWorkoutComment().GetActor().GetName())
 	s.Require().Empty(parsed.GetUserFollowed().GetActor().GetEmail())
 	s.Require().False(parsed.GetWorkoutComment().GetActor().GetFollowed())
 
@@ -408,8 +400,7 @@ func (s *parserSuite) TestNotification() {
 
 	s.Require().NotNil(parsed.GetWorkoutComment().GetWorkout().GetUser())
 	s.Require().Equal(workout.R.User.ID.String(), parsed.GetWorkoutComment().GetWorkout().GetUser().GetId())
-	s.Require().Equal(workout.R.User.FirstName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetFirstName())
-	s.Require().Equal(workout.R.User.LastName, parsed.GetWorkoutComment().GetWorkout().GetUser().GetLastName())
+	s.Require().Equal(workout.R.User.Name, parsed.GetWorkoutComment().GetWorkout().GetUser().GetName())
 	s.Require().Empty(parsed.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
 	s.Require().False(parsed.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
 
@@ -438,8 +429,7 @@ func (s *parserSuite) TestNotification() {
 	parsed = parser.Notification(notification, parser.NotificationActor(notification.Type, actor))
 
 	s.Require().Equal(actor.ID.String(), parsed.GetUserFollowed().GetActor().GetId())
-	s.Require().Equal(actor.FirstName, parsed.GetUserFollowed().GetActor().GetFirstName())
-	s.Require().Equal(actor.LastName, parsed.GetUserFollowed().GetActor().GetLastName())
+	s.Require().Equal(actor.Name, parsed.GetUserFollowed().GetActor().GetName())
 	s.Require().Equal(actor.R.Auth.Email, parsed.GetUserFollowed().GetActor().GetEmail())
 	s.Require().False(parsed.GetUserFollowed().GetActor().GetFollowed())
 
@@ -487,8 +477,7 @@ func (s *parserSuite) TestNotificationSlice() {
 
 			s.Require().NotNil(notification.GetUserFollowed().GetActor())
 			s.Require().Equal(actors[0].ID.String(), notification.GetUserFollowed().GetActor().GetId())
-			s.Require().Equal(actors[0].FirstName, notification.GetUserFollowed().GetActor().GetFirstName())
-			s.Require().Equal(actors[0].LastName, notification.GetUserFollowed().GetActor().GetLastName())
+			s.Require().Equal(actors[0].Name, notification.GetUserFollowed().GetActor().GetName())
 			s.Require().Equal(actors[0].R.Auth.Email, notification.GetUserFollowed().GetActor().GetEmail())
 			s.Require().False(notification.GetUserFollowed().GetActor().GetFollowed())
 
@@ -498,8 +487,7 @@ func (s *parserSuite) TestNotificationSlice() {
 
 			s.Require().NotNil(notification.GetWorkoutComment().GetActor())
 			s.Require().Equal(actors[1].ID.String(), notification.GetWorkoutComment().GetActor().GetId())
-			s.Require().Equal(actors[1].LastName, notification.GetWorkoutComment().GetActor().GetLastName())
-			s.Require().Equal(actors[1].FirstName, notification.GetWorkoutComment().GetActor().GetFirstName())
+			s.Require().Equal(actors[1].Name, notification.GetWorkoutComment().GetActor().GetName())
 			s.Require().Equal(actors[1].R.Auth.Email, notification.GetWorkoutComment().GetActor().GetEmail())
 			s.Require().False(notification.GetWorkoutComment().GetActor().GetFollowed())
 
@@ -511,8 +499,7 @@ func (s *parserSuite) TestNotificationSlice() {
 
 			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout().GetUser())
 			s.Require().Equal(workouts[0].R.User.ID.String(), notification.GetWorkoutComment().GetWorkout().GetUser().GetId())
-			s.Require().Equal(workouts[0].R.User.FirstName, notification.GetWorkoutComment().GetWorkout().GetUser().GetFirstName())
-			s.Require().Equal(workouts[0].R.User.LastName, notification.GetWorkoutComment().GetWorkout().GetUser().GetLastName())
+			s.Require().Equal(workouts[0].R.User.Name, notification.GetWorkoutComment().GetWorkout().GetUser().GetName())
 			s.Require().False(notification.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
 			s.Require().Empty(notification.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
 
@@ -545,8 +532,7 @@ func (s *parserSuite) TestFeedItemSlice() {
 
 			s.Require().NotNil(feedItem.GetWorkout().GetUser())
 			s.Require().Equal(workouts[i].R.User.ID.String(), feedItem.GetWorkout().GetUser().GetId())
-			s.Require().Equal(workouts[i].R.User.FirstName, feedItem.GetWorkout().GetUser().GetFirstName())
-			s.Require().Equal(workouts[i].R.User.LastName, feedItem.GetWorkout().GetUser().GetLastName())
+			s.Require().Equal(workouts[i].R.User.Name, feedItem.GetWorkout().GetUser().GetName())
 			s.Require().False(feedItem.GetWorkout().GetUser().GetFollowed())
 			s.Require().Empty(feedItem.GetWorkout().GetUser().GetEmail())
 

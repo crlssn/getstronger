@@ -112,9 +112,9 @@ test.describe('profiles and notifications', () => {
     await page.getByRole('link', { name: 'Jane Doe', exact: true }).first().click()
 
     await openProfileActions(page)
-    await page.getByRole('menuitem', { name: 'Unfollow Jane' }).click()
-    await expect(page.getByRole('button', { name: 'Follow Jane' })).toBeVisible()
-    await page.getByRole('button', { name: 'Follow Jane' }).click()
+    await page.getByRole('menuitem', { name: 'Unfollow Jane Doe' }).click()
+    await expect(page.getByRole('button', { name: 'Follow Jane Doe' })).toBeVisible()
+    await page.getByRole('button', { name: 'Follow Jane Doe' }).click()
     await expect(page.getByRole('button', { name: 'Profile actions' })).toBeVisible()
 
     const tabs = page.getByRole('navigation', { name: 'Profile sections' })

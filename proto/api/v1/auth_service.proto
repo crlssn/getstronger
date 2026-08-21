@@ -17,11 +17,13 @@ service AuthService {
 }
 
 message SignupRequest {
+  reserved 4, 5;
+  reserved "first_name", "last_name";
+
   string email = 1 [(buf.validate.field).string.email = true];
   string password = 2 [(buf.validate.field).string.min_len = 6];
   string password_confirmation = 3;
-  string first_name = 4 [(buf.validate.field).string.min_len = 1];
-  string last_name = 5 [(buf.validate.field).string.min_len = 1];
+  string name = 8 [(buf.validate.field).string.min_len = 1];
   WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];
   DistanceUnit distance_unit = 7 [(buf.validate.field).enum.defined_only = true];
 }

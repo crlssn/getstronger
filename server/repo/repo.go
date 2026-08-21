@@ -278,8 +278,7 @@ func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (boo
 
 type CreateUserParams struct {
 	AuthID       string
-	FirstName    string
-	LastName     string
+	Name         string
 	WeightUnit   string
 	DistanceUnit string
 }
@@ -287,8 +286,7 @@ type CreateUserParams struct {
 func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	user, err := models.Users.Insert(&models.UserSetter{
 		AuthID:       omit.From(uuidFromString(p.AuthID)),
-		FirstName:    omit.From(p.FirstName),
-		LastName:     omit.From(p.LastName),
+		Name:         omit.From(p.Name),
 		WeightUnit:   omit.From(string(weightunit.Normalize(p.WeightUnit))),
 		DistanceUnit: omit.From(string(distanceunit.Normalize(p.DistanceUnit))),
 	}).One(ctx, r.bobExec())

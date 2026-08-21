@@ -110,7 +110,7 @@ test.describe('authenticated journeys', () => {
     await page.getByRole('link', { name: 'Jane Doe', exact: true }).first().click()
 
     await openProfileActions(page)
-    await expect(page.getByRole('menuitem', { name: 'Unfollow Jane' })).toBeVisible()
+    await expect(page.getByRole('menuitem', { name: 'Unfollow Jane Doe' })).toBeVisible()
     await page.keyboard.press('Escape')
     const profileTabs = page.getByRole('navigation', { name: 'Profile sections' })
     await expect(profileTabs.getByRole('link', { name: 'Workouts' })).toBeVisible()

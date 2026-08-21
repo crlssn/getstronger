@@ -37,8 +37,7 @@ func TestFactory_User(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expected.ID, created.ID)
 		require.Equal(t, expected.AuthID, created.AuthID)
-		require.Equal(t, expected.FirstName, created.FirstName)
-		require.Equal(t, expected.LastName, created.LastName)
+		require.Equal(t, expected.Name, created.Name)
 		require.Equal(t, expected.CreatedAt.Truncate(time.Millisecond), created.CreatedAt.Truncate(time.Millisecond))
 	})
 
@@ -60,22 +59,13 @@ func TestFactory_User(t *testing.T) {
 		require.Equal(t, authID, created.AuthID)
 	})
 
-	t.Run("UserFirstName", func(t *testing.T) {
+	t.Run("UserName", func(t *testing.T) {
 		t.Parallel()
-		firstName := gofakeit.FirstName()
-		expected := f.NewUser(factory.UserFirstName(firstName))
+		name := gofakeit.Name()
+		expected := f.NewUser(factory.UserName(name))
 		created, err := models.FindUser(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		require.Equal(t, firstName, created.FirstName)
-	})
-
-	t.Run("UserLastName", func(t *testing.T) {
-		t.Parallel()
-		lastName := gofakeit.LastName()
-		expected := f.NewUser(factory.UserLastName(lastName))
-		created, err := models.FindUser(ctx, bob.NewDB(c.DB), expected.ID)
-		require.NoError(t, err)
-		require.Equal(t, lastName, created.LastName)
+		require.Equal(t, name, created.Name)
 	})
 
 	t.Cleanup(func() {

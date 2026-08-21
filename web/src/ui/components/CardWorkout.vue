@@ -18,6 +18,7 @@ import {
 import { deleteWorkout, postWorkoutComment } from '@/http/requests'
 import { dateLocale } from '@/i18n'
 import { formatNumber } from '@/utils/numbers'
+import { initials } from '@/utils/names'
 import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -41,14 +42,8 @@ const postingComment = ref(false)
 const comments = ref<WorkoutComment[]>([...props.workout.comments])
 
 const isOwner = computed(() => props.workout.user?.id === authStore.userId)
-const userName = computed(() =>
-  `${props.workout.user?.firstName ?? ''} ${props.workout.user?.lastName ?? ''}`.trim(),
-)
-const initials = computed(
-  () =>
-    `${props.workout.user?.firstName.charAt(0) ?? ''}${props.workout.user?.lastName.charAt(0) ?? ''}` ||
-    'GS',
-)
+const userName = computed(() => props.workout.user?.name ?? '')
+const userInitials = computed(() => initials(props.workout.user?.name) || 'GS')
 const setCount = computed(() =>
   props.workout.exerciseSets.reduce((total, exercise) => total + exercise.sets.length, 0),
 )
@@ -130,7 +125,7 @@ const postComment = async () => {
 
     <header class="author-row feed-card-control">
       <RouterLink :to="`/users/${workout.user?.id}`" class="avatar large">{{
-        initials
+        userInitials
       }}</RouterLink>
       <div class="author-copy">
         <RouterLink :to="`/users/${workout.user?.id}`">{{ userName }}</RouterLink>
@@ -196,7 +191,7 @@ const postComment = async () => {
     >
       <header class="author-row">
         <RouterLink :to="`/users/${workout.user?.id}`" class="avatar large">{{
-          initials
+          userInitials
         }}</RouterLink>
         <div class="author-copy">
           <RouterLink :to="`/users/${workout.user?.id}`">{{ userName }}</RouterLink>

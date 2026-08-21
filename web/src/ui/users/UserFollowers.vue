@@ -38,7 +38,7 @@ const fetchFollowers = async () => {
   <AppList v-if="isMounted">
     <AppListItem v-if="followers.length === 0">{{ t('common.nothingHere') }}</AppListItem>
     <AppListItemLink v-for="follower in followers" :key="follower.id" :to="`/users/${follower.id}`">
-      {{ follower.firstName }} {{ follower.lastName }}
+      {{ follower.name }}
     </AppListItemLink>
   </AppList>
 </template>

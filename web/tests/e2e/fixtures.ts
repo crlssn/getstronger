@@ -51,8 +51,7 @@ export const resetSeedData = () => {
       'server/testing/factory/seed/main.go',
       `-email=${email}`,
       `-password=${password}`,
-      `-firstname=${process.env.USER_FIRSTNAME ?? 'Alex'}`,
-      `-lastname=${process.env.USER_LASTNAME ?? 'Morgan'}`,
+      `-name=${process.env.USER_NAME ?? 'Alex Morgan'}`,
     ],
     { cwd: repositoryRoot, stdio: 'pipe' },
   )

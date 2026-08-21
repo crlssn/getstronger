@@ -19,6 +19,7 @@ import { DistanceUnit, WeightUnit, type User } from '@/proto/api/v1/shared_pb'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { formatNumber } from '@/utils/numbers'
+import { initials } from '@/utils/names'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -91,9 +92,7 @@ const setDistanceUnit = async (unit: DistanceUnit) => {
   alertStore.setSuccess(t('profile.distanceUnitUpdated'))
 }
 
-const initials = computed(
-  () => `${user.value?.firstName.charAt(0) ?? ''}${user.value?.lastName.charAt(0) ?? ''}`,
-)
+const userInitials = computed(() => initials(user.value?.name))
 const recentWorkoutCount = computed(() => dashboardStore.dashboard?.recentWorkouts.length ?? 0)
 const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volumeThisWeek ?? 0))
 </script>
@@ -108,10 +107,10 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
     </header>
 
     <section class="profile-card">
-      <div class="avatar">{{ initials }}</div>
+      <div class="avatar">{{ userInitials }}</div>
       <div class="min-w-0">
         <p class="eyebrow">{{ $t('profile.account') }}</p>
-        <h2>{{ user.firstName }} {{ user.lastName }}</h2>
+        <h2>{{ user.name }}</h2>
         <p>{{ user.email }}</p>
       </div>
       <RouterLink

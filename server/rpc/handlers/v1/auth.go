@@ -81,8 +81,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 		user, err := tx.CreateUser(ctx, repo.CreateUserParams{
 			AuthID:       auth.ID.String(),
-			FirstName:    req.Msg.GetFirstName(),
-			LastName:     req.Msg.GetLastName(),
+			Name:         strings.TrimSpace(req.Msg.GetName()),
 			WeightUnit:   parser.WeightUnitFromProto(req.Msg.GetWeightUnit()),
 			DistanceUnit: parser.DistanceUnitFromProto(req.Msg.GetDistanceUnit()),
 		})
@@ -91,7 +90,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		}
 
 		if err = h.email.SendVerification(ctx, email.SendVerification{
-			Name:  user.FirstName,
+			Name:  user.Name,
 			Email: auth.Email,
 			Token: auth.EmailToken.String(),
 		}); err != nil {
@@ -308,7 +307,7 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 	}
 
 	if err = h.email.SendVerification(ctx, email.SendVerification{
-		Name:  auth.R.User.FirstName,
+		Name:  auth.R.User.Name,
 		Email: auth.Email,
 		Token: auth.EmailToken.String(),
 	}); err != nil {
@@ -350,7 +349,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 	}
 
 	if err = h.email.SendPasswordReset(ctx, email.SendPasswordReset{
-		Name:  auth.R.User.FirstName,
+		Name:  auth.R.User.Name,
 		Email: auth.Email,
 		Token: token,
 	}); err != nil {

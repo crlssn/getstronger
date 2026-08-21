@@ -50,8 +50,7 @@ describe('ProfileView', () => {
     getCurrentUser.mockResolvedValue({
       user: {
         id: 'user-1',
-        firstName: 'Alex',
-        lastName: 'Morgan',
+        name: 'Alex Morgan',
         email: 'alex@example.com',
         weightUnit: WeightUnit.KILOGRAMS,
         distanceUnit: DistanceUnit.KILOMETERS,
