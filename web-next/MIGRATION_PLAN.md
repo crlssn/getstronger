@@ -80,8 +80,6 @@ How each syncs:
     `ExerciseTagsInput.vue` builds those three strings as English literals in
     its script, against the repo's own localisation rule; they are catalogue
     keys here.
-  - `routine.view.lastSession_one` and `_other`, in both locales.
-    `ViewRoutine.vue` builds "2 sets · last …" the same way.
   - `workout.durationPlaceholder`, in both locales. `DurationInput.vue`
     hardcodes its "m:ss" placeholder.
 - **`src/utils/**`, new modules** — usually verbatim.
@@ -95,8 +93,14 @@ two new requests on its own, which is the main reason it exists. #1116 then
 retired one catalogue key. #1120 reshaped `AppRestTimerBanner` — that one had
 to be read rather than copied, because the React port had already landed.
 
+Since then the maintainer has been updating `web-next/` alongside `web/` —
+#1125 and #1126 both did. What those PRs cannot update is a screen that does
+not exist here yet, so the diff still has to be read: #1125's `@handle` change
+and #1126's tap-target floors had to be applied by hand to the screens ported
+after them, and #1128 was `web/`-only for the same reason.
+
 Record the main commit you synced from when you do it, so the next diff has a
-starting point: **last synced `a23fef6`**.
+starting point: **last synced `d5c99ea`**.
 
 ## Decisions already made, and why
 
