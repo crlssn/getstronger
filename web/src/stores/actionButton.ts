@@ -1,28 +1,24 @@
-import { computed, type FunctionalComponent, ref } from 'vue'
-import { defineStore } from 'pinia'
+import type { ComponentProps, ComponentType } from 'react'
+
+import { create } from 'zustand'
 
 interface Button {
   action: () => void
-  icon: FunctionalComponent
+  icon: ComponentType<ComponentProps<'svg'>>
 }
 
-export const useActionButton = defineStore('actionButton', () => {
-  const a = ref(() => {})
-  const i = ref<FunctionalComponent>()
+interface ActionButtonState {
+  action: () => void
+  icon: ComponentType<ComponentProps<'svg'>> | undefined
+  set: (button: Button) => void
+  reset: () => void
+}
 
-  const set = (button: Button) => {
-    a.value = button.action
-    i.value = button.icon
-  }
+export const selectActionButtonActive = (state: ActionButtonState) => state.icon !== undefined
 
-  const reset = () => {
-    a.value = () => {}
-    i.value = undefined
-  }
-
-  const active = computed(() => {
-    return typeof a.value === 'function' && i.value !== undefined
-  })
-
-  return { action: a, icon: i, set, reset, active }
-})
+export const useActionButton = create<ActionButtonState>()((set) => ({
+  action: () => {},
+  icon: undefined,
+  set: (button) => set({ action: button.action, icon: button.icon }),
+  reset: () => set({ action: () => {}, icon: undefined }),
+}))

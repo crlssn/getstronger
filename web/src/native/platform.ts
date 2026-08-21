@@ -1,18 +1,22 @@
-import { watch } from 'vue'
 import { Capacitor } from '@capacitor/core'
 
-import router from '@/router/router'
+import { isFocusedShellPath } from '@/router/routes'
 
-// The routes of the focused active-workout shell; mirrors focusedShellRoutes
-// in AppDashboard.vue. Between sets the phone lies idle on a bench with this
-// screen open, which is exactly when the OS would dim and lock it.
-export const isWorkoutRoute = (name: unknown): boolean =>
-  name === 'workout-routine' || name === 'quick-workout'
+/** Just enough of the data router for this module, so it can be handed a stub. */
+export interface NativeRouter {
+  state: { location: { pathname: string } }
+  subscribe: (listener: (state: { location: { pathname: string } }) => void) => () => void
+  navigate: (to: string) => void | Promise<void>
+}
 
-// Maps an incoming deep link to a router path. Universal/App Links arrive as
-// https URLs on the web domain, so their path maps one to one onto the SPA's
-// routes. The custom getstronger:// scheme has no authority part, which makes
-// the URL parser read the first path segment as the host.
+/**
+ * Maps an incoming deep link to a router path.
+ *
+ * Universal/App Links arrive as https URLs on the web domain, so their path
+ * maps one to one onto the SPA's routes. The custom getstronger:// scheme has
+ * no authority part, which makes the URL parser read the first path segment as
+ * the host.
+ */
 export const deepLinkPath = (url: string): string | undefined => {
   try {
     const parsed = new URL(url)
@@ -26,9 +30,13 @@ export const deepLinkPath = (url: string): string | undefined => {
   }
 }
 
-// Wires up behaviour that only exists inside the native app shell. The plugin
-// modules are imported dynamically so browser bundles never execute them.
-export const initNativePlatform = async (): Promise<void> => {
+/**
+ * Wires up behaviour that only exists inside the native app shell.
+ *
+ * The plugin modules are imported dynamically so browser bundles never execute
+ * them.
+ */
+export const initNativePlatform = async (router: NativeRouter): Promise<void> => {
   if (!Capacitor.isNativePlatform()) return
 
   const [{ App }, { SplashScreen }, { KeepAwake }] = await Promise.all([
@@ -41,15 +49,19 @@ export const initNativePlatform = async (): Promise<void> => {
   // than to a draft existing in the store: drafts persist for hours, and
   // leaving the screen also covers finish, cancel, and navigation in one
   // signal. The OS releases the wake flag by itself when the app backgrounds.
-  watch(
-    () => router.currentRoute.value.name,
-    (name) => {
-      const call = isWorkoutRoute(name) ? KeepAwake.keepAwake() : KeepAwake.allowSleep()
-      call.catch((error: unknown) => console.warn('keep-awake unavailable', error))
-      console.debug(`keep-awake ${isWorkoutRoute(name) ? 'engaged' : 'released'}`)
-    },
-    { immediate: true },
-  )
+  let awake: boolean | undefined
+  const applyKeepAwake = (pathname: string) => {
+    const wanted = isFocusedShellPath(pathname)
+    if (wanted === awake) return
+
+    awake = wanted
+    const call = wanted ? KeepAwake.keepAwake() : KeepAwake.allowSleep()
+    call.catch((error: unknown) => console.warn('keep-awake unavailable', error))
+    console.debug(`keep-awake ${wanted ? 'engaged' : 'released'}`)
+  }
+
+  applyKeepAwake(router.state.location.pathname)
+  router.subscribe((state) => applyKeepAwake(state.location.pathname))
 
   // The Android hardware back button has no default behaviour once a listener
   // exists, so mirror the browser: walk back through the WebView's history and
@@ -68,7 +80,7 @@ export const initNativePlatform = async (): Promise<void> => {
   // password-reset emails open on the right view.
   await App.addListener('appUrlOpen', ({ url }) => {
     const path = deepLinkPath(url)
-    if (path) void router.push(path)
+    if (path) void router.navigate(path)
   })
 
   // The splash screen stays up until the app has mounted (launchAutoHide is

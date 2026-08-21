@@ -1,57 +1,63 @@
 import type { GetDashboardResponse, Plan, Routine } from '@/proto/api/v1/routine_service_pb'
 
-import { computed, ref } from 'vue'
-import { defineStore } from 'pinia'
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+import { migratedStorage } from '@/stores/persistence'
 
 import { getDashboard } from '@/http/requests'
 
-export const useDashboardStore = defineStore(
-  'dashboard',
-  () => {
-    const preferredRoutineId = ref('')
-    const dashboard = ref<GetDashboardResponse>()
-    const loading = ref(false)
+interface DashboardState {
+  preferredRoutineId: string
+  dashboard: GetDashboardResponse | undefined
+  loading: boolean
+  load: () => Promise<void>
+  selectRoutine: (routineId: string) => Promise<void>
+}
 
-    const nextRoutine = computed<Routine | undefined>(() => dashboard.value?.nextRoutine)
-    const activePlan = computed<Plan | undefined>(() => dashboard.value?.activePlan)
+export const selectNextRoutine = (state: DashboardState): Routine | undefined =>
+  state.dashboard?.nextRoutine
 
-    const load = async () => {
-      loading.value = true
-      try {
-        const response = await getDashboard(preferredRoutineId.value)
-        if (!response) return
+export const selectActivePlan = (state: DashboardState): Plan | undefined =>
+  state.dashboard?.activePlan
 
-        dashboard.value = response
-        if (
-          !response.activePlan &&
-          response.nextRoutine?.id &&
-          response.nextRoutine.id !== preferredRoutineId.value
-        ) {
-          preferredRoutineId.value = response.nextRoutine.id
+export const useDashboardStore = create<DashboardState>()(
+  persist(
+    (set, get) => ({
+      preferredRoutineId: '',
+      dashboard: undefined,
+      loading: false,
+
+      load: async () => {
+        set({ loading: true })
+        try {
+          const response = await getDashboard(get().preferredRoutineId)
+          if (!response) return
+
+          set({ dashboard: response })
+          if (
+            !response.activePlan &&
+            response.nextRoutine?.id &&
+            response.nextRoutine.id !== get().preferredRoutineId
+          ) {
+            set({ preferredRoutineId: response.nextRoutine.id })
+          }
+        } finally {
+          set({ loading: false })
         }
-      } finally {
-        loading.value = false
-      }
-    }
+      },
 
-    const selectRoutine = async (routineId: string) => {
-      preferredRoutineId.value = routineId
-      await load()
-    }
-
-    return {
-      dashboard,
-      activePlan,
-      load,
-      loading,
-      nextRoutine,
-      preferredRoutineId,
-      selectRoutine,
-    }
-  },
-  {
-    persist: {
-      pick: ['preferredRoutineId'],
+      selectRoutine: async (routineId) => {
+        set({ preferredRoutineId: routineId })
+        await get().load()
+      },
+    }),
+    {
+      name: 'dashboard',
+      storage: migratedStorage(),
+      // The response itself is server state; only the choice of routine is
+      // worth carrying across a reload.
+      partialize: ({ preferredRoutineId }) => ({ preferredRoutineId }),
     },
-  },
+  ),
 )

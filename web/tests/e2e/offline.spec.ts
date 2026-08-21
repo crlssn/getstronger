@@ -23,7 +23,9 @@ test.describe('offline mode', () => {
 
     // Visit the exercise library online so its first page lands in the cache.
     await page.goto('/exercises')
-    const firstExercise = page.locator('.exercise-group-card a strong').first()
+    // The route is the stable handle here: every exercise in the library is a
+    // link to its own page, and the create link carries no name inside it.
+    const firstExercise = page.locator('a[href^="/exercises/"] strong').first()
     await expect(firstExercise).toBeVisible()
     const exerciseName = (await firstExercise.innerText()).trim()
 
@@ -36,7 +38,7 @@ test.describe('offline mode', () => {
       await navLink(page, 'Exercises').click()
       await expect(offlineBanner(page)).toBeVisible()
       await expect(
-        page.locator('.exercise-group-card a strong').filter({ hasText: exerciseName }).first(),
+        page.locator('a[href^="/exercises/"] strong').filter({ hasText: exerciseName }).first(),
       ).toBeVisible()
     } finally {
       await context.setOffline(false)
@@ -54,7 +56,12 @@ test.describe('offline mode', () => {
     await page.goto('/workouts/quick')
     await page.getByRole('button', { name: 'Choose exercise' }).click()
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
-    const option = picker.locator('.exercise-options button').first()
+    // The options are the buttons that name something; the sheet's close and
+    // load-more controls carry no name of their own.
+    const option = picker
+      .getByRole('button')
+      .filter({ has: page.locator('strong') })
+      .first()
     const exerciseName = (await option.locator('strong').innerText()).trim()
     await option.click()
 
@@ -70,8 +77,8 @@ test.describe('offline mode', () => {
 
       // Finishing without internet is a success, not an error: the workout is
       // stored on the device, the draft is gone, and the user is back home.
-      await page.locator('.primary-action').click()
-      await page.locator('.primary-action').click()
+      await page.getByRole('button', { name: 'Complete exercise' }).click()
+      await page.getByRole('button', { name: 'Finish workout' }).click()
       await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
       await expect(page.getByText('Workout saved on this device')).toBeVisible()
       await expect(page).toHaveURL(/\/home$/)
@@ -88,8 +95,11 @@ test.describe('offline mode', () => {
     // Reconnecting replays the queued save without any further interaction.
     await synced
     await page.goto('/workout')
-    await expect(
-      page.locator('.history-list a strong').filter({ hasText: 'Quick workout' }).first(),
-    ).toBeVisible()
+    // Scoped to the history: the quick-start card at the top of the screen is
+    // also a link, and it is called Quick workout too.
+    const history = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Previous workouts' }) })
+    await expect(history.getByRole('link', { name: /Quick workout/ }).first()).toBeVisible()
   })
 })

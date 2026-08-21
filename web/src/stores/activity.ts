@@ -1,35 +1,49 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
 import { DateTime } from 'luxon'
+import { create } from 'zustand'
 
 import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
+import { singleFlight } from '@/utils/singleFlight'
 
 // Anything older than the last bucket boundary groups the same way, so there is
 // no reason to page back further than that.
 const oldestRelevantDays = 31
 const maxPages = 6
 
-export const useActivityStore = defineStore('activity', () => {
-  const exerciseLastPerformed = ref<Record<string, string>>({})
-  const routineLastPerformed = ref<Record<string, string>>({})
-  const loaded = ref(false)
-  const failed = ref(false)
-  let inFlight: Promise<void> | undefined
+interface ActivityState {
+  exerciseLastPerformed: Record<string, string>
+  routineLastPerformed: Record<string, string>
+  loaded: boolean
+  failed: boolean
+  load: () => Promise<void>
+  reset: () => void
+}
 
-  const parse = (iso: string | undefined) => {
-    if (!iso) return undefined
-    const parsed = DateTime.fromISO(iso)
-    return parsed.isValid ? parsed : undefined
-  }
+const parse = (iso: string | undefined) => {
+  if (!iso) return undefined
+  const parsed = DateTime.fromISO(iso)
+  return parsed.isValid ? parsed : undefined
+}
 
-  const lastPerformedFor = (exerciseId: string) => parse(exerciseLastPerformed.value[exerciseId])
-  const routineLastPerformedFor = (routineId: string) =>
-    parse(routineLastPerformed.value[routineId])
+/**
+ * One id's timestamp out of a last-performed record.
+ *
+ * Takes the record rather than the store so a component can subscribe to the
+ * record itself: a lookup closed over the whole store changes identity on every
+ * write, and anything memoised on it would recompute for unrelated reasons.
+ */
+export const lastPerformedIn = (record: Record<string, string>, id: string) => parse(record[id])
 
+export const selectLastPerformedFor = (state: ActivityState, exerciseId: string) =>
+  lastPerformedIn(state.exerciseLastPerformed, exerciseId)
+
+export const selectRoutineLastPerformedFor = (state: ActivityState, routineId: string) =>
+  lastPerformedIn(state.routineLastPerformed, routineId)
+
+export const useActivityStore = create<ActivityState>()((set, get) => {
   const refresh = async () => {
-    const authStore = useAuthStore()
-    if (!authStore.userId) return
+    const { userId } = useAuthStore.getState()
+    if (!userId) return
 
     const cutoff = DateTime.now().minus({ days: oldestRelevantDays })
     const performed: Record<string, string> = {}
@@ -38,7 +52,7 @@ export const useActivityStore = defineStore('activity', () => {
     let requestFailed = false
 
     for (let page = 0; page < maxPages; page += 1) {
-      const response = await listWorkouts([authStore.userId], pageToken)
+      const response = await listWorkouts([userId], pageToken)
       if (!response) {
         requestFailed = true
         break
@@ -59,9 +73,8 @@ export const useActivityStore = defineStore('activity', () => {
         for (const exerciseSets of workout.exerciseSets) {
           const exerciseId = exerciseSets.exercise?.id
           if (!exerciseId) continue
-          const existing = performed[exerciseId]
           // Workouts arrive newest first, so the first hit is the latest.
-          if (!existing) performed[exerciseId] = finished.toISO() ?? ''
+          if (!performed[exerciseId]) performed[exerciseId] = finished.toISO() ?? ''
         }
       }
 
@@ -69,38 +82,33 @@ export const useActivityStore = defineStore('activity', () => {
       if (reachedCutoff || !pageToken.length) break
     }
 
-    failed.value = requestFailed
-    if (!requestFailed) {
-      exerciseLastPerformed.value = performed
-      routineLastPerformed.value = routinesPerformed
+    if (requestFailed) {
+      set({ failed: true, loaded: true })
+      return
     }
-    loaded.value = true
+
+    set({
+      failed: false,
+      loaded: true,
+      exerciseLastPerformed: performed,
+      routineLastPerformed: routinesPerformed,
+    })
   }
 
-  // Cached for the session; reset after saving a workout.
-  const load = async () => {
-    if (loaded.value && !failed.value) return
-    if (!inFlight) {
-      inFlight = refresh().finally(() => {
-        inFlight = undefined
-      })
-    }
-    return inFlight
-  }
-
-  const reset = () => {
-    loaded.value = false
-    failed.value = false
-  }
+  const refreshOnce = singleFlight(refresh)
 
   return {
-    exerciseLastPerformed,
-    failed,
-    lastPerformedFor,
-    load,
-    loaded,
-    reset,
-    routineLastPerformed,
-    routineLastPerformedFor,
+    exerciseLastPerformed: {},
+    routineLastPerformed: {},
+    loaded: false,
+    failed: false,
+
+    // Cached for the session; reset after saving a workout.
+    load: async () => {
+      if (get().loaded && !get().failed) return
+      await refreshOnce()
+    },
+
+    reset: () => set({ loaded: false, failed: false }),
   }
 })

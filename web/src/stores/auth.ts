@@ -1,48 +1,49 @@
-import type { AccessToken } from '@/types/auth.ts'
+import type { AccessToken } from '@/types/auth'
 
-import { computed, ref } from 'vue'
-import { defineStore } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+import { migratedStorage } from '@/stores/persistence'
 import { identifyUser, resetUser } from '@/posthog'
 
-export const useAuthStore = defineStore(
-  'auth',
-  () => {
-    const userId = ref('')
-    const accessToken = ref('')
+interface AuthState {
+  userId: string
+  accessToken: string
+  setAccessToken: (token: string) => void
+  logout: () => void
+}
 
-    const setAccessToken = (token: string) => {
-      const claims = jwtDecode(token) as AccessToken
-      const wasAuthorised = authorised.value
-      const isSwitchingAccounts = Boolean(userId.value && userId.value !== claims.userId)
+export const selectAuthorised = (state: AuthState) =>
+  state.userId !== '' && state.accessToken !== ''
 
-      if (isSwitchingAccounts) resetUser()
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      userId: '',
+      accessToken: '',
 
-      userId.value = claims.userId
-      accessToken.value = token
+      setAccessToken: (token) => {
+        const claims = jwtDecode(token) as AccessToken
+        const wasAuthorised = selectAuthorised(get())
+        const isSwitchingAccounts = Boolean(get().userId && get().userId !== claims.userId)
 
-      if (!wasAuthorised || isSwitchingAccounts) identifyUser(userId.value)
-    }
+        if (isSwitchingAccounts) resetUser()
 
-    const logout = () => {
-      if (authorised.value) resetUser()
-      userId.value = ''
-      accessToken.value = ''
-    }
+        set({ userId: claims.userId, accessToken: token })
 
-    const authorised = computed(() => {
-      return userId.value !== '' && accessToken.value !== ''
-    })
+        if (!wasAuthorised || isSwitchingAccounts) identifyUser(claims.userId)
+      },
 
-    return {
-      accessToken,
-      logout,
-      setAccessToken,
-      userId,
-      authorised,
-    }
-  },
-  {
-    persist: true,
-  },
+      logout: () => {
+        if (selectAuthorised(get())) resetUser()
+        set({ userId: '', accessToken: '' })
+      },
+    }),
+    {
+      name: 'auth',
+      storage: migratedStorage(),
+      partialize: ({ userId, accessToken }) => ({ userId, accessToken }),
+    },
+  ),
 )

@@ -1,25 +1,20 @@
-import { computed, ref } from 'vue'
-import { defineStore } from 'pinia'
+import { create } from 'zustand'
 
-interface NavTab {
+export interface NavTab {
   name: string
   href: string
 }
 
-export const useNavTabs = defineStore('navTabs', () => {
-  const tabs = ref([] as NavTab[])
+interface NavTabsState {
+  tabs: NavTab[]
+  set: (tabs: NavTab[]) => void
+  reset: () => void
+}
 
-  const set = (t: NavTab[]) => {
-    tabs.value = t
-  }
+export const selectNavTabsActive = (state: NavTabsState) => state.tabs.length > 0
 
-  const reset = () => {
-    tabs.value = [] as NavTab[]
-  }
-
-  const active = computed(() => {
-    return tabs.value.length > 0
-  })
-
-  return { tabs, reset, active, set }
-})
+export const useNavTabs = create<NavTabsState>()((set) => ({
+  tabs: [],
+  set: (tabs) => set({ tabs }),
+  reset: () => set({ tabs: [] }),
+}))

@@ -25,7 +25,7 @@
     <title>GetStronger</title>
     <style>
       /* Boot splash: painted before any JavaScript runs and swept away when
-         the app mounts into the body. Cold starts wait on a token refresh
+         the app mounts into #root. Cold starts wait on a token refresh
          against a serverless backend, and this keeps that wait from being a
          blank page. Colours mirror theme.css, which is not loaded yet. */
       #boot-splash {
@@ -75,6 +75,7 @@
         <strong>GetStronger</strong>
       </div>
     </div>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

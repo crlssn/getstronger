@@ -1,13 +1,12 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
 
-vi.mock('@/http/requests.ts', () => ({
+vi.mock('@/http/requests', () => ({
   refreshToken: vi.fn(),
 }))
 
-import { refreshToken } from '@/http/requests.ts'
+import { refreshToken } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { refreshAccessTokenOrLogout } from './jwt'
 
@@ -19,7 +18,7 @@ const fakeToken = (userId: string) =>
 
 describe('refreshAccessTokenOrLogout', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
+    useAuthStore.setState({ userId: '', accessToken: '' })
     refreshTokenMock.mockReset()
   })
 
@@ -40,7 +39,7 @@ describe('refreshAccessTokenOrLogout', () => {
     await Promise.all([first, second])
 
     expect(refreshTokenMock).toHaveBeenCalledTimes(1)
-    expect(useAuthStore().accessToken).toBe(freshToken)
+    expect(useAuthStore.getState().accessToken).toBe(freshToken)
   })
 
   test('starts a new request once the previous one has settled', async () => {
@@ -52,7 +51,7 @@ describe('refreshAccessTokenOrLogout', () => {
     await refreshAccessTokenOrLogout()
 
     expect(refreshTokenMock).toHaveBeenCalledTimes(2)
-    expect(useAuthStore().accessToken).toBe(secondToken)
+    expect(useAuthStore.getState().accessToken).toBe(secondToken)
   })
 
   test('releases the shared request when it fails', async () => {
@@ -63,6 +62,6 @@ describe('refreshAccessTokenOrLogout', () => {
     refreshTokenMock.mockResolvedValue({ accessToken: recoveredToken } as never)
     await refreshAccessTokenOrLogout()
 
-    expect(useAuthStore().accessToken).toBe(recoveredToken)
+    expect(useAuthStore.getState().accessToken).toBe(recoveredToken)
   })
 })

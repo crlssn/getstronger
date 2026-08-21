@@ -1,16 +1,17 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 
-const { login, markNotificationsAsRead, push, resendVerificationEmail } = vi.hoisted(() => ({
-  login: vi.fn(),
-  markNotificationsAsRead: vi.fn(),
-  push: vi.fn(),
-  resendVerificationEmail: vi.fn(),
-}))
+const { createWorkout, getUser, login, markNotificationsAsRead, resendVerificationEmail } =
+  vi.hoisted(() => ({
+    createWorkout: vi.fn(),
+    getUser: vi.fn(),
+    login: vi.fn(),
+    markNotificationsAsRead: vi.fn(),
+    resendVerificationEmail: vi.fn(),
+  }))
 
 vi.mock('./clients', () => ({
   authClient: { login, resendVerificationEmail },
@@ -18,21 +19,34 @@ vi.mock('./clients', () => ({
   feedClient: {},
   notificationClient: { markNotificationsAsRead },
   routineClient: {},
-  userClient: {},
-  workoutClient: {},
-}))
-
-vi.mock('@/router/router', () => ({
-  default: { currentRoute: { value: { name: 'login' } }, push },
+  userClient: { getUser },
+  workoutClient: { createWorkout },
 }))
 
 import { Error as ApiError, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
+import { setNavigator, type Navigate } from '@/router/navigation'
+import { useAlertStore } from '@/stores/alerts'
+import { useAuthStore } from '@/stores/auth'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import {
+  createWorkout as createAWorkout,
+  getCurrentUser,
   login as logIn,
   markNotificationAsRead,
   resendVerificationEmail as resend,
+  verifyEmailPendingPath,
 } from './requests'
+
+const navigate = vi.fn<Navigate>()
+
+beforeEach(() => {
+  navigate.mockReset()
+  setNavigator(navigate)
+})
+
+afterEach(() => {
+  setNavigator(undefined)
+})
 
 describe('markNotificationAsRead', () => {
   beforeEach(() => {
@@ -69,9 +83,8 @@ describe('markNotificationAsRead', () => {
 
 describe('login', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
     login.mockReset()
-    push.mockReset()
+    useEmailVerificationStore.getState().clear()
   })
 
   it('sends an unverified account to the pending verification page', async () => {
@@ -86,8 +99,13 @@ describe('login', () => {
 
     await logIn('alex.morgan@example.com', 'password123')
 
-    expect(push).toHaveBeenCalledWith({ name: 'verify-email-pending' })
-    expect(useEmailVerificationStore().pendingEmail).toBe('alex.morgan@example.com')
+    // Pushed rather than replaced: the login screen stays in history, so a
+    // user who mistyped their address can go back to it.
+    expect(navigate).toHaveBeenCalledWith(
+      verifyEmailPendingPath,
+      expect.not.objectContaining({ replace: true }),
+    )
+    expect(useEmailVerificationStore.getState().pendingEmail).toBe('alex.morgan@example.com')
   })
 
   it('leaves other failures to the generic error handling', async () => {
@@ -96,7 +114,7 @@ describe('login', () => {
 
     await logIn('alex.morgan@example.com', 'wrong')
 
-    expect(push).not.toHaveBeenCalled()
+    expect(navigate).not.toHaveBeenCalled()
     vi.unstubAllGlobals()
   })
 })
@@ -123,5 +141,90 @@ describe('resendVerificationEmail', () => {
     await expect(resend('alex.morgan@example.com')).resolves.toBe(undefined)
     expect(alerted).not.toHaveBeenCalled()
     vi.unstubAllGlobals()
+  })
+})
+
+// Every request in this module routes its failures through one shared
+// tryCatch, so these cover the behaviour all ~90 of them inherit.
+describe('shared error handling', () => {
+  const detailed = (error: ApiError) =>
+    new ConnectError('rejected', Code.FailedPrecondition, undefined, [
+      { desc: ErrorDetailSchema, value: create(ErrorDetailSchema, { error }) },
+    ])
+
+  beforeEach(() => {
+    getUser.mockReset()
+    createWorkout.mockReset()
+    useAlertStore.setState({ alert: null })
+    useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
+  })
+
+  it('surfaces an application error as an alert', async () => {
+    getUser.mockRejectedValue(new ConnectError('exercise not found', Code.InvalidArgument))
+
+    await getCurrentUser('user-1')
+
+    expect(useAlertStore.getState().alert).toMatchObject({
+      type: 'error',
+      message: expect.stringContaining('exercise not found'),
+    })
+  })
+
+  // These say the request never landed rather than that it was refused, so an
+  // alert would blame the user for their connection.
+  it.each([Code.Unknown, Code.Canceled, Code.Unavailable])(
+    'stays quiet about a %i failure',
+    async (code) => {
+      getUser.mockRejectedValue(new ConnectError('transport', code))
+
+      await getCurrentUser('user-1')
+
+      expect(useAlertStore.getState().alert).toBeNull()
+    },
+  )
+
+  it('ends the session when the server rejects the token', async () => {
+    getUser.mockRejectedValue(new ConnectError('expired', Code.Unauthenticated))
+
+    await getCurrentUser('user-1')
+
+    expect(useAuthStore.getState().accessToken).toBe('')
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true })
+  })
+
+  // A missing current user means the account is gone, not that a lookup
+  // missed, so it ends the session like an expired token.
+  it('ends the session when the current user has gone missing', async () => {
+    getUser.mockRejectedValue(new ConnectError('no such user', Code.NotFound))
+
+    await getCurrentUser('user-1')
+
+    expect(useAuthStore.getState().accessToken).toBe('')
+  })
+
+  it('translates a known error detail rather than showing the raw message', async () => {
+    getUser.mockRejectedValue(detailed(ApiError.PASSWORDS_DO_NOT_MATCH))
+
+    await getCurrentUser('user-1')
+
+    expect(useAlertStore.getState().alert).toMatchObject({
+      type: 'error',
+      message: 'Passwords do not match',
+    })
+  })
+
+  // The caller queues the workout for a later retry, which it can only do if
+  // the failure reaches it.
+  it('rethrows a failed workout save instead of swallowing it', async () => {
+    createWorkout.mockRejectedValue(new ConnectError('offline', Code.Unavailable))
+
+    await expect(createAWorkout({} as never)).rejects.toThrow(ConnectError)
+  })
+
+  it('resolves with the response when nothing fails', async () => {
+    getUser.mockResolvedValue({ user: { id: 'user-1' } })
+
+    await expect(getCurrentUser('user-1')).resolves.toEqual({ user: { id: 'user-1' } })
+    expect(useAlertStore.getState().alert).toBeNull()
   })
 })

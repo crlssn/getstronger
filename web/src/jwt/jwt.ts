@@ -1,24 +1,21 @@
+import { refreshToken } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
-import { refreshToken } from '@/http/requests.ts'
+import { singleFlight } from '@/utils/singleFlight'
 
-let pendingRefresh: Promise<void> | undefined
-
-export async function refreshAccessTokenOrLogout(): Promise<void> {
-  // An expired access token fails every in-flight request at once. Share a
-  // single refresh between them so they do not stampede the endpoint, which
-  // reads the refresh token from the database on every call.
-  pendingRefresh ??= refreshAccessToken().finally(() => {
-    pendingRefresh = undefined
-  })
-
-  return pendingRefresh
-}
-
-async function refreshAccessToken(): Promise<void> {
+const refreshAccessToken = async (): Promise<void> => {
   console.debug('refreshing access token or logging out')
   const res = await refreshToken()
   if (!res) return
 
-  const authStore = useAuthStore()
-  authStore.setAccessToken(res.accessToken)
+  useAuthStore.getState().setAccessToken(res.accessToken)
 }
+
+/**
+ * Renews the access token, or logs the user out if the refresh token has gone
+ * too.
+ *
+ * An expired access token fails every in-flight request at once, so the
+ * refresh is shared between them rather than stampeding an endpoint that reads
+ * the refresh token from the database on every call.
+ */
+export const refreshAccessTokenOrLogout = singleFlight(refreshAccessToken)

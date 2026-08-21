@@ -1,78 +1,83 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { collectFiles, findLiteralText, findStaticAttributes, readSource } from './sourceScan'
+
 // The guard behind issue #953: user-visible copy lives in the i18n catalogue,
-// never in templates. A literal text node or a static user-facing attribute in
-// a component is English that Swedish users will see, and this test names the
-// exact lines. Silent fallback made these easy to miss; now they fail CI.
+// never in the markup. A literal text node or a static user-facing attribute
+// is English that Swedish users will see, and this test names the exact lines.
+//
+// The detection is exercised against fixtures as well as the source tree, so
+// it keeps working while there are few components to catch anything.
 
-// Attribute values that are format hints rather than words.
-const allowedAttributeValues = new Set(['m:ss'])
-
-const collectFiles = (directory: string): string[] =>
-  readdirSync(directory).flatMap((entry) => {
-    const path = join(directory, entry)
-    if (statSync(path).isDirectory()) {
-      return entry === 'proto' ? [] : collectFiles(path)
-    }
-    return path.endsWith('.vue') ? [path] : []
+describe('findLiteralText', () => {
+  it.each([
+    ['a bare text node', '<p>Save changes</p>'],
+    ['text beside an expression', '<p>Logged {count} sets</p>'],
+    ['text in a nested element', '<div><span>Rest timer</span></div>'],
+  ])('flags %s', (_label, source) => {
+    expect(findLiteralText(source)).toHaveLength(1)
   })
 
-const templateOf = (source: string) => {
-  const match = source.match(/<template>([\s\S]*)<\/template>/)
-  return match ? match[1] : ''
-}
+  it.each([
+    ['a translated node', "<p>{t('workout.save')}</p>"],
+    ['an interpolated value', '<p>{total}</p>'],
+    ['a mapped list', '<ul>{items.map((i) => <li>{i.name}</li>)}</ul>'],
+    ['a self-closing element', '<AppSkeleton />'],
+    ['punctuation only', '<span>·</span>'],
+    ['an arrow function', 'const done = () => finish()'],
+    ['a comparison', 'if (sets > total) return null'],
+    ['a comment mentioning markup', '// renders <p>Save</p> when idle'],
+    ['a block comment', '/* <p>Save</p> */'],
+    ['a string containing markup', "const html = '<p>Save</p>'"],
+  ])('leaves %s alone', (_label, source) => {
+    expect(findLiteralText(source)).toEqual([])
+  })
 
-// Comments are blanked character by character rather than removed: removal
-// could splice the surrounding text into new token sequences, and blanking
-// keeps every reported line number accurate.
-const blankComments = (template: string) =>
-  template.replace(/<!--[\s\S]*?-->/g, (comment) => comment.replace(/[^\n]/g, ' '))
+  it('reports the line the copy is on', () => {
+    const source = ['<div>', '  <p>{t("a")}</p>', '  <p>Hard coded</p>', '</div>'].join('\n')
 
-const lineOf = (haystack: string, index: number) => haystack.slice(0, index).split('\n').length
+    expect(findLiteralText(source)).toEqual([{ line: 3, text: 'Hard coded' }])
+  })
+})
 
-describe('template copy', () => {
-  const files = collectFiles(join(__dirname, '..', 'src'))
+describe('findStaticAttributes', () => {
+  it.each([
+    ['aria-label', '<button aria-label="Close" />'],
+    ['placeholder', '<input placeholder="Search exercises" />'],
+    ['alt', '<img alt="The logo" />'],
+    ['title', '<abbr title="Repetitions" />'],
+    ['label', '<Field label="Weight" />'],
+  ])('flags a static %s', (_label, source) => {
+    expect(findStaticAttributes(source)).toHaveLength(1)
+  })
+
+  it.each([
+    ['a translated attribute', '<button aria-label={t("common.close")} />'],
+    ['a decorative image', '<img alt="" />'],
+    ['an allowed format hint', '<DurationInput placeholder="m:ss" />'],
+    ['a bound prop of another name', '<Chart datasetLabel="Volume" />'],
+    ['a commented-out attribute', '// <button aria-label="Close" />'],
+  ])('leaves %s alone', (_label, source) => {
+    expect(findStaticAttributes(source)).toEqual([])
+  })
+})
+
+describe('component copy', () => {
+  const files = collectFiles(join(__dirname, '..', 'src'), ['.tsx'])
 
   it('renders no literal text nodes — every visible string comes from the catalogue', () => {
-    const offenders: string[] = []
-
-    for (const file of files) {
-      // Comments carry prose, interpolations carry expressions, and quoted
-      // attribute values may carry `>` that would fake a tag boundary. All are
-      // blanked in place.
-      const scrubbed = blankComments(templateOf(readFileSync(file, 'utf8')))
-        .replace(/"[^"]*"/g, (quoted) => quoted.replace(/[^\n]/g, ' '))
-        .replace(/\{\{[\s\S]*?\}\}/g, (expression) => expression.replace(/[^\n]/g, ' '))
-
-      const textNode = />([^<]+)</g
-      let match
-      while ((match = textNode.exec(scrubbed))) {
-        const text = match[1].replace(/&\w+;/g, ' ')
-        if (!/[A-Za-z]{2,}/.test(text)) continue
-        offenders.push(`${file}:${lineOf(scrubbed, match.index)} — ${text.trim().slice(0, 60)}`)
-      }
-    }
+    const offenders = files.flatMap((file) =>
+      findLiteralText(readSource(file)).map(({ line, text }) => `${file}:${line} — ${text}`),
+    )
 
     expect(offenders, offenders.join('\n')).toEqual([])
   })
 
   it('binds every user-facing attribute — no static aria-labels, placeholders, or alt text', () => {
-    const offenders: string[] = []
-
-    for (const file of files) {
-      const template = blankComments(templateOf(readFileSync(file, 'utf8')))
-
-      const attribute = /(?<![:\w-])(aria-label|placeholder|alt|title|label)="([^"]*)"/g
-      let match
-      while ((match = attribute.exec(template))) {
-        const value = match[2]
-        if (!/[A-Za-z]{2,}/.test(value)) continue
-        if (allowedAttributeValues.has(value)) continue
-        offenders.push(`${file}:${lineOf(template, match.index)} — ${match[1]}="${value}"`)
-      }
-    }
+    const offenders = files.flatMap((file) =>
+      findStaticAttributes(readSource(file)).map(({ line, text }) => `${file}:${line} — ${text}`),
+    )
 
     expect(offenders, offenders.join('\n')).toEqual([])
   })

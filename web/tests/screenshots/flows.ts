@@ -32,6 +32,11 @@ export type Flow = {
 
 const exerciseName = 'Screenshot Press'
 const routineName = 'Screenshot Routine'
+// A picker's options are the buttons that name something; its close and
+// load-more controls carry no name of their own.
+const pickerOptions = (page: Page, dialog: ReturnType<Page['getByRole']>) =>
+  dialog.getByRole('button').filter({ has: page.locator('strong') })
+
 const planName = 'Screenshot Plan'
 const everybody = ['active', 'new']
 
@@ -39,7 +44,9 @@ const everybody = ['active', 'new']
 // by default, which would silently cancel the deletion.
 // Deletions confirm through the app's own sheet (AppConfirmDialog), not a
 // native dialog, so the confirm button is clicked like any other control.
-const acceptConfirmation = (page: Page) => page.locator('.dialog-confirm').click()
+// The sheet's actions are ranked, and confirming is always the first of them.
+const acceptConfirmation = (page: Page) =>
+  page.getByRole('dialog').getByRole('button').first().click()
 
 // Which exercise the workout picker offered first, carried between two steps,
 // and the workout that was saved, so the cleanup can find it again.
@@ -69,7 +76,7 @@ export const flows: Flow[] = [
       await page.getByRole('dialog').getByRole('button', { name: 'Delete exercise' }).click()
       await expect(page).toHaveURL(/\/exercises$/)
     },
-    component: 'src/ui/exercises/CreateExercise.vue',
+    component: 'src/ui/exercises/CreateExercise.tsx',
     name: 'exercise',
     personas: everybody,
     steps: [
@@ -105,7 +112,7 @@ export const flows: Flow[] = [
       await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/routines$/)
     },
-    component: 'src/ui/routines/RoutineForm.vue',
+    component: 'src/ui/routines/RoutineForm.tsx',
     name: 'routine',
     // Choosing exercises is the whole of this form, and the new account has none.
     personas: ['active'],
@@ -114,9 +121,12 @@ export const flows: Flow[] = [
         act: async (page) => {
           await page.goto('/routines/create')
           await page.getByLabel('Routine name').fill(routineName)
-          await page.locator('.exercise-option').first().click()
-          await page.locator('.exercise-option').nth(1).click()
-          await page.locator('.exercise-option').nth(2).click()
+          // The selectable exercises are the toggles: they are the only
+          // controls on the form that report whether they are pressed.
+          const options = page.locator('button[aria-pressed]')
+          await options.first().click()
+          await options.nth(1).click()
+          await options.nth(2).click()
           await expect(page.getByText('3 selected', { exact: true })).toBeVisible()
         },
         name: 'filled',
@@ -144,7 +154,7 @@ export const flows: Flow[] = [
       await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/plans$/)
     },
-    component: 'src/ui/plans/PlanForm.vue',
+    component: 'src/ui/plans/PlanForm.tsx',
     name: 'plan',
     personas: ['active'],
     steps: [
@@ -160,14 +170,15 @@ export const flows: Flow[] = [
       {
         act: async (page) => {
           const picker = page.getByRole('dialog', { name: 'Choose a routine' })
-          await picker.locator('.routine-options button').first().click()
+          await pickerOptions(page, picker).first().click()
           await page.getByRole('button', { name: 'Add routine' }).click()
           await page
             .getByRole('dialog', { name: 'Choose a routine' })
-            .locator('.routine-options button')
+            .getByRole('button')
+            .filter({ has: page.locator('strong') })
             .first()
             .click()
-          await expect(page.locator('.routine-order ol li')).toHaveCount(2)
+          await expect(page.getByRole('listitem')).toHaveCount(2)
         },
         name: 'filled',
       },
@@ -185,7 +196,7 @@ export const flows: Flow[] = [
       if (savedWorkout === '') return
 
       await page.goto(savedWorkout)
-      const actions = page.locator('.menu-trigger').first()
+      const actions = page.getByRole('button', { name: 'Workout actions' }).first()
       if (!(await present(actions))) return
 
       await actions.click()
@@ -194,7 +205,7 @@ export const flows: Flow[] = [
       await expect(page).toHaveURL(/\/home$/)
       savedWorkout = ''
     },
-    component: 'src/ui/workouts/StartWorkout.vue',
+    component: 'src/ui/workouts/StartWorkout.tsx',
     name: 'workout',
     personas: ['active'],
     steps: [
@@ -203,7 +214,7 @@ export const flows: Flow[] = [
           await page.goto('/workouts/quick')
           await page.getByRole('button', { name: 'Choose exercise' }).click()
           const picker = page.getByRole('dialog', { name: 'Add exercise' })
-          const option = picker.locator('.exercise-options button').first()
+          const option = pickerOptions(page, picker).first()
           // The set inputs are labelled after the exercise, so the name chosen
           // here is what the next step has to ask for.
           chosenExercise = (await option.locator('strong').innerText()).trim()
@@ -229,7 +240,7 @@ export const flows: Flow[] = [
         act: async (page) => {
           await page.getByRole('button', { name: 'Add exercise' }).click()
           const picker = page.getByRole('dialog', { name: 'Add exercise' })
-          await picker.locator('.exercise-options button').first().click()
+          await pickerOptions(page, picker).first().click()
           await expect(picker).toHaveCount(0)
         },
         name: 'second-exercise-added',

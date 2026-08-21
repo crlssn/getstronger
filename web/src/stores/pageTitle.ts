@@ -1,11 +1,11 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
+import { create } from 'zustand'
 
-export const usePageTitleStore = defineStore('pageTitle', () => {
-  const pageTitle = ref('GetStronger')
-  const setPageTitle = (title: string) => {
-    pageTitle.value = title
-  }
+interface PageTitleState {
+  pageTitle: string
+  setPageTitle: (title: string) => void
+}
 
-  return { pageTitle, setPageTitle }
-})
+export const usePageTitleStore = create<PageTitleState>()((set) => ({
+  pageTitle: 'GetStronger',
+  setPageTitle: (pageTitle) => set({ pageTitle }),
+}))

@@ -55,14 +55,14 @@ export const offlineCache: Interceptor = (next) => async (req) => {
   }
 
   const key = [
-    cachePrefix + useAuthStore().userId,
+    cachePrefix + useAuthStore.getState().userId,
     `${req.service.typeName}.${req.method.name}`,
     JSON.stringify(toJson(req.method.input, req.message)),
   ].join(':')
 
   try {
     const res = await next(req)
-    useConnectionStore().setOnline(true)
+    useConnectionStore.getState().setOnline(true)
     if (!res.stream) {
       try {
         window.localStorage.setItem(key, JSON.stringify(toJson(req.method.output, res.message)))
@@ -74,7 +74,7 @@ export const offlineCache: Interceptor = (next) => async (req) => {
   } catch (error) {
     if (!isConnectivityError(error)) throw error
 
-    useConnectionStore().setOnline(false)
+    useConnectionStore.getState().setOnline(false)
     let cached: string | null = null
     try {
       cached = window.localStorage.getItem(key)

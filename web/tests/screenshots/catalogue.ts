@@ -51,64 +51,64 @@ export const personas: Persona[] = [
 ]
 
 export const guestPages: PageEntry[] = [
-  { component: 'src/ui/auth/UserLogin.vue', name: 'login', route: () => '/login' },
-  { component: 'src/ui/auth/UserSignup.vue', name: 'signup', route: () => '/signup' },
+  { component: 'src/ui/auth/UserLogin.tsx', name: 'login', route: () => '/login' },
+  { component: 'src/ui/auth/UserSignup.tsx', name: 'signup', route: () => '/signup' },
   {
-    component: 'src/ui/auth/ForgotPassword.vue',
+    component: 'src/ui/auth/ForgotPassword.tsx',
     name: 'forgot-password',
     route: () => '/forgot-password',
   },
   {
-    component: 'src/ui/auth/ResetPassword.vue',
+    component: 'src/ui/auth/ResetPassword.tsx',
     name: 'reset-password',
     route: () => '/reset-password?token=screenshot-token',
   },
   {
-    component: 'src/ui/auth/VerifyEmailPending.vue',
+    component: 'src/ui/auth/VerifyEmailPending.tsx',
     name: 'verify-email-pending',
     route: () => '/verify-email/pending',
   },
-  { component: 'src/ui/NotFound.vue', name: 'not-found', route: () => '/screenshots-has-no-page' },
+  { component: 'src/ui/NotFound.tsx', name: 'not-found', route: () => '/screenshots-has-no-page' },
 ]
 
 // The workout builders are captured last: opening one saves a workout in
 // progress, which every earlier page would otherwise show as a resume banner.
 export const authenticatedPages: PageEntry[] = [
-  { component: 'src/ui/HomeView.vue', name: 'home', route: () => '/home' },
+  { component: 'src/ui/HomeView.tsx', name: 'home', route: () => '/home' },
   {
-    component: 'src/ui/notifications/ListNotifications.vue',
+    component: 'src/ui/notifications/ListNotifications.tsx',
     name: 'notifications',
     route: () => '/notifications',
   },
-  { component: 'src/ui/ProgressView.vue', name: 'progress', route: () => '/progress' },
-  { component: 'src/ui/profile/ProfileView.vue', name: 'profile', route: () => '/profile' },
+  { component: 'src/ui/ProgressView.tsx', name: 'progress', route: () => '/progress' },
+  { component: 'src/ui/profile/ProfileView.tsx', name: 'profile', route: () => '/profile' },
   {
-    component: 'src/ui/users/UserWorkouts.vue',
+    component: 'src/ui/users/UserWorkouts.tsx',
     name: 'user-workouts',
     route: ({ userId }) => userId && `/users/${userId}`,
   },
   {
-    component: 'src/ui/users/UserFollowees.vue',
+    component: 'src/ui/users/UserFollowees.tsx',
     name: 'user-follows',
     route: ({ userId }) => userId && `/users/${userId}/follows`,
   },
   {
-    component: 'src/ui/users/UserFollowers.vue',
+    component: 'src/ui/users/UserFollowers.tsx',
     name: 'user-followers',
     route: ({ userId }) => userId && `/users/${userId}/followers`,
   },
   {
-    component: 'src/ui/users/UserPersonalBests.vue',
+    component: 'src/ui/users/UserPersonalBests.tsx',
     name: 'user-personal-bests',
     route: ({ userId }) => userId && `/users/${userId}/personal-bests`,
   },
   {
-    component: 'src/ui/users/UserWorkouts.vue',
+    component: 'src/ui/users/UserWorkouts.tsx',
     name: 'other-user',
     route: ({ followeeId }) => followeeId && `/users/${followeeId}`,
   },
   {
-    component: 'src/ui/users/UserView.vue',
+    component: 'src/ui/users/UserView.tsx',
     name: 'other-user-actions',
     prepare: async (page) => {
       await page.getByRole('button', { name: 'Profile actions' }).click()
@@ -116,68 +116,68 @@ export const authenticatedPages: PageEntry[] = [
     },
     route: ({ followeeId }) => followeeId && `/users/${followeeId}`,
   },
-  { component: 'src/ui/workouts/WorkoutView.vue', name: 'workout', route: () => '/workout' },
+  { component: 'src/ui/workouts/WorkoutView.tsx', name: 'workout', route: () => '/workout' },
   {
-    component: 'src/ui/workouts/ViewWorkout.vue',
+    component: 'src/ui/workouts/ViewWorkout.tsx',
     name: 'view-workout',
     route: ({ workoutId }) => workoutId && `/workouts/${workoutId}`,
   },
   {
-    component: 'src/ui/workouts/EditWorkout.vue',
+    component: 'src/ui/workouts/EditWorkout.tsx',
     name: 'edit-workout',
     route: ({ workoutId }) => workoutId && `/workouts/${workoutId}/edit`,
   },
-  { component: 'src/ui/plans/PlansView.vue', name: 'plans', route: () => '/plans' },
-  { component: 'src/ui/plans/PlanForm.vue', name: 'create-plan', route: () => '/plans/create' },
+  { component: 'src/ui/plans/PlansView.tsx', name: 'plans', route: () => '/plans' },
+  { component: 'src/ui/plans/PlanForm.tsx', name: 'create-plan', route: () => '/plans/create' },
   {
-    component: 'src/ui/plans/ViewPlan.vue',
+    component: 'src/ui/plans/ViewPlan.tsx',
     name: 'view-plan',
     route: ({ planId }) => planId && `/plans/${planId}`,
   },
   {
-    component: 'src/ui/plans/PlanForm.vue',
+    component: 'src/ui/plans/PlanForm.tsx',
     name: 'edit-plan',
     route: ({ planId }) => planId && `/plans/${planId}/edit`,
   },
-  { component: 'src/ui/routines/ListRoutines.vue', name: 'routines', route: () => '/routines' },
+  { component: 'src/ui/routines/ListRoutines.tsx', name: 'routines', route: () => '/routines' },
   {
-    component: 'src/ui/routines/CreateRoutine.vue',
+    component: 'src/ui/routines/CreateRoutine.tsx',
     name: 'create-routine',
     route: () => '/routines/create',
   },
   {
-    component: 'src/ui/routines/ViewRoutine.vue',
+    component: 'src/ui/routines/ViewRoutine.tsx',
     name: 'view-routine',
     route: ({ routineId }) => routineId && `/routines/${routineId}`,
   },
   {
-    component: 'src/ui/routines/EditRoutine.vue',
+    component: 'src/ui/routines/EditRoutine.tsx',
     name: 'edit-routine',
     route: ({ routineId }) => routineId && `/routines/${routineId}/edit`,
   },
-  { component: 'src/ui/exercises/ListExercises.vue', name: 'exercises', route: () => '/exercises' },
+  { component: 'src/ui/exercises/ListExercises.tsx', name: 'exercises', route: () => '/exercises' },
   {
-    component: 'src/ui/exercises/CreateExercise.vue',
+    component: 'src/ui/exercises/CreateExercise.tsx',
     name: 'create-exercise',
     route: () => '/exercises/create',
   },
   {
-    component: 'src/ui/exercises/ViewExercise.vue',
+    component: 'src/ui/exercises/ViewExercise.tsx',
     name: 'view-exercise',
     route: ({ exerciseId }) => exerciseId && `/exercises/${exerciseId}`,
   },
   {
-    component: 'src/ui/exercises/UpdateExercise.vue',
+    component: 'src/ui/exercises/UpdateExercise.tsx',
     name: 'edit-exercise',
     route: ({ exerciseId }) => exerciseId && `/exercises/${exerciseId}/edit`,
   },
   {
-    component: 'src/ui/workouts/StartWorkout.vue',
+    component: 'src/ui/workouts/StartWorkout.tsx',
     name: 'quick-workout',
     route: () => '/workouts/quick',
   },
   {
-    component: 'src/ui/workouts/StartWorkout.vue',
+    component: 'src/ui/workouts/StartWorkout.tsx',
     name: 'quick-workout-exercise-picker',
     prepare: async (page) => {
       await page.getByRole('button', { name: 'Choose exercise' }).click()
@@ -186,7 +186,7 @@ export const authenticatedPages: PageEntry[] = [
     route: () => '/workouts/quick',
   },
   {
-    component: 'src/ui/workouts/StartWorkout.vue',
+    component: 'src/ui/workouts/StartWorkout.tsx',
     name: 'start-routine',
     route: ({ routineId }) => routineId && `/workouts/routine/${routineId}`,
   },

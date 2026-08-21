@@ -1,13 +1,15 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
 import { DateTime } from 'luxon'
+import { create } from 'zustand'
 
 import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
+import { singleFlight } from '@/utils/singleFlight'
 
 const maxPages = 12
 
 const weekKey = (dateTime: DateTime) => `${dateTime.weekYear}-${dateTime.weekNumber}`
+
+export const currentWeekKey = () => weekKey(DateTime.now().startOf('week'))
 
 const computeStreak = (weeks: Set<string>) => {
   let count = 0
@@ -21,18 +23,21 @@ const computeStreak = (weeks: Set<string>) => {
   return { count, firstMissingWeek: cursor }
 }
 
-export const useStreakStore = defineStore('streak', () => {
-  const streak = ref(0)
-  const thisWeekLogged = ref(false)
-  const weekWorkoutCounts = ref<Record<string, number>>({})
-  const loaded = ref(false)
-  const failed = ref(false)
-  const computedForWeek = ref('')
-  let inFlight: Promise<void> | undefined
+interface StreakState {
+  streak: number
+  thisWeekLogged: boolean
+  weekWorkoutCounts: Record<string, number>
+  loaded: boolean
+  failed: boolean
+  computedForWeek: string
+  load: () => Promise<void>
+  reset: () => void
+}
 
+export const useStreakStore = create<StreakState>()((set, get) => {
   const refresh = async (currentWeek: string) => {
-    const authStore = useAuthStore()
-    if (!authStore.userId) return
+    const { userId } = useAuthStore.getState()
+    if (!userId) return
 
     const weeks = new Set<string>()
     const workoutCounts = new Map<string, number>()
@@ -41,7 +46,7 @@ export const useStreakStore = defineStore('streak', () => {
     let requestFailed = false
 
     for (let page = 0; page < maxPages; page += 1) {
-      const response = await listWorkouts([authStore.userId], pageToken)
+      const response = await listWorkouts([userId], pageToken)
       if (!response) {
         requestFailed = true
         break
@@ -67,46 +72,41 @@ export const useStreakStore = defineStore('streak', () => {
 
     // A partial fetch would understate the streak, so surface it as an error
     // rather than reporting a confident zero.
-    failed.value = requestFailed
     if (requestFailed) {
-      loaded.value = true
+      set({ failed: true, loaded: true })
       return
     }
 
-    streak.value = computeStreak(weeks).count
-    thisWeekLogged.value = weeks.has(currentWeek)
-    weekWorkoutCounts.value = Object.fromEntries(workoutCounts)
-    computedForWeek.value = currentWeek
-    loaded.value = true
+    set({
+      failed: false,
+      loaded: true,
+      streak: computeStreak(weeks).count,
+      thisWeekLogged: weeks.has(currentWeek),
+      weekWorkoutCounts: Object.fromEntries(workoutCounts),
+      computedForWeek: currentWeek,
+    })
   }
 
-  // Cached for the session: recomputed only when the week rolls over, after a
-  // workout is saved (see reset), or when a previous attempt failed.
-  const load = async () => {
-    const currentWeek = weekKey(DateTime.now().startOf('week'))
-    if (loaded.value && !failed.value && computedForWeek.value === currentWeek) return
-    if (!inFlight) {
-      inFlight = refresh(currentWeek).finally(() => {
-        inFlight = undefined
-      })
-    }
-    return inFlight
-  }
-
-  const reset = () => {
-    computedForWeek.value = ''
-    loaded.value = false
-    failed.value = false
-  }
+  // The week is read at call time rather than passed in, so a tab left open
+  // across midnight on Sunday recomputes instead of holding last week's count.
+  const refreshOnce = singleFlight(() => refresh(currentWeekKey()))
 
   return {
-    computedForWeek,
-    failed,
-    load,
-    loaded,
-    reset,
-    streak,
-    thisWeekLogged,
-    weekWorkoutCounts,
+    streak: 0,
+    thisWeekLogged: false,
+    weekWorkoutCounts: {},
+    loaded: false,
+    failed: false,
+    computedForWeek: '',
+
+    // Cached for the session: recomputed only when the week rolls over, after
+    // a workout is saved (see reset), or when a previous attempt failed.
+    load: async () => {
+      const { loaded, failed, computedForWeek } = get()
+      if (loaded && !failed && computedForWeek === currentWeekKey()) return
+      await refreshOnce()
+    },
+
+    reset: () => set({ computedForWeek: '', loaded: false, failed: false }),
   }
 })

@@ -1,270 +1,302 @@
-import type { ExerciseID, RoutineID, RoutineWorkout, Set } from '@/types/workout'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
+import type { ExerciseID, RoutineID, RoutineWorkout, Set as WorkoutSet } from '@/types/workout'
 
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import { isNumber } from '@/utils/numbers'
+import { create } from 'zustand'
+import { immer } from 'zustand/middleware/immer'
+import { persist } from 'zustand/middleware'
+
+import { migratedStorage } from '@/stores/persistence'
+
 import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
-import { exerciseMetrics } from '@/utils/exerciseMeasurements'
-import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
+import { exerciseMetrics } from '@/utils/exerciseMeasurements'
+import { isNumber } from '@/utils/numbers'
+import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 
-export const useWorkoutStore = defineStore(
-  'workouts',
-  () => {
-    const workouts = ref({} as RoutineWorkout)
+export const quickWorkoutRoutineID: RoutineID = 'quick-workout'
 
-    const initialiseWorkout = (routineID: RoutineID, planId = '') => {
-      if (!workouts.value[routineID]) {
-        workouts.value[routineID] = {}
-      }
+// A new set carries the preferred units up front so its inputs and the value
+// eventually typed into them can never disagree about the unit.
+const emptySet = (weightUnit?: WeightUnit, distanceUnit?: DistanceUnit): WorkoutSet => ({
+  ...(weightUnit ? { weightUnit } : {}),
+  ...(distanceUnit ? { distanceUnit } : {}),
+})
 
-      if (!workouts.value[routineID].exerciseSets) {
-        workouts.value[routineID].exerciseSets = {}
-      }
+const metricFields: Partial<Record<ExerciseMetric, keyof WorkoutSet>> = {
+  [ExerciseMetric.WEIGHT]: 'weight',
+  [ExerciseMetric.REPS]: 'reps',
+  [ExerciseMetric.DISTANCE]: 'distance',
+  [ExerciseMetric.TIME]: 'durationSeconds',
+}
 
-      if (!workouts.value[routineID].startedAt) {
-        workouts.value[routineID].startedAt = new Date().toISOString()
-      }
+interface WorkoutState {
+  workouts: RoutineWorkout
+  initialiseWorkout: (routineID: RoutineID, planId?: string) => void
+  addWorkoutExercise: (routineID: RoutineID, exercise: Exercise) => void
+  setExerciseCompleted: (routineID: RoutineID, exerciseID: ExerciseID, completed: boolean) => void
+  setNote: (routineID: RoutineID, note: string) => void
+  setRestTimer: (routineID: RoutineID, endsAt?: string, totalSeconds?: number) => void
+  addEmptySet: (
+    routineID: RoutineID,
+    exerciseID: ExerciseID,
+    weightUnit?: WeightUnit,
+    distanceUnit?: DistanceUnit,
+  ) => void
+  addEmptySetIfNone: (
+    routineID: RoutineID,
+    exerciseID: ExerciseID,
+    metrics?: ExerciseMetric[],
+    weightUnit?: WeightUnit,
+    distanceUnit?: DistanceUnit,
+  ) => void
+  updateSet: (
+    routineID: RoutineID,
+    exerciseID: ExerciseID,
+    index: number,
+    changes: Partial<WorkoutSet>,
+  ) => void
+  syncWeightUnits: (routineID: RoutineID, weightUnit: WeightUnit) => void
+  syncDistanceUnits: (routineID: RoutineID, distanceUnit: DistanceUnit) => void
+  deleteSet: (routineID: RoutineID, exerciseID: ExerciseID, index: number) => void
+  removeWorkout: (routineID: RoutineID) => void
+  startQuickWorkoutWithExercise: (exercise: Exercise) => void
+}
 
-      if (planId) workouts.value[routineID].planId = planId
-    }
+const noSets: WorkoutSet[] = []
+const noExercises: Exercise[] = []
+const noIds: ExerciseID[] = []
 
-    const getSets = (routineID: RoutineID, exerciseID: ExerciseID) => {
-      if (!workouts.value[routineID]) {
-        return []
-      }
+export const selectSets = (state: WorkoutState, routineID: RoutineID, exerciseID: ExerciseID) =>
+  state.workouts[routineID]?.exerciseSets?.[exerciseID] ?? noSets
 
-      if (!workouts.value[routineID].exerciseSets) {
-        return []
-      }
+export const selectAllSets = (state: WorkoutState, routineID: RoutineID) =>
+  state.workouts[routineID]?.exerciseSets
 
-      if (!workouts.value[routineID].exerciseSets[exerciseID]) {
-        return []
-      }
+export const selectNote = (state: WorkoutState, routineID: RoutineID) =>
+  state.workouts[routineID]?.note ?? ''
 
-      return workouts.value[routineID].exerciseSets[exerciseID]
-    }
+export const selectStartedAt = (state: WorkoutState, routineID: RoutineID) =>
+  state.workouts[routineID]?.startedAt
 
-    const getAllSets = (routineID: RoutineID) => {
-      return workouts.value[routineID]?.exerciseSets
-    }
+export const selectPlanId = (state: WorkoutState, routineID: RoutineID) =>
+  state.workouts[routineID]?.planId ?? ''
 
-    const getNote = (routineID: RoutineID) => workouts.value[routineID]?.note ?? ''
+export const selectRestTimer = (state: WorkoutState, routineID: RoutineID) => ({
+  endsAt: state.workouts[routineID]?.restTimerEndsAt,
+  totalSeconds: state.workouts[routineID]?.restTimerTotalSeconds ?? 0,
+})
 
-    const getStartedAt = (routineID: RoutineID) => workouts.value[routineID]?.startedAt
+export const selectAddedExercises = (state: WorkoutState, routineID: RoutineID) =>
+  state.workouts[routineID]?.addedExercises ?? noExercises
 
-    const getPlanId = (routineID: RoutineID) => workouts.value[routineID]?.planId ?? ''
+export const selectCompletedExerciseIds = (state: WorkoutState, routineID: RoutineID) =>
+  state.workouts[routineID]?.completedExerciseIds ?? noIds
 
-    const getRestTimer = (routineID: RoutineID) => ({
-      endsAt: workouts.value[routineID]?.restTimerEndsAt,
-      totalSeconds: workouts.value[routineID]?.restTimerTotalSeconds ?? 0,
-    })
+/**
+ * The in-progress workout drafts, one per routine, kept until they are saved.
+ *
+ * Immer earns its place here: the state is a map of maps of arrays, and every
+ * action reaches several levels into it. Written by hand, each of these would
+ * have to rebuild the path it touches.
+ */
+export const useWorkoutStore = create<WorkoutState>()(
+  persist(
+    immer((set, get) => ({
+      workouts: {},
 
-    const getAddedExercises = (routineID: RoutineID) =>
-      workouts.value[routineID]?.addedExercises ?? []
+      initialiseWorkout: (routineID, planId = '') =>
+        set((state) => {
+          const workout = (state.workouts[routineID] ??= {})
+          workout.exerciseSets ??= {}
+          workout.startedAt ??= new Date().toISOString()
+          if (planId) workout.planId = planId
+        }),
 
-    const getCompletedExerciseIds = (routineID: RoutineID) =>
-      workouts.value[routineID]?.completedExerciseIds ?? []
+      addWorkoutExercise: (routineID, exercise) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (!workout) return
 
-    const addWorkoutExercise = (routineID: RoutineID, exercise: Exercise) => {
-      const workout = workouts.value[routineID]
-      if (!workout) return
+          workout.addedExercises ??= []
+          const existing = workout.addedExercises.findIndex((entry) => entry.id === exercise.id)
+          if (existing >= 0) {
+            // Exercise definitions can change while a workout draft is saved.
+            // Keep the draft's reference current without touching any logged
+            // set data.
+            workout.addedExercises[existing] = exercise
+          } else {
+            workout.addedExercises.push(exercise)
+          }
+        }),
 
-      workout.addedExercises = workout.addedExercises || []
-      const existingIndex = workout.addedExercises.findIndex((entry) => entry.id === exercise.id)
-      if (existingIndex >= 0) {
-        // Exercise definitions can change while a workout draft is saved. Keep
-        // the draft's reference current without touching any logged set data.
-        workout.addedExercises[existingIndex] = exercise
-      } else {
-        workout.addedExercises.push(exercise)
-      }
-    }
+      setExerciseCompleted: (routineID, exerciseID, completed) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (!workout) return
 
-    const setExerciseCompleted = (
-      routineID: RoutineID,
-      exerciseID: ExerciseID,
-      completed: boolean,
-    ) => {
-      const workout = workouts.value[routineID]
-      if (!workout) return
+          const completedIds = workout.completedExerciseIds ?? []
+          workout.completedExerciseIds = completed
+            ? [...new Set([...completedIds, exerciseID])]
+            : completedIds.filter((id) => id !== exerciseID)
+        }),
 
-      const completedIds = workout.completedExerciseIds ?? []
-      workout.completedExerciseIds = completed
-        ? [...new Set([...completedIds, exerciseID])]
-        : completedIds.filter((id) => id !== exerciseID)
-    }
+      setNote: (routineID, note) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (workout) workout.note = note
+        }),
 
-    const setNote = (routineID: RoutineID, note: string) => {
-      if (!workouts.value[routineID]) return
-      workouts.value[routineID].note = note
-    }
+      setRestTimer: (routineID, endsAt, totalSeconds = 0) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (!workout) return
 
-    const setRestTimer = (routineID: RoutineID, endsAt?: string, totalSeconds = 0) => {
-      const workout = workouts.value[routineID]
-      if (!workout) return
-
-      if (!endsAt) {
-        delete workout.restTimerEndsAt
-        delete workout.restTimerTotalSeconds
-        return
-      }
-
-      workout.restTimerEndsAt = endsAt
-      workout.restTimerTotalSeconds = totalSeconds
-    }
-
-    // A new set carries the preferred units up front so its inputs and the
-    // value eventually typed into them can never disagree about the unit.
-    const emptySet = (weightUnit?: WeightUnit, distanceUnit?: DistanceUnit): Set => ({
-      ...(weightUnit ? { weightUnit } : {}),
-      ...(distanceUnit ? { distanceUnit } : {}),
-    })
-
-    const addEmptySet = (
-      routineID: RoutineID,
-      exerciseID: ExerciseID,
-      weightUnit?: WeightUnit,
-      distanceUnit?: DistanceUnit,
-    ) => {
-      const workout = workouts.value[routineID]
-      workout.exerciseSets = workout.exerciseSets || {}
-      workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
-      workout.exerciseSets[exerciseID].push(emptySet(weightUnit, distanceUnit))
-    }
-
-    const addEmptySetIfNone = (
-      routineID: RoutineID,
-      exerciseID: ExerciseID,
-      metrics: ExerciseMetric[] = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
-      weightUnit?: WeightUnit,
-      distanceUnit?: DistanceUnit,
-    ) => {
-      const workout = workouts.value[routineID]
-      workout.exerciseSets = workout.exerciseSets || {}
-      workout.exerciseSets[exerciseID] = workout.exerciseSets[exerciseID] || []
-
-      const metricFields: Partial<Record<ExerciseMetric, keyof Set>> = {
-        [ExerciseMetric.WEIGHT]: 'weight',
-        [ExerciseMetric.REPS]: 'reps',
-        [ExerciseMetric.DISTANCE]: 'distance',
-        [ExerciseMetric.TIME]: 'durationSeconds',
-      }
-      // Older persisted drafts may not contain metrics. Normalising here avoids
-      // the empty-array `every()` case appending another blank row on refresh.
-      const fields = exerciseMetrics({ metrics })
-        .map((metric) => metricFields[metric])
-        .filter(Boolean) as Array<keyof Set>
-      const noEmptySet = workout.exerciseSets[exerciseID].every((set) =>
-        fields.every((field) => isNumber(set[field])),
-      )
-      if (noEmptySet) {
-        workout.exerciseSets[exerciseID].push(emptySet(weightUnit, distanceUnit))
-      }
-    }
-
-    // The weight unit is a profile preference rather than a per-set choice, so
-    // a draft saved under an earlier preference is realigned to the current one
-    // here. Values are converted so the number keeps meaning the same weight as
-    // what was originally entered. A set carrying no unit at all predates the
-    // field, and its source is unknown, so it is only tagged.
-    const syncWeightUnits = (routineID: RoutineID, weightUnit: WeightUnit) => {
-      const workout = workouts.value[routineID]
-      if (!workout?.exerciseSets) return
-
-      const target = normalizeWeightUnit(weightUnit)
-      Object.values(workout.exerciseSets).forEach((sets) => {
-        sets.forEach((set) => {
-          if (!set.weightUnit) {
-            set.weightUnit = target
+          if (!endsAt) {
+            delete workout.restTimerEndsAt
+            delete workout.restTimerTotalSeconds
             return
           }
 
-          const current = normalizeWeightUnit(set.weightUnit)
-          if (current === target) return
+          workout.restTimerEndsAt = endsAt
+          workout.restTimerTotalSeconds = totalSeconds
+        }),
 
-          const weight = set.weight
-          if (typeof weight === 'number' && !Number.isNaN(weight)) {
-            set.weight = convertWeight(weight, current, target)
+      addEmptySet: (routineID, exerciseID, weightUnit, distanceUnit) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (!workout) return
+
+          workout.exerciseSets ??= {}
+          workout.exerciseSets[exerciseID] ??= []
+          workout.exerciseSets[exerciseID].push(emptySet(weightUnit, distanceUnit))
+        }),
+
+      addEmptySetIfNone: (
+        routineID,
+        exerciseID,
+        metrics = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+        weightUnit,
+        distanceUnit,
+      ) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (!workout) return
+
+          workout.exerciseSets ??= {}
+          const sets = (workout.exerciseSets[exerciseID] ??= [])
+
+          // Older persisted drafts may not contain metrics. Normalising here
+          // avoids the empty-array `every()` case appending another blank row
+          // on refresh.
+          const fields = exerciseMetrics({ metrics })
+            .map((metric) => metricFields[metric])
+            .filter(Boolean) as Array<keyof WorkoutSet>
+
+          const noEmptySet = sets.every((entry) => fields.every((field) => isNumber(entry[field])))
+          if (noEmptySet) sets.push(emptySet(weightUnit, distanceUnit))
+        }),
+
+      /**
+       * Writes a value into one logged set.
+       *
+       * The Vue screens assigned straight into the set object a `getSets` call
+       * had handed them. Immer freezes state, so every edit comes through here
+       * instead — which is also the only way a change notifies subscribers.
+       * An `undefined` clears the field, so a cleared input is not stored as a
+       * stale number.
+       */
+      updateSet: (routineID, exerciseID, index, changes) =>
+        set((state) => {
+          const entry = state.workouts[routineID]?.exerciseSets?.[exerciseID]?.[index]
+          if (!entry) return
+
+          for (const [field, value] of Object.entries(changes) as Array<
+            [keyof WorkoutSet, WorkoutSet[keyof WorkoutSet]]
+          >) {
+            if (value === undefined) delete entry[field]
+            else Object.assign(entry, { [field]: value })
           }
-          set.weightUnit = target
-        })
-      })
-    }
+        }),
 
-    // Same contract as syncWeightUnits for the distance preference: values are
-    // converted so the number keeps meaning the same distance as entered, and
-    // unit-less legacy sets are only tagged.
-    const syncDistanceUnits = (routineID: RoutineID, distanceUnit: DistanceUnit) => {
-      const workout = workouts.value[routineID]
-      if (!workout?.exerciseSets) return
+      // The weight unit is a profile preference rather than a per-set choice,
+      // so a draft saved under an earlier preference is realigned to the
+      // current one here. Values are converted so the number keeps meaning the
+      // same weight as what was originally entered. A set carrying no unit at
+      // all predates the field, and its source is unknown, so it is only
+      // tagged.
+      syncWeightUnits: (routineID, weightUnit) =>
+        set((state) => {
+          const sets = state.workouts[routineID]?.exerciseSets
+          if (!sets) return
 
-      const target = normalizeDistanceUnit(distanceUnit)
-      Object.values(workout.exerciseSets).forEach((sets) => {
-        sets.forEach((set) => {
-          if (!set.distanceUnit) {
-            set.distanceUnit = target
-            return
+          const target = normalizeWeightUnit(weightUnit)
+          for (const entries of Object.values(sets)) {
+            for (const entry of entries) {
+              if (!entry.weightUnit) {
+                entry.weightUnit = target
+                continue
+              }
+
+              const current = normalizeWeightUnit(entry.weightUnit)
+              if (current === target) continue
+
+              if (isNumber(entry.weight)) {
+                entry.weight = convertWeight(entry.weight as number, current, target)
+              }
+              entry.weightUnit = target
+            }
           }
+        }),
 
-          const current = normalizeDistanceUnit(set.distanceUnit)
-          if (current === target) return
+      // Same contract as syncWeightUnits for the distance preference: values
+      // are converted so the number keeps meaning the same distance as
+      // entered, and unit-less legacy sets are only tagged.
+      syncDistanceUnits: (routineID, distanceUnit) =>
+        set((state) => {
+          const sets = state.workouts[routineID]?.exerciseSets
+          if (!sets) return
 
-          const distance = set.distance
-          if (typeof distance === 'number' && !Number.isNaN(distance)) {
-            set.distance = convertDistance(distance, current, target)
+          const target = normalizeDistanceUnit(distanceUnit)
+          for (const entries of Object.values(sets)) {
+            for (const entry of entries) {
+              if (!entry.distanceUnit) {
+                entry.distanceUnit = target
+                continue
+              }
+
+              const current = normalizeDistanceUnit(entry.distanceUnit)
+              if (current === target) continue
+
+              if (isNumber(entry.distance)) {
+                entry.distance = convertDistance(entry.distance as number, current, target)
+              }
+              entry.distanceUnit = target
+            }
           }
-          set.distanceUnit = target
-        })
-      })
-    }
+        }),
 
-    const deleteSet = (routineID: RoutineID, exerciseID: ExerciseID, index: number) => {
-      if (!workouts.value[routineID]) return
-      if (!workouts.value[routineID].exerciseSets) return
-      if (!workouts.value[routineID].exerciseSets[exerciseID]) return
+      deleteSet: (routineID, exerciseID, index) =>
+        set((state) => {
+          state.workouts[routineID]?.exerciseSets?.[exerciseID]?.splice(index, 1)
+        }),
 
-      workouts.value[routineID].exerciseSets[exerciseID].splice(index, 1)
-    }
+      removeWorkout: (routineID) =>
+        set((state) => {
+          delete state.workouts[routineID]
+        }),
 
-    const removeWorkout = (routineID: RoutineID) => {
-      delete workouts.value[routineID]
-    }
-
-    const startQuickWorkoutWithExercise = (exercise: Exercise) => {
-      const routineID = 'quick-workout'
-      removeWorkout(routineID)
-      initialiseWorkout(routineID)
-      addWorkoutExercise(routineID, exercise)
-      addEmptySetIfNone(routineID, exercise.id, exercise.metrics)
-    }
-
-    return {
-      addEmptySet,
-      addEmptySetIfNone,
-      addWorkoutExercise,
-      deleteSet,
-      getAddedExercises,
-      getAllSets,
-      getCompletedExerciseIds,
-      getNote,
-      getPlanId,
-      getRestTimer,
-      getSets,
-      getStartedAt,
-      syncWeightUnits,
-      syncDistanceUnits,
-      initialiseWorkout,
-      removeWorkout,
-      startQuickWorkoutWithExercise,
-      setExerciseCompleted,
-      setNote,
-      setRestTimer,
-      workouts,
-    }
-  },
-  {
-    persist: true,
-  },
+      startQuickWorkoutWithExercise: (exercise) => {
+        const store = get()
+        store.removeWorkout(quickWorkoutRoutineID)
+        store.initialiseWorkout(quickWorkoutRoutineID)
+        store.addWorkoutExercise(quickWorkoutRoutineID, exercise)
+        store.addEmptySetIfNone(quickWorkoutRoutineID, exercise.id, exercise.metrics)
+      },
+    })),
+    {
+      name: 'workouts',
+      storage: migratedStorage(),
+      partialize: ({ workouts }) => ({ workouts }),
+    },
+  ),
 )

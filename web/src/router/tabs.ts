@@ -21,6 +21,11 @@ export const isTabRoot = (path: string) =>
 // Where "back" goes when a screen was opened directly and has no history to
 // return to: the tab root it belongs to, found by its first path segment.
 export const tabRootFor = (path: string) => {
+  // A tab root is its own root. The segments below name collections, and two
+  // of them ('/workout', '/profile') do not match the collection that leads to
+  // them, so without this they would answer '/home' rather than themselves.
+  if (isTabRoot(path)) return path
+
   const [segment] = path.split('/').filter(Boolean)
   if (!segment) return '/home'
   const collections: Record<string, string> = {

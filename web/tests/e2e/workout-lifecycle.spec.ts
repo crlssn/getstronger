@@ -14,10 +14,32 @@ import {
 
 test.beforeAll(resetSeedData)
 
+// Shared handles for a screen built almost entirely of anonymous grid cells.
+type E2EPage = Parameters<typeof logIn>[0]
+
+// The picker's options are the buttons that name something; its close and
+// load-more controls carry no name of their own.
+const pickerOptions = (page: E2EPage, dialog: ReturnType<E2EPage['getByRole']>) =>
+  dialog.getByRole('button').filter({ has: page.locator('strong') })
+
+const openExerciseName = async (page: E2EPage) =>
+  (await page.getByRole('button', { expanded: true }).locator('strong').innerText()).trim()
+
+// The unit is a label on the field, so it lives in the field's own box beside
+// the input rather than anywhere nameable.
+const unitFieldFor = (page: E2EPage, label: string) =>
+  page.getByRole('textbox', { name: label, exact: true }).locator('xpath=..')
+
+const setRow = (page: E2EPage, number: number) =>
+  page.getByRole('button', { name: `Remove set ${number}` }).locator('xpath=..')
+
+const sectionWithHeading = (page: E2EPage, heading: string) =>
+  page.locator('section').filter({ has: page.getByRole('heading', { name: heading }) })
+
 const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
   await page.getByRole('button', { name: 'Choose exercise' }).click()
   const picker = page.getByRole('dialog', { name: 'Add exercise' })
-  const option = picker.locator('.exercise-options button').first()
+  const option = pickerOptions(page, picker).first()
   const name = (await option.locator('strong').innerText()).trim()
   await option.click()
   return name
@@ -56,7 +78,9 @@ test.describe('quick workout lifecycle', () => {
     // chrome stays one band, carrying the elapsed time — the one number read
     // between sets. No progress rail: a glance should not do arithmetic.
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0)
-    const headerBox = await page.locator('.workout-header').boundingBox()
+    // Not a banner: the session runs inside the shell's <main>, which takes the
+    // role away. It is the form's own header.
+    const headerBox = await page.locator('form > header').boundingBox()
     expect(headerBox?.height).toBeLessThanOrEqual(80)
     await expect(page.getByRole('progressbar', { name: 'Session progress' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
@@ -64,12 +88,12 @@ test.describe('quick workout lifecycle', () => {
     await expect(page.getByLabel('Workout note')).toHaveCount(0)
     // Until an exercise exists there is nothing to complete: the empty state
     // leads with choosing one, and no primary action competes with it.
-    await expect(page.locator('.primary-action')).toHaveCount(0)
+    await expect(page.locator('button[type="submit"]')).toHaveCount(0)
 
     const firstExercise = await addFirstExercise(page)
     // Blocked, not disabled: the dominant control stays pressable and names
     // what is missing, rather than greying out and reading as broken.
-    await expect(page.locator('.primary-action')).toBeEnabled()
+    await expect(page.locator('button[type="submit"]')).toBeEnabled()
     await page
       .getByRole('textbox', { name: `${firstExercise} set 1 weight`, exact: true })
       .fill('25')
@@ -121,8 +145,12 @@ test.describe('quick workout lifecycle', () => {
     await expect(page).toHaveURL(/\/home$/)
     // Leaving the session hands the global navigation back.
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
-    const workoutNavigation = page.locator('.bottom-nav').getByRole('link', { name: 'Workout' })
-    await expect(workoutNavigation.locator('.timer-badge')).toHaveText(/^\d+:\d{2}$/)
+    const workoutNavigation = page
+      .getByRole('navigation', { name: 'Primary navigation' })
+      .getByRole('link', { name: 'Workout' })
+    // The ticking duration is decorative, so it is the tab's one hidden span.
+    const timerBadge = workoutNavigation.locator('span[aria-hidden="true"]')
+    await expect(timerBadge).toHaveText(/^\d+:\d{2}$/)
     await page.waitForTimeout(1100)
     await workoutNavigation.click()
     await expect(restRegion).toBeVisible()
@@ -130,7 +158,7 @@ test.describe('quick workout lifecycle', () => {
     await page.getByRole('button', { name: 'Skip', exact: true }).click()
     await expect(restRegion).toHaveCount(0)
     await page.goto('/home')
-    await expect(workoutNavigation.locator('.timer-badge')).toHaveText(/^\d+m \d{2}s$/)
+    await expect(timerBadge).toHaveText(/^\d+m \d{2}s$/)
     await workoutNavigation.click()
     await expect(
       page.getByRole('textbox', { name: `${firstExercise} set 1 weight`, exact: true }),
@@ -154,10 +182,12 @@ test.describe('quick workout lifecycle', () => {
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await page.getByRole('button', { name: 'Add exercise' }).click()
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
-    const secondOption = picker.locator('.exercise-options button').first()
+    const secondOption = pickerOptions(page, picker).first()
     const secondExercise = (await secondOption.locator('strong').innerText()).trim()
     await secondOption.click()
-    await expect(page.locator('.exercise-list')).toContainText(secondExercise)
+    await expect(
+      page.locator('button[aria-expanded]').filter({ hasText: secondExercise }),
+    ).toHaveCount(1)
 
     await page.getByRole('button', { name: 'Finish workout' }).click()
     const finishDialog = page.getByRole('dialog', { name: 'Finish workout early?' })
@@ -174,15 +204,20 @@ test.describe('quick workout lifecycle', () => {
 
     // The save confirmation spans the viewport rather than sitting inset.
     await expect(page.getByRole('status')).toContainText('Workout saved')
-    const notificationBox = await boxOf(page.locator('.alert-region'))
+    // The card spans the viewport; the region around it is what carries that.
+    const notificationBox = await boxOf(page.getByRole('status').locator('xpath=..'))
     expect(notificationBox.x).toBe(0)
     expect(notificationBox.width).toBe(390)
 
     // Finishing a workout marks the current week complete on the home streak.
     await page.goto('/home')
-    const currentWeek = page.locator('.week-block.current.complete')
+    // Each week square names itself and its state, which is a better handle
+    // than the classes that colour it.
+    const currentWeek = page.getByRole('listitem', {
+      name: /^This week: \d+ workouts? logged$/,
+    })
     await expect(currentWeek.locator('svg')).toBeVisible()
-    await expect(currentWeek.locator('.week-workout-count')).toHaveText(/^(?:[2-8]|9\+)$/)
+    await expect(currentWeek.locator('strong')).toHaveText(/^(?:[2-8]|9\+)$/)
   })
 
   test('promotes previous-session values into the set rows @mutation', async ({ page }) => {
@@ -197,10 +232,11 @@ test.describe('quick workout lifecycle', () => {
     await page.getByRole('button', { name: 'Choose exercise' }).click()
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
     await picker.getByRole('searchbox').fill(exercise)
-    await picker.locator('.exercise-options button').first().click()
+    await pickerOptions(page, picker).first().click()
 
-    const firstRow = page.locator('.set-row').first()
-    await expect(firstRow.locator('.previous-value')).toContainText('25')
+    // The previous column is the second of the row's two spans, after the set
+    // number: read-only, and named by nothing.
+    await expect(setRow(page, 1).locator(':scope > span').nth(1)).toContainText('25')
     const weight = page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
     // The prefill is off until the account asks for it: what the row shows is
     // the previous column, not a value nobody typed.
@@ -247,7 +283,11 @@ test.describe('quick workout lifecycle', () => {
 
     await expect(page).toHaveURL(/\/workout$/)
     // No draft survives: the workout tab carries no timer badge any more.
-    await expect(page.locator('.bottom-nav .timer-badge')).toHaveCount(0)
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Primary navigation' })
+        .locator('span[aria-hidden="true"]'),
+    ).toHaveCount(0)
     await page.goto('/workouts/quick')
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
     await expect(page.getByText('This should be discarded.')).toHaveCount(0)
@@ -291,8 +331,8 @@ test.describe('weight units', () => {
     // shows a static suffix, not a toggle.
     await page.goto('/workouts/quick')
     let exercise = await addFirstExercise(page)
-    let weightEntry = page.locator('.unit-entry').first()
-    await expect(weightEntry.locator('.unit-suffix')).toHaveText('kg')
+    let weightEntry = unitFieldFor(page, `${exercise} set 1 weight`)
+    await expect(weightEntry.locator('span')).toHaveText('kg')
     await expect(weightEntry.getByRole('button')).toHaveCount(0)
     await expect(page.getByRole('group', { name: /weight unit/ })).toHaveCount(0)
 
@@ -320,8 +360,8 @@ test.describe('weight units', () => {
     // New set inputs pick up the new preference as a static suffix.
     await page.goto('/workouts/quick')
     exercise = await addFirstExercise(page)
-    weightEntry = page.locator('.unit-entry').first()
-    await expect(weightEntry.locator('.unit-suffix')).toHaveText('lbs')
+    weightEntry = unitFieldFor(page, `${exercise} set 1 weight`)
+    await expect(weightEntry.locator('span')).toHaveText('lbs')
 
     // Heavier than anything seeded so this set becomes the exercise's personal
     // best and the records view has to render it back in the unit it was
@@ -338,7 +378,9 @@ test.describe('weight units', () => {
     await expect(page.getByText(/330\.69\s*lbs/)).toBeVisible()
 
     await page.goto('/progress')
-    await expect(page.locator('.record-value').filter({ hasText: /330\.69\s*lbs/ })).toBeVisible()
+    await expect(
+      sectionWithHeading(page, 'Personal records').getByText(/330\.69\s*lbs/),
+    ).toBeVisible()
 
     // Switching back to kilograms must not rewrite the set logged in pounds:
     // historical display stays correct even after the preference changes.
@@ -351,12 +393,14 @@ test.describe('weight units', () => {
     )
 
     await page.goto('/progress')
-    await expect(page.locator('.record-value').filter({ hasText: /330\.69\s*lbs/ })).toBeVisible()
+    await expect(
+      sectionWithHeading(page, 'Personal records').getByText(/330\.69\s*lbs/),
+    ).toBeVisible()
 
     await page.goto('/workouts/quick')
     exercise = await addFirstExercise(page)
-    weightEntry = page.locator('.unit-entry').first()
-    await expect(weightEntry.locator('.unit-suffix')).toHaveText('kg')
+    weightEntry = unitFieldFor(page, `${exercise} set 1 weight`)
+    await expect(weightEntry.locator('span')).toHaveText('kg')
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     await page.getByRole('button', { name: 'Discard workout' }).click()
     await page.getByRole('button', { name: 'Discard workout' }).click()
@@ -399,7 +443,7 @@ test.describe('weight units', () => {
     // 100 kg is the same weight as 220.46 lb. The row must never show the old
     // number beside the new unit, or finishing saves a weight nobody entered.
     await page.goto('/workouts/quick')
-    await expect(page.locator('.unit-entry .unit-suffix').first()).toHaveText('lbs')
+    await expect(unitFieldFor(page, `${exercise} set 1 weight`).locator('span')).toHaveText('lbs')
     await expect(
       page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }),
     ).toHaveValue('220.46')
@@ -429,7 +473,11 @@ test.describe('weight units', () => {
     // measurement card, so the athlete knows what a set will be logged in.
     await page.goto('/exercises/create')
     await page.locator('form input[type="text"]').first().fill(exerciseName)
-    await expect(page.locator('.measurement').filter({ hasText: 'Distance' })).toContainText('km')
+    await expect(
+      page
+        .getByRole('group', { name: 'How do you track it?' })
+        .getByRole('button', { name: /Distance/ }),
+    ).toContainText('km')
     await page.getByRole('button', { name: 'Distance × time' }).click()
     await page.getByRole('button', { name: 'Save Exercise' }).click()
     await expect(page).toHaveURL(/\/exercises$/)
@@ -452,12 +500,14 @@ test.describe('weight units', () => {
       await page.getByRole('button', { name: 'Choose exercise' }).click()
       const picker = page.getByRole('dialog', { name: 'Add exercise' })
       await picker.getByLabel('Search exercises').fill(exerciseName)
-      await picker.locator('.exercise-options button').first().click()
+      await pickerOptions(page, picker).first().click()
 
       // Distance is a decimal field carrying the preference as a static
       // suffix; time is a stopwatch-style field where bare digits fill in
       // from the right, so "1230" reads as 12:30.
-      await expect(page.locator('.unit-entry .unit-suffix').first()).toHaveText('mi')
+      await expect(unitFieldFor(page, `${exerciseName} set 1 distance`).locator('span')).toHaveText(
+        'mi',
+      )
       await page
         .getByRole('textbox', { name: `${exerciseName} set 1 distance`, exact: true })
         .fill('3.5')
@@ -519,9 +569,7 @@ test.describe('planned workouts and history', () => {
 
     for (let index = 0; index < 2; index += 1) {
       await page.getByRole('button', { name: 'Add routine' }).click()
-      await page
-        .getByRole('dialog', { name: 'Choose a routine' })
-        .locator('.routine-options button')
+      await pickerOptions(page, page.getByRole('dialog', { name: 'Choose a routine' }))
         .first()
         .click()
     }
@@ -533,11 +581,14 @@ test.describe('planned workouts and history', () => {
     await expect(page.getByText('Active plan', { exact: true })).toBeVisible()
 
     await page.goto('/workout')
-    const nextCard = page.locator('.next-card')
+    // The card that offers the next session is the one holding its start link.
+    const nextCard = page
+      .locator('section')
+      .filter({ has: page.getByRole('link', { name: /^Start / }) })
     await expect(nextCard).toContainText('1 of 2')
     await nextCard.getByRole('link', { name: /^Start / }).click()
 
-    const exercise = (await page.locator('.exercise-item.open .exercise-name').innerText()).trim()
+    const exercise = await openExerciseName(page)
     await logFirstSet(page, exercise, '30', '6')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
 
@@ -559,7 +610,7 @@ test.describe('planned workouts and history', () => {
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
 
     await page.goto('/workout')
-    await expect(page.locator('.next-card')).toContainText('2 of 2')
+    await expect(nextCard).toContainText('2 of 2')
 
     await page.goto('/plans')
     await page.getByRole('button', { name: 'Pause' }).click()
@@ -573,10 +624,10 @@ test.describe('planned workouts and history', () => {
 
   test('loads previous workouts to a clear end state and opens a summary', async ({ page }) => {
     await page.goto('/workout')
-    const history = page.locator('.workout-history')
+    const history = sectionWithHeading(page, 'Previous workouts')
     await expect(history.getByRole('heading', { name: 'Previous workouts' })).toBeVisible()
     await expect(history.getByRole('link')).not.toHaveCount(0)
-    await scrollToListEnd(page, '.history-end')
+    await scrollToListEnd(page, page.getByText(/reached the end of your workout history/))
     await expect(history.getByRole('status')).toContainText('reached the end')
 
     const firstWorkoutName = (

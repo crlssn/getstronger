@@ -1,9 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, type Plugin } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import react from '@vitejs/plugin-react'
 import { codecovVitePlugin } from '@codecov/vite-plugin'
 
 // Identifies a deploy. The commit SHA in CI, otherwise the build time so local
@@ -35,16 +33,14 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(buildVersion),
   },
   plugins: [
-    vue(),
-    vueJsx(),
+    react(),
     emitVersionFile(),
-    process.env.VITE_ENABLE_DEVTOOLS === 'false' ? undefined : vueDevTools(),
     codecovVitePlugin({
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
       bundleName: 'crlssn/getstronger/web',
       uploadToken: process.env.CODECOV_TOKEN,
     }),
-  ].filter((plugin) => plugin !== undefined),
+  ],
   server: {
     host: '0.0.0.0',
     // Set per worktree by 'mise run worktree:env'. strictPort keeps a busy port

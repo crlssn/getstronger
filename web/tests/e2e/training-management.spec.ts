@@ -39,14 +39,21 @@ test.describe('exercise library', () => {
   test('groups exercises by recent activity and searches names and tags', async ({ page }) => {
     await page.goto('/exercises')
     // allTextContents does not retry, so wait for the list before reading it.
-    await expect(page.locator('.exercise-group').first()).toBeVisible()
-    const groups = await page.locator('.exercise-group > h2').allTextContents()
+    // Each activity group is a section headed by its bucket name.
+    const groupHeadings = page.getByRole('heading', { level: 2 })
+    await expect(groupHeadings.first()).toBeVisible()
+    const groups = await groupHeadings.allTextContents()
     expect(groups).toEqual(activityBucketLabels.filter((label) => groups.includes(label)))
 
-    const firstExercise = page.locator('.exercise-group-card a').first()
+    // Every exercise in the library is a link to its own page; the create link
+    // is one too, but it names nothing inside itself.
+    const exerciseLinks = page
+      .locator('a[href^="/exercises/"]')
+      .filter({ has: page.locator('strong') })
+    const firstExercise = exerciseLinks.first()
     const firstExerciseName = (await firstExercise.locator('strong').innerText()).trim()
     await page.getByLabel('Search exercises').fill(firstExerciseName.toLowerCase())
-    const matches = page.locator('.exercise-group-card a')
+    const matches = exerciseLinks
     await expect(matches.first()).toBeVisible()
     await expect
       .poll(async () =>
@@ -122,7 +129,11 @@ test.describe('exercise library', () => {
     await page.getByRole('button', { name: 'Choose exercise' }).click()
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
     await picker.getByLabel('Search exercises').fill(exerciseName)
-    await picker.locator('.exercise-options button').first().click()
+    await picker
+      .getByRole('button')
+      .filter({ has: page.locator('strong') })
+      .first()
+      .click()
     await page
       .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
       .fill('40')
@@ -193,8 +204,11 @@ test.describe('routine lifecycle', () => {
     const saveButton = page.getByRole('button', { name: 'Create routine' })
     await expect(saveButton).toBeDisabled()
     await page.getByLabel('Routine name').fill(routineName)
-    await page.locator('.exercise-option').first().click()
-    await page.locator('.exercise-option').nth(1).click()
+    // The selectable exercises are the toggles: they are the only controls on
+    // the form that report whether they are pressed.
+    const options = page.locator('button[aria-pressed]')
+    await options.first().click()
+    await options.nth(1).click()
     await expect(page.getByText('2 selected', { exact: true })).toBeVisible()
     await saveButton.click()
 
@@ -204,7 +218,7 @@ test.describe('routine lifecycle', () => {
     await page.getByRole('heading', { name: routineName }).click()
 
     await expect(page.getByRole('heading', { name: 'Exercise order' })).toBeVisible()
-    await expect(page.locator('.exercise-list li')).toHaveCount(2)
+    await expect(page.getByRole('listitem')).toHaveCount(2)
     await page.getByRole('link', { name: 'Edit exercises' }).click()
     await page.getByLabel('Routine name').fill(updatedName)
     await page.getByRole('button', { name: 'Save changes' }).click()
@@ -233,19 +247,18 @@ test.describe('plan lifecycle', () => {
     await page.getByLabel('Plan name').fill(planName)
     await page.getByRole('button', { name: 'Add routine' }).click()
     let picker = page.getByRole('dialog', { name: 'Choose a routine' })
-    const firstRoutineName = (
-      await picker.locator('.routine-options button strong').first().innerText()
-    ).trim()
-    await picker.locator('.routine-options button').first().click()
+    const firstOption = picker.getByRole('button').filter({ has: page.locator('strong') })
+    const firstRoutineName = (await firstOption.first().locator('strong').innerText()).trim()
+    await firstOption.first().click()
 
     await page.getByRole('button', { name: 'Add routine' }).click()
     picker = page.getByRole('dialog', { name: 'Choose a routine' })
-    const secondRoutineName = (
-      await picker.locator('.routine-options button strong').first().innerText()
-    ).trim()
-    await picker.locator('.routine-options button').first().click()
+    const secondOption = picker.getByRole('button').filter({ has: page.locator('strong') })
+    const secondRoutineName = (await secondOption.first().locator('strong').innerText()).trim()
+    await secondOption.first().click()
 
-    const order = page.locator('.routine-order ol li')
+    // The plan's order is the only list on the builder.
+    const order = page.getByRole('listitem')
     await expect(order).toHaveCount(2)
     await order
       .nth(1)
@@ -254,17 +267,21 @@ test.describe('plan lifecycle', () => {
     await page.getByRole('button', { name: 'Create plan' }).click()
 
     await expect(page.getByRole('heading', { name: planName })).toBeVisible()
-    await expect(page.locator('.routine-order li').first()).toContainText(secondRoutineName)
-    await expect(page.locator('.routine-order li').nth(1)).toContainText(firstRoutineName)
+    const viewOrder = page.getByRole('listitem')
+    await expect(viewOrder.first()).toContainText(secondRoutineName)
+    await expect(viewOrder.nth(1)).toContainText(firstRoutineName)
 
     await page.getByRole('button', { name: 'Make active' }).click()
     await acceptConfirmDialog(page, 'Make active')
     await expect(page.getByText('Active plan', { exact: true })).toBeVisible()
-    await expect(page.locator('.routine-order li').first()).toContainText('UP NEXT')
+    await expect(page.getByRole('listitem').first()).toContainText('UP NEXT')
 
     await page.goto('/plans')
-    await expect(page.locator('.active-plan')).toContainText(planName)
-    await expect(page.locator('.active-plan')).toContainText(secondRoutineName)
+    const activePlanCard = page
+      .locator('section')
+      .filter({ has: page.getByText('Active plan', { exact: true }) })
+    await expect(activePlanCard).toContainText(planName)
+    await expect(activePlanCard).toContainText(secondRoutineName)
     await page.getByRole('button', { name: 'Pause' }).click()
     await acceptConfirmDialog(page, 'Pause')
     await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()

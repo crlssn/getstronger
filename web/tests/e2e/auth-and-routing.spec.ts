@@ -148,9 +148,11 @@ test.describe('guest authentication and routing', () => {
 
     // The alert sits below the header rather than on top of it, and its
     // contents line up with the column the page content uses.
-    const header = await boxOf(page.locator('header.guest-header'))
+    const header = await boxOf(page.getByRole('banner'))
     const alert = await boxOf(page.getByRole('status'))
-    const alertIcon = await boxOf(page.locator('.alert-card-inner .status-icon'))
+    // The status icon is decorative, so it is reached through the region it
+    // sits in rather than named: it is the first mark inside the alert.
+    const alertIcon = await boxOf(page.getByRole('status').locator('svg').first())
     const heading = await boxOf(page.getByRole('heading', { name: 'Reset your password' }))
 
     expect(alert.y).toBeGreaterThanOrEqual(header.y + header.height)
