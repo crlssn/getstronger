@@ -8,3 +8,10 @@ export const initials = (name?: string): string => {
   const last = words.length > 1 ? words[words.length - 1].charAt(0) : ''
   return `${first}${last}`.toLocaleUpperCase()
 }
+
+// A username as every view shows it. An empty username stays empty rather than
+// rendering a lone '@' while a profile is still loading.
+export const handle = (username?: string): string => {
+  const trimmed = (username ?? '').trim()
+  return trimmed ? `@${trimmed}` : ''
+}

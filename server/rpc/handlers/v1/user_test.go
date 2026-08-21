@@ -51,6 +51,24 @@ func (s *userSuite) SetupSuite() {
 	})
 }
 
+func (s *userSuite) TestUpdateUserName() {
+	s.Run("ok_name_updated_and_trimmed", func() {
+		user := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		res, err := s.handler.UpdateUserName(ctx, &connect.Request[v1.UpdateUserNameRequest]{
+			Msg: &v1.UpdateUserNameRequest{Name: "  Robin Fields  "},
+		})
+		s.Require().NoError(err)
+		s.Require().Equal("Robin Fields", res.Msg.GetUser().GetName())
+
+		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+		s.Require().NoError(err)
+		s.Require().Equal("Robin Fields", persisted.Name)
+	})
+}
+
 func (s *userSuite) TestUpdateUserUsername() {
 	s.Run("ok_username_updated_and_lowercased", func() {
 		user := s.factory.NewUser()

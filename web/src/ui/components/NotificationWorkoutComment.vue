@@ -5,6 +5,7 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'
 import { formatUnixToRelativeDateTime } from '@/utils/datetime.ts'
+import { handle } from '@/utils/names'
 import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 
 const authStore = useAuthStore()
@@ -36,9 +37,9 @@ const messageKey = computed(() => {
     <div class="w-full font-normal">
       <i18n-t :keypath="messageKey" tag="div" scope="global">
         <template #name>
-          <span class="font-semibold">{{ actor?.username }}</span>
+          <span class="font-semibold">{{ handle(actor?.username) }}</span>
         </template>
-        <template #owner>{{ workout?.user?.username }}</template>
+        <template #owner>{{ handle(workout?.user?.username) }}</template>
         <template #workout>
           <span class="font-semibold">{{ workout?.name }}</span>
         </template>

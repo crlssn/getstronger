@@ -35,7 +35,7 @@ const ownerID = 'user-owner'
 const workout = create(WorkoutSchema, {
   id: 'workout-1',
   name: 'Push Day',
-  user: { id: ownerID, name: 'Alice Lifter' },
+  user: { id: ownerID, name: 'Alice Lifter', username: 'alice' },
 })
 
 describe('CardWorkout', () => {
@@ -84,6 +84,17 @@ describe('CardWorkout', () => {
     // The card navigates home, so the alert must survive that route change.
     expect(alert?.seen).toBe(false)
     expect(router.currentRoute.value.path).toBe('/home')
+    wrapper.unmount()
+  })
+
+  test('shows the author by handle above their name', async () => {
+    const wrapper = mount(CardWorkout, {
+      global: { plugins: [i18n, router] },
+      props: { compact: false, workout },
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('@alice')
     wrapper.unmount()
   })
 

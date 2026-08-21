@@ -326,6 +326,12 @@ func UpdateUserUsername(username string) UpdateUserOpt {
 	}
 }
 
+func UpdateUserName(name string) UpdateUserOpt {
+	return func() (columns, error) {
+		return columns{models.Users.Columns.Name.Name(): strings.TrimSpace(name)}, nil
+	}
+}
+
 func UpdateUserWeightUnit(unit string) UpdateUserOpt {
 	return func() (columns, error) {
 		return columns{models.Users.Columns.WeightUnit.Name(): string(weightunit.Normalize(unit))}, nil

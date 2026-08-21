@@ -638,6 +638,7 @@ func (s *repoSuite) TestListUsersWithNameMatching() {
 func (s *repoSuite) TestUpdateUser() {
 	type expected struct {
 		err        error
+		name       string
 		weightUnit string
 	}
 
@@ -677,6 +678,19 @@ func (s *repoSuite) TestUpdateUser() {
 			},
 		},
 		{
+			name: "ok_update_name_trims_surrounding_whitespace",
+			opts: []repo.UpdateUserOpt{
+				repo.UpdateUserName("  Robin  Fields  "),
+			},
+			init: func(t *test) {
+				t.userID = s.factory.NewUser().ID.String()
+			},
+			expected: expected{
+				err:  nil,
+				name: "Robin  Fields",
+			},
+		},
+		{
 			name:   "err_unknown_user_id",
 			userID: uuid.NewString(),
 			opts: []repo.UpdateUserOpt{
@@ -703,6 +717,11 @@ func (s *repoSuite) TestUpdateUser() {
 			s.Require().NoError(err)
 			user, err := models.Users.Query(models.SelectWhere.Users.ID.EQ(gofrsuuid.FromStringOrNil(t.userID))).One(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
+			if t.expected.name != "" {
+				s.Require().Equal(t.expected.name, user.Name)
+				return
+			}
+
 			s.Require().Equal(t.expected.weightUnit, user.WeightUnit)
 		})
 	}

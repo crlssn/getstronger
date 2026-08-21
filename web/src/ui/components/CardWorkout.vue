@@ -18,7 +18,7 @@ import {
 import { deleteWorkout, postWorkoutComment } from '@/http/requests'
 import { dateLocale } from '@/i18n'
 import { formatNumber } from '@/utils/numbers'
-import { initials } from '@/utils/names'
+import { handle, initials } from '@/utils/names'
 import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -43,7 +43,7 @@ const comments = ref<WorkoutComment[]>([...props.workout.comments])
 
 const isOwner = computed(() => props.workout.user?.id === authStore.userId)
 const userName = computed(() => props.workout.user?.name ?? '')
-const userHandle = computed(() => props.workout.user?.username ?? '')
+const userHandle = computed(() => handle(props.workout.user?.username))
 const userInitials = computed(() => initials(props.workout.user?.name) || 'GS')
 const setCount = computed(() =>
   props.workout.exerciseSets.reduce((total, exercise) => total + exercise.sets.length, 0),

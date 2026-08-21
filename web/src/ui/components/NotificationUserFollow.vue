@@ -3,6 +3,7 @@ import type { User } from '@/proto/api/v1/shared_pb.ts'
 
 import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { formatUnixToRelativeDateTime } from '@/utils/datetime.ts'
+import { handle } from '@/utils/names'
 
 defineProps<{
   actor?: User
@@ -16,7 +17,7 @@ defineProps<{
     <div class="w-full">
       <i18n-t keypath="notifications.followedYou" tag="div" scope="global">
         <template #name>
-          <span class="font-semibold">{{ actor?.username }}</span>
+          <span class="font-semibold">{{ handle(actor?.username) }}</span>
         </template>
       </i18n-t>
       <p class="text-sm text-text-subtle">
