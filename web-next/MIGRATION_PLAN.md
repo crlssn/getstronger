@@ -81,6 +81,8 @@ How each syncs:
     `ExerciseTagsInput.vue` builds those three strings as English literals in
     its script, against the repo's own localisation rule; they are catalogue
     keys here.
+  - `routine.view.lastSession_one` and `_other`, in both locales.
+    `ViewRoutine.vue` builds "2 sets · last …" the same way.
 - **`src/utils/**`, new modules** — usually verbatim.
 - **`src/http/**`, `src/stores/**`** — apply the diff by hand, translating
   `useXStore()` to `useXStore.getState()` and `i18n.global.t` to `i18n.t`.
