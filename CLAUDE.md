@@ -12,7 +12,7 @@ that part is opened. Read the file for the area you are about to change.
 | Area                     | Rules                              | Covers                                        |
 | ------------------------ | ---------------------------------- | --------------------------------------------- |
 | `server/` (Go backend)   | [`server/CLAUDE.md`](server/CLAUDE.md)     | Error handling, log messages, layering  |
-| `web/` (Vue web app)     | [`web/CLAUDE.md`](web/CLAUDE.md)           | Localisation, components, design review |
+| `web/` (React web app)   | [`web/CLAUDE.md`](web/CLAUDE.md)           | State, components, localisation, testing |
 | `database/`              | [`database/CLAUDE.md`](database/CLAUDE.md) | Migrations, seeding, generated models   |
 | `proto/`                 | [`proto/CLAUDE.md`](proto/CLAUDE.md)       | Schema changes and code generation      |
 | `mobile/`                | [`mobile/CLAUDE.md`](mobile/CLAUDE.md)     | Capacitor wrappers and native builds    |

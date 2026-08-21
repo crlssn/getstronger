@@ -54,7 +54,7 @@ Sign up with your email address to explore all features.
 
 ## Tech Stack
 
-- **Web**: TypeScript (Vue.js, Tailwind CSS)
+- **Web**: TypeScript (React, Tailwind CSS)
 - **Mobile**: Capacitor (native iOS and Android wrappers around the web app)
 - **Backend**: Golang
 - **Database**: PostgreSQL
@@ -137,7 +137,7 @@ mise installs the project's pinned Go, Node.js, and development tool versions fr
 
 ## Native mobile apps
 
-The iOS and Android apps are [Capacitor](https://capacitorjs.com) projects in `mobile/` that wrap the built web bundle from `web/dist`, so the Vue codebase in `web/` stays the single source of truth. The checked-in `mobile/ios` and `mobile/android` directories are ordinary Xcode and Android Studio projects; iOS dependencies are managed with Swift Package Manager, so CocoaPods is not required.
+The iOS and Android apps are [Capacitor](https://capacitorjs.com) projects in `mobile/` that wrap the built web bundle from `web/dist`, so the React codebase in `web/` stays the single source of truth. The checked-in `mobile/ios` and `mobile/android` directories are ordinary Xcode and Android Studio projects; iOS dependencies are managed with Swift Package Manager, so CocoaPods is not required.
 
 ### Prerequisites
 
@@ -193,7 +193,7 @@ Production infrastructure is provisioned manually in the [Scaleway console](http
 
 - a Serverless Container for the Go API, fed from a Container Registry namespace;
 - a Serverless SQL Database for PostgreSQL;
-- an Object Storage bucket with the Bucket Website feature for the Vue application;
+- an Object Storage bucket with the Bucket Website feature for the React application;
 - Edge Services in front of the bucket for HTTPS and a custom domain; and
 - Scaleway Domains and DNS for the `api` and `www` records.
 
@@ -294,7 +294,7 @@ Transactional Email currently sends from the `fr-par` API endpoint. The setup an
 ### 5. Host the web application
 
 1. Open **Object Storage**, create a bucket in the same region, and enable the **Bucket Website** feature.
-2. Set both the index document and error document to `index.html`; the error document provides fallback routing for the Vue single-page application.
+2. Set both the index document and error document to `index.html`; the error document provides fallback routing for the React single-page application.
 3. Build the web application with its production API URL, then upload the contents of `web/dist/` through the console:
 
    ```bash
