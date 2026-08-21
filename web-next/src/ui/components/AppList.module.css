@@ -1,0 +1,9 @@
+@reference '../../assets/base.css';
+
+.list {
+  @apply card mb-4 divide-y divide-border overflow-hidden;
+}
+
+.fetching {
+  @apply flex h-16 items-center justify-center text-text-muted;
+}
