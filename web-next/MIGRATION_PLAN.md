@@ -9,9 +9,10 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 ## Where we are
 
-Phase A is done and phase B is under way: the React toolchain builds,
-typechecks, lints, formats and tests; every module that never depended on Vue is
-ported; and i18n now runs on i18next. 69 tests green.
+Phase A is done and phase B is most of the way through: the React toolchain
+builds, typechecks, lints, formats and tests; every module that never depended
+on Vue is ported; i18n runs on i18next; and eight of the 21 stores are on
+Zustand. 160 tests green, 88% statement / 90% line coverage.
 
 | Phase | What it covers                                         | State       |
 | ----- | ------------------------------------------------------ | ----------- |
@@ -29,13 +30,24 @@ Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
 `http/native.ts`, `src/proto/**`, and their specs.
 
 Ported with edits: `i18n/index.ts` (rewritten on i18next), `i18n/messages.ts`
-(plurals converted, see below), and `utils/{numbers,datetime,exerciseMeasurements}.ts`
-(`i18n.global.t` → `i18n.t`, nothing else).
+(plurals converted, see below), `utils/{numbers,exerciseMeasurements}.ts`
+(`i18n.global.t` → `i18n.t`, nothing else), `utils/datetime.ts` (same, plus a
+bug fix — see "Bugs found on the way"), and `router/tabs.ts` (one guard added,
+same section).
+
+Stores on Zustand: `auth`, `connection`, `alerts`, `confirmation`, `pageTitle`,
+`navTabs`, `actionButton`, `preferences`. The conventions they establish are in
+`src/stores/README.md` — read that before adding the ninth.
+
+Still on Pinia in `web/`, not yet ported: `activity`, `appVersion`, `dashboard`,
+`emailVerification`, `mutationQueue`, `notifications`, `plans`, `progress`,
+`streak`, `workout`.
 
 Verify with, from `web-next/`:
 
 ```
-npm run lint && npm run type-check && npm run test:unit -- --run && npm run build-only
+npm run lint && npm run type-check && npm run build-only
+npm run test:unit -- --run --coverage
 ```
 
 ## Decisions already made, and why
@@ -65,6 +77,10 @@ which is painful in plain `useState` and natural in Zustand's Immer middleware.
 Zustand also gives module-level store singletons, matching how the Pinia stores
 are imported directly by non-component code (`http/interceptors.ts`,
 `jwt/jwt.ts`) — a Context-based design would force those modules into hooks.
+
+The conventions that follow from it — selectors for derived values, `getState()`
+outside components, `persist` with an explicit `partialize`, and how specs reset
+a singleton store — are written up in `src/stores/README.md`.
 
 **i18n: i18next + react-i18next — done.** The catalogue keeps its single-brace
 placeholders (`{count}`, `{brand}`, 104 of them) by configuring
@@ -112,6 +128,30 @@ ESLint 10.
   real `vitest/valid-expect` findings — resolved by allowing the two-argument
   `expect(value, message)` form the specs legitimately use.
 
+## Bugs found on the way
+
+Porting a module means writing a test for it, and two of those tests failed
+against faithfully-copied code. Both fixes are in `web-next/` only; `web/` still
+has them.
+
+**`utils/datetime.ts` showed "in 0 seconds".** The relative formatter special-
+cased Luxon's zero-elapsed rendering by matching the literal strings
+`'0 seconds ago'` and `'för 0 sekunder sedan'`. Luxon only produces those when
+the moment is in the past by under a second; a moment that is exactly now, or
+slightly _ahead_ of the client clock, renders as `'in 0 seconds'` /
+`'om 0 sekunder'`, which the guard missed. Server timestamps land ahead of the
+client clock routinely, so this was reachable — finishing a workout and reading
+"in 0 seconds". The fix drops the string matching, which was the fragile part,
+and thresholds on elapsed time instead.
+
+**`router/tabs.ts` sent two tab roots to the wrong place.** `tabRootFor` maps a
+first path segment to its owning tab, and the segments are collection names
+(`workouts`, `notifications`). Two tab roots are not spelled like the collection
+that leads to them — `/workout` and `/profile` — so passing either returned
+`/home` rather than itself. Only pushed screens are passed to it today, so
+nothing was visibly broken, but it is a trap for the next caller. `tabRootFor`
+now answers a tab root with itself.
+
 ## Gotchas
 
 - **`npm install` crashes on npm 10.9.7** with `Cannot read properties of null
@@ -134,38 +174,57 @@ ESLint 10.
 
 ## Phase B — what to do next
 
-i18n is done. The remaining work is the 21 Pinia stores in `web/src/stores/`,
-then routing.
+i18n is done and the store pattern is settled (`src/stores/README.md`). Ten
+stores remain, then routing.
 
-1. Settle the Zustand store shape on one small store first — `alerts` is a good
-   candidate — and write it down here, because 20 more follow it. Decide where
-   `persist` goes (the Pinia stores use `persist: true` via
-   `pinia-plugin-persistedstate`; Zustand has its own `persist` middleware) and
-   whether stores expose actions on the store object or as separate exports.
-2. Port the leaves nothing else depends on: `alerts`, `confirmation`,
-   `pageTitle`, `navTabs`, `actionButton`, `preferences`.
-3. Then `auth`, which the HTTP layer needs. Its `setAccessToken` fires PostHog
-   `identify`/`reset` on account _transitions_, not on every write — keep that
-   distinction, it is easy to lose.
-4. Then `connection` and `mutationQueue`. `mutationQueue` calls
-   `useConnectionStore().onReconnect(…)` at module-init time; in React that
-   wiring should be explicit at app level rather than a side effect of importing
-   the store.
-5. `workout` is the big one — a deep nested map mutated by path, and the reason
-   Immer is already a dependency. Leave it until the pattern is settled.
-6. Port each store's spec alongside it. `auth`, `connection`, `mutationQueue`,
-   `notifications`, `streak`, `appVersion` and `workout` all have specs in `web/`
-   that should survive with only the store API changing.
+1. `appVersion` and `streak` next — both have specs in `web/` and few
+   dependencies, so they extend the pattern without new decisions.
+2. Then `mutationQueue`, the one with a real design question. It calls
+   `useConnectionStore().onReconnect(…)` at module-init time, so importing the
+   store has a side effect. In React that wiring belongs in an app-level effect;
+   decide where, and write it down here, because `notifications` polling has the
+   same shape.
+3. Then `activity`, `dashboard`, `emailVerification`, `notifications`, `plans`,
+   `progress` — mostly request-and-cache stores. Check whether they are really
+   server cache rather than client state before porting them as-is; several
+   would be plainer as a data-fetching hook, and this is the moment to decide
+   that rather than after 20 components depend on the store shape.
+4. `workout` last — a deep nested map mutated by path, and the reason Immer is
+   already a dependency. Port it with the Immer middleware, and lean on
+   `web/src/stores/workout.spec.ts`, which is thorough.
+5. Port each store's spec alongside it. `mutationQueue`, `notifications`,
+   `streak`, `appVersion` and `workout` all have specs in `web/` that should
+   survive with only the store API changing.
 
 Routing comes after the stores, since the global navigation guard resets
 `navTabs` and `actionButton` and so needs both to exist.
 
+## Phase H — do not forget
+
+**Persisted state changes shape at the swap.** `pinia-plugin-persistedstate`
+writes the bare state under the store id; Zustand's `persist` wraps it as
+`{ state, version }` under `name`. Both use the same key (`auth`,
+`preferences`), so on deploy the React app will read the Vue app's value, fail
+to find `state`, and fall back to defaults. For `preferences` that is a cosmetic
+reset. For `auth` it signs everyone out, because `main.ts` only attempts a token
+refresh when the store already looks authorised.
+
+Fix it with a `migrate`/`merge` on the `persist` options that recognises the old
+flat shape, or by seeding the store from the old key on first run. Either way it
+needs to ship _with_ the swap, not after.
+
 ## Test coverage
 
-The issue asks for 80%+. 22 of the 38 specs in `web/src` test plain modules and
-port with little change; the 16 that mount `.vue` SFCs need rewriting against
-Testing Library. Two filesystem guards in `web/tests/`
-(`no-hardcoded-strings.spec.ts`, `no-raw-palettes.spec.ts`) are regex scanners —
-port them in phase D and update the extension globs from `.vue` to `.tsx`.
-Coverage is not yet measured here; wire `vitest --coverage` before phase F so the
-number is visible while the feature views land rather than after.
+The issue asks for 80%+. `npm run test:unit -- --run --coverage` reports it, and
+CI runs it that way so the number moves with each increment rather than being
+discovered at the end. It currently sits at 88% statements / 90% lines.
+
+Expect it to fall once components land — the ported modules are unusually easy
+to cover. `src/proto`, `src/main.tsx` and the specs are excluded in
+`vitest.config.ts`; nothing else is.
+
+Of the 38 specs in `web/src`, 22 test plain modules and port with little change;
+the 16 that mount `.vue` SFCs need rewriting against Testing Library. Two
+filesystem guards in `web/tests/` (`no-hardcoded-strings.spec.ts`,
+`no-raw-palettes.spec.ts`) are regex scanners — port them in phase D and change
+the extension globs from `.vue` to `.tsx`.

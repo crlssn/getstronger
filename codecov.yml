@@ -19,3 +19,4 @@ ignore:
   # only to support tests; its lines are not product code to be covered.
   - "server/testing"
   - "web/src/proto"
+  - "web-next/src/proto"

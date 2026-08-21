@@ -63,7 +63,7 @@ jobs:
 
       - name: Run unit tests
         working-directory: ./web-next
-        run: npm run test:unit -- --run
+        run: npm run test:unit -- --run --coverage
 
       - name: Build the app
         working-directory: ./web-next
