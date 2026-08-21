@@ -26,10 +26,21 @@ type Factory struct {
 	userCount atomic.Int64
 }
 
+// usernameMaxLength mirrors users.username, which is VARCHAR(30).
+const usernameMaxLength = 30
+
 // nextUsername generates a faker-flavoured username that a counter keeps
-// unique: usernames are unique case-insensitively at the database level.
+// unique: usernames are unique case-insensitively at the database level. Faker
+// names run to fifty characters, so the name is trimmed to leave room for the
+// counter rather than the insert failing on the column width.
 func (f *Factory) nextUsername() string {
-	return fmt.Sprintf("%s.%d", strings.ToLower(f.Faker.Username()), f.userCount.Add(1))
+	suffix := fmt.Sprintf(".%d", f.userCount.Add(1))
+	name := []rune(strings.ToLower(f.Faker.Username()))
+	if room := usernameMaxLength - len(suffix); len(name) > room {
+		name = name[:room]
+	}
+
+	return string(name) + suffix
 }
 
 func newUUID() uuid.UUID {
