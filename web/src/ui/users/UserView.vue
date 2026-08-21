@@ -38,9 +38,15 @@ const pageTitle = computed(() => {
 
 watch(
   () => route.params.id,
-  async () => {
+  async (id) => {
+    // The watch also fires while navigating away, with no id to fetch.
+    if (!id) return
+    // Clear the previous profile's chart data so it never shows under the
+    // next profile's name while the new fetch is in flight.
+    workouts.value = []
     await fetchUser()
     pageTitleStore.setPageTitle(pageTitle.value)
+    await fetchWorkouts()
   },
 )
 
