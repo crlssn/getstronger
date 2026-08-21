@@ -143,21 +143,9 @@ describe('StartWorkout', () => {
       // Where you are, and how long you have been here. Nothing else.
       expect(header.get('.session-progress').text()).toBe('Exercise 1 of 2')
       expect(header.get('.elapsed').text().length).toBeGreaterThan(0)
-      expect(header.find('.session-rail').exists()).toBe(true)
-      wrapper.unmount()
-    })
-
-    test('advances the rail as exercises are completed', async () => {
-      const wrapper = await mountWorkout()
-
-      const rail = () => wrapper.get('.workout-header .session-rail span')
-      expect(rail().attributes('style')).toContain('width: 0%')
-
-      await logFirstSet(wrapper)
-      await wrapper.get('.primary-action').trigger('submit')
-      await flushPromises()
-
-      expect(rail().attributes('style')).toContain('width: 50%')
+      // No rail: a progress bar between sets is read at a glance, and a glance
+      // was doing arithmetic nobody asked for.
+      expect(header.find('.session-rail').exists()).toBe(false)
       wrapper.unmount()
     })
   })
@@ -207,6 +195,26 @@ describe('StartWorkout', () => {
       const banner = restBanner(wrapper)
       expect(banner.exists()).toBe(true)
       expect(banner.get('strong').text()).toBe('00:45')
+      wrapper.unmount()
+    })
+
+    test('pulses in step with the final ten-second countdown', async () => {
+      const workoutStore = useWorkoutStore()
+      workoutStore.initialiseWorkout(routineID)
+      workoutStore.setRestTimer(routineID, new Date(Date.now() + 9_000).toISOString(), 90)
+
+      const wrapper = await mountWorkout()
+
+      // Each second gets its own one-shot pulse: the animation restarts when
+      // the digit changes, so the beat and the countdown never drift apart.
+      const banner = restBanner(wrapper)
+      expect(banner.classes()).toContain('final')
+      expect(banner.classes()).toContain('tick-odd')
+
+      vi.advanceTimersByTime(1_000)
+      await flushPromises()
+      expect(banner.classes()).toContain('tick-even')
+      expect(banner.classes()).not.toContain('tick-odd')
       wrapper.unmount()
     })
 
@@ -499,6 +507,25 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
 
+    test('does not autofill when the ended rest timer moves focus along', async () => {
+      getCurrentUser.mockResolvedValue({
+        user: { weightUnit: WeightUnit.KILOGRAMS, autofillSets: true },
+      })
+      const wrapper = await mountWorkout()
+      await logFirstSet(wrapper)
+
+      // The timer runs out and aims the keyboard at the next empty field.
+      // That focus is the app's, not the user's, so no value may be copied:
+      // copied values complete sets, and a completed set starts another rest —
+      // a workout that logs itself while the phone sits in a pocket.
+      vi.advanceTimersByTime(91_000)
+      await flushPromises()
+
+      const nextWeight = wrapper.get('input[aria-label="Bench Press set 2 weight"]')
+      expect((nextWeight.element as HTMLInputElement).value).toBe('')
+      wrapper.unmount()
+    })
+
     test('corrects a completed set without restarting the rest timer', async () => {
       const workoutStore = useWorkoutStore()
       const wrapper = await mountWorkout()
@@ -513,6 +540,19 @@ describe('StartWorkout', () => {
       expect(wrapper.get('.set-row').classes()).toContain('complete')
       expect(workoutStore.getSets(routineID, benchPress.id)[0].weight).toBe(85)
       expect(workoutStore.getRestTimer(routineID).endsAt).toBe(endsAt)
+      wrapper.unmount()
+    })
+  })
+
+  describe('leave sheet', () => {
+    test('keeps the autosaved eyebrow in the quiet default grey', async () => {
+      const wrapper = await mountWorkout()
+
+      await wrapper.get('.leave-workout').trigger('click')
+
+      const eyebrow = wrapper.get('.sheet-eyebrow')
+      expect(eyebrow.text()).toBe('Autosaved')
+      expect(eyebrow.classes()).not.toContain('success')
       wrapper.unmount()
     })
   })
