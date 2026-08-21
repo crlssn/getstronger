@@ -24,7 +24,9 @@ test.describe('social feed and discovery', () => {
     await search.fill('Ja')
     await expect(page.getByText('Type at least 3 characters to search.')).toBeVisible()
     await search.fill('Jane')
-    await expect(page.locator('.search-panel').getByRole('link', { name: /Jane Doe/ })).toBeVisible()
+    await expect(
+      page.locator('.search-panel').getByRole('link', { name: /Jane Doe/ }),
+    ).toBeVisible()
 
     // The handle is searchable too, and the result leads with it.
     await search.fill('janedoe')
