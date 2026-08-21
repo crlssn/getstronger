@@ -28,10 +28,24 @@ test.describe('the workout dock', () => {
     expect(await primary.getAttribute('aria-disabled')).toBeNull()
   })
 
+  // Completing works from wherever you are: a row nobody finished would never
+  // have been saved, so it is dropped rather than kept as an obstacle.
+  test('discards a half-typed row and completes the exercise anyway', async ({ page }) => {
+    const exercise = await page.locator('.exercise-heading h2').innerText()
+    await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('25')
+
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+
+    await expect(page.locator('.completed-exercise')).toBeVisible()
+    await expect(page.locator('.set-row')).toHaveCount(0)
+  })
+
   test('says what is missing when the blocked primary is pressed', async ({ page }) => {
+    // Only finishing can block now, so that is where the message lives.
+    await page.locator('.primary-action').click()
     await page.locator('.primary-action').click()
     await expect(page.locator('.action-block > strong.blocked')).toHaveText(
-      'Log a set before moving on',
+      'Log at least one set to finish',
     )
     // The button points at the reason, so the two are announced together.
     await expect(page.locator('.primary-action')).toHaveAttribute(
@@ -42,8 +56,10 @@ test.describe('the workout dock', () => {
 
   test('clears the message once the block lifts', async ({ page }) => {
     await page.locator('.primary-action').click()
+    await page.locator('.primary-action').click()
     await expect(page.locator('.action-block > strong.blocked')).toBeVisible()
 
+    await page.getByRole('button', { name: 'Reopen' }).click()
     const exercise = await page.locator('.exercise-heading h2').innerText()
     await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('25')
     await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')

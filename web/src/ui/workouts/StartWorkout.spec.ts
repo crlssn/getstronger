@@ -328,6 +328,66 @@ describe('StartWorkout', () => {
 
       expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
     })
+
+    test('discards an untouched set row rather than blocking the way out', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      // Nothing typed anywhere: completing still moves the session on.
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      expect(workoutStore.getSets(routineID, benchPress.id)).toHaveLength(0)
+      expect(workoutStore.getCompletedExerciseIds(routineID)).toContain(benchPress.id)
+      expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
+      wrapper.unmount()
+    })
+
+    test('discards a half-typed row instead of standing in its way', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await wrapper.get('input[aria-label="Bench Press set 1 weight"]').setValue('80')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // A set without reps is never saved, so it costs nothing to drop it.
+      expect(workoutStore.getSets(routineID, benchPress.id)).toHaveLength(0)
+      expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
+      wrapper.unmount()
+    })
+
+    test('keeps every logged set and drops only the trailing empty row', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await logFirstSet(wrapper)
+      expect(workoutStore.getSets(routineID, benchPress.id)).toHaveLength(2)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      const sets = workoutStore.getSets(routineID, benchPress.id)
+      expect(sets).toHaveLength(1)
+      expect(sets[0].weight).toBe(80)
+      wrapper.unmount()
+    })
+
+    test('gives a reopened exercise a row to type into again', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      expect(workoutStore.getSets(routineID, squat.id)).toHaveLength(0)
+
+      await wrapper.get('.completed-exercise button').trigger('click')
+      await flushPromises()
+
+      expect(workoutStore.getSets(routineID, squat.id)).toHaveLength(1)
+      wrapper.unmount()
+    })
   })
 
   describe('previous values and set correction', () => {

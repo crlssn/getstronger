@@ -256,21 +256,18 @@ const primaryActionLabel = computed(() => {
   return submitting.value ? t('common.saving') : t('workout.finish')
 })
 const canRunPrimaryAction = computed(() =>
-  allExercisesComplete.value
-    ? canFinish.value
-    : Boolean(currentExercise.value && canCompleteExercise(currentExercise.value.id)),
+  allExercisesComplete.value ? canFinish.value : Boolean(currentExercise.value),
 )
 // Blocked, not disabled. A grey fill on the screen's dominant control reads as
 // broken rather than as waiting for something, so the button stays live and
-// says what is missing when it is pressed.
+// says what is missing when it is pressed. Only finishing can block: completing
+// an exercise works from wherever you are.
 const blockedReason = computed(() => {
   // An empty quick workout counts as "all exercises complete", so this is
   // checked first or the screen with nothing on it says nothing at all.
   const exercise = currentExercise.value
   if (!exercise) return t('workout.blockedNoExercise')
   if (allExercisesComplete.value) return finishStatus.value
-  if (exerciseHasIncompleteSets(exercise.id)) return t('workout.blockedPartialSet')
-  if (!exerciseLoggedSetCount(exercise.id)) return t('workout.blockedNoSet')
   return ''
 })
 // Only the finish-related hints are worth surfacing unprompted; while logging,
@@ -384,7 +381,7 @@ const initializeRoutine = async () => {
   addEmptySetsFromPreviousSession()
   seedCompletedSets()
   workoutStore.getCompletedExerciseIds(routineID).forEach((exerciseId) => {
-    if (canCompleteExercise(exerciseId)) completedExercises.value[exerciseId] = true
+    completedExercises.value[exerciseId] = true
   })
   const firstIncomplete = response.routine.exercises.findIndex(
     (exercise) => !completedExercises.value[exercise.id],
@@ -593,20 +590,24 @@ const exerciseLoggedSetCount = (exerciseID: string) =>
     .getSets(routineID, exerciseID)
     .filter((set) => isCompleteSet(set, exerciseByID(exerciseID))).length
 
-const exerciseHasIncompleteSets = (exerciseID: string) =>
+// A row nobody finished is a row that would never have been saved, so
+// completing throws it away rather than standing in the way of moving on.
+const discardUnloggedSets = (exerciseID: string) => {
+  const exercise = exerciseByID(exerciseID)
+  const sets = workoutStore.getSets(routineID, exerciseID)
+  for (let index = sets.length - 1; index >= 0; index -= 1) {
+    if (!isCompleteSet(sets[index], exercise)) workoutStore.deleteSet(routineID, exerciseID, index)
+  }
+  Object.keys(completedSets.value)
+    .filter((key) => key.startsWith(`${exerciseID}:`))
+    .forEach((key) => delete completedSets.value[key])
   workoutStore
     .getSets(routineID, exerciseID)
-    .some(
-      (set) =>
-        hasAnyExerciseSetValue(set, exerciseByID(exerciseID)) &&
-        !isCompleteSet(set, exerciseByID(exerciseID)),
-    )
-
-const canCompleteExercise = (exerciseID: string) =>
-  exerciseLoggedSetCount(exerciseID) > 0 && !exerciseHasIncompleteSets(exerciseID)
+    .forEach((set, index) => (completedSets.value[setKey(exerciseID, index)] = true))
+}
 
 const completeExercise = (exerciseID: string) => {
-  if (!canCompleteExercise(exerciseID)) return
+  discardUnloggedSets(exerciseID)
   completedExercises.value[exerciseID] = true
   workoutStore.setExerciseCompleted(routineID, exerciseID, true)
 }
@@ -614,6 +615,14 @@ const completeExercise = (exerciseID: string) => {
 const reopenExercise = (exerciseID: string) => {
   completedExercises.value[exerciseID] = false
   workoutStore.setExerciseCompleted(routineID, exerciseID, false)
+  // Completing cleared the empty row, so reopening has to hand one back.
+  workoutStore.addEmptySetIfNone(
+    routineID,
+    exerciseID,
+    exerciseByID(exerciseID)?.metrics,
+    defaultWeightUnit.value,
+    defaultDistanceUnit.value,
+  )
 }
 
 const selectExercise = (index: number) => {
@@ -625,7 +634,7 @@ const selectExercise = (index: number) => {
 
 const advanceExercise = () => {
   const exercise = currentExercise.value
-  if (!exercise || !canCompleteExercise(exercise.id)) return
+  if (!exercise) return
   completeExercise(exercise.id)
 
   const nextIndex = routine.value?.exercises.findIndex(
