@@ -128,7 +128,9 @@ test.describe('exercise library', () => {
       .fill('40')
     await page.getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true }).fill('5')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
+    // Finishing always pauses on the confirmation sheet that carries the note.
     await page.getByRole('button', { name: 'Finish workout' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     const workoutURL = page.url()
 
