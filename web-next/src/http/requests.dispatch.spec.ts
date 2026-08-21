@@ -102,6 +102,7 @@ const cases: Array<[string, () => Promise<unknown>]> = [
   ['user.listFollowees', () => requests.listFollowees('u1')],
   ['user.followUser', () => requests.followUser('u1')],
   ['user.unfollowUser', () => requests.unfollowUser('u1')],
+  ['user.updateUserName', () => requests.updateUserName('Alex Morgan')],
   ['user.updateUserUsername', () => requests.updateUserUsername('alex')],
   ['user.updateUserWeightUnit', () => requests.updateUserWeightUnit(WeightUnit.POUNDS)],
   ['user.updateUserDistanceUnit', () => requests.updateUserDistanceUnit(DistanceUnit.MILES)],
