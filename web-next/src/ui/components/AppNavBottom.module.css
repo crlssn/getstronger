@@ -1,0 +1,44 @@
+@reference '../../assets/base.css';
+
+.bottomNav {
+  @apply fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white;
+}
+
+.bottomNavInner {
+  min-height: calc(4.5rem + env(safe-area-inset-bottom));
+  @apply mx-auto grid max-w-3xl grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)];
+}
+
+.tab {
+  @apply grid min-w-0 place-items-center content-center gap-1 rounded-control px-1 text-xs font-medium text-text-subtle transition hover:bg-ink-surface hover:text-ink-strong;
+}
+
+.tab.active {
+  @apply text-ink-strong;
+}
+
+.tab svg {
+  @apply size-6;
+}
+
+.navIcon {
+  @apply relative grid place-items-center;
+}
+
+.notificationBadge {
+  @apply absolute -right-3 -top-2 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold leading-none tracking-normal text-white ring-[3px] ring-white;
+}
+
+.timerBadge {
+  @apply whitespace-nowrap rounded-full bg-surface-inverse px-2 py-0.5 font-mono text-eyebrow font-bold leading-none text-white;
+}
+
+.navLabel {
+  @apply truncate;
+}
+
+@media (min-width: 1024px) {
+  .bottomNav {
+    @apply left-1/2 right-auto w-[48rem] -translate-x-1/2 rounded-t-card border-x;
+  }
+}
