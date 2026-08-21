@@ -18,6 +18,7 @@ import AppListItem from '@/ui/components/AppListItem.vue'
 import { ChevronDownIcon, ChevronUpIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { getWorkout, updateWorkout } from '@/http/requests.ts'
 import AppListItemInput from '@/ui/components/AppListItemInput.vue'
+import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import ExerciseTags from '@/ui/exercises/ExerciseTags.vue'
 import DurationInput from '@/ui/workouts/DurationInput.vue'
 import {
