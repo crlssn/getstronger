@@ -26,6 +26,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	bobtypes "github.com/stephenafamo/bob/types"
 
+	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -518,25 +519,56 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "ok_user_created",
 			params: repo.CreateUserParams{
-				AuthID:    s.factory.NewAuth().ID.String(),
-				FirstName: "John",
-				LastName:  "Doe",
+				AuthID:   s.factory.NewAuth().ID.String(),
+				Name:     "John Doe",
+				Username: "john",
 			},
 			init: func(_ test) {},
 			expected: expected{
 				user: &models.User{
-					FirstName: "John",
-					LastName:  "Doe",
+					Name:     "John Doe",
+					Username: "john",
 				},
 				err: nil,
 			},
 		},
 		{
+			name: "ok_username_normalized_to_lowercase",
+			params: repo.CreateUserParams{
+				AuthID:   s.factory.NewAuth().ID.String(),
+				Name:     "John Casing",
+				Username: " John.Casing ",
+			},
+			init: func(_ test) {},
+			expected: expected{
+				user: &models.User{
+					Name:     "John Casing",
+					Username: "john.casing",
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "err_username_exists_case_insensitively",
+			params: repo.CreateUserParams{
+				AuthID:   s.factory.NewAuth().ID.String(),
+				Name:     "John Dupe",
+				Username: "Taken",
+			},
+			init: func(_ test) {
+				s.factory.NewUser(factory.UserUsername("taken"))
+			},
+			expected: expected{
+				user: nil,
+				err:  repo.ErrUserUsernameExists,
+			},
+		},
+		{
 			name: "err_auth_id_missing",
 			params: repo.CreateUserParams{
-				AuthID:    "",
-				FirstName: "John",
-				LastName:  "Doe",
+				AuthID:   "",
+				Name:     "John Doe",
+				Username: "john2",
 			},
 			init: func(_ test) {},
 			expected: expected{
@@ -547,9 +579,9 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "err_unknown_auth_id",
 			params: repo.CreateUserParams{
-				AuthID:    uuid.NewString(),
-				FirstName: "Jane",
-				LastName:  "Doe",
+				AuthID:   uuid.NewString(),
+				Name:     "Jane Doe",
+				Username: "jane2",
 			},
 			init: func(_ test) {},
 			expected: expected{
@@ -566,7 +598,11 @@ func (s *repoSuite) TestCreateUser() {
 
 			if t.expected.err != nil {
 				s.Require().Error(err)
-				s.Require().ErrorContains(err, t.expected.err.Error())
+				if errors.Is(t.expected.err, repo.ErrUserUsernameExists) {
+					s.Require().ErrorIs(err, repo.ErrUserUsernameExists)
+				} else {
+					s.Require().ErrorContains(err, t.expected.err.Error())
+				}
 				s.Require().Nil(user)
 				return
 			}
@@ -574,10 +610,29 @@ func (s *repoSuite) TestCreateUser() {
 			s.Require().NoError(err)
 			s.Require().NotNil(user)
 			s.Require().Equal(t.params.AuthID, user.AuthID.String())
-			s.Require().Equal(t.expected.user.FirstName, user.FirstName)
-			s.Require().Equal(t.expected.user.LastName, user.LastName)
+			s.Require().Equal(t.expected.user.Name, user.Name)
+			s.Require().Equal(t.expected.user.Username, user.Username)
+			s.Require().Equal(string(weightunit.Kilograms), user.WeightUnit)
+			s.Require().Equal(string(distanceunit.Kilometers), user.DistanceUnit)
 		})
 	}
+}
+
+func (s *repoSuite) TestListUsersWithNameMatching() {
+	user := s.factory.NewUser(
+		factory.UserName("Search Target"),
+		factory.UserUsername("clearlyunrelated"),
+	)
+
+	byName, err := s.repo.ListUsers(context.Background(), repo.ListUsersWithNameMatching("search tar"))
+	s.Require().NoError(err)
+	s.Require().Len(byName, 1)
+	s.Require().Equal(user.ID, byName[0].ID)
+
+	byUsername, err := s.repo.ListUsers(context.Background(), repo.ListUsersWithNameMatching("clearlyunrel"))
+	s.Require().NoError(err)
+	s.Require().Len(byUsername, 1)
+	s.Require().Equal(user.ID, byUsername[0].ID)
 }
 
 func (s *repoSuite) TestUpdateUser() {

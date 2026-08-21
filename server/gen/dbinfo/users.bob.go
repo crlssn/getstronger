@@ -24,24 +24,6 @@ var Users = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
-		FirstName: column{
-			Name:      "first_name",
-			DBType:    "character varying",
-			Default:   "",
-			Comment:   "",
-			Nullable:  false,
-			Generated: false,
-			AutoIncr:  false,
-		},
-		LastName: column{
-			Name:      "last_name",
-			DBType:    "character varying",
-			Default:   "",
-			Comment:   "",
-			Nullable:  false,
-			Generated: false,
-			AutoIncr:  false,
-		},
 		CreatedAt: column{
 			Name:      "created_at",
 			DBType:    "timestamp without time zone",
@@ -49,15 +31,6 @@ var Users = Table[
 			Comment:   "",
 			Nullable:  false,
 			Generated: false,
-			AutoIncr:  false,
-		},
-		FullNameSearch: column{
-			Name:      "full_name_search",
-			DBType:    "text",
-			Default:   "GENERATED",
-			Comment:   "",
-			Nullable:  false,
-			Generated: true,
 			AutoIncr:  false,
 		},
 		AuthID: column{
@@ -82,6 +55,42 @@ var Users = Table[
 			Name:      "distance_unit",
 			DBType:    "character varying",
 			Default:   "'km'::character varying",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		Name: column{
+			Name:      "name",
+			DBType:    "character varying",
+			Default:   "",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		FullNameSearch: column{
+			Name:      "full_name_search",
+			DBType:    "text",
+			Default:   "GENERATED",
+			Comment:   "",
+			Nullable:  false,
+			Generated: true,
+			AutoIncr:  false,
+		},
+		Username: column{
+			Name:      "username",
+			DBType:    "character varying",
+			Default:   "",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		AutofillSets: column{
+			Name:      "autofill_sets",
+			DBType:    "boolean",
+			Default:   "false",
 			Comment:   "",
 			Nullable:  false,
 			Generated: false,
@@ -117,6 +126,23 @@ var Users = Table[
 				},
 			},
 			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
+		IdxUsersUsernameLower: index{
+			Type: "btree",
+			Name: "idx_users_username_lower",
+			Columns: []indexColumn{
+				{
+					Name:         "lower(username::text)",
+					Desc:         null.FromCond(false, true),
+					IsExpression: true,
+				},
+			},
+			Unique:        true,
 			Comment:       "",
 			NullsFirst:    []bool{false},
 			NullsDistinct: false,
@@ -187,30 +213,32 @@ var Users = Table[
 
 type userColumns struct {
 	ID             column
-	FirstName      column
-	LastName       column
 	CreatedAt      column
-	FullNameSearch column
 	AuthID         column
 	WeightUnit     column
 	DistanceUnit   column
+	Name           column
+	FullNameSearch column
+	Username       column
+	AutofillSets   column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.FirstName, c.LastName, c.CreatedAt, c.FullNameSearch, c.AuthID, c.WeightUnit, c.DistanceUnit,
+		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username, c.AutofillSets,
 	}
 }
 
 type userIndexes struct {
 	UsersPkey              index
 	IdxUsersFullNameSearch index
+	IdxUsersUsernameLower  index
 	UsersAuthIDKey         index
 }
 
 func (i userIndexes) AsSlice() []index {
 	return []index{
-		i.UsersPkey, i.IdxUsersFullNameSearch, i.UsersAuthIDKey,
+		i.UsersPkey, i.IdxUsersFullNameSearch, i.IdxUsersUsernameLower, i.UsersAuthIDKey,
 	}
 }
 

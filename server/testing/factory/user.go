@@ -27,8 +27,8 @@ type UserOpt func(user *models.UserSetter)
 
 func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 	setter := &models.UserSetter{
-		FirstName: omit.From(f.Faker.FirstName()),
-		LastName:  omit.From(f.Faker.LastName()),
+		Name:     omit.From(f.Faker.Name()),
+		Username: omit.From(f.nextUsername()),
 	}
 	for _, opt := range opts {
 		opt(setter)
@@ -72,16 +72,16 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 // userSetterMods translates the values set through UserOpts into factory mods
 // so they override the defaults above.
 func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
-	const modCount = 6
+	const modCount = 7
 	mods := make([]bobfactory.UserMod, 0, modCount)
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.ID(value))
 	}
-	if value, ok := setter.FirstName.Get(); ok {
-		mods = append(mods, bobfactory.UserMods.FirstName(value))
+	if value, ok := setter.Name.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.Name(value))
 	}
-	if value, ok := setter.LastName.Get(); ok {
-		mods = append(mods, bobfactory.UserMods.LastName(value))
+	if value, ok := setter.Username.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.Username(value))
 	}
 	if value, ok := setter.CreatedAt.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.CreatedAt(value))
@@ -91,6 +91,9 @@ func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
 	}
 	if value, ok := setter.DistanceUnit.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.DistanceUnit(value))
+	}
+	if value, ok := setter.AutofillSets.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.AutofillSets(value))
 	}
 
 	return mods
@@ -108,15 +111,15 @@ func UserAuthID(authID any) UserOpt {
 	}
 }
 
-func UserLastName(lastName string) UserOpt {
+func UserName(name string) UserOpt {
 	return func(m *models.UserSetter) {
-		m.LastName = omit.From(lastName)
+		m.Name = omit.From(name)
 	}
 }
 
-func UserFirstName(firstName string) UserOpt {
+func UserUsername(username string) UserOpt {
 	return func(m *models.UserSetter) {
-		m.FirstName = omit.From(firstName)
+		m.Username = omit.From(username)
 	}
 }
 
@@ -135,5 +138,11 @@ func UserWeightUnit(unit weightunit.Unit) UserOpt {
 func UserDistanceUnit(unit distanceunit.Unit) UserOpt {
 	return func(m *models.UserSetter) {
 		m.DistanceUnit = omit.From(string(unit))
+	}
+}
+
+func UserAutofillSets(enabled bool) UserOpt {
+	return func(m *models.UserSetter) {
+		m.AutofillSets = omit.From(enabled)
 	}
 }

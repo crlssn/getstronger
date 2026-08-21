@@ -28,12 +28,11 @@ type SignupRequest struct {
 	Email                string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Password             string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	PasswordConfirmation string                 `protobuf:"bytes,3,opt,name=password_confirmation,json=passwordConfirmation,proto3" json:"password_confirmation,omitempty"`
-	FirstName            string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
-	LastName             string                 `protobuf:"bytes,5,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
-	WeightUnit           WeightUnit             `protobuf:"varint,6,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
-	DistanceUnit         DistanceUnit           `protobuf:"varint,7,opt,name=distance_unit,json=distanceUnit,proto3,enum=api.v1.DistanceUnit" json:"distance_unit,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	Name                 string                 `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
+	// Compared case-insensitively; the server stores it lowercased.
+	Username      string `protobuf:"bytes,9,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SignupRequest) Reset() {
@@ -87,32 +86,18 @@ func (x *SignupRequest) GetPasswordConfirmation() string {
 	return ""
 }
 
-func (x *SignupRequest) GetFirstName() string {
+func (x *SignupRequest) GetName() string {
 	if x != nil {
-		return x.FirstName
+		return x.Name
 	}
 	return ""
 }
 
-func (x *SignupRequest) GetLastName() string {
+func (x *SignupRequest) GetUsername() string {
 	if x != nil {
-		return x.LastName
+		return x.Username
 	}
 	return ""
-}
-
-func (x *SignupRequest) GetWeightUnit() WeightUnit {
-	if x != nil {
-		return x.WeightUnit
-	}
-	return WeightUnit_WEIGHT_UNIT_UNSPECIFIED
-}
-
-func (x *SignupRequest) GetDistanceUnit() DistanceUnit {
-	if x != nil {
-		return x.DistanceUnit
-	}
-	return DistanceUnit_DISTANCE_UNIT_UNSPECIFIED
 }
 
 type SignupResponse struct {
@@ -749,17 +734,14 @@ var File_api_v1_auth_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1bbuf/validate/validate.proto\"\xda\x02\n" +
+	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x1bbuf/validate/validate.proto\"\xa9\x02\n" +
 	"\rSignupRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x06R\bpassword\x123\n" +
-	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\x12&\n" +
-	"\n" +
-	"first_name\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tfirstName\x12$\n" +
-	"\tlast_name\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\blastName\x12=\n" +
-	"\vweight_unit\x18\x06 \x01(\x0e2\x12.api.v1.WeightUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
-	"weightUnit\x12C\n" +
-	"\rdistance_unit\x18\a \x01(\x0e2\x14.api.v1.DistanceUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdistanceUnit\"\x10\n" +
+	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\x12\x1b\n" +
+	"\x04name\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x127\n" +
+	"\busername\x18\t \x01(\tB\x1b\xbaH\x18r\x16\x10\x03\x18\x1e2\x10^[A-Za-z0-9_.]+$R\busernameJ\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bR\n" +
+	"first_nameR\tlast_nameR\vweight_unitR\rdistance_unit\"\x10\n" +
 	"\x0eSignupResponse\"R\n" +
 	"\fLoginRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
@@ -828,33 +810,29 @@ var file_api_v1_auth_service_proto_goTypes = []any{
 	(*ResetPasswordResponse)(nil),           // 13: api.v1.ResetPasswordResponse
 	(*UpdatePasswordRequest)(nil),           // 14: api.v1.UpdatePasswordRequest
 	(*UpdatePasswordResponse)(nil),          // 15: api.v1.UpdatePasswordResponse
-	(WeightUnit)(0),                         // 16: api.v1.WeightUnit
-	(DistanceUnit)(0),                       // 17: api.v1.DistanceUnit
 }
 var file_api_v1_auth_service_proto_depIdxs = []int32{
-	16, // 0: api.v1.SignupRequest.weight_unit:type_name -> api.v1.WeightUnit
-	17, // 1: api.v1.SignupRequest.distance_unit:type_name -> api.v1.DistanceUnit
-	0,  // 2: api.v1.AuthService.Signup:input_type -> api.v1.SignupRequest
-	2,  // 3: api.v1.AuthService.Login:input_type -> api.v1.LoginRequest
-	4,  // 4: api.v1.AuthService.RefreshToken:input_type -> api.v1.RefreshTokenRequest
-	6,  // 5: api.v1.AuthService.Logout:input_type -> api.v1.LogoutRequest
-	8,  // 6: api.v1.AuthService.VerifyEmail:input_type -> api.v1.VerifyEmailRequest
-	10, // 7: api.v1.AuthService.ResendVerificationEmail:input_type -> api.v1.ResendVerificationEmailRequest
-	12, // 8: api.v1.AuthService.ResetPassword:input_type -> api.v1.ResetPasswordRequest
-	14, // 9: api.v1.AuthService.UpdatePassword:input_type -> api.v1.UpdatePasswordRequest
-	1,  // 10: api.v1.AuthService.Signup:output_type -> api.v1.SignupResponse
-	3,  // 11: api.v1.AuthService.Login:output_type -> api.v1.LoginResponse
-	5,  // 12: api.v1.AuthService.RefreshToken:output_type -> api.v1.RefreshTokenResponse
-	7,  // 13: api.v1.AuthService.Logout:output_type -> api.v1.LogoutResponse
-	9,  // 14: api.v1.AuthService.VerifyEmail:output_type -> api.v1.VerifyEmailResponse
-	11, // 15: api.v1.AuthService.ResendVerificationEmail:output_type -> api.v1.ResendVerificationEmailResponse
-	13, // 16: api.v1.AuthService.ResetPassword:output_type -> api.v1.ResetPasswordResponse
-	15, // 17: api.v1.AuthService.UpdatePassword:output_type -> api.v1.UpdatePasswordResponse
-	10, // [10:18] is the sub-list for method output_type
-	2,  // [2:10] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	0,  // 0: api.v1.AuthService.Signup:input_type -> api.v1.SignupRequest
+	2,  // 1: api.v1.AuthService.Login:input_type -> api.v1.LoginRequest
+	4,  // 2: api.v1.AuthService.RefreshToken:input_type -> api.v1.RefreshTokenRequest
+	6,  // 3: api.v1.AuthService.Logout:input_type -> api.v1.LogoutRequest
+	8,  // 4: api.v1.AuthService.VerifyEmail:input_type -> api.v1.VerifyEmailRequest
+	10, // 5: api.v1.AuthService.ResendVerificationEmail:input_type -> api.v1.ResendVerificationEmailRequest
+	12, // 6: api.v1.AuthService.ResetPassword:input_type -> api.v1.ResetPasswordRequest
+	14, // 7: api.v1.AuthService.UpdatePassword:input_type -> api.v1.UpdatePasswordRequest
+	1,  // 8: api.v1.AuthService.Signup:output_type -> api.v1.SignupResponse
+	3,  // 9: api.v1.AuthService.Login:output_type -> api.v1.LoginResponse
+	5,  // 10: api.v1.AuthService.RefreshToken:output_type -> api.v1.RefreshTokenResponse
+	7,  // 11: api.v1.AuthService.Logout:output_type -> api.v1.LogoutResponse
+	9,  // 12: api.v1.AuthService.VerifyEmail:output_type -> api.v1.VerifyEmailResponse
+	11, // 13: api.v1.AuthService.ResendVerificationEmail:output_type -> api.v1.ResendVerificationEmailResponse
+	13, // 14: api.v1.AuthService.ResetPassword:output_type -> api.v1.ResetPasswordResponse
+	15, // 15: api.v1.AuthService.UpdatePassword:output_type -> api.v1.UpdatePasswordResponse
+	8,  // [8:16] is the sub-list for method output_type
+	0,  // [0:8] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_auth_service_proto_init() }
@@ -862,7 +840,6 @@ func file_api_v1_auth_service_proto_init() {
 	if File_api_v1_auth_service_proto != nil {
 		return
 	}
-	file_api_v1_shared_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

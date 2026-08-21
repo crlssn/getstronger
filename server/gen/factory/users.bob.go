@@ -37,13 +37,14 @@ func (mods UserModSlice) Apply(ctx context.Context, n *UserTemplate) {
 // all columns are optional and should be set by mods
 type UserTemplate struct {
 	ID             func() uuid.UUID
-	FirstName      func() string
-	LastName       func() string
 	CreatedAt      func() time.Time
-	FullNameSearch func() string
 	AuthID         func() uuid.UUID
 	WeightUnit     func() string
 	DistanceUnit   func() string
+	Name           func() string
+	FullNameSearch func() string
+	Username       func() string
+	AutofillSets   func() bool
 
 	r userR
 	f *Factory
@@ -223,14 +224,6 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		val := o.ID()
 		m.ID = omit.From(val)
 	}
-	if o.FirstName != nil {
-		val := o.FirstName()
-		m.FirstName = omit.From(val)
-	}
-	if o.LastName != nil {
-		val := o.LastName()
-		m.LastName = omit.From(val)
-	}
 	if o.CreatedAt != nil {
 		val := o.CreatedAt()
 		m.CreatedAt = omit.From(val)
@@ -246,6 +239,18 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 	if o.DistanceUnit != nil {
 		val := o.DistanceUnit()
 		m.DistanceUnit = omit.From(val)
+	}
+	if o.Name != nil {
+		val := o.Name()
+		m.Name = omit.From(val)
+	}
+	if o.Username != nil {
+		val := o.Username()
+		m.Username = omit.From(val)
+	}
+	if o.AutofillSets != nil {
+		val := o.AutofillSets()
+		m.AutofillSets = omit.From(val)
 	}
 
 	return m
@@ -272,17 +277,8 @@ func (o UserTemplate) Build() *models.User {
 	if o.ID != nil {
 		m.ID = o.ID()
 	}
-	if o.FirstName != nil {
-		m.FirstName = o.FirstName()
-	}
-	if o.LastName != nil {
-		m.LastName = o.LastName()
-	}
 	if o.CreatedAt != nil {
 		m.CreatedAt = o.CreatedAt()
-	}
-	if o.FullNameSearch != nil {
-		m.FullNameSearch = o.FullNameSearch()
 	}
 	if o.AuthID != nil {
 		m.AuthID = o.AuthID()
@@ -292,6 +288,18 @@ func (o UserTemplate) Build() *models.User {
 	}
 	if o.DistanceUnit != nil {
 		m.DistanceUnit = o.DistanceUnit()
+	}
+	if o.Name != nil {
+		m.Name = o.Name()
+	}
+	if o.FullNameSearch != nil {
+		m.FullNameSearch = o.FullNameSearch()
+	}
+	if o.Username != nil {
+		m.Username = o.Username()
+	}
+	if o.AutofillSets != nil {
+		m.AutofillSets = o.AutofillSets()
 	}
 
 	o.setModelRels(m)
@@ -313,17 +321,17 @@ func (o UserTemplate) BuildMany(number int) models.UserSlice {
 }
 
 func ensureCreatableUser(m *models.UserSetter) {
-	if m.FirstName.IsUnset() {
-		val := random_string(nil)
-		m.FirstName = omit.From(val)
-	}
-	if m.LastName.IsUnset() {
-		val := random_string(nil)
-		m.LastName = omit.From(val)
-	}
 	if m.AuthID.IsUnset() {
 		val := random_uuid_UUID(nil)
 		m.AuthID = omit.From(val)
+	}
+	if m.Name.IsUnset() {
+		val := random_string(nil)
+		m.Name = omit.From(val)
+	}
+	if m.Username.IsUnset() {
+		val := random_string(nil, "30")
+		m.Username = omit.From(val)
 	}
 }
 
@@ -625,13 +633,14 @@ type userMods struct{}
 func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 	return UserModSlice{
 		UserMods.RandomID(f),
-		UserMods.RandomFirstName(f),
-		UserMods.RandomLastName(f),
 		UserMods.RandomCreatedAt(f),
-		UserMods.RandomFullNameSearch(f),
 		UserMods.RandomAuthID(f),
 		UserMods.RandomWeightUnit(f),
 		UserMods.RandomDistanceUnit(f),
+		UserMods.RandomName(f),
+		UserMods.RandomFullNameSearch(f),
+		UserMods.RandomUsername(f),
+		UserMods.RandomAutofillSets(f),
 	}
 }
 
@@ -667,68 +676,6 @@ func (m userMods) RandomID(f *faker.Faker) UserMod {
 }
 
 // Set the model columns to this value
-func (m userMods) FirstName(val string) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FirstName = func() string { return val }
-	})
-}
-
-// Set the Column from the function
-func (m userMods) FirstNameFunc(f func() string) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FirstName = f
-	})
-}
-
-// Clear any values for the column
-func (m userMods) UnsetFirstName() UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FirstName = nil
-	})
-}
-
-// Generates a random value for the column using the given faker
-// if faker is nil, a default faker is used
-func (m userMods) RandomFirstName(f *faker.Faker) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FirstName = func() string {
-			return random_string(f)
-		}
-	})
-}
-
-// Set the model columns to this value
-func (m userMods) LastName(val string) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.LastName = func() string { return val }
-	})
-}
-
-// Set the Column from the function
-func (m userMods) LastNameFunc(f func() string) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.LastName = f
-	})
-}
-
-// Clear any values for the column
-func (m userMods) UnsetLastName() UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.LastName = nil
-	})
-}
-
-// Generates a random value for the column using the given faker
-// if faker is nil, a default faker is used
-func (m userMods) RandomLastName(f *faker.Faker) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.LastName = func() string {
-			return random_string(f)
-		}
-	})
-}
-
-// Set the model columns to this value
 func (m userMods) CreatedAt(val time.Time) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.CreatedAt = func() time.Time { return val }
@@ -755,37 +702,6 @@ func (m userMods) RandomCreatedAt(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.CreatedAt = func() time.Time {
 			return random_time_Time(f)
-		}
-	})
-}
-
-// Set the model columns to this value
-func (m userMods) FullNameSearch(val string) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FullNameSearch = func() string { return val }
-	})
-}
-
-// Set the Column from the function
-func (m userMods) FullNameSearchFunc(f func() string) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FullNameSearch = f
-	})
-}
-
-// Clear any values for the column
-func (m userMods) UnsetFullNameSearch() UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FullNameSearch = nil
-	})
-}
-
-// Generates a random value for the column using the given faker
-// if faker is nil, a default faker is used
-func (m userMods) RandomFullNameSearch(f *faker.Faker) UserMod {
-	return UserModFunc(func(_ context.Context, o *UserTemplate) {
-		o.FullNameSearch = func() string {
-			return random_string(f)
 		}
 	})
 }
@@ -879,6 +795,130 @@ func (m userMods) RandomDistanceUnit(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.DistanceUnit = func() string {
 			return random_string(f, "2")
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) Name(val string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Name = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) NameFunc(f func() string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Name = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetName() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Name = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomName(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Name = func() string {
+			return random_string(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) FullNameSearch(val string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FullNameSearch = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) FullNameSearchFunc(f func() string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FullNameSearch = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetFullNameSearch() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FullNameSearch = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomFullNameSearch(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FullNameSearch = func() string {
+			return random_string(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) Username(val string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) UsernameFunc(f func() string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetUsername() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomUsername(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = func() string {
+			return random_string(f, "30")
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) AutofillSets(val bool) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = func() bool { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) AutofillSetsFunc(f func() bool) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetAutofillSets() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomAutofillSets(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = func() bool {
+			return random_bool(f)
 		}
 	})
 }

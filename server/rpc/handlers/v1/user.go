@@ -17,6 +17,7 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -153,9 +154,37 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[ap
 	}, nil
 }
 
+func (h *userHandler) UpdateUserUsername(ctx context.Context, req *connect.Request[apiv1.UpdateUserUsernameRequest]) (*connect.Response[apiv1.UpdateUserUsernameResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if err := h.repo.UpdateUser(ctx, userID, repo.UpdateUserUsername(req.Msg.GetUsername())); err != nil {
+		if errors.Is(err, repo.ErrUserUsernameExists) {
+			log.Warn("Username already taken")
+			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
+		}
+
+		log.Error("Update user username", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(userID))
+	if err != nil {
+		log.Error("Get user after username update", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("Username updated")
+	return &connect.Response[apiv1.UpdateUserUsernameResponse]{
+		Msg: &apiv1.UpdateUserUsernameResponse{
+			User: parser.User(user),
+		},
+	}, nil
+}
+
 func (h *userHandler) UpdateUserWeightUnit(ctx context.Context, req *connect.Request[apiv1.UpdateUserWeightUnitRequest]) (*connect.Response[apiv1.UpdateUserWeightUnitResponse], error) {
 	weightUnit := parser.WeightUnitFromProto(req.Msg.GetWeightUnit())
-	user, err := h.updateUserUnitPreference(ctx, "weight unit", repo.UpdateUserWeightUnit(weightUnit))
+	user, err := h.updateUserPreference(ctx, "weight unit", repo.UpdateUserWeightUnit(weightUnit))
 	if err != nil {
 		return nil, err
 	}
@@ -167,9 +196,22 @@ func (h *userHandler) UpdateUserWeightUnit(ctx context.Context, req *connect.Req
 	}, nil
 }
 
+func (h *userHandler) UpdateUserAutofillSets(ctx context.Context, req *connect.Request[apiv1.UpdateUserAutofillSetsRequest]) (*connect.Response[apiv1.UpdateUserAutofillSetsResponse], error) {
+	user, err := h.updateUserPreference(ctx, "set autofill", repo.UpdateUserAutofillSets(req.Msg.GetEnabled()))
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[apiv1.UpdateUserAutofillSetsResponse]{
+		Msg: &apiv1.UpdateUserAutofillSetsResponse{
+			User: user,
+		},
+	}, nil
+}
+
 func (h *userHandler) UpdateUserDistanceUnit(ctx context.Context, req *connect.Request[apiv1.UpdateUserDistanceUnitRequest]) (*connect.Response[apiv1.UpdateUserDistanceUnitResponse], error) {
 	distanceUnit := parser.DistanceUnitFromProto(req.Msg.GetDistanceUnit())
-	user, err := h.updateUserUnitPreference(ctx, "distance unit", repo.UpdateUserDistanceUnit(distanceUnit))
+	user, err := h.updateUserPreference(ctx, "distance unit", repo.UpdateUserDistanceUnit(distanceUnit))
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +223,7 @@ func (h *userHandler) UpdateUserDistanceUnit(ctx context.Context, req *connect.R
 	}, nil
 }
 
-func (h *userHandler) updateUserUnitPreference(ctx context.Context, preference string, opt repo.UpdateUserOpt) (*apiv1.User, error) {
+func (h *userHandler) updateUserPreference(ctx context.Context, preference string, opt repo.UpdateUserOpt) (*apiv1.User, error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 

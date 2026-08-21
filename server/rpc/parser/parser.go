@@ -57,12 +57,13 @@ func UserFollowed(followed bool) UserOpt {
 func User(user *models.User, opts ...UserOpt) *apiv1.User {
 	u := &apiv1.User{
 		Id:           user.ID.String(),
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
+		Name:         user.Name,
+		Username:     user.Username,
 		Followed:     false,
 		Email:        "",
 		WeightUnit:   WeightUnitToProto(user.WeightUnit),
 		DistanceUnit: DistanceUnitToProto(user.DistanceUnit),
+		AutofillSets: user.AutofillSets,
 	}
 
 	if user.R.Auth != nil {

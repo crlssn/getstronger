@@ -223,18 +223,22 @@ describe('StartWorkout', () => {
     })
   })
 
-  describe('page order and peeks', () => {
-    test('stacks card, primary action, queue, and tools in reading order', async () => {
+  describe('the exercise list', () => {
+    test('stacks the list and the tools in reading order', async () => {
       const wrapper = await mountWorkout()
 
       const children = Array.from(wrapper.get('.exercise-stack').element.children).map(
         (child) => child.className,
       )
       const indexOf = (name: string) => children.findIndex((cls) => cls.includes(name))
-      expect(indexOf('card-carousel')).toBeGreaterThanOrEqual(0)
-      expect(indexOf('action-block')).toBeGreaterThan(indexOf('card-carousel'))
-      expect(indexOf('exercise-queue')).toBeGreaterThan(indexOf('action-block'))
-      expect(indexOf('workout-tools')).toBeGreaterThan(indexOf('exercise-queue'))
+      expect(indexOf('exercise-list')).toBeGreaterThanOrEqual(0)
+      expect(indexOf('workout-tools')).toBeGreaterThan(indexOf('exercise-list'))
+
+      // The forward action lives inside the exercise it acts on, under its sets.
+      const panel = Array.from(wrapper.get('.exercise-panel').element.children).map(
+        (child) => child.className,
+      )
+      expect(panel[panel.length - 1]).toContain('action-block')
 
       // The quieter finish action sits below the add-exercise affordance.
       const tools = Array.from(wrapper.get('.workout-tools').element.children).map(
@@ -246,22 +250,71 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
 
-    test('peeks the neighbouring cards without revealing their names', async () => {
+    test('holds every exercise, with exactly one of them open', async () => {
       const wrapper = await mountWorkout()
 
-      // First exercise: nothing above, the next card peeks below.
-      expect(wrapper.find('.card-peek.above').exists()).toBe(false)
-      const below = wrapper.get('.card-peek.below')
-      expect(below.text()).toBe('')
-      expect(below.attributes('aria-hidden')).toBe('true')
+      const items = wrapper.findAll('.exercise-item')
+      expect(items.map((item) => item.get('.exercise-name').text())).toEqual([
+        'Bench Press',
+        'Squat',
+      ])
+      expect(wrapper.findAll('.exercise-panel')).toHaveLength(1)
+      expect(items[0].classes()).toContain('open')
+      expect(items[0].get('.exercise-header').attributes('aria-expanded')).toBe('true')
+      expect(items[1].get('.exercise-header').attributes('aria-expanded')).toBe('false')
+      wrapper.unmount()
+    })
+
+    test('opens whichever header is tapped, without completing anything first', async () => {
+      const wrapper = await mountWorkout()
+
+      // No gate: the second exercise opens while the first is untouched.
+      await wrapper.findAll('.exercise-header')[1].trigger('click')
+      await flushPromises()
+
+      const items = wrapper.findAll('.exercise-item')
+      expect(items[0].classes()).not.toContain('open')
+      expect(items[1].classes()).toContain('open')
+      expect(wrapper.findAll('.exercise-panel')).toHaveLength(1)
+      expect(wrapper.find('input[aria-label="Squat set 1 weight"]').exists()).toBe(true)
+      expect(wrapper.find('input[aria-label="Bench Press set 1 weight"]').exists()).toBe(false)
+      expect(useWorkoutStore().getCompletedExerciseIds(routineID)).toHaveLength(0)
+
+      // And back again: the list is the way around the session.
+      await wrapper.findAll('.exercise-header')[0].trigger('click')
+      await flushPromises()
+      expect(wrapper.findAll('.exercise-item')[0].classes()).toContain('open')
+      wrapper.unmount()
+    })
+
+    test('numbers every exercise, completed ones included', async () => {
+      const wrapper = await mountWorkout()
 
       await logFirstSet(wrapper)
       await wrapper.get('.primary-action').trigger('submit')
       await flushPromises()
 
-      // Last exercise: the previous card peeks above, nothing below.
-      expect(wrapper.find('.card-peek.above').exists()).toBe(true)
-      expect(wrapper.find('.card-peek.below').exists()).toBe(false)
+      // The indicator stays the position of the exercise rather than turning
+      // into a tick: completion is reported in the line underneath.
+      const indicators = wrapper.findAll('.exercise-index')
+      expect(indicators.map((indicator) => indicator.text())).toEqual(['1', '2'])
+      expect(indicators[0].find('svg').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
+    test('reports what a collapsed exercise is waiting for', async () => {
+      const wrapper = await mountWorkout()
+
+      const collapsed = () => wrapper.findAll('.exercise-item')[1].get('.exercise-copy small')
+      expect(collapsed().text()).toBe('Not started')
+
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      expect(wrapper.findAll('.exercise-item')[0].get('.exercise-copy small').text()).toBe(
+        'Exercise completed · 1 set logged',
+      )
       wrapper.unmount()
     })
 
@@ -271,45 +324,32 @@ describe('StartWorkout', () => {
       await wrapper.get('.primary-action').trigger('submit')
       await flushPromises()
 
-      // Completing the final exercise keeps its card, now labelled as
+      // Completing the final exercise keeps it open, now labelled as
       // completed, with its sets still visible beneath the label.
       await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
       await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
       await wrapper.get('.primary-action').trigger('submit')
       await flushPromises()
 
-      expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
+      expect(wrapper.get('.exercise-item.open .exercise-name').text()).toBe('Squat')
       expect(wrapper.get('.completed-exercise').text()).toContain('Exercise completed')
       expect(wrapper.find('input[aria-label="Squat set 1 weight"]').exists()).toBe(true)
       wrapper.unmount()
     })
 
-    test('marks completed sets and exercises with a rendered check icon', async () => {
+    test('marks a completed set with a rendered check icon', async () => {
       const wrapper = await mountWorkout()
       await logFirstSet(wrapper)
 
-      // A complete set swaps its number for the check mark.
+      // A complete set swaps its number for the check mark. Asserting on the
+      // rendered svg catches an icon that is referenced but never imported.
       expect(wrapper.find('.set-row.complete .set-number svg').exists()).toBe(true)
-
-      await wrapper.get('.primary-action').trigger('submit')
-      await flushPromises()
-
-      // The finished exercise gets ticked off in the queue…
-      expect(wrapper.find('li.completed .queue-number svg').exists()).toBe(true)
-
-      await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
-      await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
-      await wrapper.get('.primary-action').trigger('submit')
-      await flushPromises()
-
-      // …and the completed banner leads with the same icon.
-      expect(wrapper.find('.completed-exercise .completed-icon svg').exists()).toBe(true)
       wrapper.unmount()
     })
   })
 
   describe('exercise progression', () => {
-    test('advances only through the plain-text complete-exercise action', async () => {
+    test('advances through the plain-text complete-exercise action', async () => {
       const wrapper = await mountWorkout()
 
       const primary = wrapper.get('.primary-action')
@@ -317,16 +357,96 @@ describe('StartWorkout', () => {
       // No icon: the label sits centred on the screen's dominant control.
       expect(primary.find('svg').exists()).toBe(false)
 
-      // The queue is a status list, not a switcher.
-      const queue = wrapper.get('.exercise-queue')
-      expect(queue.text()).toContain('Squat')
-      expect(queue.find('button').exists()).toBe(false)
-
       await logFirstSet(wrapper)
       await primary.trigger('submit')
       await flushPromises()
 
-      expect(wrapper.get('.exercise-heading h2').text()).toBe('Squat')
+      expect(wrapper.get('.exercise-item.open .exercise-name').text()).toBe('Squat')
+    })
+
+    test('keeps the label on the exercise and puts what follows in a hint', async () => {
+      const wrapper = await mountWorkout()
+
+      expect(wrapper.get('.primary-action').text()).toBe('Complete exercise')
+      expect(wrapper.get('.next-up').text()).toBe('then: Squat')
+
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // The last exercise reads the same; only the hint changes.
+      expect(wrapper.get('.primary-action').text()).toBe('Complete exercise')
+      expect(wrapper.get('.next-up').text()).toBe('then: finish')
+
+      await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
+      await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // Nothing left to complete: finishing is what the button is for now.
+      expect(wrapper.get('.primary-action').text()).toBe('Finish workout')
+      expect(wrapper.find('.next-up').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
+    test('discards an untouched set row rather than blocking the way out', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      // Nothing typed anywhere: completing still moves the session on.
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      expect(workoutStore.getSets(routineID, benchPress.id)).toHaveLength(0)
+      expect(workoutStore.getCompletedExerciseIds(routineID)).toContain(benchPress.id)
+      expect(wrapper.get('.exercise-item.open .exercise-name').text()).toBe('Squat')
+      wrapper.unmount()
+    })
+
+    test('discards a half-typed row instead of standing in its way', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await wrapper.get('input[aria-label="Bench Press set 1 weight"]').setValue('80')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // A set without reps is never saved, so it costs nothing to drop it.
+      expect(workoutStore.getSets(routineID, benchPress.id)).toHaveLength(0)
+      expect(wrapper.get('.exercise-item.open .exercise-name').text()).toBe('Squat')
+      wrapper.unmount()
+    })
+
+    test('keeps every logged set and drops only the trailing empty row', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await logFirstSet(wrapper)
+      expect(workoutStore.getSets(routineID, benchPress.id)).toHaveLength(2)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      const sets = workoutStore.getSets(routineID, benchPress.id)
+      expect(sets).toHaveLength(1)
+      expect(sets[0].weight).toBe(80)
+      wrapper.unmount()
+    })
+
+    test('gives a reopened exercise a row to type into again', async () => {
+      const workoutStore = useWorkoutStore()
+      const wrapper = await mountWorkout()
+
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+      expect(workoutStore.getSets(routineID, squat.id)).toHaveLength(0)
+
+      await wrapper.get('.completed-exercise button').trigger('click')
+      await flushPromises()
+
+      expect(workoutStore.getSets(routineID, squat.id)).toHaveLength(1)
+      wrapper.unmount()
     })
   })
 
@@ -354,7 +474,19 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
 
+    test('leaves an empty field empty on focus unless the account asked for the prefill', async () => {
+      const wrapper = await mountWorkout()
+
+      const weight = wrapper.get('input[aria-label="Bench Press set 1 weight"]')
+      await weight.trigger('focus')
+      expect((weight.element as HTMLInputElement).value).toBe('')
+      wrapper.unmount()
+    })
+
     test('copies the previous value into an empty field on focus only', async () => {
+      getCurrentUser.mockResolvedValue({
+        user: { weightUnit: WeightUnit.KILOGRAMS, autofillSets: true },
+      })
       const wrapper = await mountWorkout()
 
       const weight = wrapper.get('input[aria-label="Bench Press set 1 weight"]')

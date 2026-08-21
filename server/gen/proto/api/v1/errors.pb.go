@@ -28,6 +28,7 @@ const (
 	Error_ERROR_UNSPECIFIED            Error = 0
 	Error_ERROR_EMAIL_NOT_VERIFIED     Error = 1
 	Error_ERROR_PASSWORDS_DO_NOT_MATCH Error = 2
+	Error_ERROR_USERNAME_TAKEN         Error = 3
 )
 
 // Enum value maps for Error.
@@ -36,11 +37,13 @@ var (
 		0: "ERROR_UNSPECIFIED",
 		1: "ERROR_EMAIL_NOT_VERIFIED",
 		2: "ERROR_PASSWORDS_DO_NOT_MATCH",
+		3: "ERROR_USERNAME_TAKEN",
 	}
 	Error_value = map[string]int32{
 		"ERROR_UNSPECIFIED":            0,
 		"ERROR_EMAIL_NOT_VERIFIED":     1,
 		"ERROR_PASSWORDS_DO_NOT_MATCH": 2,
+		"ERROR_USERNAME_TAKEN":         3,
 	}
 )
 
@@ -121,11 +124,12 @@ const file_api_v1_errors_proto_rawDesc = "" +
 	"\n" +
 	"\x13api/v1/errors.proto\x12\x06api.v1\"2\n" +
 	"\vErrorDetail\x12#\n" +
-	"\x05error\x18\x01 \x01(\x0e2\r.api.v1.ErrorR\x05error*^\n" +
+	"\x05error\x18\x01 \x01(\x0e2\r.api.v1.ErrorR\x05error*x\n" +
 	"\x05Error\x12\x15\n" +
 	"\x11ERROR_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18ERROR_EMAIL_NOT_VERIFIED\x10\x01\x12 \n" +
-	"\x1cERROR_PASSWORDS_DO_NOT_MATCH\x10\x02B\x8f\x01\n" +
+	"\x1cERROR_PASSWORDS_DO_NOT_MATCH\x10\x02\x12\x18\n" +
+	"\x14ERROR_USERNAME_TAKEN\x10\x03B\x8f\x01\n" +
 	"\n" +
 	"com.api.v1B\vErrorsProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 

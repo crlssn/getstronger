@@ -7,7 +7,6 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useEmailVerificationStore } from '@/stores/emailVerification.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
-import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import posthog from '@/posthog'
 
 const router = useRouter()
@@ -15,12 +14,10 @@ const emailVerificationStore = useEmailVerificationStore()
 const req = ref<SignupRequest>({
   $typeName: 'api.v1.SignupRequest',
   email: '',
-  firstName: '',
-  lastName: '',
+  name: '',
+  username: '',
   password: '',
   passwordConfirmation: '',
-  weightUnit: WeightUnit.KILOGRAMS,
-  distanceUnit: DistanceUnit.KILOMETERS,
 })
 
 const onSignup = async () => {
@@ -43,35 +40,40 @@ const onSignup = async () => {
     </header>
 
     <form class="auth-form" method="POST" @submit.prevent="onSignup">
-      <div class="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label for="firstname" class="auth-label">{{ $t('auth.firstName') }}</label>
-          <div class="mt-2">
-            <input
-              id="firstname"
-              v-model="req.firstName"
-              name="firstname"
-              type="text"
-              autocomplete="given-name"
-              class="auth-input"
-              required
-            />
-          </div>
+      <div>
+        <label for="name" class="auth-label">{{ $t('auth.name') }}</label>
+        <div class="mt-2">
+          <input
+            id="name"
+            v-model="req.name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            class="auth-input"
+            required
+          />
         </div>
+      </div>
 
-        <div>
-          <label for="lastname" class="auth-label">{{ $t('auth.lastName') }}</label>
-          <div class="mt-2">
-            <input
-              id="lastname"
-              v-model="req.lastName"
-              name="lastname"
-              type="text"
-              autocomplete="family-name"
-              class="auth-input"
-              required
-            />
-          </div>
+      <div>
+        <label for="username" class="auth-label">{{ $t('auth.username') }}</label>
+        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.usernameHelp') }}</p>
+        <div class="mt-2">
+          <input
+            id="username"
+            v-model="req.username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            class="auth-input"
+            minlength="3"
+            maxlength="30"
+            pattern="[A-Za-z0-9._]+"
+            required
+            @input="req.username = req.username.toLowerCase()"
+          />
         </div>
       </div>
 
@@ -90,62 +92,6 @@ const onSignup = async () => {
           />
         </div>
       </div>
-
-      <fieldset>
-        <legend class="auth-label">{{ $t('auth.weightUnit') }}</legend>
-        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.weightUnitHelp') }}</p>
-        <!-- The same segmented control as everywhere else a choice of two is
-             offered; the radios stay for form semantics. -->
-        <div class="segmented mt-2" :aria-label="$t('auth.weightUnit')">
-          <label :class="{ 'is-selected': req.weightUnit === WeightUnit.KILOGRAMS }">
-            <input
-              v-model="req.weightUnit"
-              class="segmented-radio"
-              type="radio"
-              name="weightUnit"
-              :value="WeightUnit.KILOGRAMS"
-            />
-            {{ $t('auth.kilograms') }}
-          </label>
-          <label :class="{ 'is-selected': req.weightUnit === WeightUnit.POUNDS }">
-            <input
-              v-model="req.weightUnit"
-              class="segmented-radio"
-              type="radio"
-              name="weightUnit"
-              :value="WeightUnit.POUNDS"
-            />
-            {{ $t('auth.pounds') }}
-          </label>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend class="auth-label">{{ $t('auth.distanceUnit') }}</legend>
-        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.distanceUnitHelp') }}</p>
-        <div class="segmented mt-2" :aria-label="$t('auth.distanceUnit')">
-          <label :class="{ 'is-selected': req.distanceUnit === DistanceUnit.KILOMETERS }">
-            <input
-              v-model="req.distanceUnit"
-              class="segmented-radio"
-              type="radio"
-              name="distanceUnit"
-              :value="DistanceUnit.KILOMETERS"
-            />
-            {{ $t('auth.kilometers') }}
-          </label>
-          <label :class="{ 'is-selected': req.distanceUnit === DistanceUnit.MILES }">
-            <input
-              v-model="req.distanceUnit"
-              class="segmented-radio"
-              type="radio"
-              name="distanceUnit"
-              :value="DistanceUnit.MILES"
-            />
-            {{ $t('auth.miles') }}
-          </label>
-        </div>
-      </fieldset>
 
       <div>
         <label for="password" class="auth-label">{{ $t('auth.password') }}</label>

@@ -9,6 +9,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { listExercises, listPlans, listRoutines, searchUsers } from '@/http/requests'
+import { initials } from '@/utils/names'
 import type { Exercise, User } from '@/proto/api/v1/shared_pb'
 import type { Plan, Routine } from '@/proto/api/v1/routine_service_pb'
 
@@ -128,10 +129,10 @@ const onSearch = async () => {
             :to="`/users/${user.id}`"
             @click="closeSearch"
           >
-            <span class="avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
+            <span class="avatar">{{ initials(user.name) }}</span>
             <span>
-              <strong>{{ user.firstName }} {{ user.lastName }}</strong>
-              <small>{{ $t('search.viewProfile') }}</small>
+              <strong>{{ user.username }}</strong>
+              <small>{{ user.name }}</small>
             </span>
           </RouterLink>
         </template>

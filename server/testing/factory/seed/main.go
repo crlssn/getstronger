@@ -62,11 +62,11 @@ func main() {
 
 	email := flag.String("email", defaultActiveEmail, "the active persona's email")
 	password := flag.String("password", defaultSeedPassword, "the seed personas' shared password")
-	firstname := flag.String("firstname", "Alex", "the active persona's first name")
-	lastname := flag.String("lastname", "Morgan", "the active persona's last name")
+	name := flag.String("name", "Alex Morgan", "the active persona's name")
+	username := flag.String("username", "alex", "the active persona's username")
 	newEmail := flag.String("new-email", defaultNewEmail, "the newly signed-up persona's email")
-	newFirstname := flag.String("new-firstname", "Sam", "the newly signed-up persona's first name")
-	newLastname := flag.String("new-lastname", "Taylor", "the newly signed-up persona's last name")
+	newName := flag.String("new-name", "Sam Taylor", "the newly signed-up persona's name")
+	newUsername := flag.String("new-username", "sam", "the newly signed-up persona's username")
 	flag.Parse()
 
 	if err = truncateDatabase(context.Background(), database); err != nil {
@@ -77,16 +77,16 @@ func main() {
 	f := factory.NewFactory(database)
 	active, newlySignedUp := seedPersonas(database, f, personaConfig{
 		active: factory.SeedUser{
-			Email:     *email,
-			Password:  *password,
-			FirstName: *firstname,
-			LastName:  *lastname,
+			Email:    *email,
+			Password: *password,
+			Name:     *name,
+			Username: *username,
 		},
 		new: factory.SeedUser{
-			Email:     *newEmail,
-			Password:  *password,
-			FirstName: *newFirstname,
-			LastName:  *newLastname,
+			Email:    *newEmail,
+			Password: *password,
+			Name:     *newName,
+			Username: *newUsername,
 		},
 	})
 	log.Printf("seeded active persona %s (%s) and new persona %s (%s)", active.FullNameSearch, *email, newlySignedUp.FullNameSearch, *newEmail)
@@ -124,8 +124,8 @@ func seedPersonas(database *sql.DB, f *factory.Factory, config personaConfig) (*
 	)
 	newlySignedUp := f.NewUser(
 		factory.UserAuthID(newAuth.ID),
-		factory.UserFirstName(config.new.FirstName),
-		factory.UserLastName(config.new.LastName),
+		factory.UserName(config.new.Name),
+		factory.UserUsername(config.new.Username),
 	)
 
 	jane := seedJaneDoe(database, f, active)
@@ -159,8 +159,8 @@ END $$;`
 
 func seedJaneDoe(database *sql.DB, f *factory.Factory, active *models.User) *models.User {
 	jane := f.NewUser(
-		factory.UserFirstName("Jane"),
-		factory.UserLastName("Doe"),
+		factory.UserName("Jane Doe"),
+		factory.UserUsername("janedoe"),
 		factory.UserWeightUnit(weightunit.Pounds),
 	)
 	insertFollow(database, active, jane)

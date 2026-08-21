@@ -25,8 +25,7 @@ test.describe('guest authentication and routing', () => {
     await expect(page).toHaveURL(/\/signup$/)
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
     await expect(page.getByText('Lift it. Log it. Beat it.')).toBeVisible()
-    await expect(page.getByRole('radio', { name: /Kilograms/ })).toBeChecked()
-    await expect(page.getByRole('radio', { name: /Pounds/ })).not.toBeChecked()
+    await expect(page.getByLabel('Username')).toBeVisible()
 
     await page.getByRole('link', { name: 'Log in', exact: true }).click()
     await page.getByRole('link', { name: 'Forgot password?' }).click()
@@ -57,15 +56,24 @@ test.describe('guest authentication and routing', () => {
     const password = 'StrongPassword123!'
 
     await page.goto('/signup')
-    await page.getByLabel('First name').fill('E2E')
-    await page.getByLabel('Last name').fill('Member')
+    await page.getByLabel('Name', { exact: true }).fill('E2E Member')
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByLabel('Confirm password').fill(password)
-    await page.getByText('Pounds', { exact: true }).click()
-    await expect(page.getByRole('radio', { name: /Pounds/ })).toBeChecked()
-    await page.getByText('Miles', { exact: true }).click()
-    await expect(page.getByRole('radio', { name: /Miles/ })).toBeChecked()
+
+    // Units are not asked for here; the account starts metric and is changed
+    // in the profile.
+    await expect(page.getByText('Preferred weight unit')).toHaveCount(0)
+    await expect(page.getByText('Preferred distance unit')).toHaveCount(0)
+
+    // A username someone already holds is refused with a clear message and
+    // leaves the rest of the form intact.
+    await page.getByLabel('Username').fill('alex')
+    await page.getByRole('button', { name: 'Create an account' }).click()
+    await expect(page.getByRole('alert')).toContainText('already taken')
+    await expect(page).toHaveURL(/\/signup$/)
+
+    await page.getByLabel('Username').fill(`e2e.${Date.now()}`)
     await page.getByRole('button', { name: 'Create an account' }).click()
 
     // The notice says the link was sent, not that the account is verified.
@@ -104,18 +112,17 @@ test.describe('guest authentication and routing', () => {
     await page.getByRole('button', { name: 'Log in' }).click()
     await expect(page).toHaveURL(/\/home$/)
 
-    // The units picked at signup are the account's preferences, not defaults
-    // that got lost on the way to the profile.
+    // A new account is metric until the profile says otherwise.
     await page.goto('/profile')
     await expect(
       page
         .getByRole('group', { name: 'Preferred weight unit' })
-        .getByRole('button', { name: 'Pounds' }),
+        .getByRole('button', { name: 'Kilograms' }),
     ).toHaveAttribute('aria-pressed', 'true')
     await expect(
       page
         .getByRole('group', { name: 'Preferred distance unit' })
-        .getByRole('button', { name: 'Miles' }),
+        .getByRole('button', { name: 'Kilometers' }),
     ).toHaveAttribute('aria-pressed', 'true')
   })
 

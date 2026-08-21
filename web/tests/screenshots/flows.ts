@@ -224,6 +224,17 @@ export const flows: Flow[] = [
         name: 'set-logged',
       },
       {
+        // A session of one exercise never shows the list it belongs to, so a
+        // second one is added here: one open container, one collapsed header.
+        act: async (page) => {
+          await page.getByRole('button', { name: 'Add exercise' }).click()
+          const picker = page.getByRole('dialog', { name: 'Add exercise' })
+          await picker.locator('.exercise-options button').first().click()
+          await expect(picker).toHaveCount(0)
+        },
+        name: 'second-exercise-added',
+      },
+      {
         act: async (page) => {
           await page.getByRole('button', { name: 'Finish workout' }).click()
           // The confirmation only appears when an exercise is left unfinished.

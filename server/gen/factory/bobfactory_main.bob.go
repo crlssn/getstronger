@@ -578,13 +578,14 @@ func (f *Factory) fromExistingUser(ctx context.Context, m *models.User) *UserTem
 	o := &UserTemplate{f: f, alreadyPersisted: true}
 
 	o.ID = func() uuid.UUID { return m.ID }
-	o.FirstName = func() string { return m.FirstName }
-	o.LastName = func() string { return m.LastName }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
-	o.FullNameSearch = func() string { return m.FullNameSearch }
 	o.AuthID = func() uuid.UUID { return m.AuthID }
 	o.WeightUnit = func() string { return m.WeightUnit }
 	o.DistanceUnit = func() string { return m.DistanceUnit }
+	o.Name = func() string { return m.Name }
+	o.FullNameSearch = func() string { return m.FullNameSearch }
+	o.Username = func() string { return m.Username }
+	o.AutofillSets = func() bool { return m.AutofillSets }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

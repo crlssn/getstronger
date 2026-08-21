@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -22,6 +23,13 @@ type Factory struct {
 	generated *bobfactory.Factory
 	exec      bob.Executor
 	now       time.Time
+	userCount atomic.Int64
+}
+
+// nextUsername generates a faker-flavoured username that a counter keeps
+// unique: usernames are unique case-insensitively at the database level.
+func (f *Factory) nextUsername() string {
+	return fmt.Sprintf("%s.%d", strings.ToLower(f.Faker.Username()), f.userCount.Add(1))
 }
 
 func newUUID() uuid.UUID {
@@ -82,8 +90,8 @@ func workoutWithoutRelationships(model *models.Workout) *models.Workout {
 type SeedUser struct {
 	Email     string
 	Password  string
-	FirstName string
-	LastName  string
+	Name      string
+	Username  string
 	CreatedAt time.Time
 }
 
@@ -111,8 +119,10 @@ func (f *Factory) Seed(p SeedParams) *models.User {
 		)
 		userOpts := []UserOpt{
 			UserAuthID(auth.ID),
-			UserFirstName(p.User.FirstName),
-			UserLastName(p.User.LastName),
+			UserName(p.User.Name),
+		}
+		if p.User.Username != "" {
+			userOpts = append(userOpts, UserUsername(p.User.Username))
 		}
 		if !p.User.CreatedAt.IsZero() {
 			userOpts = append(userOpts, UserCreatedAt(p.User.CreatedAt))

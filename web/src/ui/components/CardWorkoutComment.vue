@@ -4,6 +4,7 @@ import type { User } from '@/proto/api/v1/shared_pb'
 
 import { computed } from 'vue'
 import { formatToRelativeDateTime } from '@/utils/datetime'
+import { initials } from '@/utils/names'
 
 const props = defineProps<{
   comment: string
@@ -11,9 +12,7 @@ const props = defineProps<{
   user?: User
 }>()
 
-const initials = computed(
-  () => `${props.user?.firstName.charAt(0) ?? ''}${props.user?.lastName.charAt(0) ?? ''}` || 'GS',
-)
+const userInitials = computed(() => initials(props.user?.name) || 'GS')
 </script>
 
 <template>
@@ -21,15 +20,13 @@ const initials = computed(
     <RouterLink
       :to="`/users/${user?.id}`"
       class="comment-avatar"
-      :aria-label="$t('workout.card.viewProfile', { name: `${user?.firstName} ${user?.lastName}` })"
+      :aria-label="$t('workout.card.viewProfile', { name: user?.name })"
     >
-      {{ initials }}
+      {{ userInitials }}
     </RouterLink>
     <div class="comment-content">
       <div class="comment-meta">
-        <RouterLink :to="`/users/${user?.id}`"
-          >{{ user?.firstName }} {{ user?.lastName }}</RouterLink
-        >
+        <RouterLink :to="`/users/${user?.id}`">{{ user?.username }}</RouterLink>
         <time>{{ formatToRelativeDateTime(timestamp) }}</time>
       </div>
       <p>{{ comment }}</p>

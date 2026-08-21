@@ -16,7 +16,7 @@ defineProps<{
     <div class="w-full">
       <i18n-t keypath="notifications.followedYou" tag="div" scope="global">
         <template #name>
-          <span class="font-semibold">{{ actor?.firstName }} {{ actor?.lastName }}</span>
+          <span class="font-semibold">{{ actor?.username }}</span>
         </template>
       </i18n-t>
       <p class="text-sm text-text-subtle">

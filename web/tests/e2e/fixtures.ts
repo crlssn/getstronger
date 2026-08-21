@@ -51,8 +51,7 @@ export const resetSeedData = () => {
       'server/testing/factory/seed/main.go',
       `-email=${email}`,
       `-password=${password}`,
-      `-firstname=${process.env.USER_FIRSTNAME ?? 'Alex'}`,
-      `-lastname=${process.env.USER_LASTNAME ?? 'Morgan'}`,
+      `-name=${process.env.USER_NAME ?? 'Alex Morgan'}`,
     ],
     { cwd: repositoryRoot, stdio: 'pipe' },
   )
@@ -70,13 +69,19 @@ export const verificationToken = (userEmail: string) =>
 export const logInAs = async (page: Page, userEmail: string, userPassword: string) => {
   await page.goto('/login')
   // A preceding test in the same worker may have left this browser signed in,
-  // and /login sends an authenticated visitor straight on to /home. Without
-  // this, whether a test passes depends on whether the one before it did.
+  // and /login sends an authenticated visitor straight on to /home. That
+  // redirect can land after goto() resolves, so settle on one page or the
+  // other before deciding — /logout renders nothing, which makes a bare
+  // `goto('/logout')` fast enough to abort its own sign-out request.
+  const emailField = page.getByLabel('Email address')
+  await expect(
+    emailField.or(page.getByRole('navigation', { name: 'Primary navigation' })).first(),
+  ).toBeVisible()
   if (!new URL(page.url()).pathname.startsWith('/login')) {
     await page.goto('/logout')
     await expect(page).toHaveURL(/\/login$/)
   }
-  await page.getByLabel('Email address').fill(userEmail)
+  await emailField.fill(userEmail)
   await page.getByLabel('Password', { exact: true }).fill(userPassword)
   await page.getByRole('button', { name: 'Log in' }).click()
   await expect(page).toHaveURL(/\/home$/)

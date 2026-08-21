@@ -21,7 +21,6 @@ import (
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
-	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -80,18 +79,16 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		}
 
 		user, err := tx.CreateUser(ctx, repo.CreateUserParams{
-			AuthID:       auth.ID.String(),
-			FirstName:    req.Msg.GetFirstName(),
-			LastName:     req.Msg.GetLastName(),
-			WeightUnit:   parser.WeightUnitFromProto(req.Msg.GetWeightUnit()),
-			DistanceUnit: parser.DistanceUnitFromProto(req.Msg.GetDistanceUnit()),
+			AuthID:   auth.ID.String(),
+			Name:     strings.TrimSpace(req.Msg.GetName()),
+			Username: req.Msg.GetUsername(),
 		})
 		if err != nil {
 			return fmt.Errorf("create user: %w", err)
 		}
 
 		if err = h.email.SendVerification(ctx, email.SendVerification{
-			Name:  user.FirstName,
+			Name:  user.Name,
 			Email: auth.Email,
 			Token: auth.EmailToken.String(),
 		}); err != nil {
@@ -105,6 +102,11 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 		return nil
 	}); err != nil {
+		if errors.Is(err, repo.ErrUserUsernameExists) {
+			log.Warn("Username already taken")
+			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
+		}
+
 		log.Error("Sign up user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -308,7 +310,7 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 	}
 
 	if err = h.email.SendVerification(ctx, email.SendVerification{
-		Name:  auth.R.User.FirstName,
+		Name:  auth.R.User.Name,
 		Email: auth.Email,
 		Token: auth.EmailToken.String(),
 	}); err != nil {
@@ -350,7 +352,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 	}
 
 	if err = h.email.SendPasswordReset(ctx, email.SendPasswordReset{
-		Name:  auth.R.User.FirstName,
+		Name:  auth.R.User.Name,
 		Email: auth.Email,
 		Token: token,
 	}); err != nil {

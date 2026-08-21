@@ -157,7 +157,7 @@ test.describe('quick workout lifecycle', () => {
     const secondOption = picker.locator('.exercise-options button').first()
     const secondExercise = (await secondOption.locator('strong').innerText()).trim()
     await secondOption.click()
-    await expect(page.locator('.exercise-queue')).toContainText(secondExercise)
+    await expect(page.locator('.exercise-list')).toContainText(secondExercise)
 
     await page.getByRole('button', { name: 'Finish workout' }).click()
     const finishDialog = page.getByRole('dialog', { name: 'Finish workout early?' })
@@ -202,7 +202,20 @@ test.describe('quick workout lifecycle', () => {
     const firstRow = page.locator('.set-row').first()
     await expect(firstRow.locator('.previous-value')).toContainText('25')
     const weight = page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
-    // Focusing an empty field offers the previous value without retyping.
+    // The prefill is off until the account asks for it: what the row shows is
+    // the previous column, not a value nobody typed.
+    await weight.focus()
+    await expect(weight).toHaveValue('')
+
+    await page.goto('/profile')
+    await page
+      .getByRole('group', { name: 'Repeat my last set' })
+      .getByRole('button', { name: 'On' })
+      .click()
+    await expect(page.getByRole('status')).toContainText('Set prefill updated')
+
+    await page.goto('/workouts/quick')
+    // Focusing an empty field now offers the previous value without retyping.
     await weight.focus()
     await expect(weight).toHaveValue('25')
 
@@ -524,7 +537,7 @@ test.describe('planned workouts and history', () => {
     await expect(nextCard).toContainText('1 of 2')
     await nextCard.getByRole('link', { name: /^Start / }).click()
 
-    const exercise = (await page.locator('.exercise-card h2').innerText()).trim()
+    const exercise = (await page.locator('.exercise-item.open .exercise-name').innerText()).trim()
     await logFirstSet(page, exercise, '30', '6')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
 
@@ -571,7 +584,7 @@ test.describe('planned workouts and history', () => {
     ).trim()
     await history.getByRole('link').first().click()
     await expect(page.getByRole('heading', { name: firstWorkoutName, exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Alex Morgan', exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'alex', exact: true }).first()).toBeVisible()
     await expect(page.getByText('Completed workout', { exact: true })).toBeVisible()
   })
 })

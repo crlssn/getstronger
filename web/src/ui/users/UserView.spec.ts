@@ -21,8 +21,8 @@ const { followUser, getUser, listWorkouts, unfollowUser } = vi.hoisted(() => ({
 
 vi.mock('@/http/requests.ts', () => ({ followUser, getUser, listWorkouts, unfollowUser }))
 
-const alice = create(UserSchema, { firstName: 'Alice', followed: true, id: 'user-a' })
-const bob = create(UserSchema, { firstName: 'Bob', followed: true, id: 'user-b' })
+const alice = create(UserSchema, { followed: true, id: 'user-a', name: 'Alice' })
+const bob = create(UserSchema, { followed: true, id: 'user-b', name: 'Bob' })
 
 // Two workouts is the chart's minimum: "we need at least two data points".
 const aliceWorkouts = [

@@ -11,19 +11,28 @@ import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
 import ProfileView from '@/ui/profile/ProfileView.vue'
 
-const { getCurrentUser, getDashboard, updateUserDistanceUnit, updateUserWeightUnit } = vi.hoisted(
-  () => ({
-    getCurrentUser: vi.fn(),
-    getDashboard: vi.fn(),
-    updateUserDistanceUnit: vi.fn(),
-    updateUserWeightUnit: vi.fn(),
-  }),
-)
+const {
+  getCurrentUser,
+  getDashboard,
+  updateUserAutofillSets,
+  updateUserDistanceUnit,
+  updateUserUsername,
+  updateUserWeightUnit,
+} = vi.hoisted(() => ({
+  getCurrentUser: vi.fn(),
+  getDashboard: vi.fn(),
+  updateUserAutofillSets: vi.fn(),
+  updateUserDistanceUnit: vi.fn(),
+  updateUserUsername: vi.fn(),
+  updateUserWeightUnit: vi.fn(),
+}))
 
 vi.mock('@/http/requests', () => ({
   getCurrentUser,
   getDashboard,
+  updateUserAutofillSets,
   updateUserDistanceUnit,
+  updateUserUsername,
   updateUserWeightUnit,
 }))
 
@@ -50,11 +59,12 @@ describe('ProfileView', () => {
     getCurrentUser.mockResolvedValue({
       user: {
         id: 'user-1',
-        firstName: 'Alex',
-        lastName: 'Morgan',
+        name: 'Alex Morgan',
+        username: 'alex',
         email: 'alex@example.com',
         weightUnit: WeightUnit.KILOGRAMS,
         distanceUnit: DistanceUnit.KILOMETERS,
+        autofillSets: false,
       },
     })
     getDashboard.mockResolvedValue({ recentWorkouts: [], personalBests: [], volumeThisWeek: 0 })
@@ -62,6 +72,37 @@ describe('ProfileView', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+  })
+
+  test('shows the username and updates it through the editor sheet', async () => {
+    updateUserUsername.mockResolvedValue({ user: { username: 'alexm' } })
+    const wrapper = await mountProfile()
+
+    expect(wrapper.text()).toContain('@alex')
+
+    await wrapper.get('[aria-label="Change username"]').trigger('click')
+    const input = wrapper.get('#edit-username')
+    await input.setValue('AlexM')
+    await wrapper.get('#username-form').trigger('submit')
+    await flushPromises()
+
+    // The draft is lowercased as it is typed, so the API sees the stored form.
+    expect(updateUserUsername).toHaveBeenCalledWith('alexm')
+    expect(wrapper.text()).toContain('@alexm')
+    expect(wrapper.find('#edit-username').exists()).toBe(false)
+  })
+
+  test('keeps the username sheet open when the update fails', async () => {
+    updateUserUsername.mockResolvedValue(undefined)
+    const wrapper = await mountProfile()
+
+    await wrapper.get('[aria-label="Change username"]').trigger('click')
+    await wrapper.get('#edit-username').setValue('taken')
+    await wrapper.get('#username-form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('@alex')
+    expect(wrapper.find('#edit-username').exists()).toBe(true)
   })
 
   test('shows the weight unit from the fetched profile as the active preference', async () => {
@@ -132,6 +173,48 @@ describe('ProfileView', () => {
     expect(distanceSegment(wrapper).get('button:last-of-type').attributes('aria-pressed')).toBe(
       'true',
     )
+  })
+
+  const autofillSegment = (wrapper: Awaited<ReturnType<typeof mountProfile>>) =>
+    wrapper.get('[aria-label="Repeat my last set"]')
+
+  test('shows the set autofill as off for an account that never enabled it', async () => {
+    const wrapper = await mountProfile()
+
+    expect(autofillSegment(wrapper).get('button:first-of-type').attributes('aria-pressed')).toBe(
+      'true',
+    )
+  })
+
+  test('turns the set autofill on and remembers it for the workout screen', async () => {
+    updateUserAutofillSets.mockResolvedValue({ user: { autofillSets: true } })
+    const wrapper = await mountProfile()
+    const preferencesStore = usePreferencesStore()
+
+    await autofillSegment(wrapper).get('button:last-of-type').trigger('click')
+    await flushPromises()
+
+    expect(updateUserAutofillSets).toHaveBeenCalledWith(true)
+    expect(preferencesStore.autofillSets).toBe(true)
+    expect(autofillSegment(wrapper).get('button:last-of-type').attributes('aria-pressed')).toBe(
+      'true',
+    )
+  })
+
+  test('reverts the set autofill and says so if the request fails', async () => {
+    updateUserAutofillSets.mockResolvedValue(undefined)
+    const wrapper = await mountProfile()
+    const preferencesStore = usePreferencesStore()
+    const alertStore = useAlertStore()
+
+    await autofillSegment(wrapper).get('button:last-of-type').trigger('click')
+    await flushPromises()
+
+    expect(preferencesStore.autofillSets).toBe(false)
+    expect(alertStore.alert).toMatchObject({
+      type: 'error',
+      message: 'Could not update the set prefill. Please try again.',
+    })
   })
 
   test('reverts the optimistic distance update and says so if the request fails', async () => {

@@ -74,13 +74,18 @@ message MetadataSet {
 }
 
 message User {
+  reserved 2, 3;
+  reserved "first_name", "last_name";
+
   string id = 1 [(buf.validate.field).string.uuid = true];
-  string first_name = 2 [(buf.validate.field).string.min_len = 1];
-  string last_name = 3 [(buf.validate.field).string.min_len = 1];
+  string name = 8 [(buf.validate.field).string.min_len = 1];
+  string username = 9;
   string email = 4;
   bool followed = 5;
   WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];
   DistanceUnit distance_unit = 7 [(buf.validate.field).enum.defined_only = true];
+  // Whether an empty set input is prefilled from the previous session.
+  bool autofill_sets = 10;
 }
 
 message PaginationRequest {
