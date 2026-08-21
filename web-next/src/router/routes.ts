@@ -145,3 +145,18 @@ export const flatRoutes = (from: AppRoute[] = routes): AppRoute[] =>
 
 export const routeByName = (name: string): AppRoute | undefined =>
   flatRoutes().find((route) => route.name === name)
+
+/**
+ * Whether a path runs full-bleed, without the app's usual chrome.
+ *
+ * Read off the route table rather than listed anywhere, so the shell, the rest
+ * banner and the native wrapper cannot disagree about which screens these are.
+ */
+export const isFocusedShellPath = (pathname: string): boolean =>
+  flatRoutes()
+    .filter((route) => route.focusedShell)
+    .some(({ path }) => {
+      if (!path.includes(':')) return pathname === path
+      // '/workouts/routine/:routine_id' matches any single segment in its place.
+      return new RegExp(`^${path.replace(/:[^/]+/g, '[^/]+')}$`).test(pathname)
+    })

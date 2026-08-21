@@ -13,11 +13,13 @@ The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, every design-system
 primitive, and the shell — the nav bars, the four app-level singletons, and the
-signed-in and signed-out layouts. Phase F is done: every screen is across,
-`StartWorkout` included. 1156 tests green, 95% statement / 97% line coverage.
+signed-in and signed-out layouts. Phases A–F are done: every screen is across,
+`StartWorkout` included, and the app now boots — `router.tsx`, `App.tsx`,
+`main.tsx` and the native wrapper are wired up, and `npm run build-only`
+produces a code-split bundle with a chunk per screen. 1185 tests green, 93%
+statement / 96% line coverage.
 
-What is left is the two files that could only be written once every screen
-existed — `router.tsx` and `main.tsx` — and then phases G and H.
+What is left is phase G — the e2e and screenshot harness — and then the swap.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
@@ -27,7 +29,7 @@ existed — `router.tsx` and `main.tsx` — and then phases G and H.
 | D     | Design-system primitives (`AppButton`, `AppCard`, …)   | done  |
 | E     | Shell (`App`, dashboard, nav, banners, dialogs)        | done  |
 | F     | Feature views (auth, workouts, exercises, routines, …) | done  |
-| G     | e2e + screenshot harness pointed at the React app      | todo  |
+| G     | e2e + screenshot harness pointed at the React app      | next  |
 | H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
 
 Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
@@ -384,19 +386,40 @@ now only appears if the navigation promise rejects. And the select-all after an
 autofilled value is deferred with a zero timeout, because the copied value only
 reaches the input on the render that write schedules.
 
-**Next: `router.tsx` and `main.tsx`.** These are the immediate work — nothing
-runs as an app until they exist. Both are still placeholders:
+**The app boots.** `router.tsx`, `App.tsx`, `main.tsx` and `native/platform.ts`
+are written, so `web-next/` is a running application rather than a pile of
+components. Four things about how they fit together:
 
-- `router.tsx` turns `routes.ts` into `createBrowserRouter` routes with a lazy
-  element each, nests them under `AppDashboard` or `GuestView` by access rule,
-  wraps them in something that calls `redirectForRoute`, and calls
-  `onNavigate`/`applyPageTitle` from a navigation effect. It must also call
-  `setNavigator(router.navigate)`, or every redirect from the HTTP layer becomes
-  a full page load.
-- `main.tsx` ports `web/src/main.ts`: auth-store init, token refresh, PostHog
-  identify, route warming, and `pollUnreadNotifications()` for a signed-in user.
-  `startMutationQueue()` is already called, by `AppOfflineBanner`, which owns
-  the rest of the offline lifecycle.
+- **`router/screens.ts` holds the import behind each route name**, and both the
+  router and `warmRoutes` read it. `routes.ts` stays free of imports of the
+  views, which would close a cycle back through the HTTP layer, and
+  `router.spec.tsx` resolves every entry — that map is a list of paths and
+  export names, exactly the wiring that goes stale silently when a screen is
+  renamed.
+- **The guard, the page title and the nav bookkeeping run in a route loader**,
+  not in an effect on the element. Effects run child-first, so a wrapper
+  blanking the title would undo the dynamic title a screen had just set; a
+  loader runs before the screen exists. `redirectForRoute` throws React Router's
+  `redirect()`, which is the direct equivalent of vue-router's `beforeEnter`.
+- **Only leaf routes get a loader.** A parent with children is a frame around
+  them; running the bookkeeping on both would reset the tab bar the frame exists
+  to hold. The leaf is handed its _screen_ name — its top-level ancestor — so
+  moving between a screen's own tabs is not a change of screen.
+- **`setNavigator(router.navigate)` is called in `main.tsx` before the first
+  render**, because a request fired by a route loader can beat the router's
+  mount, and losing that redirect strands the user.
+
+`native/platform.ts` came across with it — it was missing from this file's
+inventory. `deepLinkPath` is unchanged; the keep-awake watch is a
+`router.subscribe` rather than a Vue `watch`, and asks `isFocusedShellPath`
+rather than matching route names. That predicate now lives in `routes.ts` and
+is read off the route table, so `AppDashboard`, `AppRestTimerBanner` and the
+native wrapper cannot drift apart about which screens these are — all three had
+their own copy.
+
+**Next: phase G.** The e2e suite and the screenshot harness in `web/tests/`
+still point at the Vue app. They need a `web-next/` equivalent, running against
+the React dev server, before the swap can be trusted.
 
 ## Phase H — do not forget
 

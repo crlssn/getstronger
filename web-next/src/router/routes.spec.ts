@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { en } from '@/i18n/messages'
 import { isTabRoot, tabRootPaths } from './tabs'
-import { flatRoutes, routeByName, routes } from './routes'
+import { flatRoutes, isFocusedShellPath, routeByName, routes } from './routes'
 
 const all = flatRoutes()
 
@@ -111,6 +111,18 @@ describe('routes', () => {
         'verify-email-pending',
       ].sort(),
     )
+  })
+})
+
+describe('isFocusedShellPath', () => {
+  test.each([
+    ['/workouts/quick', true],
+    ['/workouts/routine/routine-1', true],
+    ['/workouts/routine/routine-1/extra', false],
+    ['/workouts/workout-1', false],
+    ['/home', false],
+  ])('classifies %s as %s', (pathname, expected) => {
+    expect(isFocusedShellPath(pathname)).toBe(expected)
   })
 })
 

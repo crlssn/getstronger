@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
+import { isFocusedShellPath } from '@/router/routes'
 import { useWorkoutStore } from '@/stores/workout'
 import { cn } from '@/ui/cn'
 import {
@@ -17,9 +18,6 @@ import {
 } from '@/utils/restTimer'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
 import styles from './AppRestTimerBanner.module.css'
-
-const onWorkoutScreen = (pathname: string) =>
-  pathname === '/workouts/quick' || pathname.startsWith('/workouts/routine/')
 
 /**
  * The rest countdown, carried across the app while a workout is paused.
@@ -42,7 +40,7 @@ export const AppRestTimerBanner = () => {
   const totalSeconds = savedWorkout?.[1].restTimerTotalSeconds ?? 0
 
   const remaining = restRemainingSeconds(now, endsAtMs)
-  const away = !onWorkoutScreen(pathname)
+  const away = !isFocusedShellPath(pathname)
 
   useEffect(() => {
     const tick = setInterval(() => setNow(Date.now()), 1000)

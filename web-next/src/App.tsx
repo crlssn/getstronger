@@ -1,11 +1,28 @@
-// TODO(#1100): placeholder root component. Port web/src/App.vue once
-// AppDashboard, GuestView, AppOfflineBanner, AppUpdateBanner, and
-// AppConfirmDialog have React equivalents (see MIGRATION_PLAN.md phase E).
-export default function App() {
+import { selectAuthorised, useAuthStore } from '@/stores/auth'
+import { AppConfirmDialog } from '@/ui/components/AppConfirmDialog'
+import { AppDashboard } from '@/ui/components/AppDashboard'
+import { AppOfflineBanner } from '@/ui/components/AppOfflineBanner'
+import { AppUpdateBanner } from '@/ui/components/AppUpdateBanner'
+import { GuestView } from '@/ui/components/GuestView'
+import styles from './App.module.css'
+
+/**
+ * The root of every route: one of the two shells, plus the app-level singletons.
+ *
+ * Which shell is chosen follows the token rather than the route, so a session
+ * that expires under the user takes the chrome with it rather than leaving a
+ * signed-in frame around a login form.
+ */
+export const App = () => {
+  const authorised = useAuthStore(selectAuthorised)
+
   return (
-    <div>
-      <div className="statusbar-scrim" aria-hidden="true" />
-      <p>GetStronger — React scaffold in progress. See MIGRATION_PLAN.md.</p>
-    </div>
+    <>
+      <div className={styles.statusbarScrim} aria-hidden="true" />
+      {authorised ? <AppDashboard /> : <GuestView />}
+      <AppOfflineBanner />
+      <AppUpdateBanner />
+      <AppConfirmDialog />
+    </>
   )
 }
