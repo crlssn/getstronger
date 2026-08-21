@@ -9,21 +9,24 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 ## Where we are
 
-Phase A is done and phase B is most of the way through: the React toolchain
-builds, typechecks, lints, formats and tests; every module that never depended
-on Vue is ported; i18n runs on i18next; and eight of the 21 stores are on
-Zustand. 160 tests green, 88% statement / 90% line coverage.
+The React toolchain builds, typechecks, lints, formats and tests. Everything
+below the UI is ported: the framework-agnostic modules, i18n on i18next, the
+whole HTTP layer, all 21 stores, and the routing rules. 438 tests green, 94%
+statement / 97% line coverage.
 
-| Phase | What it covers                                         | State       |
-| ----- | ------------------------------------------------------ | ----------- |
-| A     | Toolchain scaffold + framework-agnostic leaves         | done        |
-| B     | i18n, state, routing foundations                       | in progress |
-| C     | HTTP layer and the modules that depend on stores       | todo        |
-| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | todo        |
-| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo        |
-| F     | Feature views (auth, workouts, exercises, routines, …) | todo        |
-| G     | e2e + screenshot harness pointed at the React app      | todo        |
-| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo        |
+The only thing left below the UI is the React Router element tree itself, which
+cannot be written until there are screens to point it at.
+
+| Phase | What it covers                                         | State |
+| ----- | ------------------------------------------------------ | ----- |
+| A     | Toolchain scaffold + framework-agnostic leaves         | done  |
+| B     | i18n, state, routing rules                             | done  |
+| C     | HTTP layer                                             | done  |
+| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | next  |
+| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo  |
+| F     | Feature views (auth, workouts, exercises, routines, …) | todo  |
+| G     | e2e + screenshot harness pointed at the React app      | todo  |
+| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
 
 Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
 `types/*.ts`, `utils/{blurActiveElement,maskEmail,activityBuckets,distanceUnits,weightUnits}.ts`,
@@ -35,13 +38,14 @@ Ported with edits: `i18n/index.ts` (rewritten on i18next), `i18n/messages.ts`
 bug fix — see "Bugs found on the way"), and `router/tabs.ts` (one guard added,
 same section).
 
-Stores on Zustand: `auth`, `connection`, `alerts`, `confirmation`, `pageTitle`,
-`navTabs`, `actionButton`, `preferences`. The conventions they establish are in
-`src/stores/README.md` — read that before adding the ninth.
+All 21 stores are on Zustand. The conventions they follow are in
+`src/stores/README.md`.
 
-Still on Pinia in `web/`, not yet ported: `activity`, `appVersion`, `dashboard`,
-`emailVerification`, `mutationQueue`, `notifications`, `plans`, `progress`,
-`streak`, `workout`.
+The HTTP layer is done: `clients`, `interceptors`, `offlineCache`, `requests`,
+`unauthenticated`, `native`, and `jwt`. `requests.ts` needed four edits across
+663 lines — the router import, two `getState()` calls, and `i18n.global.t`.
+`router/navigation.ts` came before the router itself; see the routing decision
+below.
 
 Verify with, from `web-next/`:
 
@@ -49,6 +53,37 @@ Verify with, from `web-next/`:
 npm run lint && npm run type-check && npm run build-only
 npm run test:unit -- --run --coverage
 ```
+
+## Keeping up with `web/`
+
+`web/` keeps shipping while this is built, so every rebase can bring changes to
+files already ported. Check for it after each `git rebase origin/main`:
+
+```
+git diff <last-synced-main>..origin/main -- web/src
+```
+
+Ignore the `.vue` files — those are phases D–F. The ones that matter are
+`src/proto/**`, `src/http/**`, `src/stores/**`, `src/utils/**` and
+`src/i18n/messages.ts`.
+
+How each syncs:
+
+- **`src/proto/**`** — generated, so copy over: `cp -r web/src/proto/. web-next/src/proto/`.
+- **`src/i18n/messages.ts`** — copy the file, then re-run the plural conversion
+  on it, rather than hand-merging. It is idempotent in the sense that matters:
+  it converts the pipe form and leaves everything else alone.
+- **`src/utils/**`, new modules** — usually verbatim.
+- **`src/http/**`, `src/stores/**`** — apply the diff by hand, translating
+  `useXStore()` to `useXStore.getState()` and `i18n.global.t` to `i18n.t`.
+
+PR #1117 was the first of these: two new user requests, an `autofillSets`
+preference, a regenerated `user_service_pb`, a new `utils/names.ts`, and a
+reworked signup catalogue. The dispatch table's completeness check caught the
+two new requests on its own, which is the main reason it exists.
+
+Record the main commit you synced from when you do it, so the next diff has a
+starting point: **last synced `8574865`**.
 
 ## Decisions already made, and why
 
@@ -82,6 +117,34 @@ The conventions that follow from it — selectors for derived values, `getState(
 outside components, `persist` with an explicit `partialize`, and how specs reset
 a singleton store — are written up in `src/stores/README.md`.
 
+Two of the Pinia stores wired themselves up as a side effect of being imported:
+`mutationQueue` registered a reconnect callback, and `notifications` added a
+`visibilitychange` listener. Both now happen in an exported start function the
+app calls — `startMutationQueue()` and `pollUnreadNotifications()`. Import-time
+wiring fires in whatever order the bundler resolves modules, cannot be undone,
+and in the notifications case outlived the stop call and ran for signed-out
+visitors. `connection` and `appVersion` already had `start()`/`stop()`, so this
+is the convention the other stores now follow rather than a new one.
+
+**`workout` uses Immer, and that changes how the screens write to it.** The Vue
+screens read a set out of `getSets()` and assigned straight into it —
+`set.weight = …`, `v-model="set.durationSeconds"`. Immer freezes the state, so
+that throws. Every edit goes through `updateSet(routineID, exerciseID, index,
+changes)` instead, which is also the only way a change notifies subscribers;
+the Vue version relied on the returned object being reactive. Passing
+`undefined` for a field clears it, so a cleared input does not keep the number
+that was there before. **Phase F needs this** — it is the one place where a
+component cannot be a mechanical port.
+
+**Server-cache stores stay stores.** `activity`, `progress`, `streak`,
+`dashboard` and `plans` cache request results, and a query library would model
+that better in the abstract. They are ported as Zustand stores anyway: they hold
+_derived_ views (a streak count, a last-performed index) rather than raw
+responses, they are reset by events elsewhere in the app such as saving a
+workout, and swapping in TanStack Query would change fetching behaviour in a
+migration whose acceptance criterion is parity. Revisit it as its own change,
+with the e2e suite green on both sides.
+
 **i18n: i18next + react-i18next — done.** The catalogue keeps its single-brace
 placeholders (`{count}`, `{brand}`, 104 of them) by configuring
 `interpolation: { prefix: '{', suffix: '}' }`, so none of them needed touching.
@@ -102,12 +165,38 @@ mechanical change each — `i18n.global.t(…)` → `i18n.t(…)`.
 `i18n` needs its explicit `I18nInstance` annotation: without it `tsc` fails with
 TS2883, since the inferred type cannot be named portably.
 
-**Routing: react-router-dom 7.** The route table maps over directly; the pieces
-needing deliberate design are the three guards (`auth`, `guest`, `landing` —
-today `beforeEnter`, in React either loaders or a wrapper component) and the
-global `beforeEach` that sets the page title from `meta.titleKey` and resets the
-nav-tab and action-button stores on navigation. `router/tabs.ts` is pure data and
-already ported.
+**Routing: react-router-dom 7, with the rules kept out of the element tree.**
+`router/routes.ts` is the whole table as data — 30 routes with their access
+rule, title key and whether they hide the chrome — and `router/guards.ts` turns
+those into decisions: `redirectFor(access, signedIn)`, `onNavigate` for the tab
+and action-button resets, `applyPageTitle` for the header.
+
+Keeping them separate is what let the routing land before any screen exists,
+and it is also what makes it testable: `routes.spec.ts` checks that every title
+key resolves in the catalogue, that every tab root is a route with a title, that
+the catch-all is last, and that nothing but the auth screens is reachable signed
+out. None of that needs a rendered route.
+
+What remains is `router.tsx`: turn the table into `createBrowserRouter` routes
+with a lazy element each, wrap them in something that calls `redirectForRoute`,
+and call `onNavigate`/`applyPageTitle` from a navigation effect. It is short,
+and it needs screens.
+
+**The HTTP layer redirects through `router/navigation.ts`, not the router.**
+`http/unauthenticated.ts` has to send an expired session back to the login
+screen. In `web/` it imports the router object to do it, which closes a cycle —
+the routes lazily import the views, and the views call the HTTP layer. Vue only
+survives it because the view imports are dynamic.
+
+Rather than reproduce that, the app registers the router's `navigate` via
+`setNavigator` at mount, and the HTTP layer depends on the small `navigation`
+module instead of on the route table. This is what lets the whole HTTP layer be
+built before a single route component exists, which is the ordering the rest of
+phase C needs. `goTo` falls back to a document load when nothing is registered
+yet, so a redirect from a request that beat the router to mount is not lost.
+
+Whatever creates the router must call `setNavigator(router.navigate)`. Nothing
+does yet, because no router exists — that is the first line of the routing work.
 
 **ESLint without `eslint-plugin-react`.** Its recommended set targets prop-types
 and the pre-17 JSX runtime, both already covered here, and it has no ESLint 10
@@ -171,33 +260,45 @@ now answers a tab root with itself.
 - The Vue app mounts into `<body id="app">`. React mounts into a `#root` div, so
   `index.html` differs here; `base.css` still styles `#app`, which stays as the
   body id. Check this when porting the shell.
+- **`clients → interceptors → jwt → requests → clients` is an import cycle**,
+  inherited from `web/` and not worth unpicking for its own sake — it resolves
+  correctly at runtime. It does bite in tests: after `vi.resetModules()`,
+  destructuring `import('./interceptors')` before the graph has finished
+  evaluating yields `undefined` bindings. Import `./clients` first, as
+  `clients.spec.ts` does. This is the same class of problem the navigation
+  module was introduced to avoid, and the reason not to add the router to the
+  cycle as well.
 
-## Phase B — what to do next
+## What to do next
 
-i18n is done and the store pattern is settled (`src/stores/README.md`). Ten
-stores remain, then routing.
+Phase D: the design-system primitives, which everything above them needs.
+`AppButton`, `AppCard`, `AppList`, `AppListItem*`, `AppSheet`, `AppSkeleton`,
+`AppEmptyState`, `AppTextarea`, `DropdownButton`. They are small, they have no
+dependencies beyond the CSS already in `src/assets/`, and six of them have
+specs in `web/` to port against Testing Library.
 
-1. `appVersion` and `streak` next — both have specs in `web/` and few
-   dependencies, so they extend the pattern without new decisions.
-2. Then `mutationQueue`, the one with a real design question. It calls
-   `useConnectionStore().onReconnect(…)` at module-init time, so importing the
-   store has a side effect. In React that wiring belongs in an app-level effect;
-   decide where, and write it down here, because `notifications` polling has the
-   same shape.
-3. Then `activity`, `dashboard`, `emailVerification`, `notifications`, `plans`,
-   `progress` — mostly request-and-cache stores. Check whether they are really
-   server cache rather than client state before porting them as-is; several
-   would be plainer as a data-fetching hook, and this is the moment to decide
-   that rather than after 20 components depend on the store shape.
-4. `workout` last — a deep nested map mutated by path, and the reason Immer is
-   already a dependency. Port it with the Immer middleware, and lean on
-   `web/src/stores/workout.spec.ts`, which is thorough.
-5. Port each store's spec alongside it. `mutationQueue`, `notifications`,
-   `streak`, `appVersion` and `workout` all have specs in `web/` that should
-   survive with only the store API changing.
+Two things to do while there:
 
-Routing comes after the stores, since the global navigation guard resets
-`navTabs` and `actionButton` and so needs both to exist.
+- Port the two filesystem guards from `web/tests/` —
+  `no-hardcoded-strings.spec.ts` and `no-raw-palettes.spec.ts`. They are regex
+  scanners over the source, so they only need their globs changed from `.vue`
+  to `.tsx`. Do it before the components land, not after, so they hold from the
+  first one.
+- `AppList` uses `vInfiniteScroll` from `@vueuse/components`, which has no
+  React equivalent here. An intersection-observer hook is the replacement;
+  `utils/usePagination.ts` in `web/` is the other half of that story and is not
+  yet ported.
+
+Then phase E (the shell) and phase F (the screens), and with them `router.tsx`
+and `main.tsx` — both still placeholders. `main.tsx` should port
+`web/src/main.ts`: auth-store init, token refresh, PostHog identify, route
+warming, and the two start calls that used to be import side effects
+(`startMutationQueue()`, and `pollUnreadNotifications()` for a signed-in user).
+Whatever creates the router must also call `setNavigator(router.navigate)`, or
+every redirect from the HTTP layer becomes a full page load.
+
+After that the UI is all that is left — phases D through H, and the bulk of the
+work by volume. Nothing below the UI should need revisiting.
 
 ## Phase H — do not forget
 
@@ -217,11 +318,20 @@ needs to ship _with_ the swap, not after.
 
 The issue asks for 80%+. `npm run test:unit -- --run --coverage` reports it, and
 CI runs it that way so the number moves with each increment rather than being
-discovered at the end. It currently sits at 88% statements / 90% lines.
+discovered at the end. It currently sits at 93% statements / 95% lines.
 
 Expect it to fall once components land — the ported modules are unusually easy
 to cover. `src/proto`, `src/main.tsx` and the specs are excluded in
 `vitest.config.ts`; nothing else is.
+
+`requests.ts` is worth a note, since it is a fifth of the source. Its fifty
+wrappers are covered by a dispatch table in `requests.dispatch.spec.ts` that
+pins each request to the client method it must reach, plus a check that the
+table has an entry for every export. That is aimed at the mistake the file
+invites — a new request still calling the neighbour it was copied from — rather
+than at the coverage number, which it happens to raise from 32% to 99%. The
+shared `tryCatch` every request routes its failures through has its own suite in
+`requests.spec.ts`.
 
 Of the 38 specs in `web/src`, 22 test plain modules and port with little change;
 the 16 that mount `.vue` SFCs need rewriting against Testing Library. Two

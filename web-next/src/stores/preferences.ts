@@ -8,9 +8,19 @@ import { normalizeWeightUnit } from '@/utils/weightUnits'
 interface PreferencesState {
   weightUnit: WeightUnit
   distanceUnit: DistanceUnit
+  autofillSets: boolean
   setWeightUnit: (unit?: WeightUnit) => void
   setDistanceUnit: (unit?: DistanceUnit) => void
+  setAutofillSets: (enabled?: boolean) => void
   reset: () => void
+}
+
+const defaults = {
+  weightUnit: WeightUnit.KILOGRAMS,
+  distanceUnit: DistanceUnit.KILOMETERS,
+  // Off unless the account asked for it: a value nobody typed is a surprise,
+  // so the workout screen only prefills when this is true.
+  autofillSets: false,
 }
 
 // Cached locally so the UI has an immediate value while `getCurrentUser`
@@ -21,17 +31,21 @@ interface PreferencesState {
 export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
-      weightUnit: WeightUnit.KILOGRAMS,
-      distanceUnit: DistanceUnit.KILOMETERS,
+      ...defaults,
 
       setWeightUnit: (unit) => set({ weightUnit: normalizeWeightUnit(unit) }),
       setDistanceUnit: (unit) => set({ distanceUnit: normalizeDistanceUnit(unit) }),
+      setAutofillSets: (enabled) => set({ autofillSets: enabled ?? false }),
 
-      reset: () => set({ weightUnit: WeightUnit.KILOGRAMS, distanceUnit: DistanceUnit.KILOMETERS }),
+      reset: () => set(defaults),
     }),
     {
       name: 'preferences',
-      partialize: ({ weightUnit, distanceUnit }) => ({ weightUnit, distanceUnit }),
+      partialize: ({ weightUnit, distanceUnit, autofillSets }) => ({
+        weightUnit,
+        distanceUnit,
+        autofillSets,
+      }),
     },
   ),
 )
