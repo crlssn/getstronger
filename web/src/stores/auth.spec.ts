@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
 
 vi.mock('@/posthog', () => ({
   identifyUser: vi.fn(),
@@ -9,7 +8,7 @@ vi.mock('@/posthog', () => ({
 }))
 
 import { identifyUser, resetUser } from '@/posthog'
-import { useAuthStore } from './auth'
+import { selectAuthorised, useAuthStore } from './auth'
 
 const identifyUserMock = vi.mocked(identifyUser)
 const resetUserMock = vi.mocked(resetUser)
@@ -18,61 +17,79 @@ const resetUserMock = vi.mocked(resetUser)
 const fakeToken = (userId: string) =>
   `header.${btoa(JSON.stringify({ userId })).replace(/=+$/, '')}.signature`
 
+const authorised = () => selectAuthorised(useAuthStore.getState())
+
 describe('useAuthStore', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
+    localStorage.clear()
+    useAuthStore.setState({ userId: '', accessToken: '' })
     identifyUserMock.mockReset()
     resetUserMock.mockReset()
   })
 
   test('decodes the user ID from the token and identifies on first login', () => {
-    const store = useAuthStore()
-    store.setAccessToken(fakeToken('user-1'))
+    useAuthStore.getState().setAccessToken(fakeToken('user-1'))
 
-    expect(store.userId).toBe('user-1')
-    expect(store.authorised).toBe(true)
+    expect(useAuthStore.getState().userId).toBe('user-1')
+    expect(authorised()).toBe(true)
     expect(identifyUserMock).toHaveBeenCalledExactlyOnceWith('user-1')
     expect(resetUserMock).not.toHaveBeenCalled()
   })
 
   test('does not re-identify when the same user refreshes their token', () => {
-    const store = useAuthStore()
-    store.setAccessToken(fakeToken('user-1'))
+    useAuthStore.getState().setAccessToken(fakeToken('user-1'))
     identifyUserMock.mockReset()
 
-    store.setAccessToken(fakeToken('user-1'))
+    useAuthStore.getState().setAccessToken(fakeToken('user-1'))
 
     expect(identifyUserMock).not.toHaveBeenCalled()
     expect(resetUserMock).not.toHaveBeenCalled()
   })
 
   test('resets and re-identifies when a different user signs in', () => {
-    const store = useAuthStore()
-    store.setAccessToken(fakeToken('user-1'))
+    useAuthStore.getState().setAccessToken(fakeToken('user-1'))
     identifyUserMock.mockReset()
 
-    store.setAccessToken(fakeToken('user-2'))
+    useAuthStore.getState().setAccessToken(fakeToken('user-2'))
 
-    expect(store.userId).toBe('user-2')
+    expect(useAuthStore.getState().userId).toBe('user-2')
     expect(resetUserMock).toHaveBeenCalledOnce()
     expect(identifyUserMock).toHaveBeenCalledExactlyOnceWith('user-2')
   })
 
   test('resets analytics identity on logout', () => {
-    const store = useAuthStore()
-    store.setAccessToken(fakeToken('user-1'))
+    useAuthStore.getState().setAccessToken(fakeToken('user-1'))
 
-    store.logout()
+    useAuthStore.getState().logout()
 
-    expect(store.userId).toBe('')
-    expect(store.accessToken).toBe('')
-    expect(store.authorised).toBe(false)
+    expect(useAuthStore.getState().userId).toBe('')
+    expect(useAuthStore.getState().accessToken).toBe('')
+    expect(authorised()).toBe(false)
     expect(resetUserMock).toHaveBeenCalledOnce()
   })
 
   test('does not reset when logging out while already signed out', () => {
-    useAuthStore().logout()
+    useAuthStore.getState().logout()
 
     expect(resetUserMock).not.toHaveBeenCalled()
+  })
+
+  test('persists the session so a reload stays signed in', () => {
+    useAuthStore.getState().setAccessToken(fakeToken('user-1'))
+
+    expect(JSON.parse(localStorage.getItem('auth') ?? '{}')).toMatchObject({
+      state: { userId: 'user-1' },
+    })
+  })
+})
+
+describe('selectAuthorised', () => {
+  test.each([
+    [{ userId: 'user-1', accessToken: 'token' }, true],
+    [{ userId: 'user-1', accessToken: '' }, false],
+    [{ userId: '', accessToken: 'token' }, false],
+    [{ userId: '', accessToken: '' }, false],
+  ])('%o is authorised: %s', (state, expected) => {
+    expect(selectAuthorised({ ...useAuthStore.getState(), ...state })).toBe(expected)
   })
 })

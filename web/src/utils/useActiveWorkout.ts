@@ -1,17 +1,15 @@
 import type { Workout } from '@/types/workout'
 
-import { computed } from 'vue'
-
 import { i18n } from '@/i18n'
 import { useDashboardStore } from '@/stores/dashboard'
-import { useWorkoutStore } from '@/stores/workout'
+import { quickWorkoutRoutineID, useWorkoutStore } from '@/stores/workout'
 
 const hasEnteredValue = (value: unknown) =>
   value !== undefined && value !== null && (typeof value !== 'string' || value.trim().length > 0)
 
 // Opening a routine stamps startedAt before anything is logged, so a workout
 // only counts as resumable once it holds real progress.
-const hasProgress = (workout: Workout) =>
+export const hasProgress = (workout: Workout) =>
   Object.values(workout.exerciseSets ?? {}).some((sets) =>
     sets.some(
       (set) =>
@@ -24,54 +22,56 @@ const hasProgress = (workout: Workout) =>
   Boolean(workout.note?.trim()) ||
   Boolean(workout.addedExercises?.length)
 
-// Shared view of the locally persisted in-progress workout.
-export default function useActiveWorkout() {
-  const workoutStore = useWorkoutStore()
-  const dashboardStore = useDashboardStore()
+type SavedWorkout = [routineId: string, workout: Workout] | undefined
 
-  const savedWorkout = computed(
-    () =>
-      Object.entries(workoutStore.workouts)
-        .filter(([, workout]) => workout.startedAt && hasProgress(workout))
-        .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0],
-  )
+/** The most recently started workout that holds real progress. */
+export const selectSavedWorkout = (workouts: Record<string, Workout>): SavedWorkout =>
+  Object.entries(workouts)
+    .filter(([, workout]) => workout.startedAt && hasProgress(workout))
+    .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0]
 
-  const savedHref = computed(() => {
-    const routineId = savedWorkout.value?.[0]
-    if (!routineId) return '/workout'
-    if (routineId === 'quick-workout') return '/workouts/quick'
-    const planId = savedWorkout.value?.[1].planId
-    return planId
-      ? { path: `/workouts/routine/${routineId}`, query: { plan_id: planId } }
-      : `/workouts/routine/${routineId}`
-  })
+/**
+ * Where the workout tab goes.
+ *
+ * A plan travels as a query parameter rather than in the path, so the routine
+ * screen knows which plan to advance when the workout is saved.
+ */
+export const savedWorkoutHref = (saved: SavedWorkout): string => {
+  const routineId = saved?.[0]
+  if (!routineId) return '/workout'
+  if (routineId === quickWorkoutRoutineID) return '/workouts/quick'
 
-  const savedRoutineName = computed(() => {
-    const { t } = i18n.global
-    const routineId = savedWorkout.value?.[0]
-    if (!routineId) return t('workout.inProgress')
-    if (routineId === 'quick-workout') return t('workout.quick')
-    return (
-      dashboardStore.dashboard?.routines.find((routine) => routine.id === routineId)?.name ??
-      t('workout.inProgress')
-    )
-  })
+  const planId = saved[1].planId
+  return planId
+    ? `/workouts/routine/${routineId}?plan_id=${encodeURIComponent(planId)}`
+    : `/workouts/routine/${routineId}`
+}
 
-  const savedWorkoutStartedAtMs = computed(() => {
-    const time = Date.parse(savedWorkout.value?.[1].startedAt ?? '')
-    return Number.isNaN(time) ? undefined : time
-  })
+const millisecondsOf = (iso: string | undefined) => {
+  const time = Date.parse(iso ?? '')
+  return Number.isNaN(time) ? undefined : time
+}
 
-  const savedRestTimerEndsAtMs = computed(() => {
-    const time = Date.parse(savedWorkout.value?.[1].restTimerEndsAt ?? '')
-    return Number.isNaN(time) ? undefined : time
-  })
+/** Shared view of the locally persisted in-progress workout. */
+export const useActiveWorkout = () => {
+  const workouts = useWorkoutStore((state) => state.workouts)
+  const routines = useDashboardStore((state) => state.dashboard?.routines)
+
+  const savedWorkout = selectSavedWorkout(workouts)
+  const routineId = savedWorkout?.[0]
+
+  const savedRoutineName = !routineId
+    ? i18n.t('workout.inProgress')
+    : routineId === quickWorkoutRoutineID
+      ? i18n.t('workout.quick')
+      : (routines?.find((routine) => routine.id === routineId)?.name ??
+        i18n.t('workout.inProgress'))
 
   return {
-    savedHref,
-    savedRoutineName,
     savedWorkout,
-    savedWorkoutStartedAtMs,
-    savedRestTimerEndsAtMs,
+    savedHref: savedWorkoutHref(savedWorkout),
+    savedRoutineName,
+    savedWorkoutStartedAtMs: millisecondsOf(savedWorkout?.[1].startedAt),
+    savedRestTimerEndsAtMs: millisecondsOf(savedWorkout?.[1].restTimerEndsAt),
   }
 }

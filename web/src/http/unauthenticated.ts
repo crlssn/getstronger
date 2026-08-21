@@ -1,23 +1,18 @@
-import router from '@/router/router'
+import { currentPath, goTo } from '@/router/navigation'
 import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
+import { singleFlight } from '@/utils/singleFlight'
 
-let redirectingToLogin: Promise<void> | undefined
+export const loginPath = '/login'
+
+// An expired session fails every in-flight request at once; without this each
+// failure would queue its own redirect.
+const redirectToLogin = singleFlight(() => goTo(loginPath, { replace: true }))
 
 export const logoutUnauthenticatedUser = async (): Promise<void> => {
-  const authStore = useAuthStore()
-  authStore.logout()
-  usePreferencesStore().reset()
+  useAuthStore.getState().logout()
+  usePreferencesStore.getState().reset()
 
-  if (router.currentRoute.value.name === 'login') return
-  if (redirectingToLogin) return redirectingToLogin
-
-  redirectingToLogin = router
-    .replace({ name: 'login' })
-    .then(() => undefined)
-    .finally(() => {
-      redirectingToLogin = undefined
-    })
-
-  return redirectingToLogin
+  if (currentPath() === loginPath) return
+  await redirectToLogin()
 }

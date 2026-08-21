@@ -25,13 +25,13 @@ test.describe('social feed and discovery', () => {
     await expect(page.getByText('Type at least 3 characters to search.')).toBeVisible()
     await search.fill('Jane')
     await expect(
-      page.locator('.search-panel').getByRole('link', { name: /Jane Doe/ }),
+      page.getByRole('region', { name: 'Search' }).getByRole('link', { name: /Jane Doe/ }),
     ).toBeVisible()
 
     // The handle is searchable too, and the result leads with it.
     await search.fill('janedoe')
     await page
-      .locator('.search-panel')
+      .getByRole('region', { name: 'Search' })
       .getByRole('link', { name: /janedoe/ })
       .click()
 
@@ -41,7 +41,7 @@ test.describe('social feed and discovery', () => {
   })
 
   test('opens a feed workout and posts a comment @mutation', async ({ page }) => {
-    const card = page.locator('.feed-summary-card').filter({ hasText: 'Jane Doe' }).first()
+    const card = page.getByRole('article').filter({ hasText: 'Jane Doe' }).first()
     await expect(card).toBeVisible()
     await card.getByRole('link', { name: /View .* workout details/ }).click()
 
@@ -76,8 +76,8 @@ test.describe('social feed and discovery', () => {
     await page.reload()
     await expect(page.getByRole('alert')).toContainText('Latest workouts could not be loaded')
     await page.getByRole('button', { name: 'Try again' }).click()
-    await expect(page.locator('.feed-summary-card').first()).toBeVisible()
-    await scrollToListEnd(page, '.feed-end')
+    await expect(page.getByRole('article').first()).toBeVisible()
+    await scrollToListEnd(page, page.getByText(/all caught up/))
     await expect(page.getByText("You're all caught up")).toBeVisible()
   })
 })
@@ -87,18 +87,24 @@ test.describe('profiles and notifications', () => {
 
   test('loads seeded notifications and follows their destinations @smoke', async ({ page }) => {
     const meNavigation = page.getByRole('link', { name: /Me$/ })
-    await expect(meNavigation.locator('.notification-badge')).toHaveText('2')
+    // The badge is a bare number beside the label, so the link carries it.
+    await expect(meNavigation).toContainText('2')
     await meNavigation.click()
 
     const notificationsLink = page.getByRole('link', { name: 'Notifications' })
-    await expect(notificationsLink.locator('.notification-badge')).toHaveText('2')
+    await expect(notificationsLink).toContainText('2')
     await notificationsLink.click()
     await expect(page).toHaveURL(/\/notifications$/)
-    await expect(page.locator('.notification-item.unread')).toHaveCount(2)
-    await expect(page.locator('.notification-item:not(.unread)')).toHaveCount(2)
+    // Each row already carries a screen-reader-only "Unread notification"
+    // while it is unread, which is a better handle than the class that styles
+    // the dot beside it.
+    const rows = page.getByRole('listitem').filter({ has: page.getByRole('link') })
+    await expect(rows).toHaveCount(4)
+    await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(2)
+    await expect(rows.filter({ hasNotText: 'Unread notification' })).toHaveCount(2)
 
     await page.getByRole('button', { name: 'Mark all read' }).click()
-    await expect(page.locator('.notification-item.unread')).toHaveCount(0)
+    await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Mark all read' })).toHaveCount(0)
 
     const janeNotification = page.getByRole('link').filter({ hasText: 'janedoe' }).first()
@@ -147,7 +153,8 @@ test.describe('account progress', () => {
     await page.getByRole('link', { name: /Progress & records/ }).click()
     await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible()
     const periods = page.getByLabel('Progress period')
-    const volumeHeading = page.locator('.chart-heading h2')
+    // The volume total is the only heading that ends in a unit.
+    const volumeHeading = page.getByRole('heading', { name: /kg$/ })
     const volumes: number[] = []
     for (const period of ['7D', '4W', '3M', '1Y']) {
       await periods.getByRole('button', { name: period }).click()
@@ -164,7 +171,11 @@ test.describe('account progress', () => {
       expect(volumes[i]).toBeGreaterThan(volumes[i - 1])
     }
 
-    const firstRecord = page.locator('.record-list a').first()
+    const firstRecord = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Personal records' }) })
+      .getByRole('link')
+      .first()
     await expect(firstRecord).toBeVisible()
     await firstRecord.click()
     await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+$/)

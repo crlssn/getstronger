@@ -22,7 +22,15 @@ const authenticatedPages = [
 
 const waitForPageData = async (page: Page, path: string) => {
   if (path === '/workout') {
-    await scrollToListEnd(page, '.history-end, .history-empty, .history-error')
+    // The history has been travelled once it says so, has nothing to say, or
+    // says it could not be loaded.
+    await scrollToListEnd(
+      page,
+      page
+        .getByText(/reached the end of your workout history/)
+        .or(page.getByText('Your completed workouts will appear here.'))
+        .or(page.getByText('Workout history could not be loaded.')),
+    )
   }
 }
 
@@ -74,7 +82,9 @@ test('supports keyboard-only home search @smoke', async ({ page }) => {
       search.evaluate((element) => getComputedStyle(element).getPropertyValue('--tw-ring-shadow')),
     )
     .toContain('calc(0px + 0px)')
-  const searchField = page.locator('.search-field')
+  // The ring belongs to the field around the input, not to the input itself,
+  // so it is reached as that input's parent.
+  const searchField = search.locator('xpath=..')
   await expect(searchField).toHaveCSS('border-top-style', 'solid')
   await expect
     .poll(() =>
@@ -84,7 +94,9 @@ test('supports keyboard-only home search @smoke', async ({ page }) => {
     )
     .toBe('0 0 #0000')
   await search.fill('Jane')
-  const result = page.locator('.search-panel').getByRole('link', { name: /Jane Doe/ })
+  const result = page
+    .getByRole('region', { name: 'Search' })
+    .getByRole('link', { name: /Jane Doe/ })
   await result.focus()
   await page.keyboard.press('Enter')
 
@@ -111,15 +123,25 @@ test('keeps icon-only controls above the tap-target floor @responsive', async ({
 
   await page.goto('/plans/create')
   await page.getByRole('button', { name: 'Add routine' }).click()
-  await page
+  // The options are the buttons that name a routine; the sheet's close control
+  // carries no name of its own.
+  const firstOption = page
     .getByRole('dialog', { name: 'Choose a routine' })
-    .locator('.routine-options button')
+    .getByRole('button')
+    .filter({ has: page.locator('strong') })
     .first()
-    .click()
+  const routineName = (await firstOption.locator('strong').innerText()).trim()
+  await firstOption.click()
 
-  const reorder = page.locator('.routine-order ol li').first().locator('.order-actions button')
-  await expect(reorder.first()).toBeVisible()
-  for (const [index, control] of (await reorder.all()).entries()) {
+  // The reorder controls are named after the routine they act on, which is a
+  // steadier handle than the row they happen to sit in.
+  const reorder = [
+    page.getByRole('button', { name: `Move ${routineName} up` }),
+    page.getByRole('button', { name: `Move ${routineName} down` }),
+    page.getByRole('button', { name: `Remove ${routineName}` }),
+  ]
+  await expect(reorder[0]).toBeVisible()
+  for (const [index, control] of reorder.entries()) {
     await expectAboveFloor(control, `plan reorder control ${index + 1}`)
   }
 })

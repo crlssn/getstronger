@@ -1,11 +1,11 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import { DateTime } from 'luxon'
-
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
+
+import { DateTime } from 'luxon'
+import { create } from 'zustand'
 
 import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
+import { singleFlight } from '@/utils/singleFlight'
 
 // The chart's widest range; paging past it only fetches workouts no range shows.
 export const chartRangeDays = 365
@@ -14,18 +14,21 @@ export const chartRangeDays = 365
 const chartPageLimit = 100
 const maxPages = 8
 
+interface ProgressState {
+  workouts: Workout[]
+  loaded: boolean
+  failed: boolean
+  load: () => Promise<void>
+  reset: () => void
+}
+
 // The progress chart's data feed. The dashboard's recentWorkouts is a
 // three-item preview for the home screen, so charting a quarter or a year
 // needs its own walk through the workout history.
-export const useProgressStore = defineStore('progress', () => {
-  const workouts = ref<Workout[]>([])
-  const loaded = ref(false)
-  const failed = ref(false)
-  let inFlight: Promise<void> | undefined
-
+export const useProgressStore = create<ProgressState>()((set, get) => {
   const refresh = async () => {
-    const authStore = useAuthStore()
-    if (!authStore.userId) return
+    const { userId } = useAuthStore.getState()
+    if (!userId) return
 
     const cutoff = DateTime.now().minus({ days: chartRangeDays })
     const collected: Workout[] = []
@@ -33,7 +36,7 @@ export const useProgressStore = defineStore('progress', () => {
     let requestFailed = false
 
     for (let page = 0; page < maxPages; page += 1) {
-      const response = await listWorkouts([authStore.userId], pageToken, chartPageLimit)
+      const response = await listWorkouts([userId], pageToken, chartPageLimit)
       if (!response) {
         requestFailed = true
         break
@@ -56,34 +59,27 @@ export const useProgressStore = defineStore('progress', () => {
       if (reachedCutoff || !pageToken.length) break
     }
 
-    failed.value = requestFailed
-    if (!requestFailed) {
-      workouts.value = collected
+    if (requestFailed) {
+      set({ failed: true, loaded: true })
+      return
     }
-    loaded.value = true
+
+    set({ failed: false, loaded: true, workouts: collected })
   }
 
-  // Cached for the session; reset after saving a workout.
-  const load = async () => {
-    if (loaded.value && !failed.value) return
-    if (!inFlight) {
-      inFlight = refresh().finally(() => {
-        inFlight = undefined
-      })
-    }
-    return inFlight
-  }
-
-  const reset = () => {
-    loaded.value = false
-    failed.value = false
-  }
+  const refreshOnce = singleFlight(refresh)
 
   return {
-    failed,
-    load,
-    loaded,
-    reset,
-    workouts,
+    workouts: [],
+    loaded: false,
+    failed: false,
+
+    // Cached for the session; reset after saving a workout.
+    load: async () => {
+      if (get().loaded && !get().failed) return
+      await refreshOnce()
+    },
+
+    reset: () => set({ loaded: false, failed: false }),
   }
 })

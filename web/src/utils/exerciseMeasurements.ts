@@ -63,7 +63,7 @@ export const formatMeasurementDuration = (seconds: number) => {
 }
 
 export const formatDurationDisplay = (seconds: number) => {
-  const { t } = i18n.global
+  const { t } = i18n
   const minutes = Math.floor(seconds / 60)
   const remainder = seconds % 60
   if (!minutes) return `${remainder} ${t('common.sec')}`

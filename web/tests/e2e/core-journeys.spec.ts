@@ -83,7 +83,12 @@ test.describe('authenticated journeys', () => {
     await page.getByRole('button', { name: 'Choose exercise' }).click()
 
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
-    const firstExercise = picker.locator('.exercise-options button').first()
+    // The options are the buttons that name something; the sheet's own close
+    // and load-more controls carry no name of their own.
+    const firstExercise = picker
+      .getByRole('button')
+      .filter({ has: page.locator('strong') })
+      .first()
     const exerciseName = (await firstExercise.locator('strong').innerText()).trim()
     await firstExercise.click()
 

@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 
@@ -63,9 +62,9 @@ Object.defineProperty(window, 'localStorage', {
 
 describe('offlineCache', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
     storage.clear()
-    useAuthStore().userId = 'user-1'
+    useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
+    useConnectionStore.setState({ online: true, reconnectCallbacks: [] })
   })
 
   test('serves the cached response when the network call fails', async () => {
@@ -80,7 +79,7 @@ describe('offlineCache', () => {
     }
 
     expect(replayed.message.exercises[0].name).toBe('Bench Press')
-    expect(useConnectionStore().online).toBe(false)
+    expect(useConnectionStore.getState().online).toBe(false)
   })
 
   test('rethrows a network failure when nothing is cached', async () => {
@@ -146,7 +145,7 @@ describe('offlineCache', () => {
 
     await run(listRequest(), next)
 
-    useAuthStore().userId = 'user-2'
+    useAuthStore.setState({ userId: 'user-2' })
     await expect(run(listRequest(), next)).rejects.toThrow(ConnectError)
   })
 
@@ -187,13 +186,12 @@ describe('offlineCache', () => {
   })
 
   test('marks the connection online again after a successful read', async () => {
-    const connectionStore = useConnectionStore()
-    connectionStore.setOnline(false)
+    useConnectionStore.getState().setOnline(false)
     const next = vi.fn().mockResolvedValue(listResponse('Bench Press'))
 
     await run(listRequest(), next)
 
-    expect(connectionStore.online).toBe(true)
+    expect(useConnectionStore.getState().online).toBe(true)
   })
 })
 

@@ -7,6 +7,6 @@ import forms from '@tailwindcss/forms'
 // plays rather than the hue it happens to be. Records use the record-* tokens
 // (gold on champagne); the achievement orange ramp is gone.
 export default {
-  content: ['./index.html', './src/**/*.{html,vue,js,ts,jsx,tsx}'],
+  content: ['./index.html', './src/**/*.{html,js,ts,jsx,tsx}'],
   plugins: [forms],
 }

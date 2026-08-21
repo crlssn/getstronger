@@ -92,9 +92,18 @@ export const logInAs = async (page: Page, userEmail: string, userPassword: strin
 export const logIn = async (page: Page) => logInAs(page, email, password)
 
 export const waitForHome = async (page: Page) => {
+  // `.loading-card` is the one class the app still declares globally, and it is
+  // what the screenshot harness settles on too.
   await expect(page.locator('.loading-card')).toHaveCount(0)
+  // The feed has settled once it says something: a workout, the caught-up
+  // marker, the empty state, or the error.
   await expect(
-    page.locator('.feed-summary-card, .feed-end, .empty-state, .feed-error').first(),
+    page
+      .getByRole('link', { name: /workout details$/ })
+      .or(page.getByText(/all caught up/))
+      .or(page.getByText('No workouts from people you follow'))
+      .or(page.getByText('Latest workouts could not be loaded.'))
+      .first(),
   ).toBeVisible()
 }
 
@@ -115,15 +124,15 @@ export const openExerciseActions = async (page: Page) => {
 // The feed and the workout history page more as their sentinel scrolls into
 // view, so the end-of-list marker only exists once a reader has travelled the
 // whole list. Scrolling the way a person would is what makes it appear.
-export const scrollToListEnd = async (page: Page, selector: string, maxScrolls = 40) => {
-  const marker = page.locator(selector).first()
+export const scrollToListEnd = async (page: Page, marker: Locator, maxScrolls = 40) => {
+  const target = marker.first()
   for (let scroll = 0; scroll < maxScrolls; scroll += 1) {
-    if (await marker.isVisible()) return
+    if (await target.isVisible()) return
     await page.mouse.wheel(0, 20_000)
     await page.waitForTimeout(300)
   }
 
-  await expect(marker).toBeVisible()
+  await expect(target).toBeVisible()
 }
 
 export const allowRuntimeErrors = {

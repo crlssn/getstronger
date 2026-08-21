@@ -1,5 +1,5 @@
 import { type FieldMask } from '@bufbuild/protobuf/wkt'
-import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb.ts'
+import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb'
 
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -7,13 +7,13 @@ import { Error, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
 import {
   ListFeedItemsRequestSchema,
   type ListFeedItemsResponse,
-} from '@/proto/api/v1/feed_service_pb.ts'
+} from '@/proto/api/v1/feed_service_pb'
 import {
   ListNotificationsRequestSchema,
   type ListNotificationsResponse,
   MarkNotificationsAsReadRequestSchema,
   type MarkNotificationsAsReadResponse,
-} from '@/proto/api/v1/notification_service_pb.ts'
+} from '@/proto/api/v1/notification_service_pb'
 import {
   FollowUserRequestSchema,
   type FollowUserResponse,
@@ -37,7 +37,7 @@ import {
   type UpdateUserUsernameResponse,
   UpdateUserWeightUnitRequestSchema,
   type UpdateUserWeightUnitResponse,
-} from '@/proto/api/v1/user_service_pb.ts'
+} from '@/proto/api/v1/user_service_pb'
 import {
   CreatePlanRequestSchema,
   type CreatePlanResponse,
@@ -137,7 +137,7 @@ import {
 } from './clients'
 import { i18n } from '@/i18n'
 import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
-import router from '@/router/router'
+import { currentPath, goTo } from '@/router/navigation'
 import { useAlertStore } from '@/stores/alerts'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 
@@ -197,11 +197,12 @@ export const resendVerificationEmail = async (
   return tryCatch(() => authClient.resendVerificationEmail(req), { ignoreErrors: true })
 }
 
+export const verifyEmailPendingPath = '/verify-email/pending'
+
 const redirectToPendingVerification = async (email: string): Promise<void> => {
-  const emailVerificationStore = useEmailVerificationStore()
-  emailVerificationStore.setPendingEmail(email)
-  if (router.currentRoute.value.name === 'verify-email-pending') return
-  await router.push({ name: 'verify-email-pending' })
+  useEmailVerificationStore.getState().setPendingEmail(email)
+  if (currentPath() === verifyEmailPendingPath) return
+  await goTo(verifyEmailPendingPath)
 }
 
 export const logout = async (): Promise<LogoutResponse | void> => {
@@ -664,10 +665,10 @@ const tryCatch = async <T>(
             await options.onEmailNotVerified?.()
             return
           case Error.PASSWORDS_DO_NOT_MATCH:
-            useAlertStore().setErrorWithoutPageRefresh(i18n.global.t('auth.passwordsDoNotMatch'))
+            useAlertStore.getState().setErrorWithoutPageRefresh(i18n.t('auth.passwordsDoNotMatch'))
             return
           case Error.USERNAME_TAKEN:
-            useAlertStore().setErrorWithoutPageRefresh(i18n.global.t('auth.usernameTaken'))
+            useAlertStore.getState().setErrorWithoutPageRefresh(i18n.t('auth.usernameTaken'))
             return
         }
       }
@@ -680,7 +681,7 @@ const tryCatch = async <T>(
         Code.Unauthenticated,
       ]
       if (!ignoredCodes.includes(error.code)) {
-        useAlertStore().setErrorWithoutPageRefresh(error.message)
+        useAlertStore.getState().setErrorWithoutPageRefresh(error.message)
         return
       }
     }

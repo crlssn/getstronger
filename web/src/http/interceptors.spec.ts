@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
 import { Code, ConnectError } from '@connectrpc/connect'
 
 vi.mock('@/jwt/jwt', () => ({
@@ -27,13 +26,10 @@ const unaryRequest = { stream: false, method: UserService.method.getUser }
 
 describe('retryUnauthenticated', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
     refreshAccessTokenOrLogout.mockReset()
     refreshAccessTokenOrLogout.mockResolvedValue(undefined)
 
-    const authStore = useAuthStore()
-    authStore.userId = 'user-1'
-    authStore.accessToken = 'expired-token'
+    useAuthStore.setState({ userId: 'user-1', accessToken: 'expired-token' })
   })
 
   test('refreshes the access token and replays the call once', async () => {
@@ -46,7 +42,7 @@ describe('retryUnauthenticated', () => {
 
   test('gives up when the refresh could not restore the session', async () => {
     refreshAccessTokenOrLogout.mockImplementation(async () => {
-      useAuthStore().logout()
+      useAuthStore.getState().logout()
     })
     const next = vi.fn().mockRejectedValue(expired())
 
@@ -73,7 +69,7 @@ describe('retryUnauthenticated', () => {
   })
 
   test('skips the retry when nobody is signed in', async () => {
-    useAuthStore().logout()
+    useAuthStore.getState().logout()
     const next = vi.fn().mockRejectedValue(expired())
 
     await expect(run(unaryRequest, next)).rejects.toThrow(ConnectError)

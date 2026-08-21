@@ -1,29 +1,21 @@
-import type { Router } from 'vue-router'
+import { screens } from '@/router/screens'
 
 /**
- * Imports every lazy route component so navigation keeps working when the
- * network later disappears: an unvisited route's chunk cannot be fetched
- * offline, which would abort the navigation. Call it once the app has
- * settled; failures are ignored because the route can still load on demand.
+ * Imports every lazy screen so navigation keeps working once the network
+ * disappears.
+ *
+ * An unvisited route's chunk cannot be fetched offline, and a navigation that
+ * cannot fetch its chunk aborts. Call this after the app has settled; failures
+ * are ignored, because the route can still load on demand.
  */
-export const warmLazyRoutes = async (router: Router): Promise<void> => {
-  const loads: Promise<unknown>[] = []
-  for (const route of router.getRoutes()) {
-    for (const component of Object.values(route.components ?? {})) {
-      if (typeof component === 'function') {
-        loads.push(Promise.resolve((component as () => unknown)()).catch(() => undefined))
-      }
-    }
-  }
-  await Promise.all(loads)
+export const warmLazyRoutes = async (): Promise<void> => {
+  await Promise.all(Object.values(screens).map((load) => load?.().catch(() => undefined)))
 }
 
-/** Schedules warmLazyRoutes for when the browser is idle. */
-export const warmLazyRoutesWhenIdle = (router: Router): void => {
-  const warm = () => void warmLazyRoutes(router)
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(warm)
-  } else {
-    setTimeout(warm, 1_000)
-  }
+/** Schedules `warmLazyRoutes` for the next moment the browser is idle. */
+export const warmLazyRoutesWhenIdle = (): void => {
+  const warm = () => void warmLazyRoutes()
+
+  if ('requestIdleCallback' in window) window.requestIdleCallback(warm)
+  else setTimeout(warm, 1_000)
 }

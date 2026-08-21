@@ -1,6 +1,5 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
 import { Capacitor } from '@capacitor/core'
+import { create } from 'zustand'
 
 /** How often to re-check while the tab is open. */
 const pollIntervalMs = 5 * 60 * 1000
@@ -27,50 +26,63 @@ export const fetchDeployedVersion = async (): Promise<string | undefined> => {
   }
 }
 
-export const useAppVersionStore = defineStore('appVersion', () => {
-  const runningVersion = ref(typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '')
-  const updateAvailable = ref(false)
-  const dismissedVersion = ref('')
-  let timer: ReturnType<typeof setInterval> | undefined
+interface AppVersionState {
+  runningVersion: string
+  updateAvailable: boolean
+  dismissedVersion: string
+  check: () => Promise<void>
+  dismiss: () => Promise<void>
+  refresh: () => void
+  start: () => void
+  stop: () => void
+}
 
-  const check = async () => {
-    const latest = await fetchDeployedVersion()
-    if (!isOutdated(runningVersion.value, latest)) return
-    // Re-prompt if a further deploy lands after one was dismissed.
-    updateAvailable.value = latest !== dismissedVersion.value
-  }
+// Not state: nothing renders from them, and putting a timer handle in the store
+// would make every subscriber re-render when polling starts.
+let timer: ReturnType<typeof setInterval> | undefined
 
-  const dismiss = async () => {
-    dismissedVersion.value = (await fetchDeployedVersion()) ?? ''
-    updateAvailable.value = false
-  }
-
-  const refresh = () => window.location.reload()
-
-  const start = () => {
-    // Dev serves no version.json, and hot reload covers the same ground.
-    if (!import.meta.env.PROD || timer) return
-    // Native builds ship their assets inside the binary: a web deploy does not
-    // change what is running, so prompting to "refresh" would mislead. An
-    // app-store update hint is a possible follow-up.
-    if (Capacitor.isNativePlatform()) return
-
-    void check()
-    timer = setInterval(() => void check(), pollIntervalMs)
-    // Returning to a tab left open for hours is the likeliest moment to be
-    // running a build that no longer exists.
-    document.addEventListener('visibilitychange', onVisibilityChange)
-  }
-
+export const useAppVersionStore = create<AppVersionState>()((set, get) => {
   const onVisibilityChange = () => {
-    if (document.visibilityState === 'visible') void check()
+    if (document.visibilityState === 'visible') void get().check()
   }
 
-  const stop = () => {
-    if (timer) clearInterval(timer)
-    timer = undefined
-    document.removeEventListener('visibilitychange', onVisibilityChange)
-  }
+  return {
+    runningVersion: typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '',
+    updateAvailable: false,
+    dismissedVersion: '',
 
-  return { check, dismiss, refresh, runningVersion, start, stop, updateAvailable }
+    check: async () => {
+      const latest = await fetchDeployedVersion()
+      if (!isOutdated(get().runningVersion, latest)) return
+      // Re-prompt if a further deploy lands after one was dismissed.
+      set({ updateAvailable: latest !== get().dismissedVersion })
+    },
+
+    dismiss: async () => {
+      set({ dismissedVersion: (await fetchDeployedVersion()) ?? '', updateAvailable: false })
+    },
+
+    refresh: () => window.location.reload(),
+
+    start: () => {
+      // Dev serves no version.json, and hot reload covers the same ground.
+      if (!import.meta.env.PROD || timer) return
+      // Native builds ship their assets inside the binary: a web deploy does not
+      // change what is running, so prompting to "refresh" would mislead. An
+      // app-store update hint is a possible follow-up.
+      if (Capacitor.isNativePlatform()) return
+
+      void get().check()
+      timer = setInterval(() => void get().check(), pollIntervalMs)
+      // Returning to a tab left open for hours is the likeliest moment to be
+      // running a build that no longer exists.
+      document.addEventListener('visibilitychange', onVisibilityChange)
+    },
+
+    stop: () => {
+      if (timer) clearInterval(timer)
+      timer = undefined
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    },
+  }
 })

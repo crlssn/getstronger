@@ -3,7 +3,7 @@ import type { Interceptor } from '@connectrpc/connect'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { AuthService } from '@/proto/api/v1/auth_service_pb'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
-import { useAuthStore } from '@/stores/auth'
+import { selectAuthorised, useAuthStore } from '@/stores/auth'
 
 export const logger: Interceptor = (next) => async (req) => {
   console.debug(`sending message to ${req.url}`)
@@ -11,7 +11,7 @@ export const logger: Interceptor = (next) => async (req) => {
 }
 
 export const auth: Interceptor = (next) => async (req) => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore.getState()
   req.header.set('Authorization', `Bearer ${authStore.accessToken}`)
   return next(req)
 }
@@ -25,7 +25,7 @@ export const retryUnauthenticated: Interceptor = (next) => async (req) => {
   // Streaming responses carry Unauthenticated in the response body, which is
   // read long after this returns, so those calls recover at the call site.
   if (req.stream || req.method === AuthService.method.refreshToken) return next(req)
-  if (!useAuthStore().authorised) return next(req)
+  if (!selectAuthorised(useAuthStore.getState())) return next(req)
 
   try {
     return await next(req)
@@ -34,7 +34,7 @@ export const retryUnauthenticated: Interceptor = (next) => async (req) => {
 
     await refreshAccessTokenOrLogout()
     // A failed refresh has already logged the user out and redirected them.
-    if (!useAuthStore().authorised) throw error
+    if (!selectAuthorised(useAuthStore.getState())) throw error
 
     return next(req)
   }

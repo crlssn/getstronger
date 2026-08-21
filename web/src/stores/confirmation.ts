@@ -1,5 +1,4 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
+import { create } from 'zustand'
 
 export type Confirmation = {
   title: string
@@ -9,27 +8,34 @@ export type Confirmation = {
   destructive?: boolean
 }
 
+interface ConfirmationState {
+  confirmation: Confirmation | null
+  resolver: ((confirmed: boolean) => void) | null
+  confirm: (options: Confirmation) => Promise<boolean>
+  accept: () => void
+  dismiss: () => void
+}
+
 // Promise-based replacement for window.confirm, rendered by AppConfirmDialog.
-export const useConfirmationStore = defineStore('confirmation', () => {
-  const confirmation = ref<Confirmation | null>(null)
-  let resolver: ((confirmed: boolean) => void) | null = null
-
-  const confirm = (options: Confirmation): Promise<boolean> => {
-    resolver?.(false)
-    confirmation.value = options
-    return new Promise((resolve) => {
-      resolver = resolve
-    })
-  }
-
+export const useConfirmationStore = create<ConfirmationState>()((set, get) => {
   const settle = (confirmed: boolean) => {
-    confirmation.value = null
+    const { resolver } = get()
+    set({ confirmation: null, resolver: null })
     resolver?.(confirmed)
-    resolver = null
   }
 
-  const accept = () => settle(true)
-  const dismiss = () => settle(false)
+  return {
+    confirmation: null,
+    resolver: null,
 
-  return { accept, confirm, confirmation, dismiss }
+    confirm: (options) => {
+      get().resolver?.(false)
+      return new Promise<boolean>((resolve) => {
+        set({ confirmation: options, resolver: resolve })
+      })
+    },
+
+    accept: () => settle(true),
+    dismiss: () => settle(false),
+  }
 })
