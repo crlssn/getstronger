@@ -30,10 +30,15 @@ export const usePagination = () => {
 
   const reset = useCallback(() => setPageToken(emptyPageToken), [setPageToken])
 
+  // Memoised, like everything else returned here: a caller that fetches from an
+  // effect lists it as a dependency, and a fresh identity each render would
+  // make that effect re-run — which is a fetch loop, not a re-render.
+  const currentPageToken = useCallback(() => latest.current, [])
+
   return {
     pageToken,
     /** The token as of right now, including a set that has not rendered yet. */
-    currentPageToken: () => latest.current,
+    currentPageToken,
     hasMorePages: pageToken.length > 0,
     setPageToken,
     setFromResponse,

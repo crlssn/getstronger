@@ -1,0 +1,36 @@
+@reference '../../assets/base.css';
+
+.markAllRead {
+  @apply inline-flex min-h-(--size-control-sm) items-center whitespace-nowrap rounded-control px-3 text-sm font-semibold text-text-muted transition hover:bg-ink-surface hover:text-text disabled:cursor-wait disabled:text-text-subtle;
+}
+
+/* Unread is a state, not a colour of its own: the standard row with an ink
+   icon tile, full-strength text and a green momentum dot. Read rows keep the
+   same anatomy and simply fade. */
+.notificationItem {
+  @apply relative transition-colors duration-200;
+}
+
+.notificationItem a > svg {
+  @apply size-11 shrink-0 rounded-control bg-ink-surface p-2.5 text-text-subtle;
+}
+
+.notificationItem a > div > div {
+  @apply text-text-muted;
+}
+
+.notificationItem a > div > p {
+  @apply text-meta text-text-subtle;
+}
+
+.notificationItem.unread a > svg {
+  @apply bg-ink-tint text-ink-strong;
+}
+
+.notificationItem.unread a > div > div {
+  @apply text-text;
+}
+
+.unreadDot {
+  @apply size-2 shrink-0 rounded-full bg-success;
+}
