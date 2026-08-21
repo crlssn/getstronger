@@ -15,18 +15,26 @@ export const formatToShortDateTime = (date: Timestamp | undefined): string => {
   return localized(DateTime.fromSeconds(Number(date.seconds))).toLocaleString(DateTime.DATE_MED)
 }
 
+/**
+ * Renders a moment as "3 minutes ago", or "Just now" when it is too recent to
+ * count.
+ *
+ * Anything under a second becomes "0 seconds", and a server timestamp a few
+ * hundred milliseconds ahead of the client clock renders as "in 0 seconds" —
+ * both are read as broken rather than recent, so the threshold is on the
+ * elapsed time rather than on the rendered string.
+ */
+const relativeToNow = (date: DateTime): string => {
+  if (date.diffNow('seconds').seconds > -1) return i18n.t('date.justNow')
+  return localized(date).toRelative() ?? ''
+}
+
 export const formatToRelativeDateTime = (date: Timestamp | undefined): string => {
   if (!date) return ''
-  const relative = localized(DateTime.fromSeconds(Number(date.seconds))).toRelative()
-  if (relative === '0 seconds ago' || relative === 'för 0 sekunder sedan')
-    return i18n.t('date.justNow')
-  return relative ?? ''
+  return relativeToNow(DateTime.fromSeconds(Number(date.seconds)))
 }
 
 export const formatUnixToRelativeDateTime = (timestamp: bigint | undefined): string => {
   if (!timestamp) return ''
-  const relative = localized(DateTime.fromSeconds(Number(timestamp))).toRelative()
-  if (relative === '0 seconds ago' || relative === 'för 0 sekunder sedan')
-    return i18n.t('date.justNow')
-  return relative ?? ''
+  return relativeToNow(DateTime.fromSeconds(Number(timestamp)))
 }
