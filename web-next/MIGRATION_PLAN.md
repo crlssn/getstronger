@@ -10,20 +10,23 @@ The "Where we are" section is the source of truth for what to pick up next.
 ## Where we are
 
 The React toolchain builds, typechecks, lints, formats and tests. Everything
-below the UI is ported except the router: the framework-agnostic modules, i18n
-on i18next, the whole HTTP layer, and all 21 stores. 399 tests green, 94%
+below the UI is ported: the framework-agnostic modules, i18n on i18next, the
+whole HTTP layer, all 21 stores, and the routing rules. 438 tests green, 94%
 statement / 97% line coverage.
 
-| Phase | What it covers                                         | State       |
-| ----- | ------------------------------------------------------ | ----------- |
-| A     | Toolchain scaffold + framework-agnostic leaves         | done        |
-| B     | i18n, state, routing foundations                       | in progress |
-| C     | HTTP layer                                             | done        |
-| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | todo        |
-| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo        |
-| F     | Feature views (auth, workouts, exercises, routines, …) | todo        |
-| G     | e2e + screenshot harness pointed at the React app      | todo        |
-| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo        |
+The only thing left below the UI is the React Router element tree itself, which
+cannot be written until there are screens to point it at.
+
+| Phase | What it covers                                         | State |
+| ----- | ------------------------------------------------------ | ----- |
+| A     | Toolchain scaffold + framework-agnostic leaves         | done  |
+| B     | i18n, state, routing rules                             | done  |
+| C     | HTTP layer                                             | done  |
+| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | next  |
+| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo  |
+| F     | Feature views (auth, workouts, exercises, routines, …) | todo  |
+| G     | e2e + screenshot harness pointed at the React app      | todo  |
+| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
 
 Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
 `types/*.ts`, `utils/{blurActiveElement,maskEmail,activityBuckets,distanceUnits,weightUnits}.ts`,
@@ -162,12 +165,22 @@ mechanical change each — `i18n.global.t(…)` → `i18n.t(…)`.
 `i18n` needs its explicit `I18nInstance` annotation: without it `tsc` fails with
 TS2883, since the inferred type cannot be named portably.
 
-**Routing: react-router-dom 7.** The route table maps over directly; the pieces
-needing deliberate design are the three guards (`auth`, `guest`, `landing` —
-today `beforeEnter`, in React either loaders or a wrapper component) and the
-global `beforeEach` that sets the page title from `meta.titleKey` and resets the
-nav-tab and action-button stores on navigation. `router/tabs.ts` is pure data and
-already ported.
+**Routing: react-router-dom 7, with the rules kept out of the element tree.**
+`router/routes.ts` is the whole table as data — 30 routes with their access
+rule, title key and whether they hide the chrome — and `router/guards.ts` turns
+those into decisions: `redirectFor(access, signedIn)`, `onNavigate` for the tab
+and action-button resets, `applyPageTitle` for the header.
+
+Keeping them separate is what let the routing land before any screen exists,
+and it is also what makes it testable: `routes.spec.ts` checks that every title
+key resolves in the catalogue, that every tab root is a route with a title, that
+the catch-all is last, and that nothing but the auth screens is reachable signed
+out. None of that needs a rendered route.
+
+What remains is `router.tsx`: turn the table into `createBrowserRouter` routes
+with a lazy element each, wrap them in something that calls `redirectForRoute`,
+and call `onNavigate`/`applyPageTitle` from a navigation effect. It is short,
+and it needs screens.
 
 **The HTTP layer redirects through `router/navigation.ts`, not the router.**
 `http/unauthenticated.ts` has to send an expired session back to the login
@@ -258,16 +271,31 @@ now answers a tab root with itself.
 
 ## What to do next
 
-1. **Routing** — the route table, the three guards (`auth`, `guest`,
-   `landing`), and the global navigation effect that sets the page title from
-   `meta.titleKey` and resets `navTabs` and `actionButton`. Whatever creates the
-   router must also call `setNavigator(router.navigate)`, or every redirect from
-   the HTTP layer becomes a full page load.
-2. **The app entry point** — `main.tsx` is still a placeholder. Port
-   `web/src/main.ts`: auth-store init, token refresh, PostHog identify, route
-   warming, and the two start calls that used to be import side effects
-   (`startMutationQueue()`, and `pollUnreadNotifications()` for a signed-in
-   user).
+Phase D: the design-system primitives, which everything above them needs.
+`AppButton`, `AppCard`, `AppList`, `AppListItem*`, `AppSheet`, `AppSkeleton`,
+`AppEmptyState`, `AppTextarea`, `DropdownButton`. They are small, they have no
+dependencies beyond the CSS already in `src/assets/`, and six of them have
+specs in `web/` to port against Testing Library.
+
+Two things to do while there:
+
+- Port the two filesystem guards from `web/tests/` —
+  `no-hardcoded-strings.spec.ts` and `no-raw-palettes.spec.ts`. They are regex
+  scanners over the source, so they only need their globs changed from `.vue`
+  to `.tsx`. Do it before the components land, not after, so they hold from the
+  first one.
+- `AppList` uses `vInfiniteScroll` from `@vueuse/components`, which has no
+  React equivalent here. An intersection-observer hook is the replacement;
+  `utils/usePagination.ts` in `web/` is the other half of that story and is not
+  yet ported.
+
+Then phase E (the shell) and phase F (the screens), and with them `router.tsx`
+and `main.tsx` — both still placeholders. `main.tsx` should port
+`web/src/main.ts`: auth-store init, token refresh, PostHog identify, route
+warming, and the two start calls that used to be import side effects
+(`startMutationQueue()`, and `pollUnreadNotifications()` for a signed-in user).
+Whatever creates the router must also call `setNavigator(router.navigate)`, or
+every redirect from the HTTP layer becomes a full page load.
 
 After that the UI is all that is left — phases D through H, and the bulk of the
 work by volume. Nothing below the UI should need revisiting.
