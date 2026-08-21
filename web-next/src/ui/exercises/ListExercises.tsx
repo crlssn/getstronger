@@ -16,6 +16,7 @@ import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { groupByActivity } from '@/utils/activityGroups'
 import { measurementsForExercise } from '@/utils/exerciseMeasurements'
+import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListExercises.module.css'
 
@@ -34,7 +35,7 @@ export const ListExercises = () => {
     const response = await listExercises(currentPageToken())
     if (!response) return
 
-    setExercises((current) => [...current, ...response.exercises])
+    setExercises((current) => appendPage(current, response.exercises))
     setFromResponse(response.pagination)
   }, [currentPageToken, setFromResponse])
 

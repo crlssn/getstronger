@@ -23,6 +23,7 @@ import { formatToShortDateTime } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { downSample } from '@/utils/exerciseTrend'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
+import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ViewExercise.module.css'
 
@@ -50,7 +51,7 @@ export const ViewExercise = () => {
     const response = await listSets([], [id], currentPageToken())
     if (!response) return
 
-    setSets((current) => [...current, ...response.sets])
+    setSets((current) => appendPage(current, response.sets))
     setFromResponse(response.pagination)
   }, [id, currentPageToken, setFromResponse])
 

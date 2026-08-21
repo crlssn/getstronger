@@ -19,7 +19,9 @@ signed-in and signed-out layouts. Phases A–F are done: every screen is across,
 produces a code-split bundle with a chunk per screen. 1185 tests green, 93%
 statement / 96% line coverage.
 
-What is left is phase G — the e2e and screenshot harness — and then the swap.
+Phase G is across too: all twelve end-to-end specs and the screenshot harness,
+with a `test e2e web-next` workflow that stands the whole stack up and runs the
+suite on every push. What is left is the swap.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
@@ -29,8 +31,8 @@ What is left is phase G — the e2e and screenshot harness — and then the swap
 | D     | Design-system primitives (`AppButton`, `AppCard`, …)   | done  |
 | E     | Shell (`App`, dashboard, nav, banners, dialogs)        | done  |
 | F     | Feature views (auth, workouts, exercises, routines, …) | done  |
-| G     | e2e + screenshot harness pointed at the React app      | next  |
-| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
+| G     | e2e + screenshot harness pointed at the React app      | done  |
+| H     | Swap `web-next/` into `web/`, delete the Vue app       | next  |
 
 Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
 `types/*.ts`, `utils/{blurActiveElement,maskEmail,activityBuckets,distanceUnits,weightUnits}.ts`,
@@ -289,7 +291,8 @@ ESLint 10.
 
 Porting a module means writing a test for it, and two of those tests failed
 against faithfully-copied code. Both fixes are in `web-next/` only; `web/` still
-has them.
+has them. A third was found by the end-to-end suite on its first run, and is
+new to the React app rather than inherited.
 
 **`utils/datetime.ts` showed "in 0 seconds".** The relative formatter special-
 cased Luxon's zero-elapsed rendering by matching the literal strings
@@ -308,6 +311,17 @@ that leads to them — `/workout` and `/profile` — so passing either returned
 `/home` rather than itself. Only pushed screens are passed to it today, so
 nothing was visibly broken, but it is a trap for the next caller. `tabRootFor`
 now answers a tab root with itself.
+
+**A page could be appended twice.** The first end-to-end run reported sixteen
+"two children with the same key" errors. Every screen that pages appended its
+results with `[...current, ...page]`, and React runs an effect twice in
+development on purpose — so the first page arrived twice and every row was
+listed twice. A scroll sentinel firing again before its response lands would do
+the same thing in production. `utils/appendPage.ts` now does the appending and
+skips anything the list already holds; six screens were on the old pattern and
+`ExercisePickerSheet` and `WorkoutView` had already grown their own copy of the
+fix. This is a good argument for keeping `<StrictMode>` in `main.tsx`: it is
+what surfaced this.
 
 ## Gotchas
 
@@ -417,57 +431,75 @@ is read off the route table, so `AppDashboard`, `AppRestTimerBanner` and the
 native wrapper cannot drift apart about which screens these are — all three had
 their own copy.
 
-**Next: phase G — and it is not a copy.** The e2e suite and the screenshot
-harness in `web/tests/` still point at the Vue app. The static checks
-(`no-hardcoded-strings`, `no-raw-palettes`) are already across; the Playwright
-side is not, and the reason is worth knowing before starting.
+**Phase G — and it was not a copy.** The static checks
+(`no-hardcoded-strings`, `no-raw-palettes`) came across in phase A. The
+Playwright side was the work, and the reason it was work rather than a copy is
+worth knowing if any of it needs revisiting.
 
-The suite reaches for CSS class names — around 45 distinct ones across the
-twelve e2e specs and the screenshot flows. In `web/` those are real class names
-in a `<style scoped>` block. In `web-next/` they are CSS-module locals and
-appear in the DOM hashed (`_setRow_9cb9a0`), so **every one of those selectors
-finds nothing**. Only two survive as written, because they are the only two
-still global in `assets/main.css`: `.loading-card` and `.segmented`.
+The suite reached for CSS class names — around 120 call sites across the twelve
+e2e specs and the screenshot flows, spanning some 45 distinct class names. In
+`web/` those are real classes in a `<style scoped>` block. In `web-next/` they
+are CSS-module locals and appear in the DOM hashed (`_setRow_9cb9a0`), so
+**every one of those selectors found nothing**. Only two survived as written,
+because they are the only two still global in `assets/main.css`:
+`.loading-card` and `.segmented`.
 
-The full list, checked against the source:
+Almost all of them became a role or a name that was already in the markup: the
+exercise headers by their expanded state, the plan reorder controls by the
+routine they act on, the streak squares by the week and status they announce,
+the notification rows by the screen-reader-only "Unread notification" they
+already carry, the exercise library by route rather than by card class. No
+`data-testid` was added anywhere.
 
-- **`StartWorkout`**: `.workout-header`, `.exercise-list`, `.exercise-item`,
-  `.exercise-item.open .exercise-name`, `.exercise-header`, `.exercise-panel`,
-  `.completed-exercise`, `.primary-action`, `.next-up`, `.finish-early`,
-  `.action-block > strong.blocked`, and from the set grid `.set-row`,
-  `.set-row input`, `.previous-value`, `.unit-entry`, `.unit-suffix`.
-- **Shell**: `.bottom-nav`, `.bottom-nav .timer-badge`, `.timer-badge`,
-  `.notification-badge`, `.alert-region`, `.alert-card-inner .status-icon`,
-  `.menu-trigger`, `header.guest-header`, `.empty-state`.
-- **Screens**: `.exercise-group`, `.exercise-group-card`, `.search-field`,
-  `.search-panel`, `.measurement`, `.exercise-option`, `.exercise-options`,
-  `.routine-options`, `.routine-order`, `.order-actions`, `.active-plan`,
-  `.next-card`, `.history-list`, `.workout-history`, `.feed-summary-card`,
-  `.feed-end`, `.feed-error`, `.notification-item.unread`, `.chart-heading`,
-  `.record-list`, `.record-value`, `.week-block.current.complete`,
-  `.week-workout-count`.
-- **`.dialog-confirm`** exists in neither app any more; the sheet replaced it.
+**Two places needed structure rather than a name**, and both are commented as
+such where they appear:
 
-Rewrite them as role and text queries rather than adding `data-testid`
-everywhere: the unit specs already reach every one of these elements that way,
-so the accessible handles are known to exist, and the issue asks for the debt to
-go rather than travel. Reach for a `data-testid` only where there is genuinely
-nothing to name — the streak card's week squares, the tab bar's timer and
-notification badges — and say so in a comment when you do.
+- The set grid is a grid of anonymous cells. A row is reached through the one
+  control in it that has a name — `Remove set N` — and then its columns by
+  shape: the set number and the previous value are its two spans, the weight
+  field its only div, the reps its only bare input.
+- The unit suffix beside a weight or distance input is a label on the field, so
+  it is reached as that input's sibling inside the field's own box.
 
-Two things phase G needs that this container did not have: a Docker daemon for
+Where an id already existed it was used, since an id is as stable as a role and
+says more: `#workout-dock-status` for the blocked message and
+`#workout-next-up` for the up-next hint, both of which the primary action
+already points its `aria-describedby` at.
+
+`scrollToListEnd` now takes a locator rather than a selector string; every
+caller was passing a list of class names.
+
+**The harness.** `playwright.config.ts` and `playwright.screenshots.config.ts`
+are copies of `web/`'s — both are path-relative, so neither needed an edit, and
+they read the same `E2E_*` and `SCREENSHOT_*` ports, since the two apps' suites
+are never meant to run at once. `.github/workflows/test.e2e.web-next.yml`
+mirrors `test.e2e.yml`: Postgres as a service, `migrate`, the seed factory, and
+the official Playwright container so no browsers are downloaded. Delete it at
+the swap, along with `test.web-next.yml`.
+
+**What the harness found on its first run.** Sixteen "two children with the
+same key" errors — see "A page could be appended twice" above. Every assertion
+in every spec passed; the two failures were the runtime-error guard doing its
+job.
+
+**The screenshot harness is copied but has never been run.** It has no CI
+workflow in either app — it is a local design-review tool — and this container
+had no stack to run it against. `catalogue.ts` and `flows.ts` carry a
+`component:` path per capture, and those now point at the `.tsx` files; every
+one was checked to exist. Expect the first local run to need a nudge.
+
+Two things phase G needed that this container did not have: a Docker daemon for
 the database, and the Go backend running. Neither `mise` nor a Postgres socket
-was available here, so the Playwright suites could not be executed at all —
-which is why the port was not attempted blind.
+was available, so the Playwright suites could not be run locally at all. The
+workflow was the test runner instead — slower than a local loop, so the
+selectors were worked out by reading each component and CI used to confirm.
 
-If the next session is in the same position, CI can be the test runner instead.
-`.github/workflows/test.e2e.yml` already stands the whole stack up — Postgres as
-a service, `migrate`, the seed factory, and the official Playwright container so
-no browsers are downloaded — and runs `npm run test:e2e` in `web/`. A
-`test.e2e.web-next.yml` that mirrors it, pointed at `web-next`, turns each push
-into a real run of the ported suite. It is slower than a local loop, so get the
-selectors right by reading first and use CI to confirm rather than to explore.
-Delete it at the swap along with `test.web-next.yml`.
+One gap left for the maintainer: `mise run worktree:env` writes `web/.env` but
+not `web-next/.env`, and `mise.toml`'s `test:e2e` and `screenshots` tasks still
+point at `web/`. None of that blocks CI — the Playwright configs pass
+`VITE_API_URL` to the dev server themselves — but a local run of either React
+suite needs it. Left alone because `mise` is not installed in this container and
+a task that cannot be run should not be written blind.
 
 ## Phase H — do not forget
 
@@ -488,6 +520,31 @@ Vue-written keys.
 
 The two apps' persisted shapes were checked field by field and match, `pending`
 entries in the offline queue included, so nothing beyond the wrapping is needed.
+
+**The checklist for the swap itself.** Everything below is known to be needed;
+nothing on it has been done, because none of it makes sense before the move.
+
+- Move `web-next/` to `web/` and delete the Vue app. Both trees carry the same
+  `tests/e2e` and `tests/screenshots` and the same two Playwright configs, so
+  the suites survive the move; the `component:` paths in the screenshot
+  catalogue already point at `.tsx`.
+- Delete `.github/workflows/test.web-next.yml` and
+  `.github/workflows/test.e2e.web-next.yml`. `test.web.yml` and `test.e2e.yml`
+  both work on `./web` by directory and run the package's own scripts, so they
+  cover the React app unchanged once it lives there.
+- Rewrite `web/CLAUDE.md`. It opens "Vue 3 + TypeScript + Tailwind" and tells
+  the reader to mount specs with `global: { plugins: [i18n] }`. The React
+  equivalents are `renderWithProviders` from `src/ui/testing.tsx` and the
+  conventions in `src/stores/README.md`. There is deliberately no
+  `web-next/CLAUDE.md` — writing one now would mean maintaining two.
+- Point `mise.toml` at the new tree: `test:e2e`, `test:e2e:*`, `screenshots`
+  and `screenshots:*` all `cd web`, which is right after the move, and
+  `worktree:env` writes `web/.env`, which is also right after the move. Nothing
+  to change if the directory keeps its name.
+- Check `.claude/skills/design-review/SKILL.md` for `.vue` assumptions.
+- `mobile/capacitor.config.ts` points `webDir` at `../web/dist` and its comment
+  cites `web/src/native/platform.ts`; both stay correct after the move.
+- Keep `stores/persistence.ts`, per the section above.
 
 ## Test coverage
 

@@ -20,6 +20,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { TrainingTabs } from '@/ui/components/TrainingTabs'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { groupByRoutineActivity } from '@/utils/activityGroups'
+import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListRoutines.module.css'
 
@@ -45,7 +46,7 @@ export const ListRoutines = () => {
     const response = await listRoutines(currentPageToken())
     if (!response) return
 
-    setRoutines((current) => [...current, ...response.routines])
+    setRoutines((current) => appendPage(current, response.routines))
     setFromResponse(response.pagination)
   }, [currentPageToken, setFromResponse])
 
