@@ -1,0 +1,25 @@
+@reference '../../assets/base.css';
+
+.item {
+  @apply flex items-center justify-between gap-x-6 px-4 py-5 font-medium text-text;
+}
+
+.item.danger {
+  @apply text-danger;
+}
+
+.item.header {
+  @apply block text-sm font-semibold text-text-muted;
+}
+
+.item > svg {
+  @apply size-5 shrink-0;
+}
+
+.link {
+  @apply flex items-center justify-between gap-x-6 px-4 py-5 font-medium text-text transition hover:bg-ink-surface hover:text-ink-strong;
+}
+
+.link > svg {
+  @apply size-5 shrink-0;
+}

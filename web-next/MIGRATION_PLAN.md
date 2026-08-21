@@ -11,20 +11,22 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
-whole HTTP layer, all 21 stores, and the routing rules. 438 tests green, 94%
-statement / 97% line coverage.
+whole HTTP layer, all 21 stores, the routing rules, every design-system
+primitive, and the shell — the nav bars, the four app-level singletons, and the
+signed-in and signed-out layouts. 716 tests green, 95% statement / 98% line
+coverage.
 
-The only thing left below the UI is the React Router element tree itself, which
-cannot be written until there are screens to point it at.
+What is left is the screens, and the two files that can only be written once
+they exist: `router.tsx` and `main.tsx`.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
 | A     | Toolchain scaffold + framework-agnostic leaves         | done  |
 | B     | i18n, state, routing rules                             | done  |
 | C     | HTTP layer                                             | done  |
-| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | next  |
-| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo  |
-| F     | Feature views (auth, workouts, exercises, routines, …) | todo  |
+| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | done  |
+| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | done  |
+| F     | Feature views (auth, workouts, exercises, routines, …) | next  |
 | G     | e2e + screenshot harness pointed at the React app      | todo  |
 | H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
 
@@ -80,10 +82,11 @@ How each syncs:
 PR #1117 was the first of these: two new user requests, an `autofillSets`
 preference, a regenerated `user_service_pb`, a new `utils/names.ts`, and a
 reworked signup catalogue. The dispatch table's completeness check caught the
-two new requests on its own, which is the main reason it exists.
+two new requests on its own, which is the main reason it exists. #1116 then
+retired one catalogue key.
 
 Record the main commit you synced from when you do it, so the next diff has a
-starting point: **last synced `8574865`**.
+starting point: **last synced `8d9519f`**.
 
 ## Decisions already made, and why
 
@@ -135,6 +138,25 @@ the Vue version relied on the returned object being reactive. Passing
 `undefined` for a field clears it, so a cleared input does not keep the number
 that was there before. **Phase F needs this** — it is the one place where a
 component cannot be a mechanical port.
+
+**Components: CSS Modules where the Vue file had `<style scoped>`.** It is the
+closest thing React has to scoped styles, and it keeps the `@reference` +
+`@apply` authoring the design system already uses, so a component's CSS moves
+across nearly unchanged. Vue's `:deep(svg)` has no equivalent and needs none —
+CSS Modules hash class names, not element selectors, so `.emptyIcon svg` already
+reaches through.
+
+A component with nothing but utility classes (`AppCard`, `AppTextarea`) writes
+them in the JSX and skips the module. Callers pass `className`, which is
+appended via `cn()` rather than replacing the component's own — several screens
+position an `AppButton` with `class="auth-submit"`.
+
+**Component specs render, they do not inspect.** `renderWithProviders` in
+`src/ui/testing.tsx` wraps a component in the router and the i18n provider,
+which is the context every screen has in the real app. `vitest.setup.ts` calls
+Testing Library's `cleanup` after each test: it only unmounts by itself when
+Vitest's globals are on, and they are not, so without it every render in a file
+stacks up in the same document.
 
 **Server-cache stores stay stores.** `activity`, `progress`, `streak`,
 `dashboard` and `plans` cache request results, and a query library would model
@@ -271,34 +293,38 @@ now answers a tab root with itself.
 
 ## What to do next
 
-Phase D: the design-system primitives, which everything above them needs.
-`AppButton`, `AppCard`, `AppList`, `AppListItem*`, `AppSheet`, `AppSkeleton`,
-`AppEmptyState`, `AppTextarea`, `DropdownButton`. They are small, they have no
-dependencies beyond the CSS already in `src/assets/`, and six of them have
-specs in `web/` to port against Testing Library.
+Phase D is done: the two source guards and all eleven design-system
+primitives — `AppButton`, `AppCard`, `AppSkeleton`, `AppTextarea`,
+`AppListItem`, `AppListItemLink`, `AppListItemInput`, `AppEmptyState`,
+`AppOptionalAction`, `AppList`, `AppSheet`, `DropdownButton` — plus
+`renderWithProviders`, `useInfiniteScroll` and `usePagination`.
 
-Two things to do while there:
+**Phase F: the screens.** Everything under `web/src/ui/` that is not in
+`components/` — 30-odd views. That is the bulk of the work by volume, and it is
+mostly mechanical now: the stores, the requests, the primitives and the shell
+they lean on are all in place.
 
-- Port the two filesystem guards from `web/tests/` —
-  `no-hardcoded-strings.spec.ts` and `no-raw-palettes.spec.ts`. They are regex
-  scanners over the source, so they only need their globs changed from `.vue`
-  to `.tsx`. Do it before the components land, not after, so they hold from the
-  first one.
-- `AppList` uses `vInfiniteScroll` from `@vueuse/components`, which has no
-  React equivalent here. An intersection-observer hook is the replacement;
-  `utils/usePagination.ts` in `web/` is the other half of that story and is not
-  yet ported.
+Two things to know going in:
 
-Then phase E (the shell) and phase F (the screens), and with them `router.tsx`
-and `main.tsx` — both still placeholders. `main.tsx` should port
-`web/src/main.ts`: auth-store init, token refresh, PostHog identify, route
-warming, and the two start calls that used to be import side effects
-(`startMutationQueue()`, and `pollUnreadNotifications()` for a signed-in user).
-Whatever creates the router must also call `setNavigator(router.navigate)`, or
-every redirect from the HTTP layer becomes a full page load.
+- Workout sets are written through `updateSet(routineID, exerciseID, index,
+changes)`. The Vue screens assigned into the set object they got back from
+  `getSets`, and Immer freezes state, so that throws now.
+- `StartWorkout.vue` is 636 lines and the largest single screen by a distance.
+  Leave it until the smaller ones have settled the patterns.
 
-After that the UI is all that is left — phases D through H, and the bulk of the
-work by volume. Nothing below the UI should need revisiting.
+**Then `router.tsx` and `main.tsx`**, which can only be written once there are
+screens to point them at. Both are still placeholders:
+
+- `router.tsx` turns `routes.ts` into `createBrowserRouter` routes with a lazy
+  element each, nests them under `AppDashboard` or `GuestView` by access rule,
+  wraps them in something that calls `redirectForRoute`, and calls
+  `onNavigate`/`applyPageTitle` from a navigation effect. It must also call
+  `setNavigator(router.navigate)`, or every redirect from the HTTP layer becomes
+  a full page load.
+- `main.tsx` ports `web/src/main.ts`: auth-store init, token refresh, PostHog
+  identify, route warming, and `pollUnreadNotifications()` for a signed-in user.
+  `startMutationQueue()` is already called, by `AppOfflineBanner`, which owns
+  the rest of the offline lifecycle.
 
 ## Phase H — do not forget
 

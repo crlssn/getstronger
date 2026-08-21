@@ -1,0 +1,47 @@
+@reference '../../assets/base.css';
+
+.guestShell {
+  @apply min-h-screen bg-surface-sunken;
+}
+
+.guestHeader {
+  @apply border-b border-border bg-white;
+}
+
+.guestBrand {
+  @apply mx-auto flex min-h-24 max-w-lg items-center justify-start gap-3 px-6 py-4 text-text;
+}
+
+.guestBrandMark {
+  @apply grid size-11 place-items-center rounded-control bg-ink shadow-card shadow-ink-border;
+}
+
+.guestBrandMark img {
+  @apply size-7 brightness-0 invert;
+}
+
+.guestBrandCopy {
+  @apply flex flex-col;
+}
+
+.guestBrandCopy strong {
+  @apply text-lg font-bold leading-6 tracking-tight;
+}
+
+.guestBrandCopy strong span {
+  @apply font-semibold;
+}
+
+.guestBrandCopy > span {
+  @apply text-sm font-bold leading-5 text-text-subtle;
+}
+
+.guestMain {
+  @apply mx-auto w-full max-w-lg px-6 py-10 sm:px-8 sm:py-14;
+}
+
+/* The alert spans the viewport, but its contents belong to the same column as
+   the brand and the form below it. */
+.guestAlert {
+  @apply max-w-lg px-6 sm:px-8;
+}

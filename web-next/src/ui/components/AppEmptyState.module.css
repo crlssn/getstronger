@@ -1,0 +1,30 @@
+@reference '../../assets/base.css';
+
+/* A solid card, never dashed: dashed borders read as drop-zones, not states. */
+.emptyState {
+  @apply card grid justify-items-start gap-3 p-6;
+}
+
+.emptyIcon {
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-text-muted;
+}
+
+.emptyIcon svg {
+  @apply size-5;
+}
+
+.emptyState h2 {
+  @apply text-body-lg font-semibold text-text;
+}
+
+.emptyState p {
+  @apply text-sm leading-6 text-text-muted;
+}
+
+.emptyAction {
+  @apply mt-1 inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:brightness-125;
+}
+
+.emptyAction svg {
+  @apply size-5;
+}
