@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">GetStronger</title>
+  <desc id="description">A barbell with two weight plates on each side.</desc>
+  <rect x="4" y="60" width="120" height="8" rx="4" fill="currentColor" opacity="0.55"/>
+  <rect x="8.5" y="47" width="12" height="34" rx="3" fill="currentColor"/>
+  <rect x="25.5" y="34" width="17" height="60" rx="3" fill="currentColor"/>
+  <rect x="85.5" y="34" width="17" height="60" rx="3" fill="currentColor"/>
+  <rect x="107.5" y="47" width="12" height="34" rx="3" fill="currentColor"/>
+</svg>

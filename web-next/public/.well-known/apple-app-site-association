@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["APPLE_TEAM_ID.com.getstronger.app"],
+        "components": [{ "/": "/*" }]
+      }
+    ]
+  }
+}
