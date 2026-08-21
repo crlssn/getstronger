@@ -14,8 +14,8 @@ below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, every design-system
 primitive, and the shell — the nav bars, the four app-level singletons, and the
 signed-in and signed-out layouts. Phase F is under way: the signed-out screens,
-progress and home are across. 849 tests green, 96% statement / 98% line
-coverage.
+progress, home, notifications and the exercise forms are across. 913 tests
+green, 96% statement / 98% line coverage.
 
 What is left is the rest of the screens, and the two files that can only be
 written once they exist: `router.tsx` and `main.tsx`.
@@ -75,7 +75,12 @@ How each syncs:
 - **`src/proto/**`** — generated, so copy over: `cp -r web/src/proto/. web-next/src/proto/`.
 - **`src/i18n/messages.ts`** — copy the file, then re-run the plural conversion
   on it, rather than hand-merging. It is idempotent in the sense that matters:
-  it converts the pipe form and leaves everything else alone.
+  it converts the pipe form and leaves everything else alone. **Then re-apply
+  the divergences below**, which a straight copy would remove:
+  - `exercise.tagInput.tooLong`, `.duplicate` and `.tooMany`, in both locales.
+    `ExerciseTagsInput.vue` builds those three strings as English literals in
+    its script, against the repo's own localisation rule; they are catalogue
+    keys here.
 - **`src/utils/**`, new modules** — usually verbatim.
 - **`src/http/**`, `src/stores/**`** — apply the diff by hand, translating
   `useXStore()` to `useXStore.getState()` and `i18n.global.t` to `i18n.t`.
@@ -247,10 +252,19 @@ ESLint 10.
   against three endpoints that already take a query. Debounced to 250ms here.
   Its four result groups were four near-identical blocks of markup; they are one
   list built from data now.
+- `ExerciseTagsInput.vue` builds three error messages as English literals in
+  its script — the tag-too-long, already-added and too-many-tags complaints —
+  which the repo's own localisation rule does not allow. They are catalogue keys
+  here; see the sync section, because a straight copy of `messages.ts` removes
+  them.
+- `ExerciseMeasurementSettings.vue` puts an `aria-label` on a plain `div` for
+  its preset row, where it announces nothing. Both that row and the measurement
+  grid are `role="group"` here, so their labels are read.
 - Dead CSS, dropped as each component moved: `.feed-author` and `.set-volume` in
   the workout card, and five blocks in `HomeView` (`.section-block`,
   `.momentum-grid`, `.last-session-*`, `.workout-icon`) that style elements the
-  screen has not had for some time.
+  screen has not had for some time, and an `input { … }` block in
+  `UpdateExercise.vue` that no element in its template could ever match.
 
 ## Bugs found on the way
 
@@ -320,15 +334,23 @@ Done so far:
   `ExerciseTags`, `WorkoutChart`, `PageNavAction`, `StreakCard`,
   `HomePageActions`, `CardWorkout`, `CardWorkoutExercise`,
   `CardWorkoutComment`.
+- `ListNotifications`, with `NotificationUserFollow` and
+  `NotificationWorkoutComment`.
+- `CreateExercise` and `UpdateExercise`, which now share an `ExerciseForm`,
+  plus `ExerciseTagsInput` and `ExerciseMeasurementSettings`.
 
-Next: exercises, routines, plans, workouts, users, notifications and profile.
+Next: `ListExercises` and `ViewExercise`, then routines, plans, workouts, users
+and profile.
 
-Three things to know going in:
+Four things to know going in:
 
 - A screen that wants an action in the top nav bar renders `<PageNavAction>`.
   Do not look `#page-nav-action` up from an effect — the bar publishes it to
   `stores/pageNavAction` from its `ref` callback, and the lint rule that stops
   the effect version is right to.
+- A sentence with an element in the middle of it — a bolded name inside a
+  translated message — goes through `<RichMessage>`. `<Trans>` cannot do it
+  without tags in the catalogue, and the catalogue is shared with the Vue app.
 - Infinite scroll is `useInfiniteScroll(onReach, enabled, rootMargin?)`. Pass
   `enabled` as `!loading && !reachedEnd`: flipping it back on is what asks for
   the next page while the sentinel is still in view, so no screen needs to
