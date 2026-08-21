@@ -11,22 +11,23 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
-whole HTTP layer, all 21 stores, and the routing rules. 438 tests green, 94%
-statement / 97% line coverage.
+whole HTTP layer, all 21 stores, and the routing rules. Phase D is under way:
+the two source guards and seven of the design-system primitives. 489 tests
+green, 94% statement / 97% line coverage.
 
 The only thing left below the UI is the React Router element tree itself, which
 cannot be written until there are screens to point it at.
 
-| Phase | What it covers                                         | State |
-| ----- | ------------------------------------------------------ | ----- |
-| A     | Toolchain scaffold + framework-agnostic leaves         | done  |
-| B     | i18n, state, routing rules                             | done  |
-| C     | HTTP layer                                             | done  |
-| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | next  |
-| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo  |
-| F     | Feature views (auth, workouts, exercises, routines, …) | todo  |
-| G     | e2e + screenshot harness pointed at the React app      | todo  |
-| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
+| Phase | What it covers                                         | State       |
+| ----- | ------------------------------------------------------ | ----------- |
+| A     | Toolchain scaffold + framework-agnostic leaves         | done        |
+| B     | i18n, state, routing rules                             | done        |
+| C     | HTTP layer                                             | done        |
+| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | in progress |
+| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo        |
+| F     | Feature views (auth, workouts, exercises, routines, …) | todo        |
+| G     | e2e + screenshot harness pointed at the React app      | todo        |
+| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo        |
 
 Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
 `types/*.ts`, `utils/{blurActiveElement,maskEmail,activityBuckets,distanceUnits,weightUnits}.ts`,
@@ -135,6 +136,25 @@ the Vue version relied on the returned object being reactive. Passing
 `undefined` for a field clears it, so a cleared input does not keep the number
 that was there before. **Phase F needs this** — it is the one place where a
 component cannot be a mechanical port.
+
+**Components: CSS Modules where the Vue file had `<style scoped>`.** It is the
+closest thing React has to scoped styles, and it keeps the `@reference` +
+`@apply` authoring the design system already uses, so a component's CSS moves
+across nearly unchanged. Vue's `:deep(svg)` has no equivalent and needs none —
+CSS Modules hash class names, not element selectors, so `.emptyIcon svg` already
+reaches through.
+
+A component with nothing but utility classes (`AppCard`, `AppTextarea`) writes
+them in the JSX and skips the module. Callers pass `className`, which is
+appended via `cn()` rather than replacing the component's own — several screens
+position an `AppButton` with `class="auth-submit"`.
+
+**Component specs render, they do not inspect.** `renderWithProviders` in
+`src/ui/testing.tsx` wraps a component in the router and the i18n provider,
+which is the context every screen has in the real app. `vitest.setup.ts` calls
+Testing Library's `cleanup` after each test: it only unmounts by itself when
+Vitest's globals are on, and they are not, so without it every render in a file
+stacks up in the same document.
 
 **Server-cache stores stay stores.** `activity`, `progress`, `streak`,
 `dashboard` and `plans` cache request results, and a query library would model
@@ -271,23 +291,22 @@ now answers a tab root with itself.
 
 ## What to do next
 
-Phase D: the design-system primitives, which everything above them needs.
-`AppButton`, `AppCard`, `AppList`, `AppListItem*`, `AppSheet`, `AppSkeleton`,
-`AppEmptyState`, `AppTextarea`, `DropdownButton`. They are small, they have no
-dependencies beyond the CSS already in `src/assets/`, and six of them have
-specs in `web/` to port against Testing Library.
+Finish phase D. Done so far: the two source guards, `AppButton`, `AppCard`,
+`AppSkeleton`, `AppTextarea`, `AppListItem`, `AppListItemLink`, `AppEmptyState`,
+and the `renderWithProviders` helper.
 
-Two things to do while there:
+Still to port from `web/src/ui/components/`:
 
-- Port the two filesystem guards from `web/tests/` —
-  `no-hardcoded-strings.spec.ts` and `no-raw-palettes.spec.ts`. They are regex
-  scanners over the source, so they only need their globs changed from `.vue`
-  to `.tsx`. Do it before the components land, not after, so they hold from the
-  first one.
-- `AppList` uses `vInfiniteScroll` from `@vueuse/components`, which has no
-  React equivalent here. An intersection-observer hook is the replacement;
-  `utils/usePagination.ts` in `web/` is the other half of that story and is not
-  yet ported.
+- **`AppList`** — the one with a real decision in it. It uses `vInfiniteScroll`
+  from `@vueuse/components`, which has no React equivalent here, so it needs an
+  intersection-observer hook. `web/src/utils/usePagination.ts` is the other half
+  of that story and is not ported either; do the two together.
+- **`AppSheet`** (136 lines) and **`DropdownButton`** (70) — both are
+  `@headlessui/vue` and port onto `@headlessui/react`, which is already a
+  dependency. `AppSheet` has a spec in `web/` worth carrying over.
+- **`AppListItemInput`**, **`AppAlert`**, **`AppConfirmDialog`**,
+  **`AppOfflineBanner`**, **`AppUpdateBanner`**, **`AppOptionalAction`**,
+  **`AppSkeleton`**'s siblings — several have specs in `web/`.
 
 Then phase E (the shell) and phase F (the screens), and with them `router.tsx`
 and `main.tsx` — both still placeholders. `main.tsx` should port
