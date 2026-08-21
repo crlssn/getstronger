@@ -287,6 +287,21 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
 
+    test('numbers every exercise, completed ones included', async () => {
+      const wrapper = await mountWorkout()
+
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // The indicator stays the position of the exercise rather than turning
+      // into a tick: completion is reported in the line underneath.
+      const indicators = wrapper.findAll('.exercise-index')
+      expect(indicators.map((indicator) => indicator.text())).toEqual(['1', '2'])
+      expect(indicators[0].find('svg').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
     test('reports what a collapsed exercise is waiting for', async () => {
       const wrapper = await mountWorkout()
 

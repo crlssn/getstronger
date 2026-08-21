@@ -1648,16 +1648,13 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .completed-exercise button {
   @apply rounded-lg px-3 py-2 text-xs font-semibold text-success hover:bg-success/10;
 }
+/* A number on a neutral tile, in every state. Tinting it for completion put a
+   green disc against each finished exercise and made the column read as a
+   status light; where an exercise stands is said in words on its own line. */
 .exercise-index {
   @apply grid size-8 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
 }
-.exercise-index svg {
-  @apply size-4;
-}
-.exercise-item.completed .exercise-index {
-  @apply bg-success-surface text-success;
-}
-.exercise-item.completed .exercise-name {
+.exercise-item.completed .exercise-copy small {
   @apply text-success;
 }
 .workout-tools {
