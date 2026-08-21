@@ -3,13 +3,7 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 import { useIntersectionObserver } from '@vueuse/core'
-import {
-  CheckIcon,
-  FireIcon,
-  ListBulletIcon,
-  PlayIcon,
-  UsersIcon,
-} from '@heroicons/vue/24/outline'
+import { CheckIcon, FireIcon, ListBulletIcon, PlayIcon, UsersIcon } from '@heroicons/vue/24/outline'
 
 import { useDashboardStore } from '@/stores/dashboard'
 import { listFeedItems } from '@/http/requests'

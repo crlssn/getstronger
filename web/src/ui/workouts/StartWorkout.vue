@@ -16,8 +16,6 @@ import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
-  CheckIcon,
-  ClockIcon,
   FlagIcon,
   MagnifyingGlassIcon,
   MinusIcon,
@@ -925,7 +923,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     >
       <div class="rest-banner-inner">
         <div class="rest-copy">
-          <p class="rest-label"><ClockIcon /> {{ t('workout.rest') }}</p>
           <strong aria-hidden="true">{{ restLabel }}</strong>
         </div>
         <div class="rest-actions">
@@ -954,30 +951,30 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
       <div v-if="currentExercise" class="card-carousel">
         <div v-if="activeExerciseIndex > 0" class="card-peek above" aria-hidden="true"></div>
         <section ref="exerciseCard" class="exercise-card">
-        <header class="exercise-heading">
-          <div>
-            <!-- The position lives in the header now; saying it twice on one
+          <header class="exercise-heading">
+            <div>
+              <!-- The position lives in the header now; saying it twice on one
                  screen spent a line on nothing. -->
-            <h2>{{ currentExercise.name }}</h2>
-            <ExerciseTags compact :tags="currentExercise.tags" />
-          </div>
-        </header>
+              <h2>{{ currentExercise.name }}</h2>
+              <ExerciseTags compact :tags="currentExercise.tags" />
+            </div>
+          </header>
 
-        <!-- Ticked off, not hidden: the label sits above the sets so a
+          <!-- Ticked off, not hidden: the label sits above the sets so a
              completed exercise still shows what was logged. -->
-        <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
-          <span class="completed-icon"><CheckIcon /></span>
-          <div>
-            <strong>{{ t('workout.exerciseCompleted') }}</strong>
-            <p>
-              {{ exerciseLoggedSetCount(currentExercise.id) }}
-              {{ t('workout.loggedSets', exerciseLoggedSetCount(currentExercise.id)) }}
-            </p>
+          <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
+            <span class="completed-icon"><CheckIcon /></span>
+            <div>
+              <strong>{{ t('workout.exerciseCompleted') }}</strong>
+              <p>
+                {{ exerciseLoggedSetCount(currentExercise.id) }}
+                {{ t('workout.loggedSets', exerciseLoggedSetCount(currentExercise.id)) }}
+              </p>
+            </div>
+            <button type="button" @click="reopenExercise(currentExercise.id)">
+              {{ t('workout.reopen') }}
+            </button>
           </div>
-          <button type="button" @click="reopenExercise(currentExercise.id)">
-            {{ t('workout.reopen') }}
-          </button>
-        </div>
 
           <div
             class="set-grid set-labels"
@@ -1240,9 +1237,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 
     <AppSheet
       v-if="finishDialogOpen"
-      :title="
-        unfinishedExerciseCount > 0 ? t('workout.finishEarly') : t('workout.finishConfirm')
-      "
+      :title="unfinishedExerciseCount > 0 ? t('workout.finishEarly') : t('workout.finishConfirm')"
       :body="
         unfinishedExerciseCount > 0
           ? t('workout.finishEarlyBody', unfinishedExerciseCount)
@@ -1309,7 +1304,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </button>
       </template>
     </AppSheet>
-
   </form>
 </template>
 
@@ -1383,7 +1377,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .rest-banner {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  @apply !mt-0 sticky z-30 text-white shadow-overlay;
+  @apply !mt-0 sticky z-30 text-white;
   /* Level with the header it covers: below the status-bar scrim in the native
      WebView, zero in browsers. */
   top: env(safe-area-inset-top);
@@ -1404,15 +1398,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .rest-copy {
   @apply min-w-0;
 }
-/* White, not grey: a neutral grey washes out against a saturated background. */
-.rest-label {
-  @apply flex items-center gap-1.5 text-eyebrow font-bold uppercase text-white/85;
-}
-.rest-label svg {
-  @apply size-3.5;
-}
+/* The digits are the whole message now: as tall as the action chips beside
+   them, so the band reads as one row. */
 .rest-copy strong {
-  @apply mt-1 block font-mono text-4xl font-bold leading-none tabular-nums text-white;
+  @apply block font-mono text-(length:--size-control-sm) font-bold leading-none tabular-nums text-white;
 }
 .rest-actions {
   @apply flex shrink-0 items-center gap-1;
@@ -1438,9 +1427,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     hsl(70 92% 54%) 100%
   );
   @apply text-text;
-}
-.rest-banner.bright .rest-label {
-  @apply text-text/70;
 }
 .rest-banner.bright .rest-copy strong {
   @apply text-text;
