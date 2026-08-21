@@ -61,6 +61,24 @@ describe('AppRestTimerBanner', () => {
     wrapper.unmount()
   })
 
+  test('leads with the countdown alone, with no eyebrow beside it', async () => {
+    const router = createTestRouter()
+    await router.push('/home')
+    seedActiveWorkout(new Date(Date.now() + 90_000).toISOString(), 90)
+
+    const wrapper = mount(AppRestTimerBanner, {
+      global: { plugins: [i18n, router] },
+    })
+
+    // Same shape as the banner on the workout itself: the digits are the whole
+    // message, with no REST eyebrow and no clock icon beside them. Their size
+    // is set in scoped CSS, so the one-row alignment is checked on screen.
+    expect(wrapper.find('.rest-copy p').exists()).toBe(false)
+    expect(wrapper.find('.rest-copy svg').exists()).toBe(false)
+    expect(wrapper.get('.rest-copy').text()).toBe('01:30')
+    wrapper.unmount()
+  })
+
   test('keeps counting while hidden on the active workout page', async () => {
     const router = createTestRouter()
     await router.push('/home')
