@@ -12,7 +12,7 @@ The "Where we are" section is the source of truth for what to pick up next.
 The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, and — with phase D done —
-the two source guards and every design-system primitive. 597 tests green, 94%
+the two source guards and every design-system primitive. 574 tests green, 94%
 statement / 97% line coverage.
 
 The only thing left below the UI is the React Router element tree itself, which
