@@ -22,7 +22,15 @@ const authenticatedPages = [
 
 const waitForPageData = async (page: Page, path: string) => {
   if (path === '/workout') {
-    await scrollToListEnd(page, '.history-end, .history-empty, .history-error')
+    // The history has been travelled once it says so, has nothing to say, or
+    // says it could not be loaded.
+    await scrollToListEnd(
+      page,
+      page
+        .getByText(/reached the end of your workout history/)
+        .or(page.getByText('Your completed workouts will appear here.'))
+        .or(page.getByText('Workout history could not be loaded.')),
+    )
   }
 }
 

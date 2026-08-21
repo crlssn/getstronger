@@ -124,15 +124,15 @@ export const openExerciseActions = async (page: Page) => {
 // The feed and the workout history page more as their sentinel scrolls into
 // view, so the end-of-list marker only exists once a reader has travelled the
 // whole list. Scrolling the way a person would is what makes it appear.
-export const scrollToListEnd = async (page: Page, selector: string, maxScrolls = 40) => {
-  const marker = page.locator(selector).first()
+export const scrollToListEnd = async (page: Page, marker: Locator, maxScrolls = 40) => {
+  const target = marker.first()
   for (let scroll = 0; scroll < maxScrolls; scroll += 1) {
-    if (await marker.isVisible()) return
+    if (await target.isVisible()) return
     await page.mouse.wheel(0, 20_000)
     await page.waitForTimeout(300)
   }
 
-  await expect(marker).toBeVisible()
+  await expect(target).toBeVisible()
 }
 
 export const allowRuntimeErrors = {
