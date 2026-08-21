@@ -57,6 +57,8 @@ test.describe('guest authentication and routing', () => {
 
     await page.goto('/signup')
     await page.getByLabel('Name', { exact: true }).fill('E2E Member')
+    // The name suggests the username, so most people never touch that field.
+    await expect(page.getByLabel('Username')).toHaveValue('e2emember')
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByLabel('Confirm password').fill(password)

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -48,6 +49,38 @@ func (s *userSuite) SetupSuite() {
 		if err := s.container.Terminate(ctx); err != nil {
 			log.Fatalf("Clean container: %s", err)
 		}
+	})
+}
+
+func (s *userSuite) TestUpdateUserName() {
+	s.Run("ok_name_updated_and_trimmed", func() {
+		user := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		res, err := s.handler.UpdateUserName(ctx, &connect.Request[v1.UpdateUserNameRequest]{
+			Msg: &v1.UpdateUserNameRequest{Name: "  Robin Fields  "},
+		})
+		s.Require().NoError(err)
+		s.Require().Equal("Robin Fields", res.Msg.GetUser().GetName())
+
+		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+		s.Require().NoError(err)
+		s.Require().Equal("Robin Fields", persisted.Name)
+	})
+
+	s.Run("err_update_reports_nothing_about_the_account", func() {
+		// An update that matches no row is the handler's internal-error path;
+		// what it must not do is leak that the account is missing.
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.NewString())
+
+		res, err := s.handler.UpdateUserName(ctx, &connect.Request[v1.UpdateUserNameRequest]{
+			Msg: &v1.UpdateUserNameRequest{Name: "Robin Fields"},
+		})
+		s.Require().Nil(res)
+		s.Require().Error(err)
+		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
 	})
 }
 

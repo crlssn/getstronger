@@ -45,7 +45,7 @@ test.describe('social feed and discovery', () => {
     await expect(card).toBeVisible()
     await card.getByRole('link', { name: /View .* workout details/ }).click()
 
-    await expect(page.getByRole('link', { name: 'janedoe', exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: '@janedoe', exact: true }).first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Exercises' })).toBeVisible()
 
     const comment = uniqueName('Strong session')
@@ -115,7 +115,7 @@ test.describe('profiles and notifications', () => {
 
   test('toggles following and exposes every public profile section @mutation', async ({ page }) => {
     await page.goto('/home')
-    await page.getByRole('link', { name: 'janedoe', exact: true }).first().click()
+    await page.getByRole('link', { name: '@janedoe', exact: true }).first().click()
 
     await openProfileActions(page)
     await page.getByRole('menuitem', { name: 'Unfollow Jane Doe' }).click()
@@ -168,6 +168,23 @@ test.describe('account progress', () => {
     await expect(firstRecord).toBeVisible()
     await firstRecord.click()
     await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+$/)
+  })
+
+  test('edits the name from the profile @mutation', async ({ page }) => {
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Change name' }).click()
+    const nameInput = page.getByRole('textbox', { name: 'Name' })
+    await nameInput.fill('Alex Morgan-Reid')
+    await page.getByRole('button', { name: 'Save' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Alex Morgan-Reid' })).toBeVisible()
+    await expect(nameInput).toHaveCount(0)
+
+    // The name comes back from the backend, not from the draft still in memory.
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Alex Morgan-Reid' })).toBeVisible()
   })
 
   test('edits the username from the profile and rejects a taken one @mutation', async ({

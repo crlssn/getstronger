@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/user_service.proto.
  */
 export const file_api_v1_user_service: GenFile = /*@__PURE__*/
-  fileDesc("ChlhcGkvdjEvdXNlcl9zZXJ2aWNlLnByb3RvEgZhcGkudjEiJgoOR2V0VXNlclJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIi0KD0dldFVzZXJSZXNwb25zZRIaCgR1c2VyGAEgASgLMgwuYXBpLnYxLlVzZXIiMAoRRm9sbG93VXNlclJlcXVlc3QSGwoJZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASIUChJGb2xsb3dVc2VyUmVzcG9uc2UiNAoTVW5mb2xsb3dVc2VyUmVxdWVzdBIdCgt1bmZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiFgoUVW5mb2xsb3dVc2VyUmVzcG9uc2UiNQoUTGlzdEZvbGxvd2Vyc1JlcXVlc3QSHQoLZm9sbG93ZXJfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlcnNSZXNwb25zZRIfCglmb2xsb3dlcnMYASADKAsyDC5hcGkudjEuVXNlciI1ChRMaXN0Rm9sbG93ZWVzUmVxdWVzdBIdCgtmb2xsb3dlZV9pZBgBIAEoCUIIukgFcgOwAQEiOAoVTGlzdEZvbGxvd2Vlc1Jlc3BvbnNlEh8KCWZvbGxvd2VlcxgBIAMoCzIMLmFwaS52MS5Vc2VyImMKElNlYXJjaFVzZXJzUmVxdWVzdBIWCgVxdWVyeRgBIAEoCUIHukgEcgIQAxI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiYgoTU2VhcmNoVXNlcnNSZXNwb25zZRIbCgV1c2VycxgBIAMoCzIMLmFwaS52MS5Vc2VyEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIkoKGVVwZGF0ZVVzZXJVc2VybmFtZVJlcXVlc3QSLQoIdXNlcm5hbWUYASABKAlCG7pIGHIWEAMYHjIQXltBLVphLXowLTlfLl0rJCI4ChpVcGRhdGVVc2VyVXNlcm5hbWVSZXNwb25zZRIaCgR1c2VyGAEgASgLMgwuYXBpLnYxLlVzZXIiUwobVXBkYXRlVXNlcldlaWdodFVuaXRSZXF1ZXN0EjQKC3dlaWdodF91bml0GAEgASgOMhIuYXBpLnYxLldlaWdodFVuaXRCC7pICIIBBRABIgEAIjoKHFVwZGF0ZVVzZXJXZWlnaHRVbml0UmVzcG9uc2USGgoEdXNlchgBIAEoCzIMLmFwaS52MS5Vc2VyIjAKHVVwZGF0ZVVzZXJBdXRvZmlsbFNldHNSZXF1ZXN0Eg8KB2VuYWJsZWQYASABKAgiPAoeVXBkYXRlVXNlckF1dG9maWxsU2V0c1Jlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlciJZCh1VcGRhdGVVc2VyRGlzdGFuY2VVbml0UmVxdWVzdBI4Cg1kaXN0YW5jZV91bml0GAEgASgOMhQuYXBpLnYxLkRpc3RhbmNlVW5pdEILukgIggEFEAEiAQAiPAoeVXBkYXRlVXNlckRpc3RhbmNlVW5pdFJlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlcjKLBwoLVXNlclNlcnZpY2USQAoHR2V0VXNlchIWLmFwaS52MS5HZXRVc2VyUmVxdWVzdBoXLmFwaS52MS5HZXRVc2VyUmVzcG9uc2UiBIi1GAESSQoKRm9sbG93VXNlchIZLmFwaS52MS5Gb2xsb3dVc2VyUmVxdWVzdBoaLmFwaS52MS5Gb2xsb3dVc2VyUmVzcG9uc2UiBIi1GAESTwoMVW5mb2xsb3dVc2VyEhsuYXBpLnYxLlVuZm9sbG93VXNlclJlcXVlc3QaHC5hcGkudjEuVW5mb2xsb3dVc2VyUmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VycxIcLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VlcxIcLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVzcG9uc2UiBIi1GAESTAoLU2VhcmNoVXNlcnMSGi5hcGkudjEuU2VhcmNoVXNlcnNSZXF1ZXN0GhsuYXBpLnYxLlNlYXJjaFVzZXJzUmVzcG9uc2UiBIi1GAESYQoSVXBkYXRlVXNlclVzZXJuYW1lEiEuYXBpLnYxLlVwZGF0ZVVzZXJVc2VybmFtZVJlcXVlc3QaIi5hcGkudjEuVXBkYXRlVXNlclVzZXJuYW1lUmVzcG9uc2UiBIi1GAESbQoWVXBkYXRlVXNlckF1dG9maWxsU2V0cxIlLmFwaS52MS5VcGRhdGVVc2VyQXV0b2ZpbGxTZXRzUmVxdWVzdBomLmFwaS52MS5VcGRhdGVVc2VyQXV0b2ZpbGxTZXRzUmVzcG9uc2UiBIi1GAESZwoUVXBkYXRlVXNlcldlaWdodFVuaXQSIy5hcGkudjEuVXBkYXRlVXNlcldlaWdodFVuaXRSZXF1ZXN0GiQuYXBpLnYxLlVwZGF0ZVVzZXJXZWlnaHRVbml0UmVzcG9uc2UiBIi1GAESbQoWVXBkYXRlVXNlckRpc3RhbmNlVW5pdBIlLmFwaS52MS5VcGRhdGVVc2VyRGlzdGFuY2VVbml0UmVxdWVzdBomLmFwaS52MS5VcGRhdGVVc2VyRGlzdGFuY2VVbml0UmVzcG9uc2UiBIi1GAFClAEKCmNvbS5hcGkudjFCEFVzZXJTZXJ2aWNlUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
+  fileDesc("ChlhcGkvdjEvdXNlcl9zZXJ2aWNlLnByb3RvEgZhcGkudjEiJgoOR2V0VXNlclJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIi0KD0dldFVzZXJSZXNwb25zZRIaCgR1c2VyGAEgASgLMgwuYXBpLnYxLlVzZXIiMAoRRm9sbG93VXNlclJlcXVlc3QSGwoJZm9sbG93X2lkGAEgASgJQgi6SAVyA7ABASIUChJGb2xsb3dVc2VyUmVzcG9uc2UiNAoTVW5mb2xsb3dVc2VyUmVxdWVzdBIdCgt1bmZvbGxvd19pZBgBIAEoCUIIukgFcgOwAQEiFgoUVW5mb2xsb3dVc2VyUmVzcG9uc2UiNQoUTGlzdEZvbGxvd2Vyc1JlcXVlc3QSHQoLZm9sbG93ZXJfaWQYASABKAlCCLpIBXIDsAEBIjgKFUxpc3RGb2xsb3dlcnNSZXNwb25zZRIfCglmb2xsb3dlcnMYASADKAsyDC5hcGkudjEuVXNlciI1ChRMaXN0Rm9sbG93ZWVzUmVxdWVzdBIdCgtmb2xsb3dlZV9pZBgBIAEoCUIIukgFcgOwAQEiOAoVTGlzdEZvbGxvd2Vlc1Jlc3BvbnNlEh8KCWZvbGxvd2VlcxgBIAMoCzIMLmFwaS52MS5Vc2VyImMKElNlYXJjaFVzZXJzUmVxdWVzdBIWCgVxdWVyeRgBIAEoCUIHukgEcgIQAxI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiYgoTU2VhcmNoVXNlcnNSZXNwb25zZRIbCgV1c2VycxgBIAMoCzIMLmFwaS52MS5Vc2VyEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIi4KFVVwZGF0ZVVzZXJOYW1lUmVxdWVzdBIVCgRuYW1lGAEgASgJQge6SARyAhABIjQKFlVwZGF0ZVVzZXJOYW1lUmVzcG9uc2USGgoEdXNlchgBIAEoCzIMLmFwaS52MS5Vc2VyIkoKGVVwZGF0ZVVzZXJVc2VybmFtZVJlcXVlc3QSLQoIdXNlcm5hbWUYASABKAlCG7pIGHIWEAMYHjIQXltBLVphLXowLTlfLl0rJCI4ChpVcGRhdGVVc2VyVXNlcm5hbWVSZXNwb25zZRIaCgR1c2VyGAEgASgLMgwuYXBpLnYxLlVzZXIiUwobVXBkYXRlVXNlcldlaWdodFVuaXRSZXF1ZXN0EjQKC3dlaWdodF91bml0GAEgASgOMhIuYXBpLnYxLldlaWdodFVuaXRCC7pICIIBBRABIgEAIjoKHFVwZGF0ZVVzZXJXZWlnaHRVbml0UmVzcG9uc2USGgoEdXNlchgBIAEoCzIMLmFwaS52MS5Vc2VyIjAKHVVwZGF0ZVVzZXJBdXRvZmlsbFNldHNSZXF1ZXN0Eg8KB2VuYWJsZWQYASABKAgiPAoeVXBkYXRlVXNlckF1dG9maWxsU2V0c1Jlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlciJZCh1VcGRhdGVVc2VyRGlzdGFuY2VVbml0UmVxdWVzdBI4Cg1kaXN0YW5jZV91bml0GAEgASgOMhQuYXBpLnYxLkRpc3RhbmNlVW5pdEILukgIggEFEAEiAQAiPAoeVXBkYXRlVXNlckRpc3RhbmNlVW5pdFJlc3BvbnNlEhoKBHVzZXIYASABKAsyDC5hcGkudjEuVXNlcjLiBwoLVXNlclNlcnZpY2USQAoHR2V0VXNlchIWLmFwaS52MS5HZXRVc2VyUmVxdWVzdBoXLmFwaS52MS5HZXRVc2VyUmVzcG9uc2UiBIi1GAESSQoKRm9sbG93VXNlchIZLmFwaS52MS5Gb2xsb3dVc2VyUmVxdWVzdBoaLmFwaS52MS5Gb2xsb3dVc2VyUmVzcG9uc2UiBIi1GAESTwoMVW5mb2xsb3dVc2VyEhsuYXBpLnYxLlVuZm9sbG93VXNlclJlcXVlc3QaHC5hcGkudjEuVW5mb2xsb3dVc2VyUmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VycxIcLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZXJzUmVzcG9uc2UiBIi1GAESUgoNTGlzdEZvbGxvd2VlcxIcLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVxdWVzdBodLmFwaS52MS5MaXN0Rm9sbG93ZWVzUmVzcG9uc2UiBIi1GAESTAoLU2VhcmNoVXNlcnMSGi5hcGkudjEuU2VhcmNoVXNlcnNSZXF1ZXN0GhsuYXBpLnYxLlNlYXJjaFVzZXJzUmVzcG9uc2UiBIi1GAESVQoOVXBkYXRlVXNlck5hbWUSHS5hcGkudjEuVXBkYXRlVXNlck5hbWVSZXF1ZXN0Gh4uYXBpLnYxLlVwZGF0ZVVzZXJOYW1lUmVzcG9uc2UiBIi1GAESYQoSVXBkYXRlVXNlclVzZXJuYW1lEiEuYXBpLnYxLlVwZGF0ZVVzZXJVc2VybmFtZVJlcXVlc3QaIi5hcGkudjEuVXBkYXRlVXNlclVzZXJuYW1lUmVzcG9uc2UiBIi1GAESbQoWVXBkYXRlVXNlckF1dG9maWxsU2V0cxIlLmFwaS52MS5VcGRhdGVVc2VyQXV0b2ZpbGxTZXRzUmVxdWVzdBomLmFwaS52MS5VcGRhdGVVc2VyQXV0b2ZpbGxTZXRzUmVzcG9uc2UiBIi1GAESZwoUVXBkYXRlVXNlcldlaWdodFVuaXQSIy5hcGkudjEuVXBkYXRlVXNlcldlaWdodFVuaXRSZXF1ZXN0GiQuYXBpLnYxLlVwZGF0ZVVzZXJXZWlnaHRVbml0UmVzcG9uc2UiBIi1GAESbQoWVXBkYXRlVXNlckRpc3RhbmNlVW5pdBIlLmFwaS52MS5VcGRhdGVVc2VyRGlzdGFuY2VVbml0UmVxdWVzdBomLmFwaS52MS5VcGRhdGVVc2VyRGlzdGFuY2VVbml0UmVzcG9uc2UiBIi1GAFClAEKCmNvbS5hcGkudjFCEFVzZXJTZXJ2aWNlUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_options, file_api_v1_shared, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.GetUserRequest
@@ -223,6 +223,42 @@ export const SearchUsersResponseSchema: GenMessage<SearchUsersResponse> = /*@__P
   messageDesc(file_api_v1_user_service, 11);
 
 /**
+ * @generated from message api.v1.UpdateUserNameRequest
+ */
+export type UpdateUserNameRequest = Message<"api.v1.UpdateUserNameRequest"> & {
+  /**
+   * Free-form and stored trimmed, matching the name given at signup.
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message api.v1.UpdateUserNameRequest.
+ * Use `create(UpdateUserNameRequestSchema)` to create a new message.
+ */
+export const UpdateUserNameRequestSchema: GenMessage<UpdateUserNameRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_user_service, 12);
+
+/**
+ * @generated from message api.v1.UpdateUserNameResponse
+ */
+export type UpdateUserNameResponse = Message<"api.v1.UpdateUserNameResponse"> & {
+  /**
+   * @generated from field: api.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message api.v1.UpdateUserNameResponse.
+ * Use `create(UpdateUserNameResponseSchema)` to create a new message.
+ */
+export const UpdateUserNameResponseSchema: GenMessage<UpdateUserNameResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_user_service, 13);
+
+/**
  * @generated from message api.v1.UpdateUserUsernameRequest
  */
 export type UpdateUserUsernameRequest = Message<"api.v1.UpdateUserUsernameRequest"> & {
@@ -239,7 +275,7 @@ export type UpdateUserUsernameRequest = Message<"api.v1.UpdateUserUsernameReques
  * Use `create(UpdateUserUsernameRequestSchema)` to create a new message.
  */
 export const UpdateUserUsernameRequestSchema: GenMessage<UpdateUserUsernameRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 12);
+  messageDesc(file_api_v1_user_service, 14);
 
 /**
  * @generated from message api.v1.UpdateUserUsernameResponse
@@ -256,7 +292,7 @@ export type UpdateUserUsernameResponse = Message<"api.v1.UpdateUserUsernameRespo
  * Use `create(UpdateUserUsernameResponseSchema)` to create a new message.
  */
 export const UpdateUserUsernameResponseSchema: GenMessage<UpdateUserUsernameResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 13);
+  messageDesc(file_api_v1_user_service, 15);
 
 /**
  * @generated from message api.v1.UpdateUserWeightUnitRequest
@@ -273,7 +309,7 @@ export type UpdateUserWeightUnitRequest = Message<"api.v1.UpdateUserWeightUnitRe
  * Use `create(UpdateUserWeightUnitRequestSchema)` to create a new message.
  */
 export const UpdateUserWeightUnitRequestSchema: GenMessage<UpdateUserWeightUnitRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 14);
+  messageDesc(file_api_v1_user_service, 16);
 
 /**
  * @generated from message api.v1.UpdateUserWeightUnitResponse
@@ -290,7 +326,7 @@ export type UpdateUserWeightUnitResponse = Message<"api.v1.UpdateUserWeightUnitR
  * Use `create(UpdateUserWeightUnitResponseSchema)` to create a new message.
  */
 export const UpdateUserWeightUnitResponseSchema: GenMessage<UpdateUserWeightUnitResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 15);
+  messageDesc(file_api_v1_user_service, 17);
 
 /**
  * @generated from message api.v1.UpdateUserAutofillSetsRequest
@@ -307,7 +343,7 @@ export type UpdateUserAutofillSetsRequest = Message<"api.v1.UpdateUserAutofillSe
  * Use `create(UpdateUserAutofillSetsRequestSchema)` to create a new message.
  */
 export const UpdateUserAutofillSetsRequestSchema: GenMessage<UpdateUserAutofillSetsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 16);
+  messageDesc(file_api_v1_user_service, 18);
 
 /**
  * @generated from message api.v1.UpdateUserAutofillSetsResponse
@@ -324,7 +360,7 @@ export type UpdateUserAutofillSetsResponse = Message<"api.v1.UpdateUserAutofillS
  * Use `create(UpdateUserAutofillSetsResponseSchema)` to create a new message.
  */
 export const UpdateUserAutofillSetsResponseSchema: GenMessage<UpdateUserAutofillSetsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 17);
+  messageDesc(file_api_v1_user_service, 19);
 
 /**
  * @generated from message api.v1.UpdateUserDistanceUnitRequest
@@ -341,7 +377,7 @@ export type UpdateUserDistanceUnitRequest = Message<"api.v1.UpdateUserDistanceUn
  * Use `create(UpdateUserDistanceUnitRequestSchema)` to create a new message.
  */
 export const UpdateUserDistanceUnitRequestSchema: GenMessage<UpdateUserDistanceUnitRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 18);
+  messageDesc(file_api_v1_user_service, 20);
 
 /**
  * @generated from message api.v1.UpdateUserDistanceUnitResponse
@@ -358,7 +394,7 @@ export type UpdateUserDistanceUnitResponse = Message<"api.v1.UpdateUserDistanceU
  * Use `create(UpdateUserDistanceUnitResponseSchema)` to create a new message.
  */
 export const UpdateUserDistanceUnitResponseSchema: GenMessage<UpdateUserDistanceUnitResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_user_service, 19);
+  messageDesc(file_api_v1_user_service, 21);
 
 /**
  * @generated from service api.v1.UserService
@@ -411,6 +447,14 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof SearchUsersRequestSchema;
     output: typeof SearchUsersResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.UserService.UpdateUserName
+   */
+  updateUserName: {
+    methodKind: "unary";
+    input: typeof UpdateUserNameRequestSchema;
+    output: typeof UpdateUserNameResponseSchema;
   },
   /**
    * @generated from rpc api.v1.UserService.UpdateUserUsername

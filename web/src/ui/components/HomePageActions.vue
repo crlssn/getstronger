@@ -9,7 +9,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { listExercises, listPlans, listRoutines, searchUsers } from '@/http/requests'
-import { initials } from '@/utils/names'
+import { handle, initials } from '@/utils/names'
 import type { Exercise, User } from '@/proto/api/v1/shared_pb'
 import type { Plan, Routine } from '@/proto/api/v1/routine_service_pb'
 
@@ -131,7 +131,7 @@ const onSearch = async () => {
           >
             <span class="avatar">{{ initials(user.name) }}</span>
             <span>
-              <strong>{{ user.username }}</strong>
+              <strong>{{ handle(user.username) }}</strong>
               <small>{{ user.name }}</small>
             </span>
           </RouterLink>

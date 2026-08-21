@@ -10,6 +10,7 @@ import { SignupRequestSchema } from '@/proto/api/v1/auth_service_pb'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import { AuthPasswordInput } from '@/ui/auth/AuthPasswordInput'
 import { AppButton } from '@/ui/components/AppButton'
+import { usernameFromName } from '@/utils/names'
 
 export const UserSignup = () => {
   const { t } = useTranslation()
@@ -20,6 +21,22 @@ export const UserSignup = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [usernameEdited, setUsernameEdited] = useState(false)
+
+  // The username follows the name until it is typed in, which is the only
+  // signal that the suggestion is not wanted. Clearing the field hands it back.
+  const onNameChange = (value: string) => {
+    setName(value)
+    if (!usernameEdited) setUsername(usernameFromName(value))
+  }
+
+  const onUsernameChange = (value: string) => {
+    // Usernames are case-insensitive to the backend, so folding here stops the
+    // account reading differently from how it is addressed.
+    const typed = value.toLowerCase()
+    setUsername(typed)
+    setUsernameEdited(typed !== '')
+  }
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -58,7 +75,7 @@ export const UserSignup = () => {
               className="auth-input"
               required
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => onNameChange(event.target.value)}
             />
           </div>
         </div>
@@ -82,9 +99,7 @@ export const UserSignup = () => {
               pattern="[A-Za-z0-9._]+"
               required
               value={username}
-              // Usernames are case-insensitive to the backend, so folding here
-              // stops the account reading differently from how it is addressed.
-              onChange={(event) => setUsername(event.target.value.toLowerCase())}
+              onChange={(event) => onUsernameChange(event.target.value)}
             />
           </div>
         </div>

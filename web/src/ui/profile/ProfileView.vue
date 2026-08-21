@@ -13,6 +13,7 @@ import {
   getCurrentUser,
   updateUserAutofillSets,
   updateUserDistanceUnit,
+  updateUserName,
   updateUserUsername,
   updateUserWeightUnit,
 } from '@/http/requests'
@@ -27,7 +28,7 @@ import { DistanceUnit, WeightUnit, type User } from '@/proto/api/v1/shared_pb'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { formatNumber } from '@/utils/numbers'
-import { initials } from '@/utils/names'
+import { handle, initials } from '@/utils/names'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -127,6 +128,31 @@ const setAutofillSets = async (enabled: boolean) => {
 
 const userInitials = computed(() => initials(user.value?.name))
 
+const editingName = ref(false)
+const nameDraft = ref('')
+const savingName = ref(false)
+
+const openNameEditor = () => {
+  nameDraft.value = user.value?.name ?? ''
+  editingName.value = true
+}
+
+const saveName = async () => {
+  if (!user.value || savingName.value) return
+
+  savingName.value = true
+  const res = await updateUserName(nameDraft.value)
+  savingName.value = false
+
+  // Failures surface through the request helper's alert, so the sheet stays
+  // open for the draft to be corrected.
+  if (!res) return
+
+  user.value.name = res.user?.name ?? nameDraft.value
+  editingName.value = false
+  alertStore.setSuccess(t('profile.nameUpdated'))
+}
+
 const editingUsername = ref(false)
 const usernameDraft = ref('')
 const savingUsername = ref(false)
@@ -168,9 +194,14 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
       <div class="avatar">{{ userInitials }}</div>
       <div class="min-w-0">
         <p class="eyebrow">{{ $t('profile.account') }}</p>
-        <h2>{{ user.name }}</h2>
+        <div class="name-line">
+          <h2>{{ user.name }}</h2>
+          <button type="button" :aria-label="$t('profile.editName')" @click="openNameEditor">
+            <PencilSquareIcon />
+          </button>
+        </div>
         <p class="username-line">
-          <span class="truncate">@{{ user.username }}</span>
+          <span class="truncate">{{ handle(user.username) }}</span>
           <button
             type="button"
             :aria-label="$t('profile.editUsername')"
@@ -311,6 +342,31 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
     >
 
     <AppSheet
+      v-if="editingName"
+      :title="$t('profile.editName')"
+      :close-label="$t('common.close')"
+      @close="editingName = false"
+    >
+      <form id="name-form" @submit.prevent="saveName">
+        <label for="edit-name" class="auth-label">{{ $t('auth.name') }}</label>
+        <input
+          id="edit-name"
+          v-model="nameDraft"
+          name="name"
+          type="text"
+          autocomplete="name"
+          class="auth-input mt-2"
+          required
+        />
+      </form>
+      <template #actions>
+        <button type="submit" form="name-form" class="primary" :disabled="savingName">
+          {{ $t('common.save') }}
+        </button>
+      </template>
+    </AppSheet>
+
+    <AppSheet
       v-if="editingUsername"
       :title="$t('profile.editUsername')"
       :close-label="$t('common.close')"
@@ -363,19 +419,26 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
   @apply px-1 text-display font-bold text-text;
 }
 .profile-card h2 {
-  @apply mt-1 truncate text-title font-semibold text-text;
+  @apply truncate text-title font-semibold text-text;
 }
 .profile-card p:last-child {
   @apply mt-1 truncate text-sm text-text-subtle;
 }
-/* The pencil is a full-size tap target, so the row's text centers against it
-   with negative margins instead of growing the card. */
+/* Each pencil is a full-size tap target, so its row's text centers against it
+   with negative margins instead of growing the card. The name keeps its own
+   heading element, so the pencil stays out of the heading's accessible name. */
+.name-line,
 .username-line {
-  @apply -my-2 flex items-center gap-0.5 text-sm text-text-muted;
+  @apply -my-2 flex items-center gap-0.5;
 }
+.username-line {
+  @apply text-sm text-text-muted;
+}
+.name-line button,
 .username-line button {
   @apply grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
 }
+.name-line button svg,
 .username-line button svg {
   @apply size-4;
 }

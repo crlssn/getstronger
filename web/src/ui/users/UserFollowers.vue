@@ -5,6 +5,7 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type User } from '@/proto/api/v1/shared_pb.ts'
 import { listFollowers } from '@/http/requests.ts'
+import { handle } from '@/utils/names'
 import { usePageTitleStore } from '@/stores/pageTitle.ts'
 import AppListItem from '@/ui/components/AppListItem.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
@@ -39,7 +40,7 @@ const fetchFollowers = async () => {
     <AppListItem v-if="followers.length === 0">{{ t('common.nothingHere') }}</AppListItem>
     <AppListItemLink v-for="follower in followers" :key="follower.id" :to="`/users/${follower.id}`">
       <span>
-        <strong class="block font-medium">{{ follower.username }}</strong>
+        <strong class="block font-medium">{{ handle(follower.username) }}</strong>
         <small class="mt-0.5 block text-sm font-normal text-text-subtle">{{ follower.name }}</small>
       </span>
     </AppListItemLink>

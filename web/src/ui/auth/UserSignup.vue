@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { brandSignupSubtitle } from '@/brand'
 import { signup } from '@/http/requests'
 import { RouterLink, useRouter } from 'vue-router'
@@ -8,6 +8,7 @@ import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useEmailVerificationStore } from '@/stores/emailVerification.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
 import posthog from '@/posthog'
+import { usernameFromName } from '@/utils/names'
 
 const router = useRouter()
 const emailVerificationStore = useEmailVerificationStore()
@@ -19,6 +20,23 @@ const req = ref<SignupRequest>({
   password: '',
   passwordConfirmation: '',
 })
+
+// The username follows the name until it is typed in, which is the only
+// signal that the suggestion is not wanted. Clearing the field hands it back.
+const usernameEdited = ref(false)
+
+watch(
+  () => req.value.name,
+  (name) => {
+    if (usernameEdited.value) return
+    req.value.username = usernameFromName(name)
+  },
+)
+
+const onUsernameInput = () => {
+  req.value.username = req.value.username.toLowerCase()
+  usernameEdited.value = req.value.username !== ''
+}
 
 const onSignup = async () => {
   const res = await signup(req.value)
@@ -72,7 +90,7 @@ const onSignup = async () => {
             maxlength="30"
             pattern="[A-Za-z0-9._]+"
             required
-            @input="req.username = req.username.toLowerCase()"
+            @input="onUsernameInput"
           />
         </div>
       </div>

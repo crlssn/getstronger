@@ -2,6 +2,7 @@
 import AppListItemLink from '@/ui/components/AppListItemLink.vue'
 import AppList from '@/ui/components/AppList.vue'
 import { listFollowees } from '@/http/requests.ts'
+import { handle } from '@/utils/names'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { User } from '@/proto/api/v1/shared_pb.ts'
@@ -39,7 +40,7 @@ const fetchFollowees = async () => {
     <AppListItem v-if="followees.length === 0">{{ t('common.nothingHere') }}</AppListItem>
     <AppListItemLink v-for="followee in followees" :key="followee.id" :to="`/users/${followee.id}`">
       <span>
-        <strong class="block font-medium">{{ followee.username }}</strong>
+        <strong class="block font-medium">{{ handle(followee.username) }}</strong>
         <small class="mt-0.5 block text-sm font-normal text-text-subtle">{{ followee.name }}</small>
       </span>
     </AppListItemLink>

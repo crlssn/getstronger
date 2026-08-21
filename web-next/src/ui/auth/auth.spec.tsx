@@ -121,6 +121,9 @@ describe('AuthPasswordInput', () => {
 describe('UserSignup', () => {
   const fillIn = async () => {
     await userEvent.type(field('Name'), 'Alex Morgan')
+    // The name suggests a username, so a chosen one replaces it rather than
+    // being typed onto the end.
+    await userEvent.clear(field('Username'))
     await userEvent.type(field('Username'), 'AlexMorgan')
     await userEvent.type(field('Email address'), 'alex@example.com')
     await userEvent.type(field('Password'), 'password123')
@@ -135,6 +138,37 @@ describe('UserSignup', () => {
     await userEvent.type(field('Username'), 'AlexMorgan')
 
     expect(field('Username')).toHaveValue('alexmorgan')
+  })
+
+  test('suggests a username from the name as it is typed', async () => {
+    renderScreen(<UserSignup />)
+
+    await userEvent.type(field('Name'), 'Al')
+    // Two characters cannot be a username, so nothing is suggested yet.
+    expect(field('Username')).toHaveValue('')
+
+    await userEvent.type(field('Name'), 'ex Morgan')
+    expect(field('Username')).toHaveValue('alexmorgan')
+  })
+
+  test('leaves a username alone once it has been typed in', async () => {
+    renderScreen(<UserSignup />)
+
+    await userEvent.type(field('Name'), 'Alex Morgan')
+    await userEvent.type(field('Username'), '.m')
+    await userEvent.type(field('Name'), '-Reid')
+
+    expect(field('Username')).toHaveValue('alexmorgan.m')
+  })
+
+  test('suggests again once the username is cleared', async () => {
+    renderScreen(<UserSignup />)
+
+    await userEvent.type(field('Name'), 'Alex Morgan')
+    await userEvent.clear(field('Username'))
+    await userEvent.type(field('Name'), '-Reid')
+
+    expect(field('Username')).toHaveValue('alexmorganreid')
   })
 
   test('creates the account with what was typed', async () => {

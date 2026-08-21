@@ -16,6 +16,7 @@ const {
   getDashboard,
   updateUserAutofillSets,
   updateUserDistanceUnit,
+  updateUserName,
   updateUserUsername,
   updateUserWeightUnit,
 } = vi.hoisted(() => ({
@@ -23,6 +24,7 @@ const {
   getDashboard: vi.fn(),
   updateUserAutofillSets: vi.fn(),
   updateUserDistanceUnit: vi.fn(),
+  updateUserName: vi.fn(),
   updateUserUsername: vi.fn(),
   updateUserWeightUnit: vi.fn(),
 }))
@@ -32,6 +34,7 @@ vi.mock('@/http/requests', () => ({
   getDashboard,
   updateUserAutofillSets,
   updateUserDistanceUnit,
+  updateUserName,
   updateUserUsername,
   updateUserWeightUnit,
 }))
@@ -72,6 +75,37 @@ describe('ProfileView', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+  })
+
+  test('shows the name and updates it through the editor sheet', async () => {
+    updateUserName.mockResolvedValue({ user: { name: 'Alex Morgan-Reid' } })
+    const wrapper = await mountProfile()
+
+    expect(wrapper.text()).toContain('Alex Morgan')
+
+    await wrapper.get('[aria-label="Change name"]').trigger('click')
+    await wrapper.get('#edit-name').setValue('Alex Morgan-Reid')
+    await wrapper.get('#name-form').trigger('submit')
+    await flushPromises()
+
+    expect(updateUserName).toHaveBeenCalledWith('Alex Morgan-Reid')
+    expect(wrapper.text()).toContain('Alex Morgan-Reid')
+    expect(wrapper.find('#edit-name').exists()).toBe(false)
+    // The avatar reads the same name, so it has to follow the rename.
+    expect(wrapper.get('.avatar').text()).toBe('AM')
+  })
+
+  test('keeps the name sheet open when the update fails', async () => {
+    updateUserName.mockResolvedValue(undefined)
+    const wrapper = await mountProfile()
+
+    await wrapper.get('[aria-label="Change name"]').trigger('click')
+    await wrapper.get('#edit-name').setValue('Alex Morgan-Reid')
+    await wrapper.get('#name-form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Alex Morgan')
+    expect(wrapper.find('#edit-name').exists()).toBe(true)
   })
 
   test('shows the username and updates it through the editor sheet', async () => {

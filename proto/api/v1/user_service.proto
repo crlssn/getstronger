@@ -26,6 +26,9 @@ service UserService {
   rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse) {
     option (auth) = true;
   }
+  rpc UpdateUserName (UpdateUserNameRequest) returns (UpdateUserNameResponse) {
+    option (auth) = true;
+  }
   rpc UpdateUserUsername (UpdateUserUsernameRequest) returns (UpdateUserUsernameResponse) {
     option (auth) = true;
   }
@@ -78,6 +81,14 @@ message SearchUsersRequest {
 message SearchUsersResponse {
   repeated User users = 1;
   PaginationResponse pagination = 2;
+}
+
+message UpdateUserNameRequest {
+  // Free-form and stored trimmed, matching the name given at signup.
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+}
+message UpdateUserNameResponse {
+  User user = 1;
 }
 
 message UpdateUserUsernameRequest {

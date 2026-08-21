@@ -154,6 +154,19 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[ap
 	}, nil
 }
 
+func (h *userHandler) UpdateUserName(ctx context.Context, req *connect.Request[apiv1.UpdateUserNameRequest]) (*connect.Response[apiv1.UpdateUserNameResponse], error) {
+	user, err := h.updateUserPreference(ctx, "name", repo.UpdateUserName(req.Msg.GetName()))
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[apiv1.UpdateUserNameResponse]{
+		Msg: &apiv1.UpdateUserNameResponse{
+			User: user,
+		},
+	}, nil
+}
+
 func (h *userHandler) UpdateUserUsername(ctx context.Context, req *connect.Request[apiv1.UpdateUserUsernameRequest]) (*connect.Response[apiv1.UpdateUserUsernameResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)

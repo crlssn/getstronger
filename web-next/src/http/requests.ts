@@ -31,6 +31,8 @@ import {
   type UpdateUserAutofillSetsResponse,
   UpdateUserDistanceUnitRequestSchema,
   type UpdateUserDistanceUnitResponse,
+  UpdateUserNameRequestSchema,
+  type UpdateUserNameResponse,
   UpdateUserUsernameRequestSchema,
   type UpdateUserUsernameResponse,
   UpdateUserWeightUnitRequestSchema,
@@ -463,6 +465,11 @@ export const getUser = async (id: string): Promise<GetUserResponse | void> => {
 export const getCurrentUser = async (id: string): Promise<GetUserResponse | void> => {
   const req = create(GetUserRequestSchema, { id })
   return tryCatch(() => userClient.getUser(req), { invalidatesSessionOnNotFound: true })
+}
+
+export const updateUserName = async (name: string): Promise<UpdateUserNameResponse | void> => {
+  const req = create(UpdateUserNameRequestSchema, { name })
+  return tryCatch(() => userClient.updateUserName(req))
 }
 
 export const updateUserUsername = async (

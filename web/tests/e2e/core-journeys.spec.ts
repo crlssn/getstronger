@@ -107,7 +107,7 @@ test.describe('authenticated journeys', () => {
 
   test('shows social profile tabs and follow state @smoke', async ({ page }) => {
     await page.goto('/home')
-    await page.getByRole('link', { name: 'janedoe', exact: true }).first().click()
+    await page.getByRole('link', { name: '@janedoe', exact: true }).first().click()
 
     await openProfileActions(page)
     await expect(page.getByRole('menuitem', { name: 'Unfollow Jane Doe' })).toBeVisible()
