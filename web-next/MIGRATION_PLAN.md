@@ -13,8 +13,9 @@ The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, every design-system
 primitive, and the shell — the nav bars, the four app-level singletons, and the
-signed-in and signed-out layouts. Phase F has started: the seven signed-out
-screens are across. 736 tests green, 95% statement / 98% line coverage.
+signed-in and signed-out layouts. Phase F is under way: the signed-out screens,
+progress and home are across. 849 tests green, 96% statement / 98% line
+coverage.
 
 What is left is the rest of the screens, and the two files that can only be
 written once they exist: `router.tsx` and `main.tsx`.
@@ -239,6 +240,17 @@ ESLint 10.
   have never run. Fixed here (`**/*.spec.{ts,tsx}`), which immediately caught
   real `vitest/valid-expect` findings — resolved by allowing the two-argument
   `expect(value, message)` form the specs legitimately use.
+- `WorkoutChart.vue` nests a `legend` key under `scales.x` and `scales.y`, where
+  Chart.js has never read one, and sets `drawBorder`, which Chart.js v4 removed.
+  Neither has any effect. Dropped.
+- `HomePageActions.vue` searched on every keystroke — four requests a character,
+  against three endpoints that already take a query. Debounced to 250ms here.
+  Its four result groups were four near-identical blocks of markup; they are one
+  list built from data now.
+- Dead CSS, dropped as each component moved: `.feed-author` and `.set-volume` in
+  the workout card, and five blocks in `HomeView` (`.section-block`,
+  `.momentum-grid`, `.last-session-*`, `.workout-icon`) that style elements the
+  screen has not had for some time.
 
 ## Bugs found on the way
 
@@ -299,15 +311,28 @@ now answers a tab root with itself.
 mostly mechanical now: the stores, the requests, the primitives and the shell
 they lean on are all in place.
 
-Done so far: the seven signed-out screens — `UserLogin`, `UserSignup`,
-`ForgotPassword`, `ResetPassword`, `VerifyEmail`, `UserLogout` — plus
-`NotFound` and the shared `AuthPasswordInput`.
+Done so far:
 
-Next, in rough order of how much they teach: `VerifyEmailPending` (186 lines,
-and it has a Vue spec worth porting), `ProgressView` (216), `HomeView` (413),
-then exercises, routines, plans, workouts, users, notifications and profile.
+- The signed-out screens — `UserLogin`, `UserSignup`, `ForgotPassword`,
+  `ResetPassword`, `VerifyEmail`, `VerifyEmailPending`, `UserLogout` — plus
+  `NotFound` and the shared `AuthPasswordInput`.
+- `ProgressView` and `HomeView`, and the feature components they lean on:
+  `ExerciseTags`, `WorkoutChart`, `PageNavAction`, `StreakCard`,
+  `HomePageActions`, `CardWorkout`, `CardWorkoutExercise`,
+  `CardWorkoutComment`.
 
-Two things to know going in:
+Next: exercises, routines, plans, workouts, users, notifications and profile.
+
+Three things to know going in:
+
+- A screen that wants an action in the top nav bar renders `<PageNavAction>`.
+  Do not look `#page-nav-action` up from an effect — the bar publishes it to
+  `stores/pageNavAction` from its `ref` callback, and the lint rule that stops
+  the effect version is right to.
+- Infinite scroll is `useInfiniteScroll(onReach, enabled, rootMargin?)`. Pass
+  `enabled` as `!loading && !reachedEnd`: flipping it back on is what asks for
+  the next page while the sentinel is still in view, so no screen needs to
+  re-arm its own paging the way the Vue ones did.
 
 - Workout sets are written through `updateSet(routineID, exerciseID, index,
 changes)`. The Vue screens assigned into the set object they got back from
