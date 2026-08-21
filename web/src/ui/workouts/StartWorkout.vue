@@ -16,6 +16,7 @@ import router from '@/router/router'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
+  CheckIcon,
   FlagIcon,
   MagnifyingGlassIcon,
   MinusIcon,
