@@ -1,5 +1,5 @@
 {
-  "include": ["env.d.ts", "src/**/*"],
+  "include": ["env.d.ts", "vitest.setup.ts", "src/**/*"],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     "composite": true,

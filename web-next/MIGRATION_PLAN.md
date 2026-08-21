@@ -11,19 +11,20 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
-whole HTTP layer, all 21 stores, and the routing rules. 438 tests green, 94%
-statement / 97% line coverage.
+whole HTTP layer, all 21 stores, and the routing rules. Phase D — the
+design-system primitives — is also done now. 478 tests green, 94% statement /
+97% line coverage.
 
 The only thing left below the UI is the React Router element tree itself, which
-cannot be written until there are screens to point it at.
+cannot be written until there are screens to point it at (phase E).
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
 | A     | Toolchain scaffold + framework-agnostic leaves         | done  |
 | B     | i18n, state, routing rules                             | done  |
 | C     | HTTP layer                                             | done  |
-| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | next  |
-| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo  |
+| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | done  |
+| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | next  |
 | F     | Feature views (auth, workouts, exercises, routines, …) | todo  |
 | G     | e2e + screenshot harness pointed at the React app      | todo  |
 | H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
@@ -47,6 +48,24 @@ The HTTP layer is done: `clients`, `interceptors`, `offlineCache`, `requests`,
 `router/navigation.ts` came before the router itself; see the routing decision
 below.
 
+The nine design-system primitives are done, in `src/ui/components/`:
+`AppButton`, `AppCard`, `AppEmptyState`, `AppTextarea`, `DropdownButton`,
+`AppList`, `AppListItem`, `AppListItemInput`, `AppListItemLink`, `AppSheet`,
+`AppSkeleton`. Each has a Testing Library spec. None import each other yet —
+that starts in phase E, when screens compose them.
+
+`useInfiniteScroll` (`src/utils/`) replaces `v-infinite-scroll`: a small
+IntersectionObserver hook, its own spec, used by `AppList`'s fetch-more
+sentinel. `usePagination` from `web/src/utils/` is still unported — it is the
+page-token half of the same story, needed by phase F screens, not by `AppList`
+itself.
+
+Both filesystem guards are ported into `web-next/tests/`, scoped to `.tsx`
+(and `.css` for the palette one) instead of `.vue`. The copy guard is rebuilt
+on the TypeScript compiler API rather than regex — see the decision below for
+why. Both run today with nothing to report; keep them green as phase E and F
+add files.
+
 Verify with, from `web-next/`:
 
 ```
@@ -63,7 +82,7 @@ files already ported. Check for it after each `git rebase origin/main`:
 git diff <last-synced-main>..origin/main -- web/src
 ```
 
-Ignore the `.vue` files — those are phases D–F. The ones that matter are
+Ignore the `.vue` files — those are phases E–F. The ones that matter are
 `src/proto/**`, `src/http/**`, `src/stores/**`, `src/utils/**` and
 `src/i18n/messages.ts`.
 
@@ -82,8 +101,14 @@ preference, a regenerated `user_service_pb`, a new `utils/names.ts`, and a
 reworked signup catalogue. The dispatch table's completeness check caught the
 two new requests on its own, which is the main reason it exists.
 
+The second sync (through `affbe0d`) was smaller: two `workout.*` catalogue
+keys (`rest`, `sessionProgress`) were dropped in `web/` alongside a rest-timer
+banner fix that touches only `.vue` files, so the sync was just deleting the
+same two keys from both locales here. Nothing else in the tracked paths
+changed.
+
 Record the main commit you synced from when you do it, so the next diff has a
-starting point: **last synced `8574865`**.
+starting point: **last synced `affbe0d`**.
 
 ## Decisions already made, and why
 
@@ -204,6 +229,92 @@ peer support — including it would force `legacy-peer-deps` on the whole instal
 `eslint-plugin-react-hooks` is the set that catches real bugs and does support
 ESLint 10.
 
+**Components take Tailwind utility classes directly in `className`, not a
+scoped `<style>` block.** Vue SFCs get per-file scoped CSS for free; React has
+no equivalent, and reaching for CSS Modules or styled-components here would be
+a second styling mechanism next to the utility classes the rest of the app
+already uses. Where a Vue component's `@apply` block combined a shared
+element-selector rule with a class-selector override on the same property
+(`AppButton`'s `border-transparent` vs. each colour's `border-*`, `AppListItem`'s
+`.danger`/`.header` text colour), copying both classes onto one React element
+would leave Tailwind's own rule-emission order to pick a winner instead of the
+original CSS specificity. Each of those spots is written out as one
+non-overlapping class list per variant instead — see `AppButton.tsx` and
+`AppListItem.tsx` for the pattern. Check any new `@apply` block for the same
+shape before porting it the fast way.
+
+**`AppButton` gained an explicit `disabled` prop, and a `className` one in
+place of the Vue version's dead `containerClass`.** Vue attrs fall through
+onto the root element automatically, which is how `class="auth-submit"` reaches
+the `<button>` today even though `containerClass` is declared and never read.
+React has no fallthrough, so both are real props here: `className` is what
+callers now use for that, and `disabled` is new — nothing calls it yet, but a
+`type="submit"` button disabled while its form saves is an obvious phase-F
+need, and there is no fallthrough to add it later for free.
+
+**`AppSheet`'s action buttons take a class from `sheetActionClass`
+(`src/ui/components/sheetActionClass.ts`), not a bare `class="primary"`.** The
+Vue version styles `.sheet-actions > button` and its `.primary`/`.danger`/
+`.danger-outline`/`.tertiary` modifiers in an unscoped block, so any button a
+caller slots into `actions` picks up the ranking just by being there. React
+has no unscoped-slot styling, so callers `import { sheetActionClass } from
+'@/ui/components/sheetActionClass'` and put `className={sheetActionClass.primary}`
+(etc.) on their own button. It is a separate module rather than an export from
+`AppSheet.tsx` because a component file exporting a second value breaks Fast
+Refresh (`react-refresh/only-export-components`) — the lint rule that would
+have waved this through.
+
+**`AppList`'s fetch-more sentinel uses a real `IntersectionObserver`
+(`useInfiniteScroll`), not a port of `v-infinite-scroll`.** That directive has
+no React equivalent, and its actual behaviour when bound straight to a
+non-scrolling sentinel element (as `AppList.vue` does) doesn't have a single
+well-defined meaning to port faithfully. An intersection observer watching the
+same sentinel is the standard tool for this exact UI and produces the same
+result the design wants: the spinner fires `onFetch` once when it scrolls into
+view. Only one caller exists in `web/` today (`ListNotifications.vue`,
+phase F) and it doesn't have its own test, so there is nothing to compare
+behaviour against beyond that.
+
+**The copy guard (`tests/no-hardcoded-strings.spec.ts`) walks the TypeScript
+AST instead of pattern-matching source text.** Vue's version works because
+`<template>` blocks are cleanly delimited and can't contain arbitrary
+TypeScript — a `/>([^<]+)</` scan over just that region is safe. JSX has no
+such boundary: it's embedded in ordinary `.tsx` source that also has generics
+(`Record<'a', string>`), comparisons, and template literals reusing the same
+`<`/`>`/`{`/`}` characters. An early draft scanning raw text with those
+regexes produced both false positives (a generic's `>` pairing with an
+unrelated `<` many lines later) and false negatives (multi-line JSX text
+broken across `>`/`<` boundaries needs the same-line restriction that
+introduces). `ts.createSourceFile` plus `ts.forEachChild` sidesteps the whole
+problem by asking the real parser which nodes are `JsxText` and which
+attributes are static `StringLiteral` initializers — see the file for the
+~15-line walk. It runs today with nothing to report, same as
+`no-raw-palettes.spec.ts` (which stayed regex-based, since CSS/class-string
+scanning has no equivalent ambiguity).
+
+**Testing Library needs cleanup wired up by hand, and a `ResizeObserver`
+stub.** `vitest.setup.ts` now calls `afterEach(() => cleanup())` — Testing
+Library's own auto-cleanup only registers when it finds a global `afterEach`,
+which needs `test.globals: true` in `vitest.config.ts`, and this project
+doesn't set that (store specs reset singletons by hand instead; see
+`src/stores/README.md`). Without it, a component mounted in one test is still
+in the DOM for the next, which surfaces as spurious "found multiple elements"
+failures the moment a second spec in the same file renders the same thing.
+Separately, jsdom has no `ResizeObserver`, which Headless UI's floating-element
+positioning (`DropdownButton`'s menu) reaches for unconditionally; a no-op
+stub is registered the same way. Both are one-time setup — no future spec
+needs to know either exists.
+
+**`vitest.setup.ts` is now in `tsconfig.app.json`'s `include`.** It wasn't
+before, so the `@testing-library/jest-dom/vitest` side-effect import it does
+for the jest-dom matcher types (`toBeInTheDocument`, `toHaveClass`, …) was
+invisible to `tsc` — the matchers worked at runtime but every use failed
+`npm run type-check` with "property does not exist on type Assertion". Adding
+the file to the program's include list is what makes the global augmentation
+apply; `tsconfig.vitest.json`'s existing `"@testing-library/jest-dom"` entry
+in `types` augments Jest's matcher interface, not Vitest's, and doesn't do
+this on its own.
+
 ## Debt found in `web/` — do not carry it across
 
 - `ts-proto@2.12.0` in `web/package.json` is unused. `buf.gen.yaml` generates
@@ -271,34 +382,48 @@ now answers a tab root with itself.
 
 ## What to do next
 
-Phase D: the design-system primitives, which everything above them needs.
-`AppButton`, `AppCard`, `AppList`, `AppListItem*`, `AppSheet`, `AppSkeleton`,
-`AppEmptyState`, `AppTextarea`, `DropdownButton`. They are small, they have no
-dependencies beyond the CSS already in `src/assets/`, and six of them have
-specs in `web/` to port against Testing Library.
+Phase E: the shell. `web/src/App.vue` renders `AppDashboard` when signed in,
+`GuestView` otherwise, plus `AppOfflineBanner`, `AppUpdateBanner`, and
+`AppConfirmDialog` — the five components `web-next/src/App.tsx`'s TODO names.
+Port them in roughly this order, since each is a dependency of the next:
 
-Two things to do while there:
+1. **`AppAlert`, `AppOfflineBanner`, `AppUpdateBanner`, `AppConfirmDialog`** —
+   each reads one already-ported store (`alerts`, `connection`+`mutationQueue`,
+   `appVersion`, `confirmation`) and heroicons; `AppAlert` is used by both
+   `AppDashboard` and `GuestView` below, and `AppConfirmDialog` composes
+   `AppSheet`, which is why all four come after the phase D work rather than
+   before it.
+2. **`AppNavBottom`, `AppNavTop`, `AppRestTimerBanner`, `AppOptionalAction`** —
+   the dashboard's own chrome. `AppNavBottom` imports `useActiveWorkout` from
+   `web/src/utils/`, which is not ported yet; port it alongside (it's a small
+   store-derived hook, not a component).
+3. **`AppDashboard`** (wraps `RouterView`/`Outlet`, the two nav bars, the rest
+   banner) and **`GuestView`** (wraps `RouterView`/`Outlet`, the auth screens'
+   shared chrome) — these are what `router.tsx` needs to exist first, since
+   `RouterView`/`Outlet` are the concrete reason routes need real elements now.
+4. **`router.tsx`**: turn `router/routes.ts`'s table into `createBrowserRouter`
+   routes with a lazy element each (phase F provides those elements — until
+   they exist, a route can point at a placeholder), wrapped in something that
+   calls `redirectForRoute`, and call `onNavigate`/`applyPageTitle` from a
+   navigation effect. `router/routes.spec.ts` and `router/guards.spec.ts`
+   already cover the table and the decisions; nothing here needs new lower-
+   level tests, only wiring.
+5. **`main.tsx`**: port `web/src/main.ts` — auth-store init, token refresh,
+   PostHog identify, route warming, and the two start calls that used to be
+   import side effects (`startMutationQueue()`, and `pollUnreadNotifications()`
+   for a signed-in user). Whatever creates the router must call
+   `setNavigator(router.navigate)` here, or every redirect from the HTTP layer
+   becomes a full page load instead of a client-side one.
 
-- Port the two filesystem guards from `web/tests/` —
-  `no-hardcoded-strings.spec.ts` and `no-raw-palettes.spec.ts`. They are regex
-  scanners over the source, so they only need their globs changed from `.vue`
-  to `.tsx`. Do it before the components land, not after, so they hold from the
-  first one.
-- `AppList` uses `vInfiniteScroll` from `@vueuse/components`, which has no
-  React equivalent here. An intersection-observer hook is the replacement;
-  `utils/usePagination.ts` in `web/` is the other half of that story and is not
-  yet ported.
+`App.tsx`'s own `.statusbar-scrim` style is still unstyled — it was scoped CSS
+on `web/src/App.vue` itself, not in a shared asset file, so it didn't come
+across with the phase A scaffold. Port that rule (as a `className` per the
+phase D pattern, or into `assets/main.css` if it reads better global) when
+`App.tsx` stops being a placeholder.
 
-Then phase E (the shell) and phase F (the screens), and with them `router.tsx`
-and `main.tsx` — both still placeholders. `main.tsx` should port
-`web/src/main.ts`: auth-store init, token refresh, PostHog identify, route
-warming, and the two start calls that used to be import side effects
-(`startMutationQueue()`, and `pollUnreadNotifications()` for a signed-in user).
-Whatever creates the router must also call `setNavigator(router.navigate)`, or
-every redirect from the HTTP layer becomes a full page load.
-
-After that the UI is all that is left — phases D through H, and the bulk of the
-work by volume. Nothing below the UI should need revisiting.
+Then phase F (the feature screens), which is the bulk of the remaining work by
+volume, followed by phase G (e2e + screenshots) and phase H (the swap).
+Nothing below the UI should need revisiting.
 
 ## Phase H — do not forget
 
@@ -318,11 +443,14 @@ needs to ship _with_ the swap, not after.
 
 The issue asks for 80%+. `npm run test:unit -- --run --coverage` reports it, and
 CI runs it that way so the number moves with each increment rather than being
-discovered at the end. It currently sits at 93% statements / 95% lines.
+discovered at the end. It currently sits at 94% statements / 97% lines, after
+phase D's components — coverage held rather than fell, since each primitive's
+spec exercises close to the whole file.
 
-Expect it to fall once components land — the ported modules are unusually easy
-to cover. `src/proto`, `src/main.tsx` and the specs are excluded in
-`vitest.config.ts`; nothing else is.
+Expect it to fall once phase E's stateful shell components land — `AppAlert`'s
+route-watching auto-dismiss and `AppOfflineBanner`'s reconnect flow have more
+branches than a presentational primitive does. `src/proto`, `src/main.tsx` and
+the specs are excluded in `vitest.config.ts`; nothing else is.
 
 `requests.ts` is worth a note, since it is a fifth of the source. Its fifty
 wrappers are covered by a dispatch table in `requests.dispatch.spec.ts` that
@@ -333,8 +461,9 @@ than at the coverage number, which it happens to raise from 32% to 99%. The
 shared `tryCatch` every request routes its failures through has its own suite in
 `requests.spec.ts`.
 
-Of the 38 specs in `web/src`, 22 test plain modules and port with little change;
-the 16 that mount `.vue` SFCs need rewriting against Testing Library. Two
-filesystem guards in `web/tests/` (`no-hardcoded-strings.spec.ts`,
-`no-raw-palettes.spec.ts`) are regex scanners — port them in phase D and change
-the extension globs from `.vue` to `.tsx`.
+Of the 38 specs in `web/src`, 22 test plain modules and ported with little
+change. Of the 16 that mount `.vue` SFCs and need rewriting against Testing
+Library, `AppSheet.spec.ts` and `AppSkeleton.spec.ts` are done (phase D); the
+other 14 belong to phase E/F components. The two filesystem guards in
+`web/tests/` are ported into `web-next/tests/` — see the phase D decisions
+above for why the copy guard isn't a straight regex port like the palette one.
