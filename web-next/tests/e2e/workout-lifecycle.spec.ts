@@ -78,7 +78,9 @@ test.describe('quick workout lifecycle', () => {
     // chrome stays one band, carrying the elapsed time — the one number read
     // between sets. No progress rail: a glance should not do arithmetic.
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0)
-    const headerBox = await page.getByRole('banner').boundingBox()
+    // Not a banner: the session runs inside the shell's <main>, which takes the
+    // role away. It is the form's own header.
+    const headerBox = await page.locator('form > header').boundingBox()
     expect(headerBox?.height).toBeLessThanOrEqual(80)
     await expect(page.getByRole('progressbar', { name: 'Session progress' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
