@@ -55,6 +55,37 @@ npm run lint && npm run type-check && npm run build-only
 npm run test:unit -- --run --coverage
 ```
 
+## Keeping up with `web/`
+
+`web/` keeps shipping while this is built, so every rebase can bring changes to
+files already ported. Check for it after each `git rebase origin/main`:
+
+```
+git diff <last-synced-main>..origin/main -- web/src
+```
+
+Ignore the `.vue` files — those are phases D–F. The ones that matter are
+`src/proto/**`, `src/http/**`, `src/stores/**`, `src/utils/**` and
+`src/i18n/messages.ts`.
+
+How each syncs:
+
+- **`src/proto/**`** — generated, so copy over: `cp -r web/src/proto/. web-next/src/proto/`.
+- **`src/i18n/messages.ts`** — copy the file, then re-run the plural conversion
+  on it, rather than hand-merging. It is idempotent in the sense that matters:
+  it converts the pipe form and leaves everything else alone.
+- **`src/utils/**`, new modules** — usually verbatim.
+- **`src/http/**`, `src/stores/**`** — apply the diff by hand, translating
+  `useXStore()` to `useXStore.getState()` and `i18n.global.t` to `i18n.t`.
+
+PR #1117 was the first of these: two new user requests, an `autofillSets`
+preference, a regenerated `user_service_pb`, a new `utils/names.ts`, and a
+reworked signup catalogue. The dispatch table's completeness check caught the
+two new requests on its own, which is the main reason it exists.
+
+Record the main commit you synced from when you do it, so the next diff has a
+starting point: **last synced `8574865`**.
+
 ## Decisions already made, and why
 
 **React 19.2.8, Vite 8, Tailwind v4** — Vite and Tailwind versions match `web/`
