@@ -292,8 +292,11 @@ h2 {
 .order-actions {
   @apply flex;
 }
+/* Three targets in a row, so they take the floor in width as well as height —
+   no negative margin sideways, which would overlap the neighbour it shares an
+   edge with. The vertical one keeps the row its height. */
 .order-actions button {
-  @apply grid size-9 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint hover:text-ink disabled:opacity-25;
+  @apply -my-1 grid size-11 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint hover:text-ink disabled:opacity-25;
 }
 .order-actions button:last-child {
   @apply hover:text-danger;

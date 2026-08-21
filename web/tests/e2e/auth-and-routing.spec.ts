@@ -43,6 +43,12 @@ test.describe('guest authentication and routing', () => {
 
     await expect(page.getByRole('alert')).toContainText('invalid credentials')
     await expect(page).toHaveURL(/\/login$/)
+
+    // Dismissing is the only thing there is to do with an alert, and its button
+    // is subject to the 44px floor like any other control.
+    const dismiss = await boxOf(page.getByRole('button', { name: 'Dismiss message' }))
+    expect(dismiss.height).toBeGreaterThanOrEqual(44)
+    expect(dismiss.width).toBeGreaterThanOrEqual(44)
   })
 
   test('signs up, resends the verification link, verifies and logs in @mutation', async ({

@@ -1,5 +1,13 @@
-import { expect, expectAccessible, logIn, resetSeedData, scrollToListEnd, test } from './fixtures'
-import type { Page } from '@playwright/test'
+import {
+  boxOf,
+  expect,
+  expectAccessible,
+  logIn,
+  resetSeedData,
+  scrollToListEnd,
+  test,
+} from './fixtures'
+import type { Locator, Page } from '@playwright/test'
 
 test.beforeAll(resetSeedData)
 
@@ -82,6 +90,38 @@ test('supports keyboard-only home search @smoke', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/users\/[0-9a-f-]+$/)
   await expect(page.getByRole('navigation', { name: 'Profile sections' })).toBeVisible()
+})
+
+// theme.css calls --size-control-sm "a floor, not a step: nothing tappable goes
+// below it". Icon-only buttons are where that slips, because an icon needs no
+// room to read and the box shrinks to it.
+const tapTargetFloor = 44
+
+const expectAboveFloor = async (control: Locator, name: string) => {
+  const box = await boxOf(control)
+  expect(box.height, `${name} is ${box.height}px tall`).toBeGreaterThanOrEqual(tapTargetFloor)
+  expect(box.width, `${name} is ${box.width}px wide`).toBeGreaterThanOrEqual(tapTargetFloor)
+}
+
+test('keeps icon-only controls above the tap-target floor @responsive', async ({ page }) => {
+  await logIn(page)
+
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await expectAboveFloor(page.getByRole('button', { name: 'Close search' }), 'the search close')
+
+  await page.goto('/plans/create')
+  await page.getByRole('button', { name: 'Add routine' }).click()
+  await page
+    .getByRole('dialog', { name: 'Choose a routine' })
+    .locator('.routine-options button')
+    .first()
+    .click()
+
+  const reorder = page.locator('.routine-order ol li').first().locator('.order-actions button')
+  await expect(reorder.first()).toBeVisible()
+  for (const [index, control] of (await reorder.all()).entries()) {
+    await expectAboveFloor(control, `plan reorder control ${index + 1}`)
+  }
 })
 
 test('renders the not-found state accessibly', async ({ page }) => {
