@@ -1,5 +1,5 @@
 import { type FieldMask } from '@bufbuild/protobuf/wkt'
-import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb.ts'
+import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb'
 
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -7,13 +7,13 @@ import { Error, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
 import {
   ListFeedItemsRequestSchema,
   type ListFeedItemsResponse,
-} from '@/proto/api/v1/feed_service_pb.ts'
+} from '@/proto/api/v1/feed_service_pb'
 import {
   ListNotificationsRequestSchema,
   type ListNotificationsResponse,
   MarkNotificationsAsReadRequestSchema,
   type MarkNotificationsAsReadResponse,
-} from '@/proto/api/v1/notification_service_pb.ts'
+} from '@/proto/api/v1/notification_service_pb'
 import {
   FollowUserRequestSchema,
   type FollowUserResponse,
@@ -31,7 +31,7 @@ import {
   type UpdateUserDistanceUnitResponse,
   UpdateUserWeightUnitRequestSchema,
   type UpdateUserWeightUnitResponse,
-} from '@/proto/api/v1/user_service_pb.ts'
+} from '@/proto/api/v1/user_service_pb'
 import {
   CreatePlanRequestSchema,
   type CreatePlanResponse,

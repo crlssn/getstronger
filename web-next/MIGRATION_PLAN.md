@@ -10,11 +10,9 @@ The "Where we are" section is the source of truth for what to pick up next.
 ## Where we are
 
 The React toolchain builds, typechecks, lints, formats and tests. Everything
-below the UI is now ported: the framework-agnostic modules, i18n on i18next, the
-whole HTTP layer, and ten of the 21 stores — every one that does not read from
-`http/requests.ts`. 292 tests green, 93% statement / 95% line coverage.
-
-The eight remaining stores are no longer blocked. See "What to do next".
+below the UI is ported apart from `workout` and the router: the
+framework-agnostic modules, i18n on i18next, the whole HTTP layer, and 17 of the
+21 stores. 357 tests green, 93% statement / 96% line coverage.
 
 | Phase | What it covers                                         | State       |
 | ----- | ------------------------------------------------------ | ----------- |
@@ -38,12 +36,11 @@ bug fix — see "Bugs found on the way"), and `router/tabs.ts` (one guard added,
 same section).
 
 Stores on Zustand: `auth`, `connection`, `alerts`, `confirmation`, `pageTitle`,
-`navTabs`, `actionButton`, `preferences`, `appVersion`, `emailVerification`. The
-conventions they establish are in `src/stores/README.md` — read that before
-adding the eleventh.
+`navTabs`, `actionButton`, `preferences`, `appVersion`, `emailVerification`,
+`activity`, `progress`, `streak`, `dashboard`, `plans`, `notifications`,
+`mutationQueue`. The conventions they follow are in `src/stores/README.md`.
 
-Not yet ported: `activity`, `dashboard`, `mutationQueue`, `notifications`,
-`plans`, `progress`, `streak`, `workout`.
+Not yet ported: `workout`.
 
 The HTTP layer is done: `clients`, `interceptors`, `offlineCache`, `requests`,
 `unauthenticated`, `native`, and `jwt`. `requests.ts` needed four edits across
@@ -89,6 +86,24 @@ are imported directly by non-component code (`http/interceptors.ts`,
 The conventions that follow from it — selectors for derived values, `getState()`
 outside components, `persist` with an explicit `partialize`, and how specs reset
 a singleton store — are written up in `src/stores/README.md`.
+
+Two of the Pinia stores wired themselves up as a side effect of being imported:
+`mutationQueue` registered a reconnect callback, and `notifications` added a
+`visibilitychange` listener. Both now happen in an exported start function the
+app calls — `startMutationQueue()` and `pollUnreadNotifications()`. Import-time
+wiring fires in whatever order the bundler resolves modules, cannot be undone,
+and in the notifications case outlived the stop call and ran for signed-out
+visitors. `connection` and `appVersion` already had `start()`/`stop()`, so this
+is the convention the other stores now follow rather than a new one.
+
+**Server-cache stores stay stores.** `activity`, `progress`, `streak`,
+`dashboard` and `plans` cache request results, and a query library would model
+that better in the abstract. They are ported as Zustand stores anyway: they hold
+_derived_ views (a streak count, a last-performed index) rather than raw
+responses, they are reset by events elsewhere in the app such as saving a
+workout, and swapping in TanStack Query would change fetching behaviour in a
+migration whose acceptance criterion is parity. Revisit it as its own change,
+with the e2e suite green on both sides.
 
 **i18n: i18next + react-i18next — done.** The catalogue keeps its single-brace
 placeholders (`{count}`, `{brand}`, 104 of them) by configuring
@@ -206,23 +221,20 @@ now answers a tab root with itself.
 
 ## What to do next
 
-1. **The request-backed stores**: `streak`, `notifications`, `activity`,
-   `dashboard`, `plans`, `progress`. Before porting these as-is, check whether
-   they are really server cache rather than client state — several would be
-   plainer as a data-fetching hook, and this is the moment to decide that, not
-   after 20 components depend on the store shape.
-2. **`mutationQueue`** — the one with a real design question. It calls
-   `useConnectionStore().onReconnect(…)` at module-init time, so importing the
-   store has a side effect. In React that wiring belongs in an app-level effect;
-   decide where and write it down here, because `notifications` polling has the
-   same shape.
-3. **`workout`** last — a deep nested map mutated by path, and the reason Immer
-   is already a dependency. Port it with the Immer middleware, and lean on
-   `web/src/stores/workout.spec.ts`, which is thorough.
-
-Then routing: the route table, the three guards, and the global navigation
-effect that sets the page title and resets `navTabs` and `actionButton`.
-Whatever creates the router must also call `setNavigator(router.navigate)`.
+1. **`workout`** — the last store, and the biggest at 270 lines. A deep nested
+   map mutated by path, and the reason Immer is already a dependency. Port it
+   with the Immer middleware and lean on `web/src/stores/workout.spec.ts`,
+   which is thorough.
+2. **Routing** — the route table, the three guards (`auth`, `guest`,
+   `landing`), and the global navigation effect that sets the page title from
+   `meta.titleKey` and resets `navTabs` and `actionButton`. Whatever creates the
+   router must also call `setNavigator(router.navigate)`, or every redirect from
+   the HTTP layer becomes a full page load.
+3. **The app entry point** — `main.tsx` is still a placeholder. Port
+   `web/src/main.ts`: auth-store init, token refresh, PostHog identify, route
+   warming, and the two start calls that used to be import side effects
+   (`startMutationQueue()`, and `pollUnreadNotifications()` for a signed-in
+   user).
 
 After that the UI is all that is left — phases D through H, and the bulk of the
 work by volume. Nothing below the UI should need revisiting.

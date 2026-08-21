@@ -2,11 +2,11 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('@/http/requests.ts', () => ({
+vi.mock('@/http/requests', () => ({
   refreshToken: vi.fn(),
 }))
 
-import { refreshToken } from '@/http/requests.ts'
+import { refreshToken } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { refreshAccessTokenOrLogout } from './jwt'
 
