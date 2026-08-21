@@ -1,0 +1,21 @@
+@reference '../../assets/base.css';
+
+.optionalAction {
+  @apply flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-border bg-transparent px-4 py-2.5 text-text-muted transition hover:border-ink-border hover:bg-ink-surface/60 hover:text-text;
+}
+
+.optionalAction svg {
+  @apply size-5 shrink-0;
+}
+
+.copy {
+  @apply min-w-0 text-center;
+}
+
+.copy strong {
+  @apply block truncate text-sm font-semibold;
+}
+
+.copy small {
+  @apply mt-0.5 block truncate text-xs font-normal text-text-subtle;
+}
