@@ -81,10 +81,11 @@ How each syncs:
 PR #1117 was the first of these: two new user requests, an `autofillSets`
 preference, a regenerated `user_service_pb`, a new `utils/names.ts`, and a
 reworked signup catalogue. The dispatch table's completeness check caught the
-two new requests on its own, which is the main reason it exists.
+two new requests on its own, which is the main reason it exists. #1116 then
+retired one catalogue key.
 
 Record the main commit you synced from when you do it, so the next diff has a
-starting point: **last synced `8574865`**.
+starting point: **last synced `8d9519f`**.
 
 ## Decisions already made, and why
 
