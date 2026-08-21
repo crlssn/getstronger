@@ -7,6 +7,17 @@ import { useAlertStore } from '@/stores/alerts'
 import { cn } from '@/ui/cn'
 import styles from './AppAlert.module.css'
 
+interface Props {
+  /**
+   * Narrows the alert's content column.
+   *
+   * The card spans the viewport, but its contents belong to whatever column
+   * the shell around it uses. Vue reached in with `:deep`; a CSS module hashes
+   * its class names, so the shell hands the class down instead.
+   */
+  contentClassName?: string
+}
+
 /**
  * The single alert region, shown under the header.
  *
@@ -14,7 +25,7 @@ import styles from './AppAlert.module.css'
  * change of screen and is cleared by the next. Without that it would be gone
  * before the screen that explains it had rendered.
  */
-export const AppAlert = () => {
+export const AppAlert = ({ contentClassName }: Props = {}) => {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const alert = useAlertStore((state) => state.alert)
@@ -43,7 +54,7 @@ export const AppAlert = () => {
         role={alert.type === 'error' ? 'alert' : 'status'}
         aria-live="polite"
       >
-        <div className={styles.alertCardInner}>
+        <div className={cn(styles.alertCardInner, contentClassName)}>
           {alert.type === 'success' ? (
             <CheckCircleIcon className={styles.statusIcon} aria-hidden="true" />
           ) : (
