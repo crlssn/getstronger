@@ -216,7 +216,7 @@ test.describe('routine lifecycle', () => {
     await page.getByRole('button', { name: 'Delete' }).click()
     await acceptConfirmDialog(page, 'Delete')
     await expect(page).toHaveURL(/\/routines$/)
-    await expect(page.getByRole('alert')).toContainText('Routine deleted')
+    await expect(page.getByRole('status')).toContainText('Routine deleted')
   })
 })
 

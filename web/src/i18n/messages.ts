@@ -403,6 +403,7 @@ export const en = {
     deleteConfirmTitle: 'Delete “{name}”?',
     deleteConfirmBody: 'This cannot be undone.',
     deleted: 'Routine deleted',
+    deleteFailed: 'The routine could not be deleted. Try again.',
     form: {
       eyebrow: 'Routine builder',
       title: 'Build your routine',
@@ -1022,6 +1023,7 @@ export const sv = {
     deleteConfirmTitle: 'Ta bort ”{name}”?',
     deleteConfirmBody: 'Det här går inte att ångra.',
     deleted: 'Passet togs bort',
+    deleteFailed: 'Passet kunde inte tas bort. Försök igen.',
     form: {
       eyebrow: 'Passbyggare',
       title: 'Bygg ditt pass',
