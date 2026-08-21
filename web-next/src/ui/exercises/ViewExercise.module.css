@@ -1,0 +1,119 @@
+@reference '../../assets/base.css';
+
+.detail {
+  @apply mx-auto max-w-3xl space-y-5;
+}
+
+.emptyCard,
+.chartCard,
+.setsCard {
+  @apply card p-5;
+}
+
+.startQuickCard {
+  @apply card flex min-h-20 w-full items-center gap-4 p-4 text-left transition hover:border-ink-border hover:bg-ink-surface;
+}
+
+.startQuickIcon {
+  @apply flex size-12 shrink-0 items-center justify-center rounded-control bg-surface-inverse text-white;
+}
+
+.startQuickIcon svg {
+  @apply size-6;
+}
+
+.startQuickCopy {
+  @apply min-w-0 flex-1;
+}
+
+.startQuickCopy strong,
+.startQuickCopy small {
+  @apply block;
+}
+
+.startQuickCopy strong {
+  @apply text-sm font-semibold text-text;
+}
+
+.startQuickCopy small {
+  @apply mt-1 truncate text-xs text-text-subtle;
+}
+
+.startQuickChevron {
+  @apply size-5 shrink-0 text-text-subtle;
+}
+
+.eyebrow {
+  @apply mb-3 text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.chartCard {
+  @apply space-y-4;
+}
+
+.setsCard > header {
+  @apply -mx-5 -mt-5 flex items-end justify-between gap-3 px-5 py-5;
+}
+
+.setsCard h2,
+.emptyCard h1 {
+  @apply text-title font-semibold text-text;
+}
+
+.setsCard > header > span {
+  @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
+}
+
+.setList {
+  @apply -mx-5 divide-y divide-border border-t border-border;
+}
+
+.setList > a {
+  @apply grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-3 transition hover:text-ink-strong;
+}
+
+.setCopy {
+  @apply min-w-0;
+}
+
+.setCopy strong,
+.setCopy small {
+  @apply block;
+}
+
+.setCopy strong {
+  @apply text-sm font-semibold text-text;
+}
+
+.setCopy small {
+  @apply mt-1 text-xs text-text-subtle;
+}
+
+.recordPill {
+  @apply inline-flex items-center gap-1 rounded-full bg-record-surface px-2.5 py-1 text-xs font-semibold text-record-strong;
+}
+
+.recordPill svg,
+.setList > a > svg {
+  @apply size-4;
+}
+
+.setList > a > svg {
+  @apply text-text-subtle;
+}
+
+.emptyCopy {
+  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
+}
+
+.loadMore {
+  @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
+}
+
+.emptyCard p {
+  @apply mt-2 text-sm text-text-subtle;
+}
+
+.emptyCard a {
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
+}

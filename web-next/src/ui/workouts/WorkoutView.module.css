@@ -1,0 +1,182 @@
+@reference '../../assets/base.css';
+
+.workoutPage {
+  @apply space-y-4;
+}
+
+.pageIntro {
+  @apply px-1;
+}
+
+.eyebrow {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.pageIntro h1 {
+  @apply mt-1 text-display font-bold text-text;
+}
+
+.pageIntro > p:last-child {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
+.nextCard {
+  @apply rounded-sheet bg-surface-inverse p-6 text-white shadow-raised;
+}
+
+.nextCard > header {
+  @apply flex items-center justify-between gap-3;
+}
+
+.nextCard .eyebrow {
+  @apply text-ink-tint;
+}
+
+.nextCard > header span {
+  @apply rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold;
+}
+
+.nextCard h2 {
+  @apply mt-3 text-display font-bold;
+}
+
+.nextCard > p {
+  @apply mt-2 text-sm text-ink-tint;
+}
+
+.nextCard .planName {
+  @apply font-semibold text-white;
+}
+
+.nextCard > a {
+  @apply mt-5 flex min-h-(--size-control) items-center justify-center gap-2 rounded-control bg-white px-4 text-sm font-semibold text-ink-strong;
+}
+
+.nextCard > a svg {
+  @apply size-5;
+}
+
+.skipButton {
+  @apply mt-2 min-h-(--size-control-sm) w-full text-sm font-semibold text-ink-tint;
+}
+
+.emptyCard {
+  @apply card p-5;
+}
+
+.emptyCard h2 {
+  @apply text-title font-semibold;
+}
+
+.emptyCard p {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
+.emptyCard a {
+  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
+}
+
+.quickCard {
+  @apply card grid grid-cols-[3rem_1fr_auto] items-center gap-3 p-4;
+}
+
+.quickCard > span:nth-child(2) {
+  @apply min-w-0;
+}
+
+.quickCard strong,
+.quickCard small {
+  @apply block truncate;
+}
+
+.quickCard small {
+  @apply mt-1 text-xs text-text-subtle;
+}
+
+.quickCard > svg {
+  @apply size-5 text-text-subtle;
+}
+
+.quickIcon {
+  @apply grid size-12 place-items-center rounded-control bg-ink-tint text-ink-strong;
+}
+
+.quickIcon svg {
+  @apply size-6;
+}
+
+.workoutHistory {
+  @apply pt-3;
+}
+
+.workoutHistory > header {
+  @apply mb-3 px-1;
+}
+
+.workoutHistory > header h2 {
+  @apply mt-1 text-title font-semibold text-text;
+}
+
+.historyList {
+  @apply card overflow-hidden;
+}
+
+.historyList > a {
+  @apply flex min-h-16 items-center justify-between gap-4 border-b border-border px-4 py-3 transition last:border-b-0 hover:text-ink-strong;
+}
+
+.historyList > a > span {
+  @apply min-w-0;
+}
+
+.historyList strong,
+.historyList small {
+  @apply block truncate;
+}
+
+.historyList strong {
+  @apply text-body-lg font-semibold text-text;
+}
+
+.historyList small {
+  @apply mt-0.5 text-meta text-text-subtle;
+}
+
+.historyList > a > svg {
+  @apply size-5 shrink-0 text-text-subtle;
+}
+
+.historyStatus,
+.historyError,
+.historyEmpty,
+.historyEnd {
+  @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-control px-4 text-center text-xs text-text-subtle;
+}
+
+.historyError {
+  @apply justify-between border border-danger/20 bg-danger-surface text-left text-danger;
+}
+
+.historyError button {
+  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 font-semibold text-danger;
+}
+
+.historyEmpty {
+  @apply card;
+}
+
+.historyEnd {
+  @apply text-text-muted;
+}
+
+.historyEnd svg {
+  @apply size-4 text-success;
+}
+
+.historySpinner {
+  @apply size-4 animate-spin rounded-full border-2 border-border border-t-ink;
+}
+
+.historySentinel {
+  @apply h-px;
+}

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { tabRootFor } from '@/router/tabs'
 import { selectActionButtonActive, useActionButton } from '@/stores/actionButton'
+import { holdPageNavAction } from '@/stores/pageNavAction'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { ActionButton } from '@/ui/components/ActionButton'
 import styles from './AppNavTop.module.css'
@@ -49,7 +50,7 @@ export const AppNavTop = () => {
       <div className={styles.titleRow}>
         <h1>{pageTitle}</h1>
         {/* Screens can portal their own action (a dropdown, say) into here. */}
-        <div id="page-nav-action" className={styles.pageAction}>
+        <div id="page-nav-action" className={styles.pageAction} ref={holdPageNavAction}>
           {actionActive && icon && <ActionButton action={action} icon={icon} />}
         </div>
       </div>

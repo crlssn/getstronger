@@ -13,11 +13,11 @@ The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, every design-system
 primitive, and the shell — the nav bars, the four app-level singletons, and the
-signed-in and signed-out layouts. Phase F has started: the seven signed-out
-screens are across. 736 tests green, 95% statement / 98% line coverage.
+signed-in and signed-out layouts. Phase F is nearly done: every screen is across
+except `StartWorkout`. 1081 tests green, 95% statement / 98% line coverage.
 
-What is left is the rest of the screens, and the two files that can only be
-written once they exist: `router.tsx` and `main.tsx`.
+What is left is `StartWorkout`, and the two files that can only be written once
+every screen exists: `router.tsx` and `main.tsx`.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
@@ -74,7 +74,16 @@ How each syncs:
 - **`src/proto/**`** — generated, so copy over: `cp -r web/src/proto/. web-next/src/proto/`.
 - **`src/i18n/messages.ts`** — copy the file, then re-run the plural conversion
   on it, rather than hand-merging. It is idempotent in the sense that matters:
-  it converts the pipe form and leaves everything else alone.
+  it converts the pipe form and leaves everything else alone. **Then re-apply
+  the divergences below**, which a straight copy would remove:
+  - `exercise.tagInput.tooLong`, `.duplicate` and `.tooMany`, in both locales.
+    `ExerciseTagsInput.vue` builds those three strings as English literals in
+    its script, against the repo's own localisation rule; they are catalogue
+    keys here.
+  - `routine.view.lastSession_one` and `_other`, in both locales.
+    `ViewRoutine.vue` builds "2 sets · last …" the same way.
+  - `workout.durationPlaceholder`, in both locales. `DurationInput.vue`
+    hardcodes its "m:ss" placeholder.
 - **`src/utils/**`, new modules** — usually verbatim.
 - **`src/http/**`, `src/stores/**`** — apply the diff by hand, translating
   `useXStore()` to `useXStore.getState()` and `i18n.global.t` to `i18n.t`.
@@ -239,6 +248,26 @@ ESLint 10.
   have never run. Fixed here (`**/*.spec.{ts,tsx}`), which immediately caught
   real `vitest/valid-expect` findings — resolved by allowing the two-argument
   `expect(value, message)` form the specs legitimately use.
+- `WorkoutChart.vue` nests a `legend` key under `scales.x` and `scales.y`, where
+  Chart.js has never read one, and sets `drawBorder`, which Chart.js v4 removed.
+  Neither has any effect. Dropped.
+- `HomePageActions.vue` searched on every keystroke — four requests a character,
+  against three endpoints that already take a query. Debounced to 250ms here.
+  Its four result groups were four near-identical blocks of markup; they are one
+  list built from data now.
+- `ExerciseTagsInput.vue` builds three error messages as English literals in
+  its script — the tag-too-long, already-added and too-many-tags complaints —
+  which the repo's own localisation rule does not allow. They are catalogue keys
+  here; see the sync section, because a straight copy of `messages.ts` removes
+  them.
+- `ExerciseMeasurementSettings.vue` puts an `aria-label` on a plain `div` for
+  its preset row, where it announces nothing. Both that row and the measurement
+  grid are `role="group"` here, so their labels are read.
+- Dead CSS, dropped as each component moved: `.feed-author` and `.set-volume` in
+  the workout card, and five blocks in `HomeView` (`.section-block`,
+  `.momentum-grid`, `.last-session-*`, `.workout-icon`) that style elements the
+  screen has not had for some time, and an `input { … }` block in
+  `UpdateExercise.vue` that no element in its template could ever match.
 
 ## Bugs found on the way
 
@@ -299,21 +328,50 @@ now answers a tab root with itself.
 mostly mechanical now: the stores, the requests, the primitives and the shell
 they lean on are all in place.
 
-Done so far: the seven signed-out screens — `UserLogin`, `UserSignup`,
-`ForgotPassword`, `ResetPassword`, `VerifyEmail`, `UserLogout` — plus
-`NotFound` and the shared `AuthPasswordInput`.
+Done so far — everything but one screen:
 
-Next, in rough order of how much they teach: `VerifyEmailPending` (186 lines,
-and it has a Vue spec worth porting), `ProgressView` (216), `HomeView` (413),
-then exercises, routines, plans, workouts, users, notifications and profile.
+- Signed out: `UserLogin`, `UserSignup`, `ForgotPassword`, `ResetPassword`,
+  `VerifyEmail`, `VerifyEmailPending`, `UserLogout`, `NotFound`.
+- Home and progress: `HomeView`, `ProgressView`, and `StreakCard`,
+  `HomePageActions`, `WorkoutChart`, `PageNavAction`.
+- Workouts: `WorkoutView`, `ViewWorkout`, `EditWorkout`, `DurationInput`,
+  `SetMeasurementInputs`, and the `CardWorkout` family.
+- Exercises: `ListExercises`, `ViewExercise`, `CreateExercise`,
+  `UpdateExercise`, `ExerciseForm`, `ExerciseTagsInput`,
+  `ExerciseMeasurementSettings`, `ExerciseChart`, `ExerciseTags`.
+- Routines: `ListRoutines`, `ViewRoutine`, `CreateRoutine`, `EditRoutine`,
+  `RoutineForm`, `TrainingTabs`.
+- Plans: `PlansView`, `ViewPlan`, `PlanForm`.
+- People: `UserView` and its four tabs, `ProfileView`, `ListNotifications`.
 
-Two things to know going in:
+**What is left: `StartWorkout`.** It is 1791 lines in `web/` — note that the
+earlier estimate of 636 in this file was stale — and it is the screen the whole
+app exists for. Read it in full before starting; it owns the live workout
+timer, the rest timer, the set grid, the exercise picker, the offline queue
+path, the leave and discard dialogs, and the finish flow. Two pieces of it are
+already ported and should be used rather than rewritten:
+`SetMeasurementInputs` for a set's inputs and `DurationInput` for a duration.
 
+Four things to know going in:
+
+- A screen that wants an action in the top nav bar renders `<PageNavAction>`.
+  Do not look `#page-nav-action` up from an effect — the bar publishes it to
+  `stores/pageNavAction` from its `ref` callback, and the lint rule that stops
+  the effect version is right to.
+- A sentence with an element in the middle of it — a bolded name inside a
+  translated message — goes through `<RichMessage>`. `<Trans>` cannot do it
+  without tags in the catalogue, and the catalogue is shared with the Vue app.
+- Infinite scroll is `useInfiniteScroll(onReach, enabled, rootMargin?)`. Pass
+  `enabled` as `!loading && !reachedEnd`: flipping it back on is what asks for
+  the next page while the sentinel is still in view, so no screen needs to
+  re-arm its own paging the way the Vue ones did.
 - Workout sets are written through `updateSet(routineID, exerciseID, index,
 changes)`. The Vue screens assigned into the set object they got back from
-  `getSets`, and Immer freezes state, so that throws now.
-- `StartWorkout.vue` is 636 lines and the largest single screen by a distance.
-  Leave it until the smaller ones have settled the patterns.
+  `getSets`, and Immer freezes state, so that throws now. **`StartWorkout`
+  needs this** — it is the one place where the port cannot be mechanical.
+- Drag-to-reorder is `useSortable({ handle, ghostClass, dragClass, onReorder })`.
+  SortableJS moves the DOM itself, so the caller reorders its own state to
+  match; hand it the hashed CSS-module class names.
 
 **Then `router.tsx` and `main.tsx`**, which can only be written once there are
 screens to point them at. Both are still placeholders:

@@ -1,0 +1,29 @@
+@reference '../../assets/base.css';
+
+.commentRow {
+  @apply grid grid-cols-[auto_1fr] gap-3 py-4 first:pt-0 last:pb-0;
+}
+
+.commentAvatar {
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-xs font-semibold text-ink-strong;
+}
+
+.commentContent {
+  @apply min-w-0;
+}
+
+.commentMeta {
+  @apply flex flex-wrap items-baseline gap-x-2;
+}
+
+.commentMeta a {
+  @apply -my-3 inline-flex min-h-(--size-control-sm) items-center py-3 text-sm font-semibold text-text hover:text-ink-strong;
+}
+
+.commentMeta time {
+  @apply text-xs text-text-subtle;
+}
+
+.commentContent p {
+  @apply mt-1 whitespace-pre-wrap text-sm leading-6 text-text-muted;
+}

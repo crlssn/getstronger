@@ -1,0 +1,202 @@
+@reference '../../assets/base.css';
+
+.plansPage {
+  @apply space-y-4;
+}
+
+.pageIntro {
+  @apply grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-1;
+}
+
+.eyebrow {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.pageIntro h1 {
+  @apply mt-1 text-display font-bold text-text;
+}
+
+.pageIntro > a {
+  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white;
+}
+
+.pageIntro svg {
+  @apply size-5;
+}
+
+.pageIntro > p {
+  @apply col-span-2 max-w-none text-sm leading-6 text-text-subtle;
+}
+
+.activePlan,
+.otherPlans,
+.pausedNote,
+.emptyPlanState {
+  @apply card p-5;
+}
+
+.activePlan h2,
+.otherPlans h2,
+.pausedNote h2,
+.emptyPlanState h2 {
+  @apply text-title font-semibold text-text;
+}
+
+.emptyPlanState {
+  @apply p-6;
+}
+
+.emptyPlanIcon {
+  @apply mb-5 grid size-12 place-items-center rounded-card bg-ink-tint text-ink-strong;
+}
+
+.emptyPlanIcon svg {
+  @apply size-6;
+}
+
+.emptyPlanState h2 {
+  @apply mt-2;
+}
+
+.emptyPlanCopy {
+  @apply mt-2 text-sm leading-6 text-text-muted;
+}
+
+.planSteps {
+  @apply mt-6 divide-y divide-border border-y border-border;
+}
+
+.planSteps li {
+  @apply flex items-center gap-3 py-4;
+}
+
+.planSteps li > span {
+  @apply grid size-9 shrink-0 place-items-center rounded-control bg-ink-surface text-sm font-semibold text-ink-strong;
+}
+
+.planSteps li > span svg {
+  @apply size-4;
+}
+
+.planSteps strong,
+.planSteps small {
+  @apply block;
+}
+
+.planSteps strong {
+  @apply text-sm font-semibold text-text;
+}
+
+.planSteps small {
+  @apply mt-0.5 text-xs text-text-subtle;
+}
+
+.activePlanRule {
+  @apply mt-5 text-xs leading-5 text-text-subtle;
+}
+
+.firstPlanButton {
+  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
+}
+
+.firstPlanButton svg {
+  @apply size-5;
+}
+
+.activePlan > header {
+  @apply flex items-center justify-between gap-3;
+}
+
+.activePlan > header span {
+  @apply rounded-full bg-success-surface px-3 py-1 text-xs font-semibold text-success;
+}
+
+.activePlan > h2 {
+  @apply mt-3;
+}
+
+.activePlan > p {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
+.positionRow {
+  @apply mt-5 flex justify-between gap-3 text-sm text-text-subtle;
+}
+
+.positionRow strong {
+  @apply text-text-muted;
+}
+
+.sequence {
+  @apply mt-3 flex flex-wrap gap-2;
+}
+
+.sequence span {
+  @apply grid size-9 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
+}
+
+.sequence span.done {
+  @apply bg-success-surface text-success;
+}
+
+.sequence span.current {
+  @apply bg-ink text-white;
+}
+
+.nextRow {
+  @apply mt-4 rounded-control bg-ink-surface p-4;
+}
+
+.nextRow div {
+  @apply grid gap-1;
+}
+
+.nextRow small {
+  @apply text-xs text-ink;
+}
+
+.activePlan footer {
+  @apply mt-4 flex gap-2 border-t border-border pt-4;
+}
+
+.activePlan footer a,
+.activePlan footer button {
+  @apply min-h-(--size-control-sm) rounded-control px-4 text-sm font-semibold;
+}
+
+.activePlan footer a {
+  @apply inline-flex items-center bg-ink text-white;
+}
+
+.activePlan footer button {
+  @apply border border-border text-text-muted;
+}
+
+.pausedNote p {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
+.otherPlans > header {
+  @apply mb-2;
+}
+
+.otherPlans article {
+  @apply flex min-h-16 items-center justify-between gap-3 border-t border-border;
+}
+
+.otherPlans article a {
+  @apply min-w-0;
+}
+
+.otherPlans article strong,
+.otherPlans article small {
+  @apply block truncate;
+}
+
+.otherPlans article small {
+  @apply mt-1 text-xs text-text-subtle;
+}
+
+.otherPlans article button {
+  @apply shrink-0 text-sm font-semibold text-ink;
+}

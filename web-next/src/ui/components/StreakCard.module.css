@@ -1,0 +1,86 @@
+@reference '../../assets/base.css';
+
+.streakCard {
+  @apply card p-4;
+}
+
+.streakCard header {
+  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3;
+}
+
+.streakIcon {
+  @apply grid size-11 place-items-center rounded-control bg-info-surface text-text-muted;
+}
+
+.streakCard.active .streakIcon {
+  @apply bg-success-surface text-success;
+}
+
+.streakIcon svg {
+  @apply size-6;
+}
+
+.streakCard header strong,
+.streakCard header small {
+  @apply block truncate;
+}
+
+.streakCard header > div > strong {
+  @apply text-sm font-semibold text-text;
+}
+
+.streakCard .eyebrow {
+  @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.weekTrack {
+  @apply mt-4 grid grid-cols-5 gap-1 rounded-control bg-ink-surface p-1;
+}
+
+.weekBlock {
+  @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-ink-tint text-text-subtle;
+}
+
+.weekBlock.complete {
+  @apply bg-success text-white;
+}
+
+.weekBlock.current:not(.complete) {
+  @apply bg-success-surface ring-2 ring-inset ring-success;
+}
+
+.weekBlock > svg {
+  @apply size-4 stroke-[2.5];
+}
+
+.weekWorkoutCount {
+  @apply text-xs font-bold tabular-nums;
+}
+
+.weekBlock > span {
+  @apply size-1.5 rounded-full bg-current;
+}
+
+.trackLabels {
+  @apply mt-1.5 flex justify-between text-eyebrow font-semibold text-text-subtle;
+}
+
+.streakCard > p {
+  @apply mt-3 text-xs text-text-subtle;
+}
+
+.streakCard.active:not(.safe) > p {
+  @apply font-medium text-success;
+}
+
+.streakCount {
+  @apply min-w-12 rounded-control bg-success-surface px-2.5 py-1.5 text-center text-success;
+}
+
+.streakCount strong {
+  @apply text-base font-bold leading-none;
+}
+
+.streakCount small {
+  @apply mt-0.5 text-eyebrow font-bold uppercase;
+}

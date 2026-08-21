@@ -1,0 +1,17 @@
+@reference '../../assets/base.css';
+
+.formActions {
+  @apply mt-4;
+}
+
+.formStatus {
+  @apply card p-6 text-sm text-text-subtle;
+}
+
+.formStatus h1 {
+  @apply text-title font-semibold text-text;
+}
+
+.formStatus a {
+  @apply mt-3 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
+}

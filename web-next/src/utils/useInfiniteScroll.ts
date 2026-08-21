@@ -15,6 +15,8 @@ import { useEffect, useRef } from 'react'
 export const useInfiniteScroll = <T extends Element>(
   onReach: () => void,
   enabled = true,
+  /** Fires this far before the sentinel reaches the viewport. */
+  rootMargin?: string,
 ): React.RefObject<T | null> => {
   const sentinel = useRef<T>(null)
   const handler = useRef(onReach)
@@ -33,13 +35,19 @@ export const useInfiniteScroll = <T extends Element>(
     // list that cannot page is better than a crash.
     if (typeof IntersectionObserver === 'undefined') return
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) handler.current()
-    })
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) handler.current()
+      },
+      { rootMargin },
+    )
 
     observer.observe(element)
     return () => observer.disconnect()
-  }, [enabled])
+    // Rebuilding on `enabled` is what keeps a list paging: a fresh observer
+    // reports an already-visible sentinel, so turning it back on after a page
+    // lands asks for the next one.
+  }, [enabled, rootMargin])
 
   return sentinel
 }

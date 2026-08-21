@@ -1,0 +1,111 @@
+@reference '../../assets/base.css';
+
+.planPage {
+  @apply space-y-4;
+}
+
+/* An ordinary card: the inverse surface is reserved for the single next action
+   on a screen, and this is a page header. */
+.overview {
+  @apply card p-6;
+}
+
+.overview header {
+  @apply flex items-center justify-between gap-3;
+}
+
+.eyebrow {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.overview header span {
+  @apply rounded-full bg-success-surface px-3 py-1 text-xs font-semibold text-success;
+}
+
+.overview > p {
+  @apply mt-2 text-sm text-text-muted;
+}
+
+.overviewActions {
+  @apply mt-5 flex flex-wrap gap-2;
+}
+
+.overviewActions a,
+.overviewActions button {
+  @apply inline-flex min-h-(--size-control) items-center gap-2 rounded-control px-4 text-sm font-semibold;
+}
+
+.overviewActions a {
+  @apply bg-ink text-white transition hover:brightness-125;
+}
+
+.overviewActions button {
+  @apply border border-border text-text-muted transition hover:bg-surface-sunken hover:text-text;
+}
+
+.overviewActions svg {
+  @apply size-4;
+}
+
+.orderHeading {
+  @apply px-1 pt-2;
+}
+
+.orderHeading h2 {
+  @apply mt-1 text-title font-semibold;
+}
+
+.routineOrder {
+  @apply card overflow-hidden;
+}
+
+.routineOrder ol {
+  @apply divide-y divide-border;
+}
+
+.routineOrder li {
+  @apply grid min-h-20 grid-cols-[2.75rem_1fr_auto] items-center gap-3 p-4;
+}
+
+.routineOrder li > span {
+  @apply grid size-11 place-items-center rounded-control bg-ink-tint font-semibold text-text-muted;
+}
+
+.routineOrder li > div {
+  @apply min-w-0;
+}
+
+.routineOrder li strong,
+.routineOrder li small {
+  @apply block truncate;
+}
+
+.routineOrder li small {
+  @apply mt-0.5 text-xs text-text-subtle;
+}
+
+.routineOrder li b {
+  @apply text-sm font-semibold text-ink;
+}
+
+.routineOrder li.current {
+  @apply bg-ink-surface;
+}
+
+.routineOrder li.current > span {
+  @apply bg-ink text-white;
+}
+
+.routineOrder footer {
+  @apply border-t border-border bg-ink-surface p-4 text-sm text-text-muted;
+}
+
+/* Destructive stays a text-only role, but it reads from a card surface: the
+   danger red only clears AA contrast on white, not on the sunken canvas. */
+.deletePlan {
+  @apply card inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 px-4 text-sm font-semibold text-danger transition hover:bg-danger-surface hover:text-danger-strong;
+}
+
+.deletePlan svg {
+  @apply size-5;
+}

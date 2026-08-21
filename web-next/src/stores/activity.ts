@@ -25,11 +25,20 @@ const parse = (iso: string | undefined) => {
   return parsed.isValid ? parsed : undefined
 }
 
+/**
+ * One id's timestamp out of a last-performed record.
+ *
+ * Takes the record rather than the store so a component can subscribe to the
+ * record itself: a lookup closed over the whole store changes identity on every
+ * write, and anything memoised on it would recompute for unrelated reasons.
+ */
+export const lastPerformedIn = (record: Record<string, string>, id: string) => parse(record[id])
+
 export const selectLastPerformedFor = (state: ActivityState, exerciseId: string) =>
-  parse(state.exerciseLastPerformed[exerciseId])
+  lastPerformedIn(state.exerciseLastPerformed, exerciseId)
 
 export const selectRoutineLastPerformedFor = (state: ActivityState, routineId: string) =>
-  parse(state.routineLastPerformed[routineId])
+  lastPerformedIn(state.routineLastPerformed, routineId)
 
 export const useActivityStore = create<ActivityState>()((set, get) => {
   const refresh = async () => {

@@ -1,0 +1,9 @@
+@reference '../../assets/base.css';
+
+.profileAction {
+  @apply mb-4;
+}
+
+.profileTabs {
+  @apply mb-4;
+}
