@@ -291,7 +291,8 @@ ESLint 10.
 
 Porting a module means writing a test for it, and two of those tests failed
 against faithfully-copied code. Both fixes are in `web-next/` only; `web/` still
-has them.
+has them. A third was found by the end-to-end suite on its first run, and is
+new to the React app rather than inherited.
 
 **`utils/datetime.ts` showed "in 0 seconds".** The relative formatter special-
 cased Luxon's zero-elapsed rendering by matching the literal strings
@@ -310,6 +311,17 @@ that leads to them — `/workout` and `/profile` — so passing either returned
 `/home` rather than itself. Only pushed screens are passed to it today, so
 nothing was visibly broken, but it is a trap for the next caller. `tabRootFor`
 now answers a tab root with itself.
+
+**A page could be appended twice.** The first end-to-end run reported sixteen
+"two children with the same key" errors. Every screen that pages appended its
+results with `[...current, ...page]`, and React runs an effect twice in
+development on purpose — so the first page arrived twice and every row was
+listed twice. A scroll sentinel firing again before its response lands would do
+the same thing in production. `utils/appendPage.ts` now does the appending and
+skips anything the list already holds; six screens were on the old pattern and
+`ExercisePickerSheet` and `WorkoutView` had already grown their own copy of the
+fix. This is a good argument for keeping `<StrictMode>` in `main.tsx`: it is
+what surfaced this.
 
 ## Gotchas
 
@@ -437,13 +449,26 @@ path-relative, so it needed no edits — and reads the same `E2E_*` ports, since
 the two suites are never meant to run at once. A `test e2e web-next` workflow
 mirrors `test.e2e.yml`: Postgres as a service, `migrate`, the seed factory, and
 the official Playwright container so no browsers are downloaded. Two specs are
-across, and that workflow is what says whether they pass:
+across, and that workflow is what says whether they pass. Seven specs are over:
 
 - `auth-and-routing.spec.ts` — two selectors changed. `header.guest-header`
   became `getByRole('banner')`, and the alert's status icon is reached as the
   first `svg` inside `getByRole('status')`, since it is decorative and has no
   name of its own.
-- `localization.spec.ts` — unchanged; it was already all roles and ids.
+- `localization.spec.ts` and `segmented-control.spec.ts` — unchanged. The first
+  was already all roles and ids; the second reaches for `.segmented`, one of
+  the two classes still declared globally.
+- `seed-personas.spec.ts` — the feed card is `getByRole('article')`.
+- `core-journeys.spec.ts` and `offline.spec.ts` — the exercise picker's options
+  are the buttons that name something, which the sheet's own close and
+  load-more controls do not. Offline also swaps `.primary-action` for the two
+  buttons it actually presses, reaches the exercise library by route rather
+  than by card class, and scopes the workout history by its heading, because
+  the quick-start card above it is a link called Quick workout too.
+- `accessibility-and-responsive.spec.ts` — the search panel is
+  `getByRole('region', { name: 'Search' })`, the field around the input is that
+  input's parent, and the plan reorder controls are found by the routine they
+  are named after rather than by the row they sit in.
 - `fixtures.ts` — `waitForHome` now waits on a workout link, the caught-up
   marker, the empty state or the error, rather than on four class names.
   `.loading-card` stayed, being global.
@@ -452,12 +477,10 @@ The vitest eslint rules were scoped away from `tests/e2e/**` at the same time:
 those specs share the `.spec.ts` suffix but run under Playwright, whose
 `expect` those rules do not describe.
 
-**What is left, in the order to do it.** The remaining specs, roughly by how
-much rewriting each needs: `core-journeys` (1 site), `segmented-control` (1),
-`seed-personas` (1), `accessibility-and-responsive` (4), `offline` (6),
-`social-and-progress` (11), `training-management` (19), `workout-dock` (29),
-`workout-lifecycle` (33). Then the screenshot harness, whose only affected file
-is `flows.ts` (10 sites) — `catalogue.ts`, `budget.ts`, `diff.ts`, `inspect.ts`,
+**What is left, in the order to do it.** Four specs, by how much rewriting
+each needs: `social-and-progress` (11 sites), `training-management` (19),
+`workout-dock` (29), `workout-lifecycle` (33). Then the screenshot harness,
+whose only affected file is `flows.ts` (10 sites) — `catalogue.ts`, `budget.ts`, `diff.ts`, `inspect.ts`,
 `paths.ts` and the global setup and teardown carry no selectors at all.
 
 Rewrite them as role and text queries rather than adding `data-testid`

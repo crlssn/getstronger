@@ -8,6 +8,7 @@ import { listExercises } from '@/http/requests'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ExercisePickerSheet.module.css'
 
@@ -38,10 +39,7 @@ export const ExercisePickerSheet = ({ excluded, onAdd, onClose }: Props) => {
     const res = await listExercises(currentPageToken())
     if (!res) return
 
-    setOptions((current) => {
-      const seen = new Set(current.map((exercise) => exercise.id))
-      return [...current, ...res.exercises.filter((exercise) => !seen.has(exercise.id))]
-    })
+    setOptions((current) => appendPage(current, res.exercises))
     setFromResponse(res.pagination)
     setLoaded(true)
   }, [currentPageToken, setFromResponse])

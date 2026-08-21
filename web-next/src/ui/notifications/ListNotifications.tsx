@@ -12,6 +12,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { NotificationUserFollow } from '@/ui/components/NotificationUserFollow'
 import { NotificationWorkoutComment } from '@/ui/components/NotificationWorkoutComment'
 import { PageNavAction } from '@/ui/components/PageNavAction'
+import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListNotifications.module.css'
 
@@ -28,7 +29,7 @@ export const ListNotifications = () => {
     const res = await listNotifications(currentPageToken())
     if (!res) return
 
-    setNotifications((current) => [...current, ...res.notifications])
+    setNotifications((current) => appendPage(current, res.notifications))
     setFromResponse(res.pagination)
   }, [currentPageToken, setFromResponse])
 

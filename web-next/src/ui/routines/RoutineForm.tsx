@@ -9,6 +9,7 @@ import { listExercises } from '@/http/requests'
 import { cn } from '@/ui/cn'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './RoutineForm.module.css'
 
@@ -46,7 +47,7 @@ export const RoutineForm = ({
     const response = await listExercises(currentPageToken())
     if (!response) return
 
-    setExercises((current) => [...current, ...response.exercises])
+    setExercises((current) => appendPage(current, response.exercises))
     setFromResponse(response.pagination)
   }, [currentPageToken, setFromResponse])
 

@@ -10,6 +10,7 @@ import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { CardWorkout } from '@/ui/components/CardWorkout'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
+import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 
 /** This profile's finished workouts, newest first. */
@@ -28,7 +29,7 @@ export const UserWorkouts = () => {
       const res = await listWorkouts([id], currentPageToken())
       if (!res) return
 
-      setWorkouts((current) => [...current, ...res.workouts])
+      setWorkouts((current) => appendPage(current, res.workouts))
       setFromResponse(res.pagination)
     } finally {
       setFetching(false)
