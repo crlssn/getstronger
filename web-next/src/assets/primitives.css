@@ -1,0 +1,44 @@
+/* The three shapes that absorb most of the app's duplication, expressed in the
+ * tokens from theme.css.
+ *
+ * They are declared with @utility rather than as plain classes so that both a
+ * template (class="card") and a scoped block (@apply card p-5) can reach them:
+ * a scoped block only sees what the file it @references defines, and that file
+ * is base.css, which imports this one.
+ *
+ * Each matches what the app renders today, so adopting one moves no pixels.
+ */
+
+/* The string that had been re-typed, character for character, in 29 files. */
+@utility card {
+  @apply rounded-card border border-border bg-surface shadow-card;
+}
+
+/* Every tappable thing. Height, radius and focus ring in one place — and the
+ * height is the tap-target floor rather than a suggestion, which is what turns
+ * thirty-odd accessibility failures into a single value. */
+@utility control {
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control border px-4 py-3 text-sm font-semibold transition;
+}
+
+/* Never below --size-control-sm. There is no smaller step on purpose. */
+@utility control-sm {
+  @apply min-h-(--size-control-sm);
+}
+
+@utility control-lg {
+  @apply min-h-(--size-control-lg) text-base;
+}
+
+/* Vertical rhythm, so a screen's spacing is a choice made once. */
+@utility stack {
+  @apply flex flex-col gap-4;
+}
+
+@utility stack-sm {
+  @apply flex flex-col gap-2;
+}
+
+@utility stack-lg {
+  @apply flex flex-col gap-6;
+}

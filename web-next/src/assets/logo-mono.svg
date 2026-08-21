@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">GetStronger</title>
+  <desc id="description">A monochrome number one inside a weight-plate ring.</desc>
+  <circle cx="64" cy="64" r="45" fill="none" stroke="currentColor" stroke-width="14"/>
+  <path d="M48 49 64 36v55" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="13"/>
+  <path d="M48 94h32" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="8"/>
+  <path d="M90 27a45 45 0 0 1 10 13" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="14"/>
+</svg>

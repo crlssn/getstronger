@@ -1,0 +1,99 @@
+/* The design foundation's token layer.
+ *
+ * Values live here rather than in tailwind.config.js so that every one of them
+ * is emitted as a real custom property on :root: queryable at runtime,
+ * overridable per scope, and visible in devtools under the name it was given.
+ * The JS config stays for the legacy colour aliases until those are gone.
+ *
+ * Names describe the role a value plays, never the hue it happens to be. A
+ * developer reaching for "a bit of colour" should find no name that invites it.
+ */
+@theme static {
+  /* Ink — the graphite identity, unchanged. */
+  --color-ink: #25282d;
+  --color-ink-strong: #1f2226;
+  --color-ink-muted: #565b61;
+  /* The pale end of the same ramp: a chip, an icon tile or a hover behind ink
+   * text. Same value as --color-surface-track, different job — a groove and a
+   * tint are separable later without hunting through 69 files. */
+  --color-ink-tint: #e8e9e7;
+  --color-ink-surface: #f5f5f2;
+  --color-ink-border: #d4d5d3;
+
+  /* Surface. The canvas is ink-warm: the one neutral family everywhere. */
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f5f5f3;
+  --color-surface-inverse: #25282d;
+  /* The groove a segmented control's selected pill sits in. It needs to read
+   * against a white card, which --color-surface-sunken does not. */
+  --color-surface-track: #e8e9e7;
+  --color-border: #e3e5e0;
+  --color-border-strong: #cbd5e1;
+
+  /* Text. The ink family's own black and greys — no cool cast. A fourth,
+   * paler step is deliberately absent: a low-contrast tint may decorate a
+   * glyph beside a label, never carry meaning on its own.
+   * text-subtle sits at 4.5:1 against --color-surface-sunken, the lightest
+   * thing it is ever read on; anything paler fails WCAG AA on the canvas. */
+  --color-text: #16181b;
+  --color-text-muted: #5b6167;
+  --color-text-subtle: #656b71;
+
+  /* State. One green where there were three, an amber that is not the
+   * achievement orange, a named informational slate, and a badge colour that
+   * is separable from danger later without hunting through 69 files. */
+  --color-success: #047857;
+  --color-success-surface: #ecfdf5;
+  --color-warning: #b45309;
+  --color-warning-surface: #fffbeb;
+  --color-danger: #dc2626;
+  /* Danger text sitting on the danger surface: #dc2626 reads 4.4:1 on that
+   * pink and fails AA, so the hover pair darkens the text a step. */
+  --color-danger-strong: #b91c1c;
+  --color-danger-surface: #fef2f2;
+  --color-badge: #dc2626;
+  --color-info: #334155;
+  --color-info-surface: #f1f5f9;
+  /* Gold is for personal records, nowhere else. Champagne surface, its border,
+   * and a darker text step that clears contrast on that surface. */
+  --color-record: #ad7b1f;
+  --color-record-surface: #fbf4e6;
+  --color-record-border: #e8d0a2;
+  --color-record-strong: #8b5f18;
+
+  /* Control geometry. --size-control-sm is a floor, not a step: nothing
+   * tappable goes below it. */
+  --size-control: 3rem; /* 48 */
+  --size-control-sm: 2.75rem; /* 44 — floor */
+  --size-control-lg: 3.5rem; /* 56 */
+
+  /* Radius — eight values become four. */
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --radius-sheet: 1.5rem;
+  --radius-pill: 9999px;
+
+  /* Elevation — six steps become three. */
+  --shadow-card: 0 1px 2px rgb(2 6 23 / 0.06);
+  --shadow-raised: 0 4px 12px rgb(2 6 23 / 0.08);
+  --shadow-overlay: 0 16px 40px rgb(2 6 23 / 0.16);
+
+  /* Type — six steps, none below 12px. The eyebrow, the streak unit and the
+   * nav timer wanted to be smaller than this; they get tracking and weight
+   * instead of less size. */
+  --text-display: 1.875rem; /* 30 */
+  --text-display--line-height: 1.15;
+  --text-display--letter-spacing: -0.025em;
+  --text-title: 1.375rem; /* 22 */
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.02em;
+  --text-body-lg: 1.0625rem; /* 17 */
+  --text-body-lg--line-height: 1.5;
+  --text-body: 0.9375rem; /* 15 */
+  --text-body--line-height: 1.5;
+  --text-meta: 0.8125rem; /* 13 */
+  --text-meta--line-height: 1.4;
+  --text-eyebrow: 0.75rem; /* 12 */
+  --text-eyebrow--line-height: 1.3;
+  --text-eyebrow--letter-spacing: 0.1em;
+}
