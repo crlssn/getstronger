@@ -20,6 +20,8 @@ produces a code-split bundle with a chunk per screen. 1185 tests green, 93%
 statement / 96% line coverage.
 
 What is left is phase G — the e2e and screenshot harness — and then the swap.
+The e2e harness itself is up: `playwright.config.ts`, a `test e2e web-next`
+workflow that stands the whole stack up, and two of the twelve specs ported.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
@@ -29,7 +31,7 @@ What is left is phase G — the e2e and screenshot harness — and then the swap
 | D     | Design-system primitives (`AppButton`, `AppCard`, …)   | done  |
 | E     | Shell (`App`, dashboard, nav, banners, dialogs)        | done  |
 | F     | Feature views (auth, workouts, exercises, routines, …) | done  |
-| G     | e2e + screenshot harness pointed at the React app      | next  |
+| G     | e2e + screenshot harness pointed at the React app      | doing |
 | H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
 
 Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
@@ -417,36 +419,46 @@ is read off the route table, so `AppDashboard`, `AppRestTimerBanner` and the
 native wrapper cannot drift apart about which screens these are — all three had
 their own copy.
 
-**Next: phase G — and it is not a copy.** The e2e suite and the screenshot
-harness in `web/tests/` still point at the Vue app. The static checks
-(`no-hardcoded-strings`, `no-raw-palettes`) are already across; the Playwright
-side is not, and the reason is worth knowing before starting.
+**Phase G, in progress — and it is not a copy.** The static checks
+(`no-hardcoded-strings`, `no-raw-palettes`) came across in phase A. The
+Playwright side is the work, and the reason it is work rather than a copy is
+worth knowing before continuing.
 
-The suite reaches for CSS class names — around 45 distinct ones across the
-twelve e2e specs and the screenshot flows. In `web/` those are real class names
-in a `<style scoped>` block. In `web-next/` they are CSS-module locals and
-appear in the DOM hashed (`_setRow_9cb9a0`), so **every one of those selectors
-finds nothing**. Only two survive as written, because they are the only two
-still global in `assets/main.css`: `.loading-card` and `.segmented`.
+The suite reaches for CSS class names — around 120 call sites across the twelve
+e2e specs and the screenshot flows, spanning some 45 distinct class names. In
+`web/` those are real classes in a `<style scoped>` block. In `web-next/` they
+are CSS-module locals and appear in the DOM hashed (`_setRow_9cb9a0`), so
+**every one of those selectors finds nothing**. Only two survive as written,
+because they are the only two still global in `assets/main.css`:
+`.loading-card` and `.segmented`.
 
-The full list, checked against the source:
+**Done so far.** `playwright.config.ts` is a copy of `web/`'s — it is
+path-relative, so it needed no edits — and reads the same `E2E_*` ports, since
+the two suites are never meant to run at once. A `test e2e web-next` workflow
+mirrors `test.e2e.yml`: Postgres as a service, `migrate`, the seed factory, and
+the official Playwright container so no browsers are downloaded. Two specs are
+across, and that workflow is what says whether they pass:
 
-- **`StartWorkout`**: `.workout-header`, `.exercise-list`, `.exercise-item`,
-  `.exercise-item.open .exercise-name`, `.exercise-header`, `.exercise-panel`,
-  `.completed-exercise`, `.primary-action`, `.next-up`, `.finish-early`,
-  `.action-block > strong.blocked`, and from the set grid `.set-row`,
-  `.set-row input`, `.previous-value`, `.unit-entry`, `.unit-suffix`.
-- **Shell**: `.bottom-nav`, `.bottom-nav .timer-badge`, `.timer-badge`,
-  `.notification-badge`, `.alert-region`, `.alert-card-inner .status-icon`,
-  `.menu-trigger`, `header.guest-header`, `.empty-state`.
-- **Screens**: `.exercise-group`, `.exercise-group-card`, `.search-field`,
-  `.search-panel`, `.measurement`, `.exercise-option`, `.exercise-options`,
-  `.routine-options`, `.routine-order`, `.order-actions`, `.active-plan`,
-  `.next-card`, `.history-list`, `.workout-history`, `.feed-summary-card`,
-  `.feed-end`, `.feed-error`, `.notification-item.unread`, `.chart-heading`,
-  `.record-list`, `.record-value`, `.week-block.current.complete`,
-  `.week-workout-count`.
-- **`.dialog-confirm`** exists in neither app any more; the sheet replaced it.
+- `auth-and-routing.spec.ts` — two selectors changed. `header.guest-header`
+  became `getByRole('banner')`, and the alert's status icon is reached as the
+  first `svg` inside `getByRole('status')`, since it is decorative and has no
+  name of its own.
+- `localization.spec.ts` — unchanged; it was already all roles and ids.
+- `fixtures.ts` — `waitForHome` now waits on a workout link, the caught-up
+  marker, the empty state or the error, rather than on four class names.
+  `.loading-card` stayed, being global.
+
+The vitest eslint rules were scoped away from `tests/e2e/**` at the same time:
+those specs share the `.spec.ts` suffix but run under Playwright, whose
+`expect` those rules do not describe.
+
+**What is left, in the order to do it.** The remaining specs, roughly by how
+much rewriting each needs: `core-journeys` (1 site), `segmented-control` (1),
+`seed-personas` (1), `accessibility-and-responsive` (4), `offline` (6),
+`social-and-progress` (11), `training-management` (19), `workout-dock` (29),
+`workout-lifecycle` (33). Then the screenshot harness, whose only affected file
+is `flows.ts` (10 sites) — `catalogue.ts`, `budget.ts`, `diff.ts`, `inspect.ts`,
+`paths.ts` and the global setup and teardown carry no selectors at all.
 
 Rewrite them as role and text queries rather than adding `data-testid`
 everywhere: the unit specs already reach every one of these elements that way,
@@ -457,17 +469,18 @@ notification badges — and say so in a comment when you do.
 
 Two things phase G needs that this container did not have: a Docker daemon for
 the database, and the Go backend running. Neither `mise` nor a Postgres socket
-was available here, so the Playwright suites could not be executed at all —
-which is why the port was not attempted blind.
+was available here, so the Playwright suites cannot be executed locally — which
+is why the port is going one spec at a time rather than all at once. The
+workflow is the test runner instead: it is slower than a local loop, so get the
+selectors right by reading the component first and use CI to confirm rather than
+to explore.
 
-If the next session is in the same position, CI can be the test runner instead.
-`.github/workflows/test.e2e.yml` already stands the whole stack up — Postgres as
-a service, `migrate`, the seed factory, and the official Playwright container so
-no browsers are downloaded — and runs `npm run test:e2e` in `web/`. A
-`test.e2e.web-next.yml` that mirrors it, pointed at `web-next`, turns each push
-into a real run of the ported suite. It is slower than a local loop, so get the
-selectors right by reading first and use CI to confirm rather than to explore.
-Delete it at the swap along with `test.web-next.yml`.
+One gap left for the maintainer: `mise run worktree:env` writes `web/.env` but
+not `web-next/.env`, and `mise.toml`'s `test:e2e` task still points at `web/`.
+Neither blocks CI — the Playwright config passes `VITE_API_URL` to the dev
+server itself — but a local run of the React suite needs both. Left alone here
+because `mise` is not installed in this container and a task that cannot be run
+should not be written blind.
 
 ## Phase H — do not forget
 

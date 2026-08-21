@@ -41,7 +41,10 @@ export default tseslint.config(
 
   {
     ...pluginVitest.configs.recommended,
+    // Unit specs only. The end-to-end specs share the .spec.ts suffix but run
+    // under Playwright, whose expect these rules do not describe.
     files: ['**/*.spec.{ts,tsx}'],
+    ignores: ['tests/e2e/**'],
     rules: {
       ...pluginVitest.configs.recommended.rules,
       // Vitest's expect takes an optional second argument: the message shown
