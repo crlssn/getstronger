@@ -9,19 +9,18 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 ## Where we are
 
-The React toolchain builds, typechecks, lints, formats and tests; every module
-that never depended on Vue is ported; i18n runs on i18next; and ten of the 21
-stores are on Zustand — every one that does not need the HTTP layer. 197 tests
-green, 86% statement / 89% line coverage.
+The React toolchain builds, typechecks, lints, formats and tests. Everything
+below the UI is now ported: the framework-agnostic modules, i18n on i18next, the
+whole HTTP layer, and ten of the 21 stores — every one that does not read from
+`http/requests.ts`. 292 tests green, 93% statement / 95% line coverage.
 
-The remaining eight stores all read from `http/requests.ts`, so the next work is
-phase C, not the rest of phase B. See "What to do next".
+The eight remaining stores are no longer blocked. See "What to do next".
 
 | Phase | What it covers                                         | State       |
 | ----- | ------------------------------------------------------ | ----------- |
 | A     | Toolchain scaffold + framework-agnostic leaves         | done        |
 | B     | i18n, state, routing foundations                       | in progress |
-| C     | HTTP layer and the modules that depend on stores       | next        |
+| C     | HTTP layer                                             | done        |
 | D     | Design-system primitives (`AppButton`, `AppCard`, …)   | todo        |
 | E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo        |
 | F     | Feature views (auth, workouts, exercises, routines, …) | todo        |
@@ -43,12 +42,14 @@ Stores on Zustand: `auth`, `connection`, `alerts`, `confirmation`, `pageTitle`,
 conventions they establish are in `src/stores/README.md` — read that before
 adding the eleventh.
 
-Not yet ported, all of them blocked on `http/requests.ts`: `activity`,
-`dashboard`, `mutationQueue`, `notifications`, `plans`, `progress`, `streak`,
-`workout`.
+Not yet ported: `activity`, `dashboard`, `mutationQueue`, `notifications`,
+`plans`, `progress`, `streak`, `workout`.
 
-Also ported: `router/navigation.ts` and `http/unauthenticated.ts` — see the
-routing decision below for why those two came before the router itself.
+The HTTP layer is done: `clients`, `interceptors`, `offlineCache`, `requests`,
+`unauthenticated`, `native`, and `jwt`. `requests.ts` needed four edits across
+663 lines — the router import, two `getState()` calls, and `i18n.global.t`.
+`router/navigation.ts` came before the router itself; see the routing decision
+below.
 
 Verify with, from `web-next/`:
 
@@ -194,40 +195,37 @@ now answers a tab root with itself.
 - The Vue app mounts into `<body id="app">`. React mounts into a `#root` div, so
   `index.html` differs here; `base.css` still styles `#app`, which stays as the
   body id. Check this when porting the shell.
+- **`clients → interceptors → jwt → requests → clients` is an import cycle**,
+  inherited from `web/` and not worth unpicking for its own sake — it resolves
+  correctly at runtime. It does bite in tests: after `vi.resetModules()`,
+  destructuring `import('./interceptors')` before the graph has finished
+  evaluating yields `undefined` bindings. Import `./clients` first, as
+  `clients.spec.ts` does. This is the same class of problem the navigation
+  module was introduced to avoid, and the reason not to add the router to the
+  cycle as well.
 
 ## What to do next
 
-Every remaining store reads from `http/requests.ts`, so **phase C comes before
-the rest of phase B**. The dependency order is fixed and worth following:
-
-1. **`http/requests.ts`** — 663 lines, and the gate on everything else. It is
-   mostly thin wrappers over the generated Connect clients, so the work is bulk
-   rather than difficulty. Its dependencies are all in place now except
-   `http/clients.ts`, which needs `interceptors` and `offlineCache`.
-2. **`http/clients.ts`, `http/interceptors.ts`, `http/offlineCache.ts`** — port
-   alongside it, with the three specs from `web/src/http/`. `interceptors.ts`
-   and `offlineCache.ts` read the auth and connection stores, both of which are
-   ported, so this is a `useXStore()` → `useXStore.getState()` change and
-   nothing more.
-3. **`jwt/jwt.ts`** — small, but it closes the loop: `interceptors` calls it and
-   it calls `requests.refreshToken`.
-4. **The request-backed stores**: `streak`, `notifications`, `activity`,
+1. **The request-backed stores**: `streak`, `notifications`, `activity`,
    `dashboard`, `plans`, `progress`. Before porting these as-is, check whether
    they are really server cache rather than client state — several would be
    plainer as a data-fetching hook, and this is the moment to decide that, not
    after 20 components depend on the store shape.
-5. **`mutationQueue`** — the one with a real design question. It calls
+2. **`mutationQueue`** — the one with a real design question. It calls
    `useConnectionStore().onReconnect(…)` at module-init time, so importing the
    store has a side effect. In React that wiring belongs in an app-level effect;
    decide where and write it down here, because `notifications` polling has the
    same shape.
-6. **`workout`** last — a deep nested map mutated by path, and the reason Immer
+3. **`workout`** last — a deep nested map mutated by path, and the reason Immer
    is already a dependency. Port it with the Immer middleware, and lean on
    `web/src/stores/workout.spec.ts`, which is thorough.
 
 Then routing: the route table, the three guards, and the global navigation
 effect that sets the page title and resets `navTabs` and `actionButton`.
 Whatever creates the router must also call `setNavigator(router.navigate)`.
+
+After that the UI is all that is left — phases D through H, and the bulk of the
+work by volume. Nothing below the UI should need revisiting.
 
 ## Phase H — do not forget
 
@@ -247,11 +245,20 @@ needs to ship _with_ the swap, not after.
 
 The issue asks for 80%+. `npm run test:unit -- --run --coverage` reports it, and
 CI runs it that way so the number moves with each increment rather than being
-discovered at the end. It currently sits at 88% statements / 90% lines.
+discovered at the end. It currently sits at 93% statements / 95% lines.
 
 Expect it to fall once components land — the ported modules are unusually easy
 to cover. `src/proto`, `src/main.tsx` and the specs are excluded in
 `vitest.config.ts`; nothing else is.
+
+`requests.ts` is worth a note, since it is a fifth of the source. Its fifty
+wrappers are covered by a dispatch table in `requests.dispatch.spec.ts` that
+pins each request to the client method it must reach, plus a check that the
+table has an entry for every export. That is aimed at the mistake the file
+invites — a new request still calling the neighbour it was copied from — rather
+than at the coverage number, which it happens to raise from 32% to 99%. The
+shared `tryCatch` every request routes its failures through has its own suite in
+`requests.spec.ts`.
 
 Of the 38 specs in `web/src`, 22 test plain modules and port with little change;
 the 16 that mount `.vue` SFCs need rewriting against Testing Library. Two

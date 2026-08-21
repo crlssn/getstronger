@@ -19,6 +19,14 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     name: 'app/files-to-lint',
     extends: [js.configs.recommended, tseslint.configs.recommended],
+    rules: {
+      // A leading underscore is how the codebase already marks a binding that
+      // exists to hold a position rather than to be read.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'all' },
+      ],
+    },
   },
 
   {
