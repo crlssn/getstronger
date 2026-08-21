@@ -1,0 +1,105 @@
+@reference '../assets/base.css';
+
+.stack {
+  @apply space-y-5;
+}
+
+.eyebrow {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.recordCount {
+  @apply inline-flex w-max items-center gap-1.5 whitespace-nowrap rounded-full border border-record-border bg-record-surface px-3 py-1.5 text-meta font-semibold text-record-strong;
+}
+
+.recordCount svg {
+  @apply size-5;
+}
+
+.chartCard,
+.recordsCard {
+  @apply card p-5;
+}
+
+.chartHeading {
+  @apply mb-5 flex flex-wrap items-end justify-between gap-3;
+}
+
+.chartHeading h2 {
+  @apply mt-1 text-display font-bold text-text;
+}
+
+.chartHeading > span {
+  @apply inline-flex items-center gap-1.5 text-meta font-semibold text-text-subtle;
+}
+
+.chartHeading svg {
+  @apply size-4;
+}
+
+.periodPicker {
+  @apply mt-4;
+}
+
+/* Same height as the chart frame, so switching to an empty range does not
+   collapse the card under the reader's thumb. */
+.chartEmpty {
+  @apply grid h-64 place-items-center text-sm text-text-subtle;
+}
+
+.sectionHeading {
+  @apply mb-4;
+}
+
+.sectionHeading h2 {
+  @apply mt-1 text-title font-semibold text-text;
+}
+
+.recordList {
+  @apply divide-y divide-border;
+}
+
+.recordList a {
+  @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 transition first:pt-0 last:pb-0 hover:text-ink-strong;
+}
+
+.recordIcon {
+  @apply grid size-11 place-items-center rounded-control bg-record-surface text-record;
+}
+
+.recordIcon svg,
+.chevron {
+  @apply size-5;
+}
+
+.recordList strong,
+.recordList small {
+  @apply block truncate;
+}
+
+.recordList small {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
+.recordValue {
+  @apply text-right text-sm font-semibold text-text;
+}
+
+.chevron {
+  @apply text-text-subtle;
+}
+
+@media (max-width: 520px) {
+  .recordList a {
+    @apply grid-cols-[auto_1fr_auto];
+  }
+  .recordIcon {
+    @apply row-span-2;
+  }
+  .recordValue {
+    @apply col-start-2 row-start-2 text-left;
+  }
+  .chevron {
+    @apply col-start-3 row-span-2 row-start-1;
+  }
+}

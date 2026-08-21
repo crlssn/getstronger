@@ -1,0 +1,5 @@
+@reference '../../assets/base.css';
+
+.frame {
+  @apply h-64;
+}
