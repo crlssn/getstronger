@@ -83,6 +83,8 @@ How each syncs:
     keys here.
   - `routine.view.lastSession_one` and `_other`, in both locales.
     `ViewRoutine.vue` builds "2 sets · last …" the same way.
+  - `workout.durationPlaceholder`, in both locales. `DurationInput.vue`
+    hardcodes its "m:ss" placeholder.
 - **`src/utils/**`, new modules** — usually verbatim.
 - **`src/http/**`, `src/stores/**`** — apply the diff by hand, translating
   `useXStore()` to `useXStore.getState()` and `i18n.global.t` to `i18n.t`.
