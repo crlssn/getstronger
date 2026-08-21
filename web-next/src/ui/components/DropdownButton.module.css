@@ -1,0 +1,45 @@
+@reference '../../assets/base.css';
+
+.menuTrigger {
+  @apply grid size-11 place-items-center rounded-control border border-border bg-white text-text-subtle transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
+}
+
+.menuTrigger svg {
+  @apply size-5;
+}
+
+.menuItems {
+  @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-control border border-border bg-white p-1.5 shadow-overlay focus:outline-none;
+}
+
+.enter {
+  @apply transition duration-100 ease-out;
+}
+
+.enterFrom {
+  @apply scale-95 opacity-0;
+}
+
+.enterTo {
+  @apply scale-100 opacity-100;
+}
+
+.leave {
+  @apply transition duration-75 ease-in;
+}
+
+.menuItem {
+  @apply flex min-h-(--size-control-sm) w-full items-center rounded-lg px-3 text-left text-sm font-medium text-text-muted;
+}
+
+.menuItem.active {
+  @apply bg-ink-surface;
+}
+
+.menuItem.danger {
+  @apply text-danger;
+}
+
+.menuItem.danger.active {
+  @apply bg-danger-surface;
+}

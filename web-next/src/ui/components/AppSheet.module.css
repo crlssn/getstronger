@@ -1,0 +1,89 @@
+@reference '../../assets/base.css';
+
+.sheetBackdrop {
+  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
+}
+
+/* Flush with the bottom edge: only the top corners round, and the safe-area
+   inset is padding inside the sheet so nothing shows through beneath it. */
+.sheetPanel {
+  @apply flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-sheet bg-white px-5 pt-5 text-left shadow-overlay sm:max-h-[75vh] sm:rounded-sheet sm:pb-5;
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+}
+
+.sheetHandle {
+  @apply mx-auto mb-4 block h-1 w-12 shrink-0 rounded-full bg-ink-tint sm:hidden;
+}
+
+.sheetHeader {
+  @apply flex items-center justify-between gap-4;
+}
+
+.sheetEyebrow {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.sheetEyebrow.success {
+  @apply text-success;
+}
+
+.sheetEyebrow.danger {
+  @apply text-danger;
+}
+
+.sheetHeader h2 {
+  @apply mt-1 text-title font-semibold text-text;
+}
+
+.sheetClose {
+  @apply grid size-11 shrink-0 place-items-center rounded-control border border-border text-text-subtle;
+}
+
+.sheetClose svg {
+  @apply size-5;
+}
+
+.sheetBody {
+  @apply mt-2 text-sm leading-6 text-text-muted;
+}
+
+.sheetContent {
+  @apply mt-4 min-h-0 flex-1 overflow-y-auto;
+}
+
+.sheetActions {
+  @apply mt-4 grid gap-2;
+}
+
+/* The ranking is part of the sheet's design — a dark primary, a solid or
+   outlined destructive, and a plain outlined tertiary — so it lives here
+   rather than being restated by every caller. In Vue this had to be a second,
+   global style block, because scoped styles cannot reach slot content; a CSS
+   module reaches children by the hashed parent class, so it does not. */
+.action {
+  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold transition;
+}
+
+.action svg {
+  @apply size-5;
+}
+
+.action:disabled {
+  @apply opacity-60;
+}
+
+.action.primary {
+  @apply bg-ink text-white hover:bg-ink-strong;
+}
+
+.action.danger {
+  @apply bg-danger text-white hover:bg-danger-strong;
+}
+
+.action.dangerOutline {
+  @apply border border-danger/30 text-danger hover:bg-danger-surface hover:text-danger-strong;
+}
+
+.action.tertiary {
+  @apply border border-border text-text-muted hover:bg-ink-surface;
+}
