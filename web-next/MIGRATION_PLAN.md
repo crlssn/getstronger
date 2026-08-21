@@ -9,16 +9,19 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 ## Where we are
 
-Phase A is done and phase B is most of the way through: the React toolchain
-builds, typechecks, lints, formats and tests; every module that never depended
-on Vue is ported; i18n runs on i18next; and eight of the 21 stores are on
-Zustand. 160 tests green, 88% statement / 90% line coverage.
+The React toolchain builds, typechecks, lints, formats and tests; every module
+that never depended on Vue is ported; i18n runs on i18next; and ten of the 21
+stores are on Zustand — every one that does not need the HTTP layer. 197 tests
+green, 86% statement / 89% line coverage.
+
+The remaining eight stores all read from `http/requests.ts`, so the next work is
+phase C, not the rest of phase B. See "What to do next".
 
 | Phase | What it covers                                         | State       |
 | ----- | ------------------------------------------------------ | ----------- |
 | A     | Toolchain scaffold + framework-agnostic leaves         | done        |
 | B     | i18n, state, routing foundations                       | in progress |
-| C     | HTTP layer and the modules that depend on stores       | todo        |
+| C     | HTTP layer and the modules that depend on stores       | next        |
 | D     | Design-system primitives (`AppButton`, `AppCard`, …)   | todo        |
 | E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo        |
 | F     | Feature views (auth, workouts, exercises, routines, …) | todo        |
