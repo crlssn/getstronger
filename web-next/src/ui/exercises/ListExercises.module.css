@@ -1,0 +1,79 @@
+@reference '../../assets/base.css';
+
+.page {
+  @apply space-y-4;
+}
+
+.pageIntro {
+  @apply flex items-center justify-between gap-4 px-1;
+}
+
+.pageIntro h1 {
+  @apply mt-1 text-display font-bold text-text;
+}
+
+.createLink {
+  @apply inline-flex min-h-(--size-control) w-max items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
+}
+
+.createLink svg {
+  @apply size-5;
+}
+
+.searchField {
+  @apply flex items-center gap-2 rounded-control border border-border bg-surface px-4 shadow-card;
+}
+
+.searchField svg {
+  @apply size-5 text-text-subtle;
+}
+
+.searchField input {
+  @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
+}
+
+.exerciseList {
+  @apply space-y-4;
+}
+
+.exerciseGroup h2 {
+  @apply mb-2 px-1 text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.exerciseGroupCard {
+  @apply card overflow-hidden;
+}
+
+.exerciseGroupCard > a {
+  @apply flex min-h-16 items-center justify-between gap-3 border-t border-border px-5 py-3 transition hover:text-ink-strong;
+}
+
+.exerciseGroupCard > a:first-child {
+  @apply border-t-0;
+}
+
+.exerciseCopy {
+  @apply min-w-0;
+}
+
+.exerciseCopy strong {
+  @apply block truncate text-body-lg font-semibold text-text;
+}
+
+.exerciseCopy small {
+  @apply mt-0.5 block truncate text-meta text-text-subtle;
+}
+
+.exerciseGroupCard > a > svg {
+  @apply size-5 shrink-0 text-text-subtle;
+}
+
+.loadMore {
+  @apply min-h-(--size-control) w-full rounded-control border border-border bg-white text-sm font-semibold text-ink shadow-card;
+}
+
+@media (max-width: 420px) {
+  .createLink {
+    @apply px-3;
+  }
+}
