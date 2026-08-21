@@ -7,7 +7,6 @@ import AppButton from '@/ui/components/AppButton.vue'
 import { type SignupRequest } from '@/proto/api/v1/auth_service_pb.ts'
 import { useEmailVerificationStore } from '@/stores/emailVerification.ts'
 import AuthPasswordInput from '@/ui/auth/AuthPasswordInput.vue'
-import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import posthog from '@/posthog'
 
 const router = useRouter()
@@ -19,8 +18,6 @@ const req = ref<SignupRequest>({
   username: '',
   password: '',
   passwordConfirmation: '',
-  weightUnit: WeightUnit.KILOGRAMS,
-  distanceUnit: DistanceUnit.KILOMETERS,
 })
 
 const onSignup = async () => {
@@ -95,62 +92,6 @@ const onSignup = async () => {
           />
         </div>
       </div>
-
-      <fieldset>
-        <legend class="auth-label">{{ $t('auth.weightUnit') }}</legend>
-        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.weightUnitHelp') }}</p>
-        <!-- The same segmented control as everywhere else a choice of two is
-             offered; the radios stay for form semantics. -->
-        <div class="segmented mt-2" :aria-label="$t('auth.weightUnit')">
-          <label :class="{ 'is-selected': req.weightUnit === WeightUnit.KILOGRAMS }">
-            <input
-              v-model="req.weightUnit"
-              class="segmented-radio"
-              type="radio"
-              name="weightUnit"
-              :value="WeightUnit.KILOGRAMS"
-            />
-            {{ $t('auth.kilograms') }}
-          </label>
-          <label :class="{ 'is-selected': req.weightUnit === WeightUnit.POUNDS }">
-            <input
-              v-model="req.weightUnit"
-              class="segmented-radio"
-              type="radio"
-              name="weightUnit"
-              :value="WeightUnit.POUNDS"
-            />
-            {{ $t('auth.pounds') }}
-          </label>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend class="auth-label">{{ $t('auth.distanceUnit') }}</legend>
-        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.distanceUnitHelp') }}</p>
-        <div class="segmented mt-2" :aria-label="$t('auth.distanceUnit')">
-          <label :class="{ 'is-selected': req.distanceUnit === DistanceUnit.KILOMETERS }">
-            <input
-              v-model="req.distanceUnit"
-              class="segmented-radio"
-              type="radio"
-              name="distanceUnit"
-              :value="DistanceUnit.KILOMETERS"
-            />
-            {{ $t('auth.kilometers') }}
-          </label>
-          <label :class="{ 'is-selected': req.distanceUnit === DistanceUnit.MILES }">
-            <input
-              v-model="req.distanceUnit"
-              class="segmented-radio"
-              type="radio"
-              name="distanceUnit"
-              :value="DistanceUnit.MILES"
-            />
-            {{ $t('auth.miles') }}
-          </label>
-        </div>
-      </fieldset>
 
       <div>
         <label for="password" class="auth-label">{{ $t('auth.password') }}</label>

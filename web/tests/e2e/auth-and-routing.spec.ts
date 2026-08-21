@@ -61,10 +61,11 @@ test.describe('guest authentication and routing', () => {
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByLabel('Confirm password').fill(password)
-    await page.getByText('Pounds', { exact: true }).click()
-    await expect(page.getByRole('radio', { name: /Pounds/ })).toBeChecked()
-    await page.getByText('Miles', { exact: true }).click()
-    await expect(page.getByRole('radio', { name: /Miles/ })).toBeChecked()
+
+    // Units are not asked for here; the account starts metric and is changed
+    // in the profile.
+    await expect(page.getByText('Preferred weight unit')).toHaveCount(0)
+    await expect(page.getByText('Preferred distance unit')).toHaveCount(0)
 
     // A username someone already holds is refused with a clear message and
     // leaves the rest of the form intact.
@@ -112,18 +113,17 @@ test.describe('guest authentication and routing', () => {
     await page.getByRole('button', { name: 'Log in' }).click()
     await expect(page).toHaveURL(/\/home$/)
 
-    // The units picked at signup are the account's preferences, not defaults
-    // that got lost on the way to the profile.
+    // A new account is metric until the profile says otherwise.
     await page.goto('/profile')
     await expect(
       page
         .getByRole('group', { name: 'Preferred weight unit' })
-        .getByRole('button', { name: 'Pounds' }),
+        .getByRole('button', { name: 'Kilograms' }),
     ).toHaveAttribute('aria-pressed', 'true')
     await expect(
       page
         .getByRole('group', { name: 'Preferred distance unit' })
-        .getByRole('button', { name: 'Miles' }),
+        .getByRole('button', { name: 'Kilometers' }),
     ).toHaveAttribute('aria-pressed', 'true')
   })
 

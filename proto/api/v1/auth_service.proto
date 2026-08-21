@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/shared.proto";
 import "buf/validate/validate.proto";
 
 service AuthService {
@@ -17,8 +16,10 @@ service AuthService {
 }
 
 message SignupRequest {
-  reserved 4, 5;
-  reserved "first_name", "last_name";
+  // Units are no longer chosen here: every account starts metric and changes
+  // them in the profile.
+  reserved 4, 5, 6, 7;
+  reserved "first_name", "last_name", "weight_unit", "distance_unit";
 
   string email = 1 [(buf.validate.field).string.email = true];
   string password = 2 [(buf.validate.field).string.min_len = 6];
@@ -30,8 +31,6 @@ message SignupRequest {
     max_len: 30
     pattern: "^[A-Za-z0-9_.]+$"
   }];
-  WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];
-  DistanceUnit distance_unit = 7 [(buf.validate.field).enum.defined_only = true];
 }
 message SignupResponse {}
 

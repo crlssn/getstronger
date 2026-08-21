@@ -96,8 +96,6 @@ func (s *authSuite) TestSignup() {
 					PasswordConfirmation: "password",
 					Name:                 gofakeit.Name(),
 					Username:             "Signup.Handle",
-					WeightUnit:           v1.WeightUnit_WEIGHT_UNIT_POUNDS,
-					DistanceUnit:         v1.DistanceUnit_DISTANCE_UNIT_MILES,
 				},
 			},
 			init: func(t test) {
@@ -183,8 +181,9 @@ func (s *authSuite) TestSignup() {
 			// The username is stored lowercased so uniqueness holds regardless
 			// of how it was typed.
 			s.Require().Equal("signup.handle", user.Username)
-			s.Require().Equal("lb", user.WeightUnit)
-			s.Require().Equal("mi", user.DistanceUnit)
+			// Signup no longer asks for units: a new account starts metric.
+			s.Require().Equal("kg", user.WeightUnit)
+			s.Require().Equal("km", user.DistanceUnit)
 		})
 	}
 }

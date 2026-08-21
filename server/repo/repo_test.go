@@ -26,6 +26,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	bobtypes "github.com/stephenafamo/bob/types"
 
+	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -611,6 +612,8 @@ func (s *repoSuite) TestCreateUser() {
 			s.Require().Equal(t.params.AuthID, user.AuthID.String())
 			s.Require().Equal(t.expected.user.Name, user.Name)
 			s.Require().Equal(t.expected.user.Username, user.Username)
+			s.Require().Equal(string(weightunit.Kilograms), user.WeightUnit)
+			s.Require().Equal(string(distanceunit.Kilometers), user.DistanceUnit)
 		})
 	}
 }

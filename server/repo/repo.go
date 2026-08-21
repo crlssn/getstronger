@@ -278,20 +278,20 @@ func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (boo
 }
 
 type CreateUserParams struct {
-	AuthID       string
-	Name         string
-	Username     string
-	WeightUnit   string
-	DistanceUnit string
+	AuthID   string
+	Name     string
+	Username string
 }
 
+// CreateUser starts every account metric; the units are a profile setting from
+// then on.
 func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	user, err := models.Users.Insert(&models.UserSetter{
 		AuthID:       omit.From(uuidFromString(p.AuthID)),
 		Name:         omit.From(p.Name),
 		Username:     omit.From(normalizeUsername(p.Username)),
-		WeightUnit:   omit.From(string(weightunit.Normalize(p.WeightUnit))),
-		DistanceUnit: omit.From(string(distanceunit.Normalize(p.DistanceUnit))),
+		WeightUnit:   omit.From(string(weightunit.Kilograms)),
+		DistanceUnit: omit.From(string(distanceunit.Kilometers)),
 	}).One(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("user insert: %w", translateUserError(err))
@@ -1361,7 +1361,8 @@ func ListUsersWithNameMatching(query string) ListUsersOpt {
 			sm.Where(models.Users.Columns.FullNameSearch.Like(pattern).Or(
 				models.Users.Columns.Username.Like(pattern),
 			)),
-			sm.OrderBy(psql.F("greatest",
+			sm.OrderBy(psql.F(
+				"greatest",
 				psql.F("similarity", models.Users.Columns.FullNameSearch, psql.Arg(query)),
 				psql.F("similarity", models.Users.Columns.Username, psql.Arg(query)),
 			)).Desc(),
