@@ -53,12 +53,12 @@ test.describe('quick workout lifecycle', () => {
     await page.goto('/workouts/quick')
 
     // The focused shell takes over: global navigation is gone and the session
-    // chrome stays one band, now carrying the elapsed time — the one number
-    // read between sets — and a rail for how far through the session you are.
+    // chrome stays one band, carrying the elapsed time — the one number read
+    // between sets. No progress rail: a glance should not do arithmetic.
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0)
     const headerBox = await page.locator('.workout-header').boundingBox()
     expect(headerBox?.height).toBeLessThanOrEqual(80)
-    await expect(page.getByRole('progressbar', { name: 'Session progress' })).toBeVisible()
+    await expect(page.getByRole('progressbar', { name: 'Session progress' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add exercise' })).toHaveCount(0)
     await expect(page.getByLabel('Workout note')).toHaveCount(0)
