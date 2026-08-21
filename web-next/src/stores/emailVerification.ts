@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
+
+import { migratedStorage } from '@/stores/persistence'
 
 // Matches the server-side cooldown and is only a starting point: every resend
 // response carries the cooldown the server is actually enforcing.
@@ -51,7 +53,7 @@ export const useEmailVerificationStore = create<EmailVerificationState>()(
     }),
     {
       name: 'emailVerification',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: migratedStorage(() => sessionStorage),
       partialize: ({ pendingEmail, lastSentAt, retryAfterSeconds }) => ({
         pendingEmail,
         lastSentAt,

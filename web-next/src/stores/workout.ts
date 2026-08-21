@@ -5,6 +5,8 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 
+import { migratedStorage } from '@/stores/persistence'
+
 import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { exerciseMetrics } from '@/utils/exerciseMeasurements'
@@ -293,6 +295,7 @@ export const useWorkoutStore = create<WorkoutState>()(
     })),
     {
       name: 'workouts',
+      storage: migratedStorage(),
       partialize: ({ workouts }) => ({ workouts }),
     },
   ),
