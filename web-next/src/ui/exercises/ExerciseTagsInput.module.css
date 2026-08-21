@@ -1,0 +1,54 @@
+@reference '../../assets/base.css';
+
+.tagInput {
+  @apply card space-y-3 p-4 focus-within:border-ink-border focus-within:ring-2 focus-within:ring-ink-tint;
+}
+
+.tagList {
+  @apply flex flex-wrap gap-2;
+}
+
+.tagList > span {
+  @apply inline-flex min-h-8 items-center gap-1.5 rounded-full bg-ink-surface py-1 pl-3 pr-1.5 text-sm font-medium text-ink-strong;
+}
+
+.tagList button {
+  @apply grid size-6 place-items-center rounded-full text-ink-muted transition hover:bg-ink-tint hover:text-ink-strong;
+}
+
+.tagList svg {
+  @apply size-4;
+}
+
+/* The wrapper is already the field; a ringed input inside it double-boxes. */
+.tagInput input {
+  @apply block min-h-(--size-control-sm) w-full border-0 bg-transparent p-0 text-sm text-text placeholder:text-text-subtle focus:ring-0;
+}
+
+.tagSuggestions {
+  @apply -mt-1 overflow-hidden rounded-control border border-border bg-white shadow-raised;
+}
+
+.tagSuggestions button {
+  @apply flex min-h-11 w-full items-center justify-between gap-3 border-t border-border px-3 text-left text-sm font-medium text-text-muted first:border-t-0 hover:bg-ink-surface hover:text-ink-strong;
+}
+
+.tagSuggestions button.highlighted {
+  @apply bg-ink-surface text-ink-strong;
+}
+
+.tagSuggestions small {
+  @apply shrink-0 text-xs font-normal text-text-subtle;
+}
+
+.tagHelp {
+  @apply flex items-center justify-between gap-3 text-text-subtle;
+}
+
+.tagHelp .error {
+  @apply text-danger;
+}
+
+.full {
+  @apply border-ink-border;
+}

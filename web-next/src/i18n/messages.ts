@@ -508,6 +508,9 @@ export const en = {
       addAria: 'Add exercise tag',
       suggestionsAria: 'Existing exercise tags',
       existingTag: 'Existing tag',
+      tooLong: 'Tags can be up to {count} characters.',
+      duplicate: '“{name}” is already added.',
+      tooMany: 'You can add up to {count} tags.',
     },
     chart: {
       oneRmShort: 'Est. 1RM',
@@ -1144,6 +1147,9 @@ export const sv = {
       addAria: 'Lägg till övningstagg',
       suggestionsAria: 'Befintliga övningstaggar',
       existingTag: 'Befintlig tagg',
+      tooLong: 'Taggar får vara högst {count} tecken.',
+      duplicate: '”{name}” är redan tillagd.',
+      tooMany: 'Du kan lägga till högst {count} taggar.',
     },
     chart: {
       oneRmShort: 'Uppsk. 1RM',
