@@ -157,7 +157,7 @@ test.describe('quick workout lifecycle', () => {
     const secondOption = picker.locator('.exercise-options button').first()
     const secondExercise = (await secondOption.locator('strong').innerText()).trim()
     await secondOption.click()
-    await expect(page.locator('.exercise-queue')).toContainText(secondExercise)
+    await expect(page.locator('.exercise-list')).toContainText(secondExercise)
 
     await page.getByRole('button', { name: 'Finish workout' }).click()
     const finishDialog = page.getByRole('dialog', { name: 'Finish workout early?' })
@@ -524,7 +524,7 @@ test.describe('planned workouts and history', () => {
     await expect(nextCard).toContainText('1 of 2')
     await nextCard.getByRole('link', { name: /^Start / }).click()
 
-    const exercise = (await page.locator('.exercise-card h2').innerText()).trim()
+    const exercise = (await page.locator('.exercise-item.open .exercise-name').innerText()).trim()
     await logFirstSet(page, exercise, '30', '6')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
 

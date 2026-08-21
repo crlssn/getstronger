@@ -31,7 +31,7 @@ test.describe('the workout dock', () => {
   // Completing works from wherever you are: a row nobody finished would never
   // have been saved, so it is dropped rather than kept as an obstacle.
   test('discards a half-typed row and completes the exercise anyway', async ({ page }) => {
-    const exercise = await page.locator('.exercise-heading h2').innerText()
+    const exercise = await page.locator('.exercise-item.open .exercise-name').innerText()
     await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('25')
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
@@ -60,7 +60,7 @@ test.describe('the workout dock', () => {
     await expect(page.locator('.action-block > strong.blocked')).toBeVisible()
 
     await page.getByRole('button', { name: 'Reopen' }).click()
-    const exercise = await page.locator('.exercise-heading h2').innerText()
+    const exercise = await page.locator('.exercise-item.open .exercise-name').innerText()
     await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('25')
     await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')
 

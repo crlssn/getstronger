@@ -17,6 +17,7 @@ import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
   CheckIcon,
+  ChevronDownIcon,
   FlagIcon,
   MagnifyingGlassIcon,
   MinusIcon,
@@ -93,7 +94,7 @@ const exerciseOptionsLoaded = ref(false)
 const exerciseOptions = ref<Exercise[]>([])
 const exerciseSearch = ref('')
 const exercisePageToken = ref<Uint8Array>(new Uint8Array(0))
-const exerciseCard = ref<HTMLElement | null>(null)
+const exerciseList = ref<HTMLElement | null>(null)
 
 const authStore = useAuthStore()
 const preferencesStore = usePreferencesStore()
@@ -140,11 +141,6 @@ onUnmounted(() => {
 })
 
 const currentExercise = computed(() => routine.value?.exercises[activeExerciseIndex.value])
-const exerciseQueue = computed(() =>
-  (routine.value?.exercises ?? [])
-    .map((exercise, index) => ({ exercise, index }))
-    .filter(({ index }) => index !== activeExerciseIndex.value),
-)
 const availableExercises = computed(() => {
   const currentExerciseIds = new Set(routine.value?.exercises.map((exercise) => exercise.id) ?? [])
   const query = exerciseSearch.value.trim().toLowerCase()
@@ -302,7 +298,8 @@ const focusNextSetInput = async () => {
   await nextTick()
   if (document.activeElement instanceof HTMLInputElement) return
 
-  const inputs = exerciseCard.value?.querySelectorAll('input') ?? []
+  const inputs =
+    exerciseList.value?.querySelectorAll<HTMLInputElement>('.exercise-panel input') ?? []
   for (const input of inputs) {
     if (!input.value) {
       input.focus()
@@ -625,11 +622,35 @@ const reopenExercise = (exerciseID: string) => {
   )
 }
 
-const selectExercise = (index: number) => {
-  if (!routine.value?.exercises[index]) return
+// Opening an exercise closes the one that was open: exactly one container of
+// the list is ever unfolded, whichever way it was reached.
+const selectExercise = async (index: number) => {
+  if (!routine.value?.exercises[index] || index === activeExerciseIndex.value) return
   activeExerciseIndex.value = index
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  await nextTick()
+  // The panel that just opened can be taller than the screen, so its header is
+  // brought back into view rather than the top of the page.
+  exerciseList.value?.querySelector('.exercise-item.open')?.scrollIntoView?.({
+    behavior: 'smooth',
+    block: 'start',
+  })
   void focusNextSetInput()
+}
+
+// The one line a collapsed exercise gets: what it is waiting for, what it has
+// already taken, or that it is done.
+const exerciseStatus = (exercise: Exercise) => {
+  const logged = exerciseLoggedSetCount(exercise.id)
+  if (completedExercises.value[exercise.id]) {
+    return logged
+      ? `${t('workout.exerciseCompleted')} · ${t('workout.loggedSets', logged)}`
+      : t('workout.exerciseCompleted')
+  }
+  if (logged) return t('workout.loggedSets', logged)
+
+  const previous = previousSet(exercise.id, 0)
+  if (previous) return `${t('common.previous')} ${formatExerciseSet(previous, exercise)}`
+  return t('workout.notStarted')
 }
 
 const advanceExercise = () => {
@@ -641,7 +662,7 @@ const advanceExercise = () => {
     (entry, index) => index > activeExerciseIndex.value && !completedExercises.value[entry.id],
   )
   if (nextIndex !== undefined && nextIndex >= 0) {
-    selectExercise(nextIndex)
+    void selectExercise(nextIndex)
     useExerciseRestTimer(routine.value?.exercises[nextIndex])
     return
   }
@@ -650,7 +671,7 @@ const advanceExercise = () => {
     (entry) => !completedExercises.value[entry.id],
   )
   if (firstIncomplete !== undefined && firstIncomplete >= 0) {
-    selectExercise(firstIncomplete)
+    void selectExercise(firstIncomplete)
     useExerciseRestTimer(routine.value?.exercises[firstIncomplete])
   }
 }
@@ -955,217 +976,195 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </button>
       </section>
 
-      <!-- The active card sits between slivers of its neighbours, so the
-           session reads as a stack of cards without becoming a carousel. The
-           peeks are decorative and never reveal the neighbouring name. -->
-      <div v-if="currentExercise" class="card-carousel">
-        <div v-if="activeExerciseIndex > 0" class="card-peek above" aria-hidden="true"></div>
-        <section ref="exerciseCard" class="exercise-card">
-          <header class="exercise-heading">
-            <div>
-              <!-- The position lives in the header now; saying it twice on one
-                 screen spent a line on nothing. -->
-              <h2>{{ currentExercise.name }}</h2>
-              <ExerciseTags compact :tags="currentExercise.tags" />
-            </div>
-          </header>
-
-          <!-- Ticked off, not hidden: the label sits above the sets so a
-             completed exercise still shows what was logged. -->
-          <div v-if="completedExercises[currentExercise.id]" class="completed-exercise">
-            <span class="completed-icon"><CheckIcon /></span>
-            <div>
-              <strong>{{ t('workout.exerciseCompleted') }}</strong>
-              <p>
-                {{ exerciseLoggedSetCount(currentExercise.id) }}
-                {{ t('workout.loggedSets', exerciseLoggedSetCount(currentExercise.id)) }}
-              </p>
-            </div>
-            <button type="button" @click="reopenExercise(currentExercise.id)">
-              {{ t('workout.reopen') }}
-            </button>
-          </div>
-
-          <div
-            class="set-grid set-labels"
-            :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
-            aria-hidden="true"
-          >
-            <span>{{ t('common.set') }}</span
-            ><span>{{ t('common.previous') }}</span>
-            <span
-              v-for="measurement in measurementsForExercise(currentExercise)"
-              :key="measurement.metric"
-            >
-              {{ t(measurement.labelKey) }}
-            </span>
-          </div>
-          <div
-            v-for="(set, setIndex) in workoutStore.getSets(routineID, currentExercise.id)"
-            :key="setIndex"
-            class="set-grid set-row"
-            :class="{
-              complete: isCompleteSet(set, currentExercise),
-              active: setIndex === activeSetIndex,
-            }"
-            :style="{ '--metric-count': measurementsForExercise(currentExercise).length }"
-          >
-            <span class="set-number">
-              <CheckIcon v-if="isCompleteSet(set, currentExercise)" />
-              <template v-else>{{ setIndex + 1 }}</template>
-            </span>
-            <span class="previous-value">
-              <template v-if="previousSet(currentExercise.id, setIndex)">
-                {{ formatExerciseSet(previousSet(currentExercise.id, setIndex)!, currentExercise) }}
-              </template>
-              <span v-else>—</span>
-            </span>
-            <template
-              v-for="measurement in measurementsForExercise(currentExercise)"
-              :key="measurement.metric"
-            >
-              <DurationInput
-                v-if="measurement.field === 'durationSeconds'"
-                v-model="set.durationSeconds"
-                :aria-label="
-                  t('workout.setFieldAria', {
-                    exercise: currentExercise.name,
-                    number: setIndex + 1,
-                    field: t('common.time').toLocaleLowerCase(),
-                  })
-                "
-                @input="onSetInput(currentExercise.id, set, setIndex)"
-                @focus="
-                  copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
-                "
-              />
-              <div v-else-if="measurement.field === 'weight'" class="unit-entry">
-                <input
-                  v-model.number="set.weight"
-                  type="text"
-                  inputmode="decimal"
-                  :aria-label="
-                    t('workout.setFieldAria', {
-                      exercise: currentExercise.name,
-                      number: setIndex + 1,
-                      field: t('common.weight').toLocaleLowerCase(),
-                    })
-                  "
-                  @input="onSetInput(currentExercise.id, set, setIndex)"
-                  @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'weight')"
-                />
-                <span class="unit-suffix">{{ weightUnitLabel(defaultWeightUnit) }}</span>
-              </div>
-              <div v-else-if="measurement.field === 'distance'" class="unit-entry">
-                <input
-                  v-model.number="set.distance"
-                  type="text"
-                  inputmode="decimal"
-                  :aria-label="
-                    t('workout.setFieldAria', {
-                      exercise: currentExercise.name,
-                      number: setIndex + 1,
-                      field: t('common.distance').toLocaleLowerCase(),
-                    })
-                  "
-                  @input="onSetInput(currentExercise.id, set, setIndex)"
-                  @focus="copyPreviousValue($event, currentExercise.id, set, setIndex, 'distance')"
-                />
-                <span class="unit-suffix">{{ distanceUnitLabel(defaultDistanceUnit) }}</span>
-              </div>
-              <input
-                v-else
-                v-model.number="set[measurement.field]"
-                type="text"
-                :inputmode="measurement.inputmode"
-                :aria-label="
-                  t('workout.setFieldAria', {
-                    exercise: currentExercise.name,
-                    number: setIndex + 1,
-                    field: t(measurement.labelKey).toLocaleLowerCase(),
-                  })
-                "
-                @input="onSetInput(currentExercise.id, set, setIndex)"
-                @focus="
-                  copyPreviousValue($event, currentExercise.id, set, setIndex, measurement.field)
-                "
-              />
-            </template>
-            <button
-              type="button"
-              class="remove-set"
-              :aria-label="t('workout.removeSet', { number: setIndex + 1 })"
-              @click="deleteWorkoutSet(currentExercise.id, setIndex)"
-            >
-              <MinusIcon />
-            </button>
-          </div>
-        </section>
-        <div
-          v-if="activeExerciseIndex < (routine?.exercises.length ?? 0) - 1"
-          class="card-peek below"
-          aria-hidden="true"
-        ></div>
-      </div>
-
-      <!-- The one forward action lives right under the card it acts on, and
-           only once there is a card to act on: the empty state already leads
-           with choosing an exercise. -->
-      <div v-if="currentExercise" class="action-block">
-        <strong
-          v-if="finishError || blockedMessage || primaryStatus"
-          id="workout-dock-status"
-          :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
-          >{{ finishError || blockedMessage || primaryStatus }}</strong
-        >
-        <!-- Described by the status rather than aria-disabled: the whole point
-             is that this control is pressable, and aria-disabled would announce
-             the same "broken" that a grey fill used to. -->
-        <button
-          type="submit"
-          class="primary-action"
-          :aria-describedby="
-            finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
-          "
-          :disabled="submitting"
-        >
-          {{ primaryActionLabel }}
-        </button>
-      </div>
-
-      <!-- A status list, not a switcher: progression runs through the
-           complete-exercise action, so these rows only report where the other
-           exercises stand. -->
-      <section v-if="exerciseQueue.length" class="exercise-queue">
-        <header>
-          <div>
-            <p class="eyebrow">{{ t('workout.session') }}</p>
-            <h2>{{ t('workout.queue') }}</h2>
-          </div>
-        </header>
+      <!-- One connected list holding every exercise in the session, with
+           exactly one open. Tapping any collapsed header opens it and closes
+           whichever was open: the primary action is the guided path through
+           the session, not a gate on leaving the exercise you are in. -->
+      <section v-if="routine?.exercises.length" ref="exerciseList" class="exercise-list">
         <ul>
           <li
-            v-for="entry in exerciseQueue"
-            :key="entry.exercise.id"
-            :class="{ completed: completedExercises[entry.exercise.id] }"
+            v-for="(exercise, index) in routine.exercises"
+            :key="exercise.id"
+            class="exercise-item"
+            :class="{
+              open: index === activeExerciseIndex,
+              completed: completedExercises[exercise.id],
+            }"
           >
-            <span class="queue-number">
-              <CheckIcon v-if="completedExercises[entry.exercise.id]" />
-              <template v-else>{{ entry.index + 1 }}</template>
-            </span>
-            <span class="queue-copy">
-              <strong>{{ entry.exercise.name }}</strong>
-              <ExerciseTags compact :tags="entry.exercise.tags" />
-              <small v-if="exerciseLoggedSetCount(entry.exercise.id)">
-                {{ t('workout.loggedSets', exerciseLoggedSetCount(entry.exercise.id)) }}
-              </small>
-              <small v-else-if="previousSet(entry.exercise.id, 0)">
-                {{ t('common.previous') }} {{ previousSet(entry.exercise.id, 0)?.weight }}
-                {{ weightUnitLabel(previousSet(entry.exercise.id, 0)?.weightUnit) }} ×
-                {{ previousSet(entry.exercise.id, 0)?.reps }}
-              </small>
-              <small v-else>{{ t('workout.notStarted') }}</small>
-            </span>
+            <h2>
+              <button
+                type="button"
+                class="exercise-header"
+                :aria-expanded="index === activeExerciseIndex"
+                :aria-controls="`exercise-panel-${index}`"
+                @click="selectExercise(index)"
+              >
+                <span class="exercise-index">{{ index + 1 }}</span>
+                <span class="exercise-copy">
+                  <strong class="exercise-name">{{ exercise.name }}</strong>
+                  <ExerciseTags compact :tags="exercise.tags" />
+                  <small>{{ exerciseStatus(exercise) }}</small>
+                </span>
+                <ChevronDownIcon class="exercise-toggle" aria-hidden="true" />
+              </button>
+            </h2>
+
+            <div
+              v-if="index === activeExerciseIndex"
+              :id="`exercise-panel-${index}`"
+              class="exercise-panel"
+            >
+              <!-- Ticked off, not hidden: the label sits above the sets so a
+                   completed exercise still shows what was logged. -->
+              <div v-if="completedExercises[exercise.id]" class="completed-exercise">
+                <div>
+                  <strong>{{ t('workout.exerciseCompleted') }}</strong>
+                  <p>{{ t('workout.loggedSets', exerciseLoggedSetCount(exercise.id)) }}</p>
+                </div>
+                <button type="button" @click="reopenExercise(exercise.id)">
+                  {{ t('workout.reopen') }}
+                </button>
+              </div>
+
+              <div
+                v-if="workoutStore.getSets(routineID, exercise.id).length"
+                class="set-grid set-labels"
+                :style="{ '--metric-count': measurementsForExercise(exercise).length }"
+                aria-hidden="true"
+              >
+                <span>{{ t('common.set') }}</span
+                ><span>{{ t('common.previous') }}</span>
+                <span
+                  v-for="measurement in measurementsForExercise(exercise)"
+                  :key="measurement.metric"
+                >
+                  {{ t(measurement.labelKey) }}
+                </span>
+              </div>
+              <div
+                v-for="(set, setIndex) in workoutStore.getSets(routineID, exercise.id)"
+                :key="setIndex"
+                class="set-grid set-row"
+                :class="{
+                  complete: isCompleteSet(set, exercise),
+                  active: setIndex === activeSetIndex,
+                }"
+                :style="{ '--metric-count': measurementsForExercise(exercise).length }"
+              >
+                <span class="set-number">
+                  <CheckIcon v-if="isCompleteSet(set, exercise)" />
+                  <template v-else>{{ setIndex + 1 }}</template>
+                </span>
+                <span class="previous-value">
+                  <template v-if="previousSet(exercise.id, setIndex)">
+                    {{ formatExerciseSet(previousSet(exercise.id, setIndex)!, exercise) }}
+                  </template>
+                  <span v-else>—</span>
+                </span>
+                <template
+                  v-for="measurement in measurementsForExercise(exercise)"
+                  :key="measurement.metric"
+                >
+                  <DurationInput
+                    v-if="measurement.field === 'durationSeconds'"
+                    v-model="set.durationSeconds"
+                    :aria-label="
+                      t('workout.setFieldAria', {
+                        exercise: exercise.name,
+                        number: setIndex + 1,
+                        field: t('common.time').toLocaleLowerCase(),
+                      })
+                    "
+                    @input="onSetInput(exercise.id, set, setIndex)"
+                    @focus="copyPreviousValue($event, exercise.id, set, setIndex, measurement.field)"
+                  />
+                  <div v-else-if="measurement.field === 'weight'" class="unit-entry">
+                    <input
+                      v-model.number="set.weight"
+                      type="text"
+                      inputmode="decimal"
+                      :aria-label="
+                        t('workout.setFieldAria', {
+                          exercise: exercise.name,
+                          number: setIndex + 1,
+                          field: t('common.weight').toLocaleLowerCase(),
+                        })
+                      "
+                      @input="onSetInput(exercise.id, set, setIndex)"
+                      @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'weight')"
+                    />
+                    <span class="unit-suffix">{{ weightUnitLabel(defaultWeightUnit) }}</span>
+                  </div>
+                  <div v-else-if="measurement.field === 'distance'" class="unit-entry">
+                    <input
+                      v-model.number="set.distance"
+                      type="text"
+                      inputmode="decimal"
+                      :aria-label="
+                        t('workout.setFieldAria', {
+                          exercise: exercise.name,
+                          number: setIndex + 1,
+                          field: t('common.distance').toLocaleLowerCase(),
+                        })
+                      "
+                      @input="onSetInput(exercise.id, set, setIndex)"
+                      @focus="copyPreviousValue($event, exercise.id, set, setIndex, 'distance')"
+                    />
+                    <span class="unit-suffix">{{ distanceUnitLabel(defaultDistanceUnit) }}</span>
+                  </div>
+                  <input
+                    v-else
+                    v-model.number="set[measurement.field]"
+                    type="text"
+                    :inputmode="measurement.inputmode"
+                    :aria-label="
+                      t('workout.setFieldAria', {
+                        exercise: exercise.name,
+                        number: setIndex + 1,
+                        field: t(measurement.labelKey).toLocaleLowerCase(),
+                      })
+                    "
+                    @input="onSetInput(exercise.id, set, setIndex)"
+                    @focus="copyPreviousValue($event, exercise.id, set, setIndex, measurement.field)"
+                  />
+                </template>
+                <button
+                  type="button"
+                  class="remove-set"
+                  :aria-label="t('workout.removeSet', { number: setIndex + 1 })"
+                  @click="deleteWorkoutSet(exercise.id, setIndex)"
+                >
+                  <MinusIcon />
+                </button>
+              </div>
+
+              <!-- The one forward action lives inside the exercise it acts on,
+                   so pressing forward never means travelling past the page. -->
+              <div
+                v-if="!completedExercises[exercise.id] || allExercisesComplete || finishError"
+                class="action-block"
+              >
+                <strong
+                  v-if="finishError || blockedMessage || primaryStatus"
+                  id="workout-dock-status"
+                  :class="{ failed: finishError, blocked: !finishError && blockedMessage }"
+                  >{{ finishError || blockedMessage || primaryStatus }}</strong
+                >
+                <!-- Described by the status rather than aria-disabled: the whole
+                     point is that this control is pressable, and aria-disabled
+                     would announce the same "broken" that a grey fill used to. -->
+                <button
+                  type="submit"
+                  class="primary-action"
+                  :aria-describedby="
+                    finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
+                  "
+                  :disabled="submitting"
+                >
+                  {{ primaryActionLabel }}
+                </button>
+              </div>
+            </div>
           </li>
         </ul>
       </section>
@@ -1510,21 +1509,49 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .quick-empty button svg {
   @apply size-5;
 }
-.exercise-card,
-.exercise-queue {
-  @apply card;
+/* One connected list rather than a card per exercise: the session is a single
+   stack, and only the exercise being logged spends the screen's height. */
+.exercise-list {
+  @apply card overflow-hidden;
 }
-.exercise-card {
-  @apply p-4 sm:p-5;
+.exercise-list > ul {
+  @apply divide-y divide-border;
 }
-.exercise-heading {
-  @apply mb-4 flex items-start justify-between gap-3;
+/* The header of the exercise you just opened is scrolled back to, so it must
+   clear the session chrome and the rest band that can cover it. */
+.exercise-item {
+  scroll-margin-top: 9rem;
 }
-.exercise-heading h2 {
-  @apply mt-1 text-title font-semibold;
+.exercise-header {
+  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr_auto] items-center gap-3 px-4 py-3 text-left transition sm:px-5;
 }
-.exercise-heading p:last-child {
-  @apply mt-1 text-sm text-text-subtle;
+.exercise-item:not(.open) .exercise-header:hover {
+  @apply bg-ink-surface;
+}
+/* The open exercise is where you already are: its header stays as a label. */
+.exercise-item.open .exercise-header {
+  @apply cursor-default;
+}
+.exercise-copy {
+  @apply min-w-0;
+}
+.exercise-name {
+  @apply block truncate text-sm font-semibold text-text;
+}
+.exercise-item.open .exercise-name {
+  @apply text-title;
+}
+.exercise-copy small {
+  @apply mt-0.5 block truncate text-xs text-text-subtle;
+}
+.exercise-toggle {
+  @apply size-5 shrink-0 text-text-subtle transition;
+}
+.exercise-item.open .exercise-toggle {
+  @apply rotate-180 text-text;
+}
+.exercise-panel {
+  @apply px-4 pb-4 sm:px-5 sm:pb-5;
 }
 .set-grid {
   /* Scrolls for many-metric exercises, but the remove button overhangs by 8px
@@ -1610,13 +1637,7 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply size-4;
 }
 .completed-exercise {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-control bg-success-surface p-4 text-success;
-}
-.completed-icon {
-  @apply grid size-9 place-items-center rounded-full bg-success text-white;
-}
-.completed-icon svg {
-  @apply size-5;
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-control bg-success-surface p-4 text-success;
 }
 .completed-exercise strong {
   @apply text-sm font-semibold;
@@ -1627,44 +1648,16 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .completed-exercise button {
   @apply rounded-lg px-3 py-2 text-xs font-semibold text-success hover:bg-success/10;
 }
-.exercise-queue {
-  @apply overflow-hidden px-4 pb-1 pt-4 sm:px-5;
-}
-.exercise-queue > header {
-  @apply flex items-end justify-between gap-3 pb-3;
-}
-.exercise-queue h2 {
-  @apply mt-1 text-title font-semibold text-text;
-}
-.exercise-queue > ul {
-  @apply divide-y divide-border border-t border-border;
-}
-.exercise-queue li {
-  @apply grid min-h-16 w-full grid-cols-[2.25rem_1fr] items-center gap-3 py-2.5 text-left;
-}
-.queue-number {
+.exercise-index {
   @apply grid size-8 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
 }
-.queue-number svg {
+.exercise-index svg {
   @apply size-4;
 }
-.queue-copy {
-  @apply min-w-0;
-}
-.queue-copy strong,
-.queue-copy small {
-  @apply block truncate;
-}
-.queue-copy strong {
-  @apply text-sm font-semibold text-text;
-}
-.queue-copy small {
-  @apply mt-0.5 text-xs text-text-subtle;
-}
-.exercise-queue li.completed .queue-number {
+.exercise-item.completed .exercise-index {
   @apply bg-success-surface text-success;
 }
-.exercise-queue li.completed .queue-copy strong {
+.exercise-item.completed .exercise-name {
   @apply text-success;
 }
 .workout-tools {
@@ -1680,24 +1673,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
 .note-field textarea {
   @apply mt-2 min-h-20 w-full resize-none rounded-control border-border text-sm placeholder:text-text-subtle focus:border-ink focus:ring-ink;
 }
-/* Slivers of the neighbouring cards. Decorative: just a card edge, never the
-   neighbouring exercise's name. */
-.card-carousel {
-  @apply grid gap-1.5;
-}
-.card-peek {
-  @apply mx-3 h-3 border-x border-border bg-white shadow-card;
-}
-.card-peek.above {
-  @apply rounded-b-card border-b;
-}
-.card-peek.below {
-  @apply rounded-t-card border-t;
-}
-/* In flow right under the exercise card it acts on, so pressing forward never
-   means travelling past the rest of the page. */
+/* In flow right under the sets it acts on, so pressing forward never means
+   travelling past the rest of the page. */
 .action-block {
-  @apply flex w-full flex-col items-stretch gap-2 text-center;
+  @apply mt-4 flex w-full flex-col items-stretch gap-2 text-center;
 }
 /* What is missing, said where the button that is waiting for it lives. */
 .action-block > strong {
