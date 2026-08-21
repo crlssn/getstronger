@@ -1,0 +1,162 @@
+@reference '../../assets/base.css';
+
+.builderPage {
+  @apply space-y-5;
+}
+
+.pageIntro {
+  @apply px-1;
+}
+
+.eyebrow {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.pageIntro > p:last-child {
+  @apply mt-2 text-sm text-text-subtle;
+}
+
+.nameField input,
+.routineOrder {
+  @apply card;
+}
+
+.nameField {
+  @apply grid gap-2 text-sm font-semibold text-text-muted;
+}
+
+.nameField input {
+  @apply min-h-(--size-control) px-4 text-text placeholder:text-text-subtle focus:border-ink-muted focus:ring-ink-muted;
+}
+
+.loopNote,
+.editNote {
+  @apply flex gap-3 rounded-card border p-4 text-sm;
+}
+
+.loopNote {
+  @apply border-ink-border bg-ink-surface text-ink-strong;
+}
+
+.loopNote svg {
+  @apply mt-0.5 size-5 shrink-0;
+}
+
+.editNote {
+  @apply border-success/30 bg-success-surface text-success;
+}
+
+.routineOrder {
+  @apply overflow-hidden;
+}
+
+.routineOrder > header {
+  @apply flex items-end justify-between gap-3 p-5;
+}
+
+.routineOrder > header h2 {
+  @apply text-title font-semibold text-text;
+}
+
+.routineOrder > header > span {
+  @apply text-sm text-text-subtle;
+}
+
+.emptyOrder {
+  @apply border-t border-border p-6 text-center;
+}
+
+.emptyOrder p {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
+.routineOrder ol {
+  @apply divide-y divide-border border-t border-border;
+}
+
+.routineOrder li {
+  @apply grid grid-cols-[2.25rem_1fr_auto] items-center gap-3 p-4;
+}
+
+.position {
+  @apply grid size-9 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-text-muted;
+}
+
+.routineCopy {
+  @apply min-w-0;
+}
+
+.routineCopy strong,
+.routineCopy small {
+  @apply block truncate;
+}
+
+.routineCopy small {
+  @apply mt-1 text-xs text-text-subtle;
+}
+
+.orderActions {
+  @apply flex;
+}
+
+.orderActions button {
+  @apply grid size-9 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint hover:text-ink disabled:opacity-25;
+}
+
+.orderActions button:last-child {
+  @apply hover:text-danger;
+}
+
+.orderActions svg {
+  @apply size-4;
+}
+
+/* Kept inside the card frame; the look itself comes from AppOptionalAction. */
+.addRoutine {
+  @apply p-4;
+}
+
+.routineOrder > footer {
+  @apply border-t border-border bg-ink-surface px-5 py-4 text-sm text-text-muted;
+}
+
+.saveArea {
+  @apply grid gap-3;
+}
+
+.saveArea small {
+  @apply text-center text-xs text-text-subtle;
+}
+
+.saveArea button {
+  @apply min-h-(--size-control) rounded-control bg-ink px-5 text-sm font-semibold text-white disabled:bg-ink-tint disabled:text-text-subtle;
+}
+
+.routineOptions {
+  @apply divide-y divide-border border-y border-border;
+}
+
+.routineOptions button {
+  @apply flex min-h-16 w-full items-center justify-between gap-3 text-left;
+}
+
+.routineOptions button span {
+  @apply min-w-0;
+}
+
+.routineOptions strong,
+.routineOptions small {
+  @apply block truncate;
+}
+
+.routineOptions small {
+  @apply mt-1 text-xs text-text-subtle;
+}
+
+.routineOptions svg {
+  @apply size-5 shrink-0 text-ink;
+}
+
+.pickerEmpty {
+  @apply py-6 text-center text-sm text-text-subtle;
+}
