@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { BoltIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import { BoltIcon } from '@heroicons/vue/24/outline'
 
 import { useWorkoutStore } from '@/stores/workout'
 import useActiveWorkout from '@/utils/useActiveWorkout'
@@ -95,7 +95,6 @@ onUnmounted(() => {
   >
     <div class="rest-banner-inner">
       <div class="rest-copy">
-        <p><ClockIcon /> {{ t('workout.rest') }}</p>
         <strong aria-hidden="true">{{ restLabel }}</strong>
       </div>
       <RouterLink :to="savedHref"> <BoltIcon /> {{ t('workout.goToWorkout') }} </RouterLink>
@@ -129,17 +128,16 @@ onUnmounted(() => {
 .rest-banner-inner {
   @apply mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-3 px-3 py-3 sm:px-5 lg:px-8;
 }
-.rest-copy p {
-  @apply flex items-center gap-1.5 text-eyebrow font-bold uppercase text-white/85;
+.rest-copy {
+  @apply min-w-0;
 }
-.rest-copy p svg {
-  @apply size-3.5;
-}
+/* The digits are the whole message now: as tall as the chip beside them, so
+   the band reads as one row. */
 .rest-copy strong {
-  @apply mt-0.5 block font-mono text-2xl font-bold leading-none tabular-nums;
+  @apply block font-mono text-(length:--size-control-sm) font-bold leading-none tabular-nums;
 }
 .rest-banner a {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-black/25 px-4 text-sm font-semibold transition hover:bg-black/40;
+  @apply inline-flex min-h-(--size-control-sm) shrink-0 items-center justify-center gap-2 rounded-control bg-black/25 px-4 text-sm font-semibold transition hover:bg-black/40;
 }
 .rest-banner a svg {
   @apply size-5;
@@ -158,9 +156,6 @@ onUnmounted(() => {
     hsl(70 92% 54%) 100%
   );
   @apply text-text;
-}
-.rest-banner.bright .rest-copy p {
-  @apply text-text/70;
 }
 .rest-banner.bright a {
   @apply bg-black/15 text-text hover:bg-black/25;
