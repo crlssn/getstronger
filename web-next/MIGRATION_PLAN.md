@@ -10,9 +10,9 @@ The "Where we are" section is the source of truth for what to pick up next.
 ## Where we are
 
 The React toolchain builds, typechecks, lints, formats and tests. Everything
-below the UI is ported apart from `workout` and the router: the
-framework-agnostic modules, i18n on i18next, the whole HTTP layer, and 17 of the
-21 stores. 357 tests green, 93% statement / 96% line coverage.
+below the UI is ported except the router: the framework-agnostic modules, i18n
+on i18next, the whole HTTP layer, and all 21 stores. 399 tests green, 94%
+statement / 97% line coverage.
 
 | Phase | What it covers                                         | State       |
 | ----- | ------------------------------------------------------ | ----------- |
@@ -35,12 +35,8 @@ Ported with edits: `i18n/index.ts` (rewritten on i18next), `i18n/messages.ts`
 bug fix — see "Bugs found on the way"), and `router/tabs.ts` (one guard added,
 same section).
 
-Stores on Zustand: `auth`, `connection`, `alerts`, `confirmation`, `pageTitle`,
-`navTabs`, `actionButton`, `preferences`, `appVersion`, `emailVerification`,
-`activity`, `progress`, `streak`, `dashboard`, `plans`, `notifications`,
-`mutationQueue`. The conventions they follow are in `src/stores/README.md`.
-
-Not yet ported: `workout`.
+All 21 stores are on Zustand. The conventions they follow are in
+`src/stores/README.md`.
 
 The HTTP layer is done: `clients`, `interceptors`, `offlineCache`, `requests`,
 `unauthenticated`, `native`, and `jwt`. `requests.ts` needed four edits across
@@ -126,6 +122,16 @@ wiring fires in whatever order the bundler resolves modules, cannot be undone,
 and in the notifications case outlived the stop call and ran for signed-out
 visitors. `connection` and `appVersion` already had `start()`/`stop()`, so this
 is the convention the other stores now follow rather than a new one.
+
+**`workout` uses Immer, and that changes how the screens write to it.** The Vue
+screens read a set out of `getSets()` and assigned straight into it —
+`set.weight = …`, `v-model="set.durationSeconds"`. Immer freezes the state, so
+that throws. Every edit goes through `updateSet(routineID, exerciseID, index,
+changes)` instead, which is also the only way a change notifies subscribers;
+the Vue version relied on the returned object being reactive. Passing
+`undefined` for a field clears it, so a cleared input does not keep the number
+that was there before. **Phase F needs this** — it is the one place where a
+component cannot be a mechanical port.
 
 **Server-cache stores stay stores.** `activity`, `progress`, `streak`,
 `dashboard` and `plans` cache request results, and a query library would model
@@ -252,16 +258,12 @@ now answers a tab root with itself.
 
 ## What to do next
 
-1. **`workout`** — the last store, and the biggest at 270 lines. A deep nested
-   map mutated by path, and the reason Immer is already a dependency. Port it
-   with the Immer middleware and lean on `web/src/stores/workout.spec.ts`,
-   which is thorough.
-2. **Routing** — the route table, the three guards (`auth`, `guest`,
+1. **Routing** — the route table, the three guards (`auth`, `guest`,
    `landing`), and the global navigation effect that sets the page title from
    `meta.titleKey` and resets `navTabs` and `actionButton`. Whatever creates the
    router must also call `setNavigator(router.navigate)`, or every redirect from
    the HTTP layer becomes a full page load.
-3. **The app entry point** — `main.tsx` is still a placeholder. Port
+2. **The app entry point** — `main.tsx` is still a placeholder. Port
    `web/src/main.ts`: auth-store init, token refresh, PostHog identify, route
    warming, and the two start calls that used to be import side effects
    (`startMutationQueue()`, and `pollUnreadNotifications()` for a signed-in
