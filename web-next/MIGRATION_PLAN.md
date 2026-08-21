@@ -13,12 +13,11 @@ The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, every design-system
 primitive, and the shell — the nav bars, the four app-level singletons, and the
-signed-in and signed-out layouts. Phase F is under way: the signed-out screens,
-progress, home, notifications and the exercise forms are across. 913 tests
-green, 96% statement / 98% line coverage.
+signed-in and signed-out layouts. Phase F is nearly done: every screen is across
+except `StartWorkout`. 1081 tests green, 95% statement / 98% line coverage.
 
-What is left is the rest of the screens, and the two files that can only be
-written once they exist: `router.tsx` and `main.tsx`.
+What is left is `StartWorkout`, and the two files that can only be written once
+every screen exists: `router.tsx` and `main.tsx`.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
@@ -329,22 +328,29 @@ now answers a tab root with itself.
 mostly mechanical now: the stores, the requests, the primitives and the shell
 they lean on are all in place.
 
-Done so far:
+Done so far — everything but one screen:
 
-- The signed-out screens — `UserLogin`, `UserSignup`, `ForgotPassword`,
-  `ResetPassword`, `VerifyEmail`, `VerifyEmailPending`, `UserLogout` — plus
-  `NotFound` and the shared `AuthPasswordInput`.
-- `ProgressView` and `HomeView`, and the feature components they lean on:
-  `ExerciseTags`, `WorkoutChart`, `PageNavAction`, `StreakCard`,
-  `HomePageActions`, `CardWorkout`, `CardWorkoutExercise`,
-  `CardWorkoutComment`.
-- `ListNotifications`, with `NotificationUserFollow` and
-  `NotificationWorkoutComment`.
-- `CreateExercise` and `UpdateExercise`, which now share an `ExerciseForm`,
-  plus `ExerciseTagsInput` and `ExerciseMeasurementSettings`.
+- Signed out: `UserLogin`, `UserSignup`, `ForgotPassword`, `ResetPassword`,
+  `VerifyEmail`, `VerifyEmailPending`, `UserLogout`, `NotFound`.
+- Home and progress: `HomeView`, `ProgressView`, and `StreakCard`,
+  `HomePageActions`, `WorkoutChart`, `PageNavAction`.
+- Workouts: `WorkoutView`, `ViewWorkout`, `EditWorkout`, `DurationInput`,
+  `SetMeasurementInputs`, and the `CardWorkout` family.
+- Exercises: `ListExercises`, `ViewExercise`, `CreateExercise`,
+  `UpdateExercise`, `ExerciseForm`, `ExerciseTagsInput`,
+  `ExerciseMeasurementSettings`, `ExerciseChart`, `ExerciseTags`.
+- Routines: `ListRoutines`, `ViewRoutine`, `CreateRoutine`, `EditRoutine`,
+  `RoutineForm`, `TrainingTabs`.
+- Plans: `PlansView`, `ViewPlan`, `PlanForm`.
+- People: `UserView` and its four tabs, `ProfileView`, `ListNotifications`.
 
-Next: `ListExercises` and `ViewExercise`, then routines, plans, workouts, users
-and profile.
+**What is left: `StartWorkout`.** It is 1791 lines in `web/` — note that the
+earlier estimate of 636 in this file was stale — and it is the screen the whole
+app exists for. Read it in full before starting; it owns the live workout
+timer, the rest timer, the set grid, the exercise picker, the offline queue
+path, the leave and discard dialogs, and the finish flow. Two pieces of it are
+already ported and should be used rather than rewritten:
+`SetMeasurementInputs` for a set's inputs and `DurationInput` for a duration.
 
 Four things to know going in:
 
@@ -359,12 +365,13 @@ Four things to know going in:
   `enabled` as `!loading && !reachedEnd`: flipping it back on is what asks for
   the next page while the sentinel is still in view, so no screen needs to
   re-arm its own paging the way the Vue ones did.
-
 - Workout sets are written through `updateSet(routineID, exerciseID, index,
 changes)`. The Vue screens assigned into the set object they got back from
-  `getSets`, and Immer freezes state, so that throws now.
-- `StartWorkout.vue` is 636 lines and the largest single screen by a distance.
-  Leave it until the smaller ones have settled the patterns.
+  `getSets`, and Immer freezes state, so that throws now. **`StartWorkout`
+  needs this** — it is the one place where the port cannot be mechanical.
+- Drag-to-reorder is `useSortable({ handle, ghostClass, dragClass, onReorder })`.
+  SortableJS moves the DOM itself, so the caller reorders its own state to
+  match; hand it the hashed CSS-module class names.
 
 **Then `router.tsx` and `main.tsx`**, which can only be written once there are
 screens to point them at. Both are still placeholders:
