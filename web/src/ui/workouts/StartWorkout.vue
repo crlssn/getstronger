@@ -251,6 +251,25 @@ const primaryActionLabel = computed(() => {
   if (!allExercisesComplete.value) return t('workout.completeExercise')
   return submitting.value ? t('common.saving') : t('workout.finish')
 })
+// Where completing this exercise leads: the next one still unfinished, or the
+// end of the session. The button names what it does to the exercise on screen,
+// so the destination is said quietly underneath instead of in the label.
+const nextExerciseIndex = computed(() => {
+  const exercises = routine.value?.exercises ?? []
+  const afterCurrent = exercises.findIndex(
+    (exercise, index) =>
+      index > activeExerciseIndex.value && !completedExercises.value[exercise.id],
+  )
+  if (afterCurrent >= 0) return afterCurrent
+  return exercises.findIndex(
+    (exercise, index) =>
+      index !== activeExerciseIndex.value && !completedExercises.value[exercise.id],
+  )
+})
+const nextUpHint = computed(() => {
+  const next = routine.value?.exercises[nextExerciseIndex.value]
+  return next ? t('workout.thenNext', { name: next.name }) : t('workout.thenFinish')
+})
 const canRunPrimaryAction = computed(() =>
   allExercisesComplete.value ? canFinish.value : Boolean(currentExercise.value),
 )
@@ -1076,7 +1095,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                       })
                     "
                     @input="onSetInput(exercise.id, set, setIndex)"
-                    @focus="copyPreviousValue($event, exercise.id, set, setIndex, measurement.field)"
+                    @focus="
+                      copyPreviousValue($event, exercise.id, set, setIndex, measurement.field)
+                    "
                   />
                   <div v-else-if="measurement.field === 'weight'" class="unit-entry">
                     <input
@@ -1125,7 +1146,9 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                       })
                     "
                     @input="onSetInput(exercise.id, set, setIndex)"
-                    @focus="copyPreviousValue($event, exercise.id, set, setIndex, measurement.field)"
+                    @focus="
+                      copyPreviousValue($event, exercise.id, set, setIndex, measurement.field)
+                    "
                   />
                 </template>
                 <button
@@ -1157,12 +1180,22 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
                   type="submit"
                   class="primary-action"
                   :aria-describedby="
-                    finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : undefined
+                    [
+                      finishError || blockedMessage || primaryStatus ? 'workout-dock-status' : '',
+                      allExercisesComplete ? '' : 'workout-next-up',
+                    ]
+                      .filter(Boolean)
+                      .join(' ') || undefined
                   "
                   :disabled="submitting"
                 >
                   {{ primaryActionLabel }}
                 </button>
+                <!-- The label stays on the exercise in front of you; where the
+                     session goes next is a hint, not a promotion. -->
+                <small v-if="!allExercisesComplete" id="workout-next-up" class="next-up">
+                  {{ nextUpHint }}
+                </small>
               </div>
             </div>
           </li>
@@ -1691,6 +1724,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
    would put the greying back by another route. */
 .primary-action {
   @apply inline-flex min-h-(--size-control-lg) w-full items-center justify-center gap-2 rounded-control bg-ink px-5 text-base font-semibold text-white transition hover:brightness-125 disabled:opacity-70;
+}
+/* Quiet enough to read as a footnote to the button above it. */
+.next-up {
+  @apply text-meta text-text-subtle;
 }
 /* Demoted to a text button. It is the escape hatch, not the other half of a
    pair, and giving it equal weight left the dock with no ranking at all. */

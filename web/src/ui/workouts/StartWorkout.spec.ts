@@ -377,6 +377,31 @@ describe('StartWorkout', () => {
       expect(wrapper.get('.exercise-item.open .exercise-name').text()).toBe('Squat')
     })
 
+    test('keeps the label on the exercise and puts what follows in a hint', async () => {
+      const wrapper = await mountWorkout()
+
+      expect(wrapper.get('.primary-action').text()).toBe('Complete exercise')
+      expect(wrapper.get('.next-up').text()).toBe('then: Squat')
+
+      await logFirstSet(wrapper)
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // The last exercise reads the same; only the hint changes.
+      expect(wrapper.get('.primary-action').text()).toBe('Complete exercise')
+      expect(wrapper.get('.next-up').text()).toBe('then: finish')
+
+      await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
+      await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
+      await wrapper.get('.primary-action').trigger('submit')
+      await flushPromises()
+
+      // Nothing left to complete: finishing is what the button is for now.
+      expect(wrapper.get('.primary-action').text()).toBe('Finish workout')
+      expect(wrapper.find('.next-up').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
     test('discards an untouched set row rather than blocking the way out', async () => {
       const workoutStore = useWorkoutStore()
       const wrapper = await mountWorkout()

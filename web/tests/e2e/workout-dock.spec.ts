@@ -19,6 +19,16 @@ test.describe('the workout dock', () => {
       .click()
   })
 
+  const addAnotherExercise = async (page: Parameters<typeof logIn>[0]) => {
+    await page.getByRole('button', { name: 'Add exercise' }).click()
+    const picker = page.getByRole('dialog', { name: 'Add exercise' })
+    const option = picker.locator('.exercise-options button').first()
+    const name = (await option.locator('strong').innerText()).trim()
+    await option.click()
+    await expect(picker).toHaveCount(0)
+    return name
+  }
+
   test('keeps the primary action live while it is blocked', async ({ page }) => {
     const primary = page.locator('.primary-action')
     await expect(primary).toBeVisible()
@@ -66,6 +76,37 @@ test.describe('the workout dock', () => {
 
     await expect(page.locator('.action-block > strong.blocked')).toHaveCount(0)
     await expect(page.locator('.primary-action')).not.toHaveAttribute('aria-disabled', 'true')
+  })
+
+  // The label belongs to the exercise on screen; the destination is a hint.
+  test('names what follows without renaming the action', async ({ page }) => {
+    const primary = page.getByRole('button', { name: 'Complete exercise' })
+    await expect(primary).toBeVisible()
+    await expect(page.locator('.next-up')).toHaveText('then: finish')
+
+    const second = await addAnotherExercise(page)
+    await expect(primary).toBeVisible()
+    await expect(page.locator('.next-up')).toHaveText(`then: ${second}`)
+  })
+
+  // Every exercise is one connected list, and the guided path is an offer
+  // rather than a gate: any collapsed header opens on a tap.
+  test('opens whichever exercise header is tapped', async ({ page }) => {
+    await addAnotherExercise(page)
+
+    const items = page.locator('.exercise-item')
+    await expect(items).toHaveCount(2)
+    await expect(items.nth(0)).toHaveClass(/open/)
+
+    await items.nth(1).locator('.exercise-header').click()
+
+    await expect(items.nth(1)).toHaveClass(/open/)
+    await expect(items.nth(0)).not.toHaveClass(/open/)
+    await expect(page.locator('.exercise-panel')).toHaveCount(1)
+
+    await items.nth(0).locator('.exercise-header').click()
+    await expect(items.nth(0)).toHaveClass(/open/)
+    await expect(page.locator('.exercise-panel')).toHaveCount(1)
   })
 
   test('ranks the dock: one filled primary, one text button', async ({ page }) => {
