@@ -76,8 +76,10 @@ const alertStyle = computed(() => {
 .alert-card-inner p {
   @apply min-w-0 flex-1;
 }
+/* 44px to a thumb, 32px to the eye: the negative margin hands the extra back
+   to the row so the bar keeps its height. */
 .alert-card-inner button {
-  @apply grid size-8 shrink-0 place-items-center rounded-lg transition hover:bg-black/5;
+  @apply -m-1.5 grid size-11 shrink-0 place-items-center rounded-lg transition hover:bg-black/5;
 }
 .alert-card button svg {
   @apply size-4;

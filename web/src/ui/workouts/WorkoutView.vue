@@ -314,7 +314,7 @@ h2 {
   @apply justify-between border border-danger/20 bg-danger-surface text-left text-danger;
 }
 .history-error button {
-  @apply min-h-9 shrink-0 rounded-lg bg-white px-3 font-semibold text-danger;
+  @apply min-h-(--size-control-sm) shrink-0 rounded-lg bg-white px-3 font-semibold text-danger;
 }
 .history-empty {
   @apply card;

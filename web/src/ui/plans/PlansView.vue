@@ -322,8 +322,11 @@ h2 {
 .other-plans article small {
   @apply mt-1 text-xs text-text-subtle;
 }
+/* Switching plans is the point of this list, and the label alone gave it a
+   20px-tall target. The padding makes the floor; the negative margin keeps the
+   label on the card edge it already sat on. */
 .other-plans article button {
-  @apply shrink-0 text-sm font-semibold text-ink;
+  @apply -mr-3 inline-flex min-h-(--size-control-sm) shrink-0 items-center px-3 text-sm font-semibold text-ink;
 }
 .routine-list strong,
 .routine-empty h2 {

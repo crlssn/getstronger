@@ -222,8 +222,9 @@ const onSearch = async () => {
 .search-field input {
   @apply h-14 min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-text placeholder:text-text-subtle focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0;
 }
+/* Matches the search trigger, which is already a full target. */
 .search-field button {
-  @apply grid size-9 shrink-0 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint;
+  @apply -mx-1 grid size-11 shrink-0 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint;
 }
 .search-field button svg {
   @apply size-5;
