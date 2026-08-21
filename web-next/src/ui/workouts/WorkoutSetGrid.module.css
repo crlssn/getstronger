@@ -1,0 +1,119 @@
+@reference '../../assets/base.css';
+
+.setGrid {
+  /* Scrolls for many-metric exercises, but the remove button overhangs by 8px
+     and would otherwise paint a scrollbar under every row. */
+  scrollbar-width: none;
+  @apply grid items-center gap-2 overflow-x-auto;
+  /* The previous column sizes to its content and every spare pixel goes to the
+     inputs being typed into, so the columns space evenly with no dead stretch
+     in the middle of the row. */
+  grid-template-columns:
+    2.25rem minmax(5.5rem, max-content)
+    repeat(var(--metric-count), minmax(4.25rem, 1fr));
+}
+
+.setGrid::-webkit-scrollbar {
+  display: none;
+}
+
+.setLabels {
+  @apply pb-2 text-eyebrow font-semibold uppercase text-text-subtle;
+}
+
+.setLabels > span:first-child {
+  @apply text-center;
+}
+
+.setRow {
+  @apply relative border-t border-border py-2;
+}
+
+.setRow.complete {
+  @apply text-success;
+}
+
+/* The set number carries completion, which frees the row of a second check
+   column and makes the row you are on findable without reading it. */
+.setNumber {
+  @apply grid size-8 place-items-center justify-self-center rounded-full text-center text-sm font-semibold transition;
+}
+
+.setRow.complete .setNumber {
+  @apply bg-success-surface text-success;
+}
+
+.setRow.active .setNumber {
+  @apply bg-surface-inverse text-white;
+}
+
+.setNumber svg {
+  @apply size-4;
+}
+
+.previousValue {
+  @apply truncate text-sm text-text-subtle;
+}
+
+.setRow input {
+  @apply min-h-(--size-control) min-w-0 rounded-control border-border px-2 text-center font-semibold shadow-card focus:border-ink focus:ring-ink;
+}
+
+.setRow.active input,
+.setRow.active .unitEntry {
+  @apply border-ink;
+}
+
+.setRow.complete input,
+.setRow.complete .unitEntry {
+  @apply bg-surface-sunken;
+}
+
+/* Focus reveal must land below the session chrome — the header, and the rest
+   band that covers it — not behind it. */
+.setRow input,
+.unitEntry {
+  scroll-margin-top: 9rem;
+}
+
+.unitEntry {
+  @apply grid min-h-(--size-control) min-w-0 grid-cols-[minmax(2.75rem,1fr)_auto] items-center overflow-hidden rounded-control border border-border bg-surface pr-2.5 shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
+}
+
+.unitEntry > input {
+  @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
+}
+
+/* A unit is a label on the field, not a second control inside it. The old
+   bordered, filled cell read as a button worth pressing. */
+.unitSuffix {
+  @apply pointer-events-none select-none text-meta font-medium lowercase text-text-subtle;
+}
+
+.removeSet {
+  @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-ink-tint text-text-subtle opacity-0 transition hover:bg-danger-surface hover:text-danger-strong;
+}
+
+.setRow:hover .removeSet,
+.removeSet:focus-visible {
+  @apply opacity-100;
+}
+
+.removeSet svg {
+  @apply size-4;
+}
+
+@media (max-width: 520px) {
+  .setGrid {
+    @apply gap-1.5;
+    grid-template-columns:
+      2.25rem minmax(4.5rem, max-content)
+      repeat(var(--metric-count), minmax(5.5rem, 1fr));
+  }
+  .setLabels {
+    @apply text-eyebrow;
+  }
+  .setRow input {
+    @apply px-1;
+  }
+}
