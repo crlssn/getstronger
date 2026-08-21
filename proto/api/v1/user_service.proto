@@ -29,6 +29,9 @@ service UserService {
   rpc UpdateUserUsername (UpdateUserUsernameRequest) returns (UpdateUserUsernameResponse) {
     option (auth) = true;
   }
+  rpc UpdateUserAutofillSets (UpdateUserAutofillSetsRequest) returns (UpdateUserAutofillSetsResponse) {
+    option (auth) = true;
+  }
   rpc UpdateUserWeightUnit (UpdateUserWeightUnitRequest) returns (UpdateUserWeightUnitResponse) {
     option (auth) = true;
   }
@@ -96,6 +99,13 @@ message UpdateUserWeightUnitRequest {
   }];
 }
 message UpdateUserWeightUnitResponse {
+  User user = 1;
+}
+
+message UpdateUserAutofillSetsRequest {
+  bool enabled = 1;
+}
+message UpdateUserAutofillSetsResponse {
   User user = 1;
 }
 

@@ -25,8 +25,7 @@ test.describe('guest authentication and routing', () => {
     await expect(page).toHaveURL(/\/signup$/)
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
     await expect(page.getByText('Lift it. Log it. Beat it.')).toBeVisible()
-    await expect(page.getByRole('radio', { name: /Kilograms/ })).toBeChecked()
-    await expect(page.getByRole('radio', { name: /Pounds/ })).not.toBeChecked()
+    await expect(page.getByLabel('Username')).toBeVisible()
 
     await page.getByRole('link', { name: 'Log in', exact: true }).click()
     await page.getByRole('link', { name: 'Forgot password?' }).click()

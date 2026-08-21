@@ -37,6 +37,7 @@ type User struct {
 	Name           string    `db:"name" `
 	FullNameSearch string    `db:"full_name_search,generated" `
 	Username       string    `db:"username" `
+	AutofillSets   bool      `db:"autofill_sets" `
 
 	R userR `db:"-" `
 
@@ -83,7 +84,7 @@ type userRLoaded struct {
 
 func buildUserColumns(tableName string) userColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search", "username",
+		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search", "username", "autofill_sets",
 	)
 
 	if tableName != "" {
@@ -101,6 +102,7 @@ func buildUserColumns(tableName string) userColumns {
 		Name:           buildUserColumn(tableName, "name"),
 		FullNameSearch: buildUserColumn(tableName, "full_name_search"),
 		Username:       buildUserColumn(tableName, "username"),
+		AutofillSets:   buildUserColumn(tableName, "autofill_sets"),
 	}
 }
 
@@ -115,6 +117,7 @@ type userColumns struct {
 	Name           userColumn
 	FullNameSearch userColumn
 	Username       userColumn
+	AutofillSets   userColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -167,10 +170,11 @@ type UserSetter struct {
 	DistanceUnit omit.Val[string]    `db:"distance_unit" `
 	Name         omit.Val[string]    `db:"name" `
 	Username     omit.Val[string]    `db:"username" `
+	AutofillSets omit.Val[bool]      `db:"autofill_sets" `
 }
 
 func (s UserSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 8)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -191,6 +195,9 @@ func (s UserSetter) SetColumns() []string {
 	}
 	if s.Username.IsValue() {
 		vals = append(vals, "username")
+	}
+	if s.AutofillSets.IsValue() {
+		vals = append(vals, "autofill_sets")
 	}
 	return vals
 }
@@ -216,6 +223,9 @@ func (s UserSetter) Overwrite(t *User) {
 	}
 	if s.Username.IsValue() {
 		t.Username = s.Username.MustGet()
+	}
+	if s.AutofillSets.IsValue() {
+		t.AutofillSets = s.AutofillSets.MustGet()
 	}
 }
 
@@ -260,6 +270,11 @@ func (s *UserSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.Username.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.AutofillSets.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.AutofillSets.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -268,7 +283,7 @@ func (s UserSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 8)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -319,6 +334,13 @@ func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.AutofillSets.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "autofill_sets")...),
+			psql.Arg(s.AutofillSets),
+		}})
+	}
+
 	return exprs
 }
 
@@ -329,7 +351,7 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 		idx int
 		dst func(o *User) any
 	}
-	targets := make([]target, 0, 8)
+	targets := make([]target, 0, 9)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -348,6 +370,8 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 			targets = append(targets, target{i, func(o *User) any { return &o.FullNameSearch }})
 		case "username":
 			targets = append(targets, target{i, func(o *User) any { return &o.Username }})
+		case "autofill_sets":
+			targets = append(targets, target{i, func(o *User) any { return &o.AutofillSets }})
 		}
 	}
 
@@ -1352,6 +1376,7 @@ type userWhere[Q psql.Filterable] struct {
 	Name           psql.WhereMod[Q, string]
 	FullNameSearch psql.WhereMod[Q, string]
 	Username       psql.WhereMod[Q, string]
+	AutofillSets   psql.WhereMod[Q, bool]
 	R              userWhereR[Q]
 }
 
@@ -1370,6 +1395,7 @@ func buildUserWhere[Q psql.Filterable](cols userColumns) userWhere[Q] {
 		Name:           psql.Where[Q, string](cols.Name.Expression),
 		FullNameSearch: psql.Where[Q, string](cols.FullNameSearch.Expression),
 		Username:       psql.Where[Q, string](cols.Username.Expression),
+		AutofillSets:   psql.Where[Q, bool](cols.AutofillSets.Expression),
 		R:              userWhereR[Q]{cols: cols},
 	}
 }
@@ -1511,6 +1537,7 @@ type userPreloadBuf struct {
 	Name           null.Val[string]
 	FullNameSearch null.Val[string]
 	Username       null.Val[string]
+	AutofillSets   null.Val[bool]
 }
 
 // userScanMapperNullable maps the preloaded user
@@ -1525,7 +1552,7 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 			idx int
 			dst func(b *userPreloadBuf) any
 		}
-		targets := make([]target, 0, 8)
+		targets := make([]target, 0, 9)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1548,6 +1575,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FullNameSearch }})
 			case "username":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.Username }})
+			case "autofill_sets":
+				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.AutofillSets }})
 			}
 		}
 
@@ -1577,7 +1606,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 					!(buf.DistanceUnit.IsValue()) &&
 					!(buf.Name.IsValue()) &&
 					!(buf.FullNameSearch.IsValue()) &&
-					!(buf.Username.IsValue()) {
+					!(buf.Username.IsValue()) &&
+					!(buf.AutofillSets.IsValue()) {
 					return nil, nil
 				}
 
@@ -1605,6 +1635,9 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				}
 				if buf.Username.IsValue() {
 					o.Username = buf.Username.MustGet()
+				}
+				if buf.AutofillSets.IsValue() {
+					o.AutofillSets = buf.AutofillSets.MustGet()
 				}
 				return o, nil
 			}

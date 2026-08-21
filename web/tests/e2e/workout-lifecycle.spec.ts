@@ -202,7 +202,20 @@ test.describe('quick workout lifecycle', () => {
     const firstRow = page.locator('.set-row').first()
     await expect(firstRow.locator('.previous-value')).toContainText('25')
     const weight = page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
-    // Focusing an empty field offers the previous value without retyping.
+    // The prefill is off until the account asks for it: what the row shows is
+    // the previous column, not a value nobody typed.
+    await weight.focus()
+    await expect(weight).toHaveValue('')
+
+    await page.goto('/profile')
+    await page
+      .getByRole('group', { name: 'Repeat my last set' })
+      .getByRole('button', { name: 'On' })
+      .click()
+    await expect(page.getByRole('status')).toContainText('Set prefill updated')
+
+    await page.goto('/workouts/quick')
+    // Focusing an empty field now offers the previous value without retyping.
     await weight.focus()
     await expect(weight).toHaveValue('25')
 

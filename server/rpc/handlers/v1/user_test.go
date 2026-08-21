@@ -157,6 +157,51 @@ func (s *userSuite) TestUpdateUserWeightUnit() {
 	}
 }
 
+func (s *userSuite) TestUpdateUserAutofillSets() {
+	type test struct {
+		name    string
+		initial bool
+		enabled bool
+	}
+
+	tests := []test{
+		{name: "ok_autofill_enabled", initial: false, enabled: true},
+		{name: "ok_autofill_disabled", initial: true, enabled: false},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			user := s.factory.NewUser(factory.UserAutofillSets(t.initial))
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+			res, err := s.handler.UpdateUserAutofillSets(ctx, &connect.Request[v1.UpdateUserAutofillSetsRequest]{
+				Msg: &v1.UpdateUserAutofillSetsRequest{Enabled: t.enabled},
+			})
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+			s.Require().Equal(t.enabled, res.Msg.GetUser().GetAutofillSets())
+
+			stored, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+			s.Require().NoError(err)
+			s.Require().Equal(t.enabled, stored.AutofillSets)
+		})
+	}
+}
+
+// A brand new account keeps the prefill off until it is asked for.
+func (s *userSuite) TestGetUserAutofillSetsDefaultsOff() {
+	user := s.factory.NewUser()
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+	res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
+		Msg: &v1.GetUserRequest{Id: user.ID.String()},
+	})
+	s.Require().NoError(err)
+	s.Require().False(res.Msg.GetUser().GetAutofillSets())
+}
+
 // Changing a unit preference must never rewrite the units historical sets were
 // entered in.
 func (s *userSuite) TestUpdateUserUnitPreferences_PreserveHistoricalSetUnits() {

@@ -44,6 +44,7 @@ type UserTemplate struct {
 	Name           func() string
 	FullNameSearch func() string
 	Username       func() string
+	AutofillSets   func() bool
 
 	r userR
 	f *Factory
@@ -247,6 +248,10 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		val := o.Username()
 		m.Username = omit.From(val)
 	}
+	if o.AutofillSets != nil {
+		val := o.AutofillSets()
+		m.AutofillSets = omit.From(val)
+	}
 
 	return m
 }
@@ -292,6 +297,9 @@ func (o UserTemplate) Build() *models.User {
 	}
 	if o.Username != nil {
 		m.Username = o.Username()
+	}
+	if o.AutofillSets != nil {
+		m.AutofillSets = o.AutofillSets()
 	}
 
 	o.setModelRels(m)
@@ -632,6 +640,7 @@ func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 		UserMods.RandomName(f),
 		UserMods.RandomFullNameSearch(f),
 		UserMods.RandomUsername(f),
+		UserMods.RandomAutofillSets(f),
 	}
 }
 
@@ -879,6 +888,37 @@ func (m userMods) RandomUsername(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.Username = func() string {
 			return random_string(f, "30")
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) AutofillSets(val bool) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = func() bool { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) AutofillSetsFunc(f func() bool) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetAutofillSets() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomAutofillSets(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutofillSets = func() bool {
+			return random_bool(f)
 		}
 	})
 }

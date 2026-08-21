@@ -184,7 +184,7 @@ func (h *userHandler) UpdateUserUsername(ctx context.Context, req *connect.Reque
 
 func (h *userHandler) UpdateUserWeightUnit(ctx context.Context, req *connect.Request[apiv1.UpdateUserWeightUnitRequest]) (*connect.Response[apiv1.UpdateUserWeightUnitResponse], error) {
 	weightUnit := parser.WeightUnitFromProto(req.Msg.GetWeightUnit())
-	user, err := h.updateUserUnitPreference(ctx, "weight unit", repo.UpdateUserWeightUnit(weightUnit))
+	user, err := h.updateUserPreference(ctx, "weight unit", repo.UpdateUserWeightUnit(weightUnit))
 	if err != nil {
 		return nil, err
 	}
@@ -196,9 +196,22 @@ func (h *userHandler) UpdateUserWeightUnit(ctx context.Context, req *connect.Req
 	}, nil
 }
 
+func (h *userHandler) UpdateUserAutofillSets(ctx context.Context, req *connect.Request[apiv1.UpdateUserAutofillSetsRequest]) (*connect.Response[apiv1.UpdateUserAutofillSetsResponse], error) {
+	user, err := h.updateUserPreference(ctx, "set autofill", repo.UpdateUserAutofillSets(req.Msg.GetEnabled()))
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[apiv1.UpdateUserAutofillSetsResponse]{
+		Msg: &apiv1.UpdateUserAutofillSetsResponse{
+			User: user,
+		},
+	}, nil
+}
+
 func (h *userHandler) UpdateUserDistanceUnit(ctx context.Context, req *connect.Request[apiv1.UpdateUserDistanceUnitRequest]) (*connect.Response[apiv1.UpdateUserDistanceUnitResponse], error) {
 	distanceUnit := parser.DistanceUnitFromProto(req.Msg.GetDistanceUnit())
-	user, err := h.updateUserUnitPreference(ctx, "distance unit", repo.UpdateUserDistanceUnit(distanceUnit))
+	user, err := h.updateUserPreference(ctx, "distance unit", repo.UpdateUserDistanceUnit(distanceUnit))
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +223,7 @@ func (h *userHandler) UpdateUserDistanceUnit(ctx context.Context, req *connect.R
 	}, nil
 }
 
-func (h *userHandler) updateUserUnitPreference(ctx context.Context, preference string, opt repo.UpdateUserOpt) (*apiv1.User, error) {
+func (h *userHandler) updateUserPreference(ctx context.Context, preference string, opt repo.UpdateUserOpt) (*apiv1.User, error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 

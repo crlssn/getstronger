@@ -27,6 +27,8 @@ import {
   type SearchUsersResponse,
   UnfollowUserRequestSchema,
   type UnfollowUserResponse,
+  UpdateUserAutofillSetsRequestSchema,
+  type UpdateUserAutofillSetsResponse,
   UpdateUserDistanceUnitRequestSchema,
   type UpdateUserDistanceUnitResponse,
   UpdateUserUsernameRequestSchema,
@@ -474,6 +476,13 @@ export const updateUserWeightUnit = async (
 ): Promise<UpdateUserWeightUnitResponse | void> => {
   const req = create(UpdateUserWeightUnitRequestSchema, { weightUnit })
   return tryCatch(() => userClient.updateUserWeightUnit(req))
+}
+
+export const updateUserAutofillSets = async (
+  enabled: boolean,
+): Promise<UpdateUserAutofillSetsResponse | void> => {
+  const req = create(UpdateUserAutofillSetsRequestSchema, { enabled })
+  return tryCatch(() => userClient.updateUserAutofillSets(req))
 }
 
 export const updateUserDistanceUnit = async (

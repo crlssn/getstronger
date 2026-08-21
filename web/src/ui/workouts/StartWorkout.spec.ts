@@ -487,7 +487,19 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
 
+    test('leaves an empty field empty on focus unless the account asked for the prefill', async () => {
+      const wrapper = await mountWorkout()
+
+      const weight = wrapper.get('input[aria-label="Bench Press set 1 weight"]')
+      await weight.trigger('focus')
+      expect((weight.element as HTMLInputElement).value).toBe('')
+      wrapper.unmount()
+    })
+
     test('copies the previous value into an empty field on focus only', async () => {
+      getCurrentUser.mockResolvedValue({
+        user: { weightUnit: WeightUnit.KILOGRAMS, autofillSets: true },
+      })
       const wrapper = await mountWorkout()
 
       const weight = wrapper.get('input[aria-label="Bench Press set 1 weight"]')

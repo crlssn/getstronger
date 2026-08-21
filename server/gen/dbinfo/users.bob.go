@@ -87,6 +87,15 @@ var Users = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		AutofillSets: column{
+			Name:      "autofill_sets",
+			DBType:    "boolean",
+			Default:   "false",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: userIndexes{
 		UsersPkey: index{
@@ -211,11 +220,12 @@ type userColumns struct {
 	Name           column
 	FullNameSearch column
 	Username       column
+	AutofillSets   column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username,
+		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username, c.AutofillSets,
 	}
 }
 

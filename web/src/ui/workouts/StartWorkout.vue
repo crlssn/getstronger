@@ -122,6 +122,7 @@ onMounted(async () => {
     preferencesStore.setWeightUnit(userResponse.user.weightUnit)
     defaultDistanceUnit.value = normalizeDistanceUnit(userResponse.user.distanceUnit)
     preferencesStore.setDistanceUnit(userResponse.user.distanceUnit)
+    preferencesStore.setAutofillSets(userResponse.user.autofillSets)
   }
   workoutStore.syncWeightUnits(routineID, defaultWeightUnit.value)
   workoutStore.syncDistanceUnits(routineID, defaultDistanceUnit.value)
@@ -477,6 +478,9 @@ const copyPreviousValue = async (
   index: number,
   field: MeasurementField,
 ) => {
+  // Prefilling a field nobody typed into is opt-in, so an athlete who wants to
+  // log what they actually did sees an empty row.
+  if (!preferencesStore.autofillSets) return
   if (isNumber(set[field])) return
   const previous =
     previousSet(exerciseId, index) ?? workoutStore.getSets(routineID, exerciseId)[index - 1]

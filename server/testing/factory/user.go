@@ -72,7 +72,7 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 // userSetterMods translates the values set through UserOpts into factory mods
 // so they override the defaults above.
 func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
-	const modCount = 6
+	const modCount = 7
 	mods := make([]bobfactory.UserMod, 0, modCount)
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.ID(value))
@@ -91,6 +91,9 @@ func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
 	}
 	if value, ok := setter.DistanceUnit.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.DistanceUnit(value))
+	}
+	if value, ok := setter.AutofillSets.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.AutofillSets(value))
 	}
 
 	return mods
@@ -135,5 +138,11 @@ func UserWeightUnit(unit weightunit.Unit) UserOpt {
 func UserDistanceUnit(unit distanceunit.Unit) UserOpt {
 	return func(m *models.UserSetter) {
 		m.DistanceUnit = omit.From(string(unit))
+	}
+}
+
+func UserAutofillSets(enabled bool) UserOpt {
+	return func(m *models.UserSetter) {
+		m.AutofillSets = omit.From(enabled)
 	}
 }

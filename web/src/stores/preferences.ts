@@ -15,6 +15,9 @@ export const usePreferencesStore = defineStore(
   () => {
     const weightUnit = ref<WeightUnit>(WeightUnit.KILOGRAMS)
     const distanceUnit = ref<DistanceUnit>(DistanceUnit.KILOMETERS)
+    // Off unless the account asked for it: a value nobody typed is a
+    // surprise, so the workout screen only prefills when this is true.
+    const autofillSets = ref(false)
 
     const setWeightUnit = (unit?: WeightUnit) => {
       weightUnit.value = normalizeWeightUnit(unit)
@@ -24,16 +27,23 @@ export const usePreferencesStore = defineStore(
       distanceUnit.value = normalizeDistanceUnit(unit)
     }
 
+    const setAutofillSets = (enabled?: boolean) => {
+      autofillSets.value = enabled ?? false
+    }
+
     const reset = () => {
       weightUnit.value = WeightUnit.KILOGRAMS
       distanceUnit.value = DistanceUnit.KILOMETERS
+      autofillSets.value = false
     }
 
     return {
       weightUnit,
       distanceUnit,
+      autofillSets,
       setWeightUnit,
       setDistanceUnit,
+      setAutofillSets,
       reset,
     }
   },

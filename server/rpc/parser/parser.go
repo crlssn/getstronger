@@ -63,6 +63,7 @@ func User(user *models.User, opts ...UserOpt) *apiv1.User {
 		Email:        "",
 		WeightUnit:   WeightUnitToProto(user.WeightUnit),
 		DistanceUnit: DistanceUnitToProto(user.DistanceUnit),
+		AutofillSets: user.AutofillSets,
 	}
 
 	if user.R.Auth != nil {

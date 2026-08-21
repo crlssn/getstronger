@@ -11,6 +11,7 @@ import {
 
 import {
   getCurrentUser,
+  updateUserAutofillSets,
   updateUserDistanceUnit,
   updateUserUsername,
   updateUserWeightUnit,
@@ -38,6 +39,7 @@ const alertStore = useAlertStore()
 const preferencesStore = usePreferencesStore()
 const updatingWeightUnit = ref(false)
 const updatingDistanceUnit = ref(false)
+const updatingAutofillSets = ref(false)
 
 onMounted(async () => {
   const [response] = await Promise.all([
@@ -49,6 +51,7 @@ onMounted(async () => {
     user.value = response.user
     preferencesStore.setWeightUnit(response.user?.weightUnit)
     preferencesStore.setDistanceUnit(response.user?.distanceUnit)
+    preferencesStore.setAutofillSets(response.user?.autofillSets)
   }
 })
 
@@ -97,6 +100,29 @@ const setDistanceUnit = async (unit: DistanceUnit) => {
 
   if (user.value) user.value.distanceUnit = normalizeDistanceUnit(res.user?.distanceUnit)
   alertStore.setSuccess(t('profile.distanceUnitUpdated'))
+}
+
+const autofillSets = computed(() => preferencesStore.autofillSets)
+
+const setAutofillSets = async (enabled: boolean) => {
+  const previous = preferencesStore.autofillSets
+  if (previous === enabled) return
+
+  preferencesStore.setAutofillSets(enabled)
+  updatingAutofillSets.value = true
+  const res = await updateUserAutofillSets(enabled)
+  updatingAutofillSets.value = false
+
+  // Same contract as the units above: a network failure resolves to nothing,
+  // so the revert has to explain itself.
+  if (!res) {
+    preferencesStore.setAutofillSets(previous)
+    alertStore.setError(t('profile.autofillSetsUpdateFailed'))
+    return
+  }
+
+  if (user.value) user.value.autofillSets = res.user?.autofillSets ?? enabled
+  alertStore.setSuccess(t('profile.autofillSetsUpdated'))
 }
 
 const userInitials = computed(() => initials(user.value?.name))
@@ -249,6 +275,33 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
           @click="setDistanceUnit(DistanceUnit.MILES)"
         >
           {{ $t('auth.miles') }}
+        </button>
+      </div>
+    </section>
+
+    <section class="preferences-card">
+      <div>
+        <strong>{{ $t('profile.autofillSets') }}</strong>
+        <small>{{ $t('profile.autofillSetsBody') }}</small>
+      </div>
+      <div class="segmented" role="group" :aria-label="$t('profile.autofillSets')">
+        <button
+          type="button"
+          :aria-pressed="!autofillSets"
+          :class="{ 'is-selected': !autofillSets }"
+          :disabled="updatingAutofillSets"
+          @click="setAutofillSets(false)"
+        >
+          {{ $t('profile.autofillSetsOff') }}
+        </button>
+        <button
+          type="button"
+          :aria-pressed="autofillSets"
+          :class="{ 'is-selected': autofillSets }"
+          :disabled="updatingAutofillSets"
+          @click="setAutofillSets(true)"
+        >
+          {{ $t('profile.autofillSetsOn') }}
         </button>
       </div>
     </section>

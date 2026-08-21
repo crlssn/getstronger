@@ -332,6 +332,12 @@ func UpdateUserWeightUnit(unit string) UpdateUserOpt {
 	}
 }
 
+func UpdateUserAutofillSets(enabled bool) UpdateUserOpt {
+	return func() (columns, error) {
+		return columns{models.Users.Columns.AutofillSets.Name(): enabled}, nil
+	}
+}
+
 func UpdateUserDistanceUnit(unit string) UpdateUserOpt {
 	return func() (columns, error) {
 		return columns{models.Users.Columns.DistanceUnit.Name(): string(distanceunit.Normalize(unit))}, nil
