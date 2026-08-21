@@ -9,25 +9,28 @@ The "Where we are" section is the source of truth for what to pick up next.
 
 ## Where we are
 
-Phase A is done: the React toolchain builds, typechecks, lints, formats, and runs
-tests, and the framework-agnostic leaf modules are ported verbatim with their
-tests green.
+Phase A is done and phase B is under way: the React toolchain builds,
+typechecks, lints, formats and tests; every module that never depended on Vue is
+ported; and i18n now runs on i18next. 69 tests green.
 
-| Phase | What it covers                                         | State |
-| ----- | ------------------------------------------------------ | ----- |
-| A     | Toolchain scaffold + framework-agnostic leaves         | done  |
-| B     | i18n, state, routing foundations                       | next  |
-| C     | HTTP layer and the modules that depend on stores       | todo  |
-| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | todo  |
-| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo  |
-| F     | Feature views (auth, workouts, exercises, routines, …) | todo  |
-| G     | e2e + screenshot harness pointed at the React app      | todo  |
-| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
+| Phase | What it covers                                         | State       |
+| ----- | ------------------------------------------------------ | ----------- |
+| A     | Toolchain scaffold + framework-agnostic leaves         | done        |
+| B     | i18n, state, routing foundations                       | in progress |
+| C     | HTTP layer and the modules that depend on stores       | todo        |
+| D     | Design-system primitives (`AppButton`, `AppCard`, …)   | todo        |
+| E     | Shell (`App`, dashboard, nav, banners, dialogs)        | todo        |
+| F     | Feature views (auth, workouts, exercises, routines, …) | todo        |
+| G     | e2e + screenshot harness pointed at the React app      | todo        |
+| H     | Swap `web-next/` into `web/`, delete the Vue app       | todo        |
 
-Ported so far (verbatim, zero edits, 46 tests green):
-`brand.ts`, `posthog.ts`, `i18n/messages.ts`, `router/tabs.ts`, `types/*.ts`,
-`utils/{blurActiveElement,maskEmail,activityBuckets,distanceUnits,weightUnits}.ts`,
-`http/native.ts`, `src/proto/**`, plus the seven specs covering them.
+Ported verbatim, no edits: `brand.ts`, `posthog.ts`, `router/tabs.ts`,
+`types/*.ts`, `utils/{blurActiveElement,maskEmail,activityBuckets,distanceUnits,weightUnits}.ts`,
+`http/native.ts`, `src/proto/**`, and their specs.
+
+Ported with edits: `i18n/index.ts` (rewritten on i18next), `i18n/messages.ts`
+(plurals converted, see below), and `utils/{numbers,datetime,exerciseMeasurements}.ts`
+(`i18n.global.t` → `i18n.t`, nothing else).
 
 Verify with, from `web-next/`:
 
@@ -63,17 +66,25 @@ Zustand also gives module-level store singletons, matching how the Pinia stores
 are imported directly by non-component code (`http/interceptors.ts`,
 `jwt/jwt.ts`) — a Context-based design would force those modules into hooks.
 
-**i18n: i18next + react-i18next, with the catalogue kept byte-identical.**
-Configure `interpolation: { prefix: '{', suffix: '}' }` so all 104 single-brace
-placeholders (`{count}`, `{brand}`) work unchanged. The 24 vue-i18n plural pipe
-entries (`'{count} set | {count} sets'`) are the only catalogue edit: convert to
-i18next `_one`/`_other` suffixed keys. `messages.spec.ts`'s key-parity test keeps
-working, since suffixes land in both locales.
+**i18n: i18next + react-i18next — done.** The catalogue keeps its single-brace
+placeholders (`{count}`, `{brand}`, 104 of them) by configuring
+`interpolation: { prefix: '{', suffix: '}' }`, so none of them needed touching.
 
-Export the same surface as today's `@/i18n` (`appLocale`, `dateLocale`,
-`resolveLocale`, `AppLocale`, `i18n`) so `utils/{numbers,datetime,exerciseMeasurements}.ts`
-port with one mechanical change each: `i18n.global.t(…)` → `i18n.t(…)`, 6 call
-sites in total.
+The one catalogue edit was plurals: 16 keys per locale written in vue-i18n's pipe
+form (`'{count} set | {count} sets'`) became i18next `_one`/`_other` pairs. The
+old `messages.spec.ts` guarded these by comparing arm counts across locales,
+which no longer means anything now that arms are separate keys, so it is replaced
+by two guards that carry the same intent: every plural key has both arms in both
+locales, and no pipe form survives anywhere. A single-armed plural key would
+otherwise render that arm for every count, silently.
+
+`@/i18n` exports the same surface as before (`appLocale`, `dateLocale`,
+`resolveLocale`, `AppLocale`, `i18n`), so
+`utils/{numbers,datetime,exerciseMeasurements}.ts` came across with one
+mechanical change each — `i18n.global.t(…)` → `i18n.t(…)`.
+
+`i18n` needs its explicit `I18nInstance` annotation: without it `tsc` fails with
+TS2883, since the inferred type cannot be named portably.
 
 **Routing: react-router-dom 7.** The route table maps over directly; the pieces
 needing deliberate design are the three guards (`auth`, `guest`, `landing` —
@@ -112,28 +123,42 @@ ESLint 10.
   database, so `mise run test:web` / `test:e2e` / `screenshots` cannot run there.
   Use the `npm run …` scripts inside `web-next/` directly; they are the same
   commands `mise run test:web` wraps. E2E and screenshots need a real worktree.
-- `web-next/` is not wired into `mise.toml`, CI, or `mobile/capacitor.config.ts`
-  (`webDir: '../web/dist'`) on purpose. Phase H does that by moving the directory
-  into place, so no config needs to learn about the temporary name.
+- `web-next/` is deliberately not wired into `mise.toml`, the deploy job, or
+  `mobile/capacitor.config.ts` (`webDir: '../web/dist'`). Phase H does that by
+  moving the directory into place, so no config has to learn a temporary name.
+  The one exception is `.github/workflows/test.web-next.yml`, which mirrors
+  `test web` so each increment is checked; delete it during the swap.
 - The Vue app mounts into `<body id="app">`. React mounts into a `#root` div, so
   `index.html` differs here; `base.css` still styles `#app`, which stays as the
   body id. Check this when porting the shell.
 
 ## Phase B — what to do next
 
-1. `src/i18n/index.ts`: i18next instance per the decision above, plus the
-   `_one`/`_other` plural conversion in `messages.ts`. Port `i18n/index.spec.ts`.
-2. Port `utils/{numbers,datetime,exerciseMeasurements}.ts` and their specs — one
-   `i18n.global.t` → `i18n.t` edit each, otherwise verbatim.
-3. `src/stores/`: start with the leaf stores that nothing else depends on
-   (`alerts`, `confirmation`, `pageTitle`, `navTabs`, `actionButton`,
-   `preferences`), then `auth` (needed by the HTTP layer), then `connection` and
-   `mutationQueue`. `mutationQueue` registers a callback into `connection` at
-   module-init time; in React that wiring wants to be explicit, at app level,
-   rather than a side effect of importing the store.
-4. Port the store specs as you go — `auth`, `connection`, `mutationQueue`,
-   `notifications`, `streak`, `appVersion`, `workout` all have specs in `web/`
-   that should survive the port with only the store API changing.
+i18n is done. The remaining work is the 21 Pinia stores in `web/src/stores/`,
+then routing.
+
+1. Settle the Zustand store shape on one small store first — `alerts` is a good
+   candidate — and write it down here, because 20 more follow it. Decide where
+   `persist` goes (the Pinia stores use `persist: true` via
+   `pinia-plugin-persistedstate`; Zustand has its own `persist` middleware) and
+   whether stores expose actions on the store object or as separate exports.
+2. Port the leaves nothing else depends on: `alerts`, `confirmation`,
+   `pageTitle`, `navTabs`, `actionButton`, `preferences`.
+3. Then `auth`, which the HTTP layer needs. Its `setAccessToken` fires PostHog
+   `identify`/`reset` on account _transitions_, not on every write — keep that
+   distinction, it is easy to lose.
+4. Then `connection` and `mutationQueue`. `mutationQueue` calls
+   `useConnectionStore().onReconnect(…)` at module-init time; in React that
+   wiring should be explicit at app level rather than a side effect of importing
+   the store.
+5. `workout` is the big one — a deep nested map mutated by path, and the reason
+   Immer is already a dependency. Leave it until the pattern is settled.
+6. Port each store's spec alongside it. `auth`, `connection`, `mutationQueue`,
+   `notifications`, `streak`, `appVersion` and `workout` all have specs in `web/`
+   that should survive with only the store API changing.
+
+Routing comes after the stores, since the global navigation guard resets
+`navTabs` and `actionButton` and so needs both to exist.
 
 ## Test coverage
 
