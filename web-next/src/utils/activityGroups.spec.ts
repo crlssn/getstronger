@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { groupByActivity } from './activityGroups'
+import { groupByActivity, groupByRoutineActivity } from './activityGroups'
 
 interface Item {
   name: string
@@ -72,5 +72,45 @@ describe('groupByActivity', () => {
 
   test('is empty for nothing', () => {
     expect(group([])).toEqual([])
+  })
+})
+
+describe('groupByRoutineActivity', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-14T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const routineGroups = (items: Item[]) =>
+    groupByRoutineActivity(
+      items,
+      (item) => (item.performedAt ? DateTime.fromISO(item.performedAt) : undefined),
+      (item) => item.name,
+    )
+
+  // A routine unused for a month and one never tried are both things to pick up
+  // again, and splitting them leaves two thin groups saying the same thing.
+  test('puts a long-unused routine in with the untried ones', () => {
+    const groups = routineGroups([
+      { name: 'Stale', performedAt: '2026-01-01T09:00:00Z' },
+      { name: 'Never' },
+    ])
+
+    expect(groups).toHaveLength(1)
+    expect(groups[0]?.bucket).toBe('revisit')
+    expect(groups[0]?.items.map((item) => item.name)).toEqual(['Stale', 'Never'])
+  })
+
+  test('keeps a recently trained routine in its own group', () => {
+    const groups = routineGroups([
+      { name: 'Today', performedAt: '2026-08-14T09:00:00Z' },
+      { name: 'Never' },
+    ])
+
+    expect(groups.map((group) => group.bucket)).toEqual(['today', 'revisit'])
   })
 })
