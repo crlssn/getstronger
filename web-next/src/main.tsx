@@ -2,22 +2,65 @@ import './assets/main.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import { RouterProvider } from 'react-router-dom'
 
-// TODO(#1100): this is a placeholder bootstrap while the app is scaffolded.
-// The real entry point ports web/src/main.ts: auth-store init, token refresh,
-// PostHog identify, router mount, and route warming all belong here once
-// their React equivalents exist. See MIGRATION_PLAN.md phase B/C.
+import { I18nextProvider } from 'react-i18next'
+
+import { appLocale, i18n } from '@/i18n'
+import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
+import { initNativePlatform } from '@/native/platform'
+import posthog, { identifyUser, isPostHogConfigured } from '@/posthog'
+import { setNavigator } from '@/router/navigation'
+import { createRouter } from '@/router/router'
+import { warmLazyRoutesWhenIdle } from '@/router/warmRoutes'
+import { selectAuthorised, useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notifications'
 
 const rootElement = document.getElementById('root')
 if (rootElement === null) throw new Error('#root element is missing from index.html')
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+document.documentElement.lang = appLocale
 
-document.getElementById('boot-splash')?.remove()
+const router = createRouter()
+// Registered before the first render: the HTTP layer redirects through this,
+// and a request fired by a route loader can beat the router's own mount.
+setNavigator((to, options) => router.navigate(to, options))
 
-console.log('App initialized')
+const init = async () => {
+  if (selectAuthorised(useAuthStore.getState())) {
+    await refreshAccessTokenOrLogout()
+
+    if (selectAuthorised(useAuthStore.getState())) {
+      identifyUser(useAuthStore.getState().userId)
+      useNotificationStore.getState().pollUnreadNotifications()
+    }
+  }
+
+  console.log('App initialized')
+  createRoot(rootElement, {
+    // React swallows a render error once it has logged it, so this is where
+    // one is reported. The equivalent of Vue's app.config.errorHandler.
+    onUncaughtError: (error, info) => {
+      console.error(error, info.componentStack)
+      if (isPostHogConfigured) posthog.captureException(error)
+    },
+  }).render(
+    <StrictMode>
+      <I18nextProvider i18n={i18n}>
+        <RouterProvider router={router} />
+      </I18nextProvider>
+    </StrictMode>,
+  )
+  // After a frame, not immediately: `render` schedules the first paint rather
+  // than performing it, and sweeping the splash away first shows a blank page.
+  requestAnimationFrame(() => document.getElementById('boot-splash')?.remove())
+
+  // Warm the remaining route chunks so the whole app stays navigable offline.
+  warmLazyRoutesWhenIdle()
+
+  await initNativePlatform(router)
+}
+
+init().catch((error: unknown) => {
+  console.error(error)
+})
