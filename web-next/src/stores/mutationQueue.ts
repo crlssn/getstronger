@@ -8,6 +8,8 @@ import {
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { migratedStorage } from '@/stores/persistence'
+
 import { workoutClient } from '@/http/clients'
 import { isConnectivityError } from '@/http/offlineCache'
 import { WorkoutService, type CreateWorkoutRequest } from '@/proto/api/v1/workout_service_pb'
@@ -114,6 +116,7 @@ export const useMutationQueueStore = create<MutationQueueState>()(
     }),
     {
       name: 'mutationQueue',
+      storage: migratedStorage(),
       partialize: ({ pending }) => ({ pending }),
     },
   ),

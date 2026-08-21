@@ -3,6 +3,8 @@ import type { AccessToken } from '@/types/auth'
 import { jwtDecode } from 'jwt-decode'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+
+import { migratedStorage } from '@/stores/persistence'
 import { identifyUser, resetUser } from '@/posthog'
 
 interface AuthState {
@@ -40,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth',
+      storage: migratedStorage(),
       partialize: ({ userId, accessToken }) => ({ userId, accessToken }),
     },
   ),

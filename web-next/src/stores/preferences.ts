@@ -2,6 +2,8 @@ import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+
+import { migratedStorage } from '@/stores/persistence'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
 
@@ -41,6 +43,7 @@ export const usePreferencesStore = create<PreferencesState>()(
     }),
     {
       name: 'preferences',
+      storage: migratedStorage(),
       partialize: ({ weightUnit, distanceUnit, autofillSets }) => ({
         weightUnit,
         distanceUnit,

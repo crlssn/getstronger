@@ -417,30 +417,84 @@ is read off the route table, so `AppDashboard`, `AppRestTimerBanner` and the
 native wrapper cannot drift apart about which screens these are — all three had
 their own copy.
 
-**Next: phase G.** The e2e suite and the screenshot harness in `web/tests/`
-still point at the Vue app. They need a `web-next/` equivalent, running against
-the React dev server, before the swap can be trusted.
+**Next: phase G — and it is not a copy.** The e2e suite and the screenshot
+harness in `web/tests/` still point at the Vue app. The static checks
+(`no-hardcoded-strings`, `no-raw-palettes`) are already across; the Playwright
+side is not, and the reason is worth knowing before starting.
+
+The suite reaches for CSS class names — around 45 distinct ones across the
+twelve e2e specs and the screenshot flows. In `web/` those are real class names
+in a `<style scoped>` block. In `web-next/` they are CSS-module locals and
+appear in the DOM hashed (`_setRow_9cb9a0`), so **every one of those selectors
+finds nothing**. Only two survive as written, because they are the only two
+still global in `assets/main.css`: `.loading-card` and `.segmented`.
+
+The full list, checked against the source:
+
+- **`StartWorkout`**: `.workout-header`, `.exercise-list`, `.exercise-item`,
+  `.exercise-item.open .exercise-name`, `.exercise-header`, `.exercise-panel`,
+  `.completed-exercise`, `.primary-action`, `.next-up`, `.finish-early`,
+  `.action-block > strong.blocked`, and from the set grid `.set-row`,
+  `.set-row input`, `.previous-value`, `.unit-entry`, `.unit-suffix`.
+- **Shell**: `.bottom-nav`, `.bottom-nav .timer-badge`, `.timer-badge`,
+  `.notification-badge`, `.alert-region`, `.alert-card-inner .status-icon`,
+  `.menu-trigger`, `header.guest-header`, `.empty-state`.
+- **Screens**: `.exercise-group`, `.exercise-group-card`, `.search-field`,
+  `.search-panel`, `.measurement`, `.exercise-option`, `.exercise-options`,
+  `.routine-options`, `.routine-order`, `.order-actions`, `.active-plan`,
+  `.next-card`, `.history-list`, `.workout-history`, `.feed-summary-card`,
+  `.feed-end`, `.feed-error`, `.notification-item.unread`, `.chart-heading`,
+  `.record-list`, `.record-value`, `.week-block.current.complete`,
+  `.week-workout-count`.
+- **`.dialog-confirm`** exists in neither app any more; the sheet replaced it.
+
+Rewrite them as role and text queries rather than adding `data-testid`
+everywhere: the unit specs already reach every one of these elements that way,
+so the accessible handles are known to exist, and the issue asks for the debt to
+go rather than travel. Reach for a `data-testid` only where there is genuinely
+nothing to name — the streak card's week squares, the tab bar's timer and
+notification badges — and say so in a comment when you do.
+
+Two things phase G needs that this container did not have: a Docker daemon for
+the database, and the Go backend running. Neither `mise` nor a Postgres socket
+was available here, so the Playwright suites could not be executed at all —
+which is why the port was not attempted blind.
+
+If the next session is in the same position, CI can be the test runner instead.
+`.github/workflows/test.e2e.yml` already stands the whole stack up — Postgres as
+a service, `migrate`, the seed factory, and the official Playwright container so
+no browsers are downloaded — and runs `npm run test:e2e` in `web/`. A
+`test.e2e.web-next.yml` that mirrors it, pointed at `web-next`, turns each push
+into a real run of the ported suite. It is slower than a local loop, so get the
+selectors right by reading first and use CI to confirm rather than to explore.
+Delete it at the swap along with `test.web-next.yml`.
 
 ## Phase H — do not forget
 
-**Persisted state changes shape at the swap.** `pinia-plugin-persistedstate`
-writes the bare state under the store id; Zustand's `persist` wraps it as
-`{ state, version }` under `name`. Both use the same key (`auth`,
-`preferences`), so on deploy the React app will read the Vue app's value, fail
-to find `state`, and fall back to defaults. For `preferences` that is a cosmetic
-reset. For `auth` it signs everyone out, because `main.ts` only attempts a token
-refresh when the store already looks authorised.
+**Persisted state changes shape at the swap — handled, keep it.**
+`pinia-plugin-persistedstate` wrote a store's state bare under its id; Zustand's
+`persist` wraps it as `{ state, version }` under `name`. All six persisted
+stores use the same key in both apps (`auth`, `preferences`, `workouts`,
+`mutationQueue`, `dashboard`, `emailVerification`), so on the deploy that swaps
+them over the first read finds the old shape and every store falls back to
+defaults: signed out, offline queue dropped, workout in progress thrown away.
 
-Fix it with a `migrate`/`merge` on the `persist` options that recognises the old
-flat shape, or by seeding the store from the old key on first run. Either way it
-needs to ship _with_ the swap, not after.
+`stores/persistence.ts` fixes it. `migratedStorage()` recognises a value with no
+`state` key as one the Vue app wrote and wraps it, and the next write puts it
+back in the new shape, so a browser only ever takes that path once. Every
+persisted store passes it as its `storage`. **Do not remove it as part of the
+swap** — it is only safe to delete once no deployed client can still be carrying
+Vue-written keys.
+
+The two apps' persisted shapes were checked field by field and match, `pending`
+entries in the offline queue included, so nothing beyond the wrapping is needed.
 
 ## Test coverage
 
 The issue asks for 80%+. `npm run test:unit -- --run --coverage` reports it, and
 CI runs it that way so the number moves with each increment rather than being
 discovered at the end. It currently sits at 95% statements / 97% lines across
-1156 tests. `src/proto`, `src/main.tsx` and the specs are excluded in
+1240 tests. `src/proto`, `src/main.tsx` and the specs are excluded in
 `vitest.config.ts`; nothing else is.
 
 `requests.ts` is worth a note, since it is a fifth of the source. Its fifty

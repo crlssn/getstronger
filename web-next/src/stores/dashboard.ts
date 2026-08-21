@@ -3,6 +3,8 @@ import type { GetDashboardResponse, Plan, Routine } from '@/proto/api/v1/routine
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { migratedStorage } from '@/stores/persistence'
+
 import { getDashboard } from '@/http/requests'
 
 interface DashboardState {
@@ -52,6 +54,7 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: 'dashboard',
+      storage: migratedStorage(),
       // The response itself is server state; only the choice of routine is
       // worth carrying across a reload.
       partialize: ({ preferredRoutineId }) => ({ preferredRoutineId }),
