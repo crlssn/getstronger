@@ -51,8 +51,10 @@ const lastSession = (exerciseId: string) => {
   if (!sets.length) return ''
 
   const heaviest = sets.reduce((top, set) => (Number(set.weight) > Number(top.weight) ? set : top))
-  const count = `${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`
-  return `${count} · last ${formatExerciseSet(heaviest, entry?.exercise)}`
+  return t('routine.view.lastSession', {
+    sets: t('workout.setsCompact', sets.length),
+    value: formatExerciseSet(heaviest, entry?.exercise),
+  })
 }
 
 onMounted(async () => {
