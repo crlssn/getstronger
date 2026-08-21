@@ -13,11 +13,11 @@ The React toolchain builds, typechecks, lints, formats and tests. Everything
 below the UI is ported: the framework-agnostic modules, i18n on i18next, the
 whole HTTP layer, all 21 stores, the routing rules, every design-system
 primitive, and the shell — the nav bars, the four app-level singletons, and the
-signed-in and signed-out layouts. 716 tests green, 95% statement / 98% line
-coverage.
+signed-in and signed-out layouts. Phase F has started: the seven signed-out
+screens are across. 736 tests green, 95% statement / 98% line coverage.
 
-What is left is the screens, and the two files that can only be written once
-they exist: `router.tsx` and `main.tsx`.
+What is left is the rest of the screens, and the two files that can only be
+written once they exist: `router.tsx` and `main.tsx`.
 
 | Phase | What it covers                                         | State |
 | ----- | ------------------------------------------------------ | ----- |
@@ -26,7 +26,7 @@ they exist: `router.tsx` and `main.tsx`.
 | C     | HTTP layer                                             | done  |
 | D     | Design-system primitives (`AppButton`, `AppCard`, …)   | done  |
 | E     | Shell (`App`, dashboard, nav, banners, dialogs)        | done  |
-| F     | Feature views (auth, workouts, exercises, routines, …) | next  |
+| F     | Feature views (auth, workouts, exercises, routines, …) | doing |
 | G     | e2e + screenshot harness pointed at the React app      | todo  |
 | H     | Swap `web-next/` into `web/`, delete the Vue app       | todo  |
 
@@ -294,16 +294,18 @@ now answers a tab root with itself.
 
 ## What to do next
 
-Phase D is done: the two source guards and all eleven design-system
-primitives — `AppButton`, `AppCard`, `AppSkeleton`, `AppTextarea`,
-`AppListItem`, `AppListItemLink`, `AppListItemInput`, `AppEmptyState`,
-`AppOptionalAction`, `AppList`, `AppSheet`, `DropdownButton` — plus
-`renderWithProviders`, `useInfiniteScroll` and `usePagination`.
-
 **Phase F: the screens.** Everything under `web/src/ui/` that is not in
 `components/` — 30-odd views. That is the bulk of the work by volume, and it is
 mostly mechanical now: the stores, the requests, the primitives and the shell
 they lean on are all in place.
+
+Done so far: the seven signed-out screens — `UserLogin`, `UserSignup`,
+`ForgotPassword`, `ResetPassword`, `VerifyEmail`, `UserLogout` — plus
+`NotFound` and the shared `AuthPasswordInput`.
+
+Next, in rough order of how much they teach: `VerifyEmailPending` (186 lines,
+and it has a Vue spec worth porting), `ProgressView` (216), `HomeView` (413),
+then exercises, routines, plans, workouts, users, notifications and profile.
 
 Two things to know going in:
 
