@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 
-import { BoltIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { BoltIcon } from '@heroicons/react/24/outline'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -79,9 +79,6 @@ export const AppRestTimerBanner = () => {
     >
       <div className={styles.restBannerInner}>
         <div className={styles.restCopy}>
-          <p>
-            <ClockIcon aria-hidden="true" /> {t('workout.rest')}
-          </p>
           {/* The label is in the section's aria-label; repeating it here would
               re-announce every second. */}
           <strong aria-hidden="true">{label}</strong>

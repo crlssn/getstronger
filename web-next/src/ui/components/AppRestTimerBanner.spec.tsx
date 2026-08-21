@@ -61,6 +61,18 @@ describe('AppRestTimerBanner', () => {
     },
   )
 
+  // Same shape as the banner on the workout itself: the digits are the whole
+  // message, with no REST eyebrow and no clock icon beside them. Their size is
+  // set in the stylesheet, so the one-row alignment is checked on screen.
+  test('leads with the countdown alone, with no eyebrow beside it', () => {
+    resting(90)
+    renderWithProviders(<AppRestTimerBanner />, { route: '/home' })
+
+    const copy = screen.getByText('01:30').parentElement
+    expect(copy).toHaveTextContent(/^01:30$/)
+    expect(copy?.querySelector('svg')).toBeNull()
+  })
+
   test('offers a way back to the workout', () => {
     resting(90)
     renderWithProviders(<AppRestTimerBanner />, { route: '/home' })

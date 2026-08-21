@@ -83,10 +83,11 @@ PR #1117 was the first of these: two new user requests, an `autofillSets`
 preference, a regenerated `user_service_pb`, a new `utils/names.ts`, and a
 reworked signup catalogue. The dispatch table's completeness check caught the
 two new requests on its own, which is the main reason it exists. #1116 then
-retired one catalogue key.
+retired one catalogue key. #1120 reshaped `AppRestTimerBanner` — that one had
+to be read rather than copied, because the React port had already landed.
 
 Record the main commit you synced from when you do it, so the next diff has a
-starting point: **last synced `8d9519f`**.
+starting point: **last synced `a23fef6`**.
 
 ## Decisions already made, and why
 
