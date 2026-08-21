@@ -71,8 +71,7 @@ jobs:
       SERVER_PORT: 8080
       SSE_PORT: 8081
       USER_EMAIL: active@getstronger.test
-      USER_FIRSTNAME: Alex
-      USER_LASTNAME: Morgan
+      USER_NAME: Alex Morgan
       USER_PASSWORD: password123
       VITE_API_URL: http://localhost:8080
 
@@ -129,8 +128,7 @@ jobs:
           go run server/testing/factory/seed/main.go
           -email="${USER_EMAIL}"
           -password="${USER_PASSWORD}"
-          -firstname="${USER_FIRSTNAME}"
-          -lastname="${USER_LASTNAME}"
+          -name="${USER_NAME}"
 
       - name: Run end-to-end tests
         working-directory: web
