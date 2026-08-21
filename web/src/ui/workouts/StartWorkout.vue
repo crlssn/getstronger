@@ -152,9 +152,6 @@ const availableExercises = computed(() => {
   )
 })
 const hasMoreExercises = computed(() => exercisePageToken.value.length > 0)
-const completedExerciseCount = computed(
-  () => Object.values(completedExercises.value).filter(Boolean).length,
-)
 const unfinishedExerciseCount = computed(
   () =>
     routine.value?.exercises.filter((exercise) => !completedExercises.value[exercise.id]).length ??
@@ -214,10 +211,6 @@ const elapsedLabel = computed(() => {
   if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${remainder}`
   return `${minutes}:${remainder}`
 })
-const sessionProgress = computed(() => {
-  const total = routine.value?.exercises.length ?? 0
-  return total > 0 ? `${(completedExerciseCount.value / total) * 100}%` : '0%'
-})
 // The set you are about to log. It carries the emphasis so the row you want is
 // findable at arm's length, which is the distance this screen is read from.
 const activeSetIndex = computed(() => {
@@ -245,6 +238,9 @@ const restHue = computed(
 // so it should read as energising rather than as a warning.
 const restFinalMinute = computed(() => restSeconds.value > 0 && restSeconds.value < 60)
 const restFinalCountdown = computed(() => restSeconds.value > 0 && restSeconds.value <= 10)
+// Flipping between two classes restarts the one-shot pulse animation, so each
+// beat begins exactly when the countdown digit changes.
+const restTickParity = computed(() => (restSeconds.value % 2 === 0 ? 'tick-even' : 'tick-odd'))
 // One forward action: complete the active exercise while exercises remain,
 // finish once they are all done.
 const allExercisesComplete = computed(() => unfinishedExerciseCount.value === 0)
@@ -314,6 +310,10 @@ const onPrimaryAction = async () => {
 // Puts the cursor on the set you are about to log, so the keyboard is aimed at
 // the right field after advancing or after a rest ends. Never steals focus from
 // a field the user is already typing in.
+// Focus the app moves must not trigger the focus-autofill: an autofilled value
+// completes sets, and a completed set starts the next rest timer, so the
+// workout would keep logging itself with nobody touching the screen.
+let suppressFocusAutofill = false
 const focusNextSetInput = async () => {
   await nextTick()
   if (document.activeElement instanceof HTMLInputElement) return
@@ -322,7 +322,12 @@ const focusNextSetInput = async () => {
     exerciseList.value?.querySelectorAll<HTMLInputElement>('.exercise-panel input') ?? []
   for (const input of inputs) {
     if (!input.value) {
-      input.focus()
+      suppressFocusAutofill = true
+      try {
+        input.focus()
+      } finally {
+        suppressFocusAutofill = false
+      }
       return
     }
   }
@@ -481,6 +486,7 @@ const copyPreviousValue = async (
   // Prefilling a field nobody typed into is opt-in, so an athlete who wants to
   // log what they actually did sees an empty row.
   if (!preferencesStore.autofillSets) return
+  if (suppressFocusAutofill) return
   if (isNumber(set[field])) return
   const previous =
     previousSet(exerciseId, index) ?? workoutStore.getSets(routineID, exerciseId)[index - 1]
@@ -952,18 +958,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
         </div>
         <span class="elapsed" :aria-label="t('workout.elapsed')">{{ elapsedLabel }}</span>
       </div>
-      <!-- A rail rather than a fraction: between sets it is read at a glance,
-           and a glance does not do arithmetic. -->
-      <div
-        class="session-rail"
-        role="progressbar"
-        :aria-valuenow="completedExerciseCount"
-        :aria-valuemin="0"
-        :aria-valuemax="routine?.exercises.length ?? 0"
-        :aria-label="t('workout.sessionProgress')"
-      >
-        <span :style="{ width: sessionProgress }" />
-      </div>
     </header>
 
     <!-- The countdown is the focal point while resting; it is aria-hidden so
@@ -971,7 +965,10 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     <section
       v-if="restSeconds > 0"
       class="rest-banner"
-      :class="{ final: restFinalCountdown, bright: restFinalMinute }"
+      :class="[
+        { final: restFinalCountdown, bright: restFinalMinute },
+        restFinalCountdown ? restTickParity : '',
+      ]"
       :style="{ '--rest-hue': restHue }"
       :aria-label="t('workout.restTimer')"
     >
@@ -1333,7 +1330,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
     <AppSheet
       v-else-if="leaveDialogOpen"
       :eyebrow="t('workout.autosaved')"
-      eyebrow-tone="success"
       :title="t('workout.leaveTitle')"
       :body="t('workout.leaveBody')"
       @close="closeLeaveDialog"
@@ -1399,13 +1395,6 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
    costume, sized up for the screen it headlines. */
 .elapsed {
   @apply shrink-0 whitespace-nowrap rounded-pill bg-surface-inverse px-3 py-1.5 font-mono text-base font-bold leading-none tabular-nums text-white;
-}
-/* How far through the session, without asking anyone to do arithmetic. */
-.session-rail {
-  @apply h-1 w-full bg-border;
-}
-.session-rail > span {
-  @apply block h-full bg-success transition-[width] duration-300;
 }
 /* The primary timer while resting: it carries the accent so it outranks the
    header bar, which stays light. The hue is driven by --rest-hue and shifts
@@ -1487,38 +1476,50 @@ const addExerciseToWorkout = async (exercise: Exercise) => {
   @apply bg-ink-strong;
 }
 /* One beat per second through the last ten: the band itself brightens rather
-   than the digits resizing, so the numbers stay steady and readable. */
+   than the digits resizing, so the numbers stay steady and readable. The tick
+   class flips with the countdown, and swapping between the twin keyframe
+   names restarts the one-shot pulse — so every beat starts exactly when the
+   digit changes rather than drifting on its own clock. */
 .rest-banner.final {
-  animation: rest-pulse 1s ease-in-out infinite;
+  --pulse-brightness: 1.55;
+  --pulse-saturation: 1.25;
 }
 /* An already-bright band would blow out on the dark band's pulse range. */
 .rest-banner.final.bright {
-  animation: rest-pulse-bright 1s ease-in-out infinite;
+  --pulse-brightness: 1.14;
+  --pulse-saturation: 1.3;
 }
-@keyframes rest-pulse-bright {
+.rest-banner.final.tick-even {
+  animation: rest-pulse-a 1s ease-in-out 1;
+}
+.rest-banner.final.tick-odd {
+  animation: rest-pulse-b 1s ease-in-out 1;
+}
+/* Identical twins: alternating the name is what restarts the animation. */
+@keyframes rest-pulse-a {
   0%,
   100% {
     filter: brightness(1) saturate(1);
   }
   45% {
-    filter: brightness(1.14) saturate(1.3);
+    filter: brightness(var(--pulse-brightness)) saturate(var(--pulse-saturation));
   }
 }
-@keyframes rest-pulse {
+@keyframes rest-pulse-b {
   0%,
   100% {
     filter: brightness(1) saturate(1);
   }
   45% {
-    filter: brightness(1.55) saturate(1.25);
+    filter: brightness(var(--pulse-brightness)) saturate(var(--pulse-saturation));
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .rest-banner {
     transition: none;
   }
-  .rest-banner.final,
-  .rest-banner.final.bright {
+  .rest-banner.final.tick-even,
+  .rest-banner.final.tick-odd {
     animation: none;
   }
 }
