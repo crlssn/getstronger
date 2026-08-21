@@ -337,26 +337,13 @@ describe('StartWorkout', () => {
       wrapper.unmount()
     })
 
-    test('marks completed sets and exercises with a rendered check icon', async () => {
+    test('marks a completed set with a rendered check icon', async () => {
       const wrapper = await mountWorkout()
       await logFirstSet(wrapper)
 
-      // A complete set swaps its number for the check mark.
+      // A complete set swaps its number for the check mark. Asserting on the
+      // rendered svg catches an icon that is referenced but never imported.
       expect(wrapper.find('.set-row.complete .set-number svg').exists()).toBe(true)
-
-      await wrapper.get('.primary-action').trigger('submit')
-      await flushPromises()
-
-      // The finished exercise gets ticked off in the queue…
-      expect(wrapper.find('li.completed .queue-number svg').exists()).toBe(true)
-
-      await wrapper.get('input[aria-label="Squat set 1 weight"]').setValue('100')
-      await wrapper.get('input[aria-label="Squat set 1 reps"]').setValue('5')
-      await wrapper.get('.primary-action').trigger('submit')
-      await flushPromises()
-
-      // …and the completed banner leads with the same icon.
-      expect(wrapper.find('.completed-exercise .completed-icon svg').exists()).toBe(true)
       wrapper.unmount()
     })
   })

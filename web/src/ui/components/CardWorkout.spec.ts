@@ -35,7 +35,7 @@ const ownerID = 'user-owner'
 const workout = create(WorkoutSchema, {
   id: 'workout-1',
   name: 'Push Day',
-  user: { firstName: 'Alice', id: ownerID, lastName: 'Lifter' },
+  user: { id: ownerID, name: 'Alice Lifter' },
 })
 
 describe('CardWorkout', () => {
