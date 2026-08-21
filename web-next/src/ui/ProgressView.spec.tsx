@@ -83,6 +83,31 @@ describe('ProgressView', () => {
     expect(chartValues()).toEqual([5000, 1000])
   })
 
+  // Returning to an earlier range, and picking the same one twice, must keep
+  // producing that range's data rather than the last one's.
+  test('gives every range its own data, in any order', async () => {
+    // One workout per bucket, so only 1Y sees all four.
+    seed([workout(2, 100), workout(20, 200), workout(60, 300), workout(200, 400)])
+    renderWithProviders(<ProgressView />)
+
+    await waitFor(() => expect(chartValues()).toHaveLength(2))
+
+    for (const [label, bars] of [
+      ['7D', 1],
+      ['4W', 2],
+      ['3M', 3],
+      ['1Y', 4],
+      ['4W', 2],
+      ['7D', 1],
+      ['7D', 1],
+      ['1Y', 4],
+    ] as const) {
+      await userEvent.click(period(label))
+      expect(chartValues()).toHaveLength(bars)
+      expect(period(label)).toHaveAttribute('aria-pressed', 'true')
+    }
+  })
+
   test('marks the selected period for a screen reader', async () => {
     seed([workout(1, 1000)])
     renderWithProviders(<ProgressView />)
