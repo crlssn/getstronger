@@ -1,0 +1,70 @@
+name: test web-next
+
+# Mirrors 'test web' for the React app being built alongside the Vue one
+# (issue #1100). Delete this workflow when web-next/ replaces web/ and the
+# 'test web' workflow covers the React app instead.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths:
+      - '.github/workflows/test.web-next.yml'
+      - 'web-next/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  web-next:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          cache: npm
+          cache-dependency-path: web-next/package-lock.json
+          node-version: '24.19.0'
+
+      - name: Install dependencies
+        working-directory: ./web-next
+        run: npm ci
+
+      - name: Run linter
+        working-directory: ./web-next
+        run: npm run lint
+
+      - name: Run formatter
+        working-directory: ./web-next
+        run: npm run format
+
+      - name: Check for uncommitted changes
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git diff
+            exit 1
+          fi
+
+      - name: Run unit tests
+        working-directory: ./web-next
+        run: npm run test:unit -- --run
+
+      - name: Build the app
+        working-directory: ./web-next
+        run: npm run build
