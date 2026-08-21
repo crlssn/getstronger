@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { RichMessage } from '@/i18n/RichMessage'
 import { useAuthStore } from '@/stores/auth'
 import { formatUnixToRelativeDateTime } from '@/utils/datetime'
+import { handle } from '@/utils/names'
 
 interface Props {
   actor?: User
@@ -34,9 +35,9 @@ export const NotificationWorkoutComment = ({ actor, timestamp, workout }: Props)
         <div>
           <RichMessage
             i18nKey={messageKey}
-            values={{ owner: workout?.user?.username }}
+            values={{ owner: handle(workout?.user?.username) }}
             nodes={{
-              name: <span className="font-semibold">{actor?.username}</span>,
+              name: <span className="font-semibold">{handle(actor?.username)}</span>,
               workout: <span className="font-semibold">{workout?.name}</span>,
             }}
           />

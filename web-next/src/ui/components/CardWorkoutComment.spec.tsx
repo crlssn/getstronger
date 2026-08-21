@@ -30,7 +30,7 @@ describe('CardWorkoutComment', () => {
       />,
     )
 
-    expect(screen.getByRole('link', { name: 'alex' })).toHaveAttribute('href', '/users/user-1')
+    expect(screen.getByRole('link', { name: '@alex' })).toHaveAttribute('href', '/users/user-1')
     expect(screen.getByText('Strong session')).toBeInTheDocument()
     expect(screen.getByText('2 hours ago')).toBeInTheDocument()
   })

@@ -12,6 +12,7 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   updateUserDistanceUnit: vi.fn(),
   updateUserAutofillSets: vi.fn(),
   updateUserUsername: vi.fn(),
+  updateUserName: vi.fn(),
 }))
 
 import * as requests from '@/http/requests'
@@ -20,6 +21,7 @@ import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import {
   GetUserResponseSchema,
   UpdateUserAutofillSetsResponseSchema,
+  UpdateUserNameResponseSchema,
   UpdateUserDistanceUnitResponseSchema,
   UpdateUserUsernameResponseSchema,
   UpdateUserWeightUnitResponseSchema,
@@ -38,15 +40,16 @@ const mocked = {
   updateUserDistanceUnit: vi.mocked(requests.updateUserDistanceUnit),
   updateUserAutofillSets: vi.mocked(requests.updateUserAutofillSets),
   updateUserUsername: vi.mocked(requests.updateUserUsername),
+  updateUserName: vi.mocked(requests.updateUserName),
 }
 
 const me = 'user-me'
 
-const profile = (fields: { username?: string; autofillSets?: boolean } = {}) =>
+const profile = (fields: { username?: string; name?: string; autofillSets?: boolean } = {}) =>
   create(GetUserResponseSchema, {
     user: {
       id: me,
-      name: 'Alex Morgan',
+      name: fields.name ?? 'Alex Morgan',
       username: fields.username ?? 'alex',
       email: 'alex@example.com',
       weightUnit: WeightUnit.KILOGRAMS,
@@ -95,6 +98,7 @@ describe('ProfileView', () => {
     render()
 
     expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
+    // Rendered through handle(), so a missing username is not a lone '@'.
     expect(screen.getByText('@alex')).toBeInTheDocument()
     expect(screen.getByText('alex@example.com')).toBeInTheDocument()
     // Initials, because there are no avatars in the app.
@@ -249,6 +253,43 @@ describe('ProfileView', () => {
 
       await waitFor(() => expect(mocked.updateUserUsername).toHaveBeenCalled())
       expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+  })
+
+  describe('the name editor', () => {
+    const open = async () => {
+      await userEvent.click(await screen.findByRole('button', { name: 'Change name' }))
+      return screen.getByRole('textbox', { name: 'Name' })
+    }
+
+    test('opens with the current name', async () => {
+      render()
+
+      expect(await open()).toHaveValue('Alex Morgan')
+    })
+
+    test('saves the new name and closes', async () => {
+      mocked.updateUserName.mockResolvedValue(
+        create(UpdateUserNameResponseSchema, { user: profile({ name: 'Alexandra Morgan' }).user }),
+      )
+      render()
+
+      const field = await open()
+      await userEvent.clear(field)
+      await userEvent.type(field, 'Alexandra Morgan')
+      await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+      await waitFor(() => expect(mocked.updateUserName).toHaveBeenCalledWith('Alexandra Morgan'))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+      expect(screen.getByRole('heading', { name: 'Alexandra Morgan' })).toBeInTheDocument()
+    })
+
+    // The pencil sits beside the heading, not inside it, so the heading's
+    // accessible name stays the name itself.
+    test('keeps the pencil out of the heading', async () => {
+      render()
+
+      expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
     })
   })
 

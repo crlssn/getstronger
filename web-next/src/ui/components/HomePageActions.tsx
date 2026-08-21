@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom'
 
 import { listExercises, listPlans, listRoutines, searchUsers } from '@/http/requests'
 import { cn } from '@/ui/cn'
-import { initials } from '@/utils/names'
+import { handle, initials } from '@/utils/names'
 import styles from './HomePageActions.module.css'
 
 const maxResultsPerGroup = 5
@@ -78,7 +78,7 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
             results: (users?.users ?? []).map((user) => ({
               id: user.id,
               to: `/users/${user.id}`,
-              title: user.username,
+              title: handle(user.username),
               subtitle: user.name,
               avatar: initials(user.name),
             })),

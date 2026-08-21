@@ -2,8 +2,16 @@ import type { ComponentProps } from 'react'
 
 import { useState } from 'react'
 
-import { titleCase } from '@/utils/names'
 import styles from './AppListItemInput.module.css'
+
+/**
+ * "pull/chin up" becomes "Pull/Chin Up".
+ *
+ * Lives here rather than in utils/names.ts, which is copied verbatim from the
+ * Vue app: this field is its only caller.
+ */
+const titleCase = (value: string): string =>
+  value.toLowerCase().replace(/(^\w|(?<=[ /])\w)/g, (char) => char.toUpperCase())
 
 interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type'> {
   /** The committed value. Local edits are kept until the field is left. */

@@ -101,8 +101,8 @@ export const ViewRoutine = () => {
       Number(set.weight) > Number(top.weight) ? set : top,
     )
     return t('routine.view.lastSession', {
-      count: sets.length,
-      best: formatExerciseSet(heaviest, entry?.exercise),
+      sets: t('workout.setsCompact', { count: sets.length }),
+      value: formatExerciseSet(heaviest, entry?.exercise),
     })
   }
 

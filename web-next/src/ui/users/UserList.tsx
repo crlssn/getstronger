@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem, AppListItemLink } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
+import { handle } from '@/utils/names'
 
 interface Props {
   /** Fetches the people to list; the two tabs differ only in this. */
@@ -36,7 +37,7 @@ export const UserList = ({ fetchUsers }: Props) => {
       {users.map((user) => (
         <AppListItemLink key={user.id} to={`/users/${user.id}`}>
           <span>
-            <strong className="block font-medium">{user.username}</strong>
+            <strong className="block font-medium">{handle(user.username)}</strong>
             <small className="mt-0.5 block text-sm font-normal text-text-subtle">{user.name}</small>
           </span>
         </AppListItemLink>

@@ -9,14 +9,6 @@ export const initials = (name?: string): string => {
   return `${first}${last}`.toLocaleUpperCase()
 }
 
-/**
- * Title-cases a name as it is typed: first letter of every word, and of every
- * part after a slash, so "bench press" becomes "Bench Press" and "pull/chin up"
- * becomes "Pull/Chin Up".
- */
-export const titleCase = (value: string): string =>
-  value.toLowerCase().replace(/(^\w|(?<=[ /])\w)/g, (char) => char.toUpperCase())
-
 // A username as every view shows it. An empty username stays empty rather than
 // rendering a lone '@' while a profile is still loading.
 export const handle = (username?: string): string => {
