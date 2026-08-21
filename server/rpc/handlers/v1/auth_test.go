@@ -95,6 +95,7 @@ func (s *authSuite) TestSignup() {
 					Password:             "password",
 					PasswordConfirmation: "password",
 					Name:                 gofakeit.Name(),
+					Username:             "Signup.Handle",
 					WeightUnit:           v1.WeightUnit_WEIGHT_UNIT_POUNDS,
 					DistanceUnit:         v1.DistanceUnit_DISTANCE_UNIT_MILES,
 				},
@@ -111,6 +112,25 @@ func (s *authSuite) TestSignup() {
 			},
 			expected: expected{
 				err: nil,
+			},
+		},
+		{
+			name: "err_username_taken_case_insensitively",
+			req: &connect.Request[v1.SignupRequest]{
+				Msg: &v1.SignupRequest{
+					Email:                gofakeit.Email(),
+					Password:             "password",
+					PasswordConfirmation: "password",
+					Name:                 gofakeit.Name(),
+					Username:             "Duplicate.Handle",
+				},
+			},
+			init: func(_ test) {
+				s.factory.NewUser(factory.UserUsername("duplicate.handle"))
+				s.mocks.email.EXPECT().SendVerification(gomock.Any(), gomock.Any()).Times(0)
+			},
+			expected: expected{
+				err: rpc.Error(connect.CodeAlreadyExists, v1.Error_ERROR_USERNAME_TAKEN),
 			},
 		},
 		{
@@ -160,6 +180,9 @@ func (s *authSuite) TestSignup() {
 			s.Require().NoError(err)
 
 			s.Require().Equal(t.req.Msg.GetName(), user.Name)
+			// The username is stored lowercased so uniqueness holds regardless
+			// of how it was typed.
+			s.Require().Equal("signup.handle", user.Username)
 			s.Require().Equal("lb", user.WeightUnit)
 			s.Require().Equal("mi", user.DistanceUnit)
 		})

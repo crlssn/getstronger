@@ -12,6 +12,7 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -279,6 +280,7 @@ func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (boo
 type CreateUserParams struct {
 	AuthID       string
 	Name         string
+	Username     string
 	WeightUnit   string
 	DistanceUnit string
 }
@@ -287,17 +289,42 @@ func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User
 	user, err := models.Users.Insert(&models.UserSetter{
 		AuthID:       omit.From(uuidFromString(p.AuthID)),
 		Name:         omit.From(p.Name),
+		Username:     omit.From(normalizeUsername(p.Username)),
 		WeightUnit:   omit.From(string(weightunit.Normalize(p.WeightUnit))),
 		DistanceUnit: omit.From(string(distanceunit.Normalize(p.DistanceUnit))),
 	}).One(ctx, r.bobExec())
 	if err != nil {
-		return nil, fmt.Errorf("user insert: %w", err)
+		return nil, fmt.Errorf("user insert: %w", translateUserError(err))
 	}
 
 	return user, nil
 }
 
+var ErrUserUsernameExists = errors.New("username already exists")
+
+// Usernames are compared case-insensitively, so uniqueness is enforced by an
+// index on lower(username) rather than a column constraint. That index is not
+// in the generated dberrors vocabulary, so its violation is translated here.
+func translateUserError(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "idx_users_username_lower" {
+		return ErrUserUsernameExists
+	}
+
+	return err
+}
+
+func normalizeUsername(username string) string {
+	return strings.ToLower(strings.TrimSpace(username))
+}
+
 type UpdateUserOpt func() (columns, error)
+
+func UpdateUserUsername(username string) UpdateUserOpt {
+	return func() (columns, error) {
+		return columns{models.Users.Columns.Username.Name(): normalizeUsername(username)}, nil
+	}
+}
 
 func UpdateUserWeightUnit(unit string) UpdateUserOpt {
 	return func() (columns, error) {
@@ -320,7 +347,7 @@ func (r *repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUser
 	mods := append(cols.updateMods(), models.UpdateWhere.Users.ID.EQ(uuidFromString(userID)))
 	rows, err := models.Users.Update(mods...).Exec(ctx, r.bobExec())
 	if err != nil {
-		return fmt.Errorf("user update: %w", err)
+		return fmt.Errorf("user update: %w", translateUserError(err))
 	}
 
 	if rows != 1 {
@@ -1325,11 +1352,19 @@ func ListUsersWithIDs(ids []string) ListUsersOpt {
 	}
 }
 
+// ListUsersWithNameMatching matches the query against both the name and the
+// username, closest name matches first. Both stored values are lowercase.
 func ListUsersWithNameMatching(query string) ListUsersOpt {
 	return func() []bob.Mod[*dialect.SelectQuery] {
+		pattern := psql.Arg(fmt.Sprintf("%%%s%%", strings.ToLower(query)))
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Users.FullNameSearch.Like(fmt.Sprintf("%%%s%%", strings.ToLower(query))),
-			sm.OrderBy(psql.F("similarity", models.Users.Columns.FullNameSearch, psql.Arg(query))).Desc(),
+			sm.Where(models.Users.Columns.FullNameSearch.Like(pattern).Or(
+				models.Users.Columns.Username.Like(pattern),
+			)),
+			sm.OrderBy(psql.F("greatest",
+				psql.F("similarity", models.Users.Columns.FullNameSearch, psql.Arg(query)),
+				psql.F("similarity", models.Users.Columns.Username, psql.Arg(query)),
+			)).Desc(),
 		}
 	}
 }

@@ -26,6 +26,9 @@ service UserService {
   rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse) {
     option (auth) = true;
   }
+  rpc UpdateUserUsername (UpdateUserUsernameRequest) returns (UpdateUserUsernameResponse) {
+    option (auth) = true;
+  }
   rpc UpdateUserWeightUnit (UpdateUserWeightUnitRequest) returns (UpdateUserWeightUnitResponse) {
     option (auth) = true;
   }
@@ -72,6 +75,18 @@ message SearchUsersRequest {
 message SearchUsersResponse {
   repeated User users = 1;
   PaginationResponse pagination = 2;
+}
+
+message UpdateUserUsernameRequest {
+  // Compared case-insensitively; the server stores it lowercased.
+  string username = 1 [(buf.validate.field).string = {
+    min_len: 3
+    max_len: 30
+    pattern: "^[A-Za-z0-9_.]+$"
+  }];
+}
+message UpdateUserUsernameResponse {
+  User user = 1;
 }
 
 message UpdateUserWeightUnitRequest {

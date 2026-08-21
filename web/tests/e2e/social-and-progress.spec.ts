@@ -24,9 +24,13 @@ test.describe('social feed and discovery', () => {
     await search.fill('Ja')
     await expect(page.getByText('Type at least 3 characters to search.')).toBeVisible()
     await search.fill('Jane')
+    await expect(page.locator('.search-panel').getByRole('link', { name: /Jane Doe/ })).toBeVisible()
+
+    // The handle is searchable too, and the result leads with it.
+    await search.fill('janedoe')
     await page
       .locator('.search-panel')
-      .getByRole('link', { name: /Jane Doe/ })
+      .getByRole('link', { name: /janedoe/ })
       .click()
 
     await expect(page).toHaveURL(/\/users\/[0-9a-f-]+$/)
@@ -39,7 +43,7 @@ test.describe('social feed and discovery', () => {
     await expect(card).toBeVisible()
     await card.getByRole('link', { name: /View .* workout details/ }).click()
 
-    await expect(page.getByRole('link', { name: 'Jane Doe', exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'janedoe', exact: true }).first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Exercises' })).toBeVisible()
 
     const comment = uniqueName('Strong session')
@@ -95,7 +99,7 @@ test.describe('profiles and notifications', () => {
     await expect(page.locator('.notification-item.unread')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Mark all read' })).toHaveCount(0)
 
-    const janeNotification = page.getByRole('link').filter({ hasText: 'Jane Doe' }).first()
+    const janeNotification = page.getByRole('link').filter({ hasText: 'janedoe' }).first()
     await expect(janeNotification).toBeVisible()
     const notificationText = await janeNotification.innerText()
     await janeNotification.click()
@@ -109,7 +113,7 @@ test.describe('profiles and notifications', () => {
 
   test('toggles following and exposes every public profile section @mutation', async ({ page }) => {
     await page.goto('/home')
-    await page.getByRole('link', { name: 'Jane Doe', exact: true }).first().click()
+    await page.getByRole('link', { name: 'janedoe', exact: true }).first().click()
 
     await openProfileActions(page)
     await page.getByRole('menuitem', { name: 'Unfollow Jane Doe' }).click()
@@ -162,6 +166,29 @@ test.describe('account progress', () => {
     await expect(firstRecord).toBeVisible()
     await firstRecord.click()
     await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+$/)
+  })
+
+  test('edits the username from the profile and rejects a taken one @mutation', async ({
+    page,
+  }) => {
+    // The taken-username attempt intentionally draws a 4xx from the backend.
+    test.info().annotations.push(allowRuntimeErrors)
+    await page.goto('/profile')
+    await expect(page.getByText('@alex', { exact: true })).toBeVisible()
+
+    // A handle someone else holds is refused with a clear message.
+    await page.getByRole('button', { name: 'Change username' }).click()
+    const usernameInput = page.getByRole('textbox', { name: 'Username' })
+    await usernameInput.fill('janedoe')
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByRole('alert')).toContainText('already taken')
+    await expect(usernameInput).toBeVisible()
+
+    // A free handle saves, closes the sheet, and shows immediately.
+    await usernameInput.fill('alex.morgan')
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText('@alex.morgan', { exact: true })).toBeVisible()
+    await expect(usernameInput).toHaveCount(0)
   })
 
   test('opens the current user public profile from account settings', async ({ page }) => {

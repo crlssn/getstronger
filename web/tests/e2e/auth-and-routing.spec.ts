@@ -65,6 +65,15 @@ test.describe('guest authentication and routing', () => {
     await expect(page.getByRole('radio', { name: /Pounds/ })).toBeChecked()
     await page.getByText('Miles', { exact: true }).click()
     await expect(page.getByRole('radio', { name: /Miles/ })).toBeChecked()
+
+    // A username someone already holds is refused with a clear message and
+    // leaves the rest of the form intact.
+    await page.getByLabel('Username').fill('alex')
+    await page.getByRole('button', { name: 'Create an account' }).click()
+    await expect(page.getByRole('alert')).toContainText('already taken')
+    await expect(page).toHaveURL(/\/signup$/)
+
+    await page.getByLabel('Username').fill(`e2e.${Date.now()}`)
     await page.getByRole('button', { name: 'Create an account' }).click()
 
     // The notice says the link was sent, not that the account is verified.

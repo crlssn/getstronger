@@ -16,6 +16,7 @@ const req = ref<SignupRequest>({
   $typeName: 'api.v1.SignupRequest',
   email: '',
   name: '',
+  username: '',
   password: '',
   passwordConfirmation: '',
   weightUnit: WeightUnit.KILOGRAMS,
@@ -53,6 +54,28 @@ const onSignup = async () => {
             autocomplete="name"
             class="auth-input"
             required
+          />
+        </div>
+      </div>
+
+      <div>
+        <label for="username" class="auth-label">{{ $t('auth.username') }}</label>
+        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.usernameHelp') }}</p>
+        <div class="mt-2">
+          <input
+            id="username"
+            v-model="req.username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            class="auth-input"
+            minlength="3"
+            maxlength="30"
+            pattern="[A-Za-z0-9._]+"
+            required
+            @input="req.username = req.username.toLowerCase()"
           />
         </div>
       </div>

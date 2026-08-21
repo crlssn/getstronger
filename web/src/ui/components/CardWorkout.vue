@@ -43,6 +43,7 @@ const comments = ref<WorkoutComment[]>([...props.workout.comments])
 
 const isOwner = computed(() => props.workout.user?.id === authStore.userId)
 const userName = computed(() => props.workout.user?.name ?? '')
+const userHandle = computed(() => props.workout.user?.username ?? '')
 const userInitials = computed(() => initials(props.workout.user?.name) || 'GS')
 const setCount = computed(() =>
   props.workout.exerciseSets.reduce((total, exercise) => total + exercise.sets.length, 0),
@@ -128,8 +129,12 @@ const postComment = async () => {
         userInitials
       }}</RouterLink>
       <div class="author-copy">
-        <RouterLink :to="`/users/${workout.user?.id}`">{{ userName }}</RouterLink>
-        <p><CalendarDaysIcon /> {{ finishedDate }}</p>
+        <RouterLink :to="`/users/${workout.user?.id}`">{{ userHandle }}</RouterLink>
+        <p>
+          <span class="truncate">{{ userName }}</span>
+          <span aria-hidden="true">·</span>
+          <CalendarDaysIcon /> {{ finishedDate }}
+        </p>
       </div>
       <DropdownButton v-if="isOwner" :items="dropdownItems" />
     </header>
@@ -194,8 +199,12 @@ const postComment = async () => {
           userInitials
         }}</RouterLink>
         <div class="author-copy">
-          <RouterLink :to="`/users/${workout.user?.id}`">{{ userName }}</RouterLink>
-          <p><CalendarDaysIcon /> {{ finishedDate }}</p>
+          <RouterLink :to="`/users/${workout.user?.id}`">{{ userHandle }}</RouterLink>
+          <p>
+            <span class="truncate">{{ userName }}</span>
+            <span aria-hidden="true">·</span>
+            <CalendarDaysIcon /> {{ finishedDate }}
+          </p>
         </div>
         <DropdownButton v-if="isOwner" :items="dropdownItems" />
       </header>

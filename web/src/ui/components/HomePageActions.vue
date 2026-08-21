@@ -131,8 +131,8 @@ const onSearch = async () => {
           >
             <span class="avatar">{{ initials(user.name) }}</span>
             <span>
-              <strong>{{ user.name }}</strong>
-              <small>{{ $t('search.viewProfile') }}</small>
+              <strong>{{ user.username }}</strong>
+              <small>{{ user.name }}</small>
             </span>
           </RouterLink>
         </template>

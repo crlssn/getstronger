@@ -29,6 +29,8 @@ import {
   type UnfollowUserResponse,
   UpdateUserDistanceUnitRequestSchema,
   type UpdateUserDistanceUnitResponse,
+  UpdateUserUsernameRequestSchema,
+  type UpdateUserUsernameResponse,
   UpdateUserWeightUnitRequestSchema,
   type UpdateUserWeightUnitResponse,
 } from '@/proto/api/v1/user_service_pb.ts'
@@ -460,6 +462,13 @@ export const getCurrentUser = async (id: string): Promise<GetUserResponse | void
   return tryCatch(() => userClient.getUser(req), { invalidatesSessionOnNotFound: true })
 }
 
+export const updateUserUsername = async (
+  username: string,
+): Promise<UpdateUserUsernameResponse | void> => {
+  const req = create(UpdateUserUsernameRequestSchema, { username })
+  return tryCatch(() => userClient.updateUserUsername(req))
+}
+
 export const updateUserWeightUnit = async (
   weightUnit: WeightUnit,
 ): Promise<UpdateUserWeightUnitResponse | void> => {
@@ -640,6 +649,9 @@ const tryCatch = async <T>(
             return
           case Error.PASSWORDS_DO_NOT_MATCH:
             useAlertStore().setErrorWithoutPageRefresh(i18n.global.t('auth.passwordsDoNotMatch'))
+            return
+          case Error.USERNAME_TAKEN:
+            useAlertStore().setErrorWithoutPageRefresh(i18n.global.t('auth.usernameTaken'))
             return
         }
       }

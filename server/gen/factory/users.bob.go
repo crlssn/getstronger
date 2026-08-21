@@ -43,6 +43,7 @@ type UserTemplate struct {
 	DistanceUnit   func() string
 	Name           func() string
 	FullNameSearch func() string
+	Username       func() string
 
 	r userR
 	f *Factory
@@ -242,6 +243,10 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		val := o.Name()
 		m.Name = omit.From(val)
 	}
+	if o.Username != nil {
+		val := o.Username()
+		m.Username = omit.From(val)
+	}
 
 	return m
 }
@@ -285,6 +290,9 @@ func (o UserTemplate) Build() *models.User {
 	if o.FullNameSearch != nil {
 		m.FullNameSearch = o.FullNameSearch()
 	}
+	if o.Username != nil {
+		m.Username = o.Username()
+	}
 
 	o.setModelRels(m)
 
@@ -312,6 +320,10 @@ func ensureCreatableUser(m *models.UserSetter) {
 	if m.Name.IsUnset() {
 		val := random_string(nil)
 		m.Name = omit.From(val)
+	}
+	if m.Username.IsUnset() {
+		val := random_string(nil, "30")
+		m.Username = omit.From(val)
 	}
 }
 
@@ -619,6 +631,7 @@ func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 		UserMods.RandomDistanceUnit(f),
 		UserMods.RandomName(f),
 		UserMods.RandomFullNameSearch(f),
+		UserMods.RandomUsername(f),
 	}
 }
 
@@ -835,6 +848,37 @@ func (m userMods) RandomFullNameSearch(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.FullNameSearch = func() string {
 			return random_string(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) Username(val string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) UsernameFunc(f func() string) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetUsername() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomUsername(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.Username = func() string {
+			return random_string(f, "30")
 		}
 	})
 }

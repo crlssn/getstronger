@@ -11,19 +11,20 @@ import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
 import ProfileView from '@/ui/profile/ProfileView.vue'
 
-const { getCurrentUser, getDashboard, updateUserDistanceUnit, updateUserWeightUnit } = vi.hoisted(
-  () => ({
+const { getCurrentUser, getDashboard, updateUserDistanceUnit, updateUserUsername, updateUserWeightUnit } =
+  vi.hoisted(() => ({
     getCurrentUser: vi.fn(),
     getDashboard: vi.fn(),
     updateUserDistanceUnit: vi.fn(),
+    updateUserUsername: vi.fn(),
     updateUserWeightUnit: vi.fn(),
-  }),
-)
+  }))
 
 vi.mock('@/http/requests', () => ({
   getCurrentUser,
   getDashboard,
   updateUserDistanceUnit,
+  updateUserUsername,
   updateUserWeightUnit,
 }))
 
@@ -51,6 +52,7 @@ describe('ProfileView', () => {
       user: {
         id: 'user-1',
         name: 'Alex Morgan',
+        username: 'alex',
         email: 'alex@example.com',
         weightUnit: WeightUnit.KILOGRAMS,
         distanceUnit: DistanceUnit.KILOMETERS,
@@ -61,6 +63,37 @@ describe('ProfileView', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+  })
+
+  test('shows the username and updates it through the editor sheet', async () => {
+    updateUserUsername.mockResolvedValue({ user: { username: 'alexm' } })
+    const wrapper = await mountProfile()
+
+    expect(wrapper.text()).toContain('@alex')
+
+    await wrapper.get('[aria-label="Change username"]').trigger('click')
+    const input = wrapper.get('#edit-username')
+    await input.setValue('AlexM')
+    await wrapper.get('#username-form').trigger('submit')
+    await flushPromises()
+
+    // The draft is lowercased as it is typed, so the API sees the stored form.
+    expect(updateUserUsername).toHaveBeenCalledWith('alexm')
+    expect(wrapper.text()).toContain('@alexm')
+    expect(wrapper.find('#edit-username').exists()).toBe(false)
+  })
+
+  test('keeps the username sheet open when the update fails', async () => {
+    updateUserUsername.mockResolvedValue(undefined)
+    const wrapper = await mountProfile()
+
+    await wrapper.get('[aria-label="Change username"]').trigger('click')
+    await wrapper.get('#edit-username').setValue('taken')
+    await wrapper.get('#username-form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('@alex')
+    expect(wrapper.find('#edit-username').exists()).toBe(true)
   })
 
   test('shows the weight unit from the fetched profile as the active preference', async () => {

@@ -36,6 +36,7 @@ type User struct {
 	DistanceUnit   string    `db:"distance_unit" `
 	Name           string    `db:"name" `
 	FullNameSearch string    `db:"full_name_search,generated" `
+	Username       string    `db:"username" `
 
 	R userR `db:"-" `
 
@@ -82,7 +83,7 @@ type userRLoaded struct {
 
 func buildUserColumns(tableName string) userColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search",
+		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search", "username",
 	)
 
 	if tableName != "" {
@@ -99,6 +100,7 @@ func buildUserColumns(tableName string) userColumns {
 		DistanceUnit:   buildUserColumn(tableName, "distance_unit"),
 		Name:           buildUserColumn(tableName, "name"),
 		FullNameSearch: buildUserColumn(tableName, "full_name_search"),
+		Username:       buildUserColumn(tableName, "username"),
 	}
 }
 
@@ -112,6 +114,7 @@ type userColumns struct {
 	DistanceUnit   userColumn
 	Name           userColumn
 	FullNameSearch userColumn
+	Username       userColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -163,10 +166,11 @@ type UserSetter struct {
 	WeightUnit   omit.Val[string]    `db:"weight_unit" `
 	DistanceUnit omit.Val[string]    `db:"distance_unit" `
 	Name         omit.Val[string]    `db:"name" `
+	Username     omit.Val[string]    `db:"username" `
 }
 
 func (s UserSetter) SetColumns() []string {
-	vals := make([]string, 0, 6)
+	vals := make([]string, 0, 7)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -184,6 +188,9 @@ func (s UserSetter) SetColumns() []string {
 	}
 	if s.Name.IsValue() {
 		vals = append(vals, "name")
+	}
+	if s.Username.IsValue() {
+		vals = append(vals, "username")
 	}
 	return vals
 }
@@ -206,6 +213,9 @@ func (s UserSetter) Overwrite(t *User) {
 	}
 	if s.Name.IsValue() {
 		t.Name = s.Name.MustGet()
+	}
+	if s.Username.IsValue() {
+		t.Username = s.Username.MustGet()
 	}
 }
 
@@ -245,6 +255,11 @@ func (s *UserSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.Name.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Username.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Username.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -253,7 +268,7 @@ func (s UserSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 6)
+	exprs := make([]bob.Expression, 0, 7)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -297,6 +312,13 @@ func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.Username.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "username")...),
+			psql.Arg(s.Username),
+		}})
+	}
+
 	return exprs
 }
 
@@ -307,7 +329,7 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 		idx int
 		dst func(o *User) any
 	}
-	targets := make([]target, 0, 7)
+	targets := make([]target, 0, 8)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -324,6 +346,8 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 			targets = append(targets, target{i, func(o *User) any { return &o.Name }})
 		case "full_name_search":
 			targets = append(targets, target{i, func(o *User) any { return &o.FullNameSearch }})
+		case "username":
+			targets = append(targets, target{i, func(o *User) any { return &o.Username }})
 		}
 	}
 
@@ -1327,6 +1351,7 @@ type userWhere[Q psql.Filterable] struct {
 	DistanceUnit   psql.WhereMod[Q, string]
 	Name           psql.WhereMod[Q, string]
 	FullNameSearch psql.WhereMod[Q, string]
+	Username       psql.WhereMod[Q, string]
 	R              userWhereR[Q]
 }
 
@@ -1344,6 +1369,7 @@ func buildUserWhere[Q psql.Filterable](cols userColumns) userWhere[Q] {
 		DistanceUnit:   psql.Where[Q, string](cols.DistanceUnit.Expression),
 		Name:           psql.Where[Q, string](cols.Name.Expression),
 		FullNameSearch: psql.Where[Q, string](cols.FullNameSearch.Expression),
+		Username:       psql.Where[Q, string](cols.Username.Expression),
 		R:              userWhereR[Q]{cols: cols},
 	}
 }
@@ -1484,6 +1510,7 @@ type userPreloadBuf struct {
 	DistanceUnit   null.Val[string]
 	Name           null.Val[string]
 	FullNameSearch null.Val[string]
+	Username       null.Val[string]
 }
 
 // userScanMapperNullable maps the preloaded user
@@ -1498,7 +1525,7 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 			idx int
 			dst func(b *userPreloadBuf) any
 		}
-		targets := make([]target, 0, 7)
+		targets := make([]target, 0, 8)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1519,6 +1546,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.Name }})
 			case "full_name_search":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FullNameSearch }})
+			case "username":
+				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.Username }})
 			}
 		}
 
@@ -1547,7 +1576,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 					!(buf.WeightUnit.IsValue()) &&
 					!(buf.DistanceUnit.IsValue()) &&
 					!(buf.Name.IsValue()) &&
-					!(buf.FullNameSearch.IsValue()) {
+					!(buf.FullNameSearch.IsValue()) &&
+					!(buf.Username.IsValue()) {
 					return nil, nil
 				}
 
@@ -1572,6 +1602,9 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				}
 				if buf.FullNameSearch.IsValue() {
 					o.FullNameSearch = buf.FullNameSearch.MustGet()
+				}
+				if buf.Username.IsValue() {
+					o.Username = buf.Username.MustGet()
 				}
 				return o, nil
 			}

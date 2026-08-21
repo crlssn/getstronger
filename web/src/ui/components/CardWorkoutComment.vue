@@ -26,7 +26,7 @@ const userInitials = computed(() => initials(props.user?.name) || 'GS')
     </RouterLink>
     <div class="comment-content">
       <div class="comment-meta">
-        <RouterLink :to="`/users/${user?.id}`">{{ user?.name }}</RouterLink>
+        <RouterLink :to="`/users/${user?.id}`">{{ user?.username }}</RouterLink>
         <time>{{ formatToRelativeDateTime(timestamp) }}</time>
       </div>
       <p>{{ comment }}</p>

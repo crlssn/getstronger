@@ -27,7 +27,8 @@ type UserOpt func(user *models.UserSetter)
 
 func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 	setter := &models.UserSetter{
-		Name: omit.From(f.Faker.Name()),
+		Name:     omit.From(f.Faker.Name()),
+		Username: omit.From(f.nextUsername()),
 	}
 	for _, opt := range opts {
 		opt(setter)
@@ -71,13 +72,16 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 // userSetterMods translates the values set through UserOpts into factory mods
 // so they override the defaults above.
 func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
-	const modCount = 5
+	const modCount = 6
 	mods := make([]bobfactory.UserMod, 0, modCount)
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.ID(value))
 	}
 	if value, ok := setter.Name.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.Name(value))
+	}
+	if value, ok := setter.Username.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.Username(value))
 	}
 	if value, ok := setter.CreatedAt.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.CreatedAt(value))
@@ -107,6 +111,12 @@ func UserAuthID(authID any) UserOpt {
 func UserName(name string) UserOpt {
 	return func(m *models.UserSetter) {
 		m.Name = omit.From(name)
+	}
+}
+
+func UserUsername(username string) UserOpt {
+	return func(m *models.UserSetter) {
+		m.Username = omit.From(username)
 	}
 }
 

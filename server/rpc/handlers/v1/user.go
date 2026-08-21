@@ -17,6 +17,7 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -149,6 +150,34 @@ func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[ap
 	return &connect.Response[apiv1.ListFollowersResponse]{
 		Msg: &apiv1.ListFollowersResponse{
 			Followers: parser.UserSlice(followers),
+		},
+	}, nil
+}
+
+func (h *userHandler) UpdateUserUsername(ctx context.Context, req *connect.Request[apiv1.UpdateUserUsernameRequest]) (*connect.Response[apiv1.UpdateUserUsernameResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if err := h.repo.UpdateUser(ctx, userID, repo.UpdateUserUsername(req.Msg.GetUsername())); err != nil {
+		if errors.Is(err, repo.ErrUserUsernameExists) {
+			log.Warn("Username already taken")
+			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
+		}
+
+		log.Error("Update user username", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(userID))
+	if err != nil {
+		log.Error("Get user after username update", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("Username updated")
+	return &connect.Response[apiv1.UpdateUserUsernameResponse]{
+		Msg: &apiv1.UpdateUserUsernameResponse{
+			User: parser.User(user),
 		},
 	}, nil
 }

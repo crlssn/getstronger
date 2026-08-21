@@ -49,6 +49,9 @@ const (
 	UserServiceListFolloweesProcedure = "/api.v1.UserService/ListFollowees"
 	// UserServiceSearchUsersProcedure is the fully-qualified name of the UserService's SearchUsers RPC.
 	UserServiceSearchUsersProcedure = "/api.v1.UserService/SearchUsers"
+	// UserServiceUpdateUserUsernameProcedure is the fully-qualified name of the UserService's
+	// UpdateUserUsername RPC.
+	UserServiceUpdateUserUsernameProcedure = "/api.v1.UserService/UpdateUserUsername"
 	// UserServiceUpdateUserWeightUnitProcedure is the fully-qualified name of the UserService's
 	// UpdateUserWeightUnit RPC.
 	UserServiceUpdateUserWeightUnitProcedure = "/api.v1.UserService/UpdateUserWeightUnit"
@@ -65,6 +68,7 @@ type UserServiceClient interface {
 	ListFollowers(context.Context, *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error)
 	ListFollowees(context.Context, *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error)
 	SearchUsers(context.Context, *connect.Request[v1.SearchUsersRequest]) (*connect.Response[v1.SearchUsersResponse], error)
+	UpdateUserUsername(context.Context, *connect.Request[v1.UpdateUserUsernameRequest]) (*connect.Response[v1.UpdateUserUsernameResponse], error)
 	UpdateUserWeightUnit(context.Context, *connect.Request[v1.UpdateUserWeightUnitRequest]) (*connect.Response[v1.UpdateUserWeightUnitResponse], error)
 	UpdateUserDistanceUnit(context.Context, *connect.Request[v1.UpdateUserDistanceUnitRequest]) (*connect.Response[v1.UpdateUserDistanceUnitResponse], error)
 }
@@ -116,6 +120,12 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("SearchUsers")),
 			connect.WithClientOptions(opts...),
 		),
+		updateUserUsername: connect.NewClient[v1.UpdateUserUsernameRequest, v1.UpdateUserUsernameResponse](
+			httpClient,
+			baseURL+UserServiceUpdateUserUsernameProcedure,
+			connect.WithSchema(userServiceMethods.ByName("UpdateUserUsername")),
+			connect.WithClientOptions(opts...),
+		),
 		updateUserWeightUnit: connect.NewClient[v1.UpdateUserWeightUnitRequest, v1.UpdateUserWeightUnitResponse](
 			httpClient,
 			baseURL+UserServiceUpdateUserWeightUnitProcedure,
@@ -139,6 +149,7 @@ type userServiceClient struct {
 	listFollowers          *connect.Client[v1.ListFollowersRequest, v1.ListFollowersResponse]
 	listFollowees          *connect.Client[v1.ListFolloweesRequest, v1.ListFolloweesResponse]
 	searchUsers            *connect.Client[v1.SearchUsersRequest, v1.SearchUsersResponse]
+	updateUserUsername     *connect.Client[v1.UpdateUserUsernameRequest, v1.UpdateUserUsernameResponse]
 	updateUserWeightUnit   *connect.Client[v1.UpdateUserWeightUnitRequest, v1.UpdateUserWeightUnitResponse]
 	updateUserDistanceUnit *connect.Client[v1.UpdateUserDistanceUnitRequest, v1.UpdateUserDistanceUnitResponse]
 }
@@ -173,6 +184,11 @@ func (c *userServiceClient) SearchUsers(ctx context.Context, req *connect.Reques
 	return c.searchUsers.CallUnary(ctx, req)
 }
 
+// UpdateUserUsername calls api.v1.UserService.UpdateUserUsername.
+func (c *userServiceClient) UpdateUserUsername(ctx context.Context, req *connect.Request[v1.UpdateUserUsernameRequest]) (*connect.Response[v1.UpdateUserUsernameResponse], error) {
+	return c.updateUserUsername.CallUnary(ctx, req)
+}
+
 // UpdateUserWeightUnit calls api.v1.UserService.UpdateUserWeightUnit.
 func (c *userServiceClient) UpdateUserWeightUnit(ctx context.Context, req *connect.Request[v1.UpdateUserWeightUnitRequest]) (*connect.Response[v1.UpdateUserWeightUnitResponse], error) {
 	return c.updateUserWeightUnit.CallUnary(ctx, req)
@@ -191,6 +207,7 @@ type UserServiceHandler interface {
 	ListFollowers(context.Context, *connect.Request[v1.ListFollowersRequest]) (*connect.Response[v1.ListFollowersResponse], error)
 	ListFollowees(context.Context, *connect.Request[v1.ListFolloweesRequest]) (*connect.Response[v1.ListFolloweesResponse], error)
 	SearchUsers(context.Context, *connect.Request[v1.SearchUsersRequest]) (*connect.Response[v1.SearchUsersResponse], error)
+	UpdateUserUsername(context.Context, *connect.Request[v1.UpdateUserUsernameRequest]) (*connect.Response[v1.UpdateUserUsernameResponse], error)
 	UpdateUserWeightUnit(context.Context, *connect.Request[v1.UpdateUserWeightUnitRequest]) (*connect.Response[v1.UpdateUserWeightUnitResponse], error)
 	UpdateUserDistanceUnit(context.Context, *connect.Request[v1.UpdateUserDistanceUnitRequest]) (*connect.Response[v1.UpdateUserDistanceUnitResponse], error)
 }
@@ -238,6 +255,12 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("SearchUsers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceUpdateUserUsernameHandler := connect.NewUnaryHandler(
+		UserServiceUpdateUserUsernameProcedure,
+		svc.UpdateUserUsername,
+		connect.WithSchema(userServiceMethods.ByName("UpdateUserUsername")),
+		connect.WithHandlerOptions(opts...),
+	)
 	userServiceUpdateUserWeightUnitHandler := connect.NewUnaryHandler(
 		UserServiceUpdateUserWeightUnitProcedure,
 		svc.UpdateUserWeightUnit,
@@ -264,6 +287,8 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceListFolloweesHandler.ServeHTTP(w, r)
 		case UserServiceSearchUsersProcedure:
 			userServiceSearchUsersHandler.ServeHTTP(w, r)
+		case UserServiceUpdateUserUsernameProcedure:
+			userServiceUpdateUserUsernameHandler.ServeHTTP(w, r)
 		case UserServiceUpdateUserWeightUnitProcedure:
 			userServiceUpdateUserWeightUnitHandler.ServeHTTP(w, r)
 		case UserServiceUpdateUserDistanceUnitProcedure:
@@ -299,6 +324,10 @@ func (UnimplementedUserServiceHandler) ListFollowees(context.Context, *connect.R
 
 func (UnimplementedUserServiceHandler) SearchUsers(context.Context, *connect.Request[v1.SearchUsersRequest]) (*connect.Response[v1.SearchUsersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.UserService.SearchUsers is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) UpdateUserUsername(context.Context, *connect.Request[v1.UpdateUserUsernameRequest]) (*connect.Response[v1.UpdateUserUsernameResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.UserService.UpdateUserUsername is not implemented"))
 }
 
 func (UnimplementedUserServiceHandler) UpdateUserWeightUnit(context.Context, *connect.Request[v1.UpdateUserWeightUnitRequest]) (*connect.Response[v1.UpdateUserWeightUnitResponse], error) {

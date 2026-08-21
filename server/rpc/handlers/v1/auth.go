@@ -82,6 +82,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		user, err := tx.CreateUser(ctx, repo.CreateUserParams{
 			AuthID:       auth.ID.String(),
 			Name:         strings.TrimSpace(req.Msg.GetName()),
+			Username:     req.Msg.GetUsername(),
 			WeightUnit:   parser.WeightUnitFromProto(req.Msg.GetWeightUnit()),
 			DistanceUnit: parser.DistanceUnitFromProto(req.Msg.GetDistanceUnit()),
 		})
@@ -104,6 +105,11 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 		return nil
 	}); err != nil {
+		if errors.Is(err, repo.ErrUserUsernameExists) {
+			log.Warn("Username already taken")
+			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
+		}
+
 		log.Error("Sign up user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

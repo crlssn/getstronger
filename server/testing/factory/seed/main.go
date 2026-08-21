@@ -63,8 +63,10 @@ func main() {
 	email := flag.String("email", defaultActiveEmail, "the active persona's email")
 	password := flag.String("password", defaultSeedPassword, "the seed personas' shared password")
 	name := flag.String("name", "Alex Morgan", "the active persona's name")
+	username := flag.String("username", "alex", "the active persona's username")
 	newEmail := flag.String("new-email", defaultNewEmail, "the newly signed-up persona's email")
 	newName := flag.String("new-name", "Sam Taylor", "the newly signed-up persona's name")
+	newUsername := flag.String("new-username", "sam", "the newly signed-up persona's username")
 	flag.Parse()
 
 	if err = truncateDatabase(context.Background(), database); err != nil {
@@ -78,11 +80,13 @@ func main() {
 			Email:    *email,
 			Password: *password,
 			Name:     *name,
+			Username: *username,
 		},
 		new: factory.SeedUser{
 			Email:    *newEmail,
 			Password: *password,
 			Name:     *newName,
+			Username: *newUsername,
 		},
 	})
 	log.Printf("seeded active persona %s (%s) and new persona %s (%s)", active.FullNameSearch, *email, newlySignedUp.FullNameSearch, *newEmail)
@@ -121,6 +125,7 @@ func seedPersonas(database *sql.DB, f *factory.Factory, config personaConfig) (*
 	newlySignedUp := f.NewUser(
 		factory.UserAuthID(newAuth.ID),
 		factory.UserName(config.new.Name),
+		factory.UserUsername(config.new.Username),
 	)
 
 	jane := seedJaneDoe(database, f, active)
@@ -155,6 +160,7 @@ END $$;`
 func seedJaneDoe(database *sql.DB, f *factory.Factory, active *models.User) *models.User {
 	jane := f.NewUser(
 		factory.UserName("Jane Doe"),
+		factory.UserUsername("janedoe"),
 		factory.UserWeightUnit(weightunit.Pounds),
 	)
 	insertFollow(database, active, jane)

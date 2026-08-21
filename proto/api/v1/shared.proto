@@ -79,6 +79,7 @@ message User {
 
   string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 8 [(buf.validate.field).string.min_len = 1];
+  string username = 9;
   string email = 4;
   bool followed = 5;
   WeightUnit weight_unit = 6 [(buf.validate.field).enum.defined_only = true];

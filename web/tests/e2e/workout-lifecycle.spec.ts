@@ -571,7 +571,7 @@ test.describe('planned workouts and history', () => {
     ).trim()
     await history.getByRole('link').first().click()
     await expect(page.getByRole('heading', { name: firstWorkoutName, exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Alex Morgan', exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'alex', exact: true }).first()).toBeVisible()
     await expect(page.getByText('Completed workout', { exact: true })).toBeVisible()
   })
 })

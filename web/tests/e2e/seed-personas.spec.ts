@@ -10,6 +10,7 @@ test.describe('seed personas', () => {
     await expect(page.getByRole('heading', { name: 'Create your first routine' })).toBeVisible()
     await page.goto('/profile')
     await expect(page.getByRole('heading', { name: 'Sam Taylor' })).toBeVisible()
+    await expect(page.getByText('@sam', { exact: true })).toBeVisible()
     await expect(page.getByLabel('Training summary')).toContainText('0workouts')
 
     await page.goto('/logout')

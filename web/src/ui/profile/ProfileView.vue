@@ -5,10 +5,17 @@ import {
   BellIcon,
   ChartBarIcon,
   ChevronRightIcon,
+  PencilSquareIcon,
   UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 
-import { getCurrentUser, updateUserDistanceUnit, updateUserWeightUnit } from '@/http/requests'
+import {
+  getCurrentUser,
+  updateUserDistanceUnit,
+  updateUserUsername,
+  updateUserWeightUnit,
+} from '@/http/requests'
+import AppSheet from '@/ui/components/AppSheet.vue'
 import AppSkeleton from '@/ui/components/AppSkeleton.vue'
 import { useAlertStore } from '@/stores/alerts'
 import { useAuthStore } from '@/stores/auth'
@@ -93,6 +100,31 @@ const setDistanceUnit = async (unit: DistanceUnit) => {
 }
 
 const userInitials = computed(() => initials(user.value?.name))
+
+const editingUsername = ref(false)
+const usernameDraft = ref('')
+const savingUsername = ref(false)
+
+const openUsernameEditor = () => {
+  usernameDraft.value = user.value?.username ?? ''
+  editingUsername.value = true
+}
+
+const saveUsername = async () => {
+  if (!user.value || savingUsername.value) return
+
+  savingUsername.value = true
+  const res = await updateUserUsername(usernameDraft.value)
+  savingUsername.value = false
+
+  // Failures — including a taken username — surface through the request
+  // helper's alert, so the sheet stays open for the draft to be corrected.
+  if (!res) return
+
+  user.value.username = res.user?.username ?? usernameDraft.value
+  editingUsername.value = false
+  alertStore.setSuccess(t('profile.usernameUpdated'))
+}
 const recentWorkoutCount = computed(() => dashboardStore.dashboard?.recentWorkouts.length ?? 0)
 const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volumeThisWeek ?? 0))
 </script>
@@ -111,6 +143,16 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
       <div class="min-w-0">
         <p class="eyebrow">{{ $t('profile.account') }}</p>
         <h2>{{ user.name }}</h2>
+        <p class="username-line">
+          <span class="truncate">@{{ user.username }}</span>
+          <button
+            type="button"
+            :aria-label="$t('profile.editUsername')"
+            @click="openUsernameEditor"
+          >
+            <PencilSquareIcon />
+          </button>
+        </p>
         <p>{{ user.email }}</p>
       </div>
       <RouterLink
@@ -214,6 +256,38 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
     <RouterLink to="/logout" class="logout-link"
       ><ArrowRightOnRectangleIcon /> {{ $t('auth.logout') }}</RouterLink
     >
+
+    <AppSheet
+      v-if="editingUsername"
+      :title="$t('profile.editUsername')"
+      :close-label="$t('common.close')"
+      @close="editingUsername = false"
+    >
+      <form id="username-form" @submit.prevent="saveUsername">
+        <label for="edit-username" class="auth-label">{{ $t('auth.username') }}</label>
+        <p class="mt-1 text-sm text-text-subtle">{{ $t('auth.usernameHelp') }}</p>
+        <input
+          id="edit-username"
+          v-model="usernameDraft"
+          name="username"
+          type="text"
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          class="auth-input mt-2"
+          minlength="3"
+          maxlength="30"
+          pattern="[A-Za-z0-9._]+"
+          required
+          @input="usernameDraft = usernameDraft.toLowerCase()"
+        />
+      </form>
+      <template #actions>
+        <button type="submit" form="username-form" class="primary" :disabled="savingUsername">
+          {{ $t('common.save') }}
+        </button>
+      </template>
+    </AppSheet>
   </div>
 </template>
 
@@ -240,6 +314,17 @@ const weeklyVolume = computed(() => formatNumber(dashboardStore.dashboard?.volum
 }
 .profile-card p:last-child {
   @apply mt-1 truncate text-sm text-text-subtle;
+}
+/* The pencil is a full-size tap target, so the row's text centers against it
+   with negative margins instead of growing the card. */
+.username-line {
+  @apply -my-2 flex items-center gap-0.5 text-sm text-text-muted;
+}
+.username-line button {
+  @apply grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
+}
+.username-line button svg {
+  @apply size-4;
 }
 .notification-link {
   @apply relative grid size-14 place-items-center rounded-control text-text-muted transition hover:bg-ink-tint hover:text-text;

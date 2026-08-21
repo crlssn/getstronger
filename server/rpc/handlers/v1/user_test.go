@@ -13,6 +13,7 @@ import (
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/rpc"
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -47,6 +48,39 @@ func (s *userSuite) SetupSuite() {
 		if err := s.container.Terminate(ctx); err != nil {
 			log.Fatalf("Clean container: %s", err)
 		}
+	})
+}
+
+func (s *userSuite) TestUpdateUserUsername() {
+	s.Run("ok_username_updated_and_lowercased", func() {
+		user := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		res, err := s.handler.UpdateUserUsername(ctx, &connect.Request[v1.UpdateUserUsernameRequest]{
+			Msg: &v1.UpdateUserUsernameRequest{Username: "Fresh.Handle"},
+		})
+		s.Require().NoError(err)
+		s.Require().Equal("fresh.handle", res.Msg.GetUser().GetUsername())
+
+		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+		s.Require().NoError(err)
+		s.Require().Equal("fresh.handle", persisted.Username)
+	})
+
+	s.Run("err_username_taken_case_insensitively", func() {
+		s.factory.NewUser(factory.UserUsername("held.handle"))
+		user := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		res, err := s.handler.UpdateUserUsername(ctx, &connect.Request[v1.UpdateUserUsernameRequest]{
+			Msg: &v1.UpdateUserUsernameRequest{Username: "Held.Handle"},
+		})
+		s.Require().Nil(res)
+		s.Require().Error(err)
+		expected := rpc.Error(connect.CodeAlreadyExists, v1.Error_ERROR_USERNAME_TAKEN)
+		s.Require().Equal(expected.Error(), err.Error())
 	})
 }
 

@@ -78,6 +78,15 @@ var Users = Table[
 			Generated: true,
 			AutoIncr:  false,
 		},
+		Username: column{
+			Name:      "username",
+			DBType:    "character varying",
+			Default:   "",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: userIndexes{
 		UsersPkey: index{
@@ -108,6 +117,23 @@ var Users = Table[
 				},
 			},
 			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
+		IdxUsersUsernameLower: index{
+			Type: "btree",
+			Name: "idx_users_username_lower",
+			Columns: []indexColumn{
+				{
+					Name:         "lower(username::text)",
+					Desc:         null.FromCond(false, true),
+					IsExpression: true,
+				},
+			},
+			Unique:        true,
 			Comment:       "",
 			NullsFirst:    []bool{false},
 			NullsDistinct: false,
@@ -184,23 +210,25 @@ type userColumns struct {
 	DistanceUnit   column
 	Name           column
 	FullNameSearch column
+	Username       column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch,
+		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username,
 	}
 }
 
 type userIndexes struct {
 	UsersPkey              index
 	IdxUsersFullNameSearch index
+	IdxUsersUsernameLower  index
 	UsersAuthIDKey         index
 }
 
 func (i userIndexes) AsSlice() []index {
 	return []index{
-		i.UsersPkey, i.IdxUsersFullNameSearch, i.UsersAuthIDKey,
+		i.UsersPkey, i.IdxUsersFullNameSearch, i.IdxUsersUsernameLower, i.UsersAuthIDKey,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -86,6 +87,7 @@ func (s *Saga) Signup(ctx context.Context, f func(*connect.Response[apiv1.Signup
 			Password:             s.auth.password,
 			PasswordConfirmation: s.auth.password,
 			Name:                 gofakeit.Name(),
+			Username:             fmt.Sprintf("%s%d", strings.ToLower(gofakeit.Username()), gofakeit.Number(0, 999999)), //nolint:mnd
 		},
 	}))
 
