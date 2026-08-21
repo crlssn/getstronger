@@ -91,7 +91,10 @@ const onDeleteWorkout = async () => {
   const response = await deleteWorkout(props.workout.id)
   if (!response) return
 
-  alertStore.setErrorWithoutPageRefresh(t('workout.card.deleted'))
+  // The feed card stays put, but the full view navigates home, so its alert
+  // must survive that one route change.
+  if (props.compact) alertStore.setSuccessWithoutPageRefresh(t('workout.card.deleted'))
+  else alertStore.setSuccess(t('workout.card.deleted'))
   workoutDeleted.value = true
   if (!props.compact) await router.push('/home')
 }

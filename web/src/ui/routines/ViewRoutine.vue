@@ -102,8 +102,13 @@ const onDeleteRoutine = async () => {
   })
   if (!confirmed) return
 
-  await deleteRoutine(routine.value.id)
-  alertStore.setError(t('routine.deleted'))
+  const response = await deleteRoutine(routine.value.id)
+  if (!response) {
+    alertStore.setErrorWithoutPageRefresh(t('routine.deleteFailed'))
+    return
+  }
+
+  alertStore.setSuccess(t('routine.deleted'))
   await router.push('/routines')
 }
 </script>
