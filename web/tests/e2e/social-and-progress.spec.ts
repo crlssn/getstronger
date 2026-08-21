@@ -40,8 +40,23 @@ test.describe('social feed and discovery', () => {
     await expect(page.getByRole('navigation', { name: 'Profile sections' })).toBeVisible()
   })
 
+  // The feed card carries the whole summary: who trained, when, the three
+  // headline numbers, and what the session has drawn in comments.
+  test('summarises a seeded workout on its feed card @smoke', async ({ page }) => {
+    const card = page.getByRole('article').filter({ hasText: '@janedoe' }).first()
+    await expect(card).toBeVisible()
+
+    // The seed finishes these workouts today, so the card names the day.
+    await expect(card.getByText(/Today · \d{2}:\d{2}/)).toBeVisible()
+    for (const label of ['Volume', 'Time', 'Sets']) {
+      await expect(card.getByText(label, { exact: true })).toBeVisible()
+    }
+    await expect(card.getByText(/\d+ comments?/)).toBeAttached()
+    await expect(card.getByText('Completed workout')).toHaveCount(0)
+  })
+
   test('opens a feed workout and posts a comment @mutation', async ({ page }) => {
-    const card = page.getByRole('article').filter({ hasText: 'Jane Doe' }).first()
+    const card = page.getByRole('article').filter({ hasText: '@janedoe' }).first()
     await expect(card).toBeVisible()
     await card.getByRole('link', { name: /View .* workout details/ }).click()
 

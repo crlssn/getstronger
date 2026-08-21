@@ -4,22 +4,23 @@
   @apply mx-auto max-w-4xl space-y-5;
 }
 
-.summaryCard,
 .detailSection,
 .commentsCard {
   @apply card;
 }
 
+/* The accent rail down the left edge is the card's whole status vocabulary: an
+   ordinary session in ink, a record-setting one in gold. */
 .summaryCard {
-  @apply overflow-hidden;
+  @apply card overflow-hidden border-l-4 border-l-ink-muted p-4 sm:p-5;
 }
 
 .authorRow {
-  @apply flex items-center gap-3 border-b border-border p-4 sm:p-5;
+  @apply flex items-center gap-3;
 }
 
 .avatar {
-  @apply grid size-12 shrink-0 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-ink-strong;
+  @apply grid size-11 shrink-0 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-ink-strong;
 }
 
 .authorCopy {
@@ -32,72 +33,59 @@
   @apply -my-3 block truncate py-3 text-sm font-semibold text-text hover:text-ink-strong;
 }
 
+/* One line: a date that wraps pushes the row taller than the avatar beside it. */
 .authorCopy p {
-  @apply mt-1 flex items-center gap-1.5 text-xs text-text-subtle;
+  @apply flex items-center gap-1.5 truncate whitespace-nowrap text-xs text-text-subtle;
 }
 
 .authorCopy svg {
   @apply size-4;
 }
 
-.workoutHeading {
-  @apply bg-surface-inverse px-5 py-6 text-white sm:px-6;
+.workoutTitle {
+  @apply mt-3.5 text-title font-bold text-text;
 }
 
 .eyebrow {
   @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 
-.workoutHeading .eyebrow {
-  @apply text-ink-tint;
-}
-
-.workoutHeading h2 {
-  @apply mt-1 text-title font-semibold;
-}
-
-.workoutHeadingCopy {
-  @apply flex items-start justify-between gap-4;
-}
-
+/* The gold fill is the record family's dark step, not its mid one: white on
+   --color-record reads 3.7:1 and misses AA. */
 .personalBestBadge {
-  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-record-strong bg-record px-2.5 py-1 text-xs font-semibold text-white shadow-card;
+  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full bg-record-strong px-2.5 py-1 text-xs font-semibold text-white shadow-card;
 }
 
 .personalBestBadge svg {
   @apply size-4;
 }
 
-.metricGrid {
-  @apply grid grid-cols-2 gap-px bg-ink-tint sm:grid-cols-4;
+.metricRow {
+  @apply mt-3 flex items-center justify-between gap-3;
 }
 
-.metricGrid article {
-  @apply flex items-center gap-3 bg-white p-4;
+.metricRow article {
+  @apply flex min-w-0 items-center gap-2;
 }
 
 .metricIcon {
-  @apply grid size-10 shrink-0 place-items-center rounded-control bg-ink-tint text-ink-strong;
-}
-
-.metricIcon.amber {
-  @apply bg-record-surface text-record;
+  @apply grid size-8 shrink-0 place-items-center rounded-control bg-ink-tint text-ink-strong;
 }
 
 .metricIcon svg {
-  @apply size-5;
+  @apply size-4;
 }
 
-.metricGrid small,
-.metricGrid strong {
-  @apply block;
+.metricRow small,
+.metricRow strong {
+  @apply block truncate;
 }
 
-.metricGrid small {
+.metricRow small {
   @apply text-xs text-text-subtle;
 }
 
-.metricGrid strong {
+.metricRow strong {
   @apply mt-0.5 text-sm font-semibold text-text;
 }
 
@@ -123,15 +111,28 @@
 }
 
 .summaryNote {
-  @apply border-t border-border bg-white px-5 py-4 sm:px-6;
+  @apply mt-3 border-t border-border pt-3;
 }
 
 .summaryNote > p:last-child {
-  @apply mt-2 whitespace-pre-wrap text-sm leading-6 text-text-muted;
+  @apply mt-1.5 whitespace-pre-wrap text-sm leading-6 text-text-muted;
 }
 
 .summaryNoteCompact > p:last-child {
   @apply line-clamp-2;
+}
+
+/* The engagement strip: what the card has drawn, under a hairline. */
+.cardFooter {
+  @apply mt-3 flex items-center gap-4 border-t border-border pt-2.5 text-meta text-text-muted;
+}
+
+.footerStat {
+  @apply flex items-center gap-1.5;
+}
+
+.cardFooter svg {
+  @apply size-4;
 }
 
 .commentList {
@@ -167,40 +168,11 @@
 }
 
 .feedSummaryCard {
-  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-raised;
-}
-
-.feedSummaryCard .workoutHeading {
-  @apply border-y border-border bg-ink-surface text-text;
-  background-image: none;
-  box-shadow: inset 4px 0 0 var(--color-ink-muted);
-}
-
-.feedSummaryCard .workoutHeading .eyebrow {
-  @apply text-ink;
+  @apply relative mb-4 transition hover:-translate-y-0.5 hover:shadow-raised;
 }
 
 .summaryCard.hasPersonalBest {
-  @apply border-record-border shadow-raised;
-}
-
-.feedSummaryCard.hasPersonalBest .workoutHeading {
-  @apply border-record-border bg-record-surface;
-  box-shadow: inset 4px 0 0 var(--color-record);
-}
-
-.detailSummaryCard.hasPersonalBest .workoutHeading {
-  @apply border-y border-record-border bg-record-surface text-text;
-  background-image: none;
-  box-shadow: inset 4px 0 0 var(--color-record);
-}
-
-.summaryCard.hasPersonalBest .workoutHeading .eyebrow {
-  @apply text-record-strong;
-}
-
-.summaryCard.hasPersonalBest .metricIcon.amber {
-  @apply bg-record-surface text-record-strong;
+  @apply border-record-border border-l-record shadow-raised;
 }
 
 /* The whole feed card is one link, with the controls sitting above it so a tap
@@ -218,14 +190,9 @@
   @apply pointer-events-auto;
 }
 
-@media (max-width: 520px) {
-  .metricGrid article {
-    @apply gap-2 p-3;
-  }
+/* Three metrics across a phone leave no room for a tile beside each label. */
+@media (max-width: 380px) {
   .metricIcon {
-    @apply size-9;
-  }
-  .workoutHeading {
-    @apply px-5 py-6;
+    @apply hidden;
   }
 }

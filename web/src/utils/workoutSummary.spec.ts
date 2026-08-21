@@ -2,6 +2,7 @@ import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
+import { DateTime } from 'luxon'
 import { describe, expect, test } from 'vitest'
 
 import { WorkoutSchema } from '@/proto/api/v1/workout_service_pb'
@@ -62,12 +63,59 @@ describe('workoutSummary', () => {
     const summary = workoutSummary(workout({ startedAt: at('2026-08-14T10:00:00Z') }))
 
     expect(summary.durationMinutes).toBe(0)
-    expect(summary.finishedDate).toBe('')
+    expect(summary.finishedDay).toBe('')
+    expect(summary.finishedDayKey).toBeUndefined()
+    expect(summary.finishedTime).toBe('')
   })
 
-  test('spells out the day it finished', () => {
+  test('spells out the day it finished, and the clock time', () => {
+    const summary = workoutSummary(
+      workout({ finishedAt: at('2026-08-14T09:30:00Z') }),
+      DateTime.fromISO('2026-08-20T12:00:00Z'),
+    )
+
+    expect(summary.finishedDay).toBe('14 August')
+    expect(summary.finishedDayKey).toBeUndefined()
+    expect(summary.finishedTime).toMatch(/^\d{2}:\d{2}$/)
+  })
+
+  test('keeps the year on a workout from a year gone by', () => {
     expect(
-      workoutSummary(workout({ finishedAt: at('2026-08-14T09:30:00Z') })).finishedDate,
-    ).toMatch(/^Friday, 14 August · \d{2}:\d{2}$/)
+      workoutSummary(
+        workout({ finishedAt: at('2025-08-14T09:30:00Z') }),
+        DateTime.fromISO('2026-08-20T12:00:00Z'),
+      ).finishedDay,
+    ).toBe('14 August 2025')
+  })
+
+  test.each([
+    ['today', '2026-08-20T06:00:00Z', 'activity.today'],
+    ['yesterday', '2026-08-19T06:00:00Z', 'activity.yesterday'],
+  ])('names the day a workout finished %s', (_label, finishedAt, key) => {
+    expect(
+      workoutSummary(
+        workout({ finishedAt: at(finishedAt) }),
+        DateTime.fromISO('2026-08-20T12:00:00Z'),
+      ).finishedDayKey,
+    ).toBe(key)
+  })
+
+  // Clock skew puts a finish time slightly in the future; that is still today.
+  test('reads a finish time in the near future as today', () => {
+    expect(
+      workoutSummary(
+        workout({ finishedAt: at('2026-08-20T14:00:00Z') }),
+        DateTime.fromISO('2026-08-20T12:00:00Z'),
+      ).finishedDayKey,
+    ).toBe('activity.today')
+  })
+
+  test('has no name for the day two days ago', () => {
+    expect(
+      workoutSummary(
+        workout({ finishedAt: at('2026-08-18T06:00:00Z') }),
+        DateTime.fromISO('2026-08-20T12:00:00Z'),
+      ).finishedDayKey,
+    ).toBeUndefined()
   })
 })

@@ -104,7 +104,7 @@ test.describe('authenticated journeys', () => {
     await finishDialog.getByRole('button', { name: 'Finish and save' }).click()
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
-    await expect(page.getByText('Completed workout', { exact: true })).toBeVisible()
+    await expect(page.getByText('Volume', { exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Quick workout', exact: true })).toBeVisible()
     await expect(page.getByText('Completed by the E2E suite.')).toBeVisible()
     await expect(page.getByText(exerciseName, { exact: true })).toBeVisible()

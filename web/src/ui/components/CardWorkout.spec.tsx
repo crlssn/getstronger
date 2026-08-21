@@ -3,6 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
+import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
@@ -38,7 +39,11 @@ type WorkoutInit = MessageInitShape<typeof WorkoutSchema>
 
 // Spelled out rather than spread over a base: `create` also accepts a built
 // Workout, and a spread of two partial inits matches that overload instead.
-const workout = ({ exerciseSets, comments }: Pick<WorkoutInit, 'exerciseSets' | 'comments'> = {}) =>
+const workout = ({
+  exerciseSets,
+  comments,
+  finishedAt,
+}: Pick<WorkoutInit, 'exerciseSets' | 'comments' | 'finishedAt'> = {}) =>
   create(WorkoutSchema, {
     id: 'workout-1',
     name: 'Push Day',
@@ -46,6 +51,7 @@ const workout = ({ exerciseSets, comments }: Pick<WorkoutInit, 'exerciseSets' | 
     user: { id: ownerId, name: 'Alice Lifter', username: 'alice' },
     exerciseSets,
     comments,
+    finishedAt,
   })
 
 const withSets = () =>
@@ -110,13 +116,41 @@ describe('CardWorkout', () => {
     test('flags a session that set a personal best', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
-      expect(screen.getByText('New PR')).toBeInTheDocument()
+      expect(screen.getByText('1 PR')).toBeInTheDocument()
     })
 
     test('says nothing about records when there were none', () => {
       render(<CardWorkout compact workout={workout()} />)
 
       expect(screen.queryByText(/\bPRs?\b/)).not.toBeInTheDocument()
+    })
+
+    // A feed of finished workouts does not need every card to say so.
+    test('does not label the workout as completed', () => {
+      render(<CardWorkout compact workout={withSets()} />)
+
+      expect(screen.queryByText('Completed workout')).not.toBeInTheDocument()
+    })
+
+    test('names the day rather than dating a workout finished today', () => {
+      render(
+        <CardWorkout compact workout={workout({ finishedAt: timestampFromDate(new Date()) })} />,
+      )
+
+      expect(screen.getByText(/^Today ·/)).toBeInTheDocument()
+    })
+
+    test('says how many comments the workout has drawn', () => {
+      render(
+        <CardWorkout
+          compact
+          workout={workout({
+            comments: [{ id: 'c1', comment: 'Nice one', user: { id: 'u2', username: 'bo' } }],
+          })}
+        />,
+      )
+
+      expect(screen.getByText('1 comment')).toBeInTheDocument()
     })
 
     // The feed card stays where it is, so its alert is shown on the spot rather

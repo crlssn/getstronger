@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 
 import {
   CalendarDaysIcon,
+  ChatBubbleOvalLeftIcon,
   ClockIcon,
   FireIcon,
   RectangleStackIcon,
@@ -52,8 +53,19 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   const [commentInput, setCommentInput] = useState('')
   const [postingComment, setPostingComment] = useState(false)
 
-  const { setCount, personalBestCount, durationMinutes, finishedDate } = workoutSummary(workout)
+  const {
+    setCount,
+    personalBestCount,
+    durationMinutes,
+    finishedDay,
+    finishedDayKey,
+    finishedTime,
+  } = workoutSummary(workout)
   const isOwner = workout.user?.id === userId
+
+  const finishedLabel = finishedTime
+    ? `${finishedDayKey ? t(finishedDayKey) : finishedDay} · ${finishedTime}`
+    : ''
 
   const onDeleteWorkout = async () => {
     const confirmed = await useConfirmationStore.getState().confirm({
@@ -101,6 +113,13 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
   if (deleted) return null
 
+  const personalBestBadge = personalBestCount > 0 && (
+    <span className={styles.personalBestBadge}>
+      <TrophyIcon aria-hidden="true" />
+      {t('workout.card.prBadge', { count: personalBestCount })}
+    </span>
+  )
+
   const authorRow = (
     <header className={cn(styles.authorRow, compact && styles.feedCardControl)}>
       <Link to={`/users/${workout.user?.id}`} className={styles.avatar}>
@@ -110,25 +129,17 @@ export const CardWorkout = ({ workout, compact }: Props) => {
       <div className={styles.authorCopy}>
         <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
         <p>
-          <span className="truncate">{workout.user?.name}</span>
-          <span aria-hidden="true">·</span>
-          <CalendarDaysIcon aria-hidden="true" /> {finishedDate}
+          <CalendarDaysIcon aria-hidden="true" /> {finishedLabel}
         </p>
       </div>
+      {personalBestBadge}
       {isOwner && <DropdownButton items={dropdownItems} />}
     </header>
   )
 
-  const personalBestBadge = personalBestCount > 0 && (
-    <span className={styles.personalBestBadge}>
-      <TrophyIcon aria-hidden="true" />
-      {t('workout.card.prBadge', { count: personalBestCount })}
-    </span>
-  )
-
-  const metric = (icon: ReactNode, label: string, value: string, amber = false) => (
+  const metric = (icon: ReactNode, label: string, value: string) => (
     <article>
-      <span className={cn(styles.metricIcon, amber && styles.amber)}>{icon}</span>
+      <span className={styles.metricIcon}>{icon}</span>
       <div>
         <small>{label}</small>
         <strong>{value}</strong>
@@ -136,25 +147,21 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     </article>
   )
 
-  const metricGrid = (
-    <div className={styles.metricGrid}>
+  // Records are the badge's job, so the row keeps the three numbers that every
+  // session has.
+  const metricRow = (
+    <div className={styles.metricRow}>
       {metric(
         <FireIcon aria-hidden="true" />,
-        t('workout.totalVolume'),
+        t('common.volume'),
         `${formatNumber(workout.intensity)} ${t('common.kg')}`,
       )}
       {metric(
         <ClockIcon aria-hidden="true" />,
-        t('common.duration'),
+        t('common.time'),
         `${durationMinutes} ${t('common.min')}`,
       )}
-      {metric(<RectangleStackIcon aria-hidden="true" />, t('workout.setsLogged'), `${setCount}`)}
-      {metric(
-        <TrophyIcon aria-hidden="true" />,
-        t('workout.personalRecords'),
-        `${personalBestCount}`,
-        personalBestCount > 0,
-      )}
+      {metric(<RectangleStackIcon aria-hidden="true" />, t('common.sets'), `${setCount}`)}
     </div>
   )
 
@@ -182,18 +189,20 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
         {authorRow}
 
-        <div className={styles.workoutHeading}>
-          <div className={styles.workoutHeadingCopy}>
-            <div>
-              <p className={styles.eyebrow}>{t('workout.completed')}</p>
-              <h2>{workout.name}</h2>
-            </div>
-            {personalBestBadge}
-          </div>
-        </div>
+        <h2 className={styles.workoutTitle}>{workout.name}</h2>
 
-        {metricGrid}
+        {metricRow}
         {note}
+
+        <footer className={styles.cardFooter}>
+          <span className={styles.footerStat}>
+            <ChatBubbleOvalLeftIcon aria-hidden="true" />
+            <span aria-hidden="true">{comments.length}</span>
+            <span className="sr-only">
+              {t('workout.card.commentCount', { count: comments.length })}
+            </span>
+          </span>
+        </footer>
       </article>
     )
   }
@@ -204,25 +213,11 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
   return (
     <div className={styles.workoutDetail}>
-      <section
-        className={cn(
-          styles.summaryCard,
-          styles.detailSummaryCard,
-          personalBestCount > 0 && styles.hasPersonalBest,
-        )}
-      >
+      <section className={cn(styles.summaryCard, personalBestCount > 0 && styles.hasPersonalBest)}>
+        {/* No title: the nav bar above already carries this workout's name. */}
         {authorRow}
 
-        <div className={styles.workoutHeading}>
-          <div className={styles.workoutHeadingCopy}>
-            {/* The nav bar above already carries this workout's name. The
-                eyebrow stays because it says what the title does not. */}
-            <p className={styles.eyebrow}>{t('workout.completed')}</p>
-            {personalBestBadge}
-          </div>
-        </div>
-
-        {metricGrid}
+        {metricRow}
         {note}
       </section>
 
