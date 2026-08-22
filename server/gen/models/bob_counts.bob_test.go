@@ -132,6 +132,51 @@ func TestPlanPreloadCountMethod(t *testing.T) {
 	_ = m.PreloadCount("PlanRoutines", 0)
 }
 
+// Test that RoutineGroup has a C field with count pointers for to-many relationships
+func TestRoutineGroupCountStruct(t *testing.T) {
+	var m RoutineGroup
+	_ = m.C // Verify C field exists
+
+	// Verify GroupExercisesRoutines count field exists and is *int64
+	var _ *int64 = m.C.GroupExercisesRoutines
+}
+
+// Test that RoutineGroup has LoadCount methods for to-many relationships
+func TestRoutineGroupLoadCountMethods(t *testing.T) {
+	var m *RoutineGroup
+	var ms RoutineGroupSlice
+	ctx := context.Background()
+
+	// Verify LoadCountGroupExercisesRoutines method exists on single model
+	_ = m.LoadCountGroupExercisesRoutines(ctx, nil)
+
+	// Verify LoadCountGroupExercisesRoutines method exists on slice
+	_ = ms.LoadCountGroupExercisesRoutines(ctx, nil)
+}
+
+// Test that SelectThenLoadCount has RoutineGroup with methods for to-many relationships
+func TestSelectThenLoadCountRoutineGroup(t *testing.T) {
+	_ = SelectThenLoadCount.RoutineGroup
+
+	// Verify GroupExercisesRoutines loader exists
+	_ = SelectThenLoadCount.RoutineGroup.GroupExercisesRoutines
+}
+
+// Test that PreloadCount has RoutineGroup with methods for to-many relationships
+func TestPreloadCountRoutineGroup(t *testing.T) {
+	_ = PreloadCount.RoutineGroup
+
+	// Verify GroupExercisesRoutines preloader exists and returns a Preloader
+	_ = PreloadCount.RoutineGroup.GroupExercisesRoutines()
+}
+
+// Test that RoutineGroup has PreloadCount method
+func TestRoutineGroupPreloadCountMethod(t *testing.T) {
+	var m *RoutineGroup
+
+	_ = m.PreloadCount("GroupExercisesRoutines", 0)
+}
+
 // Test that Routine has a C field with count pointers for to-many relationships
 func TestRoutineCountStruct(t *testing.T) {
 	var m Routine
@@ -142,6 +187,9 @@ func TestRoutineCountStruct(t *testing.T) {
 
 	// Verify PlanRoutines count field exists and is *int64
 	var _ *int64 = m.C.PlanRoutines
+
+	// Verify RoutineGroups count field exists and is *int64
+	var _ *int64 = m.C.RoutineGroups
 
 	// Verify Exercises count field exists and is *int64
 	var _ *int64 = m.C.Exercises
@@ -168,6 +216,12 @@ func TestRoutineLoadCountMethods(t *testing.T) {
 	// Verify LoadCountPlanRoutines method exists on slice
 	_ = ms.LoadCountPlanRoutines(ctx, nil)
 
+	// Verify LoadCountRoutineGroups method exists on single model
+	_ = m.LoadCountRoutineGroups(ctx, nil)
+
+	// Verify LoadCountRoutineGroups method exists on slice
+	_ = ms.LoadCountRoutineGroups(ctx, nil)
+
 	// Verify LoadCountExercises method exists on single model
 	_ = m.LoadCountExercises(ctx, nil)
 
@@ -191,6 +245,9 @@ func TestSelectThenLoadCountRoutine(t *testing.T) {
 	// Verify PlanRoutines loader exists
 	_ = SelectThenLoadCount.Routine.PlanRoutines
 
+	// Verify RoutineGroups loader exists
+	_ = SelectThenLoadCount.Routine.RoutineGroups
+
 	// Verify Exercises loader exists
 	_ = SelectThenLoadCount.Routine.Exercises
 
@@ -208,6 +265,9 @@ func TestPreloadCountRoutine(t *testing.T) {
 	// Verify PlanRoutines preloader exists and returns a Preloader
 	_ = PreloadCount.Routine.PlanRoutines()
 
+	// Verify RoutineGroups preloader exists and returns a Preloader
+	_ = PreloadCount.Routine.RoutineGroups()
+
 	// Verify Exercises preloader exists and returns a Preloader
 	_ = PreloadCount.Routine.Exercises()
 
@@ -222,6 +282,8 @@ func TestRoutinePreloadCountMethod(t *testing.T) {
 	_ = m.PreloadCount("ExercisesRoutines", 0)
 
 	_ = m.PreloadCount("PlanRoutines", 0)
+
+	_ = m.PreloadCount("RoutineGroups", 0)
 
 	_ = m.PreloadCount("Exercises", 0)
 

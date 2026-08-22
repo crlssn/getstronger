@@ -87,11 +87,33 @@ func (s *Saga) Signup(ctx context.Context, f func(*connect.Response[apiv1.Signup
 			Password:             s.auth.password,
 			PasswordConfirmation: s.auth.password,
 			Name:                 gofakeit.Name(),
-			Username:             fmt.Sprintf("%s%d", strings.ToLower(gofakeit.Username()), gofakeit.Number(0, 999999)), //nolint:mnd
+			Username:             fakeUsername(),
 		},
 	}))
 
 	return s
+}
+
+// fakeUsername is a username the API will accept: gofakeit hands out names
+// with apostrophes and hyphens in them, which the username pattern does not
+// allow, so anything outside it is dropped and the result kept inside the
+// length the pattern takes.
+func fakeUsername() string {
+	const maxNameLength = 20
+
+	kept := strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '_', r == '.':
+			return r
+		default:
+			return -1
+		}
+	}, strings.ToLower(gofakeit.Username()))
+	if len(kept) > maxNameLength {
+		kept = kept[:maxNameLength]
+	}
+
+	return fmt.Sprintf("user%s%d", kept, gofakeit.Number(0, 999999)) //nolint:mnd
 }
 
 func (s *Saga) ResendVerificationEmail(ctx context.Context, f func(*connect.Response[apiv1.ResendVerificationEmailResponse], error)) *Saga {

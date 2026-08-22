@@ -1,5 +1,7 @@
 import { type FieldMask } from '@bufbuild/protobuf/wkt'
+import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb'
+import type { DraftGroup } from '@/utils/routineGroups'
 
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -59,6 +61,7 @@ import {
   type ListRoutinesResponse,
   PauseActivePlanRequestSchema,
   type PauseActivePlanResponse,
+  RoutineGroupMode,
   SetActivePlanRequestSchema,
   type SetActivePlanResponse,
   SkipPlanRoutineRequestSchema,
@@ -355,13 +358,28 @@ export const listExerciseTags = async (): Promise<string[]> => {
   return [...tags.values()].sort((left, right) => left.localeCompare(right))
 }
 
+// The groups say how the exercises are worked through. A routine that is one
+// plain block sends none, which is what every routine sent before grouping.
+const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): RoutineGroup[] =>
+  (groups ?? []).map(
+    (group) =>
+      ({
+        mode: group.mode === 'circuit' ? RoutineGroupMode.CIRCUIT : RoutineGroupMode.STRAIGHT,
+        restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
+        restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
+        exercises: group.entries.map((entry) => ({ id: entry.exerciseId }) as Exercise),
+      }) as RoutineGroup,
+  )
+
 export const createRoutine = async (
   name: string,
   exerciseIds: string[],
+  groups?: readonly DraftGroup[],
 ): Promise<CreateRoutineResponse | void> => {
   const req = create(CreateRoutineRequestSchema, {
     exerciseIds: exerciseIds,
     name: name,
+    groups: routineGroupMessages(groups),
   })
   return tryCatch(() => routineClient.createRoutine(req))
 }
@@ -406,6 +424,7 @@ export const updateRoutine = async (
   id: string,
   name: string,
   exerciseIds: string[],
+  groups?: readonly DraftGroup[],
 ): Promise<UpdateRoutineResponse | void> => {
   const exercises: Exercise[] = exerciseIds.map((id) => ({ id: id }) as Exercise)
   const req = create(UpdateRoutineRequestSchema, {
@@ -413,6 +432,7 @@ export const updateRoutine = async (
       exercises: exercises,
       id: id,
       name: name,
+      groups: routineGroupMessages(groups),
     },
   })
   return tryCatch(() => routineClient.updateRoutine(req))

@@ -25,6 +25,7 @@ func Where[Q psql.Filterable]() struct {
 	Notifications     notificationWhere[Q]
 	PlanRoutines      planRoutineWhere[Q]
 	Plans             planWhere[Q]
+	RoutineGroups     routineGroupWhere[Q]
 	Routines          routineWhere[Q]
 	Sets              setWhere[Q]
 	Traces            traceWhere[Q]
@@ -41,6 +42,7 @@ func Where[Q psql.Filterable]() struct {
 		Notifications     notificationWhere[Q]
 		PlanRoutines      planRoutineWhere[Q]
 		Plans             planWhere[Q]
+		RoutineGroups     routineGroupWhere[Q]
 		Routines          routineWhere[Q]
 		Sets              setWhere[Q]
 		Traces            traceWhere[Q]
@@ -56,6 +58,7 @@ func Where[Q psql.Filterable]() struct {
 		Notifications:     buildNotificationWhere[Q](Notifications.Columns),
 		PlanRoutines:      buildPlanRoutineWhere[Q](PlanRoutines.Columns),
 		Plans:             buildPlanWhere[Q](Plans.Columns),
+		RoutineGroups:     buildRoutineGroupWhere[Q](RoutineGroups.Columns),
 		Routines:          buildRoutineWhere[Q](Routines.Columns),
 		Sets:              buildSetWhere[Q](Sets.Columns),
 		Traces:            buildTraceWhere[Q](Traces.Columns),

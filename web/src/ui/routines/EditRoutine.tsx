@@ -1,3 +1,7 @@
+import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
+import type { Exercise } from '@/proto/api/v1/shared_pb'
+import type { DraftGroup } from '@/utils/routineGroups'
+
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -13,7 +17,8 @@ export const EditRoutine = () => {
   const { id = '' } = useParams()
 
   const [name, setName] = useState('')
-  const [exerciseIds, setExerciseIds] = useState<string[]>([])
+  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [groups, setGroups] = useState<RoutineGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -22,17 +27,22 @@ export const EditRoutine = () => {
       const response = await getRoutine(id)
       if (response?.routine) {
         setName(response.routine.name)
-        setExerciseIds(response.routine.exercises.map((exercise) => exercise.id))
+        setExercises(response.routine.exercises)
+        setGroups(response.routine.groups)
       }
       setLoading(false)
     }
     void load()
   }, [id])
 
-  const onSave = async (updatedName: string, updatedExerciseIds: string[]) => {
+  const onSave = async (
+    updatedName: string,
+    updatedExerciseIds: string[],
+    updatedGroups: DraftGroup[],
+  ) => {
     setSaving(true)
     try {
-      const response = await updateRoutine(id, updatedName, updatedExerciseIds)
+      const response = await updateRoutine(id, updatedName, updatedExerciseIds, updatedGroups)
       if (!response) return
 
       useToastStore.getState().success(t('routine.form.updated'))
@@ -49,9 +59,12 @@ export const EditRoutine = () => {
     <RoutineForm
       submitLabel={t('training.planForm.saveChanges')}
       initialName={name}
-      initialExerciseIds={exerciseIds}
+      initialExercises={exercises}
+      initialGroups={groups}
       saving={saving}
-      onSave={(updatedName, updatedIds) => void onSave(updatedName, updatedIds)}
+      onSave={(updatedName, updatedIds, updatedGroups) =>
+        void onSave(updatedName, updatedIds, updatedGroups)
+      }
     />
   )
 }

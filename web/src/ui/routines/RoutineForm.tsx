@@ -1,31 +1,44 @@
+import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
+import type { DraftGroup } from '@/utils/routineGroups'
 
-import { CheckIcon } from '@heroicons/react/24/outline'
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { listExercises } from '@/http/requests'
 import { AppButton } from '@/ui/components/AppButton'
-import { AppInput } from '@/ui/components/AppInput'
-import { AppLoadMore } from '@/ui/components/AppLoadMore'
-import { AppOptionRow } from '@/ui/components/AppOptionRow'
-import { AppSearchField } from '@/ui/components/AppSearchField'
-import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
-import { appendPage } from '@/utils/appendPage'
-import { usePagination } from '@/utils/usePagination'
+import { AppList } from '@/ui/components/AppList'
+import { AppListItemInput } from '@/ui/components/AppListItemInput'
+import { AppSegmented } from '@/ui/components/AppSegmented'
+import { RoutineGroupsEditor } from '@/ui/routines/RoutineGroupsEditor'
+import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
+import {
+  addExerciseToGroup,
+  draftGroupsFromRoutine,
+  groupExerciseIds,
+  groupLetter,
+  isGrouped,
+  saveableGroups,
+  singleStraightGroup,
+} from '@/utils/routineGroups'
 import styles from './RoutineForm.module.css'
 
 interface Props {
   submitLabel: string
-  onSave: (name: string, exerciseIds: string[]) => void
+  onSave: (name: string, exerciseIds: string[], groups: DraftGroup[]) => void
   saving?: boolean
   initialName?: string
-  initialExerciseIds?: string[]
+  /** The routine's exercises, which is where the form reads their names from. */
+  initialExercises?: Exercise[]
+  initialGroups?: RoutineGroup[]
 }
 
 /**
  * The fields a routine is made of, shared by creating one and editing one.
+ *
+ * Exercises are picked into the group that will train them rather than ticked
+ * off a list of the whole library: a routine is built in the order it is
+ * trained, and the same exercise may be picked twice — a bench press in the
+ * warm-up and a bench press in the circuit are two different pieces of work.
  *
  * The caller mounts it only once it has the routine to edit, so the initial
  * values are read once and owned here from then on.
@@ -35,138 +48,131 @@ export const RoutineForm = ({
   onSave,
   saving = false,
   initialName = '',
-  initialExerciseIds,
+  initialExercises,
+  initialGroups,
 }: Props) => {
   const { t } = useTranslation()
-  const { hasMorePages, currentPageToken, setFromResponse } = usePagination()
+
+  const initial = draftGroupsFromRoutine(
+    initialGroups ?? [],
+    (initialExercises ?? []).map((exercise) => exercise.id),
+  )
 
   const [name, setName] = useState(initialName)
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => initialExerciseIds ?? [])
-  const [exercises, setExercises] = useState<Exercise[]>([])
-  const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [groups, setGroups] = useState<DraftGroup[]>(() => initial)
+  // Grouping is the advanced half of the screen: a routine that is one plain
+  // block never has to meet it, and one that is already grouped opens on it.
+  const [advanced, setAdvanced] = useState(() => isGrouped(initial))
+  // Every exercise the form has seen: the ones the routine came with, and the
+  // ones picked since. Names are the only thing it needs from them.
+  const [names, setNames] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      [
+        ...(initialExercises ?? []),
+        ...(initialGroups ?? []).flatMap((group) => group.exercises),
+      ].map((exercise) => [exercise.id, exercise.name]),
+    ),
+  )
+  // The group the picker is adding to, so the sheet's choice knows where it goes.
+  const [pickerGroupId, setPickerGroupId] = useState('')
 
-  const fetchExercises = useCallback(async () => {
-    const response = await listExercises(currentPageToken())
-    if (!response) return
-
-    setExercises((current) => appendPage(current, response.exercises))
-    setFromResponse(response.pagination)
-  }, [currentPageToken, setFromResponse])
-
-  useEffect(() => {
-    const load = async () => {
-      await fetchExercises()
-      setLoading(false)
-    }
-    void load()
-  }, [fetchExercises])
-
-  const query = search.trim().toLowerCase()
-  const filtered = query
-    ? exercises.filter((exercise) =>
-        [exercise.name, ...exercise.tags].join(' ').toLowerCase().includes(query),
-      )
-    : exercises
-
+  const exerciseIds = groupExerciseIds(groups)
   // A routine with no name or no exercises is not a routine yet.
-  const canSubmit = name.trim().length > 0 && selectedIds.length > 0 && !saving
+  const canSubmit = name.trim().length > 0 && exerciseIds.length > 0 && !saving
 
-  const toggleExercise = (exerciseId: string) =>
-    setSelectedIds((current) =>
-      current.includes(exerciseId)
-        ? current.filter((id) => id !== exerciseId)
-        : [...current, exerciseId],
-    )
+  // Turning grouping off keeps the exercises, in order, and drops the structure
+  // — the one thing a single block cannot express.
+  const setAdvancedMode = (enabled: boolean) => {
+    setAdvanced(enabled)
+    if (!enabled) setGroups(singleStraightGroup(exerciseIds))
+  }
+
+  const addExercise = (exercise: Exercise) => {
+    setNames((current) => ({ ...current, [exercise.id]: exercise.name }))
+    setGroups((current) => addExerciseToGroup(current, pickerGroupId, exercise.id))
+    setPickerGroupId('')
+  }
+
+  const submit = () => {
+    const saved = saveableGroups(groups)
+    onSave(name.trim(), groupExerciseIds(saved), saved)
+  }
+
+  const pickerGroupIndex = groups.findIndex((group) => group.id === pickerGroupId)
 
   return (
     <form
       className={styles.routineForm}
       onSubmit={(event) => {
         event.preventDefault()
-        if (canSubmit) onSave(name.trim(), selectedIds)
+        if (canSubmit) submit()
       }}
     >
-      <header className={styles.formIntro}>
-        <div>
-          <p className={styles.eyebrow}>{t('routine.form.eyebrow')}</p>
-          <p>{t('routine.form.intro')}</p>
-        </div>
-        <span className={styles.selectionCount}>
-          {t('routine.form.selectedCount', { count: selectedIds.length })}
-        </span>
-      </header>
-
-      <section className={styles.formCard}>
-        <AppInput
-          id="routine-name"
-          type="text"
+      <h6>{t('routine.form.name')}</h6>
+      <AppList>
+        <AppListItemInput
           label={t('routine.form.name')}
+          model={name}
+          type="text"
           required
           autoComplete="off"
           placeholder={t('routine.form.namePlaceholder')}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          onUpdate={setName}
         />
-      </section>
+      </AppList>
 
-      <section className={styles.exerciseCard}>
-        <div className={styles.exerciseToolbar}>
-          <div>
-            <h2>{t('common.exercises')}</h2>
-            <p>{t('routine.form.selectHelp')}</p>
-          </div>
-          <AppSearchField
-            className={styles.searchField}
-            label={t('exercise.search')}
-            value={search}
-            onChange={setSearch}
-          />
-        </div>
+      {/* The question that decides the shape of everything below it, so it is
+          asked before any of it. */}
+      <h6>{t('routine.form.groups.section')}</h6>
+      <AppSegmented
+        className={styles.structure}
+        label={t('routine.form.groups.section')}
+        options={[
+          { label: t('routine.form.groups.simple'), value: false },
+          { label: t('routine.form.groups.advanced'), value: true },
+        ]}
+        value={advanced}
+        onChange={setAdvancedMode}
+      />
 
-        {loading ? (
-          <AppSkeleton />
-        ) : filtered.length > 0 ? (
-          <div className={styles.exerciseGrid}>
-            {filtered.map((exercise) => {
-              const selected = selectedIds.includes(exercise.id)
+      <h6>{t('common.exercises')}</h6>
+      <RoutineGroupsEditor
+        groups={groups}
+        grouped={advanced}
+        nameOf={(exerciseId) => names[exerciseId] ?? exerciseId}
+        onChange={setGroups}
+        onAddExercise={setPickerGroupId}
+      />
 
-              return (
-                <AppOptionRow
-                  key={exercise.id}
-                  leading={
-                    <span className={styles.checkBox}>
-                      {selected && <CheckIcon aria-hidden="true" />}
-                    </span>
-                  }
-                  selected={selected}
-                  onClick={() => toggleExercise(exercise.id)}
-                >
-                  <strong>{exercise.name}</strong>
-                  <ExerciseTags compact tags={exercise.tags} />
-                </AppOptionRow>
-              )
-            })}
-          </div>
-        ) : (
-          <div className={styles.emptyRow}>
-            {search ? t('workout.noExerciseMatches') : t('routine.form.createFirst')}
-          </div>
-        )}
-
-        {hasMorePages && (
-          <AppLoadMore label={t('exercise.loadMore')} onFetch={() => void fetchExercises()} />
-        )}
-      </section>
-
+      {/* At the end of the form rather than floating over it: the save belongs
+          to the routine above it, and every other form ends the same way. */}
       <div className={styles.formActions}>
-        <AppButton type="link" colour="ghost" width="auto" to="/routines">
-          {t('common.cancel')}
-        </AppButton>
-        <AppButton type="submit" colour="primary" width="auto" disabled={!canSubmit}>
+        <AppButton type="submit" colour="primary" disabled={!canSubmit}>
           {saving ? t('training.planForm.saving') : submitLabel}
         </AppButton>
+        <AppButton type="link" to="/routines" colour="secondary">
+          {t('common.cancel')}
+        </AppButton>
       </div>
+
+      {pickerGroupId && (
+        <ExercisePickerSheet
+          // The block trains each exercise once, so what it already holds is
+          // not offered again — another block still can.
+          excluded={
+            groups
+              .find((group) => group.id === pickerGroupId)
+              ?.entries.map((entry) => entry.exerciseId) ?? []
+          }
+          eyebrow={
+            advanced && pickerGroupIndex >= 0
+              ? t('routine.form.groups.groupName', { letter: groupLetter(pickerGroupIndex) })
+              : t('routine.form.eyebrow')
+          }
+          onAdd={addExercise}
+          onClose={() => setPickerGroupId('')}
+        />
+      )}
     </form>
   )
 }

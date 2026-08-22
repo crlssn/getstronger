@@ -70,6 +70,7 @@ export const UserView = () => {
 
   const profileActions: DropdownItem[] = [
     {
+      destructive: true,
       func: async () => {
         const response = await unfollowUser(id)
         if (!response) return

@@ -42,11 +42,63 @@ var ExercisesRoutines = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		GroupID: column{
+			Name:      "group_id",
+			DBType:    "uuid",
+			Default:   "",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		ID: column{
+			Name:      "id",
+			DBType:    "uuid",
+			Default:   "uuid_generate_v4()",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: exercisesRoutineIndexes{
-		RoutineExercisesPkey: index{
+		ExercisesRoutinesPkey: index{
 			Type: "btree",
-			Name: "routine_exercises_pkey",
+			Name: "exercises_routines_pkey",
+			Columns: []indexColumn{
+				{
+					Name:         "id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        true,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
+		ExercisesRoutinesGroupIDIdx: index{
+			Type: "btree",
+			Name: "exercises_routines_group_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "group_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
+		ExercisesRoutinesRoutineIDPositionIdx: index{
+			Type: "btree",
+			Name: "exercises_routines_routine_id_position_idx",
 			Columns: []indexColumn{
 				{
 					Name:         "routine_id",
@@ -54,12 +106,12 @@ var ExercisesRoutines = Table[
 					IsExpression: false,
 				},
 				{
-					Name:         "exercise_id",
+					Name:         "\"position\"",
 					Desc:         null.FromCond(false, true),
-					IsExpression: false,
+					IsExpression: true,
 				},
 			},
-			Unique:        true,
+			Unique:        false,
 			Comment:       "",
 			NullsFirst:    []bool{false, false},
 			NullsDistinct: false,
@@ -68,11 +120,20 @@ var ExercisesRoutines = Table[
 		},
 	},
 	PrimaryKey: &constraint{
-		Name:    "routine_exercises_pkey",
-		Columns: []string{"routine_id", "exercise_id"},
+		Name:    "exercises_routines_pkey",
+		Columns: []string{"id"},
 		Comment: "",
 	},
 	ForeignKeys: exercisesRoutineForeignKeys{
+		ExercisesRoutinesExercisesRoutinesGroupIDFkey: foreignKey{
+			constraint: constraint{
+				Name:    "exercises_routines.exercises_routines_group_id_fkey",
+				Columns: []string{"group_id"},
+				Comment: "",
+			},
+			ForeignTable:   "routine_groups",
+			ForeignColumns: []string{"id"},
+		},
 		ExercisesRoutinesRoutineExercisesExerciseIDFkey: foreignKey{
 			constraint: constraint{
 				Name:    "exercises_routines.routine_exercises_exercise_id_fkey",
@@ -100,32 +161,37 @@ type exercisesRoutineColumns struct {
 	RoutineID  column
 	ExerciseID column
 	Position   column
+	GroupID    column
+	ID         column
 }
 
 func (c exercisesRoutineColumns) AsSlice() []column {
 	return []column{
-		c.RoutineID, c.ExerciseID, c.Position,
+		c.RoutineID, c.ExerciseID, c.Position, c.GroupID, c.ID,
 	}
 }
 
 type exercisesRoutineIndexes struct {
-	RoutineExercisesPkey index
+	ExercisesRoutinesPkey                 index
+	ExercisesRoutinesGroupIDIdx           index
+	ExercisesRoutinesRoutineIDPositionIdx index
 }
 
 func (i exercisesRoutineIndexes) AsSlice() []index {
 	return []index{
-		i.RoutineExercisesPkey,
+		i.ExercisesRoutinesPkey, i.ExercisesRoutinesGroupIDIdx, i.ExercisesRoutinesRoutineIDPositionIdx,
 	}
 }
 
 type exercisesRoutineForeignKeys struct {
+	ExercisesRoutinesExercisesRoutinesGroupIDFkey   foreignKey
 	ExercisesRoutinesRoutineExercisesExerciseIDFkey foreignKey
 	ExercisesRoutinesRoutineExercisesRoutineIDFkey  foreignKey
 }
 
 func (f exercisesRoutineForeignKeys) AsSlice() []foreignKey {
 	return []foreignKey{
-		f.ExercisesRoutinesRoutineExercisesExerciseIDFkey, f.ExercisesRoutinesRoutineExercisesRoutineIDFkey,
+		f.ExercisesRoutinesExercisesRoutinesGroupIDFkey, f.ExercisesRoutinesRoutineExercisesExerciseIDFkey, f.ExercisesRoutinesRoutineExercisesRoutineIDFkey,
 	}
 }
 

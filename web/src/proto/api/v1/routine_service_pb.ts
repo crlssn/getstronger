@@ -2,8 +2,8 @@
 // @generated from file api/v1/routine_service.proto (package api.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_api_v1_options } from "./options_pb";
 import type { Exercise, ExerciseSet, PaginationRequest, PaginationResponse } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/routine_service.proto.
  */
 export const file_api_v1_routine_service: GenFile = /*@__PURE__*/
-  fileDesc("ChxhcGkvdjEvcm91dGluZV9zZXJ2aWNlLnByb3RvEgZhcGkudjEiTQoUQ3JlYXRlUm91dGluZVJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARIeCgxleGVyY2lzZV9pZHMYAiADKAlCCLpIBZIBAggBIiMKFUNyZWF0ZVJvdXRpbmVSZXNwb25zZRIKCgJpZBgBIAEoCSIpChFHZXRSb3V0aW5lUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiNgoSR2V0Um91dGluZVJlc3BvbnNlEiAKB3JvdXRpbmUYASABKAsyDy5hcGkudjEuUm91dGluZSJAChRVcGRhdGVSb3V0aW5lUmVxdWVzdBIoCgdyb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmVCBrpIA8gBASI5ChVVcGRhdGVSb3V0aW5lUmVzcG9uc2USIAoHcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lIiwKFERlbGV0ZVJvdXRpbmVSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASIXChVEZWxldGVSb3V0aW5lUmVzcG9uc2UiWgoTTGlzdFJvdXRpbmVzUmVxdWVzdBIMCgRuYW1lGAEgASgJEjUKCnBhZ2luYXRpb24YAiABKAsyGS5hcGkudjEuUGFnaW5hdGlvblJlcXVlc3RCBrpIA8gBASJpChRMaXN0Um91dGluZXNSZXNwb25zZRIhCghyb3V0aW5lcxgBIAMoCzIPLmFwaS52MS5Sb3V0aW5lEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIlEKEkFkZEV4ZXJjaXNlUmVxdWVzdBIcCgpyb3V0aW5lX2lkGAEgASgJQgi6SAVyA7ABARIdCgtleGVyY2lzZV9pZBgCIAEoCUIIukgFcgOwAQEiFQoTQWRkRXhlcmNpc2VSZXNwb25zZSJUChVSZW1vdmVFeGVyY2lzZVJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESHQoLZXhlcmNpc2VfaWQYAiABKAlCCLpIBXIDsAEBIhgKFlJlbW92ZUV4ZXJjaXNlUmVzcG9uc2UiWgoaVXBkYXRlRXhlcmNpc2VPcmRlclJlcXVlc3QSHAoKcm91dGluZV9pZBgBIAEoCUIIukgFcgOwAQESHgoMZXhlcmNpc2VfaWRzGAIgAygJQgi6SAWSAQIIASIdChtVcGRhdGVFeGVyY2lzZU9yZGVyUmVzcG9uc2UiMwoTR2V0RGFzaGJvYXJkUmVxdWVzdBIcChRwcmVmZXJyZWRfcm91dGluZV9pZBgBIAEoCSKQAgoUR2V0RGFzaGJvYXJkUmVzcG9uc2USJQoMbmV4dF9yb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmUSIQoIcm91dGluZXMYAiADKAsyDy5hcGkudjEuUm91dGluZRIaChJ3b3Jrb3V0c190aGlzX3dlZWsYAyABKAUSGAoQdm9sdW1lX3RoaXNfd2VlaxgEIAEoARIrCg5wZXJzb25hbF9iZXN0cxgFIAMoCzITLmFwaS52MS5FeGVyY2lzZVNldBIoCg9yZWNlbnRfd29ya291dHMYBiADKAsyDy5hcGkudjEuV29ya291dBIhCgthY3RpdmVfcGxhbhgHIAEoCzIMLmFwaS52MS5QbGFuImUKB1JvdXRpbmUSFAoCaWQYASABKAlCCLpIBXIDsAEBEhUKBG5hbWUYAiABKAlCB7pIBHICEAESLQoJZXhlcmNpc2VzGAMgAygLMhAuYXBpLnYxLkV4ZXJjaXNlQgi6SAWSAQIIASJSChFDcmVhdGVQbGFuUmVxdWVzdBIVCgRuYW1lGAEgASgJQge6SARyAhABEiYKC3JvdXRpbmVfaWRzGAIgAygJQhG6SA6SAQsIARgBIgVyA7ABASIwChJDcmVhdGVQbGFuUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIiYKDkdldFBsYW5SZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASItCg9HZXRQbGFuUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIhIKEExpc3RQbGFuc1JlcXVlc3QiMAoRTGlzdFBsYW5zUmVzcG9uc2USGwoFcGxhbnMYASADKAsyDC5hcGkudjEuUGxhbiJoChFVcGRhdGVQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQESFQoEbmFtZRgCIAEoCUIHukgEcgIQARImCgtyb3V0aW5lX2lkcxgDIAMoCUIRukgOkgELCAEYASIFcgOwAQEiMAoSVXBkYXRlUGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiIpChFEZWxldGVQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiFAoSRGVsZXRlUGxhblJlc3BvbnNlIiwKFFNldEFjdGl2ZVBsYW5SZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASIzChVTZXRBY3RpdmVQbGFuUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIhgKFlBhdXNlQWN0aXZlUGxhblJlcXVlc3QiGQoXUGF1c2VBY3RpdmVQbGFuUmVzcG9uc2UiLgoWU2tpcFBsYW5Sb3V0aW5lUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiNQoXU2tpcFBsYW5Sb3V0aW5lUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIpMBCgRQbGFuEhQKAmlkGAEgASgJQgi6SAVyA7ABARIVCgRuYW1lGAIgASgJQge6SARyAhABEisKCHJvdXRpbmVzGAMgAygLMg8uYXBpLnYxLlJvdXRpbmVCCLpIBZIBAggBEiEKEGN1cnJlbnRfcG9zaXRpb24YBCABKAVCB7pIBBoCKAASDgoGYWN0aXZlGAUgASgIMvcKCg5Sb3V0aW5lU2VydmljZRJSCg1DcmVhdGVSb3V0aW5lEhwuYXBpLnYxLkNyZWF0ZVJvdXRpbmVSZXF1ZXN0Gh0uYXBpLnYxLkNyZWF0ZVJvdXRpbmVSZXNwb25zZSIEiLUYARJJCgpHZXRSb3V0aW5lEhkuYXBpLnYxLkdldFJvdXRpbmVSZXF1ZXN0GhouYXBpLnYxLkdldFJvdXRpbmVSZXNwb25zZSIEiLUYARJSCg1VcGRhdGVSb3V0aW5lEhwuYXBpLnYxLlVwZGF0ZVJvdXRpbmVSZXF1ZXN0Gh0uYXBpLnYxLlVwZGF0ZVJvdXRpbmVSZXNwb25zZSIEiLUYARJSCg1EZWxldGVSb3V0aW5lEhwuYXBpLnYxLkRlbGV0ZVJvdXRpbmVSZXF1ZXN0Gh0uYXBpLnYxLkRlbGV0ZVJvdXRpbmVSZXNwb25zZSIEiLUYARJPCgxMaXN0Um91dGluZXMSGy5hcGkudjEuTGlzdFJvdXRpbmVzUmVxdWVzdBocLmFwaS52MS5MaXN0Um91dGluZXNSZXNwb25zZSIEiLUYARJMCgtBZGRFeGVyY2lzZRIaLmFwaS52MS5BZGRFeGVyY2lzZVJlcXVlc3QaGy5hcGkudjEuQWRkRXhlcmNpc2VSZXNwb25zZSIEiLUYARJVCg5SZW1vdmVFeGVyY2lzZRIdLmFwaS52MS5SZW1vdmVFeGVyY2lzZVJlcXVlc3QaHi5hcGkudjEuUmVtb3ZlRXhlcmNpc2VSZXNwb25zZSIEiLUYARJkChNVcGRhdGVFeGVyY2lzZU9yZGVyEiIuYXBpLnYxLlVwZGF0ZUV4ZXJjaXNlT3JkZXJSZXF1ZXN0GiMuYXBpLnYxLlVwZGF0ZUV4ZXJjaXNlT3JkZXJSZXNwb25zZSIEiLUYARJPCgxHZXREYXNoYm9hcmQSGy5hcGkudjEuR2V0RGFzaGJvYXJkUmVxdWVzdBocLmFwaS52MS5HZXREYXNoYm9hcmRSZXNwb25zZSIEiLUYARJJCgpDcmVhdGVQbGFuEhkuYXBpLnYxLkNyZWF0ZVBsYW5SZXF1ZXN0GhouYXBpLnYxLkNyZWF0ZVBsYW5SZXNwb25zZSIEiLUYARJACgdHZXRQbGFuEhYuYXBpLnYxLkdldFBsYW5SZXF1ZXN0GhcuYXBpLnYxLkdldFBsYW5SZXNwb25zZSIEiLUYARJGCglMaXN0UGxhbnMSGC5hcGkudjEuTGlzdFBsYW5zUmVxdWVzdBoZLmFwaS52MS5MaXN0UGxhbnNSZXNwb25zZSIEiLUYARJJCgpVcGRhdGVQbGFuEhkuYXBpLnYxLlVwZGF0ZVBsYW5SZXF1ZXN0GhouYXBpLnYxLlVwZGF0ZVBsYW5SZXNwb25zZSIEiLUYARJJCgpEZWxldGVQbGFuEhkuYXBpLnYxLkRlbGV0ZVBsYW5SZXF1ZXN0GhouYXBpLnYxLkRlbGV0ZVBsYW5SZXNwb25zZSIEiLUYARJSCg1TZXRBY3RpdmVQbGFuEhwuYXBpLnYxLlNldEFjdGl2ZVBsYW5SZXF1ZXN0Gh0uYXBpLnYxLlNldEFjdGl2ZVBsYW5SZXNwb25zZSIEiLUYARJYCg9QYXVzZUFjdGl2ZVBsYW4SHi5hcGkudjEuUGF1c2VBY3RpdmVQbGFuUmVxdWVzdBofLmFwaS52MS5QYXVzZUFjdGl2ZVBsYW5SZXNwb25zZSIEiLUYARJYCg9Ta2lwUGxhblJvdXRpbmUSHi5hcGkudjEuU2tpcFBsYW5Sb3V0aW5lUmVxdWVzdBofLmFwaS52MS5Ta2lwUGxhblJvdXRpbmVSZXNwb25zZSIEiLUYAUKXAQoKY29tLmFwaS52MUITUm91dGluZVNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
+  fileDesc("ChxhcGkvdjEvcm91dGluZV9zZXJ2aWNlLnByb3RvEgZhcGkudjEicwoUQ3JlYXRlUm91dGluZVJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARIeCgxleGVyY2lzZV9pZHMYAiADKAlCCLpIBZIBAggBEiQKBmdyb3VwcxgDIAMoCzIULmFwaS52MS5Sb3V0aW5lR3JvdXAiIwoVQ3JlYXRlUm91dGluZVJlc3BvbnNlEgoKAmlkGAEgASgJIikKEUdldFJvdXRpbmVSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASI2ChJHZXRSb3V0aW5lUmVzcG9uc2USIAoHcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lIkAKFFVwZGF0ZVJvdXRpbmVSZXF1ZXN0EigKB3JvdXRpbmUYASABKAsyDy5hcGkudjEuUm91dGluZUIGukgDyAEBIjkKFVVwZGF0ZVJvdXRpbmVSZXNwb25zZRIgCgdyb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmUiLAoURGVsZXRlUm91dGluZVJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhcKFURlbGV0ZVJvdXRpbmVSZXNwb25zZSJaChNMaXN0Um91dGluZXNSZXF1ZXN0EgwKBG5hbWUYASABKAkSNQoKcGFnaW5hdGlvbhgCIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImkKFExpc3RSb3V0aW5lc1Jlc3BvbnNlEiEKCHJvdXRpbmVzGAEgAygLMg8uYXBpLnYxLlJvdXRpbmUSLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiUQoSQWRkRXhlcmNpc2VSZXF1ZXN0EhwKCnJvdXRpbmVfaWQYASABKAlCCLpIBXIDsAEBEh0KC2V4ZXJjaXNlX2lkGAIgASgJQgi6SAVyA7ABASIVChNBZGRFeGVyY2lzZVJlc3BvbnNlIloKGlVwZGF0ZUV4ZXJjaXNlT3JkZXJSZXF1ZXN0EhwKCnJvdXRpbmVfaWQYASABKAlCCLpIBXIDsAEBEh4KDGV4ZXJjaXNlX2lkcxgCIAMoCUIIukgFkgECCAEiHQobVXBkYXRlRXhlcmNpc2VPcmRlclJlc3BvbnNlIjMKE0dldERhc2hib2FyZFJlcXVlc3QSHAoUcHJlZmVycmVkX3JvdXRpbmVfaWQYASABKAkikAIKFEdldERhc2hib2FyZFJlc3BvbnNlEiUKDG5leHRfcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lEiEKCHJvdXRpbmVzGAIgAygLMg8uYXBpLnYxLlJvdXRpbmUSGgoSd29ya291dHNfdGhpc193ZWVrGAMgASgFEhgKEHZvbHVtZV90aGlzX3dlZWsYBCABKAESKwoOcGVyc29uYWxfYmVzdHMYBSADKAsyEy5hcGkudjEuRXhlcmNpc2VTZXQSKAoPcmVjZW50X3dvcmtvdXRzGAYgAygLMg8uYXBpLnYxLldvcmtvdXQSIQoLYWN0aXZlX3BsYW4YByABKAsyDC5hcGkudjEuUGxhbiKLAQoHUm91dGluZRIUCgJpZBgBIAEoCUIIukgFcgOwAQESFQoEbmFtZRgCIAEoCUIHukgEcgIQARItCglleGVyY2lzZXMYAyADKAsyEC5hcGkudjEuRXhlcmNpc2VCCLpIBZIBAggBEiQKBmdyb3VwcxgEIAMoCzIULmFwaS52MS5Sb3V0aW5lR3JvdXAi0gEKDFJvdXRpbmVHcm91cBIKCgJpZBgBIAEoCRImCgRtb2RlGAIgASgOMhguYXBpLnYxLlJvdXRpbmVHcm91cE1vZGUSMgoecmVzdF9iZXR3ZWVuX2V4ZXJjaXNlc19zZWNvbmRzGAQgASgFQgq6SAcaBRiQHCgAEi8KG3Jlc3RfYmV0d2Vlbl9yb3VuZHNfc2Vjb25kcxgFIAEoBUIKukgHGgUYkBwoABIjCglleGVyY2lzZXMYBiADKAsyEC5hcGkudjEuRXhlcmNpc2VKBAgDEAQiUgoRQ3JlYXRlUGxhblJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARImCgtyb3V0aW5lX2lkcxgCIAMoCUIRukgOkgELCAEYASIFcgOwAQEiMAoSQ3JlYXRlUGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiImCg5HZXRQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiLQoPR2V0UGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiISChBMaXN0UGxhbnNSZXF1ZXN0IjAKEUxpc3RQbGFuc1Jlc3BvbnNlEhsKBXBsYW5zGAEgAygLMgwuYXBpLnYxLlBsYW4iaAoRVXBkYXRlUGxhblJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBEhUKBG5hbWUYAiABKAlCB7pIBHICEAESJgoLcm91dGluZV9pZHMYAyADKAlCEbpIDpIBCwgBGAEiBXIDsAEBIjAKElVwZGF0ZVBsYW5SZXNwb25zZRIaCgRwbGFuGAEgASgLMgwuYXBpLnYxLlBsYW4iKQoRRGVsZXRlUGxhblJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhQKEkRlbGV0ZVBsYW5SZXNwb25zZSIsChRTZXRBY3RpdmVQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiMwoVU2V0QWN0aXZlUGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiIYChZQYXVzZUFjdGl2ZVBsYW5SZXF1ZXN0IhkKF1BhdXNlQWN0aXZlUGxhblJlc3BvbnNlIi4KFlNraXBQbGFuUm91dGluZVJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIjUKF1NraXBQbGFuUm91dGluZVJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiKTAQoEUGxhbhIUCgJpZBgBIAEoCUIIukgFcgOwAQESFQoEbmFtZRgCIAEoCUIHukgEcgIQARIrCghyb3V0aW5lcxgDIAMoCzIPLmFwaS52MS5Sb3V0aW5lQgi6SAWSAQIIARIhChBjdXJyZW50X3Bvc2l0aW9uGAQgASgFQge6SAQaAigAEg4KBmFjdGl2ZRgFIAEoCCp3ChBSb3V0aW5lR3JvdXBNb2RlEiIKHlJPVVRJTkVfR1JPVVBfTU9ERV9VTlNQRUNJRklFRBAAEh8KG1JPVVRJTkVfR1JPVVBfTU9ERV9TVFJBSUdIVBABEh4KGlJPVVRJTkVfR1JPVVBfTU9ERV9DSVJDVUlUEAIyoAoKDlJvdXRpbmVTZXJ2aWNlElIKDUNyZWF0ZVJvdXRpbmUSHC5hcGkudjEuQ3JlYXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuQ3JlYXRlUm91dGluZVJlc3BvbnNlIgSItRgBEkkKCkdldFJvdXRpbmUSGS5hcGkudjEuR2V0Um91dGluZVJlcXVlc3QaGi5hcGkudjEuR2V0Um91dGluZVJlc3BvbnNlIgSItRgBElIKDVVwZGF0ZVJvdXRpbmUSHC5hcGkudjEuVXBkYXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuVXBkYXRlUm91dGluZVJlc3BvbnNlIgSItRgBElIKDURlbGV0ZVJvdXRpbmUSHC5hcGkudjEuRGVsZXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuRGVsZXRlUm91dGluZVJlc3BvbnNlIgSItRgBEk8KDExpc3RSb3V0aW5lcxIbLmFwaS52MS5MaXN0Um91dGluZXNSZXF1ZXN0GhwuYXBpLnYxLkxpc3RSb3V0aW5lc1Jlc3BvbnNlIgSItRgBEkwKC0FkZEV4ZXJjaXNlEhouYXBpLnYxLkFkZEV4ZXJjaXNlUmVxdWVzdBobLmFwaS52MS5BZGRFeGVyY2lzZVJlc3BvbnNlIgSItRgBEmQKE1VwZGF0ZUV4ZXJjaXNlT3JkZXISIi5hcGkudjEuVXBkYXRlRXhlcmNpc2VPcmRlclJlcXVlc3QaIy5hcGkudjEuVXBkYXRlRXhlcmNpc2VPcmRlclJlc3BvbnNlIgSItRgBEk8KDEdldERhc2hib2FyZBIbLmFwaS52MS5HZXREYXNoYm9hcmRSZXF1ZXN0GhwuYXBpLnYxLkdldERhc2hib2FyZFJlc3BvbnNlIgSItRgBEkkKCkNyZWF0ZVBsYW4SGS5hcGkudjEuQ3JlYXRlUGxhblJlcXVlc3QaGi5hcGkudjEuQ3JlYXRlUGxhblJlc3BvbnNlIgSItRgBEkAKB0dldFBsYW4SFi5hcGkudjEuR2V0UGxhblJlcXVlc3QaFy5hcGkudjEuR2V0UGxhblJlc3BvbnNlIgSItRgBEkYKCUxpc3RQbGFucxIYLmFwaS52MS5MaXN0UGxhbnNSZXF1ZXN0GhkuYXBpLnYxLkxpc3RQbGFuc1Jlc3BvbnNlIgSItRgBEkkKClVwZGF0ZVBsYW4SGS5hcGkudjEuVXBkYXRlUGxhblJlcXVlc3QaGi5hcGkudjEuVXBkYXRlUGxhblJlc3BvbnNlIgSItRgBEkkKCkRlbGV0ZVBsYW4SGS5hcGkudjEuRGVsZXRlUGxhblJlcXVlc3QaGi5hcGkudjEuRGVsZXRlUGxhblJlc3BvbnNlIgSItRgBElIKDVNldEFjdGl2ZVBsYW4SHC5hcGkudjEuU2V0QWN0aXZlUGxhblJlcXVlc3QaHS5hcGkudjEuU2V0QWN0aXZlUGxhblJlc3BvbnNlIgSItRgBElgKD1BhdXNlQWN0aXZlUGxhbhIeLmFwaS52MS5QYXVzZUFjdGl2ZVBsYW5SZXF1ZXN0Gh8uYXBpLnYxLlBhdXNlQWN0aXZlUGxhblJlc3BvbnNlIgSItRgBElgKD1NraXBQbGFuUm91dGluZRIeLmFwaS52MS5Ta2lwUGxhblJvdXRpbmVSZXF1ZXN0Gh8uYXBpLnYxLlNraXBQbGFuUm91dGluZVJlc3BvbnNlIgSItRgBQpcBCgpjb20uYXBpLnYxQhNSb3V0aW5lU2VydmljZVByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9nZW4vcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_options, file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.CreateRoutineRequest
@@ -31,6 +31,14 @@ export type CreateRoutineRequest = Message<"api.v1.CreateRoutineRequest"> & {
    * @generated from field: repeated string exercise_ids = 2;
    */
   exerciseIds: string[];
+
+  /**
+   * Optional. When set, it describes how exercise_ids are grouped; when empty,
+   * the routine gets a single straight-sets group holding every exercise.
+   *
+   * @generated from field: repeated api.v1.RoutineGroup groups = 3;
+   */
+  groups: RoutineGroup[];
 };
 
 /**
@@ -235,41 +243,6 @@ export const AddExerciseResponseSchema: GenMessage<AddExerciseResponse> = /*@__P
   messageDesc(file_api_v1_routine_service, 11);
 
 /**
- * @generated from message api.v1.RemoveExerciseRequest
- */
-export type RemoveExerciseRequest = Message<"api.v1.RemoveExerciseRequest"> & {
-  /**
-   * @generated from field: string routine_id = 1;
-   */
-  routineId: string;
-
-  /**
-   * @generated from field: string exercise_id = 2;
-   */
-  exerciseId: string;
-};
-
-/**
- * Describes the message api.v1.RemoveExerciseRequest.
- * Use `create(RemoveExerciseRequestSchema)` to create a new message.
- */
-export const RemoveExerciseRequestSchema: GenMessage<RemoveExerciseRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 12);
-
-/**
- * @generated from message api.v1.RemoveExerciseResponse
- */
-export type RemoveExerciseResponse = Message<"api.v1.RemoveExerciseResponse"> & {
-};
-
-/**
- * Describes the message api.v1.RemoveExerciseResponse.
- * Use `create(RemoveExerciseResponseSchema)` to create a new message.
- */
-export const RemoveExerciseResponseSchema: GenMessage<RemoveExerciseResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 13);
-
-/**
  * @generated from message api.v1.UpdateExerciseOrderRequest
  */
 export type UpdateExerciseOrderRequest = Message<"api.v1.UpdateExerciseOrderRequest"> & {
@@ -289,7 +262,7 @@ export type UpdateExerciseOrderRequest = Message<"api.v1.UpdateExerciseOrderRequ
  * Use `create(UpdateExerciseOrderRequestSchema)` to create a new message.
  */
 export const UpdateExerciseOrderRequestSchema: GenMessage<UpdateExerciseOrderRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 14);
+  messageDesc(file_api_v1_routine_service, 12);
 
 /**
  * @generated from message api.v1.UpdateExerciseOrderResponse
@@ -302,7 +275,7 @@ export type UpdateExerciseOrderResponse = Message<"api.v1.UpdateExerciseOrderRes
  * Use `create(UpdateExerciseOrderResponseSchema)` to create a new message.
  */
 export const UpdateExerciseOrderResponseSchema: GenMessage<UpdateExerciseOrderResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 15);
+  messageDesc(file_api_v1_routine_service, 13);
 
 /**
  * @generated from message api.v1.GetDashboardRequest
@@ -319,7 +292,7 @@ export type GetDashboardRequest = Message<"api.v1.GetDashboardRequest"> & {
  * Use `create(GetDashboardRequestSchema)` to create a new message.
  */
 export const GetDashboardRequestSchema: GenMessage<GetDashboardRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 16);
+  messageDesc(file_api_v1_routine_service, 14);
 
 /**
  * @generated from message api.v1.GetDashboardResponse
@@ -366,7 +339,7 @@ export type GetDashboardResponse = Message<"api.v1.GetDashboardResponse"> & {
  * Use `create(GetDashboardResponseSchema)` to create a new message.
  */
 export const GetDashboardResponseSchema: GenMessage<GetDashboardResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 17);
+  messageDesc(file_api_v1_routine_service, 15);
 
 /**
  * @generated from message api.v1.Routine
@@ -383,9 +356,18 @@ export type Routine = Message<"api.v1.Routine"> & {
   name: string;
 
   /**
+   * Every exercise of the routine, in the order they are trained. Groups
+   * partition this same list; a client that does not care how the routine is
+   * grouped can keep reading only this field.
+   *
    * @generated from field: repeated api.v1.Exercise exercises = 3;
    */
   exercises: Exercise[];
+
+  /**
+   * @generated from field: repeated api.v1.RoutineGroup groups = 4;
+   */
+  groups: RoutineGroup[];
 };
 
 /**
@@ -393,7 +375,51 @@ export type Routine = Message<"api.v1.Routine"> & {
  * Use `create(RoutineSchema)` to create a new message.
  */
 export const RoutineSchema: GenMessage<Routine> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 18);
+  messageDesc(file_api_v1_routine_service, 16);
+
+/**
+ * @generated from message api.v1.RoutineGroup
+ */
+export type RoutineGroup = Message<"api.v1.RoutineGroup"> & {
+  /**
+   * Server-assigned. Requests may leave it empty: a save replaces a routine's
+   * groups wholesale rather than matching them up by ID.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: api.v1.RoutineGroupMode mode = 2;
+   */
+  mode: RoutineGroupMode;
+
+  /**
+   * Rest taken on the way from one exercise to the next inside a round.
+   *
+   * @generated from field: int32 rest_between_exercises_seconds = 4;
+   */
+  restBetweenExercisesSeconds: number;
+
+  /**
+   * Rest taken once a round closes, before the group starts again.
+   *
+   * @generated from field: int32 rest_between_rounds_seconds = 5;
+   */
+  restBetweenRoundsSeconds: number;
+
+  /**
+   * @generated from field: repeated api.v1.Exercise exercises = 6;
+   */
+  exercises: Exercise[];
+};
+
+/**
+ * Describes the message api.v1.RoutineGroup.
+ * Use `create(RoutineGroupSchema)` to create a new message.
+ */
+export const RoutineGroupSchema: GenMessage<RoutineGroup> = /*@__PURE__*/
+  messageDesc(file_api_v1_routine_service, 17);
 
 /**
  * @generated from message api.v1.CreatePlanRequest
@@ -415,7 +441,7 @@ export type CreatePlanRequest = Message<"api.v1.CreatePlanRequest"> & {
  * Use `create(CreatePlanRequestSchema)` to create a new message.
  */
 export const CreatePlanRequestSchema: GenMessage<CreatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 19);
+  messageDesc(file_api_v1_routine_service, 18);
 
 /**
  * @generated from message api.v1.CreatePlanResponse
@@ -432,7 +458,7 @@ export type CreatePlanResponse = Message<"api.v1.CreatePlanResponse"> & {
  * Use `create(CreatePlanResponseSchema)` to create a new message.
  */
 export const CreatePlanResponseSchema: GenMessage<CreatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 20);
+  messageDesc(file_api_v1_routine_service, 19);
 
 /**
  * @generated from message api.v1.GetPlanRequest
@@ -449,7 +475,7 @@ export type GetPlanRequest = Message<"api.v1.GetPlanRequest"> & {
  * Use `create(GetPlanRequestSchema)` to create a new message.
  */
 export const GetPlanRequestSchema: GenMessage<GetPlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 21);
+  messageDesc(file_api_v1_routine_service, 20);
 
 /**
  * @generated from message api.v1.GetPlanResponse
@@ -466,7 +492,7 @@ export type GetPlanResponse = Message<"api.v1.GetPlanResponse"> & {
  * Use `create(GetPlanResponseSchema)` to create a new message.
  */
 export const GetPlanResponseSchema: GenMessage<GetPlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 22);
+  messageDesc(file_api_v1_routine_service, 21);
 
 /**
  * @generated from message api.v1.ListPlansRequest
@@ -479,7 +505,7 @@ export type ListPlansRequest = Message<"api.v1.ListPlansRequest"> & {
  * Use `create(ListPlansRequestSchema)` to create a new message.
  */
 export const ListPlansRequestSchema: GenMessage<ListPlansRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 23);
+  messageDesc(file_api_v1_routine_service, 22);
 
 /**
  * @generated from message api.v1.ListPlansResponse
@@ -496,7 +522,7 @@ export type ListPlansResponse = Message<"api.v1.ListPlansResponse"> & {
  * Use `create(ListPlansResponseSchema)` to create a new message.
  */
 export const ListPlansResponseSchema: GenMessage<ListPlansResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 24);
+  messageDesc(file_api_v1_routine_service, 23);
 
 /**
  * @generated from message api.v1.UpdatePlanRequest
@@ -523,7 +549,7 @@ export type UpdatePlanRequest = Message<"api.v1.UpdatePlanRequest"> & {
  * Use `create(UpdatePlanRequestSchema)` to create a new message.
  */
 export const UpdatePlanRequestSchema: GenMessage<UpdatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 25);
+  messageDesc(file_api_v1_routine_service, 24);
 
 /**
  * @generated from message api.v1.UpdatePlanResponse
@@ -540,7 +566,7 @@ export type UpdatePlanResponse = Message<"api.v1.UpdatePlanResponse"> & {
  * Use `create(UpdatePlanResponseSchema)` to create a new message.
  */
 export const UpdatePlanResponseSchema: GenMessage<UpdatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 26);
+  messageDesc(file_api_v1_routine_service, 25);
 
 /**
  * @generated from message api.v1.DeletePlanRequest
@@ -557,7 +583,7 @@ export type DeletePlanRequest = Message<"api.v1.DeletePlanRequest"> & {
  * Use `create(DeletePlanRequestSchema)` to create a new message.
  */
 export const DeletePlanRequestSchema: GenMessage<DeletePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 27);
+  messageDesc(file_api_v1_routine_service, 26);
 
 /**
  * @generated from message api.v1.DeletePlanResponse
@@ -570,7 +596,7 @@ export type DeletePlanResponse = Message<"api.v1.DeletePlanResponse"> & {
  * Use `create(DeletePlanResponseSchema)` to create a new message.
  */
 export const DeletePlanResponseSchema: GenMessage<DeletePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 28);
+  messageDesc(file_api_v1_routine_service, 27);
 
 /**
  * @generated from message api.v1.SetActivePlanRequest
@@ -587,7 +613,7 @@ export type SetActivePlanRequest = Message<"api.v1.SetActivePlanRequest"> & {
  * Use `create(SetActivePlanRequestSchema)` to create a new message.
  */
 export const SetActivePlanRequestSchema: GenMessage<SetActivePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 29);
+  messageDesc(file_api_v1_routine_service, 28);
 
 /**
  * @generated from message api.v1.SetActivePlanResponse
@@ -604,7 +630,7 @@ export type SetActivePlanResponse = Message<"api.v1.SetActivePlanResponse"> & {
  * Use `create(SetActivePlanResponseSchema)` to create a new message.
  */
 export const SetActivePlanResponseSchema: GenMessage<SetActivePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 30);
+  messageDesc(file_api_v1_routine_service, 29);
 
 /**
  * @generated from message api.v1.PauseActivePlanRequest
@@ -617,7 +643,7 @@ export type PauseActivePlanRequest = Message<"api.v1.PauseActivePlanRequest"> & 
  * Use `create(PauseActivePlanRequestSchema)` to create a new message.
  */
 export const PauseActivePlanRequestSchema: GenMessage<PauseActivePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 31);
+  messageDesc(file_api_v1_routine_service, 30);
 
 /**
  * @generated from message api.v1.PauseActivePlanResponse
@@ -630,7 +656,7 @@ export type PauseActivePlanResponse = Message<"api.v1.PauseActivePlanResponse"> 
  * Use `create(PauseActivePlanResponseSchema)` to create a new message.
  */
 export const PauseActivePlanResponseSchema: GenMessage<PauseActivePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 32);
+  messageDesc(file_api_v1_routine_service, 31);
 
 /**
  * @generated from message api.v1.SkipPlanRoutineRequest
@@ -647,7 +673,7 @@ export type SkipPlanRoutineRequest = Message<"api.v1.SkipPlanRoutineRequest"> & 
  * Use `create(SkipPlanRoutineRequestSchema)` to create a new message.
  */
 export const SkipPlanRoutineRequestSchema: GenMessage<SkipPlanRoutineRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 33);
+  messageDesc(file_api_v1_routine_service, 32);
 
 /**
  * @generated from message api.v1.SkipPlanRoutineResponse
@@ -664,7 +690,7 @@ export type SkipPlanRoutineResponse = Message<"api.v1.SkipPlanRoutineResponse"> 
  * Use `create(SkipPlanRoutineResponseSchema)` to create a new message.
  */
 export const SkipPlanRoutineResponseSchema: GenMessage<SkipPlanRoutineResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 34);
+  messageDesc(file_api_v1_routine_service, 33);
 
 /**
  * @generated from message api.v1.Plan
@@ -701,7 +727,37 @@ export type Plan = Message<"api.v1.Plan"> & {
  * Use `create(PlanSchema)` to create a new message.
  */
 export const PlanSchema: GenMessage<Plan> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 35);
+  messageDesc(file_api_v1_routine_service, 34);
+
+/**
+ * How a group's exercises are worked through. Straight sets finish one exercise
+ * before the next begins; a circuit takes one set of each in turn and repeats
+ * until the session says it is done.
+ *
+ * @generated from enum api.v1.RoutineGroupMode
+ */
+export enum RoutineGroupMode {
+  /**
+   * @generated from enum value: ROUTINE_GROUP_MODE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ROUTINE_GROUP_MODE_STRAIGHT = 1;
+   */
+  STRAIGHT = 1,
+
+  /**
+   * @generated from enum value: ROUTINE_GROUP_MODE_CIRCUIT = 2;
+   */
+  CIRCUIT = 2,
+}
+
+/**
+ * Describes the enum api.v1.RoutineGroupMode.
+ */
+export const RoutineGroupModeSchema: GenEnum<RoutineGroupMode> = /*@__PURE__*/
+  enumDesc(file_api_v1_routine_service, 0);
 
 /**
  * @generated from service api.v1.RoutineService
@@ -754,14 +810,6 @@ export const RoutineService: GenService<{
     methodKind: "unary";
     input: typeof AddExerciseRequestSchema;
     output: typeof AddExerciseResponseSchema;
-  },
-  /**
-   * @generated from rpc api.v1.RoutineService.RemoveExercise
-   */
-  removeExercise: {
-    methodKind: "unary";
-    input: typeof RemoveExerciseRequestSchema;
-    output: typeof RemoveExerciseResponseSchema;
   },
   /**
    * @generated from rpc api.v1.RoutineService.UpdateExerciseOrder

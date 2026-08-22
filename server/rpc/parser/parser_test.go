@@ -14,6 +14,7 @@ import (
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/weightunit"
 )
 
@@ -125,6 +126,66 @@ func (s *parserSuite) TestRoutineSlice() {
 		s.Require().Equal(routine.Title, parsed[i].GetName())
 		s.Require().Nil(parsed[i].GetExercises())
 	}
+}
+
+func (s *parserSuite) TestRoutineWithGroups() {
+	routine := s.factory.NewRoutine()
+	exercises := s.factory.NewExerciseSlice(3)
+	routine.R.Exercises = exercises
+
+	parsed := parser.RoutineWithGroups(routine, []*training.RoutineGroup{
+		{
+			ID:        "group-straight",
+			Mode:      training.RoutineGroupModeStraight,
+			Exercises: exercises[:1],
+		},
+		{
+			ID:                          "group-circuit",
+			Mode:                        training.RoutineGroupModeCircuit,
+			RestBetweenExercisesSeconds: 15,
+			RestBetweenRoundsSeconds:    90,
+			Exercises:                   exercises[1:],
+		},
+	})
+
+	// The flat list stays whole: a client that does not care how the routine is
+	// grouped keeps reading only that.
+	s.Require().Len(parsed.GetExercises(), 3)
+	s.Require().Len(parsed.GetGroups(), 2)
+
+	straight := parsed.GetGroups()[0]
+	s.Require().Equal("group-straight", straight.GetId())
+	s.Require().Equal(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, straight.GetMode())
+	s.Require().Len(straight.GetExercises(), 1)
+
+	circuit := parsed.GetGroups()[1]
+	s.Require().Equal(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, circuit.GetMode())
+	s.Require().Equal(int32(15), circuit.GetRestBetweenExercisesSeconds())
+	s.Require().Equal(int32(90), circuit.GetRestBetweenRoundsSeconds())
+	s.Require().Len(circuit.GetExercises(), 2)
+	s.Require().Equal(exercises[1].ID.String(), circuit.GetExercises()[0].GetId())
+}
+
+func (s *parserSuite) TestRoutineGroupMode() {
+	s.Require().Equal(
+		v1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+		parser.RoutineGroupModeToProto(training.RoutineGroupModeCircuit),
+	)
+	s.Require().Equal(
+		v1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+		parser.RoutineGroupModeToProto(training.RoutineGroupModeStraight),
+	)
+
+	s.Require().Equal(
+		training.RoutineGroupModeCircuit,
+		parser.RoutineGroupModeFromProto(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT),
+	)
+	// Anything else is straight sets, which is what a routine that says nothing
+	// about how it is worked through has always been.
+	s.Require().Equal(
+		training.RoutineGroupModeStraight,
+		parser.RoutineGroupModeFromProto(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_UNSPECIFIED),
+	)
 }
 
 func (s *parserSuite) TestWorkout() {

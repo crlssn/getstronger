@@ -316,6 +316,68 @@ func TestCreatePlanWithPlanRoutinesDoesNotDuplicateParent(t *testing.T) {
 	}
 }
 
+func TestCreateRoutineGroup(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	if _, err := New().NewRoutineGroupWithContext(ctx).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating RoutineGroup: %v", err)
+	}
+}
+
+func TestCreateRoutineGroupWithGroupExercisesRoutinesDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.RoutineGroups.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting RoutineGroups: %v", err)
+	}
+
+	if _, err := New().NewRoutineGroupWithContext(ctx, RoutineGroupMods.WithNewGroupExercisesRoutines(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating RoutineGroup with GroupExercisesRoutines: %v", err)
+	}
+
+	after, err := models.RoutineGroups.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting RoutineGroups: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected RoutineGroups to increase by 1, got %d", got)
+	}
+}
+
 func TestCreateRoutine(t *testing.T) {
 	if testDB == nil {
 		t.Skip("skipping test, no DSN provided")
@@ -404,6 +466,44 @@ func TestCreateRoutineWithPlanRoutinesDoesNotDuplicateParent(t *testing.T) {
 
 	if _, err := New().NewRoutineWithContext(ctx, RoutineMods.WithNewPlanRoutines(2)).Create(ctx, tx); err != nil {
 		t.Fatalf("Error creating Routine with PlanRoutines: %v", err)
+	}
+
+	after, err := models.Routines.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Routines: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Routines to increase by 1, got %d", got)
+	}
+}
+
+func TestCreateRoutineWithRoutineGroupsDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Routines.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Routines: %v", err)
+	}
+
+	if _, err := New().NewRoutineWithContext(ctx, RoutineMods.WithNewRoutineGroups(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating Routine with RoutineGroups: %v", err)
 	}
 
 	after, err := models.Routines.Query().Count(ctx, tx)

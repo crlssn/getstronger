@@ -76,7 +76,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
   const dropdownItems: DropdownItem[] = [
     { href: `/workouts/${workout.id}/edit`, title: t('workout.card.editWorkout') },
-    { func: onDeleteWorkout, title: t('workout.card.deleteWorkout') },
+    { destructive: true, func: onDeleteWorkout, title: t('workout.card.deleteWorkout') },
   ]
 
   const postComment = async (event: React.FormEvent) => {

@@ -103,6 +103,20 @@ func TestExerciseHasRelationsEmitExists(t *testing.T) {
 func TestExercisesRoutineHasRelationsEmitExists(t *testing.T) {
 	ctx := context.Background()
 
+	t.Run("GroupRoutineGroup", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(ExercisesRoutines.NameExpr()),
+			SelectWhere.ExercisesRoutines.R.HasGroupRoutineGroup(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasGroupRoutineGroup: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasGroupRoutineGroup: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
 	t.Run("Exercise", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(ExercisesRoutines.NameExpr()),
@@ -258,6 +272,41 @@ func TestPlanHasRelationsEmitExists(t *testing.T) {
 	})
 }
 
+// TestRoutineGroupHasRelationsEmitExists verifies that every generated
+// Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
+// an INNER JOIN, so the parent rows are never multiplied.
+func TestRoutineGroupHasRelationsEmitExists(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("GroupExercisesRoutines", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(RoutineGroups.NameExpr()),
+			SelectWhere.RoutineGroups.R.HasGroupExercisesRoutines(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasGroupExercisesRoutines: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasGroupExercisesRoutines: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("Routine", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(RoutineGroups.NameExpr()),
+			SelectWhere.RoutineGroups.R.HasRoutine(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasRoutine: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasRoutine: expected EXISTS in query, got: %s", sql)
+		}
+	})
+}
+
 // TestRoutineHasRelationsEmitExists verifies that every generated
 // Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
 // an INNER JOIN, so the parent rows are never multiplied.
@@ -289,6 +338,20 @@ func TestRoutineHasRelationsEmitExists(t *testing.T) {
 		}
 		if !strings.Contains(sql, "EXISTS") {
 			t.Errorf("HasPlanRoutines: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("RoutineGroups", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Routines.NameExpr()),
+			SelectWhere.Routines.R.HasRoutineGroups(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasRoutineGroups: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasRoutineGroups: expected EXISTS in query, got: %s", sql)
 		}
 	})
 

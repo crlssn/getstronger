@@ -109,16 +109,25 @@ export const waitForHome = async (page: Page) => {
 
 // Following someone turns the follow button into an entry of the profile's
 // overflow menu, so the unfollow action only exists once that menu is open.
+// The menu fades in, and a contrast check that runs mid-fade measures the
+// transition rather than the design. Waiting for it to settle is the difference
+// between a flaky accessibility assertion and a real one.
+const settledMenu = async (page: Page) => {
+  const menu = page.getByRole('menu')
+  await expect(menu).toBeVisible()
+  await expect(menu).toHaveCSS('opacity', '1')
+}
+
 export const openProfileActions = async (page: Page) => {
   await page.getByRole('button', { name: 'Profile actions' }).click()
-  await expect(page.getByRole('menu')).toBeVisible()
+  await settledMenu(page)
 }
 
 // Exercise management lives in the page header's overflow menu, so edit and
 // delete only exist once that menu is open.
 export const openExerciseActions = async (page: Page) => {
   await page.getByRole('button', { name: 'Exercise actions' }).click()
-  await expect(page.getByRole('menu')).toBeVisible()
+  await settledMenu(page)
 }
 
 // The feed and the workout history page more as their sentinel scrolls into

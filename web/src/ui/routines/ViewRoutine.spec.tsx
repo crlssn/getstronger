@@ -21,6 +21,8 @@ import { GetPreviousWorkoutSetsResponseSchema } from '@/proto/api/v1/exercise_se
 import {
   DeleteRoutineResponseSchema,
   GetRoutineResponseSchema,
+  RoutineGroupMode,
+  RoutineGroupSchema,
   UpdateExerciseOrderResponseSchema,
 } from '@/proto/api/v1/routine_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
@@ -191,6 +193,55 @@ describe('ViewRoutine', () => {
 
       await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'error' }))
       expect(screen.queryByText('routines')).not.toBeInTheDocument()
+    })
+  })
+
+  // A grouped routine is read here and rearranged on the edit screen: a drag
+  // handle would have nowhere sensible to drop.
+  describe('grouped routines', () => {
+    beforeEach(() => {
+      mocked.getRoutine.mockResolvedValue(
+        create(GetRoutineResponseSchema, {
+          routine: {
+            ...routine(),
+            groups: [
+              create(RoutineGroupSchema, {
+                id: 'a',
+                mode: RoutineGroupMode.STRAIGHT,
+                exercises: [{ id: 'bench' }],
+              }),
+              create(RoutineGroupSchema, {
+                id: 'b',
+                mode: RoutineGroupMode.CIRCUIT,
+                restBetweenExercisesSeconds: 15,
+                restBetweenRoundsSeconds: 90,
+                exercises: [{ id: 'dips' }],
+              }),
+            ],
+          },
+        }),
+      )
+    })
+
+    test('shows each group and how it runs', async () => {
+      render()
+
+      expect(await screen.findByText('Group A')).toBeInTheDocument()
+      expect(screen.getByText('Straight sets')).toBeInTheDocument()
+      expect(screen.getByText('Group B')).toBeInTheDocument()
+      expect(screen.getByText('Circuit')).toBeInTheDocument()
+      expect(
+        screen.getByText('Rest 15s between exercises · Rest 90s between rounds'),
+      ).toBeInTheDocument()
+    })
+
+    test('sends reordering to the edit screen instead of offering handles', async () => {
+      render()
+
+      expect(
+        await screen.findByText('Grouped routines are rearranged on the edit screen.'),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Reorder exercise' })).not.toBeInTheDocument()
     })
   })
 })

@@ -17,19 +17,22 @@ import styles from './ExercisePickerSheet.module.css'
 
 interface Props {
   /** Exercises already in the session, which are not offered again. */
-  excluded: readonly string[]
+  excluded?: readonly string[]
+  /** Said above the title: which session, or which group, is being added to. */
+  eyebrow?: string
   onAdd: (exercise: Exercise) => void
   onClose: () => void
 }
 
 /**
- * Adds an exercise to the session in progress, for this workout only.
+ * Picks an exercise: for the session in progress, or for a group of the routine
+ * being built.
  *
  * Searching filters what has already been fetched rather than asking the API
  * again: the list is short enough for that, and it keeps the field responsive
  * between keystrokes.
  */
-export const ExercisePickerSheet = ({ excluded, onAdd, onClose }: Props) => {
+export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: Props) => {
   const { t } = useTranslation()
 
   const [options, setOptions] = useState<Exercise[]>([])
@@ -69,7 +72,7 @@ export const ExercisePickerSheet = ({ excluded, onAdd, onClose }: Props) => {
 
   return (
     <AppSheet
-      eyebrow={t('workout.onlyThisWorkout')}
+      eyebrow={eyebrow ?? t('workout.onlyThisWorkout')}
       title={t('workout.addExercise')}
       closeLabel={t('workout.closeExercisePicker')}
       onClose={onClose}

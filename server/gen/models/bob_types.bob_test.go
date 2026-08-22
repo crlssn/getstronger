@@ -42,6 +42,9 @@ var _ bob.HookableType = &PlanRoutine{}
 // Make sure the type Plan runs hooks after queries
 var _ bob.HookableType = &Plan{}
 
+// Make sure the type RoutineGroup runs hooks after queries
+var _ bob.HookableType = &RoutineGroup{}
+
 // Make sure the type Routine runs hooks after queries
 var _ bob.HookableType = &Routine{}
 
@@ -89,3 +92,9 @@ var _ sql.Scanner = (*enums.NotificationType)(nil)
 
 // Make sure the type enums.NotificationType satisfies database/sql/driver.Valuer
 var _ driver.Valuer = *new(enums.NotificationType)
+
+// Make sure the type enums.RoutineGroupMode satisfies database/sql.Scanner
+var _ sql.Scanner = (*enums.RoutineGroupMode)(nil)
+
+// Make sure the type enums.RoutineGroupMode satisfies database/sql/driver.Valuer
+var _ driver.Valuer = *new(enums.RoutineGroupMode)

@@ -33,6 +33,7 @@ func (h *routineLibrary) CreateRoutine(ctx context.Context, req *connect.Request
 		UserID:      userID,
 		Name:        req.Msg.GetName(),
 		ExerciseIDs: req.Msg.GetExerciseIds(),
+		Groups:      routineGroupDrafts(req.Msg.GetGroups()),
 	})
 	if err != nil {
 		log.Error("Create routine", zap.Error(err))
@@ -66,9 +67,15 @@ func (h *routineLibrary) GetRoutine(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	groups, err := h.repo.ListRoutineGroups(ctx, routine.ID.String())
+	if err != nil {
+		log.Error("List groups for routine", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("Routine returned")
 	return connect.NewResponse(&apiv1.GetRoutineResponse{
-		Routine: parser.Routine(routine),
+		Routine: parser.RoutineWithGroups(routine, groups),
 	}), nil
 }
 
@@ -91,10 +98,7 @@ func (h *routineLibrary) UpdateRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exerciseIDs := make([]string, 0, len(req.Msg.GetRoutine().GetExercises()))
-	for _, exercise := range req.Msg.GetRoutine().GetExercises() {
-		exerciseIDs = append(exerciseIDs, exercise.GetId())
-	}
+	exerciseIDs := requestedRoutineExerciseIDs(req.Msg.GetRoutine())
 
 	exercises, err := h.repo.ListExercises(
 		ctx,
@@ -120,8 +124,14 @@ func (h *routineLibrary) UpdateRoutine(ctx context.Context, req *connect.Request
 			return fmt.Errorf("routine update: %w", err)
 		}
 
-		if err = tx.SetRoutineExercises(ctx, routine, routineExercises); err != nil {
-			return fmt.Errorf("set routine exercises: %w", err)
+		// The exercises were listed by ID set; positions follow the requested
+		// order, which the groups themselves carry when there are any.
+		if err = tx.SetRoutineGroups(
+			ctx, routine,
+			routineGroupDrafts(req.Msg.GetRoutine().GetGroups()),
+			routineExercises,
+		); err != nil {
+			return fmt.Errorf("set routine groups: %w", err)
 		}
 
 		return nil
@@ -140,10 +150,63 @@ func (h *routineLibrary) UpdateRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	groups, err := h.repo.ListRoutineGroups(ctx, routine.ID.String())
+	if err != nil {
+		log.Error("List groups for updated routine", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("Routine updated")
 	return connect.NewResponse(&apiv1.UpdateRoutineResponse{
-		Routine: parser.Routine(routine),
+		Routine: parser.RoutineWithGroups(routine, groups),
 	}), nil
+}
+
+// requestedRoutineExerciseIDs is every exercise the request names, in the order
+// the routine will be trained in. A client that sends groups need not repeat
+// them in the flat list, and one that sends no groups keeps working as before.
+func requestedRoutineExerciseIDs(routine *apiv1.Routine) []string {
+	ids := make([]string, 0, len(routine.GetExercises()))
+	seen := make(map[string]struct{}, len(routine.GetExercises()))
+
+	for _, group := range routine.GetGroups() {
+		for _, exercise := range group.GetExercises() {
+			if _, ok := seen[exercise.GetId()]; ok {
+				continue
+			}
+			seen[exercise.GetId()] = struct{}{}
+			ids = append(ids, exercise.GetId())
+		}
+	}
+
+	for _, exercise := range routine.GetExercises() {
+		if _, ok := seen[exercise.GetId()]; ok {
+			continue
+		}
+		seen[exercise.GetId()] = struct{}{}
+		ids = append(ids, exercise.GetId())
+	}
+
+	return ids
+}
+
+func routineGroupDrafts(groups []*apiv1.RoutineGroup) []training.RoutineGroupDraft {
+	drafts := make([]training.RoutineGroupDraft, 0, len(groups))
+	for _, group := range groups {
+		exerciseIDs := make([]string, 0, len(group.GetExercises()))
+		for _, exercise := range group.GetExercises() {
+			exerciseIDs = append(exerciseIDs, exercise.GetId())
+		}
+
+		drafts = append(drafts, training.RoutineGroupDraft{
+			Mode:                        parser.RoutineGroupModeFromProto(group.GetMode()),
+			RestBetweenExercisesSeconds: group.GetRestBetweenExercisesSeconds(),
+			RestBetweenRoundsSeconds:    group.GetRestBetweenRoundsSeconds(),
+			ExerciseIDs:                 exerciseIDs,
+		})
+	}
+
+	return drafts
 }
 
 func (h *routineLibrary) DeleteRoutine(ctx context.Context, req *connect.Request[apiv1.DeleteRoutineRequest]) (*connect.Response[apiv1.DeleteRoutineResponse], error) {
@@ -210,7 +273,7 @@ func (h *routineLibrary) ListRoutines(ctx context.Context, req *connect.Request[
 	}), nil
 }
 
-func (h *routineLibrary) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl
+func (h *routineLibrary) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -251,49 +314,6 @@ func (h *routineLibrary) AddExercise(ctx context.Context, req *connect.Request[a
 
 	log.Info("Exercise added to routine")
 	return connect.NewResponse(&apiv1.AddExerciseResponse{}), nil
-}
-
-func (h *routineLibrary) RemoveExercise(ctx context.Context, req *connect.Request[apiv1.RemoveExerciseRequest]) (*connect.Response[apiv1.RemoveExerciseResponse], error) { //nolint:dupl
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	routine, err := h.repo.GetRoutine(
-		ctx,
-		repo.GetRoutineWithID(req.Msg.GetRoutineId()),
-		repo.GetRoutineWithUserID(userID),
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("Routine not found", zap.Error(err))
-			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
-		}
-
-		log.Error("Find routine for removing exercise", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	exercise, err := h.repo.GetExercise(
-		ctx,
-		repo.GetExerciseWithID(req.Msg.GetExerciseId()),
-		repo.GetExerciseWithUserID(userID),
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("Exercise not found", zap.Error(err))
-			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
-		}
-
-		log.Error("Find exercise to remove from routine", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	if err = h.repo.RemoveExerciseFromRoutine(ctx, exercise, routine); err != nil {
-		log.Error("Remove exercise from routine", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	log.Info("Exercise removed from routine")
-	return connect.NewResponse(&apiv1.RemoveExerciseResponse{}), nil
 }
 
 func (h *routineLibrary) UpdateExerciseOrder(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseOrderRequest]) (*connect.Response[apiv1.UpdateExerciseOrderResponse], error) {
