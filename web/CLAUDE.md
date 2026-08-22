@@ -48,9 +48,9 @@ I reuse this?":
 
 | Directory       | What lives there                                     | Reusable        |
 | --------------- | ---------------------------------------------------- | --------------- |
-| `ui/components` | The design system. Generic, catalogued, domain-free.  | Anywhere        |
-| `ui/shell`      | App chrome — the nav bars, the banners, the toaster.  | Rendered once   |
-| `ui/features`   | Domain widgets — workout cards, charts, the streak.   | Within a domain |
+| `ui/components` | The design system. Generic, catalogued, domain-free. | Anywhere        |
+| `ui/shell`      | App chrome — the nav bars, the banners, the toaster. | Rendered once   |
+| `ui/features`   | Domain widgets — workout cards, charts, the streak.  | Within a domain |
 
 **Build screens out of the design system, and add to it before you need it.**
 [`src/ui/components/README.md`](src/ui/components/README.md) is the catalogue:

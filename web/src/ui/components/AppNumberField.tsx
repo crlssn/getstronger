@@ -13,8 +13,7 @@ const parseEntry = (value: string) => {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-interface Props
-  extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type' | 'className'> {
+interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type' | 'className'> {
   value: number | undefined
   onChange: (value: number | undefined) => void
   /** A unit shown inside the field, as a label on it rather than a control. */

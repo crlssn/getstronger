@@ -40,11 +40,7 @@ describe('AppOptionRow', () => {
 
   test('renders what sits either side of the copy', () => {
     render(
-      <AppOptionRow
-        leading={<span>1</span>}
-        trailing={<span>go</span>}
-        onClick={vi.fn()}
-      >
+      <AppOptionRow leading={<span>1</span>} trailing={<span>go</span>} onClick={vi.fn()}>
         Bench Press
       </AppOptionRow>,
     )

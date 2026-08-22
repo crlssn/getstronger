@@ -66,4 +66,3 @@
 .formActions {
   @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-card border border-border bg-white/95 p-3 shadow-raised backdrop-blur md:bottom-4;
 }
-

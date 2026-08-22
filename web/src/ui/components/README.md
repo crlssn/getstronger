@@ -6,11 +6,11 @@ Nothing in it knows what a workout, a routine or an exercise is.
 `ui/` has three layers, and the layer a file lives in is the answer to "may I
 reuse this?":
 
-| Directory       | What lives there                                        | Reusable        |
-| --------------- | ------------------------------------------------------- | --------------- |
-| `ui/components` | The design system. Generic, catalogued, domain-free.     | Anywhere        |
-| `ui/shell`      | App chrome — the nav bars, the banners, the toaster.     | Rendered once   |
-| `ui/features`   | Domain widgets — workout cards, charts, the streak.      | Within a domain |
+| Directory       | What lives there                                     | Reusable        |
+| --------------- | ---------------------------------------------------- | --------------- |
+| `ui/components` | The design system. Generic, catalogued, domain-free. | Anywhere        |
+| `ui/shell`      | App chrome — the nav bars, the banners, the toaster. | Rendered once   |
+| `ui/features`   | Domain widgets — workout cards, charts, the streak.  | Within a domain |
 
 `catalogue.spec.ts` fails if a component here is missing from this file, if this
 file describes one that no longer exists, or if one has no spec. That is what
@@ -20,8 +20,8 @@ aspirational.
 
 ## Choosing
 
-| You need                       | Use                                                |
-| ------------------------------ | -------------------------------------------------- |
+| You need                       | Use                                                 |
+| ------------------------------ | --------------------------------------------------- |
 | Anything a user taps           | `<AppButton>` — or `<AppIconButton>` for icon-only  |
 | A text field                   | `<AppInput>` / `<AppTextarea>`                      |
 | A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`           |

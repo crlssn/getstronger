@@ -92,12 +92,7 @@ export const ViewPlan = () => {
         </header>
         <p>{t('training.planView.routinesRepeat', { count: plan.routines.length })}</p>
         <div className={styles.overviewActions}>
-          <AppButton
-            type="link"
-            colour="primary"
-            width="auto"
-            to={`/plans/${plan.id}/edit`}
-          >
+          <AppButton type="link" colour="primary" width="auto" to={`/plans/${plan.id}/edit`}>
             <PencilIcon className="size-5" aria-hidden="true" /> {t('training.planForm.editTitle')}
           </AppButton>
           {plan.active ? (

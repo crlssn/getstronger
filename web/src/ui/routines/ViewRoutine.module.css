@@ -95,7 +95,6 @@
   @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
 
-
 /* Destructive is a text role, and this one sits in its own bordered zone. */
 .deleteRoutine {
   @apply border-danger/30;

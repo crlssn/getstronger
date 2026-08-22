@@ -7,4 +7,3 @@
 .pickerEmpty {
   @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
 }
-

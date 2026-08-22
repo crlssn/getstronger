@@ -160,7 +160,6 @@
   @apply mt-1 text-xs text-text-subtle;
 }
 
-
 /* Keeps the label on the card edge it already sat on, now that AppButton's
    padding rather than the label's own makes the tap floor. */
 .makeActive {

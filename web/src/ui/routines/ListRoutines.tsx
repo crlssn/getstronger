@@ -160,8 +160,7 @@ export const ListRoutines = () => {
                         width="auto"
                         to={`/workouts/routine/${routine.id}`}
                       >
-                        <PlayIcon className="size-5" aria-hidden="true" />{' '}
-                        {t('routine.list.start')}
+                        <PlayIcon className="size-5" aria-hidden="true" /> {t('routine.list.start')}
                       </AppButton>
                       <AppButton
                         type="link"

@@ -44,7 +44,14 @@ export const AppNavTop = () => {
     <header className={styles.pageNav}>
       {/* A small back row above the title, not a centered bar around it: the
           chevron carries the parent tab's name so back says where it goes. */}
-      <AppButton type="button" colour="ghost" size="sm" width="auto" className={styles.back} onClick={goBack}>
+      <AppButton
+        type="button"
+        colour="ghost"
+        size="sm"
+        width="auto"
+        className={styles.back}
+        onClick={goBack}
+      >
         <ChevronLeftIcon className="size-5" aria-hidden="true" />{' '}
         {t(tabLabelKeys[parentTab] ?? 'nav.home')}
       </AppButton>

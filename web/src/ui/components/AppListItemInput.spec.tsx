@@ -10,7 +10,9 @@ describe('AppListItemInput', () => {
   const field = () => screen.getByRole('textbox')
 
   test('shows the value it is given', () => {
-    render(<AppListItemInput label="Exercise name" model="Bench press" type="text" onUpdate={vi.fn()} />)
+    render(
+      <AppListItemInput label="Exercise name" model="Bench press" type="text" onUpdate={vi.fn()} />,
+    )
 
     expect(field()).toHaveValue('Bench press')
   })
@@ -28,7 +30,9 @@ describe('AppListItemInput', () => {
   })
 
   test('title-cases as the user types when asked to', async () => {
-    render(<AppListItemInput label="Exercise name" model="" type="text" capitalise onUpdate={vi.fn()} />)
+    render(
+      <AppListItemInput label="Exercise name" model="" type="text" capitalise onUpdate={vi.fn()} />,
+    )
 
     await userEvent.type(field(), 'bench press')
 
@@ -45,10 +49,14 @@ describe('AppListItemInput', () => {
 
   // A form reset, or a fetch landing, replaces what is in the field.
   test('follows a value changed underneath it', async () => {
-    const { rerender } = render(<AppListItemInput label="Exercise name" model="Squat" type="text" onUpdate={vi.fn()} />)
+    const { rerender } = render(
+      <AppListItemInput label="Exercise name" model="Squat" type="text" onUpdate={vi.fn()} />,
+    )
     await userEvent.type(field(), ' variation')
 
-    rerender(<AppListItemInput label="Exercise name" model="Deadlift" type="text" onUpdate={vi.fn()} />)
+    rerender(
+      <AppListItemInput label="Exercise name" model="Deadlift" type="text" onUpdate={vi.fn()} />,
+    )
 
     expect(field()).toHaveValue('Deadlift')
   })

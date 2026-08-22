@@ -106,7 +106,10 @@ describe('CreateExercise', () => {
     await userEvent.type(nameField(), 'Row')
     await userEvent.click(screen.getByRole('button', { name: 'Distance × time' }))
     await userEvent.click(screen.getByRole('switch'))
-    await userEvent.type(screen.getByRole('combobox', { name: 'Add exercise tag' }), 'Cardio{Enter}')
+    await userEvent.type(
+      screen.getByRole('combobox', { name: 'Add exercise tag' }),
+      'Cardio{Enter}',
+    )
     await userEvent.click(submit('Save Exercise'))
 
     await waitFor(() => expect(mocked.createExercise).toHaveBeenCalled())

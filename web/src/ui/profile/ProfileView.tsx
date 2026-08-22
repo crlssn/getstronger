@@ -204,13 +204,7 @@ export const ProfileView = () => {
         <strong>{title}</strong>
         <small>{body}</small>
       </div>
-      <AppSegmented
-        busy={busy}
-        label={title}
-        options={options}
-        value={current}
-        onChange={onPick}
-      />
+      <AppSegmented busy={busy} label={title} options={options} value={current} onChange={onPick} />
     </section>
   )
 

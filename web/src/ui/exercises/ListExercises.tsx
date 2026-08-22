@@ -1,10 +1,6 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import {
-  BookOpenIcon,
-  ChevronRightIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
+import { BookOpenIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

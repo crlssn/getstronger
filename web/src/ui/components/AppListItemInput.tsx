@@ -13,8 +13,10 @@ import styles from './AppListItemInput.module.css'
 const titleCase = (value: string): string =>
   value.toLowerCase().replace(/(^\w|(?<=[ /])\w)/g, (char) => char.toUpperCase())
 
-interface Props
-  extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type' | 'aria-label'> {
+interface Props extends Omit<
+  ComponentProps<'input'>,
+  'value' | 'onChange' | 'type' | 'aria-label'
+> {
   /**
    * The field's accessible name.
    *

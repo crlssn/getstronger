@@ -8,9 +8,7 @@ import { AppSwitch } from './AppSwitch'
 
 describe('AppSwitch', () => {
   test('says whether it is on', () => {
-    const { rerender } = render(
-      <AppSwitch label="Rest timer" checked={false} onChange={vi.fn()} />,
-    )
+    const { rerender } = render(<AppSwitch label="Rest timer" checked={false} onChange={vi.fn()} />)
     expect(screen.getByRole('switch', { name: 'Rest timer' })).not.toBeChecked()
 
     rerender(<AppSwitch label="Rest timer" checked onChange={vi.fn()} />)

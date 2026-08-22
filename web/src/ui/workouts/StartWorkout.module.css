@@ -185,7 +185,6 @@
   @apply text-meta text-text-subtle;
 }
 
-
 /* Reopening reads as a correction, not a warning, so it takes the completed
    panel's green rather than the ghost role's neutral. */
 .reopenExercise {

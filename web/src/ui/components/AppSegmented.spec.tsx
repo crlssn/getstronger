@@ -13,9 +13,7 @@ const options = [
 
 describe('AppSegmented', () => {
   test('names the group it renders', () => {
-    render(
-      <AppSegmented label="Weight unit" options={options} value="kg" onChange={vi.fn()} />,
-    )
+    render(<AppSegmented label="Weight unit" options={options} value="kg" onChange={vi.fn()} />)
 
     expect(screen.getByRole('group', { name: 'Weight unit' })).toBeInTheDocument()
   })

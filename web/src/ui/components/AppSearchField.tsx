@@ -7,8 +7,10 @@ import styles from './AppSearchField.module.css'
 
 // `size` shadows the HTML attribute of the same name, which is a character
 // count nothing here wants.
-interface Props
-  extends Omit<ComponentProps<'input'>, 'className' | 'onChange' | 'value' | 'type' | 'size'> {
+interface Props extends Omit<
+  ComponentProps<'input'>,
+  'className' | 'onChange' | 'value' | 'type' | 'size'
+> {
   /** Names the field once: it is both the placeholder and the label. */
   label: string
   value: string
