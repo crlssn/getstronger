@@ -25,6 +25,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -123,7 +124,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
-				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidExerciseTags),
+				err: connect.NewError(connect.CodeInvalidArgument, training.ErrInvalidExerciseTags),
 			},
 		},
 		{
@@ -140,7 +141,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
-				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidExerciseTags),
+				err: connect.NewError(connect.CodeInvalidArgument, training.ErrInvalidExerciseTags),
 			},
 		},
 	}

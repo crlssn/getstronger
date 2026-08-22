@@ -21,6 +21,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -147,7 +148,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 			},
 			init: func(_ test, _ string) {},
 			expected: expected{
-				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrWorkoutMustStartBeforeFinish),
+				err: connect.NewError(connect.CodeInvalidArgument, training.ErrWorkoutStartsAfterFinish),
 			},
 		},
 	}

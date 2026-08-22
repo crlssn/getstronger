@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pubsub"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
-	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 )
@@ -38,15 +38,15 @@ func (s *pubSubSuite) SetupSuite() {
 	c := container.NewContainer(ctx)
 
 	s.pubSub = pubsub.New(pubsub.Params{
-		Log:  zap.NewExample(),
-		Repo: repo.New(c.DB),
+		Log:   zap.NewExample(),
+		Store: repo.New(c.DB),
 	})
 
 	s.mocks.controller = gomock.NewController(s.T())
 	s.mocks.handler = handlers.NewMockHandler(s.mocks.controller)
 
-	s.pubSub.Subscribe(map[repo.EventTopic]handlers.Handler{
-		repo.EventTopicFollowedUser: s.mocks.handler,
+	s.pubSub.Subscribe(map[events.Topic]handlers.Handler{
+		events.TopicFollowedUser: s.mocks.handler,
 	})
 
 	s.T().Cleanup(func() {
@@ -61,7 +61,7 @@ func (s *pubSubSuite) SetupSuite() {
 func (s *pubSubSuite) TestPublish() {
 	type test struct {
 		name    string
-		topic   repo.EventTopic
+		topic   events.Topic
 		payload any
 		init    func(test)
 	}
@@ -71,8 +71,8 @@ func (s *pubSubSuite) TestPublish() {
 	tests := []test{
 		{
 			name:  "ok_handler_found",
-			topic: repo.EventTopicFollowedUser,
-			payload: payloads.UserFollowed{
+			topic: events.TopicFollowedUser,
+			payload: events.UserFollowed{
 				FollowerID: uuid.NewString(),
 				FolloweeID: uuid.NewString(),
 				EventID:    uuid.NewString(),
@@ -86,8 +86,8 @@ func (s *pubSubSuite) TestPublish() {
 		},
 		{
 			name:  "ok_handler_not_found",
-			topic: repo.EventTopicRequestTraced,
-			payload: payloads.WorkoutCommentPosted{
+			topic: events.TopicRequestTraced,
+			payload: events.WorkoutCommentPosted{
 				CommentID: uuid.NewString(),
 				EventID:   uuid.NewString(),
 			},

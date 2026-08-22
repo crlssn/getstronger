@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"go.uber.org/zap"
 )
 
 type Claims struct {
@@ -31,24 +30,37 @@ func (s Secrets) ResolveKey(tokenType TokenType) []byte {
 	}
 }
 
-type Manager struct {
-	Log       *zap.Logger
+// Issuer signs the access and refresh tokens this server hands out, and reads
+// back the ones presented to it. It is the only thing that holds the signing
+// keys, and the only thing that says whether a token is still good.
+type Issuer struct {
 	Secrets   Secrets
-	Validator *jwt.Validator
+	validator *jwt.Validator
 }
 
+// jwtLeeway forgives a little clock skew between the signer and the reader.
 const jwtLeeway = 5 * time.Second
 
-func NewManager(accessKey, refreshKey []byte) *Manager {
-	return &Manager{
+func NewIssuer(accessKey, refreshKey []byte) *Issuer {
+	return &Issuer{
 		Secrets: Secrets{
 			AccessKey:  accessKey,
 			RefreshKey: refreshKey,
 		},
-		Validator: jwt.NewValidator(
+		validator: jwt.NewValidator(
 			jwt.WithLeeway(jwtLeeway),
 		),
 	}
+}
+
+// ValidateClaims reports whether claims are still within the window they were
+// issued for.
+func (i *Issuer) ValidateClaims(claims *Claims) error {
+	if err := i.validator.Validate(claims); err != nil {
+		return fmt.Errorf("claims validate: %w", err)
+	}
+
+	return nil
 }
 
 type TokenType string
@@ -89,7 +101,7 @@ const (
 
 var errUnexpectedTokenType = errors.New("unexpected token type")
 
-func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error) {
+func (i *Issuer) CreateToken(userID string, tokenType TokenType) (string, error) {
 	if !tokenType.Validate() {
 		return "", fmt.Errorf("%w: %v", errUnexpectedTokenType, tokenType)
 	}
@@ -105,7 +117,7 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(m.Secrets.ResolveKey(tokenType))
+	tokenString, err := token.SignedString(i.Secrets.ResolveKey(tokenType))
 	if err != nil {
 		return "", fmt.Errorf("signing token: %w", err)
 	}
@@ -113,8 +125,8 @@ func (m *Manager) CreateToken(userID string, tokenType TokenType) (string, error
 	return tokenString, nil
 }
 
-func (m *Manager) MustCreateToken(userID string, tokenType TokenType) string {
-	token, err := m.CreateToken(userID, tokenType)
+func (i *Issuer) MustCreateToken(userID string, tokenType TokenType) string {
+	token, err := i.CreateToken(userID, tokenType)
 	if err != nil {
 		panic(err)
 	}
@@ -129,7 +141,7 @@ var (
 	ErrUnexpectedTokenType     = errors.New("unexpected token type")
 )
 
-func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, error) {
+func (i *Issuer) ClaimsFromToken(token string, tokenType TokenType) (*Claims, error) {
 	if !tokenType.Validate() {
 		return nil, fmt.Errorf("%w: %v", ErrUnexpectedTokenType, tokenType)
 	}
@@ -149,7 +161,7 @@ func (m *Manager) ClaimsFromToken(token string, tokenType TokenType) (*Claims, e
 			return nil, fmt.Errorf("%w: %v", ErrUnexpectedSubject, subject)
 		}
 
-		return m.Secrets.ResolveKey(tokenType), nil
+		return i.Secrets.ResolveKey(tokenType), nil
 	}, jwt.WithLeeway(jwtLeeway))
 	if err != nil {
 		return nil, fmt.Errorf("token parsing: %w", err)

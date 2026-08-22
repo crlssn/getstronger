@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/cookies"
 	"github.com/crlssn/getstronger/server/email"
@@ -34,7 +35,7 @@ import (
 type authSuite struct {
 	suite.Suite
 
-	jwt     *jwt.Manager
+	jwt     *jwt.Issuer
 	handler apiv1connect.AuthServiceHandler
 
 	factory   *factory.Factory
@@ -58,7 +59,7 @@ func (s *authSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
-	s.jwt = jwt.NewManager([]byte("access-key"), []byte("refresh-key"))
+	s.jwt = jwt.NewIssuer([]byte("access-key"), []byte("refresh-key"))
 	s.handler = handlers.NewAuthHandler(handlers.AuthHandlerParams{
 		JWT:     s.jwt,
 		Repo:    repo.New(s.container.DB),
@@ -541,7 +542,7 @@ func (s *authSuite) TestResendVerificationEmail() {
 			init: func(t test) {
 				auth := s.factory.NewAuth(
 					factory.AuthEmail(t.req.Msg.GetEmail()),
-					factory.AuthEmailVerificationSentAt(time.Now().UTC().Add(-handlers.ResendVerificationEmailCooldown-time.Minute)),
+					factory.AuthEmailVerificationSentAt(time.Now().UTC().Add(-account.VerificationCooldown-time.Minute)),
 				)
 				s.factory.NewUser(
 					factory.UserAuthID(auth.ID),
@@ -611,7 +612,7 @@ func (s *authSuite) TestResendVerificationEmail() {
 			// The response must be identical for every address so that it never
 			// discloses whether an account exists or is already verified.
 			s.Require().Equal(&v1.ResendVerificationEmailResponse{
-				RetryAfterSeconds: int32(handlers.ResendVerificationEmailCooldown.Seconds()),
+				RetryAfterSeconds: int32(account.VerificationCooldown.Seconds()),
 			}, res.Msg)
 
 			if !t.emailled {
@@ -728,7 +729,7 @@ func (s *authSuite) TestUpdatePassword() {
 			},
 			init: func(t test) {
 				s.factory.NewAuth(
-					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), repo.PasswordResetTokenTTL),
+					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), account.PasswordResetTokenTTL),
 				)
 			},
 			expected: expected{

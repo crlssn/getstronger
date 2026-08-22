@@ -10,6 +10,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/training"
 )
 
 func TestPlanLifecycle(t *testing.T) {
@@ -70,7 +71,7 @@ func TestPlanLifecycle(t *testing.T) {
 	require.Error(t, err)
 }
 
-func planRoutineIDs(plan *repo.TrainingPlan) []string {
+func planRoutineIDs(plan *training.Plan) []string {
 	ids := make([]string, 0, len(plan.Routines))
 	for _, routine := range plan.Routines {
 		ids = append(ids, routine.ID.String())

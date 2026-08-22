@@ -9,8 +9,10 @@ import (
 	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/safe"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/weightunit"
 )
 
@@ -28,17 +30,50 @@ func Exercise(exercise *models.Exercise) *apiv1.Exercise {
 func exerciseMetricsFromDB(metrics []string) []apiv1.ExerciseMetric {
 	parsed := make([]apiv1.ExerciseMetric, 0, len(metrics))
 	for _, metric := range metrics {
-		switch metric {
-		case "weight":
-			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_WEIGHT)
-		case "reps":
-			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_REPS)
-		case "distance":
-			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_DISTANCE)
-		case "time":
-			parsed = append(parsed, apiv1.ExerciseMetric_EXERCISE_METRIC_TIME)
+		if proto := exerciseMetricToProto(training.Metric(metric)); proto != apiv1.ExerciseMetric_EXERCISE_METRIC_UNSPECIFIED {
+			parsed = append(parsed, proto)
 		}
 	}
+	return parsed
+}
+
+func exerciseMetricToProto(metric training.Metric) apiv1.ExerciseMetric {
+	switch metric {
+	case training.MetricWeight:
+		return apiv1.ExerciseMetric_EXERCISE_METRIC_WEIGHT
+	case training.MetricReps:
+		return apiv1.ExerciseMetric_EXERCISE_METRIC_REPS
+	case training.MetricDistance:
+		return apiv1.ExerciseMetric_EXERCISE_METRIC_DISTANCE
+	case training.MetricTime:
+		return apiv1.ExerciseMetric_EXERCISE_METRIC_TIME
+	default:
+		return apiv1.ExerciseMetric_EXERCISE_METRIC_UNSPECIFIED
+	}
+}
+
+// ExerciseMetricsFromProto states a request in the training vocabulary. A
+// measurement this API does not know becomes an invalid metric, which the
+// training context is left to reject.
+func ExerciseMetricsFromProto(metrics []apiv1.ExerciseMetric) []training.Metric {
+	parsed := make([]training.Metric, 0, len(metrics))
+	for _, metric := range metrics {
+		switch metric {
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_WEIGHT:
+			parsed = append(parsed, training.MetricWeight)
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_REPS:
+			parsed = append(parsed, training.MetricReps)
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_DISTANCE:
+			parsed = append(parsed, training.MetricDistance)
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_TIME:
+			parsed = append(parsed, training.MetricTime)
+		case apiv1.ExerciseMetric_EXERCISE_METRIC_UNSPECIFIED:
+			parsed = append(parsed, training.Metric(""))
+		default:
+			parsed = append(parsed, training.Metric(""))
+		}
+	}
+
 	return parsed
 }
 
@@ -99,7 +134,7 @@ func RoutineSlice(routines models.RoutineSlice) []*apiv1.Routine {
 	return parseWithoutOpts(routines, Routine)
 }
 
-func Plan(plan *repo.TrainingPlan) *apiv1.Plan {
+func Plan(plan *training.Plan) *apiv1.Plan {
 	if plan == nil {
 		return nil
 	}
@@ -113,7 +148,7 @@ func Plan(plan *repo.TrainingPlan) *apiv1.Plan {
 	}
 }
 
-func PlanSlice(plans []*repo.TrainingPlan) []*apiv1.Plan {
+func PlanSlice(plans []*training.Plan) []*apiv1.Plan {
 	parsed := make([]*apiv1.Plan, 0, len(plans))
 	for _, plan := range plans {
 		parsed = append(parsed, Plan(plan))
@@ -129,14 +164,10 @@ func WorkoutExerciseSets(sets models.SetSlice, personalBests models.SetSlice) Wo
 	}
 }
 
+// WorkoutIntensity reports the workout's tonnage; the API calls it intensity.
 func WorkoutIntensity(sets models.SetSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
-		var intensity float64
-		for _, set := range sets {
-			intensity += set.Weight * float64(set.Reps)
-		}
-
-		w.Intensity = safe.Int32FromFloat64(intensity)
+		w.Intensity = safe.Int32FromFloat64(training.TotalVolume(sets).Float64())
 	}
 }
 
@@ -298,14 +329,14 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 
 type NotificationOpt func(*apiv1.Notification)
 
-func NotificationActor(nType repo.NotificationType, actor *models.User) NotificationOpt {
+func NotificationActor(nType notification.Type, actor *models.User) NotificationOpt {
 	return func(n *apiv1.Notification) {
 		if actor == nil {
 			return
 		}
 
 		switch nType {
-		case repo.NotificationTypeFollow:
+		case notification.TypeFollow:
 			if _, ok := n.GetType().(*apiv1.Notification_UserFollowed_); !ok {
 				n.Type = &apiv1.Notification_UserFollowed_{
 					UserFollowed: &apiv1.Notification_UserFollowed{
@@ -315,7 +346,7 @@ func NotificationActor(nType repo.NotificationType, actor *models.User) Notifica
 			}
 
 			n.GetType().(*apiv1.Notification_UserFollowed_).UserFollowed.Actor = User(actor) //nolint:forcetypeassert
-		case repo.NotificationTypeWorkoutComment:
+		case notification.TypeWorkoutComment:
 			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
 				n.Type = &apiv1.Notification_WorkoutComment_{
 					WorkoutComment: &apiv1.Notification_WorkoutComment{
@@ -330,9 +361,9 @@ func NotificationActor(nType repo.NotificationType, actor *models.User) Notifica
 	}
 }
 
-func NotificationWorkout(nType repo.NotificationType, workout *models.Workout) NotificationOpt {
+func NotificationWorkout(nType notification.Type, workout *models.Workout) NotificationOpt {
 	return func(n *apiv1.Notification) {
-		if nType != repo.NotificationTypeWorkoutComment || workout == nil {
+		if nType != notification.TypeWorkoutComment || workout == nil {
 			return
 		}
 
@@ -377,7 +408,7 @@ func NotificationSlice(notifications models.NotificationSlice, actors models.Use
 
 	nSlice := make([]*apiv1.Notification, 0, len(notifications))
 	for _, n := range notifications {
-		var p repo.NotificationPayload
+		var p notification.Payload
 		if err := json.Unmarshal(n.Payload.Val, &p); err != nil {
 			return nil, fmt.Errorf("unmarshal notification payload: %w", err)
 		}
@@ -386,14 +417,14 @@ func NotificationSlice(notifications models.NotificationSlice, actors models.Use
 		workout, workoutExists := mapWorkouts[p.WorkoutID]
 
 		switch n.Type {
-		case repo.NotificationTypeFollow:
+		case notification.TypeFollow:
 			if actorExists {
 				nSlice = append(nSlice, Notification(
 					n,
 					NotificationActor(n.Type, actor),
 				))
 			}
-		case repo.NotificationTypeWorkoutComment:
+		case notification.TypeWorkoutComment:
 			if actorExists && workoutExists {
 				nSlice = append(nSlice, Notification(
 					n,

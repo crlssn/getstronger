@@ -1,12 +1,63 @@
 # Backend rules (`server/`)
 
-Go backend. `rpc/` holds the Connect handlers (the terminal layer), `repo/` the
-database access and domain sentinels, `gen/` generated models and protobuf code
-that is never edited by hand.
+Go backend, organised around what the app does rather than how it is built.
 
 Verify with `mise run test:backend`, `mise run lint:backend`, and
 `mise run vet:go`. Restart this worktree's backend after verification so the
 running app uses the new code.
+
+## Where code goes
+
+A package per bounded context owns that context's vocabulary and its rules.
+None of them knows about SQL, HTTP, RPC or messaging, and `depguard` fails the
+build if one starts to — the deny list in `.golangci.yml` says why for each:
+
+| Package             | Owns                                                           |
+| ------------------- | -------------------------------------------------------------- |
+| `training/`         | Plans and their rotation, routines, exercises, workouts, weeks  |
+| `account/`          | Email addresses, usernames, passwords, verification, recovery   |
+| `notification/`     | Notification types, stored payloads, who hears about what       |
+| `pubsub/events/`    | The topics events are published under, and what each carries    |
+
+Around them sit the packages that talk to the outside world, and which hold no
+business rules of their own:
+
+- `repo/` is the single persistence adapter. `repo.Repo` reads and writes rows;
+  a `Repo` bound to a transaction is the same type as one bound to the pool,
+  which is what lets `NewTx` hand a use case a transactional store.
+- `rpc/` is the Connect edge. Handlers authenticate, translate, log once and
+  return; `rpc/parser` is the only place proto and stored rows meet.
+- `pubsub/`, `email/`, `jwt/`, `cookies/`, `trace/`, `db/` are the remaining
+  adapters. `gen/` is generated and never edited by hand.
+
+When a rule needs a home, ask which type already knows the thing the rule is
+about, and put it there — `Plan` decides when it may rotate, `Week` decides
+what a week of training adds up to. Reach for a coordinator only when a use
+case genuinely spans collaborators, as the dashboard does; it stays small and
+holds no knowledge of its own.
+
+Name types after the responsibility they carry. `service`, `manager`, `helper`
+and `utils` are not responsibilities and do not belong in a name.
+
+An import the guard rejects is usually a rule in the wrong package rather than a
+rule that needs an exception. A decision that needs a query wants the query run
+by the caller and the result passed in; one that needs to log wants to return an
+error the terminal layer logs once. Widen the deny list when a context grows a
+new neighbour it should not know about; narrow it only with a reason in the
+commit message.
+
+## Depending on the store
+
+Consumers declare the slice of `repo.Repo` they use, as an interface named for
+what that slice is for — `planRotation`, `dashboardSources`, `TraceStore`. A
+port earns its place when the dependency really is a slice: it documents what
+a type touches, and it is what the pub/sub subscribers are tested against.
+Where a use case needs most of the adapter, depend on `*repo.Repo` directly
+rather than restating it under another name.
+
+Bind ports to the adapter in the fx module that declares them, not in each
+application that assembles the server, so a new dependency cannot leave one
+wiring behind.
 
 ## Error handling
 
@@ -36,12 +87,14 @@ adapted to this codebase.
    `errors.Is`/`errors.As` forever. Use `%v` for third-party errors callers
    have no business inspecting; reserve `%w` for errors we own or deliberately
    pass through.
-8. **Translate foreign errors into package-owned sentinels.** The `repo`
-   package owns domain sentinels such as `repo.ErrAuthEmailExists` and
-   `repo.ErrPlanNotActive`; extend that vocabulary rather than leaking
-   library errors to callers. Deliberate exception: `sql.ErrNoRows` is this
-   codebase's not-found signal — `repo` passes it through wrapped, and
-   handlers branch on it with `errors.Is(err, sql.ErrNoRows)`.
+8. **Translate foreign errors into package-owned sentinels.** A bounded
+   context owns the sentinels for its own rules —
+   `account.ErrEmailAlreadyRegistered`, `training.ErrPlanNotActive` — and
+   `repo` translates the database's errors into them rather than leaking
+   library errors to callers. Extend that vocabulary in the context the rule
+   belongs to. Deliberate exception: `sql.ErrNoRows` is this codebase's
+   not-found signal — `repo` passes it through wrapped, and handlers branch on
+   it with `errors.Is(err, sql.ErrNoRows)`.
 9. **Log or return — never both.** `repo` and other inner layers only return.
    The RPC handlers are the terminal layer: they log once and return a
    sanitised `connect.NewError` with no internal detail. Pub/sub handlers log

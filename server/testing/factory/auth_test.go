@@ -13,8 +13,8 @@ import (
 
 	"github.com/stephenafamo/bob"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -86,7 +86,7 @@ func TestFactory_Auth(t *testing.T) {
 	t.Run("AuthEmailVerified", func(t *testing.T) {
 		t.Parallel()
 		passwordResetToken := uuid.NewString()
-		expected := f.NewAuth(factory.AuthPasswordResetToken(passwordResetToken, repo.PasswordResetTokenTTL))
+		expected := f.NewAuth(factory.AuthPasswordResetToken(passwordResetToken, account.PasswordResetTokenTTL))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.Equal(t, passwordResetToken, created.PasswordResetToken.GetOrZero().String())

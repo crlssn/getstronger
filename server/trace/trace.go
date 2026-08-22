@@ -8,8 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/pubsub"
-	"github.com/crlssn/getstronger/server/pubsub/payloads"
-	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 )
 
 type ResponseWriter struct {
@@ -42,7 +41,7 @@ func (m *Tracer) Trace(ctx context.Context, uri string) *Trace {
 		start: time.Now().UTC(),
 		onEnd: func(duration time.Duration, statusCode int) {
 			m.log.Info("Request traced", zap.String("uri", uri), zap.Duration("duration", duration), zap.Int("status_code", statusCode))
-			m.pubSub.Publish(ctx, repo.EventTopicRequestTraced, payloads.RequestTraced{
+			m.pubSub.Publish(ctx, events.TopicRequestTraced, events.RequestTraced{
 				Request:    uri,
 				DurationMS: int(duration.Milliseconds()),
 				StatusCode: statusCode,

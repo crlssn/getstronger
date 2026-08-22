@@ -3,25 +3,12 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 
-	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/training"
 )
-
-type TrainingPlan struct {
-	ID              string
-	UserID          string
-	Name            string
-	Active          bool
-	CurrentPosition int
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	Routines        models.RoutineSlice
-}
 
 type CreatePlanParams struct {
 	UserID     string
@@ -36,39 +23,28 @@ type UpdatePlanParams struct {
 	RoutineIDs []string
 }
 
-var (
-	ErrPlanRoutineBelongsToAnotherUser = errors.New("plan routine does not belong to user")
-	ErrPlanRoutineDeleted              = errors.New("plan routine is deleted")
-	ErrPlanRoutineDuplicate            = errors.New("plan routine is duplicated")
-	ErrPlanRequiresRoutine             = errors.New("plan requires at least one routine")
-	ErrPlanNotActive                   = errors.New("plan is not active")
-	ErrPlanUnexpectedRoutine           = errors.New("workout routine is not next in plan")
-)
+// validatePlanRoutines answers the half of the rotation rules that needs the
+// database: whether each routine exists and may be trained by this athlete.
+func (r *Repo) validatePlanRoutines(ctx context.Context, userID string, routineIDs []string) error {
+	if err := training.ValidatePlanRotation(routineIDs); err != nil {
+		return fmt.Errorf("plan rotation validate: %w", err)
+	}
 
-func (r *repo) validatePlanRoutines(ctx context.Context, userID string, routineIDs []string) error {
-	seen := make(map[string]struct{}, len(routineIDs))
 	for _, routineID := range routineIDs {
-		if _, duplicate := seen[routineID]; duplicate {
-			return ErrPlanRoutineDuplicate
-		}
-		seen[routineID] = struct{}{}
-
 		routine, err := r.GetRoutine(ctx, GetRoutineWithID(routineID))
 		if err != nil {
 			return fmt.Errorf("plan routine fetch: %w", err)
 		}
-		if routine.UserID != uuidFromString(userID) {
-			return ErrPlanRoutineBelongsToAnotherUser
-		}
-		if !routine.DeletedAt.IsNull() {
-			return ErrPlanRoutineDeleted
+
+		if err = training.ValidatePlanRoutine(routine, userID); err != nil {
+			return fmt.Errorf("plan routine validate: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func (r *repo) replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error {
+func (r *Repo) replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error {
 	if _, err := r.sqlExec().ExecContext(ctx, `DELETE FROM public.plan_routines WHERE plan_id = $1`, planID); err != nil {
 		return fmt.Errorf("plan routines delete: %w", err)
 	}
@@ -84,13 +60,9 @@ VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 	return nil
 }
 
-func (r *repo) CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error) {
-	if len(p.RoutineIDs) == 0 {
-		return nil, ErrPlanRequiresRoutine
-	}
-
+func (r *Repo) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
 	var planID string
-	if err := r.NewTx(ctx, func(tx Tx) error {
+	if err := r.NewTx(ctx, func(tx *Repo) error {
 		if err := tx.validatePlanRoutines(ctx, p.UserID, p.RoutineIDs); err != nil {
 			return err
 		}
@@ -110,7 +82,7 @@ VALUES ($1, $2, $3)`, planID, p.UserID, p.Name); err != nil {
 	return r.GetPlan(ctx, planID, p.UserID)
 }
 
-func (r *repo) scanPlan(ctx context.Context, row interface{ Scan(dest ...any) error }) (*TrainingPlan, error) {
+func (r *Repo) scanPlan(ctx context.Context, row interface{ Scan(dest ...any) error }) (*training.Plan, error) {
 	plan, err := scanPlanBase(row)
 	if err != nil {
 		return nil, err
@@ -122,8 +94,8 @@ func (r *repo) scanPlan(ctx context.Context, row interface{ Scan(dest ...any) er
 	return plan, nil
 }
 
-func scanPlanBase(row interface{ Scan(dest ...any) error }) (*TrainingPlan, error) {
-	plan := &TrainingPlan{}
+func scanPlanBase(row interface{ Scan(dest ...any) error }) (*training.Plan, error) {
+	plan := &training.Plan{}
 	if err := row.Scan(
 		&plan.ID,
 		&plan.UserID,
@@ -138,7 +110,7 @@ func scanPlanBase(row interface{ Scan(dest ...any) error }) (*TrainingPlan, erro
 	return plan, nil
 }
 
-func (r *repo) loadPlanRoutines(ctx context.Context, plan *TrainingPlan) error {
+func (r *Repo) loadPlanRoutines(ctx context.Context, plan *training.Plan) error {
 	routineRows, err := r.sqlExec().QueryContext(ctx, `
 SELECT routine_id
 FROM public.plan_routines
@@ -184,17 +156,17 @@ const selectPlanColumns = `
 SELECT id, user_id, name, active, current_position, created_at, updated_at
 FROM public.plans`
 
-func (r *repo) GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (r *Repo) GetPlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	return r.scanPlan(ctx, r.sqlExec().QueryRowContext(ctx,
 		selectPlanColumns+` WHERE id = $1 AND user_id = $2`, planID, userID))
 }
 
-func (r *repo) GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error) {
+func (r *Repo) GetActivePlan(ctx context.Context, userID string) (*training.Plan, error) {
 	return r.scanPlan(ctx, r.sqlExec().QueryRowContext(ctx,
 		selectPlanColumns+` WHERE user_id = $1 AND active = TRUE`, userID))
 }
 
-func (r *repo) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error) {
+func (r *Repo) ListPlans(ctx context.Context, userID string) ([]*training.Plan, error) {
 	rows, err := r.sqlExec().QueryContext(ctx,
 		selectPlanColumns+` WHERE user_id = $1 ORDER BY active DESC, created_at DESC`, userID)
 	if err != nil {
@@ -202,7 +174,7 @@ func (r *repo) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, e
 	}
 	defer rows.Close()
 
-	var plans []*TrainingPlan
+	var plans []*training.Plan
 	for rows.Next() {
 		plan, scanErr := scanPlanBase(rows)
 		if scanErr != nil {
@@ -226,12 +198,8 @@ func (r *repo) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, e
 	return plans, nil
 }
 
-func (r *repo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error) {
-	if len(p.RoutineIDs) == 0 {
-		return nil, ErrPlanRequiresRoutine
-	}
-
-	if err := r.NewTx(ctx, func(tx Tx) error {
+func (r *Repo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*training.Plan, error) {
+	if err := r.NewTx(ctx, func(tx *Repo) error {
 		plan, err := tx.GetPlan(ctx, p.ID, p.UserID)
 		if err != nil {
 			return fmt.Errorf("plan get before update: %w", err)
@@ -240,17 +208,7 @@ func (r *repo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPla
 			return err
 		}
 
-		currentRoutineID := ""
-		if plan.CurrentPosition >= 0 && plan.CurrentPosition < len(plan.Routines) {
-			currentRoutineID = plan.Routines[plan.CurrentPosition].ID.String()
-		}
-		currentPosition := 0
-		for position, routineID := range p.RoutineIDs {
-			if routineID == currentRoutineID {
-				currentPosition = position
-				break
-			}
-		}
+		currentPosition := plan.PositionAfterReplacing(p.RoutineIDs)
 
 		if _, err = tx.exec().ExecContext(ctx, `
 UPDATE public.plans
@@ -267,7 +225,7 @@ WHERE id = $3 AND user_id = $4`, p.Name, currentPosition, p.ID, p.UserID); err !
 	return r.GetPlan(ctx, p.ID, p.UserID)
 }
 
-func (r *repo) DeletePlan(ctx context.Context, planID, userID string) error {
+func (r *Repo) DeletePlan(ctx context.Context, planID, userID string) error {
 	result, err := r.sqlExec().ExecContext(ctx,
 		`DELETE FROM public.plans WHERE id = $1 AND user_id = $2`, planID, userID)
 	if err != nil {
@@ -283,8 +241,8 @@ func (r *repo) DeletePlan(ctx context.Context, planID, userID string) error {
 	return nil
 }
 
-func (r *repo) SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
-	if err := r.NewTx(ctx, func(tx Tx) error {
+func (r *Repo) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
+	if err := r.NewTx(ctx, func(tx *Repo) error {
 		if _, err := tx.GetPlan(ctx, planID, userID); err != nil {
 			return fmt.Errorf("plan get before activation: %w", err)
 		}
@@ -304,7 +262,7 @@ func (r *repo) SetActivePlan(ctx context.Context, planID, userID string) (*Train
 	return r.GetPlan(ctx, planID, userID)
 }
 
-func (r *repo) PauseActivePlan(ctx context.Context, userID string) error {
+func (r *Repo) PauseActivePlan(ctx context.Context, userID string) error {
 	if _, err := r.sqlExec().ExecContext(ctx,
 		`UPDATE public.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
 		return fmt.Errorf("active plan pause: %w", err)
@@ -312,23 +270,17 @@ func (r *repo) PauseActivePlan(ctx context.Context, userID string) error {
 	return nil
 }
 
-func (r *repo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*TrainingPlan, error) {
-	if err := r.NewTx(ctx, func(tx Tx) error {
+func (r *Repo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*training.Plan, error) {
+	if err := r.NewTx(ctx, func(tx *Repo) error {
 		plan, err := tx.GetPlan(ctx, planID, userID)
 		if err != nil {
 			return fmt.Errorf("plan get before advance: %w", err)
 		}
-		if !plan.Active {
-			return ErrPlanNotActive
-		}
-		if len(plan.Routines) == 0 || plan.CurrentPosition >= len(plan.Routines) {
-			return ErrPlanUnexpectedRoutine
-		}
-		if expectedRoutineID != "" && plan.Routines[plan.CurrentPosition].ID != uuidFromString(expectedRoutineID) {
-			return ErrPlanUnexpectedRoutine
+		nextPosition, err := plan.Advance(expectedRoutineID)
+		if err != nil {
+			return fmt.Errorf("plan next position: %w", err)
 		}
 
-		nextPosition := (plan.CurrentPosition + 1) % len(plan.Routines)
 		if _, err = tx.exec().ExecContext(ctx, `
 UPDATE public.plans
 SET current_position = $1, updated_at = (NOW() AT TIME ZONE 'UTC')

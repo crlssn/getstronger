@@ -12,7 +12,7 @@ import (
 	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -174,21 +174,21 @@ func TestSeedJaneDoe(t *testing.T) {
 
 	notifications, err := models.Notifications.Query(
 		models.SelectWhere.Notifications.UserID.EQ(john.ID),
-		models.SelectWhere.Notifications.Type.EQ(repo.NotificationTypeWorkoutComment),
+		models.SelectWhere.Notifications.Type.EQ(notification.TypeWorkoutComment),
 	).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Len(t, notifications, 4)
 	readCount := 0
 	unreadCount := 0
-	for _, notification := range notifications {
-		if notification.ReadAt.IsNull() {
+	for _, stored := range notifications {
+		if stored.ReadAt.IsNull() {
 			unreadCount++
 		} else {
 			readCount++
 		}
 
-		var payload repo.NotificationPayload
-		require.NoError(t, json.Unmarshal(notification.Payload.Val, &payload))
+		var payload notification.Payload
+		require.NoError(t, json.Unmarshal(stored.Payload.Val, &payload))
 		require.Equal(t, jane.ID.String(), payload.ActorID)
 		_, notifiesAboutJohnWorkout := johnWorkoutIDs[payload.WorkoutID]
 		require.True(t, notifiesAboutJohnWorkout)

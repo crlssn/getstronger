@@ -14,8 +14,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/notification"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
-	"github.com/crlssn/getstronger/server/pubsub/payloads"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -24,18 +25,18 @@ import (
 func TestRequestTraced_HandlePayload(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
-	repoMock := repo.NewMockRepo(controller)
-	handler := handlers.NewRequestTraced(zap.NewExample(), repoMock)
+	traces := handlers.NewMockTraceStore(controller)
+	handler := handlers.NewRequestTraced(zap.NewExample(), traces)
 
 	t.Run("ok_request_traced", func(t *testing.T) {
 		t.Parallel()
-		payload := payloads.RequestTraced{
+		payload := events.RequestTraced{
 			Request:    "GET /api/test",
 			DurationMS: 200,
 			StatusCode: 200,
 		}
 
-		repoMock.EXPECT().StoreTrace(gomock.Any(), repo.StoreTraceParams{
+		traces.EXPECT().StoreTrace(gomock.Any(), repo.StoreTraceParams{
 			Request:    payload.Request,
 			DurationMS: payload.DurationMS,
 			StatusCode: payload.StatusCode,
@@ -47,7 +48,7 @@ func TestRequestTraced_HandlePayload(t *testing.T) {
 	t.Run("ok_invalid_payload", func(t *testing.T) {
 		t.Parallel()
 		handler.HandlePayload("invalid_payload")
-		repoMock.EXPECT().StoreTrace(gomock.Any(), gomock.Any()).Times(0)
+		traces.EXPECT().StoreTrace(gomock.Any(), gomock.Any()).Times(0)
 	})
 
 	t.Cleanup(func() {
@@ -65,7 +66,7 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 
 	t.Run("ok_workout_comment_posted", func(t *testing.T) {
 		t.Parallel()
-		payload := payloads.WorkoutCommentPosted{
+		payload := events.WorkoutCommentPosted{
 			CommentID: uuid.NewString(),
 			EventID:   uuid.NewString(),
 		}
@@ -130,21 +131,21 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	t.Parallel()
 
 	controller := gomock.NewController(t)
-	repoMock := repo.NewMockRepo(controller)
-	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock)
+	notifications := handlers.NewMockNotificationStore(controller)
+	handler := handlers.NewFollowedUser(zap.NewExample(), notifications)
 
 	t.Run("ok_user_followed", func(t *testing.T) {
 		t.Parallel()
-		payload := payloads.UserFollowed{
+		payload := events.UserFollowed{
 			FollowerID: "follower_id",
 			FolloweeID: "followee_id",
 			EventID:    "event_id",
 		}
 
-		repoMock.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
-			Type:   repo.NotificationTypeFollow,
+		notifications.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
+			Type:   notification.TypeFollow,
 			UserID: payload.FolloweeID,
-			Payload: repo.NotificationPayload{
+			Payload: notification.Payload{
 				ActorID: payload.FollowerID,
 				EventID: payload.EventID,
 			},
@@ -156,7 +157,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	t.Run("ok_invalid_payload", func(t *testing.T) {
 		t.Parallel()
 		handler.HandlePayload("invalid_payload")
-		repoMock.EXPECT().StoreTrace(gomock.Any(), gomock.Any()).Times(0)
+		notifications.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).Times(0)
 	})
 
 	t.Cleanup(func() {

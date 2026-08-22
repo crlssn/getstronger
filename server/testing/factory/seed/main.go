@@ -13,10 +13,10 @@ import (
 	"github.com/aarondl/opt/omit"
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/db"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/factory"
 	"github.com/crlssn/getstronger/server/weightunit"
 )
@@ -342,8 +342,8 @@ func seedJaneComments(database *sql.DB, f *factory.Factory, active, jane *models
 		)
 		notificationOpts := []factory.NotificationOpt{
 			factory.NotificationUserID(active.ID),
-			factory.NotificationType(repo.NotificationTypeWorkoutComment),
-			factory.NotificationPayload(repo.NotificationPayload{
+			factory.NotificationType(notification.TypeWorkoutComment),
+			factory.NotificationPayload(notification.Payload{
 				ActorID:   jane.ID.String(),
 				WorkoutID: workout.ID.String(),
 			}),

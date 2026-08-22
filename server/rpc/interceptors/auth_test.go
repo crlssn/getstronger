@@ -16,7 +16,7 @@ import (
 type authSuite struct {
 	suite.Suite
 
-	jwt         *jwt.Manager
+	jwt         *jwt.Issuer
 	interceptor *interceptors.Auth
 }
 
@@ -26,7 +26,7 @@ func TestAuthSuite(t *testing.T) {
 }
 
 func (s *authSuite) SetupSuite() {
-	s.jwt = jwt.NewManager([]byte("access-token"), []byte("refresh-token"))
+	s.jwt = jwt.NewIssuer([]byte("access-token"), []byte("refresh-token"))
 
 	interceptor, ok := interceptors.NewAuth(zap.NewExample(), s.jwt).(*interceptors.Auth)
 	s.Require().True(ok)

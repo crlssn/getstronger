@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/pubsub/payloads"
+	"github.com/crlssn/getstronger/server/notification"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
 )
 
@@ -25,25 +25,25 @@ var (
 )
 
 type RequestTraced struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log    *zap.Logger
+	traces TraceStore
 }
 
-func NewRequestTraced(log *zap.Logger, repo repo.Repo) *RequestTraced {
-	return &RequestTraced{log, repo}
+func NewRequestTraced(log *zap.Logger, traces TraceStore) *RequestTraced {
+	return &RequestTraced{log, traces}
 }
 
 func (h *RequestTraced) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	p, ok := payload.(payloads.RequestTraced)
+	p, ok := payload.(events.RequestTraced)
 	if !ok {
 		h.log.Error("Unexpected payload type for trace event", zap.Any("payload", payload))
 		return
 	}
 
-	if err := h.repo.StoreTrace(ctx, repo.StoreTraceParams{
+	if err := h.traces.StoreTrace(ctx, repo.StoreTraceParams{
 		Request:    p.Request,
 		DurationMS: p.DurationMS,
 		StatusCode: p.StatusCode,
@@ -53,19 +53,19 @@ func (h *RequestTraced) HandlePayload(payload any) {
 }
 
 type WorkoutCommentPosted struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log      *zap.Logger
+	comments CommentThread
 }
 
-func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo) *WorkoutCommentPosted {
-	return &WorkoutCommentPosted{log, repo}
+func NewWorkoutCommentPosted(log *zap.Logger, comments CommentThread) *WorkoutCommentPosted {
+	return &WorkoutCommentPosted{log, comments}
 }
 
 func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	p, ok := payload.(payloads.WorkoutCommentPosted)
+	p, ok := payload.(events.WorkoutCommentPosted)
 	if !ok {
 		w.log.Error("Unexpected payload type for workout comment event", zap.Any("payload", payload))
 		return
@@ -75,7 +75,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		return
 	}
 
-	comment, err := w.repo.GetWorkoutComment(
+	comment, err := w.comments.GetWorkoutComment(
 		ctx,
 		repo.GetWorkoutCommentWithID(p.CommentID),
 	)
@@ -84,7 +84,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		return
 	}
 
-	workout, err := w.repo.GetWorkout(
+	workout, err := w.comments.GetWorkout(
 		ctx,
 		repo.GetWorkoutWithID(comment.WorkoutID.String()),
 		repo.GetWorkoutLoadComments(),
@@ -94,23 +94,11 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		return
 	}
 
-	mapUserIDs := make(map[uuid.UUID]struct{})
-	if comment.UserID != workout.UserID {
-		mapUserIDs[workout.UserID] = struct{}{}
-	}
-	for _, c := range workout.R.WorkoutComments {
-		if comment.UserID == c.UserID {
-			// Don't notify own comments.
-			continue
-		}
-		mapUserIDs[c.UserID] = struct{}{}
-	}
-
-	for userID := range mapUserIDs {
-		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-			Type:   repo.NotificationTypeWorkoutComment,
+	for _, userID := range notification.CommentAudience(comment.UserID, workout.UserID, workout.R.WorkoutComments) {
+		if err = w.comments.CreateNotification(ctx, repo.CreateNotificationParams{
+			Type:   notification.TypeWorkoutComment,
 			UserID: userID.String(),
-			Payload: repo.NotificationPayload{
+			Payload: notification.Payload{
 				ActorID:   comment.UserID.String(),
 				EventID:   p.EventID,
 				WorkoutID: comment.WorkoutID.String(),
@@ -122,19 +110,19 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 }
 
 type FollowedUser struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log           *zap.Logger
+	notifications NotificationStore
 }
 
-func NewFollowedUser(log *zap.Logger, repo repo.Repo) *FollowedUser {
-	return &FollowedUser{log, repo}
+func NewFollowedUser(log *zap.Logger, notifications NotificationStore) *FollowedUser {
+	return &FollowedUser{log, notifications}
 }
 
 func (u *FollowedUser) HandlePayload(payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	p, ok := payload.(payloads.UserFollowed)
+	p, ok := payload.(events.UserFollowed)
 	if !ok {
 		u.log.Error("Unexpected payload type for followed user event", zap.Any("payload", payload))
 		return
@@ -144,10 +132,10 @@ func (u *FollowedUser) HandlePayload(payload any) {
 		return
 	}
 
-	if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
-		Type:   repo.NotificationTypeFollow,
+	if err := u.notifications.CreateNotification(ctx, repo.CreateNotificationParams{
+		Type:   notification.TypeFollow,
 		UserID: p.FolloweeID,
-		Payload: repo.NotificationPayload{
+		Payload: notification.Payload{
 			ActorID: p.FollowerID,
 			EventID: p.EventID,
 		},

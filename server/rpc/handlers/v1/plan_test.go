@@ -1,0 +1,200 @@
+package v1_test
+
+import (
+	"context"
+	"log"
+	"testing"
+
+	"connectrpc.com/connect"
+	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
+
+	"github.com/crlssn/getstronger/server/gen/models"
+	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
+	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/repo"
+	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
+	"github.com/crlssn/getstronger/server/testing/container"
+	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/xcontext"
+)
+
+type planSuite struct {
+	suite.Suite
+
+	handler apiv1connect.RoutineServiceHandler
+
+	factory   *factory.Factory
+	container *container.Container
+}
+
+func TestPlanSuite(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, new(planSuite))
+}
+
+func (s *planSuite) SetupSuite() {
+	ctx := context.Background()
+	s.container = container.NewContainer(ctx)
+	s.factory = factory.NewFactory(s.container.DB)
+	s.handler = handlers.NewRoutineHandler(repo.New(s.container.DB))
+
+	s.T().Cleanup(func() {
+		if err := s.container.Terminate(ctx); err != nil {
+			log.Fatalf("Clean container: %s", err)
+		}
+	})
+}
+
+// athlete returns a context authenticated as a new user, and that user.
+func (s *planSuite) athlete() (context.Context, *models.User) {
+	user := s.factory.NewUser()
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+
+	return xcontext.WithLogger(ctx, zap.NewExample()), user
+}
+
+func (s *planSuite) createPlan(ctx context.Context, name string, routineIDs ...string) *apiv1.Plan {
+	res, err := s.handler.CreatePlan(ctx, connect.NewRequest(&apiv1.CreatePlanRequest{
+		Name:       name,
+		RoutineIds: routineIDs,
+	}))
+	s.Require().NoError(err)
+
+	return res.Msg.GetPlan()
+}
+
+func (s *planSuite) TestCreatePlanKeepsTheRotationInTheOrderAsked() {
+	ctx, user := s.athlete()
+	lower := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Lower"))
+	upper := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Upper"))
+
+	plan := s.createPlan(ctx, "Strength", upper.ID.String(), lower.ID.String())
+
+	s.Require().Equal("Strength", plan.GetName())
+	s.Require().False(plan.GetActive())
+	s.Require().Equal(
+		[]string{upper.ID.String(), lower.ID.String()},
+		planRoutineIDs(plan),
+	)
+}
+
+func (s *planSuite) TestCreatePlanRejectsARoutineTheAthleteDoesNotOwn() {
+	ctx, user := s.athlete()
+	own := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	somebodyElses := s.factory.NewRoutine(factory.RoutineUserID(s.factory.NewUser().ID))
+
+	_, err := s.handler.CreatePlan(ctx, connect.NewRequest(&apiv1.CreatePlanRequest{
+		Name:       "Borrowed",
+		RoutineIds: []string{own.ID.String(), somebodyElses.ID.String()},
+	}))
+
+	s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
+func (s *planSuite) TestCreatePlanRejectsARepeatedRoutine() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+
+	_, err := s.handler.CreatePlan(ctx, connect.NewRequest(&apiv1.CreatePlanRequest{
+		Name:       "Twice",
+		RoutineIds: []string{routine.ID.String(), routine.ID.String()},
+	}))
+
+	s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
+func (s *planSuite) TestGetPlanIsNotFoundForAnotherAthletesPlan() {
+	ownerCtx, owner := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(owner.ID))
+	plan := s.createPlan(ownerCtx, "Private", routine.ID.String())
+
+	strangerCtx, _ := s.athlete()
+	_, err := s.handler.GetPlan(strangerCtx, connect.NewRequest(&apiv1.GetPlanRequest{Id: plan.GetId()}))
+
+	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+}
+
+func (s *planSuite) TestListPlansShowsTheActivePlanFirst() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	s.createPlan(ctx, "Older", routine.ID.String())
+	activated := s.createPlan(ctx, "Newer", routine.ID.String())
+
+	_, err := s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{Id: activated.GetId()}))
+	s.Require().NoError(err)
+
+	res, err := s.handler.ListPlans(ctx, connect.NewRequest(&apiv1.ListPlansRequest{}))
+	s.Require().NoError(err)
+	s.Require().Len(res.Msg.GetPlans(), 2)
+	s.Require().Equal(activated.GetId(), res.Msg.GetPlans()[0].GetId())
+	s.Require().True(res.Msg.GetPlans()[0].GetActive())
+}
+
+func (s *planSuite) TestUpdatePlanFollowsTheCurrentRoutineToItsNewPosition() {
+	ctx, user := s.athlete()
+	first := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("First"))
+	second := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Second"))
+	plan := s.createPlan(ctx, "Rotation", first.ID.String(), second.ID.String())
+
+	_, err := s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+
+	skipped, err := s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+	s.Require().Equal(int32(1), skipped.Msg.GetPlan().GetCurrentPosition())
+
+	// The plan is on "Second"; reversing the rotation should keep it there.
+	updated, err := s.handler.UpdatePlan(ctx, connect.NewRequest(&apiv1.UpdatePlanRequest{
+		Id:         plan.GetId(),
+		Name:       "Reversed",
+		RoutineIds: []string{second.ID.String(), first.ID.String()},
+	}))
+	s.Require().NoError(err)
+	s.Require().Equal("Reversed", updated.Msg.GetPlan().GetName())
+	s.Require().Zero(updated.Msg.GetPlan().GetCurrentPosition())
+	s.Require().Equal(second.ID.String(), planRoutineIDs(updated.Msg.GetPlan())[0])
+}
+
+func (s *planSuite) TestSkipPlanRoutineWrapsAroundAndStopsWhenPaused() {
+	ctx, user := s.athlete()
+	first := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	second := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	plan := s.createPlan(ctx, "Rotation", first.ID.String(), second.ID.String())
+
+	_, err := s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+
+	for _, expected := range []int32{1, 0} {
+		res, errSkip := s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{Id: plan.GetId()}))
+		s.Require().NoError(errSkip)
+		s.Require().Equal(expected, res.Msg.GetPlan().GetCurrentPosition())
+	}
+
+	_, err = s.handler.PauseActivePlan(ctx, connect.NewRequest(&apiv1.PauseActivePlanRequest{}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{Id: plan.GetId()}))
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+}
+
+func (s *planSuite) TestDeletePlanRemovesItAndIsNotFoundTwice() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	plan := s.createPlan(ctx, "Temporary", routine.ID.String())
+
+	_, err := s.handler.DeletePlan(ctx, connect.NewRequest(&apiv1.DeletePlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.DeletePlan(ctx, connect.NewRequest(&apiv1.DeletePlanRequest{Id: plan.GetId()}))
+	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+}
+
+func planRoutineIDs(plan *apiv1.Plan) []string {
+	ids := make([]string, 0, len(plan.GetRoutines()))
+	for _, routine := range plan.GetRoutines() {
+		ids = append(ids, routine.GetId())
+	}
+
+	return ids
+}

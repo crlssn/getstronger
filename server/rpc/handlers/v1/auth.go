@@ -14,6 +14,7 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/cookies"
 	"github.com/crlssn/getstronger/server/email"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -27,8 +28,8 @@ import (
 var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 
 type authHandler struct {
-	jwt     *jwt.Manager
-	repo    repo.Repo
+	jwt     *jwt.Issuer
+	repo    *repo.Repo
 	email   email.Email
 	cookies *cookies.Cookies
 }
@@ -36,8 +37,8 @@ type authHandler struct {
 type AuthHandlerParams struct {
 	fx.In
 
-	JWT     *jwt.Manager
-	Repo    repo.Repo
+	JWT     *jwt.Issuer
+	Repo    *repo.Repo
 	Email   email.Email
 	Cookies *cookies.Cookies
 }
@@ -51,26 +52,25 @@ func NewAuthHandler(p AuthHandlerParams) apiv1connect.AuthServiceHandler {
 	}
 }
 
-var errInvalidEmail = errors.New("invalid email")
-
 func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.SignupRequest]) (*connect.Response[apiv1.SignupResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	req.Msg.Email = strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
-	if !strings.Contains(req.Msg.GetEmail(), "@") {
+	address, err := account.ParseEmailAddress(req.Msg.GetEmail())
+	if err != nil {
 		log.Warn("Invalid email")
-		return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidEmail)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+	req.Msg.Email = address
 
-	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
+	if err = account.ConfirmPassword(req.Msg.GetPassword(), req.Msg.GetPasswordConfirmation()); err != nil {
 		log.Warn("Passwords do not match")
 		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
-	if err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
+	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		auth, err := tx.CreateAuth(ctx, req.Msg.GetEmail(), req.Msg.GetPassword())
 		if err != nil {
-			if errors.Is(err, repo.ErrAuthEmailExists) {
+			if errors.Is(err, account.ErrEmailAlreadyRegistered) {
 				log.Warn("Email already registered")
 				return nil
 			}
@@ -102,7 +102,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 		return nil
 	}); err != nil {
-		if errors.Is(err, repo.ErrUserUsernameExists) {
+		if errors.Is(err, account.ErrUsernameTaken) {
 			log.Warn("Username already taken")
 			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
 		}
@@ -202,7 +202,7 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
-	if err = h.jwt.Validator.Validate(claims); err != nil {
+	if err = h.jwt.ValidateClaims(claims); err != nil {
 		log.Error("Validate refresh token claims", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
@@ -266,20 +266,16 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv
 	return connect.NewResponse(&apiv1.VerifyEmailResponse{}), nil
 }
 
-// ResendVerificationEmailCooldown throttles how often the same address may be
-// sent a verification email.
-const ResendVerificationEmailCooldown = time.Minute
-
 func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.Request[apiv1.ResendVerificationEmailRequest]) (*connect.Response[apiv1.ResendVerificationEmailResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
 	// The same response is returned for every address so that the endpoint
 	// never discloses whether an account exists or is already verified.
 	res := connect.NewResponse(&apiv1.ResendVerificationEmailResponse{
-		RetryAfterSeconds: int32(ResendVerificationEmailCooldown.Seconds()),
+		RetryAfterSeconds: int32(account.VerificationCooldown.Seconds()),
 	})
 
-	address := strings.ReplaceAll(req.Msg.GetEmail(), " ", "")
+	address := account.NormalizeEmailAddress(req.Msg.GetEmail())
 	auth, err := h.repo.GetAuth(
 		ctx,
 		repo.GetAuthByEmail(address),
@@ -302,8 +298,7 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 		return res, nil
 	}
 
-	sentAt := auth.EmailVerificationSentAt
-	if !sentAt.IsNull() && time.Now().UTC().Sub(sentAt.GetOrZero()) < ResendVerificationEmailCooldown {
+	if !account.VerificationResendAllowed(auth.EmailVerificationSentAt.GetOrZero(), time.Now().UTC()) {
 		// Do not expose information about the address being rate limited.
 		log.Warn("Verification email rate limited")
 		return res, nil
@@ -366,7 +361,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 
 func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[apiv1.UpdatePasswordRequest]) (*connect.Response[apiv1.UpdatePasswordResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
-	if req.Msg.GetPassword() != req.Msg.GetPasswordConfirmation() {
+	if err := account.ConfirmPassword(req.Msg.GetPassword(), req.Msg.GetPasswordConfirmation()); err != nil {
 		log.Warn("Passwords do not match")
 		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
@@ -382,7 +377,7 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if !auth.PasswordResetTokenValidUntil.IsNull() && auth.PasswordResetTokenValidUntil.GetOrZero().Before(time.Now().UTC()) {
+	if account.PasswordResetTokenExpired(auth.PasswordResetTokenValidUntil.GetOrZero(), time.Now().UTC()) {
 		log.Warn("Password reset token expired")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}

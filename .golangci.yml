@@ -5,7 +5,6 @@ linters:
     - funcorder
     - noinlineerr
     - wsl_v5
-    - depguard
     - exhaustruct
     - funlen
     - godox
@@ -16,6 +15,39 @@ linters:
     - varnamelen
     - wsl
     - gomodguard
+  settings:
+    depguard:
+      rules:
+        # The bounded contexts own the business rules and nothing else. A rule
+        # that needs a query, a request, an event or a log line has been put in
+        # the wrong package: see server/CLAUDE.md. `internal/` would not catch
+        # this — it constrains who may import you, not what you may import.
+        domain:
+          files:
+            - "**/server/training/**"
+            - "**/server/account/**"
+            - "**/server/notification/**"
+          deny:
+            - pkg: database/sql
+              desc: the domain does not read or write rows; let the store run the query and pass the result in
+            - pkg: github.com/stephenafamo/bob
+              desc: the domain does not build queries; gen/models is the shared row type, the ORM is the store's business
+            - pkg: connectrpc.com/connect
+              desc: the domain does not answer requests; map its errors to a code in the handler
+            - pkg: net/http
+              desc: the domain does not know it is reached over HTTP
+            - pkg: go.uber.org/zap
+              desc: the domain returns errors and lets the terminal layer log them once
+            - pkg: go.uber.org/fx
+              desc: the domain is constructed by its callers, not wired by a container
+            - pkg: github.com/crlssn/getstronger/server/repo
+              desc: the store depends on the domain, not the other way round
+            - pkg: github.com/crlssn/getstronger/server/rpc
+              desc: the RPC edge depends on the domain, not the other way round
+            - pkg: github.com/crlssn/getstronger/server/pubsub
+              desc: the domain does not publish or subscribe; raise the event from the use case that decided it
+            - pkg: github.com/crlssn/getstronger/server/gen/proto
+              desc: the domain speaks its own vocabulary; rpc/parser is where it meets the wire
   exclusions:
     generated: lax
     presets:

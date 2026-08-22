@@ -11,6 +11,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/xcontext"
@@ -19,10 +20,10 @@ import (
 var _ apiv1connect.NotificationServiceHandler = (*notificationHandler)(nil)
 
 type notificationHandler struct {
-	repo repo.Repo
+	repo *repo.Repo
 }
 
-func NewNotificationHandler(r repo.Repo) apiv1connect.NotificationServiceHandler {
+func NewNotificationHandler(r *repo.Repo) apiv1connect.NotificationServiceHandler {
 	return &notificationHandler{r}
 }
 
@@ -54,7 +55,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	var workoutIDs []string
 
 	for _, n := range paginated.Items {
-		var payload repo.NotificationPayload
+		var payload notification.Payload
 		if err = json.Unmarshal(n.Payload.Val, &payload); err != nil {
 			log.Error("Unmarshal notification payload", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)

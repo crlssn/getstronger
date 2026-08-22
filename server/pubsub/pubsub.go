@@ -8,12 +8,18 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
-	"github.com/crlssn/getstronger/server/repo"
 )
 
+// EventStore records an event so that it outlives the process that raised it,
+// whether or not a subscriber ever gets to it.
+type EventStore interface {
+	PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error
+}
+
 type event struct {
-	topic   repo.EventTopic
+	topic   events.Topic
 	payload any
 }
 
@@ -25,16 +31,16 @@ type PubSub struct {
 	mu       sync.RWMutex
 	wg       sync.WaitGroup
 	log      *zap.Logger
-	repo     repo.Repo
+	store    EventStore
 	events   chan event
-	handlers map[repo.EventTopic]handlers.Handler
+	handlers map[events.Topic]handlers.Handler
 }
 
 type Params struct {
 	fx.In
 
-	Log  *zap.Logger
-	Repo repo.Repo
+	Log   *zap.Logger
+	Store EventStore
 }
 
 const bufferSize = 1024
@@ -42,20 +48,20 @@ const bufferSize = 1024
 func New(p Params) *PubSub {
 	return &PubSub{
 		log:      p.Log,
-		repo:     p.Repo,
+		store:    p.Store,
 		events:   make(chan event, bufferSize),
-		handlers: make(map[repo.EventTopic]handlers.Handler),
+		handlers: make(map[events.Topic]handlers.Handler),
 	}
 }
 
-func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload any) {
+func (ps *PubSub) Publish(ctx context.Context, topic events.Topic, payload any) {
 	p, err := json.Marshal(payload)
 	if err != nil {
 		ps.log.Error("Marshal event payload", zap.Error(err))
 		return
 	}
 
-	if err = ps.repo.PublishEvent(ctx, topic, p); err != nil {
+	if err = ps.store.PublishEvent(ctx, topic, p); err != nil {
 		ps.log.Error("Persist event", zap.Error(err))
 		return
 	}
@@ -71,7 +77,7 @@ func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload an
 
 const workers = 10
 
-func (ps *PubSub) Subscribe(handlers map[repo.EventTopic]handlers.Handler) {
+func (ps *PubSub) Subscribe(handlers map[events.Topic]handlers.Handler) {
 	ps.mu.Lock()
 	for topic, handler := range handlers {
 		ps.handlers[topic] = handler
