@@ -222,6 +222,38 @@ func (s *userSuite) TestUpdateUserAutofillSets() {
 	}
 }
 
+// The email address belongs to the account holder alone: every signed-in user
+// can look up every other profile, so anything returned here is public.
+func (s *userSuite) TestGetUser_EmailAddressVisibility() {
+	s.Run("ok_own_profile_carries_the_email_address", func() {
+		auth := s.factory.NewAuth()
+		user := s.factory.NewUser(factory.UserAuthID(auth.ID))
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
+			Msg: &v1.GetUserRequest{Id: user.ID.String()},
+		})
+		s.Require().NoError(err)
+		s.Require().Equal(auth.Email, res.Msg.GetUser().GetEmail())
+	})
+
+	s.Run("ok_another_profile_withholds_the_email_address", func() {
+		auth := s.factory.NewAuth()
+		user := s.factory.NewUser(factory.UserAuthID(auth.ID))
+		viewer := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, viewer.ID.String())
+
+		res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
+			Msg: &v1.GetUserRequest{Id: user.ID.String()},
+		})
+		s.Require().NoError(err)
+		s.Require().Equal(user.Name, res.Msg.GetUser().GetName())
+		s.Require().Empty(res.Msg.GetUser().GetEmail())
+	})
+}
+
 // A brand new account keeps the prefill off until it is asked for.
 func (s *userSuite) TestGetUserAutofillSetsDefaultsOff() {
 	user := s.factory.NewUser()
