@@ -3,7 +3,9 @@ set -euo pipefail
 
 # Writes the local environment files for the current checkout so that several
 # worktrees can run the stack at the same time without sharing ports, Docker
-# containers, or databases.
+# containers, or databases. That includes .claude/launch.json: the browser
+# preview tool reads a fixed port from it, so it is rendered from the tracked
+# .claude/launch.json.example rather than tracked itself.
 #
 # The main checkout keeps the documented defaults. Every other worktree is
 # assigned a slot: a contiguous block of ports starting at 20000 + slot * 20.
@@ -19,8 +21,17 @@ root="$(git rev-parse --show-toplevel)"
 name="$(basename "$root")"
 local_toml="$root/mise.local.toml"
 
+# Renders the preview tool's launch configuration for a given web dev port.
+# Vite binds WEB_DEV_PORT with strictPort, so a launch.json naming any other
+# port makes the preview fail to start.
+write_launch_json() {
+  sed "s/\"port\": [0-9]*/\"port\": $1/" \
+    "$root/.claude/launch.json.example" >"$root/.claude/launch.json"
+}
+
 # The main checkout has a .git directory; worktrees have a .git file.
 if [[ -d "$root/.git" ]]; then
+  write_launch_json 5173
   echo "Main checkout detected, keeping the default ports."
   exit 0
 fi
@@ -111,6 +122,8 @@ set_env "$root/.env" CORS_ALLOWED_ORIGIN "http://localhost:$web_port,capacitor:/
 # copy of the port this worktree's MailHog publishes.
 set_env "$root/.env" MAILHOG_SMTP_PORT "$mailhog_smtp_port"
 set_env "$root/web/.env" VITE_API_URL "http://localhost:$server_port"
+
+write_launch_json "$web_port"
 
 # Seed node_modules from the main checkout so the first lint, test, or pre-push
 # run works without a full 'bun install'. cp -c clones via APFS copy-on-write,
