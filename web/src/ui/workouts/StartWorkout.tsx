@@ -15,6 +15,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -448,10 +449,12 @@ export const StartWorkout = () => {
       changes[field] = previous[field]
     }
 
-    onSetChange(exercise, index, changes)
-    // Deferred: the copied value only reaches the input on the render this
-    // write schedules, and selecting before then would select the empty field.
-    setTimeout(() => target.select(), 0)
+    // Flushed rather than deferred: the copied value has to be in the input,
+    // and selected, before this focus returns. A render left until the next
+    // tick lands after the caret has been placed, so the first character typed
+    // is appended to the copied number instead of replacing it.
+    flushSync(() => onSetChange(exercise, index, changes))
+    target.select()
   }
 
   const onRemoveSet = (exercise: Exercise, index: number) => {

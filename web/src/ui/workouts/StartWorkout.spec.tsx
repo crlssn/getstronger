@@ -472,6 +472,25 @@ describe('StartWorkout', () => {
       expect(weight).toHaveValue('80')
     })
 
+    // The copy has to land inside the focus event. Deferred to a later tick it
+    // arrives after the caret has been placed, and the first character typed
+    // on a fast tap-and-type is appended to the copied number rather than
+    // replacing it — 42.5 typed over as "42.580".
+    test('leaves the copied value selected before anything can be typed over it', async () => {
+      mocked.getCurrentUser.mockResolvedValue(
+        currentUser(WeightUnit.KILOGRAMS, { autofillSets: true }),
+      )
+      await renderWorkout()
+
+      const weight = setField('Bench Press set 1 weight') as HTMLInputElement
+      act(() => {
+        weight.focus()
+      })
+
+      expect(weight).toHaveValue('42.5')
+      expect([weight.selectionStart, weight.selectionEnd]).toEqual([0, 4])
+    })
+
     // The focus a finished rest moves is the app's, not the user's: a copied
     // value completes the set, and a completed set starts another rest — a
     // workout that logs itself while the phone sits in a pocket.
