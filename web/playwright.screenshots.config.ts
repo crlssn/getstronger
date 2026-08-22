@@ -58,7 +58,14 @@ export default defineConfig({
     {
       command: `npm run dev -- --host localhost --port ${webPort}`,
       cwd: webRoot,
-      env: { VITE_API_URL: backendURL, VITE_ENABLE_DEVTOOLS: 'false' },
+      env: {
+        VITE_API_URL: backendURL,
+        VITE_ENABLE_DEVTOOLS: 'false',
+        // Analytics stays off whatever web/.env holds, so photographing the
+        // app neither reports as real traffic nor waits on an unreachable host.
+        VITE_POSTHOG_HOST: '',
+        VITE_POSTHOG_KEY: '',
+      },
       reuseExistingServer: false,
       timeout: 120_000,
       url: baseURL,
