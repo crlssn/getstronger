@@ -343,10 +343,10 @@ describe('ProfileView', () => {
       await waitFor(() => expect(mocked.deleteAccount).toHaveBeenCalledWith('password'))
       await waitFor(() => expect(useAuthStore.getState().accessToken).toBe(''))
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
-      // The confirmation is raised for the login screen the app leaves for.
-      expect(useAlertStore.getState().alert).toEqual({
+      // The toast outlives the navigation on its own clock, so it is still
+      // readable on the login screen the app leaves for.
+      expect(useToastStore.getState().toast).toMatchObject({
         message: 'Your account has been deleted.',
-        seen: false,
         type: 'success',
       })
     })
