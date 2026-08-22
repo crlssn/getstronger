@@ -39,9 +39,15 @@ jobs:
         with:
           node-version: '24.19.0'
 
+      # Bun installs the dependencies; the scripts themselves still run on Node.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+
       - name: Install web dependencies
         working-directory: web
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Build the web bundle
         working-directory: web
@@ -73,6 +79,12 @@ jobs:
         with:
           node-version: '24.19.0'
 
+      # Bun installs the dependencies; the scripts themselves still run on Node.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+
       - name: Download web bundle
         uses: actions/download-artifact@v8
         with:
@@ -81,11 +93,11 @@ jobs:
 
       - name: Install mobile dependencies
         working-directory: mobile
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Sync the native project
         working-directory: mobile
-        run: npx cap sync ios
+        run: bunx cap sync ios
 
       - name: Write the App Store Connect API key
         env:
@@ -145,6 +157,12 @@ jobs:
         with:
           node-version: '24.19.0'
 
+      # Bun installs the dependencies; the scripts themselves still run on Node.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
@@ -159,11 +177,11 @@ jobs:
 
       - name: Install mobile dependencies
         working-directory: mobile
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Sync the native project
         working-directory: mobile
-        run: npx cap sync android
+        run: bunx cap sync android
 
       - name: Build the release bundle
         working-directory: mobile/android

@@ -29,7 +29,10 @@ permissions:
 jobs:
   # Reads the Playwright version so the browser job can run in the matching
   # official image, which ships the browsers and their system libraries and
-  # saves several minutes of downloads and apt installs per run.
+  # saves several minutes of downloads and apt installs per run. The version is
+  # read from package.json rather than the lockfile because bun.lock is JSONC
+  # and cannot be require()d; the dependency must therefore stay pinned to an
+  # exact version, or the image tag below will not resolve.
   version:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -42,12 +45,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          sparse-checkout: web/package-lock.json
+          sparse-checkout: web/package.json
           sparse-checkout-cone-mode: false
 
       - name: Read the Playwright version
         id: playwright
-        run: echo "version=$(node -p "require('./web/package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(node -p "require('./web/package.json').devDependencies['@playwright/test']")" >> "$GITHUB_OUTPUT"
 
   browser:
     needs: version
@@ -100,13 +103,22 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          cache: npm
-          cache-dependency-path: web/package-lock.json
           node-version: '24.19.0'
+
+      # Bun installs the dependencies; the scripts themselves still run on Node.
+      # Unlike the other workflows this one cannot use oven-sh/setup-bun: the
+      # action unpacks a .zip, the Playwright image ships no unzip, and the job
+      # runs as a non-root user so it cannot apt-get one. Bun's npm package
+      # carries the binary as a per-platform optional dependency instead, and
+      # --prefix keeps the install inside the writable home directory.
+      - name: Set up Bun
+        run: |
+          npm install -g --prefix "$HOME/.local" bun@1.4.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install web dependencies
         working-directory: web
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Install database migration tool
         run: |
