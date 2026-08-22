@@ -3,12 +3,15 @@ import posthog from 'posthog-js'
 const key = import.meta.env.VITE_POSTHOG_KEY
 const host = import.meta.env.VITE_POSTHOG_HOST
 
-// Unit tests import this module transitively and must never send real events.
-const inTest = import.meta.env.MODE === 'test'
+// Analytics belong to the deployed app alone. A development server never
+// reaches PostHog, whatever a local web/.env holds — which also keeps the unit
+// and browser suites, both of which run against one, from sending real events.
+// Production takes its key and host from the deploy workflow.
+const inProduction = import.meta.env.PROD
 
-export const isPostHogConfigured = Boolean(key && host) && !inTest
+export const isPostHogConfigured = Boolean(key && host) && inProduction
 
-if (key && host && !inTest) {
+if (key && host && inProduction) {
   posthog.init(key, {
     api_host: host,
     // Pageviews replace Google Analytics; pin SPA route-change capture
@@ -20,10 +23,6 @@ if (key && host && !inTest) {
       capture_console_errors: false,
     },
   })
-} else if (import.meta.env.DEV && !inTest) {
-  console.warn(
-    'PostHog is disabled: set VITE_POSTHOG_KEY and VITE_POSTHOG_HOST in web/.env to capture events.',
-  )
 }
 
 export const identifyUser = (userId: string) => {

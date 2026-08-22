@@ -46,8 +46,9 @@ test.describe('social feed and discovery', () => {
     const card = page.getByRole('article').filter({ hasText: '@janedoe' }).first()
     await expect(card).toBeVisible()
 
-    // The seed finishes these workouts today, so the card names the day.
-    await expect(card.getByText(/Today · \d{2}:\d{2}/)).toBeVisible()
+    // The seed dates workouts at random, so the card either names the day or
+    // spells the date out. Which one it picks is settled in workoutSummary.
+    await expect(card.getByText(/(Today|Yesterday|\d{1,2} \w+) · \d{2}:\d{2}/)).toBeVisible()
     for (const label of ['Volume', 'Time', 'Sets']) {
       await expect(card.getByText(label, { exact: true })).toBeVisible()
     }
