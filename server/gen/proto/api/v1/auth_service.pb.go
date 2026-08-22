@@ -730,11 +730,93 @@ func (*UpdatePasswordResponse) Descriptor() ([]byte, []int) {
 	return file_api_v1_auth_service_proto_rawDescGZIP(), []int{15}
 }
 
+// Deleting an account erases it and everything it owns, so the current
+// password is re-entered to prove the phone's owner asked for it.
+type DeleteAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Password      string                 `protobuf:"bytes,1,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAccountRequest) Reset() {
+	*x = DeleteAccountRequest{}
+	mi := &file_api_v1_auth_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAccountRequest) ProtoMessage() {}
+
+func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_auth_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
+func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_auth_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *DeleteAccountRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type DeleteAccountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAccountResponse) Reset() {
+	*x = DeleteAccountResponse{}
+	mi := &file_api_v1_auth_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAccountResponse) ProtoMessage() {}
+
+func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_auth_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
+func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_auth_service_proto_rawDescGZIP(), []int{17}
+}
+
 var File_api_v1_auth_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x1bbuf/validate/validate.proto\"\xa9\x02\n" +
+	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x1bbuf/validate/validate.proto\"\xa9\x02\n" +
 	"\rSignupRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x06R\bpassword\x123\n" +
@@ -767,7 +849,10 @@ const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\x05token\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05token\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x06R\bpassword\x123\n" +
 	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\"\x18\n" +
-	"\x16UpdatePasswordResponse2\xe3\x04\n" +
+	"\x16UpdatePasswordResponse\";\n" +
+	"\x14DeleteAccountRequest\x12#\n" +
+	"\bpassword\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\bpassword\"\x17\n" +
+	"\x15DeleteAccountResponse2\xb7\x05\n" +
 	"\vAuthService\x129\n" +
 	"\x06Signup\x12\x15.api.v1.SignupRequest\x1a\x16.api.v1.SignupResponse\"\x00\x126\n" +
 	"\x05Login\x12\x14.api.v1.LoginRequest\x1a\x15.api.v1.LoginResponse\"\x00\x12K\n" +
@@ -776,7 +861,8 @@ const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\vVerifyEmail\x12\x1a.api.v1.VerifyEmailRequest\x1a\x1b.api.v1.VerifyEmailResponse\"\x00\x12l\n" +
 	"\x17ResendVerificationEmail\x12&.api.v1.ResendVerificationEmailRequest\x1a'.api.v1.ResendVerificationEmailResponse\"\x00\x12N\n" +
 	"\rResetPassword\x12\x1c.api.v1.ResetPasswordRequest\x1a\x1d.api.v1.ResetPasswordResponse\"\x00\x12Q\n" +
-	"\x0eUpdatePassword\x12\x1d.api.v1.UpdatePasswordRequest\x1a\x1e.api.v1.UpdatePasswordResponse\"\x00B\x94\x01\n" +
+	"\x0eUpdatePassword\x12\x1d.api.v1.UpdatePasswordRequest\x1a\x1e.api.v1.UpdatePasswordResponse\"\x00\x12R\n" +
+	"\rDeleteAccount\x12\x1c.api.v1.DeleteAccountRequest\x1a\x1d.api.v1.DeleteAccountResponse\"\x04\x88\xb5\x18\x01B\x94\x01\n" +
 	"\n" +
 	"com.api.v1B\x10AuthServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -792,7 +878,7 @@ func file_api_v1_auth_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_auth_service_proto_rawDescData
 }
 
-var file_api_v1_auth_service_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_api_v1_auth_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_api_v1_auth_service_proto_goTypes = []any{
 	(*SignupRequest)(nil),                   // 0: api.v1.SignupRequest
 	(*SignupResponse)(nil),                  // 1: api.v1.SignupResponse
@@ -810,6 +896,8 @@ var file_api_v1_auth_service_proto_goTypes = []any{
 	(*ResetPasswordResponse)(nil),           // 13: api.v1.ResetPasswordResponse
 	(*UpdatePasswordRequest)(nil),           // 14: api.v1.UpdatePasswordRequest
 	(*UpdatePasswordResponse)(nil),          // 15: api.v1.UpdatePasswordResponse
+	(*DeleteAccountRequest)(nil),            // 16: api.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),           // 17: api.v1.DeleteAccountResponse
 }
 var file_api_v1_auth_service_proto_depIdxs = []int32{
 	0,  // 0: api.v1.AuthService.Signup:input_type -> api.v1.SignupRequest
@@ -820,16 +908,18 @@ var file_api_v1_auth_service_proto_depIdxs = []int32{
 	10, // 5: api.v1.AuthService.ResendVerificationEmail:input_type -> api.v1.ResendVerificationEmailRequest
 	12, // 6: api.v1.AuthService.ResetPassword:input_type -> api.v1.ResetPasswordRequest
 	14, // 7: api.v1.AuthService.UpdatePassword:input_type -> api.v1.UpdatePasswordRequest
-	1,  // 8: api.v1.AuthService.Signup:output_type -> api.v1.SignupResponse
-	3,  // 9: api.v1.AuthService.Login:output_type -> api.v1.LoginResponse
-	5,  // 10: api.v1.AuthService.RefreshToken:output_type -> api.v1.RefreshTokenResponse
-	7,  // 11: api.v1.AuthService.Logout:output_type -> api.v1.LogoutResponse
-	9,  // 12: api.v1.AuthService.VerifyEmail:output_type -> api.v1.VerifyEmailResponse
-	11, // 13: api.v1.AuthService.ResendVerificationEmail:output_type -> api.v1.ResendVerificationEmailResponse
-	13, // 14: api.v1.AuthService.ResetPassword:output_type -> api.v1.ResetPasswordResponse
-	15, // 15: api.v1.AuthService.UpdatePassword:output_type -> api.v1.UpdatePasswordResponse
-	8,  // [8:16] is the sub-list for method output_type
-	0,  // [0:8] is the sub-list for method input_type
+	16, // 8: api.v1.AuthService.DeleteAccount:input_type -> api.v1.DeleteAccountRequest
+	1,  // 9: api.v1.AuthService.Signup:output_type -> api.v1.SignupResponse
+	3,  // 10: api.v1.AuthService.Login:output_type -> api.v1.LoginResponse
+	5,  // 11: api.v1.AuthService.RefreshToken:output_type -> api.v1.RefreshTokenResponse
+	7,  // 12: api.v1.AuthService.Logout:output_type -> api.v1.LogoutResponse
+	9,  // 13: api.v1.AuthService.VerifyEmail:output_type -> api.v1.VerifyEmailResponse
+	11, // 14: api.v1.AuthService.ResendVerificationEmail:output_type -> api.v1.ResendVerificationEmailResponse
+	13, // 15: api.v1.AuthService.ResetPassword:output_type -> api.v1.ResetPasswordResponse
+	15, // 16: api.v1.AuthService.UpdatePassword:output_type -> api.v1.UpdatePasswordResponse
+	17, // 17: api.v1.AuthService.DeleteAccount:output_type -> api.v1.DeleteAccountResponse
+	9,  // [9:18] is the sub-list for method output_type
+	0,  // [0:9] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -840,13 +930,14 @@ func file_api_v1_auth_service_proto_init() {
 	if File_api_v1_auth_service_proto != nil {
 		return
 	}
+	file_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_auth_service_proto_rawDesc), len(file_api_v1_auth_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -368,6 +368,37 @@ func (r *Repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUser
 	return nil
 }
 
+// DeleteUser erases an account and everything it owns.
+//
+// The owned rows go with the auth row through ON DELETE CASCADE, so the only
+// thing to sweep by hand is what other people's rows say about the account:
+// notifications naming it as their actor, which the notification list would
+// silently skip while the unread badge kept counting them.
+func (r *Repo) DeleteUser(ctx context.Context, userID string) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
+		user, err := models.Users.Query(
+			models.SelectWhere.Users.ID.EQ(uuidFromString(userID)),
+		).One(ctx, tx.bobExec())
+		if err != nil {
+			return fmt.Errorf("user fetch: %w", err)
+		}
+
+		if _, err = models.Notifications.Delete(
+			dm.Where(psql.Raw("payload ->> 'actorId' = ?", userID)),
+		).Exec(ctx, tx.bobExec()); err != nil {
+			return fmt.Errorf("actor notifications delete: %w", err)
+		}
+
+		if _, err = models.Auths.Delete(
+			models.DeleteWhere.Auths.ID.EQ(user.AuthID),
+		).Exec(ctx, tx.bobExec()); err != nil {
+			return fmt.Errorf("auth delete: %w", err)
+		}
+
+		return nil
+	})
+}
+
 type CreateExerciseParams struct {
 	UserID      string
 	Name        string

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package api.v1;
 
+import "api/v1/options.proto";
+
 import "buf/validate/validate.proto";
 
 service AuthService {
@@ -13,6 +15,9 @@ service AuthService {
   rpc ResendVerificationEmail (ResendVerificationEmailRequest) returns (ResendVerificationEmailResponse) {}
   rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse) {}
   rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {}
+  rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {
+    option (auth) = true;
+  }
 }
 
 message SignupRequest {
@@ -75,3 +80,10 @@ message UpdatePasswordRequest {
   string password_confirmation = 3;
 }
 message UpdatePasswordResponse {}
+
+// Deleting an account erases it and everything it owns, so the current
+// password is re-entered to prove the phone's owner asked for it.
+message DeleteAccountRequest {
+  string password = 1 [(buf.validate.field).string.min_len = 1];
+}
+message DeleteAccountResponse {}
