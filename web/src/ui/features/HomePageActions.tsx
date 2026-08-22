@@ -157,14 +157,12 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
   return (
     <div className={cn(styles.homeActions, open && styles.searching)}>
       {!open && (
-        <button
-          type="button"
+        <AppIconButton
           className={styles.searchTrigger}
-          aria-label={t('search.open')}
+          icon={MagnifyingGlassIcon}
+          label={t('search.open')}
           onClick={() => onOpenChange(true)}
-        >
-          <MagnifyingGlassIcon aria-hidden="true" />
-        </button>
+        />
       )}
 
       {open && (

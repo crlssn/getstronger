@@ -29,6 +29,7 @@ aspirational.
 | A screen's title block         | `<AppPageHeader>`                                   |
 | A panel around content         | `<AppCard>`, or the `card` utility inside a module  |
 | Rows of things                 | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
+| A row that is one tap          | `<AppOptionRow>`                                    |
 | Nothing to show yet            | `<AppEmptyState>`                                   |
 | Waiting for the API            | `<AppSkeleton>`                                     |
 | A modal decision or a picker   | `<AppSheet>` + `<SheetAction>`                      |
@@ -157,6 +158,13 @@ An unordered list that fetches its next page when the bottom scrolls into view.
 
 A row, and a row that is a link. `is="danger"` for a destructive row,
 `is="header"` for a section label.
+
+### `<AppOptionRow>`
+
+A whole row that is one tap: an optional `leading` tile, the copy, an optional
+`trailing` icon. Pass `selected` only for a row that toggles — a row that picks
+and closes has no pressed state, and `aria-pressed="false"` on one says the
+wrong thing. `flat` drops the border for a row inside an already-divided list.
 
 ### `<AppEmptyState>`
 

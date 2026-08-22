@@ -49,6 +49,8 @@ import {
   useWorkoutStore,
 } from '@/stores/workout'
 import { cn } from '@/ui/cn'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
@@ -720,18 +722,16 @@ export const StartWorkout = () => {
           is the larger of the two because it is the one being read. */}
       <header className={styles.workoutHeader}>
         <div className={styles.workoutHeaderInner}>
-          <button
-            type="button"
+          <AppIconButton
             className={styles.leaveWorkout}
-            aria-label={t('workout.leaveTitle')}
+            icon={XMarkIcon}
+            label={t('workout.leaveTitle')}
             onClick={() => {
               blurActiveElement()
               setDiscardConfirmationOpen(false)
               setLeaveDialogOpen(true)
             }}
-          >
-            <XMarkIcon aria-hidden="true" />
-          </button>
+          />
           <div className="min-w-0">
             <h1>{session?.name ?? t('workout.loading')}</h1>
             <p className={styles.sessionProgress}>
@@ -762,9 +762,15 @@ export const StartWorkout = () => {
             </span>
             <h2>{t('workout.addFirstExercise')}</h2>
             <p>{t('workout.addFirstExerciseBody')}</p>
-            <button type="button" onClick={() => setPickerOpen(true)}>
-              <PlusIcon aria-hidden="true" /> {t('workout.chooseExercise')}
-            </button>
+            <AppButton
+              type="button"
+              colour="primary"
+              size="lg"
+              className="mt-2"
+              onClick={() => setPickerOpen(true)}
+            >
+              <PlusIcon className="size-5" aria-hidden="true" /> {t('workout.chooseExercise')}
+            </AppButton>
           </section>
         )}
 
@@ -821,9 +827,16 @@ export const StartWorkout = () => {
                               <strong>{t('workout.exerciseCompleted')}</strong>
                               <p>{t('workout.loggedSets', { count: loggedFor(exercise) })}</p>
                             </div>
-                            <button type="button" onClick={() => reopenExercise(exercise)}>
+                            <AppButton
+                              type="button"
+                              colour="ghost"
+                              size="sm"
+                              width="auto"
+                              className={styles.reopenExercise}
+                              onClick={() => reopenExercise(exercise)}
+                            >
                               {t('workout.reopen')}
-                            </button>
+                            </AppButton>
                           </div>
                         )}
 
@@ -862,9 +875,10 @@ export const StartWorkout = () => {
                                 control is pressable, and aria-disabled would
                                 announce the same "broken" that a grey fill used
                                 to. */}
-                            <button
+                            <AppButton
                               type="submit"
-                              className={styles.primaryAction}
+                              colour="primary"
+                              size="lg"
                               aria-describedby={
                                 [
                                   statusMessage ? 'workout-dock-status' : '',
@@ -876,7 +890,7 @@ export const StartWorkout = () => {
                               disabled={submitting}
                             >
                               {primaryActionLabel}
-                            </button>
+                            </AppButton>
                             {/* The label stays on the exercise in front of you;
                                 where the session goes next is a hint, not a
                                 promotion. */}
@@ -910,9 +924,9 @@ export const StartWorkout = () => {
             {/* The escape hatch: quieter than everything above it, but always in
                 the same place at the end of the page. */}
             {!allExercisesComplete && (
-              <button
+              <AppButton
                 type="button"
-                className={styles.finishEarly}
+                colour="ghost"
                 disabled={!canFinish}
                 title={canFinish ? undefined : finishStatus}
                 aria-label={
@@ -923,7 +937,7 @@ export const StartWorkout = () => {
                 onClick={requestFinishWorkout}
               >
                 {t('workout.finish')}
-              </button>
+              </AppButton>
             )}
           </section>
         )}

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 
 import { useTranslation } from 'react-i18next'
 
+import { AppButton } from '@/ui/components/AppButton'
 import { cn } from '@/ui/cn'
 import {
   isFinalCountdown,
@@ -51,12 +52,12 @@ export const WorkoutRestBanner = ({ remainingSeconds, totalSeconds, onAddTime, o
           <strong aria-hidden="true">{restLabel(remainingSeconds)}</strong>
         </div>
         <div className={styles.restActions}>
-          <button type="button" onClick={onAddTime}>
+          <AppButton type="button" colour="ghost" size="sm" width="auto" onClick={onAddTime}>
             {t('workout.addSeconds')}
-          </button>
-          <button type="button" onClick={onSkip}>
+          </AppButton>
+          <AppButton type="button" colour="ghost" size="sm" width="auto" onClick={onSkip}>
             {t('workout.skip')}
-          </button>
+          </AppButton>
         </div>
         <div className={styles.restProgress} aria-hidden="true">
           <span style={{ width: restProgress(remainingSeconds, totalSeconds) }} />

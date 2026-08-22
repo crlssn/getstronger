@@ -143,19 +143,12 @@ export const ExerciseMeasurementSettings = ({
       </div>
 
       {restEnabled && (
-        <div className={styles.restOptions}>
-          {restPresets.map((seconds) => (
-            <button
-              key={seconds}
-              type="button"
-              aria-pressed={restSeconds === seconds}
-              className={cn(restSeconds === seconds && styles.selected)}
-              onClick={() => onRestSecondsChange(seconds)}
-            >
-              {formatRest(seconds)}
-            </button>
-          ))}
-        </div>
+        <AppSegmented
+          label={t('exercise.restTimer')}
+          options={restPresets.map((seconds) => ({ label: formatRest(seconds), value: seconds }))}
+          value={restSeconds}
+          onChange={onRestSecondsChange}
+        />
       )}
     </section>
   )

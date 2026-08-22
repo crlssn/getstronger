@@ -4,18 +4,6 @@
   @apply space-y-2;
 }
 
-.exerciseOptions button {
-  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
-}
-
-.exerciseOptions strong {
-  @apply block truncate text-sm font-semibold text-text;
-}
-
-.exerciseOptions button > svg {
-  @apply size-5 shrink-0 text-ink;
-}
-
 .pickerEmpty {
   @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
 }

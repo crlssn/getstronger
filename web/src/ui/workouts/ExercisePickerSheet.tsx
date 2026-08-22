@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -85,13 +86,14 @@ export const ExercisePickerSheet = ({ excluded, onAdd, onClose }: Props) => {
       ) : available.length ? (
         <div className={styles.exerciseOptions}>
           {available.map((exercise) => (
-            <button key={exercise.id} type="button" onClick={() => onAdd(exercise)}>
-              <span className="min-w-0">
-                <strong>{exercise.name}</strong>
-                <ExerciseTags compact tags={exercise.tags} />
-              </span>
-              <PlusIcon aria-hidden="true" />
-            </button>
+            <AppOptionRow
+              key={exercise.id}
+              trailing={<PlusIcon aria-hidden="true" />}
+              onClick={() => onAdd(exercise)}
+            >
+              <strong>{exercise.name}</strong>
+              <ExerciseTags compact tags={exercise.tags} />
+            </AppOptionRow>
           ))}
         </div>
       ) : (

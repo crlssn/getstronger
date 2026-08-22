@@ -150,8 +150,10 @@
   @apply sr-only;
 }
 
+/* The box around the whole form is the field's border, so the textarea inside
+   contributes nothing but its text. */
 .commentForm textarea {
-  @apply min-h-24 w-full resize-none border-0 bg-transparent p-2 text-sm leading-6 placeholder:text-text-subtle focus:ring-0;
+  @apply min-h-24 border-0 bg-transparent p-2 text-sm leading-6 shadow-none focus:ring-0;
 }
 
 .commentForm > div {
@@ -160,10 +162,6 @@
 
 .commentForm small {
   @apply pl-2 text-xs text-text-subtle;
-}
-
-.commentForm button {
-  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
 }
 
 .feedSummaryCard {

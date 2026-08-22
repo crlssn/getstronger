@@ -27,11 +27,7 @@
 
 /* Leaving lives in the chrome, away from the primary action it would undo. */
 .leaveWorkout {
-  @apply -ml-1 grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
-}
-
-.leaveWorkout svg {
-  @apply size-5;
+  @apply -ml-1;
 }
 
 .workoutHeader h1 {
@@ -72,10 +68,6 @@
 
 .quickEmpty p {
   @apply max-w-sm text-sm text-text-subtle;
-}
-
-.quickEmpty button {
-  @apply mt-2 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 justify-self-stretch rounded-control bg-ink px-4 text-base font-semibold text-white transition hover:bg-ink-strong;
 }
 
 .quickEmpty button svg {
@@ -151,10 +143,6 @@
   @apply mt-0.5 text-xs text-success;
 }
 
-.completedExercise button {
-  @apply rounded-lg px-3 py-2 text-xs font-semibold text-success hover:bg-success/10;
-}
-
 /* A number on a neutral tile, in every state. Tinting it for completion put a
    green disc against each finished exercise and made the column read as a
    status light; where an exercise stands is said in words on its own line. */
@@ -202,21 +190,14 @@
   @apply text-danger;
 }
 
-/* Blocked, not disabled: it stays filled and live, and says what is missing
-   when pressed. A grey fill on the screen's dominant control reads as broken
-   rather than as waiting for something, and looking different before the tap
-   would put the greying back by another route. */
-.primaryAction {
-  @apply inline-flex min-h-(--size-control-lg) w-full items-center justify-center gap-2 rounded-control bg-ink px-5 text-base font-semibold text-white transition hover:brightness-125 disabled:opacity-70;
-}
-
 /* Quiet enough to read as a footnote to the button above it. */
 .nextUp {
   @apply text-meta text-text-subtle;
 }
 
-/* A text button: it is the escape hatch, not the other half of a pair, and
-   giving it equal weight left the tools with no ranking at all. */
-.finishEarly {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center rounded-control px-4 text-sm font-semibold text-text-muted transition hover:bg-surface-sunken hover:text-text disabled:cursor-not-allowed disabled:opacity-50;
+
+/* Reopening reads as a correction, not a warning, so it takes the completed
+   panel's green rather than the ghost role's neutral. */
+.reopenExercise {
+  @apply text-success hover:bg-success/10 hover:text-success;
 }

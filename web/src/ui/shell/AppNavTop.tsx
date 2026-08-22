@@ -7,6 +7,7 @@ import { selectActionButtonActive, useActionButton } from '@/stores/actionButton
 import { holdPageNavAction } from '@/stores/pageNavAction'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { ActionButton } from '@/ui/components/ActionButton'
+import { AppButton } from '@/ui/components/AppButton'
 import styles from './AppNavTop.module.css'
 
 const tabLabelKeys: Record<string, string> = {
@@ -43,9 +44,10 @@ export const AppNavTop = () => {
     <header className={styles.pageNav}>
       {/* A small back row above the title, not a centered bar around it: the
           chevron carries the parent tab's name so back says where it goes. */}
-      <button type="button" className={styles.back} onClick={goBack}>
-        <ChevronLeftIcon aria-hidden="true" /> {t(tabLabelKeys[parentTab] ?? 'nav.home')}
-      </button>
+      <AppButton type="button" colour="ghost" size="sm" width="auto" className={styles.back} onClick={goBack}>
+        <ChevronLeftIcon className="size-5" aria-hidden="true" />{' '}
+        {t(tabLabelKeys[parentTab] ?? 'nav.home')}
+      </AppButton>
 
       <div className={styles.titleRow}>
         <h1>{pageTitle}</h1>

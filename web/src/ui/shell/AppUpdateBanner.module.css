@@ -18,15 +18,13 @@
 /* The banner floats over the workout dock, where a mis-tap costs a set. Both
    controls take the full floor; the negative margin keeps the bar its height. */
 .refresh {
-  @apply -my-1 min-h-(--size-control-sm) shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-ink transition hover:bg-ink-tint;
+  @apply -my-1 shrink-0 border-white bg-white text-ink hover:bg-ink-tint;
 }
 
+/* On the inverted banner, so it borrows the surface's own contrast
+   rather than the default tone's. */
 .dismiss {
-  @apply -m-1 grid size-11 shrink-0 place-items-center rounded-lg text-ink-tint transition hover:bg-white/10 hover:text-white;
-}
-
-.dismiss svg {
-  @apply size-5;
+  @apply -m-1 text-ink-tint hover:bg-white/10 hover:text-white;
 }
 
 @media (min-width: 640px) {

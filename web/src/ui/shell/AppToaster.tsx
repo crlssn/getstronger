@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { ToastType } from '@/types/toast'
 
+import { AppIconButton } from '@/ui/components/AppIconButton'
 import { useToastStore } from '@/stores/toasts'
 import { cn } from '@/ui/cn'
 import styles from './AppToaster.module.css'
@@ -47,13 +48,12 @@ export const AppToaster = () => {
         >
           <Icon className={styles.statusIcon} aria-hidden="true" />
           <p>{toast.message}</p>
-          <button
-            type="button"
-            aria-label={t('common.dismiss')}
+          <AppIconButton
+            className={styles.dismiss}
+            icon={XMarkIcon}
+            label={t('common.dismiss')}
             onClick={() => useToastStore.getState().dismiss()}
-          >
-            <XMarkIcon aria-hidden="true" />
-          </button>
+          />
         </div>
       )}
     </div>

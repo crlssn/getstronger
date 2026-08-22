@@ -18,6 +18,7 @@ import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -230,20 +231,18 @@ export const PlanForm = ({ planId }: Props) => {
           {available.length > 0 ? (
             <div className={styles.routineOptions}>
               {available.map((routine) => (
-                <button
+                <AppOptionRow
                   key={routine.id}
-                  type="button"
+                  flat
+                  trailing={<PlusIcon aria-hidden="true" />}
                   onClick={() => {
                     setSelected((current) => [...current, routine])
                     setPickerOpen(false)
                   }}
                 >
-                  <span>
-                    <strong>{routine.name}</strong>
-                    <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
-                  </span>
-                  <PlusIcon aria-hidden="true" />
-                </button>
+                  <strong>{routine.name}</strong>
+                  <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
+                </AppOptionRow>
               ))}
             </div>
           ) : (

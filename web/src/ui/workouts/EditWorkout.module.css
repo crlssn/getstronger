@@ -12,10 +12,6 @@
   @apply flex gap-x-1;
 }
 
-.moveActions button {
-  @apply grid size-5 cursor-pointer place-items-center text-text-subtle;
-}
-
 .setLabel {
   @apply mb-2 block text-sm font-semibold uppercase text-text-muted;
 }

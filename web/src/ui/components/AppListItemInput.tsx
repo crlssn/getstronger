@@ -13,7 +13,15 @@ import styles from './AppListItemInput.module.css'
 const titleCase = (value: string): string =>
   value.toLowerCase().replace(/(^\w|(?<=[ /])\w)/g, (char) => char.toUpperCase())
 
-interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type'> {
+interface Props
+  extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type' | 'aria-label'> {
+  /**
+   * The field's accessible name.
+   *
+   * Required, because the field fills its row: the section heading above it is
+   * all a sighted reader has, and a heading does not label anything.
+   */
+  label: string
   /** The committed value. Local edits are kept until the field is left. */
   model: string
   type: string
@@ -27,7 +35,14 @@ interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'ty
  * The value is committed when the field is left rather than on every
  * keystroke, so a half-typed name never reaches the caller.
  */
-export const AppListItemInput = ({ model, type, capitalise = false, onUpdate, ...rest }: Props) => {
+export const AppListItemInput = ({
+  label,
+  model,
+  type,
+  capitalise = false,
+  onUpdate,
+  ...rest
+}: Props) => {
   const [value, setValue] = useState(model)
   const [committed, setCommitted] = useState(model)
 
@@ -43,6 +58,7 @@ export const AppListItemInput = ({ model, type, capitalise = false, onUpdate, ..
   return (
     <li>
       <input
+        aria-label={label}
         className={styles.input}
         type={type}
         value={value}

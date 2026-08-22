@@ -5,11 +5,7 @@
 }
 
 .back {
-  @apply -ml-2 inline-flex min-h-11 items-center gap-0.5 rounded-control pl-1 pr-3 text-sm font-semibold text-text-muted transition hover:bg-ink-surface hover:text-text;
-}
-
-.back svg {
-  @apply size-5;
+  @apply -ml-2 gap-0.5 pl-1 pr-3;
 }
 
 .titleRow {

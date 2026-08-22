@@ -115,19 +115,6 @@
   @apply divide-y divide-border border-y border-border;
 }
 
-.routineOptions button {
-  @apply flex min-h-16 w-full items-center justify-between gap-3 text-left;
-}
-
-.routineOptions button span {
-  @apply min-w-0;
-}
-
-.routineOptions strong,
-.routineOptions small {
-  @apply block truncate;
-}
-
 .routineOptions small {
   @apply mt-1 text-xs text-text-subtle;
 }

@@ -2,6 +2,8 @@ import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AppButton } from '@/ui/components/AppButton'
+import { AppIconButton } from '@/ui/components/AppIconButton'
 import { useAppVersionStore } from '@/stores/appVersion'
 import styles from './AppUpdateBanner.module.css'
 
@@ -23,21 +25,22 @@ export const AppUpdateBanner = () => {
     <div className={styles.updateBanner} role="status">
       <ArrowPathIcon aria-hidden="true" />
       <p>{t('update.available')}</p>
-      <button
+      <AppButton
         type="button"
+        colour="secondary"
+        size="sm"
+        width="auto"
         className={styles.refresh}
         onClick={() => useAppVersionStore.getState().refresh()}
       >
         {t('update.refresh')}
-      </button>
-      <button
-        type="button"
+      </AppButton>
+      <AppIconButton
         className={styles.dismiss}
-        aria-label={t('common.close')}
+        icon={XMarkIcon}
+        label={t('common.close')}
         onClick={() => void useAppVersionStore.getState().dismiss()}
-      >
-        <XMarkIcon aria-hidden="true" />
-      </button>
+      />
     </div>
   )
 }

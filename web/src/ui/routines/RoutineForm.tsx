@@ -5,9 +5,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
-import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInput } from '@/ui/components/AppInput'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
@@ -97,13 +98,10 @@ export const RoutineForm = ({
       </header>
 
       <section className={styles.formCard}>
-        <label className={styles.fieldLabel} htmlFor="routine-name">
-          {t('routine.form.name')}
-        </label>
-        <input
+        <AppInput
           id="routine-name"
-          className={styles.nameInput}
           type="text"
+          label={t('routine.form.name')}
           required
           autoComplete="off"
           placeholder={t('routine.form.namePlaceholder')}
@@ -134,21 +132,19 @@ export const RoutineForm = ({
               const selected = selectedIds.includes(exercise.id)
 
               return (
-                <button
+                <AppOptionRow
                   key={exercise.id}
-                  type="button"
-                  className={cn(styles.exerciseOption, selected && styles.selected)}
-                  aria-pressed={selected}
+                  leading={
+                    <span className={styles.checkBox}>
+                      {selected && <CheckIcon aria-hidden="true" />}
+                    </span>
+                  }
+                  selected={selected}
                   onClick={() => toggleExercise(exercise.id)}
                 >
-                  <span className={styles.checkBox}>
-                    {selected && <CheckIcon aria-hidden="true" />}
-                  </span>
-                  <span className={styles.exerciseCopy}>
-                    <strong>{exercise.name}</strong>
-                    <ExerciseTags compact tags={exercise.tags} />
-                  </span>
-                </button>
+                  <strong>{exercise.name}</strong>
+                  <ExerciseTags compact tags={exercise.tags} />
+                </AppOptionRow>
               )
             })}
           </div>

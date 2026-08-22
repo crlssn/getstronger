@@ -31,6 +31,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useToastStore } from '@/stores/toasts'
+import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
@@ -227,23 +228,19 @@ export const ProfileView = () => {
               stays out of the heading's accessible name. */}
           <div className={styles.nameLine}>
             <h2>{user.name}</h2>
-            <button
-              type="button"
-              aria-label={t('profile.editName')}
+            <AppIconButton
+              icon={PencilSquareIcon}
+              label={t('profile.editName')}
               onClick={() => setNameDraft(user.name)}
-            >
-              <PencilSquareIcon aria-hidden="true" />
-            </button>
+            />
           </div>
           <p className={styles.usernameLine}>
             <span className="truncate">{handle(user.username)}</span>
-            <button
-              type="button"
-              aria-label={t('profile.editUsername')}
+            <AppIconButton
+              icon={PencilSquareIcon}
+              label={t('profile.editUsername')}
               onClick={() => setUsernameDraft(user.username)}
-            >
-              <PencilSquareIcon aria-hidden="true" />
-            </button>
+            />
           </p>
           <p>{user.email}</p>
         </div>

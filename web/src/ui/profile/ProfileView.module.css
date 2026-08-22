@@ -40,16 +40,6 @@
   @apply text-sm text-text-muted;
 }
 
-.nameLine button,
-.usernameLine button {
-  @apply grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
-}
-
-.nameLine button svg,
-.usernameLine button svg {
-  @apply size-4;
-}
-
 .notificationLink {
   @apply relative grid size-14 place-items-center rounded-control text-text-muted transition hover:bg-ink-tint hover:text-text;
 }

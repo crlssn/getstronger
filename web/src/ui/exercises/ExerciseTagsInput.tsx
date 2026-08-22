@@ -1,7 +1,7 @@
 import type { TagRejection } from '@/utils/exerciseTags'
 
 import { XMarkIcon } from '@heroicons/react/20/solid'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
@@ -27,9 +27,11 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
   const [draft, setDraft] = useState('')
   const [rejection, setRejection] = useState<TagRejection>()
   const [focused, setFocused] = useState(false)
+  const suggestionsId = useId()
   const [highlighted, setHighlighted] = useState(-1)
 
   const matches = matchingSuggestions(suggestions, value, draft)
+  const suggestionsOpen = focused && matches.length > 0
 
   const rejectionMessage = (reason: TagRejection) => {
     if (reason.reason === 'tooLong') {
@@ -109,8 +111,12 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
           maxLength={maxTagLength}
           placeholder={t('exercise.addTag')}
           aria-label={t('exercise.tagInput.addAria')}
+          // A plain textbox may not carry aria-expanded, which is what axe
+          // rejected here: the field has to say it owns the list first.
+          role="combobox"
           aria-autocomplete="list"
-          aria-expanded={focused && matches.length > 0}
+          aria-controls={suggestionsId}
+          aria-expanded={suggestionsOpen}
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value)
@@ -125,8 +131,9 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
         />
       )}
 
-      {focused && matches.length > 0 && (
+      {suggestionsOpen && (
         <div
+          id={suggestionsId}
           className={styles.tagSuggestions}
           role="listbox"
           aria-label={t('exercise.tagInput.suggestionsAria')}

@@ -9,11 +9,7 @@
 }
 
 .searchTrigger {
-  @apply grid size-11 place-items-center rounded-control border border-border bg-white text-text-subtle shadow-card transition hover:border-ink-border hover:text-text;
-}
-
-.searchTrigger svg {
-  @apply size-5;
+  @apply border-border bg-white shadow-card hover:border-ink-border hover:text-text;
 }
 
 .searchPanel {

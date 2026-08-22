@@ -39,14 +39,10 @@
   @apply min-w-0 flex-1;
 }
 
-/* 44px to a thumb, 32px to the eye: the negative margin hands the extra back
-   to the row so the toast keeps its height. */
-.toast button {
-  @apply -m-1.5 grid size-11 shrink-0 place-items-center rounded-lg transition hover:bg-black/5;
-}
-
-.toast button svg {
-  @apply size-4;
+/* The toast is tinted by its type, so the dismiss borrows that tint rather
+   than the default tone's neutral. */
+.dismiss {
+  @apply -m-1.5 text-current hover:bg-black/5 hover:text-current;
 }
 
 @keyframes toast-in {

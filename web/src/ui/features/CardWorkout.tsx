@@ -17,11 +17,12 @@ import { deleteWorkout, postWorkoutComment } from '@/http/requests'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppTextarea } from '@/ui/components/AppTextarea'
 import { cn } from '@/ui/cn'
 import { CardWorkoutComment } from '@/ui/features/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
 import { DropdownButton } from '@/ui/components/DropdownButton'
-import { autosize } from '@/utils/autosize'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
 import { workoutSummary } from '@/utils/workoutSummary'
@@ -272,25 +273,29 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
           <form className={styles.commentForm} onSubmit={(event) => void postComment(event)}>
             <label htmlFor="workout-comment">{t('workout.card.addComment')}</label>
-            <textarea
+            <AppTextarea
+              autosize
               id="workout-comment"
-              ref={autosize}
               maxLength={maxCommentLength}
               placeholder={t('workout.card.commentPlaceholder')}
               required
+              rows={2}
               value={commentInput}
-              onChange={(event) => {
-                setCommentInput(event.target.value)
-                autosize(event.target)
-              }}
+              onChange={(event) => setCommentInput(event.target.value)}
             />
             <div>
               <small>
                 {commentInput.trim().length}/{maxCommentLength}
               </small>
-              <button type="submit" disabled={!commentInput.trim() || postingComment}>
+              <AppButton
+                type="submit"
+                colour="primary"
+                size="sm"
+                width="auto"
+                disabled={!commentInput.trim() || postingComment}
+              >
                 {postingComment ? t('workout.card.posting') : t('workout.card.postComment')}
-              </button>
+              </AppButton>
             </div>
           </form>
         </section>

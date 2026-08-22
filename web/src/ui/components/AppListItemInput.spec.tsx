@@ -10,7 +10,7 @@ describe('AppListItemInput', () => {
   const field = () => screen.getByRole('textbox')
 
   test('shows the value it is given', () => {
-    render(<AppListItemInput model="Bench press" type="text" onUpdate={vi.fn()} />)
+    render(<AppListItemInput label="Exercise name" model="Bench press" type="text" onUpdate={vi.fn()} />)
 
     expect(field()).toHaveValue('Bench press')
   })
@@ -18,7 +18,7 @@ describe('AppListItemInput', () => {
   // Committing on every keystroke would hand the caller half-typed names.
   test('commits only once the field is left', async () => {
     const onUpdate = vi.fn()
-    render(<AppListItemInput model="" type="text" onUpdate={onUpdate} />)
+    render(<AppListItemInput label="Exercise name" model="" type="text" onUpdate={onUpdate} />)
 
     await userEvent.type(field(), 'Squat')
     expect(onUpdate).not.toHaveBeenCalled()
@@ -28,7 +28,7 @@ describe('AppListItemInput', () => {
   })
 
   test('title-cases as the user types when asked to', async () => {
-    render(<AppListItemInput model="" type="text" capitalise onUpdate={vi.fn()} />)
+    render(<AppListItemInput label="Exercise name" model="" type="text" capitalise onUpdate={vi.fn()} />)
 
     await userEvent.type(field(), 'bench press')
 
@@ -36,7 +36,7 @@ describe('AppListItemInput', () => {
   })
 
   test('leaves the text alone when not asked to', async () => {
-    render(<AppListItemInput model="" type="text" onUpdate={vi.fn()} />)
+    render(<AppListItemInput label="Exercise name" model="" type="text" onUpdate={vi.fn()} />)
 
     await userEvent.type(field(), 'bench press')
 
@@ -45,10 +45,10 @@ describe('AppListItemInput', () => {
 
   // A form reset, or a fetch landing, replaces what is in the field.
   test('follows a value changed underneath it', async () => {
-    const { rerender } = render(<AppListItemInput model="Squat" type="text" onUpdate={vi.fn()} />)
+    const { rerender } = render(<AppListItemInput label="Exercise name" model="Squat" type="text" onUpdate={vi.fn()} />)
     await userEvent.type(field(), ' variation')
 
-    rerender(<AppListItemInput model="Deadlift" type="text" onUpdate={vi.fn()} />)
+    rerender(<AppListItemInput label="Exercise name" model="Deadlift" type="text" onUpdate={vi.fn()} />)
 
     expect(field()).toHaveValue('Deadlift')
   })
@@ -56,6 +56,7 @@ describe('AppListItemInput', () => {
   test('passes other attributes through', () => {
     render(
       <AppListItemInput
+        label="Exercise name"
         model=""
         type="email"
         placeholder="you@example.com"
@@ -66,5 +67,13 @@ describe('AppListItemInput', () => {
 
     expect(field()).toBeRequired()
     expect(field()).toHaveAttribute('type', 'email')
+  })
+
+  // The field fills the row, so the section heading above it is the only thing
+  // naming it — and a heading is not a label. axe caught four screens this way.
+  test('carries the name it was given', () => {
+    render(<AppListItemInput label="Exercise name" model="" type="text" onUpdate={vi.fn()} />)
+
+    expect(screen.getByLabelText('Exercise name')).toBeInTheDocument()
   })
 })

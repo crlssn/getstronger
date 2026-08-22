@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react'
 import { MinusCircleIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
+import { AppIconButton } from '@/ui/components/AppIconButton'
 import { DurationInput } from '@/ui/workouts/DurationInput'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { hasAnyExerciseSetValue, measurementsForExercise } from '@/utils/exerciseMeasurements'
@@ -96,15 +97,17 @@ export const SetMeasurementInputs = ({ set, exercise, onChange, onRemove, remove
         )
       })}
 
-      {onRemove && (
-        <button
-          type="button"
+      {/* Both or neither: AppIconButton has no label but the one it is given,
+          so a remove control without one would be an unnamed button. */}
+      {onRemove && removeLabel && (
+        <AppIconButton
           className={styles.removeSet}
-          aria-label={removeLabel}
+          icon={MinusCircleIcon}
+          // Quiet: the minus carries the meaning, and a column of red circles
+          // beside every set reads as a page full of errors.
+          label={removeLabel}
           onClick={onRemove}
-        >
-          <MinusCircleIcon aria-hidden="true" />
-        </button>
+        />
       )}
     </div>
   )
