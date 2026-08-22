@@ -135,6 +135,10 @@ export const routes: AppRoute[] = [
     titleKey: 'pages.chooseNewPassword',
   },
 
+  // Public: the app stores need a policy URL that opens without an account,
+  // and the profile links to the same page from inside one.
+  { name: 'privacy', path: '/privacy', access: 'public', titleKey: 'pages.privacy' },
+
   // TODO: Create a landing page.
   { name: 'landing', path: '/', access: 'landing' },
   { name: 'not-found', path: '*', access: 'public', titleKey: 'pages.notFound' },

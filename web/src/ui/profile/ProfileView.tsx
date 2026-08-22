@@ -7,13 +7,16 @@ import {
   ChartBarIcon,
   ChevronRightIcon,
   PencilSquareIcon,
+  ShieldCheckIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline'
+import { Code, ConnectError } from '@connectrpc/connect'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import {
+  deleteAccount,
   getCurrentUser,
   updateUserAutofillSets,
   updateUserDistanceUnit,
@@ -22,6 +25,7 @@ import {
   updateUserWeightUnit,
 } from '@/http/requests'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
+import { clearAccountState } from '@/stores/accountState'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -46,6 +50,7 @@ const maxUsernameLength = 30
 /** The Me tab: who you are, how you are doing, and what you can change. */
 export const ProfileView = () => {
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   const unreadCount = useNotificationStore((state) => state.unreadCount)
   const dashboard = useDashboardStore((state) => state.dashboard)
@@ -57,6 +62,9 @@ export const ProfileView = () => {
   const [saving, setSaving] = useState<'weight' | 'distance' | 'autofill' | 'name' | 'username'>()
   const [nameDraft, setNameDraft] = useState<string>()
   const [usernameDraft, setUsernameDraft] = useState<string>()
+  const [deletePassword, setDeletePassword] = useState<string>()
+  const [deleteError, setDeleteError] = useState<string>()
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -137,6 +145,37 @@ export const ProfileView = () => {
     setUser({ ...user, username: res.user?.username ?? usernameDraft })
     setUsernameDraft(undefined)
     useToastStore.getState().success(t('profile.usernameUpdated'))
+  }
+
+  /**
+   * Deletes the account, then leaves nothing of it on the device.
+   *
+   * A wrong password comes back as InvalidArgument and stays on the field:
+   * the sheet is the only place the password was typed, so closing it to show
+   * a toast would lose the correction.
+   */
+  const confirmDelete = async () => {
+    if (deletePassword === undefined || deleting) return
+
+    setDeleting(true)
+    setDeleteError(undefined)
+    try {
+      await deleteAccount(deletePassword)
+    } catch (error) {
+      setDeleting(false)
+      setDeleteError(
+        error instanceof ConnectError && error.code === Code.InvalidArgument
+          ? t('profile.deleteAccountWrongPassword')
+          : t('profile.deleteAccountFailed'),
+      )
+      return
+    }
+
+    clearAccountState()
+    setDeletePassword(undefined)
+    setDeleting(false)
+    useToastStore.getState().success(t('profile.accountDeleted'))
+    void navigate('/login')
   }
 
   if (!user) return <AppSkeleton />
@@ -259,6 +298,16 @@ export const ProfileView = () => {
           </span>
           <ChevronRightIcon aria-hidden="true" />
         </Link>
+        <Link to="/privacy">
+          <span className={styles.settingsIcon}>
+            <ShieldCheckIcon aria-hidden="true" />
+          </span>
+          <span>
+            <strong>{t('profile.privacyPolicy')}</strong>
+            <small>{t('profile.privacyPolicyBody')}</small>
+          </span>
+          <ChevronRightIcon aria-hidden="true" />
+        </Link>
       </section>
 
       {preference(
@@ -334,6 +383,25 @@ export const ProfileView = () => {
         <ArrowRightOnRectangleIcon aria-hidden="true" /> {t('auth.logout')}
       </Link>
 
+      {/* Both app stores require an account made in the app to be deletable
+          from inside it, which is why this sits on the profile rather than
+          behind a support email. */}
+      <section className={styles.dangerZone} aria-label={t('profile.dangerZone')}>
+        <div>
+          <strong>{t('profile.deleteAccount')}</strong>
+          <small>{t('profile.deleteAccountBody')}</small>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteError(undefined)
+            setDeletePassword('')
+          }}
+        >
+          {t('profile.deleteAccount')}
+        </button>
+      </section>
+
       {nameDraft !== undefined && (
         <AppSheet
           title={t('profile.editName')}
@@ -365,6 +433,54 @@ export const ProfileView = () => {
               value={nameDraft}
               onChange={(event) => setNameDraft(event.target.value)}
             />
+          </form>
+        </AppSheet>
+      )}
+
+      {deletePassword !== undefined && (
+        <AppSheet
+          title={t('profile.deleteAccountTitle')}
+          body={t('profile.deleteAccountWarning')}
+          eyebrow={t('profile.dangerZone')}
+          eyebrowTone="danger"
+          closeLabel={t('common.close')}
+          onClose={() => setDeletePassword(undefined)}
+          actions={
+            <>
+              <SheetAction type="submit" form="delete-account-form" tone="danger" disabled={deleting}>
+                {deleting ? t('profile.deleteAccountDeleting') : t('profile.deleteAccountConfirm')}
+              </SheetAction>
+              <SheetAction tone="tertiary" onClick={() => setDeletePassword(undefined)}>
+                {t('common.cancel')}
+              </SheetAction>
+            </>
+          }
+        >
+          <form
+            id="delete-account-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void confirmDelete()
+            }}
+          >
+            <label htmlFor="delete-account-password" className="auth-label">
+              {t('profile.deleteAccountPassword')}
+            </label>
+            <input
+              id="delete-account-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              className="auth-input mt-2"
+              required
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+            />
+            {deleteError !== undefined && (
+              <p role="alert" className="mt-2 text-sm text-danger">
+                {deleteError}
+              </p>
+            )}
           </form>
         </AppSheet>
       )}

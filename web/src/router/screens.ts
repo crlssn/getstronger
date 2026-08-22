@@ -89,5 +89,7 @@ export const screens: Partial<Record<string, ScreenLoader>> = {
     Component: (await import('@/ui/auth/ResetPassword')).ResetPassword,
   }),
 
+  privacy: async () => ({ Component: (await import('@/ui/PrivacyPolicy')).PrivacyPolicy }),
+
   'not-found': async () => ({ Component: (await import('@/ui/NotFound')).NotFound }),
 }

@@ -133,3 +133,26 @@
 .logoutLink svg {
   @apply size-5;
 }
+
+/* Set apart from the settings cards above it: an irreversible action should
+   not read as one more row of preferences. */
+.dangerZone {
+  @apply flex flex-col gap-3 rounded-card border border-danger/30 bg-danger-surface p-4 sm:flex-row sm:items-center sm:justify-between;
+}
+
+.dangerZone strong,
+.dangerZone small {
+  @apply block;
+}
+
+.dangerZone strong {
+  @apply text-base font-semibold text-danger-strong;
+}
+
+.dangerZone small {
+  @apply mt-0.5 text-sm text-text-muted;
+}
+
+.dangerZone button {
+  @apply inline-flex min-h-(--size-control) shrink-0 items-center justify-center rounded-control bg-danger px-4 text-sm font-semibold text-white hover:bg-danger-strong;
+}
