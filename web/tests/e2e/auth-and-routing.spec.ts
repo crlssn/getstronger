@@ -4,6 +4,7 @@ import {
   expect,
   expectAccessible,
   logIn,
+  logInAs,
   resetSeedData,
   test,
   uniqueName,
@@ -160,9 +161,81 @@ test.describe('guest authentication and routing', () => {
     await expect(page.getByRole('status')).toBeHidden({ timeout: 15_000 })
   })
 
+  // The stores need a policy URL that opens without an account.
+  test('opens the privacy policy without signing in @smoke', async ({ page }) => {
+    await page.goto('/privacy')
+
+    await expect(page).toHaveURL(/\/privacy$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Privacy policy' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'What we store' })).toBeVisible()
+    await expectAccessible(page)
+  })
+
   test('shows the not-found route', async ({ page }) => {
     await page.goto('/this-route-does-not-exist')
     await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
+  })
+})
+
+// Apple and Google both require an account created in the app to be deletable
+// from inside it, so this walks the whole route: a real account is signed up,
+// verified, deleted, and then proven gone by trying to sign back in.
+test.describe('account deletion', () => {
+  test('deletes the account and everything it owns @mutation', async ({ page }) => {
+    test.slow()
+    test.info().annotations.push(allowRuntimeErrors)
+
+    const email = `${uniqueName('e2e-delete').replaceAll(' ', '-')}@example.com`.toLowerCase()
+    const password = 'StrongPassword123!'
+
+    await page.goto('/signup')
+    await page.getByLabel('Name', { exact: true }).fill('E2E Leaver')
+    await page.getByLabel('Username').fill(`e2e.leaver.${Date.now()}`)
+    await page.getByLabel('Email address').fill(email)
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByLabel('Confirm password').fill(password)
+    await page.getByRole('button', { name: 'Create an account' }).click()
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
+
+    await page.goto(`/verify-email?token=${verificationToken(email)}`)
+    await expect(page).toHaveURL(/\/login$/)
+    await logInAs(page, email, password)
+
+    // Something of the account's own, so the deletion has data to take with it.
+    await page.goto('/exercises/create')
+    const exercise = uniqueName('Leaver Press')
+    await page.locator('form input[type="text"]').first().fill(exercise)
+    await page.getByRole('button', { name: 'Save Exercise' }).click()
+    await expect(page).toHaveURL(/\/exercises$/)
+    await expect(page.getByText(exercise)).toBeVisible()
+
+    await page.goto('/profile')
+    await page
+      .getByRole('region', { name: 'Danger zone' })
+      .getByRole('button', { name: 'Delete account' })
+      .click()
+
+    const sheet = page.getByRole('dialog')
+    await expect(sheet).toContainText('cannot be undone')
+
+    // A wrong password is refused without ending the session or the sheet.
+    await sheet.getByLabel('Confirm with your password').fill('not-the-password')
+    await sheet.getByRole('button', { name: 'Delete my account' }).click()
+    await expect(sheet.getByRole('alert')).toContainText('That password is not correct.')
+    await expect(page).toHaveURL(/\/profile$/)
+
+    await sheet.getByLabel('Confirm with your password').fill(password)
+    await sheet.getByRole('button', { name: 'Delete my account' }).click()
+
+    await expect(page).toHaveURL(/\/login$/)
+    await expect(page.getByRole('status')).toContainText('Your account has been deleted.')
+
+    // The account is gone from the server, not just from this browser.
+    await page.getByLabel('Email address').fill(email)
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByRole('button', { name: 'Log in' }).click()
+    await expect(page.getByRole('alert')).toContainText('invalid credentials')
+    await expect(page).toHaveURL(/\/login$/)
   })
 })
 

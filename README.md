@@ -183,9 +183,18 @@ The `release-mobile` workflow (manual trigger) builds the web bundle, archives b
 
 1. **Accounts**: an Apple Developer Program membership and a Google Play developer account; register the bundle id `com.getstronger.app` in both (or change it in `mobile/capacitor.config.ts` first — it is provisional until the first store submission).
 2. **iOS secrets**: `APPLE_TEAM_ID`, plus an App Store Connect API key (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` — the `.p8` contents). The workflow uses Xcode cloud signing (`-allowProvisioningUpdates`), so no certificates or profiles need exporting.
-3. **Android secrets**: an upload keystore (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`) and a Play service account (`PLAY_SERVICE_ACCOUNT_JSON`); the very first `.aab` must be uploaded through the Play Console by hand before the API can publish to a track.
+3. **Android secrets**: an upload keystore (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD` if the key's password differs from the store's) and a Play service account (`PLAY_SERVICE_ACCOUNT_JSON`); the very first `.aab` must be uploaded through the Play Console by hand before the API can publish to a track.
 4. **Deep-link identities**: fill the placeholders in `web/public/.well-known/` — the Apple Team ID in `apple-app-site-association` and the SHA-256 fingerprint of the upload key in `assetlinks.json` (`keytool -list -v -keystore …`) — and redeploy the web app.
-5. **Store listings**: screenshots (the `mise run screenshots` contact sheet is a good source), a privacy policy URL, and Apple's privacy nutrition labels (the app stores auth tokens and workout data; no tracking, no third-party data sharing unless PostHog analytics is configured).
+5. **Store listings**: screenshots (the `mise run screenshots` contact sheet is a good source), the privacy policy URL (`https://www.getstronger.studio/privacy`), and the privacy declarations described below.
+6. **A review account**: every screen sits behind a sign-in, so App Review and Play both need working credentials for the production API. Create a real account and hand it over in the review notes; do not point them at a seed persona, which only exists locally.
+
+#### Privacy declarations
+
+Apple's nutrition labels and Google's Data safety form are filled in from the same facts, and the three places that state them must agree: the policy page (`web/src/ui/PrivacyPolicy.tsx`), the iOS privacy manifest (`mobile/ios/App/App/PrivacyInfo.xcprivacy`), and the store consoles. As shipped the app collects email address, name, username, user id, fitness data, product interaction and crash data; all of it is linked to the account, none of it is used for tracking or advertising, and PostHog is the only third party that receives usage events. `ITSAppUsesNonExemptEncryption` is declared `false` in `Info.plist`, so TestFlight uploads skip the manual compliance question.
+
+Account deletion is a store requirement rather than a nicety: both stores refuse an app that lets people create an account without letting them delete it from inside the app. It lives under Me → Delete account, and erases the account and everything it owns.
+
+The `privacy@getstronger.studio` address the policy points at has to receive mail before the first submission — the policy is the only route people have for a data request.
 
 ## Production infrastructure on Scaleway
 

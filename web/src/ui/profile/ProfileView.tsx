@@ -68,8 +68,15 @@ export const ProfileView = () => {
 
   useEffect(() => {
     const load = async () => {
+      // Deleting the account swaps the signed-in shell for the guest one, which
+      // remounts this screen under it before the app has left /profile. There
+      // is no longer a user to ask about, and asking for an empty id answers
+      // with a validation error the person reads as a failed deletion.
+      const { userId } = useAuthStore.getState()
+      if (!userId) return
+
       const [response] = await Promise.all([
-        getCurrentUser(useAuthStore.getState().userId),
+        getCurrentUser(userId),
         useDashboardStore.getState().load(),
         useNotificationStore.getState().refreshUnreadNotifications(),
       ])
