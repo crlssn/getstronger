@@ -37,11 +37,14 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	user, err := h.repo.GetUser(
-		ctx,
-		repo.GetUserWithID(req.Msg.GetId()),
-		repo.GetUserLoadAuth(),
-	)
+	opts := []repo.GetUserOpt{repo.GetUserWithID(req.Msg.GetId())}
+	if req.Msg.GetId() == userID {
+		// Only the account holder gets the email address: the auth relation is
+		// what puts it on the response, so it is left unloaded for everyone else.
+		opts = append(opts, repo.GetUserLoadAuth())
+	}
+
+	user, err := h.repo.GetUser(ctx, opts...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Warn("User not found")
