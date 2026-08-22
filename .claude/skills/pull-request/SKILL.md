@@ -15,8 +15,12 @@ needs a sentence, a schema migration needs the full treatment.
 - Describe **what** changed at the level of its shape and the design decisions
   behind it. Never restate the diff as a file-by-file changelog — the diff
   already shows that. If you rejected an obvious alternative, say why.
-- State **how it was verified**: tests added, manual checks run. UI changes must
-  include before/after screenshots.
+- State **how it was verified**: tests added, manual checks run. A UI change
+  needs before/after screenshots, and they belong in your reply to the user, not
+  in the PR body — `gh` cannot upload images, and from the reply the user can
+  drag them into the description themselves. The body says in words what changed
+  visually, so a reviewer reading the PR alone knows what moved; it never
+  explains that images could not be attached.
 - Call out only what the reviewer genuinely needs: breaking changes, migration
   or deploy ordering, deliberately deferred work, and where to start reading if
   the diff is large.

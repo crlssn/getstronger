@@ -16,8 +16,8 @@ file-by-file changelog — the diff shows that. -->
 
 ## Verification
 
-<!-- Tests added and manual checks run. Before/after screenshots for UI
-changes. -->
+<!-- Tests added and manual checks run. For a UI change, say in words what
+moved; the before/after screenshots go to the user in the reply, not here. -->
 
 ## Notes for the reviewer
 
