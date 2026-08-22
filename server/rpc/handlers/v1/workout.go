@@ -25,11 +25,11 @@ import (
 var _ apiv1connect.WorkoutServiceHandler = (*workoutHandler)(nil)
 
 type workoutHandler struct {
-	repo   repo.Repo
+	repo   *repo.Repo
 	pubSub *pubsub.PubSub
 }
 
-func NewWorkoutHandler(r repo.Repo, ps *pubsub.PubSub) apiv1connect.WorkoutServiceHandler {
+func NewWorkoutHandler(r *repo.Repo, ps *pubsub.PubSub) apiv1connect.WorkoutServiceHandler {
 	return &workoutHandler{r, ps}
 }
 
@@ -108,7 +108,7 @@ func (h *workoutHandler) createWorkout(
 ) (*models.Workout, error, error) {
 	var workout *models.Workout
 	var planAdvanceSkipped error
-	err := h.repo.NewTx(ctx, func(tx repo.Tx) error {
+	err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		createdWorkout, createErr := tx.CreateWorkout(ctx, repo.CreateWorkoutParams{
 			Name:         workoutName,
 			Note:         request.GetNote(),
@@ -315,7 +315,7 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
+	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		if err = tx.UpdateWorkout(
 			ctx, workout.ID.String(),
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),

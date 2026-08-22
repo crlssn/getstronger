@@ -21,7 +21,7 @@ import (
 type feedSuite struct {
 	suite.Suite
 
-	repo    repo.Repo
+	repo    *repo.Repo
 	handler apiv1connect.FeedServiceHandler
 
 	factory   *factory.Factory

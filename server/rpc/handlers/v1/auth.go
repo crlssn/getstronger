@@ -29,7 +29,7 @@ var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 
 type authHandler struct {
 	jwt     *jwt.Manager
-	repo    repo.Repo
+	repo    *repo.Repo
 	email   email.Email
 	cookies *cookies.Cookies
 }
@@ -38,7 +38,7 @@ type AuthHandlerParams struct {
 	fx.In
 
 	JWT     *jwt.Manager
-	Repo    repo.Repo
+	Repo    *repo.Repo
 	Email   email.Email
 	Cookies *cookies.Cookies
 }
@@ -67,7 +67,7 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
-	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
+	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		auth, err := tx.CreateAuth(ctx, req.Msg.GetEmail(), req.Msg.GetPassword())
 		if err != nil {
 			if errors.Is(err, account.ErrEmailAlreadyRegistered) {

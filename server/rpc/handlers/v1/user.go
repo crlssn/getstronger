@@ -26,11 +26,11 @@ import (
 var _ apiv1connect.UserServiceHandler = (*userHandler)(nil)
 
 type userHandler struct {
-	repo   repo.Repo
+	repo   *repo.Repo
 	pubSub *pubsub.PubSub
 }
 
-func NewUserHandler(r repo.Repo, ps *pubsub.PubSub) apiv1connect.UserServiceHandler {
+func NewUserHandler(r *repo.Repo, ps *pubsub.PubSub) apiv1connect.UserServiceHandler {
 	return &userHandler{r, ps}
 }
 

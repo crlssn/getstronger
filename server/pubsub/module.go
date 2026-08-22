@@ -6,10 +6,25 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
+	"github.com/crlssn/getstronger/server/repo"
 )
+
+// bindStore names the slice of the persistence adapter each part of the
+// messaging machinery depends on. Binding happens here rather than in every
+// application that assembles the server, so a subscriber that grows a new
+// dependency cannot leave one of them behind.
+func bindStore() fx.Option {
+	return fx.Provide(
+		func(r *repo.Repo) EventStore { return r },
+		func(r *repo.Repo) handlers.TraceStore { return r },
+		func(r *repo.Repo) handlers.CommentThread { return r },
+		func(r *repo.Repo) handlers.NotificationStore { return r },
+	)
+}
 
 func Module() fx.Option {
 	return fx.Module("bus", fx.Options(
+		bindStore(),
 		fx.Provide(
 			New,
 			handlers.NewRegistry,

@@ -12,7 +12,6 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
-	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/training"
@@ -20,22 +19,13 @@ import (
 	"github.com/crlssn/getstronger/server/xzap"
 )
 
-var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
-
-const (
-	dashboardListLimit = 50
-	recentWorkoutLimit = 3
-)
-
-type routineHandler struct {
-	repo repo.Repo
+// routineLibrary edits the routines an athlete has built: what each one is
+// called and which exercises it holds, in which order.
+type routineLibrary struct {
+	repo *repo.Repo
 }
 
-func NewRoutineHandler(r repo.Repo) apiv1connect.RoutineServiceHandler {
-	return &routineHandler{r}
-}
-
-func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request[apiv1.CreateRoutineRequest]) (*connect.Response[apiv1.CreateRoutineResponse], error) {
+func (h *routineLibrary) CreateRoutine(ctx context.Context, req *connect.Request[apiv1.CreateRoutineRequest]) (*connect.Response[apiv1.CreateRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -55,7 +45,7 @@ func (h *routineHandler) CreateRoutine(ctx context.Context, req *connect.Request
 	}), nil
 }
 
-func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[apiv1.GetRoutineRequest]) (*connect.Response[apiv1.GetRoutineResponse], error) {
+func (h *routineLibrary) GetRoutine(ctx context.Context, req *connect.Request[apiv1.GetRoutineRequest]) (*connect.Response[apiv1.GetRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx).
 		With(xzap.FiledRoutineID(req.Msg.GetId()))
 	userID := xcontext.MustExtractUserID(ctx)
@@ -82,7 +72,7 @@ func (h *routineHandler) GetRoutine(ctx context.Context, req *connect.Request[ap
 	}), nil
 }
 
-func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request[apiv1.UpdateRoutineRequest]) (*connect.Response[apiv1.UpdateRoutineResponse], error) {
+func (h *routineLibrary) UpdateRoutine(ctx context.Context, req *connect.Request[apiv1.UpdateRoutineRequest]) (*connect.Response[apiv1.UpdateRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -122,7 +112,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
-	if err = h.repo.NewTx(ctx, func(tx repo.Tx) error {
+	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		if err = tx.UpdateRoutine(
 			ctx, routine.ID.String(),
 			repo.UpdateRoutineName(req.Msg.GetRoutine().GetName()),
@@ -156,7 +146,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 	}), nil
 }
 
-func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request[apiv1.DeleteRoutineRequest]) (*connect.Response[apiv1.DeleteRoutineResponse], error) {
+func (h *routineLibrary) DeleteRoutine(ctx context.Context, req *connect.Request[apiv1.DeleteRoutineRequest]) (*connect.Response[apiv1.DeleteRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -185,7 +175,7 @@ func (h *routineHandler) DeleteRoutine(ctx context.Context, req *connect.Request
 	return connect.NewResponse(&apiv1.DeleteRoutineResponse{}), nil
 }
 
-func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[apiv1.ListRoutinesRequest]) (*connect.Response[apiv1.ListRoutinesResponse], error) {
+func (h *routineLibrary) ListRoutines(ctx context.Context, req *connect.Request[apiv1.ListRoutinesRequest]) (*connect.Response[apiv1.ListRoutinesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -220,218 +210,7 @@ func (h *routineHandler) ListRoutines(ctx context.Context, req *connect.Request[
 	}), nil
 }
 
-func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	routines, err := h.repo.ListRoutines(
-		ctx,
-		repo.ListRoutinesLoadExercises(),
-		repo.ListRoutinesWithLimit(dashboardListLimit),
-		repo.ListRoutinesWithUserID(userID),
-		repo.ListRoutinesWithPageToken(nil),
-	)
-	if err != nil {
-		log.Error("List routines for dashboard", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	activePlan, err := h.repo.GetActivePlan(ctx, userID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Error("Get active plan for dashboard", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	nextRoutine := training.NextRoutine(activePlan, routines, req.Msg.GetPreferredRoutineId())
-
-	workouts, err := h.repo.ListWorkouts(
-		ctx,
-		repo.ListWorkoutsLoadSets(),
-		repo.ListWorkoutsLoadUser(),
-		repo.ListWorkoutsLoadExercises(),
-		repo.ListWorkoutsWithLimit(dashboardListLimit),
-		repo.ListWorkoutsWithUserIDs(userID),
-		repo.ListWorkoutsWithPageToken(nil),
-	)
-	if err != nil {
-		log.Error("List workouts for dashboard", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
-	if err != nil {
-		log.Error("Get personal bests for dashboard", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	thisWeek := training.WeekOf(time.Now().UTC()).Summarise(workouts)
-
-	recentWorkouts := workouts
-	if len(recentWorkouts) > recentWorkoutLimit {
-		recentWorkouts = recentWorkouts[:recentWorkoutLimit]
-	}
-	parsedWorkouts, err := parser.WorkoutSlice(recentWorkouts, personalBests)
-	if err != nil {
-		log.Error("Parse dashboard workouts", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-	var parsedNextRoutine *apiv1.Routine
-	if nextRoutine != nil {
-		parsedNextRoutine = parser.Routine(nextRoutine)
-	}
-
-	log.Info("Dashboard returned")
-	return connect.NewResponse(&apiv1.GetDashboardResponse{
-		NextRoutine:      parsedNextRoutine,
-		Routines:         parser.RoutineSlice(routines),
-		WorkoutsThisWeek: thisWeek.Workouts,
-		VolumeThisWeek:   thisWeek.Volume.Float64(),
-		PersonalBests:    parser.ExerciseSetSlice(personalBests),
-		RecentWorkouts:   parsedWorkouts,
-		ActivePlan:       parser.Plan(activePlan),
-	}), nil
-}
-
-func (h *routineHandler) CreatePlan(ctx context.Context, req *connect.Request[apiv1.CreatePlanRequest]) (*connect.Response[apiv1.CreatePlanResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	plan, err := h.repo.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     userID,
-		Name:       req.Msg.GetName(),
-		RoutineIDs: req.Msg.GetRoutineIds(),
-	})
-	if err != nil {
-		log.Error("Create plan", zap.Error(err))
-		if errors.Is(err, training.ErrPlanRoutineBelongsToAnotherUser) ||
-			errors.Is(err, training.ErrPlanRoutineDeleted) ||
-			errors.Is(err, training.ErrPlanRoutineDuplicate) || errors.Is(err, sql.ErrNoRows) {
-			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
-		}
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.CreatePlanResponse{Plan: parser.Plan(plan)}), nil
-}
-
-func (h *routineHandler) GetPlan(ctx context.Context, req *connect.Request[apiv1.GetPlanRequest]) (*connect.Response[apiv1.GetPlanResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	plan, err := h.repo.GetPlan(ctx, req.Msg.GetId(), userID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, connect.NewError(connect.CodeNotFound, nil)
-		}
-		log.Error("Get plan by ID", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.GetPlanResponse{Plan: parser.Plan(plan)}), nil
-}
-
-func (h *routineHandler) ListPlans(ctx context.Context, _ *connect.Request[apiv1.ListPlansRequest]) (*connect.Response[apiv1.ListPlansResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	plans, err := h.repo.ListPlans(ctx, userID)
-	if err != nil {
-		log.Error("List plans", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.ListPlansResponse{Plans: parser.PlanSlice(plans)}), nil
-}
-
-func (h *routineHandler) UpdatePlan(ctx context.Context, req *connect.Request[apiv1.UpdatePlanRequest]) (*connect.Response[apiv1.UpdatePlanResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	plan, err := h.repo.UpdatePlan(ctx, repo.UpdatePlanParams{
-		ID:         req.Msg.GetId(),
-		UserID:     userID,
-		Name:       req.Msg.GetName(),
-		RoutineIDs: req.Msg.GetRoutineIds(),
-	})
-	if err != nil {
-		log.Error("Update plan", zap.Error(err))
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, connect.NewError(connect.CodeNotFound, nil)
-		}
-		if errors.Is(err, training.ErrPlanRoutineBelongsToAnotherUser) ||
-			errors.Is(err, training.ErrPlanRoutineDeleted) ||
-			errors.Is(err, training.ErrPlanRoutineDuplicate) {
-			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
-		}
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.UpdatePlanResponse{Plan: parser.Plan(plan)}), nil
-}
-
-func (h *routineHandler) DeletePlan(ctx context.Context, req *connect.Request[apiv1.DeletePlanRequest]) (*connect.Response[apiv1.DeletePlanResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	if err := h.repo.DeletePlan(ctx, req.Msg.GetId(), userID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, connect.NewError(connect.CodeNotFound, nil)
-		}
-		log.Error("Delete plan", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.DeletePlanResponse{}), nil
-}
-
-func (h *routineHandler) SetActivePlan(ctx context.Context, req *connect.Request[apiv1.SetActivePlanRequest]) (*connect.Response[apiv1.SetActivePlanResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	plan, err := h.repo.SetActivePlan(ctx, req.Msg.GetId(), userID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, connect.NewError(connect.CodeNotFound, nil)
-		}
-		log.Error("Set active plan", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.SetActivePlanResponse{Plan: parser.Plan(plan)}), nil
-}
-
-func (h *routineHandler) PauseActivePlan(ctx context.Context, _ *connect.Request[apiv1.PauseActivePlanRequest]) (*connect.Response[apiv1.PauseActivePlanResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	if err := h.repo.PauseActivePlan(ctx, userID); err != nil {
-		log.Error("Pause active plan", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.PauseActivePlanResponse{}), nil
-}
-
-func (h *routineHandler) SkipPlanRoutine(ctx context.Context, req *connect.Request[apiv1.SkipPlanRoutineRequest]) (*connect.Response[apiv1.SkipPlanRoutineResponse], error) {
-	log := xcontext.MustExtractLogger(ctx)
-	userID := xcontext.MustExtractUserID(ctx)
-
-	plan, err := h.repo.AdvancePlan(ctx, req.Msg.GetId(), userID, "")
-	if err != nil {
-		log.Error("Skip plan routine", zap.Error(err))
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, connect.NewError(connect.CodeNotFound, nil)
-		}
-		if errors.Is(err, training.ErrPlanNotActive) || errors.Is(err, training.ErrPlanUnexpectedRoutine) {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
-		}
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	return connect.NewResponse(&apiv1.SkipPlanRoutineResponse{Plan: parser.Plan(plan)}), nil
-}
-
-func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl
+func (h *routineLibrary) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -474,7 +253,7 @@ func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[a
 	return connect.NewResponse(&apiv1.AddExerciseResponse{}), nil
 }
 
-func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Request[apiv1.RemoveExerciseRequest]) (*connect.Response[apiv1.RemoveExerciseResponse], error) { //nolint:dupl
+func (h *routineLibrary) RemoveExercise(ctx context.Context, req *connect.Request[apiv1.RemoveExerciseRequest]) (*connect.Response[apiv1.RemoveExerciseResponse], error) { //nolint:dupl
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
@@ -517,7 +296,7 @@ func (h *routineHandler) RemoveExercise(ctx context.Context, req *connect.Reques
 	return connect.NewResponse(&apiv1.RemoveExerciseResponse{}), nil
 }
 
-func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseOrderRequest]) (*connect.Response[apiv1.UpdateExerciseOrderResponse], error) {
+func (h *routineLibrary) UpdateExerciseOrder(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseOrderRequest]) (*connect.Response[apiv1.UpdateExerciseOrderResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 

@@ -40,7 +40,7 @@ import (
 type repoSuite struct {
 	suite.Suite
 
-	repo repo.Repo
+	repo *repo.Repo
 
 	container *container.Container
 	factory   *factory.Factory
@@ -72,7 +72,7 @@ func (s *repoSuite) TestNewTx() {
 
 	type test struct {
 		name     string
-		tx       func(tx repo.Tx) error
+		tx       func(tx *repo.Repo) error
 		expected expected
 	}
 
@@ -82,7 +82,7 @@ func (s *repoSuite) TestNewTx() {
 	tests := []test{
 		{
 			name: "ok_transaction_committed",
-			tx: func(tx repo.Tx) error {
+			tx: func(tx *repo.Repo) error {
 				_, err := tx.CreateAuth(context.Background(), emailCreated, "password")
 				s.Require().NoError(err)
 				return nil
@@ -91,7 +91,7 @@ func (s *repoSuite) TestNewTx() {
 		},
 		{
 			name: "err_transaction_not_committed",
-			tx: func(tx repo.Tx) error {
+			tx: func(tx *repo.Repo) error {
 				_, err := tx.CreateAuth(context.Background(), emailNotCreated, "password")
 				s.Require().NoError(err)
 				return errTxError
@@ -147,7 +147,7 @@ func TestNewTxRollbackFailure(t *testing.T) {
 	t.Parallel()
 
 	r := repo.New(sql.OpenDB(rollbackFailConnector{}))
-	err := r.NewTx(context.Background(), func(repo.Tx) error {
+	err := r.NewTx(context.Background(), func(*repo.Repo) error {
 		return errTxError
 	})
 

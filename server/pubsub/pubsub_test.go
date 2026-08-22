@@ -38,8 +38,8 @@ func (s *pubSubSuite) SetupSuite() {
 	c := container.NewContainer(ctx)
 
 	s.pubSub = pubsub.New(pubsub.Params{
-		Log:  zap.NewExample(),
-		Repo: repo.New(c.DB),
+		Log:   zap.NewExample(),
+		Store: repo.New(c.DB),
 	})
 
 	s.mocks.controller = gomock.NewController(s.T())

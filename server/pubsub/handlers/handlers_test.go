@@ -25,8 +25,8 @@ import (
 func TestRequestTraced_HandlePayload(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
-	repoMock := repo.NewMockRepo(controller)
-	handler := handlers.NewRequestTraced(zap.NewExample(), repoMock)
+	traces := handlers.NewMockTraceStore(controller)
+	handler := handlers.NewRequestTraced(zap.NewExample(), traces)
 
 	t.Run("ok_request_traced", func(t *testing.T) {
 		t.Parallel()
@@ -36,7 +36,7 @@ func TestRequestTraced_HandlePayload(t *testing.T) {
 			StatusCode: 200,
 		}
 
-		repoMock.EXPECT().StoreTrace(gomock.Any(), repo.StoreTraceParams{
+		traces.EXPECT().StoreTrace(gomock.Any(), repo.StoreTraceParams{
 			Request:    payload.Request,
 			DurationMS: payload.DurationMS,
 			StatusCode: payload.StatusCode,
@@ -48,7 +48,7 @@ func TestRequestTraced_HandlePayload(t *testing.T) {
 	t.Run("ok_invalid_payload", func(t *testing.T) {
 		t.Parallel()
 		handler.HandlePayload("invalid_payload")
-		repoMock.EXPECT().StoreTrace(gomock.Any(), gomock.Any()).Times(0)
+		traces.EXPECT().StoreTrace(gomock.Any(), gomock.Any()).Times(0)
 	})
 
 	t.Cleanup(func() {
@@ -131,8 +131,8 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	t.Parallel()
 
 	controller := gomock.NewController(t)
-	repoMock := repo.NewMockRepo(controller)
-	handler := handlers.NewFollowedUser(zap.NewExample(), repoMock)
+	notifications := handlers.NewMockNotificationStore(controller)
+	handler := handlers.NewFollowedUser(zap.NewExample(), notifications)
 
 	t.Run("ok_user_followed", func(t *testing.T) {
 		t.Parallel()
@@ -142,7 +142,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 			EventID:    "event_id",
 		}
 
-		repoMock.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
+		notifications.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
 			Type:   notification.TypeFollow,
 			UserID: payload.FolloweeID,
 			Payload: notification.Payload{
@@ -157,7 +157,7 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	t.Run("ok_invalid_payload", func(t *testing.T) {
 		t.Parallel()
 		handler.HandlePayload("invalid_payload")
-		repoMock.EXPECT().StoreTrace(gomock.Any(), gomock.Any()).Times(0)
+		notifications.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).Times(0)
 	})
 
 	t.Cleanup(func() {

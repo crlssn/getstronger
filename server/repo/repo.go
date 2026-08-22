@@ -41,25 +41,30 @@ const (
 	DESC order = "DESC"
 )
 
-var (
-	_ Tx   = (*repo)(nil)
-	_ Repo = (*repo)(nil)
-)
-
-type repo struct {
+// Repo is the codebase's single persistence adapter: it reads and writes the
+// rows every bounded context is stored as, and owns nothing else. Callers
+// declare the narrow slice of it they actually depend on.
+//
+// A Repo bound to a transaction is the same type as one bound to the pool,
+// which is what lets a use case hand its collaborators a transactional store
+// without either of them knowing which it has.
+type Repo struct {
 	db *sql.DB
 	tx *sql.Tx
 }
 
-func (r *repo) exec() *sql.Tx {
+func (r *Repo) exec() *sql.Tx {
 	return r.tx
 }
 
-func New(db *sql.DB) Repo {
-	return &repo{db, nil}
+func New(db *sql.DB) *Repo {
+	return &Repo{db, nil}
 }
 
-func (r *repo) NewTx(ctx context.Context, f func(tx Tx) error) error {
+// NewTx runs f against a transactional Repo, committing when it returns nil and
+// rolling back otherwise. Calls made on an already transactional Repo join the
+// transaction they are already in rather than opening another.
+func (r *Repo) NewTx(ctx context.Context, f func(tx *Repo) error) error {
 	if r.tx != nil {
 		return f(r)
 	}
@@ -69,7 +74,7 @@ func (r *repo) NewTx(ctx context.Context, f func(tx Tx) error) error {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 
-	if err = f(&repo{nil, tx}); err != nil {
+	if err = f(&Repo{nil, tx}); err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
 			return fmt.Errorf("rollback tx: %w", errors.Join(err, errRollback))
 		}
@@ -92,7 +97,7 @@ type sqlExecutor interface {
 
 // sqlExec exposes the raw connection for the hand-written queries that have no
 // ORM equivalent, chiefly the training plan tables.
-func (r *repo) sqlExec() sqlExecutor {
+func (r *Repo) sqlExec() sqlExecutor {
 	if r.tx != nil {
 		return r.tx
 	}
@@ -123,7 +128,7 @@ func scanIDs(rows *sql.Rows) ([]string, error) {
 // bobExec mirrors executor for the tables already migrated to Bob. Both wrap
 // the same connection or transaction, so the two ORMs stay consistent while
 // the migration is in progress.
-func (r *repo) bobExec() bob.Executor {
+func (r *Repo) bobExec() bob.Executor {
 	if r.tx != nil {
 		return bob.NewTx(r.tx)
 	}
@@ -143,7 +148,7 @@ func nullIfEmpty(v string) omitnull.Val[string] {
 	return omitnull.From(v)
 }
 
-func (r *repo) SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error {
+func (r *Repo) SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error {
 	if err := setRoutineExercises(ctx, r.bobExec(), routine.ID, exercises); err != nil {
 		return fmt.Errorf("routine exercises set: %w", err)
 	}
@@ -151,7 +156,7 @@ func (r *repo) SetRoutineExercises(ctx context.Context, routine *models.Routine,
 	return nil
 }
 
-func (r *repo) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
+func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
 	exists, err := models.Auths.Query(
 		models.SelectWhere.Auths.Email.EQ(email),
 	).Exists(ctx, r.bobExec())
@@ -233,7 +238,7 @@ func UpdateAuthDeletePasswordResetToken() UpdateAuthOpt {
 	}
 }
 
-func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error {
+func (r *Repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("auth update columns: %w", err)
@@ -252,7 +257,7 @@ func (r *repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 	return nil
 }
 
-func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
+func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
 	auth, err := models.Auths.Query(
 		models.SelectWhere.Auths.Email.EQ(email),
 	).One(ctx, r.bobExec())
@@ -267,7 +272,7 @@ func (r *repo) CompareEmailAndPassword(ctx context.Context, email, password stri
 	return nil
 }
 
-func (r *repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
+func (r *Repo) RefreshTokenExists(ctx context.Context, refreshToken string) (bool, error) {
 	exists, err := models.Auths.Query(
 		models.SelectWhere.Auths.RefreshToken.EQ(refreshToken),
 	).Exists(ctx, r.bobExec())
@@ -285,7 +290,7 @@ type CreateUserParams struct {
 
 // CreateUser starts every account metric; the units are a profile setting from
 // then on.
-func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
+func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	user, err := models.Users.Insert(&models.UserSetter{
 		AuthID:       omit.From(uuidFromString(p.AuthID)),
 		Name:         omit.From(p.Name),
@@ -344,7 +349,7 @@ func UpdateUserDistanceUnit(unit string) UpdateUserOpt {
 	}
 }
 
-func (r *repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+func (r *Repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("user update columns: %w", err)
@@ -371,7 +376,7 @@ type CreateExerciseParams struct {
 	RestSeconds int
 }
 
-func (r *repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error) {
+func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error) {
 	// Preserve the original exercise behaviour for internal and older callers that
 	// predate configurable measurements. An explicit metric selection may still
 	// use a zero rest period.
@@ -405,8 +410,8 @@ type SoftDeleteExerciseParams struct {
 	ExerciseID string
 }
 
-func (r *repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
-	return r.NewTx(ctx, func(tx Tx) error {
+func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
 		exercise, err := models.Exercises.Query(
 			models.SelectWhere.Exercises.ID.EQ(uuidFromString(p.ExerciseID)),
 			models.SelectWhere.Exercises.UserID.EQ(uuidFromString(p.UserID)),
@@ -499,7 +504,7 @@ func ListExercisesWithLimit(limit int) ListExercisesOpt {
 	}
 }
 
-func (r *repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (models.ExerciseSlice, error) {
+func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (models.ExerciseSlice, error) {
 	var queries []bob.Mod[*dialect.SelectQuery]
 	for _, opt := range opts {
 		query, err := opt()
@@ -531,7 +536,7 @@ func GetExerciseWithUserID(userID string) GetExerciseOpt {
 	}
 }
 
-func (r *repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*models.Exercise, error) {
+func (r *Repo) GetExercise(ctx context.Context, opts ...GetExerciseOpt) (*models.Exercise, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -570,7 +575,7 @@ func UpdateExerciseRestSeconds(restSeconds int) UpdateExerciseOpt {
 	}
 }
 
-func (r *repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error {
+func (r *Repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("exercise update columns: %w", err)
@@ -600,7 +605,7 @@ var (
 	ErrRoutineExerciseDeleted              = fmt.Errorf("exercise is deleted")
 )
 
-func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error) {
+func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error) {
 	exercises, err := models.Exercises.Query(
 		models.SelectWhere.Exercises.ID.In(uuidsFromStrings(p.ExerciseIDs)...),
 	).All(ctx, r.bobExec())
@@ -618,7 +623,7 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 	}
 
 	var routine *models.Routine
-	if err = r.NewTx(ctx, func(tx Tx) error {
+	if err = r.NewTx(ctx, func(tx *Repo) error {
 		routine, err = models.Routines.Insert(&models.RoutineSetter{
 			UserID: omit.From(uuidFromString(p.UserID)),
 			Title:  omit.From(p.Name),
@@ -698,7 +703,7 @@ func stableExerciseOrder() []bob.Mod[*dialect.SelectQuery] {
 	}
 }
 
-func (r *repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error) {
+func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -712,8 +717,8 @@ func (r *repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.R
 	return routine, nil
 }
 
-func (r *repo) DeleteRoutine(ctx context.Context, id string) error {
-	return r.NewTx(ctx, func(tx Tx) error {
+func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
 		routine, err := tx.GetRoutine(ctx, GetRoutineWithID(id))
 		if err != nil {
 			return fmt.Errorf("routine fetch: %w", err)
@@ -784,7 +789,7 @@ func ListRoutinesLoadExercises() ListRoutineOpt {
 	}
 }
 
-func (r *repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error) {
+func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error) {
 	var query []bob.Mod[*dialect.SelectQuery]
 	for _, opt := range opts {
 		q, err := opt()
@@ -810,7 +815,7 @@ func UpdateRoutineName(name string) UpdateRoutineOpt {
 	}
 }
 
-func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
+func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("routine update columns: %w", err)
@@ -832,7 +837,7 @@ func (r *repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 // UpdateRoutineExerciseOrder rewrites the positions of a routine's exercises to match the given ID
 // order. The single statement keeps the rewrite atomic; IDs that match no row are ignored, so the
 // caller is expected to have validated the set.
-func (r *repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
 	if _, err := r.sqlExec().ExecContext(ctx, `
 UPDATE public.exercises_routines er
 SET position = ordered.position
@@ -847,7 +852,7 @@ WHERE er.routine_id = $1
 
 // AddExerciseToRoutine appends the exercise to the routine by inserting it after the routine's
 // current last position.
-func (r *repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
+func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	if _, err := r.sqlExec().ExecContext(ctx, `
 INSERT INTO public.exercises_routines (routine_id, exercise_id, position)
 SELECT $1, $2, COALESCE(MAX(position), 0) + 1
@@ -858,7 +863,7 @@ WHERE routine_id = $1`, routine.ID.String(), exercise.ID.String()); err != nil {
 	return nil
 }
 
-func (r *repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
+func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
 	if _, err := models.ExercisesRoutines.Delete(
 		models.DeleteWhere.ExercisesRoutines.RoutineID.EQ(routine.ID),
 		models.DeleteWhere.ExercisesRoutines.ExerciseID.EQ(exercise.ID),
@@ -870,7 +875,7 @@ func (r *repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.E
 
 type ListWorkoutsOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
-func (r *repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (models.WorkoutSlice, error) {
+func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (models.WorkoutSlice, error) {
 	var query []bob.Mod[*dialect.SelectQuery]
 	for _, opt := range opts {
 		q, err := opt()
@@ -980,10 +985,10 @@ type Set struct {
 	DistanceUnit    string
 }
 
-func (r *repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
+func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*models.Workout, error) {
 	var workout *models.Workout
 
-	if err := r.NewTx(ctx, func(tx Tx) error {
+	if err := r.NewTx(ctx, func(tx *Repo) error {
 		var err error
 		workout, err = models.Workouts.Insert(&models.WorkoutSetter{
 			Name:       omit.From(p.Name),
@@ -1068,7 +1073,7 @@ func GetWorkoutLoadCommentUsers() GetWorkoutOpt {
 	}
 }
 
-func (r *repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.Workout, error) {
+func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.Workout, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -1098,7 +1103,7 @@ func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
 
 var errDeleteWorkoutMissingOptions = fmt.Errorf("delete workout: missing options")
 
-func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
+func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) error {
 	if len(opts) == 0 {
 		return errDeleteWorkoutMissingOptions
 	}
@@ -1108,7 +1113,7 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 		query = append(query, opt())
 	}
 
-	return r.NewTx(ctx, func(tx Tx) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
 		workout, err := models.Workouts.Query(query...).One(ctx, tx.bobExec())
 		if err != nil {
 			return fmt.Errorf("workout fetch: %w", err)
@@ -1140,7 +1145,7 @@ func (r *repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	})
 }
 
-func (r *repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
+func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
 	rawQuery := `
 SELECT id FROM public.sets
 WHERE (exercise_id, workout_id) IN (
@@ -1170,7 +1175,7 @@ ORDER BY created_at;
 	)
 }
 
-func (r *repo) GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error) {
+func (r *Repo) GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error) {
 	workouts, err := r.ListWorkouts(ctx, ListWorkoutsWithUserIDs(userIDs...))
 	if err != nil {
 		return nil, fmt.Errorf("workouts fetch: %w", err)
@@ -1218,7 +1223,7 @@ type FollowParams struct {
 	FolloweeID string
 }
 
-func (r *repo) Follow(ctx context.Context, p FollowParams) error {
+func (r *Repo) Follow(ctx context.Context, p FollowParams) error {
 	if _, err := models.Followers.Insert(&models.FollowerSetter{
 		FollowerID: omit.From(uuidFromString(p.FollowerID)),
 		FolloweeID: omit.From(uuidFromString(p.FolloweeID)),
@@ -1234,7 +1239,7 @@ type UnfollowParams struct {
 	FolloweeID string
 }
 
-func (r *repo) Unfollow(ctx context.Context, p UnfollowParams) error {
+func (r *Repo) Unfollow(ctx context.Context, p UnfollowParams) error {
 	if _, err := models.Followers.Delete(
 		models.DeleteWhere.Followers.FollowerID.EQ(uuidFromString(p.FollowerID)),
 		models.DeleteWhere.Followers.FolloweeID.EQ(uuidFromString(p.FolloweeID)),
@@ -1266,7 +1271,7 @@ func followeeIDsOf(userID string) bob.Expression {
 
 type ListFollowersOpt func() bob.Mod[*dialect.SelectQuery]
 
-func (r *repo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
+func (r *Repo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts)+1)
 	query = append(query, sm.Where(models.Users.Columns.ID.In(followerIDsOf(userID))))
 	for _, opt := range opts {
@@ -1283,7 +1288,7 @@ func (r *repo) ListFollowers(ctx context.Context, userID string, opts ...ListFol
 
 type ListFolloweesOpt func() bob.Mod[*dialect.SelectQuery]
 
-func (r *repo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
+func (r *Repo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts)+1)
 	query = append(query, sm.Where(models.Users.Columns.ID.In(followeeIDsOf(userID))))
 	for _, opt := range opts {
@@ -1312,7 +1317,7 @@ func GetUserLoadAuth() GetUserOpt {
 	}
 }
 
-func (r *repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, error) {
+func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -1362,7 +1367,7 @@ func ListUsersWithLimit(limit int) ListUsersOpt {
 	}
 }
 
-func (r *repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
+func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt()...)
@@ -1384,7 +1389,7 @@ type CreateWorkoutCommentParams struct {
 
 type CreateWorkoutCommentOpts func(comment *models.WorkoutComment) error
 
-func (r *repo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
+func (r *Repo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorkoutCommentOpts {
 	return func(comment *models.WorkoutComment) error {
 		user, err := models.Users.Query(
 			models.SelectWhere.Users.ID.EQ(comment.UserID),
@@ -1400,7 +1405,7 @@ func (r *repo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorko
 	}
 }
 
-func (r *repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error) {
+func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error) {
 	comment, err := models.WorkoutComments.Insert(&models.WorkoutCommentSetter{
 		UserID:    omit.From(uuidFromString(p.UserID)),
 		WorkoutID: omit.From(uuidFromString(p.WorkoutID)),
@@ -1425,7 +1430,7 @@ type StoreTraceParams struct {
 	DurationMS int
 }
 
-func (r *repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
+func (r *Repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 	if _, err := models.Traces.Insert(&models.TraceSetter{
 		Request:    omit.From(p.Request),
 		StatusCode: omit.From(safe.Int32FromInt(p.StatusCode)),
@@ -1443,7 +1448,7 @@ type CreateNotificationParams struct {
 	Payload notification.Payload
 }
 
-func (r *repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {
+func (r *Repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {
 	payload, err := json.Marshal(p.Payload)
 	if err != nil {
 		return fmt.Errorf("payload marshal: %w", err)
@@ -1477,7 +1482,7 @@ func GetWorkoutCommentWithWorkout() GetWorkoutCommentOpt {
 	}
 }
 
-func (r *repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*models.WorkoutComment, error) {
+func (r *Repo) GetWorkoutComment(ctx context.Context, opts ...GetWorkoutCommentOpt) (*models.WorkoutComment, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -1528,7 +1533,7 @@ func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 	}
 }
 
-func (r *repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error) {
+func (r *Repo) ListNotifications(ctx context.Context, opts ...ListNotificationsOpt) (models.NotificationSlice, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		q, err := opt()
@@ -1565,7 +1570,7 @@ func CountNotificationsWithUnreadOnly(onlyUnread bool) CountNotificationsOpt {
 	}
 }
 
-func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error) {
+func (r *Repo) CountNotifications(ctx context.Context, opts ...CountNotificationsOpt) (int64, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		if opt() == nil {
@@ -1582,7 +1587,7 @@ func (r *repo) CountNotifications(ctx context.Context, opts ...CountNotification
 	return count, nil
 }
 
-func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
+func (r *Repo) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
 	setReadAt := um.SetCol(models.Notifications.Columns.ReadAt.Name()).ToArg(time.Now().UTC())
 	ownedByUser := models.UpdateWhere.Notifications.UserID.EQ(uuidFromString(userID))
 	unread := models.UpdateWhere.Notifications.ReadAt.IsNull()
@@ -1602,7 +1607,7 @@ func (r *repo) MarkNotificationsAsRead(ctx context.Context, userID string, notif
 	return nil
 }
 
-func (r *repo) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
+func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
 	exists, err := models.Followers.Query(
 		models.SelectWhere.Followers.FolloweeID.EQ(user.ID),
 		models.SelectWhere.Followers.FollowerID.EQ(uuidFromString(userID)),
@@ -1652,7 +1657,7 @@ func GetAuthByRefreshToken(token string) GetAuthOpt {
 	}
 }
 
-func (r *repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error) {
+func (r *Repo) GetAuth(ctx context.Context, opts ...GetAuthOpt) (*models.Auth, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
 		query = append(query, opt())
@@ -1724,7 +1729,7 @@ func ListSetsOrderByCreatedAt(order order) ListSetsOpt {
 	}
 }
 
-func (r *repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSlice, error) {
+func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSlice, error) {
 	var query []bob.Mod[*dialect.SelectQuery]
 	for _, opt := range opts {
 		q, err := opt()
@@ -1778,7 +1783,7 @@ func UpdateWorkoutFinishedAt(finishedAt time.Time) UpdateWorkoutOpt {
 	}
 }
 
-func (r *repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
+func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
 	if _, err := r.GetWorkout(ctx, GetWorkoutWithID(workoutID)); err != nil {
 		return fmt.Errorf("workout fetch: %w", err)
 	}
@@ -1806,8 +1811,8 @@ type UpdateWorkoutSetsParams struct {
 	ExerciseSets []ExerciseSet
 }
 
-func (r *repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
-	return r.NewTx(ctx, func(tx Tx) error {
+func (r *Repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams) error {
+	return r.NewTx(ctx, func(tx *Repo) error {
 		workout, err := r.GetWorkout(
 			ctx,
 			GetWorkoutWithID(p.WorkoutID),
@@ -1861,7 +1866,7 @@ var (
 	ErrInvalidTopic = fmt.Errorf("invalid topic")
 )
 
-func (r *repo) PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error {
+func (r *Repo) PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error {
 	if !topic.Valid() {
 		return fmt.Errorf("%w: %s", ErrInvalidTopic, topic)
 	}

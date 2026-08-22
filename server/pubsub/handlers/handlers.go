@@ -25,12 +25,12 @@ var (
 )
 
 type RequestTraced struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log    *zap.Logger
+	traces TraceStore
 }
 
-func NewRequestTraced(log *zap.Logger, repo repo.Repo) *RequestTraced {
-	return &RequestTraced{log, repo}
+func NewRequestTraced(log *zap.Logger, traces TraceStore) *RequestTraced {
+	return &RequestTraced{log, traces}
 }
 
 func (h *RequestTraced) HandlePayload(payload any) {
@@ -43,7 +43,7 @@ func (h *RequestTraced) HandlePayload(payload any) {
 		return
 	}
 
-	if err := h.repo.StoreTrace(ctx, repo.StoreTraceParams{
+	if err := h.traces.StoreTrace(ctx, repo.StoreTraceParams{
 		Request:    p.Request,
 		DurationMS: p.DurationMS,
 		StatusCode: p.StatusCode,
@@ -53,12 +53,12 @@ func (h *RequestTraced) HandlePayload(payload any) {
 }
 
 type WorkoutCommentPosted struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log      *zap.Logger
+	comments CommentThread
 }
 
-func NewWorkoutCommentPosted(log *zap.Logger, repo repo.Repo) *WorkoutCommentPosted {
-	return &WorkoutCommentPosted{log, repo}
+func NewWorkoutCommentPosted(log *zap.Logger, comments CommentThread) *WorkoutCommentPosted {
+	return &WorkoutCommentPosted{log, comments}
 }
 
 func (w *WorkoutCommentPosted) HandlePayload(payload any) {
@@ -75,7 +75,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		return
 	}
 
-	comment, err := w.repo.GetWorkoutComment(
+	comment, err := w.comments.GetWorkoutComment(
 		ctx,
 		repo.GetWorkoutCommentWithID(p.CommentID),
 	)
@@ -84,7 +84,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		return
 	}
 
-	workout, err := w.repo.GetWorkout(
+	workout, err := w.comments.GetWorkout(
 		ctx,
 		repo.GetWorkoutWithID(comment.WorkoutID.String()),
 		repo.GetWorkoutLoadComments(),
@@ -95,7 +95,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 	}
 
 	for _, userID := range notification.CommentAudience(comment.UserID, workout.UserID, workout.R.WorkoutComments) {
-		if err = w.repo.CreateNotification(ctx, repo.CreateNotificationParams{
+		if err = w.comments.CreateNotification(ctx, repo.CreateNotificationParams{
 			Type:   notification.TypeWorkoutComment,
 			UserID: userID.String(),
 			Payload: notification.Payload{
@@ -110,12 +110,12 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 }
 
 type FollowedUser struct {
-	log  *zap.Logger
-	repo repo.Repo
+	log           *zap.Logger
+	notifications NotificationStore
 }
 
-func NewFollowedUser(log *zap.Logger, repo repo.Repo) *FollowedUser {
-	return &FollowedUser{log, repo}
+func NewFollowedUser(log *zap.Logger, notifications NotificationStore) *FollowedUser {
+	return &FollowedUser{log, notifications}
 }
 
 func (u *FollowedUser) HandlePayload(payload any) {
@@ -132,7 +132,7 @@ func (u *FollowedUser) HandlePayload(payload any) {
 		return
 	}
 
-	if err := u.repo.CreateNotification(ctx, repo.CreateNotificationParams{
+	if err := u.notifications.CreateNotification(ctx, repo.CreateNotificationParams{
 		Type:   notification.TypeFollow,
 		UserID: p.FolloweeID,
 		Payload: notification.Payload{

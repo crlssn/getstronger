@@ -26,7 +26,7 @@ import (
 type userSuite struct {
 	suite.Suite
 
-	repo    repo.Repo
+	repo    *repo.Repo
 	handler apiv1connect.UserServiceHandler
 
 	factory   *factory.Factory
