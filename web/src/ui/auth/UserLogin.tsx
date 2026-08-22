@@ -7,8 +7,9 @@ import { login } from '@/http/requests'
 import posthog from '@/posthog'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notifications'
-import { AuthPasswordInput } from '@/ui/auth/AuthPasswordInput'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInput } from '@/ui/components/AppInput'
+import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 
 export const UserLogin = () => {
   const { t } = useTranslation()
@@ -38,45 +39,36 @@ export const UserLogin = () => {
       </header>
 
       <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
-        <div>
-          <label htmlFor="email" className="auth-label">
-            {t('auth.email')}
-          </label>
-          <div className="mt-2">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              className="auth-input"
-              inputMode="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-        </div>
+        <AppInput
+          id="email"
+          name="email"
+          type="email"
+          label={t('auth.email')}
+          autoComplete="email"
+          inputMode="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
 
         <div>
           <div className="flex items-center justify-between gap-4">
-            <label htmlFor="password" className="auth-label">
-              {t('auth.password')}
-            </label>
-            <Link to="/forgot-password" className="auth-link text-sm">
+            <span className="text-sm font-semibold text-text">{t('auth.password')}</span>
+            <AppButton type="link" colour="ghost" size="sm" width="auto" to="/forgot-password">
               {t('auth.forgotPassword')}
-            </Link>
+            </AppButton>
           </div>
-          <div className="mt-2">
-            <AuthPasswordInput
-              id="password"
-              name="password"
-              value={password}
-              onChange={setPassword}
-            />
-          </div>
+          <AppPasswordInput
+            id="password"
+            name="password"
+            aria-label={t('auth.password')}
+            required
+            value={password}
+            onValueChange={setPassword}
+          />
         </div>
 
-        <AppButton type="submit" colour="primary" className="auth-submit">
+        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
           {t('auth.login')}
         </AppButton>
       </form>

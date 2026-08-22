@@ -8,6 +8,7 @@ import posthog from '@/posthog'
 import { ResetPasswordRequestSchema } from '@/proto/api/v1/auth_service_pb'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInput } from '@/ui/components/AppInput'
 
 export const ForgotPassword = () => {
   const { t } = useTranslation()
@@ -33,26 +34,19 @@ export const ForgotPassword = () => {
       </header>
 
       <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
-        <div>
-          <label htmlFor="email" className="auth-label">
-            {t('auth.email')}
-          </label>
-          <div className="mt-2">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              className="auth-input"
-              inputMode="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-        </div>
+        <AppInput
+          id="email"
+          name="email"
+          type="email"
+          label={t('auth.email')}
+          autoComplete="email"
+          inputMode="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
 
-        <AppButton type="submit" colour="primary" className="auth-submit">
+        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
           {t('auth.sendResetLink')}
         </AppButton>
       </form>

@@ -1,5 +1,7 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import type { SetChanges } from '@/ui/workouts/SetMeasurementInputs'
+import { AppIconButton } from '@/ui/components/AppIconButton'
+import { AppTextarea } from '@/ui/components/AppTextarea'
 import type { Timestamp } from '@bufbuild/protobuf/wkt'
 
 import { create } from '@bufbuild/protobuf'
@@ -128,22 +130,18 @@ export const EditWorkout = () => {
             </div>
             <div className={styles.moveActions}>
               {exerciseIndex > 0 && (
-                <button
-                  type="button"
-                  aria-label={t('training.planForm.moveUp', { name: exerciseSet.exercise?.name })}
+                <AppIconButton
+                  icon={ChevronUpIcon}
+                  label={t('training.planForm.moveUp', { name: exerciseSet.exercise?.name })}
                   onClick={() => moveExercise(exerciseIndex, -1)}
-                >
-                  <ChevronUpIcon aria-hidden="true" />
-                </button>
+                />
               )}
               {exerciseIndex < workout.exerciseSets.length - 1 && (
-                <button
-                  type="button"
-                  aria-label={t('training.planForm.moveDown', { name: exerciseSet.exercise?.name })}
+                <AppIconButton
+                  icon={ChevronDownIcon}
+                  label={t('training.planForm.moveDown', { name: exerciseSet.exercise?.name })}
                   onClick={() => moveExercise(exerciseIndex, 1)}
-                >
-                  <ChevronDownIcon aria-hidden="true" />
-                </button>
+                />
               )}
             </div>
           </div>
@@ -195,6 +193,7 @@ export const EditWorkout = () => {
       <h6>{t('workout.edit.startTime')}</h6>
       <AppList>
         <AppListItemInput
+          label={t('workout.edit.startTime')}
           model={toLocalInput(workout.startedAt)}
           type="datetime-local"
           required
@@ -211,6 +210,7 @@ export const EditWorkout = () => {
       <h6>{t('workout.edit.endTime')}</h6>
       <AppList>
         <AppListItemInput
+          label={t('workout.edit.endTime')}
           model={toLocalInput(workout.finishedAt)}
           type="datetime-local"
           required
@@ -225,9 +225,11 @@ export const EditWorkout = () => {
       </AppList>
 
       <h6>{t('workout.edit.note')}</h6>
-      <textarea
+      <AppTextarea
+        autosize
         className={styles.note}
         placeholder={t('workout.notePlaceholder')}
+        rows={3}
         value={workout.note}
         onChange={(event) =>
           setWorkout((current) => (current ? { ...current, note: event.target.value } : current))

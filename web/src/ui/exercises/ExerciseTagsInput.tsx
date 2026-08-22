@@ -1,7 +1,7 @@
 import type { TagRejection } from '@/utils/exerciseTags'
 
 import { XMarkIcon } from '@heroicons/react/20/solid'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
@@ -27,9 +27,11 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
   const [draft, setDraft] = useState('')
   const [rejection, setRejection] = useState<TagRejection>()
   const [focused, setFocused] = useState(false)
+  const suggestionsId = useId()
   const [highlighted, setHighlighted] = useState(-1)
 
   const matches = matchingSuggestions(suggestions, value, draft)
+  const suggestionsOpen = focused && matches.length > 0
 
   const rejectionMessage = (reason: TagRejection) => {
     if (reason.reason === 'tooLong') {
@@ -91,6 +93,10 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
           {value.map((tag, index) => (
             <span key={tag}>
               {tag}
+              {/* eslint-disable-next-line no-restricted-syntax -- The ✕ lives
+                  inside a 32px chip. AppIconButton is 44px by design and would
+                  have to grow the chip to hold it, which would make a row of
+                  tags taller than the field they sit in. */}
               <button
                 type="button"
                 aria-label={t('exercise.tagInput.remove', { name: tag })}
@@ -104,13 +110,22 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
       )}
 
       {value.length < maxTags && (
+        // An autocomplete field, not a text field: it owns a listbox and
+        // reports the active option. AppInput has no combobox behaviour, and
+        // giving it one for a single caller would put an unused ARIA contract
+        // in the design system.
+        // eslint-disable-next-line no-restricted-syntax
         <input
           type="text"
           maxLength={maxTagLength}
           placeholder={t('exercise.addTag')}
           aria-label={t('exercise.tagInput.addAria')}
+          // A plain textbox may not carry aria-expanded, which is what axe
+          // rejected here: the field has to say it owns the list first.
+          role="combobox"
           aria-autocomplete="list"
-          aria-expanded={focused && matches.length > 0}
+          aria-controls={suggestionsId}
+          aria-expanded={suggestionsOpen}
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value)
@@ -125,13 +140,18 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
         />
       )}
 
-      {focused && matches.length > 0 && (
+      {suggestionsOpen && (
         <div
+          id={suggestionsId}
           className={styles.tagSuggestions}
           role="listbox"
           aria-label={t('exercise.tagInput.suggestionsAria')}
         >
           {matches.map((suggestion, index) => (
+            // A listbox option rather than a button: it takes role="option",
+            // and an AppButton would carry a button role the listbox cannot
+            // contain.
+            // eslint-disable-next-line no-restricted-syntax
             <button
               key={suggestion}
               type="button"

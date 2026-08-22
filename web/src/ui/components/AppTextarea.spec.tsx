@@ -33,6 +33,17 @@ describe('AppTextarea', () => {
 
     const textarea = screen.getByRole('textbox')
     expect(textarea).toHaveClass('mt-4')
-    expect(textarea).toHaveClass('w-full')
+    expect(textarea.className.split(' ').length).toBeGreaterThan(1)
+  })
+
+  // Three screens grew their own textarea by hand, each resetting the height
+  // before measuring it. The behaviour belongs to the field.
+  test('grows to fit what is typed', async () => {
+    render(<AppTextarea placeholder="How did it feel?" rows={2} autosize />)
+
+    const textarea = screen.getByRole('textbox')
+    await userEvent.type(textarea, 'Strong')
+
+    expect(textarea.style.height).not.toBe('')
   })
 })

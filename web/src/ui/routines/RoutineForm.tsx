@@ -1,12 +1,15 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { CheckIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { CheckIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 
 import { listExercises } from '@/http/requests'
-import { cn } from '@/ui/cn'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppInput } from '@/ui/components/AppInput'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { appendPage } from '@/utils/appendPage'
@@ -95,13 +98,10 @@ export const RoutineForm = ({
       </header>
 
       <section className={styles.formCard}>
-        <label className={styles.fieldLabel} htmlFor="routine-name">
-          {t('routine.form.name')}
-        </label>
-        <input
+        <AppInput
           id="routine-name"
-          className={styles.nameInput}
           type="text"
+          label={t('routine.form.name')}
           required
           autoComplete="off"
           placeholder={t('routine.form.namePlaceholder')}
@@ -116,16 +116,12 @@ export const RoutineForm = ({
             <h2>{t('common.exercises')}</h2>
             <p>{t('routine.form.selectHelp')}</p>
           </div>
-          <label className={styles.searchField}>
-            <MagnifyingGlassIcon aria-hidden="true" />
-            <input
-              type="search"
-              placeholder={t('common.search')}
-              aria-label={t('exercise.search')}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
+          <AppSearchField
+            className={styles.searchField}
+            label={t('exercise.search')}
+            value={search}
+            onChange={setSearch}
+          />
         </div>
 
         {loading ? (
@@ -136,21 +132,19 @@ export const RoutineForm = ({
               const selected = selectedIds.includes(exercise.id)
 
               return (
-                <button
+                <AppOptionRow
                   key={exercise.id}
-                  type="button"
-                  className={cn(styles.exerciseOption, selected && styles.selected)}
-                  aria-pressed={selected}
+                  leading={
+                    <span className={styles.checkBox}>
+                      {selected && <CheckIcon aria-hidden="true" />}
+                    </span>
+                  }
+                  selected={selected}
                   onClick={() => toggleExercise(exercise.id)}
                 >
-                  <span className={styles.checkBox}>
-                    {selected && <CheckIcon aria-hidden="true" />}
-                  </span>
-                  <span className={styles.exerciseCopy}>
-                    <strong>{exercise.name}</strong>
-                    <ExerciseTags compact tags={exercise.tags} />
-                  </span>
-                </button>
+                  <strong>{exercise.name}</strong>
+                  <ExerciseTags compact tags={exercise.tags} />
+                </AppOptionRow>
               )
             })}
           </div>
@@ -161,19 +155,17 @@ export const RoutineForm = ({
         )}
 
         {hasMorePages && (
-          <button className={styles.loadMore} type="button" onClick={() => void fetchExercises()}>
-            <PlusIcon aria-hidden="true" /> {t('exercise.loadMore')}
-          </button>
+          <AppLoadMore label={t('exercise.loadMore')} onFetch={() => void fetchExercises()} />
         )}
       </section>
 
       <div className={styles.formActions}>
-        <Link to="/routines" className={styles.cancelLink}>
+        <AppButton type="link" colour="ghost" width="auto" to="/routines">
           {t('common.cancel')}
-        </Link>
-        <button className={styles.saveButton} type="submit" disabled={!canSubmit}>
+        </AppButton>
+        <AppButton type="submit" colour="primary" width="auto" disabled={!canSubmit}>
           {saving ? t('training.planForm.saving') : submitLabel}
-        </button>
+        </AppButton>
       </div>
     </form>
   )

@@ -27,7 +27,7 @@ const Harness = ({ initial = [] as string[], onChange = vi.fn() }) => {
   )
 }
 
-const field = () => screen.getByRole('textbox', { name: 'Add exercise tag' })
+const field = () => screen.getByRole('combobox', { name: 'Add exercise tag' })
 const options = () => screen.queryAllByRole('option')
 
 describe('ExerciseTagsInput', () => {
@@ -164,5 +164,22 @@ describe('ExerciseTagsInput', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Remove Push' }))
       expect(screen.queryByText('“push” is already added.')).not.toBeInTheDocument()
     })
+  })
+
+  // axe rejected aria-expanded on a plain textbox: the attribute is only
+  // allowed once the field says it owns a popup.
+  test('is a combobox, which is what its expanded state describes', async () => {
+    renderWithProviders(<Harness />)
+
+    const field = screen.getByRole('combobox')
+    expect(field).toHaveAttribute('aria-expanded', 'false')
+
+    await userEvent.type(field, 'ch')
+
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('combobox')).toHaveAttribute(
+      'aria-controls',
+      screen.getByRole('listbox').id,
+    )
   })
 })

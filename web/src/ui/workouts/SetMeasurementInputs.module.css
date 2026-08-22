@@ -9,26 +9,10 @@
   @apply mb-1 block text-xs font-semibold text-text-subtle;
 }
 
-.measurementInput input {
-  @apply block w-full rounded-control border-0 bg-white px-3 py-3 font-medium text-text shadow-card ring-1 ring-inset ring-ink-border placeholder:text-text-subtle focus:ring-2 focus:ring-inset focus:ring-ink;
-}
-
-.withUnit {
-  @apply flex items-center gap-2;
-}
-
-.unitSuffix {
-  @apply shrink-0 text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-/* A real button, not a bare icon with a click handler: the Vue row could not
-   be reached by keyboard at all. */
+/* Sits on the fields' baseline rather than the row's, so it lines up with the
+   inputs beside it and not with their labels. */
 .removeSet {
-  @apply mb-3 grid size-7 shrink-0 cursor-pointer place-items-center text-text-subtle;
-}
-
-.removeSet svg {
-  @apply size-7;
+  @apply mb-0.5;
 }
 
 @media (max-width: 520px) {

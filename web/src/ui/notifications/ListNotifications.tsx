@@ -6,12 +6,13 @@ import { useTranslation } from 'react-i18next'
 import { listNotifications, markNotificationAsRead } from '@/http/requests'
 import { useNotificationStore } from '@/stores/notifications'
 import { cn } from '@/ui/cn'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { NotificationUserFollow } from '@/ui/components/NotificationUserFollow'
-import { NotificationWorkoutComment } from '@/ui/components/NotificationWorkoutComment'
 import { PageNavAction } from '@/ui/components/PageNavAction'
+import { NotificationUserFollow } from '@/ui/features/NotificationUserFollow'
+import { NotificationWorkoutComment } from '@/ui/features/NotificationWorkoutComment'
 import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListNotifications.module.css'
@@ -87,16 +88,18 @@ export const ListNotifications = () => {
           tags, actions are buttons. */}
       {hasUnread && (
         <PageNavAction>
-          <button
+          <AppButton
             type="button"
-            className={styles.markAllRead}
+            colour="ghost"
+            size="sm"
+            width="auto"
             disabled={markingAllAsRead}
             onClick={() => void markAllAsRead()}
           >
             {markingAllAsRead
               ? t('profile.markingNotificationsAsRead')
               : t('profile.markAllAsRead')}
-          </button>
+          </AppButton>
         </PageNavAction>
       )}
 

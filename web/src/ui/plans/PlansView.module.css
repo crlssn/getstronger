@@ -4,28 +4,8 @@
   @apply space-y-4;
 }
 
-.pageIntro {
-  @apply grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-1;
-}
-
 .eyebrow {
   @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.pageIntro h1 {
-  @apply mt-1 text-display font-bold text-text;
-}
-
-.pageIntro > a {
-  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white;
-}
-
-.pageIntro svg {
-  @apply size-5;
-}
-
-.pageIntro > p {
-  @apply col-span-2 max-w-none text-sm leading-6 text-text-subtle;
 }
 
 .activePlan,
@@ -96,11 +76,7 @@
 }
 
 .firstPlanButton {
-  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
-}
-
-.firstPlanButton svg {
-  @apply size-5;
+  @apply mt-5;
 }
 
 .activePlan > header {
@@ -159,19 +135,6 @@
   @apply mt-4 flex gap-2 border-t border-border pt-4;
 }
 
-.activePlan footer a,
-.activePlan footer button {
-  @apply min-h-(--size-control-sm) rounded-control px-4 text-sm font-semibold;
-}
-
-.activePlan footer a {
-  @apply inline-flex items-center bg-ink text-white;
-}
-
-.activePlan footer button {
-  @apply border border-border text-text-muted;
-}
-
 .pausedNote p {
   @apply mt-1 text-sm text-text-subtle;
 }
@@ -197,9 +160,8 @@
   @apply mt-1 text-xs text-text-subtle;
 }
 
-/* Switching plans is the point of this list, and the label alone gave it a
-   20px-tall target. The padding makes the floor; the negative margin keeps the
-   label on the card edge it already sat on. */
-.otherPlans article button {
-  @apply -mr-3 inline-flex min-h-(--size-control-sm) shrink-0 items-center px-3 text-sm font-semibold text-ink;
+/* Keeps the label on the card edge it already sat on, now that AppButton's
+   padding rather than the label's own makes the tap floor. */
+.makeActive {
+  @apply -mr-3 shrink-0 text-ink;
 }

@@ -25,14 +25,6 @@
   @apply card p-5;
 }
 
-.fieldLabel {
-  @apply mb-2 block text-sm font-semibold text-text-muted;
-}
-
-.nameInput {
-  @apply h-12 w-full rounded-control border border-border bg-ink-surface px-4 text-base font-medium text-text placeholder:text-text-subtle focus:border-ink-muted focus:bg-surface focus:ring-2 focus:ring-ink-tint;
-}
-
 .exerciseToolbar {
   @apply mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
@@ -45,28 +37,14 @@
   @apply mt-1 text-sm text-text-subtle;
 }
 
+/* The toolbar puts the field beside a heading, so it takes a width rather
+ * than the full row AppSearchField would otherwise fill. */
 .searchField {
-  @apply flex min-w-52 items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
-}
-
-.searchField svg {
-  @apply size-5 text-text-subtle;
-}
-
-.searchField input {
-  @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
+  @apply min-w-52;
 }
 
 .exerciseGrid {
   @apply grid gap-2 sm:grid-cols-2;
-}
-
-.exerciseOption {
-  @apply flex min-h-16 items-center gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface/40;
-}
-
-.exerciseOption.selected {
-  @apply border-ink-border bg-ink-surface;
 }
 
 .checkBox {
@@ -81,34 +59,10 @@
   @apply size-4 stroke-[3];
 }
 
-.exerciseCopy {
-  @apply min-w-0;
-}
-
-.exerciseCopy strong {
-  @apply block truncate text-sm font-semibold text-text;
-}
-
 .emptyRow {
   @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
 }
 
-.loadMore {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-control border border-border px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
-}
-
-.loadMore svg {
-  @apply size-4;
-}
-
 .formActions {
   @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-card border border-border bg-white/95 p-3 shadow-raised backdrop-blur md:bottom-4;
-}
-
-.cancelLink {
-  @apply inline-flex min-h-(--size-control) items-center rounded-control px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
-}
-
-.saveButton {
-  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-5 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
 }

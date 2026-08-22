@@ -1,0 +1,58 @@
+@reference '../../assets/base.css';
+
+/* Anchored under the status bar rather than the bottom edge, which the offline
+   and update banners, the bottom navigation and the workout dock already share.
+   The region spans the top of the screen, so it lets taps through and only the
+   card itself takes them. */
+.toastRegion {
+  top: calc(env(safe-area-inset-top) + 0.75rem);
+  @apply pointer-events-none fixed inset-x-0 z-50 mx-auto flex w-full max-w-lg flex-col px-3;
+}
+
+.toast {
+  @apply pointer-events-auto flex min-h-14 items-center gap-3 rounded-card border px-3 py-3 text-sm font-semibold shadow-overlay;
+  animation: toast-in 200ms ease-out;
+}
+
+.toast.success {
+  @apply border-success/30 bg-success-surface text-success;
+}
+
+/* Danger reads 4.4:1 on its own surface, so the text takes the darker step. */
+.toast.error {
+  @apply border-danger/30 bg-danger-surface text-danger-strong;
+}
+
+.toast.warning {
+  @apply border-warning/30 bg-warning-surface text-warning;
+}
+
+.toast.info {
+  @apply border-info/30 bg-info-surface text-info;
+}
+
+.statusIcon {
+  @apply size-5 shrink-0;
+}
+
+.toast p {
+  @apply min-w-0 flex-1;
+}
+
+/* The toast is tinted by its type, so the dismiss borrows that tint rather
+   than the default tone's neutral. */
+.dismiss {
+  @apply -m-1.5 text-current hover:bg-black/5 hover:text-current;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

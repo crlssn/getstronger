@@ -6,7 +6,6 @@ import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -32,7 +31,6 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { renderWithProviders } from '@/ui/testing'
-import { DurationInput } from './DurationInput'
 import { EditWorkout } from './EditWorkout'
 import { ViewWorkout } from './ViewWorkout'
 import { WorkoutView } from './WorkoutView'
@@ -92,62 +90,6 @@ beforeEach(() => {
   useDashboardStore.setState({ dashboard: undefined })
   useToastStore.getState().dismiss()
   useConfirmationStore.setState({ confirmation: null, resolver: null })
-})
-
-describe('DurationInput', () => {
-  const Harness = ({ initial }: { initial?: number }) => {
-    const [value, setValue] = useState<number | undefined>(initial)
-
-    return (
-      <>
-        <DurationInput aria-label="Time" value={value} onChange={setValue} />
-        <output>{value ?? 'none'}</output>
-      </>
-    )
-  }
-
-  const field = () => screen.getByRole('textbox', { name: 'Time' })
-
-  test('opens in the canonical format', () => {
-    renderWithProviders(<Harness initial={90} />)
-
-    expect(field()).toHaveValue('1:30')
-  })
-
-  test('reads the colon form as it is typed', async () => {
-    renderWithProviders(<Harness />)
-
-    await userEvent.type(field(), '2:15')
-
-    expect(screen.getByRole('status')).toHaveTextContent('135')
-  })
-
-  test('reads bare digits from the right', async () => {
-    renderWithProviders(<Harness />)
-
-    await userEvent.type(field(), '130')
-
-    expect(screen.getByRole('status')).toHaveTextContent('90')
-  })
-
-  // Reformatting on every keystroke would rewrite what is being typed.
-  test('leaves the text alone until the field is left', async () => {
-    renderWithProviders(<Harness />)
-
-    await userEvent.type(field(), '130')
-    expect(field()).toHaveValue('130')
-
-    await userEvent.tab()
-    expect(field()).toHaveValue('1:30')
-  })
-
-  test('clears to nothing when the field is emptied', async () => {
-    renderWithProviders(<Harness initial={90} />)
-
-    await userEvent.clear(field())
-
-    expect(screen.getByRole('status')).toHaveTextContent('none')
-  })
 })
 
 describe('ViewWorkout', () => {
@@ -238,7 +180,7 @@ describe('EditWorkout', () => {
     render()
 
     await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0]!)
-    await userEvent.type(screen.getAllByRole('spinbutton', { name: 'Weight' })[1]!, '90')
+    await userEvent.type(screen.getAllByRole('textbox', { name: 'Weight' })[1]!, '90')
     await userEvent.click(screen.getByRole('button', { name: 'Update workout' }))
 
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())

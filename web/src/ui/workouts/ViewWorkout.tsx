@@ -2,12 +2,13 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { getWorkout } from '@/http/requests'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { CardWorkout } from '@/ui/components/CardWorkout'
+import { CardWorkout } from '@/ui/features/CardWorkout'
 import styles from './ViewWorkout.module.css'
 
 /** One finished workout, in full. */
@@ -35,7 +36,9 @@ export const ViewWorkout = () => {
       <section className={styles.emptyCard}>
         <h1>{t('workout.view.unavailable')}</h1>
         <p>{t('workout.view.unavailableBody')}</p>
-        <Link to="/workout">{t('workout.view.viewWorkouts')}</Link>
+        <AppButton type="link" colour="primary" width="auto" className="mt-4" to="/workout">
+          {t('workout.view.viewWorkouts')}
+        </AppButton>
       </section>
     )
   }

@@ -43,16 +43,48 @@ Two rules that bite if you miss them:
 
 ## Components
 
+`src/ui/` has three layers, and the layer a file lives in is the answer to "may
+I reuse this?":
+
+| Directory       | What lives there                                     | Reusable        |
+| --------------- | ---------------------------------------------------- | --------------- |
+| `ui/components` | The design system. Generic, catalogued, domain-free. | Anywhere        |
+| `ui/shell`      | App chrome — the nav bars, the banners, the toaster. | Rendered once   |
+| `ui/features`   | Domain widgets — workout cards, charts, the streak.  | Within a domain |
+
+**Build screens out of the design system, and add to it before you need it.**
+[`src/ui/components/README.md`](src/ui/components/README.md) is the catalogue:
+what exists, and which component answers which need. Read it before writing a
+control — the app went through a stage of fifty-three hand-written buttons and
+five different search fields, and every one of them started as a screen that
+did not find what it wanted.
+
+Two rules enforce it, so neither depends on remembering:
+
+- **A screen may not render a bare `<button>`, `<input>`, `<textarea>` or
+  `<select>`.** ESLint rejects them outside `ui/components`. A genuinely local
+  exception disables the rule on that line with the reason written above it,
+  where a reviewer reads it — there are four in the app, and each says why.
+- **Every component in `ui/components` is in the catalogue and has a spec.**
+  `catalogue.spec.ts` fails otherwise, including for a catalogue entry whose
+  component no longer exists.
+
+So a new pattern goes into the system first: component, spec, catalogue entry,
+and then the screen that wanted it. A pattern with one caller still belongs
+there if it is generic; a pattern that knows what a workout is belongs in
+`ui/features`.
+
 CSS Modules for anything a component styles itself, using the same
 `@reference` + `@apply` authoring as the rest of the design system. A component
 with nothing but utility classes writes them in the JSX and skips the module.
 Callers pass `className`, which is appended via `cn()` rather than replacing the
-component's own.
+component's own — a screen positions a component from outside and never
+restyles it from outside.
 
-Only two class names are still global — `.loading-card` and `.segmented`.
-Everything else is a module local and appears in the DOM hashed, so **nothing
-outside a component may select by its class**: the end-to-end suite reaches
-elements by role, name or id instead.
+Only one class name is still global, `.loading-card`. Everything else is a
+module local and appears in the DOM hashed, so **nothing outside a component may
+select by its class**: the end-to-end suite reaches elements by role, name or id
+instead.
 
 Screens that want an action in the top nav bar render `<PageNavAction>`. A
 sentence with an element in the middle of it goes through `<RichMessage>`.

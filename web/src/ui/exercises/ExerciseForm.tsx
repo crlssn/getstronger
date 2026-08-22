@@ -52,6 +52,7 @@ export const ExerciseForm = ({ values, onChange, onSubmit, submitLabel }: Props)
       <h6>{t('exercise.name')}</h6>
       <AppList>
         <AppListItemInput
+          label={t('exercise.name')}
           model={values.name}
           type="text"
           required

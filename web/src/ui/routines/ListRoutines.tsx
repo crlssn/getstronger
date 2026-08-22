@@ -3,7 +3,6 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import {
   ChevronRightIcon,
   EllipsisHorizontalIcon,
-  MagnifyingGlassIcon,
   PlayIcon,
   PlusIcon,
   RectangleStackIcon,
@@ -16,9 +15,13 @@ import { listRoutines } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { TrainingTabs } from '@/ui/components/TrainingTabs'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import { groupByRoutineActivity } from '@/utils/activityGroups'
 import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
@@ -93,28 +96,19 @@ export const ListRoutines = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageIntro}>
-        <div>
-          <h1>{t('training.heading')}</h1>
-          <p>{t('training.routinesDescription')}</p>
-        </div>
-        <Link to="/routines/create" className={styles.createLink}>
-          <PlusIcon aria-hidden="true" /> {t('training.newRoutine')}
-        </Link>
-      </header>
+      <AppPageHeader
+        action={
+          <AppButton type="link" colour="primary" width="auto" to="/routines/create">
+            <PlusIcon className="size-5" aria-hidden="true" /> {t('training.newRoutine')}
+          </AppButton>
+        }
+        lead={t('training.routinesDescription')}
+        title={t('training.heading')}
+      />
 
       <TrainingTabs />
 
-      <label className={styles.searchField}>
-        <MagnifyingGlassIcon aria-hidden="true" />
-        <input
-          type="search"
-          placeholder={t('training.searchRoutines')}
-          aria-label={t('training.searchRoutines')}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
+      <AppSearchField label={t('training.searchRoutines')} value={search} onChange={setSearch} />
 
       {!loaded ? (
         <AppSkeleton />
@@ -159,12 +153,24 @@ export const ListRoutines = () => {
                     </div>
 
                     <div className={styles.routineActions}>
-                      <Link to={`/workouts/routine/${routine.id}`} className={styles.startLink}>
-                        <PlayIcon aria-hidden="true" /> {t('routine.list.start')}
-                      </Link>
-                      <Link to={`/routines/${routine.id}`} className={styles.viewLink}>
+                      <AppButton
+                        type="link"
+                        colour="primary"
+                        size="sm"
+                        width="auto"
+                        to={`/workouts/routine/${routine.id}`}
+                      >
+                        <PlayIcon className="size-5" aria-hidden="true" /> {t('routine.list.start')}
+                      </AppButton>
+                      <AppButton
+                        type="link"
+                        colour="secondary"
+                        size="sm"
+                        width="auto"
+                        to={`/routines/${routine.id}`}
+                      >
                         {t('routine.list.view')}
-                      </Link>
+                      </AppButton>
                       <details className={styles.routineMenu}>
                         <summary aria-label={t('routine.list.actionsAria')}>
                           <EllipsisHorizontalIcon aria-hidden="true" />
@@ -172,14 +178,16 @@ export const ListRoutines = () => {
                         <div>
                           <Link to={`/routines/${routine.id}/edit`}>{t('routine.list.edit')}</Link>
                           {routine.id !== preferredRoutineId && (
-                            <button
+                            <AppButton
                               type="button"
+                              colour="ghost"
+                              size="sm"
                               onClick={() =>
                                 void useDashboardStore.getState().selectRoutine(routine.id)
                               }
                             >
                               {t('routine.makeUpNext')}
-                            </button>
+                            </AppButton>
                           )}
                         </div>
                       </details>
@@ -201,9 +209,7 @@ export const ListRoutines = () => {
       )}
 
       {hasMorePages && (
-        <button type="button" className={styles.loadMore} onClick={() => void fetchRoutines()}>
-          {t('routine.list.loadMore')}
-        </button>
+        <AppLoadMore label={t('routine.list.loadMore')} onFetch={() => void fetchRoutines()} />
       )}
     </div>
   )

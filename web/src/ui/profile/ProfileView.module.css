@@ -40,16 +40,6 @@
   @apply text-sm text-text-muted;
 }
 
-.nameLine button,
-.usernameLine button {
-  @apply grid size-11 shrink-0 place-items-center rounded-control text-text-subtle transition hover:bg-ink-tint hover:text-text;
-}
-
-.nameLine button svg,
-.usernameLine button svg {
-  @apply size-4;
-}
-
 .notificationLink {
   @apply relative grid size-14 place-items-center rounded-control text-text-muted transition hover:bg-ink-tint hover:text-text;
 }
@@ -126,12 +116,10 @@
   @apply mt-0.5 text-sm text-text-subtle;
 }
 
+/* Signing out is destructive, and reads from the sunken canvas rather
+   than a card, so it keeps a border to sit on. */
 .logoutLink {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-danger/30 bg-white px-4 text-sm font-semibold text-danger hover:bg-danger-surface hover:text-danger-strong;
-}
-
-.logoutLink svg {
-  @apply size-5;
+  @apply mt-4 border-danger/30 bg-white;
 }
 
 /* Set apart from the settings cards above it: an irreversible action should
@@ -153,6 +141,8 @@
   @apply mt-0.5 text-sm text-text-muted;
 }
 
-.dangerZone button {
-  @apply inline-flex min-h-(--size-control) shrink-0 items-center justify-center rounded-control bg-danger px-4 text-sm font-semibold text-white hover:bg-danger-strong;
+/* The one filled-red control in the app: deleting an account is the only
+   action whose weight earns the danger colour as a fill rather than as text. */
+.deleteAccount {
+  @apply shrink-0 border-danger bg-danger text-white hover:bg-danger-strong hover:text-white;
 }

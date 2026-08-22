@@ -1,0 +1,90 @@
+@reference '../../assets/base.css';
+
+@property --rest-hue {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 160;
+}
+
+.restBanner {
+  @apply sticky z-30 text-white shadow-raised;
+  /* Below the status-bar scrim in the native WebView; zero in browsers. */
+  top: env(safe-area-inset-top);
+  background-image: linear-gradient(
+    140deg,
+    hsl(var(--rest-hue, 165) 95% 21%) 0%,
+    hsl(var(--rest-hue, 165) 92% 31%) 58%,
+    hsl(calc(var(--rest-hue, 165) - 28) 96% 40%) 100%
+  );
+  transition: --rest-hue 900ms ease;
+}
+
+.restBannerInner {
+  @apply mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-3 px-3 py-3 sm:px-5 lg:px-8;
+}
+
+.restCopy {
+  @apply min-w-0;
+}
+
+/* The digits are the whole message now: as tall as the chip beside them, so
+   the band reads as one row. */
+.restCopy strong {
+  @apply block font-mono text-(length:--size-control-sm) font-bold leading-none tabular-nums;
+}
+
+/* On the rest band, which is its own colour: the button borrows that
+   surface's contrast rather than the ghost role's. */
+.restBanner a {
+  @apply bg-black/25 text-white hover:bg-black/40 hover:text-white;
+}
+
+.restProgress {
+  @apply col-span-2 h-1 overflow-hidden rounded-full bg-white/15;
+}
+
+.restProgress span {
+  @apply block h-full rounded-full bg-white transition-[width] duration-1000 ease-linear;
+}
+
+.restBanner.bright {
+  background-image: linear-gradient(
+    140deg,
+    hsl(42 100% 50%) 0%,
+    hsl(50 100% 56%) 55%,
+    hsl(70 92% 54%) 100%
+  );
+  @apply text-text;
+}
+
+.restBanner.bright a {
+  @apply bg-black/15 text-text hover:bg-black/25;
+}
+
+.restBanner.bright .restProgress {
+  @apply bg-black/15;
+}
+
+.restBanner.bright .restProgress span {
+  @apply bg-ink-strong;
+}
+
+.restBanner.final {
+  animation: rest-pulse 1s ease-in-out infinite;
+}
+
+@keyframes rest-pulse {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  45% {
+    filter: brightness(1.12) saturate(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .restBanner.final {
+    animation: none;
+  }
+}

@@ -39,6 +39,41 @@ export default tseslint.config(
     },
   },
 
+  // The design system is a rule, not a suggestion: a screen that reaches for a
+  // bare control is a screen inventing a fifth button style. `ui/components`
+  // is where controls are allowed to be built, and everywhere else composes
+  // them. Genuinely local exceptions disable this line by line, with the
+  // reason written where a reviewer will read it.
+  {
+    files: ['src/ui/**/*.tsx'],
+    ignores: ['src/ui/components/**', '**/*.spec.tsx'],
+    name: 'app/design-system',
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'JSXOpeningElement[name.name="button"]',
+          message:
+            'Use <AppButton>, <AppIconButton> or <AppOptionRow> from @/ui/components. A control that none of them covers is added to the design system first — see src/ui/components/README.md.',
+        },
+        {
+          selector: 'JSXOpeningElement[name.name="input"]',
+          message:
+            'Use <AppInput>, <AppNumberField>, <AppDurationInput>, <AppSearchField> or <AppSwitch> from @/ui/components. A field that none of them covers is added to the design system first — see src/ui/components/README.md.',
+        },
+        {
+          selector: 'JSXOpeningElement[name.name="textarea"]',
+          message: 'Use <AppTextarea> from @/ui/components.',
+        },
+        {
+          selector: 'JSXOpeningElement[name.name="select"]',
+          message:
+            'The app has no select. Use <AppSegmented> for a few options, or add one to the design system.',
+        },
+      ],
+    },
+  },
+
   {
     ...pluginVitest.configs.recommended,
     // Unit specs only. The Playwright specs under tests/ share the .spec.ts

@@ -4,38 +4,6 @@
   @apply space-y-5;
 }
 
-.pageIntro {
-  @apply flex items-center justify-between gap-4 px-1;
-}
-
-.pageIntro h1 {
-  @apply mt-1 text-display font-bold text-text;
-}
-
-.pageIntro p:last-child {
-  @apply mt-1 max-w-xl text-sm text-text-subtle;
-}
-
-.createLink {
-  @apply inline-flex min-h-(--size-control) w-max items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink-strong;
-}
-
-.createLink svg {
-  @apply size-5;
-}
-
-.searchField {
-  @apply flex items-center gap-2 rounded-control border border-border bg-surface px-4 shadow-card;
-}
-
-.searchField svg {
-  @apply size-5 text-text-subtle;
-}
-
-.searchField input {
-  @apply h-12 w-full border-0 bg-transparent p-0 text-sm placeholder:text-text-subtle focus:ring-0;
-}
-
 .routineGroup {
   @apply space-y-3;
 }
@@ -94,23 +62,6 @@
   @apply relative mt-auto flex flex-wrap items-center gap-2;
 }
 
-.routineActions a,
-.routineActions button {
-  @apply inline-flex min-h-(--size-control-sm) items-center justify-center gap-2 rounded-control px-3.5 text-sm font-semibold;
-}
-
-.routineActions svg {
-  @apply size-4;
-}
-
-.startLink {
-  @apply bg-ink text-white hover:bg-ink-strong;
-}
-
-.viewLink {
-  @apply border border-ink-border bg-white text-text hover:bg-ink-surface;
-}
-
 .routineMenu {
   @apply relative ml-auto;
 }
@@ -136,18 +87,5 @@
   @apply flex min-h-(--size-control-sm) w-full items-center justify-start rounded-lg px-3 text-left text-sm font-medium text-text-muted hover:bg-ink-surface;
 }
 
-.loadMore {
-  @apply mx-auto block rounded-control border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted;
-}
-
 @media (max-width: 520px) {
-  .pageIntro {
-    @apply items-center;
-  }
-  .pageIntro p:last-child {
-    @apply hidden;
-  }
-  .createLink {
-    @apply shrink-0;
-  }
 }

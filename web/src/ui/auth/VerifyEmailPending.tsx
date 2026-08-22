@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { resendVerificationEmail } from '@/http/requests'
 import { selectHasPendingEmail, useEmailVerificationStore } from '@/stores/emailVerification'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInput } from '@/ui/components/AppInput'
 import { maskEmail } from '@/utils/maskEmail'
 import styles from './VerifyEmailPending.module.css'
 
@@ -105,30 +106,24 @@ export const VerifyEmailPending = () => {
         <p className={styles.hint}>{t('auth.verification.notReceived')}</p>
 
         {!hasPendingEmail && (
-          <div>
-            <label htmlFor="verification-email" className="auth-label">
-              {t('auth.email')}
-            </label>
-            <div className="mt-2">
-              <input
-                id="verification-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                className="auth-input"
-                inputMode="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </div>
-          </div>
+          <AppInput
+            id="verification-email"
+            name="email"
+            type="email"
+            label={t('auth.email')}
+            autoComplete="email"
+            inputMode="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
         )}
 
         <AppButton
           type="submit"
           colour="primary"
-          className="auth-submit"
+          size="lg"
+          className="mt-2"
           disabled={!canResend}
           aria-busy={status === 'sending'}
         >

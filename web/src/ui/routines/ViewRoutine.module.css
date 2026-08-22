@@ -26,23 +26,6 @@
   @apply flex shrink-0 flex-wrap gap-2;
 }
 
-.heroActions a,
-.heroActions button {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold;
-}
-
-.heroActions svg {
-  @apply size-5;
-}
-
-.startButton {
-  @apply bg-ink text-white transition hover:brightness-125;
-}
-
-.nextButton {
-  @apply border border-border text-text-muted transition hover:bg-surface-sunken hover:text-text;
-}
-
 .exerciseSection,
 .dangerZone {
   @apply card p-5;
@@ -60,10 +43,6 @@
 .sectionHeading p,
 .dangerZone p {
   @apply mt-1 text-sm text-text-subtle;
-}
-
-.sectionHeading a {
-  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-control px-3 text-sm font-semibold text-ink-strong hover:bg-ink-surface;
 }
 
 .sectionHeading svg {
@@ -95,7 +74,7 @@
 }
 
 .dragHandle {
-  @apply grid size-11 cursor-grab place-items-center rounded-lg text-text-subtle hover:bg-ink-tint active:cursor-grabbing;
+  @apply cursor-grab active:cursor-grabbing;
 }
 
 .dragHandle svg {
@@ -116,10 +95,7 @@
   @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
 }
 
-.dangerZone button {
-  @apply inline-flex min-h-(--size-control-sm) w-max items-center gap-2 rounded-control border border-danger/30 px-4 text-sm font-semibold text-danger hover:bg-danger-surface hover:text-danger-strong;
-}
-
-.dangerZone svg {
-  @apply size-5;
+/* Destructive is a text role, and this one sits in its own bordered zone. */
+.deleteRoutine {
+  @apply border-danger/30;
 }

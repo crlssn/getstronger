@@ -1,37 +1,9 @@
 @reference '../../assets/base.css';
 
-.exerciseSearch {
-  @apply mb-4 flex items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
-}
-
-.exerciseSearch svg {
-  @apply size-5 text-text-subtle;
-}
-
-.exerciseSearch input {
-  @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
-}
-
 .exerciseOptions {
   @apply space-y-2;
 }
 
-.exerciseOptions button {
-  @apply flex min-h-(--size-control-lg) w-full items-center justify-between gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
-}
-
-.exerciseOptions strong {
-  @apply block truncate text-sm font-semibold text-text;
-}
-
-.exerciseOptions button > svg {
-  @apply size-5 shrink-0 text-ink;
-}
-
 .pickerEmpty {
   @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
-}
-
-.loadMore {
-  @apply mt-4 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
 }

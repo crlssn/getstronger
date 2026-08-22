@@ -7,8 +7,10 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { selectActivePlan, usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { TrainingTabs } from '@/ui/components/TrainingTabs'
+import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import styles from './PlansView.module.css'
 
 /** Every plan: which one is running, where it is, and what else is available. */
@@ -58,17 +60,17 @@ export const PlansView = () => {
 
   return (
     <div className={styles.plansPage}>
-      <header className={styles.pageIntro}>
-        <div>
-          <h1>{t('training.heading')}</h1>
-        </div>
-        {plans.length > 0 && (
-          <Link to="/plans/create">
-            <PlusIcon aria-hidden="true" /> {t('training.newPlan')}
-          </Link>
-        )}
-        <p>{t('training.plansDescription')}</p>
-      </header>
+      <AppPageHeader
+        action={
+          plans.length > 0 && (
+            <AppButton type="link" colour="primary" width="auto" to="/plans/create">
+              <PlusIcon className="size-5" aria-hidden="true" /> {t('training.newPlan')}
+            </AppButton>
+          )
+        }
+        lead={t('training.plansDescription')}
+        title={t('training.heading')}
+      />
 
       <TrainingTabs />
 
@@ -112,9 +114,14 @@ export const PlansView = () => {
           </ol>
 
           <p className={styles.activePlanRule}>{t('training.oneActive')}</p>
-          <Link to="/plans/create" className={styles.firstPlanButton}>
-            <PlusIcon aria-hidden="true" /> {t('training.createFirstPlan')}
-          </Link>
+          <AppButton
+            type="link"
+            colour="primary"
+            className={styles.firstPlanButton}
+            to="/plans/create"
+          >
+            <PlusIcon className="size-5" aria-hidden="true" /> {t('training.createFirstPlan')}
+          </AppButton>
         </section>
       ) : (
         <>
@@ -164,10 +171,24 @@ export const PlansView = () => {
               )}
 
               <footer>
-                <Link to={`/plans/${activePlan.id}`}>{t('training.viewPlan')}</Link>
-                <button type="button" onClick={() => void pause()}>
+                <AppButton
+                  type="link"
+                  colour="primary"
+                  size="sm"
+                  width="auto"
+                  to={`/plans/${activePlan.id}`}
+                >
+                  {t('training.viewPlan')}
+                </AppButton>
+                <AppButton
+                  type="button"
+                  colour="secondary"
+                  size="sm"
+                  width="auto"
+                  onClick={() => void pause()}
+                >
                   {t('training.pause')}
-                </button>
+                </AppButton>
               </footer>
             </section>
           ) : (
@@ -191,9 +212,16 @@ export const PlansView = () => {
                       {t('training.routineCountSequence', { count: plan.routines.length })}
                     </small>
                   </Link>
-                  <button type="button" onClick={() => void activate(plan.id)}>
+                  <AppButton
+                    type="button"
+                    colour="ghost"
+                    size="sm"
+                    width="auto"
+                    className={styles.makeActive}
+                    onClick={() => void activate(plan.id)}
+                  >
                     {t('training.makeActive')}
-                  </button>
+                  </AppButton>
                 </article>
               ))}
             </section>

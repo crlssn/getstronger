@@ -1,0 +1,11 @@
+@reference '../../assets/base.css';
+
+.textarea {
+  @apply block w-full rounded-control border border-ink-border bg-white px-4 py-3 text-base text-text shadow-card transition placeholder:text-text-subtle focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
+}
+
+/* The height is set from the content, so a scrollbar would only ever appear
+ * for the instant between typing and measuring. */
+.grows {
+  @apply resize-none overflow-hidden;
+}

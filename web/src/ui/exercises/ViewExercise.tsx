@@ -7,23 +7,26 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
-import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import { useToastStore } from '@/stores/toasts'
 import { useWorkoutStore } from '@/stores/workout'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
-import { ExerciseChart } from '@/ui/components/ExerciseChart'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { ExerciseChart } from '@/ui/features/ExerciseChart'
+import { appendPage } from '@/utils/appendPage'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { formatToShortDateTime } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { downSample } from '@/utils/exerciseTrend'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
-import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ViewExercise.module.css'
 
@@ -117,7 +120,9 @@ export const ViewExercise = () => {
       <section className={styles.emptyCard}>
         <h1>{t('exercise.unavailable')}</h1>
         <p>{t('exercise.view.unavailableBody')}</p>
-        <Link to="/exercises">{t('exercise.view.viewExercises')}</Link>
+        <AppButton type="link" colour="primary" width="auto" className="mt-4" to="/exercises">
+          {t('exercise.view.viewExercises')}
+        </AppButton>
       </section>
     )
   }
@@ -149,20 +154,19 @@ export const ViewExercise = () => {
       <ExerciseTags tags={exercise.tags} />
 
       {isOwner && (
-        <button
-          type="button"
+        <AppOptionRow
           className={styles.startQuickCard}
+          leading={
+            <span className={styles.startQuickIcon}>
+              <BoltIcon aria-hidden="true" />
+            </span>
+          }
+          trailing={<ChevronRightIcon className={styles.startQuickChevron} aria-hidden="true" />}
           onClick={() => void onStartQuickWorkout()}
         >
-          <span className={styles.startQuickIcon}>
-            <BoltIcon aria-hidden="true" />
-          </span>
-          <span className={styles.startQuickCopy}>
-            <strong>{t('exercise.startQuickWorkout')}</strong>
-            <small>{t('exercise.startQuickWorkoutBody', { name: exercise.name })}</small>
-          </span>
-          <ChevronRightIcon className={styles.startQuickChevron} aria-hidden="true" />
-        </button>
+          <strong>{t('exercise.startQuickWorkout')}</strong>
+          <small>{t('exercise.startQuickWorkoutBody', { name: exercise.name })}</small>
+        </AppOptionRow>
       )}
 
       {deleteDialogOpen && (
@@ -225,9 +229,7 @@ export const ViewExercise = () => {
         )}
 
         {hasMorePages && (
-          <button type="button" className={styles.loadMore} onClick={() => void fetchSets()}>
-            {t('exercise.view.loadMoreSets')}
-          </button>
+          <AppLoadMore label={t('exercise.view.loadMoreSets')} onFetch={() => void fetchSets()} />
         )}
       </section>
     </div>

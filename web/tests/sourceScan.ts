@@ -67,13 +67,17 @@ export const scrubbed = (source: string) => {
  * tag rather than any `>`, because a bare one also ends a TypeScript generic:
  * `Omit<ComponentProps<typeof Link>, 'x'>` would otherwise read as markup.
  *
+ * A lone capital is a type parameter, not a tag — `interface Props<T>` would
+ * otherwise swallow everything up to the next element. Single-letter tags are
+ * still read when they are lower case, which is every one HTML has: p, b, a.
+ *
  * Two letters or more, since punctuation and single symbols are not copy.
  */
 export const findLiteralText = (source: string): Finding[] => {
   const clean = scrubbed(source)
   const findings: Finding[] = []
 
-  const textNode = /<[A-Za-z][A-Za-z0-9.]*(?:\s[^<>]*)?>([^<>]+)</g
+  const textNode = /<(?:[a-z][A-Za-z0-9.]*|[A-Z][A-Za-z0-9.]+)(?:\s[^<>]*)?>([^<>]+)</g
   let match
   while ((match = textNode.exec(clean))) {
     const text = (match[1] ?? '').replace(/&\w+;/g, ' ')

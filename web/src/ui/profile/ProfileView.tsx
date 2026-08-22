@@ -26,12 +26,16 @@ import {
 } from '@/http/requests'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { clearAccountState } from '@/stores/accountState'
-import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
-import { cn } from '@/ui/cn'
+import { useToastStore } from '@/stores/toasts'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
+import { AppIconButton } from '@/ui/components/AppIconButton'
+import { AppInput } from '@/ui/components/AppInput'
+import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
@@ -200,20 +204,7 @@ export const ProfileView = () => {
         <strong>{title}</strong>
         <small>{body}</small>
       </div>
-      <div className="segmented" role="group" aria-label={title}>
-        {options.map((option) => (
-          <button
-            key={option.label}
-            type="button"
-            aria-pressed={current === option.value}
-            className={cn(current === option.value && 'is-selected')}
-            disabled={busy}
-            onClick={() => onPick(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <AppSegmented busy={busy} label={title} options={options} value={current} onChange={onPick} />
     </section>
   )
 
@@ -233,23 +224,19 @@ export const ProfileView = () => {
               stays out of the heading's accessible name. */}
           <div className={styles.nameLine}>
             <h2>{user.name}</h2>
-            <button
-              type="button"
-              aria-label={t('profile.editName')}
+            <AppIconButton
+              icon={PencilSquareIcon}
+              label={t('profile.editName')}
               onClick={() => setNameDraft(user.name)}
-            >
-              <PencilSquareIcon aria-hidden="true" />
-            </button>
+            />
           </div>
           <p className={styles.usernameLine}>
             <span className="truncate">{handle(user.username)}</span>
-            <button
-              type="button"
-              aria-label={t('profile.editUsername')}
+            <AppIconButton
+              icon={PencilSquareIcon}
+              label={t('profile.editUsername')}
               onClick={() => setUsernameDraft(user.username)}
-            >
-              <PencilSquareIcon aria-hidden="true" />
-            </button>
+            />
           </p>
           <p>{user.email}</p>
         </div>
@@ -386,9 +373,9 @@ export const ProfileView = () => {
           ),
       )}
 
-      <Link to="/logout" className={styles.logoutLink}>
-        <ArrowRightOnRectangleIcon aria-hidden="true" /> {t('auth.logout')}
-      </Link>
+      <AppButton type="link" colour="destructive" className={styles.logoutLink} to="/logout">
+        <ArrowRightOnRectangleIcon className="size-5" aria-hidden="true" /> {t('auth.logout')}
+      </AppButton>
 
       {/* Both app stores require an account made in the app to be deletable
           from inside it, which is why this sits on the profile rather than
@@ -398,15 +385,18 @@ export const ProfileView = () => {
           <strong>{t('profile.deleteAccount')}</strong>
           <small>{t('profile.deleteAccountBody')}</small>
         </div>
-        <button
+        <AppButton
           type="button"
+          colour="destructive"
+          width="auto"
+          className={styles.deleteAccount}
           onClick={() => {
             setDeleteError(undefined)
             setDeletePassword('')
           }}
         >
           {t('profile.deleteAccount')}
-        </button>
+        </AppButton>
       </section>
 
       {nameDraft !== undefined && (
@@ -427,15 +417,12 @@ export const ProfileView = () => {
               void saveName()
             }}
           >
-            <label htmlFor="edit-name" className="auth-label">
-              {t('auth.name')}
-            </label>
-            <input
+            <AppInput
               id="edit-name"
               name="name"
               type="text"
+              label={t('auth.name')}
               autoComplete="name"
-              className="auth-input mt-2"
               required
               value={nameDraft}
               onChange={(event) => setNameDraft(event.target.value)}
@@ -475,18 +462,15 @@ export const ProfileView = () => {
               void confirmDelete()
             }}
           >
-            <label htmlFor="delete-account-password" className="auth-label">
-              {t('profile.deleteAccountPassword')}
-            </label>
-            <input
+            <AppPasswordInput
               id="delete-account-password"
               name="password"
-              type="password"
+              label={t('profile.deleteAccountPassword')}
               autoComplete="current-password"
-              className="auth-input mt-2"
+              invalid={deleteError !== undefined}
               required
               value={deletePassword}
-              onChange={(event) => setDeletePassword(event.target.value)}
+              onValueChange={setDeletePassword}
             />
             {deleteError !== undefined && (
               <p role="alert" className="mt-2 text-sm text-danger">
@@ -520,18 +504,15 @@ export const ProfileView = () => {
               void saveUsername()
             }}
           >
-            <label htmlFor="edit-username" className="auth-label">
-              {t('auth.username')}
-            </label>
-            <p className="mt-1 text-sm text-text-subtle">{t('auth.usernameHelp')}</p>
-            <input
+            <AppInput
               id="edit-username"
               name="username"
               type="text"
+              label={t('auth.username')}
+              hint={t('auth.usernameHelp')}
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
-              className="auth-input mt-2"
               minLength={minUsernameLength}
               maxLength={maxUsernameLength}
               pattern={usernamePattern}

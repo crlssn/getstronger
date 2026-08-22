@@ -97,7 +97,7 @@ describe('UserLogin', () => {
   })
 })
 
-describe('AuthPasswordInput', () => {
+describe('the password field on an auth screen', () => {
   test('hides the password until the user asks to see it', async () => {
     renderScreen(<UserLogin />)
 

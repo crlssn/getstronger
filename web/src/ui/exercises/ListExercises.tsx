@@ -1,11 +1,6 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import {
-  BookOpenIcon,
-  ChevronRightIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
+import { BookOpenIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -13,10 +8,14 @@ import { Link } from 'react-router-dom'
 import { listExercises } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { groupByActivity } from '@/utils/activityGroups'
-import { measurementsForExercise } from '@/utils/exerciseMeasurements'
 import { appendPage } from '@/utils/appendPage'
+import { measurementsForExercise } from '@/utils/exerciseMeasurements'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListExercises.module.css'
 
@@ -78,25 +77,16 @@ export const ListExercises = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageIntro}>
-        <div>
-          <h1>{t('exercise.heading')}</h1>
-        </div>
-        <Link to="/exercises/create" className={styles.createLink}>
-          <PlusIcon aria-hidden="true" /> {t('exercise.new')}
-        </Link>
-      </header>
+      <AppPageHeader
+        action={
+          <AppButton type="link" colour="primary" width="auto" to="/exercises/create">
+            <PlusIcon className="size-5" aria-hidden="true" /> {t('exercise.new')}
+          </AppButton>
+        }
+        title={t('exercise.heading')}
+      />
 
-      <label className={styles.searchField}>
-        <MagnifyingGlassIcon aria-hidden="true" />
-        <input
-          type="search"
-          placeholder={t('exercise.search')}
-          aria-label={t('exercise.search')}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
+      <AppSearchField label={t('exercise.search')} value={search} onChange={setSearch} />
 
       {loading ? (
         <AppSkeleton />
@@ -120,9 +110,7 @@ export const ListExercises = () => {
           ))}
 
           {hasMorePages && (
-            <button type="button" className={styles.loadMore} onClick={() => void fetchExercises()}>
-              {t('exercise.loadMore')}
-            </button>
+            <AppLoadMore label={t('exercise.loadMore')} onFetch={() => void fetchExercises()} />
           )}
         </section>
       ) : (

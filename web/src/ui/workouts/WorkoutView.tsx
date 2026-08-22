@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { formatToShortDateTime } from '@/utils/datetime'
 import { formatNumber } from '@/utils/numbers'
@@ -151,20 +152,28 @@ export const WorkoutView = () => {
               ),
             })}
           </p>
-          <Link to={plannedStart}>
-            <PlayIcon aria-hidden="true" /> {t('workout.startRoutine')}
-          </Link>
+          <AppButton type="link" colour="secondary" className="mt-5" to={plannedStart}>
+            <PlayIcon className="size-5" aria-hidden="true" /> {t('workout.startRoutine')}
+          </AppButton>
           {activePlan && (
-            <button type="button" className={styles.skipButton} onClick={() => void skip()}>
+            <AppButton
+              type="button"
+              colour="ghost"
+              size="sm"
+              className={styles.skipButton}
+              onClick={() => void skip()}
+            >
               {t('workout.skipRoutine')}
-            </button>
+            </AppButton>
           )}
         </section>
       ) : (
         <section className={styles.emptyCard}>
           <h2>{t('workout.noSelection')}</h2>
           <p>{t('workout.noSelectionBody')}</p>
-          <Link to="/plans">{t('home.chooseRoutine')}</Link>
+          <AppButton type="link" colour="primary" width="auto" className="mt-4" to="/plans">
+            {t('home.chooseRoutine')}
+          </AppButton>
         </section>
       )}
 
@@ -204,9 +213,15 @@ export const WorkoutView = () => {
         ) : failed ? (
           <div className={styles.historyError} role="alert">
             <span>{t('workout.historyError')}</span>
-            <button type="button" onClick={() => void loadMoreHistory()}>
+            <AppButton
+              type="button"
+              colour="destructive"
+              size="sm"
+              width="auto"
+              onClick={() => void loadMoreHistory()}
+            >
               {t('common.retry')}
-            </button>
+            </AppButton>
           </div>
         ) : workouts.length === 0 ? (
           <div className={styles.historyEmpty}>{t('workout.historyEmpty')}</div>

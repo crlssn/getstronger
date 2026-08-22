@@ -4,7 +4,9 @@ import type { CSSProperties } from 'react'
 import { MinusCircleIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
-import { DurationInput } from '@/ui/workouts/DurationInput'
+import { AppIconButton } from '@/ui/components/AppIconButton'
+import { AppDurationInput } from '@/ui/components/AppDurationInput'
+import { AppNumberField } from '@/ui/components/AppNumberField'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { hasAnyExerciseSetValue, measurementsForExercise } from '@/utils/exerciseMeasurements'
 import { weightUnitLabel } from '@/utils/weightUnits'
@@ -19,8 +21,6 @@ interface Props {
   onRemove?: () => void
   removeLabel?: string
 }
-
-const asNumber = (value: string) => (value === '' ? undefined : Number(value))
 
 /**
  * One row of inputs for a single set, following what the exercise measures.
@@ -48,63 +48,46 @@ export const SetMeasurementInputs = ({ set, exercise, onChange, onRemove, remove
             <span>{label}</span>
 
             {measurement.field === 'durationSeconds' ? (
-              <DurationInput
+              <AppDurationInput
+                id={id}
                 aria-label={label}
                 value={set.durationSeconds}
                 required={required}
                 onChange={(durationSeconds) => onChange({ durationSeconds })}
               />
-            ) : measurement.field === 'weight' || measurement.field === 'distance' ? (
-              <div className={styles.withUnit}>
-                <input
-                  id={id}
-                  aria-label={label}
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="any"
-                  placeholder={label}
-                  required={required}
-                  value={set[measurement.field] ?? ''}
-                  onChange={(event) =>
-                    onChange({ [measurement.field]: asNumber(event.target.value) })
-                  }
-                />
-                <span className={styles.unitSuffix}>
-                  {measurement.field === 'weight'
-                    ? weightUnitLabel(set.weightUnit)
-                    : distanceUnitLabel(set.distanceUnit)}
-                </span>
-              </div>
             ) : (
-              <input
+              <AppNumberField
                 id={id}
                 aria-label={label}
-                type="number"
                 inputMode={measurement.inputmode}
-                min="0"
-                step={measurement.field === 'reps' ? 1 : 'any'}
                 placeholder={label}
                 required={required}
-                value={set[measurement.field] ?? ''}
-                onChange={(event) =>
-                  onChange({ [measurement.field]: asNumber(event.target.value) })
+                unit={
+                  measurement.field === 'weight'
+                    ? weightUnitLabel(set.weightUnit)
+                    : measurement.field === 'distance'
+                      ? distanceUnitLabel(set.distanceUnit)
+                      : undefined
                 }
+                value={set[measurement.field]}
+                onChange={(entered) => onChange({ [measurement.field]: entered })}
               />
             )}
           </div>
         )
       })}
 
-      {onRemove && (
-        <button
-          type="button"
+      {/* Both or neither: AppIconButton has no label but the one it is given,
+          so a remove control without one would be an unnamed button. */}
+      {onRemove && removeLabel && (
+        <AppIconButton
           className={styles.removeSet}
-          aria-label={removeLabel}
+          icon={MinusCircleIcon}
+          // Quiet: the minus carries the meaning, and a column of red circles
+          // beside every set reads as a page full of errors.
+          label={removeLabel}
           onClick={onRemove}
-        >
-          <MinusCircleIcon aria-hidden="true" />
-        </button>
+        />
       )}
     </div>
   )

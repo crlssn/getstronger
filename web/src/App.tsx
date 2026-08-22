@@ -1,10 +1,10 @@
 import { selectAuthorised, useAuthStore } from '@/stores/auth'
-import { AppConfirmDialog } from '@/ui/components/AppConfirmDialog'
-import { AppDashboard } from '@/ui/components/AppDashboard'
-import { AppOfflineBanner } from '@/ui/components/AppOfflineBanner'
-import { AppToaster } from '@/ui/components/AppToaster'
-import { AppUpdateBanner } from '@/ui/components/AppUpdateBanner'
-import { GuestView } from '@/ui/components/GuestView'
+import { AppConfirmDialog } from '@/ui/shell/AppConfirmDialog'
+import { AppDashboard } from '@/ui/shell/AppDashboard'
+import { AppOfflineBanner } from '@/ui/shell/AppOfflineBanner'
+import { AppToaster } from '@/ui/shell/AppToaster'
+import { AppUpdateBanner } from '@/ui/shell/AppUpdateBanner'
+import { GuestView } from '@/ui/shell/GuestView'
 import styles from './App.module.css'
 
 /**

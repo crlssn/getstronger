@@ -1,0 +1,39 @@
+@reference '../../assets/base.css';
+
+.field {
+  @apply block;
+}
+
+.label {
+  @apply block text-sm font-semibold text-text;
+}
+
+.hint {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
+/* Positions a trailing control against the input rather than against the
+ * label above it. */
+.control {
+  @apply relative;
+}
+
+.label + .control,
+.hint + .control {
+  @apply mt-2;
+}
+
+/* The one field treatment in the app: control-lg tall so a thumb lands in it,
+ * one border, one focus ring. */
+.input {
+  @apply block min-h-(--size-control-lg) w-full rounded-control border border-ink-border bg-white px-4 py-3 text-base text-text shadow-card transition placeholder:text-text-subtle hover:border-ink-muted focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
+}
+
+/* Room for the control that sits over the trailing edge. */
+.hasTrailing {
+  @apply pr-12;
+}
+
+.invalid {
+  @apply border-danger focus:border-danger focus:ring-danger-surface;
+}

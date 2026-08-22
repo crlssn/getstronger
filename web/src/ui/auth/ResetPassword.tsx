@@ -7,8 +7,8 @@ import { updatePassword } from '@/http/requests'
 import posthog from '@/posthog'
 import { UpdatePasswordRequestSchema } from '@/proto/api/v1/auth_service_pb'
 import { useToastStore } from '@/stores/toasts'
-import { AuthPasswordInput } from '@/ui/auth/AuthPasswordInput'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 
 export const ResetPassword = () => {
   const { t } = useTranslation()
@@ -44,37 +44,27 @@ export const ResetPassword = () => {
       </header>
 
       <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
-        <div>
-          <label htmlFor="password" className="auth-label">
-            {t('auth.recovery.newPassword')}
-          </label>
-          <div className="mt-2">
-            <AuthPasswordInput
-              id="password"
-              name="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={setPassword}
-            />
-          </div>
-        </div>
+        <AppPasswordInput
+          id="password"
+          name="password"
+          label={t('auth.recovery.newPassword')}
+          autoComplete="new-password"
+          required
+          value={password}
+          onValueChange={setPassword}
+        />
 
-        <div>
-          <label htmlFor="passwordConfirmation" className="auth-label">
-            {t('auth.recovery.confirmNewPassword')}
-          </label>
-          <div className="mt-2">
-            <AuthPasswordInput
-              id="passwordConfirmation"
-              name="passwordConfirmation"
-              autoComplete="new-password"
-              value={passwordConfirmation}
-              onChange={setPasswordConfirmation}
-            />
-          </div>
-        </div>
+        <AppPasswordInput
+          id="passwordConfirmation"
+          name="passwordConfirmation"
+          label={t('auth.recovery.confirmNewPassword')}
+          autoComplete="new-password"
+          required
+          value={passwordConfirmation}
+          onValueChange={setPasswordConfirmation}
+        />
 
-        <AppButton type="submit" colour="primary" className="auth-submit">
+        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
           {t('auth.recovery.updatePassword')}
         </AppButton>
       </form>

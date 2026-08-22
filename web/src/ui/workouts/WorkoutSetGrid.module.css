@@ -55,39 +55,25 @@
   @apply truncate text-sm text-text-subtle;
 }
 
-.setRow input {
-  @apply min-h-(--size-control) min-w-0 rounded-control border-border px-2 text-center font-semibold shadow-card focus:border-ink focus:ring-ink;
-}
-
+/* The fields are AppNumberField and AppDurationInput; the row only says what
+   its own state does to them. */
 .setRow.active input,
-.setRow.active .unitEntry {
+.setRow.active > div {
   @apply border-ink;
 }
 
+/* AppNumberField sets its own text colour, so the completed row has to say
+   again what it does to the values inside it. */
 .setRow.complete input,
-.setRow.complete .unitEntry {
-  @apply bg-surface-sunken;
+.setRow.complete > div {
+  @apply bg-surface-sunken text-success;
 }
 
 /* Focus reveal must land below the session chrome — the header, and the rest
    band that covers it — not behind it. */
 .setRow input,
-.unitEntry {
+.setRow > div {
   scroll-margin-top: 9rem;
-}
-
-.unitEntry {
-  @apply grid min-h-(--size-control) min-w-0 grid-cols-[minmax(2.75rem,1fr)_auto] items-center overflow-hidden rounded-control border border-border bg-surface pr-2.5 shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
-}
-
-.unitEntry > input {
-  @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
-}
-
-/* A unit is a label on the field, not a second control inside it. The old
-   bordered, filled cell read as a button worth pressing. */
-.unitSuffix {
-  @apply pointer-events-none select-none text-meta font-medium lowercase text-text-subtle;
 }
 
 .removeSet {

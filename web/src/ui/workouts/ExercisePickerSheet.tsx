@@ -1,10 +1,13 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
@@ -71,29 +74,26 @@ export const ExercisePickerSheet = ({ excluded, onAdd, onClose }: Props) => {
       closeLabel={t('workout.closeExercisePicker')}
       onClose={onClose}
     >
-      <label className={styles.exerciseSearch}>
-        <MagnifyingGlassIcon aria-hidden="true" />
-        <input
-          type="search"
-          value={search}
-          placeholder={t('exercise.search')}
-          aria-label={t('exercise.search')}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
+      <AppSearchField
+        className="mb-4"
+        label={t('exercise.search')}
+        value={search}
+        onChange={setSearch}
+      />
 
       {loading && !loaded ? (
         <AppSkeleton />
       ) : available.length ? (
         <div className={styles.exerciseOptions}>
           {available.map((exercise) => (
-            <button key={exercise.id} type="button" onClick={() => onAdd(exercise)}>
-              <span className="min-w-0">
-                <strong>{exercise.name}</strong>
-                <ExerciseTags compact tags={exercise.tags} />
-              </span>
-              <PlusIcon aria-hidden="true" />
-            </button>
+            <AppOptionRow
+              key={exercise.id}
+              trailing={<PlusIcon aria-hidden="true" />}
+              onClick={() => onAdd(exercise)}
+            >
+              <strong>{exercise.name}</strong>
+              <ExerciseTags compact tags={exercise.tags} />
+            </AppOptionRow>
           ))}
         </div>
       ) : (
@@ -103,9 +103,11 @@ export const ExercisePickerSheet = ({ excluded, onAdd, onClose }: Props) => {
       )}
 
       {hasMorePages && (
-        <button type="button" className={styles.loadMore} disabled={loading} onClick={loadMore}>
-          {loading ? t('common.loading') : t('exercise.loadMore')}
-        </button>
+        <AppLoadMore
+          label={loading ? t('common.loading') : t('exercise.loadMore')}
+          loading={loading}
+          onFetch={loadMore}
+        />
       )}
     </AppSheet>
   )

@@ -10,18 +10,19 @@ import {
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 
 import { listFeedItems } from '@/http/requests'
 import { dateLocale } from '@/i18n'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { cn } from '@/ui/cn'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { CardWorkout } from '@/ui/components/CardWorkout'
-import { HomePageActions } from '@/ui/components/HomePageActions'
-import { StreakCard } from '@/ui/components/StreakCard'
+import { CardWorkout } from '@/ui/features/CardWorkout'
+import { HomePageActions } from '@/ui/features/HomePageActions'
+import { StreakCard } from '@/ui/features/StreakCard'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
 import styles from './HomeView.module.css'
 
@@ -171,21 +172,32 @@ export const HomeView = () => {
                   </p>
                 </div>
                 <div className={styles.sessionActions}>
-                  <Link to={nextWorkoutHref} className={styles.startButton}>
-                    <PlayIcon aria-hidden="true" /> {t('home.startWorkout')}
-                  </Link>
+                  <AppButton
+                    type="link"
+                    colour="secondary"
+                    className={styles.startButton}
+                    to={nextWorkoutHref}
+                  >
+                    <PlayIcon className="size-5" aria-hidden="true" /> {t('home.startWorkout')}
+                  </AppButton>
                   {activePlan ? (
-                    <Link to="/workout" className={styles.chooseButton}>
+                    <AppButton
+                      type="link"
+                      colour="ghost"
+                      className={styles.chooseButton}
+                      to="/workout"
+                    >
                       {t('home.workoutOptions')}
-                    </Link>
+                    </AppButton>
                   ) : (
-                    <button
+                    <AppButton
                       type="button"
+                      colour="ghost"
                       className={styles.chooseButton}
                       onClick={() => setRoutinePickerOpen(true)}
                     >
                       {t('home.chooseRoutine')}
-                    </button>
+                    </AppButton>
                   )}
                 </div>
               </section>
@@ -213,9 +225,15 @@ export const HomeView = () => {
               ) : feedError ? (
                 <div className={styles.feedError} role="alert">
                   <span>{t('home.loadFailed')}</span>
-                  <button type="button" onClick={() => void loadMoreFeed()}>
+                  <AppButton
+                    type="button"
+                    colour="destructive"
+                    size="sm"
+                    width="auto"
+                    onClick={() => void loadMoreFeed()}
+                  >
                     {t('common.retry')}
-                  </button>
+                  </AppButton>
                 </div>
               ) : feedWorkouts.length === 0 ? (
                 <AppEmptyState
@@ -258,23 +276,24 @@ export const HomeView = () => {
         >
           <div className={styles.routineOptions}>
             {dashboard?.routines.map((routine) => (
-              <button
+              <AppOptionRow
                 key={routine.id}
-                type="button"
-                className={cn(routine.id === nextRoutine?.id && styles.selected)}
+                leading={
+                  <span className={styles.routineIcon}>
+                    <FireIcon aria-hidden="true" />
+                  </span>
+                }
+                selected={routine.id === nextRoutine?.id}
+                trailing={
+                  <span className={styles.selectionIcon}>
+                    <CheckIcon aria-hidden="true" />
+                  </span>
+                }
                 onClick={() => void selectRoutine(routine.id)}
               >
-                <span className={styles.routineIcon}>
-                  <FireIcon aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <strong>{routine.name}</strong>
-                  <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
-                </span>
-                <span className={styles.selectionIcon}>
-                  <CheckIcon aria-hidden="true" />
-                </span>
-              </button>
+                <strong>{routine.name}</strong>
+                <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
+              </AppOptionRow>
             ))}
           </div>
         </AppSheet>

@@ -5,12 +5,12 @@ import { Link } from 'react-router-dom'
 
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
-import { cn } from '@/ui/cn'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
-import { WorkoutChart } from '@/ui/components/WorkoutChart'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { WorkoutChart } from '@/ui/features/WorkoutChart'
 import { totalVolume, withinDays } from '@/utils/dailyVolume'
 import { formatToShortDateTime } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
@@ -82,22 +82,17 @@ export const ProgressView = () => {
               <p className={styles.chartEmpty}>{t('progress.emptyRange')}</p>
             )}
 
-            <div
-              className={cn(styles.periodPicker, 'segmented is-compact')}
-              aria-label={t('progress.periodAria')}
-            >
-              {periodOptions.map((option) => (
-                <button
-                  key={option.days}
-                  type="button"
-                  className={cn(periodDays === option.days && 'is-selected')}
-                  aria-pressed={periodDays === option.days}
-                  onClick={() => setPeriodDays(option.days)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+            <AppSegmented
+              className={styles.periodPicker}
+              density="compact"
+              label={t('progress.periodAria')}
+              options={periodOptions.map((option) => ({
+                label: option.label,
+                value: option.days,
+              }))}
+              value={periodDays}
+              onChange={setPeriodDays}
+            />
           </section>
         )
       )}

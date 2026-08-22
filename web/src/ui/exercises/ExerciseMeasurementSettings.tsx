@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next'
 
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { usePreferencesStore } from '@/stores/preferences'
-import { cn } from '@/ui/cn'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
+import { AppSegmented } from '@/ui/components/AppSegmented'
+import { AppSwitch } from '@/ui/components/AppSwitch'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { weightUnitLabel } from '@/utils/weightUnits'
 import styles from './ExerciseMeasurementSettings.module.css'
@@ -90,21 +92,12 @@ export const ExerciseMeasurementSettings = ({
         <p>{t('exercise.measurements.help')}</p>
       </div>
 
-      {/* Grouped so the label is announced: an aria-label on a plain div is
-          inert, which is what both of these rows were. */}
-      <div className="segmented" role="group" aria-label={t('exercise.measurements.presetsAria')}>
-        {presets.map((preset) => (
-          <button
-            key={preset.labelKey}
-            type="button"
-            className={cn(isPreset(preset.values) && 'is-selected')}
-            aria-pressed={isPreset(preset.values)}
-            onClick={() => onMetricsChange([...preset.values])}
-          >
-            {t(preset.labelKey)}
-          </button>
-        ))}
-      </div>
+      <AppSegmented
+        label={t('exercise.measurements.presetsAria')}
+        options={presets.map((preset) => ({ label: t(preset.labelKey), value: preset }))}
+        value={presets.find((preset) => isPreset(preset.values))}
+        onChange={(preset) => preset && onMetricsChange([...preset.values])}
+      />
 
       <div
         className={styles.measurementGrid}
@@ -112,24 +105,20 @@ export const ExerciseMeasurementSettings = ({
         aria-label={t('exercise.measurements.heading')}
       >
         {measurements.map((measurement) => (
-          <button
+          <AppOptionRow
             key={measurement.value}
-            type="button"
-            className={cn(
-              styles.measurement,
-              metrics.includes(measurement.value) && styles.selected,
-            )}
-            aria-pressed={metrics.includes(measurement.value)}
+            className={styles.measurement}
+            leading={
+              <span className={styles.check} aria-hidden="true">
+                {metrics.includes(measurement.value) ? '✓' : '+'}
+              </span>
+            }
+            selected={metrics.includes(measurement.value)}
             onClick={() => toggleMetric(measurement.value)}
           >
-            <span className={styles.check} aria-hidden="true">
-              {metrics.includes(measurement.value) ? '✓' : '+'}
-            </span>
-            <span>
-              <strong>{measurement.label}</strong>
-              <small>{measurement.unit}</small>
-            </span>
-          </button>
+            <strong>{measurement.label}</strong>
+            <small>{measurement.unit}</small>
+          </AppOptionRow>
         ))}
       </div>
 
@@ -138,32 +127,21 @@ export const ExerciseMeasurementSettings = ({
           <strong>{t('exercise.restTimer')}</strong>
           <small>{t('exercise.measurements.restHelp')}</small>
         </div>
-        <button
-          type="button"
-          role="switch"
-          className={styles.switch}
-          aria-checked={restEnabled}
-          aria-label={t('exercise.restTimer')}
-          onClick={() => onRestSecondsChange(restEnabled ? 0 : defaultRestSeconds)}
-        >
-          <span className={styles.knob} />
-        </button>
+        <AppSwitch
+          checked={restEnabled}
+          label={t('exercise.restTimer')}
+          onChange={(enabled) => onRestSecondsChange(enabled ? defaultRestSeconds : 0)}
+        />
       </div>
 
       {restEnabled && (
-        <div className={styles.restOptions}>
-          {restPresets.map((seconds) => (
-            <button
-              key={seconds}
-              type="button"
-              aria-pressed={restSeconds === seconds}
-              className={cn(restSeconds === seconds && styles.selected)}
-              onClick={() => onRestSecondsChange(seconds)}
-            >
-              {formatRest(seconds)}
-            </button>
-          ))}
-        </div>
+        <AppSegmented
+          density="compact"
+          label={t('exercise.restTimer')}
+          options={restPresets.map((seconds) => ({ label: formatRest(seconds), value: seconds }))}
+          value={restSeconds}
+          onChange={onRestSecondsChange}
+        />
       )}
     </section>
   )

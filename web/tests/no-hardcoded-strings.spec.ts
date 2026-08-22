@@ -30,6 +30,7 @@ describe('findLiteralText', () => {
     ['a comment mentioning markup', '// renders <p>Save</p> when idle'],
     ['a block comment', '/* <p>Save</p> */'],
     ['a string containing markup', "const html = '<p>Save</p>'"],
+    ['a generic type parameter', 'interface Props<T> {\n  value: T\n}\n\ninterface Other {'],
   ])('leaves %s alone', (_label, source) => {
     expect(findLiteralText(source)).toEqual([])
   })

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { expect, logIn, resetSeedData, test } from './fixtures'
 
 test.beforeAll(resetSeedData)
@@ -16,21 +16,41 @@ const logInWhateverTheLanguage = async (page: Page) => {
   await expect(page).toHaveURL(/\/home$/)
 }
 
+/**
+ * Every option of every segmented control on the page.
+ *
+ * By role rather than by class: AppSegmented is a labelled group of buttons and
+ * AppSegmentedNav a named navigation of links, and both of those are contracts
+ * the component keeps. Its class names are module locals and appear hashed.
+ */
+const segmentedOptions = (page: Page, navName: RegExp): Locator[] => [
+  page.getByRole('group').getByRole('button'),
+  page.getByRole('navigation', { name: navName }).getByRole('link'),
+]
+
+const clipped = async (options: Locator) =>
+  Promise.all(
+    (await options.all()).map(async (option) => ({
+      label: (await option.textContent())?.trim() ?? '',
+      ...(await option.evaluate((element) => ({
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      }))),
+    })),
+  ).then((measured) =>
+    measured
+      .filter((option) => option.scrollWidth > option.clientWidth + 1)
+      .map((option) => `${option.label} needs ${option.scrollWidth}px`),
+  )
+
 // The segmented control is auto-width and scrolls rather than dividing a row
 // into equal columns, and the reason is entirely this: Föredragen viktenhet
 // and Starta träningspass need somewhere to go. An equal-column grid gave the
 // old weight-unit picker 69px for "Kilograms" and it clipped its own container.
-const clippedOptions = (page: Page) =>
-  page.evaluate(() =>
-    Array.from(document.querySelectorAll<HTMLElement>('.segmented > *'))
-      .filter((option) => option.scrollWidth > option.clientWidth + 1)
-      .map((option) => `${option.textContent?.trim()} needs ${option.scrollWidth}px`),
-  )
-
 const pages = [
-  { heading: /Föredragen viktenhet/, path: '/profile' },
-  { heading: /Framsteg|Progress/, path: '/progress' },
-  { heading: /Träning|Training/, path: '/routines' },
+  { heading: /Föredragen viktenhet/, nav: /Träning|Training/, path: '/profile' },
+  { heading: /Framsteg|Progress/, nav: /Träning|Training/, path: '/progress' },
+  { heading: /Träning|Training/, nav: /Träning|Training/, path: '/routines' },
 ] as const
 
 test.describe('in Swedish', () => {
@@ -39,10 +59,13 @@ test.describe('in Swedish', () => {
   test('never clips a segmented option @responsive', async ({ page }) => {
     await logInWhateverTheLanguage(page)
 
-    for (const { heading, path } of pages) {
+    for (const { heading, nav, path } of pages) {
       await page.goto(path)
       await expect(page.getByText(heading).first()).toBeVisible()
-      expect(await clippedOptions(page), `${path} clips a segmented option`).toEqual([])
+
+      for (const options of segmentedOptions(page, nav)) {
+        expect(await clipped(options), `${path} clips a segmented option`).toEqual([])
+      }
     }
   })
 })
@@ -51,7 +74,7 @@ test('keeps every segmented option above the tap-target floor', async ({ page })
   await logIn(page)
   await page.goto('/profile')
 
-  const options = page.locator('.segmented > *')
+  const options = page.getByRole('group').getByRole('button')
   await expect(options.first()).toBeVisible()
 
   for (const option of await options.all()) {

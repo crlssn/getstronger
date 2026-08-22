@@ -1,4 +1,4 @@
-/* The three shapes that absorb most of the app's duplication, expressed in the
+/* The two shapes that absorb most of the app's duplication, expressed in the
  * tokens from theme.css.
  *
  * They are declared with @utility rather than as plain classes so that both a
@@ -28,17 +28,4 @@
 
 @utility control-lg {
   @apply min-h-(--size-control-lg) text-base;
-}
-
-/* Vertical rhythm, so a screen's spacing is a choice made once. */
-@utility stack {
-  @apply flex flex-col gap-4;
-}
-
-@utility stack-sm {
-  @apply flex flex-col gap-2;
-}
-
-@utility stack-lg {
-  @apply flex flex-col gap-6;
 }

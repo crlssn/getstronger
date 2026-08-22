@@ -1,0 +1,9 @@
+@reference '../../assets/base.css';
+
+.loadMore {
+  @apply control mt-4 w-full border-border bg-surface text-text-muted shadow-card hover:bg-ink-surface hover:text-text;
+}
+
+.loadMore:disabled {
+  @apply cursor-wait text-text-subtle;
+}

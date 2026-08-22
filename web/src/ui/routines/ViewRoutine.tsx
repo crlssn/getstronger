@@ -11,7 +11,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import {
   deleteRoutine,
@@ -19,10 +19,12 @@ import {
   getRoutine,
   updateExerciseOrder,
 } from '@/http/requests'
-import { useToastStore } from '@/stores/toasts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import { useToastStore } from '@/stores/toasts'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
@@ -155,13 +157,23 @@ export const ViewRoutine = () => {
           </p>
         </div>
         <div className={styles.heroActions}>
-          <Link to={`/workouts/routine/${routine.id}`} className={styles.startButton}>
-            <PlayIcon aria-hidden="true" /> {t('workout.start')}
-          </Link>
+          <AppButton
+            type="link"
+            colour="primary"
+            width="auto"
+            to={`/workouts/routine/${routine.id}`}
+          >
+            <PlayIcon className="size-5" aria-hidden="true" /> {t('workout.start')}
+          </AppButton>
           {!isUpNext && (
-            <button type="button" className={styles.nextButton} onClick={() => void makeUpNext()}>
-              <StarIcon aria-hidden="true" /> {t('routine.makeUpNext')}
-            </button>
+            <AppButton
+              type="button"
+              colour="secondary"
+              width="auto"
+              onClick={() => void makeUpNext()}
+            >
+              <StarIcon className="size-5" aria-hidden="true" /> {t('routine.makeUpNext')}
+            </AppButton>
           )}
         </div>
       </section>
@@ -172,9 +184,15 @@ export const ViewRoutine = () => {
             <h2>{t('routine.view.orderTitle')}</h2>
             <p>{t('routine.view.orderHelp')}</p>
           </div>
-          <Link to={`/routines/${routine.id}/edit`}>
-            <PencilIcon aria-hidden="true" /> {t('routine.view.editExercises')}
-          </Link>
+          <AppButton
+            type="link"
+            colour="ghost"
+            size="sm"
+            width="auto"
+            to={`/routines/${routine.id}/edit`}
+          >
+            <PencilIcon className="size-5" aria-hidden="true" /> {t('routine.view.editExercises')}
+          </AppButton>
         </div>
 
         <ol ref={list} className={styles.exerciseList}>
@@ -192,13 +210,11 @@ export const ViewRoutine = () => {
                     <ExerciseTags compact tags={exercise.tags} />
                   )}
                 </span>
-                <button
-                  type="button"
+                <AppIconButton
                   className={styles.dragHandle}
-                  aria-label={t('routine.view.reorderAria')}
-                >
-                  <Bars3Icon aria-hidden="true" />
-                </button>
+                  icon={Bars3Icon}
+                  label={t('routine.view.reorderAria')}
+                />
               </li>
             )
           })}
@@ -210,9 +226,16 @@ export const ViewRoutine = () => {
           <h2>{t('routine.view.deleteTitle')}</h2>
           <p>{t('routine.view.deleteBody')}</p>
         </div>
-        <button type="button" onClick={() => void onDeleteRoutine()}>
-          <TrashIcon aria-hidden="true" /> {t('common.delete')}
-        </button>
+        <AppButton
+          type="button"
+          colour="destructive"
+          size="sm"
+          width="auto"
+          className={styles.deleteRoutine}
+          onClick={() => void onDeleteRoutine()}
+        >
+          <TrashIcon className="size-5" aria-hidden="true" /> {t('common.delete')}
+        </AppButton>
       </section>
     </div>
   )

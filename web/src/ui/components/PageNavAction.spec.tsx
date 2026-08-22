@@ -5,7 +5,7 @@ import { afterEach, describe, expect, test } from 'vitest'
 
 import { usePageNavActionStore } from '@/stores/pageNavAction'
 import { renderWithProviders } from '@/ui/testing'
-import { AppNavTop } from './AppNavTop'
+import { AppNavTop } from '@/ui/shell/AppNavTop'
 import { PageNavAction } from './PageNavAction'
 
 afterEach(() => {

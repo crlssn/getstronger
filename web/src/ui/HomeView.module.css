@@ -60,22 +60,14 @@
   @apply grid gap-1 sm:min-w-48;
 }
 
-.startButton,
-.chooseButton {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold transition;
-}
-
+/* The session card is ink, so its actions invert: white fill for the primary,
+   white text for the quieter one. */
 .startButton {
-  @apply bg-white text-ink-strong hover:bg-ink-surface;
+  @apply border-white bg-white text-ink-strong hover:bg-ink-surface;
 }
 
 .chooseButton {
-  @apply text-white hover:bg-white/10;
-}
-
-.startButton svg,
-.chooseButton svg {
-  @apply size-5;
+  @apply text-white hover:bg-white/10 hover:text-white;
 }
 
 .followingFeed {
@@ -100,10 +92,6 @@
 
 .feedError {
   @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
-}
-
-.feedError button {
-  @apply min-h-(--size-control-sm) shrink-0 rounded-control px-3 font-semibold hover:bg-danger-surface hover:text-danger-strong;
 }
 
 .feedEnd {
@@ -137,23 +125,6 @@
 
 .routineOptions {
   @apply space-y-2;
-}
-
-.routineOptions > button {
-  @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-card border border-border p-4 text-left hover:border-ink-border hover:bg-ink-surface/50;
-}
-
-.routineOptions > button.selected {
-  @apply border-ink-muted bg-ink-surface;
-}
-
-.routineOptions strong,
-.routineOptions small {
-  @apply block truncate;
-}
-
-.routineOptions small {
-  @apply mt-1 text-sm text-text-subtle;
 }
 
 .routineIcon {
