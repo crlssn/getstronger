@@ -5,7 +5,7 @@
       "name": "web",
       "runtimeExecutable": "mise",
       "runtimeArgs": ["run", "app:web"],
-      "port": 20383
+      "port": 5173
     }
   ]
 }
