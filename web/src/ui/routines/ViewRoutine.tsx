@@ -19,7 +19,7 @@ import {
   getRoutine,
   updateExerciseOrder,
 } from '@/http/requests'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -109,7 +109,7 @@ export const ViewRoutine = () => {
   const makeUpNext = async () => {
     if (!routine) return
     await useDashboardStore.getState().selectRoutine(routine.id)
-    useAlertStore.getState().setSuccess(t('routine.upNextToast', { name: routine.name }))
+    useToastStore.getState().success(t('routine.upNextToast', { name: routine.name }))
   }
 
   const onDeleteRoutine = async () => {
@@ -125,11 +125,11 @@ export const ViewRoutine = () => {
 
     const response = await deleteRoutine(routine.id)
     if (!response) {
-      useAlertStore.getState().setErrorWithoutPageRefresh(t('routine.deleteFailed'))
+      useToastStore.getState().error(t('routine.deleteFailed'))
       return
     }
 
-    useAlertStore.getState().setSuccess(t('routine.deleted'))
+    useToastStore.getState().success(t('routine.deleted'))
     await navigate('/routines')
   }
 

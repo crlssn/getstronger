@@ -8,7 +8,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { getExercise, updateExercise } from '@/http/requests'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
 import styles from './ExerciseForm.module.css'
@@ -47,7 +47,7 @@ export const UpdateExercise = () => {
     const res = await updateExercise(create(ExerciseSchema, { ...exercise, ...values }))
     if (!res) return
 
-    useAlertStore.getState().setSuccess(t('exercise.form.updated'))
+    useToastStore.getState().success(t('exercise.form.updated'))
     await navigate(`/exercises/${exercise.id}`)
   }
 

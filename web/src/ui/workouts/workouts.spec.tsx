@@ -26,7 +26,7 @@ import {
   UpdateWorkoutResponseSchema,
   WorkoutSchema,
 } from '@/proto/api/v1/workout_service_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -90,7 +90,7 @@ beforeEach(() => {
   vi.spyOn(usePlanStore.getState(), 'load').mockResolvedValue(undefined)
   useAuthStore.setState({ userId: me })
   useDashboardStore.setState({ dashboard: undefined })
-  useAlertStore.setState({ alert: null })
+  useToastStore.getState().dismiss()
   useConfirmationStore.setState({ confirmation: null, resolver: null })
 })
 
@@ -197,7 +197,7 @@ describe('EditWorkout', () => {
     render()
 
     expect(await screen.findByText('home')).toBeInTheDocument()
-    expect(useAlertStore.getState().alert?.type).toBe('error')
+    expect(useToastStore.getState().toast?.type).toBe('error')
   })
 
   test('opens with every set filled in', async () => {

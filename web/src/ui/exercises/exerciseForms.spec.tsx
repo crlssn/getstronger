@@ -21,7 +21,7 @@ import {
   UpdateExerciseResponseSchema,
 } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { renderWithProviders } from '@/ui/testing'
 import { CreateExercise } from './CreateExercise'
 import { UpdateExercise } from './UpdateExercise'
@@ -68,7 +68,7 @@ beforeEach(() => {
   mocked.createExercise.mockResolvedValue(create(CreateExerciseResponseSchema, {}))
   mocked.updateExercise.mockResolvedValue(create(UpdateExerciseResponseSchema, {}))
   mocked.getExercise.mockResolvedValue(existing())
-  useAlertStore.setState({ alert: null })
+  useToastStore.getState().dismiss()
 })
 
 describe('CreateExercise', () => {
@@ -97,7 +97,7 @@ describe('CreateExercise', () => {
       restSeconds: 90,
     })
     expect(await screen.findByText('list')).toBeInTheDocument()
-    expect(useAlertStore.getState().alert?.type).toBe('success')
+    expect(useToastStore.getState().toast?.type).toBe('success')
   })
 
   test('sends what was chosen, not what it started with', async () => {
@@ -127,7 +127,7 @@ describe('CreateExercise', () => {
 
     await waitFor(() => expect(mocked.createExercise).toHaveBeenCalled())
     expect(screen.queryByText('list')).not.toBeInTheDocument()
-    expect(useAlertStore.getState().alert).toBeNull()
+    expect(useToastStore.getState().toast).toBeNull()
   })
 })
 

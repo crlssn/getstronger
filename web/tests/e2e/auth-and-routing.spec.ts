@@ -44,8 +44,8 @@ test.describe('guest authentication and routing', () => {
     await expect(page.getByRole('alert')).toContainText('invalid credentials')
     await expect(page).toHaveURL(/\/login$/)
 
-    // Dismissing is the only thing there is to do with an alert, and its button
-    // is subject to the 44px floor like any other control.
+    // A toast goes on its own, but the button that takes it early is subject to
+    // the 44px floor like any other control.
     const dismiss = await boxOf(page.getByRole('button', { name: 'Dismiss message' }))
     expect(dismiss.height).toBeGreaterThanOrEqual(44)
     expect(dismiss.width).toBeGreaterThanOrEqual(44)
@@ -146,17 +146,18 @@ test.describe('guest authentication and routing', () => {
     )
     await expect(page.getByLabel('Email address')).toHaveValue('')
 
-    // The alert sits below the header rather than on top of it, and its
-    // contents line up with the column the page content uses.
-    const header = await boxOf(page.getByRole('banner'))
-    const alert = await boxOf(page.getByRole('status'))
-    // The status icon is decorative, so it is reached through the region it
-    // sits in rather than named: it is the first mark inside the alert.
-    const alertIcon = await boxOf(page.getByRole('status').locator('svg').first())
-    const heading = await boxOf(page.getByRole('heading', { name: 'Reset your password' }))
+    // The toast floats near the top of the viewport, clear of both edges, and
+    // stays inside the column the rest of the page is read in.
+    const toast = await boxOf(page.getByRole('status'))
+    const viewport = page.viewportSize()
 
-    expect(alert.y).toBeGreaterThanOrEqual(header.y + header.height)
-    expect(Math.abs(alertIcon.x - heading.x)).toBeLessThan(2)
+    expect(toast.y).toBeGreaterThan(0)
+    expect(toast.y).toBeLessThan((viewport?.height ?? 0) / 2)
+    expect(toast.x).toBeGreaterThan(0)
+    expect(toast.x + toast.width).toBeLessThanOrEqual(viewport?.width ?? 0)
+
+    // Nothing has to be tapped for it to go: it takes itself away.
+    await expect(page.getByRole('status')).toBeHidden({ timeout: 15_000 })
   })
 
   test('shows the not-found route', async ({ page }) => {

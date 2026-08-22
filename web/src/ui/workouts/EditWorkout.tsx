@@ -12,7 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { getWorkout, updateWorkout } from '@/http/requests'
 import { SetSchema } from '@/proto/api/v1/shared_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
@@ -51,7 +51,7 @@ export const EditWorkout = () => {
       // Editing someone else's workout is refused here as well as by the API,
       // so the form is never shown for one.
       if (res.workout?.user?.id !== useAuthStore.getState().userId) {
-        useAlertStore.getState().setError(t('workout.edit.noPermission'))
+        useToastStore.getState().error(t('workout.edit.noPermission'))
         await navigate('/home')
         return
       }
@@ -77,7 +77,7 @@ export const EditWorkout = () => {
     const res = await updateWorkout({ ...workout, exerciseSets })
     if (!res) return
 
-    useAlertStore.getState().setSuccess(t('workout.edit.updated'))
+    useToastStore.getState().success(t('workout.edit.updated'))
     await navigate(`/workouts/${workout.id}`)
   }
 

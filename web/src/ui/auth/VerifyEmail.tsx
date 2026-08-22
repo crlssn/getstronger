@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { verifyEmail } from '@/http/requests'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 
 /**
@@ -32,7 +32,7 @@ export const VerifyEmail = () => {
       // Nothing is pending any more, so the recovery page no longer has an
       // address to offer.
       useEmailVerificationStore.getState().clear()
-      useAlertStore.getState().setSuccess(t('auth.verification.verified'))
+      useToastStore.getState().success(t('auth.verification.verified'))
       void navigate('/login')
     }
 

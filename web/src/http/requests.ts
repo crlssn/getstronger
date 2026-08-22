@@ -138,7 +138,7 @@ import {
 import { i18n } from '@/i18n'
 import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 import { currentPath, goTo } from '@/router/navigation'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 
 const defaultPageLimit = 25
@@ -665,10 +665,10 @@ const tryCatch = async <T>(
             await options.onEmailNotVerified?.()
             return
           case Error.PASSWORDS_DO_NOT_MATCH:
-            useAlertStore.getState().setErrorWithoutPageRefresh(i18n.t('auth.passwordsDoNotMatch'))
+            useToastStore.getState().error(i18n.t('auth.passwordsDoNotMatch'))
             return
           case Error.USERNAME_TAKEN:
-            useAlertStore.getState().setErrorWithoutPageRefresh(i18n.t('auth.usernameTaken'))
+            useToastStore.getState().error(i18n.t('auth.usernameTaken'))
             return
         }
       }
@@ -681,7 +681,7 @@ const tryCatch = async <T>(
         Code.Unauthenticated,
       ]
       if (!ignoredCodes.includes(error.code)) {
-        useAlertStore.getState().setErrorWithoutPageRefresh(error.message)
+        useToastStore.getState().error(error.message)
         return
       }
     }

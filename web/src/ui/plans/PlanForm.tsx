@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { getPlan, listRoutines } from '@/http/requests'
 import posthog from '@/posthog'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { usePlanStore } from '@/stores/plans'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet } from '@/ui/components/AppSheet'
@@ -88,9 +88,9 @@ export const PlanForm = ({ planId }: Props) => {
     if (!plan) return
 
     posthog.capture(editing ? 'plan_updated' : 'plan_created')
-    useAlertStore
+    useToastStore
       .getState()
-      .setSuccess(editing ? t('training.planForm.updated') : t('training.planForm.created'))
+      .success(editing ? t('training.planForm.updated') : t('training.planForm.created'))
     await navigate(`/plans/${plan.id}`)
   }
 

@@ -3,7 +3,6 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { isTabRoot } from '@/router/tabs'
 import { isFocusedShellPath } from '@/router/routes'
 import { cn } from '@/ui/cn'
-import { AppAlert } from '@/ui/components/AppAlert'
 import { AppNavBottom } from '@/ui/components/AppNavBottom'
 import { AppNavTop } from '@/ui/components/AppNavTop'
 import { AppRestTimerBanner } from '@/ui/components/AppRestTimerBanner'
@@ -26,7 +25,6 @@ export const AppDashboard = () => {
 
   return (
     <div className={cn(styles.dashboardShell, focusedShell && styles.focusedShell)}>
-      <AppAlert />
       <AppRestTimerBanner />
       <main className={styles.main}>
         {showsTopNavigation && <AppNavTop />}

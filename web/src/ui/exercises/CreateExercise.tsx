@@ -9,7 +9,7 @@ import { createExercise } from '@/http/requests'
 import posthog from '@/posthog'
 import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
 import { defaultRestSeconds } from '@/ui/exercises/ExerciseMeasurementSettings'
 
@@ -32,7 +32,7 @@ export const CreateExercise = () => {
     if (!res) return
 
     posthog.capture('exercise_created')
-    useAlertStore.getState().setSuccess(t('exercise.form.created'))
+    useToastStore.getState().success(t('exercise.form.created'))
     await navigate('/exercises')
   }
 

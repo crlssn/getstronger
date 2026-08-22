@@ -73,8 +73,8 @@ catalogue value contains any of them.
   and render it with `t()`. The test suite enforces key parity between locales,
   so a key added to one locale only will fail `messages.spec.ts`.
 - This covers more than markup: aria-labels, input placeholders, confirm
-  dialogs, alert toasts, dropdown item titles, page-title fallbacks, and strings
-  built outside JSX all count as user-facing.
+  dialogs, toast messages, dropdown item titles, page-title fallbacks, and
+  strings built outside JSX all count as user-facing.
 - Reuse an existing key when one already says the same thing (check `common.*`
   first) instead of adding a near-duplicate.
 - Placeholders are single-brace (`{count}`, `{brand}`), configured that way in

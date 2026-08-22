@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { getRoutine, updateRoutine } from '@/http/requests'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { RoutineForm } from '@/ui/routines/RoutineForm'
 
@@ -35,7 +35,7 @@ export const EditRoutine = () => {
       const response = await updateRoutine(id, updatedName, updatedExerciseIds)
       if (!response) return
 
-      useAlertStore.getState().setSuccess(t('routine.form.updated'))
+      useToastStore.getState().success(t('routine.form.updated'))
       await navigate(`/routines/${id}`)
     } finally {
       setSaving(false)

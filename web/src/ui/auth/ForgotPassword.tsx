@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 import { resetPassword } from '@/http/requests'
 import posthog from '@/posthog'
 import { ResetPasswordRequestSchema } from '@/proto/api/v1/auth_service_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
 
 export const ForgotPassword = () => {
@@ -21,9 +21,7 @@ export const ForgotPassword = () => {
 
     posthog.capture('password_reset_requested')
     setEmail('')
-    // Without a page refresh: the confirmation belongs on this screen, beside
-    // the address it was sent to.
-    useAlertStore.getState().setSuccessWithoutPageRefresh(t('auth.recovery.linkSent'))
+    useToastStore.getState().success(t('auth.recovery.linkSent'))
   }
 
   return (
