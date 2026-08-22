@@ -31,6 +31,8 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useToastStore } from '@/stores/toasts'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
@@ -377,9 +379,9 @@ export const ProfileView = () => {
           ),
       )}
 
-      <Link to="/logout" className={styles.logoutLink}>
-        <ArrowRightOnRectangleIcon aria-hidden="true" /> {t('auth.logout')}
-      </Link>
+      <AppButton type="link" colour="destructive" className={styles.logoutLink} to="/logout">
+        <ArrowRightOnRectangleIcon className="size-5" aria-hidden="true" /> {t('auth.logout')}
+      </AppButton>
 
       {/* Both app stores require an account made in the app to be deletable
           from inside it, which is why this sits on the profile rather than
@@ -389,15 +391,18 @@ export const ProfileView = () => {
           <strong>{t('profile.deleteAccount')}</strong>
           <small>{t('profile.deleteAccountBody')}</small>
         </div>
-        <button
+        <AppButton
           type="button"
+          colour="destructive"
+          width="auto"
+          className={styles.deleteAccount}
           onClick={() => {
             setDeleteError(undefined)
             setDeletePassword('')
           }}
         >
           {t('profile.deleteAccount')}
-        </button>
+        </AppButton>
       </section>
 
       {nameDraft !== undefined && (
@@ -463,18 +468,15 @@ export const ProfileView = () => {
               void confirmDelete()
             }}
           >
-            <label htmlFor="delete-account-password" className="auth-label">
-              {t('profile.deleteAccountPassword')}
-            </label>
-            <input
+            <AppPasswordInput
               id="delete-account-password"
               name="password"
-              type="password"
+              label={t('profile.deleteAccountPassword')}
               autoComplete="current-password"
-              className="auth-input mt-2"
+              invalid={deleteError !== undefined}
               required
               value={deletePassword}
-              onChange={(event) => setDeletePassword(event.target.value)}
+              onValueChange={setDeletePassword}
             />
             {deleteError !== undefined && (
               <p role="alert" className="mt-2 text-sm text-danger">

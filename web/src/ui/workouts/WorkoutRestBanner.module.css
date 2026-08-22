@@ -49,8 +49,10 @@
 
 /* A dark tint keeps the white label high-contrast wherever the chips land on
    the gradient; a white tint washes out against the bright corner. */
+/* On the rest band, which is its own colour: the button borrows that
+   surface's contrast rather than the ghost role's. */
 .restBanner button {
-  @apply min-h-(--size-control-sm) rounded-control bg-black/25 px-3 text-sm font-semibold text-white transition hover:bg-black/40;
+  @apply bg-black/25 text-white hover:bg-black/40 hover:text-white;
 }
 
 .restProgress {

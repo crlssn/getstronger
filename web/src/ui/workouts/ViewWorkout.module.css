@@ -12,6 +12,3 @@
   @apply mt-2 text-sm text-text-subtle;
 }
 
-.emptyCard a {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-4 text-sm font-semibold text-white;
-}

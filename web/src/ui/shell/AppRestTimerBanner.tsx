@@ -3,10 +3,11 @@ import type { CSSProperties } from 'react'
 import { BoltIcon } from '@heroicons/react/24/outline'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { isFocusedShellPath } from '@/router/routes'
 import { useWorkoutStore } from '@/stores/workout'
+import { AppButton } from '@/ui/components/AppButton'
 import { cn } from '@/ui/cn'
 import {
   isFinalCountdown,
@@ -81,9 +82,9 @@ export const AppRestTimerBanner = () => {
               re-announce every second. */}
           <strong aria-hidden="true">{label}</strong>
         </div>
-        <Link to={savedHref}>
-          <BoltIcon aria-hidden="true" /> {t('workout.goToWorkout')}
-        </Link>
+        <AppButton type="link" colour="ghost" size="sm" width="auto" to={savedHref}>
+          <BoltIcon className="size-5" aria-hidden="true" /> {t('workout.goToWorkout')}
+        </AppButton>
         <div className={styles.restProgress} aria-hidden="true">
           <span style={{ width: restProgress(remaining, totalSeconds) }} />
         </div>

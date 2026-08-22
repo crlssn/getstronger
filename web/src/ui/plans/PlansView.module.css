@@ -4,28 +4,8 @@
   @apply space-y-4;
 }
 
-.pageIntro {
-  @apply grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-1;
-}
-
 .eyebrow {
   @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.pageIntro h1 {
-  @apply mt-1 text-display font-bold text-text;
-}
-
-.pageIntro > a {
-  @apply inline-flex min-h-(--size-control) shrink-0 items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white;
-}
-
-.pageIntro svg {
-  @apply size-5;
-}
-
-.pageIntro > p {
-  @apply col-span-2 max-w-none text-sm leading-6 text-text-subtle;
 }
 
 .activePlan,
@@ -96,11 +76,7 @@
 }
 
 .firstPlanButton {
-  @apply mt-5 inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-strong;
-}
-
-.firstPlanButton svg {
-  @apply size-5;
+  @apply mt-5;
 }
 
 .activePlan > header {

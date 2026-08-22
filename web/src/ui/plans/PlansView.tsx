@@ -8,6 +8,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { selectActivePlan, usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import styles from './PlansView.module.css'
@@ -59,17 +60,17 @@ export const PlansView = () => {
 
   return (
     <div className={styles.plansPage}>
-      <header className={styles.pageIntro}>
-        <div>
-          <h1>{t('training.heading')}</h1>
-        </div>
-        {plans.length > 0 && (
-          <Link to="/plans/create">
-            <PlusIcon aria-hidden="true" /> {t('training.newPlan')}
-          </Link>
-        )}
-        <p>{t('training.plansDescription')}</p>
-      </header>
+      <AppPageHeader
+        action={
+          plans.length > 0 && (
+            <AppButton type="link" colour="primary" width="auto" to="/plans/create">
+              <PlusIcon className="size-5" aria-hidden="true" /> {t('training.newPlan')}
+            </AppButton>
+          )
+        }
+        lead={t('training.plansDescription')}
+        title={t('training.heading')}
+      />
 
       <TrainingTabs />
 
@@ -113,9 +114,14 @@ export const PlansView = () => {
           </ol>
 
           <p className={styles.activePlanRule}>{t('training.oneActive')}</p>
-          <Link to="/plans/create" className={styles.firstPlanButton}>
-            <PlusIcon aria-hidden="true" /> {t('training.createFirstPlan')}
-          </Link>
+          <AppButton
+            type="link"
+            colour="primary"
+            className={styles.firstPlanButton}
+            to="/plans/create"
+          >
+            <PlusIcon className="size-5" aria-hidden="true" /> {t('training.createFirstPlan')}
+          </AppButton>
         </section>
       ) : (
         <>

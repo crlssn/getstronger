@@ -171,7 +171,9 @@ export const WorkoutView = () => {
         <section className={styles.emptyCard}>
           <h2>{t('workout.noSelection')}</h2>
           <p>{t('workout.noSelectionBody')}</p>
-          <Link to="/plans">{t('home.chooseRoutine')}</Link>
+          <AppButton type="link" colour="primary" width="auto" className="mt-4" to="/plans">
+            {t('home.chooseRoutine')}
+          </AppButton>
         </section>
       )}
 

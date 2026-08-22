@@ -4,11 +4,12 @@ import type { ExerciseFormValues } from '@/ui/exercises/ExerciseForm'
 import { create } from '@bufbuild/protobuf'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { getExercise, updateExercise } from '@/http/requests'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
 import styles from './ExerciseForm.module.css'
@@ -67,7 +68,9 @@ export const UpdateExercise = () => {
   return (
     <section className={styles.formStatus}>
       <h1>{t('exercise.unavailable')}</h1>
-      <Link to="/exercises">{t('common.exercises')}</Link>
+      <AppButton type="link" colour="primary" width="auto" className="mt-3" to="/exercises">
+        {t('common.exercises')}
+      </AppButton>
     </section>
   )
 }

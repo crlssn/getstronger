@@ -12,6 +12,7 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useToastStore } from '@/stores/toasts'
 import { useWorkoutStore } from '@/stores/workout'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
@@ -119,7 +120,9 @@ export const ViewExercise = () => {
       <section className={styles.emptyCard}>
         <h1>{t('exercise.unavailable')}</h1>
         <p>{t('exercise.view.unavailableBody')}</p>
-        <Link to="/exercises">{t('exercise.view.viewExercises')}</Link>
+        <AppButton type="link" colour="primary" width="auto" className="mt-4" to="/exercises">
+          {t('exercise.view.viewExercises')}
+        </AppButton>
       </section>
     )
   }

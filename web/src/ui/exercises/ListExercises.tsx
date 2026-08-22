@@ -12,7 +12,9 @@ import { Link } from 'react-router-dom'
 import { listExercises } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { groupByActivity } from '@/utils/activityGroups'
@@ -79,14 +81,14 @@ export const ListExercises = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageIntro}>
-        <div>
-          <h1>{t('exercise.heading')}</h1>
-        </div>
-        <Link to="/exercises/create" className={styles.createLink}>
-          <PlusIcon aria-hidden="true" /> {t('exercise.new')}
-        </Link>
-      </header>
+      <AppPageHeader
+        action={
+          <AppButton type="link" colour="primary" width="auto" to="/exercises/create">
+            <PlusIcon className="size-5" aria-hidden="true" /> {t('exercise.new')}
+          </AppButton>
+        }
+        title={t('exercise.heading')}
+      />
 
       <AppSearchField label={t('exercise.search')} value={search} onChange={setSearch} />
 

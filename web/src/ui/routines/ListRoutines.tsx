@@ -17,6 +17,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
@@ -95,15 +96,15 @@ export const ListRoutines = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageIntro}>
-        <div>
-          <h1>{t('training.heading')}</h1>
-          <p>{t('training.routinesDescription')}</p>
-        </div>
-        <Link to="/routines/create" className={styles.createLink}>
-          <PlusIcon aria-hidden="true" /> {t('training.newRoutine')}
-        </Link>
-      </header>
+      <AppPageHeader
+        action={
+          <AppButton type="link" colour="primary" width="auto" to="/routines/create">
+            <PlusIcon className="size-5" aria-hidden="true" /> {t('training.newRoutine')}
+          </AppButton>
+        }
+        lead={t('training.routinesDescription')}
+        title={t('training.heading')}
+      />
 
       <TrainingTabs />
 
@@ -152,12 +153,25 @@ export const ListRoutines = () => {
                     </div>
 
                     <div className={styles.routineActions}>
-                      <Link to={`/workouts/routine/${routine.id}`} className={styles.startLink}>
-                        <PlayIcon aria-hidden="true" /> {t('routine.list.start')}
-                      </Link>
-                      <Link to={`/routines/${routine.id}`} className={styles.viewLink}>
+                      <AppButton
+                        type="link"
+                        colour="primary"
+                        size="sm"
+                        width="auto"
+                        to={`/workouts/routine/${routine.id}`}
+                      >
+                        <PlayIcon className="size-5" aria-hidden="true" />{' '}
+                        {t('routine.list.start')}
+                      </AppButton>
+                      <AppButton
+                        type="link"
+                        colour="secondary"
+                        size="sm"
+                        width="auto"
+                        to={`/routines/${routine.id}`}
+                      >
                         {t('routine.list.view')}
-                      </Link>
+                      </AppButton>
                       <details className={styles.routineMenu}>
                         <summary aria-label={t('routine.list.actionsAria')}>
                           <EllipsisHorizontalIcon aria-hidden="true" />
