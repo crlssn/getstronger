@@ -106,10 +106,15 @@ jobs:
           node-version: '24.19.0'
 
       # Bun installs the dependencies; the scripts themselves still run on Node.
+      # Unlike the other workflows this one cannot use oven-sh/setup-bun: the
+      # action unpacks a .zip, the Playwright image ships no unzip, and the job
+      # runs as a non-root user so it cannot apt-get one. Bun's npm package
+      # carries the binary as a per-platform optional dependency instead, and
+      # --prefix keeps the install inside the writable home directory.
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: '1.4.0'
+        run: |
+          npm install -g --prefix "$HOME/.local" bun@1.4.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install web dependencies
         working-directory: web
