@@ -14,7 +14,7 @@ func TestGenerateTokens(t *testing.T) {
 	userID := "123"
 	now := time.Now().UTC()
 
-	m := jwt.NewManager([]byte("access_key"), []byte("refresh_key"))
+	m := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
 
 	accessToken := m.MustCreateToken(userID, jwt.TokenTypeAccess)
 	require.NotEmpty(t, accessToken)
@@ -50,7 +50,7 @@ func TestGenerateTokens(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, "token parsing: token is unverifiable: error while executing keyfunc: unexpected subject: refresh_token", err.Error())
 
-	m = jwt.NewManager([]byte("access_key2"), []byte("refresh_key2"))
+	m = jwt.NewIssuer([]byte("access_key2"), []byte("refresh_key2"))
 
 	_, err = m.ClaimsFromToken(accessToken, jwt.TokenTypeAccess)
 	require.Error(t, err)

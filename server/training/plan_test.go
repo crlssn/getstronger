@@ -1,6 +1,7 @@
 package training_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
@@ -123,6 +124,17 @@ func TestPlanPositionAfterReplacing(t *testing.T) {
 		t.Parallel()
 		require.Equal(t, 0, (&training.Plan{}).PositionAfterReplacing([]string{first.String()}))
 	})
+}
+
+func TestRejectsRotation(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, training.RejectsRotation(fmt.Errorf("plan create: %w", training.ErrPlanRoutineDeleted)))
+	require.True(t, training.RejectsRotation(training.ErrPlanRequiresRoutine))
+	require.True(t, training.RejectsRotation(training.ErrPlanRoutineDuplicate))
+	require.True(t, training.RejectsRotation(training.ErrPlanRoutineBelongsToAnotherUser))
+	require.False(t, training.RejectsRotation(training.ErrPlanNotActive))
+	require.False(t, training.RejectsRotation(nil))
 }
 
 func TestValidatePlanRotation(t *testing.T) {

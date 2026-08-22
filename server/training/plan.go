@@ -116,3 +116,12 @@ func ValidatePlanRoutine(routine *models.Routine, userID string) error {
 
 	return nil
 }
+
+// RejectsRotation reports whether err is a plan turning down the rotation it
+// was asked to follow, rather than something having gone wrong on the way.
+func RejectsRotation(err error) bool {
+	return errors.Is(err, ErrPlanRequiresRoutine) ||
+		errors.Is(err, ErrPlanRoutineDuplicate) ||
+		errors.Is(err, ErrPlanRoutineBelongsToAnotherUser) ||
+		errors.Is(err, ErrPlanRoutineDeleted)
+}

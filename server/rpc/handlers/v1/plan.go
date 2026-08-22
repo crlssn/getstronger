@@ -34,20 +34,18 @@ type planLibrary struct {
 	plans planRotation
 }
 
-func (h *planLibrary) CreatePlan(ctx context.Context, req *connect.Request[apiv1.CreatePlanRequest]) (*connect.Response[apiv1.CreatePlanResponse], error) {
+func (p *planLibrary) CreatePlan(ctx context.Context, req *connect.Request[apiv1.CreatePlanRequest]) (*connect.Response[apiv1.CreatePlanResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	plan, err := h.plans.CreatePlan(ctx, repo.CreatePlanParams{
+	plan, err := p.plans.CreatePlan(ctx, repo.CreatePlanParams{
 		UserID:     userID,
 		Name:       req.Msg.GetName(),
 		RoutineIDs: req.Msg.GetRoutineIds(),
 	})
 	if err != nil {
 		log.Error("Create plan", zap.Error(err))
-		if errors.Is(err, training.ErrPlanRoutineBelongsToAnotherUser) ||
-			errors.Is(err, training.ErrPlanRoutineDeleted) ||
-			errors.Is(err, training.ErrPlanRoutineDuplicate) || errors.Is(err, sql.ErrNoRows) {
+		if training.RejectsRotation(err) || errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 		}
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -56,11 +54,11 @@ func (h *planLibrary) CreatePlan(ctx context.Context, req *connect.Request[apiv1
 	return connect.NewResponse(&apiv1.CreatePlanResponse{Plan: parser.Plan(plan)}), nil
 }
 
-func (h *planLibrary) GetPlan(ctx context.Context, req *connect.Request[apiv1.GetPlanRequest]) (*connect.Response[apiv1.GetPlanResponse], error) {
+func (p *planLibrary) GetPlan(ctx context.Context, req *connect.Request[apiv1.GetPlanRequest]) (*connect.Response[apiv1.GetPlanResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	plan, err := h.plans.GetPlan(ctx, req.Msg.GetId(), userID)
+	plan, err := p.plans.GetPlan(ctx, req.Msg.GetId(), userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
@@ -72,11 +70,11 @@ func (h *planLibrary) GetPlan(ctx context.Context, req *connect.Request[apiv1.Ge
 	return connect.NewResponse(&apiv1.GetPlanResponse{Plan: parser.Plan(plan)}), nil
 }
 
-func (h *planLibrary) ListPlans(ctx context.Context, _ *connect.Request[apiv1.ListPlansRequest]) (*connect.Response[apiv1.ListPlansResponse], error) {
+func (p *planLibrary) ListPlans(ctx context.Context, _ *connect.Request[apiv1.ListPlansRequest]) (*connect.Response[apiv1.ListPlansResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	plans, err := h.plans.ListPlans(ctx, userID)
+	plans, err := p.plans.ListPlans(ctx, userID)
 	if err != nil {
 		log.Error("List plans", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -85,11 +83,11 @@ func (h *planLibrary) ListPlans(ctx context.Context, _ *connect.Request[apiv1.Li
 	return connect.NewResponse(&apiv1.ListPlansResponse{Plans: parser.PlanSlice(plans)}), nil
 }
 
-func (h *planLibrary) UpdatePlan(ctx context.Context, req *connect.Request[apiv1.UpdatePlanRequest]) (*connect.Response[apiv1.UpdatePlanResponse], error) {
+func (p *planLibrary) UpdatePlan(ctx context.Context, req *connect.Request[apiv1.UpdatePlanRequest]) (*connect.Response[apiv1.UpdatePlanResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	plan, err := h.plans.UpdatePlan(ctx, repo.UpdatePlanParams{
+	plan, err := p.plans.UpdatePlan(ctx, repo.UpdatePlanParams{
 		ID:         req.Msg.GetId(),
 		UserID:     userID,
 		Name:       req.Msg.GetName(),
@@ -100,9 +98,7 @@ func (h *planLibrary) UpdatePlan(ctx context.Context, req *connect.Request[apiv1
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
-		if errors.Is(err, training.ErrPlanRoutineBelongsToAnotherUser) ||
-			errors.Is(err, training.ErrPlanRoutineDeleted) ||
-			errors.Is(err, training.ErrPlanRoutineDuplicate) {
+		if training.RejectsRotation(err) {
 			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 		}
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -111,11 +107,11 @@ func (h *planLibrary) UpdatePlan(ctx context.Context, req *connect.Request[apiv1
 	return connect.NewResponse(&apiv1.UpdatePlanResponse{Plan: parser.Plan(plan)}), nil
 }
 
-func (h *planLibrary) DeletePlan(ctx context.Context, req *connect.Request[apiv1.DeletePlanRequest]) (*connect.Response[apiv1.DeletePlanResponse], error) {
+func (p *planLibrary) DeletePlan(ctx context.Context, req *connect.Request[apiv1.DeletePlanRequest]) (*connect.Response[apiv1.DeletePlanResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.plans.DeletePlan(ctx, req.Msg.GetId(), userID); err != nil {
+	if err := p.plans.DeletePlan(ctx, req.Msg.GetId(), userID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
@@ -126,11 +122,11 @@ func (h *planLibrary) DeletePlan(ctx context.Context, req *connect.Request[apiv1
 	return connect.NewResponse(&apiv1.DeletePlanResponse{}), nil
 }
 
-func (h *planLibrary) SetActivePlan(ctx context.Context, req *connect.Request[apiv1.SetActivePlanRequest]) (*connect.Response[apiv1.SetActivePlanResponse], error) {
+func (p *planLibrary) SetActivePlan(ctx context.Context, req *connect.Request[apiv1.SetActivePlanRequest]) (*connect.Response[apiv1.SetActivePlanResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	plan, err := h.plans.SetActivePlan(ctx, req.Msg.GetId(), userID)
+	plan, err := p.plans.SetActivePlan(ctx, req.Msg.GetId(), userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
@@ -142,11 +138,11 @@ func (h *planLibrary) SetActivePlan(ctx context.Context, req *connect.Request[ap
 	return connect.NewResponse(&apiv1.SetActivePlanResponse{Plan: parser.Plan(plan)}), nil
 }
 
-func (h *planLibrary) PauseActivePlan(ctx context.Context, _ *connect.Request[apiv1.PauseActivePlanRequest]) (*connect.Response[apiv1.PauseActivePlanResponse], error) {
+func (p *planLibrary) PauseActivePlan(ctx context.Context, _ *connect.Request[apiv1.PauseActivePlanRequest]) (*connect.Response[apiv1.PauseActivePlanResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.plans.PauseActivePlan(ctx, userID); err != nil {
+	if err := p.plans.PauseActivePlan(ctx, userID); err != nil {
 		log.Error("Pause active plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -154,11 +150,11 @@ func (h *planLibrary) PauseActivePlan(ctx context.Context, _ *connect.Request[ap
 	return connect.NewResponse(&apiv1.PauseActivePlanResponse{}), nil
 }
 
-func (h *planLibrary) SkipPlanRoutine(ctx context.Context, req *connect.Request[apiv1.SkipPlanRoutineRequest]) (*connect.Response[apiv1.SkipPlanRoutineResponse], error) {
+func (p *planLibrary) SkipPlanRoutine(ctx context.Context, req *connect.Request[apiv1.SkipPlanRoutineRequest]) (*connect.Response[apiv1.SkipPlanRoutineResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	plan, err := h.plans.AdvancePlan(ctx, req.Msg.GetId(), userID, "")
+	plan, err := p.plans.AdvancePlan(ctx, req.Msg.GetId(), userID, "")
 	if err != nil {
 		log.Error("Skip plan routine", zap.Error(err))
 		if errors.Is(err, sql.ErrNoRows) {

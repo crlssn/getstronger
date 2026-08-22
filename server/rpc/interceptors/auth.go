@@ -21,7 +21,7 @@ import (
 
 var _ connect.Interceptor = (*Auth)(nil)
 
-func NewAuth(log *zap.Logger, m *jwt.Manager) connect.Interceptor {
+func NewAuth(log *zap.Logger, m *jwt.Issuer) connect.Interceptor {
 	a := &Auth{
 		log:     log,
 		jwt:     m,
@@ -33,7 +33,7 @@ func NewAuth(log *zap.Logger, m *jwt.Manager) connect.Interceptor {
 
 type Auth struct {
 	log     *zap.Logger
-	jwt     *jwt.Manager
+	jwt     *jwt.Issuer
 	methods map[string]bool
 }
 
@@ -170,7 +170,7 @@ func (a *Auth) ClaimsFromHeader(header http.Header) (*jwt.Claims, error) {
 		return nil, fmt.Errorf("claims from token: %w", err)
 	}
 
-	if err = a.jwt.Validator.Validate(claims); err != nil {
+	if err = a.jwt.ValidateClaims(claims); err != nil {
 		return nil, fmt.Errorf("validate claims: %w", err)
 	}
 

@@ -35,7 +35,7 @@ import (
 type authSuite struct {
 	suite.Suite
 
-	jwt     *jwt.Manager
+	jwt     *jwt.Issuer
 	handler apiv1connect.AuthServiceHandler
 
 	factory   *factory.Factory
@@ -59,7 +59,7 @@ func (s *authSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
-	s.jwt = jwt.NewManager([]byte("access-key"), []byte("refresh-key"))
+	s.jwt = jwt.NewIssuer([]byte("access-key"), []byte("refresh-key"))
 	s.handler = handlers.NewAuthHandler(handlers.AuthHandlerParams{
 		JWT:     s.jwt,
 		Repo:    repo.New(s.container.DB),

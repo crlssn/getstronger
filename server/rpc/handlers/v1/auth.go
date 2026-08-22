@@ -28,7 +28,7 @@ import (
 var _ apiv1connect.AuthServiceHandler = (*authHandler)(nil)
 
 type authHandler struct {
-	jwt     *jwt.Manager
+	jwt     *jwt.Issuer
 	repo    *repo.Repo
 	email   email.Email
 	cookies *cookies.Cookies
@@ -37,7 +37,7 @@ type authHandler struct {
 type AuthHandlerParams struct {
 	fx.In
 
-	JWT     *jwt.Manager
+	JWT     *jwt.Issuer
 	Repo    *repo.Repo
 	Email   email.Email
 	Cookies *cookies.Cookies
@@ -202,7 +202,7 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
-	if err = h.jwt.Validator.Validate(claims); err != nil {
+	if err = h.jwt.ValidateClaims(claims); err != nil {
 		log.Error("Validate refresh token claims", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}

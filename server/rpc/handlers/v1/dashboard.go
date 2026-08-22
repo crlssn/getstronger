@@ -39,11 +39,11 @@ type dashboard struct {
 	sources dashboardSources
 }
 
-func (h *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
+func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	routines, err := h.sources.ListRoutines(
+	routines, err := d.sources.ListRoutines(
 		ctx,
 		repo.ListRoutinesLoadExercises(),
 		repo.ListRoutinesWithLimit(dashboardListLimit),
@@ -55,7 +55,7 @@ func (h *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	activePlan, err := h.sources.GetActivePlan(ctx, userID)
+	activePlan, err := d.sources.GetActivePlan(ctx, userID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Error("Get active plan for dashboard", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -63,7 +63,7 @@ func (h *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 
 	nextRoutine := training.NextRoutine(activePlan, routines, req.Msg.GetPreferredRoutineId())
 
-	workouts, err := h.sources.ListWorkouts(
+	workouts, err := d.sources.ListWorkouts(
 		ctx,
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
@@ -77,7 +77,7 @@ func (h *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBests, err := h.sources.GetPersonalBests(ctx, userID)
+	personalBests, err := d.sources.GetPersonalBests(ctx, userID)
 	if err != nil {
 		log.Error("Get personal bests for dashboard", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
