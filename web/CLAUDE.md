@@ -12,6 +12,16 @@ To see the app rather than reason about its markup — screenshots, accessibilit
 and tap-target measurements, visual diffs — follow
 `.claude/skills/design-review/SKILL.md`.
 
+Any change that alters what a page looks like ends with a screenshot of the
+changed page, shared in the reply rather than only written to disk, so the
+change can be judged by looking at it. Photograph the affected pages with
+`mise run screenshots:page <pattern>` once the change is in place, and attach
+the resulting image; when the change was meant to move an existing page, attach
+the highlighted difference from `mise run screenshots:diff` alongside it. A
+change with no visible effect — refactors, state, tests, tooling — needs no
+screenshot, and neither does one whose page cannot be reached without a
+backend the worktree cannot start; say so instead of skipping silently.
+
 ## State
 
 Zustand, with module-level store singletons so non-component code
