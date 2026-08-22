@@ -86,6 +86,7 @@ describe('routes', () => {
     ['logout', 'auth'],
     ['quick-workout', 'auth'],
     ['landing', 'landing'],
+    ['privacy', 'public'],
     ['not-found', 'public'],
   ])('%s is reachable by %s', (name, access) => {
     expect(routeByName(name)?.access).toBe(access)
@@ -105,6 +106,7 @@ describe('routes', () => {
         'landing',
         'login',
         'not-found',
+        'privacy',
         'reset-password',
         'signup',
         'verify-email',

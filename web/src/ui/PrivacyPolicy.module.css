@@ -1,0 +1,37 @@
+@reference '../assets/base.css';
+
+.policy {
+  @apply mx-auto max-w-3xl space-y-5 pb-8;
+}
+
+.policy header h1 {
+  @apply px-1 text-display font-bold text-text;
+}
+
+.policy header p {
+  @apply mt-1 px-1 text-sm text-text-subtle;
+}
+
+.section {
+  @apply card space-y-2 p-5;
+}
+
+.section h2 {
+  @apply text-title font-semibold text-text;
+}
+
+.section p {
+  @apply text-pretty text-sm leading-relaxed text-text-muted;
+}
+
+.section ul {
+  @apply space-y-2;
+}
+
+.section li {
+  @apply text-pretty pl-4 text-sm leading-relaxed text-text-muted;
+
+  /* A marker rather than list-disc: the bullet stays on the first line of a
+     wrapped item without the indent list-inside collapses. */
+  @apply relative before:absolute before:left-0 before:content-['•'];
+}

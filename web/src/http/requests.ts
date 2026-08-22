@@ -86,6 +86,8 @@ import {
   type Workout,
 } from '@/proto/api/v1/workout_service_pb'
 import {
+  DeleteAccountRequestSchema,
+  type DeleteAccountResponse,
   LoginRequestSchema,
   type LoginResponse,
   LogoutRequestSchema,
@@ -208,6 +210,17 @@ const redirectToPendingVerification = async (email: string): Promise<void> => {
 export const logout = async (): Promise<LogoutResponse | void> => {
   const req = create(LogoutRequestSchema, {})
   return tryCatch(() => authClient.logout(req))
+}
+
+/**
+ * Deletes the signed-in account, irreversibly.
+ *
+ * Errors are rethrown rather than alerted: the only one the caller expects is
+ * a wrong password, which belongs beside the field rather than in a toast.
+ */
+export const deleteAccount = async (password: string): Promise<DeleteAccountResponse | void> => {
+  const req = create(DeleteAccountRequestSchema, { password })
+  return tryCatch(() => authClient.deleteAccount(req), { rethrow: true })
 }
 
 export const refreshToken = async (): Promise<RefreshTokenResponse | void> => {

@@ -54,6 +54,9 @@ const (
 	// AuthServiceUpdatePasswordProcedure is the fully-qualified name of the AuthService's
 	// UpdatePassword RPC.
 	AuthServiceUpdatePasswordProcedure = "/api.v1.AuthService/UpdatePassword"
+	// AuthServiceDeleteAccountProcedure is the fully-qualified name of the AuthService's DeleteAccount
+	// RPC.
+	AuthServiceDeleteAccountProcedure = "/api.v1.AuthService/DeleteAccount"
 )
 
 // AuthServiceClient is a client for the api.v1.AuthService service.
@@ -66,6 +69,7 @@ type AuthServiceClient interface {
 	ResendVerificationEmail(context.Context, *connect.Request[v1.ResendVerificationEmailRequest]) (*connect.Response[v1.ResendVerificationEmailResponse], error)
 	ResetPassword(context.Context, *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error)
 	UpdatePassword(context.Context, *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error)
+	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 }
 
 // NewAuthServiceClient constructs a client for the api.v1.AuthService service. By default, it uses
@@ -127,6 +131,12 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceMethods.ByName("UpdatePassword")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteAccount: connect.NewClient[v1.DeleteAccountRequest, v1.DeleteAccountResponse](
+			httpClient,
+			baseURL+AuthServiceDeleteAccountProcedure,
+			connect.WithSchema(authServiceMethods.ByName("DeleteAccount")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -140,6 +150,7 @@ type authServiceClient struct {
 	resendVerificationEmail *connect.Client[v1.ResendVerificationEmailRequest, v1.ResendVerificationEmailResponse]
 	resetPassword           *connect.Client[v1.ResetPasswordRequest, v1.ResetPasswordResponse]
 	updatePassword          *connect.Client[v1.UpdatePasswordRequest, v1.UpdatePasswordResponse]
+	deleteAccount           *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
 }
 
 // Signup calls api.v1.AuthService.Signup.
@@ -182,6 +193,11 @@ func (c *authServiceClient) UpdatePassword(ctx context.Context, req *connect.Req
 	return c.updatePassword.CallUnary(ctx, req)
 }
 
+// DeleteAccount calls api.v1.AuthService.DeleteAccount.
+func (c *authServiceClient) DeleteAccount(ctx context.Context, req *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
+	return c.deleteAccount.CallUnary(ctx, req)
+}
+
 // AuthServiceHandler is an implementation of the api.v1.AuthService service.
 type AuthServiceHandler interface {
 	Signup(context.Context, *connect.Request[v1.SignupRequest]) (*connect.Response[v1.SignupResponse], error)
@@ -192,6 +208,7 @@ type AuthServiceHandler interface {
 	ResendVerificationEmail(context.Context, *connect.Request[v1.ResendVerificationEmailRequest]) (*connect.Response[v1.ResendVerificationEmailResponse], error)
 	ResetPassword(context.Context, *connect.Request[v1.ResetPasswordRequest]) (*connect.Response[v1.ResetPasswordResponse], error)
 	UpdatePassword(context.Context, *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error)
+	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -249,6 +266,12 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceMethods.ByName("UpdatePassword")),
 		connect.WithHandlerOptions(opts...),
 	)
+	authServiceDeleteAccountHandler := connect.NewUnaryHandler(
+		AuthServiceDeleteAccountProcedure,
+		svc.DeleteAccount,
+		connect.WithSchema(authServiceMethods.ByName("DeleteAccount")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthServiceSignupProcedure:
@@ -267,6 +290,8 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 			authServiceResetPasswordHandler.ServeHTTP(w, r)
 		case AuthServiceUpdatePasswordProcedure:
 			authServiceUpdatePasswordHandler.ServeHTTP(w, r)
+		case AuthServiceDeleteAccountProcedure:
+			authServiceDeleteAccountHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -306,4 +331,8 @@ func (UnimplementedAuthServiceHandler) ResetPassword(context.Context, *connect.R
 
 func (UnimplementedAuthServiceHandler) UpdatePassword(context.Context, *connect.Request[v1.UpdatePasswordRequest]) (*connect.Response[v1.UpdatePasswordResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.AuthService.UpdatePassword is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.AuthService.DeleteAccount is not implemented"))
 }

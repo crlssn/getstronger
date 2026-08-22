@@ -13,9 +13,13 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   updateUserAutofillSets: vi.fn(),
   updateUserUsername: vi.fn(),
   updateUserName: vi.fn(),
+  deleteAccount: vi.fn(),
 }))
 
+import { Code, ConnectError } from '@connectrpc/connect'
+
 import * as requests from '@/http/requests'
+import { DeleteAccountResponseSchema } from '@/proto/api/v1/auth_service_pb'
 import { GetDashboardResponseSchema } from '@/proto/api/v1/routine_service_pb'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import {
@@ -41,6 +45,7 @@ const mocked = {
   updateUserAutofillSets: vi.mocked(requests.updateUserAutofillSets),
   updateUserUsername: vi.mocked(requests.updateUserUsername),
   updateUserName: vi.mocked(requests.updateUserName),
+  deleteAccount: vi.mocked(requests.deleteAccount),
 }
 
 const me = 'user-me'
@@ -81,6 +86,7 @@ describe('ProfileView', () => {
       create(UpdateUserAutofillSetsResponseSchema, updated()),
     )
     mocked.updateUserUsername.mockResolvedValue(create(UpdateUserUsernameResponseSchema, updated()))
+    mocked.deleteAccount.mockResolvedValue(create(DeleteAccountResponseSchema, {}))
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
     vi.spyOn(useNotificationStore.getState(), 'refreshUnreadNotifications').mockResolvedValue()
     useAuthStore.setState({ userId: me })
@@ -297,5 +303,65 @@ describe('ProfileView', () => {
     render()
 
     expect(await screen.findByRole('link', { name: /Log out/ })).toHaveAttribute('href', '/logout')
+  })
+
+  // Both app stores require the account to be deletable from inside the app.
+  describe('deleting the account', () => {
+    const open = async () => {
+      render()
+      await loaded()
+      await userEvent.click(
+        within(screen.getByRole('region', { name: 'Danger zone' })).getByRole('button', {
+          name: 'Delete account',
+        }),
+      )
+
+      return screen.getByLabelText('Confirm with your password')
+    }
+
+    test('is reachable from the profile', async () => {
+      render()
+
+      expect(await screen.findByRole('link', { name: /Privacy policy/ })).toHaveAttribute(
+        'href',
+        '/privacy',
+      )
+    })
+
+    test('asks for the password before erasing anything', async () => {
+      await open()
+
+      expect(screen.getByRole('dialog')).toHaveTextContent('cannot be undone')
+      expect(mocked.deleteAccount).not.toHaveBeenCalled()
+    })
+
+    test('deletes the account and leaves for the login screen', async () => {
+      const field = await open()
+      await userEvent.type(field, 'password')
+      await userEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+
+      await waitFor(() => expect(mocked.deleteAccount).toHaveBeenCalledWith('password'))
+      await waitFor(() => expect(useAuthStore.getState().accessToken).toBe(''))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+      // The toast outlives the navigation on its own clock, so it is still
+      // readable on the login screen the app leaves for.
+      expect(useToastStore.getState().toast).toMatchObject({
+        message: 'Your account has been deleted.',
+        type: 'success',
+      })
+    })
+
+    // The password was only ever typed into the sheet, so a rejection has to
+    // land there rather than in a toast behind it.
+    test('keeps the sheet open when the password is wrong', async () => {
+      mocked.deleteAccount.mockRejectedValue(new ConnectError('nope', Code.InvalidArgument))
+      const field = await open()
+      await userEvent.type(field, 'wrong')
+      await userEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('That password is not correct.')
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(useAuthStore.getState().userId).toBe(me)
+    })
   })
 })

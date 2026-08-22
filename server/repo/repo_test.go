@@ -1382,6 +1382,108 @@ func (s *repoSuite) TestDeleteWorkout() {
 	}
 }
 
+func (s *repoSuite) TestDeleteUser() {
+	ctx := context.Background()
+	db := bob.NewDB(s.container.DB)
+
+	auth := s.factory.NewAuth()
+	user := s.factory.NewUser(factory.UserAuthID(auth.ID))
+	other := s.factory.NewUser()
+
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	s.factory.AddRoutineExercise(routine, exercise)
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+	set := s.factory.NewSet(factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(exercise.ID))
+
+	// Someone else's comment on the account's workout goes with the workout.
+	comment := s.factory.NewWorkoutComment(
+		factory.WorkoutCommentUserID(other.ID),
+		factory.WorkoutCommentWorkoutID(workout.ID),
+	)
+
+	plan, err := s.repo.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Plan",
+		RoutineIDs: []string{routine.ID.String()},
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: user.ID.String(),
+		FolloweeID: other.ID.String(),
+	}))
+
+	own := s.factory.NewNotification(factory.NotificationUserID(user.ID))
+	// The follow notification sitting in someone else's list names the leaving
+	// account as its actor, and would otherwise keep their badge lit forever.
+	aboutUser := s.factory.NewNotification(
+		factory.NotificationUserID(other.ID),
+		factory.NotificationPayload(notification.Payload{ActorID: user.ID.String()}),
+	)
+	unrelated := s.factory.NewNotification(factory.NotificationUserID(other.ID))
+
+	s.Require().NoError(s.repo.DeleteUser(ctx, user.ID.String()))
+
+	gone := []struct {
+		name   string
+		exists func() (bool, error)
+	}{
+		{"auth", func() (bool, error) {
+			return models.Auths.Query(models.SelectWhere.Auths.ID.EQ(auth.ID)).Exists(ctx, db)
+		}},
+		{"user", func() (bool, error) {
+			return models.Users.Query(models.SelectWhere.Users.ID.EQ(user.ID)).Exists(ctx, db)
+		}},
+		{"routine", func() (bool, error) {
+			return models.Routines.Query(models.SelectWhere.Routines.ID.EQ(routine.ID)).Exists(ctx, db)
+		}},
+		{"exercise", func() (bool, error) {
+			return models.Exercises.Query(models.SelectWhere.Exercises.ID.EQ(exercise.ID)).Exists(ctx, db)
+		}},
+		{"workout", func() (bool, error) {
+			return models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workout.ID)).Exists(ctx, db)
+		}},
+		{"set", func() (bool, error) {
+			return models.Sets.Query(models.SelectWhere.Sets.ID.EQ(set.ID)).Exists(ctx, db)
+		}},
+		{"comment", func() (bool, error) {
+			return models.WorkoutComments.Query(models.SelectWhere.WorkoutComments.ID.EQ(comment.ID)).Exists(ctx, db)
+		}},
+		{"own notification", func() (bool, error) {
+			return models.Notifications.Query(models.SelectWhere.Notifications.ID.EQ(own.ID)).Exists(ctx, db)
+		}},
+		{"notification about the user", func() (bool, error) {
+			return models.Notifications.Query(models.SelectWhere.Notifications.ID.EQ(aboutUser.ID)).Exists(ctx, db)
+		}},
+		{"follow", func() (bool, error) {
+			return models.Followers.Query(models.SelectWhere.Followers.FollowerID.EQ(user.ID)).Exists(ctx, db)
+		}},
+	}
+
+	for _, g := range gone {
+		exists, errExists := g.exists()
+		s.Require().NoError(errExists, g.name)
+		s.Require().False(exists, g.name)
+	}
+
+	exists, err := models.Notifications.Query(models.SelectWhere.Notifications.ID.EQ(unrelated.ID)).Exists(ctx, db)
+	s.Require().NoError(err)
+	s.Require().True(exists)
+
+	exists, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(other.ID)).Exists(ctx, db)
+	s.Require().NoError(err)
+	s.Require().True(exists)
+
+	_, err = s.repo.GetPlan(ctx, plan.ID, user.ID.String())
+	s.Require().ErrorIs(err, sql.ErrNoRows)
+}
+
+func (s *repoSuite) TestDeleteUserNotFound() {
+	err := s.repo.DeleteUser(context.Background(), uuid.NewString())
+	s.Require().ErrorIs(err, sql.ErrNoRows)
+}
+
 func (s *repoSuite) TestUpdateWorkoutSets() {
 	type expected struct {
 		err error

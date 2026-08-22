@@ -243,6 +243,47 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.Logou
 	return res, nil
 }
 
+// DeleteAccount erases the account and everything it owns, irreversibly.
+//
+// The password is re-entered rather than trusted from the access token: an
+// unlocked phone is enough to reach this screen, and the deletion cannot be
+// undone.
+func (h *authHandler) DeleteAccount(ctx context.Context, req *connect.Request[apiv1.DeleteAccountRequest]) (*connect.Response[apiv1.DeleteAccountResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	user, err := h.repo.GetUser(ctx, repo.GetUserWithID(userID), repo.GetUserLoadAuth())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("User not found for account deletion")
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+
+		log.Error("Fetch user for account deletion", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	// InvalidArgument rather than Unauthenticated: the access token is fine, and
+	// the web client treats Unauthenticated as a dead session and logs out —
+	// which would answer a mistyped password by ending the session.
+	if err = h.repo.CompareEmailAndPassword(ctx, user.R.Auth.Email, req.Msg.GetPassword()); err != nil {
+		log.Warn("Invalid password for account deletion", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
+	}
+
+	if err = h.repo.DeleteUser(ctx, userID); err != nil {
+		log.Error("Delete account", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	res := connect.NewResponse(&apiv1.DeleteAccountResponse{})
+	cookie := h.cookies.ExpiredRefreshToken()
+	res.Header().Set("Set-Cookie", cookie.String())
+
+	log.Info("Account deleted")
+	return res, nil
+}
+
 func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv1.VerifyEmailRequest]) (*connect.Response[apiv1.VerifyEmailResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 

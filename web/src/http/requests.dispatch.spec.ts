@@ -56,6 +56,7 @@ const page = new Uint8Array(0)
 const cases: Array<[string, () => Promise<unknown>]> = [
   ['auth.login', () => requests.login('a@example.com', 'pw')],
   ['auth.logout', () => requests.logout()],
+  ['auth.deleteAccount', () => requests.deleteAccount('pw')],
   ['auth.refreshToken', () => requests.refreshToken()],
   ['auth.signup', () => requests.signup({} as never)],
   ['auth.verifyEmail', () => requests.verifyEmail('token')],

@@ -430,6 +430,107 @@ func (s *authSuite) TestLogout() {
 	}
 }
 
+func (s *authSuite) TestDeleteAccount() {
+	type expected struct {
+		err error
+	}
+
+	type test struct {
+		name     string
+		password string
+		init     func(t test) (context.Context, *models.User)
+		expected expected
+	}
+
+	const password = "password"
+
+	newAccount := func() *models.User {
+		auth := s.factory.NewAuth(factory.AuthPassword(password))
+		return s.factory.NewUser(factory.UserAuthID(auth.ID))
+	}
+
+	tests := []test{
+		{
+			name:     "ok_account_deleted",
+			password: password,
+			init: func(_ test) (context.Context, *models.User) {
+				user := newAccount()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID.String()), user
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:     "err_wrong_password",
+			password: "not-the-password",
+			init: func(_ test) (context.Context, *models.User) {
+				user := newAccount()
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID.String()), user
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidCredentials),
+			},
+		},
+		{
+			name:     "err_user_not_found",
+			password: password,
+			init: func(_ test) (context.Context, *models.User) {
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, uuid.NewString()), nil
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeNotFound, nil),
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx, user := t.init(t)
+
+			res, err := s.handler.DeleteAccount(ctx, &connect.Request[v1.DeleteAccountRequest]{
+				Msg: &v1.DeleteAccountRequest{Password: t.password},
+			})
+			if t.expected.err != nil {
+				s.Require().Nil(res)
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.err.Error(), err.Error())
+
+				if user != nil {
+					// A rejected request must leave the account exactly as it was.
+					exists, existsErr := models.Users.Query(models.SelectWhere.Users.ID.EQ(user.ID)).
+						Exists(ctx, bob.NewDB(s.container.DB))
+					s.Require().NoError(existsErr)
+					s.Require().True(exists)
+				}
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+
+			// The session dies with the account, so the browser is told to drop
+			// the refresh cookie just as it is on logout.
+			cookie := res.Header().Get("Set-Cookie")
+			s.Require().Contains(cookie, "HttpOnly")
+			s.Require().Contains(cookie, "Max-Age=0")
+
+			exists, existsErr := models.Users.Query(models.SelectWhere.Users.ID.EQ(user.ID)).
+				Exists(ctx, bob.NewDB(s.container.DB))
+			s.Require().NoError(existsErr)
+			s.Require().False(exists)
+
+			exists, existsErr = models.Auths.Query(models.SelectWhere.Auths.ID.EQ(user.AuthID)).
+				Exists(ctx, bob.NewDB(s.container.DB))
+			s.Require().NoError(existsErr)
+			s.Require().False(exists)
+		})
+	}
+}
+
 func (s *authSuite) TestVerifyEmail() {
 	type expected struct {
 		err error

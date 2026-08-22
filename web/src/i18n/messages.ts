@@ -571,6 +571,20 @@ export const en = {
     trend: 'Trend',
     actionsLabel: 'Profile actions',
     sectionsAria: 'Profile sections',
+    privacyPolicy: 'Privacy policy',
+    privacyPolicyBody: 'What we store, and why',
+    dangerZone: 'Danger zone',
+    deleteAccount: 'Delete account',
+    deleteAccountBody: 'Erase your account and everything in it',
+    deleteAccountTitle: 'Delete your account?',
+    deleteAccountWarning:
+      'Your workouts, routines, plans, followers and account details are erased for good. This cannot be undone.',
+    deleteAccountPassword: 'Confirm with your password',
+    deleteAccountConfirm: 'Delete my account',
+    deleteAccountDeleting: 'Deleting…',
+    deleteAccountWrongPassword: 'That password is not correct.',
+    deleteAccountFailed: 'Could not delete your account. Please try again.',
+    accountDeleted: 'Your account has been deleted.',
   },
   streak: {
     eyebrow: 'Weekly streak',
@@ -611,6 +625,41 @@ export const en = {
     title: 'Page not found',
     body: 'Sorry, we couldn’t find the page you’re looking for.',
   },
+  privacy: {
+    heading: 'Privacy policy',
+    updated: 'Last updated 22 August 2026.',
+    intro:
+      '{brand} is a training log. This explains what it stores about you, why, and how to get rid of it.',
+    collectTitle: 'What we store',
+    collectAccount:
+      'Your account: email address, name, username and password (hashed, never readable).',
+    collectTraining:
+      'Your training: workouts, sets, routines, plans, exercises, notes, comments and who you follow.',
+    collectUsage:
+      'How the app is used: pages opened and errors hit, tied to your account id so a fault can be traced back to a real session.',
+    useTitle: 'Why we store it',
+    useBody:
+      'To run the app and show you your own history, to keep your account secure, and to find out what is broken. Your data is never sold, and never used for advertising.',
+    shareTitle: 'Who else sees it',
+    shareFollowers:
+      'Other members see what your public profile shows: your name, username, workouts and personal bests.',
+    shareProcessors:
+      'Two suppliers process data on our behalf: Scaleway hosts the servers and the database in France, and PostHog receives the usage and error events in the EU.',
+    retentionTitle: 'How long we keep it',
+    retentionBody:
+      'Until you delete your account. Deleting it erases your account and everything it owns from the database immediately; backups age out within 30 days.',
+    rightsTitle: 'Your choices',
+    rightsEdit: 'Change your name, username and preferences at any time under Me.',
+    rightsDelete:
+      'Delete your account under Me → Delete account. There is no waiting period and no way back.',
+    rightsContact: 'Ask for a copy of your data, or anything else about this policy, at {email}.',
+    storageTitle: 'Cookies and on-device storage',
+    storageBody:
+      'A session cookie keeps you signed in. The app also keeps unsaved workouts and preferences on your device so it works without a connection; signing out or deleting your account clears them.',
+    changesTitle: 'Changes',
+    changesBody:
+      'If this policy changes, the date above changes with it. Material changes are announced in the app.',
+  },
   pages: {
     home: 'Home',
     notifications: 'Notifications',
@@ -636,6 +685,7 @@ export const en = {
     verifyEmail: 'Verify your email',
     resetPassword: 'Reset password',
     chooseNewPassword: 'Choose a new password',
+    privacy: 'Privacy policy',
     notFound: 'Not found',
   },
   date: { justNow: 'Just now' },
@@ -1214,6 +1264,20 @@ export const sv = {
     trend: 'Trend',
     actionsLabel: 'Profilåtgärder',
     sectionsAria: 'Profilsektioner',
+    privacyPolicy: 'Integritetspolicy',
+    privacyPolicyBody: 'Vad vi lagrar, och varför',
+    dangerZone: 'Riskzon',
+    deleteAccount: 'Ta bort konto',
+    deleteAccountBody: 'Radera ditt konto och allt i det',
+    deleteAccountTitle: 'Ta bort ditt konto?',
+    deleteAccountWarning:
+      'Dina träningspass, pass, planer, följare och kontouppgifter raderas för gott. Det går inte att ångra.',
+    deleteAccountPassword: 'Bekräfta med ditt lösenord',
+    deleteAccountConfirm: 'Ta bort mitt konto',
+    deleteAccountDeleting: 'Tar bort…',
+    deleteAccountWrongPassword: 'Lösenordet stämmer inte.',
+    deleteAccountFailed: 'Det gick inte att ta bort ditt konto. Försök igen.',
+    accountDeleted: 'Ditt konto har tagits bort.',
   },
   streak: {
     eyebrow: 'Veckostreak',
@@ -1254,6 +1318,41 @@ export const sv = {
     title: 'Sidan hittades inte',
     body: 'Tyvärr kunde vi inte hitta sidan du letar efter.',
   },
+  privacy: {
+    heading: 'Integritetspolicy',
+    updated: 'Senast uppdaterad 22 augusti 2026.',
+    intro:
+      '{brand} är en träningsdagbok. Här står vad som lagras om dig, varför, och hur du blir av med det.',
+    collectTitle: 'Vad vi lagrar',
+    collectAccount:
+      'Ditt konto: e-postadress, namn, användarnamn och lösenord (hashat, aldrig läsbart).',
+    collectTraining:
+      'Din träning: träningspass, set, pass, planer, övningar, anteckningar, kommentarer och vilka du följer.',
+    collectUsage:
+      'Hur appen används: öppnade sidor och fel som uppstår, kopplat till ditt konto-id så att ett fel går att spåra till en verklig session.',
+    useTitle: 'Varför vi lagrar det',
+    useBody:
+      'För att driva appen och visa dig din egen historik, för att hålla ditt konto säkert, och för att ta reda på vad som är trasigt. Dina uppgifter säljs aldrig och används aldrig för annonsering.',
+    shareTitle: 'Vem mer ser det',
+    shareFollowers:
+      'Andra medlemmar ser det din offentliga profil visar: ditt namn, användarnamn, träningspass och personliga rekord.',
+    shareProcessors:
+      'Två leverantörer behandlar uppgifter åt oss: Scaleway driver servrarna och databasen i Frankrike, och PostHog tar emot användnings- och felhändelser inom EU.',
+    retentionTitle: 'Hur länge vi sparar det',
+    retentionBody:
+      'Tills du tar bort ditt konto. Då raderas kontot och allt det äger ur databasen direkt; säkerhetskopior faller bort inom 30 dagar.',
+    rightsTitle: 'Dina val',
+    rightsEdit: 'Ändra namn, användarnamn och inställningar när du vill under Jag.',
+    rightsDelete:
+      'Ta bort ditt konto under Jag → Ta bort konto. Ingen väntetid, och ingen väg tillbaka.',
+    rightsContact: 'Be om en kopia av dina uppgifter, eller fråga om policyn, på {email}.',
+    storageTitle: 'Kakor och lagring på enheten',
+    storageBody:
+      'En sessionskaka håller dig inloggad. Appen sparar också osparade träningspass och inställningar på din enhet så att den fungerar utan uppkoppling; att logga ut eller ta bort kontot rensar dem.',
+    changesTitle: 'Ändringar',
+    changesBody:
+      'Om policyn ändras ändras datumet ovan med den. Väsentliga ändringar meddelas i appen.',
+  },
   pages: {
     home: 'Hem',
     notifications: 'Aviseringar',
@@ -1279,6 +1378,7 @@ export const sv = {
     verifyEmail: 'Verifiera din e-postadress',
     resetPassword: 'Återställ lösenord',
     chooseNewPassword: 'Välj ett nytt lösenord',
+    privacy: 'Integritetspolicy',
     notFound: 'Sidan hittades inte',
   },
   date: { justNow: 'Nyss' },
