@@ -149,16 +149,18 @@ export const WorkoutSetGrid = ({
               )
             })}
 
-            {/* eslint-disable-next-line no-restricted-syntax -- A 24px badge
-                overhanging the row's corner. At AppIconButton's 44px it would
-                cover the right-hand edge of the field beside it and take taps
-                meant for typing, so this one stays under the floor on purpose.
-                Reaching it is a hover or a focus, which is a known gap on a
-                phone and a redesign rather than a restyle. */}
+            {/* eslint-disable-next-line no-restricted-syntax -- A 44px target
+                that shows as a 24px disc in the row's corner. AppIconButton
+                fills its whole square on hover, which here would put a fill
+                over the field the disc sits on. */}
             <button
               type="button"
               className={styles.removeSet}
               aria-label={t('workout.removeSet', { number: index + 1 })}
+              // The row's own focus is what reveals this on a phone, so the
+              // press must not take it away: blurring the field first would
+              // hide the button out from under the finger already on it.
+              onMouseDown={(event) => event.preventDefault()}
               onClick={() => onRemove(index)}
             >
               <MinusIcon aria-hidden="true" />

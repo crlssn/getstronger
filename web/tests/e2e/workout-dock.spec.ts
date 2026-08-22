@@ -144,6 +144,48 @@ test.describe('the workout dock', () => {
     }
   })
 
+  // The row is its own sideways scroller, so anything hanging off its edge is
+  // clipped: the remove control used to land as a grey half-circle over the
+  // corner of the field beside it.
+  test('draws the remove control inside its row, under a fingertip', async ({ page }) => {
+    const remove = page.getByRole('button', { name: 'Remove set 1' })
+    const row = remove.locator('xpath=..')
+    await row.hover()
+
+    const rowBox = await boxOf(row)
+    const removeBox = await boxOf(remove)
+
+    expect(removeBox.x).toBeGreaterThanOrEqual(rowBox.x)
+    expect(removeBox.y).toBeGreaterThanOrEqual(rowBox.y)
+    expect(removeBox.x + removeBox.width).toBeLessThanOrEqual(rowBox.x + rowBox.width)
+    expect(removeBox.y + removeBox.height).toBeLessThanOrEqual(rowBox.y + rowBox.height)
+
+    expect(removeBox.width).toBeGreaterThanOrEqual(44)
+    expect(removeBox.height).toBeGreaterThanOrEqual(44)
+  })
+
+  // A phone has no hover, so the row being typed into is what reveals its
+  // remove control. Until then the control takes no taps: it sits over the
+  // corner of a field, and an invisible box there deletes a set silently.
+  test('reveals the remove control when the row is typed into, not before', async ({ page }) => {
+    await page.mouse.move(0, 0)
+    const remove = page.getByRole('button', { name: 'Remove set 1' })
+    const shown = () =>
+      remove.evaluate((node) => {
+        const style = getComputedStyle(node)
+        return `${style.opacity} ${style.pointerEvents}`
+      })
+
+    expect(await shown()).toBe('0 none')
+
+    const exercise = await openExerciseName(page)
+    await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).focus()
+
+    // Polled: the reveal is a fade, so the frame after focus is still on its
+    // way to opaque.
+    await expect.poll(shown).toBe('1 auto')
+  })
+
   // The row's spare width belongs to the fields being typed into, not to the
   // read-only previous column: no dead space in the middle of the row.
   test('lets the measurement inputs take the row’s spare width', async ({ page }) => {
