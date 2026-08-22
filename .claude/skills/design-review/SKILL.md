@@ -23,7 +23,9 @@ description: Look at the GetStronger app instead of reasoning about its markup �
   reached every page it should and no page it should not.
 - Report a visual change by sharing the image, not by describing it. Attach the
   screenshot of each changed page — and the highlighted difference when one
-  exists — to the reply, so the change is judged by looking at it.
+  exists — to the reply, so the change is judged by looking at it. That reply is
+  also where a pull request's before/after screenshots go, since they cannot be
+  uploaded to a PR body from the command line.
 - Add a page, or a state that is only reachable by interacting with a page, by
   adding an entry to `web/tests/screenshots/catalogue.ts`. Creating an exercise,
   a routine, a plan, or a workout is photographed as a flow in
