@@ -9,7 +9,8 @@ running app uses the new code.
 ## Where code goes
 
 A package per bounded context owns that context's vocabulary and its rules.
-None of them knows about SQL, HTTP, RPC or messaging:
+None of them knows about SQL, HTTP, RPC or messaging, and `depguard` fails the
+build if one starts to — the deny list in `.golangci.yml` says why for each:
 
 | Package             | Owns                                                           |
 | ------------------- | -------------------------------------------------------------- |
@@ -37,6 +38,13 @@ holds no knowledge of its own.
 
 Name types after the responsibility they carry. `service`, `manager`, `helper`
 and `utils` are not responsibilities and do not belong in a name.
+
+An import the guard rejects is usually a rule in the wrong package rather than a
+rule that needs an exception. A decision that needs a query wants the query run
+by the caller and the result passed in; one that needs to log wants to return an
+error the terminal layer logs once. Widen the deny list when a context grows a
+new neighbour it should not know about; narrow it only with a reason in the
+commit message.
 
 ## Depending on the store
 
