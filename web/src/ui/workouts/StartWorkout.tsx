@@ -51,13 +51,14 @@ import {
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppIconButton } from '@/ui/components/AppIconButton'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
+import { AppTextarea } from '@/ui/components/AppTextarea'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
 import { WorkoutRestBanner } from '@/ui/workouts/WorkoutRestBanner'
 import { WorkoutSetGrid } from '@/ui/workouts/WorkoutSetGrid'
-import { autosize } from '@/utils/autosize'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { formatExerciseSet, isExerciseSetComplete } from '@/utils/exerciseMeasurements'
@@ -796,21 +797,20 @@ export const StartWorkout = () => {
                     )}
                   >
                     <h2>
-                      <button
-                        type="button"
+                      <AppOptionRow
                         className={styles.exerciseHeader}
                         aria-expanded={open}
                         aria-controls={`exercise-panel-${index}`}
+                        leading={<span className={styles.exerciseIndex}>{index + 1}</span>}
+                        trailing={
+                          <ChevronDownIcon className={styles.exerciseToggle} aria-hidden="true" />
+                        }
                         onClick={() => selectExercise(index)}
                       >
-                        <span className={styles.exerciseIndex}>{index + 1}</span>
-                        <span className={styles.exerciseCopy}>
-                          <strong className={styles.exerciseName}>{exercise.name}</strong>
-                          <ExerciseTags compact tags={exercise.tags} />
-                          <small>{exerciseStatus(exercise)}</small>
-                        </span>
-                        <ChevronDownIcon className={styles.exerciseToggle} aria-hidden="true" />
-                      </button>
+                        <strong className={styles.exerciseName}>{exercise.name}</strong>
+                        <ExerciseTags compact tags={exercise.tags} />
+                        <small>{exerciseStatus(exercise)}</small>
+                      </AppOptionRow>
                     </h2>
 
                     {open && (
@@ -981,15 +981,15 @@ export const StartWorkout = () => {
             <label htmlFor="workout-note">
               {t('workout.note')} <span>{t('common.optional')}</span>
             </label>
-            <textarea
+            <AppTextarea
+              autosize
               id="workout-note"
-              ref={autosize}
-              value={workout?.note ?? ''}
               placeholder={t('workout.notePlaceholder')}
-              onChange={(event) => {
-                autosize(event.currentTarget)
+              rows={3}
+              value={workout?.note ?? ''}
+              onChange={(event) =>
                 useWorkoutStore.getState().setNote(routineID, event.target.value)
-              }}
+              }
             />
           </div>
         </AppSheet>

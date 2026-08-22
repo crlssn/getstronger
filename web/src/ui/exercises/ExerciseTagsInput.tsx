@@ -93,6 +93,10 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
           {value.map((tag, index) => (
             <span key={tag}>
               {tag}
+              {/* eslint-disable-next-line no-restricted-syntax -- The ✕ lives
+                  inside a 32px chip. AppIconButton is 44px by design and would
+                  have to grow the chip to hold it, which would make a row of
+                  tags taller than the field they sit in. */}
               <button
                 type="button"
                 aria-label={t('exercise.tagInput.remove', { name: tag })}
@@ -106,6 +110,11 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
       )}
 
       {value.length < maxTags && (
+        // An autocomplete field, not a text field: it owns a listbox and
+        // reports the active option. AppInput has no combobox behaviour, and
+        // giving it one for a single caller would put an unused ARIA contract
+        // in the design system.
+        // eslint-disable-next-line no-restricted-syntax
         <input
           type="text"
           maxLength={maxTagLength}
@@ -139,6 +148,10 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
           aria-label={t('exercise.tagInput.suggestionsAria')}
         >
           {matches.map((suggestion, index) => (
+            // A listbox option rather than a button: it takes role="option",
+            // and an AppButton would carry a button role the listbox cannot
+            // contain.
+            // eslint-disable-next-line no-restricted-syntax
             <button
               key={suggestion}
               type="button"

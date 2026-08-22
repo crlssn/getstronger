@@ -1,0 +1,27 @@
+@reference '../../assets/base.css';
+
+/* The track is drawn behind the knob rather than as a wrapper, so the whole
+ * control is one element and one tap target at the floor height. */
+.switch {
+  @apply relative inline-flex min-h-(--size-control-sm) w-14 shrink-0 cursor-pointer items-center;
+}
+
+.switch::before {
+  @apply absolute inset-x-0 top-1/2 h-8 -translate-y-1/2 rounded-full bg-ink-tint transition-colors content-[''];
+}
+
+.switch[aria-checked='true']::before {
+  @apply bg-surface-inverse;
+}
+
+.switch:disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+
+.knob {
+  @apply absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-white shadow-card transition-transform;
+}
+
+.switch[aria-checked='true'] .knob {
+  @apply translate-x-6;
+}

@@ -1,14 +1,14 @@
 import type { DistanceUnit, Exercise, Set as LoggedSet, WeightUnit } from '@/proto/api/v1/shared_pb'
 import type { Set } from '@/types/workout'
 import type { MeasurementField } from '@/utils/exerciseMeasurements'
-import type { ComponentProps, CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
 
 import { CheckIcon, MinusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
-import { DurationInput } from '@/ui/workouts/DurationInput'
+import { AppDurationInput } from '@/ui/components/AppDurationInput'
+import { AppNumberField } from '@/ui/components/AppNumberField'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import {
   formatExerciseSet,
@@ -17,50 +17,6 @@ import {
 } from '@/utils/exerciseMeasurements'
 import { weightUnitLabel } from '@/utils/weightUnits'
 import styles from './WorkoutSetGrid.module.css'
-
-const parseEntry = (value: string) => {
-  const trimmed = value.trim()
-  if (!trimmed) return undefined
-
-  const parsed = Number(trimmed)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-interface EntryProps extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type'> {
-  value: number | undefined
-  onChange: (value: number | undefined) => void
-}
-
-/**
- * A number field that keeps the text being typed rather than the number read
- * from it.
- *
- * Rendering `value` straight into the input would swallow the keystroke halfway
- * through "3.5", because "3." parses to 3 and would be written back as "3". An
- * external write — the previous session's value copied in on focus — still
- * reaches the field, since the number changing is what refreshes the text.
- */
-const NumberEntry = ({ value, onChange, ...rest }: EntryProps) => {
-  const [text, setText] = useState(() => (value === undefined ? '' : String(value)))
-
-  const [seen, setSeen] = useState(value)
-  if (value !== seen) {
-    setSeen(value)
-    setText(value === undefined ? '' : String(value))
-  }
-
-  return (
-    <input
-      {...rest}
-      type="text"
-      value={text}
-      onChange={(event) => {
-        setText(event.target.value)
-        onChange(parseEntry(event.target.value))
-      }}
-    />
-  )
-}
 
 interface Props {
   exercise: Exercise
@@ -151,7 +107,7 @@ export const WorkoutSetGrid = ({
 
               if (measurement.field === 'durationSeconds') {
                 return (
-                  <DurationInput
+                  <AppDurationInput
                     key={measurement.metric}
                     aria-label={label}
                     value={set.durationSeconds}
@@ -165,25 +121,24 @@ export const WorkoutSetGrid = ({
                 const field = measurement.field
 
                 return (
-                  <div key={measurement.metric} className={styles.unitEntry}>
-                    <NumberEntry
-                      aria-label={label}
-                      inputMode="decimal"
-                      value={set[field]}
-                      onChange={(entered) => onChange(index, { [field]: entered })}
-                      onFocus={onFocus}
-                    />
-                    <span className={styles.unitSuffix}>
-                      {field === 'weight'
+                  <AppNumberField
+                    key={measurement.metric}
+                    aria-label={label}
+                    inputMode="decimal"
+                    unit={
+                      field === 'weight'
                         ? weightUnitLabel(weightUnit)
-                        : distanceUnitLabel(distanceUnit)}
-                    </span>
-                  </div>
+                        : distanceUnitLabel(distanceUnit)
+                    }
+                    value={set[field]}
+                    onChange={(entered) => onChange(index, { [field]: entered })}
+                    onFocus={onFocus}
+                  />
                 )
               }
 
               return (
-                <NumberEntry
+                <AppNumberField
                   key={measurement.metric}
                   aria-label={label}
                   inputMode={measurement.inputmode}
@@ -194,6 +149,12 @@ export const WorkoutSetGrid = ({
               )
             })}
 
+            {/* eslint-disable-next-line no-restricted-syntax -- A 24px badge
+                overhanging the row's corner. At AppIconButton's 44px it would
+                cover the right-hand edge of the field beside it and take taps
+                meant for typing, so this one stays under the floor on purpose.
+                Reaching it is a hover or a focus, which is a known gap on a
+                phone and a redesign rather than a restyle. */}
             <button
               type="button"
               className={styles.removeSet}

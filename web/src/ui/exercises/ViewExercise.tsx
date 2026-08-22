@@ -13,6 +13,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { useToastStore } from '@/stores/toasts'
 import { useWorkoutStore } from '@/stores/workout'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
@@ -150,20 +151,19 @@ export const ViewExercise = () => {
       <ExerciseTags tags={exercise.tags} />
 
       {isOwner && (
-        <button
-          type="button"
+        <AppOptionRow
           className={styles.startQuickCard}
+          leading={
+            <span className={styles.startQuickIcon}>
+              <BoltIcon aria-hidden="true" />
+            </span>
+          }
+          trailing={<ChevronRightIcon className={styles.startQuickChevron} aria-hidden="true" />}
           onClick={() => void onStartQuickWorkout()}
         >
-          <span className={styles.startQuickIcon}>
-            <BoltIcon aria-hidden="true" />
-          </span>
-          <span className={styles.startQuickCopy}>
-            <strong>{t('exercise.startQuickWorkout')}</strong>
-            <small>{t('exercise.startQuickWorkoutBody', { name: exercise.name })}</small>
-          </span>
-          <ChevronRightIcon className={styles.startQuickChevron} aria-hidden="true" />
-        </button>
+          <strong>{t('exercise.startQuickWorkout')}</strong>
+          <small>{t('exercise.startQuickWorkoutBody', { name: exercise.name })}</small>
+        </AppOptionRow>
       )}
 
       {deleteDialogOpen && (

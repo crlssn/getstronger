@@ -1,0 +1,22 @@
+@reference '../../assets/base.css';
+
+/* A cell in a grid of them, not a form field: centred, tight, and sized so a
+ * thumb still lands in it on the narrowest phone. */
+.field {
+  @apply min-h-(--size-control) min-w-0 rounded-control border border-border bg-surface px-2 text-center font-semibold text-text shadow-card transition placeholder:text-text-subtle focus:border-ink focus:ring-1 focus:ring-ink;
+}
+
+/* Inside the unit wrapper, which owns the border and the focus ring. */
+.withUnit {
+  @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
+}
+
+.unitEntry {
+  @apply grid min-h-(--size-control) min-w-0 grid-cols-[minmax(2.75rem,1fr)_auto] items-center overflow-hidden rounded-control border border-border bg-surface pr-2.5 shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
+}
+
+/* A unit is a label on the field, not a second control inside it. The old
+ * bordered, filled cell read as a button worth pressing. */
+.unit {
+  @apply pointer-events-none select-none text-meta font-medium lowercase text-text-subtle;
+}

@@ -15,6 +15,7 @@ import { listRoutines } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -164,14 +165,16 @@ export const ListRoutines = () => {
                         <div>
                           <Link to={`/routines/${routine.id}/edit`}>{t('routine.list.edit')}</Link>
                           {routine.id !== preferredRoutineId && (
-                            <button
+                            <AppButton
                               type="button"
+                              colour="ghost"
+                              size="sm"
                               onClick={() =>
                                 void useDashboardStore.getState().selectRoutine(routine.id)
                               }
                             >
                               {t('routine.makeUpNext')}
-                            </button>
+                            </AppButton>
                           )}
                         </div>
                       </details>

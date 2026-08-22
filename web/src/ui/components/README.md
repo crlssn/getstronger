@@ -24,6 +24,8 @@ aspirational.
 | ------------------------------ | -------------------------------------------------- |
 | Anything a user taps           | `<AppButton>` — or `<AppIconButton>` for icon-only  |
 | A text field                   | `<AppInput>` / `<AppTextarea>`                      |
+| A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`           |
+| On or off                      | `<AppSwitch>`                                       |
 | A field the user searches with | `<AppSearchField>`                                  |
 | The next page of a list        | `<AppLoadMore>`                                     |
 | A screen's title block         | `<AppPageHeader>`                                   |
@@ -105,6 +107,23 @@ A magnifier and a `type="search"` input, in the single arrangement the app uses
 for searching. `label` names the field once and becomes both the placeholder and
 the accessible name. `size="lg"` is the home search panel, where the field is
 the screen; `trailing` puts a control inside the field's border.
+
+### `<AppNumberField>` and `<AppDurationInput>`
+
+The two fields a set is logged with. Both keep the text being typed rather than
+the number read back from it — rendering the value straight into the input eats
+the keystroke halfway through "3.5", because "3." parses to 3 and is written
+back as "3". `<AppNumberField>` takes an optional `unit`, drawn inside the
+field's border as a label on it rather than a control in it.
+
+Both are `type="text"` with an `inputMode`, not `type="number"`: a spinner on a
+set row is a mis-tap waiting to happen, and a scroll wheel over one silently
+changes what was logged.
+
+### `<AppSwitch>`
+
+On or off, decided the moment it is tapped. `label` is required — a track and a
+knob have no accessible name of their own.
 
 ### `<AppListItemInput>`
 

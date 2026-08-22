@@ -151,6 +151,12 @@ const isNavigationCancellation = (reason: string) =>
   ) || /^(cancelled|canceled)$/i.test(reason.trim())
 
 export const expectAccessible = async (page: Page) => {
+  // A menu that is fading out is still in the DOM, at whatever opacity the
+  // transition has reached, and axe reads that blend as a contrast failure on
+  // copy nobody can read any more. Waiting for it to leave is the difference
+  // between a scan of the page and a scan of an animation frame.
+  await expect(page.getByRole('menu')).toHaveCount(0)
+
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()

@@ -3,12 +3,15 @@ import type { ComponentProps } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { cn } from '@/ui/cn'
 import { formatMeasurementDuration } from '@/utils/exerciseMeasurements'
 import { parseDuration } from '@/utils/parseDuration'
+import styles from './AppNumberField.module.css'
 
-interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type'> {
+interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type' | 'className'> {
   value: number | undefined
   onChange: (seconds: number | undefined) => void
+  className?: string
 }
 
 const display = (seconds: number | undefined) =>
@@ -22,7 +25,7 @@ const display = (seconds: number | undefined) =>
  * The value follows the text; the text only snaps to the canonical format when
  * the field is left.
  */
-export const DurationInput = ({ value, onChange, ...rest }: Props) => {
+export const AppDurationInput = ({ value, onChange, className, ...rest }: Props) => {
   const { t } = useTranslation()
 
   const [text, setText] = useState(() => display(value))
@@ -41,6 +44,7 @@ export const DurationInput = ({ value, onChange, ...rest }: Props) => {
   return (
     <input
       {...rest}
+      className={cn(styles.field, className)}
       value={text}
       type="text"
       inputMode="numeric"
