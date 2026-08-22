@@ -132,6 +132,7 @@ export const ViewExercise = () => {
   const exerciseActions: DropdownItem[] = [
     { href: `/exercises/${id}/edit`, title: t('exercise.update') },
     {
+      destructive: true,
       func: async () => {
         // The menu item keeps focus otherwise, and the sheet opens behind it.
         blurActiveElement()

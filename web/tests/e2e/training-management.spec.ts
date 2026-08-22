@@ -154,6 +154,9 @@ test.describe('exercise library', () => {
     // The confirmation explains what deleting does before anything happens.
     await openExerciseActions(page)
     await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
+    // The menu fades out as the sheet opens, and a contrast check that catches
+    // it mid-fade measures the transition rather than the design.
+    await expect(page.getByRole('menu')).toHaveCount(0)
     const dialog = page.getByRole('dialog', { name: `Delete “${exerciseName}”?` })
     await expect(dialog).toBeVisible()
     await expect(dialog).toContainText(
@@ -191,6 +194,29 @@ test.describe('exercise library', () => {
   })
 })
 
+// Exercises are picked into the block that trains them, through the sheet the
+// session uses. `groupIndex` names which block's button to press.
+const addRoutineExercise = async (
+  page: Parameters<typeof logIn>[0],
+  name?: string,
+  groupIndex = 0,
+) => {
+  await page.getByRole('button', { name: 'Add exercise' }).nth(groupIndex).click()
+  const sheet = page.getByRole('dialog')
+
+  if (name) await sheet.getByLabel('Search exercises').fill(name)
+  const option = name
+    ? sheet.getByRole('button').filter({ hasText: name })
+    : sheet.getByRole('button').filter({ has: page.locator('strong') })
+
+  const chosen = option.first()
+  const chosenName = (await chosen.locator('strong').innerText()).trim()
+  await chosen.click()
+  await expect(sheet).toBeHidden()
+
+  return chosenName
+}
+
 test.describe('routine lifecycle', () => {
   test.beforeEach(async ({ page }) => logIn(page))
 
@@ -204,12 +230,9 @@ test.describe('routine lifecycle', () => {
     const saveButton = page.getByRole('button', { name: 'Create routine' })
     await expect(saveButton).toBeDisabled()
     await page.getByLabel('Routine name').fill(routineName)
-    // The selectable exercises are the toggles: they are the only controls on
-    // the form that report whether they are pressed.
-    const options = page.locator('button[aria-pressed]')
-    await options.first().click()
-    await options.nth(1).click()
-    await expect(page.getByText('2 selected', { exact: true })).toBeVisible()
+    await addRoutineExercise(page)
+    await addRoutineExercise(page)
+    await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
     await saveButton.click()
 
     await expect(page).toHaveURL(/\/routines$/)
@@ -231,6 +254,134 @@ test.describe('routine lifecycle', () => {
     await acceptConfirmDialog(page, 'Delete')
     await expect(page).toHaveURL(/\/routines$/)
     await expect(page.getByRole('status')).toContainText('Routine deleted')
+  })
+
+  // The whole circuit, end to end: built in groups, saved, read back, and then
+  // trained one set at a time with the rounds counting up.
+  //
+  // It brings its own exercises rather than borrowing seeded ones: a saved
+  // workout becomes the previous session for whatever it was logged against,
+  // and that is what later tests autofill from.
+  test('builds a circuit and trains it a round at a time @mutation', async ({ page }) => {
+    const routineName = uniqueName('E2E Circuit')
+    const first = uniqueName('E2E Circuit press')
+    const second = uniqueName('E2E Circuit squat')
+
+    try {
+      for (const exercise of [first, second]) {
+        await page.goto('/exercises/create')
+        await page.locator('form input[type="text"]').first().fill(exercise)
+        await page.getByRole('button', { name: 'Save Exercise' }).click()
+        await expect(page).toHaveURL(/\/exercises$/)
+      }
+
+      await page.goto('/routines/create')
+      await page.getByLabel('Routine name').fill(routineName)
+      await addRoutineExercise(page, first)
+      await addRoutineExercise(page, second)
+      await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+
+      // Grouping is the advanced half of the form; a circuit lives inside it.
+      await page.getByRole('button', { name: 'Advanced', exact: true }).click()
+      await page.getByRole('button', { name: 'Circuit', exact: true }).click()
+      await page.getByLabel('Rest after each exercise').fill('5')
+      await page.getByLabel('Rest after each round').fill('10')
+      await page.getByRole('button', { name: 'Create routine' }).click()
+
+      await expect(page).toHaveURL(/\/routines$/)
+      await page.getByLabel('Search routines').fill(routineName)
+      await page.getByRole('heading', { name: routineName }).click()
+
+      // Saved, read back from the API, and described in the words it was built
+      // with.
+      await expect(page.getByText('Circuit', { exact: true })).toBeVisible()
+      await expect(
+        page.getByText('Rest 5s between exercises · Rest 10s between rounds'),
+      ).toBeVisible()
+
+      // Reopened for editing, the builder shows the circuit as a circuit rather
+      // than as the plain block a routine starts as, and a change to it is
+      // saved as one.
+      await page.getByRole('link', { name: 'Edit exercises' }).click()
+      await expect(page.getByRole('button', { name: 'Advanced', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+      await expect(page.getByRole('button', { name: 'Circuit', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+      await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+
+      await page.getByLabel('Rest after each round').fill('20')
+      await page.getByRole('button', { name: 'Save changes' }).click()
+
+      await expect(
+        page.getByText('Rest 5s between exercises · Rest 20s between rounds'),
+      ).toBeVisible()
+
+      await page.getByRole('link', { name: 'Start workout' }).click()
+      await expect(page.getByText('Round 1 · exercise 1 of 2')).toBeVisible()
+
+      const complete = page.locator('button[type="submit"]')
+      await expect(complete).toHaveText('Complete set')
+
+      // One row: a circuit has no round count to lay them out from, so the next
+      // one arrives as this one is filled in.
+      await expect(
+        page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }),
+      ).toHaveCount(0)
+
+      await page.getByRole('textbox', { name: `${first} set 1 weight`, exact: true }).fill('25')
+      await page.getByRole('textbox', { name: `${first} set 1 reps`, exact: true }).fill('8')
+      // A circuit rests on the way to the next station, not the moment the set
+      // is complete.
+      await expect(page.getByRole('region', { name: 'Rest timer' })).toHaveCount(0)
+
+      await complete.click()
+      await expect(page.getByText('Round 1 · exercise 2 of 2')).toBeVisible()
+      await expect(page.getByRole('region', { name: 'Rest timer' })).toBeVisible()
+
+      await page.getByRole('textbox', { name: `${second} set 1 weight`, exact: true }).fill('30')
+      await page.getByRole('textbox', { name: `${second} set 1 reps`, exact: true }).fill('6')
+      await complete.click()
+
+      // The round only turns over once every exercise in it has taken its set.
+      await expect(page.getByText('Round 2 · exercise 1 of 2')).toBeVisible()
+      await expect(
+        page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }),
+      ).toBeVisible()
+
+      // Two rounds is enough: a circuit ends when the session says so, and that
+      // ticks off every exercise in it.
+      await page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }).fill('25')
+      await page.getByRole('textbox', { name: `${first} set 2 reps`, exact: true }).fill('8')
+      await page.getByRole('button', { name: 'Complete circuit' }).click()
+      await expect(page.getByRole('button', { name: 'Complete circuit' })).toHaveCount(0)
+      await expect(complete).toHaveText('Finish workout')
+
+      await page.getByRole('button', { name: 'Finish workout' }).first().click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
+      await expect(page).toHaveURL(/\/workouts\//)
+      await expect(page.getByText(/25\s*kg/).first()).toBeVisible()
+
+      await page.getByRole('button', { name: 'Workout actions' }).click()
+      await page.getByRole('menuitem', { name: 'Delete workout' }).click()
+      await acceptConfirmDialog(page, 'Delete workout')
+      await expect(page.getByRole('status')).toContainText('Workout deleted')
+    } finally {
+      await page.goto('/routines')
+      await page.getByLabel('Search routines').fill(routineName)
+      const savedRoutine = page.getByRole('heading', { name: routineName })
+      if (await savedRoutine.isVisible()) {
+        await savedRoutine.click()
+        await page.getByRole('button', { name: 'Delete' }).click()
+        await acceptConfirmDialog(page, 'Delete')
+        await expect(page.getByRole('status')).toContainText('Routine deleted')
+      }
+      await deleteExercise(page, second)
+      await deleteExercise(page, first)
+    }
   })
 })
 

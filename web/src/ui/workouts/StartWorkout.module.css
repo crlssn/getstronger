@@ -76,6 +76,18 @@
 
 /* One connected list rather than a card per exercise: the session is a single
    stack, and only the exercise being logged spends the screen's height. */
+.circuitBand {
+  @apply flex items-center justify-between gap-3 rounded-t-card bg-ink px-4 py-2 text-white;
+}
+
+.circuitBand strong {
+  @apply text-eyebrow font-bold uppercase tracking-wider;
+}
+
+.circuitBand span {
+  @apply text-sm font-semibold tabular-nums;
+}
+
 .exerciseList {
   @apply card overflow-hidden;
 }

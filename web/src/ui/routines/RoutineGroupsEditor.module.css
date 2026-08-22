@@ -1,0 +1,103 @@
+@reference '../../assets/base.css';
+
+/* A group is a card of the page rather than a box inside the card above it.
+ * Nothing inside is boxed either: settings and exercises are ruled rows, so the
+ * exercise name keeps the width that four nested borders were taking. */
+.group {
+  @apply card mb-4 flex flex-col gap-3 p-4;
+}
+
+.group.circuit {
+  @apply border-ink-border;
+}
+
+.groupHeader {
+  @apply flex items-center gap-3;
+}
+
+.groupBadge {
+  @apply grid size-8 shrink-0 place-items-center rounded-control bg-ink text-sm font-bold text-white;
+}
+
+.groupTitle {
+  @apply min-w-0;
+}
+
+.groupTitle strong {
+  @apply block text-sm font-semibold text-text;
+}
+
+.groupTitle small {
+  @apply block text-xs text-text-subtle;
+}
+
+.modeSwitch {
+  @apply w-full;
+}
+
+.modeSwitch > * {
+  @apply flex-1;
+}
+
+.settings {
+  @apply flex flex-col divide-y divide-border border-y border-border;
+}
+
+.settingRow {
+  @apply flex min-h-(--size-control) items-center justify-between gap-3 py-2;
+}
+
+.settingLabel {
+  @apply min-w-0 text-sm font-medium text-text;
+}
+
+.settingLabel small {
+  @apply block text-xs font-normal text-text-subtle;
+}
+
+/* Positioning only: AppNumberField draws the field and its unit. */
+.secondsField {
+  @apply w-28 shrink-0;
+}
+
+.exercises {
+  @apply flex flex-col divide-y divide-border;
+}
+
+.exercises li {
+  @apply flex min-h-(--size-control) items-center gap-1 py-1;
+}
+
+.position {
+  @apply grid size-6 shrink-0 place-items-center rounded-md bg-ink-surface text-xs font-bold tabular-nums text-text-muted;
+}
+
+/* The name takes whatever the controls leave, and never less than legible: it
+ * is the only part of the row that says which exercise this is. */
+.exerciseName {
+  @apply mr-auto min-w-0 flex-1 truncate pl-2 text-sm font-semibold text-text;
+}
+
+.moveButton {
+  @apply shrink-0;
+}
+
+/* The row's three controls read as one set, so the menu drops the border the
+ * trigger wears when it sits alone in a nav bar. */
+.moveMenu {
+  @apply border-transparent bg-transparent;
+}
+
+.groupActions {
+  @apply flex items-center gap-2;
+}
+
+/* Positioning only: the whole width the row can spare, because adding an
+   exercise is what a group is built with. */
+.addExercise {
+  @apply flex-1;
+}
+
+.emptyGroup {
+  @apply rounded-control bg-ink-surface p-4 text-center text-sm text-text-subtle;
+}

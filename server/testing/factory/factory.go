@@ -86,6 +86,12 @@ func routineWithoutRelationships(model *models.Routine) *models.Routine {
 	return &copy
 }
 
+func routineGroupWithoutRelationships(model *models.RoutineGroup) *models.RoutineGroup {
+	copy := *model
+	copy.R = models.RoutineGroup{}.R
+	return &copy
+}
+
 func exerciseWithoutRelationships(model *models.Exercise) *models.Exercise {
 	copy := *model
 	copy.R = models.Exercise{}.R

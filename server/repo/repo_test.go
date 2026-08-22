@@ -34,6 +34,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/weightunit"
 )
 
@@ -1134,6 +1135,139 @@ func (s *repoSuite) TestCreateRoutineKeepsRequestedExerciseOrder() {
 	s.Require().Equal(exerciseIDs, s.routineExerciseIDs(routine.ID.String()))
 }
 
+func (s *repoSuite) routineGroupExerciseIDs(routineID string) [][]string {
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routineID)
+	s.Require().NoError(err)
+
+	grouped := make([][]string, 0, len(groups))
+	for _, group := range groups {
+		exerciseIDs := make([]string, 0, len(group.Exercises))
+		for _, exercise := range group.Exercises {
+			exerciseIDs = append(exerciseIDs, exercise.ID.String())
+		}
+		grouped = append(grouped, exerciseIDs)
+	}
+	return grouped
+}
+
+func (s *repoSuite) TestCreateRoutineWithoutGroupsHoldsOneStraightGroup() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := []string{exercises[0].ID.String(), exercises[1].ID.String()}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID.String(),
+		Name:        "Legs",
+		ExerciseIDs: exerciseIDs,
+	})
+	s.Require().NoError(err)
+
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(groups, 1)
+	s.Require().Equal(training.RoutineGroupModeStraight, groups[0].Mode)
+	s.Require().Equal([][]string{exerciseIDs}, s.routineGroupExerciseIDs(routine.ID.String()))
+}
+
+func (s *repoSuite) TestCreateRoutineWithGroups() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	warmUpID := exercises[0].ID.String()
+	circuitIDs := []string{exercises[1].ID.String(), exercises[2].ID.String()}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID.String(),
+		Name:        "Full body",
+		ExerciseIDs: append([]string{warmUpID}, circuitIDs...),
+		Groups: []training.RoutineGroupDraft{
+			{
+				Mode:        training.RoutineGroupModeStraight,
+				ExerciseIDs: []string{warmUpID},
+			},
+			{
+				Mode:                        training.RoutineGroupModeCircuit,
+				RestBetweenExercisesSeconds: 15,
+				RestBetweenRoundsSeconds:    90,
+				ExerciseIDs:                 circuitIDs,
+			},
+		},
+	})
+	s.Require().NoError(err)
+
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(groups, 2)
+
+	s.Require().Equal(training.RoutineGroupModeStraight, groups[0].Mode)
+	s.Require().Equal(training.RoutineGroupModeCircuit, groups[1].Mode)
+	s.Require().Equal(int32(15), groups[1].RestBetweenExercisesSeconds)
+	s.Require().Equal(int32(90), groups[1].RestBetweenRoundsSeconds)
+
+	s.Require().Equal([][]string{{warmUpID}, circuitIDs}, s.routineGroupExerciseIDs(routine.ID.String()))
+	// The flat exercise order is the groups read end to end.
+	s.Require().Equal(append([]string{warmUpID}, circuitIDs...), s.routineExerciseIDs(routine.ID.String()))
+}
+
+func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	exerciseIDs := []string{exercises[0].ID.String(), exercises[1].ID.String(), exercises[2].ID.String()}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID.String(),
+		Name:        "Full body",
+		ExerciseIDs: exerciseIDs,
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.SetRoutineGroups(context.Background(), routine, []training.RoutineGroupDraft{
+		{
+			Mode:        training.RoutineGroupModeStraight,
+			ExerciseIDs: []string{exerciseIDs[2]},
+		},
+		{
+			Mode:                     training.RoutineGroupModeCircuit,
+			RestBetweenRoundsSeconds: 60,
+			ExerciseIDs:              []string{exerciseIDs[0], exerciseIDs[1]},
+		},
+	}, exercises))
+
+	s.Require().Equal(
+		[][]string{{exerciseIDs[2]}, {exerciseIDs[0], exerciseIDs[1]}},
+		s.routineGroupExerciseIDs(routine.ID.String()),
+	)
+	s.Require().Equal(
+		[]string{exerciseIDs[2], exerciseIDs[0], exerciseIDs[1]},
+		s.routineExerciseIDs(routine.ID.String()),
+	)
+}
+
+// An exercise added to a routine that is already grouped joins the last group,
+// which is where the flat order puts it too.
+func (s *repoSuite) TestAddExerciseToRoutineJoinsTheLastGroup() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID.String(),
+		Name:        "Full body",
+		ExerciseIDs: []string{exercises[0].ID.String(), exercises[1].ID.String()},
+		Groups: []training.RoutineGroupDraft{
+			{Mode: training.RoutineGroupModeStraight, ExerciseIDs: []string{exercises[0].ID.String()}},
+			{Mode: training.RoutineGroupModeCircuit, ExerciseIDs: []string{exercises[1].ID.String()}},
+		},
+	})
+	s.Require().NoError(err)
+
+	added := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), added, routine))
+
+	s.Require().Equal(
+		[][]string{{exercises[0].ID.String()}, {exercises[1].ID.String(), added.ID.String()}},
+		s.routineGroupExerciseIDs(routine.ID.String()),
+	)
+}
+
 func (s *repoSuite) TestAddExerciseToRoutinePlacesLast() {
 	user := s.factory.NewUser()
 	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
@@ -1152,20 +1286,6 @@ func (s *repoSuite) TestAddExerciseToRoutinePlacesLast() {
 	emptyRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), added, emptyRoutine))
 	s.Require().Equal([]string{added.ID.String()}, s.routineExerciseIDs(emptyRoutine.ID.String()))
-}
-
-func (s *repoSuite) TestRemoveExerciseFromRoutineKeepsRelativeOrder() {
-	user := s.factory.NewUser()
-	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
-	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
-	s.factory.AddRoutineExercise(routine, exercises...)
-
-	s.Require().NoError(s.repo.RemoveExerciseFromRoutine(context.Background(), exercises[1], routine))
-
-	s.Require().Equal(
-		[]string{exercises[0].ID.String(), exercises[2].ID.String()},
-		s.routineExerciseIDs(routine.ID.String()),
-	)
 }
 
 func (s *repoSuite) TestUpdateRoutineExerciseOrder() {

@@ -3,14 +3,18 @@ import type { SessionExercise } from './workoutSession'
 import { create } from '@bufbuild/protobuf'
 import { describe, expect, test } from 'vitest'
 
+import { RoutineGroupMode, RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
 import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import {
   activeSetIndex,
+  circuitRound,
   elapsedLabel,
   finishBlocker,
   incompleteSetCount,
   loggedSetCount,
-  nextUnfinishedIndex,
+  nextCircuitStep,
+  nextUnfinishedStation,
+  sessionGroups,
 } from './workoutSession'
 
 const lift = (id: string) =>
@@ -97,23 +101,142 @@ describe('activeSetIndex', () => {
   })
 })
 
-describe('nextUnfinishedIndex', () => {
-  const exercises = [lift('a'), lift('b'), lift('c')]
+describe('nextUnfinishedStation', () => {
+  const stations = [{ key: 'a' }, { key: 'b' }, { key: 'c' }]
 
-  test('is the next unfinished exercise below the current one', () => {
-    expect(nextUnfinishedIndex(exercises, { a: true }, 0)).toBe(1)
+  test('is the next unfinished station below the current one', () => {
+    expect(nextUnfinishedStation(stations, { a: true }, 0)).toBe(1)
   })
 
   test('skips the ones already completed', () => {
-    expect(nextUnfinishedIndex(exercises, { a: true, b: true }, 0)).toBe(2)
+    expect(nextUnfinishedStation(stations, { a: true, b: true }, 0)).toBe(2)
   })
 
   // Working out of order still has to land somewhere useful.
-  test('wraps back to an unfinished exercise above the current one', () => {
-    expect(nextUnfinishedIndex(exercises, { b: true, c: true }, 1)).toBe(0)
+  test('wraps back to an unfinished station above the current one', () => {
+    expect(nextUnfinishedStation(stations, { b: true, c: true }, 1)).toBe(0)
   })
 
   test('is nothing once everything is done', () => {
-    expect(nextUnfinishedIndex(exercises, { a: true, b: true, c: true }, 0)).toBe(-1)
+    expect(nextUnfinishedStation(stations, { a: true, b: true, c: true }, 0)).toBe(-1)
+  })
+})
+
+const circuit = (id: string, exerciseIds: string[]) =>
+  create(RoutineGroupSchema, {
+    id,
+    mode: RoutineGroupMode.CIRCUIT,
+    restBetweenExercisesSeconds: 15,
+    restBetweenRoundsSeconds: 90,
+    exercises: exerciseIds.map((exerciseId) => lift(exerciseId)),
+  })
+
+const straight = (id: string, exerciseIds: string[]) =>
+  create(RoutineGroupSchema, {
+    id,
+    mode: RoutineGroupMode.STRAIGHT,
+    exercises: exerciseIds.map((exerciseId) => lift(exerciseId)),
+  })
+
+describe('sessionGroups', () => {
+  test('is one straight group when the routine has none', () => {
+    const groups = sessionGroups(undefined, [lift('a'), lift('b')])
+
+    expect(groups).toHaveLength(1)
+    expect(groups[0]?.mode).toBe('straight')
+    expect(groups[0]?.stations.map((station) => station.key)).toEqual(['a', 'b'])
+  })
+
+  test('carries the settings of each group across', () => {
+    const groups = sessionGroups(
+      [straight('one', ['a']), circuit('two', ['b', 'c'])],
+      [lift('a'), lift('b'), lift('c')],
+    )
+
+    expect(groups[1]).toMatchObject({
+      mode: 'circuit',
+      restBetweenExercisesSeconds: 15,
+      restBetweenRoundsSeconds: 90,
+    })
+    expect(groups[1]?.stations.map((station) => station.exercise.id)).toEqual(['b', 'c'])
+  })
+
+  test('appends an exercise added mid-session as a straight block of its own', () => {
+    const groups = sessionGroups([circuit('two', ['a'])], [lift('a'), lift('added')])
+
+    expect(groups).toHaveLength(2)
+    expect(groups[1]?.mode).toBe('straight')
+    expect(groups[1]?.stations.map((station) => station.key)).toEqual(['added'])
+  })
+
+  test('drops an exercise the session no longer holds', () => {
+    const groups = sessionGroups([circuit('two', ['a', 'gone'])], [lift('a')])
+
+    expect(groups[0]?.stations.map((station) => station.key)).toEqual(['a'])
+  })
+
+  // A bench press in the warm-up and a bench press in the circuit are two
+  // pieces of work, so they are two stations with two sets of sets.
+  test('gives an exercise trained in two groups a key for each', () => {
+    const groups = sessionGroups(
+      [straight('one', ['a']), circuit('two', ['a', 'b'])],
+      [lift('a'), lift('a'), lift('b')],
+    )
+
+    expect(groups[0]?.stations.map((station) => station.key)).toEqual(['a'])
+    expect(groups[1]?.stations.map((station) => station.key)).toEqual(['a#2', 'b'])
+  })
+})
+
+describe('circuitRound', () => {
+  const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]!
+
+  test('is the first round before anything is logged', () => {
+    expect(circuitRound(group(), {})).toBe(1)
+  })
+
+  test('stays on the round until every exercise in it has been logged', () => {
+    expect(circuitRound(group(), { a: 1 })).toBe(1)
+    expect(circuitRound(group(), { a: 1, b: 1 })).toBe(2)
+  })
+
+  // There is no last round: a circuit goes round until the session ends it.
+  test('keeps counting for as long as the circuit is worked', () => {
+    expect(circuitRound(group(), { a: 9, b: 9 })).toBe(10)
+  })
+})
+
+describe('nextCircuitStep', () => {
+  const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]!
+
+  test('walks to the next exercise inside the round', () => {
+    expect(nextCircuitStep(group(), 'a', 0)).toEqual({
+      kind: 'nextStation',
+      key: 'b',
+      restSeconds: 15,
+    })
+  })
+
+  test('rests for the round when the last exercise closes it', () => {
+    expect(nextCircuitStep(group(), 'b', 1)).toEqual({
+      kind: 'nextRound',
+      key: 'a',
+      round: 2,
+      restSeconds: 90,
+    })
+  })
+
+  // Only the session ends a circuit, so the walk itself always has a next step.
+  test('starts another round however many have been taken', () => {
+    expect(nextCircuitStep(group(), 'b', 9)).toEqual({
+      kind: 'nextRound',
+      key: 'a',
+      round: 10,
+      restSeconds: 90,
+    })
+  })
+
+  test('finishes the group when the station is not in it', () => {
+    expect(nextCircuitStep(group(), 'missing', 1)).toEqual({ kind: 'groupComplete' })
   })
 })

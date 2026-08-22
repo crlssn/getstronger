@@ -24,6 +24,7 @@ type preloaders struct {
 	Notification     notificationPreloader
 	PlanRoutine      planRoutinePreloader
 	Plan             planPreloader
+	RoutineGroup     routineGroupPreloader
 	Routine          routinePreloader
 	Set              setPreloader
 	User             userPreloader
@@ -40,6 +41,7 @@ func getPreloaders() preloaders {
 		Notification:     buildNotificationPreloader(),
 		PlanRoutine:      buildPlanRoutinePreloader(),
 		Plan:             buildPlanPreloader(),
+		RoutineGroup:     buildRoutineGroupPreloader(),
 		Routine:          buildRoutinePreloader(),
 		Set:              buildSetPreloader(),
 		User:             buildUserPreloader(),
@@ -62,6 +64,7 @@ type thenLoaders[Q orm.Loadable] struct {
 	Notification     notificationThenLoader[Q]
 	PlanRoutine      planRoutineThenLoader[Q]
 	Plan             planThenLoader[Q]
+	RoutineGroup     routineGroupThenLoader[Q]
 	Routine          routineThenLoader[Q]
 	Set              setThenLoader[Q]
 	User             userThenLoader[Q]
@@ -78,6 +81,7 @@ func getThenLoaders[Q orm.Loadable]() thenLoaders[Q] {
 		Notification:     buildNotificationThenLoader[Q](),
 		PlanRoutine:      buildPlanRoutineThenLoader[Q](),
 		Plan:             buildPlanThenLoader[Q](),
+		RoutineGroup:     buildRoutineGroupThenLoader[Q](),
 		Routine:          buildRoutineThenLoader[Q](),
 		Set:              buildSetThenLoader[Q](),
 		User:             buildUserThenLoader[Q](),

@@ -11,7 +11,6 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
-	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob"
@@ -146,14 +145,6 @@ func nullIfEmpty(v string) omitnull.Val[string] {
 	}
 
 	return omitnull.From(v)
-}
-
-func (r *Repo) SetRoutineExercises(ctx context.Context, routine *models.Routine, exercises models.ExerciseSlice) error {
-	if err := setRoutineExercises(ctx, r.bobExec(), routine.ID, exercises); err != nil {
-		return fmt.Errorf("routine exercises set: %w", err)
-	}
-
-	return nil
 }
 
 func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
@@ -629,6 +620,9 @@ type CreateRoutineParams struct {
 	UserID      string
 	Name        string
 	ExerciseIDs []string
+	// Optional. When empty the routine gets a single straight-sets group
+	// holding every exercise in ExerciseIDs.
+	Groups []training.RoutineGroupDraft
 }
 
 var (
@@ -663,8 +657,14 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 			return fmt.Errorf("routine insert: %w", err)
 		}
 
-		if err = setRoutineExercises(ctx, tx.bobExec(), routine.ID, training.OrderExercisesByIDs(exercises, p.ExerciseIDs)); err != nil {
-			return fmt.Errorf("routine exercises set: %w", err)
+		ordered := training.OrderExercisesByIDs(exercises, p.ExerciseIDs)
+		exerciseIDs := make([]string, 0, len(ordered))
+		for _, exercise := range ordered {
+			exerciseIDs = append(exerciseIDs, exercise.ID.String())
+		}
+
+		if err = setRoutineGroups(ctx, tx.bobExec(), routine.ID, training.NormalizeRoutineGroups(p.Groups, exerciseIDs)); err != nil {
+			return fmt.Errorf("routine groups set: %w", err)
 		}
 		return nil
 	}); err != nil {
@@ -672,35 +672,6 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 	}
 
 	return routine, nil
-}
-
-// setRoutineExercises replaces a routine's exercise links, the equivalent of
-// SQLBoiler's SetExercises. Positions follow the slice order.
-func setRoutineExercises(ctx context.Context, exec bob.Executor, routineID uuid.UUID, exercises models.ExerciseSlice) error {
-	if _, err := models.ExercisesRoutines.Delete(
-		models.DeleteWhere.ExercisesRoutines.RoutineID.EQ(routineID),
-	).Exec(ctx, exec); err != nil {
-		return fmt.Errorf("routine exercises delete: %w", err)
-	}
-
-	if len(exercises) == 0 {
-		return nil
-	}
-
-	links := make([]*models.ExercisesRoutineSetter, 0, len(exercises))
-	for index, exercise := range exercises {
-		links = append(links, &models.ExercisesRoutineSetter{
-			RoutineID:  omit.From(routineID),
-			ExerciseID: omit.From(exercise.ID),
-			Position:   omit.From(safe.Int32FromInt(index + 1)),
-		})
-	}
-
-	if _, err := models.ExercisesRoutines.Insert(bob.ToMods(links...)).Exec(ctx, exec); err != nil {
-		return fmt.Errorf("routine exercises insert: %w", err)
-	}
-
-	return nil
 }
 
 type GetRoutineOpt func() bob.Mod[*dialect.SelectQuery]
@@ -755,8 +726,8 @@ func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
 			return fmt.Errorf("routine fetch: %w", err)
 		}
 
-		if err = setRoutineExercises(ctx, tx.bobExec(), routine.ID, nil); err != nil {
-			return fmt.Errorf("routine exercises set: %w", err)
+		if err = setRoutineGroups(ctx, tx.bobExec(), routine.ID, nil); err != nil {
+			return fmt.Errorf("routine groups set: %w", err)
 		}
 
 		if err = routine.Delete(ctx, tx.bobExec()); err != nil {
@@ -882,25 +853,21 @@ WHERE er.routine_id = $1
 }
 
 // AddExerciseToRoutine appends the exercise to the routine by inserting it after the routine's
-// current last position.
+// current last position, which puts it in the routine's last group.
 func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
+	if err := ensureRoutineGroup(ctx, r.sqlExec(), routine.ID.String()); err != nil {
+		return err
+	}
+
 	if _, err := r.sqlExec().ExecContext(ctx, `
-INSERT INTO public.exercises_routines (routine_id, exercise_id, position)
-SELECT $1, $2, COALESCE(MAX(position), 0) + 1
-FROM public.exercises_routines
-WHERE routine_id = $1`, routine.ID.String(), exercise.ID.String()); err != nil {
+INSERT INTO public.exercises_routines (routine_id, exercise_id, position, group_id)
+SELECT $1, $2, COALESCE(MAX(er.position), 0) + 1,
+       (SELECT id FROM public.routine_groups WHERE routine_id = $1 ORDER BY position DESC LIMIT 1)
+FROM public.exercises_routines er
+WHERE er.routine_id = $1`, routine.ID.String(), exercise.ID.String()); err != nil {
 		return fmt.Errorf("routine exercises add: %w", err)
 	}
-	return nil
-}
 
-func (r *Repo) RemoveExerciseFromRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
-	if _, err := models.ExercisesRoutines.Delete(
-		models.DeleteWhere.ExercisesRoutines.RoutineID.EQ(routine.ID),
-		models.DeleteWhere.ExercisesRoutines.ExerciseID.EQ(exercise.ID),
-	).Exec(ctx, r.bobExec()); err != nil {
-		return fmt.Errorf("routine exercises remove: %w", err)
-	}
 	return nil
 }
 

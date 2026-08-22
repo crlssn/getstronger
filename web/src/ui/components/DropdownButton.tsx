@@ -11,15 +11,16 @@ import styles from './DropdownButton.module.css'
 interface Props {
   items: DropdownItem[]
   label?: string
+  className?: string
 }
 
-export const DropdownButton = ({ items, label }: Props) => {
+export const DropdownButton = ({ items, label, className }: Props) => {
   const { t } = useTranslation()
 
   return (
     <Menu as="div" className="relative inline-block text-left">
       <MenuButton
-        className={styles.menuTrigger}
+        className={cn(styles.menuTrigger, className)}
         aria-label={label ?? t('workout.card.actionsAria')}
       >
         <EllipsisHorizontalIcon aria-hidden="true" />
@@ -42,11 +43,13 @@ export const DropdownButton = ({ items, label }: Props) => {
                     {item.title}
                   </Link>
                 ) : (
-                  // An item that acts rather than navigates is destructive:
-                  // every one of them today is a delete.
                   <button
                     type="button"
-                    className={cn(styles.menuItem, styles.danger, focus && styles.active)}
+                    className={cn(
+                      styles.menuItem,
+                      item.destructive && styles.danger,
+                      focus && styles.active,
+                    )}
                     onClick={() => void item.func?.()}
                   >
                     {item.title}

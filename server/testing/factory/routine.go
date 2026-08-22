@@ -12,6 +12,7 @@ import (
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/gen/models/enums"
 )
 
 func (f *Factory) NewRoutineSlice(count int, opts ...RoutineOpt) models.RoutineSlice {
@@ -96,6 +97,7 @@ func RoutineName(name string) RoutineOpt {
 
 // AddRoutineExercise appends the exercises to the routine, continuing from the
 // routine's current last position so repeated calls keep extending the order.
+// They join the routine's last group, the way the app appends them.
 func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*models.Exercise) {
 	ctx := context.Background()
 
@@ -111,12 +113,85 @@ func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*mode
 		panic(fmt.Errorf("retrieve last routine exercise position: %w", err))
 	}
 
+	group := f.lastRoutineGroup(routine)
 	for _, exercise := range exercises {
 		position++
 		f.generated.NewExercisesRoutine(
 			bobfactory.ExercisesRoutineMods.WithExistingRoutine(routineWithoutRelationships(routine)),
 			bobfactory.ExercisesRoutineMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
+			bobfactory.ExercisesRoutineMods.WithExistingGroupRoutineGroup(routineGroupWithoutRelationships(group)),
 			bobfactory.ExercisesRoutineMods.Position(position),
 		).MustCreate(ctx, f.exec)
 	}
+}
+
+type RoutineGroupOpt func(group *models.RoutineGroupSetter)
+
+func RoutineGroupCircuit(restBetweenExercisesSeconds, restBetweenRoundsSeconds int32) RoutineGroupOpt {
+	return func(group *models.RoutineGroupSetter) {
+		group.Mode = omit.From(enums.RoutineGroupModeCircuit)
+		group.RestBetweenExercisesSeconds = omit.From(restBetweenExercisesSeconds)
+		group.RestBetweenRoundsSeconds = omit.From(restBetweenRoundsSeconds)
+	}
+}
+
+// NewRoutineGroup appends a group to the routine. Exercises added afterwards
+// join it, since it is then the routine's last group.
+func (f *Factory) NewRoutineGroup(routine *models.Routine, opts ...RoutineGroupOpt) *models.RoutineGroup {
+	ctx := context.Background()
+
+	setter := &models.RoutineGroupSetter{
+		RoutineID: omit.From(routine.ID),
+		Position:  omit.From(f.nextRoutineGroupPosition(routine)),
+		Mode:      omit.From(enums.RoutineGroupModeStraight),
+	}
+	for _, opt := range opts {
+		opt(setter)
+	}
+
+	group, err := models.RoutineGroups.Insert(setter).One(ctx, f.exec)
+	if err != nil {
+		panic(fmt.Errorf("create routine group: %w", err))
+	}
+
+	return group
+}
+
+func (f *Factory) nextRoutineGroupPosition(routine *models.Routine) int32 {
+	last, err := f.queryLastRoutineGroup(routine)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0
+		}
+		panic(fmt.Errorf("retrieve last routine group: %w", err))
+	}
+
+	return last.Position + 1
+}
+
+// lastRoutineGroup is where an appended exercise belongs. A routine always has
+// at least one group, so an empty one gets its straight-sets group here.
+func (f *Factory) lastRoutineGroup(routine *models.Routine) *models.RoutineGroup {
+	last, err := f.queryLastRoutineGroup(routine)
+	if err == nil {
+		return last
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		panic(fmt.Errorf("retrieve last routine group: %w", err))
+	}
+
+	return f.NewRoutineGroup(routine)
+}
+
+func (f *Factory) queryLastRoutineGroup(routine *models.Routine) (*models.RoutineGroup, error) {
+	group, err := models.RoutineGroups.Query(
+		models.SelectWhere.RoutineGroups.RoutineID.EQ(routine.ID),
+		sm.OrderBy(models.RoutineGroups.Columns.Position).Desc(),
+		sm.Limit(1),
+	).One(context.Background(), f.exec)
+	if err != nil {
+		return nil, fmt.Errorf("routine group query: %w", err)
+	}
+
+	return group, nil
 }

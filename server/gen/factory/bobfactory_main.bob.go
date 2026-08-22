@@ -26,6 +26,7 @@ type Factory struct {
 	baseNotificationMods     NotificationModSlice
 	basePlanRoutineMods      PlanRoutineModSlice
 	basePlanMods             PlanModSlice
+	baseRoutineGroupMods     RoutineGroupModSlice
 	baseRoutineMods          RoutineModSlice
 	baseSetMods              SetModSlice
 	baseTraceMods            TraceModSlice
@@ -204,6 +205,8 @@ func (f *Factory) fromExistingExercisesRoutine(ctx context.Context, m *models.Ex
 	o.RoutineID = func() uuid.UUID { return m.RoutineID }
 	o.ExerciseID = func() uuid.UUID { return m.ExerciseID }
 	o.Position = func() int32 { return m.Position }
+	o.GroupID = func() uuid.UUID { return m.GroupID }
+	o.ID = func() uuid.UUID { return m.ID }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -211,6 +214,9 @@ func (f *Factory) fromExistingExercisesRoutine(ctx context.Context, m *models.Ex
 			return o
 		}
 		visited[ptr] = struct{}{}
+	}
+	if m.R.GroupRoutineGroup != nil {
+		ExercisesRoutineMods.WithExistingGroupRoutineGroup(m.R.GroupRoutineGroup).Apply(ctx, o)
 	}
 	if m.R.Exercise != nil {
 		ExercisesRoutineMods.WithExistingExercise(m.R.Exercise).Apply(ctx, o)
@@ -409,6 +415,56 @@ func (f *Factory) fromExistingPlan(ctx context.Context, m *models.Plan) *PlanTem
 	return o
 }
 
+func (f *Factory) NewRoutineGroup(mods ...RoutineGroupMod) *RoutineGroupTemplate {
+	return f.NewRoutineGroupWithContext(context.Background(), mods...)
+}
+
+func (f *Factory) NewRoutineGroupWithContext(ctx context.Context, mods ...RoutineGroupMod) *RoutineGroupTemplate {
+	o := &RoutineGroupTemplate{f: f}
+
+	if f != nil {
+		f.baseRoutineGroupMods.Apply(ctx, o)
+	}
+
+	RoutineGroupModSlice(mods).Apply(ctx, o)
+
+	return o
+}
+
+func (f *Factory) FromExistingRoutineGroup(ctx context.Context, m *models.RoutineGroup) *RoutineGroupTemplate {
+	visited := make(map[uintptr]struct{})
+	ctx = factoryVisitedCtx.WithValue(ctx, visited)
+	return f.fromExistingRoutineGroup(ctx, m)
+}
+
+func (f *Factory) fromExistingRoutineGroup(ctx context.Context, m *models.RoutineGroup) *RoutineGroupTemplate {
+	o := &RoutineGroupTemplate{f: f, alreadyPersisted: true}
+
+	o.ID = func() uuid.UUID { return m.ID }
+	o.RoutineID = func() uuid.UUID { return m.RoutineID }
+	o.Position = func() int32 { return m.Position }
+	o.Mode = func() enums.RoutineGroupMode { return m.Mode }
+	o.RestBetweenExercisesSeconds = func() int32 { return m.RestBetweenExercisesSeconds }
+	o.RestBetweenRoundsSeconds = func() int32 { return m.RestBetweenRoundsSeconds }
+	o.CreatedAt = func() time.Time { return m.CreatedAt }
+
+	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
+		ptr := uintptr(unsafe.Pointer(m))
+		if _, seen := visited[ptr]; seen {
+			return o
+		}
+		visited[ptr] = struct{}{}
+	}
+	if len(m.R.GroupExercisesRoutines) > 0 {
+		RoutineGroupMods.AddExistingGroupExercisesRoutines(m.R.GroupExercisesRoutines...).Apply(ctx, o)
+	}
+	if m.R.Routine != nil {
+		RoutineGroupMods.WithExistingRoutine(m.R.Routine).Apply(ctx, o)
+	}
+
+	return o
+}
+
 func (f *Factory) NewRoutine(mods ...RoutineMod) *RoutineTemplate {
 	return f.NewRoutineWithContext(context.Background(), mods...)
 }
@@ -452,6 +508,9 @@ func (f *Factory) fromExistingRoutine(ctx context.Context, m *models.Routine) *R
 	}
 	if len(m.R.PlanRoutines) > 0 {
 		RoutineMods.AddExistingPlanRoutines(m.R.PlanRoutines...).Apply(ctx, o)
+	}
+	if len(m.R.RoutineGroups) > 0 {
+		RoutineMods.AddExistingRoutineGroups(m.R.RoutineGroups...).Apply(ctx, o)
 	}
 	if m.R.User != nil {
 		RoutineMods.WithExistingUser(m.R.User).Apply(ctx, o)
@@ -789,6 +848,14 @@ func (f *Factory) ClearBasePlanMods() {
 
 func (f *Factory) AddBasePlanMod(mods ...PlanMod) {
 	f.basePlanMods = append(f.basePlanMods, mods...)
+}
+
+func (f *Factory) ClearBaseRoutineGroupMods() {
+	f.baseRoutineGroupMods = nil
+}
+
+func (f *Factory) AddBaseRoutineGroupMod(mods ...RoutineGroupMod) {
+	f.baseRoutineGroupMods = append(f.baseRoutineGroupMods, mods...)
 }
 
 func (f *Factory) ClearBaseRoutineMods() {

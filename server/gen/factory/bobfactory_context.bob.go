@@ -26,6 +26,7 @@ var (
 
 	// Relationship Contexts for exercises_routines
 	exercisesRoutineWithParentsCascadingCtx = newContextual[bool]("exercisesRoutineWithParentsCascading")
+	exercisesRoutineRelGroupRoutineGroupCtx = newContextual[bool]("exercises_routines.routine_groups.exercises_routines.exercises_routines_group_id_fkey")
 	exercisesRoutineRelExerciseCtx          = newContextual[bool]("exercises.exercises_routines.exercises_routines.routine_exercises_exercise_id_fkey")
 	exercisesRoutineRelRoutineCtx           = newContextual[bool]("exercises_routines.routines.exercises_routines.routine_exercises_routine_id_fkey")
 
@@ -48,10 +49,16 @@ var (
 	planRelPlanRoutinesCtx      = newContextual[bool]("plan_routines.plans.plan_routines.plan_routines_plan_id_fkey")
 	planRelUserCtx              = newContextual[bool]("plans.users.plans.plans_user_id_fkey")
 
+	// Relationship Contexts for routine_groups
+	routineGroupWithParentsCascadingCtx      = newContextual[bool]("routineGroupWithParentsCascading")
+	routineGroupRelGroupExercisesRoutinesCtx = newContextual[bool]("exercises_routines.routine_groups.exercises_routines.exercises_routines_group_id_fkey")
+	routineGroupRelRoutineCtx                = newContextual[bool]("routine_groups.routines.routine_groups.routine_groups_routine_id_fkey")
+
 	// Relationship Contexts for routines
 	routineWithParentsCascadingCtx = newContextual[bool]("routineWithParentsCascading")
 	routineRelExercisesRoutinesCtx = newContextual[bool]("exercises_routines.routines.exercises_routines.routine_exercises_routine_id_fkey")
 	routineRelPlanRoutinesCtx      = newContextual[bool]("plan_routines.routines.plan_routines.plan_routines_routine_id_fkey")
+	routineRelRoutineGroupsCtx     = newContextual[bool]("routine_groups.routines.routine_groups.routine_groups_routine_id_fkey")
 	routineRelUserCtx              = newContextual[bool]("routines.users.routines.routines_user_id_fkey")
 	routineRelExercisesCtx         = newContextual[bool]("exercises.routines.routines_exercises")
 	routineRelWorkoutsCtx          = newContextual[bool]("routines.workouts.workouts.workouts_routine_id_fkey")

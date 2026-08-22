@@ -27,9 +27,6 @@ service RoutineService {
   rpc AddExercise (AddExerciseRequest) returns (AddExerciseResponse) {
     option (auth) = true;
   }
-  rpc RemoveExercise (RemoveExerciseRequest) returns (RemoveExerciseResponse) {
-    option (auth) = true;
-  }
   rpc UpdateExerciseOrder (UpdateExerciseOrderRequest) returns (UpdateExerciseOrderResponse) {
     option (auth) = true;
   }
@@ -65,6 +62,9 @@ service RoutineService {
 message CreateRoutineRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   repeated string exercise_ids = 2 [(buf.validate.field).repeated.min_items = 1];
+  // Optional. When set, it describes how exercise_ids are grouped; when empty,
+  // the routine gets a single straight-sets group holding every exercise.
+  repeated RoutineGroup groups = 3;
 }
 message CreateRoutineResponse {
   string id = 1;
@@ -104,12 +104,6 @@ message AddExerciseRequest {
 }
 message AddExerciseResponse {}
 
-message RemoveExerciseRequest {
-  string routine_id = 1 [(buf.validate.field).string.uuid = true];
-  string exercise_id = 2 [(buf.validate.field).string.uuid = true];
-}
-message RemoveExerciseResponse {}
-
 message UpdateExerciseOrderRequest {
   string routine_id = 1 [(buf.validate.field).string.uuid = true];
   repeated string exercise_ids = 2 [(buf.validate.field).repeated.min_items = 1];
@@ -133,7 +127,35 @@ message GetDashboardResponse {
 message Routine {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
+  // Every exercise of the routine, in the order they are trained. Groups
+  // partition this same list; a client that does not care how the routine is
+  // grouped can keep reading only this field.
   repeated Exercise exercises = 3 [(buf.validate.field).repeated.min_items = 1];
+  repeated RoutineGroup groups = 4;
+}
+
+// How a group's exercises are worked through. Straight sets finish one exercise
+// before the next begins; a circuit takes one set of each in turn and repeats
+// until the session says it is done.
+enum RoutineGroupMode {
+  ROUTINE_GROUP_MODE_UNSPECIFIED = 0;
+  ROUTINE_GROUP_MODE_STRAIGHT = 1;
+  ROUTINE_GROUP_MODE_CIRCUIT = 2;
+}
+
+message RoutineGroup {
+  // Server-assigned. Requests may leave it empty: a save replaces a routine's
+  // groups wholesale rather than matching them up by ID.
+  string id = 1;
+  RoutineGroupMode mode = 2;
+  // 3 held a round count. A circuit runs for as many rounds as the session
+  // takes, and is ended from the session rather than planned in the routine.
+  reserved 3;
+  // Rest taken on the way from one exercise to the next inside a round.
+  int32 rest_between_exercises_seconds = 4 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
+  // Rest taken once a round closes, before the group starts again.
+  int32 rest_between_rounds_seconds = 5 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
+  repeated Exercise exercises = 6;
 }
 
 message CreatePlanRequest {

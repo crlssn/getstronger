@@ -38,6 +38,8 @@ type ExercisesRoutineTemplate struct {
 	RoutineID  func() uuid.UUID
 	ExerciseID func() uuid.UUID
 	Position   func() int32
+	GroupID    func() uuid.UUID
+	ID         func() uuid.UUID
 
 	r exercisesRoutineR
 	f *Factory
@@ -46,10 +48,14 @@ type ExercisesRoutineTemplate struct {
 }
 
 type exercisesRoutineR struct {
-	Exercise *exercisesRoutineRExerciseR
-	Routine  *exercisesRoutineRRoutineR
+	GroupRoutineGroup *exercisesRoutineRGroupRoutineGroupR
+	Exercise          *exercisesRoutineRExerciseR
+	Routine           *exercisesRoutineRRoutineR
 }
 
+type exercisesRoutineRGroupRoutineGroupR struct {
+	o *RoutineGroupTemplate
+}
 type exercisesRoutineRExerciseR struct {
 	o *ExerciseTemplate
 }
@@ -67,6 +73,14 @@ func (o *ExercisesRoutineTemplate) Apply(ctx context.Context, mods ...ExercisesR
 // setModelRels creates and sets the relationships on *models.ExercisesRoutine
 // according to the relationships in the template. Nothing is inserted into the db
 func (t ExercisesRoutineTemplate) setModelRels(o *models.ExercisesRoutine) {
+	if t.r.GroupRoutineGroup != nil {
+		rel := t.r.GroupRoutineGroup.o.Build()
+		rel.R.GroupExercisesRoutines = append(rel.R.GroupExercisesRoutines, o)
+		o.GroupID = rel.ID // h2
+		o.R.GroupRoutineGroup = rel
+		o.R.Loaded.GroupRoutineGroup = true
+	}
+
 	if t.r.Exercise != nil {
 		rel := t.r.Exercise.o.Build()
 		rel.R.ExercisesRoutines = append(rel.R.ExercisesRoutines, o)
@@ -101,6 +115,14 @@ func (o ExercisesRoutineTemplate) BuildSetter() *models.ExercisesRoutineSetter {
 		val := o.Position()
 		m.Position = omit.From(val)
 	}
+	if o.GroupID != nil {
+		val := o.GroupID()
+		m.GroupID = omit.From(val)
+	}
+	if o.ID != nil {
+		val := o.ID()
+		m.ID = omit.From(val)
+	}
 
 	return m
 }
@@ -131,6 +153,12 @@ func (o ExercisesRoutineTemplate) Build() *models.ExercisesRoutine {
 	}
 	if o.Position != nil {
 		m.Position = o.Position()
+	}
+	if o.GroupID != nil {
+		m.GroupID = o.GroupID()
+	}
+	if o.ID != nil {
+		m.ID = o.ID()
 	}
 
 	o.setModelRels(m)
@@ -164,6 +192,10 @@ func ensureCreatableExercisesRoutine(m *models.ExercisesRoutineSetter) {
 		val := random_int32(nil)
 		m.Position = omit.From(val)
 	}
+	if m.GroupID.IsUnset() {
+		val := random_uuid_UUID(nil)
+		m.GroupID = omit.From(val)
+	}
 }
 
 // insertOptRels creates and inserts any optional the relationships on *models.ExercisesRoutine
@@ -187,59 +219,86 @@ func (o *ExercisesRoutineTemplate) Create(ctx context.Context, exec bob.Executor
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	var rel0 *models.Exercise
+	var rel0 *models.RoutineGroup
 
-	if o.r.Exercise == nil {
-		if parentModel, found := mInCreation["exercises:exercises_routines:exercises_routines.routine_exercises_exercise_id_fkey"]; found {
-			if pModel, ok := parentModel.(*models.Exercise); ok {
+	if o.r.GroupRoutineGroup == nil {
+		if parentModel, found := mInCreation["routine_groups:exercises_routines:exercises_routines.exercises_routines_group_id_fkey"]; found {
+			if pModel, ok := parentModel.(*models.RoutineGroup); ok {
 				rel0 = pModel
 			}
 		}
 	}
 
 	if rel0 == nil {
-		if o.r.Exercise == nil {
-			ExercisesRoutineMods.WithNewExercise().Apply(ctx, o)
+		if o.r.GroupRoutineGroup == nil {
+			ExercisesRoutineMods.WithNewGroupRoutineGroup().Apply(ctx, o)
 		}
 
-		if o.r.Exercise.o.alreadyPersisted {
-			rel0 = o.r.Exercise.o.Build()
+		if o.r.GroupRoutineGroup.o.alreadyPersisted {
+			rel0 = o.r.GroupRoutineGroup.o.Build()
 		} else {
-			rel0, err = o.r.Exercise.o.Create(ctx, exec)
+			rel0, err = o.r.GroupRoutineGroup.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.ExerciseID = omit.From(rel0.ID)
+	opt.GroupID = omit.From(rel0.ID)
 
-	var rel1 *models.Routine
+	var rel1 *models.Exercise
 
-	if o.r.Routine == nil {
-		if parentModel, found := mInCreation["routines:exercises_routines:exercises_routines.routine_exercises_routine_id_fkey"]; found {
-			if pModel, ok := parentModel.(*models.Routine); ok {
+	if o.r.Exercise == nil {
+		if parentModel, found := mInCreation["exercises:exercises_routines:exercises_routines.routine_exercises_exercise_id_fkey"]; found {
+			if pModel, ok := parentModel.(*models.Exercise); ok {
 				rel1 = pModel
 			}
 		}
 	}
 
 	if rel1 == nil {
-		if o.r.Routine == nil {
-			ExercisesRoutineMods.WithNewRoutine().Apply(ctx, o)
+		if o.r.Exercise == nil {
+			ExercisesRoutineMods.WithNewExercise().Apply(ctx, o)
 		}
 
-		if o.r.Routine.o.alreadyPersisted {
-			rel1 = o.r.Routine.o.Build()
+		if o.r.Exercise.o.alreadyPersisted {
+			rel1 = o.r.Exercise.o.Build()
 		} else {
-			rel1, err = o.r.Routine.o.Create(ctx, exec)
+			rel1, err = o.r.Exercise.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.RoutineID = omit.From(rel1.ID)
+	opt.ExerciseID = omit.From(rel1.ID)
+
+	var rel2 *models.Routine
+
+	if o.r.Routine == nil {
+		if parentModel, found := mInCreation["routines:exercises_routines:exercises_routines.routine_exercises_routine_id_fkey"]; found {
+			if pModel, ok := parentModel.(*models.Routine); ok {
+				rel2 = pModel
+			}
+		}
+	}
+
+	if rel2 == nil {
+		if o.r.Routine == nil {
+			ExercisesRoutineMods.WithNewRoutine().Apply(ctx, o)
+		}
+
+		if o.r.Routine.o.alreadyPersisted {
+			rel2 = o.r.Routine.o.Build()
+		} else {
+			rel2, err = o.r.Routine.o.Create(ctx, exec)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	opt.RoutineID = omit.From(rel2.ID)
 
 	m, err := models.ExercisesRoutines.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -257,9 +316,11 @@ func (o *ExercisesRoutineTemplate) Create(ctx context.Context, exec bob.Executor
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
 
-	m.R.Exercise = rel0
+	m.R.GroupRoutineGroup = rel0
+	m.R.Loaded.GroupRoutineGroup = true
+	m.R.Exercise = rel1
 	m.R.Loaded.Exercise = true
-	m.R.Routine = rel1
+	m.R.Routine = rel2
 	m.R.Loaded.Routine = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -342,6 +403,8 @@ func (m exercisesRoutineMods) RandomizeAllColumns(f *faker.Faker) ExercisesRouti
 		ExercisesRoutineMods.RandomRoutineID(f),
 		ExercisesRoutineMods.RandomExerciseID(f),
 		ExercisesRoutineMods.RandomPosition(f),
+		ExercisesRoutineMods.RandomGroupID(f),
+		ExercisesRoutineMods.RandomID(f),
 	}
 }
 
@@ -438,12 +501,79 @@ func (m exercisesRoutineMods) RandomPosition(f *faker.Faker) ExercisesRoutineMod
 	})
 }
 
+// Set the model columns to this value
+func (m exercisesRoutineMods) GroupID(val uuid.UUID) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.GroupID = func() uuid.UUID { return val }
+	})
+}
+
+// Set the Column from the function
+func (m exercisesRoutineMods) GroupIDFunc(f func() uuid.UUID) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.GroupID = f
+	})
+}
+
+// Clear any values for the column
+func (m exercisesRoutineMods) UnsetGroupID() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.GroupID = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m exercisesRoutineMods) RandomGroupID(f *faker.Faker) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.GroupID = func() uuid.UUID {
+			return random_uuid_UUID(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m exercisesRoutineMods) ID(val uuid.UUID) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.ID = func() uuid.UUID { return val }
+	})
+}
+
+// Set the Column from the function
+func (m exercisesRoutineMods) IDFunc(f func() uuid.UUID) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.ID = f
+	})
+}
+
+// Clear any values for the column
+func (m exercisesRoutineMods) UnsetID() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.ID = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m exercisesRoutineMods) RandomID(f *faker.Faker) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.ID = func() uuid.UUID {
+			return random_uuid_UUID(f)
+		}
+	})
+}
+
 func (m exercisesRoutineMods) WithParentsCascading() ExercisesRoutineMod {
 	return ExercisesRoutineModFunc(func(ctx context.Context, o *ExercisesRoutineTemplate) {
 		if isDone, _ := exercisesRoutineWithParentsCascadingCtx.Value(ctx); isDone {
 			return
 		}
 		ctx = exercisesRoutineWithParentsCascadingCtx.WithValue(ctx, true)
+		{
+
+			related := o.f.NewRoutineGroupWithContext(ctx, RoutineGroupMods.WithParentsCascading())
+			m.WithGroupRoutineGroup(related).Apply(ctx, o)
+		}
 		{
 
 			related := o.f.NewExerciseWithContext(ctx, ExerciseMods.WithParentsCascading())
@@ -454,6 +584,36 @@ func (m exercisesRoutineMods) WithParentsCascading() ExercisesRoutineMod {
 			related := o.f.NewRoutineWithContext(ctx, RoutineMods.WithParentsCascading())
 			m.WithRoutine(related).Apply(ctx, o)
 		}
+	})
+}
+
+func (m exercisesRoutineMods) WithGroupRoutineGroup(rel *RoutineGroupTemplate) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(ctx context.Context, o *ExercisesRoutineTemplate) {
+		o.r.GroupRoutineGroup = &exercisesRoutineRGroupRoutineGroupR{
+			o: rel,
+		}
+	})
+}
+
+func (m exercisesRoutineMods) WithNewGroupRoutineGroup(mods ...RoutineGroupMod) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(ctx context.Context, o *ExercisesRoutineTemplate) {
+		related := o.f.NewRoutineGroupWithContext(ctx, mods...)
+
+		m.WithGroupRoutineGroup(related).Apply(ctx, o)
+	})
+}
+
+func (m exercisesRoutineMods) WithExistingGroupRoutineGroup(em *models.RoutineGroup) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(ctx context.Context, o *ExercisesRoutineTemplate) {
+		o.r.GroupRoutineGroup = &exercisesRoutineRGroupRoutineGroupR{
+			o: o.f.fromExistingRoutineGroup(ctx, em),
+		}
+	})
+}
+
+func (m exercisesRoutineMods) WithoutGroupRoutineGroup() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(ctx context.Context, o *ExercisesRoutineTemplate) {
+		o.r.GroupRoutineGroup = nil
 	})
 }
 

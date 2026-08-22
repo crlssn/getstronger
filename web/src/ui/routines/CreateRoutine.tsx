@@ -1,3 +1,5 @@
+import type { DraftGroup } from '@/utils/routineGroups'
+
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -12,10 +14,10 @@ export const CreateRoutine = () => {
   const navigate = useNavigate()
   const [saving, setSaving] = useState(false)
 
-  const onSave = async (name: string, exerciseIds: string[]) => {
+  const onSave = async (name: string, exerciseIds: string[], groups: DraftGroup[]) => {
     setSaving(true)
     try {
-      const response = await createRoutine(name, exerciseIds)
+      const response = await createRoutine(name, exerciseIds, groups)
       if (!response) return
 
       posthog.capture('routine_created')
@@ -30,7 +32,7 @@ export const CreateRoutine = () => {
     <RoutineForm
       submitLabel={t('home.createRoutine')}
       saving={saving}
-      onSave={(name, exerciseIds) => void onSave(name, exerciseIds)}
+      onSave={(name, exerciseIds, groups) => void onSave(name, exerciseIds, groups)}
     />
   )
 }

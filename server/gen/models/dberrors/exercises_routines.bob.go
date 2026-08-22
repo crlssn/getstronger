@@ -4,14 +4,14 @@
 package dberrors
 
 var ExercisesRoutineErrors = &exercisesRoutineErrors{
-	ErrUniqueRoutineExercisesPkey: &UniqueConstraintError{
+	ErrUniqueExercisesRoutinesPkey: &UniqueConstraintError{
 		schema:  "",
 		table:   "exercises_routines",
-		columns: []string{"routine_id", "exercise_id"},
-		s:       "routine_exercises_pkey",
+		columns: []string{"id"},
+		s:       "exercises_routines_pkey",
 	},
 }
 
 type exercisesRoutineErrors struct {
-	ErrUniqueRoutineExercisesPkey *UniqueConstraintError
+	ErrUniqueExercisesRoutinesPkey *UniqueConstraintError
 }

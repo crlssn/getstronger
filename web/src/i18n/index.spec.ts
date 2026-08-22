@@ -12,8 +12,15 @@ describe('resolveLocale', () => {
     expect(resolveLocale(languages)).toBe(expected)
   })
 
-  it('uses Swedish when it is an accepted browser language', () => {
+  it('uses Swedish when it is the first accepted language the app speaks', () => {
     expect(resolveLocale(['fr-FR', 'sv-SE', 'en-GB'])).toBe('sv')
+  })
+
+  // A browser that lists English first is asking for English, however far down
+  // Swedish appears.
+  it('follows the order the browser asks in', () => {
+    expect(resolveLocale(['en-GB', 'sv-GB'])).toBe('en')
+    expect(resolveLocale(['sv-GB', 'en-GB'])).toBe('sv')
   })
 })
 

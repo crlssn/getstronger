@@ -18,7 +18,11 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
-import { GetRoutineResponseSchema, RoutineSchema } from '@/proto/api/v1/routine_service_pb'
+import {
+  GetRoutineResponseSchema,
+  RoutineGroupMode,
+  RoutineSchema,
+} from '@/proto/api/v1/routine_service_pb'
 import {
   DistanceUnit,
   ExerciseMetric,
@@ -99,13 +103,32 @@ const renderWorkout = async (route = `/workouts/routine/${routineID}`, name = 'P
   return result
 }
 
+// Bench and squat taken one set each in turn, resting between stations and
+// again once the lap closes, for as many rounds as the session takes.
+const circuitRoutine = () =>
+  create(GetRoutineResponseSchema, {
+    routine: create(RoutineSchema, {
+      name: 'Push Day',
+      exercises: [benchPress, squat],
+      groups: [
+        {
+          id: 'group-circuit',
+          mode: RoutineGroupMode.CIRCUIT,
+          restBetweenExercisesSeconds: 15,
+          restBetweenRoundsSeconds: 120,
+          exercises: [benchPress, squat],
+        },
+      ],
+    }),
+  })
+
 const setField = (label: string) => screen.getByRole('textbox', { name: label })
 
 // The escape hatch in the tools shares its label, so the one inside the open
 // exercise is identified by being the form's submit.
 const primaryAction = () =>
   screen
-    .getAllByRole('button', { name: /Complete exercise|Finish workout|Saving/ })
+    .getAllByRole('button', { name: /Complete exercise|Complete set|Finish workout|Saving/ })
     .find((button) => button.getAttribute('type') === 'submit')!
 
 const restBanner = () => screen.queryByRole('region', { name: 'Rest timer' })
@@ -195,6 +218,185 @@ describe('StartWorkout', () => {
 
       expect(screen.getByText('workout tab')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
+    })
+  })
+
+  describe('circuits', () => {
+    beforeEach(() => {
+      mocked.getRoutine.mockResolvedValue(circuitRoutine())
+    })
+
+    test('counts rounds rather than exercises', async () => {
+      await renderWorkout()
+
+      expect(screen.getByText('Round 1 · exercise 1 of 2')).toBeInTheDocument()
+      expect(screen.getByText('Circuit')).toBeInTheDocument()
+    })
+
+    // A circuit has no round count to lay rows out from, and a row for a round
+    // nobody has walked would take the emphasis that says "type here next".
+    test('opens on one row, whatever was logged last time', async () => {
+      mocked.getPreviousWorkoutSets.mockResolvedValue(
+        create(GetPreviousWorkoutSetsResponseSchema, {
+          exerciseSets: [
+            create(ExerciseSetsSchema, {
+              exercise: { id: benchPress.id },
+              sets: Array.from({ length: 6 }, () => ({ reps: 8, weight: 80 })),
+            }),
+          ],
+        }),
+      )
+      await renderWorkout()
+
+      expect(setField('Bench Press set 1 weight')).toBeVisible()
+      expect(
+        screen.queryByRole('textbox', { name: 'Bench Press set 2 weight' }),
+      ).not.toBeInTheDocument()
+    })
+
+    test('grows the next row as the set in front of you is filled in', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+
+      expect(setField('Bench Press set 2 weight')).toBeVisible()
+    })
+
+    test('walks to the next exercise instead of finishing the one in front of you', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+      await user.click(primaryAction())
+
+      // Still the first round: the round only turns over once every exercise in
+      // it has taken its set.
+      expect(screen.getByText('Round 1 · exercise 2 of 2')).toBeInTheDocument()
+      expect(await screen.findByRole('textbox', { name: 'Squat set 1 weight' })).toBeVisible()
+      expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds ?? []).toEqual([])
+    })
+
+    test('rests for the walk between exercises and for the round that closed', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+      // The set alone starts nothing: a circuit rests on the way to the next
+      // station, not the moment the numbers are in.
+      expect(restBanner()).not.toBeInTheDocument()
+
+      await user.click(primaryAction())
+      expect(within(restBanner()!).getByText('00:15')).toBeInTheDocument()
+
+      await user.type(await screen.findByRole('textbox', { name: 'Squat set 1 weight' }), '100')
+      await user.type(setField('Squat set 1 reps'), '5')
+      await user.click(primaryAction())
+
+      expect(within(restBanner()!).getByText('02:00')).toBeInTheDocument()
+      expect(screen.getByText('Round 2 · exercise 1 of 2')).toBeInTheDocument()
+    })
+
+    // A circuit runs until it is ended: taking another round is always the next
+    // step, however many have been taken.
+    test('goes round again rather than running out', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await completeBothExercises(user)
+
+      expect(screen.getByText('Round 2 · exercise 1 of 2')).toBeInTheDocument()
+      expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds ?? []).toEqual([])
+      expect(primaryAction()).toHaveTextContent('Complete set')
+    })
+
+    test('ends the circuit when the session says so, ticking off every exercise in it', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+      await user.click(screen.getByRole('button', { name: 'Complete circuit' }))
+
+      expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds).toEqual([
+        benchPress.id,
+        squat.id,
+      ])
+      expect(primaryAction()).toHaveTextContent('Finish workout')
+    })
+
+    // Ending a circuit is a decision to make while you are in one.
+    test('offers no way to end a circuit that is already over', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+      await user.click(screen.getByRole('button', { name: 'Complete circuit' }))
+
+      expect(screen.queryByRole('button', { name: 'Complete circuit' })).not.toBeInTheDocument()
+    })
+  })
+
+  // The same exercise in two groups is two pieces of work: two rows, two sets of
+  // sets, and one exercise on the record that comes out of it.
+  describe('an exercise trained in two groups', () => {
+    beforeEach(() => {
+      mocked.getRoutine.mockResolvedValue(
+        create(GetRoutineResponseSchema, {
+          routine: create(RoutineSchema, {
+            name: 'Push Day',
+            exercises: [benchPress, benchPress, squat],
+            groups: [
+              {
+                id: 'group-warmup',
+                mode: RoutineGroupMode.STRAIGHT,
+                exercises: [benchPress],
+              },
+              {
+                id: 'group-circuit',
+                mode: RoutineGroupMode.CIRCUIT,
+                exercises: [benchPress, squat],
+              },
+            ],
+          }),
+        }),
+      )
+    })
+
+    test('logs each of them on its own', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+      await user.click(primaryAction())
+
+      // The second bench press opens with an empty row of its own rather than
+      // the set that was just logged against the first.
+      const second = await screen.findAllByRole('textbox', { name: /Bench Press set 1 weight/ })
+      expect(second).toHaveLength(1)
+      expect(second[0]).toHaveValue('')
+
+      const sets = useWorkoutStore.getState().workouts[routineID]?.exerciseSets ?? {}
+      expect(sets[benchPress.id]?.filter((set) => set.weight)).toHaveLength(1)
+      expect(sets[`${benchPress.id}#2`]?.filter((set) => set.weight) ?? []).toHaveLength(0)
+    })
+
+    test('saves them as one exercise on the workout', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+      await user.click(primaryAction())
+
+      await user.type(setField('Bench Press set 1 weight'), '70')
+      await user.type(setField('Bench Press set 1 reps'), '10')
+      await user.click(screen.getAllByRole('button', { name: 'Finish workout' })[0]!)
+      await user.click(screen.getByRole('button', { name: 'Finish and save' }))
+
+      await waitFor(() => expect(mocked.createWorkout).toHaveBeenCalled())
+      const request = mocked.createWorkout.mock.calls[0]![0]
+      const bench = request.exerciseSets.filter((entry) => entry.exercise?.id === benchPress.id)
+      expect(bench).toHaveLength(1)
+      expect(bench[0]?.sets).toHaveLength(2)
     })
   })
 

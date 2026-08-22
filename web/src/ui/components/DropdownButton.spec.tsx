@@ -50,15 +50,22 @@ describe('DropdownButton', () => {
     expect(func).toHaveBeenCalledOnce()
   })
 
-  // An item that acts rather than navigates is destructive — every one of them
-  // today is a delete — so it must not look like the rest.
-  test('marks an acting item as destructive', async () => {
-    renderWithProviders(<DropdownButton items={[navigate, { title: 'Delete' }]} />)
+  // Destructive is a property of the item, not of acting rather than
+  // navigating: moving an exercise to another group acts, and is not one.
+  test('marks only the items that say they are destructive', async () => {
+    renderWithProviders(
+      <DropdownButton
+        items={[navigate, { destructive: true, title: 'Delete' }, { title: 'Move to group B' }]}
+      />,
+    )
 
     await open()
 
     expect(screen.getByRole('menuitem', { name: 'Delete' }).className).toContain('danger')
     expect(screen.getByRole('menuitem', { name: 'Edit' }).className).not.toContain('danger')
+    expect(screen.getByRole('menuitem', { name: 'Move to group B' }).className).not.toContain(
+      'danger',
+    )
   })
 
   // The trigger is an ellipsis with no text, so without a label a screen

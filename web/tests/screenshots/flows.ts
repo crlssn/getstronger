@@ -37,7 +37,17 @@ const routineName = 'Screenshot Routine'
 const pickerOptions = (page: Page, dialog: ReturnType<Page['getByRole']>) =>
   dialog.getByRole('button').filter({ has: page.locator('strong') })
 
+const circuitName = 'Screenshot Circuit'
 const planName = 'Screenshot Plan'
+
+// The builder picks exercises through the same sheet the session uses; each
+// group has its own button, and the first one is the block being filled.
+const pickExercise = async (page: Page, optionIndex = 0, groupIndex = 0) => {
+  await page.getByRole('button', { name: 'Add exercise' }).nth(groupIndex).click()
+  const sheet = page.getByRole('dialog')
+  await pickerOptions(page, sheet).nth(optionIndex).click()
+  await expect(sheet).toBeHidden()
+}
 const everybody = ['active', 'new']
 
 // A native confirm() blocks until it is answered, and Playwright dismisses it
@@ -121,13 +131,10 @@ export const flows: Flow[] = [
         act: async (page) => {
           await page.goto('/routines/create')
           await page.getByLabel('Routine name').fill(routineName)
-          // The selectable exercises are the toggles: they are the only
-          // controls on the form that report whether they are pressed.
-          const options = page.locator('button[aria-pressed]')
-          await options.first().click()
-          await options.nth(1).click()
-          await options.nth(2).click()
-          await expect(page.getByText('3 selected', { exact: true })).toBeVisible()
+          await pickExercise(page, 0)
+          await pickExercise(page, 1)
+          await pickExercise(page, 2)
+          await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(3)
         },
         name: 'filled',
       },
@@ -140,6 +147,68 @@ export const flows: Flow[] = [
           await expect(page.getByRole('heading', { name: 'Exercise order' })).toBeVisible()
         },
         name: 'saved',
+      },
+    ],
+  },
+  {
+    cleanup: async (page) => {
+      await page.goto('/routines')
+      await page.getByLabel('Search routines').fill(circuitName)
+      const routine = page.getByRole('heading', { name: circuitName }).first()
+      if (!(await present(routine))) return
+
+      await routine.click()
+      await page.getByRole('button', { name: 'Delete' }).click()
+      await acceptConfirmation(page)
+      await expect(page).toHaveURL(/\/routines$/)
+    },
+    component: 'src/ui/routines/RoutineGroupsEditor.tsx',
+    // The advanced half of the builder, where exercises are grouped and a group
+    // is turned into a circuit. Folded away until it is asked for, so it is only
+    // ever seen by walking to it.
+    name: 'circuit',
+    personas: ['active'],
+    steps: [
+      {
+        act: async (page) => {
+          await page.goto('/routines/create')
+          await page.getByLabel('Routine name').fill(circuitName)
+          await pickExercise(page, 0)
+          await pickExercise(page, 1)
+          await pickExercise(page, 2)
+
+          await page.getByRole('button', { name: 'Advanced', exact: true }).click()
+          await page.getByRole('button', { name: 'Circuit', exact: true }).click()
+          await page.getByLabel('Rest after each exercise').fill('15')
+          await page.getByLabel('Rest after each round').fill('90')
+
+          // Two groups, since that is where the row runs out of width: the
+          // exercise name shares it with the reorder and move controls.
+          await page.getByRole('button', { name: 'New group' }).click()
+          const move = page.getByRole('button', { name: /^Actions for / }).last()
+          await move.click()
+          await page.getByRole('menuitem', { name: 'Move to group B' }).click()
+        },
+        name: 'grouped',
+      },
+      {
+        act: async (page) => {
+          await page.getByRole('button', { name: 'Create routine' }).click()
+          await expect(page).toHaveURL(/\/routines$/)
+          await page.getByLabel('Search routines').fill(circuitName)
+          await page.getByRole('heading', { name: circuitName }).click()
+          await expect(page.getByText('Circuit', { exact: true }).first()).toBeVisible()
+        },
+        name: 'saved',
+      },
+      {
+        // The session as a circuit is trained: banded by round, and asking for
+        // one set rather than for the exercise to be finished with.
+        act: async (page) => {
+          await page.getByRole('link', { name: 'Start workout' }).click()
+          await expect(page.getByText('Round 1 · exercise 1 of 2')).toBeVisible()
+        },
+        name: 'session',
       },
     ],
   },

@@ -55,6 +55,7 @@ type RoutinesQuery = *psql.ViewQuery[*Routine, RoutineSlice]
 type routineR struct {
 	ExercisesRoutines ExercisesRoutineSlice // exercises_routines.routine_exercises_routine_id_fkey
 	PlanRoutines      PlanRoutineSlice      // plan_routines.plan_routines_routine_id_fkey
+	RoutineGroups     RoutineGroupSlice     // routine_groups.routine_groups_routine_id_fkey
 	User              *User                 // routines.routines_user_id_fkey
 	Exercises         ExerciseSlice         // routines_exercises
 	Workouts          WorkoutSlice          // workouts.workouts_routine_id_fkey
@@ -68,6 +69,7 @@ type routineR struct {
 type routineRLoaded struct {
 	ExercisesRoutines bool // exercises_routines.routine_exercises_routine_id_fkey
 	PlanRoutines      bool // plan_routines.plan_routines_routine_id_fkey
+	RoutineGroups     bool // routine_groups.routine_groups_routine_id_fkey
 	User              bool // routines.routines_user_id_fkey
 	Exercises         bool // routines_exercises
 	Workouts          bool // workouts.workouts_routine_id_fkey
@@ -611,6 +613,29 @@ func (os RoutineSlice) PlanRoutines(mods ...bob.Mod[*dialect.SelectQuery]) PlanR
 	)...)
 }
 
+// RoutineGroups starts a query for related objects on routine_groups
+func (o *Routine) RoutineGroups(mods ...bob.Mod[*dialect.SelectQuery]) RoutineGroupsQuery {
+	return RoutineGroups.Query(append(mods,
+		sm.Where(RoutineGroups.Columns.RoutineID.EQ(psql.Arg(o.ID))),
+	)...)
+}
+
+func (os RoutineSlice) RoutineGroups(mods ...bob.Mod[*dialect.SelectQuery]) RoutineGroupsQuery {
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	return RoutineGroups.Query(append(mods,
+		sm.Where(RoutineGroups.Columns.RoutineID.EQ(PKArgExpr)),
+	)...)
+}
+
 // User starts a query for related objects on users
 func (o *Routine) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
 	return Users.Query(append(mods,
@@ -823,6 +848,76 @@ func (routine0 *Routine) AttachPlanRoutines(ctx context.Context, exec bob.Execut
 	}
 
 	routine0.R.PlanRoutines = append(routine0.R.PlanRoutines, planRoutines1...)
+
+	for _, rel := range related {
+		rel.R.Routine = routine0
+		rel.R.Loaded.Routine = true
+	}
+
+	return nil
+}
+
+func insertRoutineRoutineGroups0(ctx context.Context, exec bob.Executor, routineGroups1 []*RoutineGroupSetter, routine0 *Routine) (RoutineGroupSlice, error) {
+	for i := range routineGroups1 {
+		routineGroups1[i].RoutineID = omit.From(routine0.ID)
+	}
+
+	ret, err := RoutineGroups.Insert(bob.ToMods(routineGroups1...)).All(ctx, exec)
+	if err != nil {
+		return ret, fmt.Errorf("insertRoutineRoutineGroups0: %w", err)
+	}
+
+	return ret, nil
+}
+
+func attachRoutineRoutineGroups0(ctx context.Context, exec bob.Executor, count int, routineGroups1 RoutineGroupSlice, routine0 *Routine) (RoutineGroupSlice, error) {
+	setter := &RoutineGroupSetter{
+		RoutineID: omit.From(routine0.ID),
+	}
+
+	err := routineGroups1.UpdateAll(ctx, exec, *setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachRoutineRoutineGroups0: %w", err)
+	}
+
+	return routineGroups1, nil
+}
+
+func (routine0 *Routine) InsertRoutineGroups(ctx context.Context, exec bob.Executor, related ...*RoutineGroupSetter) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+
+	routineGroups1, err := insertRoutineRoutineGroups0(ctx, exec, related, routine0)
+	if err != nil {
+		return err
+	}
+
+	routine0.R.RoutineGroups = append(routine0.R.RoutineGroups, routineGroups1...)
+
+	for _, rel := range routineGroups1 {
+		rel.R.Routine = routine0
+		rel.R.Loaded.Routine = true
+	}
+	return nil
+}
+
+func (routine0 *Routine) AttachRoutineGroups(ctx context.Context, exec bob.Executor, related ...*RoutineGroup) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	routineGroups1 := RoutineGroupSlice(related)
+
+	_, err = attachRoutineRoutineGroups0(ctx, exec, len(related), routineGroups1, routine0)
+	if err != nil {
+		return err
+	}
+
+	routine0.R.RoutineGroups = append(routine0.R.RoutineGroups, routineGroups1...)
 
 	for _, rel := range related {
 		rel.R.Routine = routine0
@@ -1077,6 +1172,20 @@ func (w routineWhereR[Q]) HasPlanRoutines(filters ...bob.Mod[*dialect.SelectQuer
 	return mods.Where[Q]{E: psql.Exists(q)}
 }
 
+// HasRoutineGroups filters parents that have a matching RoutineGroups using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to RoutineGroups).
+func (w routineWhereR[Q]) HasRoutineGroups(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(RoutineGroups.NameExpr()),
+		sm.Where(RoutineGroups.Columns.RoutineID.EQ(w.cols.ID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
 // HasUser filters parents that have a matching User using a
 // correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
 // multiply parent rows, so no DISTINCT is needed. The optional filters are
@@ -1249,6 +1358,22 @@ func (o *Routine) Preload(name string, retrieved any) error {
 			}
 		}
 		return nil
+	case "RoutineGroups":
+		rels, ok := retrieved.(RoutineGroupSlice)
+		if !ok {
+			return fmt.Errorf("routine cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.RoutineGroups = rels
+		o.R.Loaded.RoutineGroups = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.Routine = o
+				rel.R.Loaded.Routine = true
+			}
+		}
+		return nil
 	case "User":
 		rel, ok := retrieved.(*User)
 		if !ok {
@@ -1323,6 +1448,7 @@ func buildRoutinePreloader() routinePreloader {
 type routineThenLoader[Q orm.Loadable] struct {
 	ExercisesRoutines func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	PlanRoutines      func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	RoutineGroups     func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	User              func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Exercises         func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Workouts          func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
@@ -1334,6 +1460,9 @@ func buildRoutineThenLoader[Q orm.Loadable]() routineThenLoader[Q] {
 	}
 	type PlanRoutinesLoadInterface interface {
 		LoadPlanRoutines(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type RoutineGroupsLoadInterface interface {
+		LoadRoutineGroups(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type UserLoadInterface interface {
 		LoadUser(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -1356,6 +1485,12 @@ func buildRoutineThenLoader[Q orm.Loadable]() routineThenLoader[Q] {
 			"PlanRoutines",
 			func(ctx context.Context, exec bob.Executor, retrieved PlanRoutinesLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadPlanRoutines(ctx, exec, mods...)
+			},
+		),
+		RoutineGroups: thenLoadBuilder[Q](
+			"RoutineGroups",
+			func(ctx context.Context, exec bob.Executor, retrieved RoutineGroupsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadRoutineGroups(ctx, exec, mods...)
 			},
 		),
 		User: thenLoadBuilder[Q](
@@ -1520,6 +1655,80 @@ func (os RoutineSlice) LoadPlanRoutines(ctx context.Context, exec bob.Executor, 
 			rel.R.Loaded.Routine = true
 
 			o.R.PlanRoutines = append(o.R.PlanRoutines, rel)
+
+		}
+	}
+
+	return nil
+}
+
+// LoadRoutineGroups loads the routine's RoutineGroups into the .R struct
+func (o *Routine) LoadRoutineGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.RoutineGroups = nil
+	o.R.Loaded.RoutineGroups = false
+
+	related, err := o.RoutineGroups(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.Routine = o
+		rel.R.Loaded.Routine = true
+	}
+
+	o.R.RoutineGroups = related
+	o.R.Loaded.RoutineGroups = true
+	return nil
+}
+
+// LoadRoutineGroups loads the routine's RoutineGroups into the .R struct
+func (os RoutineSlice) LoadRoutineGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	routineGroups, err := os.RoutineGroups(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.RoutineGroups = nil
+		o.R.Loaded.RoutineGroups = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	routineByKey := make(map[uuid.UUID][]*Routine, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		routineByKey[o.ID] = append(routineByKey[o.ID], o)
+	}
+
+	for _, rel := range routineGroups {
+
+		owners, ok := routineByKey[rel.RoutineID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.Routine = o
+			rel.R.Loaded.Routine = true
+
+			o.R.RoutineGroups = append(o.R.RoutineGroups, rel)
 
 		}
 	}
@@ -1795,6 +2004,7 @@ func (os RoutineSlice) LoadWorkouts(ctx context.Context, exec bob.Executor, mods
 type routineC struct {
 	ExercisesRoutines *int64
 	PlanRoutines      *int64
+	RoutineGroups     *int64
 	Exercises         *int64
 	Workouts          *int64
 }
@@ -1810,6 +2020,8 @@ func (o *Routine) PreloadCount(name string, count int64) error {
 		o.C.ExercisesRoutines = &count
 	case "PlanRoutines":
 		o.C.PlanRoutines = &count
+	case "RoutineGroups":
+		o.C.RoutineGroups = &count
 	case "Exercises":
 		o.C.Exercises = &count
 	case "Workouts":
@@ -1821,6 +2033,7 @@ func (o *Routine) PreloadCount(name string, count int64) error {
 type routineCountPreloader struct {
 	ExercisesRoutines func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	PlanRoutines      func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+	RoutineGroups     func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Exercises         func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Workouts          func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 }
@@ -1856,6 +2069,23 @@ func buildRoutineCountPreloader() routineCountPreloader {
 
 					sm.From(PlanRoutines.NameAsExpr()),
 					sm.Where(psql.Quote(PlanRoutines.Alias(), "routine_id").EQ(psql.Quote(parent, "id"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
+		RoutineGroups: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*Routine]("RoutineGroups", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Routines.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(RoutineGroups.NameAsExpr()),
+					sm.Where(psql.Quote(RoutineGroups.Alias(), "routine_id").EQ(psql.Quote(parent, "id"))),
 				}
 				subqueryMods = append(subqueryMods, mods...)
 				return psql.Group(psql.Select(subqueryMods...).Expression)
@@ -1904,6 +2134,7 @@ func buildRoutineCountPreloader() routineCountPreloader {
 type routineCountThenLoader[Q orm.Loadable] struct {
 	ExercisesRoutines func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	PlanRoutines      func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	RoutineGroups     func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Exercises         func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Workouts          func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
@@ -1914,6 +2145,9 @@ func buildRoutineCountThenLoader[Q orm.Loadable]() routineCountThenLoader[Q] {
 	}
 	type PlanRoutinesCountInterface interface {
 		LoadCountPlanRoutines(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type RoutineGroupsCountInterface interface {
+		LoadCountRoutineGroups(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type ExercisesCountInterface interface {
 		LoadCountExercises(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -1933,6 +2167,12 @@ func buildRoutineCountThenLoader[Q orm.Loadable]() routineCountThenLoader[Q] {
 			"PlanRoutines",
 			func(ctx context.Context, exec bob.Executor, retrieved PlanRoutinesCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadCountPlanRoutines(ctx, exec, mods...)
+			},
+		),
+		RoutineGroups: countThenLoadBuilder[Q](
+			"RoutineGroups",
+			func(ctx context.Context, exec bob.Executor, retrieved RoutineGroupsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountRoutineGroups(ctx, exec, mods...)
 			},
 		),
 		Exercises: countThenLoadBuilder[Q](
@@ -2108,6 +2348,85 @@ func (os RoutineSlice) LoadCountPlanRoutines(ctx context.Context, exec bob.Execu
 	return nil
 }
 
+// LoadCountRoutineGroups loads the count of RoutineGroups into the C struct
+func (o *Routine) LoadCountRoutineGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.RoutineGroups(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.RoutineGroups = &count
+	return nil
+}
+
+// LoadCountRoutineGroups loads the count of RoutineGroups for a slice in a single batch query
+func (os RoutineSlice) LoadCountRoutineGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		ID    uuid.UUID
+		Count int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			RoutineGroups.Columns.RoutineID.As("id"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(RoutineGroups.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(RoutineGroups.Columns.RoutineID.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(RoutineGroups.Columns.RoutineID),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[uuid.UUID]int64, len(results))
+	for _, r := range results {
+		countMap[r.ID] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.ID]
+		o.C.RoutineGroups = &count
+	}
+
+	return nil
+}
+
 // LoadCountExercises loads the count of Exercises into the C struct
 func (o *Routine) LoadCountExercises(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
 	if o == nil {
@@ -2273,6 +2592,7 @@ type routineJoins[Q dialect.Joinable] struct {
 	typ               string
 	ExercisesRoutines modAs[Q, exercisesRoutineColumns]
 	PlanRoutines      modAs[Q, planRoutineColumns]
+	RoutineGroups     modAs[Q, routineGroupColumns]
 	User              modAs[Q, userColumns]
 	Exercises         modAs[Q, exerciseColumns]
 	Workouts          modAs[Q, workoutColumns]
@@ -2306,6 +2626,20 @@ func buildRoutineJoins[Q dialect.Joinable](cols routineColumns, typ string) rout
 
 				{
 					mods = append(mods, dialect.Join[Q](typ, PlanRoutines.NameExpr().As(to.Alias())).On(
+						to.RoutineID.EQ(cols.ID),
+					))
+				}
+
+				return mods
+			},
+		},
+		RoutineGroups: modAs[Q, routineGroupColumns]{
+			c: RoutineGroups.Columns,
+			f: func(to routineGroupColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, RoutineGroups.NameExpr().As(to.Alias())).On(
 						to.RoutineID.EQ(cols.ID),
 					))
 				}

@@ -1,7 +1,8 @@
+import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { CreateWorkoutRequest } from '@/proto/api/v1/workout_service_pb'
 import type { Set as WorkoutSet } from '@/types/workout'
 import type { MeasurementField } from '@/utils/exerciseMeasurements'
-import type { SessionExercise } from '@/utils/workoutSession'
+import type { SessionExercise, SessionGroup, SessionStation } from '@/utils/workoutSession'
 import type { RefObject } from 'react'
 
 import { create } from '@bufbuild/protobuf'
@@ -67,21 +68,26 @@ import { restRemainingSeconds } from '@/utils/restTimer'
 import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 import {
   activeSetIndex,
+  circuitRound,
+  completedCircuitRounds,
   defaultRestSeconds,
   elapsedLabel,
   finishBlocker,
   loggedSetCount,
-  nextUnfinishedIndex,
+  nextCircuitStep,
+  nextUnfinishedStation,
   restExtensionSeconds,
+  sessionGroups,
 } from '@/utils/workoutSession'
 import styles from './StartWorkout.module.css'
 
 interface Session {
   name: string
   exercises: Exercise[]
+  groups: RoutineGroup[]
 }
 
-const setKey = (exerciseID: string, index: number) => `${exerciseID}:${index}`
+const setKey = (stationKey: string, index: number) => `${stationKey}:${index}`
 
 const millisecondsOf = (iso: string | undefined) => {
   const time = Date.parse(iso ?? '')
@@ -112,32 +118,42 @@ const focusNextSetInput = (panel: HTMLElement | null, suppress: RefObject<boolea
   }
 }
 
-/** Tops every exercise up to one blank row, and to as many as it had last time. */
-const fillEmptySets = (routineID: string, exercises: Exercise[], previous: ExerciseSets[]) => {
+/**
+ * Gives every station the row it opens on, and the shape it had last time.
+ *
+ * Straight sets open on as many rows as the exercise took last session, which
+ * is the session being repeated. A circuit opens on one: its rows are rounds
+ * nobody has walked yet, and a row for a round you have not reached takes the
+ * emphasis that says "type here next" when what comes next is another exercise.
+ */
+const fillEmptySets = (
+  routineID: string,
+  blocks: readonly SessionGroup[],
+  previous: ExerciseSets[],
+) => {
   const { weightUnit, distanceUnit } = usePreferencesStore.getState()
   const store = () => useWorkoutStore.getState()
 
-  exercises.forEach((exercise) =>
-    store().addEmptySetIfNone(routineID, exercise.id, exercise.metrics, weightUnit, distanceUnit),
-  )
+  blocks.forEach((block) => {
+    block.stations.forEach(({ key, exercise }) => {
+      store().addEmptySetIfNone(routineID, key, exercise.metrics, weightUnit, distanceUnit)
+      if (block.mode === 'circuit') return
 
-  previous.forEach((entry) => {
-    if (!entry.exercise) return
-
-    const logged = selectSets(store(), routineID, entry.exercise.id).length
-    for (let index = logged; index < entry.sets.length; index += 1) {
-      store().addEmptySet(routineID, entry.exercise.id, weightUnit, distanceUnit)
-    }
+      const rows = previous.find((entry) => entry.exercise?.id === exercise.id)?.sets.length ?? 0
+      for (let index = selectSets(store(), routineID, key).length; index < rows; index += 1) {
+        store().addEmptySet(routineID, key, weightUnit, distanceUnit)
+      }
+    })
   })
 }
 
-const completedSetKeys = (routineID: string, exercises: Exercise[]) => {
+const completedSetKeys = (routineID: string, stations: readonly SessionStation[]) => {
   const state = useWorkoutStore.getState()
   const keys = new Set<string>()
 
-  exercises.forEach((exercise) => {
-    selectSets(state, routineID, exercise.id).forEach((set, index) => {
-      if (isExerciseSetComplete(set, exercise)) keys.add(setKey(exercise.id, index))
+  stations.forEach(({ key, exercise }) => {
+    selectSets(state, routineID, key).forEach((set, index) => {
+      if (isExerciseSetComplete(set, exercise)) keys.add(setKey(key, index))
     })
   })
 
@@ -168,7 +184,7 @@ export const StartWorkout = () => {
 
   const [session, setSession] = useState<Session>()
   const [previousSets, setPreviousSets] = useState<ExerciseSets[]>([])
-  const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
+  const [activeStationIndex, setActiveStationIndex] = useState(0)
   const [now, setNow] = useState(() => Date.now())
   const [submitting, setSubmitting] = useState(false)
   const [finishError, setFinishError] = useState('')
@@ -194,9 +210,36 @@ export const StartWorkout = () => {
   )
 
   const allSets = workout?.exerciseSets
+
+  // The session in blocks: straight ones behave exactly as they always have,
+  // circuits are walked a set at a time and counted in rounds. A station is one
+  // exercise where the routine trains it, so an exercise in two groups is two
+  // of them, each with its own sets.
+  const blocks = useMemo(() => sessionGroups(session?.groups, exercises), [session, exercises])
+  const stations = useMemo(() => blocks.flatMap((block) => block.stations), [blocks])
+  const blockOf = useMemo(() => {
+    const lookup = new Map<string, SessionGroup>()
+    blocks.forEach((block) => block.stations.forEach(({ key }) => lookup.set(key, block)))
+    return lookup
+  }, [blocks])
+  const stationIndex = useMemo(
+    () => new Map(stations.map((station, index) => [station.key, index])),
+    [stations],
+  )
+
   const entries = useMemo<SessionExercise[]>(
-    () => exercises.map((exercise) => ({ exercise, sets: allSets?.[exercise.id] ?? [] })),
-    [exercises, allSets],
+    () => stations.map(({ key, exercise }) => ({ exercise, sets: allSets?.[key] ?? [] })),
+    [stations, allSets],
+  )
+  const loggedCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        stations.map(({ key, exercise }) => [
+          key,
+          (allSets?.[key] ?? []).filter((set) => isExerciseSetComplete(set, exercise)).length,
+        ]),
+      ),
+    [stations, allSets],
   )
 
   useEffect(() => {
@@ -226,14 +269,19 @@ export const StartWorkout = () => {
           saved.map(async (entry) => (await getExercise(entry.id))?.exercise ?? entry),
         )
         current.forEach((exercise) => store().addWorkoutExercise(routineID, exercise))
-        setSession({ name: t('workout.quick'), exercises: current })
+        setSession({ name: t('workout.quick'), exercises: current, groups: [] })
 
         const previous = current.length
           ? ((await getPreviousWorkoutSets(current.map(({ id }) => id)))?.exerciseSets ?? [])
           : []
         setPreviousSets(previous)
-        fillEmptySets(routineID, current, previous)
-        completedSets.current = completedSetKeys(routineID, current)
+
+        const quickBlocks = sessionGroups([], current)
+        fillEmptySets(routineID, quickBlocks, previous)
+        completedSets.current = completedSetKeys(
+          routineID,
+          quickBlocks.flatMap((block) => block.stations),
+        )
         return
       }
 
@@ -252,19 +300,26 @@ export const StartWorkout = () => {
       selectAddedExercises(store(), routineID).forEach((added) => {
         if (!current.some((entry) => entry.id === added.id)) current.push(added)
       })
-      setSession({ name: routineRes.routine.name, exercises: current })
+      setSession({
+        name: routineRes.routine.name,
+        exercises: current,
+        groups: routineRes.routine.groups,
+      })
 
       const previous =
         (await getPreviousWorkoutSets(current.map(({ id }) => id)))?.exerciseSets ?? []
       setPreviousSets(previous)
-      fillEmptySets(routineID, current, previous)
-      completedSets.current = completedSetKeys(routineID, current)
+
+      const sessionBlocks = sessionGroups(routineRes.routine.groups, current)
+      const sessionStations = sessionBlocks.flatMap((block) => block.stations)
+      fillEmptySets(routineID, sessionBlocks, previous)
+      completedSets.current = completedSetKeys(routineID, sessionStations)
 
       const done = selectCompletedExerciseIds(store(), routineID)
-      setActiveExerciseIndex(
+      setActiveStationIndex(
         Math.max(
           0,
-          current.findIndex((entry) => !done.includes(entry.id)),
+          sessionStations.findIndex((station) => !done.includes(station.key)),
         ),
       )
     }
@@ -304,9 +359,20 @@ export const StartWorkout = () => {
   const startedAtMs = millisecondsOf(workout?.startedAt)
   const elapsedSeconds = startedAtMs ? Math.max(0, Math.floor((now - startedAtMs) / 1000)) : 0
 
-  const currentExercise = exercises[activeExerciseIndex]
-  const unfinishedCount = exercises.filter((exercise) => !completed[exercise.id]).length
+  const activeStation = stations[activeStationIndex]
+  const currentExercise = activeStation?.exercise
+  const unfinishedCount = stations.filter((station) => !completed[station.key]).length
   const allExercisesComplete = unfinishedCount === 0
+
+  const activeBlock = activeStation ? blockOf.get(activeStation.key) : undefined
+  const activeIndexInBlock = Math.max(
+    0,
+    activeBlock?.stations.findIndex((station) => station.key === activeStation?.key) ?? 0,
+  )
+  const inCircuit = activeBlock?.mode === 'circuit' && !allExercisesComplete
+  const activeRound = activeBlock ? circuitRound(activeBlock, loggedCounts) : 1
+  const roundOf = (block: SessionGroup) => circuitRound(block, loggedCounts)
+  const completedRoundsOf = (block: SessionGroup) => completedCircuitRounds(block, loggedCounts)
 
   const blocker = finishBlocker(session ? entries : undefined, quickWorkout)
   const finishStatus = !blocker
@@ -322,14 +388,14 @@ export const StartWorkout = () => {
   // A workout with nothing in it is not "ready to finish": `finishBlocker`
   // leaves an empty quick workout unblocked because there is nothing to fix
   // there, only something to add.
-  const canFinish = exercises.length > 0 && !blocker && !submitting
-  const canRunPrimaryAction = allExercisesComplete ? canFinish : Boolean(currentExercise)
+  const canFinish = stations.length > 0 && !blocker && !submitting
+  const canRunPrimaryAction = allExercisesComplete ? canFinish : Boolean(activeStation)
 
   // Blocked, not disabled. A grey fill on the screen's dominant control reads as
   // broken rather than as waiting for something, so the button stays live and
   // says what is missing when it is pressed. Only finishing can block:
   // completing an exercise works from wherever you are.
-  const blockedReason = !currentExercise
+  const blockedReason = !activeStation
     ? t('workout.blockedNoExercise')
     : allExercisesComplete
       ? finishStatus
@@ -342,36 +408,48 @@ export const StartWorkout = () => {
   const primaryStatus = allExercisesComplete ? finishStatus : ''
   const statusMessage = finishError || shownBlocked || primaryStatus
 
-  const nextIndex = nextUnfinishedIndex(exercises, completed, activeExerciseIndex)
-  const nextExercise = exercises[nextIndex]
-  const nextUpHint = nextExercise
-    ? t('workout.thenNext', { name: nextExercise.name })
+  const nextIndex = nextUnfinishedStation(stations, completed, activeStationIndex)
+  const circuitStep =
+    inCircuit && activeBlock && activeStation
+      ? nextCircuitStep(activeBlock, activeStation.key, completedRoundsOf(activeBlock))
+      : undefined
+  const nextStation =
+    circuitStep && circuitStep.kind !== 'groupComplete'
+      ? stations.find((station) => station.key === circuitStep.key)
+      : stations[nextIndex]
+  const nextUpHint = nextStation
+    ? t('workout.thenNext', { name: nextStation.exercise.name })
     : t('workout.thenFinish')
-  const primaryActionLabel = !allExercisesComplete
-    ? t('workout.completeExercise')
-    : submitting
+  const primaryActionLabel = allExercisesComplete
+    ? submitting
       ? t('common.saving')
       : t('workout.finish')
+    : inCircuit
+      ? t('workout.completeSet')
+      : t('workout.completeExercise')
 
-  const setsFor = (exerciseID: string) =>
-    selectSets(useWorkoutStore.getState(), routineID, exerciseID)
+  const setsFor = (key: string) => selectSets(useWorkoutStore.getState(), routineID, key)
   const previousSetsFor = (exerciseID: string) =>
     previousSets.find((entry) => entry.exercise?.id === exerciseID)?.sets
   const previousSetFor = (exerciseID: string, index: number) => previousSetsFor(exerciseID)?.[index]
-  const loggedFor = (exercise: Exercise) =>
-    setsFor(exercise.id).filter((set) => isExerciseSetComplete(set, exercise)).length
+  const loggedFor = ({ key, exercise }: SessionStation) =>
+    setsFor(key).filter((set) => isExerciseSetComplete(set, exercise)).length
 
-  const rememberCompletedSets = (exercise: Exercise) => {
-    for (const key of completedSets.current) {
-      if (key.startsWith(`${exercise.id}:`)) completedSets.current.delete(key)
+  const rememberCompletedSets = ({ key, exercise }: SessionStation) => {
+    for (const entry of completedSets.current) {
+      if (entry.startsWith(`${key}:`)) completedSets.current.delete(entry)
     }
-    setsFor(exercise.id).forEach((set, index) => {
-      if (isExerciseSetComplete(set, exercise))
-        completedSets.current.add(setKey(exercise.id, index))
+    setsFor(key).forEach((set, index) => {
+      if (isExerciseSetComplete(set, exercise)) completedSets.current.add(setKey(key, index))
     })
   }
 
   const startRest = (seconds = defaultRestSeconds) => {
+    // Read at event time, never during render: this runs from completing a set,
+    // moving on, or pressing "+30 sec". The compiler cannot follow that through
+    // the handlers that reach it, so the check is silenced here rather than
+    // every caller being reshaped to satisfy it.
+    // eslint-disable-next-line react-hooks/purity
     const startedAt = Date.now()
 
     // The countdown is read off the ticking clock, and that clock last read
@@ -388,16 +466,23 @@ export const StartWorkout = () => {
     else useWorkoutStore.getState().setRestTimer(routineID)
   }
 
+  const startRestOrClear = (seconds: number) => {
+    if (seconds > 0) startRest(seconds)
+    else useWorkoutStore.getState().setRestTimer(routineID)
+  }
+
   // Completing a set is what starts the rest, so it must fire on the crossing
   // and not on every keystroke that leaves the set complete.
-  const syncSetCompletion = (exercise: Exercise, index: number) => {
-    const set = setsFor(exercise.id)[index]
-    const key = setKey(exercise.id, index)
+  const syncSetCompletion = (station: SessionStation, index: number) => {
+    const set = setsFor(station.key)[index]
+    const key = setKey(station.key, index)
 
-    if (set && isExerciseSetComplete(set, exercise)) {
+    if (set && isExerciseSetComplete(set, station.exercise)) {
       if (!completedSets.current.has(key)) {
         completedSets.current.add(key)
-        startExerciseRest(exercise)
+        // A circuit rests on the way to the next exercise or into the next
+        // round, so its rest belongs to moving on rather than to the set.
+        if (blockOf.get(station.key)?.mode !== 'circuit') startExerciseRest(station.exercise)
       }
       return
     }
@@ -405,29 +490,35 @@ export const StartWorkout = () => {
     completedSets.current.delete(key)
   }
 
-  const onSetChange = (exercise: Exercise, index: number, changes: WorkoutSet) => {
+  const onSetChange = (station: SessionStation, index: number, changes: WorkoutSet) => {
     const store = useWorkoutStore.getState()
 
     setFinishError('')
-    store.updateSet(routineID, exercise.id, index, changes)
-    store.addEmptySetIfNone(routineID, exercise.id, exercise.metrics, weightUnit, distanceUnit)
-    syncSetCompletion(exercise, index)
+    store.updateSet(routineID, station.key, index, changes)
+    store.addEmptySetIfNone(
+      routineID,
+      station.key,
+      station.exercise.metrics,
+      weightUnit,
+      distanceUnit,
+    )
+    syncSetCompletion(station, index)
   }
 
   // Prefilling a field nobody typed into is opt-in, so an athlete who wants to
   // log what they actually did sees an empty row.
   const onFocusField = (
-    exercise: Exercise,
+    station: SessionStation,
     index: number,
     field: MeasurementField,
     target: HTMLInputElement,
   ) => {
     if (!autofillSets || suppressFocusAutofill.current) return
 
-    const sets = setsFor(exercise.id)
+    const sets = setsFor(station.key)
     if (isNumber(sets[index]?.[field])) return
 
-    const previous = previousSetFor(exercise.id, index) ?? sets[index - 1]
+    const previous = previousSetFor(station.exercise.id, index) ?? sets[index - 1]
     if (!previous) return
 
     const changes: WorkoutSet = {}
@@ -456,84 +547,131 @@ export const StartWorkout = () => {
     // and selected, before this focus returns. A render left until the next
     // tick lands after the caret has been placed, so the first character typed
     // is appended to the copied number instead of replacing it.
-    flushSync(() => onSetChange(exercise, index, changes))
+    flushSync(() => onSetChange(station, index, changes))
     target.select()
   }
 
-  const onRemoveSet = (exercise: Exercise, index: number) => {
-    useWorkoutStore.getState().deleteSet(routineID, exercise.id, index)
-    rememberCompletedSets(exercise)
+  const onRemoveSet = (station: SessionStation, index: number) => {
+    useWorkoutStore.getState().deleteSet(routineID, station.key, index)
+    rememberCompletedSets(station)
   }
 
-  const selectExercise = (index: number) => {
-    if (!exercises[index] || index === activeExerciseIndex) return
+  const selectStation = (index: number) => {
+    if (!stations[index] || index === activeStationIndex) return
 
-    setActiveExerciseIndex(index)
+    setActiveStationIndex(index)
     setFocusRequest((request) => request + 1)
   }
 
   // A row nobody finished is a row that would never have been saved, so
   // completing throws it away rather than standing in the way of moving on.
-  const completeExercise = (exercise: Exercise) => {
+  const completeStation = (station: SessionStation) => {
     const store = useWorkoutStore.getState()
-    const sets = setsFor(exercise.id)
+    const sets = setsFor(station.key)
 
     for (let index = sets.length - 1; index >= 0; index -= 1) {
-      if (!isExerciseSetComplete(sets[index], exercise)) {
-        store.deleteSet(routineID, exercise.id, index)
+      if (!isExerciseSetComplete(sets[index], station.exercise)) {
+        store.deleteSet(routineID, station.key, index)
       }
     }
-    rememberCompletedSets(exercise)
-    store.setExerciseCompleted(routineID, exercise.id, true)
+    rememberCompletedSets(station)
+    store.setExerciseCompleted(routineID, station.key, true)
   }
 
-  const reopenExercise = (exercise: Exercise) => {
+  const reopenStation = ({ key, exercise }: SessionStation) => {
     const store = useWorkoutStore.getState()
 
-    store.setExerciseCompleted(routineID, exercise.id, false)
+    store.setExerciseCompleted(routineID, key, false)
     // Completing cleared the empty row, so reopening has to hand one back.
-    store.addEmptySetIfNone(routineID, exercise.id, exercise.metrics, weightUnit, distanceUnit)
+    store.addEmptySetIfNone(routineID, key, exercise.metrics, weightUnit, distanceUnit)
   }
 
-  const advanceExercise = () => {
-    if (!currentExercise) return
-
-    completeExercise(currentExercise)
-
+  const moveToNextUnfinished = () => {
     const done = selectCompletedExerciseIds(useWorkoutStore.getState(), routineID)
-    const next = nextUnfinishedIndex(
-      exercises,
-      Object.fromEntries(done.map((id) => [id, true])),
-      activeExerciseIndex,
+    const next = nextUnfinishedStation(
+      stations,
+      Object.fromEntries(done.map((key) => [key, true])),
+      activeStationIndex,
     )
     if (next < 0) return
 
-    selectExercise(next)
-    startExerciseRest(exercises[next])
+    selectStation(next)
+    startExerciseRest(stations[next]?.exercise)
+  }
+
+  /**
+   * Ends the circuit at the round it has reached, ticking off every exercise in
+   * it at once — they were all being worked, so they are all done together.
+   */
+  const completeCircuit = (block: SessionGroup) => {
+    block.stations.forEach((station) => completeStation(station))
+    moveToNextUnfinished()
+  }
+
+  /**
+   * One step around the circuit: along the group, and back to the top when the
+   * round closes.
+   *
+   * Nothing is ticked off on the way round, because an exercise in a circuit is
+   * not finished with until the circuit is — and how many rounds that takes is
+   * decided here, in the session, not in the routine.
+   */
+  const advanceCircuit = (block: SessionGroup) => {
+    if (!activeStation) return
+
+    const step = nextCircuitStep(block, activeStation.key, completedRoundsOf(block))
+    if (step.kind === 'groupComplete') {
+      completeCircuit(block)
+      return
+    }
+
+    const next = stationIndex.get(step.key) ?? -1
+    if (next < 0) return
+
+    selectStation(next)
+    startRestOrClear(step.restSeconds)
+  }
+
+  const advanceExercise = () => {
+    if (!activeStation) return
+
+    const block = blockOf.get(activeStation.key)
+    if (block?.mode === 'circuit') {
+      advanceCircuit(block)
+      return
+    }
+
+    completeStation(activeStation)
+    moveToNextUnfinished()
   }
 
   const buildWorkoutSets = () => {
     const stored = selectAllSets(useWorkoutStore.getState(), routineID)
     if (!stored) return []
 
-    return exercises
-      .map((exercise) => {
-        const sets = stored[exercise.id]?.filter((set) => isExerciseSetComplete(set, exercise))
-        if (!sets?.length) return undefined
+    // A workout records sets against an exercise, so the two stations of a
+    // repeated exercise are saved as one exercise's worth of work.
+    const byExercise = new Map<string, WorkoutSet[]>()
+    stations.forEach(({ key, exercise }) => {
+      const sets = stored[key]?.filter((set) => isExerciseSetComplete(set, exercise)) ?? []
+      if (!sets.length) return
 
-        return create(ExerciseSetsSchema, {
-          exercise: { id: exercise.id },
-          sets: sets.map((set) => ({
-            reps: set.reps,
-            weight: set.weight,
-            distance: set.distance ?? 0,
-            durationSeconds: set.durationSeconds ?? 0,
-            weightUnit: normalizeWeightUnit(set.weightUnit ?? weightUnit),
-            distanceUnit: normalizeDistanceUnit(set.distanceUnit ?? distanceUnit),
-          })),
-        })
-      })
-      .filter((entry) => entry !== undefined)
+      byExercise.set(exercise.id, [...(byExercise.get(exercise.id) ?? []), ...sets])
+    })
+
+    return [...byExercise].map(([exerciseId, sets]) =>
+      create(ExerciseSetsSchema, {
+        exercise: { id: exerciseId },
+        sets: sets.map((set) => ({
+          reps: set.reps,
+          weight: set.weight,
+          distance: set.distance ?? 0,
+          durationSeconds: set.durationSeconds ?? 0,
+          weightUnit: normalizeWeightUnit(set.weightUnit ?? weightUnit),
+          distanceUnit: normalizeDistanceUnit(set.distanceUnit ?? distanceUnit),
+        })),
+      }),
+    )
   }
 
   const openSavedWorkout = async (workoutId: string) => {
@@ -681,31 +819,36 @@ export const StartWorkout = () => {
 
     setSession({ ...session, exercises: current })
     store.addWorkoutExercise(routineID, exercise)
-    store.addEmptySetIfNone(routineID, exercise.id, exercise.metrics, weightUnit, distanceUnit)
     setPickerOpen(false)
 
     const res = await getPreviousWorkoutSets([exercise.id])
-    if (!res) return
+    const previous = res ? [...previousSets, ...res.exerciseSets] : previousSets
+    if (res) setPreviousSets(previous)
 
-    const previous = [...previousSets, ...res.exerciseSets]
-    setPreviousSets(previous)
-    fillEmptySets(routineID, current, previous)
+    // The exercise joins the session's last block, so its station is whatever
+    // laying the session out again makes of it.
+    fillEmptySets(routineID, sessionGroups(session.groups, current), previous)
   }
 
   // The one line a collapsed exercise gets: what it is waiting for, what it has
   // already taken, or that it is done.
-  const exerciseStatus = (exercise: Exercise) => {
-    const logged = loggedFor(exercise)
+  const stationStatus = (station: SessionStation) => {
+    const logged = loggedFor(station)
 
-    if (completed[exercise.id]) {
+    if (completed[station.key]) {
       return logged
         ? `${t('workout.exerciseCompleted')} · ${t('workout.loggedSets', { count: logged })}`
         : t('workout.exerciseCompleted')
     }
+    const block = blockOf.get(station.key)
+    if (block?.mode === 'circuit') {
+      return logged ? t('workout.roundsLogged', { count: logged }) : t('workout.notStarted')
+    }
+
     if (logged) return t('workout.loggedSets', { count: logged })
 
-    const previous = previousSetFor(exercise.id, 0)
-    if (previous) return `${t('common.previous')} ${formatExerciseSet(previous, exercise)}`
+    const previous = previousSetFor(station.exercise.id, 0)
+    if (previous) return `${t('common.previous')} ${formatExerciseSet(previous, station.exercise)}`
     return t('workout.notStarted')
   }
 
@@ -736,10 +879,16 @@ export const StartWorkout = () => {
           <div className="min-w-0">
             <h1>{session?.name ?? t('workout.loading')}</h1>
             <p className={styles.sessionProgress}>
-              {t('workout.exercisePosition', {
-                current: Math.min(activeExerciseIndex + 1, exercises.length),
-                total: exercises.length,
-              })}
+              {inCircuit && activeBlock
+                ? t('workout.circuitPosition', {
+                    round: activeRound,
+                    current: activeIndexInBlock + 1,
+                    total: activeBlock.stations.length,
+                  })
+                : t('workout.exercisePosition', {
+                    current: Math.min(activeStationIndex + 1, stations.length),
+                    total: stations.length,
+                  })}
             </p>
           </div>
           <span className={styles.elapsed} aria-label={t('workout.elapsed')}>
@@ -779,21 +928,32 @@ export const StartWorkout = () => {
             exactly one open. Tapping any collapsed header opens it and closes
             whichever was open: the primary action is the guided path through
             the session, not a gate on leaving the exercise you are in. */}
-        {exercises.length > 0 && (
-          <section className={styles.exerciseList}>
+        {/* One list per block. A circuit wears a band saying which round it is
+            on, because that is the number being tracked in a circuit — the set
+            count on any one exercise is not. */}
+        {blocks.map((block) => (
+          <section key={block.id} className={styles.exerciseList}>
+            {block.mode === 'circuit' && (
+              <div className={styles.circuitBand}>
+                <strong>{t('workout.circuit')}</strong>
+                <span>{t('workout.roundPosition', { round: roundOf(block) })}</span>
+              </div>
+            )}
             <ul>
-              {exercises.map((exercise, index) => {
-                const open = index === activeExerciseIndex
-                const sets = allSets?.[exercise.id] ?? []
+              {block.stations.map((station) => {
+                const { key, exercise } = station
+                const index = stationIndex.get(key) ?? 0
+                const open = index === activeStationIndex
+                const sets = allSets?.[key] ?? []
 
                 return (
                   <li
-                    key={exercise.id}
+                    key={key}
                     ref={open ? openItemRef : undefined}
                     className={cn(
                       styles.exerciseItem,
                       open && styles.open,
-                      completed[exercise.id] && styles.completed,
+                      completed[key] && styles.completed,
                     )}
                   >
                     <h2>
@@ -805,11 +965,11 @@ export const StartWorkout = () => {
                         trailing={
                           <ChevronDownIcon className={styles.exerciseToggle} aria-hidden="true" />
                         }
-                        onClick={() => selectExercise(index)}
+                        onClick={() => selectStation(index)}
                       >
                         <strong className={styles.exerciseName}>{exercise.name}</strong>
                         <ExerciseTags compact tags={exercise.tags} />
-                        <small>{exerciseStatus(exercise)}</small>
+                        <small>{stationStatus(station)}</small>
                       </AppOptionRow>
                     </h2>
 
@@ -821,11 +981,11 @@ export const StartWorkout = () => {
                       >
                         {/* Ticked off, not hidden: the label sits above the sets
                             so a completed exercise still shows what was logged. */}
-                        {completed[exercise.id] && (
+                        {completed[key] && (
                           <div className={styles.completedExercise}>
                             <div>
                               <strong>{t('workout.exerciseCompleted')}</strong>
-                              <p>{t('workout.loggedSets', { count: loggedFor(exercise) })}</p>
+                              <p>{t('workout.loggedSets', { count: loggedFor(station) })}</p>
                             </div>
                             <AppButton
                               type="button"
@@ -833,7 +993,7 @@ export const StartWorkout = () => {
                               size="sm"
                               width="auto"
                               className={styles.reopenExercise}
-                              onClick={() => reopenExercise(exercise)}
+                              onClick={() => reopenStation(station)}
                             >
                               {t('workout.reopen')}
                             </AppButton>
@@ -847,17 +1007,17 @@ export const StartWorkout = () => {
                           activeIndex={activeSetIndex(sets, exercise)}
                           weightUnit={weightUnit}
                           distanceUnit={distanceUnit}
-                          onChange={(setIndex, changes) => onSetChange(exercise, setIndex, changes)}
+                          onChange={(setIndex, changes) => onSetChange(station, setIndex, changes)}
                           onFocusField={(setIndex, field, target) =>
-                            onFocusField(exercise, setIndex, field, target)
+                            onFocusField(station, setIndex, field, target)
                           }
-                          onRemove={(setIndex) => onRemoveSet(exercise, setIndex)}
+                          onRemove={(setIndex) => onRemoveSet(station, setIndex)}
                         />
 
                         {/* The one forward action lives inside the exercise it
                             acts on, so pressing forward never means travelling
                             past the page. */}
-                        {(!completed[exercise.id] || allExercisesComplete || finishError) && (
+                        {(!completed[key] || allExercisesComplete || finishError) && (
                           <div className={styles.actionBlock}>
                             {statusMessage && (
                               <strong
@@ -899,6 +1059,19 @@ export const StartWorkout = () => {
                                 {nextUpHint}
                               </small>
                             )}
+                            {/* A circuit runs for as many rounds as the session
+                                takes, so ending it is a decision — and it
+                                belongs next to the button that takes another
+                                round, which is where that decision is made. */}
+                            {block.mode === 'circuit' && !completed[key] && (
+                              <AppButton
+                                type="button"
+                                colour="secondary"
+                                onClick={() => completeCircuit(block)}
+                              >
+                                {t('workout.completeCircuit')}
+                              </AppButton>
+                            )}
                           </div>
                         )}
                       </div>
@@ -908,7 +1081,7 @@ export const StartWorkout = () => {
               })}
             </ul>
           </section>
-        )}
+        ))}
 
         {(!quickWorkout || exercises.length > 0) && (
           <section className={styles.workoutTools}>

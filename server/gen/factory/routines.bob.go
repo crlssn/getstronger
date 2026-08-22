@@ -53,6 +53,7 @@ type RoutineTemplate struct {
 type routineR struct {
 	ExercisesRoutines []*routineRExercisesRoutinesR
 	PlanRoutines      []*routineRPlanRoutinesR
+	RoutineGroups     []*routineRRoutineGroupsR
 	User              *routineRUserR
 	Exercises         []*routineRExercisesR
 	Workouts          []*routineRWorkoutsR
@@ -65,6 +66,10 @@ type routineRExercisesRoutinesR struct {
 type routineRPlanRoutinesR struct {
 	number int
 	o      *PlanRoutineTemplate
+}
+type routineRRoutineGroupsR struct {
+	number int
+	o      *RoutineGroupTemplate
 }
 type routineRUserR struct {
 	o *UserTemplate
@@ -117,6 +122,21 @@ func (t RoutineTemplate) setModelRels(o *models.Routine) {
 		}
 		o.R.PlanRoutines = rel
 		o.R.Loaded.PlanRoutines = true
+	}
+
+	if t.r.RoutineGroups != nil {
+		rel := models.RoutineGroupSlice{}
+		for _, r := range t.r.RoutineGroups {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.RoutineID = o.ID // h2
+				rel.R.Routine = o
+				rel.R.Loaded.Routine = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.RoutineGroups = rel
+		o.R.Loaded.RoutineGroups = true
 	}
 
 	if t.r.User != nil {
@@ -294,6 +314,26 @@ func (o *RoutineTemplate) insertOptRels(ctx context.Context, exec bob.Executor, 
 		}
 	}
 
+	isRoutineGroupsDone, _ := routineRelRoutineGroupsCtx.Value(ctx)
+	if !isRoutineGroupsDone && o.r.RoutineGroups != nil {
+		ctx = routineRelRoutineGroupsCtx.WithValue(ctx, true)
+		for _, r := range o.r.RoutineGroups {
+			if r.o.alreadyPersisted {
+				m.R.RoutineGroups = append(m.R.RoutineGroups, r.o.Build())
+			} else {
+				rel2, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachRoutineGroups(ctx, exec, rel2...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isExercisesDone, _ := routineRelExercisesCtx.Value(ctx)
 	if !isExercisesDone && o.r.Exercises != nil {
 		ctx = routineRelExercisesCtx.WithValue(ctx, true)
@@ -305,12 +345,12 @@ func (o *RoutineTemplate) insertOptRels(ctx context.Context, exec bob.Executor, 
 				if err != nil {
 					return err
 				}
-				rel3, err := r.o.CreateMany(ctx, exec, r.number)
+				rel4, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachExercises(ctx, exec, exercisesRoutine1, rel3...)
+				err = m.AttachExercises(ctx, exec, exercisesRoutine1, rel4...)
 				if err != nil {
 					return err
 				}
@@ -325,12 +365,12 @@ func (o *RoutineTemplate) insertOptRels(ctx context.Context, exec bob.Executor, 
 			if r.o.alreadyPersisted {
 				m.R.Workouts = append(m.R.Workouts, r.o.Build())
 			} else {
-				rel4, err := r.o.CreateMany(ctx, exec, r.number)
+				rel5, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachWorkouts(ctx, exec, rel4...)
+				err = m.AttachWorkouts(ctx, exec, rel5...)
 				if err != nil {
 					return err
 				}
@@ -353,32 +393,32 @@ func (o *RoutineTemplate) Create(ctx context.Context, exec bob.Executor) (*model
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	var rel2 *models.User
+	var rel3 *models.User
 
 	if o.r.User == nil {
 		if parentModel, found := mInCreation["users:routines:routines.routines_user_id_fkey"]; found {
 			if pModel, ok := parentModel.(*models.User); ok {
-				rel2 = pModel
+				rel3 = pModel
 			}
 		}
 	}
 
-	if rel2 == nil {
+	if rel3 == nil {
 		if o.r.User == nil {
 			RoutineMods.WithNewUser().Apply(ctx, o)
 		}
 
 		if o.r.User.o.alreadyPersisted {
-			rel2 = o.r.User.o.Build()
+			rel3 = o.r.User.o.Build()
 		} else {
-			rel2, err = o.r.User.o.Create(ctx, exec)
+			rel3, err = o.r.User.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.UserID = omit.From(rel2.ID)
+	opt.UserID = omit.From(rel3.ID)
 
 	m, err := models.Routines.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -395,11 +435,12 @@ func (o *RoutineTemplate) Create(ctx context.Context, exec bob.Executor) (*model
 	}
 	newMInCreation["routines:exercises_routines:exercises_routines.routine_exercises_routine_id_fkey"] = m
 	newMInCreation["routines:plan_routines:plan_routines.plan_routines_routine_id_fkey"] = m
+	newMInCreation["routines:routine_groups:routine_groups.routine_groups_routine_id_fkey"] = m
 	newMInCreation["routines:workouts:workouts.workouts_routine_id_fkey"] = m
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
 
-	m.R.User = rel2
+	m.R.User = rel3
 	m.R.Loaded.User = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -801,6 +842,54 @@ func (m routineMods) AddExistingPlanRoutines(existingModels ...*models.PlanRouti
 func (m routineMods) WithoutPlanRoutines() RoutineMod {
 	return RoutineModFunc(func(ctx context.Context, o *RoutineTemplate) {
 		o.r.PlanRoutines = nil
+	})
+}
+
+func (m routineMods) WithRoutineGroups(number int, related *RoutineGroupTemplate) RoutineMod {
+	return RoutineModFunc(func(ctx context.Context, o *RoutineTemplate) {
+		o.r.RoutineGroups = []*routineRRoutineGroupsR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m routineMods) WithNewRoutineGroups(number int, mods ...RoutineGroupMod) RoutineMod {
+	return RoutineModFunc(func(ctx context.Context, o *RoutineTemplate) {
+		related := o.f.NewRoutineGroupWithContext(ctx, mods...)
+		m.WithRoutineGroups(number, related).Apply(ctx, o)
+	})
+}
+
+func (m routineMods) AddRoutineGroups(number int, related *RoutineGroupTemplate) RoutineMod {
+	return RoutineModFunc(func(ctx context.Context, o *RoutineTemplate) {
+		o.r.RoutineGroups = append(o.r.RoutineGroups, &routineRRoutineGroupsR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m routineMods) AddNewRoutineGroups(number int, mods ...RoutineGroupMod) RoutineMod {
+	return RoutineModFunc(func(ctx context.Context, o *RoutineTemplate) {
+		related := o.f.NewRoutineGroupWithContext(ctx, mods...)
+		m.AddRoutineGroups(number, related).Apply(ctx, o)
+	})
+}
+
+func (m routineMods) AddExistingRoutineGroups(existingModels ...*models.RoutineGroup) RoutineMod {
+	return RoutineModFunc(func(ctx context.Context, o *RoutineTemplate) {
+		for _, em := range existingModels {
+			o.r.RoutineGroups = append(o.r.RoutineGroups, &routineRRoutineGroupsR{
+				o: o.f.fromExistingRoutineGroup(ctx, em),
+			})
+		}
+	})
+}
+
+func (m routineMods) WithoutRoutineGroups() RoutineMod {
+	return RoutineModFunc(func(ctx context.Context, o *RoutineTemplate) {
+		o.r.RoutineGroups = nil
 	})
 }
 

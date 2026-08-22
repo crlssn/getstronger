@@ -1,68 +1,16 @@
 @reference '../../assets/base.css';
 
 .routineForm {
-  @apply mx-auto max-w-4xl space-y-5;
+  @apply mx-auto max-w-4xl;
 }
 
-.formIntro {
-  @apply flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between;
-}
-
-.eyebrow {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.formIntro p:last-child {
-  @apply mt-2 text-sm text-text-subtle;
-}
-
-.selectionCount {
-  @apply w-max rounded-full bg-ink-surface px-3 py-1.5 text-xs font-semibold text-ink-strong;
-}
-
-.formCard,
-.exerciseCard {
-  @apply card p-5;
-}
-
-.exerciseToolbar {
-  @apply mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
-}
-
-.exerciseToolbar h2 {
-  @apply text-title font-semibold text-text;
-}
-
-.exerciseToolbar p {
-  @apply mt-1 text-sm text-text-subtle;
-}
-
-/* The toolbar puts the field beside a heading, so it takes a width rather
- * than the full row AppSearchField would otherwise fill. */
-.searchField {
-  @apply min-w-52;
-}
-
-.exerciseGrid {
-  @apply grid gap-2 sm:grid-cols-2;
-}
-
-.checkBox {
-  @apply grid size-6 shrink-0 place-items-center rounded-md border-2 border-ink-border bg-white;
-}
-
-.selected .checkBox {
-  @apply border-ink bg-ink text-white;
-}
-
-.checkBox svg {
-  @apply size-4 stroke-[3];
-}
-
-.emptyRow {
-  @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
+/* No card: the switch is the whole of this section, and a box around one
+   control is a box around nothing. What each half means is answered by the
+   groups that appear under Advanced. */
+.structure {
+  @apply mb-4;
 }
 
 .formActions {
-  @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-card border border-border bg-white/95 p-3 shadow-raised backdrop-blur md:bottom-4;
+  @apply mt-4 grid gap-2;
 }

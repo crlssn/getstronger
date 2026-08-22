@@ -1,5 +1,7 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
-import type { ExerciseSets } from '@/proto/api/v1/shared_pb'
+import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
+
+import { RoutineGroupMode } from '@/proto/api/v1/routine_service_pb'
 
 import {
   Bars3Icon,
@@ -28,6 +30,7 @@ import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
+import { groupLetter } from '@/utils/routineGroups'
 import { useSortable } from '@/utils/useSortable'
 import styles from './ViewRoutine.module.css'
 
@@ -64,6 +67,12 @@ export const ViewRoutine = () => {
     void load()
   }, [id, t])
 
+  // A routine that is more than one plain block is rearranged on the edit
+  // screen: dragging a row here knows nothing about which group it lands in.
+  const groups = routine?.groups ?? []
+  const grouped =
+    groups.length > 1 || groups.some((group) => group.mode === RoutineGroupMode.CIRCUIT)
+
   // SortableJS moves the rows itself; the state is reordered to match so React
   // renders the same order it is already looking at.
   const list = useSortable<HTMLOListElement>(
@@ -87,7 +96,7 @@ export const ViewRoutine = () => {
         )
       },
     },
-    Boolean(routine),
+    Boolean(routine) && !grouped,
   )
 
   // Ten rows of Plank / Rows / Rows with no numbers on them is a list nobody
@@ -138,6 +147,27 @@ export const ViewRoutine = () => {
   if (loading) return <AppSkeleton />
   if (!routine) return null
 
+  const exerciseRow = (exercise: Exercise, index: number, draggable: boolean, key = '') => {
+    const summary = lastSession(exercise.id)
+
+    return (
+      <li key={key || exercise.id} data-id={exercise.id}>
+        <span className={styles.number}>{index + 1}</span>
+        <span className={styles.exerciseCopy}>
+          <strong>{exercise.name}</strong>
+          {summary ? <small>{summary}</small> : <ExerciseTags compact tags={exercise.tags} />}
+        </span>
+        {draggable && (
+          <AppIconButton
+            className={styles.dragHandle}
+            icon={Bars3Icon}
+            label={t('routine.view.reorderAria')}
+          />
+        )}
+      </li>
+    )
+  }
+
   const isUpNext = routine.id === preferredRoutineId
 
   return (
@@ -182,7 +212,7 @@ export const ViewRoutine = () => {
         <div className={styles.sectionHeading}>
           <div>
             <h2>{t('routine.view.orderTitle')}</h2>
-            <p>{t('routine.view.orderHelp')}</p>
+            <p>{grouped ? t('routine.view.groupedOrderHelp') : t('routine.view.orderHelp')}</p>
           </div>
           <AppButton
             type="link"
@@ -195,30 +225,61 @@ export const ViewRoutine = () => {
           </AppButton>
         </div>
 
-        <ol ref={list} className={styles.exerciseList}>
-          {routine.exercises.map((exercise, index) => {
-            const summary = lastSession(exercise.id)
+        {grouped ? (
+          <div className={styles.groupList}>
+            {groups.map((group, groupIndex) => {
+              const letter = groupLetter(groupIndex)
+              const circuit = group.mode === RoutineGroupMode.CIRCUIT
 
-            return (
-              <li key={exercise.id} data-id={exercise.id}>
-                <span className={styles.number}>{index + 1}</span>
-                <span className={styles.exerciseCopy}>
-                  <strong>{exercise.name}</strong>
-                  {summary ? (
-                    <small>{summary}</small>
-                  ) : (
-                    <ExerciseTags compact tags={exercise.tags} />
-                  )}
-                </span>
-                <AppIconButton
-                  className={styles.dragHandle}
-                  icon={Bars3Icon}
-                  label={t('routine.view.reorderAria')}
-                />
-              </li>
-            )
-          })}
-        </ol>
+              return (
+                <section key={group.id} className={styles.group}>
+                  <header className={styles.groupHeader}>
+                    <span className={styles.groupBadge} aria-hidden="true">
+                      {letter}
+                    </span>
+                    <div>
+                      <strong>{t('routine.form.groups.groupName', { letter })}</strong>
+                      <small>
+                        {circuit ? t('routine.view.groupCircuit') : t('routine.view.groupStraight')}
+                      </small>
+                    </div>
+                  </header>
+
+                  {circuit &&
+                    (group.restBetweenExercisesSeconds > 0 ||
+                      group.restBetweenRoundsSeconds > 0) && (
+                      <p className={styles.groupRest}>
+                        {[
+                          group.restBetweenExercisesSeconds > 0 &&
+                            t('routine.view.groupRestExercise', {
+                              seconds: group.restBetweenExercisesSeconds,
+                            }),
+                          group.restBetweenRoundsSeconds > 0 &&
+                            t('routine.view.groupRestRound', {
+                              seconds: group.restBetweenRoundsSeconds,
+                            }),
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    )}
+
+                  <ol className={styles.exerciseList}>
+                    {group.exercises.map((exercise, index) =>
+                      exerciseRow(exercise, index, false, `${group.id}-${index}`),
+                    )}
+                  </ol>
+                </section>
+              )
+            })}
+          </div>
+        ) : (
+          <ol ref={list} className={styles.exerciseList}>
+            {routine.exercises.map((exercise, index) =>
+              exerciseRow(exercise, index, true, `${exercise.id}-${index}`),
+            )}
+          </ol>
+        )}
       </section>
 
       <section className={styles.dangerZone}>

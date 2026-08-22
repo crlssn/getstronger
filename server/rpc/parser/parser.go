@@ -134,6 +134,46 @@ func RoutineSlice(routines models.RoutineSlice) []*apiv1.Routine {
 	return parseWithoutOpts(routines, Routine)
 }
 
+// RoutineWithGroups adds the routine's groups to the flat exercise list, for
+// the screens that need to know how the session is worked through.
+func RoutineWithGroups(routine *models.Routine, groups []*training.RoutineGroup) *apiv1.Routine {
+	r := Routine(routine)
+	r.Groups = RoutineGroupSlice(groups)
+
+	return r
+}
+
+func RoutineGroupSlice(groups []*training.RoutineGroup) []*apiv1.RoutineGroup {
+	parsed := make([]*apiv1.RoutineGroup, 0, len(groups))
+	for _, group := range groups {
+		parsed = append(parsed, &apiv1.RoutineGroup{
+			Id:                          group.ID,
+			Mode:                        RoutineGroupModeToProto(group.Mode),
+			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
+			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
+			Exercises:                   ExerciseSlice(group.Exercises),
+		})
+	}
+
+	return parsed
+}
+
+func RoutineGroupModeToProto(mode training.RoutineGroupMode) apiv1.RoutineGroupMode {
+	if mode == training.RoutineGroupModeCircuit {
+		return apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT
+	}
+
+	return apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT
+}
+
+func RoutineGroupModeFromProto(mode apiv1.RoutineGroupMode) training.RoutineGroupMode {
+	if mode == apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT {
+		return training.RoutineGroupModeCircuit
+	}
+
+	return training.RoutineGroupModeStraight
+}
+
 func Plan(plan *training.Plan) *apiv1.Plan {
 	if plan == nil {
 		return nil

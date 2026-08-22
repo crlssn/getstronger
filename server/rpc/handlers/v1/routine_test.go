@@ -199,7 +199,9 @@ func (s *routineSuite) TestDeleteRoutineRefusesAnotherAthletesRoutine() {
 	s.Require().Equal(connect.CodePermissionDenied, connect.CodeOf(err))
 }
 
-func (s *routineSuite) TestAddAndRemoveExerciseChangeWhatTheRoutineHolds() {
+// An exercise added to a routine joins its last group, which is where the flat
+// order puts it too. Taking one away is a save of the groups without it.
+func (s *routineSuite) TestAddExerciseChangesWhatTheRoutineHolds() {
 	ctx, user := s.athlete()
 	original := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	added := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
@@ -218,17 +220,11 @@ func (s *routineSuite) TestAddAndRemoveExerciseChangeWhatTheRoutineHolds() {
 
 	fetched, err := s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: created.Msg.GetId()}))
 	s.Require().NoError(err)
-	s.Require().Len(fetched.Msg.GetRoutine().GetExercises(), 2)
-
-	_, err = s.handler.RemoveExercise(ctx, connect.NewRequest(&apiv1.RemoveExerciseRequest{
-		RoutineId:  created.Msg.GetId(),
-		ExerciseId: original.ID.String(),
-	}))
-	s.Require().NoError(err)
-
-	fetched, err = s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: created.Msg.GetId()}))
-	s.Require().NoError(err)
-	s.Require().Equal([]string{added.ID.String()}, routineExerciseIDs(fetched.Msg.GetRoutine()))
+	s.Require().Equal(
+		[]string{original.ID.String(), added.ID.String()},
+		routineExerciseIDs(fetched.Msg.GetRoutine()),
+	)
+	s.Require().Len(fetched.Msg.GetRoutine().GetGroups(), 1)
 }
 
 func routineExerciseIDs(routine *apiv1.Routine) []string {
@@ -238,4 +234,246 @@ func routineExerciseIDs(routine *apiv1.Routine) []string {
 	}
 
 	return ids
+}
+
+func (s *routineSuite) context(user *models.User) context.Context {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	return xcontext.WithUserID(ctx, user.ID.String())
+}
+
+func (s *routineSuite) exerciseIDs(exercises models.ExerciseSlice) []string {
+	ids := make([]string, 0, len(exercises))
+	for _, exercise := range exercises {
+		ids = append(ids, exercise.ID.String())
+	}
+	return ids
+}
+
+func (s *routineSuite) getRoutine(ctx context.Context, routineID string) *apiv1.Routine {
+	res, err := s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: routineID}))
+	s.Require().NoError(err)
+	return res.Msg.GetRoutine()
+}
+
+// A routine that says nothing about how it is worked through is one block of
+// straight sets, which is what every routine was before groups existed.
+func (s *routineSuite) TestCreateRoutineWithoutGroups() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: exerciseIDs,
+	}))
+	s.Require().NoError(err)
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	s.Require().Equal("Full body", routine.GetName())
+	s.Require().Len(routine.GetExercises(), 2)
+	s.Require().Len(routine.GetGroups(), 1)
+	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, routine.GetGroups()[0].GetMode())
+	s.Require().Len(routine.GetGroups()[0].GetExercises(), 2)
+}
+
+func (s *routineSuite) TestCreateRoutineWithGroups() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: exerciseIDs,
+		Groups: []*apiv1.RoutineGroup{
+			{
+				Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.Exercise{{Id: exerciseIDs[0]}},
+			},
+			{
+				Mode:                        apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+				RestBetweenExercisesSeconds: 15,
+				RestBetweenRoundsSeconds:    90,
+				Exercises:                   []*apiv1.Exercise{{Id: exerciseIDs[2]}, {Id: exerciseIDs[1]}},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	s.Require().Len(routine.GetGroups(), 2)
+
+	circuit := routine.GetGroups()[1]
+	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, circuit.GetMode())
+	s.Require().Equal(int32(15), circuit.GetRestBetweenExercisesSeconds())
+	s.Require().Equal(int32(90), circuit.GetRestBetweenRoundsSeconds())
+	s.Require().Equal(
+		[]string{exerciseIDs[2], exerciseIDs[1]},
+		[]string{circuit.GetExercises()[0].GetId(), circuit.GetExercises()[1].GetId()},
+	)
+
+	// The flat list is the groups read end to end, so the order the groups put
+	// the exercises in is the order the routine is trained in.
+	flat := make([]string, 0, len(routine.GetExercises()))
+	for _, exercise := range routine.GetExercises() {
+		flat = append(flat, exercise.GetId())
+	}
+	s.Require().Equal([]string{exerciseIDs[0], exerciseIDs[2], exerciseIDs[1]}, flat)
+}
+
+// A bench press in the warm-up and a bench press in the circuit are two
+// different pieces of work, and a routine is allowed to say so.
+func (s *routineSuite) TestCreateRoutineWithAnExerciseInTwoGroups() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: exerciseIDs,
+		Groups: []*apiv1.RoutineGroup{
+			{
+				Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.Exercise{{Id: exerciseIDs[0]}},
+			},
+			{
+				Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+				Exercises: []*apiv1.Exercise{{Id: exerciseIDs[0]}, {Id: exerciseIDs[1]}},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	s.Require().Len(routine.GetGroups(), 2)
+	s.Require().Len(routine.GetGroups()[0].GetExercises(), 1)
+	s.Require().Len(routine.GetGroups()[1].GetExercises(), 2)
+	s.Require().Equal(exerciseIDs[0], routine.GetGroups()[0].GetExercises()[0].GetId())
+	s.Require().Equal(exerciseIDs[0], routine.GetGroups()[1].GetExercises()[0].GetId())
+
+	// The flat list is still the groups read end to end, so the repeat is in it
+	// twice: that is how many times the routine trains it.
+	flat := make([]string, 0, len(routine.GetExercises()))
+	for _, exercise := range routine.GetExercises() {
+		flat = append(flat, exercise.GetId())
+	}
+	s.Require().Equal([]string{exerciseIDs[0], exerciseIDs[0], exerciseIDs[1]}, flat)
+}
+
+func (s *routineSuite) TestCreateRoutineHoldsAnExerciseOncePerGroup() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: exerciseIDs,
+		Groups: []*apiv1.RoutineGroup{
+			{
+				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+				Exercises: []*apiv1.Exercise{
+					{Id: exerciseIDs[0]},
+					{Id: exerciseIDs[1]},
+					{Id: exerciseIDs[0]},
+				},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	s.Require().Len(routine.GetGroups(), 1)
+	s.Require().Len(routine.GetGroups()[0].GetExercises(), 2)
+}
+
+func (s *routineSuite) TestUpdateRoutineRegroupsIt() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: exerciseIDs,
+	}))
+	s.Require().NoError(err)
+
+	// The exercises are named by the groups alone: a client that groups them
+	// need not repeat the flat list.
+	updated, err := s.handler.UpdateRoutine(ctx, connect.NewRequest(&apiv1.UpdateRoutineRequest{
+		Routine: &apiv1.Routine{
+			Id:   created.Msg.GetId(),
+			Name: "Circuit day",
+			Groups: []*apiv1.RoutineGroup{
+				{
+					Mode:                     apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+					RestBetweenRoundsSeconds: 60,
+					Exercises:                []*apiv1.Exercise{{Id: exerciseIDs[1]}, {Id: exerciseIDs[0]}},
+				},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+	s.Require().Equal("Circuit day", updated.Msg.GetRoutine().GetName())
+	s.Require().Len(updated.Msg.GetRoutine().GetGroups(), 1)
+	s.Require().Equal(int32(60), updated.Msg.GetRoutine().GetGroups()[0].GetRestBetweenRoundsSeconds())
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	s.Require().Len(routine.GetGroups(), 1)
+	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, routine.GetGroups()[0].GetMode())
+	s.Require().Equal(int32(60), routine.GetGroups()[0].GetRestBetweenRoundsSeconds())
+	s.Require().Equal(
+		[]string{exerciseIDs[1], exerciseIDs[0]},
+		[]string{routine.GetExercises()[0].GetId(), routine.GetExercises()[1].GetId()},
+	)
+}
+
+// Grouping is optional on the way in as well: a client that has never heard of
+// it keeps saving a flat list, and the routine stays one straight block.
+func (s *routineSuite) TestUpdateRoutineWithoutGroups() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: exerciseIDs,
+	}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.UpdateRoutine(ctx, connect.NewRequest(&apiv1.UpdateRoutineRequest{
+		Routine: &apiv1.Routine{
+			Id:        created.Msg.GetId(),
+			Name:      "Full body",
+			Exercises: []*apiv1.Exercise{{Id: exerciseIDs[1]}},
+		},
+	}))
+	s.Require().NoError(err)
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	s.Require().Len(routine.GetGroups(), 1)
+	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, routine.GetGroups()[0].GetMode())
+	s.Require().Len(routine.GetExercises(), 1)
+	s.Require().Equal(exerciseIDs[1], routine.GetExercises()[0].GetId())
+}
+
+func (s *routineSuite) TestGetRoutineOfAnotherUser() {
+	owner := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(1, factory.ExerciseUserID(owner.ID))
+
+	created, err := s.handler.CreateRoutine(s.context(owner), connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: s.exerciseIDs(exercises),
+	}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.GetRoutine(
+		s.context(s.factory.NewUser()),
+		connect.NewRequest(&apiv1.GetRoutineRequest{Id: created.Msg.GetId()}),
+	)
+	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
 }

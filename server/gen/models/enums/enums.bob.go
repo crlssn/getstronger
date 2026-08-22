@@ -156,3 +156,76 @@ func (e *NotificationType) Scan(value any) error {
 
 	return nil
 }
+
+// Enum values for RoutineGroupMode
+const (
+	RoutineGroupModeStraight RoutineGroupMode = "straight"
+	RoutineGroupModeCircuit  RoutineGroupMode = "circuit"
+)
+
+func AllRoutineGroupMode() []RoutineGroupMode {
+	return []RoutineGroupMode{
+		RoutineGroupModeStraight,
+		RoutineGroupModeCircuit,
+	}
+}
+
+type RoutineGroupMode string
+
+func (e RoutineGroupMode) String() string {
+	return string(e)
+}
+
+func (e RoutineGroupMode) Valid() bool {
+	switch e {
+	case RoutineGroupModeStraight,
+		RoutineGroupModeCircuit:
+		return true
+	default:
+		return false
+	}
+}
+
+// useful when testing in other packages
+func (e RoutineGroupMode) All() []RoutineGroupMode {
+	return AllRoutineGroupMode()
+}
+
+func (e RoutineGroupMode) MarshalText() ([]byte, error) {
+	return []byte(e), nil
+}
+
+func (e *RoutineGroupMode) UnmarshalText(text []byte) error {
+	return e.Scan(text)
+}
+
+func (e RoutineGroupMode) MarshalBinary() ([]byte, error) {
+	return []byte(e), nil
+}
+
+func (e *RoutineGroupMode) UnmarshalBinary(data []byte) error {
+	return e.Scan(data)
+}
+
+func (e RoutineGroupMode) Value() (driver.Value, error) {
+	return string(e), nil
+}
+
+func (e *RoutineGroupMode) Scan(value any) error {
+	switch x := value.(type) {
+	case string:
+		*e = RoutineGroupMode(x)
+	case []byte:
+		*e = RoutineGroupMode(x)
+	case nil:
+		return fmt.Errorf("cannot nil into RoutineGroupMode")
+	default:
+		return fmt.Errorf("cannot scan type %T: %v", value, value)
+	}
+
+	if !e.Valid() {
+		return fmt.Errorf("invalid RoutineGroupMode value: %s", *e)
+	}
+
+	return nil
+}
