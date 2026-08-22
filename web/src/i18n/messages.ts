@@ -631,7 +631,8 @@ export const en = {
     intro:
       '{brand} is a training log. This explains what it stores about you, why, and how to get rid of it.',
     collectTitle: 'What we store',
-    collectAccount: 'Your account: email address, name, username and password (hashed, never readable).',
+    collectAccount:
+      'Your account: email address, name, username and password (hashed, never readable).',
     collectTraining:
       'Your training: workouts, sets, routines, plans, exercises, notes, comments and who you follow.',
     collectUsage:
@@ -649,9 +650,9 @@ export const en = {
       'Until you delete your account. Deleting it erases your account and everything it owns from the database immediately; backups age out within 30 days.',
     rightsTitle: 'Your choices',
     rightsEdit: 'Change your name, username and preferences at any time under Me.',
-    rightsDelete: 'Delete your account under Me → Delete account. There is no waiting period and no way back.',
-    rightsContact:
-      'Ask for a copy of your data, or anything else about this policy, at {email}.',
+    rightsDelete:
+      'Delete your account under Me → Delete account. There is no waiting period and no way back.',
+    rightsContact: 'Ask for a copy of your data, or anything else about this policy, at {email}.',
     storageTitle: 'Cookies and on-device storage',
     storageBody:
       'A session cookie keeps you signed in. The app also keeps unsaved workouts and preferences on your device so it works without a connection; signing out or deleting your account clears them.',
@@ -1342,7 +1343,8 @@ export const sv = {
       'Tills du tar bort ditt konto. Då raderas kontot och allt det äger ur databasen direkt; säkerhetskopior faller bort inom 30 dagar.',
     rightsTitle: 'Dina val',
     rightsEdit: 'Ändra namn, användarnamn och inställningar när du vill under Jag.',
-    rightsDelete: 'Ta bort ditt konto under Jag → Ta bort konto. Ingen väntetid, och ingen väg tillbaka.',
+    rightsDelete:
+      'Ta bort ditt konto under Jag → Ta bort konto. Ingen väntetid, och ingen väg tillbaka.',
     rightsContact: 'Be om en kopia av dina uppgifter, eller fråga om policyn, på {email}.',
     storageTitle: 'Kakor och lagring på enheten',
     storageBody:

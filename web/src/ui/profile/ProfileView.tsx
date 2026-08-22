@@ -454,7 +454,12 @@ export const ProfileView = () => {
           onClose={() => setDeletePassword(undefined)}
           actions={
             <>
-              <SheetAction type="submit" form="delete-account-form" tone="danger" disabled={deleting}>
+              <SheetAction
+                type="submit"
+                form="delete-account-form"
+                tone="danger"
+                disabled={deleting}
+              >
                 {deleting ? t('profile.deleteAccountDeleting') : t('profile.deleteAccountConfirm')}
               </SheetAction>
               <SheetAction tone="tertiary" onClick={() => setDeletePassword(undefined)}>

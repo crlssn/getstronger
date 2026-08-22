@@ -23,9 +23,7 @@ describe('clearAccountState', () => {
     useDashboardStore.setState({ preferredRoutineId: 'routine-1' })
     useEmailVerificationStore.getState().setPendingEmail('lifter@example.com')
     useMutationQueueStore.setState({
-      pending: [
-        { method: 'CreateWorkout', request: '{}', queuedAt: new Date(0).toISOString() },
-      ],
+      pending: [{ method: 'CreateWorkout', request: '{}', queuedAt: new Date(0).toISOString() }],
     })
     useWorkoutStore.getState().initialiseWorkout('routine-1')
 
