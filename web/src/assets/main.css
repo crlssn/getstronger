@@ -129,20 +129,8 @@ select {
   @apply space-y-5;
 }
 
-.auth-label {
-  @apply block text-sm font-semibold text-text;
-}
-
-.auth-input {
-  @apply block min-h-(--size-control-lg) w-full rounded-control border border-ink-border bg-white px-4 py-3 text-base text-text shadow-card placeholder:text-text-subtle transition hover:border-ink-muted focus:border-ink-muted focus:ring-2 focus:ring-ink-tint;
-}
-
 .auth-link {
   @apply font-semibold text-ink underline decoration-ink-border underline-offset-4 transition hover:text-ink-strong hover:decoration-ink-muted;
-}
-
-.auth-submit {
-  @apply mt-2 min-h-(--size-control-lg) text-base;
 }
 
 .auth-footer {

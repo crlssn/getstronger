@@ -32,6 +32,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
 import { cn } from '@/ui/cn'
+import { AppInput } from '@/ui/components/AppInput'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
@@ -427,15 +428,12 @@ export const ProfileView = () => {
               void saveName()
             }}
           >
-            <label htmlFor="edit-name" className="auth-label">
-              {t('auth.name')}
-            </label>
-            <input
+            <AppInput
               id="edit-name"
               name="name"
               type="text"
+              label={t('auth.name')}
               autoComplete="name"
-              className="auth-input mt-2"
               required
               value={nameDraft}
               onChange={(event) => setNameDraft(event.target.value)}
@@ -520,18 +518,15 @@ export const ProfileView = () => {
               void saveUsername()
             }}
           >
-            <label htmlFor="edit-username" className="auth-label">
-              {t('auth.username')}
-            </label>
-            <p className="mt-1 text-sm text-text-subtle">{t('auth.usernameHelp')}</p>
-            <input
+            <AppInput
               id="edit-username"
               name="username"
               type="text"
+              label={t('auth.username')}
+              hint={t('auth.usernameHelp')}
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
-              className="auth-input mt-2"
               minLength={minUsernameLength}
               maxLength={maxUsernameLength}
               pattern={usernamePattern}

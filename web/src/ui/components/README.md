@@ -92,6 +92,11 @@ ring. `label` renders the field's own label; without it a caller must supply
 The multi-line field, matching `<AppInput>`'s border and focus treatment.
 `autosize` grows it with its content instead of scrolling.
 
+### `<AppPasswordInput>`
+
+An `<AppInput>` that hides what is typed, with a toggle to show it. The toggle
+fills the field's height rather than the glyph's, so it is a real tap target.
+
 ### `<AppSearchField>`
 
 A magnifier and a `type="search"` input, in the single arrangement the app uses

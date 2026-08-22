@@ -8,8 +8,9 @@ import { signup, verifyEmailPendingPath } from '@/http/requests'
 import posthog from '@/posthog'
 import { SignupRequestSchema } from '@/proto/api/v1/auth_service_pb'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
-import { AuthPasswordInput } from '@/ui/auth/AuthPasswordInput'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInput } from '@/ui/components/AppInput'
+import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { usernameFromName } from '@/utils/names'
 
 export const UserSignup = () => {
@@ -62,98 +63,67 @@ export const UserSignup = () => {
       </header>
 
       <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
-        <div>
-          <label htmlFor="name" className="auth-label">
-            {t('auth.name')}
-          </label>
-          <div className="mt-2">
-            <input
-              id="name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              className="auth-input"
-              required
-              value={name}
-              onChange={(event) => onNameChange(event.target.value)}
-            />
-          </div>
-        </div>
+        <AppInput
+          id="name"
+          name="name"
+          type="text"
+          label={t('auth.name')}
+          autoComplete="name"
+          required
+          value={name}
+          onChange={(event) => onNameChange(event.target.value)}
+        />
 
-        <div>
-          <label htmlFor="username" className="auth-label">
-            {t('auth.username')}
-          </label>
-          <p className="mt-1 text-sm text-text-subtle">{t('auth.usernameHelp')}</p>
-          <div className="mt-2">
-            <input
-              id="username"
-              name="username"
-              type="text"
-              autoComplete="username"
-              autoCapitalize="none"
-              spellCheck={false}
-              className="auth-input"
-              minLength={3}
-              maxLength={30}
-              pattern="[A-Za-z0-9._]+"
-              required
-              value={username}
-              onChange={(event) => onUsernameChange(event.target.value)}
-            />
-          </div>
-        </div>
+        <AppInput
+          id="username"
+          name="username"
+          type="text"
+          label={t('auth.username')}
+          hint={t('auth.usernameHelp')}
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          minLength={3}
+          maxLength={30}
+          pattern="[A-Za-z0-9._]+"
+          required
+          value={username}
+          onChange={(event) => onUsernameChange(event.target.value)}
+        />
 
-        <div>
-          <label htmlFor="email" className="auth-label">
-            {t('auth.email')}
-          </label>
-          <div className="mt-2">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              className="auth-input"
-              inputMode="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-        </div>
+        <AppInput
+          id="email"
+          name="email"
+          type="email"
+          label={t('auth.email')}
+          autoComplete="email"
+          inputMode="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
 
-        <div>
-          <label htmlFor="password" className="auth-label">
-            {t('auth.password')}
-          </label>
-          <div className="mt-2">
-            <AuthPasswordInput
-              id="password"
-              name="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={setPassword}
-            />
-          </div>
-        </div>
+        <AppPasswordInput
+          id="password"
+          name="password"
+          label={t('auth.password')}
+          autoComplete="new-password"
+          required
+          value={password}
+          onValueChange={setPassword}
+        />
 
-        <div>
-          <label htmlFor="passwordConfirmation" className="auth-label">
-            {t('auth.confirmPassword')}
-          </label>
-          <div className="mt-2">
-            <AuthPasswordInput
-              id="passwordConfirmation"
-              name="passwordConfirmation"
-              autoComplete="new-password"
-              value={passwordConfirmation}
-              onChange={setPasswordConfirmation}
-            />
-          </div>
-        </div>
+        <AppPasswordInput
+          id="passwordConfirmation"
+          name="passwordConfirmation"
+          label={t('auth.confirmPassword')}
+          autoComplete="new-password"
+          required
+          value={passwordConfirmation}
+          onValueChange={setPasswordConfirmation}
+        />
 
-        <AppButton type="submit" colour="primary" className="auth-submit">
+        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
           {t('auth.createAccount')}
         </AppButton>
       </form>

@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 
 import { useId } from 'react'
 
@@ -11,6 +11,8 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
   /** A line under the label explaining what the field wants. */
   hint?: string
   invalid?: boolean
+  /** A control at the trailing edge, inside the field's border. */
+  trailing?: ReactNode
   /** Positions the field. The input's own styling is never replaced. */
   className?: string
 }
@@ -21,7 +23,7 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
  * Screens used to assemble those three by hand, which is how the app ended up
  * with four field heights and three focus treatments.
  */
-export const AppInput = ({ label, hint, invalid, className, id, ...rest }: Props) => {
+export const AppInput = ({ label, hint, invalid, trailing, className, id, ...rest }: Props) => {
   const generatedId = useId()
   const inputId = id ?? generatedId
 
@@ -33,12 +35,19 @@ export const AppInput = ({ label, hint, invalid, className, id, ...rest }: Props
         </label>
       )}
       {hint && <p className={styles.hint}>{hint}</p>}
-      <input
-        id={inputId}
-        className={cn(styles.input, invalid && styles.invalid)}
-        aria-invalid={invalid || undefined}
-        {...rest}
-      />
+      <div className={styles.control}>
+        <input
+          id={inputId}
+          className={cn(
+            styles.input,
+            Boolean(trailing) && styles.hasTrailing,
+            invalid && styles.invalid,
+          )}
+          aria-invalid={invalid || undefined}
+          {...rest}
+        />
+        {trailing}
+      </div>
     </div>
   )
 }

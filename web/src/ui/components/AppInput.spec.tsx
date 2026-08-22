@@ -57,9 +57,17 @@ describe('AppInput', () => {
   })
 
   test('positions from the outside without losing its own classes', () => {
-    render(<AppInput label="Email" className="mt-4" />)
+    const { container } = render(<AppInput label="Email" className="mt-4" />)
 
-    const field = screen.getByLabelText('Email').parentElement
-    expect(field).toHaveClass('mt-4')
+    expect(container.firstElementChild).toHaveClass('mt-4')
+    expect(container.firstElementChild?.className.split(' ').length).toBeGreaterThan(1)
+  })
+
+  // A reveal toggle, a unit, a clear button: whatever sits at the trailing edge
+  // belongs inside the field's border rather than beside it.
+  test('renders a trailing control inside the field', () => {
+    render(<AppInput label="Password" trailing={<button type="button">Show</button>} />)
+
+    expect(screen.getByRole('button', { name: 'Show' })).toBeInTheDocument()
   })
 })
