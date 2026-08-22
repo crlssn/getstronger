@@ -471,7 +471,7 @@ func (s *authSuite) TestDeleteAccount() {
 				return xcontext.WithUserID(ctx, user.ID.String()), user
 			},
 			expected: expected{
-				err: connect.NewError(connect.CodeUnauthenticated, nil),
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidCredentials),
 			},
 		},
 		{

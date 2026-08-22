@@ -263,9 +263,12 @@ func (h *authHandler) DeleteAccount(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	// InvalidArgument rather than Unauthenticated: the access token is fine, and
+	// the web client treats Unauthenticated as a dead session and logs out —
+	// which would answer a mistyped password by ending the session.
 	if err = h.repo.CompareEmailAndPassword(ctx, user.R.Auth.Email, req.Msg.GetPassword()); err != nil {
 		log.Warn("Invalid password for account deletion", zap.Error(err))
-		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
 
 	if err = h.repo.DeleteUser(ctx, userID); err != nil {
