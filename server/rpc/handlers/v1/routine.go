@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 
 	"connectrpc.com/connect"
@@ -16,6 +15,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 	"github.com/crlssn/getstronger/server/xzap"
 )
@@ -23,10 +23,8 @@ import (
 var _ apiv1connect.RoutineServiceHandler = (*routineHandler)(nil)
 
 const (
-	dashboardListLimit  = 50
-	recentWorkoutLimit  = 3
-	daysPerWeek         = 7
-	mondayWeekdayOffset = 6
+	dashboardListLimit = 50
+	recentWorkoutLimit = 3
 )
 
 type routineHandler struct {
@@ -118,8 +116,9 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if len(exercises) != len(exerciseIDs) {
-		log.Warn("Exercise count mismatch", zap.Strings("expected", exerciseIDs), zap.Any("actual", exercises))
+	routineExercises, err := training.ResolveRoutineExercises(exercises, exerciseIDs)
+	if err != nil {
+		log.Warn("Routine exercises unresolved", zap.Strings("exercise_ids", exerciseIDs), zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
@@ -131,8 +130,7 @@ func (h *routineHandler) UpdateRoutine(ctx context.Context, req *connect.Request
 			return fmt.Errorf("routine update: %w", err)
 		}
 
-		// The exercises were listed by ID set; positions follow the requested order.
-		if err = tx.SetRoutineExercises(ctx, routine, repo.OrderExercisesByIDs(exercises, exerciseIDs)); err != nil {
+		if err = tx.SetRoutineExercises(ctx, routine, routineExercises); err != nil {
 			return fmt.Errorf("set routine exercises: %w", err)
 		}
 
@@ -244,7 +242,7 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	nextRoutine := dashboardNextRoutine(activePlan, routines, req.Msg.GetPreferredRoutineId())
+	nextRoutine := training.NextRoutine(activePlan, routines, req.Msg.GetPreferredRoutineId())
 
 	workouts, err := h.repo.ListWorkouts(
 		ctx,
@@ -266,7 +264,7 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workoutsThisWeek, volumeThisWeek := summarizeDashboardWeek(workouts, startOfWeek(time.Now().UTC()))
+	thisWeek := training.WeekOf(time.Now().UTC()).Summarise(workouts)
 
 	recentWorkouts := workouts
 	if len(recentWorkouts) > recentWorkoutLimit {
@@ -286,8 +284,8 @@ func (h *routineHandler) GetDashboard(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&apiv1.GetDashboardResponse{
 		NextRoutine:      parsedNextRoutine,
 		Routines:         parser.RoutineSlice(routines),
-		WorkoutsThisWeek: workoutsThisWeek,
-		VolumeThisWeek:   volumeThisWeek,
+		WorkoutsThisWeek: thisWeek.Workouts,
+		VolumeThisWeek:   thisWeek.Volume.Float64(),
 		PersonalBests:    parser.ExerciseSetSlice(personalBests),
 		RecentWorkouts:   parsedWorkouts,
 		ActivePlan:       parser.Plan(activePlan),
@@ -305,9 +303,9 @@ func (h *routineHandler) CreatePlan(ctx context.Context, req *connect.Request[ap
 	})
 	if err != nil {
 		log.Error("Create plan", zap.Error(err))
-		if errors.Is(err, repo.ErrPlanRoutineBelongsToAnotherUser) ||
-			errors.Is(err, repo.ErrPlanRoutineDeleted) ||
-			errors.Is(err, repo.ErrPlanRoutineDuplicate) || errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, training.ErrPlanRoutineBelongsToAnotherUser) ||
+			errors.Is(err, training.ErrPlanRoutineDeleted) ||
+			errors.Is(err, training.ErrPlanRoutineDuplicate) || errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 		}
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -360,9 +358,9 @@ func (h *routineHandler) UpdatePlan(ctx context.Context, req *connect.Request[ap
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
-		if errors.Is(err, repo.ErrPlanRoutineBelongsToAnotherUser) ||
-			errors.Is(err, repo.ErrPlanRoutineDeleted) ||
-			errors.Is(err, repo.ErrPlanRoutineDuplicate) {
+		if errors.Is(err, training.ErrPlanRoutineBelongsToAnotherUser) ||
+			errors.Is(err, training.ErrPlanRoutineDeleted) ||
+			errors.Is(err, training.ErrPlanRoutineDuplicate) {
 			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 		}
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -424,56 +422,13 @@ func (h *routineHandler) SkipPlanRoutine(ctx context.Context, req *connect.Reque
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
-		if errors.Is(err, repo.ErrPlanNotActive) || errors.Is(err, repo.ErrPlanUnexpectedRoutine) {
+		if errors.Is(err, training.ErrPlanNotActive) || errors.Is(err, training.ErrPlanUnexpectedRoutine) {
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
 	return connect.NewResponse(&apiv1.SkipPlanRoutineResponse{Plan: parser.Plan(plan)}), nil
-}
-
-func startOfWeek(value time.Time) time.Time {
-	dayOffset := (int(value.Weekday()) + mondayWeekdayOffset) % daysPerWeek
-	start := value.AddDate(0, 0, -dayOffset)
-	return time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
-}
-
-func dashboardNextRoutine(activePlan *repo.TrainingPlan, routines models.RoutineSlice, preferredRoutineID string) *models.Routine {
-	if activePlan != nil && activePlan.CurrentPosition >= 0 && activePlan.CurrentPosition < len(activePlan.Routines) {
-		return activePlan.Routines[activePlan.CurrentPosition]
-	}
-
-	if preferredRoutineID != "" {
-		index := slices.IndexFunc(routines, func(routine *models.Routine) bool {
-			return routine.ID.String() == preferredRoutineID
-		})
-		if index >= 0 {
-			return routines[index]
-		}
-	}
-
-	if len(routines) > 0 {
-		return routines[0]
-	}
-
-	return nil
-}
-
-func summarizeDashboardWeek(workouts models.WorkoutSlice, weekStart time.Time) (int32, float64) {
-	var workoutCount int32
-	var volume float64
-	for _, workout := range workouts {
-		if workout.FinishedAt.Before(weekStart) {
-			continue
-		}
-		workoutCount++
-		for _, set := range workout.R.Sets {
-			volume += set.Weight * float64(set.Reps)
-		}
-	}
-
-	return workoutCount, volume
 }
 
 func (h *routineHandler) AddExercise(ctx context.Context, req *connect.Request[apiv1.AddExerciseRequest]) (*connect.Response[apiv1.AddExerciseResponse], error) { //nolint:dupl
@@ -586,21 +541,9 @@ func (h *routineHandler) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	if len(req.Msg.GetExerciseIds()) != len(routine.R.Exercises) {
-		log.Warn("Unexpected exercise count", zap.Int("expected", len(routine.R.Exercises)), zap.Int("actual", len(req.Msg.GetExerciseIds())))
+	if err = training.ValidateExerciseOrder(routine.R.Exercises, req.Msg.GetExerciseIds()); err != nil {
+		log.Warn("Exercise order does not match routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
-	}
-
-	mapExpectedExerciseIDs := make(map[string]struct{}, len(routine.R.Exercises))
-	for _, exercise := range routine.R.Exercises {
-		mapExpectedExerciseIDs[exercise.ID.String()] = struct{}{}
-	}
-
-	for _, exerciseID := range req.Msg.GetExerciseIds() {
-		if _, ok := mapExpectedExerciseIDs[exerciseID]; !ok {
-			log.Warn("Unexpected exercise ID", zap.String("exercise_id", exerciseID))
-			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
-		}
 	}
 
 	if err = h.repo.UpdateRoutineExerciseOrder(ctx, routine.ID.String(), req.Msg.GetExerciseIds()); err != nil {

@@ -10,7 +10,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
-	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -337,20 +337,20 @@ func (s *parserSuite) TestExerciseSetsFromPB() {
 }
 
 func (s *parserSuite) TestNotification() {
-	notification := s.factory.NewNotification(
-		factory.NotificationType(repo.NotificationTypeWorkoutComment),
+	record := s.factory.NewNotification(
+		factory.NotificationType(notification.TypeWorkoutComment),
 	)
-	parsed := parser.Notification(notification)
+	parsed := parser.Notification(record)
 
-	s.Require().Equal(notification.ID.String(), parsed.GetId())
-	s.Require().Equal(notification.CreatedAt.Unix(), parsed.GetNotifiedAtUnix())
+	s.Require().Equal(record.ID.String(), parsed.GetId())
+	s.Require().Equal(record.CreatedAt.Unix(), parsed.GetNotifiedAtUnix())
 	s.Require().False(parsed.GetRead())
 	s.Require().Nil(parsed.GetUserFollowed())
 	s.Require().Nil(parsed.GetWorkoutComment().GetActor())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout())
 
 	actor := s.factory.NewUser()
-	parsed = parser.Notification(notification, parser.NotificationActor(notification.Type, actor))
+	parsed = parser.Notification(record, parser.NotificationActor(record.Type, actor))
 
 	s.Require().NotNil(parsed.GetWorkoutComment().GetActor())
 	s.Require().Equal(actor.ID.String(), parsed.GetWorkoutComment().GetActor().GetId())
@@ -362,7 +362,7 @@ func (s *parserSuite) TestNotification() {
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout())
 
 	workout := s.factory.NewWorkout()
-	parsed = parser.Notification(notification, parser.NotificationWorkout(notification.Type, workout))
+	parsed = parser.Notification(record, parser.NotificationWorkout(record.Type, workout))
 
 	s.Require().NotNil(parsed.GetWorkoutComment().GetWorkout())
 	s.Require().Equal(workout.ID.String(), parsed.GetWorkoutComment().GetWorkout().GetId())
@@ -381,9 +381,9 @@ func (s *parserSuite) TestNotification() {
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetExerciseSets())
 
 	parsed = parser.Notification(
-		notification,
-		parser.NotificationActor(notification.Type, actor),
-		parser.NotificationWorkout(notification.Type, workout),
+		record,
+		parser.NotificationActor(record.Type, actor),
+		parser.NotificationWorkout(record.Type, workout),
 	)
 
 	s.Require().NotNil(actor.ID, parsed.GetWorkoutComment().GetActor())
@@ -408,25 +408,25 @@ func (s *parserSuite) TestNotification() {
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetComments())
 	s.Require().Nil(parsed.GetWorkoutComment().GetWorkout().GetExerciseSets())
 
-	notification = s.factory.NewNotification(
-		factory.NotificationType(repo.NotificationTypeFollow),
+	record = s.factory.NewNotification(
+		factory.NotificationType(notification.TypeFollow),
 	)
-	parsed = parser.Notification(notification)
+	parsed = parser.Notification(record)
 
-	s.Require().Equal(notification.ID.String(), parsed.GetId())
-	s.Require().Equal(notification.CreatedAt.Unix(), parsed.GetNotifiedAtUnix())
+	s.Require().Equal(record.ID.String(), parsed.GetId())
+	s.Require().Equal(record.CreatedAt.Unix(), parsed.GetNotifiedAtUnix())
 
 	s.Require().Nil(parsed.GetWorkoutComment())
 	s.Require().Nil(parsed.GetUserFollowed().GetActor())
 
 	readNotification := s.factory.NewNotification(
-		factory.NotificationType(repo.NotificationTypeFollow),
+		factory.NotificationType(notification.TypeFollow),
 		factory.NotificationRead(),
 	)
 	s.Require().True(parser.Notification(readNotification).GetRead())
 
 	actor = s.factory.NewUser()
-	parsed = parser.Notification(notification, parser.NotificationActor(notification.Type, actor))
+	parsed = parser.Notification(record, parser.NotificationActor(record.Type, actor))
 
 	s.Require().Equal(actor.ID.String(), parsed.GetUserFollowed().GetActor().GetId())
 	s.Require().Equal(actor.Name, parsed.GetUserFollowed().GetActor().GetName())
@@ -441,14 +441,14 @@ func (s *parserSuite) TestNotificationSlice() {
 	workouts := s.factory.NewWorkoutSlice(1)
 	notifications := models.NotificationSlice{
 		s.factory.NewNotification(
-			factory.NotificationType(repo.NotificationTypeFollow),
-			factory.NotificationPayload(repo.NotificationPayload{
+			factory.NotificationType(notification.TypeFollow),
+			factory.NotificationPayload(notification.Payload{
 				ActorID: actors[0].ID.String(),
 			}),
 		),
 		s.factory.NewNotification(
-			factory.NotificationType(repo.NotificationTypeWorkoutComment),
-			factory.NotificationPayload(repo.NotificationPayload{
+			factory.NotificationType(notification.TypeWorkoutComment),
+			factory.NotificationPayload(notification.Payload{
 				ActorID:   actors[1].ID.String(),
 				WorkoutID: workouts[0].ID.String(),
 			}),
@@ -458,56 +458,56 @@ func (s *parserSuite) TestNotificationSlice() {
 	parsed, err := parser.NotificationSlice(notifications, actors, workouts)
 	s.Require().NoError(err)
 	s.Require().Len(parsed, len(notifications))
-	for i, notification := range parsed {
-		s.Require().Equal(notifications[i].ID.String(), notification.GetId())
-		s.Require().Equal(notifications[i].CreatedAt.Unix(), notification.GetNotifiedAtUnix())
+	for i, record := range parsed {
+		s.Require().Equal(notifications[i].ID.String(), record.GetId())
+		s.Require().Equal(notifications[i].CreatedAt.Unix(), record.GetNotifiedAtUnix())
 
 		switch notifications[i].Type {
-		case repo.NotificationTypeFollow:
-			s.Require().NotNil(notification.GetUserFollowed())
-		case repo.NotificationTypeWorkoutComment:
-			s.Require().NotNil(notification.GetWorkoutComment())
+		case notification.TypeFollow:
+			s.Require().NotNil(record.GetUserFollowed())
+		case notification.TypeWorkoutComment:
+			s.Require().NotNil(record.GetWorkoutComment())
 		default:
-			s.FailNow(fmt.Sprintf("unexpected notification type: %v", notifications[i].Type))
+			s.FailNow(fmt.Sprintf("unexpected record type: %v", notifications[i].Type))
 		}
 
 		switch i {
 		case 0:
-			s.Require().NotNil(notification.GetUserFollowed())
+			s.Require().NotNil(record.GetUserFollowed())
 
-			s.Require().NotNil(notification.GetUserFollowed().GetActor())
-			s.Require().Equal(actors[0].ID.String(), notification.GetUserFollowed().GetActor().GetId())
-			s.Require().Equal(actors[0].Name, notification.GetUserFollowed().GetActor().GetName())
-			s.Require().Equal(actors[0].R.Auth.Email, notification.GetUserFollowed().GetActor().GetEmail())
-			s.Require().False(notification.GetUserFollowed().GetActor().GetFollowed())
+			s.Require().NotNil(record.GetUserFollowed().GetActor())
+			s.Require().Equal(actors[0].ID.String(), record.GetUserFollowed().GetActor().GetId())
+			s.Require().Equal(actors[0].Name, record.GetUserFollowed().GetActor().GetName())
+			s.Require().Equal(actors[0].R.Auth.Email, record.GetUserFollowed().GetActor().GetEmail())
+			s.Require().False(record.GetUserFollowed().GetActor().GetFollowed())
 
-			s.Require().Nil(notification.GetWorkoutComment())
+			s.Require().Nil(record.GetWorkoutComment())
 		case 1:
-			s.Require().NotNil(notification.GetWorkoutComment())
+			s.Require().NotNil(record.GetWorkoutComment())
 
-			s.Require().NotNil(notification.GetWorkoutComment().GetActor())
-			s.Require().Equal(actors[1].ID.String(), notification.GetWorkoutComment().GetActor().GetId())
-			s.Require().Equal(actors[1].Name, notification.GetWorkoutComment().GetActor().GetName())
-			s.Require().Equal(actors[1].R.Auth.Email, notification.GetWorkoutComment().GetActor().GetEmail())
-			s.Require().False(notification.GetWorkoutComment().GetActor().GetFollowed())
+			s.Require().NotNil(record.GetWorkoutComment().GetActor())
+			s.Require().Equal(actors[1].ID.String(), record.GetWorkoutComment().GetActor().GetId())
+			s.Require().Equal(actors[1].Name, record.GetWorkoutComment().GetActor().GetName())
+			s.Require().Equal(actors[1].R.Auth.Email, record.GetWorkoutComment().GetActor().GetEmail())
+			s.Require().False(record.GetWorkoutComment().GetActor().GetFollowed())
 
-			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout())
-			s.Require().Equal(workouts[0].ID.String(), notification.GetWorkoutComment().GetWorkout().GetId())
-			s.Require().Equal(workouts[0].Name, notification.GetWorkoutComment().GetWorkout().GetName())
-			s.Require().True(workouts[0].StartedAt.Equal(notification.GetWorkoutComment().GetWorkout().GetStartedAt().AsTime()))
-			s.Require().True(workouts[0].FinishedAt.Equal(notification.GetWorkoutComment().GetWorkout().GetFinishedAt().AsTime()))
+			s.Require().NotNil(record.GetWorkoutComment().GetWorkout())
+			s.Require().Equal(workouts[0].ID.String(), record.GetWorkoutComment().GetWorkout().GetId())
+			s.Require().Equal(workouts[0].Name, record.GetWorkoutComment().GetWorkout().GetName())
+			s.Require().True(workouts[0].StartedAt.Equal(record.GetWorkoutComment().GetWorkout().GetStartedAt().AsTime()))
+			s.Require().True(workouts[0].FinishedAt.Equal(record.GetWorkoutComment().GetWorkout().GetFinishedAt().AsTime()))
 
-			s.Require().NotNil(notification.GetWorkoutComment().GetWorkout().GetUser())
-			s.Require().Equal(workouts[0].R.User.ID.String(), notification.GetWorkoutComment().GetWorkout().GetUser().GetId())
-			s.Require().Equal(workouts[0].R.User.Name, notification.GetWorkoutComment().GetWorkout().GetUser().GetName())
-			s.Require().False(notification.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
-			s.Require().Empty(notification.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
+			s.Require().NotNil(record.GetWorkoutComment().GetWorkout().GetUser())
+			s.Require().Equal(workouts[0].R.User.ID.String(), record.GetWorkoutComment().GetWorkout().GetUser().GetId())
+			s.Require().Equal(workouts[0].R.User.Name, record.GetWorkoutComment().GetWorkout().GetUser().GetName())
+			s.Require().False(record.GetWorkoutComment().GetWorkout().GetUser().GetFollowed())
+			s.Require().Empty(record.GetWorkoutComment().GetWorkout().GetUser().GetEmail())
 
-			s.Require().Nil(notification.GetUserFollowed())
-			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetComments())
-			s.Require().Nil(notification.GetWorkoutComment().GetWorkout().GetExerciseSets())
+			s.Require().Nil(record.GetUserFollowed())
+			s.Require().Nil(record.GetWorkoutComment().GetWorkout().GetComments())
+			s.Require().Nil(record.GetWorkoutComment().GetWorkout().GetExerciseSets())
 		default:
-			s.FailNow(fmt.Sprintf("unexpected notification index: %d", i))
+			s.FailNow(fmt.Sprintf("unexpected record index: %d", i))
 		}
 	}
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/pubsub/events"
+	"github.com/crlssn/getstronger/server/training"
 )
 
 //go:generate mockgen -package repo -source=interfaces.go -destination=interfaces_mock.go Repo
@@ -37,15 +39,15 @@ type methods interface {
 type planMethods interface { //nolint:interfacebloat // Plan operations form one cohesive transactional capability.
 	validatePlanRoutines(ctx context.Context, userID string, routineIDs []string) error
 	replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error
-	CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error)
-	GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error)
-	GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error)
-	ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error)
-	UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error)
+	CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error)
+	GetPlan(ctx context.Context, planID, userID string) (*training.Plan, error)
+	GetActivePlan(ctx context.Context, userID string) (*training.Plan, error)
+	ListPlans(ctx context.Context, userID string) ([]*training.Plan, error)
+	UpdatePlan(ctx context.Context, p UpdatePlanParams) (*training.Plan, error)
 	DeletePlan(ctx context.Context, planID, userID string) error
-	SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error)
+	SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error)
 	PauseActivePlan(ctx context.Context, userID string) error
-	AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*TrainingPlan, error)
+	AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*training.Plan, error)
 }
 
 type setMethods interface {
@@ -118,5 +120,5 @@ type notificationMethods interface {
 }
 
 type pubSubMethods interface {
-	PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error
+	PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error
 }

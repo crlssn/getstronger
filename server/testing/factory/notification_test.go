@@ -13,7 +13,7 @@ import (
 	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
@@ -64,7 +64,7 @@ func TestFactory_Notification(t *testing.T) {
 
 	t.Run("NotificationType", func(t *testing.T) {
 		t.Parallel()
-		notificationType := repo.NotificationTypeFollow
+		notificationType := notification.TypeFollow
 		expected := f.NewNotification(factory.NotificationType(notificationType))
 		created, err := models.FindNotification(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
@@ -73,14 +73,14 @@ func TestFactory_Notification(t *testing.T) {
 
 	t.Run("NotificationPayload", func(t *testing.T) {
 		t.Parallel()
-		payload := repo.NotificationPayload{
+		payload := notification.Payload{
 			ActorID:   uuid.NewString(),
 			WorkoutID: uuid.NewString(),
 		}
 		expected := f.NewNotification(factory.NotificationPayload(payload))
 		created, err := models.FindNotification(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
-		var createdPayload repo.NotificationPayload
+		var createdPayload notification.Payload
 		require.NoError(t, json.Unmarshal(created.Payload.Val, &createdPayload))
 		require.Equal(t, payload, createdPayload)
 	})

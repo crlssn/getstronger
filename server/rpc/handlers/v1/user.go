@@ -11,11 +11,12 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
-	"github.com/crlssn/getstronger/server/pubsub/payloads"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
 	"github.com/crlssn/getstronger/server/rpc/parser"
@@ -113,7 +114,7 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.pubSub.Publish(ctx, repo.EventTopicFollowedUser, payloads.UserFollowed{
+	h.pubSub.Publish(ctx, events.TopicFollowedUser, events.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: req.Msg.GetFollowId(),
 		EventID:    uuid.NewString(),
@@ -175,7 +176,7 @@ func (h *userHandler) UpdateUserUsername(ctx context.Context, req *connect.Reque
 	userID := xcontext.MustExtractUserID(ctx)
 
 	if err := h.repo.UpdateUser(ctx, userID, repo.UpdateUserUsername(req.Msg.GetUsername())); err != nil {
-		if errors.Is(err, repo.ErrUserUsernameExists) {
+		if errors.Is(err, account.ErrUsernameTaken) {
 			log.Warn("Username already taken")
 			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
 		}

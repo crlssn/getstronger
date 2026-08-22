@@ -24,9 +24,13 @@ import (
 	bobtypes "github.com/stephenafamo/bob/types"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/notification"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/safe"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/weightunit"
 )
 
@@ -147,8 +151,6 @@ func (r *repo) SetRoutineExercises(ctx context.Context, routine *models.Routine,
 	return nil
 }
 
-var ErrAuthEmailExists = fmt.Errorf("email already exists")
-
 func (r *repo) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
 	exists, err := models.Auths.Query(
 		models.SelectWhere.Auths.Email.EQ(email),
@@ -157,7 +159,7 @@ func (r *repo) CreateAuth(ctx context.Context, email, password string) (*models.
 		return nil, fmt.Errorf("email exists check: %w", err)
 	}
 	if exists {
-		return nil, ErrAuthEmailExists
+		return nil, account.ErrEmailAlreadyRegistered
 	}
 
 	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -213,13 +215,11 @@ func UpdateAuthRefreshToken(refreshToken string) UpdateAuthOpt {
 	}
 }
 
-const PasswordResetTokenTTL = 24 * time.Hour
-
 func UpdateAuthPasswordResetToken(token string) UpdateAuthOpt {
 	return func() (columns, error) {
 		return columns{
 			models.Auths.Columns.PasswordResetToken.Name():           token,
-			models.Auths.Columns.PasswordResetTokenValidUntil.Name(): time.Now().UTC().Add(PasswordResetTokenTTL),
+			models.Auths.Columns.PasswordResetTokenValidUntil.Name(): time.Now().UTC().Add(account.PasswordResetTokenTTL),
 		}, nil
 	}
 }
@@ -289,7 +289,7 @@ func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User
 	user, err := models.Users.Insert(&models.UserSetter{
 		AuthID:       omit.From(uuidFromString(p.AuthID)),
 		Name:         omit.From(p.Name),
-		Username:     omit.From(normalizeUsername(p.Username)),
+		Username:     omit.From(account.NormalizeUsername(p.Username)),
 		WeightUnit:   omit.From(string(weightunit.Kilograms)),
 		DistanceUnit: omit.From(string(distanceunit.Kilometers)),
 	}).One(ctx, r.bobExec())
@@ -300,29 +300,23 @@ func (r *repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User
 	return user, nil
 }
 
-var ErrUserUsernameExists = errors.New("username already exists")
-
 // Usernames are compared case-insensitively, so uniqueness is enforced by an
 // index on lower(username) rather than a column constraint. That index is not
 // in the generated dberrors vocabulary, so its violation is translated here.
 func translateUserError(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "idx_users_username_lower" {
-		return ErrUserUsernameExists
+		return account.ErrUsernameTaken
 	}
 
 	return err
-}
-
-func normalizeUsername(username string) string {
-	return strings.ToLower(strings.TrimSpace(username))
 }
 
 type UpdateUserOpt func() (columns, error)
 
 func UpdateUserUsername(username string) UpdateUserOpt {
 	return func() (columns, error) {
-		return columns{models.Users.Columns.Username.Name(): normalizeUsername(username)}, nil
+		return columns{models.Users.Columns.Username.Name(): account.NormalizeUsername(username)}, nil
 	}
 }
 
@@ -633,7 +627,7 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 			return fmt.Errorf("routine insert: %w", err)
 		}
 
-		if err = setRoutineExercises(ctx, tx.bobExec(), routine.ID, OrderExercisesByIDs(exercises, p.ExerciseIDs)); err != nil {
+		if err = setRoutineExercises(ctx, tx.bobExec(), routine.ID, training.OrderExercisesByIDs(exercises, p.ExerciseIDs)); err != nil {
 			return fmt.Errorf("routine exercises set: %w", err)
 		}
 		return nil
@@ -642,28 +636,6 @@ func (r *repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 	}
 
 	return routine, nil
-}
-
-// OrderExercisesByIDs returns the exercises rearranged to match the order of
-// ids. IDs that match no exercise and duplicate IDs are skipped, as are
-// exercises the ids omit.
-func OrderExercisesByIDs(exercises models.ExerciseSlice, ids []string) models.ExerciseSlice {
-	exercisesByID := make(map[string]*models.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		exercisesByID[exercise.ID.String()] = exercise
-	}
-
-	ordered := make(models.ExerciseSlice, 0, len(exercises))
-	for _, id := range ids {
-		exercise, ok := exercisesByID[id]
-		if !ok {
-			continue
-		}
-		delete(exercisesByID, id)
-		ordered = append(ordered, exercise)
-	}
-
-	return ordered
 }
 
 // setRoutineExercises replaces a routine's exercise links, the equivalent of
@@ -1466,15 +1438,9 @@ func (r *repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 }
 
 type CreateNotificationParams struct {
-	Type    NotificationType
+	Type    notification.Type
 	UserID  string
-	Payload NotificationPayload
-}
-
-type NotificationPayload struct {
-	ActorID   string `json:"actorId,omitempty"`
-	EventID   string `json:"eventId,omitempty"`
-	WorkoutID string `json:"workoutId,omitempty"`
+	Payload notification.Payload
 }
 
 func (r *repo) CreateNotification(ctx context.Context, p CreateNotificationParams) error {
@@ -1895,7 +1861,7 @@ var (
 	ErrInvalidTopic = fmt.Errorf("invalid topic")
 )
 
-func (r *repo) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
+func (r *repo) PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error {
 	if !topic.Valid() {
 		return fmt.Errorf("%w: %s", ErrInvalidTopic, topic)
 	}

@@ -15,9 +15,10 @@ import (
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
-	"github.com/crlssn/getstronger/server/pubsub/payloads"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -36,9 +37,10 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if req.Msg.GetStartedAt().AsTime().After(req.Msg.GetFinishedAt().AsTime()) {
+	period, err := training.NewPeriod(req.Msg.GetStartedAt().AsTime(), req.Msg.GetFinishedAt().AsTime())
+	if err != nil {
 		log.Warn("Workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	workoutName, err := h.resolveWorkoutName(ctx, req.Msg, userID)
@@ -46,7 +48,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		return nil, err
 	}
 
-	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, userID, workoutName)
+	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, userID, workoutName, period)
 	if err != nil {
 		log.Error("Create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -76,11 +78,7 @@ func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.
 			return "", connect.NewError(connect.CodeInvalidArgument, nil)
 		}
 
-		if request.GetWorkoutName() != "" {
-			return request.GetWorkoutName(), nil
-		}
-
-		return "Quick Workout", nil
+		return training.WorkoutName("", request.GetWorkoutName()), nil
 	}
 
 	routine, err := h.repo.GetRoutine(
@@ -98,7 +96,7 @@ func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.
 		return "", connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return routine.Title, nil
+	return training.WorkoutName(routine.Title, request.GetWorkoutName()), nil
 }
 
 func (h *workoutHandler) createWorkout(
@@ -106,6 +104,7 @@ func (h *workoutHandler) createWorkout(
 	request *apiv1.CreateWorkoutRequest,
 	userID string,
 	workoutName string,
+	period training.Period,
 ) (*models.Workout, error, error) {
 	var workout *models.Workout
 	var planAdvanceSkipped error
@@ -115,8 +114,8 @@ func (h *workoutHandler) createWorkout(
 			Note:         request.GetNote(),
 			UserID:       userID,
 			RoutineID:    request.GetRoutineId(),
-			StartedAt:    request.GetStartedAt().AsTime(),
-			FinishedAt:   request.GetFinishedAt().AsTime(),
+			StartedAt:    period.StartedAt,
+			FinishedAt:   period.FinishedAt,
 			ExerciseSets: parser.ExerciseSetsFromPB(request.GetExerciseSets()),
 		})
 		if createErr != nil {
@@ -143,9 +142,11 @@ func (h *workoutHandler) createWorkout(
 	return workout, planAdvanceSkipped, err
 }
 
+// A workout is worth keeping even when the plan refuses to rotate: the athlete
+// may have trained off-plan, paused the plan, or deleted it mid-session.
 func isPlanAdvanceSkippable(err error) bool {
-	return errors.Is(err, repo.ErrPlanNotActive) ||
-		errors.Is(err, repo.ErrPlanUnexpectedRoutine) ||
+	return errors.Is(err, training.ErrPlanNotActive) ||
+		errors.Is(err, training.ErrPlanUnexpectedRoutine) ||
 		errors.Is(err, sql.ErrNoRows)
 }
 
@@ -275,7 +276,7 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	h.pubSub.Publish(ctx, repo.EventTopicWorkoutCommentPosted, payloads.WorkoutCommentPosted{
+	h.pubSub.Publish(ctx, events.TopicWorkoutCommentPosted, events.WorkoutCommentPosted{
 		CommentID: comment.ID.String(),
 		EventID:   uuid.NewString(),
 	})
@@ -288,15 +289,14 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	}, nil
 }
 
-var ErrWorkoutMustStartBeforeFinish = errors.New("workout must start before it finishes")
-
 func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[apiv1.UpdateWorkoutRequest]) (*connect.Response[apiv1.UpdateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if req.Msg.GetWorkout().GetStartedAt().AsTime().After(req.Msg.GetWorkout().GetFinishedAt().AsTime()) {
+	period, err := training.NewPeriod(req.Msg.GetWorkout().GetStartedAt().AsTime(), req.Msg.GetWorkout().GetFinishedAt().AsTime())
+	if err != nil {
 		log.Warn("Workout cannot start after it finishes")
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrWorkoutMustStartBeforeFinish)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
@@ -320,8 +320,8 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			ctx, workout.ID.String(),
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
 			repo.UpdateWorkoutNote(req.Msg.GetWorkout().GetNote()),
-			repo.UpdateWorkoutStartedAt(req.Msg.GetWorkout().GetStartedAt().AsTime()),
-			repo.UpdateWorkoutFinishedAt(req.Msg.GetWorkout().GetFinishedAt().AsTime()),
+			repo.UpdateWorkoutStartedAt(period.StartedAt),
+			repo.UpdateWorkoutFinishedAt(period.FinishedAt),
 		); err != nil {
 			return fmt.Errorf("update workout: %w", err)
 		}

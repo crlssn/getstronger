@@ -26,8 +26,11 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	bobtypes "github.com/stephenafamo/bob/types"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/notification"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -184,7 +187,7 @@ func (s *repoSuite) TestCreateAuth() {
 				s.factory.NewAuth(factory.AuthEmail(t.email))
 			},
 			expected: expected{
-				err: repo.ErrAuthEmailExists,
+				err: account.ErrEmailAlreadyRegistered,
 			},
 		},
 	}
@@ -260,7 +263,7 @@ func (s *repoSuite) TestUpdateAuth() {
 			init: func(t *test) {
 				t.expected.auth = s.factory.NewAuth(
 					factory.AuthID(t.authID),
-					factory.AuthPasswordResetToken(factory.UUID(0), repo.PasswordResetTokenTTL),
+					factory.AuthPasswordResetToken(factory.UUID(0), account.PasswordResetTokenTTL),
 				)
 			},
 			expected: expected{
@@ -560,7 +563,7 @@ func (s *repoSuite) TestCreateUser() {
 			},
 			expected: expected{
 				user: nil,
-				err:  repo.ErrUserUsernameExists,
+				err:  account.ErrUsernameTaken,
 			},
 		},
 		{
@@ -598,8 +601,8 @@ func (s *repoSuite) TestCreateUser() {
 
 			if t.expected.err != nil {
 				s.Require().Error(err)
-				if errors.Is(t.expected.err, repo.ErrUserUsernameExists) {
-					s.Require().ErrorIs(err, repo.ErrUserUsernameExists)
+				if errors.Is(t.expected.err, account.ErrUsernameTaken) {
+					s.Require().ErrorIs(err, account.ErrUsernameTaken)
 				} else {
 					s.Require().ErrorContains(err, t.expected.err.Error())
 				}
@@ -1318,7 +1321,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 				workout := s.factory.NewWorkout(factory.WorkoutID(workoutID))
 				s.factory.NewSet(factory.SetWorkoutID(workoutID))
 				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workoutID))
-				s.factory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
+				s.factory.NewNotification(factory.NotificationPayload(notification.Payload{
 					WorkoutID: workoutID,
 				}))
 
@@ -1338,7 +1341,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 				workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
 				s.factory.NewSet(factory.SetWorkoutID(workout.ID))
 				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID))
-				s.factory.NewNotification(factory.NotificationPayload(repo.NotificationPayload{
+				s.factory.NewNotification(factory.NotificationPayload(notification.Payload{
 					WorkoutID: workout.ID.String(),
 				}))
 
@@ -1488,7 +1491,7 @@ func (s *repoSuite) TestPublishEvent() {
 
 	type test struct {
 		name     string
-		topic    repo.EventTopic
+		topic    events.Topic
 		payload  []byte
 		expected expected
 	}
@@ -1496,7 +1499,7 @@ func (s *repoSuite) TestPublishEvent() {
 	tests := []test{
 		{
 			name:    "ok_publish_event",
-			topic:   repo.EventTopicWorkoutCommentPosted,
+			topic:   events.TopicWorkoutCommentPosted,
 			payload: []byte("{}"),
 			expected: expected{
 				err: nil,
@@ -1504,7 +1507,7 @@ func (s *repoSuite) TestPublishEvent() {
 		},
 		{
 			name:    "err_invalid_topic",
-			topic:   repo.EventTopic("not_found"),
+			topic:   events.Topic("not_found"),
 			payload: nil,
 			expected: expected{
 				err: repo.ErrInvalidTopic,
@@ -1512,7 +1515,7 @@ func (s *repoSuite) TestPublishEvent() {
 		},
 		{
 			name:    "err_empty_payload",
-			topic:   repo.EventTopicWorkoutCommentPosted,
+			topic:   events.TopicWorkoutCommentPosted,
 			payload: nil,
 			expected: expected{
 				err: repo.ErrEmptyPayload,

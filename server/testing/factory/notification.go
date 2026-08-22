@@ -13,7 +13,7 @@ import (
 
 	bobfactory "github.com/crlssn/getstronger/server/gen/factory"
 	"github.com/crlssn/getstronger/server/gen/models"
-	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/notification"
 )
 
 func (f *Factory) NewNotificationSlice(count int, opts ...NotificationOpt) models.NotificationSlice {
@@ -33,9 +33,9 @@ func (f *Factory) NewNotification(opts ...NotificationOpt) *models.Notification 
 		opt(setter)
 	}
 	if setter.Type.IsUnset() {
-		setter.Type = omit.From(repo.NotificationType(f.Faker.RandomString([]string{
-			repo.NotificationTypeFollow.String(),
-			repo.NotificationTypeWorkoutComment.String(),
+		setter.Type = omit.From(notification.Type(f.Faker.RandomString([]string{
+			notification.TypeFollow.String(),
+			notification.TypeWorkoutComment.String(),
 		})))
 	}
 	if setter.Payload.IsUnset() {
@@ -94,7 +94,7 @@ func NotificationUserID(userID any) NotificationOpt {
 	}
 }
 
-func NotificationPayload(payload repo.NotificationPayload) NotificationOpt {
+func NotificationPayload(payload notification.Payload) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
 		value, err := json.Marshal(payload)
 		if err != nil {
@@ -105,7 +105,7 @@ func NotificationPayload(payload repo.NotificationPayload) NotificationOpt {
 	}
 }
 
-func NotificationType(notificationType repo.NotificationType) NotificationOpt {
+func NotificationType(notificationType notification.Type) NotificationOpt {
 	return func(notification *models.NotificationSetter) {
 		notification.Type = omit.From(notificationType)
 	}

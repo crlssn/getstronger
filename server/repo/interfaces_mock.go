@@ -15,6 +15,8 @@ import (
 	reflect "reflect"
 
 	models "github.com/crlssn/getstronger/server/gen/models"
+	events "github.com/crlssn/getstronger/server/pubsub/events"
+	"github.com/crlssn/getstronger/server/training"
 	bob "github.com/stephenafamo/bob"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -58,10 +60,10 @@ func (mr *MockRepoMockRecorder) AddExerciseToRoutine(ctx, exercise, routine any)
 }
 
 // AdvancePlan mocks base method.
-func (m *MockRepo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*TrainingPlan, error) {
+func (m *MockRepo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AdvancePlan", ctx, planID, userID, expectedRoutineID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -151,10 +153,10 @@ func (mr *MockRepoMockRecorder) CreateNotification(ctx, p any) *gomock.Call {
 }
 
 // CreatePlan mocks base method.
-func (m *MockRepo) CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error) {
+func (m *MockRepo) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -292,10 +294,10 @@ func (mr *MockRepoMockRecorder) Follow(ctx, p any) *gomock.Call {
 }
 
 // GetActivePlan mocks base method.
-func (m *MockRepo) GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error) {
+func (m *MockRepo) GetActivePlan(ctx context.Context, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActivePlan", ctx, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -367,10 +369,10 @@ func (mr *MockRepoMockRecorder) GetPersonalBests(ctx any, userIDs ...any) *gomoc
 }
 
 // GetPlan mocks base method.
-func (m *MockRepo) GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *MockRepo) GetPlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -572,10 +574,10 @@ func (mr *MockRepoMockRecorder) ListNotifications(ctx any, opts ...any) *gomock.
 }
 
 // ListPlans mocks base method.
-func (m *MockRepo) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error) {
+func (m *MockRepo) ListPlans(ctx context.Context, userID string) ([]*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPlans", ctx, userID)
-	ret0, _ := ret[0].([]*TrainingPlan)
+	ret0, _ := ret[0].([]*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -723,7 +725,7 @@ func (mr *MockRepoMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomoc
 }
 
 // PublishEvent mocks base method.
-func (m *MockRepo) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
+func (m *MockRepo) PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)
@@ -766,10 +768,10 @@ func (mr *MockRepoMockRecorder) RemoveExerciseFromRoutine(ctx, exercise, routine
 }
 
 // SetActivePlan mocks base method.
-func (m *MockRepo) SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *MockRepo) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetActivePlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -875,10 +877,10 @@ func (mr *MockRepoMockRecorder) UpdateExercise(ctx, exerciseID any, opts ...any)
 }
 
 // UpdatePlan mocks base method.
-func (m *MockRepo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error) {
+func (m *MockRepo) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1041,10 +1043,10 @@ func (mr *MockTxMockRecorder) AddExerciseToRoutine(ctx, exercise, routine any) *
 }
 
 // AdvancePlan mocks base method.
-func (m *MockTx) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*TrainingPlan, error) {
+func (m *MockTx) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AdvancePlan", ctx, planID, userID, expectedRoutineID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1134,10 +1136,10 @@ func (mr *MockTxMockRecorder) CreateNotification(ctx, p any) *gomock.Call {
 }
 
 // CreatePlan mocks base method.
-func (m *MockTx) CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error) {
+func (m *MockTx) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1275,10 +1277,10 @@ func (mr *MockTxMockRecorder) Follow(ctx, p any) *gomock.Call {
 }
 
 // GetActivePlan mocks base method.
-func (m *MockTx) GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error) {
+func (m *MockTx) GetActivePlan(ctx context.Context, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActivePlan", ctx, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1350,10 +1352,10 @@ func (mr *MockTxMockRecorder) GetPersonalBests(ctx any, userIDs ...any) *gomock.
 }
 
 // GetPlan mocks base method.
-func (m *MockTx) GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *MockTx) GetPlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1555,10 +1557,10 @@ func (mr *MockTxMockRecorder) ListNotifications(ctx any, opts ...any) *gomock.Ca
 }
 
 // ListPlans mocks base method.
-func (m *MockTx) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error) {
+func (m *MockTx) ListPlans(ctx context.Context, userID string) ([]*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPlans", ctx, userID)
-	ret0, _ := ret[0].([]*TrainingPlan)
+	ret0, _ := ret[0].([]*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1692,7 +1694,7 @@ func (mr *MockTxMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *gomock.
 }
 
 // PublishEvent mocks base method.
-func (m *MockTx) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
+func (m *MockTx) PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)
@@ -1735,10 +1737,10 @@ func (mr *MockTxMockRecorder) RemoveExerciseFromRoutine(ctx, exercise, routine a
 }
 
 // SetActivePlan mocks base method.
-func (m *MockTx) SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *MockTx) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetActivePlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1844,10 +1846,10 @@ func (mr *MockTxMockRecorder) UpdateExercise(ctx, exerciseID any, opts ...any) *
 }
 
 // UpdatePlan mocks base method.
-func (m *MockTx) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error) {
+func (m *MockTx) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2038,10 +2040,10 @@ func (mr *MockmethodsMockRecorder) AddExerciseToRoutine(ctx, exercise, routine a
 }
 
 // AdvancePlan mocks base method.
-func (m *Mockmethods) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*TrainingPlan, error) {
+func (m *Mockmethods) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AdvancePlan", ctx, planID, userID, expectedRoutineID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2131,10 +2133,10 @@ func (mr *MockmethodsMockRecorder) CreateNotification(ctx, p any) *gomock.Call {
 }
 
 // CreatePlan mocks base method.
-func (m *Mockmethods) CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error) {
+func (m *Mockmethods) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2272,10 +2274,10 @@ func (mr *MockmethodsMockRecorder) Follow(ctx, p any) *gomock.Call {
 }
 
 // GetActivePlan mocks base method.
-func (m *Mockmethods) GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error) {
+func (m *Mockmethods) GetActivePlan(ctx context.Context, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActivePlan", ctx, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2347,10 +2349,10 @@ func (mr *MockmethodsMockRecorder) GetPersonalBests(ctx any, userIDs ...any) *go
 }
 
 // GetPlan mocks base method.
-func (m *Mockmethods) GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *Mockmethods) GetPlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2552,10 +2554,10 @@ func (mr *MockmethodsMockRecorder) ListNotifications(ctx any, opts ...any) *gomo
 }
 
 // ListPlans mocks base method.
-func (m *Mockmethods) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error) {
+func (m *Mockmethods) ListPlans(ctx context.Context, userID string) ([]*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPlans", ctx, userID)
-	ret0, _ := ret[0].([]*TrainingPlan)
+	ret0, _ := ret[0].([]*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2689,7 +2691,7 @@ func (mr *MockmethodsMockRecorder) PostCreateWorkoutCommentLoadUser(ctx any) *go
 }
 
 // PublishEvent mocks base method.
-func (m *Mockmethods) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
+func (m *Mockmethods) PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)
@@ -2732,10 +2734,10 @@ func (mr *MockmethodsMockRecorder) RemoveExerciseFromRoutine(ctx, exercise, rout
 }
 
 // SetActivePlan mocks base method.
-func (m *Mockmethods) SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *Mockmethods) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetActivePlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2841,10 +2843,10 @@ func (mr *MockmethodsMockRecorder) UpdateExercise(ctx, exerciseID any, opts ...a
 }
 
 // UpdatePlan mocks base method.
-func (m *Mockmethods) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error) {
+func (m *Mockmethods) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2993,10 +2995,10 @@ func (m *MockplanMethods) EXPECT() *MockplanMethodsMockRecorder {
 }
 
 // AdvancePlan mocks base method.
-func (m *MockplanMethods) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*TrainingPlan, error) {
+func (m *MockplanMethods) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AdvancePlan", ctx, planID, userID, expectedRoutineID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3008,10 +3010,10 @@ func (mr *MockplanMethodsMockRecorder) AdvancePlan(ctx, planID, userID, expected
 }
 
 // CreatePlan mocks base method.
-func (m *MockplanMethods) CreatePlan(ctx context.Context, p CreatePlanParams) (*TrainingPlan, error) {
+func (m *MockplanMethods) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3037,10 +3039,10 @@ func (mr *MockplanMethodsMockRecorder) DeletePlan(ctx, planID, userID any) *gomo
 }
 
 // GetActivePlan mocks base method.
-func (m *MockplanMethods) GetActivePlan(ctx context.Context, userID string) (*TrainingPlan, error) {
+func (m *MockplanMethods) GetActivePlan(ctx context.Context, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActivePlan", ctx, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3052,10 +3054,10 @@ func (mr *MockplanMethodsMockRecorder) GetActivePlan(ctx, userID any) *gomock.Ca
 }
 
 // GetPlan mocks base method.
-func (m *MockplanMethods) GetPlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *MockplanMethods) GetPlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3067,10 +3069,10 @@ func (mr *MockplanMethodsMockRecorder) GetPlan(ctx, planID, userID any) *gomock.
 }
 
 // ListPlans mocks base method.
-func (m *MockplanMethods) ListPlans(ctx context.Context, userID string) ([]*TrainingPlan, error) {
+func (m *MockplanMethods) ListPlans(ctx context.Context, userID string) ([]*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPlans", ctx, userID)
-	ret0, _ := ret[0].([]*TrainingPlan)
+	ret0, _ := ret[0].([]*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3096,10 +3098,10 @@ func (mr *MockplanMethodsMockRecorder) PauseActivePlan(ctx, userID any) *gomock.
 }
 
 // SetActivePlan mocks base method.
-func (m *MockplanMethods) SetActivePlan(ctx context.Context, planID, userID string) (*TrainingPlan, error) {
+func (m *MockplanMethods) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetActivePlan", ctx, planID, userID)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3111,10 +3113,10 @@ func (mr *MockplanMethodsMockRecorder) SetActivePlan(ctx, planID, userID any) *g
 }
 
 // UpdatePlan mocks base method.
-func (m *MockplanMethods) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*TrainingPlan, error) {
+func (m *MockplanMethods) UpdatePlan(ctx context.Context, p UpdatePlanParams) (*training.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePlan", ctx, p)
-	ret0, _ := ret[0].(*TrainingPlan)
+	ret0, _ := ret[0].(*training.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -4140,7 +4142,7 @@ func (m *MockpubSubMethods) EXPECT() *MockpubSubMethodsMockRecorder {
 }
 
 // PublishEvent mocks base method.
-func (m *MockpubSubMethods) PublishEvent(ctx context.Context, topic EventTopic, payload []byte) error {
+func (m *MockpubSubMethods) PublishEvent(ctx context.Context, topic events.Topic, payload []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishEvent", ctx, topic, payload)
 	ret0, _ := ret[0].(error)

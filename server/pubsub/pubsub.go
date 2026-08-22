@@ -8,12 +8,13 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/repo"
 )
 
 type event struct {
-	topic   repo.EventTopic
+	topic   events.Topic
 	payload any
 }
 
@@ -27,7 +28,7 @@ type PubSub struct {
 	log      *zap.Logger
 	repo     repo.Repo
 	events   chan event
-	handlers map[repo.EventTopic]handlers.Handler
+	handlers map[events.Topic]handlers.Handler
 }
 
 type Params struct {
@@ -44,11 +45,11 @@ func New(p Params) *PubSub {
 		log:      p.Log,
 		repo:     p.Repo,
 		events:   make(chan event, bufferSize),
-		handlers: make(map[repo.EventTopic]handlers.Handler),
+		handlers: make(map[events.Topic]handlers.Handler),
 	}
 }
 
-func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload any) {
+func (ps *PubSub) Publish(ctx context.Context, topic events.Topic, payload any) {
 	p, err := json.Marshal(payload)
 	if err != nil {
 		ps.log.Error("Marshal event payload", zap.Error(err))
@@ -71,7 +72,7 @@ func (ps *PubSub) Publish(ctx context.Context, topic repo.EventTopic, payload an
 
 const workers = 10
 
-func (ps *PubSub) Subscribe(handlers map[repo.EventTopic]handlers.Handler) {
+func (ps *PubSub) Subscribe(handlers map[events.Topic]handlers.Handler) {
 	ps.mu.Lock()
 	for topic, handler := range handlers {
 		ps.handlers[topic] = handler

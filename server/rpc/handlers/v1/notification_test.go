@@ -14,6 +14,7 @@ import (
 
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/repo"
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -196,10 +197,10 @@ func (s *notificationSuite) TestListNotifications() {
 					)
 					s.testFactory.NewNotification(
 						factory.NotificationID(n.GetId()),
-						factory.NotificationType(repo.NotificationTypeWorkoutComment),
+						factory.NotificationType(notification.TypeWorkoutComment),
 						factory.NotificationUserID(userID),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
-						factory.NotificationPayload(repo.NotificationPayload{
+						factory.NotificationPayload(notification.Payload{
 							ActorID:   comment.UserID.String(),
 							WorkoutID: workout.ID.String(),
 						}),
@@ -250,10 +251,10 @@ func (s *notificationSuite) TestListNotifications() {
 				for _, n := range test.expected.res.Msg.GetNotifications() {
 					s.testFactory.NewNotification(
 						factory.NotificationID(n.GetId()),
-						factory.NotificationType(repo.NotificationTypeFollow),
+						factory.NotificationType(notification.TypeFollow),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						factory.NotificationUserID(userID),
-						factory.NotificationPayload(repo.NotificationPayload{
+						factory.NotificationPayload(notification.Payload{
 							ActorID: s.testFactory.NewUser(
 								factory.UserID(n.GetUserFollowed().GetActor().GetId()),
 								factory.UserName(n.GetUserFollowed().GetActor().GetName()),
@@ -296,9 +297,9 @@ func (s *notificationSuite) TestListNotifications() {
 			},
 			init: func(_ test, userID string) {
 				s.testFactory.NewNotification(
-					factory.NotificationType(repo.NotificationTypeWorkoutComment),
+					factory.NotificationType(notification.TypeWorkoutComment),
 					factory.NotificationUserID(userID),
-					factory.NotificationPayload(repo.NotificationPayload{
+					factory.NotificationPayload(notification.Payload{
 						ActorID:   s.testFactory.NewUser().ID.String(),
 						WorkoutID: uuid.NewString(),
 					}),
