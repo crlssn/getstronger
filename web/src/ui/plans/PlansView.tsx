@@ -8,7 +8,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { selectActivePlan, usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { TrainingTabs } from '@/ui/components/TrainingTabs'
+import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import styles from './PlansView.module.css'
 
 /** Every plan: which one is running, where it is, and what else is available. */

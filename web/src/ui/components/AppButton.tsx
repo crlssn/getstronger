@@ -10,31 +10,54 @@ import styles from './AppButton.module.css'
 // fill). Anything that wants "a bit of colour" has no name to reach for.
 export type ButtonColour = 'primary' | 'secondary' | 'ghost' | 'destructive'
 
-type LinkProps = Omit<ComponentProps<typeof Link>, 'className'> & {
-  type: 'link'
+// The control scale, not a set of paddings: sm is the tap-target floor, lg is
+// what a form's submit uses. There is nothing below sm on purpose.
+export type ButtonSize = 'sm' | 'md' | 'lg'
+
+interface Shared {
   colour: ButtonColour
+  size?: ButtonSize
+  /** Most buttons fill their column; `auto` shrinks one to its content. */
+  width?: 'full' | 'auto'
   className?: string
 }
 
-type ButtonProps = Omit<ComponentProps<'button'>, 'className' | 'type'> & {
-  type: 'button' | 'submit'
-  colour: ButtonColour
-  className?: string
-}
+type LinkProps = Omit<ComponentProps<typeof Link>, 'className'> & Shared & { type: 'link' }
+
+type ButtonProps = Omit<ComponentProps<'button'>, 'className' | 'type'> &
+  Shared & { type: 'button' | 'submit' }
 
 export const AppButton = (props: LinkProps | ButtonProps) => {
+  const { colour, size = 'md', width = 'full', className } = props
+  const shape = cn(styles.button, styles[colour], styles[size], width === 'full' && styles.full)
+
   if (props.type === 'link') {
-    const { colour, className, type: _type, children, ...rest } = props
+    const {
+      colour: _colour,
+      size: _size,
+      width: _width,
+      className: _className,
+      type: _type,
+      children,
+      ...rest
+    } = props
     return (
-      <Link className={cn(styles.button, styles.link, styles[colour], className)} {...rest}>
+      <Link className={cn(shape, styles.link, className)} {...rest}>
         {children}
       </Link>
     )
   }
 
-  const { colour, className, children, ...rest } = props
+  const {
+    colour: _colour,
+    size: _size,
+    width: _width,
+    className: _className,
+    children,
+    ...rest
+  } = props
   return (
-    <button className={cn(styles.button, styles[colour], className)} {...rest}>
+    <button className={cn(shape, className)} {...rest}>
       {children}
     </button>
   )

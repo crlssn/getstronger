@@ -3,9 +3,9 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { isTabRoot } from '@/router/tabs'
 import { isFocusedShellPath } from '@/router/routes'
 import { cn } from '@/ui/cn'
-import { AppNavBottom } from '@/ui/components/AppNavBottom'
-import { AppNavTop } from '@/ui/components/AppNavTop'
-import { AppRestTimerBanner } from '@/ui/components/AppRestTimerBanner'
+import { AppNavBottom } from '@/ui/shell/AppNavBottom'
+import { AppNavTop } from '@/ui/shell/AppNavTop'
+import { AppRestTimerBanner } from '@/ui/shell/AppRestTimerBanner'
 import styles from './AppDashboard.module.css'
 
 /**

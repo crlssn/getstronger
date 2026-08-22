@@ -16,7 +16,7 @@ import { AppCard } from '@/ui/components/AppCard'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
-import { WorkoutChart } from '@/ui/components/WorkoutChart'
+import { WorkoutChart } from '@/ui/features/WorkoutChart'
 import styles from './UserView.module.css'
 
 /**

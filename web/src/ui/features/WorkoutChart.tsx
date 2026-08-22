@@ -7,7 +7,7 @@ import { Bar } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 
 import { borderColor, inkColor, subtleColor, successColor } from '@/ui/chartTokens'
-import { latestValueLabel } from '@/ui/components/latestValueLabel'
+import { latestValueLabel } from '@/ui/features/latestValueLabel'
 import { dailyVolume } from '@/utils/dailyVolume'
 import styles from './WorkoutChart.module.css'
 

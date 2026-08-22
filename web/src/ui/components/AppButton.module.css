@@ -1,15 +1,31 @@
 @reference '../../assets/base.css';
 
 .button {
-  @apply inline-flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-transparent px-4 py-3 text-sm font-semibold transition;
+  @apply control border-transparent;
+}
+
+.full {
+  @apply w-full;
 }
 
 .link {
-  @apply block py-3 text-center;
+  @apply text-center no-underline;
 }
 
 .button:disabled {
   @apply cursor-not-allowed opacity-60;
+}
+
+.sm {
+  @apply control-sm px-3;
+}
+
+.md {
+  @apply min-h-(--size-control);
+}
+
+.lg {
+  @apply control-lg;
 }
 
 .primary {

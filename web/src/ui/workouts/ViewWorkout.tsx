@@ -7,7 +7,7 @@ import { Link, useParams } from 'react-router-dom'
 import { getWorkout } from '@/http/requests'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { CardWorkout } from '@/ui/components/CardWorkout'
+import { CardWorkout } from '@/ui/features/CardWorkout'
 import styles from './ViewWorkout.module.css'
 
 /** One finished workout, in full. */

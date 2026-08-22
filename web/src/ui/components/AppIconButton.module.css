@@ -1,0 +1,35 @@
+@reference '../../assets/base.css';
+
+/* Square, so the tap target clears the floor on both axes rather than only on
+ * the one the text happened to fill. */
+.iconButton {
+  @apply grid shrink-0 place-items-center rounded-control border border-transparent transition;
+}
+
+.sm {
+  @apply size-11;
+}
+
+.md {
+  @apply size-12;
+}
+
+.iconButton svg {
+  @apply size-5;
+}
+
+.iconButton:disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+
+.default {
+  @apply text-text-subtle hover:bg-ink-surface hover:text-text;
+}
+
+.strong {
+  @apply border-ink bg-ink text-white hover:bg-ink-strong;
+}
+
+.danger {
+  @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
+}

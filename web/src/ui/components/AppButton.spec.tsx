@@ -84,6 +84,34 @@ describe('AppButton', () => {
     expect(button.className).toContain('primary')
   })
 
+  // Three heights, all on the control scale. A screen that wants a shorter
+  // button picks `sm`, which is the tap-target floor, rather than a padding.
+  test.each(['sm', 'md', 'lg'] as const)('takes the %s height', (size) => {
+    render(
+      <AppButton type="button" colour="primary" size={size}>
+        Save
+      </AppButton>,
+    )
+
+    expect(screen.getByRole('button').className).toContain(size)
+  })
+
+  test('is full width unless asked to shrink', () => {
+    const { rerender } = render(
+      <AppButton type="button" colour="primary">
+        Save
+      </AppButton>,
+    )
+    expect(screen.getByRole('button').className).toContain('full')
+
+    rerender(
+      <AppButton type="button" colour="primary" width="auto">
+        Save
+      </AppButton>,
+    )
+    expect(screen.getByRole('button').className).not.toContain('full')
+  })
+
   test('passes other attributes through', () => {
     render(
       <AppButton type="button" colour="primary" aria-label="Save the workout">

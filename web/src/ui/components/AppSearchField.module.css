@@ -1,0 +1,31 @@
+@reference '../../assets/base.css';
+
+.field {
+  @apply flex w-full items-center gap-2 rounded-control border border-border bg-surface px-4 shadow-card transition focus-within:border-ink-muted;
+}
+
+.icon {
+  @apply size-5 shrink-0 text-text-subtle;
+}
+
+/* The border, background and focus ring belong to the label around it, so the
+ * input itself contributes nothing but its text. */
+.input {
+  @apply min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-text placeholder:text-text-subtle focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0;
+}
+
+.md.input {
+  @apply h-12;
+}
+
+.lg {
+  @apply rounded-card;
+}
+
+.lg.input {
+  @apply h-14;
+}
+
+.lg .icon {
+  @apply size-6;
+}
