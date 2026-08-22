@@ -189,13 +189,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          cache: npm
-          cache-dependency-path: web/package-lock.json
           node-version: '24.19.0'
+
+      # Bun installs the dependencies; the scripts themselves still run on Node.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
 
       - name: Install dependencies
         working-directory: ./web
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Build the app
         working-directory: ./web

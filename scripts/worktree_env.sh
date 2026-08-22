@@ -113,7 +113,7 @@ set_env "$root/.env" MAILHOG_SMTP_PORT "$mailhog_smtp_port"
 set_env "$root/web/.env" VITE_API_URL "http://localhost:$server_port"
 
 # Seed node_modules from the main checkout so the first lint, test, or pre-push
-# run works without a full 'npm install'. cp -c clones via APFS copy-on-write,
+# run works without a full 'bun install'. cp -c clones via APFS copy-on-write,
 # so the copy is nearly instant; other filesystems fall back to a plain copy.
 main_root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 for dir in . web mobile; do

@@ -71,7 +71,7 @@ Sign up with your email address to explore all features.
 - [**mise**](https://mise.jdx.dev/getting-started.html)
 - **Docker**
 
-mise installs the project's pinned Go, Node.js, and development tool versions from `mise.toml`.
+mise installs the project's pinned Go, Node.js, Bun, and development tool versions from `mise.toml`. Bun installs the JavaScript dependencies; the scripts themselves still run on Node.
 
 ### Setup
 

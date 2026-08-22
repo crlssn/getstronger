@@ -37,9 +37,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          cache: npm
-          cache-dependency-path: mobile/package-lock.json
           node-version: '24.19.0'
+
+      # Bun installs the dependencies; the scripts themselves still run on Node.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -49,7 +53,7 @@ jobs:
 
       - name: Install mobile dependencies
         working-directory: mobile
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       # Regenerates android/capacitor-cordova-android-plugins, which
       # settings.gradle includes. The update also copies the web bundle, but a
@@ -59,7 +63,7 @@ jobs:
         run: |
           mkdir -p ../web/dist android/app/src/main/assets
           touch ../web/dist/index.html
-          npx cap update android
+          bunx cap update android
 
       # The dependencies task exits 0 even when a configuration fails to
       # resolve against the lockfiles, so also grep its report for failures.
