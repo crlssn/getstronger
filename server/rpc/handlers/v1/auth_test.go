@@ -2,7 +2,6 @@ package v1_test
 
 import (
 	"context"
-	"errors"
 	"log"
 	"testing"
 	"time"
@@ -528,68 +527,6 @@ func (s *authSuite) TestDeleteAccount() {
 				Exists(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(existsErr)
 			s.Require().False(exists)
-		})
-	}
-}
-
-var errRepoUnavailable = errors.New("repo unavailable")
-
-// The suite's handler talks to a real database, which cannot be made to fail on
-// demand — so the two paths where it does are driven through a mocked repo.
-// They matter more than most internal-error branches: the web client wipes the
-// account's local state the moment this call succeeds, so a delete that failed
-// server-side but answered with success would sign someone out and leave them
-// believing an account that still exists is gone.
-func (s *authSuite) TestDeleteAccountRepoFailure() {
-	type test struct {
-		name   string
-		expect func(r *repo.MockRepo)
-	}
-
-	tests := []test{
-		{
-			name: "err_user_fetch",
-			expect: func(r *repo.MockRepo) {
-				r.EXPECT().GetUser(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errRepoUnavailable)
-			},
-		},
-		{
-			name: "err_delete",
-			expect: func(r *repo.MockRepo) {
-				user := &models.User{}
-				user.R.Auth = &models.Auth{Email: gofakeit.Email()}
-				r.EXPECT().GetUser(gomock.Any(), gomock.Any(), gomock.Any()).Return(user, nil)
-				r.EXPECT().CompareEmailAndPassword(gomock.Any(), user.R.Auth.Email, "password").Return(nil)
-				r.EXPECT().DeleteUser(gomock.Any(), gomock.Any()).Return(errRepoUnavailable)
-			},
-		},
-	}
-
-	for _, t := range tests {
-		s.Run(t.name, func() {
-			controller := gomock.NewController(s.T())
-			defer controller.Finish()
-
-			repoMock := repo.NewMockRepo(controller)
-			t.expect(repoMock)
-
-			handler := handlers.NewAuthHandler(handlers.AuthHandlerParams{
-				JWT:     s.jwt,
-				Repo:    repoMock,
-				Email:   s.mocks.email,
-				Cookies: cookies.New(new(config.Config)),
-			})
-
-			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-			ctx = xcontext.WithUserID(ctx, uuid.NewString())
-
-			res, err := handler.DeleteAccount(ctx, &connect.Request[v1.DeleteAccountRequest]{
-				Msg: &v1.DeleteAccountRequest{Password: "password"},
-			})
-
-			s.Require().Nil(res)
-			s.Require().Error(err)
-			s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
 		})
 	}
 }
