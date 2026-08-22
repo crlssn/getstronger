@@ -13,6 +13,8 @@ import { Link } from 'react-router-dom'
 
 import { listExercises, listPlans, listRoutines, searchUsers } from '@/http/requests'
 import { cn } from '@/ui/cn'
+import { AppIconButton } from '@/ui/components/AppIconButton'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { handle, initials } from '@/utils/names'
 import styles from './HomePageActions.module.css'
 
@@ -167,23 +169,24 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
 
       {open && (
         <section className={styles.searchPanel} aria-label={t('search.open')}>
-          <div className={styles.searchField}>
-            <MagnifyingGlassIcon aria-hidden="true" />
-            <input
-              // The field mounts with the panel, so opening search from
-              // anywhere on the page lands the cursor in it.
-              ref={focusOnMount}
-              type="search"
-              placeholder={t('search.placeholder')}
-              aria-label={t('search.placeholder')}
-              value={query}
-              onChange={(event) => onQueryChange(event.target.value)}
-              onKeyDown={(event) => event.key === 'Escape' && closeSearch()}
-            />
-            <button type="button" aria-label={t('search.close')} onClick={closeSearch}>
-              <XMarkIcon aria-hidden="true" />
-            </button>
-          </div>
+          <AppSearchField
+            // The field mounts with the panel, so opening search from anywhere
+            // on the page lands the cursor in it.
+            inputRef={focusOnMount}
+            size="lg"
+            label={t('search.placeholder')}
+            value={query}
+            onChange={onQueryChange}
+            onKeyDown={(event) => event.key === 'Escape' && closeSearch()}
+            trailing={
+              <AppIconButton
+                className="-mr-2"
+                label={t('search.close')}
+                icon={XMarkIcon}
+                onClick={closeSearch}
+              />
+            }
+          />
 
           {found.length > 0 ? (
             <div className={styles.searchResults}>

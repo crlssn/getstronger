@@ -1,12 +1,14 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { CheckIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { CheckIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 import { listExercises } from '@/http/requests'
 import { cn } from '@/ui/cn'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { appendPage } from '@/utils/appendPage'
@@ -116,16 +118,12 @@ export const RoutineForm = ({
             <h2>{t('common.exercises')}</h2>
             <p>{t('routine.form.selectHelp')}</p>
           </div>
-          <label className={styles.searchField}>
-            <MagnifyingGlassIcon aria-hidden="true" />
-            <input
-              type="search"
-              placeholder={t('common.search')}
-              aria-label={t('exercise.search')}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
+          <AppSearchField
+            className={styles.searchField}
+            label={t('exercise.search')}
+            value={search}
+            onChange={setSearch}
+          />
         </div>
 
         {loading ? (
@@ -161,9 +159,7 @@ export const RoutineForm = ({
         )}
 
         {hasMorePages && (
-          <button className={styles.loadMore} type="button" onClick={() => void fetchExercises()}>
-            <PlusIcon aria-hidden="true" /> {t('exercise.loadMore')}
-          </button>
+          <AppLoadMore label={t('exercise.loadMore')} onFetch={() => void fetchExercises()} />
         )}
       </section>
 

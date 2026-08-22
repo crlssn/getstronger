@@ -7,23 +7,24 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
-import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
+import { useToastStore } from '@/stores/toasts'
 import { useWorkoutStore } from '@/stores/workout'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
-import { ExerciseChart } from '@/ui/features/ExerciseChart'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { ExerciseChart } from '@/ui/features/ExerciseChart'
+import { appendPage } from '@/utils/appendPage'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { formatToShortDateTime } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { downSample } from '@/utils/exerciseTrend'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
-import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ViewExercise.module.css'
 
@@ -225,9 +226,7 @@ export const ViewExercise = () => {
         )}
 
         {hasMorePages && (
-          <button type="button" className={styles.loadMore} onClick={() => void fetchSets()}>
-            {t('exercise.view.loadMoreSets')}
-          </button>
+          <AppLoadMore label={t('exercise.view.loadMoreSets')} onFetch={() => void fetchSets()} />
         )}
       </section>
     </div>

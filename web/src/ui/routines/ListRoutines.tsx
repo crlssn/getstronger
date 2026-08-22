@@ -3,7 +3,6 @@ import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import {
   ChevronRightIcon,
   EllipsisHorizontalIcon,
-  MagnifyingGlassIcon,
   PlayIcon,
   PlusIcon,
   RectangleStackIcon,
@@ -16,9 +15,11 @@ import { listRoutines } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import { groupByRoutineActivity } from '@/utils/activityGroups'
 import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
@@ -105,16 +106,7 @@ export const ListRoutines = () => {
 
       <TrainingTabs />
 
-      <label className={styles.searchField}>
-        <MagnifyingGlassIcon aria-hidden="true" />
-        <input
-          type="search"
-          placeholder={t('training.searchRoutines')}
-          aria-label={t('training.searchRoutines')}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
+      <AppSearchField label={t('training.searchRoutines')} value={search} onChange={setSearch} />
 
       {!loaded ? (
         <AppSkeleton />
@@ -201,9 +193,7 @@ export const ListRoutines = () => {
       )}
 
       {hasMorePages && (
-        <button type="button" className={styles.loadMore} onClick={() => void fetchRoutines()}>
-          {t('routine.list.loadMore')}
-        </button>
+        <AppLoadMore label={t('routine.list.loadMore')} onFetch={() => void fetchRoutines()} />
       )}
     </div>
   )

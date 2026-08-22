@@ -45,16 +45,10 @@
   @apply mt-1 text-sm text-text-subtle;
 }
 
+/* The toolbar puts the field beside a heading, so it takes a width rather
+ * than the full row AppSearchField would otherwise fill. */
 .searchField {
-  @apply flex min-w-52 items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
-}
-
-.searchField svg {
-  @apply size-5 text-text-subtle;
-}
-
-.searchField input {
-  @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
+  @apply min-w-52;
 }
 
 .exerciseGrid {
@@ -91,14 +85,6 @@
 
 .emptyRow {
   @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
-}
-
-.loadMore {
-  @apply mt-4 inline-flex min-h-(--size-control) items-center gap-2 rounded-control border border-border px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
-}
-
-.loadMore svg {
-  @apply size-4;
 }
 
 .formActions {

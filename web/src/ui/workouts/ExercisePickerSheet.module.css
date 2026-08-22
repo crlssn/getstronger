@@ -1,17 +1,5 @@
 @reference '../../assets/base.css';
 
-.exerciseSearch {
-  @apply mb-4 flex items-center gap-2 rounded-control border border-border bg-ink-surface px-3;
-}
-
-.exerciseSearch svg {
-  @apply size-5 text-text-subtle;
-}
-
-.exerciseSearch input {
-  @apply h-11 w-full border-0 bg-transparent p-0 text-sm focus:ring-0;
-}
-
 .exerciseOptions {
   @apply space-y-2;
 }
@@ -32,6 +20,3 @@
   @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
 }
 
-.loadMore {
-  @apply mt-4 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface disabled:cursor-wait disabled:text-text-subtle;
-}

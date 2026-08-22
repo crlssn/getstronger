@@ -106,10 +106,6 @@
   @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
 }
 
-.loadMore {
-  @apply mt-3 min-h-(--size-control) w-full rounded-control border border-border text-sm font-semibold text-text-muted hover:bg-ink-surface;
-}
-
 .emptyCard p {
   @apply mt-2 text-sm text-text-subtle;
 }

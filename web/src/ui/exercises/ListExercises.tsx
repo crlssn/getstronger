@@ -3,7 +3,6 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import {
   BookOpenIcon,
   ChevronRightIcon,
-  MagnifyingGlassIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -13,10 +12,12 @@ import { Link } from 'react-router-dom'
 import { listExercises } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppLoadMore } from '@/ui/components/AppLoadMore'
+import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { groupByActivity } from '@/utils/activityGroups'
-import { measurementsForExercise } from '@/utils/exerciseMeasurements'
 import { appendPage } from '@/utils/appendPage'
+import { measurementsForExercise } from '@/utils/exerciseMeasurements'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListExercises.module.css'
 
@@ -87,16 +88,7 @@ export const ListExercises = () => {
         </Link>
       </header>
 
-      <label className={styles.searchField}>
-        <MagnifyingGlassIcon aria-hidden="true" />
-        <input
-          type="search"
-          placeholder={t('exercise.search')}
-          aria-label={t('exercise.search')}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
+      <AppSearchField label={t('exercise.search')} value={search} onChange={setSearch} />
 
       {loading ? (
         <AppSkeleton />
@@ -120,9 +112,7 @@ export const ListExercises = () => {
           ))}
 
           {hasMorePages && (
-            <button type="button" className={styles.loadMore} onClick={() => void fetchExercises()}>
-              {t('exercise.loadMore')}
-            </button>
+            <AppLoadMore label={t('exercise.loadMore')} onFetch={() => void fetchExercises()} />
           )}
         </section>
       ) : (
