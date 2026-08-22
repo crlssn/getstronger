@@ -255,6 +255,13 @@ test.describe('quick workout lifecycle', () => {
     await weight.focus()
     await expect(weight).toHaveValue('25')
 
+    // The copy arrives inside the focus itself, already selected, so typing
+    // straight over it replaces the number rather than landing behind it.
+    await weight.fill('30')
+    await expect(weight).toHaveValue('30')
+    await weight.fill('25')
+    await expect(weight).toHaveValue('25')
+
     await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await finishAndSave(page)
