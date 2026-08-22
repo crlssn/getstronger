@@ -3,10 +3,10 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 
 import { listExercises } from '@/http/requests'
 import { cn } from '@/ui/cn'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -164,12 +164,12 @@ export const RoutineForm = ({
       </section>
 
       <div className={styles.formActions}>
-        <Link to="/routines" className={styles.cancelLink}>
+        <AppButton type="link" colour="ghost" width="auto" to="/routines">
           {t('common.cancel')}
-        </Link>
-        <button className={styles.saveButton} type="submit" disabled={!canSubmit}>
+        </AppButton>
+        <AppButton type="submit" colour="primary" width="auto" disabled={!canSubmit}>
           {saving ? t('training.planForm.saving') : submitLabel}
-        </button>
+        </AppButton>
       </div>
     </form>
   )

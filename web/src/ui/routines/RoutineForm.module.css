@@ -91,10 +91,3 @@
   @apply sticky bottom-20 z-10 flex items-center justify-end gap-3 rounded-card border border-border bg-white/95 p-3 shadow-raised backdrop-blur md:bottom-4;
 }
 
-.cancelLink {
-  @apply inline-flex min-h-(--size-control) items-center rounded-control px-4 text-sm font-semibold text-text-muted hover:bg-ink-surface;
-}
-
-.saveButton {
-  @apply inline-flex min-h-(--size-control) items-center rounded-control bg-ink px-5 text-sm font-semibold text-white hover:bg-ink-strong disabled:cursor-not-allowed disabled:bg-ink-border;
-}

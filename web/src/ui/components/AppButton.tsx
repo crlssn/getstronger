@@ -29,7 +29,7 @@ type ButtonProps = Omit<ComponentProps<'button'>, 'className' | 'type'> &
 
 export const AppButton = (props: LinkProps | ButtonProps) => {
   const { colour, size = 'md', width = 'full', className } = props
-  const shape = cn(styles.button, styles[colour], styles[size], width === 'full' && styles.full)
+  const shape = cn(styles.button, styles[colour], styles[size], styles[width])
 
   if (props.type === 'link') {
     const {

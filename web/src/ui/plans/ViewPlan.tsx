@@ -3,7 +3,7 @@ import type { Plan } from '@/proto/api/v1/routine_service_pb'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { getPlan } from '@/http/requests'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -11,6 +11,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import styles from './ViewPlan.module.css'
 
@@ -91,17 +92,27 @@ export const ViewPlan = () => {
         </header>
         <p>{t('training.planView.routinesRepeat', { count: plan.routines.length })}</p>
         <div className={styles.overviewActions}>
-          <Link to={`/plans/${plan.id}/edit`}>
-            <PencilIcon aria-hidden="true" /> {t('training.planForm.editTitle')}
-          </Link>
+          <AppButton
+            type="link"
+            colour="primary"
+            width="auto"
+            to={`/plans/${plan.id}/edit`}
+          >
+            <PencilIcon className="size-5" aria-hidden="true" /> {t('training.planForm.editTitle')}
+          </AppButton>
           {plan.active ? (
-            <button type="button" onClick={() => void pause()}>
+            <AppButton type="button" colour="secondary" width="auto" onClick={() => void pause()}>
               {t('training.pause')}
-            </button>
+            </AppButton>
           ) : (
-            <button type="button" onClick={() => void activate()}>
+            <AppButton
+              type="button"
+              colour="secondary"
+              width="auto"
+              onClick={() => void activate()}
+            >
               {t('training.makeActive')}
-            </button>
+            </AppButton>
           )}
         </div>
       </section>
@@ -140,9 +151,14 @@ export const ViewPlan = () => {
         </footer>
       </section>
 
-      <button type="button" className={styles.deletePlan} onClick={() => void remove()}>
-        <TrashIcon aria-hidden="true" /> {t('training.planView.delete')}
-      </button>
+      <AppButton
+        type="button"
+        colour="destructive"
+        className={styles.deletePlan}
+        onClick={() => void remove()}
+      >
+        <TrashIcon className="size-5" aria-hidden="true" /> {t('training.planView.delete')}
+      </AppButton>
     </div>
   )
 }

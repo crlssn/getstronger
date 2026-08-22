@@ -4,15 +4,15 @@ import type { DropdownItem } from '@/types/dropdown'
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useLocation, useParams } from 'react-router-dom'
+import { Outlet, useParams } from 'react-router-dom'
 
 import { followUser, getUser, listWorkouts, unfollowUser } from '@/http/requests'
 import posthog from '@/posthog'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
-import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppCard } from '@/ui/components/AppCard'
+import { AppSegmentedNav } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
@@ -26,7 +26,6 @@ import styles from './UserView.module.css'
 export const UserView = () => {
   const { t } = useTranslation()
   const { id = '' } = useParams()
-  const { pathname } = useLocation()
   const signedInUserId = useAuthStore((state) => state.userId)
 
   const [user, setUser] = useState<User>()
@@ -114,18 +113,11 @@ export const UserView = () => {
       )}
 
       {user ? (
-        <nav className={cn(styles.profileTabs, 'segmented')} aria-label={t('profile.sectionsAria')}>
-          {tabs.map((tab) => (
-            <Link
-              key={tab.name}
-              to={tab.href}
-              className={cn(tab.href === pathname && 'is-selected')}
-              aria-current={tab.href === pathname ? 'page' : undefined}
-            >
-              {tab.name}
-            </Link>
-          ))}
-        </nav>
+        <AppSegmentedNav
+          className={styles.profileTabs}
+          label={t('profile.sectionsAria')}
+          links={tabs.map((tab) => ({ label: tab.name, to: tab.href }))}
+        />
       ) : (
         <AppSkeleton className={styles.profileTabs} />
       )}

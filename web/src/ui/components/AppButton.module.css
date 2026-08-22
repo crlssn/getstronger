@@ -8,6 +8,13 @@
   @apply w-full;
 }
 
+/* Shrink-wrapped rather than merely "not full width": a flex or grid parent
+ * stretches its children by default, which is how an auto-width button ended
+ * up filling a column it was meant to sit at the end of. */
+.auto {
+  @apply w-max max-w-full;
+}
+
 .link {
   @apply text-center no-underline;
 }

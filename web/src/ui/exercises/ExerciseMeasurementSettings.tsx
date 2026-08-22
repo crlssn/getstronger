@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { usePreferencesStore } from '@/stores/preferences'
 import { cn } from '@/ui/cn'
+import { AppSegmented } from '@/ui/components/AppSegmented'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { weightUnitLabel } from '@/utils/weightUnits'
 import styles from './ExerciseMeasurementSettings.module.css'
@@ -90,21 +91,12 @@ export const ExerciseMeasurementSettings = ({
         <p>{t('exercise.measurements.help')}</p>
       </div>
 
-      {/* Grouped so the label is announced: an aria-label on a plain div is
-          inert, which is what both of these rows were. */}
-      <div className="segmented" role="group" aria-label={t('exercise.measurements.presetsAria')}>
-        {presets.map((preset) => (
-          <button
-            key={preset.labelKey}
-            type="button"
-            className={cn(isPreset(preset.values) && 'is-selected')}
-            aria-pressed={isPreset(preset.values)}
-            onClick={() => onMetricsChange([...preset.values])}
-          >
-            {t(preset.labelKey)}
-          </button>
-        ))}
-      </div>
+      <AppSegmented
+        label={t('exercise.measurements.presetsAria')}
+        options={presets.map((preset) => ({ label: t(preset.labelKey), value: preset }))}
+        value={presets.find((preset) => isPreset(preset.values))}
+        onChange={(preset) => preset && onMetricsChange([...preset.values])}
+      />
 
       <div
         className={styles.measurementGrid}

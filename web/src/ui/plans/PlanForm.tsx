@@ -13,8 +13,11 @@ import { useNavigate } from 'react-router-dom'
 
 import { getPlan, listRoutines } from '@/http/requests'
 import posthog from '@/posthog'
-import { useToastStore } from '@/stores/toasts'
 import { usePlanStore } from '@/stores/plans'
+import { useToastStore } from '@/stores/toasts'
+import { AppButton } from '@/ui/components/AppButton'
+import { AppIconButton } from '@/ui/components/AppIconButton'
+import { AppInput } from '@/ui/components/AppInput'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -112,15 +115,13 @@ export const PlanForm = ({ planId }: Props) => {
           <AppSkeleton />
         ) : (
           <>
-            <label className={styles.nameField}>
-              <span>{t('training.planForm.name')}</span>
-              <input
-                type="text"
-                placeholder={t('training.planForm.namePlaceholder')}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
+            <AppInput
+              className={styles.nameField}
+              label={t('training.planForm.name')}
+              placeholder={t('training.planForm.namePlaceholder')}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
 
             <div className={styles.loopNote}>
               <ArrowsUpDownIcon aria-hidden="true" />
@@ -154,33 +155,28 @@ export const PlanForm = ({ planId }: Props) => {
                         </small>
                       </div>
                       <div className={styles.orderActions}>
-                        <button
-                          type="button"
+                        <AppIconButton
+                          icon={ArrowUpIcon}
                           disabled={index === 0}
-                          aria-label={t('training.planForm.moveUp', { name: routine.name })}
+                          label={t('training.planForm.moveUp', { name: routine.name })}
                           onClick={() => moveRoutine(index, -1)}
-                        >
-                          <ArrowUpIcon aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
+                        />
+                        <AppIconButton
+                          icon={ArrowDownIcon}
                           disabled={index === selected.length - 1}
-                          aria-label={t('training.planForm.moveDown', { name: routine.name })}
+                          label={t('training.planForm.moveDown', { name: routine.name })}
                           onClick={() => moveRoutine(index, 1)}
-                        >
-                          <ArrowDownIcon aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={t('training.planForm.remove', { name: routine.name })}
+                        />
+                        <AppIconButton
+                          icon={TrashIcon}
+                          tone="danger"
+                          label={t('training.planForm.remove', { name: routine.name })}
                           onClick={() =>
                             setSelected((current) =>
                               current.filter((_, position) => position !== index),
                             )
                           }
-                        >
-                          <TrashIcon aria-hidden="true" />
-                        </button>
+                        />
                       </div>
                     </li>
                   ))}
@@ -212,13 +208,13 @@ export const PlanForm = ({ planId }: Props) => {
                   ? t('training.planForm.saveNoteEditing')
                   : t('training.planForm.saveNoteNew')}
               </small>
-              <button type="submit" disabled={!canSave || saving}>
+              <AppButton type="submit" colour="primary" disabled={!canSave || saving}>
                 {saving
                   ? t('training.planForm.saving')
                   : editing
                     ? t('training.planForm.saveChanges')
                     : t('training.planForm.createPlan')}
-              </button>
+              </AppButton>
             </div>
           </>
         )}

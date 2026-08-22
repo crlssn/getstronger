@@ -26,13 +26,13 @@ import {
 } from '@/http/requests'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { clearAccountState } from '@/stores/accountState'
-import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
-import { cn } from '@/ui/cn'
+import { useToastStore } from '@/stores/toasts'
 import { AppInput } from '@/ui/components/AppInput'
+import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
@@ -201,20 +201,13 @@ export const ProfileView = () => {
         <strong>{title}</strong>
         <small>{body}</small>
       </div>
-      <div className="segmented" role="group" aria-label={title}>
-        {options.map((option) => (
-          <button
-            key={option.label}
-            type="button"
-            aria-pressed={current === option.value}
-            className={cn(current === option.value && 'is-selected')}
-            disabled={busy}
-            onClick={() => onPick(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <AppSegmented
+        busy={busy}
+        label={title}
+        options={options}
+        value={current}
+        onChange={onPick}
+      />
     </section>
   )
 

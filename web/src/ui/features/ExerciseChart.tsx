@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { borderColor, inkColor, subtleColor } from '@/ui/chartTokens'
-import { cn } from '@/ui/cn'
+import { AppSegmented } from '@/ui/components/AppSegmented'
 import { exerciseMetrics, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { trendByDay, trendChange } from '@/utils/exerciseTrend'
 import { formatNumber } from '@/utils/numbers'
@@ -115,19 +115,12 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
         {change && <span>{change}</span>}
       </header>
 
-      <div className="segmented" role="group" aria-label={t('exercise.chart.metricAria')}>
-        {options.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            className={cn(metric === option.key && 'is-selected')}
-            aria-pressed={metric === option.key}
-            onClick={() => setMetric(option.key)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <AppSegmented
+        label={t('exercise.chart.metricAria')}
+        options={options.map((option) => ({ label: option.label, value: option.key }))}
+        value={metric}
+        onChange={setMetric}
+      />
 
       {/* One point is not a trend, so it says what it is waiting for instead of
           drawing a line through a single dot. */}

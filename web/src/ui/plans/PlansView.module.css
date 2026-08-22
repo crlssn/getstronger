@@ -159,19 +159,6 @@
   @apply mt-4 flex gap-2 border-t border-border pt-4;
 }
 
-.activePlan footer a,
-.activePlan footer button {
-  @apply min-h-(--size-control-sm) rounded-control px-4 text-sm font-semibold;
-}
-
-.activePlan footer a {
-  @apply inline-flex items-center bg-ink text-white;
-}
-
-.activePlan footer button {
-  @apply border border-border text-text-muted;
-}
-
 .pausedNote p {
   @apply mt-1 text-sm text-text-subtle;
 }
@@ -197,9 +184,9 @@
   @apply mt-1 text-xs text-text-subtle;
 }
 
-/* Switching plans is the point of this list, and the label alone gave it a
-   20px-tall target. The padding makes the floor; the negative margin keeps the
-   label on the card edge it already sat on. */
-.otherPlans article button {
-  @apply -mr-3 inline-flex min-h-(--size-control-sm) shrink-0 items-center px-3 text-sm font-semibold text-ink;
+
+/* Keeps the label on the card edge it already sat on, now that AppButton's
+   padding rather than the label's own makes the tap floor. */
+.makeActive {
+  @apply -mr-3 shrink-0 text-ink;
 }
