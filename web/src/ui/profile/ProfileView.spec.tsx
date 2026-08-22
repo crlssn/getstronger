@@ -26,7 +26,7 @@ import {
   UpdateUserUsernameResponseSchema,
   UpdateUserWeightUnitResponseSchema,
 } from '@/proto/api/v1/user_service_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
@@ -91,7 +91,7 @@ describe('ProfileView', () => {
       distanceUnit: DistanceUnit.KILOMETERS,
       autofillSets: false,
     })
-    useAlertStore.setState({ alert: null })
+    useToastStore.getState().dismiss()
   })
 
   test('leads with who you are', async () => {
@@ -161,7 +161,7 @@ describe('ProfileView', () => {
         'true',
       )
       await waitFor(() => expect(request()).toHaveBeenCalledWith(expected))
-      expect(useAlertStore.getState().alert?.type).toBe('success')
+      expect(useToastStore.getState().toast?.type).toBe('success')
     })
 
     // The request helper is silent for network-level failures, so the revert
@@ -179,7 +179,7 @@ describe('ProfileView', () => {
           'false',
         ),
       )
-      expect(useAlertStore.getState().alert?.type).toBe('error')
+      expect(useToastStore.getState().toast?.type).toBe('error')
     })
 
     test('does nothing when the current option is picked again', async () => {
@@ -242,7 +242,7 @@ describe('ProfileView', () => {
       expect(screen.getByText('@newalex')).toBeInTheDocument()
     })
 
-    // A taken username surfaces through the request helper's own alert, so the
+    // A taken username surfaces through the request helper's own toast, so the
     // sheet stays open for the draft to be corrected.
     test('stays open when the name could not be saved', async () => {
       mocked.updateUserUsername.mockResolvedValue(undefined)

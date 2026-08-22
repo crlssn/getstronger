@@ -27,7 +27,7 @@ import {
   UpdateRoutineResponseSchema,
 } from '@/proto/api/v1/routine_service_pb'
 import { useActivityStore } from '@/stores/activity'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useDashboardStore } from '@/stores/dashboard'
 import { renderWithProviders } from '@/ui/testing'
 import { CreateRoutine } from './CreateRoutine'
@@ -86,7 +86,7 @@ beforeEach(() => {
   vi.spyOn(useActivityStore.getState(), 'load').mockResolvedValue(undefined)
   useDashboardStore.setState({ preferredRoutineId: '' })
   useActivityStore.setState({ routineLastPerformed: {}, loaded: true, failed: false })
-  useAlertStore.setState({ alert: null })
+  useToastStore.getState().dismiss()
 })
 
 afterEach(() => {
@@ -238,7 +238,7 @@ describe('CreateRoutine', () => {
     await waitFor(() =>
       expect(mocked.createRoutine).toHaveBeenCalledWith('Upper body', ['bench', 'row']),
     )
-    expect(useAlertStore.getState().alert?.type).toBe('success')
+    expect(useToastStore.getState().toast?.type).toBe('success')
   })
 
   test('counts what has been picked', async () => {

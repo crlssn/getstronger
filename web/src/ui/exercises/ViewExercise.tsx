@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { deleteExercise, getExercise, listSets } from '@/http/requests'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -77,11 +77,11 @@ export const ViewExercise = () => {
       setDeleteDialogOpen(false)
 
       if (!response) {
-        useAlertStore.getState().setErrorWithoutPageRefresh(t('exercise.view.deleteFailed'))
+        useToastStore.getState().error(t('exercise.view.deleteFailed'))
         return
       }
 
-      useAlertStore.getState().setSuccess(t('exercise.view.deleted'))
+      useToastStore.getState().success(t('exercise.view.deleted'))
       await navigate('/exercises')
     } finally {
       setDeleting(false)

@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet } from 'react-router-dom'
 
 import { brandName, brandNameParts, brandSlogan } from '@/brand'
-import { AppAlert } from '@/ui/components/AppAlert'
 import styles from './GuestView.module.css'
 
 /** The shell a signed-out visitor sees: the brand, and one narrow column. */
@@ -29,8 +28,6 @@ export const GuestView = () => {
           </span>
         </Link>
       </header>
-
-      <AppAlert contentClassName={styles.guestAlert} />
 
       <main className={styles.guestMain}>
         <Outlet />

@@ -25,7 +25,7 @@ vi.mock('./clients', () => ({
 
 import { Error as ApiError, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
 import { setNavigator, type Navigate } from '@/router/navigation'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import {
@@ -155,23 +155,23 @@ describe('shared error handling', () => {
   beforeEach(() => {
     getUser.mockReset()
     createWorkout.mockReset()
-    useAlertStore.setState({ alert: null })
+    useToastStore.getState().dismiss()
     useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
   })
 
-  it('surfaces an application error as an alert', async () => {
+  it('surfaces an application error as a toast', async () => {
     getUser.mockRejectedValue(new ConnectError('exercise not found', Code.InvalidArgument))
 
     await getCurrentUser('user-1')
 
-    expect(useAlertStore.getState().alert).toMatchObject({
+    expect(useToastStore.getState().toast).toMatchObject({
       type: 'error',
       message: expect.stringContaining('exercise not found'),
     })
   })
 
-  // These say the request never landed rather than that it was refused, so an
-  // alert would blame the user for their connection.
+  // These say the request never landed rather than that it was refused, so a
+  // toast would blame the user for their connection.
   it.each([Code.Unknown, Code.Canceled, Code.Unavailable])(
     'stays quiet about a %i failure',
     async (code) => {
@@ -179,7 +179,7 @@ describe('shared error handling', () => {
 
       await getCurrentUser('user-1')
 
-      expect(useAlertStore.getState().alert).toBeNull()
+      expect(useToastStore.getState().toast).toBeNull()
     },
   )
 
@@ -207,7 +207,7 @@ describe('shared error handling', () => {
 
     await getCurrentUser('user-1')
 
-    expect(useAlertStore.getState().alert).toMatchObject({
+    expect(useToastStore.getState().toast).toMatchObject({
       type: 'error',
       message: 'Passwords do not match',
     })
@@ -225,6 +225,6 @@ describe('shared error handling', () => {
     getUser.mockResolvedValue({ user: { id: 'user-1' } })
 
     await expect(getCurrentUser('user-1')).resolves.toEqual({ user: { id: 'user-1' } })
-    expect(useAlertStore.getState().alert).toBeNull()
+    expect(useToastStore.getState().toast).toBeNull()
   })
 })

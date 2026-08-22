@@ -20,7 +20,7 @@ import {
   ListRoutinesResponseSchema,
   PlanSchema,
 } from '@/proto/api/v1/routine_service_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
@@ -60,7 +60,7 @@ beforeEach(() => {
   mocked.getPlan.mockResolvedValue(create(GetPlanResponseSchema, { plan: plan() }))
   vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
   usePlanStore.setState({ plans: [], loading: false })
-  useAlertStore.setState({ alert: null })
+  useToastStore.getState().dismiss()
   useConfirmationStore.setState({ confirmation: null, resolver: null })
 })
 
@@ -240,7 +240,7 @@ describe('PlanForm', () => {
 
     // Trimmed, so a stray space does not become part of the name.
     await waitFor(() => expect(createPlan).toHaveBeenCalledWith('Upper lower', ['push', 'pull']))
-    expect(useAlertStore.getState().alert?.type).toBe('success')
+    expect(useToastStore.getState().toast?.type).toBe('success')
   })
 
   // A routine appears once in a plan, so the picker stops offering it.

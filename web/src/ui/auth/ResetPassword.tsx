@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { updatePassword } from '@/http/requests'
 import posthog from '@/posthog'
 import { UpdatePasswordRequestSchema } from '@/proto/api/v1/auth_service_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { AuthPasswordInput } from '@/ui/auth/AuthPasswordInput'
 import { AppButton } from '@/ui/components/AppButton'
 
@@ -31,7 +31,7 @@ export const ResetPassword = () => {
     if (!res) return
 
     posthog.capture('password_reset_completed')
-    useAlertStore.getState().setSuccess(t('auth.recovery.resetDone'))
+    useToastStore.getState().success(t('auth.recovery.resetDone'))
     void navigate('/login')
   }
 

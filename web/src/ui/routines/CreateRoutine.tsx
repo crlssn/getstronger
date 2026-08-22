@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { createRoutine } from '@/http/requests'
 import posthog from '@/posthog'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { RoutineForm } from '@/ui/routines/RoutineForm'
 
 export const CreateRoutine = () => {
@@ -19,7 +19,7 @@ export const CreateRoutine = () => {
       if (!response) return
 
       posthog.capture('routine_created')
-      useAlertStore.getState().setSuccess(t('routine.form.created'))
+      useToastStore.getState().success(t('routine.form.created'))
       await navigate('/routines')
     } finally {
       setSaving(false)

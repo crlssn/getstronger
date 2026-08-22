@@ -31,7 +31,7 @@ import posthog from '@/posthog'
 import { ExerciseSetsSchema, type Exercise, type ExerciseSets } from '@/proto/api/v1/shared_pb'
 import { CreateWorkoutRequestSchema, WorkoutService } from '@/proto/api/v1/workout_service_pb'
 import { useActivityStore } from '@/stores/activity'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConnectionStore } from '@/stores/connection'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -554,7 +554,8 @@ export const StartWorkout = () => {
     useMutationQueueStore.getState().enqueue(WorkoutService.method.createWorkout, request)
     useConnectionStore.getState().setOnline(false)
     useWorkoutStore.getState().removeWorkout(routineID)
-    useAlertStore.getState().setSuccess(t('workout.savedOffline'))
+    // Not a success yet: the workout is on the device and not on the server.
+    useToastStore.getState().info(t('workout.savedOffline'))
     await navigate('/home', { replace: true })
   }
 
@@ -608,7 +609,7 @@ export const StartWorkout = () => {
         logged_set_count: loggedSetCount(entries),
         workout_type: quickWorkout ? 'quick' : 'routine',
       })
-      useAlertStore.getState().setSuccess(t('workout.saved'))
+      useToastStore.getState().success(t('workout.saved'))
       await openSavedWorkout(workoutId)
     } catch (error) {
       console.error('failed to finish workout', error)

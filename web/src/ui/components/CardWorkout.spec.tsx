@@ -21,7 +21,7 @@ import {
   PostCommentResponseSchema,
   WorkoutSchema,
 } from '@/proto/api/v1/workout_service_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { renderWithProviders } from '@/ui/testing'
@@ -86,7 +86,7 @@ describe('CardWorkout', () => {
     Object.values(mocked).forEach((mock) => mock.mockReset())
     mocked.deleteWorkout.mockResolvedValue(create(DeleteWorkoutResponseSchema, {}))
     useAuthStore.setState({ userId: ownerId })
-    useAlertStore.setState({ alert: null })
+    useToastStore.getState().dismiss()
     useConfirmationStore.setState({ confirmation: null, resolver: null })
   })
 
@@ -119,15 +119,13 @@ describe('CardWorkout', () => {
       expect(screen.queryByText(/\bPRs?\b/)).not.toBeInTheDocument()
     })
 
-    // The feed card stays where it is, so its alert is shown on the spot rather
-    // than held for a route change that is not coming.
+    // The feed card stays where it is, so the toast is all there is to see.
     test('announces a deletion on the spot', async () => {
       render(<CardWorkout compact workout={workout()} />)
 
       await deleteViaMenu()
 
-      await waitFor(() => expect(useAlertStore.getState().alert?.seen).toBe(true))
-      expect(useAlertStore.getState().alert?.type).toBe('success')
+      await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'success' }))
       expect(screen.queryByText('Push Day')).not.toBeInTheDocument()
     })
 
@@ -151,14 +149,14 @@ describe('CardWorkout', () => {
       expect(screen.getAllByRole('row')).toHaveLength(3)
     })
 
-    // The alert has to survive the navigation home that follows.
+    // The toast has to survive the navigation home that follows.
     test('announces a deletion and goes home', async () => {
       render(<CardWorkout compact={false} workout={workout()} />)
 
       await deleteViaMenu()
 
       await waitFor(() => expect(screen.getByText('home')).toBeInTheDocument())
-      expect(useAlertStore.getState().alert).toMatchObject({ type: 'success', seen: false })
+      expect(useToastStore.getState().toast).toMatchObject({ type: 'success' })
     })
 
     test('does nothing when the deletion is declined', async () => {
@@ -170,7 +168,7 @@ describe('CardWorkout', () => {
       useConfirmationStore.getState().dismiss()
 
       await waitFor(() => expect(mocked.deleteWorkout).not.toHaveBeenCalled())
-      expect(useAlertStore.getState().alert).toBeNull()
+      expect(useToastStore.getState().toast).toBeNull()
     })
 
     test('offers no menu on a workout that is not yours', () => {

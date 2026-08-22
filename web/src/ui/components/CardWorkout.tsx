@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { deleteWorkout, postWorkoutComment } from '@/http/requests'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { cn } from '@/ui/cn'
@@ -67,11 +67,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     const response = await deleteWorkout(workout.id)
     if (!response) return
 
-    // The feed card stays put, but the full view navigates home, so its alert
-    // must survive that one route change.
-    const alerts = useAlertStore.getState()
-    if (compact) alerts.setSuccessWithoutPageRefresh(t('workout.card.deleted'))
-    else alerts.setSuccess(t('workout.card.deleted'))
+    useToastStore.getState().success(t('workout.card.deleted'))
 
     setDeleted(true)
     if (!compact) await navigate('/home')

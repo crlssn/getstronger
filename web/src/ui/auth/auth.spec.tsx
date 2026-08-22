@@ -16,7 +16,7 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import { usePreferencesStore } from '@/stores/preferences'
@@ -57,7 +57,7 @@ const fakeToken = (userId: string) =>
 beforeEach(() => {
   Object.values(mocked).forEach((mock) => mock.mockReset())
   useAuthStore.setState({ userId: '', accessToken: '' })
-  useAlertStore.setState({ alert: null })
+  useToastStore.getState().dismiss()
   useEmailVerificationStore.getState().clear()
 })
 
@@ -224,8 +224,7 @@ describe('ForgotPassword', () => {
     )
   })
 
-  // The confirmation belongs on this screen, beside the address it was sent to,
-  // so it is raised without waiting for a navigation.
+  // The confirmation belongs beside the address it was sent to.
   test('confirms on the spot and clears the field', async () => {
     mocked.resetPassword.mockResolvedValue({} as never)
     renderScreen(<ForgotPassword />)
@@ -233,7 +232,7 @@ describe('ForgotPassword', () => {
     await userEvent.type(field('Email address'), 'alex@example.com')
     await submit(/Send/)
 
-    expect(useAlertStore.getState().alert).toMatchObject({ type: 'success', seen: true })
+    expect(useToastStore.getState().toast).toMatchObject({ type: 'success' })
     expect(field('Email address')).toHaveValue('')
   })
 
@@ -244,7 +243,7 @@ describe('ForgotPassword', () => {
     await userEvent.type(field('Email address'), 'alex@example.com')
     await submit(/Send/)
 
-    expect(useAlertStore.getState().alert).toBeNull()
+    expect(useToastStore.getState().toast).toBeNull()
   })
 })
 
@@ -283,7 +282,7 @@ describe('VerifyEmail', () => {
     renderScreen(<VerifyEmail />, '/verify-email?token=abc123')
 
     await waitFor(() => expect(useEmailVerificationStore.getState().pendingEmail).toBe(''))
-    expect(useAlertStore.getState().alert).toMatchObject({ type: 'success' })
+    expect(useToastStore.getState().toast).toMatchObject({ type: 'success' })
   })
 
   // A dead or reused link has to explain itself rather than showing nothing.

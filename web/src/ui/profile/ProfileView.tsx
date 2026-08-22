@@ -22,7 +22,7 @@ import {
   updateUserWeightUnit,
 } from '@/http/requests'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useNotificationStore } from '@/stores/notifications'
@@ -100,11 +100,11 @@ export const ProfileView = () => {
 
     if (!res) {
       apply(previous)
-      useAlertStore.getState().setError(messages.failed)
+      useToastStore.getState().error(messages.failed)
       return
     }
 
-    useAlertStore.getState().setSuccess(messages.updated)
+    useToastStore.getState().success(messages.updated)
   }
 
   const saveName = async () => {
@@ -114,13 +114,13 @@ export const ProfileView = () => {
     const res = await updateUserName(nameDraft)
     setSaving(undefined)
 
-    // Failures surface through the request helper's alert, so the sheet stays
+    // Failures surface through the request helper's toast, so the sheet stays
     // open for the draft to be corrected.
     if (!res) return
 
     setUser({ ...user, name: res.user?.name ?? nameDraft })
     setNameDraft(undefined)
-    useAlertStore.getState().setSuccess(t('profile.nameUpdated'))
+    useToastStore.getState().success(t('profile.nameUpdated'))
   }
 
   const saveUsername = async () => {
@@ -131,12 +131,12 @@ export const ProfileView = () => {
     setSaving(undefined)
 
     // Failures — including a taken username — surface through the request
-    // helper's alert, so the sheet stays open for the draft to be corrected.
+    // helper's toast, so the sheet stays open for the draft to be corrected.
     if (!res) return
 
     setUser({ ...user, username: res.user?.username ?? usernameDraft })
     setUsernameDraft(undefined)
-    useAlertStore.getState().setSuccess(t('profile.usernameUpdated'))
+    useToastStore.getState().success(t('profile.usernameUpdated'))
   }
 
   if (!user) return <AppSkeleton />

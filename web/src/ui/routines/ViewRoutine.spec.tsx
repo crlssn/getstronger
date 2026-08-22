@@ -24,7 +24,7 @@ import {
   UpdateExerciseOrderResponseSchema,
 } from '@/proto/api/v1/routine_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -66,7 +66,7 @@ describe('ViewRoutine', () => {
     mocked.deleteRoutine.mockResolvedValue(create(DeleteRoutineResponseSchema, {}))
     mocked.updateExerciseOrder.mockResolvedValue(create(UpdateExerciseOrderResponseSchema, {}))
     useDashboardStore.setState({ preferredRoutineId: '' })
-    useAlertStore.setState({ alert: null })
+    useToastStore.getState().dismiss()
     useConfirmationStore.setState({ confirmation: null, resolver: null })
   })
 
@@ -143,7 +143,7 @@ describe('ViewRoutine', () => {
 
       expect(selectRoutine).toHaveBeenCalledWith('push')
       await waitFor(() =>
-        expect(useAlertStore.getState().alert?.message).toBe('Push day is up next'),
+        expect(useToastStore.getState().toast?.message).toBe('Push day is up next'),
       )
     })
 
@@ -166,7 +166,7 @@ describe('ViewRoutine', () => {
 
       await waitFor(() => expect(mocked.deleteRoutine).toHaveBeenCalledWith('push'))
       expect(await screen.findByText('routines')).toBeInTheDocument()
-      expect(useAlertStore.getState().alert).toMatchObject({ type: 'success', seen: false })
+      expect(useToastStore.getState().toast).toMatchObject({ type: 'success' })
     })
 
     test('does nothing when the confirmation is declined', async () => {
@@ -189,9 +189,7 @@ describe('ViewRoutine', () => {
       await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
       useConfirmationStore.getState().accept()
 
-      await waitFor(() =>
-        expect(useAlertStore.getState().alert).toMatchObject({ type: 'error', seen: true }),
-      )
+      await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'error' }))
       expect(screen.queryByText('routines')).not.toBeInTheDocument()
     })
   })

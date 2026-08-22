@@ -25,7 +25,7 @@ import {
   ListSetsResponseSchema,
 } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric, SetSchema } from '@/proto/api/v1/shared_pb'
-import { useAlertStore } from '@/stores/alerts'
+import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageNavActionStore } from '@/stores/pageNavAction'
@@ -93,7 +93,7 @@ describe('ViewExercise', () => {
     mocked.listSets.mockResolvedValue(setsPage([]))
     mocked.deleteExercise.mockResolvedValue(create(DeleteExerciseResponseSchema, {}))
     useAuthStore.setState({ userId: ownerId })
-    useAlertStore.setState({ alert: null })
+    useToastStore.getState().dismiss()
     useConfirmationStore.setState({ confirmation: null, resolver: null })
     useWorkoutStore.setState({ workouts: {} })
 
@@ -245,11 +245,11 @@ describe('ViewExercise', () => {
 
       await waitFor(() => expect(mocked.deleteExercise).toHaveBeenCalledWith('bench'))
       expect(await screen.findByText('library')).toBeInTheDocument()
-      expect(useAlertStore.getState().alert).toMatchObject({ type: 'success', seen: false })
+      expect(useToastStore.getState().toast).toMatchObject({ type: 'success' })
     })
 
-    // The reader stays where they are, so the complaint has to be visible here
-    // rather than held for a navigation that is not happening.
+    // A failed deletion leaves the reader where they are, so the complaint is
+    // all that changes.
     test('reports a failure without leaving the page', async () => {
       mocked.deleteExercise.mockResolvedValue(undefined)
       render()
@@ -257,9 +257,7 @@ describe('ViewExercise', () => {
 
       await userEvent.click(await screen.findByRole('button', { name: /Delete exercise/ }))
 
-      await waitFor(() =>
-        expect(useAlertStore.getState().alert).toMatchObject({ type: 'error', seen: true }),
-      )
+      await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'error' }))
       expect(screen.queryByText('library')).not.toBeInTheDocument()
     })
 
