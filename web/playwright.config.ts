@@ -86,7 +86,15 @@ export default defineConfig({
         {
           command: `npm run dev -- --host localhost --port ${webPort}`,
           cwd: webRoot,
-          env: { VITE_API_URL: localBackendURL, VITE_ENABLE_DEVTOOLS: 'false' },
+          env: {
+            VITE_API_URL: localBackendURL,
+            VITE_ENABLE_DEVTOOLS: 'false',
+            // Analytics stays off whatever web/.env holds. A configured PostHog
+            // would report test traffic as real, and an unreachable one fails
+            // every spec through the no-failed-requests fixture.
+            VITE_POSTHOG_HOST: '',
+            VITE_POSTHOG_KEY: '',
+          },
           reuseExistingServer: false,
           timeout: 120_000,
           url: localBaseURL,
