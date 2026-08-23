@@ -13,11 +13,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/rpc/interceptors"
+	"github.com/crlssn/getstronger/server/xcontext"
 )
 
 type authSuite struct {
@@ -193,6 +195,113 @@ func (s *authSuite) TestSchemaDecidesAuthentication() {
 
 			client := apiv1connect.NewAuthServiceClient(server.Client(), server.URL)
 			s.Require().Equal(t.expected, t.call(s.T().Context(), client, header))
+		})
+	}
+}
+
+// streamingConn is the smallest connect.StreamingHandlerConn the interceptor
+// needs: it reads the spec and the request header and touches nothing else.
+type streamingConn struct {
+	spec   connect.Spec
+	header http.Header
+}
+
+func (c *streamingConn) Spec() connect.Spec           { return c.spec }
+func (c *streamingConn) Peer() connect.Peer           { return connect.Peer{} }
+func (c *streamingConn) Receive(_ any) error          { return nil }
+func (c *streamingConn) RequestHeader() http.Header   { return c.header }
+func (c *streamingConn) Send(_ any) error             { return nil }
+func (c *streamingConn) ResponseHeader() http.Header  { return make(http.Header) }
+func (c *streamingConn) ResponseTrailer() http.Header { return make(http.Header) }
+
+func (s *authSuite) TestStreamingHandler() {
+	type expected struct {
+		code    connect.Code
+		reached bool
+		userID  string
+	}
+
+	type test struct {
+		name     string
+		token    string
+		method   string
+		expected expected
+	}
+
+	userID := uuid.NewString()
+	accessToken, accessTokenErr := s.jwt.CreateToken(userID, jwt.TokenTypeAccess)
+	s.Require().NoError(accessTokenErr)
+
+	tests := []test{
+		{
+			name:   "ok_public_procedure_reaches_handler",
+			method: "Login",
+			expected: expected{
+				reached: true,
+			},
+		},
+		{
+			name:   "err_authenticated_procedure_without_token",
+			method: "DeleteAccount",
+			expected: expected{
+				code: connect.CodeUnauthenticated,
+			},
+		},
+		{
+			name:   "ok_authenticated_procedure_with_token",
+			method: "DeleteAccount",
+			token:  accessToken,
+			expected: expected{
+				reached: true,
+				userID:  userID,
+			},
+		},
+		{
+			// A procedure the interceptor cannot read a schema for is refused
+			// rather than served: the zero value must not decide.
+			name: "err_procedure_without_schema",
+			expected: expected{
+				code: connect.CodeUnauthenticated,
+			},
+		},
+	}
+
+	service := apiv1.File_api_v1_auth_service_proto.Services().ByName("AuthService")
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			spec := connect.Spec{
+				Procedure:  "/api.v1.AuthService/Unknown",
+				StreamType: connect.StreamTypeServer,
+			}
+			if t.method != "" {
+				method := service.Methods().ByName(protoreflect.Name(t.method))
+				s.Require().NotNil(method)
+				spec.Procedure = fmt.Sprintf("/api.v1.AuthService/%s", t.method)
+				spec.Schema = method
+			}
+
+			header := make(http.Header)
+			if t.token != "" {
+				header.Set("Authorization", fmt.Sprintf("Bearer %s", t.token))
+			}
+
+			var reached bool
+			var handlerUserID string
+			err := s.interceptor.WrapStreamingHandler(func(ctx context.Context, _ connect.StreamingHandlerConn) error {
+				reached = true
+				handlerUserID, _ = xcontext.ExtractUserID(ctx)
+				return nil
+			})(s.T().Context(), &streamingConn{spec: spec, header: header})
+
+			s.Require().Equal(t.expected.reached, reached)
+			s.Require().Equal(t.expected.userID, handlerUserID)
+			if t.expected.code != 0 {
+				s.Require().Error(err)
+				s.Require().Equal(t.expected.code, connect.CodeOf(err))
+				return
+			}
+			s.Require().NoError(err)
 		})
 	}
 }
