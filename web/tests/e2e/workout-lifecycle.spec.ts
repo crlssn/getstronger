@@ -25,6 +25,10 @@ const pickerOptions = (page: E2EPage, dialog: ReturnType<E2EPage['getByRole']>) 
 const openExerciseName = async (page: E2EPage) =>
   (await page.getByRole('button', { expanded: true }).locator('strong').innerText()).trim()
 
+// One header per station, in session order. Two exercises may carry the same
+// title, so position is what tells the stations apart; a name is not.
+const stationHeaders = (page: E2EPage) => page.locator('button[aria-expanded]')
+
 // The unit is a label on the field, so it lives in the field's own box beside
 // the input rather than anywhere nameable.
 const unitFieldFor = (page: E2EPage, label: string) =>
@@ -180,14 +184,17 @@ test.describe('quick workout lifecycle', () => {
     await expect(weightInput).toHaveValue('26')
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
+    const stations = stationHeaders(page)
+    await expect(stations).toHaveCount(1)
     await page.getByRole('button', { name: 'Add exercise' }).click()
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
     const secondOption = pickerOptions(page, picker).first()
     const secondExercise = (await secondOption.locator('strong').innerText()).trim()
     await secondOption.click()
-    await expect(
-      page.locator('button[aria-expanded]').filter({ hasText: secondExercise }),
-    ).toHaveCount(1)
+    // The exercise joins the end of the session, so the count proves it was
+    // added exactly once and the last header proves it is the one added.
+    await expect(stations).toHaveCount(2)
+    await expect(stations.nth(1)).toContainText(secondExercise)
 
     await page.getByRole('button', { name: 'Finish workout' }).click()
     const finishDialog = page.getByRole('dialog', { name: 'Finish workout early?' })

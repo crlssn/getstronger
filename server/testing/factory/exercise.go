@@ -25,10 +25,19 @@ func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) models.Exerci
 
 type ExerciseOpt func(exercise *models.ExerciseSetter)
 
+// The titles a seeded exercise is drawn from. Fixtures that need a particular
+// one ask for it with ExerciseTitle.
+func exerciseTitles() []string {
+	return []string{
+		"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups",
+		"Shoulder Press", "Rows", "Plank", "Burpees", "Lunges",
+	}
+}
+
 func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
 	setter := &models.ExerciseSetter{
 		ID:    omit.From(newUUID()),
-		Title: omit.From(f.Faker.RandomString([]string{"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups", "Shoulder Press", "Rows", "Plank", "Burpees", "Lunges"})),
+		Title: omit.From(f.Faker.RandomString(exerciseTitles())),
 		Tags:  omit.From(pq.StringArray{}),
 	}
 	for _, opt := range opts {
