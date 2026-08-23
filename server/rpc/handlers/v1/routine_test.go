@@ -495,6 +495,57 @@ func (s *routineSuite) TestUpdateRoutineRegroupsIt() {
 	)
 }
 
+// An exercise trained in two groups is two pieces of work but one exercise to
+// look up, and a client is free to name it in the flat list as well. Both the
+// repeat and the echo have to resolve to one lookup, or the update is rejected
+// for naming an exercise the athlete does not have twice over.
+func (s *routineSuite) TestUpdateRoutineTrainsAnExerciseInTwoGroups() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Full body",
+		ExerciseIds: exerciseIDs,
+	}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.UpdateRoutine(ctx, connect.NewRequest(&apiv1.UpdateRoutineRequest{
+		Routine: &apiv1.Routine{
+			Id:   created.Msg.GetId(),
+			Name: "Full body",
+			// The flat list repeats what the groups already named, which is
+			// what a client that keeps both in step sends.
+			Exercises: []*apiv1.Exercise{{Id: exerciseIDs[0]}, {Id: exerciseIDs[1]}},
+			Groups: []*apiv1.RoutineGroup{
+				{
+					Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+					Exercises: groupExercises(exerciseIDs[0]),
+				},
+				{
+					Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+					Exercises: groupExercises(exerciseIDs[0], exerciseIDs[1]),
+				},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	s.Require().Len(routine.GetGroups(), 2)
+	s.Require().Len(routine.GetGroups()[0].GetExercises(), 1)
+	s.Require().Len(routine.GetGroups()[1].GetExercises(), 2)
+
+	// The flat list is the groups read end to end, so the repeat is in it
+	// twice: that is how many times the routine trains it.
+	flat := make([]string, 0, len(routine.GetExercises()))
+	for _, exercise := range routine.GetExercises() {
+		flat = append(flat, exercise.GetId())
+	}
+	s.Require().Equal([]string{exerciseIDs[0], exerciseIDs[0], exerciseIDs[1]}, flat)
+}
+
 // Grouping is optional on the way in as well: a client that has never heard of
 // it keeps saving a flat list, and the routine stays one straight block.
 func (s *routineSuite) TestUpdateRoutineWithoutGroups() {
