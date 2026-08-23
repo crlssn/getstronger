@@ -357,12 +357,13 @@ Configure these per environment, using the same names on both:
 ```text
 Variables: DEPLOY_ENVIRONMENT, DB_HOST, DB_NAME, DB_MIGRATION_USER,
            SCW_CONTAINER_ID, SCW_BUCKET_NAME, VITE_API_URL,
-           VITE_POSTHOG_KEY, VITE_POSTHOG_HOST,
            API_DOMAIN, COOKIE_DOMAIN, CORS_ALLOWED_ORIGIN, EMAIL_FROM_ADDRESS
 Secrets:   DB_MIGRATION_PASSWORD
 ```
 
 `DEPLOY_ENVIRONMENT` is the environment's own name, `beta` or `production`. Every deploying job refuses to start unless it matches the environment it was asked to deploy to: GitHub falls back to repository-scoped variables when an environment defines none, so without that check a half-configured `beta` would quietly deploy to production infrastructure. `API_DOMAIN`, `COOKIE_DOMAIN`, `CORS_ALLOWED_ORIGIN`, and `EMAIL_FROM_ADDRESS` are the container's own configuration rather than workflow inputs; they live here so each environment's values are recorded in one place.
+
+`VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` are set on `production` only, and nowhere else — see step 8.
 
 These stay at repository scope, shared by both environments:
 
@@ -370,6 +371,8 @@ These stay at repository scope, shared by both environments:
 Variables: DB_PORT, SCW_REGION, SCW_PROJECT_ID, SCW_TEM_REGION
 Secrets:   SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
 ```
+
+`DB_MIGRATION_PASSWORD` is the only secret that differs by environment; the API and web jobs authenticate to Scaleway with the shared `SCW_ACCESS_KEY_ID` and `SCW_SECRET_KEY`. A beta database in the production Project is reached by the same migration identity, so both environments hold the same value — set it on each anyway, so beta never depends on a repository-scoped fallback.
 
 Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key; the workflow uses the migration identity only in the database job. The runtime identity is configured directly on the Serverless Container, not in GitHub. `SCW_CONTAINER_ID` is the Serverless Container's UUID, shown on its **Overview** tab in the console. If beta runs in its own Scaleway Project, put that Project's `SCW_ACCESS_KEY_ID` and `SCW_SECRET_KEY` on the `beta` environment; environment secrets take precedence over repository ones.
 
@@ -385,16 +388,16 @@ For the initial cutover of either environment, open the **deploy** workflow in G
 
 ### 8. Create the beta environment
 
-Beta is a full copy of the production stack, serving `https://beta.getstronger.studio` against `https://api.beta.getstronger.studio`. Repeat steps 2, 3, 5, and 6 with beta names and domains:
+Beta is a full copy of the production stack, serving `https://beta.getstronger.studio` against `https://beta.api.getstronger.studio`. Repeat steps 2, 3, 5, and 6 with beta names and domains:
 
 | Resource | Production | Beta |
 | --- | --- | --- |
 | Serverless SQL Database | `getstronger` | `getstronger-beta` |
 | Serverless Container | `getstronger` | `getstronger-beta` |
 | Container image | `getstronger/server:latest` | `getstronger/server:beta` |
-| Object Storage bucket | `getstronger-public-bucket` | `getstronger-beta-bucket` |
+| Object Storage bucket | `getstronger-public-bucket` | `beta.getstronger.studio` |
 | Web domain | `www.getstronger.studio` | `beta.getstronger.studio` |
-| API domain | `api.getstronger.studio` | `api.beta.getstronger.studio` |
+| API domain | `api.getstronger.studio` | `beta.api.getstronger.studio` |
 
 The image tag is not cosmetic: both environments push to the single `getstronger/server` registry namespace, so the beta container must be created from `getstronger/server:beta`. Pointing it at `latest` would make every production deploy roll out to beta as well.
 
@@ -402,15 +405,15 @@ Beta's container takes the same configuration as step 3 with its own values, inc
 
 Keeping beta in the production Scaleway Project reuses the IAM applications from step 1: the migration and runtime permission sets are Project-scoped and already cover a second database. A separate Project isolates beta more strictly, at the cost of its own IAM applications and deploy key.
 
-Two things should not be shared with production:
+Two things to settle before beta takes traffic:
 
-- **Analytics.** Create a second PostHog project and use its key as beta's `VITE_POSTHOG_KEY`, so test traffic never lands in production analytics.
-- **Email.** Register a beta sending domain in Transactional Email as in step 4, and point beta's `EMAIL_FROM_ADDRESS` at it.
+- **Analytics.** Beta sends none. `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` live on the `production` environment and at no other scope, so a beta build has no key and `posthog-js` never initialises. Leave both absent on `beta` rather than blank — a whitespace placeholder is still a value, and the app would initialise with it. Should beta ever need analytics, give it a second PostHog project rather than production's key.
+- **Email.** Beta can share production's sending domain, since the verified identity is a domain rather than an environment; register a separate one in Transactional Email as in step 4 if beta's mail should be traceable apart from production's.
 
 Bring beta up with **Run workflow** against the `beta` environment with all three components enabled, then verify:
 
 ```bash
-curl --fail https://api.beta.getstronger.studio/healthz
+curl --fail https://beta.api.getstronger.studio/healthz
 ```
 
 Seed an account on the beta database and smoke-test the deployed stack with the live end-to-end suite described below.
