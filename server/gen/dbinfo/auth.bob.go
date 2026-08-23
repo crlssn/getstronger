@@ -141,6 +141,23 @@ var Auths = Table[
 			Where:         "",
 			Include:       []string{},
 		},
+		IdxAuthEmailLower: index{
+			Type: "btree",
+			Name: "idx_auth_email_lower",
+			Columns: []indexColumn{
+				{
+					Name:         "lower(email::text)",
+					Desc:         null.FromCond(false, true),
+					IsExpression: true,
+				},
+			},
+			Unique:        true,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 	},
 	PrimaryKey: &constraint{
 		Name:    "auth_pkey",
@@ -179,13 +196,14 @@ func (c authColumns) AsSlice() []column {
 }
 
 type authIndexes struct {
-	AuthPkey     index
-	AuthEmailKey index
+	AuthPkey          index
+	AuthEmailKey      index
+	IdxAuthEmailLower index
 }
 
 func (i authIndexes) AsSlice() []index {
 	return []index{
-		i.AuthPkey, i.AuthEmailKey,
+		i.AuthPkey, i.AuthEmailKey, i.IdxAuthEmailLower,
 	}
 }
 

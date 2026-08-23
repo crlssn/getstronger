@@ -9,10 +9,16 @@ import (
 	"github.com/crlssn/getstronger/server/account"
 )
 
+func TestNormalizeEmailAddress(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, "athlete@example.com", account.NormalizeEmailAddress("\tAthlete @ Example.COM\n"))
+}
+
 func TestParseEmailAddress(t *testing.T) {
 	t.Parallel()
 
-	address, err := account.ParseEmailAddress("  athlete @ example.com ")
+	address, err := account.ParseEmailAddress("  Athlete @ Example.com ")
 	require.NoError(t, err)
 	require.Equal(t, "athlete@example.com", address)
 

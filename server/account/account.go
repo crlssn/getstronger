@@ -23,9 +23,11 @@ var (
 	ErrPasswordConfirmationMismatch = errors.New("passwords do not match")
 )
 
-// NormalizeEmailAddress strips the spaces people paste in around an address.
+// NormalizeEmailAddress folds an address to the form uniqueness and lookups are
+// judged by: it strips the spaces people paste in around one, and lowercases
+// the rest, because a mailbox is one mailbox however its address was typed.
 func NormalizeEmailAddress(raw string) string {
-	return strings.ReplaceAll(raw, " ", "")
+	return strings.ToLower(strings.ReplaceAll(strings.TrimSpace(raw), " ", ""))
 }
 
 // ParseEmailAddress normalizes an address and rejects one that could never be

@@ -148,8 +148,9 @@ func nullIfEmpty(v string) omitnull.Val[string] {
 }
 
 func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*models.Auth, error) {
+	address := account.NormalizeEmailAddress(email)
 	exists, err := models.Auths.Query(
-		models.SelectWhere.Auths.Email.EQ(email),
+		models.SelectWhere.Auths.Email.EQ(address),
 	).Exists(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("email exists check: %w", err)
@@ -164,7 +165,7 @@ func (r *Repo) CreateAuth(ctx context.Context, email, password string) (*models.
 	}
 
 	auth, err := models.Auths.Insert(&models.AuthSetter{
-		Email:    omit.From(email),
+		Email:    omit.From(address),
 		Password: omit.From(bcryptPassword),
 	}).One(ctx, r.bobExec())
 	if err != nil {
@@ -250,7 +251,7 @@ func (r *Repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 
 func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
 	auth, err := models.Auths.Query(
-		models.SelectWhere.Auths.Email.EQ(email),
+		models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(email)),
 	).One(ctx, r.bobExec())
 	if err != nil {
 		return fmt.Errorf("auth fetch: %w", err)
@@ -1627,7 +1628,7 @@ func GetAuthByID(id string) GetAuthOpt {
 
 func GetAuthByEmail(email string) GetAuthOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Auths.Email.EQ(email)
+		return models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(email))
 	}
 }
 

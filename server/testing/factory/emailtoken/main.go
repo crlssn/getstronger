@@ -12,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/stephenafamo/bob"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/db"
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -43,7 +44,7 @@ func main() {
 	}
 
 	auth, err := models.Auths.Query(
-		models.SelectWhere.Auths.Email.EQ(*email),
+		models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(*email)),
 	).One(context.Background(), bob.NewDB(database))
 	if err != nil {
 		log.Printf("fetch auth: %v", err)

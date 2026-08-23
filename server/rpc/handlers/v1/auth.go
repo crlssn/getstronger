@@ -316,10 +316,9 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 		RetryAfterSeconds: int32(account.VerificationCooldown.Seconds()),
 	})
 
-	address := account.NormalizeEmailAddress(req.Msg.GetEmail())
 	auth, err := h.repo.GetAuth(
 		ctx,
-		repo.GetAuthByEmail(address),
+		repo.GetAuthByEmail(req.Msg.GetEmail()),
 		repo.GetAuthWithUser(),
 	)
 	if err != nil {
