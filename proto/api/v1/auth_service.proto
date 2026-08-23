@@ -7,17 +7,31 @@ import "api/v1/options.proto";
 import "buf/validate/validate.proto";
 
 service AuthService {
-  rpc Signup (SignupRequest) returns (SignupResponse) {}
-  rpc Login (LoginRequest) returns (LoginResponse) {}
-  rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {}
-  rpc Logout (LogoutRequest) returns (LogoutResponse) {}
-  rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {}
-  rpc ResendVerificationEmail (ResendVerificationEmailRequest) returns (ResendVerificationEmailResponse) {}
-  rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse) {}
-  rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {}
-  rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {
-    option (auth) = true;
+  rpc Signup (SignupRequest) returns (SignupResponse) {
+    option (guest) = true;
   }
+  rpc Login (LoginRequest) returns (LoginResponse) {
+    option (guest) = true;
+  }
+  rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (guest) = true;
+  }
+  rpc Logout (LogoutRequest) returns (LogoutResponse) {
+    option (guest) = true;
+  }
+  rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {
+    option (guest) = true;
+  }
+  rpc ResendVerificationEmail (ResendVerificationEmailRequest) returns (ResendVerificationEmailResponse) {
+    option (guest) = true;
+  }
+  rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse) {
+    option (guest) = true;
+  }
+  rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {
+    option (guest) = true;
+  }
+  rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {}
 }
 
 message SignupRequest {

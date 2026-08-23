@@ -486,7 +486,7 @@ var File_api_v1_notification_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\n" +
-	"!api/v1/notification_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"]\n" +
+	"!api/v1/notification_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"]\n" +
 	"\x18ListNotificationsRequest\x12A\n" +
 	"\n" +
 	"pagination\x18\x01 \x01(\v2\x19.api.v1.PaginationRequestB\x06\xbaH\x03\xc8\x01\x01R\n" +
@@ -514,11 +514,11 @@ const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\x0eWorkoutComment\x12\"\n" +
 	"\x05actor\x18\x01 \x01(\v2\f.api.v1.UserR\x05actor\x12)\n" +
 	"\aworkout\x18\x02 \x01(\v2\x0f.api.v1.WorkoutR\aworkoutB\x06\n" +
-	"\x04type2\xe2\x02\n" +
-	"\x13NotificationService\x12^\n" +
-	"\x11ListNotifications\x12 .api.v1.ListNotificationsRequest\x1a!.api.v1.ListNotificationsResponse\"\x04\x88\xb5\x18\x01\x12p\n" +
-	"\x17MarkNotificationsAsRead\x12&.api.v1.MarkNotificationsAsReadRequest\x1a'.api.v1.MarkNotificationsAsReadResponse\"\x04\x88\xb5\x18\x01\x12y\n" +
-	"\x1aGetUnreadNotificationCount\x12).api.v1.GetUnreadNotificationCountRequest\x1a*.api.v1.GetUnreadNotificationCountResponse\"\x04\x88\xb5\x18\x01B\x9c\x01\n" +
+	"\x04type2\xd6\x02\n" +
+	"\x13NotificationService\x12Z\n" +
+	"\x11ListNotifications\x12 .api.v1.ListNotificationsRequest\x1a!.api.v1.ListNotificationsResponse\"\x00\x12l\n" +
+	"\x17MarkNotificationsAsRead\x12&.api.v1.MarkNotificationsAsReadRequest\x1a'.api.v1.MarkNotificationsAsReadResponse\"\x00\x12u\n" +
+	"\x1aGetUnreadNotificationCount\x12).api.v1.GetUnreadNotificationCountRequest\x1a*.api.v1.GetUnreadNotificationCountResponse\"\x00B\x9c\x01\n" +
 	"\n" +
 	"com.api.v1B\x18NotificationServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -577,7 +577,6 @@ func file_api_v1_notification_service_proto_init() {
 	if File_api_v1_notification_service_proto != nil {
 		return
 	}
-	file_api_v1_options_proto_init()
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
 	file_api_v1_notification_service_proto_msgTypes[2].OneofWrappers = []any{}

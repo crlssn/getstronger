@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/options.proto";
 import "api/v1/shared.proto";
 
 import "google/protobuf/timestamp.proto";
@@ -10,24 +9,12 @@ import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
 service WorkoutService {
-  rpc CreateWorkout (CreateWorkoutRequest) returns (CreateWorkoutResponse) {
-    option (auth) = true;
-  }
-  rpc GetWorkout (GetWorkoutRequest) returns (GetWorkoutResponse) {
-    option (auth) = true;
-  }
-  rpc ListWorkouts (ListWorkoutsRequest) returns (ListWorkoutsResponse) {
-    option (auth) = true;
-  }
-  rpc DeleteWorkout (DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {
-    option (auth) = true;
-  }
-  rpc PostComment (PostCommentRequest) returns (PostCommentResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateWorkout (UpdateWorkoutRequest) returns (UpdateWorkoutResponse) {
-    option (auth) = true;
-  }
+  rpc CreateWorkout (CreateWorkoutRequest) returns (CreateWorkoutResponse) {}
+  rpc GetWorkout (GetWorkoutRequest) returns (GetWorkoutResponse) {}
+  rpc ListWorkouts (ListWorkoutsRequest) returns (ListWorkoutsResponse) {}
+  rpc DeleteWorkout (DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {}
+  rpc PostComment (PostCommentRequest) returns (PostCommentResponse) {}
+  rpc UpdateWorkout (UpdateWorkoutRequest) returns (UpdateWorkoutResponse) {}
 }
 
 message CreateWorkoutRequest {

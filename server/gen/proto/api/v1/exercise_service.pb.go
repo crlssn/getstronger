@@ -804,7 +804,7 @@ var File_api_v1_exercise_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xd1\x01\n" +
+	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xd1\x01\n" +
 	"\x15CreateExerciseRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12&\n" +
 	"\x04tags\x18\x02 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
@@ -858,16 +858,16 @@ const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\x04sets\x18\x01 \x03(\v2\v.api.v1.SetR\x04sets\x12:\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1a.api.v1.PaginationResponseR\n" +
-	"pagination2\xc9\x05\n" +
-	"\x0fExerciseService\x12U\n" +
-	"\x0eCreateExercise\x12\x1d.api.v1.CreateExerciseRequest\x1a\x1e.api.v1.CreateExerciseResponse\"\x04\x88\xb5\x18\x01\x12L\n" +
-	"\vGetExercise\x12\x1a.api.v1.GetExerciseRequest\x1a\x1b.api.v1.GetExerciseResponse\"\x04\x88\xb5\x18\x01\x12U\n" +
-	"\x0eUpdateExercise\x12\x1d.api.v1.UpdateExerciseRequest\x1a\x1e.api.v1.UpdateExerciseResponse\"\x04\x88\xb5\x18\x01\x12U\n" +
-	"\x0eDeleteExercise\x12\x1d.api.v1.DeleteExerciseRequest\x1a\x1e.api.v1.DeleteExerciseResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rListExercises\x12\x1c.api.v1.ListExercisesRequest\x1a\x1d.api.v1.ListExercisesResponse\"\x04\x88\xb5\x18\x01\x12m\n" +
-	"\x16GetPreviousWorkoutSets\x12%.api.v1.GetPreviousWorkoutSetsRequest\x1a&.api.v1.GetPreviousWorkoutSetsResponse\"\x04\x88\xb5\x18\x01\x12[\n" +
-	"\x10GetPersonalBests\x12\x1f.api.v1.GetPersonalBestsRequest\x1a .api.v1.GetPersonalBestsResponse\"\x04\x88\xb5\x18\x01\x12C\n" +
-	"\bListSets\x12\x17.api.v1.ListSetsRequest\x1a\x18.api.v1.ListSetsResponse\"\x04\x88\xb5\x18\x01B\x98\x01\n" +
+	"pagination2\xa9\x05\n" +
+	"\x0fExerciseService\x12Q\n" +
+	"\x0eCreateExercise\x12\x1d.api.v1.CreateExerciseRequest\x1a\x1e.api.v1.CreateExerciseResponse\"\x00\x12H\n" +
+	"\vGetExercise\x12\x1a.api.v1.GetExerciseRequest\x1a\x1b.api.v1.GetExerciseResponse\"\x00\x12Q\n" +
+	"\x0eUpdateExercise\x12\x1d.api.v1.UpdateExerciseRequest\x1a\x1e.api.v1.UpdateExerciseResponse\"\x00\x12Q\n" +
+	"\x0eDeleteExercise\x12\x1d.api.v1.DeleteExerciseRequest\x1a\x1e.api.v1.DeleteExerciseResponse\"\x00\x12N\n" +
+	"\rListExercises\x12\x1c.api.v1.ListExercisesRequest\x1a\x1d.api.v1.ListExercisesResponse\"\x00\x12i\n" +
+	"\x16GetPreviousWorkoutSets\x12%.api.v1.GetPreviousWorkoutSetsRequest\x1a&.api.v1.GetPreviousWorkoutSetsResponse\"\x00\x12W\n" +
+	"\x10GetPersonalBests\x12\x1f.api.v1.GetPersonalBestsRequest\x1a .api.v1.GetPersonalBestsResponse\"\x00\x12?\n" +
+	"\bListSets\x12\x17.api.v1.ListSetsRequest\x1a\x18.api.v1.ListSetsResponse\"\x00B\x98\x01\n" +
 	"\n" +
 	"com.api.v1B\x14ExerciseServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -952,7 +952,6 @@ func file_api_v1_exercise_service_proto_init() {
 	if File_api_v1_exercise_service_proto != nil {
 		return
 	}
-	file_api_v1_options_proto_init()
 	file_api_v1_shared_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{

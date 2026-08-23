@@ -197,7 +197,7 @@ var File_api_v1_feed_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_feed_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/feed_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"~\n" +
+	"\x19api/v1/feed_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"~\n" +
 	"\x14ListFeedItemsRequest\x12#\n" +
 	"\rfollowed_only\x18\x01 \x01(\bR\ffollowedOnly\x12A\n" +
 	"\n" +
@@ -210,9 +210,9 @@ const file_api_v1_feed_service_proto_rawDesc = "" +
 	"pagination\"?\n" +
 	"\bFeedItem\x12+\n" +
 	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutH\x00R\aworkoutB\x06\n" +
-	"\x04type2a\n" +
-	"\vFeedService\x12R\n" +
-	"\rListFeedItems\x12\x1c.api.v1.ListFeedItemsRequest\x1a\x1d.api.v1.ListFeedItemsResponse\"\x04\x88\xb5\x18\x01B\x94\x01\n" +
+	"\x04type2]\n" +
+	"\vFeedService\x12N\n" +
+	"\rListFeedItems\x12\x1c.api.v1.ListFeedItemsRequest\x1a\x1d.api.v1.ListFeedItemsResponse\"\x00B\x94\x01\n" +
 	"\n" +
 	"com.api.v1B\x10FeedServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -256,7 +256,6 @@ func file_api_v1_feed_service_proto_init() {
 	if File_api_v1_feed_service_proto != nil {
 		return
 	}
-	file_api_v1_options_proto_init()
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
 	file_api_v1_feed_service_proto_msgTypes[2].OneofWrappers = []any{

@@ -1792,7 +1792,7 @@ var File_api_v1_routine_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/routine_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"\x8e\x01\n" +
+	"\x1capi/v1/routine_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"\x8e\x01\n" +
 	"\x14CreateRoutineRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12+\n" +
 	"\fexercise_ids\x18\x02 \x03(\tB\b\xbaH\x05\x92\x01\x02\b\x01R\vexerciseIds\x12,\n" +
@@ -1898,29 +1898,28 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x10RoutineGroupMode\x12\"\n" +
 	"\x1eROUTINE_GROUP_MODE_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bROUTINE_GROUP_MODE_STRAIGHT\x10\x01\x12\x1e\n" +
-	"\x1aROUTINE_GROUP_MODE_CIRCUIT\x10\x022\xa0\n" +
+	"\x1aROUTINE_GROUP_MODE_CIRCUIT\x10\x022\xe0\t\n" +
+	"\x0eRoutineService\x12N\n" +
+	"\rCreateRoutine\x12\x1c.api.v1.CreateRoutineRequest\x1a\x1d.api.v1.CreateRoutineResponse\"\x00\x12E\n" +
 	"\n" +
-	"\x0eRoutineService\x12R\n" +
-	"\rCreateRoutine\x12\x1c.api.v1.CreateRoutineRequest\x1a\x1d.api.v1.CreateRoutineResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"GetRoutine\x12\x19.api.v1.GetRoutineRequest\x1a\x1a.api.v1.GetRoutineResponse\"\x00\x12N\n" +
+	"\rUpdateRoutine\x12\x1c.api.v1.UpdateRoutineRequest\x1a\x1d.api.v1.UpdateRoutineResponse\"\x00\x12N\n" +
+	"\rDeleteRoutine\x12\x1c.api.v1.DeleteRoutineRequest\x1a\x1d.api.v1.DeleteRoutineResponse\"\x00\x12K\n" +
+	"\fListRoutines\x12\x1b.api.v1.ListRoutinesRequest\x1a\x1c.api.v1.ListRoutinesResponse\"\x00\x12H\n" +
+	"\vAddExercise\x12\x1a.api.v1.AddExerciseRequest\x1a\x1b.api.v1.AddExerciseResponse\"\x00\x12`\n" +
+	"\x13UpdateExerciseOrder\x12\".api.v1.UpdateExerciseOrderRequest\x1a#.api.v1.UpdateExerciseOrderResponse\"\x00\x12K\n" +
+	"\fGetDashboard\x12\x1b.api.v1.GetDashboardRequest\x1a\x1c.api.v1.GetDashboardResponse\"\x00\x12E\n" +
 	"\n" +
-	"GetRoutine\x12\x19.api.v1.GetRoutineRequest\x1a\x1a.api.v1.GetRoutineResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rUpdateRoutine\x12\x1c.api.v1.UpdateRoutineRequest\x1a\x1d.api.v1.UpdateRoutineResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rDeleteRoutine\x12\x1c.api.v1.DeleteRoutineRequest\x1a\x1d.api.v1.DeleteRoutineResponse\"\x04\x88\xb5\x18\x01\x12O\n" +
-	"\fListRoutines\x12\x1b.api.v1.ListRoutinesRequest\x1a\x1c.api.v1.ListRoutinesResponse\"\x04\x88\xb5\x18\x01\x12L\n" +
-	"\vAddExercise\x12\x1a.api.v1.AddExerciseRequest\x1a\x1b.api.v1.AddExerciseResponse\"\x04\x88\xb5\x18\x01\x12d\n" +
-	"\x13UpdateExerciseOrder\x12\".api.v1.UpdateExerciseOrderRequest\x1a#.api.v1.UpdateExerciseOrderResponse\"\x04\x88\xb5\x18\x01\x12O\n" +
-	"\fGetDashboard\x12\x1b.api.v1.GetDashboardRequest\x1a\x1c.api.v1.GetDashboardResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"CreatePlan\x12\x19.api.v1.CreatePlanRequest\x1a\x1a.api.v1.CreatePlanResponse\"\x00\x12<\n" +
+	"\aGetPlan\x12\x16.api.v1.GetPlanRequest\x1a\x17.api.v1.GetPlanResponse\"\x00\x12B\n" +
+	"\tListPlans\x12\x18.api.v1.ListPlansRequest\x1a\x19.api.v1.ListPlansResponse\"\x00\x12E\n" +
 	"\n" +
-	"CreatePlan\x12\x19.api.v1.CreatePlanRequest\x1a\x1a.api.v1.CreatePlanResponse\"\x04\x88\xb5\x18\x01\x12@\n" +
-	"\aGetPlan\x12\x16.api.v1.GetPlanRequest\x1a\x17.api.v1.GetPlanResponse\"\x04\x88\xb5\x18\x01\x12F\n" +
-	"\tListPlans\x12\x18.api.v1.ListPlansRequest\x1a\x19.api.v1.ListPlansResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"UpdatePlan\x12\x19.api.v1.UpdatePlanRequest\x1a\x1a.api.v1.UpdatePlanResponse\"\x00\x12E\n" +
 	"\n" +
-	"UpdatePlan\x12\x19.api.v1.UpdatePlanRequest\x1a\x1a.api.v1.UpdatePlanResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
-	"\n" +
-	"DeletePlan\x12\x19.api.v1.DeletePlanRequest\x1a\x1a.api.v1.DeletePlanResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rSetActivePlan\x12\x1c.api.v1.SetActivePlanRequest\x1a\x1d.api.v1.SetActivePlanResponse\"\x04\x88\xb5\x18\x01\x12X\n" +
-	"\x0fPauseActivePlan\x12\x1e.api.v1.PauseActivePlanRequest\x1a\x1f.api.v1.PauseActivePlanResponse\"\x04\x88\xb5\x18\x01\x12X\n" +
-	"\x0fSkipPlanRoutine\x12\x1e.api.v1.SkipPlanRoutineRequest\x1a\x1f.api.v1.SkipPlanRoutineResponse\"\x04\x88\xb5\x18\x01B\x97\x01\n" +
+	"DeletePlan\x12\x19.api.v1.DeletePlanRequest\x1a\x1a.api.v1.DeletePlanResponse\"\x00\x12N\n" +
+	"\rSetActivePlan\x12\x1c.api.v1.SetActivePlanRequest\x1a\x1d.api.v1.SetActivePlanResponse\"\x00\x12T\n" +
+	"\x0fPauseActivePlan\x12\x1e.api.v1.PauseActivePlanRequest\x1a\x1f.api.v1.PauseActivePlanResponse\"\x00\x12T\n" +
+	"\x0fSkipPlanRoutine\x12\x1e.api.v1.SkipPlanRoutineRequest\x1a\x1f.api.v1.SkipPlanRoutineResponse\"\x00B\x97\x01\n" +
 	"\n" +
 	"com.api.v1B\x13RoutineServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -2049,7 +2048,6 @@ func file_api_v1_routine_service_proto_init() {
 	if File_api_v1_routine_service_proto != nil {
 		return
 	}
-	file_api_v1_options_proto_init()
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
 	type x struct{}

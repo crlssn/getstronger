@@ -132,6 +132,78 @@ func (s *authSuite) TestUnregisteredProcedure() {
 	s.Require().False(reached)
 }
 
+// TestGuestProceduresAreTheOnlyOnesServed calls every procedure the app mounts
+// without a token and asserts that exactly the guest-marked ones are served.
+// Six of the seven services carry no access annotation at all, so this is also
+// what pins the default: a method that says nothing needs a token, and so does
+// every method of a service mounted without a single annotation.
+func (s *authSuite) TestGuestProceduresAreTheOnlyOnesServed() {
+	// The schema decides which procedures are guest ones; this list repeats it
+	// so that marking one has to be written down twice. Drift fails the sweep
+	// below rather than opening an endpoint quietly.
+	guestProcedures := []string{
+		"/api.v1.AuthService/Signup",
+		"/api.v1.AuthService/Login",
+		"/api.v1.AuthService/RefreshToken",
+		"/api.v1.AuthService/Logout",
+		"/api.v1.AuthService/VerifyEmail",
+		"/api.v1.AuthService/ResendVerificationEmail",
+		"/api.v1.AuthService/ResetPassword",
+		"/api.v1.AuthService/UpdatePassword",
+	}
+
+	opts := connect.WithInterceptors(s.interceptor)
+
+	mux := http.NewServeMux()
+	mux.Handle(apiv1connect.NewAuthServiceHandler(apiv1connect.UnimplementedAuthServiceHandler{}, opts))
+	mux.Handle(apiv1connect.NewFeedServiceHandler(apiv1connect.UnimplementedFeedServiceHandler{}, opts))
+	mux.Handle(apiv1connect.NewUserServiceHandler(apiv1connect.UnimplementedUserServiceHandler{}, opts))
+	mux.Handle(apiv1connect.NewRoutineServiceHandler(apiv1connect.UnimplementedRoutineServiceHandler{}, opts))
+	mux.Handle(apiv1connect.NewWorkoutServiceHandler(apiv1connect.UnimplementedWorkoutServiceHandler{}, opts))
+	mux.Handle(apiv1connect.NewExerciseServiceHandler(apiv1connect.UnimplementedExerciseServiceHandler{}, opts))
+	mux.Handle(apiv1connect.NewNotificationServiceHandler(apiv1connect.UnimplementedNotificationServiceHandler{}, opts))
+
+	server := httptest.NewServer(mux)
+	s.T().Cleanup(server.Close)
+
+	files := []protoreflect.FileDescriptor{
+		apiv1.File_api_v1_auth_service_proto,
+		apiv1.File_api_v1_feed_service_proto,
+		apiv1.File_api_v1_user_service_proto,
+		apiv1.File_api_v1_routine_service_proto,
+		apiv1.File_api_v1_workout_service_proto,
+		apiv1.File_api_v1_exercise_service_proto,
+		apiv1.File_api_v1_notification_service_proto,
+	}
+
+	var served []string
+	for _, file := range files {
+		services := file.Services()
+		for i := range services.Len() {
+			service := services.Get(i)
+			methods := service.Methods()
+			for j := range methods.Len() {
+				procedure := fmt.Sprintf("/%s/%s", service.FullName(), methods.Get(j).Name())
+				// An empty message encodes to an empty body, which every
+				// procedure decodes, so one request type calls them all.
+				client := connect.NewClient[apiv1.LoginRequest, apiv1.LoginResponse](server.Client(), server.URL+procedure)
+				_, err := client.CallUnary(s.T().Context(), connect.NewRequest(&apiv1.LoginRequest{}))
+				s.Require().Error(err)
+
+				if connect.CodeOf(err) == connect.CodeUnauthenticated {
+					continue
+				}
+
+				// The mounted handler is unimplemented, so its code proves the call reached it.
+				s.Require().Equal(connect.CodeUnimplemented, connect.CodeOf(err), procedure)
+				served = append(served, procedure)
+			}
+		}
+	}
+
+	s.Require().ElementsMatch(guestProcedures, served)
+}
+
 func (s *authSuite) TestSchemaDecidesAuthentication() {
 	type test struct {
 		name     string
@@ -159,7 +231,7 @@ func (s *authSuite) TestSchemaDecidesAuthentication() {
 
 	tests := []test{
 		{
-			name: "ok_public_procedure_reaches_handler",
+			name: "ok_guest_procedure_reaches_handler",
 			call: login,
 			// The mounted handler is unimplemented, so its code proves the call reached it.
 			expected: connect.CodeUnimplemented,
@@ -234,7 +306,7 @@ func (s *authSuite) TestStreamingHandler() {
 
 	tests := []test{
 		{
-			name:   "ok_public_procedure_reaches_handler",
+			name:   "ok_guest_procedure_reaches_handler",
 			method: "Login",
 			expected: expected{
 				reached: true,

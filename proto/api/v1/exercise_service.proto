@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/options.proto";
 import "api/v1/shared.proto";
 
 import "google/protobuf/field_mask.proto";
@@ -10,36 +9,20 @@ import "google/protobuf/field_mask.proto";
 import "buf/validate/validate.proto";
 
 service ExerciseService {
-  rpc CreateExercise (CreateExerciseRequest) returns (CreateExerciseResponse) {
-    option (auth) = true;
-  }
-  rpc GetExercise (GetExerciseRequest) returns (GetExerciseResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateExercise (UpdateExerciseRequest) returns (UpdateExerciseResponse) {
-    option (auth) = true;
-  }
+  rpc CreateExercise (CreateExerciseRequest) returns (CreateExerciseResponse) {}
+  rpc GetExercise (GetExerciseRequest) returns (GetExerciseResponse) {}
+  rpc UpdateExercise (UpdateExerciseRequest) returns (UpdateExerciseResponse) {}
   // DeleteExercise soft-deletes an exercise the caller owns. Product rule:
   // the exercise disappears from the owner's library and is detached from
   // every routine that includes it, while previously logged sets and finished
   // workouts keep referencing it, so training history is preserved unchanged.
   // The deletion is not reversible through the API; the soft delete exists so
   // history keeps resolving the exercise, not as a client-facing undo.
-  rpc DeleteExercise (DeleteExerciseRequest) returns (DeleteExerciseResponse) {
-    option (auth) = true;
-  }
-  rpc ListExercises (ListExercisesRequest) returns (ListExercisesResponse) {
-    option (auth) = true;
-  }
-  rpc GetPreviousWorkoutSets(GetPreviousWorkoutSetsRequest) returns (GetPreviousWorkoutSetsResponse) {
-    option (auth) = true;
-  }
-  rpc GetPersonalBests (GetPersonalBestsRequest) returns (GetPersonalBestsResponse) {
-    option (auth) = true;
-  }
-  rpc ListSets (ListSetsRequest) returns (ListSetsResponse) {
-    option (auth) = true;
-  }
+  rpc DeleteExercise (DeleteExerciseRequest) returns (DeleteExerciseResponse) {}
+  rpc ListExercises (ListExercisesRequest) returns (ListExercisesResponse) {}
+  rpc GetPreviousWorkoutSets(GetPreviousWorkoutSetsRequest) returns (GetPreviousWorkoutSetsResponse) {}
+  rpc GetPersonalBests (GetPersonalBestsRequest) returns (GetPersonalBestsResponse) {}
+  rpc ListSets (ListSetsRequest) returns (ListSetsResponse) {}
 }
 
 message CreateExerciseRequest {

@@ -852,17 +852,17 @@ const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\x16UpdatePasswordResponse\";\n" +
 	"\x14DeleteAccountRequest\x12#\n" +
 	"\bpassword\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\bpassword\"\x17\n" +
-	"\x15DeleteAccountResponse2\xb7\x05\n" +
-	"\vAuthService\x129\n" +
-	"\x06Signup\x12\x15.api.v1.SignupRequest\x1a\x16.api.v1.SignupResponse\"\x00\x126\n" +
-	"\x05Login\x12\x14.api.v1.LoginRequest\x1a\x15.api.v1.LoginResponse\"\x00\x12K\n" +
-	"\fRefreshToken\x12\x1b.api.v1.RefreshTokenRequest\x1a\x1c.api.v1.RefreshTokenResponse\"\x00\x129\n" +
-	"\x06Logout\x12\x15.api.v1.LogoutRequest\x1a\x16.api.v1.LogoutResponse\"\x00\x12H\n" +
-	"\vVerifyEmail\x12\x1a.api.v1.VerifyEmailRequest\x1a\x1b.api.v1.VerifyEmailResponse\"\x00\x12l\n" +
-	"\x17ResendVerificationEmail\x12&.api.v1.ResendVerificationEmailRequest\x1a'.api.v1.ResendVerificationEmailResponse\"\x00\x12N\n" +
-	"\rResetPassword\x12\x1c.api.v1.ResetPasswordRequest\x1a\x1d.api.v1.ResetPasswordResponse\"\x00\x12Q\n" +
-	"\x0eUpdatePassword\x12\x1d.api.v1.UpdatePasswordRequest\x1a\x1e.api.v1.UpdatePasswordResponse\"\x00\x12R\n" +
-	"\rDeleteAccount\x12\x1c.api.v1.DeleteAccountRequest\x1a\x1d.api.v1.DeleteAccountResponse\"\x04\x88\xb5\x18\x01B\x94\x01\n" +
+	"\x15DeleteAccountResponse2\xd3\x05\n" +
+	"\vAuthService\x12=\n" +
+	"\x06Signup\x12\x15.api.v1.SignupRequest\x1a\x16.api.v1.SignupResponse\"\x04\x90\xb5\x18\x01\x12:\n" +
+	"\x05Login\x12\x14.api.v1.LoginRequest\x1a\x15.api.v1.LoginResponse\"\x04\x90\xb5\x18\x01\x12O\n" +
+	"\fRefreshToken\x12\x1b.api.v1.RefreshTokenRequest\x1a\x1c.api.v1.RefreshTokenResponse\"\x04\x90\xb5\x18\x01\x12=\n" +
+	"\x06Logout\x12\x15.api.v1.LogoutRequest\x1a\x16.api.v1.LogoutResponse\"\x04\x90\xb5\x18\x01\x12L\n" +
+	"\vVerifyEmail\x12\x1a.api.v1.VerifyEmailRequest\x1a\x1b.api.v1.VerifyEmailResponse\"\x04\x90\xb5\x18\x01\x12p\n" +
+	"\x17ResendVerificationEmail\x12&.api.v1.ResendVerificationEmailRequest\x1a'.api.v1.ResendVerificationEmailResponse\"\x04\x90\xb5\x18\x01\x12R\n" +
+	"\rResetPassword\x12\x1c.api.v1.ResetPasswordRequest\x1a\x1d.api.v1.ResetPasswordResponse\"\x04\x90\xb5\x18\x01\x12U\n" +
+	"\x0eUpdatePassword\x12\x1d.api.v1.UpdatePasswordRequest\x1a\x1e.api.v1.UpdatePasswordResponse\"\x04\x90\xb5\x18\x01\x12N\n" +
+	"\rDeleteAccount\x12\x1c.api.v1.DeleteAccountRequest\x1a\x1d.api.v1.DeleteAccountResponse\"\x00B\x94\x01\n" +
 	"\n" +
 	"com.api.v1B\x10AuthServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 

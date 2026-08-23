@@ -11,11 +11,20 @@ import { file_google_protobuf_descriptor } from "@bufbuild/protobuf/wkt";
  * Describes the file api/v1/options.proto.
  */
 export const file_api_v1_options: GenFile = /*@__PURE__*/
-  fileDesc("ChRhcGkvdjEvb3B0aW9ucy5wcm90bxIGYXBpLnYxOjQKBGF1dGgSHi5nb29nbGUucHJvdG9idWYuTWV0aG9kT3B0aW9ucxjRhgMgASgIUgRhdXRoQpABCgpjb20uYXBpLnYxQgxPcHRpb25zUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_google_protobuf_descriptor]);
+  fileDesc("ChRhcGkvdjEvb3B0aW9ucy5wcm90bxIGYXBpLnYxOjYKBWd1ZXN0Eh4uZ29vZ2xlLnByb3RvYnVmLk1ldGhvZE9wdGlvbnMY0oYDIAEoCFIFZ3Vlc3RCkAEKCmNvbS5hcGkudjFCDE9wdGlvbnNQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_google_protobuf_descriptor]);
 
 /**
- * @generated from extension: bool auth = 50001;
+ * A guest procedure is served without a bearer token, because it either
+ * precedes a session or carries its own credential in the payload. Every
+ * other procedure requires one, so only the exception is written down and a
+ * method that says nothing is authenticated.
+ *
+ * Field 50001 held the inverse option, `bool auth`, and is retired. An
+ * `extend` block cannot carry a `reserved` statement, so this comment is the
+ * only thing keeping the number out of use.
+ *
+ * @generated from extension: bool guest = 50002;
  */
-export const auth: GenExtension<MethodOptions, boolean> = /*@__PURE__*/
+export const guest: GenExtension<MethodOptions, boolean> = /*@__PURE__*/
   extDesc(file_api_v1_options, 0);
 
