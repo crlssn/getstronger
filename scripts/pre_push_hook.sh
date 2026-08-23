@@ -5,6 +5,10 @@
 # runs everything again on the pull request, so the hook only has to be fast
 # enough that nobody reaches for --no-verify.
 #
+# Git runs this through the shim installed as the pre-push hook, so an edit
+# here takes effect on the next push with no reinstall. The shim skips the
+# checks when this script is missing or not executable.
+#
 # Git hands a pre-push hook one line per pushed ref on stdin:
 #   <local ref> <local sha> <remote ref> <remote sha>
 # Run by hand, with nothing on stdin, it checks the checked-out branch instead.

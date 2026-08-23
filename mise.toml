@@ -461,12 +461,16 @@ run = "mise install"
 alias = "install_hooks"
 description = "Install the pre-push Git hook"
 run = [
+    # The installed hook is a shim that runs scripts/pre_push_hook.sh from the
+    # repository, so this is the last time the hook needs installing: the
+    # checks themselves are never copied out of the tree.
+    #
     # Resolve the hook directory via Git so this also works from a worktree,
     # where .git is a file rather than a directory.
     '''
     hooks="$(git rev-parse --git-path hooks)"
     mkdir -p "$hooks"
-    cp ./scripts/pre_push_hook.sh "$hooks/pre-push"
+    cp ./scripts/pre_push_shim.sh "$hooks/pre-push"
     chmod +x "$hooks/pre-push"
     ''',
     '''echo "✅  Installed pre-push hook"''',
