@@ -1,10 +1,10 @@
 {
-  "comment": "The most findings of each kind the screenshot harness may report before the build fails. Lower a number whenever a change earns it; raising one is a decision that belongs in a review, not a commit message. Measured over the full page set, including the create-exercise/routine/plan/workout flows. smallTapTargets went 7 -> 3: the set grid's remove badge is a 44px target now, and it was what the three workout and circuit flow pages reported. What is left is the tag chip's dismiss on the exercise form and the @mention links under a workout.",
+  "comment": "The most findings of each kind the screenshot harness may report before the build fails. Lower a number whenever a change earns it; raising one is a decision that belongs in a review, not a commit message. Measured over the full page set, including the create-exercise/routine/plan/workout flows. smallTapTargets went 3 -> 1 when the tag chip became its own remove button: the two 24px ✕ buttons on the filled create-exercise page went with it. What is left is the @mention links under a workout.",
   "budget": {
     "accessibility": 0,
     "clippedText": 0,
     "horizontalOverflow": 0,
-    "smallTapTargets": 3,
+    "smallTapTargets": 1,
     "tinyText": 0
   }
 }

@@ -101,7 +101,7 @@ test.describe('exercise library', () => {
         await tagInput.fill(`E2E tag ${index}`)
         await tagInput.press('Enter')
       }
-      await expect(page.getByLabel('Exercise tags').locator(':scope > span')).toHaveCount(10)
+      await expect(page.getByLabel('Exercise tags').locator(':scope > button')).toHaveCount(10)
       await expect(page.getByLabel('Add exercise tag')).toHaveCount(0)
 
       await page.getByRole('button', { name: 'Save Exercise' }).click()

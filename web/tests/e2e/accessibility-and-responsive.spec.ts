@@ -146,6 +146,28 @@ test('keeps icon-only controls above the tap-target floor @responsive', async ({
   }
 })
 
+// The tag chip is the one control whose ✕ cannot grow: the pill around it is
+// 32px. The chip's own box is what carries the floor, and removing has to
+// still work from the label, not only from the ✕.
+test('removes a tag from a chip that clears the tap-target floor @responsive', async ({ page }) => {
+  await logIn(page)
+
+  await page.goto('/exercises/create')
+  const tagInput = page.getByLabel('Add exercise tag')
+  await tagInput.fill('Upper body')
+  await tagInput.press('Enter')
+  await tagInput.fill('Pull')
+  await tagInput.press('Enter')
+
+  const chip = page.getByRole('button', { name: 'Remove Upper body' })
+  await expectAboveFloor(chip, 'the tag chip')
+
+  // The label, not the ✕, which is the half of the chip the old button missed.
+  await chip.getByText('Upper body', { exact: true }).click()
+  await expect(chip).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Remove Pull' })).toBeVisible()
+})
+
 test('renders the not-found state accessibly', async ({ page }) => {
   await page.goto('/this-route-does-not-exist')
   await expect(page.getByRole('heading', { name: /not found/i })).toBeVisible()
