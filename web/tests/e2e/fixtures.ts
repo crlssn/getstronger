@@ -66,6 +66,15 @@ export const verificationToken = (userEmail: string) =>
     stdio: 'pipe',
   }).trim()
 
+// The password reset link is sent by the same noop provider, so its token is
+// read the same way.
+export const passwordResetToken = (userEmail: string) =>
+  execFileSync(
+    'go',
+    ['run', 'server/testing/factory/passwordresettoken/main.go', `-email=${userEmail}`],
+    { cwd: repositoryRoot, encoding: 'utf8', stdio: 'pipe' },
+  ).trim()
+
 export const logInAs = async (page: Page, userEmail: string, userPassword: string) => {
   await page.goto('/login')
   // A preceding test in the same worker may have left this browser signed in,
