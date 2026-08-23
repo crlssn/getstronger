@@ -67,6 +67,16 @@ describe('ExerciseTagsInput', () => {
     expect(screen.queryByRole('button', { name: 'Remove Push' })).not.toBeInTheDocument()
   })
 
+  // The whole chip removes, not just the ✕ drawn inside it: a 24px ✕ is half
+  // the tap-target floor, and the chip is the only box around it big enough.
+  test('removes a tag from anywhere on the chip', async () => {
+    renderWithProviders(<Harness initial={['Push']} />)
+
+    await userEvent.click(screen.getByText('Push'))
+
+    expect(screen.queryByRole('button', { name: 'Remove Push' })).not.toBeInTheDocument()
+  })
+
   test('counts the tags against the limit', async () => {
     renderWithProviders(<Harness initial={['Push']} />)
 

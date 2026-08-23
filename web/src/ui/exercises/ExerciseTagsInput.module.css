@@ -8,12 +8,31 @@
   @apply flex flex-wrap gap-2;
 }
 
-.tagList > span {
+/* Tapping the chip removes the tag, so the tap target is the chip's box rather
+ * than the ✕ inside it — the way AppSwitch is one box with a smaller track
+ * drawn inside. The button carries the floor height and nothing else, which
+ * keeps the hit area exactly as wide as the pill: chips can grow apart, never
+ * overlap. */
+.tagList > button {
+  @apply inline-flex min-h-(--size-control-sm) items-center focus-visible:ring-0 focus-visible:ring-offset-0;
+}
+
+/* The ring belongs on the pill, not on the invisible box around it. */
+.tagList > button:focus-visible .tag {
+  @apply ring-2 ring-ink-muted ring-offset-2;
+}
+
+.tagList .tag {
   @apply inline-flex min-h-8 items-center gap-1.5 rounded-full bg-ink-surface py-1 pl-3 pr-1.5 text-sm font-medium text-ink-strong;
 }
 
-.tagList button {
-  @apply grid size-6 place-items-center rounded-full text-ink-muted transition hover:bg-ink-tint hover:text-ink-strong;
+/* Decoration: it says the chip is removable, and the chip does the removing. */
+.tagList .remove {
+  @apply grid size-6 place-items-center rounded-full text-ink-muted transition;
+}
+
+.tagList > button:hover .remove {
+  @apply bg-ink-tint text-ink-strong;
 }
 
 .tagList svg {

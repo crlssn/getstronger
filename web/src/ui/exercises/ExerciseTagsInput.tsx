@@ -91,20 +91,25 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
       {value.length > 0 && (
         <div className={styles.tagList} aria-label={t('exercise.tagInput.listAria')}>
           {value.map((tag, index) => (
-            <span key={tag}>
-              {tag}
-              {/* eslint-disable-next-line no-restricted-syntax -- The ✕ lives
-                  inside a 32px chip. AppIconButton is 44px by design and would
-                  have to grow the chip to hold it, which would make a row of
-                  tags taller than the field they sit in. */}
-              <button
-                type="button"
-                aria-label={t('exercise.tagInput.remove', { name: tag })}
-                onClick={() => removeTag(index)}
-              >
-                <XMarkIcon aria-hidden="true" />
-              </button>
-            </span>
+            /* eslint-disable-next-line no-restricted-syntax -- A chip, which
+               the design system has no control for: AppIconButton carries no
+               label and AppButton is a 48px control, where a row of ten tags
+               would dwarf the field they sit in. */
+            <button
+              key={tag}
+              type="button"
+              aria-label={t('exercise.tagInput.remove', { name: tag })}
+              onClick={() => removeTag(index)}
+            >
+              {/* The chip is drawn inside the button rather than being it, so
+                  the box can hold the 44px tap floor while the pill stays 32. */}
+              <span className={styles.tag}>
+                {tag}
+                <span className={styles.remove} aria-hidden="true">
+                  <XMarkIcon />
+                </span>
+              </span>
+            </button>
           ))}
         </div>
       )}
