@@ -59,7 +59,7 @@ beforeEach(() => {
   mocked.listRoutines.mockResolvedValue(create(ListRoutinesResponseSchema, { routines }))
   mocked.getPlan.mockResolvedValue(create(GetPlanResponseSchema, { plan: plan() }))
   vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
-  usePlanStore.setState({ plans: [], loading: false })
+  usePlanStore.setState({ plans: [], loading: false, failed: false })
   useToastStore.getState().dismiss()
   useConfirmationStore.setState({ confirmation: null, resolver: null })
 })
@@ -85,6 +85,18 @@ describe('PlansView', () => {
     )
     // The header's create link would be a second way to do the same thing.
     expect(screen.queryByRole('link', { name: /New plan/ })).not.toBeInTheDocument()
+  })
+
+  // The empty state teaches what a plan is, which is the wrong lesson for
+  // someone who already has three of them.
+  test('says the fetch failed rather than explaining what a plan is', async () => {
+    vi.spyOn(usePlanStore.getState(), 'load').mockImplementation(async () => {
+      usePlanStore.setState({ failed: true })
+    })
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('How plans work')).not.toBeInTheDocument()
   })
 
   test('leads with the running plan and where it is in the loop', async () => {

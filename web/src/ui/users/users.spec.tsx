@@ -214,6 +214,21 @@ describe('UserWorkouts', () => {
 
     expect(await screen.findByText('Nothing here yet…')).toBeInTheDocument()
   })
+
+  // A profile with fifty workouts and no connection used to read as a profile
+  // with no workouts.
+  test('says the fetch failed rather than that the profile is empty', async () => {
+    mocked.listWorkouts.mockResolvedValue(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Nothing here yet…')).not.toBeInTheDocument()
+
+    mocked.listWorkouts.mockResolvedValue(workoutsPage([workout('w1', '2026-08-14T08:00:00Z')]))
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('heading', { name: 'Workout w1' })).toBeInTheDocument()
+  })
 })
 
 describe('UserPersonalBests', () => {
@@ -246,6 +261,14 @@ describe('UserPersonalBests', () => {
 
     expect(await screen.findByText('Nothing here yet…')).toBeInTheDocument()
   })
+
+  test('says the fetch failed rather than that there are no bests', async () => {
+    mocked.getPersonalBests.mockResolvedValue(undefined)
+    render(`/users/${them}/personal-bests`)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Nothing here yet…')).not.toBeInTheDocument()
+  })
 })
 
 // The two tabs differ only in which request they make, so they share a list.
@@ -268,5 +291,20 @@ describe.each([
     render(`/users/${them}/${path}`)
 
     expect(await screen.findByText('Nothing here yet…')).toBeInTheDocument()
+  })
+
+  test('says the fetch failed, and retries it', async () => {
+    mock().mockResolvedValue(undefined)
+    render(`/users/${them}/${path}`)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Nothing here yet…')).not.toBeInTheDocument()
+
+    mock().mockResolvedValue(
+      create(schema, { [field]: [{ id: 'user-1', username: 'sam', name: 'Sam Doe' }] }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('link', { name: /sam/ })).toBeInTheDocument()
   })
 })

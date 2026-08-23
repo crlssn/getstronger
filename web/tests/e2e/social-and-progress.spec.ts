@@ -74,8 +74,11 @@ test.describe('social feed and discovery', () => {
       }
     })
     await page.reload()
-    await expect(page.getByRole('alert')).toContainText('Latest workouts could not be loaded')
-    await page.getByRole('button', { name: 'Try again' }).click()
+    // Scoped to the feed's own row: an unreachable backend also raises the
+    // global connectivity toast, which is an alert of its own.
+    const failure = page.getByRole('alert').filter({ hasText: 'Latest workouts could not be' })
+    await expect(failure).toBeVisible()
+    await failure.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('article').first()).toBeVisible()
     await scrollToListEnd(page, page.getByText(/all caught up/))
     await expect(page.getByText("You're all caught up")).toBeVisible()

@@ -141,8 +141,10 @@ import {
   workoutClient,
 } from './clients'
 import { i18n } from '@/i18n'
+import { isConnectivityError } from '@/http/offlineCache'
 import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 import { currentPath, goTo } from '@/router/navigation'
+import { useConnectionStore } from '@/stores/connection'
 import { useToastStore } from '@/stores/toasts'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 
@@ -706,20 +708,33 @@ const tryCatch = async <T>(
         }
       }
 
-      // DEBT: Filter out some error codes to alert the user until we have a better way to handle them.
-      const ignoredCodes: Code[] = [
-        Code.Unknown,
-        Code.Canceled,
-        Code.Unavailable,
-        Code.Unauthenticated,
-      ]
-      if (!ignoredCodes.includes(error.code)) {
-        useToastStore.getState().error(error.message)
+      // An application error says something the user can act on, so it is
+      // shown as it came. Cancelled and unreachable are neither: they fall
+      // through to the connectivity handling below.
+      if (error.code !== Code.Canceled && !isConnectivityError(error)) {
+        useToastStore.getState().error(
+          // An Unknown carries a transport message ("[unknown] Failed to
+          // fetch"), which tells the user nothing they can do anything with.
+          error.code === Code.Unknown ? i18n.t('common.somethingWentWrong') : error.message,
+        )
         return
       }
     }
 
     console.error('request', error)
     if (options.rethrow) throw error
+
+    // A request that never reached the backend used to end here in silence, and
+    // the callers turned that silence into "nothing here yet".
+    //
+    // The toast marks the moment connectivity went, not every request that
+    // fails after it: the banner carries the state from there on, and a toast
+    // per failed request would bury the one message the user was waiting for —
+    // "Workout saved on this device" is raised while the app is already
+    // offline, and the newest toast wins.
+    if (isConnectivityError(error) && useConnectionStore.getState().online) {
+      useConnectionStore.getState().setOnline(false)
+      useToastStore.getState().error(i18n.t('offline.requestFailed'))
+    }
   }
 }

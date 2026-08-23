@@ -23,6 +23,7 @@ export const UserSignup = () => {
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [usernameEdited, setUsernameEdited] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   // The username follows the name until it is typed in, which is the only
   // signal that the suggestion is not wanted. Clearing the field hands it back.
@@ -41,10 +42,17 @@ export const UserSignup = () => {
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (submitting) return
 
-    const res = await signup(
-      create(SignupRequestSchema, { name, username, email, password, passwordConfirmation }),
-    )
+    setSubmitting(true)
+    let res
+    try {
+      res = await signup(
+        create(SignupRequestSchema, { name, username, email, password, passwordConfirmation }),
+      )
+    } finally {
+      setSubmitting(false)
+    }
     if (!res) return
 
     posthog.capture('account_signed_up')
@@ -123,8 +131,15 @@ export const UserSignup = () => {
           onValueChange={setPasswordConfirmation}
         />
 
-        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
-          {t('auth.createAccount')}
+        <AppButton
+          type="submit"
+          colour="primary"
+          size="lg"
+          className="mt-2"
+          disabled={submitting}
+          aria-busy={submitting || undefined}
+        >
+          {submitting ? t('auth.creatingAccount') : t('auth.createAccount')}
         </AppButton>
       </form>
 

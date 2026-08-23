@@ -32,7 +32,7 @@ const seed = (...plans: unknown[]) => usePlanStore.setState({ plans: plans as ne
 
 describe('plan store', () => {
   beforeEach(() => {
-    usePlanStore.setState({ plans: [], loading: false })
+    usePlanStore.setState({ plans: [], loading: false, failed: false })
     Object.values(mocked).forEach((mock) => mock.mockReset())
   })
 
@@ -52,6 +52,20 @@ describe('plan store', () => {
     await store().load()
 
     expect(store().plans).toHaveLength(1)
+  })
+
+  // An empty plan list and an unreachable server look the same to the screen
+  // otherwise, and only one of them deserves the teaching empty state.
+  test('records that a load failed, and that the next one did not', async () => {
+    mocked.listPlans.mockResolvedValue(undefined)
+    await store().load()
+
+    expect(store().failed).toBe(true)
+
+    mocked.listPlans.mockResolvedValue({ plans: [plan('p1')] } as never)
+    await store().load()
+
+    expect(store().failed).toBe(false)
   })
 
   test('clears the loading flag even when the request throws', async () => {

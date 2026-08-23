@@ -191,6 +191,27 @@ export const authenticatedPages: PageEntry[] = [
     name: 'start-routine',
     route: ({ routineId }) => routineId && `/workouts/routine/${routineId}`,
   },
+  // Last of all, because a refused request leaves the app believing it is
+  // offline until the next one succeeds, and the banner that says so would
+  // otherwise turn up in the page photographed after this one.
+  {
+    component: 'src/ui/components/AppErrorState.tsx',
+    name: 'load-failed',
+    prepare: async (page) => {
+      // The offline cache would serve the last good page instead of failing,
+      // which is the right behaviour and the wrong screenshot.
+      await page.evaluate(() => {
+        for (const key of Object.keys(window.localStorage)) {
+          if (key.startsWith('offlineCache:')) window.localStorage.removeItem(key)
+        }
+      })
+      await page.route('**/ListExercises', (route) => route.abort())
+      await page.reload()
+      await page.getByRole('alert').waitFor()
+      await page.unroute('**/ListExercises')
+    },
+    route: () => '/exercises',
+  },
 ]
 
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'

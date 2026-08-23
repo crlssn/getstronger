@@ -90,10 +90,6 @@
   @apply size-5 animate-spin rounded-full border-2 border-border border-t-ink;
 }
 
-.feedError {
-  @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
-}
-
 .feedEnd {
   @apply flex items-center justify-center gap-3 py-5 text-text-muted;
 }

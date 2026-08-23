@@ -17,17 +17,25 @@ export const ResetPassword = () => {
 
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (submitting) return
 
-    const res = await updatePassword(
-      create(UpdatePasswordRequestSchema, {
-        password,
-        passwordConfirmation,
-        token: params.get('token') ?? '',
-      }),
-    )
+    setSubmitting(true)
+    let res
+    try {
+      res = await updatePassword(
+        create(UpdatePasswordRequestSchema, {
+          password,
+          passwordConfirmation,
+          token: params.get('token') ?? '',
+        }),
+      )
+    } finally {
+      setSubmitting(false)
+    }
     if (!res) return
 
     posthog.capture('password_reset_completed')
@@ -64,8 +72,15 @@ export const ResetPassword = () => {
           onValueChange={setPasswordConfirmation}
         />
 
-        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
-          {t('auth.recovery.updatePassword')}
+        <AppButton
+          type="submit"
+          colour="primary"
+          size="lg"
+          className="mt-2"
+          disabled={submitting}
+          aria-busy={submitting || undefined}
+        >
+          {submitting ? t('auth.recovery.updatingPassword') : t('auth.recovery.updatePassword')}
         </AppButton>
       </form>
     </section>

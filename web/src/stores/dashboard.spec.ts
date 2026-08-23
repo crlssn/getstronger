@@ -16,7 +16,12 @@ const response = (dashboard: Record<string, unknown>) => dashboard as never
 describe('dashboard store', () => {
   beforeEach(() => {
     localStorage.clear()
-    useDashboardStore.setState({ preferredRoutineId: '', dashboard: undefined, loading: false })
+    useDashboardStore.setState({
+      preferredRoutineId: '',
+      dashboard: undefined,
+      loading: false,
+      failed: false,
+    })
     getDashboardMock.mockReset()
     getDashboardMock.mockResolvedValue(response({}))
   })
@@ -69,6 +74,20 @@ describe('dashboard store', () => {
     await store().load()
 
     expect(selectNextRoutine(store())?.id).toBe('r1')
+  })
+
+  // Without this the home screen cannot tell an account with no routines from
+  // one it could not reach, and it offers onboarding to both.
+  test('records that a load failed, and that the next one did not', async () => {
+    getDashboardMock.mockResolvedValue(undefined)
+    await store().load()
+
+    expect(store().failed).toBe(true)
+
+    getDashboardMock.mockResolvedValue(response({ nextRoutine: { id: 'r1' } }))
+    await store().load()
+
+    expect(store().failed).toBe(false)
   })
 
   test('clears the loading flag even when the request fails', async () => {

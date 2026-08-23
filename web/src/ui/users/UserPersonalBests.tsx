@@ -1,10 +1,11 @@
 import type { ExerciseSet } from '@/proto/api/v1/shared_pb'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 
 import { getPersonalBests } from '@/http/requests'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem, AppListItemLink } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -19,17 +20,24 @@ export const UserPersonalBests = () => {
 
   const [personalBests, setPersonalBests] = useState<ExerciseSet[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
 
-  useEffect(() => {
-    const load = async () => {
-      const res = await getPersonalBests(id)
-      if (res) setPersonalBests(res.personalBests)
-      setLoaded(true)
-    }
-    void load()
+  const load = useCallback(async () => {
+    const res = await getPersonalBests(id)
+    if (res) setPersonalBests(res.personalBests)
+    setFailed(!res)
   }, [id])
 
+  useEffect(() => {
+    const initialLoad = async () => {
+      await load()
+      setLoaded(true)
+    }
+    void initialLoad()
+  }, [load])
+
   if (!loaded) return <AppSkeleton />
+  if (failed) return <AppErrorState onRetry={() => void load()} />
 
   return (
     <AppList>

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { create } from '@bufbuild/protobuf'
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -160,6 +160,26 @@ describe('HomePageActions', () => {
     await settle()
 
     expect(await screen.findByText('Nothing found for “zzz”.')).toBeInTheDocument()
+  })
+
+  // Four endpoints answer one question, so "nothing found" is only true when
+  // all four actually answered.
+  test('says the search failed rather than that nothing matched', async () => {
+    Object.values(mocked).forEach((mock) => mock.mockResolvedValue(undefined))
+    renderOpen()
+
+    await userEvent.type(field(), 'bench')
+    await settle()
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('The search could not be completed.')
+    expect(screen.queryByText('Nothing found for “bench”.')).not.toBeInTheDocument()
+
+    withResults()
+    await userEvent.click(within(failure).getByRole('button'))
+    await settle()
+
+    expect(await screen.findByText('Bench press')).toBeInTheDocument()
   })
 
   // One search per typed word, not one per keystroke.

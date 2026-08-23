@@ -86,6 +86,25 @@ describe('UserLogin', () => {
     expect(useAuthStore.getState().accessToken).toBe('')
   })
 
+  // With the server unreachable, tapping "Log in" used to do nothing at all:
+  // no alert, no pending state, no reaction of any kind.
+  test('reacts to the submit while the request is out', async () => {
+    let land: (value: undefined) => void = () => {}
+    mocked.login.mockReturnValue(new Promise<undefined>((resolve) => (land = resolve)))
+    renderScreen(<UserLogin />)
+
+    await userEvent.type(field('Email address'), 'alex@example.com')
+    await userEvent.type(field('Password'), 'password123')
+    await submit('Log in')
+
+    const button = await screen.findByRole('button', { name: 'Logging in…' })
+    expect(button).toBeDisabled()
+
+    land(undefined)
+
+    expect(await screen.findByRole('button', { name: 'Log in' })).toBeEnabled()
+  })
+
   test('offers a way to recover a password and to sign up', () => {
     renderScreen(<UserLogin />)
 

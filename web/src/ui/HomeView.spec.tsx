@@ -55,7 +55,7 @@ describe('HomeView', () => {
     listFeedItems.mockReset()
     listFeedItems.mockResolvedValue(feedPage([]))
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
-    useDashboardStore.setState({ dashboard: undefined, loading: false })
+    useDashboardStore.setState({ dashboard: undefined, loading: false, failed: false })
     // The streak card fetches on mount and is covered by its own spec.
     useStreakStore.setState({ loaded: false, failed: true })
   })
@@ -162,6 +162,21 @@ describe('HomeView', () => {
         'href',
         '/routines/create',
       )
+    })
+
+    // Onboarding copy for a user who already has routines is the worst thing
+    // this screen can say, so a failed load has to say something else.
+    test('says the dashboard failed rather than asking for a first routine', async () => {
+      const load = vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
+      useDashboardStore.setState({ dashboard: undefined, failed: true })
+      render()
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+      expect(screen.queryByText('Create your first routine')).not.toBeInTheDocument()
+
+      await userEvent.click(within(screen.getByRole('alert')).getByRole('button'))
+
+      expect(load).toHaveBeenCalled()
     })
 
     test('picks a different routine and closes the sheet', async () => {

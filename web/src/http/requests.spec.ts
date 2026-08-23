@@ -27,6 +27,7 @@ import { Error as ApiError, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
 import { setNavigator, type Navigate } from '@/router/navigation'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
+import { useConnectionStore } from '@/stores/connection'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import {
   createWorkout as createAWorkout,
@@ -156,6 +157,7 @@ describe('shared error handling', () => {
     getUser.mockReset()
     createWorkout.mockReset()
     useToastStore.getState().dismiss()
+    useConnectionStore.setState({ online: true })
     useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
   })
 
@@ -170,18 +172,53 @@ describe('shared error handling', () => {
     })
   })
 
-  // These say the request never landed rather than that it was refused, so a
-  // toast would blame the user for their connection.
-  it.each([Code.Unknown, Code.Canceled, Code.Unavailable])(
-    'stays quiet about a %i failure',
-    async (code) => {
-      getUser.mockRejectedValue(new ConnectError('transport', code))
+  // The failure the app used to swallow. Silence here is what let the screens
+  // render an unreachable backend as an empty list, so an unreachable backend
+  // now says so — and says it about the connection, not about the request.
+  it('names a connectivity failure as one', async () => {
+    getUser.mockRejectedValue(new ConnectError('transport', Code.Unavailable))
 
-      await getCurrentUser('user-1')
+    await getCurrentUser('user-1')
 
-      expect(useToastStore.getState().toast).toBeNull()
-    },
-  )
+    expect(useToastStore.getState().toast).toMatchObject({
+      type: 'error',
+      message: expect.stringContaining('offline'),
+    })
+    expect(useConnectionStore.getState().online).toBe(false)
+  })
+
+  // The banner carries the offline state once it is up, and the newest toast
+  // wins: one per failed request would bury whatever the user was waiting for.
+  it('says it once rather than once per failed request', async () => {
+    useConnectionStore.setState({ online: false })
+    getUser.mockRejectedValue(new ConnectError('transport', Code.Unavailable))
+
+    await getCurrentUser('user-1')
+
+    expect(useToastStore.getState().toast).toBeNull()
+  })
+
+  // An Unknown carries a transport message the user can do nothing with.
+  it('replaces an unknown failure’s message with one that means something', async () => {
+    getUser.mockRejectedValue(new ConnectError('[unknown] Failed to fetch', Code.Unknown))
+
+    await getCurrentUser('user-1')
+
+    expect(useToastStore.getState().toast).toMatchObject({
+      type: 'error',
+      message: 'Something went wrong. Please try again.',
+    })
+  })
+
+  // The app changing its mind — a superseded search, a screen left behind — is
+  // not something the user did or needs telling about.
+  it('stays quiet about a cancelled request', async () => {
+    getUser.mockRejectedValue(new ConnectError('aborted', Code.Canceled))
+
+    await getCurrentUser('user-1')
+
+    expect(useToastStore.getState().toast).toBeNull()
+  })
 
   it('ends the session when the server rejects the token', async () => {
     getUser.mockRejectedValue(new ConnectError('expired', Code.Unauthenticated))

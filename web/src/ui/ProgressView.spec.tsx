@@ -4,7 +4,7 @@ import type { ChartData } from 'chart.js'
 
 import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -48,7 +48,7 @@ const dashboardWith = (personalBests: { name: string; weight: number }[]) =>
 
 const seed = (workouts: ReturnType<typeof workout>[], dashboard = dashboardWith([])) => {
   useProgressStore.setState({ workouts, loaded: true, failed: false })
-  useDashboardStore.setState({ dashboard })
+  useDashboardStore.setState({ dashboard, failed: false })
 }
 
 const period = (label: string) => screen.getByRole('button', { name: label })
@@ -61,7 +61,7 @@ describe('ProgressView', () => {
     vi.spyOn(useProgressStore.getState(), 'load').mockResolvedValue(undefined)
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
     useProgressStore.setState({ workouts: [], loaded: false, failed: false })
-    useDashboardStore.setState({ dashboard: undefined })
+    useDashboardStore.setState({ dashboard: undefined, failed: false })
   })
 
   test('waits before showing a card it has no data for', () => {
@@ -149,6 +149,31 @@ describe('ProgressView', () => {
 
     await waitFor(() => expect(screen.getByText('Nothing to chart yet')).toBeInTheDocument())
     expect(screen.getByRole('link', { name: 'Start workout' })).toHaveAttribute('href', '/workout')
+  })
+
+  // The store has always set this flag; the view used to ignore it, so a failed
+  // refresh took the whole volume section off the screen without saying a word.
+  test('reads the failure flag its store sets', async () => {
+    const load = vi.spyOn(useProgressStore.getState(), 'load').mockResolvedValue(undefined)
+    useProgressStore.setState({ workouts: [], loaded: true, failed: true })
+    useDashboardStore.setState({ dashboard: dashboardWith([{ name: 'Bench press', weight: 100 }]) })
+    renderWithProviders(<ProgressView />)
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('Something went wrong')
+
+    await userEvent.click(within(failure).getByRole('button'))
+
+    expect(load).toHaveBeenCalled()
+  })
+
+  test('says the records failed rather than that there are none', async () => {
+    useProgressStore.setState({ workouts: [workout(1, 1000)], loaded: true, failed: false })
+    useDashboardStore.setState({ dashboard: undefined, failed: true })
+    renderWithProviders(<ProgressView />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Nothing to chart yet')).not.toBeInTheDocument()
   })
 
   // A chip that exists to celebrate should not report a zero.
