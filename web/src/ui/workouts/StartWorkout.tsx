@@ -466,9 +466,9 @@ export const StartWorkout = () => {
     else useWorkoutStore.getState().setRestTimer(routineID)
   }
 
-  // The station already carries the rest that belongs to it: the routine's own
+  // The station already carries the rest between its sets: the routine's own
   // length where a routine trains it, and the app default otherwise.
-  const startExerciseRest = (station?: SessionStation) => {
+  const startSetRest = (station?: SessionStation) => {
     startRestOrClear(station?.restSeconds ?? 0)
   }
 
@@ -483,7 +483,7 @@ export const StartWorkout = () => {
         completedSets.current.add(key)
         // A circuit rests on the way to the next exercise or into the next
         // round, so its rest belongs to moving on rather than to the set.
-        if (blockOf.get(station.key)?.mode !== 'circuit') startExerciseRest(station)
+        if (blockOf.get(station.key)?.mode !== 'circuit') startSetRest(station)
       }
       return
     }
@@ -588,6 +588,7 @@ export const StartWorkout = () => {
   }
 
   const moveToNextUnfinished = () => {
+    const left = activeStation
     const done = selectCompletedExerciseIds(useWorkoutStore.getState(), routineID)
     const next = nextUnfinishedStation(
       stations,
@@ -597,7 +598,9 @@ export const StartWorkout = () => {
     if (next < 0) return
 
     selectStation(next)
-    startExerciseRest(stations[next])
+    // The walk to the next exercise is the block's rest, not the next
+    // exercise's: what is being rested from is the work just finished.
+    startRestOrClear(left ? (blockOf.get(left.key)?.restBetweenExercisesSeconds ?? 0) : 0)
   }
 
   /**

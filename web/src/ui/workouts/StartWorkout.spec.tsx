@@ -531,6 +531,65 @@ describe('StartWorkout', () => {
       expect(restBanner()).not.toBeInTheDocument()
     })
 
+    // The walk to the next lift is the block's rest: what is being rested from
+    // is the exercise just finished, not the one about to start.
+    test("rests for the block's length on the way to the next exercise", async () => {
+      const user = userEvent.setup()
+      mocked.getRoutine.mockResolvedValue(
+        create(GetRoutineResponseSchema, {
+          routine: create(RoutineSchema, {
+            name: 'Push Day',
+            exercises: [benchPress, squat],
+            groups: [
+              {
+                id: 'group-straight',
+                mode: RoutineGroupMode.STRAIGHT,
+                restBetweenExercisesSeconds: 120,
+                exercises: [trains(benchPress), trains(squat)],
+              },
+            ],
+          }),
+        }),
+      )
+      await renderWorkout()
+
+      await logFirstSet(user)
+      // The set's own rest first, which is the exercise's own length.
+      expect(within(restBanner()!).getByText('01:30')).toBeInTheDocument()
+
+      await user.click(primaryAction())
+
+      expect(within(restBanner()!).getByText('02:00')).toBeInTheDocument()
+    })
+
+    // A block that says nothing rests for nothing, rather than borrowing the
+    // length off the exercise being walked to.
+    test('takes no rest between exercises where the block gives none', async () => {
+      const user = userEvent.setup()
+      mocked.getRoutine.mockResolvedValue(
+        create(GetRoutineResponseSchema, {
+          routine: create(RoutineSchema, {
+            name: 'Push Day',
+            exercises: [benchPress, squat],
+            groups: [
+              {
+                id: 'group-straight',
+                mode: RoutineGroupMode.STRAIGHT,
+                restBetweenExercisesSeconds: 0,
+                exercises: [trains(benchPress), trains(squat)],
+              },
+            ],
+          }),
+        }),
+      )
+      await renderWorkout()
+
+      await logFirstSet(user)
+      await user.click(primaryAction())
+
+      expect(restBanner()).not.toBeInTheDocument()
+    })
+
     // A circuit rests between exercises and between rounds, so a set rest
     // stored against one of its exercises is not the session's to take.
     test('takes no set rest in a circuit however long the routine says', async () => {

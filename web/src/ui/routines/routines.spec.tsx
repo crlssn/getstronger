@@ -340,23 +340,24 @@ describe('CreateRoutine', () => {
 
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
+    await addExercise(/Row/)
     await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
 
-    const betweenExercises = screen.getByLabelText('Rest after each exercise')
+    const betweenExercises = screen.getByLabelText('Rest after each exercise in group A')
     await userEvent.clear(betweenExercises)
-    await userEvent.type(betweenExercises, '20')
+    await userEvent.type(betweenExercises, '0:20')
 
-    const betweenRounds = screen.getByLabelText('Rest after each round')
+    const betweenRounds = screen.getByLabelText('Rest after each round in group A')
     await userEvent.clear(betweenRounds)
-    await userEvent.type(betweenRounds, '120')
+    await userEvent.type(betweenRounds, '2:00')
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() =>
       expect(mocked.createRoutine).toHaveBeenCalledWith(
         'Full body',
-        ['bench'],
+        ['bench', 'row'],
         [
           expect.objectContaining({
             restBetweenExercisesSeconds: 20,
@@ -475,6 +476,37 @@ describe('CreateRoutine', () => {
     )
   })
 
+  // A plain routine pauses on the way to the next lift too, so it is asked how
+  // long for without having to be turned into a circuit first.
+  test('sets the rest between exercises on a routine that is one plain block', async () => {
+    render()
+
+    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
+    await addExercise(/Bench press/)
+
+    // A rest between exercises means nothing until there are two of them.
+    expect(screen.queryByLabelText('Rest after each exercise')).not.toBeInTheDocument()
+    await addExercise(/Row/)
+
+    const betweenExercises = screen.getByLabelText('Rest after each exercise')
+    expect(betweenExercises).toHaveValue('1:30')
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Add 30 seconds to Rest after each exercise' }),
+    )
+    expect(betweenExercises).toHaveValue('2:00')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
+
+    await waitFor(() =>
+      expect(mocked.createRoutine).toHaveBeenCalledWith(
+        'Heavy day',
+        ['bench', 'row'],
+        [expect.objectContaining({ mode: 'straight', restBetweenExercisesSeconds: 120 })],
+      ),
+    )
+  })
+
   // Rest between sets used to be the exercise library's only, so the same lift
   // rested the same length in every routine that trained it.
   test('gives an exercise a rest of its own in this routine', async () => {
@@ -484,12 +516,13 @@ describe('CreateRoutine', () => {
     await addExercise(/Bench press/)
 
     const rest = screen.getByLabelText('Rest between sets of Bench press')
-    // A real value from the moment it is picked, rather than a placeholder for
-    // a length written down somewhere else.
-    expect(rest).toHaveValue('90')
+    // A length read off a clock, not a second count — and a real value from the
+    // moment it is picked rather than a placeholder for one written down
+    // somewhere else.
+    expect(rest).toHaveValue('1:30')
 
     await userEvent.clear(rest)
-    await userEvent.type(rest, '180')
+    await userEvent.type(rest, '3:00')
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() =>
@@ -513,7 +546,7 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Cardio day')
     await addExercise(/Row/)
 
-    expect(screen.getByLabelText('Rest between sets of Row')).toHaveValue('0')
+    expect(screen.getByLabelText('Rest between sets of Row')).toHaveValue('0:00')
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 

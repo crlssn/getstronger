@@ -25,6 +25,7 @@ aspirational.
 | Anything a user taps           | `<AppButton>` — or `<AppIconButton>` for icon-only  |
 | A text field                   | `<AppInput>` / `<AppTextarea>`                      |
 | A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`           |
+| A duration nudged in steps     | `<AppDurationStepper>`                              |
 | On or off                      | `<AppSwitch>`                                       |
 | A field the user searches with | `<AppSearchField>`                                  |
 | The next page of a list        | `<AppLoadMore>`                                     |
@@ -120,6 +121,19 @@ field's border as a label on it rather than a control in it.
 Both are `type="text"` with an `inputMode`, not `type="number"`: a spinner on a
 set row is a mis-tap waiting to happen, and a scroll wheel over one silently
 changes what was logged.
+
+### `<AppDurationStepper>`
+
+An `<AppDurationInput>` with a − and a + either side of it, stepping 30 seconds
+by default. For a duration that is read off a clock and adjusted in coarse
+nudges rather than typed exactly — every rest in the routine builder. `label`
+names the field and is what the two buttons build their own names from, so a
+card holding several of them still reads unambiguously to a screen reader.
+
+Unlike the two fields above it, its value is never `undefined`: an empty field
+is a half-typed state rather than an answer, so clearing it leaves the last
+value standing and the field snaps back on blur. Zero is typed, or stepped
+down to.
 
 ### `<AppSwitch>`
 
