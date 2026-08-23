@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppDurationStepper } from '@/ui/components/AppDurationStepper'
 import { AppIconButton } from '@/ui/components/AppIconButton'
-import { AppNumberField } from '@/ui/components/AppNumberField'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { DropdownButton } from '@/ui/components/DropdownButton'
@@ -16,7 +16,6 @@ import {
   defaultRoundRestSeconds,
   groupHasExercise,
   groupLetter,
-  maximumRestSeconds,
   moveEntryToGroup,
   moveEntryWithinGroup,
   removeEntry,
@@ -34,11 +33,6 @@ interface Props {
   onChange: (groups: DraftGroup[]) => void
   onAddExercise: (groupId: string) => void
 }
-
-/** A rest the API will take: seconds, never negative, never past an hour. A
- *  cleared field is no rest, which is the same thing as typing a zero. */
-const clampRest = (seconds: number | undefined) =>
-  Math.min(Math.max(Math.round(seconds ?? 0), 0), maximumRestSeconds)
 
 const withGroup = (groups: DraftGroup[], groupId: string, changes: Partial<DraftGroup>) =>
   groups.map((group) => (group.id === groupId ? { ...group, ...changes } : group))
@@ -99,6 +93,9 @@ export const RoutineGroupsEditor = ({
       {groups.map((group, index) => {
         const letter = groupLetter(index)
         const circuit = group.mode === 'circuit'
+        // A rest between exercises is a rest between two of them, so a block
+        // holding one is not asked about the walk it never takes.
+        const walksBetweenExercises = group.entries.length > 1
 
         return (
           <section key={group.id} className={cn(styles.group, circuit && styles.circuit)}>
@@ -133,49 +130,52 @@ export const RoutineGroupsEditor = ({
               />
             )}
 
-            {circuit && (
+            {/* Every block pauses on the way to the next exercise, so both
+                kinds are asked how long for. Only a circuit has a lap to close,
+                so only a circuit is asked about the round. */}
+            {(walksBetweenExercises || circuit) && (
               <div className={styles.settings}>
-                {/* Two rests, because a circuit has two places to take one: on
-                    the walk to the next station, and once the lap closes. */}
-                <div className={styles.settingRow}>
-                  <label className={styles.settingLabel} htmlFor={`rest-exercise-${group.id}`}>
-                    {t('routine.form.groups.restExercise')}
-                  </label>
-                  <AppNumberField
-                    id={`rest-exercise-${group.id}`}
-                    className={styles.secondsField}
-                    inputMode="numeric"
-                    unit={t('common.sec')}
-                    value={group.restBetweenExercisesSeconds}
-                    onChange={(seconds) =>
-                      onChange(
-                        withGroup(groups, group.id, {
-                          restBetweenExercisesSeconds: clampRest(seconds),
-                        }),
-                      )
-                    }
-                  />
-                </div>
+                {walksBetweenExercises && (
+                  <div className={styles.settingRow}>
+                    <label className={styles.settingLabel} htmlFor={`rest-exercise-${group.id}`}>
+                      {t('routine.form.groups.restExercise')}
+                    </label>
+                    <AppDurationStepper
+                      id={`rest-exercise-${group.id}`}
+                      label={
+                        grouped
+                          ? t('routine.form.groups.restExerciseAria', { letter })
+                          : t('routine.form.groups.restExercise')
+                      }
+                      value={group.restBetweenExercisesSeconds}
+                      onChange={(seconds) =>
+                        onChange(
+                          withGroup(groups, group.id, { restBetweenExercisesSeconds: seconds }),
+                        )
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className={styles.settingRow}>
-                  <label className={styles.settingLabel} htmlFor={`rest-round-${group.id}`}>
-                    {t('routine.form.groups.restRound')}
-                  </label>
-                  <AppNumberField
-                    id={`rest-round-${group.id}`}
-                    className={styles.secondsField}
-                    inputMode="numeric"
-                    unit={t('common.sec')}
-                    value={group.restBetweenRoundsSeconds}
-                    onChange={(seconds) =>
-                      onChange(
-                        withGroup(groups, group.id, {
-                          restBetweenRoundsSeconds: clampRest(seconds),
-                        }),
-                      )
-                    }
-                  />
-                </div>
+                {circuit && (
+                  <div className={styles.settingRow}>
+                    <label className={styles.settingLabel} htmlFor={`rest-round-${group.id}`}>
+                      {t('routine.form.groups.restRound')}
+                    </label>
+                    <AppDurationStepper
+                      id={`rest-round-${group.id}`}
+                      label={
+                        grouped
+                          ? t('routine.form.groups.restRoundAria', { letter })
+                          : t('routine.form.groups.restRound')
+                      }
+                      value={group.restBetweenRoundsSeconds}
+                      onChange={(seconds) =>
+                        onChange(withGroup(groups, group.id, { restBetweenRoundsSeconds: seconds }))
+                      }
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -224,17 +224,14 @@ export const RoutineGroupsEditor = ({
                           >
                             {t('routine.form.groups.restSet')}
                           </label>
-                          <AppNumberField
+                          <AppDurationStepper
                             id={`rest-set-${entry.key}`}
-                            className={styles.secondsField}
-                            inputMode="numeric"
-                            unit={t('common.sec')}
                             // Every row's label reads the same, so the name is
                             // what tells a screen reader which one this is.
-                            aria-label={t('routine.form.groups.restSetAria', { name })}
+                            label={t('routine.form.groups.restSetAria', { name })}
                             value={entry.restSeconds}
                             onChange={(seconds) =>
-                              onChange(setEntryRest(groups, entry.key, clampRest(seconds)))
+                              onChange(setEntryRest(groups, entry.key, seconds))
                             }
                           />
                         </div>

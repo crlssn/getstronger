@@ -70,10 +70,14 @@ const newLocalId = (prefix: string) => {
   return `${prefix}-${nextLocalId}`
 }
 
-const straightGroup = (entries: DraftEntry[]): DraftGroup => ({
+const straightGroup = (
+  entries: DraftEntry[],
+  restBetweenExercisesSeconds = defaultRestSeconds,
+): DraftGroup => ({
   id: newLocalId('group'),
   mode: 'straight',
-  restBetweenExercisesSeconds: 0,
+  restBetweenExercisesSeconds,
+  // A straight block is worked once through, so there is no round to close.
   restBetweenRoundsSeconds: 0,
   entries,
 })
@@ -112,7 +116,9 @@ export const collapseToSingleGroup = (groups: readonly DraftGroup[]): DraftGroup
       return true
     })
 
-  return [straightGroup(entries)]
+  // The block keeps the first group's pause between exercises: the structure is
+  // what a single block cannot express, not the rests.
+  return [straightGroup(entries, groups[0]?.restBetweenExercisesSeconds)]
 }
 
 /** A, B, C — how a group is named everywhere it is spoken about. */
@@ -284,8 +290,15 @@ export const clampGroup = (group: DraftGroup): DraftGroup => {
     restSeconds: clampRest(entry.restSeconds),
   }))
 
+  // A straight block pauses on the way to the next exercise like a circuit
+  // does; what it has no use for is a round rest, having no rounds.
   if (group.mode !== 'circuit') {
-    return { ...group, restBetweenExercisesSeconds: 0, restBetweenRoundsSeconds: 0, entries }
+    return {
+      ...group,
+      restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
+      restBetweenRoundsSeconds: 0,
+      entries,
+    }
   }
 
   return {

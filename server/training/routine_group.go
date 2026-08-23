@@ -151,17 +151,16 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 		normalized.Exercises[index].RestSeconds = &rest
 	}
 
-	// Both group rests belong to a circuit, and the set rest belongs to
-	// straight sets: a circuit rests on the way to the next exercise and on the
-	// way into the next round, never between the sets of one exercise. The set
-	// rest is kept rather than cleared, so a group switched back to straight
-	// sets rests as it did before.
-	if normalized.Mode != RoutineGroupModeCircuit {
-		return normalized
-	}
-
+	// Every block pauses on the way to the next exercise, so both kinds carry
+	// that rest. A circuit rests between the sets of nothing — it rotates
+	// instead — but the set rest is kept rather than cleared, so a group
+	// switched back to straight sets rests as it did before.
 	normalized.RestBetweenExercisesSeconds = clampInt32(group.RestBetweenExercisesSeconds, 0, routineGroupMaxRestSeconds)
-	normalized.RestBetweenRoundsSeconds = clampInt32(group.RestBetweenRoundsSeconds, 0, routineGroupMaxRestSeconds)
+
+	// Only a circuit has a lap to close.
+	if normalized.Mode == RoutineGroupModeCircuit {
+		normalized.RestBetweenRoundsSeconds = clampInt32(group.RestBetweenRoundsSeconds, 0, routineGroupMaxRestSeconds)
+	}
 
 	return normalized
 }

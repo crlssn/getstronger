@@ -1,0 +1,12 @@
+@reference '../../assets/base.css';
+
+/* The two buttons flank the value rather than stacking beside it: a rest is
+ * read as one thing, and the shortest path from reading it to changing it is a
+ * thumb on either side. */
+.stepper {
+  @apply flex items-center gap-1.5;
+}
+
+.field {
+  @apply w-16;
+}
