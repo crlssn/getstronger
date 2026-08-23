@@ -17,10 +17,12 @@ that part is opened. Read the file for the area you are about to change.
 | `proto/`                 | [`proto/CLAUDE.md`](proto/CLAUDE.md)       | Schema changes and code generation      |
 | `mobile/`                | [`mobile/CLAUDE.md`](mobile/CLAUDE.md)     | Capacitor wrappers and native builds    |
 
-Two recurring jobs are written up as skills rather than rules, because they
+Three recurring jobs are written up as skills rather than rules, because they
 matter only when you are doing them: `.claude/skills/pull-request/SKILL.md` for
-writing a PR description, and `.claude/skills/design-review/SKILL.md` for
-looking at the app instead of reasoning about its markup.
+writing a PR description, `.claude/skills/design-review/SKILL.md` for looking at
+the app instead of reasoning about its markup, and
+`.claude/skills/design-brief/SKILL.md` for briefing Claude Design when a screen
+needs mocking rather than photographing.
 
 ## Working in a worktree
 
