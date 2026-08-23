@@ -33,14 +33,20 @@ worktree. The local stack is not shared, so set it up before running anything.
   out from it, so the new workspace starts from up-to-date code.
 - Run `mise run worktree:env` once per worktree before the first build, test, or
   server start. It assigns this worktree its own database container, database
-  port, backend port, SSE port, web port, MailHog ports, and end-to-end test
-  ports, and records them in `.env`, `web/.env`, `mise.local.toml`, and
-  `.claude/launch.json` (rendered from the tracked
+  port, backend port, SSE port, web port, MailHog ports, end-to-end test ports,
+  and Playwright report ports, and records them in `.env`, `web/.env`,
+  `mise.local.toml`, and `.claude/launch.json` (rendered from the tracked
   `.claude/launch.json.example`, so the browser preview starts on this
   worktree's web port). These files are not tracked by Git. It also seeds
   `node_modules` from the main checkout, so a fresh worktree needs no
   `bun install` before linting, testing, or pushing — only rerun
   `mise run install:js` if a `bun.lock` has changed since branching.
+- The slot it hands out is the lowest one no other worktree and no container
+  has claimed, so it is safe to run in a worktree that already has one: a
+  worktree sharing another's slot is renumbered, and one that has its own keeps
+  it. If it reports that every slot is taken, containers from removed worktrees
+  are holding them; `mise run worktree:prune` lists those and
+  `mise run worktree:prune -- --force` removes them.
 - Run every command through `mise run`, never the underlying tool directly.
   Only `mise run` loads the per-worktree ports; `npx playwright test` or
   `npm run dev` on their own fall back to the shared defaults and will collide
@@ -49,7 +55,9 @@ worktree. The local stack is not shared, so set it up before running anything.
   and `mise run db:seed` before verification.
 - Never run `mise run db:clean`, `mise run db:init`, or `mise run clean` with a
   `DB_CONTAINER` you did not configure, and never stop or remove a Docker
-  container, server, or port that belongs to another worktree.
+  container, server, or port that belongs to another worktree. The tasks that
+  create, wipe, or remove state refuse to run in a worktree that has not been
+  given its own — they name `mise run worktree:env` when they do.
 - Confine all changes to this worktree. Do not edit files in another worktree or
   in the main checkout.
 

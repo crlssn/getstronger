@@ -49,6 +49,12 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: ['carl.local'],
   },
+  preview: {
+    // The dev server's port: they serve the same app and are never both
+    // running, and 'vite preview' otherwise takes one default for the machine.
+    port: Number(process.env.WEB_DEV_PORT ?? 5173),
+    strictPort: true,
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
