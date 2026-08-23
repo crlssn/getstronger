@@ -222,7 +222,10 @@ export const RoutineGroupsEditor = ({
                           what the placeholder shows. */}
                       {!circuit && (
                         <div className={styles.entryRest}>
-                          <label className={styles.entryRestLabel} htmlFor={`rest-set-${entry.key}`}>
+                          <label
+                            className={styles.entryRestLabel}
+                            htmlFor={`rest-set-${entry.key}`}
+                          >
                             {t('routine.form.groups.restSet')}
                           </label>
                           <AppNumberField

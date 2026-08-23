@@ -182,9 +182,7 @@ export const setEntryRest = (
 ): DraftGroup[] =>
   groups.map((group) => ({
     ...group,
-    entries: group.entries.map((entry) =>
-      entry.key === key ? { ...entry, restSeconds } : entry,
-    ),
+    entries: group.entries.map((entry) => (entry.key === key ? { ...entry, restSeconds } : entry)),
   }))
 
 /**
