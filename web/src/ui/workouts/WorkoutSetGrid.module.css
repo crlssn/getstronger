@@ -1,8 +1,8 @@
 @reference '../../assets/base.css';
 
 .setGrid {
-  /* Scrolls for many-metric exercises, but the remove button overhangs by 8px
-     and would otherwise paint a scrollbar under every row. */
+  /* Scrolls for many-metric exercises, without drawing a scrollbar under every
+     row for the few that need it. */
   scrollbar-width: none;
   @apply grid items-center gap-2 overflow-x-auto;
   /* The previous column sizes to its content and every spare pixel goes to the
@@ -76,17 +76,34 @@
   scroll-margin-top: 9rem;
 }
 
+/* The row is its own sideways scroller, so it clips what hangs off its edge:
+   overhanging by 8px drew the control as a half-circle over the field beside
+   it. The box is a fingertip; the disc in its corner is what you see. */
 .removeSet {
-  @apply absolute -right-2 -top-1 grid size-6 place-items-center rounded-full bg-ink-tint text-text-subtle opacity-0 transition hover:bg-danger-surface hover:text-danger-strong;
+  @apply pointer-events-none absolute right-0 top-0 grid size-11 items-start justify-items-end p-1 text-text-subtle opacity-0 transition hover:text-danger-strong focus-visible:ring-0 focus-visible:ring-offset-0;
 }
 
+/* Hidden means untappable, not invisible-but-live: the box covers the corner
+   of a field, and a phone has no hover to warn that the tap deletes a set. The
+   row being typed into is what reveals it there. */
 .setRow:hover .removeSet,
+.setRow:focus-within .removeSet,
 .removeSet:focus-visible {
-  @apply opacity-100;
+  @apply pointer-events-auto opacity-100;
 }
 
 .removeSet svg {
-  @apply size-4;
+  @apply size-6 rounded-full bg-ink-tint p-1 transition;
+}
+
+.removeSet:hover svg {
+  @apply bg-danger-surface;
+}
+
+/* Ringing the disc rather than the tap target: a ring around the box would sit
+   on the row's edge, where the row's own overflow cuts it in half. */
+.removeSet:focus-visible svg {
+  @apply ring-2 ring-ink-muted;
 }
 
 @media (max-width: 520px) {
