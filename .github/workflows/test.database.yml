@@ -9,6 +9,7 @@ on:
       - ready_for_review
     paths:
       - '.github/workflows/test.database.yml'
+      - '.squawk.toml'
       - 'database/migrations/**'
 
 concurrency:
@@ -34,20 +35,27 @@ jobs:
         id: migrations
         with:
           script: |
-            const { data } = await github.rest.pulls.listFiles({
+            const data = await github.paginate(github.rest.pulls.listFiles, {
               repo: context.repo.repo,
               owner: context.repo.owner,
               pull_number: context.payload.pull_request.number,
+              per_page: 100,
             });
             
+            // Only the up migrations run against production. 001_schema.down.sql
+            // is a local teardown for db:reset, and dropping every table is its job.
             const files = data
-              .filter(file => file.filename.startsWith('database/migrations/') && file.filename.endsWith('.sql'))
+              .filter(file => file.filename.startsWith('database/migrations/') && file.filename.endsWith('.up.sql'))
               .map(file => file.filename);
             
             core.setOutput('file_names', files.join(' '));
             console.log('Modified migrations:', files.join(' '));
 
+      # Excluded rules live in .squawk.toml at the repository root, which Squawk
+      # picks up on its own; the action has no input for passing a config path.
       - name: Run Squawk
         uses: sbdchd/squawk-action@88de415330adcae2214818f02e55c1817a717432 # v2.0.0
         with:
           files: ${{ steps.migrations.outputs.file_names }}
+          assume-in-transaction: true
+          pg-version: '16.4'
