@@ -38,10 +38,6 @@
   @apply text-body-lg font-semibold text-text;
 }
 
-.routineTags {
-  @apply mt-1;
-}
-
 .routineExercises {
   @apply mt-1 text-sm text-text-muted;
 }
@@ -85,7 +81,4 @@
 .routineMenu > div a,
 .routineMenu > div button {
   @apply flex min-h-(--size-control-sm) w-full items-center justify-start rounded-lg px-3 text-left text-sm font-medium text-text-muted hover:bg-ink-surface;
-}
-
-@media (max-width: 520px) {
 }
