@@ -269,6 +269,32 @@ test.describe('quick workout lifecycle', () => {
     await expect(page.getByText(/25\s*kg/)).toBeVisible()
   })
 
+  test('counts every logged workout on the profile @mutation', async ({ page }) => {
+    // The dashboard sends a three-workout preview, and the seed already fills
+    // it. A stat measured off that preview reads the same number forever.
+    const workoutsStat = page
+      .getByRole('region', { name: 'Training summary' })
+      .locator('article')
+      .filter({ hasText: 'workouts' })
+      .locator('strong')
+
+    await page.goto('/profile')
+    await expect(workoutsStat).toBeVisible()
+    const before = Number((await workoutsStat.innerText()).replace(/\D/g, ''))
+    expect(before).toBeGreaterThanOrEqual(3)
+
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+    await logFirstSet(page, exercise)
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await finishAndSave(page)
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+    await page.goto('/profile')
+    // Rendered through formatNumber(), so the expectation carries separators too.
+    await expect(workoutsStat).toHaveText((before + 1).toLocaleString('en-US'))
+  })
+
   test('discards local progress without creating a workout @mutation', async ({ page }) => {
     await page.goto('/workouts/quick')
     const exercise = await addFirstExercise(page)

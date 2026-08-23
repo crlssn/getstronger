@@ -146,3 +146,41 @@ func (s *dashboardSuite) TestThisWeekCountsOnlyWorkoutsFinishedSinceMonday() {
 	s.Require().InDelta(500.0, msg.GetVolumeThisWeek(), 0.001)
 	s.Require().Len(msg.GetRecentWorkouts(), 2, "recent workouts are not limited to the current week")
 }
+
+func (s *dashboardSuite) TestWorkoutCountAndRecordsAreLifetimeTotals() {
+	ctx, user := s.athlete()
+	exercises := []*models.Exercise{
+		s.factory.NewExercise(factory.ExerciseUserID(user.ID)),
+		s.factory.NewExercise(factory.ExerciseUserID(user.ID)),
+	}
+
+	// More workouts than the recent preview holds, so a count taken off that
+	// preview cannot pass for the total.
+	const logged = 5
+	for i := range logged {
+		workout := s.factory.NewWorkout(
+			factory.WorkoutUserID(user.ID),
+			factory.WorkoutFinishedAt(time.Now().UTC()),
+		)
+		s.factory.NewSet(
+			factory.SetUserID(user.ID),
+			factory.SetWorkoutID(workout.ID),
+			factory.SetExerciseID(exercises[i%len(exercises)].ID),
+			factory.SetWeight(100),
+			factory.SetReps(5),
+		)
+	}
+
+	msg := s.dashboard(ctx, "")
+	s.Require().Len(msg.GetRecentWorkouts(), 3, "the preview stays capped")
+	s.Require().Equal(int32(logged), msg.GetWorkoutCount())
+	s.Require().Len(msg.GetPersonalBests(), len(exercises), "one record per exercise, uncapped")
+}
+
+func (s *dashboardSuite) TestWorkoutCountIgnoresOtherAthletes() {
+	ctx, _ := s.athlete()
+	stranger := s.factory.NewUser()
+	s.factory.NewWorkout(factory.WorkoutUserID(stranger.ID))
+
+	s.Require().Zero(s.dashboard(ctx, "").GetWorkoutCount())
+}

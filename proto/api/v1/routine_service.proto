@@ -120,8 +120,13 @@ message GetDashboardResponse {
   int32 workouts_this_week = 3;
   double volume_this_week = 4;
   repeated ExerciseSet personal_bests = 5;
+  // A preview of the log, not all of it: clients that want a lifetime figure
+  // read workout_count.
   repeated Workout recent_workouts = 6;
   Plan active_plan = 7;
+  // Every workout the athlete has ever logged, counted in the database rather
+  // than measured off recent_workouts.
+  int32 workout_count = 8;
 }
 
 message Routine {

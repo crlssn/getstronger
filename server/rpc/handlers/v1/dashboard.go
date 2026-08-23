@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"math"
 	"time"
 
 	"connectrpc.com/connect"
@@ -24,6 +25,7 @@ type dashboardSources interface {
 	ListWorkouts(ctx context.Context, opts ...repo.ListWorkoutsOpt) (models.WorkoutSlice, error)
 	GetActivePlan(ctx context.Context, userID string) (*training.Plan, error)
 	GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error)
+	CountWorkouts(ctx context.Context, userID string) (int64, error)
 }
 
 const (
@@ -83,6 +85,19 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	// The listed workouts stop at dashboardListLimit, so the lifetime total is
+	// counted rather than measured off them.
+	workoutCount, err := d.sources.CountWorkouts(ctx, userID)
+	if err != nil {
+		log.Error("Count workouts for dashboard", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+	// Unreachable in practice, but the response field is 32-bit and a silent
+	// wrap would read as a negative workout count.
+	if workoutCount > math.MaxInt32 {
+		workoutCount = math.MaxInt32
+	}
+
 	thisWeek := training.WeekOf(time.Now().UTC()).Summarise(workouts)
 
 	recentWorkouts := workouts
@@ -105,5 +120,6 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		PersonalBests:    parser.ExerciseSetSlice(personalBests),
 		RecentWorkouts:   parsedWorkouts,
 		ActivePlan:       parser.Plan(activePlan),
+		WorkoutCount:     int32(workoutCount),
 	}), nil
 }

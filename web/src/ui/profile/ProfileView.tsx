@@ -256,11 +256,13 @@ export const ProfileView = () => {
 
       <section className={styles.statsStrip} aria-label={t('profile.trainingSummary')}>
         <article>
-          <strong>{dashboard?.recentWorkouts.length ?? 0}</strong>
+          {/* The lifetime total, not recentWorkouts.length — that list is a
+              three-workout preview. */}
+          <strong>{formatNumber(dashboard?.workoutCount ?? 0)}</strong>
           <small>{t('profile.workouts')}</small>
         </article>
         <article>
-          <strong>{dashboard?.personalBests.length ?? 0}</strong>
+          <strong>{formatNumber(dashboard?.personalBests.length ?? 0)}</strong>
           <small>{t('profile.records')}</small>
         </article>
         <article>
