@@ -1,14 +1,28 @@
+# Deploys the database, API, and web app to one of two environments. A merge to
+# `main` reaches beta only; production is promoted by publishing a release, so
+# nothing reaches users without a deliberate act.
 name: deploy
 
 on:
   push:
     branches:
       - main
+  release:
+    types:
+      - published
   pull_request:
     types:
       - labeled
   workflow_dispatch:
     inputs:
+      environment:
+        description: Environment to deploy to
+        required: true
+        default: beta
+        type: choice
+        options:
+          - beta
+          - production
       migrate:
         description: Run pending database migrations
         required: true
@@ -25,8 +39,11 @@ on:
         default: true
         type: boolean
 
+# Per environment, so a beta deploy never queues behind a production one. Keep
+# this in step with the `init` job's environment output; workflow-level
+# concurrency cannot read job outputs, so the rule is spelled out twice.
 concurrency:
-  group: deployments
+  group: deployments-${{ (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')) && 'production' || 'beta' }}
   cancel-in-progress: false
 
 permissions:
@@ -39,25 +56,38 @@ permissions:
 
 jobs:
   init:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy' && github.actor == 'crlssn')
+    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy' && github.actor == 'crlssn')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     outputs:
-      web: ${{ steps.changes.outputs.web }}
-      server: ${{ steps.changes.outputs.server }}
-      database: ${{ steps.changes.outputs.database }}
+      environment: ${{ steps.target.outputs.environment }}
+      # A release deploys every component. It usually spans several merges, and
+      # a full deploy is the safer default for a rare, deliberate promotion.
+      web: ${{ github.event_name == 'release' && 'true' || steps.changes.outputs.web }}
+      server: ${{ github.event_name == 'release' && 'true' || steps.changes.outputs.server }}
+      database: ${{ github.event_name == 'release' && 'true' || steps.changes.outputs.database }}
 
     steps:
+      - name: Resolve the target environment
+        id: target
+        env:
+          ENVIRONMENT: ${{ (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')) && 'production' || 'beta' }}
+        run: |
+          echo "Deploying to ${ENVIRONMENT}"
+          echo "environment=${ENVIRONMENT}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout code
+        if: github.event_name != 'release'
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       # On push, diff against the last successful push deploy rather than only
       # the pushed commits, so changes from a failed deploy are retried on the
-      # next push instead of being silently dropped.
-      - name: Find last successful deploy
+      # next push instead of being silently dropped. Pushes only ever deploy to
+      # beta, so this lookup is a beta-only question.
+      - name: Find last successful beta deploy
         id: last-deploy
         if: github.event_name == 'push'
         env:
@@ -70,6 +100,7 @@ jobs:
 
       - name: Check for changes
         id: changes
+        if: github.event_name != 'release'
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           base: ${{ steps.last-deploy.outputs.sha }}
@@ -83,7 +114,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: needs.init.outputs.database == 'true' || (github.event_name == 'workflow_dispatch' && inputs.migrate)
+    environment: ${{ needs.init.outputs.environment }}
     env:
+      DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
+      EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
       DB_HOST: ${{ vars.DB_HOST }}
       DB_PORT: ${{ vars.DB_PORT }}
       DB_NAME: ${{ vars.DB_NAME }}
@@ -91,6 +125,16 @@ jobs:
       DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
 
     steps:
+      # An environment without variables of its own falls back to repository
+      # scope, so a half-configured beta would quietly deploy to production.
+      # Each environment names itself in DEPLOY_ENVIRONMENT to rule that out.
+      - name: Verify the environment is configured
+        run: |
+          if [ "$DEPLOY_ENVIRONMENT" != "$EXPECTED_ENVIRONMENT" ]; then
+            echo "::error::Expected the ${EXPECTED_ENVIRONMENT} environment, but DEPLOY_ENVIRONMENT is '${DEPLOY_ENVIRONMENT:-unset}'. Configure the ${EXPECTED_ENVIRONMENT} GitHub Environment before deploying."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v7
 
@@ -113,11 +157,25 @@ jobs:
       always() &&
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
       (needs.init.outputs.server == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_server))
+    environment: ${{ needs.init.outputs.environment }}
 
     env:
+      DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
+      EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
       IMAGE: rg.fr-par.scw.cloud/getstronger/server
+      # Production keeps the `latest` tag its container was configured with;
+      # beta publishes under its own tag so the two never pull each other's
+      # image from the shared registry namespace.
+      TAG: ${{ needs.init.outputs.environment == 'production' && 'latest' || 'beta' }}
 
     steps:
+      - name: Verify the environment is configured
+        run: |
+          if [ "$DEPLOY_ENVIRONMENT" != "$EXPECTED_ENVIRONMENT" ]; then
+            echo "::error::Expected the ${EXPECTED_ENVIRONMENT} environment, but DEPLOY_ENVIRONMENT is '${DEPLOY_ENVIRONMENT:-unset}'. Configure the ${EXPECTED_ENVIRONMENT} GitHub Environment before deploying."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v7
 
@@ -129,11 +187,11 @@ jobs:
           password: ${{ secrets.SCW_SECRET_KEY }}
 
       - name: Build API image
-        run: docker build --platform linux/amd64 --tag "$IMAGE:latest" --tag "$IMAGE:$GITHUB_SHA" .
+        run: docker build --platform linux/amd64 --tag "$IMAGE:$TAG" --tag "$IMAGE:$GITHUB_SHA" .
 
       - name: Push API image to Scaleway Container Registry
         run: |
-          docker push "$IMAGE:latest"
+          docker push "$IMAGE:$TAG"
           docker push "$IMAGE:$GITHUB_SHA"
 
       - name: Deploy the Serverless Container
@@ -181,8 +239,20 @@ jobs:
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
       (needs.server.result == 'success' || needs.server.result == 'skipped') &&
       (needs.init.outputs.web == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
+    environment: ${{ needs.init.outputs.environment }}
+
+    env:
+      DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
+      EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
 
     steps:
+      - name: Verify the environment is configured
+        run: |
+          if [ "$DEPLOY_ENVIRONMENT" != "$EXPECTED_ENVIRONMENT" ]; then
+            echo "::error::Expected the ${EXPECTED_ENVIRONMENT} environment, but DEPLOY_ENVIRONMENT is '${DEPLOY_ENVIRONMENT:-unset}'. Configure the ${EXPECTED_ENVIRONMENT} GitHub Environment before deploying."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v7
 

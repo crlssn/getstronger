@@ -179,7 +179,7 @@ The custom `getstronger://` scheme opens the app directly on both platforms with
 
 App icons and splash screens are generated from the brand logo — `npm run assets` in `mobile/` re-renders the sources in `mobile/assets/` from `web/src/assets/logo-mono.svg` and regenerates every platform variant.
 
-The `release-mobile` workflow (manual trigger) builds the web bundle, archives both apps with the run number as build number, and uploads to TestFlight and Play internal testing. Before its first run, the following one-time setup is needed:
+The `release-mobile` workflow (manual trigger) builds the web bundle against the `production` GitHub Environment, archives both apps with the run number as build number, and uploads to TestFlight and Play internal testing. Shipping a native build is therefore a deliberate act against production, independent of the web and API deploys. Before its first run, the following one-time setup is needed:
 
 1. **Accounts**: an Apple Developer Program membership and a Google Play developer account; register the bundle id `com.getstronger.app` in both (or change it in `mobile/capacitor.config.ts` first — it is provisional until the first store submission).
 2. **iOS secrets**: `APPLE_TEAM_ID`, plus an App Store Connect API key (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` — the `.p8` contents). The workflow uses Xcode cloud signing (`-allowProvisioningUpdates`), so no certificates or profiles need exporting.
@@ -196,9 +196,9 @@ Account deletion is a store requirement rather than a nicety: both stores refuse
 
 The `privacy@getstronger.studio` address the policy points at has to receive mail before the first submission — the policy is the only route people have for a data request.
 
-## Production infrastructure on Scaleway
+## Hosting infrastructure on Scaleway
 
-Production infrastructure is provisioned manually in the [Scaleway console](https://console.scaleway.com/) (ClickOps). The suggested layout is:
+Infrastructure is provisioned manually in the [Scaleway console](https://console.scaleway.com/) (ClickOps). Each deployed environment — production, and the beta environment every merge to `main` lands on — is one copy of this layout:
 
 - a Serverless Container for the Go API, fed from a Container Registry namespace;
 - a Serverless SQL Database for PostgreSQL;
@@ -206,7 +206,7 @@ Production infrastructure is provisioned manually in the [Scaleway console](http
 - Edge Services in front of the bucket for HTTPS and a custom domain; and
 - Scaleway Domains and DNS for the `api` and `www` records.
 
-Choose one region for the regional resources (for example, Paris). Resource names below are examples and can be changed.
+Steps 1 to 7 below walk through production; step 8 covers what beta duplicates and what it must not share. Choose one region for the regional resources (for example, Paris). Resource names below are examples and can be changed.
 
 ### 1. Create the project and database identities
 
@@ -262,7 +262,7 @@ The connection format and mandatory `sslmode=require` setting are documented in 
 
 ### 3. Create the API container
 
-1. Open **Containers > Container Registry** and create a namespace named `getstronger` in the chosen region. The deployment workflow pushes the API image to `rg.fr-par.scw.cloud/getstronger/server`, tagged both `latest` and with the deployed commit SHA.
+1. Open **Containers > Container Registry** and create a namespace named `getstronger` in the chosen region. The deployment workflow pushes the API image to `rg.fr-par.scw.cloud/getstronger/server`, tagged with the deployed commit SHA and with the environment's own tag — `latest` for production, `beta` for beta.
 2. Open **Serverless > Containers**, create a namespace, and create a container from the registry image `getstronger/server:latest`, listening on port `8080` (the port the Dockerfile exposes and `SERVER_PORT` must match).
 3. Resources of `250 mVCPU` and `256 MB` are comfortable for the Go API. For autoscaling, use request concurrency with a minimum of `1` instance to avoid cold starts on a user-facing API. Keep the maximum low: pubsub events are dispatched in-process, so live notifications do not propagate between instances.
 4. Configure the container's environment variables and secrets as listed below. Use the **Secrets** section for credentials; both surface to the process identically, but secrets are stored encrypted and hidden in the console.
@@ -333,28 +333,87 @@ The DNS console flow is described in [Configure DNS zones](https://www.scaleway.
 
 ### 7. Connect the deployment workflow
 
-The GitHub Actions deployment workflow builds the API's `linux/amd64` Docker image on its runner, pushes it to the Container Registry, and triggers a new deployment of the Serverless Container, which pulls the fresh `latest` image. The web build is uploaded through Scaleway Object Storage's S3-compatible endpoint. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`; give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` (with the production Project as the API key's preferred Object Storage Project) plus `ContainerRegistryFullAccess` and `ContainersFullAccess` on the production Project.
+The GitHub Actions deployment workflow builds the API's `linux/amd64` Docker image on its runner, pushes it to the Container Registry, and triggers a new deployment of the Serverless Container, which pulls the image tag belonging to the environment being deployed. The web build is uploaded through Scaleway Object Storage's S3-compatible endpoint. The AWS CLI is only the S3 protocol client recommended by Scaleway; the workflow's explicit `scw.cloud` endpoint ensures that it does not access or create AWS resources. Create a separate IAM application named `getstronger-deploy`; give it `ObjectStorageBucketsRead`, `ObjectStorageObjectsRead`, `ObjectStorageObjectsWrite`, and `ObjectStorageObjectsDelete` (with the deployed Project as the API key's preferred Object Storage Project) plus `ContainerRegistryFullAccess` and `ContainersFullAccess` on that Project.
 
-Configure these GitHub repository variables:
+#### Environments and triggers
+
+The workflow deploys to one of two GitHub Environments, `beta` and `production`, which hold everything that differs between the two targets. The trigger decides which:
+
+| Trigger | Environment |
+| --- | --- |
+| Push to `main` | `beta` |
+| Pull request labelled `deploy` | `beta` |
+| Published GitHub release | `production` |
+| **Run workflow** (manual) | `beta` or `production`, chosen by an input |
+
+A merge is therefore never a production deploy: `main` lands on beta, and production is promoted by publishing a release. Concurrency is scoped per environment so the two never queue behind each other. A push deploys only the components whose paths changed since the last successful push deploy; a release deploys all three, because a promotion usually spans several merges.
+
+Give the `production` environment a required reviewer under **Settings → Environments → production → Required reviewers**, so the promotion is an approval rather than an accident. Every deploying job names its environment, so a production run pauses before it touches anything.
+
+Leave beta's deployment branch policy at **All branches**: a pull request labelled `deploy` runs from its own branch, and a restrictive policy would reject it.
+
+Configure these per environment, using the same names on both:
 
 ```text
-DB_HOST, DB_PORT, DB_NAME, DB_MIGRATION_USER
-VITE_API_URL
-SCW_REGION, SCW_BUCKET_NAME, SCW_CONTAINER_ID
+Variables: DEPLOY_ENVIRONMENT, DB_HOST, DB_NAME, DB_MIGRATION_USER,
+           SCW_CONTAINER_ID, SCW_BUCKET_NAME, VITE_API_URL,
+           VITE_POSTHOG_KEY, VITE_POSTHOG_HOST,
+           API_DOMAIN, COOKIE_DOMAIN, CORS_ALLOWED_ORIGIN, EMAIL_FROM_ADDRESS
+Secrets:   DB_MIGRATION_PASSWORD
 ```
 
-Configure these GitHub repository secrets:
+`DEPLOY_ENVIRONMENT` is the environment's own name, `beta` or `production`. Every deploying job refuses to start unless it matches the environment it was asked to deploy to: GitHub falls back to repository-scoped variables when an environment defines none, so without that check a half-configured `beta` would quietly deploy to production infrastructure. `API_DOMAIN`, `COOKIE_DOMAIN`, `CORS_ALLOWED_ORIGIN`, and `EMAIL_FROM_ADDRESS` are the container's own configuration rather than workflow inputs; they live here so each environment's values are recorded in one place.
+
+These stay at repository scope, shared by both environments:
 
 ```text
-DB_MIGRATION_PASSWORD
-SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
+Variables: DB_PORT, SCW_REGION, SCW_PROJECT_ID, SCW_TEM_REGION
+Secrets:   SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
 ```
 
-Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key; the workflow uses the migration identity only in the database job. The runtime identity is configured directly on the Serverless Container, not in GitHub. `SCW_CONTAINER_ID` is the Serverless Container's UUID, shown on its **Overview** tab in the console.
-
-For the initial cutover, open the **deploy** workflow in GitHub Actions and choose **Run workflow**. Its manual inputs can independently migrate the Serverless SQL Database, deploy the API, and deploy the web application. This also provides a safe way to migrate a newly created database when no migration file changed in the triggering commit.
+Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key; the workflow uses the migration identity only in the database job. The runtime identity is configured directly on the Serverless Container, not in GitHub. `SCW_CONTAINER_ID` is the Serverless Container's UUID, shown on its **Overview** tab in the console. If beta runs in its own Scaleway Project, put that Project's `SCW_ACCESS_KEY_ID` and `SCW_SECRET_KEY` on the `beta` environment; environment secrets take precedence over repository ones.
 
 The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secret key goes in `SCW_SECRET_KEY`. See [Using IAM API keys with Object Storage](https://www.scaleway.com/en/docs/iam/api-cli/using-api-key-object-storage/) for the preferred-Project behavior.
+
+#### Cutting a release
+
+1. Open **Releases → Draft a new release** and create a tag such as `v1.4.0` on the commit to promote, or push the tag first with `git tag v1.4.0 && git push origin v1.4.0`.
+2. Generate the release notes and publish. Publishing a pre-release triggers the same workflow, which makes it a usable rehearsal.
+3. Approve the pending production deployment in the workflow run. Migrations run first, then the API, then the web app, all from the tagged commit.
+
+For the initial cutover of either environment, open the **deploy** workflow in GitHub Actions and choose **Run workflow**. It asks which environment to target and can independently migrate the Serverless SQL Database, deploy the API, and deploy the web application. This is also the safe way to migrate a newly created database when no migration file changed in the triggering commit.
+
+### 8. Create the beta environment
+
+Beta is a full copy of the production stack, serving `https://beta.getstronger.studio` against `https://api.beta.getstronger.studio`. Repeat steps 2, 3, 5, and 6 with beta names and domains:
+
+| Resource | Production | Beta |
+| --- | --- | --- |
+| Serverless SQL Database | `getstronger` | `getstronger-beta` |
+| Serverless Container | `getstronger` | `getstronger-beta` |
+| Container image | `getstronger/server:latest` | `getstronger/server:beta` |
+| Object Storage bucket | `getstronger-public-bucket` | `getstronger-beta-bucket` |
+| Web domain | `www.getstronger.studio` | `beta.getstronger.studio` |
+| API domain | `api.getstronger.studio` | `api.beta.getstronger.studio` |
+
+The image tag is not cosmetic: both environments push to the single `getstronger/server` registry namespace, so the beta container must be created from `getstronger/server:beta`. Pointing it at `latest` would make every production deploy roll out to beta as well.
+
+Beta's container takes the same configuration as step 3 with its own values, including `ENV=production` — the backend only distinguishes `local` from `production`, and beta is a deployed environment in every respect.
+
+Keeping beta in the production Scaleway Project reuses the IAM applications from step 1: the migration and runtime permission sets are Project-scoped and already cover a second database. A separate Project isolates beta more strictly, at the cost of its own IAM applications and deploy key.
+
+Two things should not be shared with production:
+
+- **Analytics.** Create a second PostHog project and use its key as beta's `VITE_POSTHOG_KEY`, so test traffic never lands in production analytics.
+- **Email.** Register a beta sending domain in Transactional Email as in step 4, and point beta's `EMAIL_FROM_ADDRESS` at it.
+
+Bring beta up with **Run workflow** against the `beta` environment with all three components enabled, then verify:
+
+```bash
+curl --fail https://api.beta.getstronger.studio/healthz
+```
+
+Seed an account on the beta database and smoke-test the deployed stack with the live end-to-end suite described below.
 
 ## End-to-end tests
 
@@ -375,8 +434,10 @@ mise run test:e2e
 To run the non-mutating smoke scenarios against a deployed environment, provide its URL and credentials. Live mode never seeds the database and automatically excludes mutation scenarios:
 
 ```bash
-E2E_BASE_URL=https://example.com E2E_USER_EMAIL=user@example.com E2E_USER_PASSWORD=secret mise run test:e2e:live
+E2E_BASE_URL=https://beta.getstronger.studio E2E_USER_EMAIL=user@example.com E2E_USER_PASSWORD=secret mise run test:e2e:live
 ```
+
+Point it at beta rather than production: the suite signs in and browses as a real user, and beta is the environment that exists to absorb that.
 
 For interactive debugging, use either the visible browser or Playwright UI:
 
