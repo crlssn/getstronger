@@ -265,8 +265,7 @@ func (s *parserSuite) TestWorkoutSlice() {
 			workouts[0].R.Sets[0],
 		}
 
-		parsed, err := parser.WorkoutSlice(workouts, personalBests)
-		s.Require().NoError(err)
+		parsed := parser.WorkoutSlice(workouts, personalBests)
 		s.Require().Len(parsed, len(workouts))
 
 		for i, workout := range parsed {
@@ -300,8 +299,7 @@ func (s *parserSuite) TestWorkoutSlice() {
 		workout := s.factory.NewWorkout()
 		workout.R = models.Workout{}.R
 
-		parsed, err := parser.WorkoutSlice(models.WorkoutSlice{workout}, nil)
-		s.Require().NoError(err)
+		parsed := parser.WorkoutSlice(models.WorkoutSlice{workout}, nil)
 		s.Require().Len(parsed, 1)
 		s.Require().Equal(workout.ID.String(), parsed[0].GetId())
 		s.Require().Nil(parsed[0].GetUser())
@@ -579,8 +577,7 @@ func (s *parserSuite) TestFeedItemSlice() {
 		workout.R.Sets = s.factory.NewSetSlice(1, factory.SetWorkoutID(workout.ID))
 	}
 
-	parsed, err := parser.FeedItemSlice(workouts, nil)
-	s.Require().NoError(err)
+	parsed := parser.FeedItemSlice(workouts, nil)
 	s.Require().Len(parsed, len(workouts))
 	for i, feedItem := range parsed {
 		switch i {

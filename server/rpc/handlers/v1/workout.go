@@ -223,11 +223,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	w, err := parser.WorkoutSlice(pagination.Items, personalBests)
-	if err != nil {
-		log.Error("Parse workout list", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
+	w := parser.WorkoutSlice(pagination.Items, personalBests)
 
 	log.Info("Workouts listed")
 	return &connect.Response[apiv1.ListWorkoutsResponse]{

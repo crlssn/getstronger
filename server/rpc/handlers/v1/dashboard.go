@@ -89,11 +89,8 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 	if len(recentWorkouts) > recentWorkoutLimit {
 		recentWorkouts = recentWorkouts[:recentWorkoutLimit]
 	}
-	parsedWorkouts, err := parser.WorkoutSlice(recentWorkouts, personalBests)
-	if err != nil {
-		log.Error("Parse dashboard workouts", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
+	parsedWorkouts := parser.WorkoutSlice(recentWorkouts, personalBests)
+
 	var parsedNextRoutine *apiv1.Routine
 	if nextRoutine != nil {
 		parsedNextRoutine = parser.Routine(nextRoutine)

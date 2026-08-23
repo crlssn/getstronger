@@ -245,7 +245,7 @@ func Workout(workout *models.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	return w
 }
 
-func WorkoutSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) ([]*apiv1.Workout, error) {
+func WorkoutSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) []*apiv1.Workout {
 	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
 	for _, workout := range workouts {
 		var workoutOpts []WorkoutOpt
@@ -260,7 +260,7 @@ func WorkoutSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) (
 		workoutSlice = append(workoutSlice, Workout(workout, workoutOpts...))
 	}
 
-	return workoutSlice, nil
+	return workoutSlice
 }
 
 func WorkoutComment(comment *models.WorkoutComment) *apiv1.WorkoutComment {
@@ -478,15 +478,9 @@ func NotificationSlice(notifications models.NotificationSlice, actors models.Use
 	return nSlice, nil
 }
 
-func FeedItemSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) ([]*apiv1.FeedItem, error) {
+func FeedItemSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) []*apiv1.FeedItem {
 	items := make([]*apiv1.FeedItem, 0, len(workouts))
-
-	workoutSlice, err := WorkoutSlice(workouts, personalBests)
-	if err != nil {
-		return nil, fmt.Errorf("parse workouts: %w", err)
-	}
-
-	for _, workout := range workoutSlice {
+	for _, workout := range WorkoutSlice(workouts, personalBests) {
 		items = append(items, &apiv1.FeedItem{
 			Type: &apiv1.FeedItem_Workout{
 				Workout: workout,
@@ -494,7 +488,7 @@ func FeedItemSlice(workouts models.WorkoutSlice, personalBests models.SetSlice) 
 		})
 	}
 
-	return items, nil
+	return items
 }
 
 func SetSlice(sets models.SetSlice, personalBests models.SetSlice) []*apiv1.Set {
