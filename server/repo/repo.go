@@ -891,6 +891,19 @@ func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (model
 	return workouts, nil
 }
 
+// CountWorkouts is every workout the user has ever logged. Callers that show a
+// lifetime figure want this rather than the length of a listed page.
+func (r *Repo) CountWorkouts(ctx context.Context, userID string) (int64, error) {
+	count, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.UserID.EQ(uuidFromString(userID)),
+	).Count(ctx, r.bobExec())
+	if err != nil {
+		return 0, fmt.Errorf("workouts count: %w", err)
+	}
+
+	return count, nil
+}
+
 func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{

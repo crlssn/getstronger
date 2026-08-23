@@ -114,7 +114,10 @@ describe('ProfileView', () => {
   test('summarises how training is going', async () => {
     useDashboardStore.setState({
       dashboard: create(GetDashboardResponseSchema, {
-        recentWorkouts: [{ id: 'w1' }, { id: 'w2' }],
+        // The dashboard sends a three-workout preview; the stat is the total
+        // beside it, so it must not be counted off the preview.
+        workoutCount: 1284,
+        recentWorkouts: [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }],
         personalBests: [{ set: { id: 's1' } }],
         volumeThisWeek: 4200,
       }),
@@ -122,7 +125,8 @@ describe('ProfileView', () => {
     render()
 
     const stats = within(await screen.findByRole('region', { name: 'Training summary' }))
-    expect(stats.getByText('2')).toBeInTheDocument()
+    expect(stats.getByText('1,284')).toBeInTheDocument()
+    expect(stats.queryByText('3')).not.toBeInTheDocument()
     expect(stats.getByText('1')).toBeInTheDocument()
     expect(stats.getByText('4,200 kg')).toBeInTheDocument()
   })

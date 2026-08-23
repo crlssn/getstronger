@@ -768,10 +768,15 @@ type GetDashboardResponse struct {
 	WorkoutsThisWeek int32                  `protobuf:"varint,3,opt,name=workouts_this_week,json=workoutsThisWeek,proto3" json:"workouts_this_week,omitempty"`
 	VolumeThisWeek   float64                `protobuf:"fixed64,4,opt,name=volume_this_week,json=volumeThisWeek,proto3" json:"volume_this_week,omitempty"`
 	PersonalBests    []*ExerciseSet         `protobuf:"bytes,5,rep,name=personal_bests,json=personalBests,proto3" json:"personal_bests,omitempty"`
-	RecentWorkouts   []*Workout             `protobuf:"bytes,6,rep,name=recent_workouts,json=recentWorkouts,proto3" json:"recent_workouts,omitempty"`
-	ActivePlan       *Plan                  `protobuf:"bytes,7,opt,name=active_plan,json=activePlan,proto3" json:"active_plan,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// A preview of the log, not all of it: clients that want a lifetime figure
+	// read workout_count.
+	RecentWorkouts []*Workout `protobuf:"bytes,6,rep,name=recent_workouts,json=recentWorkouts,proto3" json:"recent_workouts,omitempty"`
+	ActivePlan     *Plan      `protobuf:"bytes,7,opt,name=active_plan,json=activePlan,proto3" json:"active_plan,omitempty"`
+	// Every workout the athlete has ever logged, counted in the database rather
+	// than measured off recent_workouts.
+	WorkoutCount  int32 `protobuf:"varint,8,opt,name=workout_count,json=workoutCount,proto3" json:"workout_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetDashboardResponse) Reset() {
@@ -851,6 +856,13 @@ func (x *GetDashboardResponse) GetActivePlan() *Plan {
 		return x.ActivePlan
 	}
 	return nil
+}
+
+func (x *GetDashboardResponse) GetWorkoutCount() int32 {
+	if x != nil {
+		return x.WorkoutCount
+	}
+	return 0
 }
 
 type Routine struct {
@@ -1820,7 +1832,7 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\fexercise_ids\x18\x02 \x03(\tB\b\xbaH\x05\x92\x01\x02\b\x01R\vexerciseIds\"\x1d\n" +
 	"\x1bUpdateExerciseOrderResponse\"G\n" +
 	"\x13GetDashboardRequest\x120\n" +
-	"\x14preferred_routine_id\x18\x01 \x01(\tR\x12preferredRoutineId\"\xf4\x02\n" +
+	"\x14preferred_routine_id\x18\x01 \x01(\tR\x12preferredRoutineId\"\x99\x03\n" +
 	"\x14GetDashboardResponse\x122\n" +
 	"\fnext_routine\x18\x01 \x01(\v2\x0f.api.v1.RoutineR\vnextRoutine\x12+\n" +
 	"\broutines\x18\x02 \x03(\v2\x0f.api.v1.RoutineR\broutines\x12,\n" +
@@ -1829,7 +1841,8 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x0epersonal_bests\x18\x05 \x03(\v2\x13.api.v1.ExerciseSetR\rpersonalBests\x128\n" +
 	"\x0frecent_workouts\x18\x06 \x03(\v2\x0f.api.v1.WorkoutR\x0erecentWorkouts\x12-\n" +
 	"\vactive_plan\x18\a \x01(\v2\f.api.v1.PlanR\n" +
-	"activePlan\"\xa8\x01\n" +
+	"activePlan\x12#\n" +
+	"\rworkout_count\x18\b \x01(\x05R\fworkoutCount\"\xa8\x01\n" +
 	"\aRoutine\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x128\n" +
