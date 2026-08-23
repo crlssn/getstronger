@@ -39,14 +39,13 @@ func (mods ExerciseModSlice) Apply(ctx context.Context, n *ExerciseTemplate) {
 // ExerciseTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type ExerciseTemplate struct {
-	ID          func() uuid.UUID
-	UserID      func() uuid.UUID
-	Title       func() string
-	CreatedAt   func() time.Time
-	DeletedAt   func() null.Val[time.Time]
-	Tags        func() pq.StringArray
-	Metrics     func() pq.StringArray
-	RestSeconds func() int32
+	ID        func() uuid.UUID
+	UserID    func() uuid.UUID
+	Title     func() string
+	CreatedAt func() time.Time
+	DeletedAt func() null.Val[time.Time]
+	Tags      func() pq.StringArray
+	Metrics   func() pq.StringArray
 
 	r exerciseR
 	f *Factory
@@ -173,10 +172,6 @@ func (o ExerciseTemplate) BuildSetter() *models.ExerciseSetter {
 		val := o.Metrics()
 		m.Metrics = omit.From(val)
 	}
-	if o.RestSeconds != nil {
-		val := o.RestSeconds()
-		m.RestSeconds = omit.From(val)
-	}
 
 	return m
 }
@@ -219,9 +214,6 @@ func (o ExerciseTemplate) Build() *models.Exercise {
 	}
 	if o.Metrics != nil {
 		m.Metrics = o.Metrics()
-	}
-	if o.RestSeconds != nil {
-		m.RestSeconds = o.RestSeconds()
 	}
 
 	o.setModelRels(m)
@@ -470,7 +462,6 @@ func (m exerciseMods) RandomizeAllColumns(f *faker.Faker) ExerciseMod {
 		ExerciseMods.RandomDeletedAt(f),
 		ExerciseMods.RandomTags(f),
 		ExerciseMods.RandomMetrics(f),
-		ExerciseMods.RandomRestSeconds(f),
 	}
 }
 
@@ -709,37 +700,6 @@ func (m exerciseMods) RandomMetrics(f *faker.Faker) ExerciseMod {
 	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
 		o.Metrics = func() pq.StringArray {
 			return random_pq_StringArray(f)
-		}
-	})
-}
-
-// Set the model columns to this value
-func (m exerciseMods) RestSeconds(val int32) ExerciseMod {
-	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.RestSeconds = func() int32 { return val }
-	})
-}
-
-// Set the Column from the function
-func (m exerciseMods) RestSecondsFunc(f func() int32) ExerciseMod {
-	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.RestSeconds = f
-	})
-}
-
-// Clear any values for the column
-func (m exerciseMods) UnsetRestSeconds() ExerciseMod {
-	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.RestSeconds = nil
-	})
-}
-
-// Generates a random value for the column using the given faker
-// if faker is nil, a default faker is used
-func (m exerciseMods) RandomRestSeconds(f *faker.Faker) ExerciseMod {
-	return ExerciseModFunc(func(_ context.Context, o *ExerciseTemplate) {
-		o.RestSeconds = func() int32 {
-			return random_int32(f)
 		}
 	})
 }

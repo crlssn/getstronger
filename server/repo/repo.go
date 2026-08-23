@@ -392,34 +392,26 @@ func (r *Repo) DeleteUser(ctx context.Context, userID string) error {
 }
 
 type CreateExerciseParams struct {
-	UserID      string
-	Name        string
-	Tags        []string
-	Metrics     []string
-	RestSeconds int
+	UserID  string
+	Name    string
+	Tags    []string
+	Metrics []string
 }
 
 func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*models.Exercise, error) {
-	// Preserve the original exercise behaviour for internal and older callers that
-	// predate configurable measurements. An explicit metric selection may still
-	// use a zero rest period.
+	// Preserve the original exercise behaviour for internal and older callers
+	// that predate configurable measurements: a conventional weights lift.
 	if len(p.Metrics) == 0 {
 		p.Metrics = []string{"weight", "reps"}
-		if p.RestSeconds == 0 {
-			p.RestSeconds = 90
-		}
 	}
 	if p.Tags == nil {
 		p.Tags = []string{}
 	}
-	// RestSeconds intentionally supports zero (rest timer disabled). Setting it
-	// explicitly keeps the DB default from taking over.
 	exercise, err := models.Exercises.Insert(&models.ExerciseSetter{
-		UserID:      omit.From(uuidFromString(p.UserID)),
-		Title:       omit.From(p.Name),
-		Tags:        omit.From(pq.StringArray(p.Tags)),
-		Metrics:     omit.From(pq.StringArray(p.Metrics)),
-		RestSeconds: omit.From(safe.Int32FromInt(p.RestSeconds)),
+		UserID:  omit.From(uuidFromString(p.UserID)),
+		Title:   omit.From(p.Name),
+		Tags:    omit.From(pq.StringArray(p.Tags)),
+		Metrics: omit.From(pq.StringArray(p.Metrics)),
 	}).One(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("exercise insert: %w", err)
@@ -592,12 +584,6 @@ func UpdateExerciseMetrics(metrics []string) UpdateExerciseOpt {
 	}
 }
 
-func UpdateExerciseRestSeconds(restSeconds int) UpdateExerciseOpt {
-	return func() (columns, error) {
-		return columns{models.Exercises.Columns.RestSeconds.Name(): safe.Int32FromInt(restSeconds)}, nil
-	}
-}
-
 func (r *Repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
@@ -664,7 +650,9 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 			exerciseIDs = append(exerciseIDs, exercise.ID.String())
 		}
 
-		if err = setRoutineGroups(ctx, tx.bobExec(), routine.ID, training.NormalizeRoutineGroups(p.Groups, exerciseIDs)); err != nil {
+		if err = setRoutineGroups(
+			ctx, tx.bobExec(), routine.ID, training.NormalizeRoutineGroups(p.Groups, exerciseIDs), ordered,
+		); err != nil {
 			return fmt.Errorf("routine groups set: %w", err)
 		}
 		return nil
@@ -727,7 +715,7 @@ func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
 			return fmt.Errorf("routine fetch: %w", err)
 		}
 
-		if err = setRoutineGroups(ctx, tx.bobExec(), routine.ID, nil); err != nil {
+		if err = setRoutineGroups(ctx, tx.bobExec(), routine.ID, nil, nil); err != nil {
 			return fmt.Errorf("routine groups set: %w", err)
 		}
 
@@ -860,12 +848,16 @@ func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exerci
 		return err
 	}
 
-	if _, err := r.sqlExec().ExecContext(ctx, `
-INSERT INTO public.exercises_routines (routine_id, exercise_id, position, group_id)
+	if _, err := r.sqlExec().ExecContext(
+		ctx, `
+INSERT INTO public.exercises_routines (routine_id, exercise_id, position, group_id, rest_seconds)
 SELECT $1, $2, COALESCE(MAX(er.position), 0) + 1,
-       (SELECT id FROM public.routine_groups WHERE routine_id = $1 ORDER BY position DESC LIMIT 1)
+       (SELECT id FROM public.routine_groups WHERE routine_id = $1 ORDER BY position DESC LIMIT 1),
+       $3
 FROM public.exercises_routines er
-WHERE er.routine_id = $1`, routine.ID.String(), exercise.ID.String()); err != nil {
+WHERE er.routine_id = $1`,
+		routine.ID.String(), exercise.ID.String(), newOccurrenceRestSeconds(exercise),
+	); err != nil {
 		return fmt.Errorf("routine exercises add: %w", err)
 	}
 

@@ -4,10 +4,12 @@ import { create } from '@bufbuild/protobuf'
 import { describe, expect, it } from 'vitest'
 
 import { RoutineGroupMode, RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import {
   addExerciseToGroup,
   addGroup,
+  collapseToSingleGroup,
+  defaultRestSeconds,
   defaultRoundRestSeconds,
   draftGroupsFromRoutine,
   groupExerciseIds,
@@ -15,6 +17,7 @@ import {
   moveEntryToGroup,
   moveEntryWithinGroup,
   removeEntry,
+  newOccurrenceRestSeconds,
   removeGroup,
   saveableGroups,
   setEntryRest,
@@ -23,9 +26,11 @@ import {
 
 const exercise = (id: string) => create(ExerciseSchema, { id, name: id })
 
-// One exercise where a group trains it. `restSeconds` left out is the routine
-// saying nothing, which leaves the exercise's own rest to answer.
-const trains = (id: string, restSeconds?: number) => ({ exercise: exercise(id), restSeconds })
+// One exercise where a group trains it, and the rest it takes there.
+const trains = (id: string, restSeconds = defaultRestSeconds) => ({
+  exercise: exercise(id),
+  restSeconds,
+})
 
 const entryKey = (groups: readonly DraftGroup[], groupIndex: number, position: number) =>
   groups[groupIndex]!.entries[position]!.key
@@ -34,7 +39,7 @@ const entryKey = (groups: readonly DraftGroup[], groupIndex: number, position: n
 const twoGroups = (first: string[], second: string[]) => {
   const groups = addGroup(singleStraightGroup(first))
   return second.reduce(
-    (current, exerciseId) => addExerciseToGroup(current, groups[1]!.id, exerciseId),
+    (current, exerciseId) => addExerciseToGroup(current, groups[1]!.id, exercise(exerciseId)),
     groups,
   )
 }
@@ -52,9 +57,56 @@ describe('singleStraightGroup', () => {
     expect(groupExerciseIds(singleStraightGroup())).toEqual([])
   })
 
-  // Collapsing two groups into one block can name the same exercise twice.
-  it('trains an exercise once however many times it was named', () => {
-    expect(groupExerciseIds(singleStraightGroup(['a', 'b', 'a']))).toEqual(['a', 'b'])
+  // Only a routine saved before grouping arrives as bare IDs, and it never
+  // recorded what each of them rests for either.
+  it('rests every exercise for the default', () => {
+    expect(singleStraightGroup(['a'])[0]?.entries[0]?.restSeconds).toBe(defaultRestSeconds)
+  })
+})
+
+describe('newOccurrenceRestSeconds', () => {
+  it('is the default for a conventional lift', () => {
+    expect(
+      newOccurrenceRestSeconds(
+        create(ExerciseSchema, { metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS] }),
+      ),
+    ).toBe(defaultRestSeconds)
+  })
+
+  // Held against the clock, so it is one continuous effort rather than a set to
+  // recover from: a plank picked into a routine starts with no timer.
+  it('is no rest at all for an exercise measured by time', () => {
+    expect(
+      newOccurrenceRestSeconds(create(ExerciseSchema, { metrics: [ExerciseMetric.TIME] })),
+    ).toBe(0)
+    expect(
+      newOccurrenceRestSeconds(
+        create(ExerciseSchema, { metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME] }),
+      ),
+    ).toBe(0)
+  })
+})
+
+describe('collapseToSingleGroup', () => {
+  it('keeps the exercises in order and the rest each of them takes', () => {
+    const grouped = twoGroups(['a'], ['b'])
+    const withRest = setEntryRest(grouped, entryKey(grouped, 1, 0), 15)
+
+    const collapsed = collapseToSingleGroup(withRest)
+    expect(collapsed).toHaveLength(1)
+    expect(collapsed[0]?.mode).toBe('straight')
+    expect(collapsed[0]?.entries.map((entry) => entry.restSeconds)).toEqual([
+      defaultRestSeconds,
+      15,
+    ])
+  })
+
+  // Two groups can each train it; one block trains it once.
+  it('trains an exercise once however many groups named it', () => {
+    expect(groupExerciseIds(collapseToSingleGroup(twoGroups(['a', 'b'], ['a'])))).toEqual([
+      'a',
+      'b',
+    ])
   })
 })
 
@@ -87,10 +139,9 @@ describe('draftGroupsFromRoutine', () => {
     // The same exercise in two groups is two entries, each with its own key.
     expect(groupExerciseIds(groups)).toEqual(['a', 'a', 'b'])
     expect(entryKey(groups, 0, 0)).not.toBe(entryKey(groups, 1, 0))
-    // The rest the routine gave that occurrence comes back with it, and the
-    // ones it said nothing about stay unset.
+    // The rest the routine gave each occurrence comes back with it.
     expect(groups[0]?.entries[0]?.restSeconds).toBe(180)
-    expect(groups[1]?.entries[0]?.restSeconds).toBeUndefined()
+    expect(groups[1]?.entries[0]?.restSeconds).toBe(defaultRestSeconds)
   })
 
   it('falls back to one straight group for a routine saved before grouping', () => {
@@ -110,6 +161,16 @@ describe('addExerciseToGroup', () => {
     expect(groups[1]?.entries).toHaveLength(1)
   })
 
+  // A plank rests for nothing wherever a routine picks it up, and a lift for
+  // the default, so the field opens on the right answer rather than on a guess.
+  it('starts the occurrence at the rest a new one of that exercise takes', () => {
+    const plank = create(ExerciseSchema, { id: 'plank', metrics: [ExerciseMetric.TIME] })
+    const groups = addExerciseToGroup(singleStraightGroup(), '', plank)
+    const withPlank = addExerciseToGroup(groups, groups[0]!.id, plank)
+
+    expect(withPlank[0]?.entries[0]?.restSeconds).toBe(0)
+  })
+
   it('lets the same exercise be trained in two groups', () => {
     const groups = twoGroups(['a'], ['a'])
 
@@ -120,8 +181,8 @@ describe('addExerciseToGroup', () => {
   // A group is a block of distinct work: twice in one round is a repeat nobody
   // asked for.
   it('will not hold the same exercise twice in one group', () => {
-    const groups = addExerciseToGroup(singleStraightGroup(['a']), '', 'a')
-    const again = addExerciseToGroup(groups, groups[0]!.id, 'a')
+    const groups = addExerciseToGroup(singleStraightGroup(['a']), '', exercise('a'))
+    const again = addExerciseToGroup(groups, groups[0]!.id, exercise('a'))
 
     expect(groupExerciseIds(again)).toEqual(['a'])
   })
@@ -254,14 +315,13 @@ describe('saveableGroups', () => {
   })
 
   // A circuit rests between exercises and between rounds, so a set rest has
-  // nowhere to go — but it stays in the draft, so switching back restores it.
-  it("drops a circuit's per-exercise rests on the way out, not out of the draft", () => {
+  // nowhere to go there — it travels anyway, so switching back restores it.
+  it("keeps a circuit's per-exercise rests, which it has nowhere to take", () => {
     const groups = singleStraightGroup(['a'])
     const withRest = setEntryRest(groups, entryKey(groups, 0, 0), 180)
     const asCircuit = withRest.map((group) => ({ ...group, mode: 'circuit' as const }))
 
-    expect(saveableGroups(asCircuit)[0]?.entries[0]?.restSeconds).toBeUndefined()
-    expect(asCircuit[0]?.entries[0]?.restSeconds).toBe(180)
+    expect(saveableGroups(asCircuit)[0]?.entries[0]?.restSeconds).toBe(180)
   })
 })
 

@@ -33,7 +33,10 @@ message Exercise {
     unique: true
     items: { enum: { defined_only: true not_in: [0] } }
   }];
-  int32 rest_seconds = 6 [(buf.validate.field).int32 = { gte: 0, lte: 3600 }];
+  // 6 held how long the exercise rested between sets, which a routine now
+  // says for each occurrence of it.
+  reserved 6;
+  reserved "rest_seconds";
 }
 
 enum ExerciseMetric {

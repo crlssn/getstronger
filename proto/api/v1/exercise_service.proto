@@ -41,7 +41,10 @@ message CreateExerciseRequest {
     unique: true
     items: { enum: { defined_only: true not_in: [0] } }
   }];
-  int32 rest_seconds = 4 [(buf.validate.field).int32 = { gte: 0, lte: 3600 }];
+  // 4 held the rest an exercise took between sets, which is now a property of
+  // the routine occurrence rather than of the library.
+  reserved 4;
+  reserved "rest_seconds";
 }
 message CreateExerciseResponse {
   string id = 1;

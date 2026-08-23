@@ -31,14 +31,12 @@ interface Props {
   grouped: boolean
   /** Names come from the routine and from the picker, so nothing is fetched here. */
   nameOf: (exerciseId: string) => string
-  /** The rest the exercise library says this exercise takes, which is what an
-   * empty per-exercise field falls back to. */
-  libraryRestOf: (exerciseId: string) => number
   onChange: (groups: DraftGroup[]) => void
   onAddExercise: (groupId: string) => void
 }
 
-/** A rest the API will take: seconds, never negative, never past an hour. */
+/** A rest the API will take: seconds, never negative, never past an hour. A
+ *  cleared field is no rest, which is the same thing as typing a zero. */
 const clampRest = (seconds: number | undefined) =>
   Math.min(Math.max(Math.round(seconds ?? 0), 0), maximumRestSeconds)
 
@@ -70,7 +68,6 @@ export const RoutineGroupsEditor = ({
   groups,
   grouped,
   nameOf,
-  libraryRestOf,
   onChange,
   onAddExercise,
 }: Props) => {
@@ -217,9 +214,8 @@ export const RoutineGroupsEditor = ({
 
                       {/* A circuit rests on the way to the next exercise and on
                           the way into the next round, so only straight sets have
-                          somewhere to put a rest of their own. Left empty, the
-                          exercise library still says how long it is — which is
-                          what the placeholder shows. */}
+                          somewhere to put a rest of their own. Zero is an answer
+                          here: it turns the timer off for this occurrence. */}
                       {!circuit && (
                         <div className={styles.entryRest}>
                           <label
@@ -236,16 +232,9 @@ export const RoutineGroupsEditor = ({
                             // Every row's label reads the same, so the name is
                             // what tells a screen reader which one this is.
                             aria-label={t('routine.form.groups.restSetAria', { name })}
-                            placeholder={String(libraryRestOf(entry.exerciseId))}
                             value={entry.restSeconds}
                             onChange={(seconds) =>
-                              onChange(
-                                setEntryRest(
-                                  groups,
-                                  entry.key,
-                                  seconds === undefined ? undefined : clampRest(seconds),
-                                ),
-                              )
+                              onChange(setEntryRest(groups, entry.key, clampRest(seconds)))
                             }
                           />
                         </div>

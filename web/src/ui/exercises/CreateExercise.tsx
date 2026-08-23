@@ -11,15 +11,13 @@ import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
-import { defaultRestSeconds } from '@/ui/exercises/ExerciseMeasurementSettings'
 
-// Weight and reps with a 90-second rest: what most exercises are, so most of
-// this form is already filled in.
+// Weight and reps: what most exercises are, so most of this form is already
+// filled in.
 const blankExercise: ExerciseFormValues = {
   name: '',
   tags: [],
   metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
-  restSeconds: defaultRestSeconds,
 }
 
 export const CreateExercise = () => {

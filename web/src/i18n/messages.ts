@@ -502,8 +502,6 @@ export const en = {
     tagHelp: 'Use Enter or a comma to add each tag.',
     save: 'Save Exercise',
     unit: 'Measurement units',
-    restTimer: 'Rest timer',
-    restOptional: 'Optional rest between sets',
     measurements: {
       heading: 'How do you track it?',
       help: 'Choose a starting point, then mix any measurements you need.',
@@ -516,7 +514,6 @@ export const en = {
       unitMinSec: 'min : sec',
       lockedHelp:
         'Measurements stay as they are once sets are logged, so your history keeps the units it was recorded in. Create a new exercise to track this movement differently.',
-      restHelp: 'Starts after every completed set',
     },
     startQuickWorkout: 'Start quick workout',
     startQuickWorkoutBody: 'Start logging {name} now.',
@@ -1239,8 +1236,6 @@ export const sv = {
     tagHelp: 'Använd Enter eller kommatecken för varje tagg.',
     save: 'Spara övning',
     unit: 'Måttenheter',
-    restTimer: 'Vilotimer',
-    restOptional: 'Valfri vila mellan set',
     measurements: {
       heading: 'Hur mäter du övningen?',
       help: 'Välj en utgångspunkt och kombinera sedan de mått du behöver.',
@@ -1253,7 +1248,6 @@ export const sv = {
       unitMinSec: 'min : sek',
       lockedHelp:
         'Måtten ligger fast när set har loggats, så din historik behåller enheterna den registrerades i. Skapa en ny övning om du vill mäta rörelsen på ett annat sätt.',
-      restHelp: 'Startar efter varje avslutat set',
     },
     startQuickWorkout: 'Starta snabbpass',
     startQuickWorkoutBody: 'Börja logga {name} nu.',

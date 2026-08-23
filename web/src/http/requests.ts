@@ -373,8 +373,6 @@ const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): Routin
           (entry) =>
             ({
               exercise: { id: entry.exerciseId } as Exercise,
-              // Left out rather than zeroed: field presence is what tells the
-              // API "inherit the exercise's rest" from "no timer here".
               restSeconds: entry.restSeconds,
             }) as RoutineExercise,
         ),
@@ -454,7 +452,7 @@ export const updateExercise = async (
   const req = create(UpdateExerciseRequestSchema, {
     exercise,
     updateMask: {
-      paths: ['name', 'tags', 'metrics', 'rest_seconds'],
+      paths: ['name', 'tags', 'metrics'],
     } as FieldMask,
   })
   return tryCatch(() => exerciseClient.updateExercise(req))

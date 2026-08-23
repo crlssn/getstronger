@@ -66,9 +66,6 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:c
 	if value, ok := setter.Metrics.Get(); ok {
 		mods = append(mods, bobfactory.ExerciseMods.Metrics(value))
 	}
-	if value, ok := setter.RestSeconds.Get(); ok {
-		mods = append(mods, bobfactory.ExerciseMods.RestSeconds(value))
-	}
 
 	template := f.generated.NewExercise(mods...)
 	built := template.Build()

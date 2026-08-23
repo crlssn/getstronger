@@ -14,7 +14,6 @@ import styles from './ExerciseForm.module.css'
 export interface ExerciseFormValues {
   name: string
   metrics: ExerciseMetric[]
-  restSeconds: number
   tags: string[]
 }
 
@@ -72,8 +71,6 @@ export const ExerciseForm = ({
       <ExerciseMeasurementSettings
         metrics={values.metrics}
         onMetricsChange={(metrics) => update({ metrics })}
-        restSeconds={values.restSeconds}
-        onRestSecondsChange={(restSeconds) => update({ restSeconds })}
         metricsLocked={metricsLocked}
       />
 

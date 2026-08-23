@@ -33,14 +33,6 @@
   @apply bg-surface-inverse text-white;
 }
 
-.restSetting {
-  @apply flex items-center justify-between border-t border-border pt-5;
-}
-
-.restSetting strong {
-  @apply block text-base text-text;
-}
-
 /* The same tile as an editable measurement, minus the affordances: no hover,
    no tick, and a sunken fill for something being read rather than set. The
    tint one step darker is the lightest surface text-subtle still clears AA on,

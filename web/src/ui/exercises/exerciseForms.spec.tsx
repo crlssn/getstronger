@@ -43,7 +43,6 @@ const existing = () =>
       name: 'Bench press',
       tags: ['Chest'],
       metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
-      restSeconds: 90,
     },
   })
 
@@ -77,15 +76,24 @@ beforeEach(() => {
 
 describe('CreateExercise', () => {
   // Most exercises are lifts, so most of the form is already answered.
-  test('starts on weight and reps with a rest set', async () => {
+  test('starts on weight and reps', async () => {
     render(<CreateExercise />)
 
     await waitFor(() => expect(mocked.listExerciseTags).toHaveBeenCalled())
-    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('button', { name: 'Weight × reps' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
+  })
+
+  // How long an exercise rests belongs to the routine that trains it, so the
+  // library form has nothing to say about it.
+  test('does not ask how long the exercise rests', async () => {
+    render(<CreateExercise />)
+
+    await waitFor(() => expect(mocked.listExerciseTags).toHaveBeenCalled())
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(screen.queryByText('Rest timer')).not.toBeInTheDocument()
   })
 
   test('creates the exercise it was given and goes back to the list', async () => {
@@ -98,7 +106,6 @@ describe('CreateExercise', () => {
     expect(mocked.createExercise.mock.calls[0]?.[0]).toMatchObject({
       name: 'Overhead press',
       metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
-      restSeconds: 90,
     })
     expect(await screen.findByText('list')).toBeInTheDocument()
     expect(useToastStore.getState().toast?.type).toBe('success')
@@ -109,7 +116,6 @@ describe('CreateExercise', () => {
 
     await userEvent.type(nameField(), 'Row')
     await userEvent.click(screen.getByRole('button', { name: 'Distance × time' }))
-    await userEvent.click(screen.getByRole('switch'))
     await userEvent.type(
       screen.getByRole('combobox', { name: 'Add exercise tag' }),
       'Cardio{Enter}',
@@ -120,7 +126,6 @@ describe('CreateExercise', () => {
     expect(mocked.createExercise.mock.calls[0]?.[0]).toMatchObject({
       name: 'Row',
       metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
-      restSeconds: 0,
       tags: ['Cardio'],
     })
   })

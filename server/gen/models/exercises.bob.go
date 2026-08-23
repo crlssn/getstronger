@@ -31,14 +31,13 @@ import (
 
 // Exercise is an object representing the database table.
 type Exercise struct {
-	ID          uuid.UUID           `db:"id,pk" `
-	UserID      uuid.UUID           `db:"user_id" `
-	Title       string              `db:"title" `
-	CreatedAt   time.Time           `db:"created_at" `
-	DeletedAt   null.Val[time.Time] `db:"deleted_at" `
-	Tags        pq.StringArray      `db:"tags" `
-	Metrics     pq.StringArray      `db:"metrics" `
-	RestSeconds int32               `db:"rest_seconds" `
+	ID        uuid.UUID           `db:"id,pk" `
+	UserID    uuid.UUID           `db:"user_id" `
+	Title     string              `db:"title" `
+	CreatedAt time.Time           `db:"created_at" `
+	DeletedAt null.Val[time.Time] `db:"deleted_at" `
+	Tags      pq.StringArray      `db:"tags" `
+	Metrics   pq.StringArray      `db:"metrics" `
 
 	R exerciseR `db:"-" `
 
@@ -77,7 +76,7 @@ type exerciseRLoaded struct {
 
 func buildExerciseColumns(tableName string) exerciseColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "user_id", "title", "created_at", "deleted_at", "tags", "metrics", "rest_seconds",
+		"id", "user_id", "title", "created_at", "deleted_at", "tags", "metrics",
 	)
 
 	if tableName != "" {
@@ -94,21 +93,19 @@ func buildExerciseColumns(tableName string) exerciseColumns {
 		DeletedAt:   buildExerciseColumn(tableName, "deleted_at"),
 		Tags:        buildExerciseColumn(tableName, "tags"),
 		Metrics:     buildExerciseColumn(tableName, "metrics"),
-		RestSeconds: buildExerciseColumn(tableName, "rest_seconds"),
 	}
 }
 
 type exerciseColumns struct {
 	expr.ColumnsExpr
-	tableAlias  string
-	ID          exerciseColumn
-	UserID      exerciseColumn
-	Title       exerciseColumn
-	CreatedAt   exerciseColumn
-	DeletedAt   exerciseColumn
-	Tags        exerciseColumn
-	Metrics     exerciseColumn
-	RestSeconds exerciseColumn
+	tableAlias string
+	ID         exerciseColumn
+	UserID     exerciseColumn
+	Title      exerciseColumn
+	CreatedAt  exerciseColumn
+	DeletedAt  exerciseColumn
+	Tags       exerciseColumn
+	Metrics    exerciseColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -154,18 +151,17 @@ func (c exerciseColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type ExerciseSetter struct {
-	ID          omit.Val[uuid.UUID]      `db:"id,pk" `
-	UserID      omit.Val[uuid.UUID]      `db:"user_id" `
-	Title       omit.Val[string]         `db:"title" `
-	CreatedAt   omit.Val[time.Time]      `db:"created_at" `
-	DeletedAt   omitnull.Val[time.Time]  `db:"deleted_at" `
-	Tags        omit.Val[pq.StringArray] `db:"tags" `
-	Metrics     omit.Val[pq.StringArray] `db:"metrics" `
-	RestSeconds omit.Val[int32]          `db:"rest_seconds" `
+	ID        omit.Val[uuid.UUID]      `db:"id,pk" `
+	UserID    omit.Val[uuid.UUID]      `db:"user_id" `
+	Title     omit.Val[string]         `db:"title" `
+	CreatedAt omit.Val[time.Time]      `db:"created_at" `
+	DeletedAt omitnull.Val[time.Time]  `db:"deleted_at" `
+	Tags      omit.Val[pq.StringArray] `db:"tags" `
+	Metrics   omit.Val[pq.StringArray] `db:"metrics" `
 }
 
 func (s ExerciseSetter) SetColumns() []string {
-	vals := make([]string, 0, 8)
+	vals := make([]string, 0, 7)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -186,9 +182,6 @@ func (s ExerciseSetter) SetColumns() []string {
 	}
 	if s.Metrics.IsValue() {
 		vals = append(vals, "metrics")
-	}
-	if s.RestSeconds.IsValue() {
-		vals = append(vals, "rest_seconds")
 	}
 	return vals
 }
@@ -214,9 +207,6 @@ func (s ExerciseSetter) Overwrite(t *Exercise) {
 	}
 	if s.Metrics.IsValue() {
 		t.Metrics = s.Metrics.MustGet()
-	}
-	if s.RestSeconds.IsValue() {
-		t.RestSeconds = s.RestSeconds.MustGet()
 	}
 }
 
@@ -261,11 +251,6 @@ func (s *ExerciseSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.Metrics.MustGet()).WriteSQL(ctx, w, d, start)
-		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-			if s.RestSeconds.IsUnset() {
-				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
-			}
-			return psql.Arg(s.RestSeconds.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -274,7 +259,7 @@ func (s ExerciseSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s ExerciseSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 8)
+	exprs := make([]bob.Expression, 0, 7)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -325,13 +310,6 @@ func (s ExerciseSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
-	if s.RestSeconds.IsValue() {
-		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
-			psql.Quote(append(prefix, "rest_seconds")...),
-			psql.Arg(s.RestSeconds),
-		}})
-	}
-
 	return exprs
 }
 
@@ -342,7 +320,7 @@ func exerciseScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fu
 		idx int
 		dst func(o *Exercise) any
 	}
-	targets := make([]target, 0, 8)
+	targets := make([]target, 0, 7)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -359,8 +337,6 @@ func exerciseScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fu
 			targets = append(targets, target{i, func(o *Exercise) any { return &o.Tags }})
 		case "metrics":
 			targets = append(targets, target{i, func(o *Exercise) any { return &o.Metrics }})
-		case "rest_seconds":
-			targets = append(targets, target{i, func(o *Exercise) any { return &o.RestSeconds }})
 		}
 	}
 
@@ -995,16 +971,15 @@ func (exercise0 *Exercise) AttachSets(ctx context.Context, exec bob.Executor, re
 }
 
 type exerciseWhere[Q psql.Filterable] struct {
-	cols        exerciseColumns
-	ID          psql.WhereMod[Q, uuid.UUID]
-	UserID      psql.WhereMod[Q, uuid.UUID]
-	Title       psql.WhereMod[Q, string]
-	CreatedAt   psql.WhereMod[Q, time.Time]
-	DeletedAt   psql.WhereNullMod[Q, time.Time]
-	Tags        psql.WhereMod[Q, pq.StringArray]
-	Metrics     psql.WhereMod[Q, pq.StringArray]
-	RestSeconds psql.WhereMod[Q, int32]
-	R           exerciseWhereR[Q]
+	cols      exerciseColumns
+	ID        psql.WhereMod[Q, uuid.UUID]
+	UserID    psql.WhereMod[Q, uuid.UUID]
+	Title     psql.WhereMod[Q, string]
+	CreatedAt psql.WhereMod[Q, time.Time]
+	DeletedAt psql.WhereNullMod[Q, time.Time]
+	Tags      psql.WhereMod[Q, pq.StringArray]
+	Metrics   psql.WhereMod[Q, pq.StringArray]
+	R         exerciseWhereR[Q]
 }
 
 func (exerciseWhere[Q]) AliasedAs(alias string) exerciseWhere[Q] {
@@ -1013,16 +988,15 @@ func (exerciseWhere[Q]) AliasedAs(alias string) exerciseWhere[Q] {
 
 func buildExerciseWhere[Q psql.Filterable](cols exerciseColumns) exerciseWhere[Q] {
 	return exerciseWhere[Q]{
-		cols:        cols,
-		ID:          psql.Where[Q, uuid.UUID](cols.ID.Expression),
-		UserID:      psql.Where[Q, uuid.UUID](cols.UserID.Expression),
-		Title:       psql.Where[Q, string](cols.Title.Expression),
-		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		DeletedAt:   psql.WhereNull[Q, time.Time](cols.DeletedAt.Expression),
-		Tags:        psql.Where[Q, pq.StringArray](cols.Tags.Expression),
-		Metrics:     psql.Where[Q, pq.StringArray](cols.Metrics.Expression),
-		RestSeconds: psql.Where[Q, int32](cols.RestSeconds.Expression),
-		R:           exerciseWhereR[Q]{cols: cols},
+		cols:      cols,
+		ID:        psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		UserID:    psql.Where[Q, uuid.UUID](cols.UserID.Expression),
+		Title:     psql.Where[Q, string](cols.Title.Expression),
+		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		DeletedAt: psql.WhereNull[Q, time.Time](cols.DeletedAt.Expression),
+		Tags:      psql.Where[Q, pq.StringArray](cols.Tags.Expression),
+		Metrics:   psql.Where[Q, pq.StringArray](cols.Metrics.Expression),
+		R:         exerciseWhereR[Q]{cols: cols},
 	}
 }
 
@@ -1096,14 +1070,13 @@ func (w exerciseWhereR[Q]) HasRoutines(filters ...bob.Mod[*dialect.SelectQuery])
 // on a LEFT JOIN miss every column comes back NULL, so each field uses the
 // nullable version of the column type even when the column itself is NOT NULL.
 type exercisePreloadBuf struct {
-	ID          null.Val[uuid.UUID]
-	UserID      null.Val[uuid.UUID]
-	Title       null.Val[string]
-	CreatedAt   null.Val[time.Time]
-	DeletedAt   null.Val[time.Time]
-	Tags        null.Val[pq.StringArray]
-	Metrics     null.Val[pq.StringArray]
-	RestSeconds null.Val[int32]
+	ID        null.Val[uuid.UUID]
+	UserID    null.Val[uuid.UUID]
+	Title     null.Val[string]
+	CreatedAt null.Val[time.Time]
+	DeletedAt null.Val[time.Time]
+	Tags      null.Val[pq.StringArray]
+	Metrics   null.Val[pq.StringArray]
 }
 
 // exerciseScanMapperNullable maps the preloaded exercise
@@ -1118,7 +1091,7 @@ func exerciseScanMapperNullable(prefix string) scan.Mapper[*Exercise] {
 			idx int
 			dst func(b *exercisePreloadBuf) any
 		}
-		targets := make([]target, 0, 8)
+		targets := make([]target, 0, 7)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1139,8 +1112,6 @@ func exerciseScanMapperNullable(prefix string) scan.Mapper[*Exercise] {
 				targets = append(targets, target{i, func(b *exercisePreloadBuf) any { return &b.Tags }})
 			case "metrics":
 				targets = append(targets, target{i, func(b *exercisePreloadBuf) any { return &b.Metrics }})
-			case "rest_seconds":
-				targets = append(targets, target{i, func(b *exercisePreloadBuf) any { return &b.RestSeconds }})
 			}
 		}
 
@@ -1169,8 +1140,7 @@ func exerciseScanMapperNullable(prefix string) scan.Mapper[*Exercise] {
 					!(buf.CreatedAt.IsValue()) &&
 					!(buf.DeletedAt.IsValue()) &&
 					!(buf.Tags.IsValue()) &&
-					!(buf.Metrics.IsValue()) &&
-					!(buf.RestSeconds.IsValue()) {
+					!(buf.Metrics.IsValue()) {
 					return nil, nil
 				}
 
@@ -1193,9 +1163,6 @@ func exerciseScanMapperNullable(prefix string) scan.Mapper[*Exercise] {
 				}
 				if buf.Metrics.IsValue() {
 					o.Metrics = buf.Metrics.MustGet()
-				}
-				if buf.RestSeconds.IsValue() {
-					o.RestSeconds = buf.RestSeconds.MustGet()
 				}
 				return o, nil
 			}

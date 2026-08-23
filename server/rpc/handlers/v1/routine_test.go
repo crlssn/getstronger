@@ -8,7 +8,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -17,6 +16,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -381,9 +381,9 @@ func (s *routineSuite) TestCreateRoutineWithAPerExerciseRest() {
 			{
 				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
 				Exercises: []*apiv1.RoutineExercise{
-					{Exercise: &apiv1.Exercise{Id: exerciseIDs[0]}, RestSeconds: proto.Int32(180)},
-					{Exercise: &apiv1.Exercise{Id: exerciseIDs[1]}},
-					{Exercise: &apiv1.Exercise{Id: exerciseIDs[2]}, RestSeconds: proto.Int32(0)},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[0]}, RestSeconds: 180},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[1]}, RestSeconds: 45},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[2]}, RestSeconds: 0},
 				},
 			},
 		},
@@ -394,15 +394,44 @@ func (s *routineSuite) TestCreateRoutineWithAPerExerciseRest() {
 	s.Require().Len(group.GetExercises(), 3)
 
 	s.Require().Equal(int32(180), group.GetExercises()[0].GetRestSeconds())
-	// Unset, so editing the exercise in the library still moves this rest.
-	s.Require().Nil(group.GetExercises()[1].RestSeconds)
-	// Zero turns the timer off here, and is not the same as saying nothing.
-	s.Require().Equal(proto.Int32(0), group.GetExercises()[2].RestSeconds)
+	s.Require().Equal(int32(45), group.GetExercises()[1].GetRestSeconds())
+	// Zero is an answer of its own: no timer for this occurrence.
+	s.Require().Equal(int32(0), group.GetExercises()[2].GetRestSeconds())
+}
+
+// Nothing says how long an occurrence rests, so the rest a new one of that
+// exercise starts at does — and an exercise held against the clock starts with
+// no timer at all.
+func (s *routineSuite) TestCreateRoutineWithoutGroupsRestsByDefault() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	lift := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	plank := s.factory.NewExercise(
+		factory.ExerciseUserID(user.ID),
+		factory.ExerciseMetrics(training.MetricTime.String()),
+	)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Plain day",
+		ExerciseIds: []string{lift.ID.String(), plank.ID.String()},
+	}))
+	s.Require().NoError(err)
+
+	group := s.getRoutine(ctx, created.Msg.GetId()).GetGroups()[0]
+	s.Require().Len(group.GetExercises(), 2)
+
+	rests := make(map[string]int32, len(group.GetExercises()))
+	for _, entry := range group.GetExercises() {
+		rests[entry.GetExercise().GetId()] = entry.GetRestSeconds()
+	}
+	s.Require().Equal(int32(training.DefaultRestSeconds), rests[lift.ID.String()])
+	s.Require().Equal(int32(0), rests[plank.ID.String()])
 }
 
 // A circuit rests between exercises and between rounds, so a set rest sent for
-// one is dropped rather than stored and ignored.
-func (s *routineSuite) TestCreateRoutineIgnoresAPerExerciseRestInACircuit() {
+// one has nowhere to go while it is one. It is kept rather than dropped, so a
+// group switched back to straight sets rests as it did before.
+func (s *routineSuite) TestCreateRoutineKeepsAPerExerciseRestInACircuit() {
 	user := s.factory.NewUser()
 	ctx := s.context(user)
 	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
@@ -416,8 +445,8 @@ func (s *routineSuite) TestCreateRoutineIgnoresAPerExerciseRestInACircuit() {
 				Mode:                     apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
 				RestBetweenRoundsSeconds: 120,
 				Exercises: []*apiv1.RoutineExercise{
-					{Exercise: &apiv1.Exercise{Id: exerciseIDs[0]}, RestSeconds: proto.Int32(180)},
-					{Exercise: &apiv1.Exercise{Id: exerciseIDs[1]}},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[0]}, RestSeconds: 180},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[1]}, RestSeconds: 0},
 				},
 			},
 		},
@@ -426,8 +455,8 @@ func (s *routineSuite) TestCreateRoutineIgnoresAPerExerciseRestInACircuit() {
 
 	group := s.getRoutine(ctx, created.Msg.GetId()).GetGroups()[0]
 	s.Require().Equal(int32(120), group.GetRestBetweenRoundsSeconds())
-	s.Require().Nil(group.GetExercises()[0].RestSeconds)
-	s.Require().Nil(group.GetExercises()[1].RestSeconds)
+	s.Require().Equal(int32(180), group.GetExercises()[0].GetRestSeconds())
+	s.Require().Equal(int32(0), group.GetExercises()[1].GetRestSeconds())
 }
 
 func (s *routineSuite) TestCreateRoutineHoldsAnExerciseOncePerGroup() {
