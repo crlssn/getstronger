@@ -55,11 +55,6 @@
   @apply block text-xs font-normal text-text-subtle;
 }
 
-/* Positioning only: AppNumberField draws the field and its unit. */
-.secondsField {
-  @apply w-28 shrink-0;
-}
-
 .exercises {
   @apply flex flex-col divide-y divide-border;
 }
@@ -91,10 +86,6 @@
  * is the only part of the row that says which exercise this is. */
 .exerciseName {
   @apply mr-auto min-w-0 flex-1 truncate pl-2 text-sm font-semibold text-text;
-}
-
-.moveButton {
-  @apply shrink-0;
 }
 
 /* The row's three controls read as one set, so the menu drops the border the

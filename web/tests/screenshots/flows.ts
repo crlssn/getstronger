@@ -139,7 +139,20 @@ export const flows: Flow[] = [
         name: 'filled',
       },
       {
+        // The switch is the whole answer for a routine that wants a rest timer
+        // and does not care how long, so the folded-away state is one the
+        // builder is seen in as often as the open one.
         act: async (page) => {
+          await page.getByRole('switch', { name: 'Rest timers' }).click()
+          await expect(page.getByLabel(/^Rest between sets of/).first()).toBeHidden()
+        },
+        name: 'rest-off',
+      },
+      {
+        act: async (page) => {
+          // Saved with its timers back on, so the routine below is the one the
+          // rest of this flow photographs.
+          await page.getByRole('switch', { name: 'Rest timers' }).click()
           await page.getByRole('button', { name: 'Create routine' }).click()
           await expect(page).toHaveURL(/\/routines$/)
           await page.getByLabel('Search routines').fill(routineName)

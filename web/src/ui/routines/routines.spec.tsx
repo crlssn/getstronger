@@ -291,7 +291,10 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Upper body')
     await addExercise(/Bench press/)
     await addExercise(/^Row/)
-    await userEvent.click(screen.getByRole('button', { name: 'Move Row up' }))
+    // Reordering is in the row's menu: two arrows and a menu left the exercise
+    // name competing for a phone's width.
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for Row' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Move Row up' }))
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() =>
@@ -474,6 +477,45 @@ describe('CreateRoutine', () => {
         [expect.objectContaining({ mode: 'straight' })],
       ),
     )
+  })
+
+  // Most routines want a rest timer and do not care how long, so the switch is
+  // the whole answer and the lengths stay folded away behind it.
+  test('folds the rest lengths away until the switch asks for them', async () => {
+    render()
+
+    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
+    await addExercise(/Bench press/)
+    await addExercise(/Row/)
+
+    expect(screen.getByRole('switch', { name: 'Rest timers' })).toBeChecked()
+    expect(screen.getByLabelText('Rest between sets of Bench press')).toBeVisible()
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
+
+    expect(screen.queryByLabelText('Rest between sets of Bench press')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Rest after each exercise')).not.toBeInTheDocument()
+    // The lengths stay in the draft while it is off, so the line says what
+    // turning it back on would give. Between-sets lengths belong to the
+    // exercises, and this block holds a lift and a timed row, so they vary.
+    expect(screen.getByText('Varies between sets · 1:30 after each exercise')).toBeVisible()
+  })
+
+  // No timer is no rest: the lengths the form is holding are what the switch
+  // would hand back, not what this routine trains with.
+  test('saves no rest anywhere when the timer is switched off', async () => {
+    render()
+
+    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
+    await addExercise(/Bench press/)
+    await addExercise(/Row/)
+    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
+
+    await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
+    const [, , groups] = mocked.createRoutine.mock.calls[0]!
+    expect(groups?.[0]?.restBetweenExercisesSeconds).toBe(0)
+    expect(groups?.[0]?.entries.map((entry) => entry.restSeconds)).toEqual([0, 0])
   })
 
   // A plain routine pauses on the way to the next lift too, so it is asked how
