@@ -27,7 +27,7 @@ func TestCookies_RefreshToken(t *testing.T) {
 		Value:    "value",
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   cfg.Server.CookieDomain,
-		MaxAge:   int(jwt.ExpiryTimeRefresh),
+		MaxAge:   int(jwt.ExpiryTimeRefresh.Seconds()),
 		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
@@ -42,7 +42,7 @@ func TestCookies_RefreshToken(t *testing.T) {
 		Value:    "value",
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   cfg.Server.CookieDomain,
-		MaxAge:   int(jwt.ExpiryTimeRefresh),
+		MaxAge:   int(jwt.ExpiryTimeRefresh.Seconds()),
 		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
@@ -55,11 +55,15 @@ func TestCookies_RefreshToken(t *testing.T) {
 		Value:    "value",
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   cfg.Server.CookieDomain,
-		MaxAge:   int(jwt.ExpiryTimeRefresh),
+		MaxAge:   int(jwt.ExpiryTimeRefresh.Seconds()),
 		Secure:   false,
 		HttpOnly: true,
 		SameSite: http.SameSiteDefaultMode,
 	}, cookie.RefreshToken("value"))
+
+	// A literal rather than a derived expression: comparing the cookie against
+	// the same expression that builds it is what hid the nanosecond Max-Age.
+	require.Contains(t, cookie.RefreshToken("value").String(), "Max-Age=2592000;")
 }
 
 func TestCookies_ExpiredRefreshToken(t *testing.T) {
