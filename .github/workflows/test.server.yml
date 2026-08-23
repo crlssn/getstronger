@@ -77,12 +77,19 @@ jobs:
         with:
           version: v2.12.2
 
+      # go test cannot emit JUnit XML, which Codecov Test Analytics needs to
+      # report failures and flakes; gotestsum wraps it and writes both.
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@v1.13.0
+
       - name: Run tests with coverage
         # -coverpkg makes a statement count wherever it is executed, so helpers
         # exercised only from another package's tests are not reported as 0%.
         # Scoped to ./server/... because all Go code and tests live there and
         # ./... would drag in the vendored Go package under web/node_modules.
-        run: go test ./... -coverpkg=./server/... -coverprofile=coverage.out
+        run: >-
+          gotestsum --junitfile junit.xml --format testname --
+          ./... -coverpkg=./server/... -coverprofile=coverage.out
         env:
           # Ten test binaries share one Ryuk container, and each waits up to a
           # hardcoded 60s for it to log that it started — a deadline a loaded
@@ -95,6 +102,18 @@ jobs:
         with:
           slug: crlssn/getstronger
           files: coverage.out
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # Runs even when the suite fails, which is the run whose results matter.
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
+        with:
+          slug: crlssn/getstronger
+          files: junit.xml
+          report_type: test_results
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
