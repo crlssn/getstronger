@@ -16,27 +16,6 @@
   @apply w-full;
 }
 
-.searchField {
-  @apply card flex w-full items-center gap-2 px-4 transition focus-within:border-ink-muted;
-}
-
-.searchField > svg {
-  @apply size-6 shrink-0 text-text-subtle;
-}
-
-.searchField input {
-  @apply h-14 min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-text placeholder:text-text-subtle focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0;
-}
-
-/* Matches the search trigger, which is already a full target. */
-.searchField button {
-  @apply -mx-1 grid size-11 shrink-0 place-items-center rounded-lg text-text-subtle hover:bg-ink-tint;
-}
-
-.searchField button svg {
-  @apply size-5;
-}
-
 .searchResults {
   @apply card mt-3 w-full overflow-hidden;
 }

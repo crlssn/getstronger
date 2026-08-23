@@ -39,6 +39,3 @@
 .exerciseGroupCard > a > svg {
   @apply size-5 shrink-0 text-text-subtle;
 }
-
-@media (max-width: 420px) {
-}

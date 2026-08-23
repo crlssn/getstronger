@@ -1,11 +1,13 @@
 # Store conventions
 
-Zustand, one store per file, named `useXStore` to match the call sites the Vue
-app already had.
+Zustand, one store per file, each exported as `useXStore` — the `use` prefix
+because reading one inside a component is a hook subscription like any other.
 
 **State and actions live on the same object.** Actions are plain functions on
-the store, so `useWorkoutStore.getState().addSet(…)` works from non-component
-code the same way `useWorkoutStore()` did under Pinia.
+the store rather than a separate dispatch layer, so code that is not a
+component at all can still reach one: `jwt/jwt.ts` calls `setAccessToken`
+through `useAuthStore.getState()`, and `http/interceptors.ts` reads the token
+back the same way.
 
 **Reading from a component** goes through a selector, so the component only
 re-renders when that slice changes:
@@ -21,8 +23,9 @@ that is not a hook — uses `getState()`:
 const { accessToken } = useAuthStore.getState()
 ```
 
-**Derived values are exported selectors, not stored state.** Pinia's `computed`
-has no Zustand equivalent, and duplicating the value into state lets it drift:
+**Derived values are exported selectors, not stored state.** A store holds
+what it was told; anything computed from that is a function of it, and copying
+the computed value into state gives it a second place to be wrong:
 
 ```ts
 export const selectAuthorised = (state: AuthState) => state.userId !== '' && ...
@@ -31,13 +34,19 @@ useAuthStore(selectAuthorised)            // in a component
 selectAuthorised(useAuthStore.getState()) // outside one
 ```
 
-**Persistence** uses Zustand's `persist` middleware where the Pinia store had
-`persist: true`, with `partialize` naming the fields explicitly so actions and
-transient state never reach storage.
+A selector is written as a standalone function of the state so both call sites
+above can use it — one subscribing, one reading once.
 
-**Tests reset the store themselves.** Zustand stores are module singletons, so
-there is no `setActivePinia(createPinia())` equivalent; a `beforeEach` that
-merges the initial values back in does the same job:
+**Persistence** uses Zustand's `persist` middleware over `migratedStorage` from
+[`persistence.ts`](persistence.ts). Six stores persist: `auth`, `dashboard`,
+`emailVerification`, `mutationQueue`, `preferences` and `workout`. Each names
+its fields in `partialize` explicitly, so actions and transient state never
+reach storage — a store that persisted its whole object would write its own
+functions out and read them back as data.
+
+**Tests reset the store themselves.** A store is a module singleton, so state
+set by one test is still there in the next; a `beforeEach` that merges the
+initial values back in is what isolates them:
 
 ```ts
 beforeEach(() => {
