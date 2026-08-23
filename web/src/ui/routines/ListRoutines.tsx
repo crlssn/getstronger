@@ -15,6 +15,7 @@ import { listRoutines } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { useDashboardStore } from '@/stores/dashboard'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
@@ -44,10 +45,15 @@ export const ListRoutines = () => {
   const [routines, setRoutines] = useState<Routine[]>([])
   const [search, setSearch] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const fetchRoutines = useCallback(async () => {
+    setFailed(false)
     const response = await listRoutines(currentPageToken())
-    if (!response) return
+    if (!response) {
+      setFailed(true)
+      return
+    }
 
     setRoutines((current) => appendPage(current, response.routines))
     setFromResponse(response.pagination)
@@ -112,6 +118,8 @@ export const ListRoutines = () => {
 
       {!loaded ? (
         <AppSkeleton />
+      ) : failed && routines.length === 0 ? (
+        <AppErrorState onRetry={() => void fetchRoutines()} />
       ) : filtered.length > 0 ? (
         groups.map((group) => (
           <section key={group.bucket} className={styles.routineGroup}>
@@ -208,8 +216,12 @@ export const ListRoutines = () => {
         />
       )}
 
-      {hasMorePages && (
-        <AppLoadMore label={t('routine.list.loadMore')} onFetch={() => void fetchRoutines()} />
+      {failed && routines.length > 0 ? (
+        <AppErrorState compact onRetry={() => void fetchRoutines()} />
+      ) : (
+        hasMorePages && (
+          <AppLoadMore label={t('routine.list.loadMore')} onFetch={() => void fetchRoutines()} />
+        )
       )}
     </div>
   )

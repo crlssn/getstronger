@@ -1,0 +1,29 @@
+@reference '../../assets/base.css';
+
+/* A card like the empty state, not an alarm: the icon carries the bad news, so
+   the surface stays the app's own. */
+.errorState {
+  @apply card grid justify-items-start gap-3 p-6;
+}
+
+.errorIcon {
+  @apply grid size-11 place-items-center rounded-control bg-danger-surface text-danger;
+}
+
+.errorIcon svg {
+  @apply size-5;
+}
+
+.errorState h2 {
+  @apply text-body-lg font-semibold text-text;
+}
+
+.errorState p {
+  @apply text-sm leading-6 text-text-muted;
+}
+
+/* The inline form: one row under content that did arrive, so it announces the
+   gap rather than replacing what is on screen. */
+.compactError {
+  @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
+}

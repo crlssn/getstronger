@@ -3,7 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -91,6 +91,20 @@ describe('ListNotifications', () => {
     render()
 
     expect(await screen.findByText('Your notifications will appear here')).toBeInTheDocument()
+  })
+
+  test('says the fetch failed rather than that there is nothing', async () => {
+    mocked.listNotifications.mockResolvedValue(undefined)
+    render()
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Your notifications will appear here')).not.toBeInTheDocument()
+
+    mocked.listNotifications.mockResolvedValue(page([follow('n1')]))
+    await userEvent.click(within(failure).getByRole('button'))
+
+    expect(await screen.findByRole('link')).toBeInTheDocument()
   })
 
   test('names who followed you, and links to them', async () => {

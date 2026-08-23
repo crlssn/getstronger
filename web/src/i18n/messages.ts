@@ -42,6 +42,9 @@ export const en = {
     dismiss: 'Dismiss message',
     pageAction: 'Page action',
     nothingHere: 'Nothing here yet…',
+    loadFailed: 'Something went wrong',
+    loadFailedBody: 'That did not load. Check your connection and try again.',
+    somethingWentWrong: 'Something went wrong. Please try again.',
   },
   nav: {
     primary: 'Primary navigation',
@@ -58,6 +61,7 @@ export const en = {
   },
   offline: {
     banner: 'You are offline—showing saved data.',
+    requestFailed: 'You appear to be offline. Check your connection and try again.',
     queued_one: '{count} change will sync when you are back online.',
     queued_other: '{count} changes will sync when you are back online.',
   },
@@ -87,6 +91,9 @@ export const en = {
     alreadyMember: 'Already have an account?',
     resetPassword: 'Reset password',
     sendResetLink: 'Send reset link',
+    sendingResetLink: 'Sending the link…',
+    loggingIn: 'Logging in…',
+    creatingAccount: 'Creating your account…',
     logout: 'Log out',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
@@ -103,6 +110,7 @@ export const en = {
       newPassword: 'New password',
       confirmNewPassword: 'Confirm new password',
       updatePassword: 'Update password',
+      updatingPassword: 'Updating the password…',
       resetDone: 'Your password has been reset',
     },
     verification: {
@@ -167,6 +175,7 @@ export const en = {
     searching: 'Searching…',
     nothingFound: 'Nothing found for “{query}”.',
     hint: 'Type at least 3 characters to search.',
+    failed: 'The search could not be completed.',
   },
   notifications: {
     empty: 'Your notifications will appear here',
@@ -766,6 +775,9 @@ export const sv = {
     dismiss: 'Stäng meddelandet',
     pageAction: 'Sidåtgärd',
     nothingHere: 'Inget här ännu…',
+    loadFailed: 'Något gick fel',
+    loadFailedBody: 'Det gick inte att ladda. Kontrollera din anslutning och försök igen.',
+    somethingWentWrong: 'Något gick fel. Försök igen.',
   },
   nav: {
     primary: 'Primär navigering',
@@ -782,6 +794,7 @@ export const sv = {
   },
   offline: {
     banner: 'Du är offline – visar sparade data.',
+    requestFailed: 'Du verkar vara offline. Kontrollera din anslutning och försök igen.',
     queued_one: '{count} ändring synkas när du är online igen.',
     queued_other: '{count} ändringar synkas när du är online igen.',
   },
@@ -811,6 +824,9 @@ export const sv = {
     alreadyMember: 'Har du redan ett konto?',
     resetPassword: 'Återställ lösenord',
     sendResetLink: 'Skicka återställningslänk',
+    sendingResetLink: 'Skickar länken…',
+    loggingIn: 'Loggar in…',
+    creatingAccount: 'Skapar kontot…',
     logout: 'Logga ut',
     showPassword: 'Visa lösenord',
     hidePassword: 'Dölj lösenord',
@@ -827,6 +843,7 @@ export const sv = {
       newPassword: 'Nytt lösenord',
       confirmNewPassword: 'Bekräfta nytt lösenord',
       updatePassword: 'Uppdatera lösenordet',
+      updatingPassword: 'Uppdaterar lösenordet…',
       resetDone: 'Ditt lösenord har återställts',
     },
     verification: {
@@ -891,6 +908,7 @@ export const sv = {
     searching: 'Söker…',
     nothingFound: 'Inga resultat för ”{query}”.',
     hint: 'Skriv minst 3 tecken för att söka.',
+    failed: 'Sökningen kunde inte slutföras.',
   },
   notifications: {
     empty: 'Dina aviseringar visas här',

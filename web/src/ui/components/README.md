@@ -33,6 +33,7 @@ aspirational.
 | Rows of things                 | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
 | A row that is one tap          | `<AppOptionRow>`                                    |
 | Nothing to show yet            | `<AppEmptyState>`                                   |
+| A fetch that failed            | `<AppErrorState>`                                   |
 | Waiting for the API            | `<AppSkeleton>`                                     |
 | A modal decision or a picker   | `<AppSheet>` + `<SheetAction>`                      |
 | One of a few choices           | `<AppSegmented>` / `<AppSegmentedNav>`              |
@@ -190,6 +191,15 @@ wrong thing. `flat` drops the border for a row inside an already-divided list.
 Nothing to show, and what to do about it. `action` is required — not required
 to exist, required to be decided. A screen with genuinely nowhere to go writes
 `action="none"` in its own markup, where a reviewer sees the choice being made.
+
+### `<AppErrorState>`
+
+The counterpart to `<AppEmptyState>`, and the reason both exist: a screen that
+only checks `length === 0` renders an unreachable server as an empty list,
+which is the more confident of the two claims and the harder one to argue
+with. `onRetry` is required for the same reason `action` is over there — a
+dead end is not a state. `compact` is the one-row form, for a failure under
+content that did arrive.
 
 ### `<AppSkeleton>`
 

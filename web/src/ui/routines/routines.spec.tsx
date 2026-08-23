@@ -196,6 +196,20 @@ describe('ListRoutines', () => {
     expect(await screen.findByText('No routines yet')).toBeInTheDocument()
   })
 
+  test('says the fetch failed rather than that there are no routines', async () => {
+    mocked.listRoutines.mockResolvedValue(undefined)
+    render()
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('No routines yet')).not.toBeInTheDocument()
+
+    mocked.listRoutines.mockResolvedValue(routinesPage([push, pull]))
+    await userEvent.click(within(failure).getByRole('button'))
+
+    expect(await screen.findByRole('heading', { name: 'Push day', level: 3 })).toBeInTheDocument()
+  })
+
   test('loads another page on request', async () => {
     const second = new Uint8Array([1])
     mocked.listRoutines

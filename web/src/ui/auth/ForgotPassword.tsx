@@ -13,11 +13,19 @@ import { AppInput } from '@/ui/components/AppInput'
 export const ForgotPassword = () => {
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (submitting) return
 
-    const res = await resetPassword(create(ResetPasswordRequestSchema, { email }))
+    setSubmitting(true)
+    let res
+    try {
+      res = await resetPassword(create(ResetPasswordRequestSchema, { email }))
+    } finally {
+      setSubmitting(false)
+    }
     if (!res) return
 
     posthog.capture('password_reset_requested')
@@ -46,8 +54,15 @@ export const ForgotPassword = () => {
           onChange={(event) => setEmail(event.target.value)}
         />
 
-        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
-          {t('auth.sendResetLink')}
+        <AppButton
+          type="submit"
+          colour="primary"
+          size="lg"
+          className="mt-2"
+          disabled={submitting}
+          aria-busy={submitting || undefined}
+        >
+          {submitting ? t('auth.sendingResetLink') : t('auth.sendResetLink')}
         </AppButton>
       </form>
 

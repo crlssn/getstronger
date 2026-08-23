@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { listExercises } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
@@ -29,10 +30,15 @@ export const ListExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
 
   const fetchExercises = useCallback(async () => {
+    setFailed(false)
     const response = await listExercises(currentPageToken())
-    if (!response) return
+    if (!response) {
+      setFailed(true)
+      return
+    }
 
     setExercises((current) => appendPage(current, response.exercises))
     setFromResponse(response.pagination)
@@ -90,6 +96,8 @@ export const ListExercises = () => {
 
       {loading ? (
         <AppSkeleton />
+      ) : failed && exercises.length === 0 ? (
+        <AppErrorState onRetry={() => void fetchExercises()} />
       ) : filtered.length > 0 ? (
         <section className={styles.exerciseList}>
           {groups.map((group) => (
@@ -109,8 +117,12 @@ export const ListExercises = () => {
             </section>
           ))}
 
-          {hasMorePages && (
-            <AppLoadMore label={t('exercise.loadMore')} onFetch={() => void fetchExercises()} />
+          {failed ? (
+            <AppErrorState compact onRetry={() => void fetchExercises()} />
+          ) : (
+            hasMorePages && (
+              <AppLoadMore label={t('exercise.loadMore')} onFetch={() => void fetchExercises()} />
+            )
           )}
         </section>
       ) : (

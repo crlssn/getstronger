@@ -1,5 +1,5 @@
 import { ArrowPathIcon, CheckIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
@@ -8,6 +8,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { selectActivePlan, usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { TrainingTabs } from '@/ui/features/TrainingTabs'
@@ -19,16 +20,19 @@ export const PlansView = () => {
 
   const plans = usePlanStore((state) => state.plans)
   const activePlan = usePlanStore(selectActivePlan)
+  const failed = usePlanStore((state) => state.failed)
 
   const [loaded, setLoaded] = useState(false)
 
+  const load = useCallback(() => usePlanStore.getState().load(), [])
+
   useEffect(() => {
-    const load = async () => {
-      await usePlanStore.getState().load()
+    const initialLoad = async () => {
+      await load()
       setLoaded(true)
     }
-    void load()
-  }, [])
+    void initialLoad()
+  }, [load])
 
   const otherPlans = plans.filter((plan) => !plan.active)
   const nextRoutine = activePlan?.routines[activePlan.currentPosition]
@@ -76,6 +80,10 @@ export const PlansView = () => {
 
       {!loaded ? (
         <AppSkeleton />
+      ) : failed && plans.length === 0 ? (
+        // The empty state below teaches what a plan is, which is the wrong
+        // lesson for someone who already has three of them.
+        <AppErrorState onRetry={() => void load()} />
       ) : plans.length === 0 ? (
         // A plan is an unfamiliar idea, so the empty state teaches it rather
         // than just offering a button.

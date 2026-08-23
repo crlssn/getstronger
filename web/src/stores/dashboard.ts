@@ -11,6 +11,8 @@ interface DashboardState {
   preferredRoutineId: string
   dashboard: GetDashboardResponse | undefined
   loading: boolean
+  /** The last load failed, so an absent dashboard is not an empty account. */
+  failed: boolean
   load: () => Promise<void>
   selectRoutine: (routineId: string) => Promise<void>
 }
@@ -27,14 +29,18 @@ export const useDashboardStore = create<DashboardState>()(
       preferredRoutineId: '',
       dashboard: undefined,
       loading: false,
+      failed: false,
 
       load: async () => {
         set({ loading: true })
         try {
           const response = await getDashboard(get().preferredRoutineId)
-          if (!response) return
+          if (!response) {
+            set({ failed: true })
+            return
+          }
 
-          set({ dashboard: response })
+          set({ dashboard: response, failed: false })
           if (
             !response.activePlan &&
             response.nextRoutine?.id &&

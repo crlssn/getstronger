@@ -141,6 +141,22 @@ describe('ListExercises', () => {
     )
   })
 
+  // "No exercises yet" for a library that never arrived invites the reader to
+  // recreate a library they already have.
+  test('says the library failed rather than that it is empty', async () => {
+    listExercises.mockResolvedValue(undefined)
+    render()
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('No exercises yet')).not.toBeInTheDocument()
+
+    listExercises.mockResolvedValue(page([bench]))
+    await userEvent.click(within(failure).getByRole('button'))
+
+    expect(await screen.findByRole('link', { name: /Bench press/ })).toBeInTheDocument()
+  })
+
   test('loads another page on request', async () => {
     const second = new Uint8Array([1])
     listExercises.mockResolvedValueOnce(page([bench], second)).mockResolvedValue(page([run]))

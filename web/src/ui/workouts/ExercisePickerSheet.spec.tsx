@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -92,6 +92,24 @@ describe('ExercisePickerSheet', () => {
     expect(
       await screen.findByText('All available exercises are already in this workout.'),
     ).toBeInTheDocument()
+  })
+
+  // "All available exercises are already in this workout" for a library that
+  // never arrived is the one reading this picker must not offer.
+  test('says the library failed rather than that everything is already added', async () => {
+    listExercises.mockResolvedValue(undefined)
+    await renderPicker()
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('Something went wrong')
+    expect(
+      screen.queryByText('All available exercises are already in this workout.'),
+    ).not.toBeInTheDocument()
+
+    listExercises.mockResolvedValue(page())
+    await userEvent.click(within(failure).getByRole('button'))
+
+    expect(await screen.findByRole('button', { name: /Bench Press/ })).toBeInTheDocument()
   })
 
   test('fetches the next page on request', async () => {

@@ -15,6 +15,8 @@ import {
 interface PlanState {
   plans: Plan[]
   loading: boolean
+  /** The last load failed, so an empty list is not an account without plans. */
+  failed: boolean
   load: () => Promise<void>
   create: (name: string, routineIds: string[]) => Promise<Plan | undefined>
   update: (id: string, name: string, routineIds: string[]) => Promise<Plan | undefined>
@@ -33,12 +35,13 @@ export const usePlanStore = create<PlanState>()((set, get) => {
   return {
     plans: [],
     loading: false,
+    failed: false,
 
     load: async () => {
       set({ loading: true })
       try {
         const response = await listPlans()
-        if (response) set({ plans: response.plans })
+        set(response ? { plans: response.plans, failed: false } : { failed: true })
       } finally {
         set({ loading: false })
       }

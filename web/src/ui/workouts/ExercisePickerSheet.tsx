@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSearchField } from '@/ui/components/AppSearchField'
@@ -38,12 +39,17 @@ export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: 
   const [options, setOptions] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
   const [search, setSearch] = useState('')
   const { currentPageToken, hasMorePages, setFromResponse } = usePagination()
 
   const fetchPage = useCallback(async () => {
+    setFailed(false)
     const res = await listExercises(currentPageToken())
-    if (!res) return
+    if (!res) {
+      setFailed(true)
+      return
+    }
 
     setOptions((current) => appendPage(current, res.exercises))
     setFromResponse(res.pagination)
@@ -86,6 +92,10 @@ export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: 
 
       {loading && !loaded ? (
         <AppSkeleton />
+      ) : failed && !options.length ? (
+        // "All available exercises are already in this workout" for a library
+        // that never arrived is the reading this picker must not offer.
+        <AppErrorState onRetry={loadMore} />
       ) : available.length ? (
         <div className={styles.exerciseOptions}>
           {available.map((exercise) => (
@@ -105,7 +115,9 @@ export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: 
         </div>
       )}
 
-      {hasMorePages && (
+      {failed && options.length > 0 && <AppErrorState compact onRetry={loadMore} />}
+
+      {hasMorePages && !failed && (
         <AppLoadMore
           label={loading ? t('common.loading') : t('exercise.loadMore')}
           loading={loading}

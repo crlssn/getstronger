@@ -18,6 +18,7 @@ import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { CardWorkout } from '@/ui/features/CardWorkout'
@@ -47,6 +48,7 @@ export const HomeView = () => {
 
   const dashboard = useDashboardStore((state) => state.dashboard)
   const loading = useDashboardStore((state) => state.loading)
+  const dashboardFailed = useDashboardStore((state) => state.failed)
   const nextRoutine = useDashboardStore(selectNextRoutine)
   const activePlan = useDashboardStore(selectActivePlan)
 
@@ -201,6 +203,10 @@ export const HomeView = () => {
                   )}
                 </div>
               </section>
+            ) : dashboardFailed ? (
+              // Onboarding copy for a user who already has routines is the
+              // worst thing this screen can say, so a failed load says so.
+              <AppErrorState onRetry={() => void useDashboardStore.getState().load()} />
             ) : (
               <AppEmptyState
                 action={{ label: t('home.createRoutine'), to: '/routines/create' }}
@@ -223,18 +229,11 @@ export const HomeView = () => {
               {!feedLoaded ? (
                 <AppSkeleton />
               ) : feedError ? (
-                <div className={styles.feedError} role="alert">
-                  <span>{t('home.loadFailed')}</span>
-                  <AppButton
-                    type="button"
-                    colour="destructive"
-                    size="sm"
-                    width="auto"
-                    onClick={() => void loadMoreFeed()}
-                  >
-                    {t('common.retry')}
-                  </AppButton>
-                </div>
+                <AppErrorState
+                  compact
+                  title={t('home.loadFailed')}
+                  onRetry={() => void loadMoreFeed()}
+                />
               ) : feedWorkouts.length === 0 ? (
                 <AppEmptyState
                   action={{ label: t('home.emptyFeedAction') }}

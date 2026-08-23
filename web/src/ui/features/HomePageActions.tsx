@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 
 import { listExercises, listPlans, listRoutines, searchUsers } from '@/http/requests'
 import { cn } from '@/ui/cn'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { handle, initials } from '@/utils/names'
@@ -52,6 +53,10 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
   const [groups, setGroups] = useState(noGroups)
   const [searching, setSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [failed, setFailed] = useState(false)
+  // Bumped by the retry button: the search runs from an effect, so asking for
+  // it again means changing something the effect watches.
+  const [attempt, setAttempt] = useState(0)
 
   const trimmed = query.trim()
 
@@ -73,6 +78,10 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
           listExercises(new Uint8Array(0), trimmed),
         ])
         if (stale) return
+
+        // Four endpoints answer one question, so the panel can only claim
+        // "nothing found" when all four actually answered.
+        setFailed([users, routines, plans, exercises].every((response) => !response))
 
         setGroups([
           {
@@ -131,12 +140,13 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
       stale = true
       clearTimeout(timer)
     }
-  }, [trimmed, t])
+  }, [trimmed, attempt, t])
 
   const clear = () => {
     setGroups(noGroups)
     setSearching(false)
     setHasSearched(false)
+    setFailed(false)
   }
 
   const onQueryChange = (value: string) => {
@@ -209,6 +219,12 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
             <p className={styles.searchHint} aria-live="polite">
               {t('search.searching')}
             </p>
+          ) : failed ? (
+            <AppErrorState
+              compact
+              title={t('search.failed')}
+              onRetry={() => setAttempt((current) => current + 1)}
+            />
           ) : (
             <p className={styles.searchHint}>
               {hasSearched ? t('search.nothingFound', { query }) : t('search.hint')}

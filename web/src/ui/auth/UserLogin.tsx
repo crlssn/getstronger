@@ -17,11 +17,20 @@ export const UserLogin = () => {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  // A submit against an unreachable server used to do nothing visible at all.
+  const [submitting, setSubmitting] = useState(false)
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (submitting) return
 
-    const res = await login(email, password)
+    setSubmitting(true)
+    let res
+    try {
+      res = await login(email, password)
+    } finally {
+      setSubmitting(false)
+    }
     if (!res) return
 
     useAuthStore.getState().setAccessToken(res.accessToken)
@@ -68,8 +77,15 @@ export const UserLogin = () => {
           />
         </div>
 
-        <AppButton type="submit" colour="primary" size="lg" className="mt-2">
-          {t('auth.login')}
+        <AppButton
+          type="submit"
+          colour="primary"
+          size="lg"
+          className="mt-2"
+          disabled={submitting}
+          aria-busy={submitting || undefined}
+        >
+          {submitting ? t('auth.loggingIn') : t('auth.login')}
         </AppButton>
       </form>
 

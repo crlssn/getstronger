@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 
 import { listWorkouts } from '@/http/requests'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -22,12 +23,17 @@ export const UserWorkouts = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loaded, setLoaded] = useState(false)
   const [fetching, setFetching] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const fetchWorkouts = useCallback(async () => {
     setFetching(true)
+    setFailed(false)
     try {
       const res = await listWorkouts([id], currentPageToken())
-      if (!res) return
+      if (!res) {
+        setFailed(true)
+        return
+      }
 
       setWorkouts((current) => appendPage(current, res.workouts))
       setFromResponse(res.pagination)
@@ -46,10 +52,11 @@ export const UserWorkouts = () => {
 
   const sentinel = useInfiniteScroll<HTMLDivElement>(
     () => void fetchWorkouts(),
-    hasMorePages && !fetching,
+    hasMorePages && !fetching && !failed,
   )
 
   if (!loaded) return <AppSkeleton />
+  if (failed && workouts.length === 0) return <AppErrorState onRetry={() => void fetchWorkouts()} />
 
   return (
     <>
@@ -57,7 +64,11 @@ export const UserWorkouts = () => {
         <CardWorkout key={workout.id} compact workout={workout} />
       ))}
 
-      {hasMorePages && <div ref={sentinel} aria-hidden="true" />}
+      {failed ? (
+        <AppErrorState compact onRetry={() => void fetchWorkouts()} />
+      ) : (
+        hasMorePages && <div ref={sentinel} aria-hidden="true" />
+      )}
 
       {workouts.length === 0 && (
         <AppList>

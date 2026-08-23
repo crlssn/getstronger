@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
@@ -31,12 +32,15 @@ export const ProgressView = () => {
   const dashboard = useDashboardStore((state) => state.dashboard)
   const workouts = useProgressStore((state) => state.workouts)
   const loaded = useProgressStore((state) => state.loaded)
+  const failed = useProgressStore((state) => state.failed)
+  const dashboardFailed = useDashboardStore((state) => state.failed)
 
   const [periodDays, setPeriodDays] = useState(28)
 
-  useEffect(() => {
+  const load = () =>
     void Promise.all([useDashboardStore.getState().load(), useProgressStore.getState().load()])
-  }, [])
+
+  useEffect(load, [])
 
   const filtered = useMemo(() => withinDays(workouts, periodDays), [workouts, periodDays])
   const personalBests = dashboard?.personalBests ?? []
@@ -61,6 +65,10 @@ export const ProgressView = () => {
           silently unmounting the controls. */}
       {!loaded ? (
         <AppSkeleton />
+      ) : failed ? (
+        // The store has always set this flag; the section used to vanish
+        // instead of reading it, which reads as an account with no history.
+        <AppErrorState onRetry={load} />
       ) : (
         workouts.length > 0 && (
           <section className={styles.chartCard}>
@@ -104,7 +112,9 @@ export const ProgressView = () => {
             <h2>{t('progress.personalRecords')}</h2>
           </div>
 
-          {personalBests.length > 0 ? (
+          {dashboardFailed && personalBests.length === 0 ? (
+            <AppErrorState onRetry={load} />
+          ) : personalBests.length > 0 ? (
             <div className={styles.recordList}>
               {personalBests.map((personalBest) => (
                 <Link key={personalBest.set?.id} to={`/exercises/${personalBest.exercise?.id}`}>

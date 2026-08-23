@@ -7,6 +7,7 @@ import { listNotifications, markNotificationAsRead } from '@/http/requests'
 import { useNotificationStore } from '@/stores/notifications'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -24,11 +25,16 @@ export const ListNotifications = () => {
 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
   const [markingAllAsRead, setMarkingAllAsRead] = useState(false)
 
   const fetchNotifications = useCallback(async () => {
+    setFailed(false)
     const res = await listNotifications(currentPageToken())
-    if (!res) return
+    if (!res) {
+      setFailed(true)
+      return
+    }
 
     setNotifications((current) => appendPage(current, res.notifications))
     setFromResponse(res.pagination)
@@ -81,6 +87,8 @@ export const ListNotifications = () => {
   }
 
   if (!loaded) return <AppSkeleton />
+  if (failed && notifications.length === 0)
+    return <AppErrorState onRetry={() => void fetchNotifications()} />
 
   return (
     <>
@@ -103,7 +111,7 @@ export const ListNotifications = () => {
         </PageNavAction>
       )}
 
-      <AppList canFetch={hasMorePages} onFetch={() => void fetchNotifications()}>
+      <AppList canFetch={hasMorePages && !failed} onFetch={() => void fetchNotifications()}>
         {notifications.map((notification) => (
           <AppListItem
             key={notification.id}
@@ -134,6 +142,8 @@ export const ListNotifications = () => {
 
         {notifications.length === 0 && <AppListItem>{t('notifications.empty')}</AppListItem>}
       </AppList>
+
+      {failed && <AppErrorState compact onRetry={() => void fetchNotifications()} />}
     </>
   )
 }
