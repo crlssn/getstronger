@@ -16,6 +16,7 @@ on:
       - 'go.mod'
       - 'go.sum'
       - 'server/**'
+      - 'scripts/**'
       - 'database/migrations/**'
       - '.github/workflows/test.server.yml'
 
