@@ -8,15 +8,17 @@ body:
       value: |
         Title convention: `feat|fix|test|chore|infra: web|server|mobile|infra|db: summary`.
         Apply a `P1`/`P2`/`P3`, a `type:` and an `area:` label after opening.
+        Keep the body inside the caps on each field: anything longer goes in a
+        follow-up comment, where reading it is opt-in.
 
   - type: textarea
     id: problem
     attributes:
       label: Problem
       description: >
-        What is wrong or missing today, and why it matters. Describe the current
-        behaviour concretely — the screen, the package, the viewport, the failure.
-        State the consequence for a user or an operator, not just the defect.
+        At most three sentences. What is wrong or missing today, described
+        concretely — the screen, the package, the viewport, the failure — and its
+        consequence for a user or an operator, not just the defect.
       placeholder: |
         On a 390 × 844 viewport, the header, rest banner and tab bar leave roughly
         half the screen for logging sets, and global navigation makes accidental
@@ -29,8 +31,9 @@ body:
     attributes:
       label: Proposed change
       description: >
-        The intended shape of the solution. Enough for someone else to start, without
-        pinning down decisions that are better made while implementing.
+        At most five bullets. The intended shape of the solution — enough for someone
+        else to start, without pinning down decisions that are better made while
+        implementing.
     validations:
       required: true
 
@@ -38,7 +41,7 @@ body:
     id: acceptance
     attributes:
       label: Acceptance criteria
-      description: A checklist that makes "done" unambiguous.
+      description: A checklist that makes "done" unambiguous. No cap — this is the part that does get read.
       value: |
         - [ ]
         - [ ]
@@ -50,7 +53,7 @@ body:
     id: tests
     attributes:
       label: Test coverage
-      description: Which tests should exist or change. Write "none" if genuinely not applicable.
+      description: One line — which tests should exist or change. Write "none" if genuinely not applicable.
     validations:
       required: false
 

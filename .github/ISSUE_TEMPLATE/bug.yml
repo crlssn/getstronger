@@ -3,11 +3,17 @@ description: Something behaves incorrectly and can be reproduced.
 title: "fix: <area>: <short imperative summary>"
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep the body inside the caps on each field: anything longer goes in a
+        follow-up comment, where reading it is opt-in.
+
   - type: textarea
     id: what
     attributes:
       label: What happens
-      description: The observed behaviour, and what you expected instead.
+      description: At most three sentences — the observed behaviour, and what you expected instead.
     validations:
       required: true
 
@@ -15,6 +21,7 @@ body:
     id: repro
     attributes:
       label: Reproduction
+      description: One line per step, at most five steps.
       value: |
         1.
         2.
