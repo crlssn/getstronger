@@ -78,3 +78,54 @@ func TestRestSeconds(t *testing.T) {
 	require.Equal(t, 45, training.RestSeconds(45, nil))
 	require.Equal(t, 0, training.RestSeconds(0, []training.Metric{training.MetricTime}))
 }
+
+func TestMetricsFromStrings(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, training.DefaultMetrics(), training.MetricsFromStrings([]string{"weight", "reps"}))
+	require.Empty(t, training.MetricsFromStrings(nil))
+}
+
+func TestMetricsLocked(t *testing.T) {
+	t.Parallel()
+
+	stored := []training.Metric{training.MetricWeight, training.MetricReps}
+
+	t.Run("an exercise nobody has logged stays free to change", func(t *testing.T) {
+		t.Parallel()
+		require.False(t, training.MetricsLocked(stored, []training.Metric{training.MetricTime}, false))
+	})
+
+	t.Run("logged sets keep the measurements they were recorded under", func(t *testing.T) {
+		t.Parallel()
+		require.True(t, training.MetricsLocked(stored, []training.Metric{
+			training.MetricDistance, training.MetricTime,
+		}, true))
+	})
+
+	t.Run("asking for what is already measured changes nothing", func(t *testing.T) {
+		t.Parallel()
+		require.False(t, training.MetricsLocked(stored, []training.Metric{
+			training.MetricWeight, training.MetricReps,
+		}, true))
+	})
+
+	t.Run("a reordering is not a change", func(t *testing.T) {
+		t.Parallel()
+		require.False(t, training.MetricsLocked(stored, []training.Metric{
+			training.MetricReps, training.MetricWeight,
+		}, true))
+	})
+
+	t.Run("dropping one of the measurements is a change", func(t *testing.T) {
+		t.Parallel()
+		require.True(t, training.MetricsLocked(stored, []training.Metric{training.MetricWeight}, true))
+	})
+
+	t.Run("adding a measurement is a change", func(t *testing.T) {
+		t.Parallel()
+		require.True(t, training.MetricsLocked(stored, []training.Metric{
+			training.MetricWeight, training.MetricReps, training.MetricTime,
+		}, true))
+	})
+}

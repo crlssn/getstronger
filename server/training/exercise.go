@@ -121,3 +121,45 @@ func RestSeconds(requested int, requestedMetrics []Metric) int {
 
 	return requested
 }
+
+// MetricsFromStrings reads back what the store keeps as text.
+func MetricsFromStrings(values []string) []Metric {
+	metrics := make([]Metric, 0, len(values))
+	for _, value := range values {
+		metrics = append(metrics, Metric(value))
+	}
+
+	return metrics
+}
+
+// MetricsLocked reports whether a requested change of measurements must be
+// refused. A set is recorded in the columns its exercise measured by at the
+// time, and nothing says which those were, so re-reading a logged set under
+// different measurements rewrites the athlete's history rather than restating
+// it. An exercise nobody has logged yet has no history to protect, and asking
+// for the measurements already in force changes nothing whatever order they
+// arrive in.
+func MetricsLocked(stored, requested []Metric, hasLoggedSets bool) bool {
+	return hasLoggedSets && !sameMetrics(stored, requested)
+}
+
+// sameMetrics reports whether two normalized sets of measurements measure the
+// same thing. Their order is how a form listed them, not what a set means.
+func sameMetrics(stored, requested []Metric) bool {
+	if len(stored) != len(requested) {
+		return false
+	}
+
+	seen := make(map[Metric]struct{}, len(stored))
+	for _, metric := range stored {
+		seen[metric] = struct{}{}
+	}
+
+	for _, metric := range requested {
+		if _, found := seen[metric]; !found {
+			return false
+		}
+	}
+
+	return true
+}

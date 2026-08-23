@@ -1042,6 +1042,24 @@ func (s *repoSuite) TestListExercises() {
 	}
 }
 
+func (s *repoSuite) TestCountSets() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	other := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	count, err := s.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID.String()))
+	s.Require().NoError(err)
+	s.Require().Zero(count)
+
+	s.factory.NewSetSlice(2, factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
+	s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(other.ID))
+
+	count, err = s.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID.String()))
+	s.Require().NoError(err)
+	s.Require().Equal(int64(2), count)
+}
+
 func (s *repoSuite) TestUpdateRoutine() {
 	type expected struct {
 		err error
