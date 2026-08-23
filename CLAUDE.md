@@ -93,6 +93,9 @@ worktree. The local stack is not shared, so set it up before running anything.
   changes interact with yours.
 - Prefer rebasing over merge commits so each branch stays a linear series of
   commits on top of `main`.
+- The pre-push hook formats, lints, and tests only the areas the push changes,
+  so a web-only push never starts a database container. Let it run: `--no-verify`
+  is for a hook that is broken, not for one that is slow.
 
 ## Code comments
 

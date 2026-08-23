@@ -16,6 +16,7 @@ on:
       - 'go.mod'
       - 'go.sum'
       - 'server/**'
+      - 'scripts/**'
       - 'database/migrations/**'
       - '.github/workflows/test.server.yml'
 
@@ -82,6 +83,12 @@ jobs:
         # Scoped to ./server/... because all Go code and tests live there and
         # ./... would drag in the vendored Go package under web/node_modules.
         run: go test ./... -coverpkg=./server/... -coverprofile=coverage.out
+        env:
+          # Ten test binaries share one Ryuk container, and each waits up to a
+          # hardcoded 60s for it to log that it started — a deadline a loaded
+          # runner misses often enough to redden a green branch (#1161). The
+          # runner is discarded after the job, so nothing here needs reaping.
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2

@@ -22,7 +22,13 @@ type Container struct {
 }
 
 const (
-	startTimeout = 10 * time.Second
+	// Ten packages start their own Postgres, and `go test ./...` builds them in
+	// parallel, so a single run can ask one Docker daemon for ten containers at
+	// once — more when other worktrees are doing the same. This is a startup
+	// deadline rather than a test assertion: nothing is served by failing fast,
+	// and at ten seconds a loaded daemon failed a run that had nothing wrong
+	// with it.
+	startTimeout = 2 * time.Minute
 	occurrence   = 2
 )
 
