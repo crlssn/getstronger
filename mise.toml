@@ -38,6 +38,14 @@ node = "24.19.0"
 # A shims directory that does not exist is simply ignored.
 PATH = "{{ env.MISE_DATA_DIR | default(value=env.HOME ~ '/.local/share/mise') }}/shims:{{ env.PATH }}"
 
+# golangci-lint caches results by file content and reports each one against the
+# path it was computed at. Worktrees hold the same files, so one shared cache
+# reports a sibling worktree's paths — and the generated-file exclusions, which
+# have to reread those paths, stop applying, or fail outright once that worktree
+# is gone. A cache per checkout keeps the results attached to the files that
+# produced them.
+GOLANGCI_LINT_CACHE = "{{ config_root }}/.golangci-lint-cache"
+
 # Worktrees override the container names and ports below in mise.local.toml so
 # that parallel checkouts never share state. See 'mise run worktree:env'.
 DB_SSL_MODE = { default = "disable" }
@@ -384,7 +392,12 @@ alias = "lint_backend"
 description = "Lint backend code"
 # Resolved through mise rather than PATH: a system golangci-lint v1 shadows the
 # version pinned above on some machines, and v1 refuses this v2 configuration.
-run = '"$(mise which golangci-lint)" run'
+#
+# --allow-parallel-runners because golangci-lint otherwise takes a global file
+# lock and exits non-zero the moment another worktree is linting, which on a
+# machine running several agents is most of the time. The lock guards a shared
+# cache; GOLANGCI_LINT_CACHE above gives each checkout its own.
+run = '"$(mise which golangci-lint)" run --allow-parallel-runners'
 
 [tasks.vet]
 description = "Vet all code"
