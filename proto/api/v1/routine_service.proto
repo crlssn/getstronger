@@ -2,61 +2,28 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/options.proto";
 import "api/v1/shared.proto";
 import "api/v1/workout_service.proto";
 
 import "buf/validate/validate.proto";
 
 service RoutineService {
-  rpc CreateRoutine(CreateRoutineRequest) returns (CreateRoutineResponse) {
-    option (auth) = true;
-  }
-  rpc GetRoutine (GetRoutineRequest) returns (GetRoutineResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateRoutine (UpdateRoutineRequest) returns (UpdateRoutineResponse) {
-    option (auth) = true;
-  }
-  rpc DeleteRoutine (DeleteRoutineRequest) returns (DeleteRoutineResponse) {
-    option (auth) = true;
-  }
-  rpc ListRoutines (ListRoutinesRequest) returns (ListRoutinesResponse) {
-    option (auth) = true;
-  }
-  rpc AddExercise (AddExerciseRequest) returns (AddExerciseResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateExerciseOrder (UpdateExerciseOrderRequest) returns (UpdateExerciseOrderResponse) {
-    option (auth) = true;
-  }
-  rpc GetDashboard (GetDashboardRequest) returns (GetDashboardResponse) {
-    option (auth) = true;
-  }
-  rpc CreatePlan (CreatePlanRequest) returns (CreatePlanResponse) {
-    option (auth) = true;
-  }
-  rpc GetPlan (GetPlanRequest) returns (GetPlanResponse) {
-    option (auth) = true;
-  }
-  rpc ListPlans (ListPlansRequest) returns (ListPlansResponse) {
-    option (auth) = true;
-  }
-  rpc UpdatePlan (UpdatePlanRequest) returns (UpdatePlanResponse) {
-    option (auth) = true;
-  }
-  rpc DeletePlan (DeletePlanRequest) returns (DeletePlanResponse) {
-    option (auth) = true;
-  }
-  rpc SetActivePlan (SetActivePlanRequest) returns (SetActivePlanResponse) {
-    option (auth) = true;
-  }
-  rpc PauseActivePlan (PauseActivePlanRequest) returns (PauseActivePlanResponse) {
-    option (auth) = true;
-  }
-  rpc SkipPlanRoutine (SkipPlanRoutineRequest) returns (SkipPlanRoutineResponse) {
-    option (auth) = true;
-  }
+  rpc CreateRoutine(CreateRoutineRequest) returns (CreateRoutineResponse) {}
+  rpc GetRoutine (GetRoutineRequest) returns (GetRoutineResponse) {}
+  rpc UpdateRoutine (UpdateRoutineRequest) returns (UpdateRoutineResponse) {}
+  rpc DeleteRoutine (DeleteRoutineRequest) returns (DeleteRoutineResponse) {}
+  rpc ListRoutines (ListRoutinesRequest) returns (ListRoutinesResponse) {}
+  rpc AddExercise (AddExerciseRequest) returns (AddExerciseResponse) {}
+  rpc UpdateExerciseOrder (UpdateExerciseOrderRequest) returns (UpdateExerciseOrderResponse) {}
+  rpc GetDashboard (GetDashboardRequest) returns (GetDashboardResponse) {}
+  rpc CreatePlan (CreatePlanRequest) returns (CreatePlanResponse) {}
+  rpc GetPlan (GetPlanRequest) returns (GetPlanResponse) {}
+  rpc ListPlans (ListPlansRequest) returns (ListPlansResponse) {}
+  rpc UpdatePlan (UpdatePlanRequest) returns (UpdatePlanResponse) {}
+  rpc DeletePlan (DeletePlanRequest) returns (DeletePlanResponse) {}
+  rpc SetActivePlan (SetActivePlanRequest) returns (SetActivePlanResponse) {}
+  rpc PauseActivePlan (PauseActivePlanRequest) returns (PauseActivePlanResponse) {}
+  rpc SkipPlanRoutine (SkipPlanRoutineRequest) returns (SkipPlanRoutineResponse) {}
 }
 
 message CreateRoutineRequest {

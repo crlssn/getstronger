@@ -5,5 +5,13 @@ package api.v1;
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.MethodOptions {
-  bool auth = 50001;
+  // A guest procedure is served without a bearer token, because it either
+  // precedes a session or carries its own credential in the payload. Every
+  // other procedure requires one, so only the exception is written down and a
+  // method that says nothing is authenticated.
+  //
+  // Field 50001 held the inverse option, `bool auth`, and is retired. An
+  // `extend` block cannot carry a `reserved` statement, so this comment is the
+  // only thing keeping the number out of use.
+  bool guest = 50002;
 }

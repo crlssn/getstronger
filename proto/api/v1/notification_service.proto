@@ -2,22 +2,15 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/options.proto";
 import "api/v1/shared.proto";
 import "api/v1/workout_service.proto";
 
 import "buf/validate/validate.proto";
 
 service NotificationService {
-  rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse) {
-    option (auth) = true;
-  }
-  rpc MarkNotificationsAsRead (MarkNotificationsAsReadRequest) returns (MarkNotificationsAsReadResponse) {
-    option (auth) = true;
-  }
-  rpc GetUnreadNotificationCount (GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse) {
-    option (auth) = true;
-  }
+  rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse) {}
+  rpc MarkNotificationsAsRead (MarkNotificationsAsReadRequest) returns (MarkNotificationsAsReadResponse) {}
+  rpc GetUnreadNotificationCount (GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse) {}
 }
 
 message ListNotificationsRequest {

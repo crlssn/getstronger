@@ -997,7 +997,7 @@ var File_api_v1_user_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_user_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/user_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a\x1bbuf/validate/validate.proto\"*\n" +
+	"\x19api/v1/user_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1bbuf/validate/validate.proto\"*\n" +
 	"\x0eGetUserRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"3\n" +
 	"\x0fGetUserResponse\x12 \n" +
@@ -1049,20 +1049,20 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x1dUpdateUserDistanceUnitRequest\x12F\n" +
 	"\rdistance_unit\x18\x01 \x01(\x0e2\x14.api.v1.DistanceUnitB\v\xbaH\b\x82\x01\x05\x10\x01\"\x01\x00R\fdistanceUnit\"B\n" +
 	"\x1eUpdateUserDistanceUnitResponse\x12 \n" +
-	"\x04user\x18\x01 \x01(\v2\f.api.v1.UserR\x04user2\xe2\a\n" +
-	"\vUserService\x12@\n" +
-	"\aGetUser\x12\x16.api.v1.GetUserRequest\x1a\x17.api.v1.GetUserResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"\x04user\x18\x01 \x01(\v2\f.api.v1.UserR\x04user2\xb6\a\n" +
+	"\vUserService\x12<\n" +
+	"\aGetUser\x12\x16.api.v1.GetUserRequest\x1a\x17.api.v1.GetUserResponse\"\x00\x12E\n" +
 	"\n" +
-	"FollowUser\x12\x19.api.v1.FollowUserRequest\x1a\x1a.api.v1.FollowUserResponse\"\x04\x88\xb5\x18\x01\x12O\n" +
-	"\fUnfollowUser\x12\x1b.api.v1.UnfollowUserRequest\x1a\x1c.api.v1.UnfollowUserResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rListFollowers\x12\x1c.api.v1.ListFollowersRequest\x1a\x1d.api.v1.ListFollowersResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rListFollowees\x12\x1c.api.v1.ListFolloweesRequest\x1a\x1d.api.v1.ListFolloweesResponse\"\x04\x88\xb5\x18\x01\x12L\n" +
-	"\vSearchUsers\x12\x1a.api.v1.SearchUsersRequest\x1a\x1b.api.v1.SearchUsersResponse\"\x04\x88\xb5\x18\x01\x12U\n" +
-	"\x0eUpdateUserName\x12\x1d.api.v1.UpdateUserNameRequest\x1a\x1e.api.v1.UpdateUserNameResponse\"\x04\x88\xb5\x18\x01\x12a\n" +
-	"\x12UpdateUserUsername\x12!.api.v1.UpdateUserUsernameRequest\x1a\".api.v1.UpdateUserUsernameResponse\"\x04\x88\xb5\x18\x01\x12m\n" +
-	"\x16UpdateUserAutofillSets\x12%.api.v1.UpdateUserAutofillSetsRequest\x1a&.api.v1.UpdateUserAutofillSetsResponse\"\x04\x88\xb5\x18\x01\x12g\n" +
-	"\x14UpdateUserWeightUnit\x12#.api.v1.UpdateUserWeightUnitRequest\x1a$.api.v1.UpdateUserWeightUnitResponse\"\x04\x88\xb5\x18\x01\x12m\n" +
-	"\x16UpdateUserDistanceUnit\x12%.api.v1.UpdateUserDistanceUnitRequest\x1a&.api.v1.UpdateUserDistanceUnitResponse\"\x04\x88\xb5\x18\x01B\x94\x01\n" +
+	"FollowUser\x12\x19.api.v1.FollowUserRequest\x1a\x1a.api.v1.FollowUserResponse\"\x00\x12K\n" +
+	"\fUnfollowUser\x12\x1b.api.v1.UnfollowUserRequest\x1a\x1c.api.v1.UnfollowUserResponse\"\x00\x12N\n" +
+	"\rListFollowers\x12\x1c.api.v1.ListFollowersRequest\x1a\x1d.api.v1.ListFollowersResponse\"\x00\x12N\n" +
+	"\rListFollowees\x12\x1c.api.v1.ListFolloweesRequest\x1a\x1d.api.v1.ListFolloweesResponse\"\x00\x12H\n" +
+	"\vSearchUsers\x12\x1a.api.v1.SearchUsersRequest\x1a\x1b.api.v1.SearchUsersResponse\"\x00\x12Q\n" +
+	"\x0eUpdateUserName\x12\x1d.api.v1.UpdateUserNameRequest\x1a\x1e.api.v1.UpdateUserNameResponse\"\x00\x12]\n" +
+	"\x12UpdateUserUsername\x12!.api.v1.UpdateUserUsernameRequest\x1a\".api.v1.UpdateUserUsernameResponse\"\x00\x12i\n" +
+	"\x16UpdateUserAutofillSets\x12%.api.v1.UpdateUserAutofillSetsRequest\x1a&.api.v1.UpdateUserAutofillSetsResponse\"\x00\x12c\n" +
+	"\x14UpdateUserWeightUnit\x12#.api.v1.UpdateUserWeightUnitRequest\x1a$.api.v1.UpdateUserWeightUnitResponse\"\x00\x12i\n" +
+	"\x16UpdateUserDistanceUnit\x12%.api.v1.UpdateUserDistanceUnitRequest\x1a&.api.v1.UpdateUserDistanceUnitResponse\"\x00B\x94\x01\n" +
 	"\n" +
 	"com.api.v1B\x10UserServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -1156,7 +1156,6 @@ func file_api_v1_user_service_proto_init() {
 	if File_api_v1_user_service_proto != nil {
 		return
 	}
-	file_api_v1_options_proto_init()
 	file_api_v1_shared_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{

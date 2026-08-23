@@ -100,12 +100,13 @@ func (a *Auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 	}
 }
 
-// requiresAuth reports whether the schema of the procedure being served marks
-// it as needing a token. Connect hands the interceptor the descriptor of the
-// method it is about to call, so the answer comes from the same schema that
-// generated the handler and cannot drift from what the mux serves. A procedure
-// that arrives without a readable descriptor is treated as requiring a token:
-// the interceptor must never serve a method whose rules it cannot read.
+// requiresAuth reports whether the procedure being served needs a token. Every
+// procedure does unless its schema marks it as a guest one, so the answer is
+// the negation of an option only the eight pre-login procedures carry. Connect
+// hands the interceptor the descriptor of the method it is about to call, so
+// the answer comes from the same schema that generated the handler and cannot
+// drift from what the mux serves. Anything unreadable is not an exemption: the
+// interceptor must never serve a method whose rules it cannot read.
 func requiresAuth(log *zap.Logger, spec connect.Spec) bool {
 	method, ok := spec.Schema.(protoreflect.MethodDescriptor)
 	if !ok {
@@ -119,13 +120,13 @@ func requiresAuth(log *zap.Logger, spec connect.Spec) bool {
 		return true
 	}
 
-	auth, ok := proto.GetExtension(options, apiv1.E_Auth).(bool)
+	guest, ok := proto.GetExtension(options, apiv1.E_Guest).(bool)
 	if !ok {
-		log.Warn("Request auth option unreadable: requiring authentication")
+		log.Warn("Request guest option unreadable: requiring authentication")
 		return true
 	}
 
-	return auth
+	return !guest
 }
 
 var (

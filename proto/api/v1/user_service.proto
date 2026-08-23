@@ -2,45 +2,22 @@ syntax = "proto3";
 
 package api.v1;
 
-import "api/v1/options.proto";
 import "api/v1/shared.proto";
 
 import "buf/validate/validate.proto";
 
 service UserService {
-  rpc GetUser (GetUserRequest) returns (GetUserResponse) {
-    option (auth) = true;
-  }
-  rpc FollowUser (FollowUserRequest) returns (FollowUserResponse) {
-    option (auth) = true;
-  }
-  rpc UnfollowUser (UnfollowUserRequest) returns (UnfollowUserResponse) {
-    option (auth) = true;
-  }
-  rpc ListFollowers (ListFollowersRequest) returns (ListFollowersResponse) {
-    option (auth) = true;
-  }
-  rpc ListFollowees (ListFolloweesRequest) returns (ListFolloweesResponse) {
-    option (auth) = true;
-  }
-  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateUserName (UpdateUserNameRequest) returns (UpdateUserNameResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateUserUsername (UpdateUserUsernameRequest) returns (UpdateUserUsernameResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateUserAutofillSets (UpdateUserAutofillSetsRequest) returns (UpdateUserAutofillSetsResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateUserWeightUnit (UpdateUserWeightUnitRequest) returns (UpdateUserWeightUnitResponse) {
-    option (auth) = true;
-  }
-  rpc UpdateUserDistanceUnit (UpdateUserDistanceUnitRequest) returns (UpdateUserDistanceUnitResponse) {
-    option (auth) = true;
-  }
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
+  rpc FollowUser (FollowUserRequest) returns (FollowUserResponse) {}
+  rpc UnfollowUser (UnfollowUserRequest) returns (UnfollowUserResponse) {}
+  rpc ListFollowers (ListFollowersRequest) returns (ListFollowersResponse) {}
+  rpc ListFollowees (ListFolloweesRequest) returns (ListFolloweesResponse) {}
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse) {}
+  rpc UpdateUserName (UpdateUserNameRequest) returns (UpdateUserNameResponse) {}
+  rpc UpdateUserUsername (UpdateUserUsernameRequest) returns (UpdateUserUsernameResponse) {}
+  rpc UpdateUserAutofillSets (UpdateUserAutofillSetsRequest) returns (UpdateUserAutofillSetsResponse) {}
+  rpc UpdateUserWeightUnit (UpdateUserWeightUnitRequest) returns (UpdateUserWeightUnitResponse) {}
+  rpc UpdateUserDistanceUnit (UpdateUserDistanceUnitRequest) returns (UpdateUserDistanceUnitResponse) {}
 }
 
 message GetUserRequest {

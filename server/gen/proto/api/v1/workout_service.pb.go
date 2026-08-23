@@ -798,7 +798,7 @@ var File_api_v1_workout_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xd2\x02\n" +
+	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xd2\x02\n" +
 	"\x14CreateWorkoutRequest\x12\x1d\n" +
 	"\n" +
 	"routine_id\x18\x01 \x01(\tR\troutineId\x12C\n" +
@@ -859,15 +859,15 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\x04user\x18\x02 \x01(\v2\f.api.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\x12!\n" +
 	"\acomment\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\acomment\x12A\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedAt2\xf6\x03\n" +
-	"\x0eWorkoutService\x12R\n" +
-	"\rCreateWorkout\x12\x1c.api.v1.CreateWorkoutRequest\x1a\x1d.api.v1.CreateWorkoutResponse\"\x04\x88\xb5\x18\x01\x12I\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedAt2\xde\x03\n" +
+	"\x0eWorkoutService\x12N\n" +
+	"\rCreateWorkout\x12\x1c.api.v1.CreateWorkoutRequest\x1a\x1d.api.v1.CreateWorkoutResponse\"\x00\x12E\n" +
 	"\n" +
-	"GetWorkout\x12\x19.api.v1.GetWorkoutRequest\x1a\x1a.api.v1.GetWorkoutResponse\"\x04\x88\xb5\x18\x01\x12O\n" +
-	"\fListWorkouts\x12\x1b.api.v1.ListWorkoutsRequest\x1a\x1c.api.v1.ListWorkoutsResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rDeleteWorkout\x12\x1c.api.v1.DeleteWorkoutRequest\x1a\x1d.api.v1.DeleteWorkoutResponse\"\x04\x88\xb5\x18\x01\x12L\n" +
-	"\vPostComment\x12\x1a.api.v1.PostCommentRequest\x1a\x1b.api.v1.PostCommentResponse\"\x04\x88\xb5\x18\x01\x12R\n" +
-	"\rUpdateWorkout\x12\x1c.api.v1.UpdateWorkoutRequest\x1a\x1d.api.v1.UpdateWorkoutResponse\"\x04\x88\xb5\x18\x01B\x97\x01\n" +
+	"GetWorkout\x12\x19.api.v1.GetWorkoutRequest\x1a\x1a.api.v1.GetWorkoutResponse\"\x00\x12K\n" +
+	"\fListWorkouts\x12\x1b.api.v1.ListWorkoutsRequest\x1a\x1c.api.v1.ListWorkoutsResponse\"\x00\x12N\n" +
+	"\rDeleteWorkout\x12\x1c.api.v1.DeleteWorkoutRequest\x1a\x1d.api.v1.DeleteWorkoutResponse\"\x00\x12H\n" +
+	"\vPostComment\x12\x1a.api.v1.PostCommentRequest\x1a\x1b.api.v1.PostCommentResponse\"\x00\x12N\n" +
+	"\rUpdateWorkout\x12\x1c.api.v1.UpdateWorkoutRequest\x1a\x1d.api.v1.UpdateWorkoutResponse\"\x00B\x97\x01\n" +
 	"\n" +
 	"com.api.v1B\x13WorkoutServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -946,7 +946,6 @@ func file_api_v1_workout_service_proto_init() {
 	if File_api_v1_workout_service_proto != nil {
 		return
 	}
-	file_api_v1_options_proto_init()
 	file_api_v1_shared_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{

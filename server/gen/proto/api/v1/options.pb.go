@@ -26,25 +26,34 @@ var file_api_v1_options_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.MethodOptions)(nil),
 		ExtensionType: (*bool)(nil),
-		Field:         50001,
-		Name:          "api.v1.auth",
-		Tag:           "varint,50001,opt,name=auth",
+		Field:         50002,
+		Name:          "api.v1.guest",
+		Tag:           "varint,50002,opt,name=guest",
 		Filename:      "api/v1/options.proto",
 	},
 }
 
 // Extension fields to descriptorpb.MethodOptions.
 var (
-	// optional bool auth = 50001;
-	E_Auth = &file_api_v1_options_proto_extTypes[0]
+	// A guest procedure is served without a bearer token, because it either
+	// precedes a session or carries its own credential in the payload. Every
+	// other procedure requires one, so only the exception is written down and a
+	// method that says nothing is authenticated.
+	//
+	// Field 50001 held the inverse option, `bool auth`, and is retired. An
+	// `extend` block cannot carry a `reserved` statement, so this comment is the
+	// only thing keeping the number out of use.
+	//
+	// optional bool guest = 50002;
+	E_Guest = &file_api_v1_options_proto_extTypes[0]
 )
 
 var File_api_v1_options_proto protoreflect.FileDescriptor
 
 const file_api_v1_options_proto_rawDesc = "" +
 	"\n" +
-	"\x14api/v1/options.proto\x12\x06api.v1\x1a google/protobuf/descriptor.proto:4\n" +
-	"\x04auth\x12\x1e.google.protobuf.MethodOptions\x18ц\x03 \x01(\bR\x04authB\x90\x01\n" +
+	"\x14api/v1/options.proto\x12\x06api.v1\x1a google/protobuf/descriptor.proto:6\n" +
+	"\x05guest\x12\x1e.google.protobuf.MethodOptions\x18҆\x03 \x01(\bR\x05guestB\x90\x01\n" +
 	"\n" +
 	"com.api.v1B\fOptionsProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -52,7 +61,7 @@ var file_api_v1_options_proto_goTypes = []any{
 	(*descriptorpb.MethodOptions)(nil), // 0: google.protobuf.MethodOptions
 }
 var file_api_v1_options_proto_depIdxs = []int32{
-	0, // 0: api.v1.auth:extendee -> google.protobuf.MethodOptions
+	0, // 0: api.v1.guest:extendee -> google.protobuf.MethodOptions
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
