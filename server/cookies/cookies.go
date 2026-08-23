@@ -27,7 +27,7 @@ func (c *Cookies) RefreshToken(value string) *http.Cookie {
 		Value:    value,
 		Path:     fmt.Sprintf("/%s", apiv1connect.AuthServiceName),
 		Domain:   c.config.Server.CookieDomain,
-		MaxAge:   int(jwt.ExpiryTimeRefresh),
+		MaxAge:   int(jwt.ExpiryTimeRefresh.Seconds()),
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: sameSiteMode(secure),

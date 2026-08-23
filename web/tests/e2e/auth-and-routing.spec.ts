@@ -254,6 +254,21 @@ test.describe('authenticated session routing', () => {
     await expect(page).toHaveURL(/\/home$/)
   })
 
+  // Not @smoke: Safari and Firefox cap cookie lifetimes on their own terms, so
+  // only Chromium says anything reliable about what the server asked for.
+  test('keeps the refresh token for the thirty days the session lasts', async ({ page }) => {
+    const cookie = (await page.context().cookies()).find(({ name }) => name === 'refreshToken')
+    expect(cookie, 'Logging in should store a refresh-token cookie').toBeDefined()
+
+    const thirtyDays = 30 * 24 * 60 * 60
+    const lifetime = (cookie?.expires ?? 0) - Date.now() / 1000
+    // An upper bound as well as a lower one: a Max-Age in the wrong unit is
+    // clamped by the browser to its own cap rather than rejected, so only the
+    // ceiling shows the difference between thirty days and four hundred.
+    expect(lifetime).toBeGreaterThan(thirtyDays - 60 * 60)
+    expect(lifetime).toBeLessThanOrEqual(thirtyDays)
+  })
+
   test('logs out and protects the session after reload @mutation', async ({ page }) => {
     await page.goto('/profile')
     await page.getByRole('link', { name: 'Log out' }).click()
