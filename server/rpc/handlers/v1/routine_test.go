@@ -8,6 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -289,13 +290,13 @@ func (s *routineSuite) TestCreateRoutineWithGroups() {
 		Groups: []*apiv1.RoutineGroup{
 			{
 				Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
-				Exercises: []*apiv1.Exercise{{Id: exerciseIDs[0]}},
+				Exercises: groupExercises(exerciseIDs[0]),
 			},
 			{
 				Mode:                        apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
 				RestBetweenExercisesSeconds: 15,
 				RestBetweenRoundsSeconds:    90,
-				Exercises:                   []*apiv1.Exercise{{Id: exerciseIDs[2]}, {Id: exerciseIDs[1]}},
+				Exercises:                   groupExercises(exerciseIDs[2], exerciseIDs[1]),
 			},
 		},
 	}))
@@ -310,7 +311,10 @@ func (s *routineSuite) TestCreateRoutineWithGroups() {
 	s.Require().Equal(int32(90), circuit.GetRestBetweenRoundsSeconds())
 	s.Require().Equal(
 		[]string{exerciseIDs[2], exerciseIDs[1]},
-		[]string{circuit.GetExercises()[0].GetId(), circuit.GetExercises()[1].GetId()},
+		[]string{
+			circuit.GetExercises()[0].GetExercise().GetId(),
+			circuit.GetExercises()[1].GetExercise().GetId(),
+		},
 	)
 
 	// The flat list is the groups read end to end, so the order the groups put
@@ -336,11 +340,11 @@ func (s *routineSuite) TestCreateRoutineWithAnExerciseInTwoGroups() {
 		Groups: []*apiv1.RoutineGroup{
 			{
 				Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
-				Exercises: []*apiv1.Exercise{{Id: exerciseIDs[0]}},
+				Exercises: groupExercises(exerciseIDs[0]),
 			},
 			{
 				Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
-				Exercises: []*apiv1.Exercise{{Id: exerciseIDs[0]}, {Id: exerciseIDs[1]}},
+				Exercises: groupExercises(exerciseIDs[0], exerciseIDs[1]),
 			},
 		},
 	}))
@@ -350,8 +354,8 @@ func (s *routineSuite) TestCreateRoutineWithAnExerciseInTwoGroups() {
 	s.Require().Len(routine.GetGroups(), 2)
 	s.Require().Len(routine.GetGroups()[0].GetExercises(), 1)
 	s.Require().Len(routine.GetGroups()[1].GetExercises(), 2)
-	s.Require().Equal(exerciseIDs[0], routine.GetGroups()[0].GetExercises()[0].GetId())
-	s.Require().Equal(exerciseIDs[0], routine.GetGroups()[1].GetExercises()[0].GetId())
+	s.Require().Equal(exerciseIDs[0], routine.GetGroups()[0].GetExercises()[0].GetExercise().GetId())
+	s.Require().Equal(exerciseIDs[0], routine.GetGroups()[1].GetExercises()[0].GetExercise().GetId())
 
 	// The flat list is still the groups read end to end, so the repeat is in it
 	// twice: that is how many times the routine trains it.
@@ -360,6 +364,70 @@ func (s *routineSuite) TestCreateRoutineWithAnExerciseInTwoGroups() {
 		flat = append(flat, exercise.GetId())
 	}
 	s.Require().Equal([]string{exerciseIDs[0], exerciseIDs[0], exerciseIDs[1]}, flat)
+}
+
+// The rest a straight group gives an exercise is the routine's, not the
+// library's: the same lift can rest one length here and another next door.
+func (s *routineSuite) TestCreateRoutineWithAPerExerciseRest() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Heavy day",
+		ExerciseIds: exerciseIDs,
+		Groups: []*apiv1.RoutineGroup{
+			{
+				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.RoutineExercise{
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[0]}, RestSeconds: proto.Int32(180)},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[1]}},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[2]}, RestSeconds: proto.Int32(0)},
+				},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	group := s.getRoutine(ctx, created.Msg.GetId()).GetGroups()[0]
+	s.Require().Len(group.GetExercises(), 3)
+
+	s.Require().Equal(int32(180), group.GetExercises()[0].GetRestSeconds())
+	// Unset, so editing the exercise in the library still moves this rest.
+	s.Require().Nil(group.GetExercises()[1].RestSeconds)
+	// Zero turns the timer off here, and is not the same as saying nothing.
+	s.Require().Equal(proto.Int32(0), group.GetExercises()[2].RestSeconds)
+}
+
+// A circuit rests between exercises and between rounds, so a set rest sent for
+// one is dropped rather than stored and ignored.
+func (s *routineSuite) TestCreateRoutineIgnoresAPerExerciseRestInACircuit() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := s.exerciseIDs(exercises)
+
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Circuit day",
+		ExerciseIds: exerciseIDs,
+		Groups: []*apiv1.RoutineGroup{
+			{
+				Mode:                     apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+				RestBetweenRoundsSeconds: 120,
+				Exercises: []*apiv1.RoutineExercise{
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[0]}, RestSeconds: proto.Int32(180)},
+					{Exercise: &apiv1.Exercise{Id: exerciseIDs[1]}},
+				},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	group := s.getRoutine(ctx, created.Msg.GetId()).GetGroups()[0]
+	s.Require().Equal(int32(120), group.GetRestBetweenRoundsSeconds())
+	s.Require().Nil(group.GetExercises()[0].RestSeconds)
+	s.Require().Nil(group.GetExercises()[1].RestSeconds)
 }
 
 func (s *routineSuite) TestCreateRoutineHoldsAnExerciseOncePerGroup() {
@@ -373,12 +441,8 @@ func (s *routineSuite) TestCreateRoutineHoldsAnExerciseOncePerGroup() {
 		ExerciseIds: exerciseIDs,
 		Groups: []*apiv1.RoutineGroup{
 			{
-				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
-				Exercises: []*apiv1.Exercise{
-					{Id: exerciseIDs[0]},
-					{Id: exerciseIDs[1]},
-					{Id: exerciseIDs[0]},
-				},
+				Mode:      apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+				Exercises: groupExercises(exerciseIDs[0], exerciseIDs[1], exerciseIDs[0]),
 			},
 		},
 	}))
@@ -411,7 +475,7 @@ func (s *routineSuite) TestUpdateRoutineRegroupsIt() {
 				{
 					Mode:                     apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
 					RestBetweenRoundsSeconds: 60,
-					Exercises:                []*apiv1.Exercise{{Id: exerciseIDs[1]}, {Id: exerciseIDs[0]}},
+					Exercises:                groupExercises(exerciseIDs[1], exerciseIDs[0]),
 				},
 			},
 		},
@@ -476,4 +540,15 @@ func (s *routineSuite) TestGetRoutineOfAnotherUser() {
 		connect.NewRequest(&apiv1.GetRoutineRequest{Id: created.Msg.GetId()}),
 	)
 	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+}
+
+// groupExercises names a group's exercises without saying anything about rest,
+// which is what a routine nobody has given one keeps sending.
+func groupExercises(ids ...string) []*apiv1.RoutineExercise {
+	exercises := make([]*apiv1.RoutineExercise, 0, len(ids))
+	for _, id := range ids {
+		exercises = append(exercises, &apiv1.RoutineExercise{Exercise: &apiv1.Exercise{Id: id}})
+	}
+
+	return exercises
 }

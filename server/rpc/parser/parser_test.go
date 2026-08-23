@@ -133,18 +133,24 @@ func (s *parserSuite) TestRoutineWithGroups() {
 	exercises := s.factory.NewExerciseSlice(3)
 	routine.R.Exercises = exercises
 
+	restSeconds := int32(180)
 	parsed := parser.RoutineWithGroups(routine, []*training.RoutineGroup{
 		{
-			ID:        "group-straight",
-			Mode:      training.RoutineGroupModeStraight,
-			Exercises: exercises[:1],
+			ID:   "group-straight",
+			Mode: training.RoutineGroupModeStraight,
+			Exercises: []training.RoutineExercise{
+				{Exercise: exercises[0], RestSeconds: &restSeconds},
+			},
 		},
 		{
 			ID:                          "group-circuit",
 			Mode:                        training.RoutineGroupModeCircuit,
 			RestBetweenExercisesSeconds: 15,
 			RestBetweenRoundsSeconds:    90,
-			Exercises:                   exercises[1:],
+			Exercises: []training.RoutineExercise{
+				{Exercise: exercises[1]},
+				{Exercise: exercises[2]},
+			},
 		},
 	})
 
@@ -157,13 +163,20 @@ func (s *parserSuite) TestRoutineWithGroups() {
 	s.Require().Equal("group-straight", straight.GetId())
 	s.Require().Equal(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, straight.GetMode())
 	s.Require().Len(straight.GetExercises(), 1)
+	s.Require().Equal(exercises[0].ID.String(), straight.GetExercises()[0].GetExercise().GetId())
+	// Set, so the routine's own answer reaches the client rather than the
+	// exercise library's.
+	s.Require().Equal(&restSeconds, straight.GetExercises()[0].RestSeconds)
 
 	circuit := parsed.GetGroups()[1]
 	s.Require().Equal(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, circuit.GetMode())
 	s.Require().Equal(int32(15), circuit.GetRestBetweenExercisesSeconds())
 	s.Require().Equal(int32(90), circuit.GetRestBetweenRoundsSeconds())
 	s.Require().Len(circuit.GetExercises(), 2)
-	s.Require().Equal(exercises[1].ID.String(), circuit.GetExercises()[0].GetId())
+	s.Require().Equal(exercises[1].ID.String(), circuit.GetExercises()[0].GetExercise().GetId())
+	// Unset, so "inherit" survives the round trip instead of collapsing into
+	// "no timer".
+	s.Require().Nil(circuit.GetExercises()[0].RestSeconds)
 }
 
 func (s *parserSuite) TestRoutineGroupMode() {

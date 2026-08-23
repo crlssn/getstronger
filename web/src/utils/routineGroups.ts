@@ -25,6 +25,15 @@ export const maximumRestSeconds = 3600
 export interface DraftEntry {
   key: string
   exerciseId: string
+  /**
+   * How long this occurrence rests between sets.
+   *
+   * Undefined is the routine saying nothing, which leaves the exercise's own
+   * rest to answer for it; zero turns the timer off here alone. A circuit rests
+   * between exercises and between rounds, so it never applies — the value is
+   * kept while the group is one, so switching back restores what was typed.
+   */
+  restSeconds?: number
 }
 
 /**
@@ -94,7 +103,11 @@ export const draftGroupsFromRoutine = (
     mode: group.mode === RoutineGroupMode.CIRCUIT ? 'circuit' : 'straight',
     restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
     restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
-    entries: entriesOf(group.exercises.map((exercise) => exercise.id)),
+    entries: group.exercises.map((entry) => ({
+      key: newLocalId('entry'),
+      exerciseId: entry.exercise?.id ?? '',
+      restSeconds: entry.restSeconds,
+    })),
   }))
 }
 
@@ -157,6 +170,24 @@ export const moveEntryWithinGroup = (
   })
 
 /**
+ * Sets how long one exercise rests between sets where this routine trains it.
+ *
+ * `undefined` clears the routine's answer rather than storing a zero, so the
+ * exercise library goes back to saying how long the rest is.
+ */
+export const setEntryRest = (
+  groups: readonly DraftGroup[],
+  key: string,
+  restSeconds: number | undefined,
+): DraftGroup[] =>
+  groups.map((group) => ({
+    ...group,
+    entries: group.entries.map((entry) =>
+      entry.key === key ? { ...entry, restSeconds } : entry,
+    ),
+  }))
+
+/**
  * A second group is nearly always the circuit somebody came here for, so it
  * arrives ready to rotate rather than as another straight block.
  */
@@ -197,19 +228,32 @@ export const removeGroup = (groups: readonly DraftGroup[], groupId: string): Dra
     })
 }
 
+const clampRest = (value: number) =>
+  Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : 0, 0), maximumRestSeconds)
+
 /** Keeps a group's settings inside what the API accepts. */
 export const clampGroup = (group: DraftGroup): DraftGroup => {
   if (group.mode !== 'circuit') {
-    return { ...group, restBetweenExercisesSeconds: 0, restBetweenRoundsSeconds: 0 }
+    return {
+      ...group,
+      restBetweenExercisesSeconds: 0,
+      restBetweenRoundsSeconds: 0,
+      entries: group.entries.map((entry) =>
+        entry.restSeconds === undefined
+          ? entry
+          : { ...entry, restSeconds: clampRest(entry.restSeconds) },
+      ),
+    }
   }
-
-  const clamp = (value: number) =>
-    Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : 0, 0), maximumRestSeconds)
 
   return {
     ...group,
-    restBetweenExercisesSeconds: clamp(group.restBetweenExercisesSeconds),
-    restBetweenRoundsSeconds: clamp(group.restBetweenRoundsSeconds),
+    restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
+    restBetweenRoundsSeconds: clampRest(group.restBetweenRoundsSeconds),
+    // A circuit rests on the way to the next exercise and on the way into the
+    // next round, so a set rest has nowhere to go. It is dropped on the way out
+    // rather than out of the draft, so switching back hands it over again.
+    entries: group.entries.map(({ restSeconds: _unused, ...entry }) => entry),
   }
 }
 

@@ -170,12 +170,13 @@ func requestedRoutineExerciseIDs(routine *apiv1.Routine) []string {
 	seen := make(map[string]struct{}, len(routine.GetExercises()))
 
 	for _, group := range routine.GetGroups() {
-		for _, exercise := range group.GetExercises() {
-			if _, ok := seen[exercise.GetId()]; ok {
+		for _, entry := range group.GetExercises() {
+			id := entry.GetExercise().GetId()
+			if _, ok := seen[id]; ok {
 				continue
 			}
-			seen[exercise.GetId()] = struct{}{}
-			ids = append(ids, exercise.GetId())
+			seen[id] = struct{}{}
+			ids = append(ids, id)
 		}
 	}
 
@@ -193,16 +194,21 @@ func requestedRoutineExerciseIDs(routine *apiv1.Routine) []string {
 func routineGroupDrafts(groups []*apiv1.RoutineGroup) []training.RoutineGroupDraft {
 	drafts := make([]training.RoutineGroupDraft, 0, len(groups))
 	for _, group := range groups {
-		exerciseIDs := make([]string, 0, len(group.GetExercises()))
-		for _, exercise := range group.GetExercises() {
-			exerciseIDs = append(exerciseIDs, exercise.GetId())
+		exercises := make([]training.RoutineExerciseDraft, 0, len(group.GetExercises()))
+		for _, entry := range group.GetExercises() {
+			exercises = append(exercises, training.RoutineExerciseDraft{
+				ExerciseID: entry.GetExercise().GetId(),
+				// Field presence is the whole point: a request that leaves the
+				// rest out is asking to inherit, not asking for no timer.
+				RestSeconds: entry.RestSeconds,
+			})
 		}
 
 		drafts = append(drafts, training.RoutineGroupDraft{
 			Mode:                        parser.RoutineGroupModeFromProto(group.GetMode()),
 			RestBetweenExercisesSeconds: group.GetRestBetweenExercisesSeconds(),
 			RestBetweenRoundsSeconds:    group.GetRestBetweenRoundsSeconds(),
-			ExerciseIDs:                 exerciseIDs,
+			Exercises:                   exercises,
 		})
 	}
 

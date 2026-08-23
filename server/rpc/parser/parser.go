@@ -151,7 +151,22 @@ func RoutineGroupSlice(groups []*training.RoutineGroup) []*apiv1.RoutineGroup {
 			Mode:                        RoutineGroupModeToProto(group.Mode),
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
-			Exercises:                   ExerciseSlice(group.Exercises),
+			Exercises:                   RoutineExerciseSlice(group.Exercises),
+		})
+	}
+
+	return parsed
+}
+
+// RoutineExerciseSlice states a group's exercises with the rest each of them
+// takes where this routine trains it. An occurrence the routine says nothing
+// about leaves the field unset, so the exercise's own rest still answers.
+func RoutineExerciseSlice(exercises []training.RoutineExercise) []*apiv1.RoutineExercise {
+	parsed := make([]*apiv1.RoutineExercise, 0, len(exercises))
+	for _, exercise := range exercises {
+		parsed = append(parsed, &apiv1.RoutineExercise{
+			Exercise:    Exercise(exercise.Exercise),
+			RestSeconds: exercise.RestSeconds,
 		})
 	}
 

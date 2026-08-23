@@ -383,6 +383,71 @@ test.describe('routine lifecycle', () => {
       await deleteExercise(page, first)
     }
   })
+
+  // Rest between sets used to be the exercise library's only, so a lift rested
+  // the same length everywhere it was trained. Built, saved, read back, and
+  // then trained with the routine's length on the clock rather than the
+  // library's.
+  test('rests for the length the routine gives an exercise @mutation', async ({ page }) => {
+    const routineName = uniqueName('E2E Rest')
+    const lift = uniqueName('E2E Rest press')
+
+    try {
+      await page.goto('/exercises/create')
+      await page.locator('form input[type="text"]').first().fill(lift)
+      await page.getByRole('button', { name: 'Save Exercise' }).click()
+      await expect(page).toHaveURL(/\/exercises$/)
+
+      await page.goto('/routines/create')
+      await page.getByLabel('Routine name').fill(routineName)
+      await addRoutineExercise(page, lift)
+
+      // Empty until the routine says otherwise, showing what the library says.
+      const rest = page.getByLabel(`Rest between sets of ${lift}`)
+      await expect(rest).toHaveValue('')
+      await expect(rest).toHaveAttribute('placeholder', '90')
+
+      await rest.fill('300')
+      await page.getByRole('button', { name: 'Create routine' }).click()
+
+      await expect(page).toHaveURL(/\/routines$/)
+      await page.getByLabel('Search routines').fill(routineName)
+      await page.getByRole('heading', { name: routineName }).click()
+
+      // Saved and read back from the API: reopening the builder shows the
+      // routine's own answer rather than the library's.
+      await page.getByRole('link', { name: 'Edit exercises' }).click()
+      await expect(page.getByLabel(`Rest between sets of ${lift}`)).toHaveValue('300')
+      await page.getByRole('button', { name: 'Save changes' }).click()
+
+      await page.getByRole('link', { name: 'Start workout' }).click()
+      await page.getByRole('textbox', { name: `${lift} set 1 weight`, exact: true }).fill('40')
+      await page.getByRole('textbox', { name: `${lift} set 1 reps`, exact: true }).fill('10')
+
+      // Five minutes, not the ninety seconds the exercise itself carries.
+      await expect(page.getByRole('region', { name: 'Rest timer' })).toContainText(/0[45]:\d\d/)
+
+      await page.getByRole('button', { name: 'Finish workout' }).first().click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
+      await expect(page).toHaveURL(/\/workouts\//)
+
+      await page.getByRole('button', { name: 'Workout actions' }).click()
+      await page.getByRole('menuitem', { name: 'Delete workout' }).click()
+      await acceptConfirmDialog(page, 'Delete workout')
+      await expect(page.getByRole('status')).toContainText('Workout deleted')
+    } finally {
+      await page.goto('/routines')
+      await page.getByLabel('Search routines').fill(routineName)
+      const savedRoutine = page.getByRole('heading', { name: routineName })
+      if (await savedRoutine.isVisible()) {
+        await savedRoutine.click()
+        await page.getByRole('button', { name: 'Delete' }).click()
+        await acceptConfirmDialog(page, 'Delete')
+        await expect(page.getByRole('status')).toContainText('Routine deleted')
+      }
+      await deleteExercise(page, lift)
+    }
+  })
 })
 
 test.describe('plan lifecycle', () => {

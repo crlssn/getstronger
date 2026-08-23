@@ -945,8 +945,8 @@ type RoutineGroup struct {
 	// Rest taken on the way from one exercise to the next inside a round.
 	RestBetweenExercisesSeconds int32 `protobuf:"varint,4,opt,name=rest_between_exercises_seconds,json=restBetweenExercisesSeconds,proto3" json:"rest_between_exercises_seconds,omitempty"`
 	// Rest taken once a round closes, before the group starts again.
-	RestBetweenRoundsSeconds int32       `protobuf:"varint,5,opt,name=rest_between_rounds_seconds,json=restBetweenRoundsSeconds,proto3" json:"rest_between_rounds_seconds,omitempty"`
-	Exercises                []*Exercise `protobuf:"bytes,6,rep,name=exercises,proto3" json:"exercises,omitempty"`
+	RestBetweenRoundsSeconds int32              `protobuf:"varint,5,opt,name=rest_between_rounds_seconds,json=restBetweenRoundsSeconds,proto3" json:"rest_between_rounds_seconds,omitempty"`
+	Exercises                []*RoutineExercise `protobuf:"bytes,7,rep,name=exercises,proto3" json:"exercises,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -1009,11 +1009,69 @@ func (x *RoutineGroup) GetRestBetweenRoundsSeconds() int32 {
 	return 0
 }
 
-func (x *RoutineGroup) GetExercises() []*Exercise {
+func (x *RoutineGroup) GetExercises() []*RoutineExercise {
 	if x != nil {
 		return x.Exercises
 	}
 	return nil
+}
+
+// One exercise where a routine trains it. The same exercise in another group,
+// or in another routine, is a different occurrence and rests for its own length.
+type RoutineExercise struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Exercise *Exercise              `protobuf:"bytes,1,opt,name=exercise,proto3" json:"exercise,omitempty"`
+	// How long this occurrence rests between sets. Unset inherits the exercise's
+	// own rest, which is what a routine that has never said otherwise stores; 0
+	// turns the timer off here without touching the exercise library. Ignored in
+	// a circuit, which rests between exercises and between rounds instead.
+	RestSeconds   *int32 `protobuf:"varint,2,opt,name=rest_seconds,json=restSeconds,proto3,oneof" json:"rest_seconds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoutineExercise) Reset() {
+	*x = RoutineExercise{}
+	mi := &file_api_v1_routine_service_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoutineExercise) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoutineExercise) ProtoMessage() {}
+
+func (x *RoutineExercise) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_routine_service_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoutineExercise.ProtoReflect.Descriptor instead.
+func (*RoutineExercise) Descriptor() ([]byte, []int) {
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *RoutineExercise) GetExercise() *Exercise {
+	if x != nil {
+		return x.Exercise
+	}
+	return nil
+}
+
+func (x *RoutineExercise) GetRestSeconds() int32 {
+	if x != nil && x.RestSeconds != nil {
+		return *x.RestSeconds
+	}
+	return 0
 }
 
 type CreatePlanRequest struct {
@@ -1026,7 +1084,7 @@ type CreatePlanRequest struct {
 
 func (x *CreatePlanRequest) Reset() {
 	*x = CreatePlanRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[18]
+	mi := &file_api_v1_routine_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1038,7 +1096,7 @@ func (x *CreatePlanRequest) String() string {
 func (*CreatePlanRequest) ProtoMessage() {}
 
 func (x *CreatePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[18]
+	mi := &file_api_v1_routine_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1051,7 +1109,7 @@ func (x *CreatePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePlanRequest.ProtoReflect.Descriptor instead.
 func (*CreatePlanRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{18}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CreatePlanRequest) GetName() string {
@@ -1077,7 +1135,7 @@ type CreatePlanResponse struct {
 
 func (x *CreatePlanResponse) Reset() {
 	*x = CreatePlanResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[19]
+	mi := &file_api_v1_routine_service_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1089,7 +1147,7 @@ func (x *CreatePlanResponse) String() string {
 func (*CreatePlanResponse) ProtoMessage() {}
 
 func (x *CreatePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[19]
+	mi := &file_api_v1_routine_service_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1102,7 +1160,7 @@ func (x *CreatePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePlanResponse.ProtoReflect.Descriptor instead.
 func (*CreatePlanResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{19}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CreatePlanResponse) GetPlan() *Plan {
@@ -1121,7 +1179,7 @@ type GetPlanRequest struct {
 
 func (x *GetPlanRequest) Reset() {
 	*x = GetPlanRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[20]
+	mi := &file_api_v1_routine_service_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1133,7 +1191,7 @@ func (x *GetPlanRequest) String() string {
 func (*GetPlanRequest) ProtoMessage() {}
 
 func (x *GetPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[20]
+	mi := &file_api_v1_routine_service_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1146,7 +1204,7 @@ func (x *GetPlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanRequest.ProtoReflect.Descriptor instead.
 func (*GetPlanRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{20}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetPlanRequest) GetId() string {
@@ -1165,7 +1223,7 @@ type GetPlanResponse struct {
 
 func (x *GetPlanResponse) Reset() {
 	*x = GetPlanResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[21]
+	mi := &file_api_v1_routine_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1177,7 +1235,7 @@ func (x *GetPlanResponse) String() string {
 func (*GetPlanResponse) ProtoMessage() {}
 
 func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[21]
+	mi := &file_api_v1_routine_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1190,7 +1248,7 @@ func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanResponse.ProtoReflect.Descriptor instead.
 func (*GetPlanResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{21}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetPlanResponse) GetPlan() *Plan {
@@ -1208,7 +1266,7 @@ type ListPlansRequest struct {
 
 func (x *ListPlansRequest) Reset() {
 	*x = ListPlansRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[22]
+	mi := &file_api_v1_routine_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1220,7 +1278,7 @@ func (x *ListPlansRequest) String() string {
 func (*ListPlansRequest) ProtoMessage() {}
 
 func (x *ListPlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[22]
+	mi := &file_api_v1_routine_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1233,7 +1291,7 @@ func (x *ListPlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansRequest.ProtoReflect.Descriptor instead.
 func (*ListPlansRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{22}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{23}
 }
 
 type ListPlansResponse struct {
@@ -1245,7 +1303,7 @@ type ListPlansResponse struct {
 
 func (x *ListPlansResponse) Reset() {
 	*x = ListPlansResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[23]
+	mi := &file_api_v1_routine_service_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1257,7 +1315,7 @@ func (x *ListPlansResponse) String() string {
 func (*ListPlansResponse) ProtoMessage() {}
 
 func (x *ListPlansResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[23]
+	mi := &file_api_v1_routine_service_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1270,7 +1328,7 @@ func (x *ListPlansResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansResponse.ProtoReflect.Descriptor instead.
 func (*ListPlansResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{23}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListPlansResponse) GetPlans() []*Plan {
@@ -1291,7 +1349,7 @@ type UpdatePlanRequest struct {
 
 func (x *UpdatePlanRequest) Reset() {
 	*x = UpdatePlanRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[24]
+	mi := &file_api_v1_routine_service_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1303,7 +1361,7 @@ func (x *UpdatePlanRequest) String() string {
 func (*UpdatePlanRequest) ProtoMessage() {}
 
 func (x *UpdatePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[24]
+	mi := &file_api_v1_routine_service_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1316,7 +1374,7 @@ func (x *UpdatePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePlanRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePlanRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{24}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UpdatePlanRequest) GetId() string {
@@ -1349,7 +1407,7 @@ type UpdatePlanResponse struct {
 
 func (x *UpdatePlanResponse) Reset() {
 	*x = UpdatePlanResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[25]
+	mi := &file_api_v1_routine_service_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1361,7 +1419,7 @@ func (x *UpdatePlanResponse) String() string {
 func (*UpdatePlanResponse) ProtoMessage() {}
 
 func (x *UpdatePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[25]
+	mi := &file_api_v1_routine_service_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1374,7 +1432,7 @@ func (x *UpdatePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePlanResponse.ProtoReflect.Descriptor instead.
 func (*UpdatePlanResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{25}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *UpdatePlanResponse) GetPlan() *Plan {
@@ -1393,7 +1451,7 @@ type DeletePlanRequest struct {
 
 func (x *DeletePlanRequest) Reset() {
 	*x = DeletePlanRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[26]
+	mi := &file_api_v1_routine_service_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1405,7 +1463,7 @@ func (x *DeletePlanRequest) String() string {
 func (*DeletePlanRequest) ProtoMessage() {}
 
 func (x *DeletePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[26]
+	mi := &file_api_v1_routine_service_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1418,7 +1476,7 @@ func (x *DeletePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePlanRequest.ProtoReflect.Descriptor instead.
 func (*DeletePlanRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{26}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *DeletePlanRequest) GetId() string {
@@ -1436,7 +1494,7 @@ type DeletePlanResponse struct {
 
 func (x *DeletePlanResponse) Reset() {
 	*x = DeletePlanResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[27]
+	mi := &file_api_v1_routine_service_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1448,7 +1506,7 @@ func (x *DeletePlanResponse) String() string {
 func (*DeletePlanResponse) ProtoMessage() {}
 
 func (x *DeletePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[27]
+	mi := &file_api_v1_routine_service_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1461,7 +1519,7 @@ func (x *DeletePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePlanResponse.ProtoReflect.Descriptor instead.
 func (*DeletePlanResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{27}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{28}
 }
 
 type SetActivePlanRequest struct {
@@ -1473,7 +1531,7 @@ type SetActivePlanRequest struct {
 
 func (x *SetActivePlanRequest) Reset() {
 	*x = SetActivePlanRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[28]
+	mi := &file_api_v1_routine_service_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1485,7 +1543,7 @@ func (x *SetActivePlanRequest) String() string {
 func (*SetActivePlanRequest) ProtoMessage() {}
 
 func (x *SetActivePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[28]
+	mi := &file_api_v1_routine_service_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1498,7 +1556,7 @@ func (x *SetActivePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetActivePlanRequest.ProtoReflect.Descriptor instead.
 func (*SetActivePlanRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{28}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *SetActivePlanRequest) GetId() string {
@@ -1517,7 +1575,7 @@ type SetActivePlanResponse struct {
 
 func (x *SetActivePlanResponse) Reset() {
 	*x = SetActivePlanResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[29]
+	mi := &file_api_v1_routine_service_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1529,7 +1587,7 @@ func (x *SetActivePlanResponse) String() string {
 func (*SetActivePlanResponse) ProtoMessage() {}
 
 func (x *SetActivePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[29]
+	mi := &file_api_v1_routine_service_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1542,7 +1600,7 @@ func (x *SetActivePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetActivePlanResponse.ProtoReflect.Descriptor instead.
 func (*SetActivePlanResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{29}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *SetActivePlanResponse) GetPlan() *Plan {
@@ -1560,7 +1618,7 @@ type PauseActivePlanRequest struct {
 
 func (x *PauseActivePlanRequest) Reset() {
 	*x = PauseActivePlanRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[30]
+	mi := &file_api_v1_routine_service_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1572,7 +1630,7 @@ func (x *PauseActivePlanRequest) String() string {
 func (*PauseActivePlanRequest) ProtoMessage() {}
 
 func (x *PauseActivePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[30]
+	mi := &file_api_v1_routine_service_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1585,7 +1643,7 @@ func (x *PauseActivePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseActivePlanRequest.ProtoReflect.Descriptor instead.
 func (*PauseActivePlanRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{30}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{31}
 }
 
 type PauseActivePlanResponse struct {
@@ -1596,7 +1654,7 @@ type PauseActivePlanResponse struct {
 
 func (x *PauseActivePlanResponse) Reset() {
 	*x = PauseActivePlanResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[31]
+	mi := &file_api_v1_routine_service_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1608,7 +1666,7 @@ func (x *PauseActivePlanResponse) String() string {
 func (*PauseActivePlanResponse) ProtoMessage() {}
 
 func (x *PauseActivePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[31]
+	mi := &file_api_v1_routine_service_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1621,7 +1679,7 @@ func (x *PauseActivePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseActivePlanResponse.ProtoReflect.Descriptor instead.
 func (*PauseActivePlanResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{31}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{32}
 }
 
 type SkipPlanRoutineRequest struct {
@@ -1633,7 +1691,7 @@ type SkipPlanRoutineRequest struct {
 
 func (x *SkipPlanRoutineRequest) Reset() {
 	*x = SkipPlanRoutineRequest{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[32]
+	mi := &file_api_v1_routine_service_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1645,7 +1703,7 @@ func (x *SkipPlanRoutineRequest) String() string {
 func (*SkipPlanRoutineRequest) ProtoMessage() {}
 
 func (x *SkipPlanRoutineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[32]
+	mi := &file_api_v1_routine_service_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1658,7 +1716,7 @@ func (x *SkipPlanRoutineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SkipPlanRoutineRequest.ProtoReflect.Descriptor instead.
 func (*SkipPlanRoutineRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{32}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *SkipPlanRoutineRequest) GetId() string {
@@ -1677,7 +1735,7 @@ type SkipPlanRoutineResponse struct {
 
 func (x *SkipPlanRoutineResponse) Reset() {
 	*x = SkipPlanRoutineResponse{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[33]
+	mi := &file_api_v1_routine_service_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1689,7 +1747,7 @@ func (x *SkipPlanRoutineResponse) String() string {
 func (*SkipPlanRoutineResponse) ProtoMessage() {}
 
 func (x *SkipPlanRoutineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[33]
+	mi := &file_api_v1_routine_service_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1702,7 +1760,7 @@ func (x *SkipPlanRoutineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SkipPlanRoutineResponse.ProtoReflect.Descriptor instead.
 func (*SkipPlanRoutineResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{33}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *SkipPlanRoutineResponse) GetPlan() *Plan {
@@ -1725,7 +1783,7 @@ type Plan struct {
 
 func (x *Plan) Reset() {
 	*x = Plan{}
-	mi := &file_api_v1_routine_service_proto_msgTypes[34]
+	mi := &file_api_v1_routine_service_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1737,7 +1795,7 @@ func (x *Plan) String() string {
 func (*Plan) ProtoMessage() {}
 
 func (x *Plan) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_routine_service_proto_msgTypes[34]
+	mi := &file_api_v1_routine_service_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1750,7 +1808,7 @@ func (x *Plan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Plan.ProtoReflect.Descriptor instead.
 func (*Plan) Descriptor() ([]byte, []int) {
-	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{34}
+	return file_api_v1_routine_service_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *Plan) GetId() string {
@@ -1847,15 +1905,20 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x128\n" +
 	"\texercises\x18\x03 \x03(\v2\x10.api.v1.ExerciseB\b\xbaH\x05\x92\x01\x02\b\x01R\texercises\x12,\n" +
-	"\x06groups\x18\x04 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"\x9e\x02\n" +
+	"\x06groups\x18\x04 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"\xab\x02\n" +
 	"\fRoutineGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +
 	"\x04mode\x18\x02 \x01(\x0e2\x18.api.v1.RoutineGroupModeR\x04mode\x12O\n" +
 	"\x1erest_between_exercises_seconds\x18\x04 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x1brestBetweenExercisesSeconds\x12I\n" +
 	"\x1brest_between_rounds_seconds\x18\x05 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x18restBetweenRoundsSeconds\x12.\n" +
-	"\texercises\x18\x06 \x03(\v2\x10.api.v1.ExerciseR\texercisesJ\x04\b\x03\x10\x04\"d\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x18restBetweenRoundsSeconds\x125\n" +
+	"\texercises\x18\a \x03(\v2\x17.api.v1.RoutineExerciseR\texercisesJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"\x84\x01\n" +
+	"\x0fRoutineExercise\x12,\n" +
+	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x122\n" +
+	"\frest_seconds\x18\x02 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00H\x00R\vrestSeconds\x88\x01\x01B\x0f\n" +
+	"\r_rest_seconds\"d\n" +
 	"\x11CreatePlanRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
 	"\vroutine_ids\x18\x02 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
@@ -1936,7 +1999,7 @@ func file_api_v1_routine_service_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_routine_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_v1_routine_service_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_api_v1_routine_service_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_api_v1_routine_service_proto_goTypes = []any{
 	(RoutineGroupMode)(0),               // 0: api.v1.RoutineGroupMode
 	(*CreateRoutineRequest)(nil),        // 1: api.v1.CreateRoutineRequest
@@ -1957,90 +2020,92 @@ var file_api_v1_routine_service_proto_goTypes = []any{
 	(*GetDashboardResponse)(nil),        // 16: api.v1.GetDashboardResponse
 	(*Routine)(nil),                     // 17: api.v1.Routine
 	(*RoutineGroup)(nil),                // 18: api.v1.RoutineGroup
-	(*CreatePlanRequest)(nil),           // 19: api.v1.CreatePlanRequest
-	(*CreatePlanResponse)(nil),          // 20: api.v1.CreatePlanResponse
-	(*GetPlanRequest)(nil),              // 21: api.v1.GetPlanRequest
-	(*GetPlanResponse)(nil),             // 22: api.v1.GetPlanResponse
-	(*ListPlansRequest)(nil),            // 23: api.v1.ListPlansRequest
-	(*ListPlansResponse)(nil),           // 24: api.v1.ListPlansResponse
-	(*UpdatePlanRequest)(nil),           // 25: api.v1.UpdatePlanRequest
-	(*UpdatePlanResponse)(nil),          // 26: api.v1.UpdatePlanResponse
-	(*DeletePlanRequest)(nil),           // 27: api.v1.DeletePlanRequest
-	(*DeletePlanResponse)(nil),          // 28: api.v1.DeletePlanResponse
-	(*SetActivePlanRequest)(nil),        // 29: api.v1.SetActivePlanRequest
-	(*SetActivePlanResponse)(nil),       // 30: api.v1.SetActivePlanResponse
-	(*PauseActivePlanRequest)(nil),      // 31: api.v1.PauseActivePlanRequest
-	(*PauseActivePlanResponse)(nil),     // 32: api.v1.PauseActivePlanResponse
-	(*SkipPlanRoutineRequest)(nil),      // 33: api.v1.SkipPlanRoutineRequest
-	(*SkipPlanRoutineResponse)(nil),     // 34: api.v1.SkipPlanRoutineResponse
-	(*Plan)(nil),                        // 35: api.v1.Plan
-	(*PaginationRequest)(nil),           // 36: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),          // 37: api.v1.PaginationResponse
-	(*ExerciseSet)(nil),                 // 38: api.v1.ExerciseSet
-	(*Workout)(nil),                     // 39: api.v1.Workout
-	(*Exercise)(nil),                    // 40: api.v1.Exercise
+	(*RoutineExercise)(nil),             // 19: api.v1.RoutineExercise
+	(*CreatePlanRequest)(nil),           // 20: api.v1.CreatePlanRequest
+	(*CreatePlanResponse)(nil),          // 21: api.v1.CreatePlanResponse
+	(*GetPlanRequest)(nil),              // 22: api.v1.GetPlanRequest
+	(*GetPlanResponse)(nil),             // 23: api.v1.GetPlanResponse
+	(*ListPlansRequest)(nil),            // 24: api.v1.ListPlansRequest
+	(*ListPlansResponse)(nil),           // 25: api.v1.ListPlansResponse
+	(*UpdatePlanRequest)(nil),           // 26: api.v1.UpdatePlanRequest
+	(*UpdatePlanResponse)(nil),          // 27: api.v1.UpdatePlanResponse
+	(*DeletePlanRequest)(nil),           // 28: api.v1.DeletePlanRequest
+	(*DeletePlanResponse)(nil),          // 29: api.v1.DeletePlanResponse
+	(*SetActivePlanRequest)(nil),        // 30: api.v1.SetActivePlanRequest
+	(*SetActivePlanResponse)(nil),       // 31: api.v1.SetActivePlanResponse
+	(*PauseActivePlanRequest)(nil),      // 32: api.v1.PauseActivePlanRequest
+	(*PauseActivePlanResponse)(nil),     // 33: api.v1.PauseActivePlanResponse
+	(*SkipPlanRoutineRequest)(nil),      // 34: api.v1.SkipPlanRoutineRequest
+	(*SkipPlanRoutineResponse)(nil),     // 35: api.v1.SkipPlanRoutineResponse
+	(*Plan)(nil),                        // 36: api.v1.Plan
+	(*PaginationRequest)(nil),           // 37: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),          // 38: api.v1.PaginationResponse
+	(*ExerciseSet)(nil),                 // 39: api.v1.ExerciseSet
+	(*Workout)(nil),                     // 40: api.v1.Workout
+	(*Exercise)(nil),                    // 41: api.v1.Exercise
 }
 var file_api_v1_routine_service_proto_depIdxs = []int32{
 	18, // 0: api.v1.CreateRoutineRequest.groups:type_name -> api.v1.RoutineGroup
 	17, // 1: api.v1.GetRoutineResponse.routine:type_name -> api.v1.Routine
 	17, // 2: api.v1.UpdateRoutineRequest.routine:type_name -> api.v1.Routine
 	17, // 3: api.v1.UpdateRoutineResponse.routine:type_name -> api.v1.Routine
-	36, // 4: api.v1.ListRoutinesRequest.pagination:type_name -> api.v1.PaginationRequest
+	37, // 4: api.v1.ListRoutinesRequest.pagination:type_name -> api.v1.PaginationRequest
 	17, // 5: api.v1.ListRoutinesResponse.routines:type_name -> api.v1.Routine
-	37, // 6: api.v1.ListRoutinesResponse.pagination:type_name -> api.v1.PaginationResponse
+	38, // 6: api.v1.ListRoutinesResponse.pagination:type_name -> api.v1.PaginationResponse
 	17, // 7: api.v1.GetDashboardResponse.next_routine:type_name -> api.v1.Routine
 	17, // 8: api.v1.GetDashboardResponse.routines:type_name -> api.v1.Routine
-	38, // 9: api.v1.GetDashboardResponse.personal_bests:type_name -> api.v1.ExerciseSet
-	39, // 10: api.v1.GetDashboardResponse.recent_workouts:type_name -> api.v1.Workout
-	35, // 11: api.v1.GetDashboardResponse.active_plan:type_name -> api.v1.Plan
-	40, // 12: api.v1.Routine.exercises:type_name -> api.v1.Exercise
+	39, // 9: api.v1.GetDashboardResponse.personal_bests:type_name -> api.v1.ExerciseSet
+	40, // 10: api.v1.GetDashboardResponse.recent_workouts:type_name -> api.v1.Workout
+	36, // 11: api.v1.GetDashboardResponse.active_plan:type_name -> api.v1.Plan
+	41, // 12: api.v1.Routine.exercises:type_name -> api.v1.Exercise
 	18, // 13: api.v1.Routine.groups:type_name -> api.v1.RoutineGroup
 	0,  // 14: api.v1.RoutineGroup.mode:type_name -> api.v1.RoutineGroupMode
-	40, // 15: api.v1.RoutineGroup.exercises:type_name -> api.v1.Exercise
-	35, // 16: api.v1.CreatePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 17: api.v1.GetPlanResponse.plan:type_name -> api.v1.Plan
-	35, // 18: api.v1.ListPlansResponse.plans:type_name -> api.v1.Plan
-	35, // 19: api.v1.UpdatePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 20: api.v1.SetActivePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 21: api.v1.SkipPlanRoutineResponse.plan:type_name -> api.v1.Plan
-	17, // 22: api.v1.Plan.routines:type_name -> api.v1.Routine
-	1,  // 23: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
-	3,  // 24: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
-	5,  // 25: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
-	7,  // 26: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
-	9,  // 27: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
-	11, // 28: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
-	13, // 29: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
-	15, // 30: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
-	19, // 31: api.v1.RoutineService.CreatePlan:input_type -> api.v1.CreatePlanRequest
-	21, // 32: api.v1.RoutineService.GetPlan:input_type -> api.v1.GetPlanRequest
-	23, // 33: api.v1.RoutineService.ListPlans:input_type -> api.v1.ListPlansRequest
-	25, // 34: api.v1.RoutineService.UpdatePlan:input_type -> api.v1.UpdatePlanRequest
-	27, // 35: api.v1.RoutineService.DeletePlan:input_type -> api.v1.DeletePlanRequest
-	29, // 36: api.v1.RoutineService.SetActivePlan:input_type -> api.v1.SetActivePlanRequest
-	31, // 37: api.v1.RoutineService.PauseActivePlan:input_type -> api.v1.PauseActivePlanRequest
-	33, // 38: api.v1.RoutineService.SkipPlanRoutine:input_type -> api.v1.SkipPlanRoutineRequest
-	2,  // 39: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
-	4,  // 40: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
-	6,  // 41: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
-	8,  // 42: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
-	10, // 43: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
-	12, // 44: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
-	14, // 45: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
-	16, // 46: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
-	20, // 47: api.v1.RoutineService.CreatePlan:output_type -> api.v1.CreatePlanResponse
-	22, // 48: api.v1.RoutineService.GetPlan:output_type -> api.v1.GetPlanResponse
-	24, // 49: api.v1.RoutineService.ListPlans:output_type -> api.v1.ListPlansResponse
-	26, // 50: api.v1.RoutineService.UpdatePlan:output_type -> api.v1.UpdatePlanResponse
-	28, // 51: api.v1.RoutineService.DeletePlan:output_type -> api.v1.DeletePlanResponse
-	30, // 52: api.v1.RoutineService.SetActivePlan:output_type -> api.v1.SetActivePlanResponse
-	32, // 53: api.v1.RoutineService.PauseActivePlan:output_type -> api.v1.PauseActivePlanResponse
-	34, // 54: api.v1.RoutineService.SkipPlanRoutine:output_type -> api.v1.SkipPlanRoutineResponse
-	39, // [39:55] is the sub-list for method output_type
-	23, // [23:39] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	19, // 15: api.v1.RoutineGroup.exercises:type_name -> api.v1.RoutineExercise
+	41, // 16: api.v1.RoutineExercise.exercise:type_name -> api.v1.Exercise
+	36, // 17: api.v1.CreatePlanResponse.plan:type_name -> api.v1.Plan
+	36, // 18: api.v1.GetPlanResponse.plan:type_name -> api.v1.Plan
+	36, // 19: api.v1.ListPlansResponse.plans:type_name -> api.v1.Plan
+	36, // 20: api.v1.UpdatePlanResponse.plan:type_name -> api.v1.Plan
+	36, // 21: api.v1.SetActivePlanResponse.plan:type_name -> api.v1.Plan
+	36, // 22: api.v1.SkipPlanRoutineResponse.plan:type_name -> api.v1.Plan
+	17, // 23: api.v1.Plan.routines:type_name -> api.v1.Routine
+	1,  // 24: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
+	3,  // 25: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
+	5,  // 26: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
+	7,  // 27: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
+	9,  // 28: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
+	11, // 29: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
+	13, // 30: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
+	15, // 31: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
+	20, // 32: api.v1.RoutineService.CreatePlan:input_type -> api.v1.CreatePlanRequest
+	22, // 33: api.v1.RoutineService.GetPlan:input_type -> api.v1.GetPlanRequest
+	24, // 34: api.v1.RoutineService.ListPlans:input_type -> api.v1.ListPlansRequest
+	26, // 35: api.v1.RoutineService.UpdatePlan:input_type -> api.v1.UpdatePlanRequest
+	28, // 36: api.v1.RoutineService.DeletePlan:input_type -> api.v1.DeletePlanRequest
+	30, // 37: api.v1.RoutineService.SetActivePlan:input_type -> api.v1.SetActivePlanRequest
+	32, // 38: api.v1.RoutineService.PauseActivePlan:input_type -> api.v1.PauseActivePlanRequest
+	34, // 39: api.v1.RoutineService.SkipPlanRoutine:input_type -> api.v1.SkipPlanRoutineRequest
+	2,  // 40: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
+	4,  // 41: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
+	6,  // 42: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
+	8,  // 43: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
+	10, // 44: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
+	12, // 45: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
+	14, // 46: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
+	16, // 47: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
+	21, // 48: api.v1.RoutineService.CreatePlan:output_type -> api.v1.CreatePlanResponse
+	23, // 49: api.v1.RoutineService.GetPlan:output_type -> api.v1.GetPlanResponse
+	25, // 50: api.v1.RoutineService.ListPlans:output_type -> api.v1.ListPlansResponse
+	27, // 51: api.v1.RoutineService.UpdatePlan:output_type -> api.v1.UpdatePlanResponse
+	29, // 52: api.v1.RoutineService.DeletePlan:output_type -> api.v1.DeletePlanResponse
+	31, // 53: api.v1.RoutineService.SetActivePlan:output_type -> api.v1.SetActivePlanResponse
+	33, // 54: api.v1.RoutineService.PauseActivePlan:output_type -> api.v1.PauseActivePlanResponse
+	35, // 55: api.v1.RoutineService.SkipPlanRoutine:output_type -> api.v1.SkipPlanRoutineResponse
+	40, // [40:56] is the sub-list for method output_type
+	24, // [24:40] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_routine_service_proto_init() }
@@ -2050,13 +2115,14 @@ func file_api_v1_routine_service_proto_init() {
 	}
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
+	file_api_v1_routine_service_proto_msgTypes[18].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_routine_service_proto_rawDesc), len(file_api_v1_routine_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   35,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

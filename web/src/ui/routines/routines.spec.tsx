@@ -67,8 +67,8 @@ const routinesPage = (routines: RoutineInit[], nextPageToken = new Uint8Array(0)
 const exercisesPage = () =>
   create(ListExercisesResponseSchema, {
     exercises: [
-      { id: 'bench', name: 'Bench press', tags: ['Chest'] },
-      { id: 'row', name: 'Row', tags: ['Back'] },
+      { id: 'bench', name: 'Bench press', tags: ['Chest'], restSeconds: 90 },
+      { id: 'row', name: 'Row', tags: ['Back'], restSeconds: 45 },
     ],
   })
 
@@ -474,6 +474,64 @@ describe('CreateRoutine', () => {
     )
   })
 
+  // Rest between sets used to be the exercise library's only, so the same lift
+  // rested the same length in every routine that trained it.
+  test('gives an exercise a rest of its own in this routine', async () => {
+    render()
+
+    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
+    await addExercise(/Bench press/)
+
+    const rest = screen.getByLabelText('Rest between sets of Bench press')
+    // Empty until somebody says otherwise, showing what the library says.
+    expect(rest).toHaveValue('')
+    expect(rest).toHaveAttribute('placeholder', '90')
+
+    await userEvent.type(rest, '180')
+    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
+
+    await waitFor(() =>
+      expect(mocked.createRoutine).toHaveBeenCalledWith(
+        'Heavy day',
+        ['bench'],
+        [
+          expect.objectContaining({
+            entries: [expect.objectContaining({ exerciseId: 'bench', restSeconds: 180 })],
+          }),
+        ],
+      ),
+    )
+  })
+
+  // Leaving it alone stores nothing, so editing the exercise in the library
+  // still moves the rest in this routine.
+  test('stores no rest for an exercise nobody gave one', async () => {
+    render()
+
+    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
+    await addExercise(/Bench press/)
+    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
+
+    await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
+    const [, , groups] = mocked.createRoutine.mock.calls[0]!
+    expect(groups?.[0]?.entries[0]?.restSeconds).toBeUndefined()
+  })
+
+  // A circuit rests between exercises and between rounds, so a set rest has
+  // nowhere to go and no control to set it with.
+  test('offers no per-exercise rest in a circuit', async () => {
+    render()
+
+    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
+    await addExercise(/Bench press/)
+    expect(screen.getByLabelText('Rest between sets of Bench press')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
+
+    expect(screen.queryByLabelText('Rest between sets of Bench press')).not.toBeInTheDocument()
+  })
+
   test('drops the structure again when grouping is turned back off', async () => {
     render()
 
@@ -550,8 +608,8 @@ describe('EditRoutine', () => {
         routine: {
           ...push,
           groups: [
-            { mode: RoutineGroupMode.STRAIGHT, exercises: [{ id: 'bench' }] },
-            { mode: RoutineGroupMode.CIRCUIT, exercises: [{ id: 'dips' }] },
+            { mode: RoutineGroupMode.STRAIGHT, exercises: [{ exercise: { id: 'bench' } }] },
+            { mode: RoutineGroupMode.CIRCUIT, exercises: [{ exercise: { id: 'dips' } }] },
           ],
         },
       }),

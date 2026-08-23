@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import type { Exercise } from '@/proto/api/v1/shared_pb'
+
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import { act, screen, waitFor, within } from '@testing-library/react'
@@ -75,6 +77,10 @@ const running = create(ExerciseSchema, {
   metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
 })
 
+// One exercise where a group trains it. `restSeconds` left out is the routine
+// saying nothing, which leaves the exercise's own rest to answer.
+const trains = (exercise: Exercise, restSeconds?: number) => ({ exercise, restSeconds })
+
 const routineOf = (name: string, exercises = [benchPress, squat]) =>
   create(GetRoutineResponseSchema, { routine: create(RoutineSchema, { name, exercises }) })
 
@@ -116,7 +122,7 @@ const circuitRoutine = () =>
           mode: RoutineGroupMode.CIRCUIT,
           restBetweenExercisesSeconds: 15,
           restBetweenRoundsSeconds: 120,
-          exercises: [benchPress, squat],
+          exercises: [trains(benchPress), trains(squat)],
         },
       ],
     }),
@@ -349,12 +355,12 @@ describe('StartWorkout', () => {
               {
                 id: 'group-warmup',
                 mode: RoutineGroupMode.STRAIGHT,
-                exercises: [benchPress],
+                exercises: [trains(benchPress)],
               },
               {
                 id: 'group-circuit',
                 mode: RoutineGroupMode.CIRCUIT,
-                exercises: [benchPress, squat],
+                exercises: [trains(benchPress), trains(squat)],
               },
             ],
           }),
@@ -474,6 +480,91 @@ describe('StartWorkout', () => {
       await user.type(setField('Squat set 1 reps'), '5')
 
       expect(restBanner()).not.toBeInTheDocument()
+    })
+
+    // The whole point of the routine's own rest: the same lift rests one length
+    // here and another wherever else it is trained.
+    test("rests for the routine's length rather than the exercise library's", async () => {
+      const user = userEvent.setup()
+      mocked.getRoutine.mockResolvedValue(
+        create(GetRoutineResponseSchema, {
+          routine: create(RoutineSchema, {
+            name: 'Push Day',
+            exercises: [benchPress],
+            groups: [
+              {
+                id: 'group-straight',
+                mode: RoutineGroupMode.STRAIGHT,
+                exercises: [trains(benchPress, 180)],
+              },
+            ],
+          }),
+        }),
+      )
+      await renderWorkout()
+
+      await logFirstSet(user)
+
+      expect(within(restBanner()!).getByText('03:00')).toBeInTheDocument()
+    })
+
+    // Zero is an answer of its own, and a different one from saying nothing.
+    test('starts no rest where the routine turned the timer off', async () => {
+      const user = userEvent.setup()
+      mocked.getRoutine.mockResolvedValue(
+        create(GetRoutineResponseSchema, {
+          routine: create(RoutineSchema, {
+            name: 'Push Day',
+            exercises: [benchPress],
+            groups: [
+              {
+                id: 'group-straight',
+                mode: RoutineGroupMode.STRAIGHT,
+                exercises: [trains(benchPress, 0)],
+              },
+            ],
+          }),
+        }),
+      )
+      await renderWorkout()
+
+      await logFirstSet(user)
+
+      expect(restBanner()).not.toBeInTheDocument()
+    })
+
+    // A circuit rests between exercises and between rounds, so a set rest
+    // stored against one of its exercises is not the session's to take.
+    test('takes no set rest in a circuit however long the routine says', async () => {
+      const user = userEvent.setup()
+      mocked.getRoutine.mockResolvedValue(
+        create(GetRoutineResponseSchema, {
+          routine: create(RoutineSchema, {
+            name: 'Push Day',
+            exercises: [benchPress, squat],
+            groups: [
+              {
+                id: 'group-circuit',
+                mode: RoutineGroupMode.CIRCUIT,
+                restBetweenExercisesSeconds: 15,
+                restBetweenRoundsSeconds: 120,
+                exercises: [trains(benchPress, 180), trains(squat)],
+              },
+            ],
+          }),
+        }),
+      )
+      await renderWorkout()
+
+      await logFirstSet(user)
+      // Completing the set starts nothing: the three minutes stored against the
+      // bench press are not this group's to take.
+      expect(restBanner()).not.toBeInTheDocument()
+
+      await user.click(primaryAction())
+
+      // Only the walk to the next station rests, for the length the group says.
+      expect(within(restBanner()!).getByText('00:15')).toBeInTheDocument()
     })
   })
 

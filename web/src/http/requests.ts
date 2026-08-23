@@ -1,5 +1,5 @@
 import { type FieldMask } from '@bufbuild/protobuf/wkt'
-import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
+import type { RoutineExercise, RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb'
 import type { DraftGroup } from '@/utils/routineGroups'
 
@@ -369,7 +369,15 @@ const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): Routin
         mode: group.mode === 'circuit' ? RoutineGroupMode.CIRCUIT : RoutineGroupMode.STRAIGHT,
         restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
         restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
-        exercises: group.entries.map((entry) => ({ id: entry.exerciseId }) as Exercise),
+        exercises: group.entries.map(
+          (entry) =>
+            ({
+              exercise: { id: entry.exerciseId } as Exercise,
+              // Left out rather than zeroed: field presence is what tells the
+              // API "inherit the exercise's rest" from "no timer here".
+              restSeconds: entry.restSeconds,
+            }) as RoutineExercise,
+        ),
       }) as RoutineGroup,
   )
 

@@ -65,7 +65,22 @@
 }
 
 .exercises li {
-  @apply flex min-h-(--size-control) items-center gap-1 py-1;
+  @apply flex flex-col py-1;
+}
+
+.entryRow {
+  @apply flex min-h-(--size-control) items-center gap-1;
+}
+
+/* The rest is a second line rather than a fourth control on the first: on a
+ * phone the exercise name has no width to spare. Indented to the name above it,
+ * so the row reads as one exercise and its setting. */
+.entryRest {
+  @apply flex items-center justify-between gap-3 pb-1 pl-8;
+}
+
+.entryRestLabel {
+  @apply min-w-0 truncate text-xs text-text-subtle;
 }
 
 .position {

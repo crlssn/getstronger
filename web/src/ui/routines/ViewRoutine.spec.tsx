@@ -208,14 +208,14 @@ describe('ViewRoutine', () => {
               create(RoutineGroupSchema, {
                 id: 'a',
                 mode: RoutineGroupMode.STRAIGHT,
-                exercises: [{ id: 'bench' }],
+                exercises: [{ exercise: { id: 'bench' } }],
               }),
               create(RoutineGroupSchema, {
                 id: 'b',
                 mode: RoutineGroupMode.CIRCUIT,
                 restBetweenExercisesSeconds: 15,
                 restBetweenRoundsSeconds: 90,
-                exercises: [{ id: 'dips' }],
+                exercises: [{ exercise: { id: 'dips' } }],
               }),
             ],
           },
