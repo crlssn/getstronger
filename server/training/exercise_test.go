@@ -71,12 +71,18 @@ func TestNormalizeExerciseTags(t *testing.T) {
 	require.ErrorIs(t, err, training.ErrInvalidExerciseTags)
 }
 
-func TestRestSeconds(t *testing.T) {
+func TestNewOccurrenceRestSeconds(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, training.DefaultRestSeconds, training.RestSeconds(0, nil))
-	require.Equal(t, 45, training.RestSeconds(45, nil))
-	require.Equal(t, 0, training.RestSeconds(0, []training.Metric{training.MetricTime}))
+	require.Equal(t, int32(training.DefaultRestSeconds), training.NewOccurrenceRestSeconds(nil))
+	require.Equal(t, int32(training.DefaultRestSeconds), training.NewOccurrenceRestSeconds(training.DefaultMetrics()))
+
+	// An exercise held against the clock is one continuous effort, so a new
+	// occurrence of it starts with no timer at all.
+	require.Equal(t, int32(0), training.NewOccurrenceRestSeconds([]training.Metric{training.MetricTime}))
+	require.Equal(t, int32(0), training.NewOccurrenceRestSeconds(
+		[]training.Metric{training.MetricDistance, training.MetricTime},
+	))
 }
 
 func TestMetricsFromStrings(t *testing.T) {

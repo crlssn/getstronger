@@ -25,13 +25,6 @@ var ExerciseErrors = &exerciseErrors{
 		s:       "exercises_metrics_valid",
 	},
 
-	ErrCheckExercisesRestSecondsValid: &CheckConstraintError{
-		schema:  "",
-		table:   "exercises",
-		columns: []string{"rest_seconds"},
-		s:       "exercises_rest_seconds_valid",
-	},
-
 	ErrCheckExercisesTagsMax10: &CheckConstraintError{
 		schema:  "",
 		table:   "exercises",
@@ -46,8 +39,6 @@ type exerciseErrors struct {
 	ErrCheckExercisesMetricsNotEmpty *CheckConstraintError
 
 	ErrCheckExercisesMetricsValid *CheckConstraintError
-
-	ErrCheckExercisesRestSecondsValid *CheckConstraintError
 
 	ErrCheckExercisesTagsMax10 *CheckConstraintError
 }

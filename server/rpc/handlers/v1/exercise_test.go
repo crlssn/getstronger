@@ -58,9 +58,8 @@ func (s *exerciseSuite) SetupSuite() {
 
 func (s *exerciseSuite) TestCreateExercise() {
 	type expected struct {
-		err         error
-		metrics     []string
-		restSeconds int
+		err     error
+		metrics []string
 	}
 
 	type test struct {
@@ -85,19 +84,17 @@ func (s *exerciseSuite) TestCreateExercise() {
 				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
-				err:         nil,
-				metrics:     []string{"weight", "reps"},
-				restSeconds: 90,
+				err:     nil,
+				metrics: []string{"weight", "reps"},
 			},
 		},
 		{
-			name: "ok_custom_measurements_without_rest_timer",
+			name: "ok_custom_measurements",
 			req: &connect.Request[v1.CreateExerciseRequest]{
 				Msg: &v1.CreateExerciseRequest{
-					Name:        "Loaded carry",
-					Tags:        []string{},
-					Metrics:     []v1.ExerciseMetric{v1.ExerciseMetric_EXERCISE_METRIC_WEIGHT, v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE, v1.ExerciseMetric_EXERCISE_METRIC_TIME},
-					RestSeconds: 0,
+					Name:    "Loaded carry",
+					Tags:    []string{},
+					Metrics: []v1.ExerciseMetric{v1.ExerciseMetric_EXERCISE_METRIC_WEIGHT, v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE, v1.ExerciseMetric_EXERCISE_METRIC_TIME},
 				},
 			},
 			init: func(_ test) context.Context {
@@ -106,8 +103,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 				return xcontext.WithUserID(ctx, user.ID.String())
 			},
 			expected: expected{
-				metrics:     []string{"weight", "distance", "time"},
-				restSeconds: 0,
+				metrics: []string{"weight", "distance", "time"},
 			},
 		},
 		{
@@ -169,7 +165,6 @@ func (s *exerciseSuite) TestCreateExercise() {
 			s.Require().NotNil(exercise)
 			s.Require().Equal(t.req.Msg.GetTags(), []string(exercise.Tags))
 			s.Require().Equal(t.expected.metrics, []string(exercise.Metrics))
-			s.Require().Equal(int32(t.expected.restSeconds), exercise.RestSeconds)
 		})
 	}
 }
@@ -552,8 +547,9 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 		)
 	})
 
-	// Rest is a coaching preference rather than a unit of the recorded history.
-	s.Run("ok_name_tags_and_rest_stay_editable_with_history", func() {
+	// The measurements are what a logged set is stored in the columns of; the
+	// name it is filed under is not.
+	s.Run("ok_name_and_tags_stay_editable_with_history", func() {
 		user := s.factory.NewUser()
 		exercise := s.factory.NewExercise(
 			factory.ExerciseUserID(user.ID),
@@ -567,23 +563,41 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 		res, err := s.handler.UpdateExercise(ctx, &connect.Request[v1.UpdateExerciseRequest]{
 			Msg: &v1.UpdateExerciseRequest{
 				Exercise: &v1.Exercise{
-					Id:          exercise.ID.String(),
-					Name:        "New Name",
-					Tags:        []string{"New Tag"},
-					RestSeconds: 120,
+					Id:   exercise.ID.String(),
+					Name: "New Name",
+					Tags: []string{"New Tag"},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{
-					Paths: []string{"name", "tags", "rest_seconds"},
+					Paths: []string{"name", "tags"},
 				},
 			},
 		})
 		s.Require().NoError(err)
-		s.Require().Equal(int32(120), res.Msg.GetExercise().GetRestSeconds())
+		s.Require().Equal("New Name", res.Msg.GetExercise().GetName())
 
 		updated := stored(exercise.ID.String())
 		s.Require().Equal("New Name", updated.Title)
 		s.Require().Equal([]string{"New Tag"}, []string(updated.Tags))
-		s.Require().Equal(int32(120), updated.RestSeconds)
+	})
+
+	// The library no longer carries a rest, so the path an older client still
+	// sends is refused rather than quietly ignored.
+	s.Run("err_rest_seconds_is_no_longer_a_path", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		res, err := s.handler.UpdateExercise(ctx, &connect.Request[v1.UpdateExerciseRequest]{
+			Msg: &v1.UpdateExerciseRequest{
+				Exercise:   &v1.Exercise{Id: exercise.ID.String()},
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"rest_seconds"}},
+			},
+		})
+		s.Require().Nil(res)
+		s.Require().Equal(
+			connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidUpdateMaskPath).Error(),
+			err.Error(),
+		)
 	})
 }
 

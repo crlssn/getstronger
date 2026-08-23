@@ -8,9 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
-	"github.com/aarondl/opt/omitnull"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -27,12 +25,12 @@ import (
 
 // ExercisesRoutine is an object representing the database table.
 type ExercisesRoutine struct {
-	RoutineID   uuid.UUID       `db:"routine_id" `
-	ExerciseID  uuid.UUID       `db:"exercise_id" `
-	Position    int32           `db:"position" `
-	GroupID     uuid.UUID       `db:"group_id" `
-	ID          uuid.UUID       `db:"id,pk" `
-	RestSeconds null.Val[int32] `db:"rest_seconds" `
+	RoutineID   uuid.UUID `db:"routine_id" `
+	ExerciseID  uuid.UUID `db:"exercise_id" `
+	Position    int32     `db:"position" `
+	GroupID     uuid.UUID `db:"group_id" `
+	ID          uuid.UUID `db:"id,pk" `
+	RestSeconds int32     `db:"rest_seconds" `
 
 	R exercisesRoutineR `db:"-" `
 }
@@ -145,7 +143,7 @@ type ExercisesRoutineSetter struct {
 	Position    omit.Val[int32]     `db:"position" `
 	GroupID     omit.Val[uuid.UUID] `db:"group_id" `
 	ID          omit.Val[uuid.UUID] `db:"id,pk" `
-	RestSeconds omitnull.Val[int32] `db:"rest_seconds" `
+	RestSeconds omit.Val[int32]     `db:"rest_seconds" `
 }
 
 func (s ExercisesRoutineSetter) SetColumns() []string {
@@ -165,7 +163,7 @@ func (s ExercisesRoutineSetter) SetColumns() []string {
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
-	if s.RestSeconds.IsValue() || s.RestSeconds.IsNull() {
+	if s.RestSeconds.IsValue() {
 		vals = append(vals, "rest_seconds")
 	}
 	return vals
@@ -187,8 +185,8 @@ func (s ExercisesRoutineSetter) Overwrite(t *ExercisesRoutine) {
 	if s.ID.IsValue() {
 		t.ID = s.ID.MustGet()
 	}
-	if s.RestSeconds.IsValue() || s.RestSeconds.IsNull() {
-		t.RestSeconds = s.RestSeconds.MustGetNull()
+	if s.RestSeconds.IsValue() {
+		t.RestSeconds = s.RestSeconds.MustGet()
 	}
 }
 
@@ -227,7 +225,7 @@ func (s *ExercisesRoutineSetter) Apply(q *dialect.InsertQuery) {
 			if s.RestSeconds.IsUnset() {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
-			return psql.Arg(s.RestSeconds.MustGetNull()).WriteSQL(ctx, w, d, start)
+			return psql.Arg(s.RestSeconds.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -273,7 +271,7 @@ func (s ExercisesRoutineSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
-	if s.RestSeconds.IsValue() || s.RestSeconds.IsNull() {
+	if s.RestSeconds.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "rest_seconds")...),
 			psql.Arg(s.RestSeconds),
@@ -827,7 +825,7 @@ type exercisesRoutineWhere[Q psql.Filterable] struct {
 	Position    psql.WhereMod[Q, int32]
 	GroupID     psql.WhereMod[Q, uuid.UUID]
 	ID          psql.WhereMod[Q, uuid.UUID]
-	RestSeconds psql.WhereNullMod[Q, int32]
+	RestSeconds psql.WhereMod[Q, int32]
 	R           exercisesRoutineWhereR[Q]
 }
 
@@ -843,7 +841,7 @@ func buildExercisesRoutineWhere[Q psql.Filterable](cols exercisesRoutineColumns)
 		Position:    psql.Where[Q, int32](cols.Position.Expression),
 		GroupID:     psql.Where[Q, uuid.UUID](cols.GroupID.Expression),
 		ID:          psql.Where[Q, uuid.UUID](cols.ID.Expression),
-		RestSeconds: psql.WhereNull[Q, int32](cols.RestSeconds.Expression),
+		RestSeconds: psql.Where[Q, int32](cols.RestSeconds.Expression),
 		R:           exercisesRoutineWhereR[Q]{cols: cols},
 	}
 }

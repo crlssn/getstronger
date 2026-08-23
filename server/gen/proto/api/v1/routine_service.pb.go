@@ -1021,11 +1021,10 @@ func (x *RoutineGroup) GetExercises() []*RoutineExercise {
 type RoutineExercise struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Exercise *Exercise              `protobuf:"bytes,1,opt,name=exercise,proto3" json:"exercise,omitempty"`
-	// How long this occurrence rests between sets. Unset inherits the exercise's
-	// own rest, which is what a routine that has never said otherwise stores; 0
-	// turns the timer off here without touching the exercise library. Ignored in
-	// a circuit, which rests between exercises and between rounds instead.
-	RestSeconds   *int32 `protobuf:"varint,2,opt,name=rest_seconds,json=restSeconds,proto3,oneof" json:"rest_seconds,omitempty"`
+	// How long this occurrence rests between sets; 0 turns the timer off here
+	// alone. Ignored in a circuit, which rests between exercises and between
+	// rounds instead.
+	RestSeconds   int32 `protobuf:"varint,2,opt,name=rest_seconds,json=restSeconds,proto3" json:"rest_seconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1068,8 +1067,8 @@ func (x *RoutineExercise) GetExercise() *Exercise {
 }
 
 func (x *RoutineExercise) GetRestSeconds() int32 {
-	if x != nil && x.RestSeconds != nil {
-		return *x.RestSeconds
+	if x != nil {
+		return x.RestSeconds
 	}
 	return 0
 }
@@ -1913,12 +1912,11 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x1brestBetweenExercisesSeconds\x12I\n" +
 	"\x1brest_between_rounds_seconds\x18\x05 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x18restBetweenRoundsSeconds\x125\n" +
-	"\texercises\x18\a \x03(\v2\x17.api.v1.RoutineExerciseR\texercisesJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"\x84\x01\n" +
+	"\texercises\x18\a \x03(\v2\x17.api.v1.RoutineExerciseR\texercisesJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"n\n" +
 	"\x0fRoutineExercise\x12,\n" +
-	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x122\n" +
+	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x12-\n" +
 	"\frest_seconds\x18\x02 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00H\x00R\vrestSeconds\x88\x01\x01B\x0f\n" +
-	"\r_rest_seconds\"d\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"d\n" +
 	"\x11CreatePlanRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
 	"\vroutine_ids\x18\x02 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
@@ -2115,7 +2113,6 @@ func file_api_v1_routine_service_proto_init() {
 	}
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
-	file_api_v1_routine_service_proto_msgTypes[18].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

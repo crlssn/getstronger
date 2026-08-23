@@ -78,15 +78,6 @@ var Exercises = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
-		RestSeconds: column{
-			Name:      "rest_seconds",
-			DBType:    "integer",
-			Default:   "90",
-			Comment:   "",
-			Nullable:  false,
-			Generated: false,
-			AutoIncr:  false,
-		},
 	},
 	Indexes: exerciseIndexes{
 		ExercisesPkey: index{
@@ -141,14 +132,6 @@ var Exercises = Table[
 			},
 			Expression: "(metrics <@ ARRAY['weight'::text, 'reps'::text, 'distance'::text, 'time'::text])",
 		},
-		ExercisesRestSecondsValid: check{
-			constraint: constraint{
-				Name:    "exercises_rest_seconds_valid",
-				Columns: []string{"rest_seconds"},
-				Comment: "",
-			},
-			Expression: "((rest_seconds >= 0) AND (rest_seconds <= 3600))",
-		},
 		ExercisesTagsMax10: check{
 			constraint: constraint{
 				Name:    "exercises_tags_max_10",
@@ -162,19 +145,18 @@ var Exercises = Table[
 }
 
 type exerciseColumns struct {
-	ID          column
-	UserID      column
-	Title       column
-	CreatedAt   column
-	DeletedAt   column
-	Tags        column
-	Metrics     column
-	RestSeconds column
+	ID        column
+	UserID    column
+	Title     column
+	CreatedAt column
+	DeletedAt column
+	Tags      column
+	Metrics   column
 }
 
 func (c exerciseColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.UserID, c.Title, c.CreatedAt, c.DeletedAt, c.Tags, c.Metrics, c.RestSeconds,
+		c.ID, c.UserID, c.Title, c.CreatedAt, c.DeletedAt, c.Tags, c.Metrics,
 	}
 }
 
@@ -205,14 +187,13 @@ func (u exerciseUniques) AsSlice() []constraint {
 }
 
 type exerciseChecks struct {
-	ExercisesMetricsNotEmpty  check
-	ExercisesMetricsValid     check
-	ExercisesRestSecondsValid check
-	ExercisesTagsMax10        check
+	ExercisesMetricsNotEmpty check
+	ExercisesMetricsValid    check
+	ExercisesTagsMax10       check
 }
 
 func (c exerciseChecks) AsSlice() []check {
 	return []check{
-		c.ExercisesMetricsNotEmpty, c.ExercisesMetricsValid, c.ExercisesRestSecondsValid, c.ExercisesTagsMax10,
+		c.ExercisesMetricsNotEmpty, c.ExercisesMetricsValid, c.ExercisesTagsMax10,
 	}
 }

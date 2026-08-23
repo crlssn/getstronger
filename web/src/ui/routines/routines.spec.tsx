@@ -27,6 +27,7 @@ import {
   RoutineGroupMode,
   UpdateRoutineResponseSchema,
 } from '@/proto/api/v1/routine_service_pb'
+import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { useActivityStore } from '@/stores/activity'
 import { useToastStore } from '@/stores/toasts'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -67,8 +68,8 @@ const routinesPage = (routines: RoutineInit[], nextPageToken = new Uint8Array(0)
 const exercisesPage = () =>
   create(ListExercisesResponseSchema, {
     exercises: [
-      { id: 'bench', name: 'Bench press', tags: ['Chest'], restSeconds: 90 },
-      { id: 'row', name: 'Row', tags: ['Back'], restSeconds: 45 },
+      { id: 'bench', name: 'Bench press', tags: ['Chest'] },
+      { id: 'row', name: 'Row', tags: ['Back'], metrics: [ExerciseMetric.TIME] },
     ],
   })
 
@@ -483,10 +484,11 @@ describe('CreateRoutine', () => {
     await addExercise(/Bench press/)
 
     const rest = screen.getByLabelText('Rest between sets of Bench press')
-    // Empty until somebody says otherwise, showing what the library says.
-    expect(rest).toHaveValue('')
-    expect(rest).toHaveAttribute('placeholder', '90')
+    // A real value from the moment it is picked, rather than a placeholder for
+    // a length written down somewhere else.
+    expect(rest).toHaveValue('90')
 
+    await userEvent.clear(rest)
     await userEvent.type(rest, '180')
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
@@ -503,18 +505,21 @@ describe('CreateRoutine', () => {
     )
   })
 
-  // Leaving it alone stores nothing, so editing the exercise in the library
-  // still moves the rest in this routine.
-  test('stores no rest for an exercise nobody gave one', async () => {
+  // Held against the clock, so it is one continuous effort rather than a set to
+  // recover from: the field opens on no rest rather than on a minute and a half.
+  test('starts a time-measured exercise at no rest', async () => {
     render()
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
-    await addExercise(/Bench press/)
+    await userEvent.type(await screen.findByLabelText('Routine name'), 'Cardio day')
+    await addExercise(/Row/)
+
+    expect(screen.getByLabelText('Rest between sets of Row')).toHaveValue('0')
+
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
     const [, , groups] = mocked.createRoutine.mock.calls[0]!
-    expect(groups?.[0]?.entries[0]?.restSeconds).toBeUndefined()
+    expect(groups?.[0]?.entries[0]?.restSeconds).toBe(0)
   })
 
   // A circuit rests between exercises and between rounds, so a set rest has

@@ -66,11 +66,11 @@ import { formatExerciseSet, isExerciseSetComplete } from '@/utils/exerciseMeasur
 import { isNumber } from '@/utils/numbers'
 import { restRemainingSeconds } from '@/utils/restTimer'
 import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
+import { defaultRestSeconds } from '@/utils/routineGroups'
 import {
   activeSetIndex,
   circuitRound,
   completedCircuitRounds,
-  defaultRestSeconds,
   elapsedLabel,
   finishBlocker,
   loggedSetCount,
@@ -467,7 +467,7 @@ export const StartWorkout = () => {
   }
 
   // The station already carries the rest that belongs to it: the routine's own
-  // length where it gave one, and the exercise's otherwise.
+  // length where a routine trains it, and the app default otherwise.
   const startExerciseRest = (station?: SessionStation) => {
     startRestOrClear(station?.restSeconds ?? 0)
   }

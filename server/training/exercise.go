@@ -10,7 +10,7 @@ import (
 const MaxExerciseTags = 10
 
 // DefaultRestSeconds is how long a plain weight-and-reps lift rests between
-// sets when the athlete does not say.
+// sets when nothing says otherwise.
 const DefaultRestSeconds = 90
 
 var (
@@ -108,18 +108,6 @@ func NormalizeExerciseTags(tags []string) ([]string, error) {
 	}
 
 	return normalized, nil
-}
-
-// RestSeconds settles how long a new exercise rests between sets. An exercise
-// created without naming its measurements is a conventional weights lift, so it
-// gets a default rest period; one that names them keeps whatever it asked for,
-// including no rest at all.
-func RestSeconds(requested int, requestedMetrics []Metric) int {
-	if len(requestedMetrics) == 0 && requested == 0 {
-		return DefaultRestSeconds
-	}
-
-	return requested
 }
 
 // MetricsFromStrings reads back what the store keeps as text.

@@ -288,7 +288,6 @@ type Exercise struct {
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Tags          []string               `protobuf:"bytes,4,rep,name=tags,proto3" json:"tags,omitempty"`
 	Metrics       []ExerciseMetric       `protobuf:"varint,5,rep,packed,name=metrics,proto3,enum=api.v1.ExerciseMetric" json:"metrics,omitempty"`
-	RestSeconds   int32                  `protobuf:"varint,6,opt,name=rest_seconds,json=restSeconds,proto3" json:"rest_seconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -356,13 +355,6 @@ func (x *Exercise) GetMetrics() []ExerciseMetric {
 		return x.Metrics
 	}
 	return nil
-}
-
-func (x *Exercise) GetRestSeconds() int32 {
-	if x != nil {
-		return x.RestSeconds
-	}
-	return 0
 }
 
 type Set struct {
@@ -732,16 +724,14 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"\x03set\x18\x02 \x01(\v2\v.api.v1.SetB\x06\xbaH\x03\xc8\x01\x01R\x03set\"o\n" +
 	"\fExerciseSets\x124\n" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseB\x06\xbaH\x03\xc8\x01\x01R\bexercise\x12)\n" +
-	"\x04sets\x18\x02 \x03(\v2\v.api.v1.SetB\b\xbaH\x05\x92\x01\x02\b\x01R\x04sets\"\xee\x01\n" +
+	"\x04sets\x18\x02 \x03(\v2\v.api.v1.SetB\b\xbaH\x05\x92\x01\x02\b\x01R\x04sets\"\xd3\x01\n" +
 	"\bExercise\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12&\n" +
 	"\x04tags\x18\x04 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
 	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
-	"\ametrics\x18\x05 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametrics\x12-\n" +
-	"\frest_seconds\x18\x06 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"\xdf\x02\n" +
+	"\ametrics\x18\x05 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametricsJ\x04\b\x06\x10\aR\frest_seconds\"\xdf\x02\n" +
 	"\x03Set\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06weight\x18\x02 \x01(\x01R\x06weight\x12\x1b\n" +

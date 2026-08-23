@@ -5,9 +5,7 @@ import type { GroupMode } from '@/utils/routineGroups'
 
 import { RoutineGroupMode } from '@/proto/api/v1/routine_service_pb'
 import { hasAnyExerciseSetValue, isExerciseSetComplete } from '@/utils/exerciseMeasurements'
-
-/** The rest a completed set starts when its exercise names no length of its own. */
-export const defaultRestSeconds = 90
+import { defaultRestSeconds } from '@/utils/routineGroups'
 
 /** How much a "+30 sec" tap adds to a running rest. */
 export const restExtensionSeconds = 30
@@ -115,21 +113,9 @@ export const nextUnfinishedStation = (
 export interface SessionStation {
   key: string
   exercise: Exercise
-  /** How long this station rests between sets, already resolved. */
+  /** How long this station rests between sets. */
   restSeconds: number
 }
-
-/**
- * How long an exercise rests between sets where the session trains it.
- *
- * The routine's own answer when it gave one — including zero, which is the
- * routine turning the timer off here without touching the exercise library —
- * and otherwise the length the exercise itself carries.
- */
-export const effectiveRestSeconds = (
-  exercise: Exercise | undefined,
-  override: number | undefined,
-): number => override ?? exercise?.restSeconds ?? defaultRestSeconds
 
 /** One block of the session: stations, and how they are worked through. */
 export interface SessionGroup {
@@ -158,14 +144,10 @@ export const sessionGroups = (
   const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]))
   const occurrences = new Map<string, number>()
 
-  const stationFor = (exercise: Exercise, override?: number): SessionStation => {
+  const stationFor = (exercise: Exercise, restSeconds = defaultRestSeconds): SessionStation => {
     const occurrence = occurrences.get(exercise.id) ?? 0
     occurrences.set(exercise.id, occurrence + 1)
-    return {
-      key: stationKey(exercise.id, occurrence),
-      exercise,
-      restSeconds: effectiveRestSeconds(exercise, override),
-    }
+    return { key: stationKey(exercise.id, occurrence), exercise, restSeconds }
   }
 
   const blocks: SessionGroup[] = []
@@ -177,7 +159,7 @@ export const sessionGroups = (
 
       // A circuit rests between exercises and between rounds, so a set rest
       // stored against one of its exercises is not the session's to take.
-      return [stationFor(exercise, circuit ? undefined : entry.restSeconds)]
+      return [circuit ? stationFor(exercise) : stationFor(exercise, entry.restSeconds)]
     })
 
     blocks.push({

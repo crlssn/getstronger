@@ -1,6 +1,8 @@
 package training
 
 import (
+	"slices"
+
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/models/enums"
 )
@@ -33,10 +35,9 @@ type RoutineGroup struct {
 // for its own length.
 type RoutineExercise struct {
 	Exercise *models.Exercise
-	// RestSeconds is how long this occurrence rests between sets. Nil inherits
-	// the exercise's own rest, so editing the library still moves it; zero
-	// turns the timer off here alone.
-	RestSeconds *int32
+	// RestSeconds is how long this occurrence rests between sets; zero turns
+	// the timer off here alone.
+	RestSeconds int32
 }
 
 // RoutineGroupDraft is a group as a save describes it. Exercises are named by
@@ -50,10 +51,23 @@ type RoutineGroupDraft struct {
 }
 
 // RoutineExerciseDraft is one exercise a save puts in a group, and the rest it
-// asks that occurrence to take.
+// asks that occurrence to take. Nil is a save that does not say — one that
+// named no groups at all — and leaves NewOccurrenceRestSeconds to answer.
 type RoutineExerciseDraft struct {
 	ExerciseID  string
 	RestSeconds *int32
+}
+
+// NewOccurrenceRestSeconds is how long an exercise rests between sets where a
+// routine has just started training it. An exercise measured against the clock
+// — a plank, a run — is one continuous effort rather than a set to recover
+// from, so it starts with no timer at all.
+func NewOccurrenceRestSeconds(metrics []Metric) int32 {
+	if slices.Contains(metrics, MetricTime) {
+		return 0
+	}
+
+	return DefaultRestSeconds
 }
 
 // NormalizeRoutineGroups is what a routine's groups are worth saving as.
@@ -128,24 +142,22 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 		normalized.Mode = RoutineGroupModeStraight
 	}
 
-	// Both group rests belong to a circuit, and the set rest belongs to
-	// straight sets: a circuit rests on the way to the next exercise and on the
-	// way into the next round, never between the sets of one exercise.
-	if normalized.Mode != RoutineGroupModeCircuit {
-		for index, exercise := range normalized.Exercises {
-			if exercise.RestSeconds == nil {
-				continue
-			}
-
-			rest := clampInt32(*exercise.RestSeconds, 0, routineGroupMaxRestSeconds)
-			normalized.Exercises[index].RestSeconds = &rest
+	for index, exercise := range normalized.Exercises {
+		if exercise.RestSeconds == nil {
+			continue
 		}
 
-		return normalized
+		rest := clampInt32(*exercise.RestSeconds, 0, routineGroupMaxRestSeconds)
+		normalized.Exercises[index].RestSeconds = &rest
 	}
 
-	for index := range normalized.Exercises {
-		normalized.Exercises[index].RestSeconds = nil
+	// Both group rests belong to a circuit, and the set rest belongs to
+	// straight sets: a circuit rests on the way to the next exercise and on the
+	// way into the next round, never between the sets of one exercise. The set
+	// rest is kept rather than cleared, so a group switched back to straight
+	// sets rests as it did before.
+	if normalized.Mode != RoutineGroupModeCircuit {
+		return normalized
 	}
 
 	normalized.RestBetweenExercisesSeconds = clampInt32(group.RestBetweenExercisesSeconds, 0, routineGroupMaxRestSeconds)

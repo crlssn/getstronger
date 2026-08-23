@@ -4,19 +4,9 @@ import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { usePreferencesStore } from '@/stores/preferences'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSegmented } from '@/ui/components/AppSegmented'
-import { AppSwitch } from '@/ui/components/AppSwitch'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { weightUnitLabel } from '@/utils/weightUnits'
 import styles from './ExerciseMeasurementSettings.module.css'
-
-/** The rest length a switched-on timer starts at. */
-export const defaultRestSeconds = 90
-
-// Every 30 seconds up to five minutes, so any common rest length is one tap.
-const restPresets = Array.from({ length: 10 }, (_, index) => (index + 1) * 30)
-
-const formatRest = (seconds: number) =>
-  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
 const presets = [
   {
@@ -34,8 +24,6 @@ const presets = [
 interface Props {
   metrics: ExerciseMetric[]
   onMetricsChange: (metrics: ExerciseMetric[]) => void
-  restSeconds: number
-  onRestSecondsChange: (seconds: number) => void
   /**
    * Whether the measurements are settled by sets already logged. A logged set
    * is stored in the columns its exercise measured by at the time, so the
@@ -44,12 +32,16 @@ interface Props {
   metricsLocked?: boolean
 }
 
-/** What an exercise measures, and how long its rest runs for. */
+/**
+ * What an exercise measures.
+ *
+ * How long it rests between sets is not asked here: rest belongs to the routine
+ * that trains the exercise, which can want one length in a strength block and
+ * another in a circuit.
+ */
 export const ExerciseMeasurementSettings = ({
   metrics,
   onMetricsChange,
-  restSeconds,
-  onRestSecondsChange,
   metricsLocked = false,
 }: Props) => {
   const { t } = useTranslation()
@@ -89,8 +81,6 @@ export const ExerciseMeasurementSettings = ({
     if (metrics.length === 1) return
     onMetricsChange(metrics.filter((value) => value !== metric))
   }
-
-  const restEnabled = restSeconds > 0
 
   return (
     <section className={styles.settings}>
@@ -146,28 +136,6 @@ export const ExerciseMeasurementSettings = ({
             ))}
           </div>
         </>
-      )}
-
-      <div className={styles.restSetting}>
-        <div>
-          <strong>{t('exercise.restTimer')}</strong>
-          <small>{t('exercise.measurements.restHelp')}</small>
-        </div>
-        <AppSwitch
-          checked={restEnabled}
-          label={t('exercise.restTimer')}
-          onChange={(enabled) => onRestSecondsChange(enabled ? defaultRestSeconds : 0)}
-        />
-      </div>
-
-      {restEnabled && (
-        <AppSegmented
-          density="compact"
-          label={t('exercise.restTimer')}
-          options={restPresets.map((seconds) => ({ label: formatRest(seconds), value: seconds }))}
-          value={restSeconds}
-          onChange={onRestSecondsChange}
-        />
       )}
     </section>
   )

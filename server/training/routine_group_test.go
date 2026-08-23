@@ -151,7 +151,7 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 					Exercises: []training.RoutineExerciseDraft{
 						// Set, so the routine says how long to rest.
 						{ExerciseID: "a", RestSeconds: new(int32(180))},
-						// Unset, so the exercise library still says.
+						// Unset, so the rest a new occurrence starts at answers.
 						{ExerciseID: "b"},
 						// Zero is an answer of its own: no timer here.
 						{ExerciseID: "c", RestSeconds: new(int32(0))},
@@ -183,8 +183,10 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 		},
 		{
 			// A circuit rests on the way to the next exercise and on the way
-			// into the next round, so there is nowhere for a set rest to go.
-			name: "a circuit takes no rest between sets",
+			// into the next round, so a set rest has nowhere to go while it is
+			// one. It is kept rather than cleared, so a group switched back to
+			// straight sets rests as it did before.
+			name: "a circuit keeps a set rest it has nowhere to take",
 			groups: []training.RoutineGroupDraft{
 				{
 					Mode:                     training.RoutineGroupModeCircuit,
@@ -199,7 +201,9 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 				{
 					Mode:                     training.RoutineGroupModeCircuit,
 					RestBetweenRoundsSeconds: 120,
-					Exercises:                exercises("a"),
+					Exercises: []training.RoutineExerciseDraft{
+						{ExerciseID: "a", RestSeconds: new(int32(180))},
+					},
 				},
 			},
 		},

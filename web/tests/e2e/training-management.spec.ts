@@ -457,10 +457,9 @@ test.describe('routine lifecycle', () => {
     }
   })
 
-  // Rest between sets used to be the exercise library's only, so a lift rested
-  // the same length everywhere it was trained. Built, saved, read back, and
-  // then trained with the routine's length on the clock rather than the
-  // library's.
+  // Rest between sets belongs to the routine, so the same lift can rest one
+  // length here and another next door. Built, saved, read back, and then
+  // trained with the length this routine gave it on the clock.
   test('rests for the length the routine gives an exercise @mutation', async ({ page }) => {
     const routineName = uniqueName('E2E Rest')
     const lift = uniqueName('E2E Rest press')
@@ -475,10 +474,10 @@ test.describe('routine lifecycle', () => {
       await page.getByLabel('Routine name').fill(routineName)
       await addRoutineExercise(page, lift)
 
-      // Empty until the routine says otherwise, showing what the library says.
+      // A real value from the moment it is picked, rather than a placeholder
+      // for a length written down somewhere else.
       const rest = page.getByLabel(`Rest between sets of ${lift}`)
-      await expect(rest).toHaveValue('')
-      await expect(rest).toHaveAttribute('placeholder', '90')
+      await expect(rest).toHaveValue('90')
 
       await rest.fill('300')
       await page.getByRole('button', { name: 'Create routine' }).click()
@@ -488,7 +487,7 @@ test.describe('routine lifecycle', () => {
       await page.getByRole('heading', { name: routineName }).click()
 
       // Saved and read back from the API: reopening the builder shows the
-      // routine's own answer rather than the library's.
+      // routine's own answer for this occurrence.
       await page.getByRole('link', { name: 'Edit exercises' }).click()
       await expect(page.getByLabel(`Rest between sets of ${lift}`)).toHaveValue('300')
       await page.getByRole('button', { name: 'Save changes' }).click()
@@ -497,7 +496,7 @@ test.describe('routine lifecycle', () => {
       await page.getByRole('textbox', { name: `${lift} set 1 weight`, exact: true }).fill('40')
       await page.getByRole('textbox', { name: `${lift} set 1 reps`, exact: true }).fill('10')
 
-      // Five minutes, not the ninety seconds the exercise itself carries.
+      // Five minutes, not the ninety seconds it started at.
       await expect(page.getByRole('region', { name: 'Rest timer' })).toContainText(/0[45]:\d\d/)
 
       await page.getByRole('button', { name: 'Finish workout' }).first().click()

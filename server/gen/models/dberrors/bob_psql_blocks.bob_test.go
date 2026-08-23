@@ -65,23 +65,6 @@ func TestCheckConstraintErrors(t *testing.T) {
 			t.Fatal("expected ErrCheckExercisesMetricsValid.Is not to match different constraint")
 		}
 	})
-	t.Run("Exercise_ErrCheckExercisesRestSecondsValid", func(t *testing.T) {
-		matchingErr := newCheckErr("23514", "exercises_rest_seconds_valid")
-		if !errors.Is(ExerciseErrors.ErrCheckExercisesRestSecondsValid, matchingErr) {
-			t.Fatalf("expected ErrCheckExercisesRestSecondsValid to match constraint %q", "exercises_rest_seconds_valid")
-		}
-		if !ExerciseErrors.ErrCheckExercisesRestSecondsValid.Is(matchingErr) {
-			t.Fatalf("expected ErrCheckExercisesRestSecondsValid.Is to match constraint %q", "exercises_rest_seconds_valid")
-		}
-
-		nonMatchingErr := newCheckErr("23514", "other_constraint")
-		if errors.Is(ExerciseErrors.ErrCheckExercisesRestSecondsValid, nonMatchingErr) {
-			t.Fatal("expected ErrCheckExercisesRestSecondsValid not to match different constraint")
-		}
-		if ExerciseErrors.ErrCheckExercisesRestSecondsValid.Is(nonMatchingErr) {
-			t.Fatal("expected ErrCheckExercisesRestSecondsValid.Is not to match different constraint")
-		}
-	})
 	t.Run("Exercise_ErrCheckExercisesTagsMax10", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "exercises_tags_max_10")
 		if !errors.Is(ExerciseErrors.ErrCheckExercisesTagsMax10, matchingErr) {

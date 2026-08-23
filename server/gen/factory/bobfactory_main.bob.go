@@ -152,7 +152,6 @@ func (f *Factory) fromExistingExercise(ctx context.Context, m *models.Exercise) 
 	o.DeletedAt = func() null.Val[time.Time] { return m.DeletedAt }
 	o.Tags = func() pq.StringArray { return m.Tags }
 	o.Metrics = func() pq.StringArray { return m.Metrics }
-	o.RestSeconds = func() int32 { return m.RestSeconds }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -207,7 +206,7 @@ func (f *Factory) fromExistingExercisesRoutine(ctx context.Context, m *models.Ex
 	o.Position = func() int32 { return m.Position }
 	o.GroupID = func() uuid.UUID { return m.GroupID }
 	o.ID = func() uuid.UUID { return m.ID }
-	o.RestSeconds = func() null.Val[int32] { return m.RestSeconds }
+	o.RestSeconds = func() int32 { return m.RestSeconds }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
