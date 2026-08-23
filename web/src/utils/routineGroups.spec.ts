@@ -17,10 +17,15 @@ import {
   removeEntry,
   removeGroup,
   saveableGroups,
+  setEntryRest,
   singleStraightGroup,
 } from '@/utils/routineGroups'
 
 const exercise = (id: string) => create(ExerciseSchema, { id, name: id })
+
+// One exercise where a group trains it. `restSeconds` left out is the routine
+// saying nothing, which leaves the exercise's own rest to answer.
+const trains = (id: string, restSeconds?: number) => ({ exercise: exercise(id), restSeconds })
 
 const entryKey = (groups: readonly DraftGroup[], groupIndex: number, position: number) =>
   groups[groupIndex]!.entries[position]!.key
@@ -60,14 +65,14 @@ describe('draftGroupsFromRoutine', () => {
         create(RoutineGroupSchema, {
           id: 'group-1',
           mode: RoutineGroupMode.STRAIGHT,
-          exercises: [exercise('a')],
+          exercises: [trains('a', 180)],
         }),
         create(RoutineGroupSchema, {
           id: 'group-2',
           mode: RoutineGroupMode.CIRCUIT,
           restBetweenExercisesSeconds: 15,
           restBetweenRoundsSeconds: 90,
-          exercises: [exercise('a'), exercise('b')],
+          exercises: [trains('a'), trains('b')],
         }),
       ],
       ['a', 'a', 'b'],
@@ -82,6 +87,10 @@ describe('draftGroupsFromRoutine', () => {
     // The same exercise in two groups is two entries, each with its own key.
     expect(groupExerciseIds(groups)).toEqual(['a', 'a', 'b'])
     expect(entryKey(groups, 0, 0)).not.toBe(entryKey(groups, 1, 0))
+    // The rest the routine gave that occurrence comes back with it, and the
+    // ones it said nothing about stay unset.
+    expect(groups[0]?.entries[0]?.restSeconds).toBe(180)
+    expect(groups[1]?.entries[0]?.restSeconds).toBeUndefined()
   })
 
   it('falls back to one straight group for a routine saved before grouping', () => {
@@ -229,6 +238,30 @@ describe('saveableGroups', () => {
     const circuit = { ...groups[1]!, entries: groups[0]!.entries, restBetweenRoundsSeconds: 99999 }
 
     expect(saveableGroups([circuit])[0]?.restBetweenRoundsSeconds).toBe(3600)
+  })
+
+  it("keeps a straight group's per-exercise rests, pulled into range", () => {
+    const groups = singleStraightGroup(['a', 'b'])
+    const withRests = setEntryRest(
+      setEntryRest(groups, entryKey(groups, 0, 0), 99999),
+      entryKey(groups, 0, 1),
+      0,
+    )
+
+    expect(saveableGroups(withRests)[0]?.entries.map((entry) => entry.restSeconds)).toEqual([
+      3600, 0,
+    ])
+  })
+
+  // A circuit rests between exercises and between rounds, so a set rest has
+  // nowhere to go — but it stays in the draft, so switching back restores it.
+  it("drops a circuit's per-exercise rests on the way out, not out of the draft", () => {
+    const groups = singleStraightGroup(['a'])
+    const withRest = setEntryRest(groups, entryKey(groups, 0, 0), 180)
+    const asCircuit = withRest.map((group) => ({ ...group, mode: 'circuit' as const }))
+
+    expect(saveableGroups(asCircuit)[0]?.entries[0]?.restSeconds).toBeUndefined()
+    expect(asCircuit[0]?.entries[0]?.restSeconds).toBe(180)
   })
 })
 

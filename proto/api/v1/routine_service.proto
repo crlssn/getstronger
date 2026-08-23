@@ -127,7 +127,20 @@ message RoutineGroup {
   int32 rest_between_exercises_seconds = 4 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
   // Rest taken once a round closes, before the group starts again.
   int32 rest_between_rounds_seconds = 5 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
-  repeated Exercise exercises = 6;
+  // 6 held the exercises without the rest each of them takes in this group.
+  reserved 6;
+  repeated RoutineExercise exercises = 7;
+}
+
+// One exercise where a routine trains it. The same exercise in another group,
+// or in another routine, is a different occurrence and rests for its own length.
+message RoutineExercise {
+  Exercise exercise = 1;
+  // How long this occurrence rests between sets. Unset inherits the exercise's
+  // own rest, which is what a routine that has never said otherwise stores; 0
+  // turns the timer off here without touching the exercise library. Ignored in
+  // a circuit, which rests between exercises and between rounds instead.
+  optional int32 rest_seconds = 2 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
 }
 
 message CreatePlanRequest {

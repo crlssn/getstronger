@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
@@ -53,7 +54,7 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID string) ([]*trai
 			Mode:                        group.Mode,
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
-			Exercises:                   make(models.ExerciseSlice, 0, len(links)),
+			Exercises:                   make([]training.RoutineExercise, 0, len(links)),
 		}
 		parsed = append(parsed, parsedGroup)
 		byID[group.ID] = parsedGroup
@@ -68,7 +69,18 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID string) ([]*trai
 		if !ok {
 			continue
 		}
-		group.Exercises = append(group.Exercises, exercise)
+
+		// A null column is the routine saying nothing, which leaves the
+		// exercise's own rest to answer for it.
+		var restSeconds *int32
+		if rest, ok := link.RestSeconds.Get(); ok {
+			restSeconds = &rest
+		}
+
+		group.Exercises = append(group.Exercises, training.RoutineExercise{
+			Exercise:    exercise,
+			RestSeconds: restSeconds,
+		})
 	}
 
 	return parsed, nil
@@ -143,13 +155,16 @@ func setRoutineGroups(ctx context.Context, exec bob.Executor, routineID uuid.UUI
 			return fmt.Errorf("routine group insert: %w", err)
 		}
 
-		links := make([]*models.ExercisesRoutineSetter, 0, len(group.ExerciseIDs))
-		for _, exerciseID := range group.ExerciseIDs {
+		links := make([]*models.ExercisesRoutineSetter, 0, len(group.Exercises))
+		for _, exercise := range group.Exercises {
 			links = append(links, &models.ExercisesRoutineSetter{
 				RoutineID:  omit.From(routineID),
-				ExerciseID: omit.From(uuidFromString(exerciseID)),
+				ExerciseID: omit.From(uuidFromString(exercise.ExerciseID)),
 				GroupID:    omit.From(inserted.ID),
 				Position:   omit.From(safe.Int32FromInt(position)),
+				// Null is the routine saying nothing, which leaves the
+				// exercise's own rest to answer for this occurrence.
+				RestSeconds: omitnull.FromPtr(exercise.RestSeconds),
 			})
 			position++
 		}

@@ -461,14 +461,15 @@ export const StartWorkout = () => {
       .setRestTimer(routineID, new Date(startedAt + seconds * 1000).toISOString(), seconds)
   }
 
-  const startExerciseRest = (exercise?: Exercise) => {
-    if (exercise?.restSeconds) startRest(exercise.restSeconds)
-    else useWorkoutStore.getState().setRestTimer(routineID)
-  }
-
   const startRestOrClear = (seconds: number) => {
     if (seconds > 0) startRest(seconds)
     else useWorkoutStore.getState().setRestTimer(routineID)
+  }
+
+  // The station already carries the rest that belongs to it: the routine's own
+  // length where it gave one, and the exercise's otherwise.
+  const startExerciseRest = (station?: SessionStation) => {
+    startRestOrClear(station?.restSeconds ?? 0)
   }
 
   // Completing a set is what starts the rest, so it must fire on the crossing
@@ -482,7 +483,7 @@ export const StartWorkout = () => {
         completedSets.current.add(key)
         // A circuit rests on the way to the next exercise or into the next
         // round, so its rest belongs to moving on rather than to the set.
-        if (blockOf.get(station.key)?.mode !== 'circuit') startExerciseRest(station.exercise)
+        if (blockOf.get(station.key)?.mode !== 'circuit') startExerciseRest(station)
       }
       return
     }
@@ -596,7 +597,7 @@ export const StartWorkout = () => {
     if (next < 0) return
 
     selectStation(next)
-    startExerciseRest(stations[next]?.exercise)
+    startExerciseRest(stations[next])
   }
 
   /**

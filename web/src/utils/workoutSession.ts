@@ -115,7 +115,21 @@ export const nextUnfinishedStation = (
 export interface SessionStation {
   key: string
   exercise: Exercise
+  /** How long this station rests between sets, already resolved. */
+  restSeconds: number
 }
+
+/**
+ * How long an exercise rests between sets where the session trains it.
+ *
+ * The routine's own answer when it gave one — including zero, which is the
+ * routine turning the timer off here without touching the exercise library —
+ * and otherwise the length the exercise itself carries.
+ */
+export const effectiveRestSeconds = (
+  exercise: Exercise | undefined,
+  override: number | undefined,
+): number => override ?? exercise?.restSeconds ?? defaultRestSeconds
 
 /** One block of the session: stations, and how they are worked through. */
 export interface SessionGroup {
@@ -144,22 +158,31 @@ export const sessionGroups = (
   const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]))
   const occurrences = new Map<string, number>()
 
-  const stationFor = (exercise: Exercise): SessionStation => {
+  const stationFor = (exercise: Exercise, override?: number): SessionStation => {
     const occurrence = occurrences.get(exercise.id) ?? 0
     occurrences.set(exercise.id, occurrence + 1)
-    return { key: stationKey(exercise.id, occurrence), exercise }
+    return {
+      key: stationKey(exercise.id, occurrence),
+      exercise,
+      restSeconds: effectiveRestSeconds(exercise, override),
+    }
   }
 
   const blocks: SessionGroup[] = []
   for (const group of groups ?? []) {
-    const stations = group.exercises
-      .map((exercise) => byId.get(exercise.id))
-      .filter((exercise) => exercise !== undefined)
-      .map(stationFor)
+    const circuit = group.mode === RoutineGroupMode.CIRCUIT
+    const stations = group.exercises.flatMap((entry) => {
+      const exercise = byId.get(entry.exercise?.id ?? '')
+      if (!exercise) return []
+
+      // A circuit rests between exercises and between rounds, so a set rest
+      // stored against one of its exercises is not the session's to take.
+      return [stationFor(exercise, circuit ? undefined : entry.restSeconds)]
+    })
 
     blocks.push({
       id: group.id,
-      mode: group.mode === RoutineGroupMode.CIRCUIT ? 'circuit' : 'straight',
+      mode: circuit ? 'circuit' : 'straight',
       restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
       restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
       stations,

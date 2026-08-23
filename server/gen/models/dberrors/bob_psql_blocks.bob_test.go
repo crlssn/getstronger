@@ -100,6 +100,24 @@ func TestCheckConstraintErrors(t *testing.T) {
 		}
 	})
 
+	t.Run("ExercisesRoutine_ErrCheckExercisesRoutinesRestSecondsValid", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "exercises_routines_rest_seconds_valid")
+		if !errors.Is(ExercisesRoutineErrors.ErrCheckExercisesRoutinesRestSecondsValid, matchingErr) {
+			t.Fatalf("expected ErrCheckExercisesRoutinesRestSecondsValid to match constraint %q", "exercises_routines_rest_seconds_valid")
+		}
+		if !ExercisesRoutineErrors.ErrCheckExercisesRoutinesRestSecondsValid.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckExercisesRoutinesRestSecondsValid.Is to match constraint %q", "exercises_routines_rest_seconds_valid")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(ExercisesRoutineErrors.ErrCheckExercisesRoutinesRestSecondsValid, nonMatchingErr) {
+			t.Fatal("expected ErrCheckExercisesRoutinesRestSecondsValid not to match different constraint")
+		}
+		if ExercisesRoutineErrors.ErrCheckExercisesRoutinesRestSecondsValid.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckExercisesRoutinesRestSecondsValid.Is not to match different constraint")
+		}
+	})
+
 	t.Run("PlanRoutine_ErrCheckPlanRoutinesPositionCheck", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "plan_routines_position_check")
 		if !errors.Is(PlanRoutineErrors.ErrCheckPlanRoutinesPositionCheck, matchingErr) {

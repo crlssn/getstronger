@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/routine_service.proto.
  */
 export const file_api_v1_routine_service: GenFile = /*@__PURE__*/
-  fileDesc("ChxhcGkvdjEvcm91dGluZV9zZXJ2aWNlLnByb3RvEgZhcGkudjEicwoUQ3JlYXRlUm91dGluZVJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARIeCgxleGVyY2lzZV9pZHMYAiADKAlCCLpIBZIBAggBEiQKBmdyb3VwcxgDIAMoCzIULmFwaS52MS5Sb3V0aW5lR3JvdXAiIwoVQ3JlYXRlUm91dGluZVJlc3BvbnNlEgoKAmlkGAEgASgJIikKEUdldFJvdXRpbmVSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASI2ChJHZXRSb3V0aW5lUmVzcG9uc2USIAoHcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lIkAKFFVwZGF0ZVJvdXRpbmVSZXF1ZXN0EigKB3JvdXRpbmUYASABKAsyDy5hcGkudjEuUm91dGluZUIGukgDyAEBIjkKFVVwZGF0ZVJvdXRpbmVSZXNwb25zZRIgCgdyb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmUiLAoURGVsZXRlUm91dGluZVJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhcKFURlbGV0ZVJvdXRpbmVSZXNwb25zZSJaChNMaXN0Um91dGluZXNSZXF1ZXN0EgwKBG5hbWUYASABKAkSNQoKcGFnaW5hdGlvbhgCIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImkKFExpc3RSb3V0aW5lc1Jlc3BvbnNlEiEKCHJvdXRpbmVzGAEgAygLMg8uYXBpLnYxLlJvdXRpbmUSLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiUQoSQWRkRXhlcmNpc2VSZXF1ZXN0EhwKCnJvdXRpbmVfaWQYASABKAlCCLpIBXIDsAEBEh0KC2V4ZXJjaXNlX2lkGAIgASgJQgi6SAVyA7ABASIVChNBZGRFeGVyY2lzZVJlc3BvbnNlIloKGlVwZGF0ZUV4ZXJjaXNlT3JkZXJSZXF1ZXN0EhwKCnJvdXRpbmVfaWQYASABKAlCCLpIBXIDsAEBEh4KDGV4ZXJjaXNlX2lkcxgCIAMoCUIIukgFkgECCAEiHQobVXBkYXRlRXhlcmNpc2VPcmRlclJlc3BvbnNlIjMKE0dldERhc2hib2FyZFJlcXVlc3QSHAoUcHJlZmVycmVkX3JvdXRpbmVfaWQYASABKAkipwIKFEdldERhc2hib2FyZFJlc3BvbnNlEiUKDG5leHRfcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lEiEKCHJvdXRpbmVzGAIgAygLMg8uYXBpLnYxLlJvdXRpbmUSGgoSd29ya291dHNfdGhpc193ZWVrGAMgASgFEhgKEHZvbHVtZV90aGlzX3dlZWsYBCABKAESKwoOcGVyc29uYWxfYmVzdHMYBSADKAsyEy5hcGkudjEuRXhlcmNpc2VTZXQSKAoPcmVjZW50X3dvcmtvdXRzGAYgAygLMg8uYXBpLnYxLldvcmtvdXQSIQoLYWN0aXZlX3BsYW4YByABKAsyDC5hcGkudjEuUGxhbhIVCg13b3Jrb3V0X2NvdW50GAggASgFIosBCgdSb3V0aW5lEhQKAmlkGAEgASgJQgi6SAVyA7ABARIVCgRuYW1lGAIgASgJQge6SARyAhABEi0KCWV4ZXJjaXNlcxgDIAMoCzIQLmFwaS52MS5FeGVyY2lzZUIIukgFkgECCAESJAoGZ3JvdXBzGAQgAygLMhQuYXBpLnYxLlJvdXRpbmVHcm91cCLSAQoMUm91dGluZUdyb3VwEgoKAmlkGAEgASgJEiYKBG1vZGUYAiABKA4yGC5hcGkudjEuUm91dGluZUdyb3VwTW9kZRIyCh5yZXN0X2JldHdlZW5fZXhlcmNpc2VzX3NlY29uZHMYBCABKAVCCrpIBxoFGJAcKAASLwobcmVzdF9iZXR3ZWVuX3JvdW5kc19zZWNvbmRzGAUgASgFQgq6SAcaBRiQHCgAEiMKCWV4ZXJjaXNlcxgGIAMoCzIQLmFwaS52MS5FeGVyY2lzZUoECAMQBCJSChFDcmVhdGVQbGFuUmVxdWVzdBIVCgRuYW1lGAEgASgJQge6SARyAhABEiYKC3JvdXRpbmVfaWRzGAIgAygJQhG6SA6SAQsIARgBIgVyA7ABASIwChJDcmVhdGVQbGFuUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIiYKDkdldFBsYW5SZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASItCg9HZXRQbGFuUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIhIKEExpc3RQbGFuc1JlcXVlc3QiMAoRTGlzdFBsYW5zUmVzcG9uc2USGwoFcGxhbnMYASADKAsyDC5hcGkudjEuUGxhbiJoChFVcGRhdGVQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQESFQoEbmFtZRgCIAEoCUIHukgEcgIQARImCgtyb3V0aW5lX2lkcxgDIAMoCUIRukgOkgELCAEYASIFcgOwAQEiMAoSVXBkYXRlUGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiIpChFEZWxldGVQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiFAoSRGVsZXRlUGxhblJlc3BvbnNlIiwKFFNldEFjdGl2ZVBsYW5SZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASIzChVTZXRBY3RpdmVQbGFuUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIhgKFlBhdXNlQWN0aXZlUGxhblJlcXVlc3QiGQoXUGF1c2VBY3RpdmVQbGFuUmVzcG9uc2UiLgoWU2tpcFBsYW5Sb3V0aW5lUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiNQoXU2tpcFBsYW5Sb3V0aW5lUmVzcG9uc2USGgoEcGxhbhgBIAEoCzIMLmFwaS52MS5QbGFuIpMBCgRQbGFuEhQKAmlkGAEgASgJQgi6SAVyA7ABARIVCgRuYW1lGAIgASgJQge6SARyAhABEisKCHJvdXRpbmVzGAMgAygLMg8uYXBpLnYxLlJvdXRpbmVCCLpIBZIBAggBEiEKEGN1cnJlbnRfcG9zaXRpb24YBCABKAVCB7pIBBoCKAASDgoGYWN0aXZlGAUgASgIKncKEFJvdXRpbmVHcm91cE1vZGUSIgoeUk9VVElORV9HUk9VUF9NT0RFX1VOU1BFQ0lGSUVEEAASHwobUk9VVElORV9HUk9VUF9NT0RFX1NUUkFJR0hUEAESHgoaUk9VVElORV9HUk9VUF9NT0RFX0NJUkNVSVQQAjLgCQoOUm91dGluZVNlcnZpY2USTgoNQ3JlYXRlUm91dGluZRIcLmFwaS52MS5DcmVhdGVSb3V0aW5lUmVxdWVzdBodLmFwaS52MS5DcmVhdGVSb3V0aW5lUmVzcG9uc2UiABJFCgpHZXRSb3V0aW5lEhkuYXBpLnYxLkdldFJvdXRpbmVSZXF1ZXN0GhouYXBpLnYxLkdldFJvdXRpbmVSZXNwb25zZSIAEk4KDVVwZGF0ZVJvdXRpbmUSHC5hcGkudjEuVXBkYXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuVXBkYXRlUm91dGluZVJlc3BvbnNlIgASTgoNRGVsZXRlUm91dGluZRIcLmFwaS52MS5EZWxldGVSb3V0aW5lUmVxdWVzdBodLmFwaS52MS5EZWxldGVSb3V0aW5lUmVzcG9uc2UiABJLCgxMaXN0Um91dGluZXMSGy5hcGkudjEuTGlzdFJvdXRpbmVzUmVxdWVzdBocLmFwaS52MS5MaXN0Um91dGluZXNSZXNwb25zZSIAEkgKC0FkZEV4ZXJjaXNlEhouYXBpLnYxLkFkZEV4ZXJjaXNlUmVxdWVzdBobLmFwaS52MS5BZGRFeGVyY2lzZVJlc3BvbnNlIgASYAoTVXBkYXRlRXhlcmNpc2VPcmRlchIiLmFwaS52MS5VcGRhdGVFeGVyY2lzZU9yZGVyUmVxdWVzdBojLmFwaS52MS5VcGRhdGVFeGVyY2lzZU9yZGVyUmVzcG9uc2UiABJLCgxHZXREYXNoYm9hcmQSGy5hcGkudjEuR2V0RGFzaGJvYXJkUmVxdWVzdBocLmFwaS52MS5HZXREYXNoYm9hcmRSZXNwb25zZSIAEkUKCkNyZWF0ZVBsYW4SGS5hcGkudjEuQ3JlYXRlUGxhblJlcXVlc3QaGi5hcGkudjEuQ3JlYXRlUGxhblJlc3BvbnNlIgASPAoHR2V0UGxhbhIWLmFwaS52MS5HZXRQbGFuUmVxdWVzdBoXLmFwaS52MS5HZXRQbGFuUmVzcG9uc2UiABJCCglMaXN0UGxhbnMSGC5hcGkudjEuTGlzdFBsYW5zUmVxdWVzdBoZLmFwaS52MS5MaXN0UGxhbnNSZXNwb25zZSIAEkUKClVwZGF0ZVBsYW4SGS5hcGkudjEuVXBkYXRlUGxhblJlcXVlc3QaGi5hcGkudjEuVXBkYXRlUGxhblJlc3BvbnNlIgASRQoKRGVsZXRlUGxhbhIZLmFwaS52MS5EZWxldGVQbGFuUmVxdWVzdBoaLmFwaS52MS5EZWxldGVQbGFuUmVzcG9uc2UiABJOCg1TZXRBY3RpdmVQbGFuEhwuYXBpLnYxLlNldEFjdGl2ZVBsYW5SZXF1ZXN0Gh0uYXBpLnYxLlNldEFjdGl2ZVBsYW5SZXNwb25zZSIAElQKD1BhdXNlQWN0aXZlUGxhbhIeLmFwaS52MS5QYXVzZUFjdGl2ZVBsYW5SZXF1ZXN0Gh8uYXBpLnYxLlBhdXNlQWN0aXZlUGxhblJlc3BvbnNlIgASVAoPU2tpcFBsYW5Sb3V0aW5lEh4uYXBpLnYxLlNraXBQbGFuUm91dGluZVJlcXVlc3QaHy5hcGkudjEuU2tpcFBsYW5Sb3V0aW5lUmVzcG9uc2UiAEKXAQoKY29tLmFwaS52MUITUm91dGluZVNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
+  fileDesc("ChxhcGkvdjEvcm91dGluZV9zZXJ2aWNlLnByb3RvEgZhcGkudjEicwoUQ3JlYXRlUm91dGluZVJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARIeCgxleGVyY2lzZV9pZHMYAiADKAlCCLpIBZIBAggBEiQKBmdyb3VwcxgDIAMoCzIULmFwaS52MS5Sb3V0aW5lR3JvdXAiIwoVQ3JlYXRlUm91dGluZVJlc3BvbnNlEgoKAmlkGAEgASgJIikKEUdldFJvdXRpbmVSZXF1ZXN0EhQKAmlkGAEgASgJQgi6SAVyA7ABASI2ChJHZXRSb3V0aW5lUmVzcG9uc2USIAoHcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lIkAKFFVwZGF0ZVJvdXRpbmVSZXF1ZXN0EigKB3JvdXRpbmUYASABKAsyDy5hcGkudjEuUm91dGluZUIGukgDyAEBIjkKFVVwZGF0ZVJvdXRpbmVSZXNwb25zZRIgCgdyb3V0aW5lGAEgASgLMg8uYXBpLnYxLlJvdXRpbmUiLAoURGVsZXRlUm91dGluZVJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhcKFURlbGV0ZVJvdXRpbmVSZXNwb25zZSJaChNMaXN0Um91dGluZXNSZXF1ZXN0EgwKBG5hbWUYASABKAkSNQoKcGFnaW5hdGlvbhgCIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImkKFExpc3RSb3V0aW5lc1Jlc3BvbnNlEiEKCHJvdXRpbmVzGAEgAygLMg8uYXBpLnYxLlJvdXRpbmUSLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiUQoSQWRkRXhlcmNpc2VSZXF1ZXN0EhwKCnJvdXRpbmVfaWQYASABKAlCCLpIBXIDsAEBEh0KC2V4ZXJjaXNlX2lkGAIgASgJQgi6SAVyA7ABASIVChNBZGRFeGVyY2lzZVJlc3BvbnNlIloKGlVwZGF0ZUV4ZXJjaXNlT3JkZXJSZXF1ZXN0EhwKCnJvdXRpbmVfaWQYASABKAlCCLpIBXIDsAEBEh4KDGV4ZXJjaXNlX2lkcxgCIAMoCUIIukgFkgECCAEiHQobVXBkYXRlRXhlcmNpc2VPcmRlclJlc3BvbnNlIjMKE0dldERhc2hib2FyZFJlcXVlc3QSHAoUcHJlZmVycmVkX3JvdXRpbmVfaWQYASABKAkipwIKFEdldERhc2hib2FyZFJlc3BvbnNlEiUKDG5leHRfcm91dGluZRgBIAEoCzIPLmFwaS52MS5Sb3V0aW5lEiEKCHJvdXRpbmVzGAIgAygLMg8uYXBpLnYxLlJvdXRpbmUSGgoSd29ya291dHNfdGhpc193ZWVrGAMgASgFEhgKEHZvbHVtZV90aGlzX3dlZWsYBCABKAESKwoOcGVyc29uYWxfYmVzdHMYBSADKAsyEy5hcGkudjEuRXhlcmNpc2VTZXQSKAoPcmVjZW50X3dvcmtvdXRzGAYgAygLMg8uYXBpLnYxLldvcmtvdXQSIQoLYWN0aXZlX3BsYW4YByABKAsyDC5hcGkudjEuUGxhbhIVCg13b3Jrb3V0X2NvdW50GAggASgFIosBCgdSb3V0aW5lEhQKAmlkGAEgASgJQgi6SAVyA7ABARIVCgRuYW1lGAIgASgJQge6SARyAhABEi0KCWV4ZXJjaXNlcxgDIAMoCzIQLmFwaS52MS5FeGVyY2lzZUIIukgFkgECCAESJAoGZ3JvdXBzGAQgAygLMhQuYXBpLnYxLlJvdXRpbmVHcm91cCLfAQoMUm91dGluZUdyb3VwEgoKAmlkGAEgASgJEiYKBG1vZGUYAiABKA4yGC5hcGkudjEuUm91dGluZUdyb3VwTW9kZRIyCh5yZXN0X2JldHdlZW5fZXhlcmNpc2VzX3NlY29uZHMYBCABKAVCCrpIBxoFGJAcKAASLwobcmVzdF9iZXR3ZWVuX3JvdW5kc19zZWNvbmRzGAUgASgFQgq6SAcaBRiQHCgAEioKCWV4ZXJjaXNlcxgHIAMoCzIXLmFwaS52MS5Sb3V0aW5lRXhlcmNpc2VKBAgDEARKBAgGEAcibQoPUm91dGluZUV4ZXJjaXNlEiIKCGV4ZXJjaXNlGAEgASgLMhAuYXBpLnYxLkV4ZXJjaXNlEiUKDHJlc3Rfc2Vjb25kcxgCIAEoBUIKukgHGgUYkBwoAEgAiAEBQg8KDV9yZXN0X3NlY29uZHMiUgoRQ3JlYXRlUGxhblJlcXVlc3QSFQoEbmFtZRgBIAEoCUIHukgEcgIQARImCgtyb3V0aW5lX2lkcxgCIAMoCUIRukgOkgELCAEYASIFcgOwAQEiMAoSQ3JlYXRlUGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiImCg5HZXRQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiLQoPR2V0UGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiISChBMaXN0UGxhbnNSZXF1ZXN0IjAKEUxpc3RQbGFuc1Jlc3BvbnNlEhsKBXBsYW5zGAEgAygLMgwuYXBpLnYxLlBsYW4iaAoRVXBkYXRlUGxhblJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBEhUKBG5hbWUYAiABKAlCB7pIBHICEAESJgoLcm91dGluZV9pZHMYAyADKAlCEbpIDpIBCwgBGAEiBXIDsAEBIjAKElVwZGF0ZVBsYW5SZXNwb25zZRIaCgRwbGFuGAEgASgLMgwuYXBpLnYxLlBsYW4iKQoRRGVsZXRlUGxhblJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhQKEkRlbGV0ZVBsYW5SZXNwb25zZSIsChRTZXRBY3RpdmVQbGFuUmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiMwoVU2V0QWN0aXZlUGxhblJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiIYChZQYXVzZUFjdGl2ZVBsYW5SZXF1ZXN0IhkKF1BhdXNlQWN0aXZlUGxhblJlc3BvbnNlIi4KFlNraXBQbGFuUm91dGluZVJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIjUKF1NraXBQbGFuUm91dGluZVJlc3BvbnNlEhoKBHBsYW4YASABKAsyDC5hcGkudjEuUGxhbiKTAQoEUGxhbhIUCgJpZBgBIAEoCUIIukgFcgOwAQESFQoEbmFtZRgCIAEoCUIHukgEcgIQARIrCghyb3V0aW5lcxgDIAMoCzIPLmFwaS52MS5Sb3V0aW5lQgi6SAWSAQIIARIhChBjdXJyZW50X3Bvc2l0aW9uGAQgASgFQge6SAQaAigAEg4KBmFjdGl2ZRgFIAEoCCp3ChBSb3V0aW5lR3JvdXBNb2RlEiIKHlJPVVRJTkVfR1JPVVBfTU9ERV9VTlNQRUNJRklFRBAAEh8KG1JPVVRJTkVfR1JPVVBfTU9ERV9TVFJBSUdIVBABEh4KGlJPVVRJTkVfR1JPVVBfTU9ERV9DSVJDVUlUEAIy4AkKDlJvdXRpbmVTZXJ2aWNlEk4KDUNyZWF0ZVJvdXRpbmUSHC5hcGkudjEuQ3JlYXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuQ3JlYXRlUm91dGluZVJlc3BvbnNlIgASRQoKR2V0Um91dGluZRIZLmFwaS52MS5HZXRSb3V0aW5lUmVxdWVzdBoaLmFwaS52MS5HZXRSb3V0aW5lUmVzcG9uc2UiABJOCg1VcGRhdGVSb3V0aW5lEhwuYXBpLnYxLlVwZGF0ZVJvdXRpbmVSZXF1ZXN0Gh0uYXBpLnYxLlVwZGF0ZVJvdXRpbmVSZXNwb25zZSIAEk4KDURlbGV0ZVJvdXRpbmUSHC5hcGkudjEuRGVsZXRlUm91dGluZVJlcXVlc3QaHS5hcGkudjEuRGVsZXRlUm91dGluZVJlc3BvbnNlIgASSwoMTGlzdFJvdXRpbmVzEhsuYXBpLnYxLkxpc3RSb3V0aW5lc1JlcXVlc3QaHC5hcGkudjEuTGlzdFJvdXRpbmVzUmVzcG9uc2UiABJICgtBZGRFeGVyY2lzZRIaLmFwaS52MS5BZGRFeGVyY2lzZVJlcXVlc3QaGy5hcGkudjEuQWRkRXhlcmNpc2VSZXNwb25zZSIAEmAKE1VwZGF0ZUV4ZXJjaXNlT3JkZXISIi5hcGkudjEuVXBkYXRlRXhlcmNpc2VPcmRlclJlcXVlc3QaIy5hcGkudjEuVXBkYXRlRXhlcmNpc2VPcmRlclJlc3BvbnNlIgASSwoMR2V0RGFzaGJvYXJkEhsuYXBpLnYxLkdldERhc2hib2FyZFJlcXVlc3QaHC5hcGkudjEuR2V0RGFzaGJvYXJkUmVzcG9uc2UiABJFCgpDcmVhdGVQbGFuEhkuYXBpLnYxLkNyZWF0ZVBsYW5SZXF1ZXN0GhouYXBpLnYxLkNyZWF0ZVBsYW5SZXNwb25zZSIAEjwKB0dldFBsYW4SFi5hcGkudjEuR2V0UGxhblJlcXVlc3QaFy5hcGkudjEuR2V0UGxhblJlc3BvbnNlIgASQgoJTGlzdFBsYW5zEhguYXBpLnYxLkxpc3RQbGFuc1JlcXVlc3QaGS5hcGkudjEuTGlzdFBsYW5zUmVzcG9uc2UiABJFCgpVcGRhdGVQbGFuEhkuYXBpLnYxLlVwZGF0ZVBsYW5SZXF1ZXN0GhouYXBpLnYxLlVwZGF0ZVBsYW5SZXNwb25zZSIAEkUKCkRlbGV0ZVBsYW4SGS5hcGkudjEuRGVsZXRlUGxhblJlcXVlc3QaGi5hcGkudjEuRGVsZXRlUGxhblJlc3BvbnNlIgASTgoNU2V0QWN0aXZlUGxhbhIcLmFwaS52MS5TZXRBY3RpdmVQbGFuUmVxdWVzdBodLmFwaS52MS5TZXRBY3RpdmVQbGFuUmVzcG9uc2UiABJUCg9QYXVzZUFjdGl2ZVBsYW4SHi5hcGkudjEuUGF1c2VBY3RpdmVQbGFuUmVxdWVzdBofLmFwaS52MS5QYXVzZUFjdGl2ZVBsYW5SZXNwb25zZSIAElQKD1NraXBQbGFuUm91dGluZRIeLmFwaS52MS5Ta2lwUGxhblJvdXRpbmVSZXF1ZXN0Gh8uYXBpLnYxLlNraXBQbGFuUm91dGluZVJlc3BvbnNlIgBClwEKCmNvbS5hcGkudjFCE1JvdXRpbmVTZXJ2aWNlUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.CreateRoutineRequest
@@ -419,9 +419,9 @@ export type RoutineGroup = Message<"api.v1.RoutineGroup"> & {
   restBetweenRoundsSeconds: number;
 
   /**
-   * @generated from field: repeated api.v1.Exercise exercises = 6;
+   * @generated from field: repeated api.v1.RoutineExercise exercises = 7;
    */
-  exercises: Exercise[];
+  exercises: RoutineExercise[];
 };
 
 /**
@@ -430,6 +430,36 @@ export type RoutineGroup = Message<"api.v1.RoutineGroup"> & {
  */
 export const RoutineGroupSchema: GenMessage<RoutineGroup> = /*@__PURE__*/
   messageDesc(file_api_v1_routine_service, 17);
+
+/**
+ * One exercise where a routine trains it. The same exercise in another group,
+ * or in another routine, is a different occurrence and rests for its own length.
+ *
+ * @generated from message api.v1.RoutineExercise
+ */
+export type RoutineExercise = Message<"api.v1.RoutineExercise"> & {
+  /**
+   * @generated from field: api.v1.Exercise exercise = 1;
+   */
+  exercise?: Exercise | undefined;
+
+  /**
+   * How long this occurrence rests between sets. Unset inherits the exercise's
+   * own rest, which is what a routine that has never said otherwise stores; 0
+   * turns the timer off here without touching the exercise library. Ignored in
+   * a circuit, which rests between exercises and between rounds instead.
+   *
+   * @generated from field: optional int32 rest_seconds = 2;
+   */
+  restSeconds?: number | undefined;
+};
+
+/**
+ * Describes the message api.v1.RoutineExercise.
+ * Use `create(RoutineExerciseSchema)` to create a new message.
+ */
+export const RoutineExerciseSchema: GenMessage<RoutineExercise> = /*@__PURE__*/
+  messageDesc(file_api_v1_routine_service, 18);
 
 /**
  * @generated from message api.v1.CreatePlanRequest
@@ -451,7 +481,7 @@ export type CreatePlanRequest = Message<"api.v1.CreatePlanRequest"> & {
  * Use `create(CreatePlanRequestSchema)` to create a new message.
  */
 export const CreatePlanRequestSchema: GenMessage<CreatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 18);
+  messageDesc(file_api_v1_routine_service, 19);
 
 /**
  * @generated from message api.v1.CreatePlanResponse
@@ -468,7 +498,7 @@ export type CreatePlanResponse = Message<"api.v1.CreatePlanResponse"> & {
  * Use `create(CreatePlanResponseSchema)` to create a new message.
  */
 export const CreatePlanResponseSchema: GenMessage<CreatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 19);
+  messageDesc(file_api_v1_routine_service, 20);
 
 /**
  * @generated from message api.v1.GetPlanRequest
@@ -485,7 +515,7 @@ export type GetPlanRequest = Message<"api.v1.GetPlanRequest"> & {
  * Use `create(GetPlanRequestSchema)` to create a new message.
  */
 export const GetPlanRequestSchema: GenMessage<GetPlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 20);
+  messageDesc(file_api_v1_routine_service, 21);
 
 /**
  * @generated from message api.v1.GetPlanResponse
@@ -502,7 +532,7 @@ export type GetPlanResponse = Message<"api.v1.GetPlanResponse"> & {
  * Use `create(GetPlanResponseSchema)` to create a new message.
  */
 export const GetPlanResponseSchema: GenMessage<GetPlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 21);
+  messageDesc(file_api_v1_routine_service, 22);
 
 /**
  * @generated from message api.v1.ListPlansRequest
@@ -515,7 +545,7 @@ export type ListPlansRequest = Message<"api.v1.ListPlansRequest"> & {
  * Use `create(ListPlansRequestSchema)` to create a new message.
  */
 export const ListPlansRequestSchema: GenMessage<ListPlansRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 22);
+  messageDesc(file_api_v1_routine_service, 23);
 
 /**
  * @generated from message api.v1.ListPlansResponse
@@ -532,7 +562,7 @@ export type ListPlansResponse = Message<"api.v1.ListPlansResponse"> & {
  * Use `create(ListPlansResponseSchema)` to create a new message.
  */
 export const ListPlansResponseSchema: GenMessage<ListPlansResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 23);
+  messageDesc(file_api_v1_routine_service, 24);
 
 /**
  * @generated from message api.v1.UpdatePlanRequest
@@ -559,7 +589,7 @@ export type UpdatePlanRequest = Message<"api.v1.UpdatePlanRequest"> & {
  * Use `create(UpdatePlanRequestSchema)` to create a new message.
  */
 export const UpdatePlanRequestSchema: GenMessage<UpdatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 24);
+  messageDesc(file_api_v1_routine_service, 25);
 
 /**
  * @generated from message api.v1.UpdatePlanResponse
@@ -576,7 +606,7 @@ export type UpdatePlanResponse = Message<"api.v1.UpdatePlanResponse"> & {
  * Use `create(UpdatePlanResponseSchema)` to create a new message.
  */
 export const UpdatePlanResponseSchema: GenMessage<UpdatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 25);
+  messageDesc(file_api_v1_routine_service, 26);
 
 /**
  * @generated from message api.v1.DeletePlanRequest
@@ -593,7 +623,7 @@ export type DeletePlanRequest = Message<"api.v1.DeletePlanRequest"> & {
  * Use `create(DeletePlanRequestSchema)` to create a new message.
  */
 export const DeletePlanRequestSchema: GenMessage<DeletePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 26);
+  messageDesc(file_api_v1_routine_service, 27);
 
 /**
  * @generated from message api.v1.DeletePlanResponse
@@ -606,7 +636,7 @@ export type DeletePlanResponse = Message<"api.v1.DeletePlanResponse"> & {
  * Use `create(DeletePlanResponseSchema)` to create a new message.
  */
 export const DeletePlanResponseSchema: GenMessage<DeletePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 27);
+  messageDesc(file_api_v1_routine_service, 28);
 
 /**
  * @generated from message api.v1.SetActivePlanRequest
@@ -623,7 +653,7 @@ export type SetActivePlanRequest = Message<"api.v1.SetActivePlanRequest"> & {
  * Use `create(SetActivePlanRequestSchema)` to create a new message.
  */
 export const SetActivePlanRequestSchema: GenMessage<SetActivePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 28);
+  messageDesc(file_api_v1_routine_service, 29);
 
 /**
  * @generated from message api.v1.SetActivePlanResponse
@@ -640,7 +670,7 @@ export type SetActivePlanResponse = Message<"api.v1.SetActivePlanResponse"> & {
  * Use `create(SetActivePlanResponseSchema)` to create a new message.
  */
 export const SetActivePlanResponseSchema: GenMessage<SetActivePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 29);
+  messageDesc(file_api_v1_routine_service, 30);
 
 /**
  * @generated from message api.v1.PauseActivePlanRequest
@@ -653,7 +683,7 @@ export type PauseActivePlanRequest = Message<"api.v1.PauseActivePlanRequest"> & 
  * Use `create(PauseActivePlanRequestSchema)` to create a new message.
  */
 export const PauseActivePlanRequestSchema: GenMessage<PauseActivePlanRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 30);
+  messageDesc(file_api_v1_routine_service, 31);
 
 /**
  * @generated from message api.v1.PauseActivePlanResponse
@@ -666,7 +696,7 @@ export type PauseActivePlanResponse = Message<"api.v1.PauseActivePlanResponse"> 
  * Use `create(PauseActivePlanResponseSchema)` to create a new message.
  */
 export const PauseActivePlanResponseSchema: GenMessage<PauseActivePlanResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 31);
+  messageDesc(file_api_v1_routine_service, 32);
 
 /**
  * @generated from message api.v1.SkipPlanRoutineRequest
@@ -683,7 +713,7 @@ export type SkipPlanRoutineRequest = Message<"api.v1.SkipPlanRoutineRequest"> & 
  * Use `create(SkipPlanRoutineRequestSchema)` to create a new message.
  */
 export const SkipPlanRoutineRequestSchema: GenMessage<SkipPlanRoutineRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 32);
+  messageDesc(file_api_v1_routine_service, 33);
 
 /**
  * @generated from message api.v1.SkipPlanRoutineResponse
@@ -700,7 +730,7 @@ export type SkipPlanRoutineResponse = Message<"api.v1.SkipPlanRoutineResponse"> 
  * Use `create(SkipPlanRoutineResponseSchema)` to create a new message.
  */
 export const SkipPlanRoutineResponseSchema: GenMessage<SkipPlanRoutineResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 33);
+  messageDesc(file_api_v1_routine_service, 34);
 
 /**
  * @generated from message api.v1.Plan
@@ -737,7 +767,7 @@ export type Plan = Message<"api.v1.Plan"> & {
  * Use `create(PlanSchema)` to create a new message.
  */
 export const PlanSchema: GenMessage<Plan> = /*@__PURE__*/
-  messageDesc(file_api_v1_routine_service, 34);
+  messageDesc(file_api_v1_routine_service, 35);
 
 /**
  * How a group's exercises are worked through. Straight sets finish one exercise

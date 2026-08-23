@@ -21,6 +21,7 @@ import {
   moveEntryWithinGroup,
   removeEntry,
   removeGroup,
+  setEntryRest,
 } from '@/utils/routineGroups'
 import styles from './RoutineGroupsEditor.module.css'
 
@@ -30,6 +31,9 @@ interface Props {
   grouped: boolean
   /** Names come from the routine and from the picker, so nothing is fetched here. */
   nameOf: (exerciseId: string) => string
+  /** The rest the exercise library says this exercise takes, which is what an
+   * empty per-exercise field falls back to. */
+  libraryRestOf: (exerciseId: string) => number
   onChange: (groups: DraftGroup[]) => void
   onAddExercise: (groupId: string) => void
 }
@@ -66,6 +70,7 @@ export const RoutineGroupsEditor = ({
   groups,
   grouped,
   nameOf,
+  libraryRestOf,
   onChange,
   onAddExercise,
 }: Props) => {
@@ -184,29 +189,67 @@ export const RoutineGroupsEditor = ({
 
                   return (
                     <li key={entry.key}>
-                      <span className={styles.position}>{position + 1}</span>
-                      <span className={styles.exerciseName}>{name}</span>
+                      <div className={styles.entryRow}>
+                        <span className={styles.position}>{position + 1}</span>
+                        <span className={styles.exerciseName}>{name}</span>
 
-                      <AppIconButton
-                        className={styles.moveButton}
-                        icon={ChevronUpIcon}
-                        label={t('routine.form.groups.moveUp', { name })}
-                        disabled={position === 0}
-                        onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, -1))}
-                      />
-                      <AppIconButton
-                        className={styles.moveButton}
-                        icon={ChevronDownIcon}
-                        label={t('routine.form.groups.moveDown', { name })}
-                        disabled={position === group.entries.length - 1}
-                        onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, 1))}
-                      />
+                        <AppIconButton
+                          className={styles.moveButton}
+                          icon={ChevronUpIcon}
+                          label={t('routine.form.groups.moveUp', { name })}
+                          disabled={position === 0}
+                          onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, -1))}
+                        />
+                        <AppIconButton
+                          className={styles.moveButton}
+                          icon={ChevronDownIcon}
+                          label={t('routine.form.groups.moveDown', { name })}
+                          disabled={position === group.entries.length - 1}
+                          onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, 1))}
+                        />
 
-                      <DropdownButton
-                        className={styles.moveMenu}
-                        label={t('routine.form.groups.entryActions', { name })}
-                        items={entryActions(entry.key, group.id, entry.exerciseId, name)}
-                      />
+                        <DropdownButton
+                          className={styles.moveMenu}
+                          label={t('routine.form.groups.entryActions', { name })}
+                          items={entryActions(entry.key, group.id, entry.exerciseId, name)}
+                        />
+                      </div>
+
+                      {/* A circuit rests on the way to the next exercise and on
+                          the way into the next round, so only straight sets have
+                          somewhere to put a rest of their own. Left empty, the
+                          exercise library still says how long it is — which is
+                          what the placeholder shows. */}
+                      {!circuit && (
+                        <div className={styles.entryRest}>
+                          <label
+                            className={styles.entryRestLabel}
+                            htmlFor={`rest-set-${entry.key}`}
+                          >
+                            {t('routine.form.groups.restSet')}
+                          </label>
+                          <AppNumberField
+                            id={`rest-set-${entry.key}`}
+                            className={styles.secondsField}
+                            inputMode="numeric"
+                            unit={t('common.sec')}
+                            // Every row's label reads the same, so the name is
+                            // what tells a screen reader which one this is.
+                            aria-label={t('routine.form.groups.restSetAria', { name })}
+                            placeholder={String(libraryRestOf(entry.exerciseId))}
+                            value={entry.restSeconds}
+                            onChange={(seconds) =>
+                              onChange(
+                                setEntryRest(
+                                  groups,
+                                  entry.key,
+                                  seconds === undefined ? undefined : clampRest(seconds),
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                      )}
                     </li>
                   )
                 })}

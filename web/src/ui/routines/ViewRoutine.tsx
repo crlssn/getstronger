@@ -265,8 +265,10 @@ export const ViewRoutine = () => {
                     )}
 
                   <ol className={styles.exerciseList}>
-                    {group.exercises.map((exercise, index) =>
-                      exerciseRow(exercise, index, false, `${group.id}-${index}`),
+                    {group.exercises.map((entry, index) =>
+                      entry.exercise
+                        ? exerciseRow(entry.exercise, index, false, `${group.id}-${index}`)
+                        : null,
                     )}
                   </ol>
                 </section>

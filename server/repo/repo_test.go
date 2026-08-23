@@ -1209,6 +1209,17 @@ func (s *repoSuite) TestCreateRoutineKeepsRequestedExerciseOrder() {
 	s.Require().Equal(exerciseIDs, s.routineExerciseIDs(routine.ID.String()))
 }
 
+// routineExercises names a group's exercises, none of them overriding the rest
+// the exercise library already says they take.
+func routineExercises(ids ...string) []training.RoutineExerciseDraft {
+	drafts := make([]training.RoutineExerciseDraft, 0, len(ids))
+	for _, id := range ids {
+		drafts = append(drafts, training.RoutineExerciseDraft{ExerciseID: id})
+	}
+
+	return drafts
+}
+
 func (s *repoSuite) routineGroupExerciseIDs(routineID string) [][]string {
 	groups, err := s.repo.ListRoutineGroups(context.Background(), routineID)
 	s.Require().NoError(err)
@@ -1217,7 +1228,7 @@ func (s *repoSuite) routineGroupExerciseIDs(routineID string) [][]string {
 	for _, group := range groups {
 		exerciseIDs := make([]string, 0, len(group.Exercises))
 		for _, exercise := range group.Exercises {
-			exerciseIDs = append(exerciseIDs, exercise.ID.String())
+			exerciseIDs = append(exerciseIDs, exercise.Exercise.ID.String())
 		}
 		grouped = append(grouped, exerciseIDs)
 	}
@@ -1255,14 +1266,14 @@ func (s *repoSuite) TestCreateRoutineWithGroups() {
 		ExerciseIDs: append([]string{warmUpID}, circuitIDs...),
 		Groups: []training.RoutineGroupDraft{
 			{
-				Mode:        training.RoutineGroupModeStraight,
-				ExerciseIDs: []string{warmUpID},
+				Mode:      training.RoutineGroupModeStraight,
+				Exercises: routineExercises(warmUpID),
 			},
 			{
 				Mode:                        training.RoutineGroupModeCircuit,
 				RestBetweenExercisesSeconds: 15,
 				RestBetweenRoundsSeconds:    90,
-				ExerciseIDs:                 circuitIDs,
+				Exercises:                   routineExercises(circuitIDs...),
 			},
 		},
 	})
@@ -1296,13 +1307,13 @@ func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
 
 	s.Require().NoError(s.repo.SetRoutineGroups(context.Background(), routine, []training.RoutineGroupDraft{
 		{
-			Mode:        training.RoutineGroupModeStraight,
-			ExerciseIDs: []string{exerciseIDs[2]},
+			Mode:      training.RoutineGroupModeStraight,
+			Exercises: routineExercises(exerciseIDs[2]),
 		},
 		{
 			Mode:                     training.RoutineGroupModeCircuit,
 			RestBetweenRoundsSeconds: 60,
-			ExerciseIDs:              []string{exerciseIDs[0], exerciseIDs[1]},
+			Exercises:                routineExercises(exerciseIDs[0], exerciseIDs[1]),
 		},
 	}, exercises))
 
@@ -1316,6 +1327,43 @@ func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
 	)
 }
 
+// The whole point of the override: the routine's own answer survives a save and
+// a reload, and an occurrence that never had one still has none.
+func (s *repoSuite) TestSetRoutineGroupsKeepsThePerExerciseRest() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	exerciseIDs := []string{exercises[0].ID.String(), exercises[1].ID.String(), exercises[2].ID.String()}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID.String(),
+		Name:        "Heavy day",
+		ExerciseIDs: exerciseIDs,
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.SetRoutineGroups(context.Background(), routine, []training.RoutineGroupDraft{
+		{
+			Mode: training.RoutineGroupModeStraight,
+			Exercises: []training.RoutineExerciseDraft{
+				{ExerciseID: exerciseIDs[0], RestSeconds: new(int32(180))},
+				{ExerciseID: exerciseIDs[1]},
+				{ExerciseID: exerciseIDs[2], RestSeconds: new(int32(0))},
+			},
+		},
+	}, exercises))
+
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(groups, 1)
+	s.Require().Len(groups[0].Exercises, 3)
+
+	s.Require().Equal(new(int32(180)), groups[0].Exercises[0].RestSeconds)
+	// Null stays null, so the exercise library still answers for it.
+	s.Require().Nil(groups[0].Exercises[1].RestSeconds)
+	// Zero is an answer of its own, and must not read back as "say nothing".
+	s.Require().Equal(new(int32(0)), groups[0].Exercises[2].RestSeconds)
+}
+
 // An exercise added to a routine that is already grouped joins the last group,
 // which is where the flat order puts it too.
 func (s *repoSuite) TestAddExerciseToRoutineJoinsTheLastGroup() {
@@ -1327,8 +1375,8 @@ func (s *repoSuite) TestAddExerciseToRoutineJoinsTheLastGroup() {
 		Name:        "Full body",
 		ExerciseIDs: []string{exercises[0].ID.String(), exercises[1].ID.String()},
 		Groups: []training.RoutineGroupDraft{
-			{Mode: training.RoutineGroupModeStraight, ExerciseIDs: []string{exercises[0].ID.String()}},
-			{Mode: training.RoutineGroupModeCircuit, ExerciseIDs: []string{exercises[1].ID.String()}},
+			{Mode: training.RoutineGroupModeStraight, Exercises: routineExercises(exercises[0].ID.String())},
+			{Mode: training.RoutineGroupModeCircuit, Exercises: routineExercises(exercises[1].ID.String())},
 		},
 	})
 	s.Require().NoError(err)

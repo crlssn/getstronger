@@ -8,6 +8,7 @@ import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import {
   activeSetIndex,
   circuitRound,
+  effectiveRestSeconds,
   elapsedLabel,
   finishBlocker,
   incompleteSetCount,
@@ -17,8 +18,20 @@ import {
   sessionGroups,
 } from './workoutSession'
 
-const lift = (id: string) =>
-  create(ExerciseSchema, { id, name: id, metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS] })
+const lift = (id: string, restSeconds = 90) =>
+  create(ExerciseSchema, {
+    id,
+    name: id,
+    restSeconds,
+    metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+  })
+
+// One exercise where a group trains it. `restSeconds` left out is the routine
+// saying nothing, which leaves the exercise's own rest to answer.
+const trains = (exerciseId: string, restSeconds?: number) => ({
+  exercise: lift(exerciseId),
+  restSeconds,
+})
 
 // Plain objects, like the store's own sets: a `create`d Set carries proto3
 // zeros, which read as values somebody typed.
@@ -122,20 +135,20 @@ describe('nextUnfinishedStation', () => {
   })
 })
 
-const circuit = (id: string, exerciseIds: string[]) =>
+const circuit = (id: string, exerciseIds: string[], rests: (number | undefined)[] = []) =>
   create(RoutineGroupSchema, {
     id,
     mode: RoutineGroupMode.CIRCUIT,
     restBetweenExercisesSeconds: 15,
     restBetweenRoundsSeconds: 90,
-    exercises: exerciseIds.map((exerciseId) => lift(exerciseId)),
+    exercises: exerciseIds.map((exerciseId, index) => trains(exerciseId, rests[index])),
   })
 
-const straight = (id: string, exerciseIds: string[]) =>
+const straight = (id: string, exerciseIds: string[], rests: (number | undefined)[] = []) =>
   create(RoutineGroupSchema, {
     id,
     mode: RoutineGroupMode.STRAIGHT,
-    exercises: exerciseIds.map((exerciseId) => lift(exerciseId)),
+    exercises: exerciseIds.map((exerciseId, index) => trains(exerciseId, rests[index])),
   })
 
 describe('sessionGroups', () => {
@@ -185,6 +198,51 @@ describe('sessionGroups', () => {
 
     expect(groups[0]?.stations.map((station) => station.key)).toEqual(['a'])
     expect(groups[1]?.stations.map((station) => station.key)).toEqual(['a#2', 'b'])
+  })
+
+  // The routine's own answer, the exercise's, and the routine turning the timer
+  // off — three different things, and a station has to tell them apart.
+  test('rests for the routine where it gave a length, and the exercise where it did not', () => {
+    const groups = sessionGroups(
+      [straight('one', ['a', 'b', 'c'], [180, undefined, 0])],
+      [lift('a'), lift('b'), lift('c')],
+    )
+
+    expect(groups[0]?.stations.map((station) => station.restSeconds)).toEqual([180, 90, 0])
+  })
+
+  // A circuit rests between exercises and between rounds, so a set rest stored
+  // against one of its exercises is not the session's to take.
+  test('ignores a per-exercise rest in a circuit', () => {
+    const groups = sessionGroups([circuit('two', ['a'], [180])], [lift('a')])
+
+    expect(groups[0]?.stations[0]?.restSeconds).toBe(90)
+  })
+
+  // Nothing in a quick workout came from a routine, so nothing can override.
+  test('rests by the exercise for anything the routine does not know about', () => {
+    const groups = sessionGroups(undefined, [lift('a', 45)])
+
+    expect(groups[0]?.stations[0]?.restSeconds).toBe(45)
+  })
+})
+
+describe('effectiveRestSeconds', () => {
+  test("is the routine's override when it gave one", () => {
+    expect(effectiveRestSeconds(lift('a', 90), 180)).toBe(180)
+  })
+
+  // Zero is an answer, not an absence: it turns the timer off here alone.
+  test('is zero when the routine turned the timer off', () => {
+    expect(effectiveRestSeconds(lift('a', 90), 0)).toBe(0)
+  })
+
+  test("is the exercise's own rest when the routine said nothing", () => {
+    expect(effectiveRestSeconds(lift('a', 45), undefined)).toBe(45)
+  })
+
+  test('is the default when there is no exercise to ask', () => {
+    expect(effectiveRestSeconds(undefined, undefined)).toBe(90)
   })
 })
 

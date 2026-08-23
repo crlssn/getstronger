@@ -25,7 +25,18 @@ type RoutineGroup struct {
 	Mode                        RoutineGroupMode
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
-	Exercises                   models.ExerciseSlice
+	Exercises                   []RoutineExercise
+}
+
+// RoutineExercise is one exercise where a routine trains it. The same exercise
+// in another group, or in another routine, is a different occurrence and rests
+// for its own length.
+type RoutineExercise struct {
+	Exercise *models.Exercise
+	// RestSeconds is how long this occurrence rests between sets. Nil inherits
+	// the exercise's own rest, so editing the library still moves it; zero
+	// turns the timer off here alone.
+	RestSeconds *int32
 }
 
 // RoutineGroupDraft is a group as a save describes it. Exercises are named by
@@ -35,7 +46,14 @@ type RoutineGroupDraft struct {
 	Mode                        RoutineGroupMode
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
-	ExerciseIDs                 []string
+	Exercises                   []RoutineExerciseDraft
+}
+
+// RoutineExerciseDraft is one exercise a save puts in a group, and the rest it
+// asks that occurrence to take.
+type RoutineExerciseDraft struct {
+	ExerciseID  string
+	RestSeconds *int32
 }
 
 // NormalizeRoutineGroups is what a routine's groups are worth saving as.
@@ -53,19 +71,24 @@ func NormalizeRoutineGroups(groups []RoutineGroupDraft, ownedExerciseIDs []strin
 
 	normalized := make([]RoutineGroupDraft, 0, len(groups))
 	for _, group := range groups {
-		exerciseIDs := distinctOwned(group.ExerciseIDs, owned)
-		if len(exerciseIDs) == 0 {
+		exercises := distinctOwned(group.Exercises, owned)
+		if len(exercises) == 0 {
 			continue
 		}
 
-		normalized = append(normalized, normalizeRoutineGroup(group, exerciseIDs))
+		normalized = append(normalized, normalizeRoutineGroup(group, exercises))
 	}
 
 	if len(normalized) > 0 {
 		return normalized
 	}
 
-	fallback := distinctOwned(ownedExerciseIDs, owned)
+	flat := make([]RoutineExerciseDraft, 0, len(ownedExerciseIDs))
+	for _, id := range ownedExerciseIDs {
+		flat = append(flat, RoutineExerciseDraft{ExerciseID: id})
+	}
+
+	fallback := distinctOwned(flat, owned)
 	if len(fallback) == 0 {
 		return normalized
 	}
@@ -75,40 +98,54 @@ func NormalizeRoutineGroups(groups []RoutineGroupDraft, ownedExerciseIDs []strin
 	}
 }
 
-// distinctOwned drops the IDs that name an exercise the routine's owner does
-// not have, and the ones this group already holds. A repeat is only meaningful
-// between groups, so a second copy inside one is dropped rather than trained.
-func distinctOwned(exerciseIDs []string, owned map[string]struct{}) []string {
-	kept := make([]string, 0, len(exerciseIDs))
-	seen := make(map[string]struct{}, len(exerciseIDs))
+// distinctOwned drops the exercises the routine's owner does not have, and the
+// ones this group already holds. A repeat is only meaningful between groups, so
+// a second copy inside one is dropped rather than trained.
+func distinctOwned(exercises []RoutineExerciseDraft, owned map[string]struct{}) []RoutineExerciseDraft {
+	kept := make([]RoutineExerciseDraft, 0, len(exercises))
+	seen := make(map[string]struct{}, len(exercises))
 
-	for _, id := range exerciseIDs {
-		if _, ok := owned[id]; !ok {
+	for _, exercise := range exercises {
+		if _, ok := owned[exercise.ExerciseID]; !ok {
 			continue
 		}
-		if _, duplicate := seen[id]; duplicate {
+		if _, duplicate := seen[exercise.ExerciseID]; duplicate {
 			continue
 		}
-		seen[id] = struct{}{}
-		kept = append(kept, id)
+		seen[exercise.ExerciseID] = struct{}{}
+		kept = append(kept, exercise)
 	}
 
 	return kept
 }
 
-func normalizeRoutineGroup(group RoutineGroupDraft, exerciseIDs []string) RoutineGroupDraft {
+func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseDraft) RoutineGroupDraft {
 	normalized := RoutineGroupDraft{
-		Mode:        group.Mode,
-		ExerciseIDs: exerciseIDs,
+		Mode:      group.Mode,
+		Exercises: exercises,
 	}
 	if !normalized.Mode.Valid() {
 		normalized.Mode = RoutineGroupModeStraight
 	}
 
-	// Both rests belong to a circuit: straight sets rest for as long as the
-	// exercise itself says.
+	// Both group rests belong to a circuit, and the set rest belongs to
+	// straight sets: a circuit rests on the way to the next exercise and on the
+	// way into the next round, never between the sets of one exercise.
 	if normalized.Mode != RoutineGroupModeCircuit {
+		for index, exercise := range normalized.Exercises {
+			if exercise.RestSeconds == nil {
+				continue
+			}
+
+			rest := clampInt32(*exercise.RestSeconds, 0, routineGroupMaxRestSeconds)
+			normalized.Exercises[index].RestSeconds = &rest
+		}
+
 		return normalized
+	}
+
+	for index := range normalized.Exercises {
+		normalized.Exercises[index].RestSeconds = nil
 	}
 
 	normalized.RestBetweenExercisesSeconds = clampInt32(group.RestBetweenExercisesSeconds, 0, routineGroupMaxRestSeconds)
