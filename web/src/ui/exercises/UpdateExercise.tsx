@@ -6,12 +6,13 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { getExercise, updateExercise } from '@/http/requests'
+import { getExercise, listSets, updateExercise } from '@/http/requests'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
+import { emptyPageToken } from '@/utils/usePagination'
 import styles from './ExerciseForm.module.css'
 
 export const UpdateExercise = () => {
@@ -24,10 +25,16 @@ export const UpdateExercise = () => {
   const [exercise, setExercise] = useState<Exercise>()
   const [values, setValues] = useState<ExerciseFormValues>()
   const [loading, setLoading] = useState(true)
+  // The backend refuses a measurement change on an exercise that has been
+  // logged, so the form asks for a single set to find out before offering one.
+  const [metricsLocked, setMetricsLocked] = useState(false)
 
   useEffect(() => {
     const load = async () => {
-      const res = await getExercise(id)
+      const [res, logged] = await Promise.all([
+        getExercise(id),
+        listSets([], [id], emptyPageToken, 1),
+      ])
       if (res?.exercise) {
         setExercise(res.exercise)
         setValues({
@@ -36,6 +43,7 @@ export const UpdateExercise = () => {
           metrics: [...res.exercise.metrics],
           restSeconds: res.exercise.restSeconds,
         })
+        setMetricsLocked((logged?.sets.length ?? 0) > 0)
       }
       setLoading(false)
     }
@@ -57,6 +65,7 @@ export const UpdateExercise = () => {
       <ExerciseForm
         values={values}
         onChange={setValues}
+        metricsLocked={metricsLocked}
         onSubmit={() => void onSubmit()}
         submitLabel={t('exercise.update')}
       />

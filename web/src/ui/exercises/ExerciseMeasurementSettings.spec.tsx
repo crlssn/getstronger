@@ -13,6 +13,7 @@ import { ExerciseMeasurementSettings } from './ExerciseMeasurementSettings'
 const Harness = ({
   metrics: initialMetrics = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
   restSeconds: initialRest = 90,
+  metricsLocked = false,
 }) => {
   const [metrics, setMetrics] = useState(initialMetrics)
   const [restSeconds, setRestSeconds] = useState(initialRest)
@@ -23,6 +24,7 @@ const Harness = ({
       onMetricsChange={setMetrics}
       restSeconds={restSeconds}
       onRestSecondsChange={setRestSeconds}
+      metricsLocked={metricsLocked}
     />
   )
 }
@@ -99,6 +101,39 @@ describe('ExerciseMeasurementSettings', () => {
 
     expect(preset('Timed')).toHaveAttribute('aria-pressed', 'true')
     expect(preset('Weight × reps')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  // A logged set is stored in the columns the exercise measured by at the time,
+  // so the athlete is shown what those are rather than a control that fails.
+  describe('once sets have been logged', () => {
+    test('reads the measurements back instead of offering them', () => {
+      renderWithProviders(<Harness metricsLocked />)
+
+      const locked = screen.getByRole('list', { name: 'How do you track it?' })
+      expect(within(locked).getAllByRole('listitem')).toHaveLength(2)
+      expect(locked).toHaveTextContent('Weight')
+      expect(locked).toHaveTextContent('Reps')
+      expect(locked).not.toHaveTextContent('Distance')
+      expect(screen.queryByRole('button', { name: /^Weight/ })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('group', { name: 'Common measurement combinations' }),
+      ).not.toBeInTheDocument()
+    })
+
+    test('says why they cannot be changed', () => {
+      renderWithProviders(<Harness metricsLocked />)
+
+      expect(screen.getByText(/Measurements stay as they are once sets are logged/)).toBeVisible()
+    })
+
+    // Rest is a coaching preference rather than a unit of the recorded history.
+    test('leaves the rest timer editable', async () => {
+      renderWithProviders(<Harness metricsLocked />)
+
+      await userEvent.click(restSwitch())
+
+      expect(restSwitch()).toHaveAttribute('aria-checked', 'false')
+    })
   })
 
   describe('the rest timer', () => {

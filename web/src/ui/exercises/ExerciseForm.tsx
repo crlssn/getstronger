@@ -23,6 +23,8 @@ interface Props {
   onChange: (values: ExerciseFormValues) => void
   onSubmit: () => void
   submitLabel: string
+  /** Whether what the exercise measures is settled by sets already logged. */
+  metricsLocked?: boolean
 }
 
 /**
@@ -31,7 +33,13 @@ interface Props {
  * It owns no exercise of its own — the screen above it decides what happens on
  * submit, and whether that is a create or an update.
  */
-export const ExerciseForm = ({ values, onChange, onSubmit, submitLabel }: Props) => {
+export const ExerciseForm = ({
+  values,
+  onChange,
+  onSubmit,
+  submitLabel,
+  metricsLocked = false,
+}: Props) => {
   const { t } = useTranslation()
   const [suggestions, setSuggestions] = useState<string[]>([])
 
@@ -66,6 +74,7 @@ export const ExerciseForm = ({ values, onChange, onSubmit, submitLabel }: Props)
         onMetricsChange={(metrics) => update({ metrics })}
         restSeconds={values.restSeconds}
         onRestSecondsChange={(restSeconds) => update({ restSeconds })}
+        metricsLocked={metricsLocked}
       />
 
       <h6>
