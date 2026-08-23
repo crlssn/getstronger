@@ -42,9 +42,11 @@
 }
 
 /* The same tile as an editable measurement, minus the affordances: no hover,
-   no tick, and the quieter border of something being read rather than set. */
+   no tick, and a sunken fill for something being read rather than set. The
+   tint one step darker is the lightest surface text-subtle still clears AA on,
+   and the unit line underneath is written in it. */
 .lockedMeasurement {
-  @apply min-h-(--size-control-sm) rounded-card border border-border bg-ink-tint p-4;
+  @apply min-h-(--size-control-sm) rounded-card border border-border bg-surface-sunken p-4;
 }
 
 .lockedMeasurement strong {

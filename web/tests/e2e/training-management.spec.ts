@@ -114,6 +114,79 @@ test.describe('exercise library', () => {
     }
   })
 
+  // A logged set is stored in the columns its exercise measured by at the time,
+  // and nothing records which those were. Re-reading it under other
+  // measurements would restate the training log rather than the exercise.
+  test('settles the measurements of a logged exercise while its name stays editable @mutation', async ({
+    page,
+  }) => {
+    const exerciseName = uniqueName('E2E Measurement lock')
+    const renamedExercise = `${exerciseName} renamed`
+
+    try {
+      await page.goto('/exercises/create')
+      await page.locator('form input[type="text"]').first().fill(exerciseName)
+      await page.getByRole('button', { name: 'Save Exercise' }).click()
+      await expect(page).toHaveURL(/\/exercises$/)
+
+      const openForEditing = async (name: string) => {
+        await page.goto('/exercises')
+        await page.getByLabel('Search exercises').fill(name)
+        await page.getByRole('link').filter({ hasText: name }).first().click()
+        await openExerciseActions(page)
+        await page.getByRole('menuitem', { name: 'Update exercise' }).click()
+        await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+\/edit$/)
+      }
+
+      // Nothing logged yet, so a mistake made at creation time is correctable.
+      await openForEditing(exerciseName)
+      await expect(page.getByRole('group', { name: 'How do you track it?' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Distance × time' })).toBeVisible()
+
+      await page.goto('/workouts/quick')
+      await page.getByRole('button', { name: 'Choose exercise' }).click()
+      const picker = page.getByRole('dialog', { name: 'Add exercise' })
+      await picker.getByLabel('Search exercises').fill(exerciseName)
+      await picker
+        .getByRole('button')
+        .filter({ has: page.locator('strong') })
+        .first()
+        .click()
+      await page
+        .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
+        .fill('100')
+      await page.getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true }).fill('5')
+      await page.getByRole('button', { name: 'Complete exercise' }).click()
+      await page.getByRole('button', { name: 'Finish workout' }).click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
+      await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+      // With a set behind it the block is read back rather than offered, and
+      // says why.
+      await openForEditing(exerciseName)
+      await expect(page.getByRole('list', { name: 'How do you track it?' })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'How do you track it?' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Distance × time' })).toHaveCount(0)
+      await expect(
+        page.getByText('Measurements stay as they are once sets are logged'),
+      ).toBeVisible()
+      await expectAccessible(page)
+
+      // The name is not a unit of the recorded history, so it still saves.
+      await page.locator('form input[type="text"]').first().fill(renamedExercise)
+      await page.getByRole('button', { name: 'Update exercise' }).click()
+      await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+$/)
+      await expect(page.getByText('Exercise updated')).toBeVisible()
+
+      // And the set is still the lift it was logged as.
+      await expect(page.getByRole('heading', { name: 'Logged sets' })).toBeVisible()
+      await expect(page.getByText(/100\s*(kg|lbs)\s*·\s*5/)).toBeVisible()
+    } finally {
+      await deleteExercise(page, renamedExercise)
+      await deleteExercise(page, exerciseName)
+    }
+  })
+
   test('deletes an exercise through the header menu while preserving workout history @mutation', async ({
     page,
   }) => {
