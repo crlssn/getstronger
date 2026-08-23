@@ -15,4 +15,7 @@ junit.xml
 /promo/source/
 /.golangci-lint-cache/
 /.claude/launch.json
+# Worktrees live inside the main checkout. Only the shared .git/info/exclude
+# kept them out of 'git status', and that file is neither tracked nor cloned.
+/.claude/worktrees/
 /.claude/settings.local.json

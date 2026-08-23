@@ -61,6 +61,10 @@ E2E_SSE_PORT = { default = "18181" }
 SCREENSHOT_WEB_PORT = { default = "15273" }
 SCREENSHOT_SERVER_PORT = { default = "18280" }
 SCREENSHOT_SSE_PORT = { default = "18281" }
+# Playwright's report and UI servers take no port of their own, so every
+# worktree would serve them on the same one. The slot block has room to spare.
+PLAYWRIGHT_REPORT_PORT = { default = "9323" }
+PLAYWRIGHT_UI_PORT = { default = "9324" }
 DB_CONFIG_PATH = { default = "./database/bobgen.yaml" }
 DB_MIGRATIONS_PATH = { default = "database/migrations/" }
 USER_EMAIL = { default = "active@getstronger.test" }
@@ -75,7 +79,7 @@ NEW_USER_NAME = { default = "Sam Taylor" }
 alias = "db_init"
 description = "Recreate the local PostgreSQL container"
 env = { _.file = ".env" }
-run = [{ task = "db:clean" }, '''
+run = [{ task = "worktree:guard" }, { task = "db:clean" }, '''
   docker run --name "$DB_CONTAINER" -d -p "$DB_PORT:5432" \
     -e POSTGRES_DB="$DB_NAME" \
     -e POSTGRES_USER="$DB_USER" \
@@ -92,7 +96,7 @@ run = 'docker start "$DB_CONTAINER"'
 alias = "db_migrate"
 description = "Reset migrations and regenerate the database models"
 env = { _.file = ".env" }
-run = '''
+run = [{ task = "worktree:guard" }, '''
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -114,13 +118,13 @@ dsn="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?ssl
 "$migrate" -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
 PSQL_DSN="$dsn" "$bobgen" -c "$DB_CONFIG_PATH"
 git apply --ignore-space-change database/bobgen-v0.50.0.patch
-'''
+''']
 
 [tasks."db:migrate"]
 alias = ["db_migrate_up", "db:migrate:up"]
 description = "Apply pending migrations and regenerate the database models"
 env = { _.file = ".env" }
-run = '''
+run = [{ task = "worktree:guard" }, '''
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -133,12 +137,12 @@ dsn="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?ssl
 "$migrate" -path "$DB_MIGRATIONS_PATH" -database "$dsn" -verbose up
 PSQL_DSN="$dsn" "$bobgen" -c "$DB_CONFIG_PATH"
 git apply --ignore-space-change database/bobgen-v0.50.0.patch
-'''
+''']
 
 [tasks."db:seed"]
 alias = "db_seed"
 description = "Seed the local database"
-run = '''
+run = [{ task = "worktree:guard" }, '''
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -149,7 +153,7 @@ set -euo pipefail
   -name="$USER_NAME" \
   -new-email="$NEW_USER_EMAIL" \
   -new-name="$NEW_USER_NAME"
-'''
+''']
 
 # Code generation tasks
 
@@ -231,11 +235,11 @@ run = [
 
 [tasks."test:e2e:report"]
 description = "Open the latest browser end-to-end test report"
-run = "cd web && npm run test:e2e:report"
+run = 'cd web && npm run test:e2e:report -- --port "$PLAYWRIGHT_REPORT_PORT"'
 
 [tasks."test:e2e:ui"]
 description = "Reset seeded data and open the Playwright test UI"
-run = [{ task = "db:seed" }, "cd web && npm run test:e2e:ui"]
+run = [{ task = "db:seed" }, 'cd web && npm run test:e2e:ui -- --ui-port "$PLAYWRIGHT_UI_PORT"']
 
 # Screenshot tasks
 
@@ -282,7 +286,7 @@ run = ["bun install", "npm run dev"]
 [tasks."app:email"]
 alias = "app_email"
 description = "Run MailHog"
-run = '''
+run = [{ task = "worktree:guard" }, '''
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -309,12 +313,12 @@ if ! docker container inspect "$MAILHOG_CONTAINER" >/dev/null 2>&1; then
 fi
 
 echo "The email app is running at http://localhost:$MAILHOG_HTTP_PORT"
-'''
+''']
 
 [tasks."app:backend"]
 alias = "app_backend"
 description = "Run the backend server"
-run = "go run ./server/cmd/main.go"
+run = [{ task = "worktree:guard" }, "go run ./server/cmd/main.go"]
 
 # Native app tasks. The Capacitor projects in mobile/ wrap the built web
 # bundle, so every sync rebuilds web/dist first. The bundle ships inside the
@@ -482,6 +486,16 @@ run = [
 description = "Give this worktree its own ports, database, and containers"
 run = "./scripts/worktree_env.sh"
 
+[tasks."worktree:guard"]
+description = "Fail when this worktree has no ports and containers of its own"
+hide = true
+run = "./scripts/worktree_guard.sh"
+
+[tasks."worktree:prune"]
+description = "List the containers left behind by removed worktrees, or remove them"
+usage = 'flag "--force" help="Remove the containers instead of listing them"'
+run = "./scripts/worktree_prune.sh"
+
 [tasks.setup]
 description = "Set up and run the local development environment"
 run = [
@@ -503,9 +517,9 @@ run = [{ task = "db:clean" }, { task = "email:clean" }]
 
 [tasks."email:clean"]
 description = "Remove the local MailHog container"
-run = 'docker rm -f "$MAILHOG_CONTAINER" || true'
+run = [{ task = "worktree:guard" }, 'docker rm -f "$MAILHOG_CONTAINER" || true']
 
 [tasks."db:clean"]
 alias = "clean_db"
 description = "Remove the local PostgreSQL container"
-run = 'docker rm -f "$DB_CONTAINER" || true'
+run = [{ task = "worktree:guard" }, 'docker rm -f "$DB_CONTAINER" || true']
