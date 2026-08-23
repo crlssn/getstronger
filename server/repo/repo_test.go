@@ -9,13 +9,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/aarondl/opt/null"
+	"github.com/aarondl/opt/omit"
 	"github.com/brianvoe/gofakeit/v7"
 	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -181,11 +184,31 @@ func (s *repoSuite) TestCreateAuth() {
 			},
 		},
 		{
+			name:     "ok_email_normalized_to_lowercase",
+			email:    " Mixed." + gofakeit.Email(),
+			password: "password",
+			init:     func(_ test) {},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
 			name:     "err_email_already_exists",
 			email:    gofakeit.Email(),
 			password: "password",
 			init: func(t test) {
 				s.factory.NewAuth(factory.AuthEmail(t.email))
+			},
+			expected: expected{
+				err: account.ErrEmailAlreadyRegistered,
+			},
+		},
+		{
+			name:     "err_email_already_exists_case_insensitively",
+			email:    "Alice." + gofakeit.Email(),
+			password: "password",
+			init: func(t test) {
+				s.factory.NewAuth(factory.AuthEmail(strings.ToLower(t.email)))
 			},
 			expected: expected{
 				err: account.ErrEmailAlreadyRegistered,
@@ -205,10 +228,29 @@ func (s *repoSuite) TestCreateAuth() {
 			}
 			s.Require().NoError(err)
 			s.Require().NotNil(auth)
-			s.Require().Equal(t.email, auth.Email)
+			// The address is stored folded, so one mailbox stays one account
+			// however the athlete typed it.
+			s.Require().Equal(account.NormalizeEmailAddress(t.email), auth.Email)
 			s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.password)))
 		})
 	}
+}
+
+// The application folds addresses on the way in, so a case-variant duplicate
+// can only arrive by racing the existence check. The index is what refuses it.
+func (s *repoSuite) TestAuthEmailIsUniqueCaseInsensitively() {
+	ctx := context.Background()
+	address := gofakeit.Email()
+	s.factory.NewAuth(factory.AuthEmail(address))
+
+	_, err := models.Auths.Insert(&models.AuthSetter{
+		Email:    omit.From(strings.ToUpper(address)),
+		Password: omit.From(repo.MustHashPassword("password")),
+	}).One(ctx, bob.NewDB(s.container.DB))
+
+	var pgErr *pgconn.PgError
+	s.Require().ErrorAs(err, &pgErr)
+	s.Require().Equal("idx_auth_email_lower", pgErr.ConstraintName)
 }
 
 func (s *repoSuite) TestUpdateAuth() {
@@ -407,6 +449,20 @@ func (s *repoSuite) TestCompareEmailAndPassword() {
 			init: func(t test) {
 				s.factory.NewAuth(
 					factory.AuthEmail(t.email),
+					factory.AuthPassword(t.password),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name:     "ok_email_matched_case_insensitively",
+			email:    "Bob." + gofakeit.Email(),
+			password: "valid_password",
+			init: func(t test) {
+				s.factory.NewAuth(
+					factory.AuthEmail(strings.ToLower(t.email)),
 					factory.AuthPassword(t.password),
 				)
 			},

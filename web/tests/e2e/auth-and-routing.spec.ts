@@ -136,6 +136,51 @@ test.describe('guest authentication and routing', () => {
     ).toHaveAttribute('aria-pressed', 'true')
   })
 
+  test('treats one mailbox as one account whatever the case @mutation', async ({ page }) => {
+    // Mail providers deliver Alice@example.com and alice@example.com to the
+    // same inbox, so the app has to as well: the second signup must not open a
+    // second account, and the first must accept a lowercased login.
+    test.slow()
+    test.info().annotations.push(allowRuntimeErrors)
+
+    const local = uniqueName('E2E-Case').replaceAll(' ', '-')
+    const mixedCase = `${local}@Example.com`
+    const password = 'StrongPassword123!'
+    const username = `e2e.case.${Date.now()}`
+
+    await page.goto('/signup')
+    await page.getByLabel('Name', { exact: true }).fill('E2E Casing')
+    await page.getByLabel('Username').fill(username)
+    await page.getByLabel('Email address').fill(mixedCase)
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByLabel('Confirm password').fill(password)
+    await page.getByRole('button', { name: 'Create an account' }).click()
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
+
+    // The same address lowercased is the same mailbox. Signup answers the same
+    // way it answers any duplicate, so that it cannot be used to discover who
+    // is registered; what it must not do is open a second account.
+    await page.goto('/signup')
+    await page.getByLabel('Name', { exact: true }).fill('E2E Twin')
+    await page.getByLabel('Username').fill(`${username}.twin`)
+    await page.getByLabel('Email address').fill(mixedCase.toLowerCase())
+    await page.getByLabel('Password', { exact: true }).fill('AnotherPassword123!')
+    await page.getByLabel('Confirm password').fill('AnotherPassword123!')
+    await page.getByRole('button', { name: 'Create an account' }).click()
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
+
+    await page.goto(`/verify-email?token=${verificationToken(mixedCase)}`)
+    await expect(page).toHaveURL(/\/login$/)
+
+    // The address typed back lowercased, as an autocorrecting keyboard leaves
+    // it, reaches the account that signed up with capitals.
+    await logInAs(page, mixedCase.toLowerCase(), password)
+
+    // And it is the first account, not a second one the twin signup opened.
+    await page.goto('/profile')
+    await expect(page.getByText(`@${username}`, { exact: true })).toBeVisible()
+  })
+
   test('accepts password reset requests without exposing account existence', async ({ page }) => {
     await page.goto('/forgot-password')
     await page

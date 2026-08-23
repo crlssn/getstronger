@@ -3,6 +3,7 @@ package v1_test
 import (
 	"context"
 	"log"
+	"strings"
 	"testing"
 	"time"
 
@@ -114,6 +115,30 @@ func (s *authSuite) TestSignup() {
 			},
 		},
 		{
+			name: "ok_email_normalized_to_lowercase",
+			req: &connect.Request[v1.SignupRequest]{
+				Msg: &v1.SignupRequest{
+					Email:                "Mixed." + gofakeit.Email(),
+					Password:             "password",
+					PasswordConfirmation: "password",
+					Name:                 gofakeit.Name(),
+					Username:             "Case.Handle",
+				},
+			},
+			init: func(t test) {
+				s.mocks.email.EXPECT().
+					SendVerification(gomock.Any(), gomock.Any()).
+					Do(func(_ context.Context, req email.SendVerification) {
+						// The verification goes to the address as stored, which
+						// is the one the mailbox answers to either way.
+						s.Require().Equal(account.NormalizeEmailAddress(t.req.Msg.GetEmail()), req.Email)
+					})
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
 			name: "err_username_taken_case_insensitively",
 			req: &connect.Request[v1.SignupRequest]{
 				Msg: &v1.SignupRequest{
@@ -168,9 +193,11 @@ func (s *authSuite) TestSignup() {
 			s.Require().NoError(err)
 			s.Require().NotNil(res)
 
-			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(t.req.Msg.GetEmail())).One(ctx, bob.NewDB(s.container.DB))
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(t.req.Msg.GetEmail()))).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(auth.EmailVerified)
+			// The address is stored folded, so one mailbox stays one account.
+			s.Require().Equal(strings.ToLower(auth.Email), auth.Email)
 
 			// The signup email counts towards the resend rate limit.
 			s.Require().False(auth.EmailVerificationSentAt.IsNull())
@@ -181,12 +208,44 @@ func (s *authSuite) TestSignup() {
 			s.Require().Equal(t.req.Msg.GetName(), user.Name)
 			// The username is stored lowercased so uniqueness holds regardless
 			// of how it was typed.
-			s.Require().Equal("signup.handle", user.Username)
+			s.Require().Equal(account.NormalizeUsername(t.req.Msg.GetUsername()), user.Username)
+			s.Require().Equal(strings.ToLower(t.req.Msg.GetUsername()), user.Username)
 			// Signup no longer asks for units: a new account starts metric.
 			s.Require().Equal("kg", user.WeightUnit)
 			s.Require().Equal("km", user.DistanceUnit)
 		})
 	}
+}
+
+// A second signup differing only in case reaches the account that already
+// holds the mailbox. The response hides that, so that the endpoint cannot be
+// used to discover who is registered; what proves the collision was caught is
+// that no second account and no second verification email follow.
+func (s *authSuite) TestSignupRefusesACaseVariantOfARegisteredEmail() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	address := strings.ToLower(gofakeit.Email())
+
+	auth := s.factory.NewAuth(factory.AuthEmail(address))
+	s.factory.NewUser(factory.UserAuthID(auth.ID))
+	s.mocks.email.EXPECT().SendVerification(gomock.Any(), gomock.Any()).Times(0)
+
+	res, err := s.handler.Signup(ctx, &connect.Request[v1.SignupRequest]{
+		Msg: &v1.SignupRequest{
+			Email:                strings.ToUpper(address),
+			Password:             "password",
+			PasswordConfirmation: "password",
+			Name:                 gofakeit.Name(),
+			Username:             "case.variant",
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+
+	count, err := models.Auths.Query(
+		models.SelectWhere.Auths.Email.EQ(address),
+	).Count(ctx, bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+	s.Require().Equal(int64(1), count)
 }
 
 func (s *authSuite) TestLogin() {
@@ -213,6 +272,30 @@ func (s *authSuite) TestLogin() {
 			init: func(t test) {
 				auth := s.factory.NewAuth(
 					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthPassword(t.req.Msg.GetPassword()),
+					factory.AuthEmailVerified(),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "ok_email_matched_case_insensitively",
+			req: &connect.Request[v1.LoginRequest]{
+				Msg: &v1.LoginRequest{
+					Email:    "Mixed." + gofakeit.Email(),
+					Password: "password",
+				},
+			},
+			init: func(t test) {
+				// The account was signed up lowercased; this login types it
+				// back with capitals, as an autocorrecting keyboard does.
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(strings.ToLower(t.req.Msg.GetEmail())),
 					factory.AuthPassword(t.req.Msg.GetPassword()),
 					factory.AuthEmailVerified(),
 				)
@@ -278,7 +361,7 @@ func (s *authSuite) TestLogin() {
 			s.Require().NotNil(res)
 			s.Require().NotEmpty(res.Msg.GetAccessToken())
 
-			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(t.req.Msg.GetEmail())).One(ctx, bob.NewDB(s.container.DB))
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(t.req.Msg.GetEmail()))).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(auth.RefreshToken.IsNull())
 		})
@@ -655,6 +738,29 @@ func (s *authSuite) TestResendVerificationEmail() {
 			emailled: true,
 		},
 		{
+			name: "ok_email_matched_case_insensitively",
+			req: &connect.Request[v1.ResendVerificationEmailRequest]{
+				Msg: &v1.ResendVerificationEmailRequest{
+					Email: "Mixed." + gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(strings.ToLower(t.req.Msg.GetEmail())),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+
+				s.mocks.email.EXPECT().
+					SendVerification(gomock.Any(), gomock.Any()).
+					Do(func(_ context.Context, req email.SendVerification) {
+						s.Require().Equal(account.NormalizeEmailAddress(t.req.Msg.GetEmail()), req.Email)
+					})
+			},
+			emailled: true,
+		},
+		{
 			name: "ok_email_not_found_no_exposure",
 			req: &connect.Request[v1.ResendVerificationEmailRequest]{
 				Msg: &v1.ResendVerificationEmailRequest{
@@ -720,7 +826,7 @@ func (s *authSuite) TestResendVerificationEmail() {
 				return
 			}
 
-			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(t.req.Msg.GetEmail())).One(ctx, bob.NewDB(s.container.DB))
+			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(t.req.Msg.GetEmail()))).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(auth.EmailVerificationSentAt.IsNull())
 			s.Require().WithinDuration(time.Now().UTC(), auth.EmailVerificationSentAt.GetOrZero(), time.Minute)
@@ -764,6 +870,35 @@ func (s *authSuite) TestResetPassword() {
 						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
 						_, err := uuid.Parse(req.Token)
 						s.Require().NoError(err)
+					})
+			},
+			expected: expected{
+				err:  nil,
+				resp: &v1.ResetPasswordResponse{},
+			},
+		},
+		{
+			name: "ok_email_matched_case_insensitively",
+			req: &connect.Request[v1.ResetPasswordRequest]{
+				Msg: &v1.ResetPasswordRequest{
+					Email: "Mixed." + gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				// Without folding this lookup misses and the endpoint answers
+				// with the same success it gives an unknown address, so the
+				// reset link is never sent and nothing says why.
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(strings.ToLower(t.req.Msg.GetEmail())),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+
+				s.mocks.email.EXPECT().
+					SendPasswordReset(gomock.Any(), gomock.Any()).
+					Do(func(_ context.Context, req email.SendPasswordReset) {
+						s.Require().Equal(account.NormalizeEmailAddress(t.req.Msg.GetEmail()), req.Email)
 					})
 			},
 			expected: expected{
