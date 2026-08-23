@@ -423,10 +423,14 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}
 
+	// The refresh token goes with the password: a reset is the remedy for
+	// someone else being in the account, so the session they already hold must
+	// end too. Every device signs in again.
 	if err = h.repo.UpdateAuth(
 		ctx, auth.ID.String(),
 		repo.UpdateAuthPassword(req.Msg.GetPassword()),
 		repo.UpdateAuthDeletePasswordResetToken(),
+		repo.UpdateAuthDeleteRefreshToken(),
 	); err != nil {
 		log.Error("Update password", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

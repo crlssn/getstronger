@@ -831,6 +831,7 @@ func (s *authSuite) TestUpdatePassword() {
 			init: func(t test) {
 				s.factory.NewAuth(
 					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), account.PasswordResetTokenTTL),
+					factory.AuthRefreshToken(uuid.NewString()),
 				)
 			},
 			expected: expected{
@@ -911,6 +912,10 @@ func (s *authSuite) TestUpdatePassword() {
 			s.Require().NoError(auth.Reload(ctx, bob.NewDB(s.container.DB)))
 			s.Require().Empty(auth.PasswordResetToken.GetOrZero())
 			s.Require().NoError(bcrypt.CompareHashAndPassword(auth.Password, []byte(t.req.Msg.GetPassword())))
+			// A reset is what someone reaches for when they think another
+			// person is in their account, so it must end the sessions that
+			// person already holds.
+			s.Require().True(auth.RefreshToken.IsNull())
 		})
 	}
 }

@@ -5,6 +5,7 @@ import {
   expectAccessible,
   logIn,
   logInAs,
+  passwordResetToken,
   resetSeedData,
   test,
   uniqueName,
@@ -174,6 +175,71 @@ test.describe('guest authentication and routing', () => {
   test('shows the not-found route', async ({ page }) => {
     await page.goto('/this-route-does-not-exist')
     await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
+  })
+})
+
+// A reset is what someone reaches for when they suspect another person is in
+// their account, so this walks the whole route on two devices: one holds a
+// session, the other resets the password, and the first is proven to be out.
+test.describe('password reset', () => {
+  test('ends the sessions that were open before the reset @mutation', async ({ browser, page }) => {
+    test.slow()
+    test.info().annotations.push(allowRuntimeErrors)
+
+    const email = `${uniqueName('e2e-reset').replaceAll(' ', '-')}@example.com`.toLowerCase()
+    const password = 'StrongPassword123!'
+    const newPassword = 'BrandNewPassword456!'
+
+    await page.goto('/signup')
+    await page.getByLabel('Name', { exact: true }).fill('E2E Resetter')
+    await page.getByLabel('Username').fill(`e2e.resetter.${Date.now()}`)
+    await page.getByLabel('Email address').fill(email)
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByLabel('Confirm password').fill(password)
+    await page.getByRole('button', { name: 'Create an account' }).click()
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
+
+    await page.goto(`/verify-email?token=${verificationToken(email)}`)
+    await expect(page).toHaveURL(/\/login$/)
+    await logInAs(page, email, password)
+
+    // This browser now holds the session the reset has to end. The pages that
+    // reset a password are for guests, so the reset itself happens elsewhere.
+    const other = await browser.newContext({ baseURL: new URL(page.url()).origin })
+    const device = await other.newPage()
+
+    await device.goto('/forgot-password')
+    await device.getByLabel('Email address').fill(email)
+    await device.getByRole('button', { name: 'Send reset link' }).click()
+    await expect(device.getByRole('status')).toContainText(
+      'Please check your inbox to reset your password',
+    )
+
+    await device.goto(`/reset-password?token=${passwordResetToken(email)}`)
+    await device.getByLabel('New password', { exact: true }).fill(newPassword)
+    await device.getByLabel('Confirm new password').fill(newPassword)
+    await device.getByRole('button', { name: 'Update password' }).click()
+    await expect(device).toHaveURL(/\/login$/)
+    await logInAs(device, email, newPassword)
+    await other.close()
+
+    // The first browser is still on /home with an access token that is good for
+    // another fifteen minutes; standing in for that quarter of an hour passing
+    // is all this does. What it cannot fake is the refresh token behind it,
+    // which the reset deleted, so the renewal fails and the session ends.
+    await page.evaluate(() => {
+      const auth = JSON.parse(window.localStorage.getItem('auth') ?? '{}')
+      auth.state.accessToken = 'expired.access.token'
+      window.localStorage.setItem('auth', JSON.stringify(auth))
+    })
+    await page.goto('/profile')
+
+    await expect(page).toHaveURL(/\/login$/)
+    // And the old password no longer opens it either.
+    await page.getByLabel('Email address').fill(email)
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByRole('button', { name: 'Log in' }).click()
+    await expect(page.getByRole('alert')).toContainText('invalid credentials')
   })
 })
 
