@@ -6,28 +6,43 @@ description: Write a pull request description for this repository. Use when open
 # Pull request descriptions
 
 A PR description has one job: let a reviewer understand the change without
-reverse-engineering the diff. Follow `.github/pull_request_template.md` and keep
-the length proportional to the size and risk of the change — a one-line fix
-needs a sentence, a schema migration needs the full treatment.
+reverse-engineering the diff. Follow `.github/pull_request_template.md` and stay
+inside its budget — **250 words for the whole body, 400 as a hard ceiling**. A
+body nobody reads end to end helps nobody, so the cap binds even when the change
+is subtle.
 
-- Lead with **why**: the problem being solved and the motivation for solving it
-  now. Link the issue if one exists, but summarise it so the PR stands alone.
-- Describe **what** changed at the level of its shape and the design decisions
-  behind it. Never restate the diff as a file-by-file changelog — the diff
-  already shows that. If you rejected an obvious alternative, say why.
-- State **how it was verified**: tests added, manual checks run. A UI change
-  needs before/after screenshots, and they belong in your reply to the user, not
-  in the PR body — `gh` cannot upload images, and from the reply the user can
-  drag them into the description themselves. The body says in words what changed
-  visually, so a reviewer reading the PR alone knows what moved; it never
-  explains that images could not be attached.
-- Call out only what the reviewer genuinely needs: breaking changes, migration
-  or deploy ordering, deliberately deferred work, and where to start reading if
-  the diff is large.
-- Be concise. Delete template sections that do not apply rather than filling
-  them with "N/A" or padding. Prose the reader must skim past is worse than
-  absence.
+## Write it in this order
+
+1. **Draft the one-sentence lede first**, before any section: what this change
+   does, above the first heading. If you cannot write it in one sentence, you do
+   not yet understand the change well enough to describe it.
+2. Fill the sections under their caps, below.
+3. **Cut to the cap before posting.** Count the words. Whatever survives the cut
+   and still matters goes in a follow-up comment on the PR, where reading it is
+   opt-in — never back into the body.
+
+## Section caps
+
+- **Why**: at most three sentences, covering only what the linked issue does not
+  already say. Link the issue; do not re-summarise it.
+- **What**: at most five bullets, at the level of the change's shape and its
+  design decisions. Never restate the diff as a file-by-file changelog. A
+  rejected alternative gets one clause, or is dropped if it does not change how
+  the diff is read.
+- **Verification**: one line — commands run and tests added. Expand only for a
+  failure or a flake. A UI change needs before/after screenshots, and they belong
+  in your reply to the user, not in the PR body — `gh` cannot upload images, and
+  from the reply the user can drag them in themselves. The body says in words
+  what moved; it never explains that images could not be attached.
+- **Notes for the reviewer**: at most three bullets, and only what the reviewer
+  genuinely needs — breaking changes, migration or deploy ordering, deliberately
+  deferred work, where to start reading a large diff. Delete the section rather
+  than padding it.
+
+Delete template sections that do not apply rather than filling them with "N/A".
+Prose the reader must skim past is worse than absence.
 
 Before writing, read `.github/pull_request_template.md` and the last few merged
 PR bodies (`gh pr list --state merged --limit 3 --json title,body`) so the new
-description matches the house style.
+description matches the house style — but match the caps above, not the length
+of older bodies written before them.
