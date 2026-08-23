@@ -146,6 +146,18 @@ jobs:
         working-directory: web
         run: npm run test:e2e
 
+      # Runs even when the suite fails, which is the run whose results matter.
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
+        with:
+          slug: crlssn/getstronger
+          files: web/junit.xml
+          report_type: test_results
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v7

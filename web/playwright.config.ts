@@ -51,8 +51,14 @@ export default defineConfig({
         },
       ]
     : localProjects,
+  // The junit file feeds Codecov Test Analytics, which is where CI flakes are
+  // recorded; locally it would only be noise.
   reporter: process.env.CI
-    ? [['line'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    ? [
+        ['line'],
+        ['html', { open: 'never', outputFolder: 'playwright-report' }],
+        ['junit', { outputFile: 'junit.xml' }],
+      ]
     : [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   retries: process.env.CI ? 2 : 0,
   testDir: './tests/e2e',
