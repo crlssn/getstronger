@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 	"time"
 
 	"connectrpc.com/connect"
@@ -99,6 +100,15 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	locked, err := h.metricsLocked(ctx, log, exercise, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	if locked {
+		log.Warn("Exercise measurements locked by logged sets")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+	}
+
 	var opts []repo.UpdateExerciseOpt
 	for _, path := range req.Msg.GetUpdateMask().GetPaths() {
 		opt, errOpt := h.pathToUpdateExerciseOpt(path, req.Msg.GetExercise())
@@ -123,6 +133,30 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(&apiv1.UpdateExerciseResponse{
 		Exercise: parser.Exercise(exercise),
 	}), nil
+}
+
+// metricsLocked asks the training context whether the update may change what
+// the exercise measures. It answers false for an update that leaves the
+// measurements alone, so the whole-message updates the web client sends keep
+// working, and it runs the "has it been logged" query the rule needs rather
+// than letting the domain reach for a store.
+func (h *exerciseHandler) metricsLocked(ctx context.Context, log *zap.Logger, exercise *models.Exercise, msg *apiv1.UpdateExerciseRequest) (bool, error) {
+	if !slices.Contains(msg.GetUpdateMask().GetPaths(), "metrics") {
+		return false, nil
+	}
+
+	requested, err := training.NormalizeMetrics(parser.ExerciseMetricsFromProto(msg.GetExercise().GetMetrics()))
+	if err != nil {
+		return false, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	sets, err := h.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID.String()))
+	if err != nil {
+		log.Error("Count sets for exercise measurement change", zap.Error(err))
+		return false, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return training.MetricsLocked(training.MetricsFromStrings(exercise.Metrics), requested, sets > 0), nil
 }
 
 func (h *exerciseHandler) pathToUpdateExerciseOpt(path string, exercise *apiv1.Exercise) (repo.UpdateExerciseOpt, error) {

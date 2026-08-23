@@ -432,6 +432,161 @@ func (s *exerciseSuite) TestUpdateExercise() {
 	}
 }
 
+// A logged set is recorded in the columns its exercise measured by at the
+// time, so changing them afterwards would restate the athlete's history rather
+// than the exercise.
+func (s *exerciseSuite) TestUpdateExerciseMetrics() {
+	request := func(exerciseID string, metrics ...v1.ExerciseMetric) *connect.Request[v1.UpdateExerciseRequest] {
+		return &connect.Request[v1.UpdateExerciseRequest]{
+			Msg: &v1.UpdateExerciseRequest{
+				Exercise: &v1.Exercise{
+					Id:      exerciseID,
+					Name:    "New Name",
+					Metrics: metrics,
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{
+					Paths: []string{"name", "metrics"},
+				},
+			},
+		}
+	}
+
+	stored := func(exerciseID string) *models.Exercise {
+		exercise, err := models.FindExercise(context.Background(), bob.NewDB(s.container.DB), nativeUUID(exerciseID))
+		s.Require().NoError(err)
+		return exercise
+	}
+
+	s.Run("err_metrics_changed_on_logged_exercise", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(
+			factory.ExerciseUserID(user.ID),
+			factory.ExerciseTitle("Old Name"),
+			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
+		)
+		s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
+
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		res, err := s.handler.UpdateExercise(ctx, request(
+			exercise.ID.String(),
+			v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE,
+			v1.ExerciseMetric_EXERCISE_METRIC_TIME,
+		))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeFailedPrecondition, nil).Error(), err.Error())
+
+		// The name shared the mask with the measurements, so it must not have
+		// landed on its own.
+		unchanged := stored(exercise.ID.String())
+		s.Require().Equal("Old Name", unchanged.Title)
+		s.Require().Equal(training.MetricStrings(training.DefaultMetrics()), []string(unchanged.Metrics))
+	})
+
+	s.Run("ok_metrics_unchanged_on_logged_exercise", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(
+			factory.ExerciseUserID(user.ID),
+			factory.ExerciseTitle("Old Name"),
+			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
+		)
+		s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
+
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		// Reordered rather than identical: the web client sends the whole
+		// message back, and the order a form listed them in is not a change.
+		res, err := s.handler.UpdateExercise(ctx, request(
+			exercise.ID.String(),
+			v1.ExerciseMetric_EXERCISE_METRIC_REPS,
+			v1.ExerciseMetric_EXERCISE_METRIC_WEIGHT,
+		))
+		s.Require().NoError(err)
+		s.Require().Equal("New Name", res.Msg.GetExercise().GetName())
+
+		updated := stored(exercise.ID.String())
+		s.Require().Equal("New Name", updated.Title)
+		s.Require().Equal([]string{"reps", "weight"}, []string(updated.Metrics))
+	})
+
+	s.Run("ok_metrics_changed_without_logged_sets", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(
+			factory.ExerciseUserID(user.ID),
+			factory.ExerciseTitle("Old Name"),
+			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
+		)
+
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		res, err := s.handler.UpdateExercise(ctx, request(
+			exercise.ID.String(),
+			v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE,
+			v1.ExerciseMetric_EXERCISE_METRIC_TIME,
+		))
+		s.Require().NoError(err)
+		s.Require().Equal([]v1.ExerciseMetric{
+			v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE,
+			v1.ExerciseMetric_EXERCISE_METRIC_TIME,
+		}, res.Msg.GetExercise().GetMetrics())
+
+		updated := stored(exercise.ID.String())
+		s.Require().Equal([]string{"distance", "time"}, []string(updated.Metrics))
+	})
+
+	// The guard reads the requested measurements before it counts sets, so an
+	// unrecognised one is rejected as an argument rather than as a violation.
+	s.Run("err_metrics_invalid", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(
+			factory.ExerciseUserID(user.ID),
+			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
+		)
+
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		res, err := s.handler.UpdateExercise(ctx, request(
+			exercise.ID.String(),
+			v1.ExerciseMetric_EXERCISE_METRIC_UNSPECIFIED,
+		))
+		s.Require().Nil(res)
+		s.Require().Equal(
+			connect.NewError(connect.CodeInvalidArgument, training.ErrInvalidExerciseMetric).Error(),
+			err.Error(),
+		)
+	})
+
+	// Rest is a coaching preference rather than a unit of the recorded history.
+	s.Run("ok_name_tags_and_rest_stay_editable_with_history", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(
+			factory.ExerciseUserID(user.ID),
+			factory.ExerciseTitle("Old Name"),
+			factory.ExerciseTags("Old Tag"),
+			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
+		)
+		s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
+
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		res, err := s.handler.UpdateExercise(ctx, &connect.Request[v1.UpdateExerciseRequest]{
+			Msg: &v1.UpdateExerciseRequest{
+				Exercise: &v1.Exercise{
+					Id:          exercise.ID.String(),
+					Name:        "New Name",
+					Tags:        []string{"New Tag"},
+					RestSeconds: 120,
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{
+					Paths: []string{"name", "tags", "rest_seconds"},
+				},
+			},
+		})
+		s.Require().NoError(err)
+		s.Require().Equal(int32(120), res.Msg.GetExercise().GetRestSeconds())
+
+		updated := stored(exercise.ID.String())
+		s.Require().Equal("New Name", updated.Title)
+		s.Require().Equal([]string{"New Tag"}, []string(updated.Tags))
+		s.Require().Equal(int32(120), updated.RestSeconds)
+	})
+}
+
 func (s *exerciseSuite) TestDeleteExercise() {
 	type expected struct {
 		err error

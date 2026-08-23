@@ -12,12 +12,14 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   updateExercise: vi.fn(),
   getExercise: vi.fn(),
   listExerciseTags: vi.fn(),
+  listSets: vi.fn(),
 }))
 
 import * as requests from '@/http/requests'
 import {
   CreateExerciseResponseSchema,
   GetExerciseResponseSchema,
+  ListSetsResponseSchema,
   UpdateExerciseResponseSchema,
 } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
@@ -31,6 +33,7 @@ const mocked = {
   updateExercise: vi.mocked(requests.updateExercise),
   getExercise: vi.mocked(requests.getExercise),
   listExerciseTags: vi.mocked(requests.listExerciseTags),
+  listSets: vi.mocked(requests.listSets),
 }
 
 const existing = () =>
@@ -68,6 +71,7 @@ beforeEach(() => {
   mocked.createExercise.mockResolvedValue(create(CreateExerciseResponseSchema, {}))
   mocked.updateExercise.mockResolvedValue(create(UpdateExerciseResponseSchema, {}))
   mocked.getExercise.mockResolvedValue(existing())
+  mocked.listSets.mockResolvedValue(create(ListSetsResponseSchema, { sets: [] }))
   useToastStore.getState().dismiss()
 })
 
@@ -157,6 +161,27 @@ describe('UpdateExercise', () => {
       name: 'Incline press',
     })
     expect(await screen.findByText('detail')).toBeInTheDocument()
+  })
+
+  // Changing what a logged exercise measures would restate its history in units
+  // it was never recorded in, so the backend refuses it and the form never
+  // offers it.
+  test('reads the measurements back when the exercise has been logged', async () => {
+    mocked.listSets.mockResolvedValue(
+      create(ListSetsResponseSchema, { sets: [{ id: 'set-1', weight: 100, reps: 5 }] }),
+    )
+    render(<UpdateExercise />, '/exercises/exercise-1/edit')
+
+    expect(await screen.findByRole('list', { name: 'How do you track it?' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'How do you track it?' })).not.toBeInTheDocument()
+    expect(mocked.listSets).toHaveBeenCalledWith([], ['exercise-1'], expect.anything(), 1)
+  })
+
+  test('keeps the measurements editable while nothing has been logged', async () => {
+    render(<UpdateExercise />, '/exercises/exercise-1/edit')
+
+    expect(await screen.findByRole('group', { name: 'How do you track it?' })).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'How do you track it?' })).not.toBeInTheDocument()
   })
 
   // An empty object literal is truthy, so a blank exercise would render the

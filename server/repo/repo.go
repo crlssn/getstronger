@@ -1761,6 +1761,28 @@ func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSli
 	return sets, nil
 }
 
+type CountSetsOpt func() bob.Mod[*dialect.SelectQuery]
+
+func CountSetsWithExerciseID(exerciseID string) CountSetsOpt {
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Sets.ExerciseID.EQ(uuidFromString(exerciseID))
+	}
+}
+
+func (r *Repo) CountSets(ctx context.Context, opts ...CountSetsOpt) (int64, error) {
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
+	for _, opt := range opts {
+		query = append(query, opt())
+	}
+
+	count, err := models.Sets.Query(query...).Count(ctx, r.bobExec())
+	if err != nil {
+		return 0, fmt.Errorf("sets count: %w", err)
+	}
+
+	return count, nil
+}
+
 type UpdateWorkoutOpt func() (columns, error)
 
 func UpdateWorkoutName(name string) UpdateWorkoutOpt {

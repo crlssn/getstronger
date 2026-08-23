@@ -512,6 +512,8 @@ export const en = {
       presetTimed: 'Timed',
       unitCount: 'count',
       unitMinSec: 'min : sec',
+      lockedHelp:
+        'Measurements stay as they are once sets are logged, so your history keeps the units it was recorded in. Create a new exercise to track this movement differently.',
       restHelp: 'Starts after every completed set',
     },
     startQuickWorkout: 'Start quick workout',
@@ -1245,6 +1247,8 @@ export const sv = {
       presetTimed: 'På tid',
       unitCount: 'antal',
       unitMinSec: 'min : sek',
+      lockedHelp:
+        'Måtten ligger fast när set har loggats, så din historik behåller enheterna den registrerades i. Skapa en ny övning om du vill mäta rörelsen på ett annat sätt.',
       restHelp: 'Startar efter varje avslutat set',
     },
     startQuickWorkout: 'Starta snabbpass',

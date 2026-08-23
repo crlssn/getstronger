@@ -36,6 +36,12 @@ interface Props {
   onMetricsChange: (metrics: ExerciseMetric[]) => void
   restSeconds: number
   onRestSecondsChange: (seconds: number) => void
+  /**
+   * Whether the measurements are settled by sets already logged. A logged set
+   * is stored in the columns its exercise measured by at the time, so the
+   * measurements are read back rather than offered for editing.
+   */
+  metricsLocked?: boolean
 }
 
 /** What an exercise measures, and how long its rest runs for. */
@@ -44,6 +50,7 @@ export const ExerciseMeasurementSettings = ({
   onMetricsChange,
   restSeconds,
   onRestSecondsChange,
+  metricsLocked = false,
 }: Props) => {
   const { t } = useTranslation()
   const weightUnit = usePreferencesStore((state) => state.weightUnit)
@@ -89,38 +96,57 @@ export const ExerciseMeasurementSettings = ({
     <section className={styles.settings}>
       <div>
         <h3>{t('exercise.measurements.heading')}</h3>
-        <p>{t('exercise.measurements.help')}</p>
+        <p>
+          {metricsLocked ? t('exercise.measurements.lockedHelp') : t('exercise.measurements.help')}
+        </p>
       </div>
 
-      <AppSegmented
-        label={t('exercise.measurements.presetsAria')}
-        options={presets.map((preset) => ({ label: t(preset.labelKey), value: preset }))}
-        value={presets.find((preset) => isPreset(preset.values))}
-        onChange={(preset) => preset && onMetricsChange([...preset.values])}
-      />
+      {metricsLocked ? (
+        // Only what the exercise measures, and no way to change it: the other
+        // three would be controls whose every tap the backend refuses.
+        <ul className={styles.measurementGrid} aria-label={t('exercise.measurements.heading')}>
+          {measurements
+            .filter((measurement) => metrics.includes(measurement.value))
+            .map((measurement) => (
+              <li key={measurement.value} className={styles.lockedMeasurement}>
+                <strong>{measurement.label}</strong>
+                <small>{measurement.unit}</small>
+              </li>
+            ))}
+        </ul>
+      ) : (
+        <>
+          <AppSegmented
+            label={t('exercise.measurements.presetsAria')}
+            options={presets.map((preset) => ({ label: t(preset.labelKey), value: preset }))}
+            value={presets.find((preset) => isPreset(preset.values))}
+            onChange={(preset) => preset && onMetricsChange([...preset.values])}
+          />
 
-      <div
-        className={styles.measurementGrid}
-        role="group"
-        aria-label={t('exercise.measurements.heading')}
-      >
-        {measurements.map((measurement) => (
-          <AppOptionRow
-            key={measurement.value}
-            className={styles.measurement}
-            leading={
-              <span className={styles.check} aria-hidden="true">
-                {metrics.includes(measurement.value) ? '✓' : '+'}
-              </span>
-            }
-            selected={metrics.includes(measurement.value)}
-            onClick={() => toggleMetric(measurement.value)}
+          <div
+            className={styles.measurementGrid}
+            role="group"
+            aria-label={t('exercise.measurements.heading')}
           >
-            <strong>{measurement.label}</strong>
-            <small>{measurement.unit}</small>
-          </AppOptionRow>
-        ))}
-      </div>
+            {measurements.map((measurement) => (
+              <AppOptionRow
+                key={measurement.value}
+                className={styles.measurement}
+                leading={
+                  <span className={styles.check} aria-hidden="true">
+                    {metrics.includes(measurement.value) ? '✓' : '+'}
+                  </span>
+                }
+                selected={metrics.includes(measurement.value)}
+                onClick={() => toggleMetric(measurement.value)}
+              >
+                <strong>{measurement.label}</strong>
+                <small>{measurement.unit}</small>
+              </AppOptionRow>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className={styles.restSetting}>
         <div>
