@@ -1,0 +1,51 @@
+# Squawk lints the migrations a pull request touches; see
+# .github/workflows/test.database.yml. Its defaults assume a busy table behind
+# every ALTER and statements running outside a transaction, neither of which
+# describes this project, so the rules that only make sense under those
+# assumptions are turned off here. Every exclusion carries its reason: the
+# reason is the part that decides, later, whether the exclusion still holds.
+#
+# A one-off exception among the rules that remain belongs in the migration as
+# `-- squawk-ignore <rule>`, not in this list.
+
+excluded_rules = [
+  # CREATE INDEX CONCURRENTLY cannot run inside a transaction block, and
+  # golang-migrate wraps every migration file in one. Taking this advice would
+  # break the deploy.
+  "require-concurrent-index-creation",
+
+  # Same: DROP INDEX CONCURRENTLY is illegal inside a transaction block.
+  "require-concurrent-index-deletion",
+
+  # ADD CONSTRAINT NOT VALID followed by VALIDATE CONSTRAINT in the same file
+  # buys nothing — the ACCESS EXCLUSIVE lock is held for the whole transaction
+  # either way. Splitting the two across separate migrations is the real
+  # technique, and that is a per-case judgement rather than a default.
+  "constraint-missing-not-valid",
+
+  # Same reasoning: a foreign key added and validated in one transaction cannot
+  # be made cheaper by NOT VALID alone.
+  "adding-foreign-key-constraint",
+
+  # Guards against a schema change wedging a busy table. Deploys are serialised
+  # against a single small database with no read replicas, and no migration so
+  # far has come close to a lock worth timing out.
+  "require-lock-timeout",
+
+  # Same.
+  "require-statement-timeout",
+
+  # Aimed at 32-bit surrogate keys; every primary key here is a UUID. It fires
+  # on counters such as position and rest_between_*_seconds, which already
+  # carry CHECK constraints bounding them well below a 32-bit overflow.
+  "prefer-bigint-over-int",
+
+  # The schema stores UTC uniformly (NOW() AT TIME ZONE 'UTC') across every
+  # timestamp column. Moving to timestamptz is a schema-wide decision for its
+  # own issue, not a warning on each migration that adds a column.
+  "prefer-timestamp-tz",
+
+  # VARCHAR(2) for unit codes and VARCHAR(30) for usernames are deliberate
+  # length bounds on small tables, not an oversight.
+  "prefer-text-field",
+]

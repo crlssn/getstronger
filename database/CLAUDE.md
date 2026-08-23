@@ -11,6 +11,15 @@ bobgen into `server/gen/`, which is never edited by hand.
   `001_schema.down.sql` is a whole-schema teardown that lets `mise run db:reset`
   rebuild a local database from nothing — it is not a precedent for
   per-migration down files.
+- Each migration file runs inside one implicit transaction: golang-migrate
+  sends the whole file as a single statement and the DSNs do not set
+  `x-multi-statement`. So `CREATE INDEX CONCURRENTLY` and `DROP INDEX
+  CONCURRENTLY` are illegal here, and `ADD CONSTRAINT ... NOT VALID` followed by
+  `VALIDATE CONSTRAINT` in the same file saves nothing — the lock is held until
+  the transaction commits either way. If a table ever grows large enough to make
+  the lock hurt, split the change across two migrations: the `NOT VALID` add or
+  the index creation in one, the `VALIDATE` in the next. Squawk is configured
+  for that reality in `.squawk.toml`; when it warns, it means it.
 - After adding a migration, run `mise run db:migrate`. It applies the pending
   migrations and regenerates the bob models from the resulting schema. Reach for
   `mise run db:reset` only when an existing migration was edited in place and
