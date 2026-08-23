@@ -22,19 +22,15 @@ import (
 var _ connect.Interceptor = (*Auth)(nil)
 
 func NewAuth(log *zap.Logger, m *jwt.Issuer) connect.Interceptor {
-	a := &Auth{
-		log:     log,
-		jwt:     m,
-		methods: make(map[string]bool),
+	return &Auth{
+		log: log,
+		jwt: m,
 	}
-	a.initMethods()
-	return a
 }
 
 type Auth struct {
-	log     *zap.Logger
-	jwt     *jwt.Issuer
-	methods map[string]bool
+	log *zap.Logger
+	jwt *jwt.Issuer
 }
 
 func (a *Auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
@@ -46,8 +42,7 @@ func (a *Auth) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		log.Info("Request received")
 		ctx = xcontext.WithLogger(ctx, log)
 
-		requiresAuth := a.methods[req.Spec().Procedure]
-		if !requiresAuth {
+		if !requiresAuth(log, req.Spec()) {
 			log.Info("Request does not require authentication")
 			return next(ctx, req)
 		}
@@ -85,8 +80,7 @@ func (a *Auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 		log.Info("Request received")
 		ctx = xcontext.WithLogger(ctx, log)
 
-		requiresAuth := a.methods[conn.Spec().Procedure]
-		if !requiresAuth {
+		if !requiresAuth(log, conn.Spec()) {
 			log.Info("Request does not require authentication")
 			return next(ctx, conn)
 		}
@@ -106,46 +100,32 @@ func (a *Auth) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.S
 	}
 }
 
-func (a *Auth) initMethods() {
-	fileDescriptors := []protoreflect.FileDescriptor{
-		apiv1.File_api_v1_auth_service_proto,
-		apiv1.File_api_v1_feed_service_proto,
-		apiv1.File_api_v1_user_service_proto,
-		apiv1.File_api_v1_routine_service_proto,
-		apiv1.File_api_v1_workout_service_proto,
-		apiv1.File_api_v1_exercise_service_proto,
-		apiv1.File_api_v1_notification_service_proto,
+// requiresAuth reports whether the schema of the procedure being served marks
+// it as needing a token. Connect hands the interceptor the descriptor of the
+// method it is about to call, so the answer comes from the same schema that
+// generated the handler and cannot drift from what the mux serves. A procedure
+// that arrives without a readable descriptor is treated as requiring a token:
+// the interceptor must never serve a method whose rules it cannot read.
+func requiresAuth(log *zap.Logger, spec connect.Spec) bool {
+	method, ok := spec.Schema.(protoreflect.MethodDescriptor)
+	if !ok {
+		log.Warn("Request schema unreadable: requiring authentication")
+		return true
 	}
 
-	for _, fileDescriptor := range fileDescriptors {
-		// Iterate over the services in the file descriptor.
-		services := fileDescriptor.Services()
-		for i := range services.Len() {
-			service := services.Get(i)
-			methods := service.Methods()
-			for j := range methods.Len() {
-				method := methods.Get(j)
-				requiresAuth := false
-
-				// Access the custom options.
-				options, ok := method.Options().(*descriptorpb.MethodOptions)
-				if !ok {
-					panic("invalid method options")
-				}
-				if proto.HasExtension(options, apiv1.E_Auth) {
-					if ext := proto.GetExtension(options, apiv1.E_Auth); ext != nil {
-						if v, ok := ext.(bool); ok {
-							requiresAuth = v
-						}
-					}
-				}
-
-				// Build the full method name.
-				fullMethodName := fmt.Sprintf("/%s/%s", service.FullName(), method.Name())
-				a.methods[fullMethodName] = requiresAuth
-			}
-		}
+	options, ok := method.Options().(*descriptorpb.MethodOptions)
+	if !ok {
+		log.Warn("Request method options unreadable: requiring authentication")
+		return true
 	}
+
+	auth, ok := proto.GetExtension(options, apiv1.E_Auth).(bool)
+	if !ok {
+		log.Warn("Request auth option unreadable: requiring authentication")
+		return true
+	}
+
+	return auth
 }
 
 var (
