@@ -21,6 +21,11 @@ const activityBucketLabels = [
   'Not tried yet',
 ]
 
+// The exercises a block holds, as its rows. The form's name field is a list
+// item too, so the ordered list is what separates the exercises from it — and
+// the rows carry no control of their own while the rest lengths are on show.
+const routineExercises = (page: Parameters<typeof logIn>[0]) => page.locator('ol > li')
+
 // A rest field is a textbox between two nudge buttons, and the buttons quote the
 // field's own name so a screen reader can tell one row's from another's. That
 // makes a label match find all three, so the textbox is asked for by role.
@@ -311,7 +316,7 @@ test.describe('routine lifecycle', () => {
     await page.getByLabel('Routine name').fill(routineName)
     await addRoutineExercise(page)
     await addRoutineExercise(page)
-    await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+    await expect(routineExercises(page)).toHaveCount(2)
     await saveButton.click()
 
     await expect(page).toHaveURL(/\/routines$/)
@@ -358,7 +363,7 @@ test.describe('routine lifecycle', () => {
       await page.getByLabel('Routine name').fill(routineName)
       await addRoutineExercise(page, first)
       await addRoutineExercise(page, second)
-      await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+      await expect(routineExercises(page)).toHaveCount(2)
 
       // Grouping is the advanced half of the form; a circuit lives inside it.
       await page.getByRole('button', { name: 'Advanced', exact: true }).click()
@@ -392,7 +397,7 @@ test.describe('routine lifecycle', () => {
         'aria-pressed',
         'true',
       )
-      await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+      await expect(routineExercises(page)).toHaveCount(2)
 
       await restField(page, 'Rest after each round in group A').fill('0:20')
       await page.getByRole('button', { name: 'Save changes' }).click()
