@@ -48,6 +48,10 @@ const pickExercise = async (page: Page, optionIndex = 0, groupIndex = 0) => {
   await pickerOptions(page, sheet).nth(optionIndex).click()
   await expect(sheet).toBeHidden()
 }
+// The exercises a block holds, as its rows: the form's name field is a list
+// item too, so the ordered list is what tells them apart.
+const routineExercises = (page: Page) => page.locator('ol > li')
+
 const everybody = ['active', 'new']
 
 // A native confirm() blocks until it is answered, and Playwright dismisses it
@@ -134,7 +138,7 @@ export const flows: Flow[] = [
           await pickExercise(page, 0)
           await pickExercise(page, 1)
           await pickExercise(page, 2)
-          await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(3)
+          await expect(routineExercises(page)).toHaveCount(3)
         },
         name: 'filled',
       },
@@ -196,11 +200,18 @@ export const flows: Flow[] = [
           await page.getByLabel('Rest after each round').fill('90')
 
           // Two groups, since that is where the row runs out of width: the
-          // exercise name shares it with the reorder and move controls.
+          // exercise name shares it with the reorder and move controls, which
+          // are only on the row while the rest lengths are folded away. The
+          // timer goes back on afterwards, so the saved circuit keeps its rests.
           await page.getByRole('button', { name: 'New group' }).click()
-          const move = page.getByRole('button', { name: /^Actions for / }).last()
-          await move.click()
+          const restTimers = page.getByRole('switch', { name: 'Rest timers in group A' })
+          await restTimers.click()
+          await page
+            .getByRole('button', { name: /^Actions for / })
+            .last()
+            .click()
           await page.getByRole('menuitem', { name: 'Move to group B' }).click()
+          await restTimers.click()
         },
         name: 'grouped',
       },

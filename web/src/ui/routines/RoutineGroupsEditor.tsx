@@ -1,7 +1,7 @@
 import type { DropdownItem } from '@/types/dropdown'
 import type { DraftGroup, GroupMode } from '@/utils/routineGroups'
 
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
@@ -106,43 +106,22 @@ export const RoutineGroupsEditor = ({
 }: Props) => {
   const { t } = useTranslation()
 
+  // Only the groups that could take it: one group trains an exercise once.
+  const moveTargets = (groupId: string, exerciseId: string) =>
+    groups
+      .map((group, index) => ({ group, letter: groupLetter(index) }))
+      .filter(({ group }) => group.id !== groupId && !groupHasExercise(group, exerciseId))
+
   const entryActions = (
     key: string,
-    group: DraftGroup,
-    position: number,
+    groupId: string,
+    exerciseId: string,
     name: string,
   ): DropdownItem[] => [
-    // Reordering lives in the menu rather than on the row: two arrows and a
-    // menu left the exercise name competing with three controls for a phone's
-    // width, and the rest field wants that width more than they did. A move
-    // nothing can do is left out rather than shown greyed.
-    ...(position > 0
-      ? [
-          {
-            func: async () => onChange(moveEntryWithinGroup(groups, key, -1)),
-            title: t('routine.form.groups.moveUp', { name }),
-          },
-        ]
-      : []),
-    ...(position < group.entries.length - 1
-      ? [
-          {
-            func: async () => onChange(moveEntryWithinGroup(groups, key, 1)),
-            title: t('routine.form.groups.moveDown', { name }),
-          },
-        ]
-      : []),
-    // Only the groups that could take it: one group trains an exercise once.
-    ...groups
-      .map((group, index) => ({ group, letter: groupLetter(index) }))
-      .filter(
-        ({ group: other }) =>
-          other.id !== group.id && !groupHasExercise(other, group.entries[position]!.exerciseId),
-      )
-      .map(({ group: other, letter }) => ({
-        func: async () => onChange(moveEntryToGroup(groups, key, other.id)),
-        title: t('routine.form.groups.moveToGroup', { letter }),
-      })),
+    ...moveTargets(groupId, exerciseId).map(({ group, letter }) => ({
+      func: async () => onChange(moveEntryToGroup(groups, key, group.id)),
+      title: t('routine.form.groups.moveToGroup', { letter }),
+    })),
     {
       destructive: true,
       func: async () => onChange(removeEntry(groups, key)),
@@ -276,11 +255,49 @@ export const RoutineGroupsEditor = ({
                         <span className={styles.position}>{position + 1}</span>
                         <span className={styles.exerciseName}>{name}</span>
 
-                        <DropdownButton
-                          className={styles.moveMenu}
-                          label={t('routine.form.groups.entryActions', { name })}
-                          items={entryActions(entry.key, group, position, name)}
-                        />
+                        {/* Organising the block and tuning its rests are two
+                            jobs, and the row has width for one of them: the
+                            controls step aside while the lengths are on show. */}
+                        {!group.restTimers && (
+                          <>
+                            <AppIconButton
+                              className={styles.moveButton}
+                              icon={ChevronUpIcon}
+                              label={t('routine.form.groups.moveUp', { name })}
+                              disabled={position === 0}
+                              onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, -1))}
+                            />
+                            <AppIconButton
+                              className={styles.moveButton}
+                              icon={ChevronDownIcon}
+                              label={t('routine.form.groups.moveDown', { name })}
+                              disabled={position === group.entries.length - 1}
+                              onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, 1))}
+                            />
+
+                            {/* A menu earns its place when it can say "Move to
+                                group B"; where the routine is one block it
+                                would be hiding a single action, so that action
+                                is the button. */}
+                            {moveTargets(group.id, entry.exerciseId).length > 0 ? (
+                              <DropdownButton
+                                className={styles.moveMenu}
+                                label={t('routine.form.groups.entryActions', { name })}
+                                items={entryActions(entry.key, group.id, entry.exerciseId, name)}
+                              />
+                            ) : (
+                              // Quiet, unlike the group's own bin: taking an
+                              // exercise out of a block is undone by adding it
+                              // again, and a column of red would shout it down.
+                              <AppIconButton
+                                className={styles.moveButton}
+                                icon={TrashIcon}
+                                label={t('routine.form.groups.removeExercise', { name })}
+                                onClick={() => onChange(removeEntry(groups, entry.key))}
+                              />
+                            )}
+                          </>
+                        )}
                       </div>
 
                       {/* A circuit rests on the way to the next exercise and on
