@@ -492,10 +492,9 @@ describe('CreateRoutine', () => {
 
     expect(screen.queryByLabelText('Rest between sets of Bench press')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Rest after each exercise')).not.toBeInTheDocument()
-    // The lengths stay in the draft while it is off, so the line says what
-    // turning it back on would give. Between-sets lengths belong to the
-    // exercises, and this block holds a lift and a timed row, so they vary.
-    expect(screen.getByText('Varies between sets · 1:30 after each exercise')).toBeVisible()
+    // Off is an answer rather than a folded-away setting, so the line says what
+    // the routine trains with instead of quoting lengths it is not using.
+    expect(screen.getByText('No rest between sets and exercises')).toBeVisible()
   })
 
   // No timer is no rest: the lengths the form is holding are what the switch

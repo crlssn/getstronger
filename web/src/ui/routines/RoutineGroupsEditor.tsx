@@ -12,7 +12,6 @@ import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { DropdownButton } from '@/ui/components/DropdownButton'
-import { formatMeasurementDuration } from '@/utils/exerciseMeasurements'
 import {
   addGroup,
   defaultRoundRestSeconds,
@@ -34,43 +33,6 @@ interface Props {
   nameOf: (exerciseId: string) => string
   onChange: (groups: DraftGroup[]) => void
   onAddExercise: (groupId: string) => void
-}
-
-/**
- * What the block's rest timer amounts to, in one line.
- *
- * Shown while the timer is off, where the fields are folded away: it says what
- * turning it back on would give rather than leaving the switch unexplained.
- * Between-sets lengths belong to the exercises, so they only read as one figure
- * when the exercises agree on it.
- */
-const restSummary = (
-  group: DraftGroup,
-  t: (key: string, values?: Record<string, string>) => string,
-) => {
-  const circuit = group.mode === 'circuit'
-  const sets = group.entries.map((entry) => entry.restSeconds)
-  const shared = sets.every((seconds) => seconds === sets[0])
-
-  return [
-    !circuit &&
-      sets.length > 0 &&
-      t('routine.form.groups.restSummarySets', {
-        duration: shared
-          ? formatMeasurementDuration(sets[0]!)
-          : t('routine.form.groups.restVaries'),
-      }),
-    group.entries.length > 1 &&
-      t('routine.form.groups.restSummaryExercise', {
-        duration: formatMeasurementDuration(group.restBetweenExercisesSeconds),
-      }),
-    circuit &&
-      t('routine.form.groups.restSummaryRound', {
-        duration: formatMeasurementDuration(group.restBetweenRoundsSeconds),
-      }),
-  ]
-    .filter(Boolean)
-    .join(' · ')
 }
 
 const withGroup = (groups: DraftGroup[], groupId: string, changes: Partial<DraftGroup>) =>
@@ -178,10 +140,17 @@ export const RoutineGroupsEditor = ({
               <div className={styles.settingRow}>
                 <div className={styles.settingLabel}>
                   {t('routine.form.groups.restTimers')}
+                  {/* Off is not a folded-away setting but an answer, so the
+                      line states it rather than advertising lengths the
+                      routine is not training with. */}
                   <small>
                     {group.restTimers
                       ? t('routine.form.groups.restTimersHint')
-                      : restSummary(group, t)}
+                      : t(
+                          circuit
+                            ? 'routine.form.groups.restTimersOffCircuit'
+                            : 'routine.form.groups.restTimersOff',
+                        )}
                   </small>
                 </div>
                 <AppSwitch
