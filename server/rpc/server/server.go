@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -63,28 +64,37 @@ func NewServer(p Params) *Server {
 	}
 }
 
-func (s *Server) ListenAndServe(_ context.Context) error {
+// ListenAndServe binds the socket before returning, so the fx OnStart hook it
+// backs completes only once the server accepts connections. A hook that returned
+// while a goroutine was still binding let callers reach a closed port, and a
+// port already in use killed the process instead of failing startup.
+func (s *Server) ListenAndServe(ctx context.Context) error {
+	listener, err := new(net.ListenConfig).Listen(ctx, "tcp", s.server.Addr)
+	if err != nil {
+		return fmt.Errorf("server listen: %w", err)
+	}
+
 	go func() {
-		if err := s.listenAndServe(); err != nil {
+		if err := s.serve(listener); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				return
 			}
 
-			s.log.Fatal("Server: listen and serve", zap.Error(err))
+			s.log.Fatal("Server: serve", zap.Error(err))
 		}
 	}()
 
 	return nil
 }
 
-func (s *Server) listenAndServe() error {
+func (s *Server) serve(listener net.Listener) error {
 	if s.config.Server.HasCertificate() {
 		s.log.Info("Server: listening on https")
-		return s.server.ListenAndServeTLS(s.config.Server.CertPath, s.config.Server.KeyPath) //nolint:wrapcheck
+		return s.server.ServeTLS(listener, s.config.Server.CertPath, s.config.Server.KeyPath) //nolint:wrapcheck
 	}
 
 	s.log.Info("Server: listening on http")
-	return s.server.ListenAndServe() //nolint:wrapcheck
+	return s.server.Serve(listener) //nolint:wrapcheck
 }
 
 func NewMultiplexer(f []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
