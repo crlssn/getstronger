@@ -280,9 +280,6 @@ describe('CreateRoutine', () => {
     await addExercise(/Bench press/)
     expect(screen.getByText('Bench press')).toBeInTheDocument()
 
-    // Organising the block and tuning its rests are two jobs, and the row has
-    // width for one of them: the controls appear with the timer folded away.
-    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
     await userEvent.click(screen.getByRole('button', { name: 'Remove Bench press' }))
     expect(screen.getByText('No exercises here yet.')).toBeInTheDocument()
   })
@@ -293,7 +290,6 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Upper body')
     await addExercise(/Bench press/)
     await addExercise(/^Row/)
-    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
     await userEvent.click(screen.getByRole('button', { name: 'Move Row up' }))
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
@@ -441,7 +437,6 @@ describe('CreateRoutine', () => {
     // Moving between groups is a menu: on a phone a select this wide leaves the
     // exercise name a couple of characters. A block with somewhere to move to
     // keeps the menu; one without shows the single action it was hiding.
-    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers in group A' }))
     await userEvent.click(screen.getByRole('button', { name: 'Actions for Row' }))
     await userEvent.click(screen.getByRole('menuitem', { name: 'Move to group B' }))
 
@@ -665,7 +660,6 @@ describe('EditRoutine', () => {
     await userEvent.clear(field)
     await userEvent.type(field, 'Upper body')
 
-    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
     await userEvent.click(screen.getByRole('button', { name: 'Remove Dips' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
