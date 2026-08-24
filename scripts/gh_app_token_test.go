@@ -93,8 +93,8 @@ func runTokenScript(t *testing.T, env map[string]string, responseBody string) to
 
 	cmd := exec.CommandContext(t.Context(), "bash", script)
 
-	// The ambient environment may already export GH_APP_*, which would hide a
-	// case that is meant to run without it.
+	// mise exports the real GH_APP_* into every task, so a case meant to run
+	// without one would otherwise silently pick the machine's value up.
 	for _, entry := range os.Environ() {
 		name, _, _ := strings.Cut(entry, "=")
 		switch name {

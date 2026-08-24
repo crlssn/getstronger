@@ -119,9 +119,10 @@ worktree. The local stack is not shared, so set it up before running anything.
   ruleset then wants a second approval that nobody can give.
 - Turn on auto-merge as yourself, not through the task:
   `gh pr merge --auto --squash`.
-- The app's private key lives at `~/.config/getstronger/gh-app.pem`, with
-  `GH_APP_ID` and `GH_APP_INSTALLATION_ID` exported from the shell profile. That
-  is machine-wide, so a new worktree needs no setup of its own.
+- The app's ids are tracked in mise's `[env]`, so a new worktree needs no setup.
+  The private key is the only credential and lives outside the repository, at
+  `~/.config/getstronger/gh-app.pem`. Run the task through `mise run`; a bare
+  `./scripts/pr_create.sh` has none of that in its environment.
 
 ## Writing for people
 

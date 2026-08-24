@@ -73,6 +73,15 @@ USER_NAME = { default = "Alex Morgan" }
 NEW_USER_EMAIL = { default = "new@getstronger.test" }
 NEW_USER_NAME = { default = "Sam Taylor" }
 
+# The GitHub App that authors pull requests. Neither id is a credential, so
+# they are tracked here and every worktree and clone gets them with no setup;
+# a shell profile would reach only interactive shells, never an agent's or a
+# hook's. The private key is the credential, and it stays out of the
+# repository. See 'mise run pr:create'.
+GH_APP_ID = { default = "4701373" }
+GH_APP_INSTALLATION_ID = { default = "156182314" }
+GH_APP_PRIVATE_KEY = { default = "{{ env.HOME }}/.config/getstronger/gh-app.pem" }
+
 # Database tasks
 
 [tasks."db:init"]
@@ -484,12 +493,7 @@ usage = '''
 arg "<title>" help="Pull request subject, in the same style as a commit subject"
 arg "<body_file>" help="Path to a file holding the pull request body as Markdown"
 '''
-# GitHub refuses a self-approval, so a pull request opened with your own token
-# can never satisfy the one-approval rule on main. Minting an installation
-# token here makes the app the author and leaves you free to review it. Push
-# the branch yourself first: commits authored by the app count as unattributed
-# changes and the ruleset then asks for a second approval.
-run = 'GH_TOKEN="$(./scripts/gh_app_token.sh)" gh pr create --title "$usage_title" --body-file "$usage_body_file"'
+run = './scripts/pr_create.sh "$usage_title" "$usage_body_file"'
 
 # Local development tasks
 

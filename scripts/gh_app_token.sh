@@ -14,14 +14,17 @@
 
 set -uo pipefail
 
-readonly KEY_PATH="${GH_APP_PRIVATE_KEY:-$HOME/.config/getstronger/gh-app.pem}"
-
 fail() {
   echo "gh_app_token: $1" >&2
   exit 1
 }
 
-[ -n "${GH_APP_ID:-}" ] || fail "GH_APP_ID is not set"
+# The ids come from mise's [env], so they reach every worktree and clone with
+# no per-machine setup. Only the key is a credential, and it stays outside the
+# repository.
+readonly KEY_PATH="${GH_APP_PRIVATE_KEY:-$HOME/.config/getstronger/gh-app.pem}"
+
+[ -n "${GH_APP_ID:-}" ] || fail "GH_APP_ID is not set; run this through 'mise run'"
 [ -n "${GH_APP_INSTALLATION_ID:-}" ] || fail "GH_APP_INSTALLATION_ID is not set"
 [ -r "$KEY_PATH" ] || fail "cannot read the private key at $KEY_PATH"
 
