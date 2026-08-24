@@ -107,6 +107,22 @@ worktree. The local stack is not shared, so set it up before running anything.
   so a web-only push never starts a database container. Let it run: `--no-verify`
   is for a hook that is broken, not for one that is slow.
 
+## Pull requests
+
+- Open every pull request with `mise run pr:create "<subject>" <body-file>`, and
+  write the body with the `pull-request` skill. The task mints a GitHub App
+  token so the app authors the pull request. GitHub refuses a self-approval, so
+  one opened under your own account can never satisfy the single approval `main`
+  asks for.
+- Push the branch yourself before running it. The app token only ever opens the
+  pull request: commits the app authors count as unattributed changes, and the
+  ruleset then wants a second approval that nobody can give.
+- Turn on auto-merge as yourself, not through the task:
+  `gh pr merge --auto --squash`.
+- The app's private key lives at `~/.config/getstronger/gh-app.pem`, with
+  `GH_APP_ID` and `GH_APP_INSTALLATION_ID` exported from the shell profile. That
+  is machine-wide, so a new worktree needs no setup of its own.
+
 ## Writing for people
 
 Anything a person reads — a comment, a commit message, a PR description, a reply
