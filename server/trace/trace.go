@@ -17,9 +17,23 @@ type ResponseWriter struct {
 	statusCode int
 }
 
+// NewResponseWriter wraps w with the status defaulted to 200. A handler that
+// writes a body without calling WriteHeader sends an implicit 200, and that
+// write never reaches this wrapper's WriteHeader, so without the default a
+// successful response would be traced as status 0.
+func NewResponseWriter(w http.ResponseWriter) *ResponseWriter {
+	return &ResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+}
+
 func (rw *ResponseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+// StatusCode is the status the handler sent, or 200 when it wrote a body
+// without an explicit WriteHeader.
+func (rw *ResponseWriter) StatusCode() int {
+	return rw.statusCode
 }
 
 type Tracer struct {
@@ -51,5 +65,5 @@ func (m *Tracer) Trace(ctx context.Context, uri string) *Trace {
 }
 
 func (t *Trace) End(rw *ResponseWriter) {
-	t.onEnd(time.Since(t.start), rw.statusCode)
+	t.onEnd(time.Since(t.start), rw.StatusCode())
 }
