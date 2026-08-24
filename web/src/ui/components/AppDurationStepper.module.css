@@ -1,12 +1,28 @@
 @reference '../../assets/base.css';
 
-/* The two buttons flank the value rather than stacking beside it: a rest is
- * read as one thing, and the shortest path from reading it to changing it is a
- * thumb on either side. */
+/* One control, not three: the wrapper owns the border, the rounding and the
+ * focus ring, and the parts inside are divided from each other rather than
+ * floating beside each other. A rest is read as one thing, and the shortest
+ * path from reading it to changing it is a thumb on either side of it. */
 .stepper {
-  @apply flex items-center gap-1.5;
+  @apply inline-grid shrink-0 grid-cols-[auto_3.5rem_auto] items-center overflow-hidden rounded-control border border-border bg-surface shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
 }
 
+/* Inside the wrapper, which draws the border this would otherwise repeat. */
 .field {
-  @apply w-16;
+  @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
+}
+
+/* Flat and squared off, joined to the value by the rule between them. Kept at
+ * the same height as the control so the tap target keeps its floor. */
+.nudge {
+  @apply h-11 w-11 rounded-none border-0 shadow-none;
+}
+
+.nudge:first-child {
+  @apply border-r border-border;
+}
+
+.nudge:last-child {
+  @apply border-l border-border;
 }

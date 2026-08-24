@@ -27,6 +27,10 @@ interface Props {
  * is the common edit, and selecting a field to retype it is a poor way to make
  * it. Typing still wins where the wanted length is not a multiple of the step.
  *
+ * The three parts are drawn as one control — the value is what the buttons
+ * change, not a field they happen to sit beside — so the border, the rounding
+ * and the focus ring belong to the whole rather than to each piece.
+ *
  * The value is always a number: an empty field is a half-typed state rather
  * than an answer, so clearing it leaves the last value alone and the field
  * snaps back to it on the way out. Zero is typed, or stepped down to.
@@ -49,6 +53,7 @@ export const AppDurationStepper = ({
   return (
     <div className={cn(styles.stepper, className)}>
       <AppIconButton
+        className={styles.nudge}
         icon={MinusIcon}
         label={t('common.durationDecrease', { label, seconds: step })}
         disabled={value <= min}
@@ -64,6 +69,7 @@ export const AppDurationStepper = ({
         onChange={(seconds) => seconds !== undefined && onChange(clamp(seconds))}
       />
       <AppIconButton
+        className={styles.nudge}
         icon={PlusIcon}
         label={t('common.durationIncrease', { label, seconds: step })}
         disabled={value >= max}
