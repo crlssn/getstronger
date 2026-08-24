@@ -103,7 +103,8 @@ func runTokenScript(t *testing.T, env map[string]string, responseBody string) to
 		}
 		cmd.Env = append(cmd.Env, entry)
 	}
-	cmd.Env = append(cmd.Env,
+	cmd.Env = append(
+		cmd.Env,
 		"PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"),
 		"CURL_LOG="+curlLog,
 		"CURL_BODY="+body,
