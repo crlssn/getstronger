@@ -492,8 +492,9 @@ description = "Open a pull request authored by the GitHub App"
 usage = '''
 arg "<title>" help="Pull request subject, in the same style as a commit subject"
 arg "<body_file>" help="Path to a file holding the pull request body as Markdown"
+flag "--base <base>" help="Branch to target instead of the default one, for a pull request stacked on another"
 '''
-run = './scripts/pr_create.sh "$usage_title" "$usage_body_file"'
+run = './scripts/pr_create.sh "$usage_title" "$usage_body_file" ${usage_base+--base "$usage_base"}'
 
 # Local development tasks
 

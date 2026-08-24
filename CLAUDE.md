@@ -114,6 +114,9 @@ worktree. The local stack is not shared, so set it up before running anything.
   token so the app authors the pull request. GitHub refuses a self-approval, so
   one opened under your own account can never satisfy the single approval `main`
   asks for.
+- Stack a pull request on another with `--base <branch>`, naming the branch
+  below it. Without it the pull request targets `main` and shows the whole
+  stack's diff.
 - Push the branch yourself before running it. The app token only ever opens the
   pull request: commits the app authors count as unattributed changes, and the
   ruleset then wants a second approval that nobody can give.
