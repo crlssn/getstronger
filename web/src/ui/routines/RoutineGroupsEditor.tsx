@@ -255,48 +255,41 @@ export const RoutineGroupsEditor = ({
                         <span className={styles.position}>{position + 1}</span>
                         <span className={styles.exerciseName}>{name}</span>
 
-                        {/* Organising the block and tuning its rests are two
-                            jobs, and the row has width for one of them: the
-                            controls step aside while the lengths are on show. */}
-                        {!group.restTimers && (
-                          <>
-                            <AppIconButton
-                              className={styles.moveButton}
-                              icon={ChevronUpIcon}
-                              label={t('routine.form.groups.moveUp', { name })}
-                              disabled={position === 0}
-                              onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, -1))}
-                            />
-                            <AppIconButton
-                              className={styles.moveButton}
-                              icon={ChevronDownIcon}
-                              label={t('routine.form.groups.moveDown', { name })}
-                              disabled={position === group.entries.length - 1}
-                              onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, 1))}
-                            />
+                        <AppIconButton
+                          className={styles.moveButton}
+                          icon={ChevronUpIcon}
+                          label={t('routine.form.groups.moveUp', { name })}
+                          disabled={position === 0}
+                          onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, -1))}
+                        />
+                        <AppIconButton
+                          className={styles.moveButton}
+                          icon={ChevronDownIcon}
+                          label={t('routine.form.groups.moveDown', { name })}
+                          disabled={position === group.entries.length - 1}
+                          onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, 1))}
+                        />
 
-                            {/* A menu earns its place when it can say "Move to
+                        {/* A menu earns its place when it can say "Move to
                                 group B"; where the routine is one block it
                                 would be hiding a single action, so that action
                                 is the button. */}
-                            {moveTargets(group.id, entry.exerciseId).length > 0 ? (
-                              <DropdownButton
-                                className={styles.moveMenu}
-                                label={t('routine.form.groups.entryActions', { name })}
-                                items={entryActions(entry.key, group.id, entry.exerciseId, name)}
-                              />
-                            ) : (
-                              // Quiet, unlike the group's own bin: taking an
-                              // exercise out of a block is undone by adding it
-                              // again, and a column of red would shout it down.
-                              <AppIconButton
-                                className={styles.moveButton}
-                                icon={TrashIcon}
-                                label={t('routine.form.groups.removeExercise', { name })}
-                                onClick={() => onChange(removeEntry(groups, entry.key))}
-                              />
-                            )}
-                          </>
+                        {moveTargets(group.id, entry.exerciseId).length > 0 ? (
+                          <DropdownButton
+                            className={styles.moveMenu}
+                            label={t('routine.form.groups.entryActions', { name })}
+                            items={entryActions(entry.key, group.id, entry.exerciseId, name)}
+                          />
+                        ) : (
+                          // Quiet, unlike the group's own bin: taking an
+                          // exercise out of a block is undone by adding it
+                          // again, and a column of red would shout it down.
+                          <AppIconButton
+                            className={styles.moveButton}
+                            icon={TrashIcon}
+                            label={t('routine.form.groups.removeExercise', { name })}
+                            onClick={() => onChange(removeEntry(groups, entry.key))}
+                          />
                         )}
                       </div>
 
