@@ -63,8 +63,7 @@ export interface DraftGroup {
    *
    * Off is stored as no rest anywhere in the block, since "no timer" and "rest
    * for nothing" are the same session. The lengths stay in the draft while it
-   * is off, so the summary can say what turning it back on would give, and so
-   * flipping it twice costs nothing.
+   * is off, so flipping it twice costs nothing.
    */
   restTimers: boolean
   restBetweenExercisesSeconds: number
@@ -158,8 +157,8 @@ export const draftGroupsFromRoutine = (
 
   return groups.map((group) => {
     // A block that rests nowhere is a block with the timer off. Its fields fall
-    // back to what a new occurrence would take, so the summary says what
-    // turning the timer on would give rather than quoting the zeros.
+    // back to what a new occurrence would take, so switching the timer on hands
+    // back a routine's worth of lengths rather than a column of zeros.
     const restTimers =
       group.restBetweenExercisesSeconds > 0 ||
       group.restBetweenRoundsSeconds > 0 ||
