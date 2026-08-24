@@ -107,6 +107,12 @@ worktree. The local stack is not shared, so set it up before running anything.
   so a web-only push never starts a database container. Let it run: `--no-verify`
   is for a hook that is broken, not for one that is slow.
 
+## Writing for people
+
+Anything a person reads — a comment, a commit message, a PR description, a reply
+in chat — is as short as it can be and still land. Choose each word; cut the
+ones that carry nothing. Say the thing, then stop.
+
 ## Code comments
 
 A comment earns its place by delivering its point in the first sentence, and
