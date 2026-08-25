@@ -203,21 +203,34 @@ jobs:
           # Point the container at this commit's image. What a container runs is
           # then a fact rather than whatever a moving tag pointed at when it last
           # pulled, and a rollback is this same field set to an earlier commit.
-          curl --silent --show-error --fail \
+          code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --request PATCH \
             --header "X-Auth-Token: $SCW_SECRET_KEY" \
             --header 'Content-Type: application/json' \
             --data "$(jq --null-input --arg image "$IMAGE:$GITHUB_SHA" '{registry_image: $image}')" \
-            "$container_url" > /dev/null
+            "$container_url")"
+          if [ "$code" = 409 ]; then
+            echo "::error::The container is mid-deployment and would not accept the image update. Re-run once it settles."
+            exit 1
+          fi
+          if [ "${code#2}" = "$code" ]; then
+            echo "::error::Updating the container image failed with HTTP $code"
+            exit 1
+          fi
 
-          # Redeploying the same commit leaves the image unchanged, which makes
-          # the patch a no-op, so ask for the deployment rather than assume it.
-          curl --silent --show-error --fail \
+          # Changing the image deploys on its own, and asking again while that
+          # runs is a 409. Redeploying the same commit changes nothing, though,
+          # so the request still has to be made — and its 409 ignored.
+          code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --request POST \
             --header "X-Auth-Token: $SCW_SECRET_KEY" \
             --header 'Content-Type: application/json' \
             --data '{}' \
-            "${container_url}/deploy" > /dev/null
+            "${container_url}/deploy")"
+          if [ "$code" != 409 ] && [ "${code#2}" = "$code" ]; then
+            echo "::error::Requesting the deployment failed with HTTP $code"
+            exit 1
+          fi
 
           attempts=0
           status=pending
