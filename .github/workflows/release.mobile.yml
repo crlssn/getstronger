@@ -29,6 +29,9 @@ jobs:
   web:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The native apps ship against production, so the bundle is built with the
+    # production environment's variables rather than the repository's.
+    environment: production
 
     steps:
       - name: Checkout code
