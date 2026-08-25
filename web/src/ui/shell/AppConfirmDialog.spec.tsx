@@ -87,4 +87,13 @@ describe('AppConfirmDialog', () => {
 
     await expect(answer).resolves.toBe(false)
   })
+
+  // The sheet focuses itself as it opens, which is also what drops the
+  // on-screen keyboard the question slid over.
+  test('hands focus to the question', () => {
+    void ask(request)
+    renderWithProviders(<AppConfirmDialog />)
+
+    expect(screen.getByRole('dialog')).toHaveFocus()
+  })
 })

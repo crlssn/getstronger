@@ -2,6 +2,7 @@
 
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, test, vi } from 'vitest'
 
 import { renderWithProviders } from '@/ui/testing'
@@ -107,6 +108,85 @@ describe('AppSheet', () => {
     await userEvent.keyboard('{Escape}')
 
     expect(onClose).not.toHaveBeenCalled()
+  })
+
+  // A dialog nobody has focused is one a keyboard reaches only by tabbing the
+  // page behind it — which `aria-modal` has already hidden from a screen
+  // reader.
+  test('moves focus into the panel when it opens', () => {
+    renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+
+    expect(dialog()).toHaveFocus()
+  })
+
+  test('returns focus to whatever opened it', async () => {
+    const Opener = () => {
+      const [open, setOpen] = useState(false)
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Choose routine
+          </button>
+          {open && <AppSheet title="Choose routine" onClose={() => setOpen(false)} />}
+        </>
+      )
+    }
+
+    renderWithProviders(<Opener />)
+    const opener = screen.getByRole('button', { name: 'Choose routine' })
+    await userEvent.click(opener)
+    expect(dialog()).toHaveFocus()
+
+    await userEvent.keyboard('{Escape}')
+
+    expect(opener).toHaveFocus()
+  })
+
+  test('wraps Tab from the last control back to the first', async () => {
+    renderWithProviders(
+      <AppSheet
+        title="Add exercise"
+        closeLabel="Close"
+        onClose={vi.fn()}
+        actions={<SheetAction tone="primary">Save</SheetAction>}
+      />,
+    )
+
+    const close = screen.getByRole('button', { name: 'Close' })
+    const save = screen.getByRole('button', { name: 'Save' })
+
+    await userEvent.tab()
+    expect(close).toHaveFocus()
+    await userEvent.tab()
+    expect(save).toHaveFocus()
+    await userEvent.tab()
+
+    expect(close).toHaveFocus()
+  })
+
+  test('wraps Shift+Tab from the panel to the last control', async () => {
+    renderWithProviders(
+      <AppSheet
+        title="Add exercise"
+        closeLabel="Close"
+        onClose={vi.fn()}
+        actions={<SheetAction tone="primary">Save</SheetAction>}
+      />,
+    )
+
+    await userEvent.tab({ shift: true })
+
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveFocus()
+  })
+
+  // Focus has nowhere to go in a sheet that is only a question, and letting Tab
+  // out of it would land on the page the dialog has hidden.
+  test('keeps focus on a panel with nothing to tab to', async () => {
+    renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+
+    await userEvent.tab()
+
+    expect(dialog()).toHaveFocus()
   })
 })
 

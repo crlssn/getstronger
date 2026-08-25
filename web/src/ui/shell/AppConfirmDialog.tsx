@@ -1,9 +1,7 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useConfirmationStore } from '@/stores/confirmation'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
-import blurActiveElement from '@/utils/blurActiveElement'
 
 /**
  * The app-styled replacement for `window.confirm`.
@@ -14,12 +12,6 @@ import blurActiveElement from '@/utils/blurActiveElement'
 export const AppConfirmDialog = () => {
   const { t } = useTranslation()
   const confirmation = useConfirmationStore((state) => state.confirmation)
-
-  // The sheet slides over whatever had focus, and a still-focused field behind
-  // it keeps the on-screen keyboard up.
-  useEffect(() => {
-    if (confirmation) blurActiveElement()
-  }, [confirmation])
 
   if (!confirmation) return null
 
