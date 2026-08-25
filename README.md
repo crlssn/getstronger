@@ -262,8 +262,8 @@ The connection format and mandatory `sslmode=require` setting are documented in 
 
 ### 3. Create the API container
 
-1. Open **Containers > Container Registry** and create a namespace named `getstronger` in the chosen region. The deployment workflow pushes the API image to `rg.fr-par.scw.cloud/getstronger/server`, tagged with the deployed commit SHA and with the environment's own tag — `latest` for production, `beta` for beta.
-2. Open **Serverless > Containers**, create a namespace, and create a container from the registry image `getstronger/server:latest`, listening on port `8080` (the port the Dockerfile exposes and `SERVER_PORT` must match).
+1. Open **Containers > Container Registry** and create a namespace named `getstronger` in the chosen region. The deployment workflow pushes the API image to `rg.fr-par.scw.cloud/getstronger/server`, tagged with the deployed commit SHA and nothing else — no moving tag, so both environments share the namespace without being able to roll out to each other.
+2. Open **Serverless > Containers**, create a namespace, and create a container from any image the workflow has pushed, listening on port `8080` (the port the Dockerfile exposes and `SERVER_PORT` must match). Each deploy repoints the container at its own commit's image, so the one chosen here only has to get it started.
 3. Resources of `250 mVCPU` and `256 MB` are comfortable for the Go API. For autoscaling, use request concurrency with a minimum of `1` instance to avoid cold starts on a user-facing API. Keep the maximum low: pubsub events are dispatched in-process, so live notifications do not propagate between instances.
 4. Configure the container's environment variables and secrets as listed below. Use the **Secrets** section for credentials; both surface to the process identically, but secrets are stored encrypted and hidden in the console.
 5. Deploy the container and verify `https://<container-endpoint>/healthz` responds before wiring up the custom domain.
@@ -386,6 +386,8 @@ The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secr
 2. Generate the release notes and publish. Publishing a pre-release triggers the same workflow, which makes it a usable rehearsal.
 3. Approve the pending production deployment in the workflow run. Migrations run first, then the API, then the web app, all from the tagged commit.
 
+To roll back, set the container's **Image** to an earlier commit's tag in the console and redeploy — a deploy pins that field rather than moving a tag, so nothing else has to change. Nothing prunes the registry, so clear out old commit tags there occasionally.
+
 For the initial cutover of either environment, open the **deploy** workflow in GitHub Actions and choose **Run workflow**. It asks which environment to target and can independently migrate the Serverless SQL Database, deploy the API, and deploy the web application. This is also the safe way to migrate a newly created database when no migration file changed in the triggering commit.
 
 ### 8. Create the beta environment
@@ -396,12 +398,11 @@ Beta is a full copy of the production stack, serving `https://beta.getstronger.s
 | --- | --- | --- |
 | Serverless SQL Database | `getstronger` | `getstronger-beta` |
 | Serverless Container | `getstronger` | `getstronger-beta` |
-| Container image | `getstronger/server:latest` | `getstronger/server:beta` |
 | Object Storage bucket | `getstronger-public-bucket` | `beta.getstronger.studio` |
 | Web domain | `www.getstronger.studio` | `beta.getstronger.studio` |
 | API domain | `api.getstronger.studio` | `beta.api.getstronger.studio` |
 
-The image tag is not cosmetic: both environments push to the single `getstronger/server` registry namespace, so the beta container must be created from `getstronger/server:beta`. Pointing it at `latest` would make every production deploy roll out to beta as well.
+Both environments push to the single `getstronger/server` registry namespace, which is safe because neither publishes a moving tag: every image is tagged with its commit, and a deploy repoints its own container at the commit it just built.
 
 Beta's container takes the same configuration as step 3 with its own values, including `ENV=production` — the backend only distinguishes `local` from `production`, and beta is a deployed environment in every respect.
 

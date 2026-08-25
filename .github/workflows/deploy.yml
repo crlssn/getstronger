@@ -166,10 +166,6 @@ jobs:
       DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
       EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
       IMAGE: rg.fr-par.scw.cloud/getstronger/server
-      # Production keeps the `latest` tag its container was configured with;
-      # beta publishes under its own tag so the two never pull each other's
-      # image from the shared registry namespace.
-      TAG: ${{ needs.init.outputs.environment == 'production' && 'latest' || 'beta' }}
 
     steps:
       - name: Verify the environment is configured
@@ -189,13 +185,13 @@ jobs:
           username: nologin
           password: ${{ secrets.SCW_SECRET_KEY }}
 
+      # Only the commit tag is published. No environment shares a moving tag
+      # with another, so nothing can roll out to the wrong one.
       - name: Build API image
-        run: docker build --platform linux/amd64 --tag "$IMAGE:$TAG" --tag "$IMAGE:$GITHUB_SHA" .
+        run: docker build --platform linux/amd64 --tag "$IMAGE:$GITHUB_SHA" .
 
       - name: Push API image to Scaleway Container Registry
-        run: |
-          docker push "$IMAGE:$TAG"
-          docker push "$IMAGE:$GITHUB_SHA"
+        run: docker push "$IMAGE:$GITHUB_SHA"
 
       - name: Deploy the Serverless Container
         env:
@@ -204,6 +200,18 @@ jobs:
         run: |
           container_url="https://api.scaleway.com/containers/v1beta1/regions/fr-par/containers/${SCW_CONTAINER_ID}"
 
+          # Point the container at this commit's image. What a container runs is
+          # then a fact rather than whatever a moving tag pointed at when it last
+          # pulled, and a rollback is this same field set to an earlier commit.
+          curl --silent --show-error --fail \
+            --request PATCH \
+            --header "X-Auth-Token: $SCW_SECRET_KEY" \
+            --header 'Content-Type: application/json' \
+            --data "$(jq --null-input --arg image "$IMAGE:$GITHUB_SHA" '{registry_image: $image}')" \
+            "$container_url" > /dev/null
+
+          # Redeploying the same commit leaves the image unchanged, which makes
+          # the patch a no-op, so ask for the deployment rather than assume it.
           curl --silent --show-error --fail \
             --request POST \
             --header "X-Auth-Token: $SCW_SECRET_KEY" \
@@ -214,6 +222,9 @@ jobs:
           attempts=0
           status=pending
           while [ "$attempts" -lt 60 ]; do
+            # Read after the pause, never before it: a deployment that has only
+            # just been asked for still reports the previous revision as ready.
+            sleep 5
             status="$(curl --silent --show-error --fail \
               --header "X-Auth-Token: $SCW_SECRET_KEY" \
               "$container_url" | jq -r '.status')"
@@ -225,7 +236,6 @@ jobs:
               exit 1
             fi
             attempts=$((attempts + 1))
-            sleep 5
           done
 
           if [ "$status" != ready ]; then
