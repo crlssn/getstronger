@@ -41,7 +41,6 @@ export const UpdateExercise = () => {
           name: res.exercise.name,
           tags: [...res.exercise.tags],
           metrics: [...res.exercise.metrics],
-          restSeconds: res.exercise.restSeconds,
         })
         setMetricsLocked((logged?.sets.length ?? 0) > 0)
       }

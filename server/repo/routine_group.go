@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aarondl/opt/omit"
-	"github.com/aarondl/opt/omitnull"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
@@ -70,16 +69,9 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID string) ([]*trai
 			continue
 		}
 
-		// A null column is the routine saying nothing, which leaves the
-		// exercise's own rest to answer for it.
-		var restSeconds *int32
-		if rest, ok := link.RestSeconds.Get(); ok {
-			restSeconds = &rest
-		}
-
 		group.Exercises = append(group.Exercises, training.RoutineExercise{
 			Exercise:    exercise,
-			RestSeconds: restSeconds,
+			RestSeconds: link.RestSeconds,
 		})
 	}
 
@@ -119,17 +111,55 @@ func (r *Repo) SetRoutineGroups(ctx context.Context, routine *models.Routine, gr
 		exerciseIDs = append(exerciseIDs, exercise.ID.String())
 	}
 
-	if err := setRoutineGroups(ctx, r.bobExec(), routine.ID, training.NormalizeRoutineGroups(groups, exerciseIDs)); err != nil {
+	if err := setRoutineGroups(
+		ctx, r.bobExec(), routine.ID, training.NormalizeRoutineGroups(groups, exerciseIDs), exercises,
+	); err != nil {
 		return fmt.Errorf("routine groups set: %w", err)
 	}
 
 	return nil
 }
 
+// newOccurrenceRestSeconds is the rest a link row starts at when nothing says
+// otherwise, read off what the exercise measures.
+func newOccurrenceRestSeconds(exercise *models.Exercise) int32 {
+	return training.NewOccurrenceRestSeconds(training.MetricsFromStrings(exercise.Metrics))
+}
+
+// newOccurrenceRests is what each of these exercises rests for where a routine
+// has just started training it, by exercise ID.
+func newOccurrenceRests(exercises models.ExerciseSlice) map[string]int32 {
+	rests := make(map[string]int32, len(exercises))
+	for _, exercise := range exercises {
+		rests[exercise.ID.String()] = newOccurrenceRestSeconds(exercise)
+	}
+
+	return rests
+}
+
+// occurrenceRest is the rest a link row stores. Every row carries one, so a
+// save that says nothing about an occurrence — an older client, or one that
+// named no groups at all — takes the rest a new occurrence starts at.
+func occurrenceRest(exercise training.RoutineExerciseDraft, newRests map[string]int32) int32 {
+	if exercise.RestSeconds != nil {
+		return *exercise.RestSeconds
+	}
+	if rest, ok := newRests[exercise.ExerciseID]; ok {
+		return rest
+	}
+
+	return training.DefaultRestSeconds
+}
+
 // setRoutineGroups rewrites a routine's groups and exercise links. The groups
 // are expected to be normalized: every exercise ID belongs to the routine's
 // owner and appears exactly once.
-func setRoutineGroups(ctx context.Context, exec bob.Executor, routineID uuid.UUID, groups []training.RoutineGroupDraft) error {
+func setRoutineGroups(
+	ctx context.Context, exec bob.Executor, routineID uuid.UUID,
+	groups []training.RoutineGroupDraft, exercises models.ExerciseSlice,
+) error {
+	newRests := newOccurrenceRests(exercises)
+
 	if _, err := models.ExercisesRoutines.Delete(
 		models.DeleteWhere.ExercisesRoutines.RoutineID.EQ(routineID),
 	).Exec(ctx, exec); err != nil {
@@ -158,13 +188,11 @@ func setRoutineGroups(ctx context.Context, exec bob.Executor, routineID uuid.UUI
 		links := make([]*models.ExercisesRoutineSetter, 0, len(group.Exercises))
 		for _, exercise := range group.Exercises {
 			links = append(links, &models.ExercisesRoutineSetter{
-				RoutineID:  omit.From(routineID),
-				ExerciseID: omit.From(uuidFromString(exercise.ExerciseID)),
-				GroupID:    omit.From(inserted.ID),
-				Position:   omit.From(safe.Int32FromInt(position)),
-				// Null is the routine saying nothing, which leaves the
-				// exercise's own rest to answer for this occurrence.
-				RestSeconds: omitnull.FromPtr(exercise.RestSeconds),
+				RoutineID:   omit.From(routineID),
+				ExerciseID:  omit.From(uuidFromString(exercise.ExerciseID)),
+				GroupID:     omit.From(inserted.ID),
+				Position:    omit.From(safe.Int32FromInt(position)),
+				RestSeconds: omit.From(occurrenceRest(exercise, newRests)),
 			})
 			position++
 		}

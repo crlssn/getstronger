@@ -7,9 +7,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
-	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
@@ -42,7 +40,7 @@ type ExercisesRoutineTemplate struct {
 	Position    func() int32
 	GroupID     func() uuid.UUID
 	ID          func() uuid.UUID
-	RestSeconds func() null.Val[int32]
+	RestSeconds func() int32
 
 	r exercisesRoutineR
 	f *Factory
@@ -128,7 +126,7 @@ func (o ExercisesRoutineTemplate) BuildSetter() *models.ExercisesRoutineSetter {
 	}
 	if o.RestSeconds != nil {
 		val := o.RestSeconds()
-		m.RestSeconds = omitnull.FromNull(val)
+		m.RestSeconds = omit.From(val)
 	}
 
 	return m
@@ -575,14 +573,14 @@ func (m exercisesRoutineMods) RandomID(f *faker.Faker) ExercisesRoutineMod {
 }
 
 // Set the model columns to this value
-func (m exercisesRoutineMods) RestSeconds(val null.Val[int32]) ExercisesRoutineMod {
+func (m exercisesRoutineMods) RestSeconds(val int32) ExercisesRoutineMod {
 	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
-		o.RestSeconds = func() null.Val[int32] { return val }
+		o.RestSeconds = func() int32 { return val }
 	})
 }
 
 // Set the Column from the function
-func (m exercisesRoutineMods) RestSecondsFunc(f func() null.Val[int32]) ExercisesRoutineMod {
+func (m exercisesRoutineMods) RestSecondsFunc(f func() int32) ExercisesRoutineMod {
 	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
 		o.RestSeconds = f
 	})
@@ -597,32 +595,10 @@ func (m exercisesRoutineMods) UnsetRestSeconds() ExercisesRoutineMod {
 
 // Generates a random value for the column using the given faker
 // if faker is nil, a default faker is used
-// The generated value is sometimes null
 func (m exercisesRoutineMods) RandomRestSeconds(f *faker.Faker) ExercisesRoutineMod {
 	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
-		o.RestSeconds = func() null.Val[int32] {
-			if f == nil {
-				f = &defaultFaker
-			}
-
-			val := random_int32(f)
-			return null.From(val)
-		}
-	})
-}
-
-// Generates a random value for the column using the given faker
-// if faker is nil, a default faker is used
-// The generated value is never null
-func (m exercisesRoutineMods) RandomRestSecondsNotNull(f *faker.Faker) ExercisesRoutineMod {
-	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
-		o.RestSeconds = func() null.Val[int32] {
-			if f == nil {
-				f = &defaultFaker
-			}
-
-			val := random_int32(f)
-			return null.From(val)
+		o.RestSeconds = func() int32 {
+			return random_int32(f)
 		}
 	})
 }

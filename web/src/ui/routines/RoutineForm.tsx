@@ -16,11 +16,10 @@ import {
   draftGroupsFromRoutine,
   groupExerciseIds,
   groupLetter,
+  collapseToSingleGroup,
   isGrouped,
   saveableGroups,
-  singleStraightGroup,
 } from '@/utils/routineGroups'
-import { defaultRestSeconds } from '@/utils/workoutSession'
 import styles from './RoutineForm.module.css'
 
 interface Props {
@@ -65,8 +64,7 @@ export const RoutineForm = ({
   // block never has to meet it, and one that is already grouped opens on it.
   const [advanced, setAdvanced] = useState(() => isGrouped(initial))
   // Every exercise the form has seen: the ones the routine came with, and the
-  // ones picked since. Its name labels the row, and the rest it takes in the
-  // library is what an empty per-exercise rest falls back to.
+  // ones picked since. Its name is what labels the row.
   const [library, setLibrary] = useState<Record<string, Exercise>>(() =>
     Object.fromEntries(
       [
@@ -88,12 +86,12 @@ export const RoutineForm = ({
   // — the one thing a single block cannot express.
   const setAdvancedMode = (enabled: boolean) => {
     setAdvanced(enabled)
-    if (!enabled) setGroups(singleStraightGroup(exerciseIds))
+    if (!enabled) setGroups(collapseToSingleGroup(groups))
   }
 
   const addExercise = (exercise: Exercise) => {
     setLibrary((current) => ({ ...current, [exercise.id]: exercise }))
-    setGroups((current) => addExerciseToGroup(current, pickerGroupId, exercise.id))
+    setGroups((current) => addExerciseToGroup(current, pickerGroupId, exercise))
     setPickerGroupId('')
   }
 
@@ -144,7 +142,6 @@ export const RoutineForm = ({
         groups={groups}
         grouped={advanced}
         nameOf={(exerciseId) => library[exerciseId]?.name ?? exerciseId}
-        libraryRestOf={(exerciseId) => library[exerciseId]?.restSeconds ?? defaultRestSeconds}
         onChange={setGroups}
         onAddExercise={setPickerGroupId}
       />

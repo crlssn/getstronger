@@ -18,12 +18,11 @@ import (
 
 func Exercise(exercise *models.Exercise) *apiv1.Exercise {
 	return &apiv1.Exercise{
-		Id:          exercise.ID.String(),
-		UserId:      exercise.UserID.String(),
-		Name:        exercise.Title,
-		Tags:        []string(exercise.Tags),
-		Metrics:     exerciseMetricsFromDB(exercise.Metrics),
-		RestSeconds: exercise.RestSeconds,
+		Id:      exercise.ID.String(),
+		UserId:  exercise.UserID.String(),
+		Name:    exercise.Title,
+		Tags:    []string(exercise.Tags),
+		Metrics: exerciseMetricsFromDB(exercise.Metrics),
 	}
 }
 
@@ -159,8 +158,7 @@ func RoutineGroupSlice(groups []*training.RoutineGroup) []*apiv1.RoutineGroup {
 }
 
 // RoutineExerciseSlice states a group's exercises with the rest each of them
-// takes where this routine trains it. An occurrence the routine says nothing
-// about leaves the field unset, so the exercise's own rest still answers.
+// takes where this routine trains it.
 func RoutineExerciseSlice(exercises []training.RoutineExercise) []*apiv1.RoutineExercise {
 	parsed := make([]*apiv1.RoutineExercise, 0, len(exercises))
 	for _, exercise := range exercises {

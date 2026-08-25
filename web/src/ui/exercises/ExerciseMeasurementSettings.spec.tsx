@@ -12,18 +12,14 @@ import { ExerciseMeasurementSettings } from './ExerciseMeasurementSettings'
 
 const Harness = ({
   metrics: initialMetrics = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
-  restSeconds: initialRest = 90,
   metricsLocked = false,
 }) => {
   const [metrics, setMetrics] = useState(initialMetrics)
-  const [restSeconds, setRestSeconds] = useState(initialRest)
 
   return (
     <ExerciseMeasurementSettings
       metrics={metrics}
       onMetricsChange={setMetrics}
-      restSeconds={restSeconds}
-      onRestSecondsChange={setRestSeconds}
       metricsLocked={metricsLocked}
     />
   )
@@ -36,7 +32,6 @@ const inGroup = (label: string, name: string | RegExp) =>
 
 const measurement = (name: string) => inGroup('How do you track it?', new RegExp(`^${name}`))
 const preset = (name: string) => inGroup('Common measurement combinations', name)
-const restSwitch = () => screen.getByRole('switch')
 
 describe('ExerciseMeasurementSettings', () => {
   beforeEach(() => {
@@ -125,56 +120,14 @@ describe('ExerciseMeasurementSettings', () => {
 
       expect(screen.getByText(/Measurements stay as they are once sets are logged/)).toBeVisible()
     })
-
-    // Rest is a coaching preference rather than a unit of the recorded history.
-    test('leaves the rest timer editable', async () => {
-      renderWithProviders(<Harness metricsLocked />)
-
-      await userEvent.click(restSwitch())
-
-      expect(restSwitch()).toHaveAttribute('aria-checked', 'false')
-    })
   })
 
-  describe('the rest timer', () => {
-    test('is on whenever a rest is set', () => {
-      renderWithProviders(<Harness restSeconds={90} />)
+  // Rest belongs to the routine that trains the exercise, which can want one
+  // length in a strength block and another in a circuit.
+  test('does not ask how long the exercise rests', () => {
+    renderWithProviders(<Harness />)
 
-      expect(restSwitch()).toHaveAttribute('aria-checked', 'true')
-      expect(screen.getByRole('button', { name: '1:30' })).toHaveAttribute('aria-pressed', 'true')
-    })
-
-    test('hides its lengths when switched off', async () => {
-      renderWithProviders(<Harness restSeconds={0} />)
-
-      expect(restSwitch()).toHaveAttribute('aria-checked', 'false')
-      expect(screen.queryByRole('button', { name: '1:30' })).not.toBeInTheDocument()
-    })
-
-    test('comes back on at a default rather than at zero', async () => {
-      renderWithProviders(<Harness restSeconds={0} />)
-
-      await userEvent.click(restSwitch())
-
-      expect(restSwitch()).toHaveAttribute('aria-checked', 'true')
-      expect(screen.getByRole('button', { name: '1:30' })).toHaveAttribute('aria-pressed', 'true')
-    })
-
-    test('picks a different length', async () => {
-      renderWithProviders(<Harness />)
-
-      await userEvent.click(screen.getByRole('button', { name: '3:00' }))
-
-      expect(screen.getByRole('button', { name: '3:00' })).toHaveAttribute('aria-pressed', 'true')
-      expect(screen.getByRole('button', { name: '1:30' })).toHaveAttribute('aria-pressed', 'false')
-    })
-
-    test('offers every half minute up to five', () => {
-      renderWithProviders(<Harness />)
-
-      expect(screen.getByRole('button', { name: '0:30' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: '5:00' })).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: '5:30' })).not.toBeInTheDocument()
-    })
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(screen.queryByText('Rest timer')).not.toBeInTheDocument()
   })
 })

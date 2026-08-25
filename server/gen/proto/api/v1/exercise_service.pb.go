@@ -29,7 +29,6 @@ type CreateExerciseRequest struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
 	Metrics       []ExerciseMetric       `protobuf:"varint,3,rep,packed,name=metrics,proto3,enum=api.v1.ExerciseMetric" json:"metrics,omitempty"`
-	RestSeconds   int32                  `protobuf:"varint,4,opt,name=rest_seconds,json=restSeconds,proto3" json:"rest_seconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -83,13 +82,6 @@ func (x *CreateExerciseRequest) GetMetrics() []ExerciseMetric {
 		return x.Metrics
 	}
 	return nil
-}
-
-func (x *CreateExerciseRequest) GetRestSeconds() int32 {
-	if x != nil {
-		return x.RestSeconds
-	}
-	return 0
 }
 
 type CreateExerciseResponse struct {
@@ -804,14 +796,12 @@ var File_api_v1_exercise_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xd1\x01\n" +
+	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xb6\x01\n" +
 	"\x15CreateExerciseRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12&\n" +
 	"\x04tags\x18\x02 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
 	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
-	"\ametrics\x18\x03 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametrics\x12-\n" +
-	"\frest_seconds\x18\x04 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"(\n" +
+	"\ametrics\x18\x03 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametricsJ\x04\b\x04\x10\x05R\frest_seconds\"(\n" +
 	"\x16CreateExerciseResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\".\n" +
 	"\x12GetExerciseRequest\x12\x18\n" +

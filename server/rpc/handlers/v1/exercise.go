@@ -38,18 +38,16 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	requestedMetrics := parser.ExerciseMetricsFromProto(req.Msg.GetMetrics())
-	metrics, err := training.NormalizeMetrics(requestedMetrics)
+	metrics, err := training.NormalizeMetrics(parser.ExerciseMetricsFromProto(req.Msg.GetMetrics()))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
-		UserID:      userID,
-		Name:        req.Msg.GetName(),
-		Tags:        tags,
-		Metrics:     training.MetricStrings(metrics),
-		RestSeconds: training.RestSeconds(int(req.Msg.GetRestSeconds()), requestedMetrics),
+		UserID:  userID,
+		Name:    req.Msg.GetName(),
+		Tags:    tags,
+		Metrics: training.MetricStrings(metrics),
 	})
 	if err != nil {
 		log.Error("Create exercise", zap.Error(err))
@@ -175,8 +173,6 @@ func (h *exerciseHandler) pathToUpdateExerciseOpt(path string, exercise *apiv1.E
 			return nil, connect.NewError(connect.CodeInvalidArgument, err)
 		}
 		return repo.UpdateExerciseMetrics(training.MetricStrings(metrics)), nil
-	case "rest_seconds":
-		return repo.UpdateExerciseRestSeconds(int(exercise.GetRestSeconds())), nil
 	default:
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidUpdateMaskPath)
 	}

@@ -5,10 +5,10 @@ import { describe, expect, test } from 'vitest'
 
 import { RoutineGroupMode, RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
 import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
+import { defaultRestSeconds } from '@/utils/routineGroups'
 import {
   activeSetIndex,
   circuitRound,
-  effectiveRestSeconds,
   elapsedLabel,
   finishBlocker,
   incompleteSetCount,
@@ -18,17 +18,15 @@ import {
   sessionGroups,
 } from './workoutSession'
 
-const lift = (id: string, restSeconds = 90) =>
+const lift = (id: string) =>
   create(ExerciseSchema, {
     id,
     name: id,
-    restSeconds,
     metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
   })
 
-// One exercise where a group trains it. `restSeconds` left out is the routine
-// saying nothing, which leaves the exercise's own rest to answer.
-const trains = (exerciseId: string, restSeconds?: number) => ({
+// One exercise where a group trains it, and the rest it takes there.
+const trains = (exerciseId: string, restSeconds = 90) => ({
   exercise: lift(exerciseId),
   restSeconds,
 })
@@ -200,15 +198,15 @@ describe('sessionGroups', () => {
     expect(groups[1]?.stations.map((station) => station.key)).toEqual(['a#2', 'b'])
   })
 
-  // The routine's own answer, the exercise's, and the routine turning the timer
-  // off — three different things, and a station has to tell them apart.
-  test('rests for the routine where it gave a length, and the exercise where it did not', () => {
+  // The routine is the only thing that says how long an occurrence rests, and
+  // zero is an answer of its own rather than an absence.
+  test('rests for the length the routine gives each occurrence', () => {
     const groups = sessionGroups(
-      [straight('one', ['a', 'b', 'c'], [180, undefined, 0])],
+      [straight('one', ['a', 'b', 'c'], [180, 45, 0])],
       [lift('a'), lift('b'), lift('c')],
     )
 
-    expect(groups[0]?.stations.map((station) => station.restSeconds)).toEqual([180, 90, 0])
+    expect(groups[0]?.stations.map((station) => station.restSeconds)).toEqual([180, 45, 0])
   })
 
   // A circuit rests between exercises and between rounds, so a set rest stored
@@ -219,30 +217,20 @@ describe('sessionGroups', () => {
     expect(groups[0]?.stations[0]?.restSeconds).toBe(90)
   })
 
-  // Nothing in a quick workout came from a routine, so nothing can override.
-  test('rests by the exercise for anything the routine does not know about', () => {
-    const groups = sessionGroups(undefined, [lift('a', 45)])
+  // Nothing in a quick workout came from a routine, and nothing else says how
+  // long to rest, so the app default does.
+  test('rests for the default for anything the routine does not know about', () => {
+    const groups = sessionGroups(undefined, [lift('a')])
 
-    expect(groups[0]?.stations[0]?.restSeconds).toBe(45)
-  })
-})
-
-describe('effectiveRestSeconds', () => {
-  test("is the routine's override when it gave one", () => {
-    expect(effectiveRestSeconds(lift('a', 90), 180)).toBe(180)
+    expect(groups[0]?.stations[0]?.restSeconds).toBe(defaultRestSeconds)
   })
 
-  // Zero is an answer, not an absence: it turns the timer off here alone.
-  test('is zero when the routine turned the timer off', () => {
-    expect(effectiveRestSeconds(lift('a', 90), 0)).toBe(0)
-  })
+  // Added mid-session, so it trails the groups the routine did describe and
+  // rests for the default like a quick workout does.
+  test('rests for the default for an exercise added to a routine mid-session', () => {
+    const groups = sessionGroups([straight('one', ['a'], [180])], [lift('a'), lift('b')])
 
-  test("is the exercise's own rest when the routine said nothing", () => {
-    expect(effectiveRestSeconds(lift('a', 45), undefined)).toBe(45)
-  })
-
-  test('is the default when there is no exercise to ask', () => {
-    expect(effectiveRestSeconds(undefined, undefined)).toBe(90)
+    expect(groups[1]?.stations.map((station) => station.restSeconds)).toEqual([defaultRestSeconds])
   })
 })
 

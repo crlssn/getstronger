@@ -196,11 +196,12 @@ func routineGroupDrafts(groups []*apiv1.RoutineGroup) []training.RoutineGroupDra
 	for _, group := range groups {
 		exercises := make([]training.RoutineExerciseDraft, 0, len(group.GetExercises()))
 		for _, entry := range group.GetExercises() {
+			// A request that names a group names the rest with it, so the
+			// occurrence is stated rather than left to a default.
+			rest := entry.GetRestSeconds()
 			exercises = append(exercises, training.RoutineExerciseDraft{
-				ExerciseID: entry.GetExercise().GetId(),
-				// Field presence is the whole point: a request that leaves the
-				// rest out is asking to inherit, not asking for no timer.
-				RestSeconds: entry.RestSeconds,
+				ExerciseID:  entry.GetExercise().GetId(),
+				RestSeconds: &rest,
 			})
 		}
 

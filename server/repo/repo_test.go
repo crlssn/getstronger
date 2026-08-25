@@ -1327,8 +1327,9 @@ func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
 	)
 }
 
-// The whole point of the override: the routine's own answer survives a save and
-// a reload, and an occurrence that never had one still has none.
+// The whole point of the per-occurrence rest: the routine's own answer survives
+// a save and a reload, and a save that says nothing gets the rest a new
+// occurrence starts at rather than no rest at all.
 func (s *repoSuite) TestSetRoutineGroupsKeepsThePerExerciseRest() {
 	user := s.factory.NewUser()
 	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
@@ -1357,11 +1358,72 @@ func (s *repoSuite) TestSetRoutineGroupsKeepsThePerExerciseRest() {
 	s.Require().Len(groups, 1)
 	s.Require().Len(groups[0].Exercises, 3)
 
-	s.Require().Equal(new(int32(180)), groups[0].Exercises[0].RestSeconds)
-	// Null stays null, so the exercise library still answers for it.
-	s.Require().Nil(groups[0].Exercises[1].RestSeconds)
+	s.Require().Equal(int32(180), groups[0].Exercises[0].RestSeconds)
+	// Nothing said, so the row carries what a new occurrence starts at.
+	s.Require().Equal(int32(training.DefaultRestSeconds), groups[0].Exercises[1].RestSeconds)
 	// Zero is an answer of its own, and must not read back as "say nothing".
-	s.Require().Equal(new(int32(0)), groups[0].Exercises[2].RestSeconds)
+	s.Require().Equal(int32(0), groups[0].Exercises[2].RestSeconds)
+}
+
+// An exercise measured against the clock is one continuous effort, so a new
+// occurrence of it starts with no timer — which is how a plank ends up resting
+// nothing wherever a routine picks it up.
+func (s *repoSuite) TestSetRoutineGroupsRestsTimeMeasuredExercisesForNothing() {
+	user := s.factory.NewUser()
+	lift := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	plank := s.factory.NewExercise(
+		factory.ExerciseUserID(user.ID),
+		factory.ExerciseMetrics(training.MetricTime.String()),
+	)
+	exercises := models.ExerciseSlice{lift, plank}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID.String(),
+		Name:        "Core day",
+		ExerciseIDs: []string{lift.ID.String(), plank.ID.String()},
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.SetRoutineGroups(context.Background(), routine, []training.RoutineGroupDraft{
+		{
+			Mode: training.RoutineGroupModeStraight,
+			Exercises: []training.RoutineExerciseDraft{
+				{ExerciseID: lift.ID.String()},
+				{ExerciseID: plank.ID.String()},
+			},
+		},
+	}, exercises))
+
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(groups[0].Exercises, 2)
+	s.Require().Equal(int32(training.DefaultRestSeconds), groups[0].Exercises[0].RestSeconds)
+	s.Require().Equal(int32(0), groups[0].Exercises[1].RestSeconds)
+}
+
+// Added from the exercise library rather than the routine builder, so nothing
+// states a rest and the occurrence starts where a new one does.
+func (s *repoSuite) TestAddExerciseToRoutineRestsByDefault() {
+	user := s.factory.NewUser()
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID: user.ID.String(),
+		Name:   "Core day",
+	})
+	s.Require().NoError(err)
+
+	lift := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	plank := s.factory.NewExercise(
+		factory.ExerciseUserID(user.ID),
+		factory.ExerciseMetrics(training.MetricTime.String()),
+	)
+	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), lift, routine))
+	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), plank, routine))
+
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(groups[0].Exercises, 2)
+	s.Require().Equal(int32(training.DefaultRestSeconds), groups[0].Exercises[0].RestSeconds)
+	s.Require().Equal(int32(0), groups[0].Exercises[1].RestSeconds)
 }
 
 // An exercise added to a routine that is already grouped joins the last group,

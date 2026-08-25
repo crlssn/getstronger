@@ -1,6 +1,8 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
+import type { Exercise } from '@/proto/api/v1/shared_pb'
 
 import { RoutineGroupMode } from '@/proto/api/v1/routine_service_pb'
+import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 
 /**
  * How a group's exercises are worked through: straight sets finish one exercise
@@ -9,10 +11,23 @@ import { RoutineGroupMode } from '@/proto/api/v1/routine_service_pb'
  */
 export type GroupMode = 'straight' | 'circuit'
 
+/** How long an exercise rests between sets when nothing says otherwise. */
+export const defaultRestSeconds = 90
+
 /** The rest a new circuit takes once a round closes. */
 export const defaultRoundRestSeconds = 90
 
 export const maximumRestSeconds = 3600
+
+/**
+ * How long an exercise rests between sets where a routine has just started
+ * training it.
+ *
+ * An exercise measured against the clock — a plank, a run — is one continuous
+ * effort rather than a set to recover from, so it starts with no timer at all.
+ */
+export const newOccurrenceRestSeconds = (exercise: Exercise): number =>
+  exercise.metrics.includes(ExerciseMetric.TIME) ? 0 : defaultRestSeconds
 
 /**
  * One exercise where a routine trains it.
@@ -26,14 +41,12 @@ export interface DraftEntry {
   key: string
   exerciseId: string
   /**
-   * How long this occurrence rests between sets.
-   *
-   * Undefined is the routine saying nothing, which leaves the exercise's own
-   * rest to answer for it; zero turns the timer off here alone. A circuit rests
-   * between exercises and between rounds, so it never applies — the value is
-   * kept while the group is one, so switching back restores what was typed.
+   * How long this occurrence rests between sets; zero turns the timer off here
+   * alone. A circuit rests between exercises and between rounds, so it never
+   * applies — the value is kept while the group is one, so switching back
+   * restores what was typed.
    */
-  restSeconds?: number
+  restSeconds: number
 }
 
 /**
@@ -57,23 +70,50 @@ const newLocalId = (prefix: string) => {
   return `${prefix}-${nextLocalId}`
 }
 
-const entriesOf = (exerciseIds: readonly string[]): DraftEntry[] =>
-  exerciseIds.map((exerciseId) => ({ key: newLocalId('entry'), exerciseId }))
-
-const straightGroup = (exerciseIds: readonly string[]): DraftGroup => ({
+const straightGroup = (entries: DraftEntry[]): DraftGroup => ({
   id: newLocalId('group'),
   mode: 'straight',
   restBetweenExercisesSeconds: 0,
   restBetweenRoundsSeconds: 0,
-  // Collapsing groups into one block can name the same exercise twice — it was
-  // in two of them — and one block trains it once.
-  entries: entriesOf([...new Set(exerciseIds)]),
+  entries,
 })
 
-/** What every routine starts as: one block, worked one exercise at a time. */
+/**
+ * What every routine starts as: one block, worked one exercise at a time.
+ *
+ * Named by ID rather than by exercise because the only caller that has nothing
+ * but IDs is a routine saved before grouping, where what each of them measures
+ * was never recorded against the occurrence either.
+ */
 export const singleStraightGroup = (exerciseIds: readonly string[] = []): DraftGroup[] => [
-  straightGroup(exerciseIds),
+  straightGroup(
+    exerciseIds.map((exerciseId) => ({
+      key: newLocalId('entry'),
+      exerciseId,
+      restSeconds: defaultRestSeconds,
+    })),
+  ),
 ]
+
+/**
+ * Collapses a grouped routine into the one block a plain routine is.
+ *
+ * The exercises keep their order and the rest each of them takes; only the
+ * structure goes, which is the one thing a single block cannot express. Two
+ * groups can name the same exercise, and one block trains it once.
+ */
+export const collapseToSingleGroup = (groups: readonly DraftGroup[]): DraftGroup[] => {
+  const seen = new Set<string>()
+  const entries = groups
+    .flatMap((group) => group.entries)
+    .filter((entry) => {
+      if (seen.has(entry.exerciseId)) return false
+      seen.add(entry.exerciseId)
+      return true
+    })
+
+  return [straightGroup(entries)]
+}
 
 /** A, B, C — how a group is named everywhere it is spoken about. */
 export const groupLetter = (index: number) => String.fromCharCode(65 + index)
@@ -118,11 +158,21 @@ export const groupHasExercise = (group: DraftGroup, exerciseId: string): boolean
 export const addExerciseToGroup = (
   groups: readonly DraftGroup[],
   groupId: string,
-  exerciseId: string,
+  exercise: Exercise,
 ): DraftGroup[] =>
   groups.map((group) =>
-    group.id === groupId && !groupHasExercise(group, exerciseId)
-      ? { ...group, entries: [...group.entries, { key: newLocalId('entry'), exerciseId }] }
+    group.id === groupId && !groupHasExercise(group, exercise.id)
+      ? {
+          ...group,
+          entries: [
+            ...group.entries,
+            {
+              key: newLocalId('entry'),
+              exerciseId: exercise.id,
+              restSeconds: newOccurrenceRestSeconds(exercise),
+            },
+          ],
+        }
       : group,
   )
 
@@ -169,16 +219,11 @@ export const moveEntryWithinGroup = (
     return { ...group, entries }
   })
 
-/**
- * Sets how long one exercise rests between sets where this routine trains it.
- *
- * `undefined` clears the routine's answer rather than storing a zero, so the
- * exercise library goes back to saying how long the rest is.
- */
+/** Sets how long one exercise rests between sets where this routine trains it. */
 export const setEntryRest = (
   groups: readonly DraftGroup[],
   key: string,
-  restSeconds: number | undefined,
+  restSeconds: number,
 ): DraftGroup[] =>
   groups.map((group) => ({
     ...group,
@@ -231,27 +276,23 @@ const clampRest = (value: number) =>
 
 /** Keeps a group's settings inside what the API accepts. */
 export const clampGroup = (group: DraftGroup): DraftGroup => {
+  // A circuit rests on the way to the next exercise and on the way into the
+  // next round, so a set rest has nowhere to go while it is one. It travels
+  // anyway, so a group switched back to straight sets rests as it did before.
+  const entries = group.entries.map((entry) => ({
+    ...entry,
+    restSeconds: clampRest(entry.restSeconds),
+  }))
+
   if (group.mode !== 'circuit') {
-    return {
-      ...group,
-      restBetweenExercisesSeconds: 0,
-      restBetweenRoundsSeconds: 0,
-      entries: group.entries.map((entry) =>
-        entry.restSeconds === undefined
-          ? entry
-          : { ...entry, restSeconds: clampRest(entry.restSeconds) },
-      ),
-    }
+    return { ...group, restBetweenExercisesSeconds: 0, restBetweenRoundsSeconds: 0, entries }
   }
 
   return {
     ...group,
     restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
     restBetweenRoundsSeconds: clampRest(group.restBetweenRoundsSeconds),
-    // A circuit rests on the way to the next exercise and on the way into the
-    // next round, so a set rest has nowhere to go. It is dropped on the way out
-    // rather than out of the draft, so switching back hands it over again.
-    entries: group.entries.map(({ restSeconds: _unused, ...entry }) => entry),
+    entries,
   }
 }
 

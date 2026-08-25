@@ -62,7 +62,6 @@ const benchPress = create(ExerciseSchema, {
   id: 'exercise-bench',
   name: 'Bench Press',
   metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
-  restSeconds: 90,
 })
 
 const squat = create(ExerciseSchema, {
@@ -77,9 +76,8 @@ const running = create(ExerciseSchema, {
   metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
 })
 
-// One exercise where a group trains it. `restSeconds` left out is the routine
-// saying nothing, which leaves the exercise's own rest to answer.
-const trains = (exercise: Exercise, restSeconds?: number) => ({ exercise, restSeconds })
+// One exercise where a group trains it, and the rest it takes there.
+const trains = (exercise: Exercise, restSeconds = 90) => ({ exercise, restSeconds })
 
 const routineOf = (name: string, exercises = [benchPress, squat]) =>
   create(GetRoutineResponseSchema, { routine: create(RoutineSchema, { name, exercises }) })
@@ -469,9 +467,9 @@ describe('StartWorkout', () => {
       expect(useWorkoutStore.getState().workouts[routineID]?.restTimerEndsAt).toBeUndefined()
     })
 
-    // An exercise with no rest of its own moves straight on rather than
-    // inheriting the previous exercise's countdown.
-    test('starts no rest for an exercise that names none', async () => {
+    // Nothing behind this station says how long it rests — a quick workout, or
+    // an exercise added mid-session — so the app default does.
+    test('rests for the default where no routine occurrence answers', async () => {
       const user = userEvent.setup()
       mocked.getRoutine.mockResolvedValue(routineOf('Push Day', [squat]))
       await renderWorkout()
@@ -479,12 +477,12 @@ describe('StartWorkout', () => {
       await user.type(setField('Squat set 1 weight'), '100')
       await user.type(setField('Squat set 1 reps'), '5')
 
-      expect(restBanner()).not.toBeInTheDocument()
+      expect(within(restBanner()!).getByText('01:30')).toBeInTheDocument()
     })
 
     // The whole point of the routine's own rest: the same lift rests one length
     // here and another wherever else it is trained.
-    test("rests for the routine's length rather than the exercise library's", async () => {
+    test('rests for the length this routine gives the exercise', async () => {
       const user = userEvent.setup()
       mocked.getRoutine.mockResolvedValue(
         create(GetRoutineResponseSchema, {
