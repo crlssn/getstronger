@@ -62,11 +62,14 @@ jobs:
 
     outputs:
       environment: ${{ steps.target.outputs.environment }}
-      # A release deploys every component. It usually spans several merges, and
-      # a full deploy is the safer default for a rare, deliberate promotion.
-      web: ${{ github.event_name == 'release' && 'true' || steps.changes.outputs.web }}
-      server: ${{ github.event_name == 'release' && 'true' || steps.changes.outputs.server }}
-      database: ${{ github.event_name == 'release' && 'true' || steps.changes.outputs.database }}
+      # A release and a labelled pull request deploy every component: a release
+      # usually spans several merges, and a label is asking to see that branch
+      # on beta — neither wants an environment running half of one revision and
+      # half of another. A push deploys by path, and a manual run by its inputs,
+      # which is why these are left empty for it.
+      web: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.web }}
+      server: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.server }}
+      database: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.database }}
 
     steps:
       - name: Resolve the target environment
@@ -78,7 +81,7 @@ jobs:
           echo "environment=${ENVIRONMENT}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout code
-        if: github.event_name != 'release'
+        if: github.event_name == 'push'
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -100,7 +103,7 @@ jobs:
 
       - name: Check for changes
         id: changes
-        if: github.event_name != 'release'
+        if: github.event_name == 'push'
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           base: ${{ steps.last-deploy.outputs.sha }}

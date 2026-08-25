@@ -346,7 +346,9 @@ The workflow deploys to one of two GitHub Environments, `beta` and `production`,
 | Published GitHub release | `production` |
 | **Run workflow** (manual) | `beta` or `production`, chosen by an input |
 
-A merge is therefore never a production deploy: `main` lands on beta, and production is promoted by publishing a release. Concurrency is scoped per environment so the two never queue behind each other. A push deploys only the components whose paths changed since the last successful push deploy; a release deploys all three, because a promotion usually spans several merges.
+A merge is therefore never a production deploy: `main` lands on beta, and production is promoted by publishing a release. Concurrency is scoped per environment so the two never queue behind each other.
+
+Only a push deploys selectively, by the paths that changed since the last successful push deploy. A release and a labelled pull request deploy all three components, since neither wants an environment running half of one revision and half of another. Beta then keeps what the pull request left there until a later push or a manual run replaces it — run the workflow against `main` with all three components to put it back.
 
 Give the `production` environment a required reviewer under **Settings → Environments → production → Required reviewers**, so the promotion is an approval rather than an accident. Every deploying job names its environment, so a production run pauses before it touches anything.
 
