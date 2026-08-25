@@ -46,6 +46,13 @@ concurrency:
   group: deployments-${{ (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')) && 'production' || 'beta' }}
   cancel-in-progress: false
 
+# A pull_request run checks out an ephemeral merge commit whose SHA exists
+# nowhere afterwards, which is no use as an image tag or as an answer to what a
+# container is running. Deploy the branch itself; every other event already
+# points at a real commit.
+env:
+  DEPLOY_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+
 permissions:
   contents: read
   pull-requests: write
@@ -140,6 +147,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_REF }}
 
       - name: Install golang-migrate
         run: |
@@ -177,6 +186,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_REF }}
 
       - name: Log in to Scaleway Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -188,10 +199,10 @@ jobs:
       # Only the commit tag is published. No environment shares a moving tag
       # with another, so nothing can roll out to the wrong one.
       - name: Build API image
-        run: docker build --platform linux/amd64 --tag "$IMAGE:$GITHUB_SHA" .
+        run: docker build --platform linux/amd64 --tag "$IMAGE:$DEPLOY_REF" .
 
       - name: Push API image to Scaleway Container Registry
-        run: docker push "$IMAGE:$GITHUB_SHA"
+        run: docker push "$IMAGE:$DEPLOY_REF"
 
       - name: Deploy the Serverless Container
         env:
@@ -207,7 +218,7 @@ jobs:
             --request PATCH \
             --header "X-Auth-Token: $SCW_SECRET_KEY" \
             --header 'Content-Type: application/json' \
-            --data "$(jq --null-input --arg image "$IMAGE:$GITHUB_SHA" '{registry_image: $image}')" \
+            --data "$(jq --null-input --arg image "$IMAGE:$DEPLOY_REF" '{registry_image: $image}')" \
             "$container_url")"
           if [ "$code" = 409 ]; then
             echo "::error::The container is mid-deployment and would not accept the image update. Re-run once it settles."
@@ -281,6 +292,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_REF }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
