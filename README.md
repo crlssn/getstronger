@@ -342,7 +342,7 @@ The workflow deploys to one of two GitHub Environments, `beta` and `production`,
 | Trigger | Environment |
 | --- | --- |
 | Push to `main` | `beta` |
-| Pull request labelled `deploy` | `beta` |
+| Pull request labelled `deploy:beta` | `beta` |
 | Published GitHub release | `production` |
 | **Run workflow** (manual) | `beta` or `production`, chosen by an input |
 
@@ -350,7 +350,7 @@ A merge is therefore never a production deploy: `main` lands on beta, and produc
 
 Give the `production` environment a required reviewer under **Settings → Environments → production → Required reviewers**, so the promotion is an approval rather than an accident. Every deploying job names its environment, so a production run pauses before it touches anything.
 
-Leave beta's deployment branch policy at **All branches**: a pull request labelled `deploy` runs from its own branch, and a restrictive policy would reject it.
+Leave beta's deployment branch policy at **All branches**: a pull request labelled `deploy:beta` runs from its own branch, and a restrictive policy would reject it.
 
 Configure these per environment, using the same names on both:
 

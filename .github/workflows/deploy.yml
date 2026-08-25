@@ -56,7 +56,7 @@ permissions:
 
 jobs:
   init:
-    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy' && github.actor == 'crlssn')
+    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy:beta' && github.actor == 'crlssn')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -305,11 +305,11 @@ jobs:
     needs: [init, database, server, web]
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: always() && github.event_name == 'pull_request' && github.event.label.name == 'deploy'
+    if: always() && github.event_name == 'pull_request' && github.event.label.name == 'deploy:beta'
 
     steps:
       - name: Remove deploy label
-        run: gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy"
+        run: gh pr edit ${{ github.event.pull_request.number }} --remove-label "deploy:beta"
         env:
           GH_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
