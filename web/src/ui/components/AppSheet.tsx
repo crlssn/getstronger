@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react'
 
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useRef } from 'react'
 
 import { cn } from '@/ui/cn'
 import styles from './AppSheet.module.css'
@@ -36,6 +36,15 @@ interface Props {
   actions?: ReactNode
 }
 
+const focusableSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
 // One bottom sheet for every modal surface: drag handle, optional eyebrow,
 // title, body copy, a content region for list-style sheets, and stacked
 // full-width actions. It sits flush with the bottom edge of the viewport.
@@ -50,11 +59,60 @@ export const AppSheet = ({
   actions,
 }: Props) => {
   const titleId = useId()
+  const panel = useRef<HTMLElement>(null)
+
+  // `aria-modal` hides the page behind the sheet from a screen reader, so the
+  // sheet has to hold the keyboard too: focus starts on the panel, Tab cannot
+  // leave it, and whatever opened the sheet gets focus back. Callers used to
+  // blur the trigger instead, which dropped focus to the body — from where Tab
+  // walks the hidden page before ever reaching the sheet.
+  useEffect(() => {
+    const opener = document.activeElement
+    panel.current?.focus({ preventScroll: true })
+
+    return () => {
+      if (opener instanceof HTMLElement && opener.isConnected) {
+        opener.focus({ preventScroll: true })
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const onKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab' || !panel.current) return
+
+      const stops = Array.from(panel.current.querySelectorAll<HTMLElement>(focusableSelector))
+      const first = stops[0]
+      const last = stops[stops.length - 1]
+      const active = document.activeElement
+
+      // A sheet that is only a question has nowhere for Tab to go, and letting
+      // it out would land on the page the dialog has hidden.
+      if (!first || !last) {
+        event.preventDefault()
+        panel.current.focus({ preventScroll: true })
+        return
+      }
+
+      // Tabbing forward off the panel itself needs no help — the browser
+      // already moves into the first stop inside it.
+      const outside = !panel.current.contains(active)
+      const wrapsBackward = outside || active === first || active === panel.current
+      const wrapsForward = outside || active === last
+
+      if (event.shiftKey && wrapsBackward) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && wrapsForward) {
+        event.preventDefault()
+        first.focus()
+      }
     }
+
     document.addEventListener('keydown', onKeydown)
     return () => document.removeEventListener('keydown', onKeydown)
   }, [onClose])
@@ -69,10 +127,13 @@ export const AppSheet = ({
       }}
     >
       <section
+        ref={panel}
         className={styles.sheetPanel}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        // Focusable only as the sheet's landing point, never as a tab stop.
+        tabIndex={-1}
       >
         <span className={styles.sheetHandle} aria-hidden="true" />
 
