@@ -21,6 +21,17 @@ const activityBucketLabels = [
   'Not tried yet',
 ]
 
+// The exercises a block holds, as its rows. The form's name field is a list
+// item too, so the ordered list is what separates the exercises from it — and
+// the rows carry no control of their own while the rest lengths are on show.
+const routineExercises = (page: Parameters<typeof logIn>[0]) => page.locator('ol > li')
+
+// A rest field is a textbox between two nudge buttons, and the buttons quote the
+// field's own name so a screen reader can tell one row's from another's. That
+// makes a label match find all three, so the textbox is asked for by role.
+const restField = (page: Parameters<typeof logIn>[0], name: string) =>
+  page.getByRole('textbox', { name, exact: true })
+
 const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) => {
   await page.goto('/exercises')
   await page.getByLabel('Search exercises').fill(name)
@@ -305,7 +316,7 @@ test.describe('routine lifecycle', () => {
     await page.getByLabel('Routine name').fill(routineName)
     await addRoutineExercise(page)
     await addRoutineExercise(page)
-    await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+    await expect(routineExercises(page)).toHaveCount(2)
     await saveButton.click()
 
     await expect(page).toHaveURL(/\/routines$/)
@@ -352,13 +363,15 @@ test.describe('routine lifecycle', () => {
       await page.getByLabel('Routine name').fill(routineName)
       await addRoutineExercise(page, first)
       await addRoutineExercise(page, second)
-      await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+      await expect(routineExercises(page)).toHaveCount(2)
 
       // Grouping is the advanced half of the form; a circuit lives inside it.
       await page.getByRole('button', { name: 'Advanced', exact: true }).click()
       await page.getByRole('button', { name: 'Circuit', exact: true }).click()
-      await page.getByLabel('Rest after each exercise').fill('5')
-      await page.getByLabel('Rest after each round').fill('10')
+      // The rest fields carry ±30s buttons whose names quote the field's own,
+      // so a label match would find all three. The textbox is the one to fill.
+      await restField(page, 'Rest after each exercise in group A').fill('0:05')
+      await restField(page, 'Rest after each round in group A').fill('0:10')
       await page.getByRole('button', { name: 'Create routine' }).click()
 
       await expect(page).toHaveURL(/\/routines$/)
@@ -384,9 +397,9 @@ test.describe('routine lifecycle', () => {
         'aria-pressed',
         'true',
       )
-      await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(2)
+      await expect(routineExercises(page)).toHaveCount(2)
 
-      await page.getByLabel('Rest after each round').fill('20')
+      await restField(page, 'Rest after each round in group A').fill('0:20')
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       await expect(
@@ -457,29 +470,41 @@ test.describe('routine lifecycle', () => {
     }
   })
 
-  // Rest between sets belongs to the routine, so the same lift can rest one
-  // length here and another next door. Built, saved, read back, and then
-  // trained with the length this routine gave it on the clock.
-  test('rests for the length the routine gives an exercise @mutation', async ({ page }) => {
+  // Both rests belong to the routine: how long a lift rests between its sets,
+  // and how long the block pauses on the way to the next lift. Built, saved,
+  // read back, and then trained with both lengths on the clock.
+  test('rests for the lengths the routine gives an exercise @mutation', async ({ page }) => {
     const routineName = uniqueName('E2E Rest')
     const lift = uniqueName('E2E Rest press')
+    const second = uniqueName('E2E Rest row')
 
     try {
-      await page.goto('/exercises/create')
-      await page.locator('form input[type="text"]').first().fill(lift)
-      await page.getByRole('button', { name: 'Save Exercise' }).click()
-      await expect(page).toHaveURL(/\/exercises$/)
+      for (const name of [lift, second]) {
+        await page.goto('/exercises/create')
+        await page.locator('form input[type="text"]').first().fill(name)
+        await page.getByRole('button', { name: 'Save Exercise' }).click()
+        await expect(page).toHaveURL(/\/exercises$/)
+      }
 
       await page.goto('/routines/create')
       await page.getByLabel('Routine name').fill(routineName)
       await addRoutineExercise(page, lift)
+      await addRoutineExercise(page, second)
 
-      // A real value from the moment it is picked, rather than a placeholder
-      // for a length written down somewhere else.
-      const rest = page.getByLabel(`Rest between sets of ${lift}`)
-      await expect(rest).toHaveValue('90')
+      // Read off a clock, and a real value from the moment it is picked rather
+      // than a placeholder for a length written down somewhere else.
+      const rest = restField(page, `Rest between sets of ${lift}`)
+      await expect(rest).toHaveValue('1:30')
 
-      await rest.fill('300')
+      await rest.fill('5:00')
+
+      // A plain routine says how long it pauses between exercises too, without
+      // having to be turned into a circuit first.
+      const between = restField(page, 'Rest after each exercise')
+      await expect(between).toHaveValue('1:30')
+      await page.getByRole('button', { name: 'Add 30 seconds to Rest after each exercise' }).click()
+      await expect(between).toHaveValue('2:00')
+
       await page.getByRole('button', { name: 'Create routine' }).click()
 
       await expect(page).toHaveURL(/\/routines$/)
@@ -487,9 +512,10 @@ test.describe('routine lifecycle', () => {
       await page.getByRole('heading', { name: routineName }).click()
 
       // Saved and read back from the API: reopening the builder shows the
-      // routine's own answer for this occurrence.
+      // routine's own answers rather than a default.
       await page.getByRole('link', { name: 'Edit exercises' }).click()
-      await expect(page.getByLabel(`Rest between sets of ${lift}`)).toHaveValue('300')
+      await expect(restField(page, `Rest between sets of ${lift}`)).toHaveValue('5:00')
+      await expect(restField(page, 'Rest after each exercise')).toHaveValue('2:00')
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       await page.getByRole('link', { name: 'Start workout' }).click()
@@ -497,7 +523,13 @@ test.describe('routine lifecycle', () => {
       await page.getByRole('textbox', { name: `${lift} set 1 reps`, exact: true }).fill('10')
 
       // Five minutes, not the ninety seconds it started at.
-      await expect(page.getByRole('region', { name: 'Rest timer' })).toContainText(/0[45]:\d\d/)
+      const restTimer = page.getByRole('region', { name: 'Rest timer' })
+      await expect(restTimer).toContainText(/0[45]:\d\d/)
+
+      // Moving on rests for the block's length instead, which is the pause
+      // between one exercise and the next rather than between two sets.
+      await page.getByRole('button', { name: 'Complete exercise' }).first().click()
+      await expect(restTimer).toContainText(/0[12]:\d\d/)
 
       await page.getByRole('button', { name: 'Finish workout' }).first().click()
       await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
@@ -517,6 +549,7 @@ test.describe('routine lifecycle', () => {
         await acceptConfirmDialog(page, 'Delete')
         await expect(page.getByRole('status')).toContainText('Routine deleted')
       }
+      await deleteExercise(page, second)
       await deleteExercise(page, lift)
     }
   })

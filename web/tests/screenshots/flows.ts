@@ -48,6 +48,15 @@ const pickExercise = async (page: Page, optionIndex = 0, groupIndex = 0) => {
   await pickerOptions(page, sheet).nth(optionIndex).click()
   await expect(sheet).toBeHidden()
 }
+// A rest field is a textbox between two nudge buttons, and the buttons quote the
+// field's own name so a screen reader can tell one row's from another's. That
+// makes a label match find all three, so the textbox is asked for by role.
+const restField = (page: Page, name: string) => page.getByRole('textbox', { name, exact: true })
+
+// The exercises a block holds, as its rows: the form's name field is a list
+// item too, so the ordered list is what tells them apart.
+const routineExercises = (page: Page) => page.locator('ol > li')
+
 const everybody = ['active', 'new']
 
 // A native confirm() blocks until it is answered, and Playwright dismisses it
@@ -134,12 +143,25 @@ export const flows: Flow[] = [
           await pickExercise(page, 0)
           await pickExercise(page, 1)
           await pickExercise(page, 2)
-          await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(3)
+          await expect(routineExercises(page)).toHaveCount(3)
         },
         name: 'filled',
       },
       {
+        // The switch is the whole answer for a routine that wants a rest timer
+        // and does not care how long, so the folded-away state is one the
+        // builder is seen in as often as the open one.
         act: async (page) => {
+          await page.getByRole('switch', { name: 'Rest timers' }).click()
+          await expect(page.getByLabel(/^Rest between sets of/).first()).toBeHidden()
+        },
+        name: 'rest-off',
+      },
+      {
+        act: async (page) => {
+          // Saved with its timers back on, so the routine below is the one the
+          // rest of this flow photographs.
+          await page.getByRole('switch', { name: 'Rest timers' }).click()
           await page.getByRole('button', { name: 'Create routine' }).click()
           await expect(page).toHaveURL(/\/routines$/)
           await page.getByLabel('Search routines').fill(routineName)
@@ -179,14 +201,16 @@ export const flows: Flow[] = [
 
           await page.getByRole('button', { name: 'Advanced', exact: true }).click()
           await page.getByRole('button', { name: 'Circuit', exact: true }).click()
-          await page.getByLabel('Rest after each exercise').fill('15')
-          await page.getByLabel('Rest after each round').fill('90')
+          await restField(page, 'Rest after each exercise in group A').fill('0:15')
+          await restField(page, 'Rest after each round in group A').fill('1:30')
 
           // Two groups, since that is where the row runs out of width: the
           // exercise name shares it with the reorder and move controls.
           await page.getByRole('button', { name: 'New group' }).click()
-          const move = page.getByRole('button', { name: /^Actions for / }).last()
-          await move.click()
+          await page
+            .getByRole('button', { name: /^Actions for / })
+            .last()
+            .click()
           await page.getByRole('menuitem', { name: 'Move to group B' }).click()
         },
         name: 'grouped',

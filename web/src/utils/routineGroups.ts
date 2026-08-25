@@ -58,6 +58,14 @@ export interface DraftEntry {
 export interface DraftGroup {
   id: string
   mode: GroupMode
+  /**
+   * Whether this block runs a rest timer at all.
+   *
+   * Off is stored as no rest anywhere in the block, since "no timer" and "rest
+   * for nothing" are the same session. The lengths stay in the draft while it
+   * is off, so flipping it twice costs nothing.
+   */
+  restTimers: boolean
   restBetweenExercisesSeconds: number
   restBetweenRoundsSeconds: number
   entries: DraftEntry[]
@@ -70,10 +78,15 @@ const newLocalId = (prefix: string) => {
   return `${prefix}-${nextLocalId}`
 }
 
-const straightGroup = (entries: DraftEntry[]): DraftGroup => ({
+const straightGroup = (
+  entries: DraftEntry[],
+  restBetweenExercisesSeconds = defaultRestSeconds,
+): DraftGroup => ({
   id: newLocalId('group'),
   mode: 'straight',
-  restBetweenExercisesSeconds: 0,
+  restTimers: true,
+  restBetweenExercisesSeconds,
+  // A straight block is worked once through, so there is no round to close.
   restBetweenRoundsSeconds: 0,
   entries,
 })
@@ -103,6 +116,8 @@ export const singleStraightGroup = (exerciseIds: readonly string[] = []): DraftG
  * groups can name the same exercise, and one block trains it once.
  */
 export const collapseToSingleGroup = (groups: readonly DraftGroup[]): DraftGroup[] => {
+  // One block cannot run two timers, so it runs one if any block did.
+  const restTimers = groups.some((group) => group.restTimers)
   const seen = new Set<string>()
   const entries = groups
     .flatMap((group) => group.entries)
@@ -112,7 +127,9 @@ export const collapseToSingleGroup = (groups: readonly DraftGroup[]): DraftGroup
       return true
     })
 
-  return [straightGroup(entries)]
+  // The block keeps the first group's pause between exercises: the structure is
+  // what a single block cannot express, not the rests.
+  return [{ ...straightGroup(entries, groups[0]?.restBetweenExercisesSeconds), restTimers }]
 }
 
 /** A, B, C — how a group is named everywhere it is spoken about. */
@@ -138,17 +155,34 @@ export const draftGroupsFromRoutine = (
 ): DraftGroup[] => {
   if (!groups.length) return singleStraightGroup(exerciseIds)
 
-  return groups.map((group) => ({
-    id: newLocalId('group'),
-    mode: group.mode === RoutineGroupMode.CIRCUIT ? 'circuit' : 'straight',
-    restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
-    restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
-    entries: group.exercises.map((entry) => ({
-      key: newLocalId('entry'),
-      exerciseId: entry.exercise?.id ?? '',
-      restSeconds: entry.restSeconds,
-    })),
-  }))
+  return groups.map((group) => {
+    // A block that rests nowhere is a block with the timer off. Its fields fall
+    // back to what a new occurrence would take, so switching the timer on hands
+    // back a routine's worth of lengths rather than a column of zeros.
+    const restTimers =
+      group.restBetweenExercisesSeconds > 0 ||
+      group.restBetweenRoundsSeconds > 0 ||
+      group.exercises.some((entry) => entry.restSeconds > 0)
+
+    return {
+      id: newLocalId('group'),
+      mode: group.mode === RoutineGroupMode.CIRCUIT ? 'circuit' : 'straight',
+      restTimers,
+      restBetweenExercisesSeconds: restTimers
+        ? group.restBetweenExercisesSeconds
+        : defaultRestSeconds,
+      restBetweenRoundsSeconds: restTimers
+        ? group.restBetweenRoundsSeconds
+        : defaultRoundRestSeconds,
+      entries: group.exercises.map((entry) => ({
+        key: newLocalId('entry'),
+        exerciseId: entry.exercise?.id ?? '',
+        restSeconds: restTimers
+          ? entry.restSeconds
+          : ((entry.exercise && newOccurrenceRestSeconds(entry.exercise)) ?? defaultRestSeconds),
+      })),
+    }
+  })
 }
 
 /** Whether the group already trains this exercise, and so will not take it again. */
@@ -239,6 +273,7 @@ export const addGroup = (groups: readonly DraftGroup[]): DraftGroup[] => [
   {
     id: newLocalId('group'),
     mode: 'circuit',
+    restTimers: true,
     restBetweenExercisesSeconds: 0,
     restBetweenRoundsSeconds: defaultRoundRestSeconds,
     entries: [],
@@ -276,6 +311,17 @@ const clampRest = (value: number) =>
 
 /** Keeps a group's settings inside what the API accepts. */
 export const clampGroup = (group: DraftGroup): DraftGroup => {
+  // No timer is no rest: the lengths the draft is holding are what the switch
+  // would hand back, not what this routine trains with.
+  if (!group.restTimers) {
+    return {
+      ...group,
+      restBetweenExercisesSeconds: 0,
+      restBetweenRoundsSeconds: 0,
+      entries: group.entries.map((entry) => ({ ...entry, restSeconds: 0 })),
+    }
+  }
+
   // A circuit rests on the way to the next exercise and on the way into the
   // next round, so a set rest has nowhere to go while it is one. It travels
   // anyway, so a group switched back to straight sets rests as it did before.
@@ -284,8 +330,15 @@ export const clampGroup = (group: DraftGroup): DraftGroup => {
     restSeconds: clampRest(entry.restSeconds),
   }))
 
+  // A straight block pauses on the way to the next exercise like a circuit
+  // does; what it has no use for is a round rest, having no rounds.
   if (group.mode !== 'circuit') {
-    return { ...group, restBetweenExercisesSeconds: 0, restBetweenRoundsSeconds: 0, entries }
+    return {
+      ...group,
+      restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
+      restBetweenRoundsSeconds: 0,
+      entries,
+    }
   }
 
   return {

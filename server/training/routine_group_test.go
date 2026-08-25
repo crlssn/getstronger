@@ -116,7 +116,9 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 			},
 		},
 		{
-			name: "both group rests belong to a circuit",
+			// A straight block pauses between exercises like a circuit does, but
+			// is worked once through, so it has no round to close.
+			name: "a straight group keeps its rest between exercises and drops the round",
 			groups: []training.RoutineGroupDraft{
 				{
 					Mode:                        training.RoutineGroupModeStraight,
@@ -127,7 +129,29 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 			},
 			ordered: []string{"a"},
 			expected: []training.RoutineGroupDraft{
-				{Mode: training.RoutineGroupModeStraight, Exercises: exercises("a")},
+				{
+					Mode:                        training.RoutineGroupModeStraight,
+					RestBetweenExercisesSeconds: 30,
+					Exercises:                   exercises("a"),
+				},
+			},
+		},
+		{
+			name: "a rest between exercises outside the supported range is pulled back into it",
+			groups: []training.RoutineGroupDraft{
+				{
+					Mode:                        training.RoutineGroupModeStraight,
+					RestBetweenExercisesSeconds: 99999,
+					Exercises:                   exercises("a"),
+				},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{
+					Mode:                        training.RoutineGroupModeStraight,
+					RestBetweenExercisesSeconds: 3600,
+					Exercises:                   exercises("a"),
+				},
 			},
 		},
 		{

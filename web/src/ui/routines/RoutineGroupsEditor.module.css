@@ -39,8 +39,10 @@
   @apply flex-1;
 }
 
+/* Ruled below only: the "Exercises" heading already separates the card from
+ * the form above it, and a second line under it read as a stray edge. */
 .settings {
-  @apply flex flex-col divide-y divide-border border-y border-border;
+  @apply flex flex-col divide-y divide-border border-b border-border;
 }
 
 .settingRow {
@@ -53,11 +55,6 @@
 
 .settingLabel small {
   @apply block text-xs font-normal text-text-subtle;
-}
-
-/* Positioning only: AppNumberField draws the field and its unit. */
-.secondsField {
-  @apply w-28 shrink-0;
 }
 
 .exercises {
@@ -93,12 +90,12 @@
   @apply mr-auto min-w-0 flex-1 truncate pl-2 text-sm font-semibold text-text;
 }
 
+/* The row's three controls read as one set, so the menu drops the border the
+ * trigger wears when it sits alone in a nav bar. */
 .moveButton {
   @apply shrink-0;
 }
 
-/* The row's three controls read as one set, so the menu drops the border the
- * trigger wears when it sits alone in a nav bar. */
 .moveMenu {
   @apply border-transparent bg-transparent;
 }
