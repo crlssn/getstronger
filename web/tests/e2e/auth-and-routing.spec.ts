@@ -324,8 +324,8 @@ test.describe('account deletion', () => {
 
     await page.goto('/profile')
     await page
-      .getByRole('region', { name: 'Danger zone' })
-      .getByRole('button', { name: 'Delete account' })
+      .getByRole('region', { name: 'Account' })
+      .getByRole('button', { name: /Delete account/ })
       .click()
 
     const sheet = page.getByRole('dialog')

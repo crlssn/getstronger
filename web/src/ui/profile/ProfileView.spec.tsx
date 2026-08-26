@@ -322,10 +322,16 @@ describe('ProfileView', () => {
     })
   })
 
-  test('offers the way out', async () => {
+  // Three levels of alarm for something done once: the only filled red button
+  // in the app, in a tinted red card, under a red-outlined log out. Both are
+  // plain rows now, and the red waits in the confirmation.
+  test('offers the way out and the way off as two plain rows', async () => {
     render()
 
-    expect(await screen.findByRole('link', { name: /Log out/ })).toHaveAttribute('href', '/logout')
+    const account = within(await screen.findByRole('region', { name: 'Account' }))
+    expect(account.getByRole('link', { name: /Log out/ })).toHaveAttribute('href', '/logout')
+    expect(account.getByRole('button', { name: /Delete account/ })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Danger zone' })).not.toBeInTheDocument()
   })
 
   // Both app stores require the account to be deletable from inside the app.
@@ -334,8 +340,8 @@ describe('ProfileView', () => {
       render()
       await loaded()
       await userEvent.click(
-        within(screen.getByRole('region', { name: 'Danger zone' })).getByRole('button', {
-          name: 'Delete account',
+        within(screen.getByRole('region', { name: 'Account' })).getByRole('button', {
+          name: /Delete account/,
         }),
       )
 

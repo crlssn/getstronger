@@ -70,11 +70,13 @@
   @apply card divide-y divide-border overflow-hidden;
 }
 
-.settingsCard a {
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
+.settingsCard a,
+.settingsCard button {
+  @apply grid w-full grid-cols-[1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
 }
 
-.settingsCard > a > svg {
+.settingsCard > a > svg,
+.settingsCard > button > svg {
   @apply size-5 text-text-subtle;
 }
 
@@ -106,33 +108,8 @@
   @apply mt-0.5 text-sm text-text-subtle;
 }
 
-/* Signing out is destructive, and reads from the sunken canvas rather
-   than a card, so it keeps a border to sit on. */
-.logoutLink {
-  @apply mt-4 border-danger/30 bg-white;
-}
-
-/* Set apart from the settings cards above it: an irreversible action should
-   not read as one more row of preferences. */
-.dangerZone {
-  @apply flex flex-col gap-3 rounded-card border border-danger/30 bg-danger-surface p-4 sm:flex-row sm:items-center sm:justify-between;
-}
-
-.dangerZone strong,
-.dangerZone small {
-  @apply block;
-}
-
-.dangerZone strong {
-  @apply text-base font-semibold text-danger-strong;
-}
-
-.dangerZone small {
-  @apply mt-0.5 text-sm text-text-muted;
-}
-
-/* The one filled-red control in the app: deleting an account is the only
-   action whose weight earns the danger colour as a fill rather than as text. */
-.deleteAccount {
-  @apply shrink-0 border-danger bg-danger text-white hover:bg-danger-strong hover:text-white;
+/* A row that acts rather than navigates, in the shape of the ones that do:
+   the button role brings a height, a radius and a weight it does not want. */
+.accountAction {
+  @apply h-auto min-h-0 rounded-none text-left font-normal text-text;
 }

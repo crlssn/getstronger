@@ -1,12 +1,7 @@
 import type { User } from '@/proto/api/v1/shared_pb'
 import type { ReactNode } from 'react'
 
-import {
-  ArrowRightOnRectangleIcon,
-  BellIcon,
-  ChevronRightIcon,
-  PencilSquareIcon,
-} from '@heroicons/react/24/outline'
+import { BellIcon, ChevronRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -366,29 +361,37 @@ export const ProfileView = () => {
           ),
       )}
 
-      <AppButton type="link" colour="destructive" className={styles.logoutLink} to="/logout">
-        <ArrowRightOnRectangleIcon className="size-5" aria-hidden="true" /> {t('auth.logout')}
-      </AppButton>
+      {/* Two plain rows, in the shape every other settings row takes. Between
+          them these carried three levels of alarm — the app's only filled red
+          button, in a tinted red card, under a red-outlined log out — for
+          things done once or never. The red waits in the confirmation, which
+          is where it means something.
 
-      {/* Both app stores require an account made in the app to be deletable
-          from inside it, which is why this sits on the profile rather than
+          Both app stores require an account made in the app to be deletable
+          from inside it, which is why deleting sits on the profile rather than
           behind a support email. */}
-      <section className={styles.dangerZone} aria-label={t('profile.dangerZone')}>
-        <div>
-          <strong>{t('profile.deleteAccount')}</strong>
-          <small>{t('profile.deleteAccountBody')}</small>
-        </div>
+      <section className={styles.settingsCard} aria-label={t('profile.accountSection')}>
+        <Link to="/logout">
+          <span>
+            <strong>{t('auth.logout')}</strong>
+            <small>{t('profile.logoutBody')}</small>
+          </span>
+          <ChevronRightIcon aria-hidden="true" />
+        </Link>
         <AppButton
           type="button"
-          colour="destructive"
-          width="auto"
-          className={styles.deleteAccount}
+          colour="ghost"
+          className={styles.accountAction}
           onClick={() => {
             setDeleteError(undefined)
             setDeletePassword('')
           }}
         >
-          {t('profile.deleteAccount')}
+          <span>
+            <strong>{t('profile.deleteAccount')}</strong>
+            <small>{t('profile.deleteAccountBody')}</small>
+          </span>
+          <ChevronRightIcon aria-hidden="true" />
         </AppButton>
       </section>
 
