@@ -15,7 +15,7 @@
 }
 
 .title {
-  @apply mt-1 text-display font-bold text-text;
+  @apply mt-1 text-display font-extrabold text-text;
 }
 
 .lead {

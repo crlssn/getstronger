@@ -16,7 +16,10 @@ interface Props<T> {
   options: ReadonlyArray<SegmentedOption<T>>
   value: T
   onChange: (value: T) => void
-  /** Numeric labels only — 7D, 4W, 1Y. Nothing long enough to need the room. */
+  /**
+   * Short labels only — 7D, 4W, 1Y, or a two-word switch sharing a row with a
+   * title. Nothing long enough to need the room it gives up.
+   */
   density?: 'default' | 'compact'
   /** Locks the control while the choice is being saved. */
   busy?: boolean

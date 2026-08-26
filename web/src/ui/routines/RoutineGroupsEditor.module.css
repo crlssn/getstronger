@@ -1,48 +1,52 @@
 @reference '../../assets/base.css';
 
-/* A group is a card of the page rather than a box inside the card above it.
- * Nothing inside is boxed either: settings and exercises are ruled rows, so the
- * exercise name keeps the width that four nested borders were taking. */
+/* A group is a titled thing on the page: its name and how it runs sit above the
+ * card, and the card holds what is being built. */
 .group {
-  @apply card mb-4 flex flex-col gap-3 p-4;
-}
-
-.group.circuit {
-  @apply border-ink-border;
+  @apply mb-4 flex flex-col;
 }
 
 .groupHeader {
-  @apply flex items-center gap-3;
+  @apply mb-1 flex items-center gap-2 px-1;
 }
 
 .groupBadge {
-  @apply grid size-8 shrink-0 place-items-center rounded-control bg-ink text-sm font-bold text-white;
+  @apply grid size-7 shrink-0 place-items-center rounded-control bg-ink text-xs font-bold text-white;
 }
 
 .groupTitle {
-  @apply min-w-0;
+  @apply mr-auto min-w-0 truncate text-body font-bold text-text;
 }
 
-.groupTitle strong {
-  @apply block text-sm font-semibold text-text;
-}
-
-.groupTitle small {
-  @apply block text-xs text-text-subtle;
-}
-
+/* Auto-width beside the title rather than a second full-width control inside
+   the card. */
 .modeSwitch {
-  @apply w-full;
+  @apply shrink-0;
 }
 
-.modeSwitch > * {
-  @apply flex-1;
+/* The line that says how the group runs, and the one action that is about the
+   group rather than about what is in it. */
+.groupHintRow {
+  @apply mb-2 flex items-center gap-2 px-1;
 }
 
-/* Ruled below only: the "Exercises" heading already separates the card from
- * the form above it, and a second line under it read as a stray edge. */
+.groupHint {
+  @apply min-w-0 flex-1 text-meta font-medium text-text-subtle;
+}
+
+/* Positioning only: the button's own quiet is the design system's. */
+.removeGroup {
+  @apply shrink-0;
+}
+
+/* Nothing inside is boxed either: settings and exercises are ruled rows, so the
+ * exercise name keeps the width that four nested borders were taking. */
+.groupCard {
+  @apply card overflow-hidden;
+}
+
 .settings {
-  @apply flex flex-col divide-y divide-border border-b border-border;
+  @apply flex flex-col border-b border-border px-4 pt-1;
 }
 
 .settingRow {
@@ -50,11 +54,25 @@
 }
 
 .settingLabel {
-  @apply min-w-0 text-sm font-medium text-text;
+  @apply min-w-0 text-body font-bold text-text;
 }
 
 .settingLabel small {
-  @apply block text-xs font-normal text-text-subtle;
+  @apply block text-meta font-medium text-text-subtle;
+}
+
+/* The lengths, once the switch has asked for them: tinted rows rather than
+   another set of ruled ones, so they read as belonging to the switch above. */
+.restLengths {
+  @apply mb-3 flex flex-col gap-2;
+}
+
+.restRow {
+  @apply flex items-center justify-between gap-3 rounded-control bg-ink-surface py-1.5 pl-3 pr-1.5;
+}
+
+.restLabel {
+  @apply min-w-0 truncate text-sm font-semibold text-text;
 }
 
 .exercises {
@@ -62,54 +80,66 @@
 }
 
 .exercises li {
-  @apply flex flex-col py-1;
+  @apply flex flex-col;
 }
 
 .entryRow {
-  @apply flex min-h-(--size-control) items-center gap-1;
+  @apply flex min-h-(--size-control) items-center gap-1 pl-3 pr-2;
 }
 
-/* The rest is a second line rather than a fourth control on the first: on a
+/* The rest is a second line rather than a fifth control on the first: on a
  * phone the exercise name has no width to spare. Indented to the name above it,
  * so the row reads as one exercise and its setting. */
 .entryRest {
-  @apply flex items-center justify-between gap-3 pb-1 pl-8;
+  @apply flex items-center justify-between gap-3 pb-2 pl-11 pr-2;
 }
 
 .entryRestLabel {
-  @apply min-w-0 truncate text-xs text-text-subtle;
+  @apply min-w-0 truncate text-meta font-semibold text-text-subtle;
 }
 
+/* A count, not a tile: the number orders the list and nothing more. */
 .position {
-  @apply grid size-6 shrink-0 place-items-center rounded-md bg-ink-surface text-xs font-bold tabular-nums text-text-muted;
+  @apply w-6 shrink-0 text-center text-xs font-bold tabular-nums text-text-subtle;
 }
 
 /* The name takes whatever the controls leave, and never less than legible: it
- * is the only part of the row that says which exercise this is. */
+ * is the only part of the row that says which exercise this is, so it is read
+ * at body size while everything around it is smaller. */
 .exerciseName {
-  @apply mr-auto min-w-0 flex-1 truncate pl-2 text-sm font-semibold text-text;
+  @apply mr-auto min-w-0 flex-1 truncate pl-2 text-body font-semibold text-text;
 }
 
-/* The row's three controls read as one set, so the menu drops the border the
- * trigger wears when it sits alone in a nav bar. */
-.moveButton {
-  @apply shrink-0;
+/* A grip, not a menu: short strokes that read as something to hold rather than
+   as three lines of anything. */
+.dragHandle {
+  @apply cursor-grab text-ink-border active:cursor-grabbing;
 }
 
-.moveMenu {
-  @apply border-transparent bg-transparent;
+.dragHandle svg {
+  @apply size-4;
 }
 
+/* SortableJS puts these on the DOM itself, so the hashed names are handed to
+   it rather than written in the markup. */
+.sortableGhost {
+  @apply opacity-30;
+}
+
+.sortableDrag {
+  @apply rounded-control border border-ink-border bg-surface shadow-raised;
+}
+
+/* Ruled off from the exercises above it: adding one is what a group is built
+   with, so it is the width of the card rather than a button parked in a row. */
 .groupActions {
-  @apply flex items-center gap-2;
+  @apply border-t border-border px-2;
 }
 
-/* Positioning only: the whole width the row can spare, because adding an
-   exercise is what a group is built with. */
 .addExercise {
-  @apply flex-1;
+  @apply w-full;
 }
 
 .emptyGroup {
-  @apply rounded-control bg-ink-surface p-4 text-center text-sm text-text-subtle;
+  @apply px-4 py-6 text-center text-sm text-text-subtle;
 }

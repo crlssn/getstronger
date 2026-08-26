@@ -13,6 +13,12 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
   invalid?: boolean
   /** A control at the trailing edge, inside the field's border. */
   trailing?: ReactNode
+  /**
+   * `card` draws the field as the panel it fills: the label sits inside it as
+   * an eyebrow and the value is read at title size. For the one field a screen
+   * is built around, rather than one of a form's many.
+   */
+  variant?: 'default' | 'card'
   /** Positions the field. The input's own styling is never replaced. */
   className?: string
 }
@@ -23,12 +29,21 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
  * Screens used to assemble those three by hand, which is how the app ended up
  * with four field heights and three focus treatments.
  */
-export const AppInput = ({ label, hint, invalid, trailing, className, id, ...rest }: Props) => {
+export const AppInput = ({
+  label,
+  hint,
+  invalid,
+  trailing,
+  variant = 'default',
+  className,
+  id,
+  ...rest
+}: Props) => {
   const generatedId = useId()
   const inputId = id ?? generatedId
 
   return (
-    <div className={cn(styles.field, className)}>
+    <div className={cn(styles.field, variant === 'card' && styles.card, className)}>
       {label && (
         <label htmlFor={inputId} className={styles.label}>
           {label}

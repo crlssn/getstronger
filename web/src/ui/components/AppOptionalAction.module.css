@@ -1,7 +1,7 @@
 @reference '../../assets/base.css';
 
 .optionalAction {
-  @apply flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-border bg-transparent px-4 py-2.5 text-text-muted transition hover:border-ink-border hover:bg-ink-surface/60 hover:text-text;
+  @apply flex min-h-(--size-control) w-full items-center justify-center gap-2 rounded-control border border-dashed border-ink-border bg-transparent px-4 py-2.5 text-text-muted transition hover:border-ink-muted hover:bg-ink-surface/60 hover:text-text;
 }
 
 .optionalAction svg {

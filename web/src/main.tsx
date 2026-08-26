@@ -1,3 +1,8 @@
+// The typeface first, so its @font-face rules are in the sheet before anything
+// asks for them. Imported here rather than from main.css: Vite rewrites and
+// emits the font files for a module import, and leaves a plain CSS @import of
+// a package pointing at a path that only exists in node_modules.
+import '@fontsource-variable/plus-jakarta-sans'
 import './assets/main.css'
 
 import { StrictMode } from 'react'

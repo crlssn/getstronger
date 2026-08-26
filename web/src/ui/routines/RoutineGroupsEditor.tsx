@@ -1,28 +1,27 @@
-import type { DropdownItem } from '@/types/dropdown'
 import type { DraftGroup, GroupMode } from '@/utils/routineGroups'
 
-import { ChevronDownIcon, ChevronUpIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppDurationStepper } from '@/ui/components/AppDurationStepper'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSwitch } from '@/ui/components/AppSwitch'
-import { DropdownButton } from '@/ui/components/DropdownButton'
+import { AppValueChip } from '@/ui/components/AppValueChip'
+import { formatMeasurementDuration } from '@/utils/exerciseMeasurements'
 import {
   addGroup,
   defaultRoundRestSeconds,
-  groupHasExercise,
   groupLetter,
-  moveEntryToGroup,
-  moveEntryWithinGroup,
   removeEntry,
   removeGroup,
+  reorderEntry,
   setEntryRest,
 } from '@/utils/routineGroups'
+import { useSortable } from '@/utils/useSortable'
 import styles from './RoutineGroupsEditor.module.css'
 
 interface Props {
@@ -50,14 +49,113 @@ const setMode = (groups: DraftGroup[], groupId: string, mode: GroupMode) => {
   })
 }
 
+interface EntriesProps {
+  groups: DraftGroup[]
+  group: DraftGroup
+  /** Whether the rest between sets is a setting this block has at all. */
+  restBetweenSets: boolean
+  nameOf: (exerciseId: string) => string
+  onChange: (groups: DraftGroup[]) => void
+}
+
+/**
+ * A group's exercises, in the order they are trained.
+ *
+ * Its own component because each list is dragged on its own, and a hook cannot
+ * be called once per group from a loop.
+ */
+const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: EntriesProps) => {
+  const { t } = useTranslation()
+
+  // Which row has its rest open. One at a time: a rest is a detour from
+  // building the routine rather than a column of the list.
+  const [openEntry, setOpenEntry] = useState('')
+
+  // SortableJS moves the rows itself; the draft is reordered to match so React
+  // renders the order it is already looking at.
+  const list = useSortable<HTMLOListElement>(
+    {
+      handle: `.${styles.dragHandle}`,
+      ghostClass: styles.sortableGhost,
+      dragClass: styles.sortableDrag,
+      animation: 150,
+      onReorder: (from, to) => onChange(reorderEntry(groups, group.id, from, to)),
+    },
+    group.entries.length > 1,
+  )
+
+  if (!group.entries.length) {
+    return <p className={styles.emptyGroup}>{t('routine.form.groups.empty')}</p>
+  }
+
+  return (
+    <ol ref={list} className={styles.exercises}>
+      {group.entries.map((entry, position) => {
+        const name = nameOf(entry.exerciseId)
+        const rest = formatMeasurementDuration(entry.restSeconds)
+        const open = restBetweenSets && openEntry === entry.key
+
+        return (
+          <li key={entry.key}>
+            <div className={styles.entryRow}>
+              <span className={styles.position}>{String(position + 1).padStart(2, '0')}</span>
+              <span className={styles.exerciseName}>{name}</span>
+
+              {/* The rest reads as a value on the row and unfolds its stepper
+                  only for somebody tuning it. */}
+              {restBetweenSets && (
+                <AppValueChip
+                  label={t('routine.form.groups.restSetChip', { name, value: rest })}
+                  value={rest}
+                  expanded={open}
+                  onClick={() => setOpenEntry(open ? '' : entry.key)}
+                />
+              )}
+
+              {/* Quiet, unlike the group's own bin: taking an exercise out of a
+                  block is undone by adding it again, and a column of red would
+                  shout the list down. */}
+              <AppIconButton
+                icon={TrashIcon}
+                label={t('routine.form.groups.removeExercise', { name })}
+                onClick={() => onChange(removeEntry(groups, entry.key))}
+              />
+              <AppIconButton
+                className={styles.dragHandle}
+                icon={Bars3Icon}
+                label={t('routine.form.groups.reorder', { name })}
+              />
+            </div>
+
+            {/* Zero is an answer here: it turns the timer off for this
+                occurrence alone. */}
+            {open && (
+              <div className={styles.entryRest}>
+                <span className={styles.entryRestLabel}>{t('routine.form.groups.restSet')}</span>
+                <AppDurationStepper
+                  // Every row's label reads the same, so the name is what tells
+                  // a screen reader which one this is.
+                  label={t('routine.form.groups.restSetAria', { name })}
+                  value={entry.restSeconds}
+                  onChange={(seconds) => onChange(setEntryRest(groups, entry.key, seconds))}
+                />
+              </div>
+            )}
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
 /**
  * The exercises of a routine, in the blocks that train them.
  *
  * A group is a card of the page, not a box inside another box. On a phone the
  * exercise name is the first thing to lose room, and every border it sits
- * inside takes some of it — so nothing here is boxed, only ruled. Where an
- * exercise goes next is the row's menu, which can say "Move to group B" where a
- * select could only name it.
+ * inside takes some of it — so nothing here is boxed, only ruled. How the block
+ * runs sits beside its badge above the card, where it reads as a property of
+ * the group rather than as another full-width control inside it.
  */
 export const RoutineGroupsEditor = ({
   groups,
@@ -67,29 +165,6 @@ export const RoutineGroupsEditor = ({
   onAddExercise,
 }: Props) => {
   const { t } = useTranslation()
-
-  // Only the groups that could take it: one group trains an exercise once.
-  const moveTargets = (groupId: string, exerciseId: string) =>
-    groups
-      .map((group, index) => ({ group, letter: groupLetter(index) }))
-      .filter(({ group }) => group.id !== groupId && !groupHasExercise(group, exerciseId))
-
-  const entryActions = (
-    key: string,
-    groupId: string,
-    exerciseId: string,
-    name: string,
-  ): DropdownItem[] => [
-    ...moveTargets(groupId, exerciseId).map(({ group, letter }) => ({
-      func: async () => onChange(moveEntryToGroup(groups, key, group.id)),
-      title: t('routine.form.groups.moveToGroup', { letter }),
-    })),
-    {
-      destructive: true,
-      func: async () => onChange(removeEntry(groups, key)),
-      title: t('routine.form.groups.removeExercise', { name }),
-    },
-  ]
 
   return (
     <>
@@ -101,220 +176,161 @@ export const RoutineGroupsEditor = ({
         const walksBetweenExercises = group.entries.length > 1
 
         return (
-          <section key={group.id} className={cn(styles.group, circuit && styles.circuit)}>
-            {/* Only a group is named on the card. The plain block a routine
-                starts as is the "Exercises" label above it. */}
+          <section key={group.id} className={styles.group}>
+            {/* Only a group is named. The plain block a routine starts as is
+                the whole of the form's exercise list. */}
             {grouped && (
-              <header className={styles.groupHeader}>
-                <span className={styles.groupBadge} aria-hidden="true">
-                  {letter}
-                </span>
-                <div className={styles.groupTitle}>
-                  <strong>{t('routine.form.groups.groupName', { letter })}</strong>
-                  <small>
+              <>
+                <header className={styles.groupHeader}>
+                  <span className={styles.groupBadge} aria-hidden="true">
+                    {letter}
+                  </span>
+                  <strong className={styles.groupTitle}>
+                    {t('routine.form.groups.groupName', { letter })}
+                  </strong>
+                  <AppSegmented
+                    className={styles.modeSwitch}
+                    density="compact"
+                    label={t('routine.form.groups.modeAria', { letter })}
+                    options={[
+                      { label: t('routine.form.groups.straight'), value: 'straight' as GroupMode },
+                      { label: t('routine.form.groups.circuit'), value: 'circuit' as GroupMode },
+                    ]}
+                    value={group.mode}
+                    onChange={(mode) => onChange(setMode(groups, group.id, mode))}
+                  />
+                </header>
+                <div className={styles.groupHintRow}>
+                  <p className={styles.groupHint}>
                     {circuit
                       ? t('routine.form.groups.circuitSummary')
                       : t('routine.form.groups.straightSummary')}
-                  </small>
+                  </p>
+                  {/* Quiet, and nowhere near the button that fills the group:
+                      what it removes is the block, not the exercises in it —
+                      those fold into the group above. */}
+                  {groups.length > 1 && (
+                    <AppButton
+                      type="button"
+                      colour="ghost"
+                      size="inline"
+                      width="auto"
+                      className={styles.removeGroup}
+                      aria-label={t('routine.form.groups.removeGroup', { letter })}
+                      onClick={() => onChange(removeGroup(groups, group.id))}
+                    >
+                      {t('common.remove')}
+                    </AppButton>
+                  )}
                 </div>
-              </header>
+              </>
             )}
 
-            {grouped && (
-              <AppSegmented
-                className={styles.modeSwitch}
-                label={t('routine.form.groups.modeAria', { letter })}
-                options={[
-                  { label: t('routine.form.groups.straight'), value: 'straight' as GroupMode },
-                  { label: t('routine.form.groups.circuit'), value: 'circuit' as GroupMode },
-                ]}
-                value={group.mode}
-                onChange={(mode) => onChange(setMode(groups, group.id, mode))}
-              />
-            )}
-
-            {/* The switch is the whole answer for most routines, which want a
-                rest timer and do not care how long: the lengths only appear for
-                somebody who came to change them. */}
-            <div className={styles.settings}>
-              <div className={styles.settingRow}>
-                <div className={styles.settingLabel}>
-                  {t('routine.form.groups.restTimers')}
-                  {/* Off is not a folded-away setting but an answer, so the
-                      line states it rather than advertising lengths the
-                      routine is not training with. */}
-                  <small>
-                    {group.restTimers
-                      ? t('routine.form.groups.restTimersHint')
-                      : t(
-                          circuit
-                            ? 'routine.form.groups.restTimersOffCircuit'
-                            : 'routine.form.groups.restTimersOff',
-                        )}
-                  </small>
+            <div className={styles.groupCard}>
+              {/* The switch is the whole answer for most routines, which want a
+                  rest timer and do not care how long: the lengths only appear
+                  for somebody who came to change them. */}
+              <div className={styles.settings}>
+                <div className={styles.settingRow}>
+                  <div className={styles.settingLabel}>
+                    {t('routine.form.groups.restTimers')}
+                    {/* Off is not a folded-away setting but an answer, so the
+                        line states it rather than advertising lengths the
+                        routine is not training with. */}
+                    <small>
+                      {group.restTimers
+                        ? t(
+                            circuit
+                              ? 'routine.form.groups.restTimersHintCircuit'
+                              : 'routine.form.groups.restTimersHint',
+                          )
+                        : t(
+                            circuit
+                              ? 'routine.form.groups.restTimersOffCircuit'
+                              : 'routine.form.groups.restTimersOff',
+                          )}
+                    </small>
+                  </div>
+                  <AppSwitch
+                    checked={group.restTimers}
+                    label={
+                      grouped
+                        ? t('routine.form.groups.restTimersAria', { letter })
+                        : t('routine.form.groups.restTimers')
+                    }
+                    onChange={(restTimers) => onChange(withGroup(groups, group.id, { restTimers }))}
+                  />
                 </div>
-                <AppSwitch
-                  checked={group.restTimers}
-                  label={
-                    grouped
-                      ? t('routine.form.groups.restTimersAria', { letter })
-                      : t('routine.form.groups.restTimers')
-                  }
-                  onChange={(restTimers) => onChange(withGroup(groups, group.id, { restTimers }))}
-                />
+
+                {group.restTimers && (walksBetweenExercises || circuit) && (
+                  <div className={styles.restLengths}>
+                    {walksBetweenExercises && (
+                      <div className={styles.restRow}>
+                        <span className={styles.restLabel}>
+                          {t('routine.form.groups.restExercise')}
+                        </span>
+                        <AppDurationStepper
+                          label={
+                            grouped
+                              ? t('routine.form.groups.restExerciseAriaGroup', { letter })
+                              : t('routine.form.groups.restExerciseAria')
+                          }
+                          value={group.restBetweenExercisesSeconds}
+                          onChange={(seconds) =>
+                            onChange(
+                              withGroup(groups, group.id, { restBetweenExercisesSeconds: seconds }),
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+
+                    {circuit && (
+                      <div className={styles.restRow}>
+                        <span className={styles.restLabel}>
+                          {t('routine.form.groups.restRound')}
+                        </span>
+                        <AppDurationStepper
+                          label={
+                            grouped
+                              ? t('routine.form.groups.restRoundAriaGroup', { letter })
+                              : t('routine.form.groups.restRoundAria')
+                          }
+                          value={group.restBetweenRoundsSeconds}
+                          onChange={(seconds) =>
+                            onChange(
+                              withGroup(groups, group.id, { restBetweenRoundsSeconds: seconds }),
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {group.restTimers && (
-                <>
-                  {walksBetweenExercises && (
-                    <div className={styles.settingRow}>
-                      <label className={styles.settingLabel} htmlFor={`rest-exercise-${group.id}`}>
-                        {t('routine.form.groups.restExercise')}
-                      </label>
-                      <AppDurationStepper
-                        id={`rest-exercise-${group.id}`}
-                        label={
-                          grouped
-                            ? t('routine.form.groups.restExerciseAriaGroup', { letter })
-                            : t('routine.form.groups.restExerciseAria')
-                        }
-                        value={group.restBetweenExercisesSeconds}
-                        onChange={(seconds) =>
-                          onChange(
-                            withGroup(groups, group.id, { restBetweenExercisesSeconds: seconds }),
-                          )
-                        }
-                      />
-                    </div>
-                  )}
+              <GroupEntries
+                groups={groups}
+                group={group}
+                // A circuit rests on the way to the next exercise and on the way
+                // into the next round, so only straight sets have somewhere to
+                // put a rest of their own.
+                restBetweenSets={group.restTimers && !circuit}
+                nameOf={nameOf}
+                onChange={onChange}
+              />
 
-                  {circuit && (
-                    <div className={styles.settingRow}>
-                      <label className={styles.settingLabel} htmlFor={`rest-round-${group.id}`}>
-                        {t('routine.form.groups.restRound')}
-                      </label>
-                      <AppDurationStepper
-                        id={`rest-round-${group.id}`}
-                        label={
-                          grouped
-                            ? t('routine.form.groups.restRoundAriaGroup', { letter })
-                            : t('routine.form.groups.restRoundAria')
-                        }
-                        value={group.restBetweenRoundsSeconds}
-                        onChange={(seconds) =>
-                          onChange(
-                            withGroup(groups, group.id, { restBetweenRoundsSeconds: seconds }),
-                          )
-                        }
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {group.entries.length > 0 ? (
-              <ol className={styles.exercises}>
-                {group.entries.map((entry, position) => {
-                  const name = nameOf(entry.exerciseId)
-
-                  return (
-                    <li key={entry.key}>
-                      <div className={styles.entryRow}>
-                        <span className={styles.position}>{position + 1}</span>
-                        <span className={styles.exerciseName}>{name}</span>
-
-                        <AppIconButton
-                          className={styles.moveButton}
-                          icon={ChevronUpIcon}
-                          label={t('routine.form.groups.moveUp', { name })}
-                          disabled={position === 0}
-                          onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, -1))}
-                        />
-                        <AppIconButton
-                          className={styles.moveButton}
-                          icon={ChevronDownIcon}
-                          label={t('routine.form.groups.moveDown', { name })}
-                          disabled={position === group.entries.length - 1}
-                          onClick={() => onChange(moveEntryWithinGroup(groups, entry.key, 1))}
-                        />
-
-                        {/* A menu earns its place when it can say "Move to
-                                group B"; where the routine is one block it
-                                would be hiding a single action, so that action
-                                is the button. */}
-                        {moveTargets(group.id, entry.exerciseId).length > 0 ? (
-                          <DropdownButton
-                            className={styles.moveMenu}
-                            label={t('routine.form.groups.entryActions', { name })}
-                            items={entryActions(entry.key, group.id, entry.exerciseId, name)}
-                          />
-                        ) : (
-                          // Quiet, unlike the group's own bin: taking an
-                          // exercise out of a block is undone by adding it
-                          // again, and a column of red would shout it down.
-                          <AppIconButton
-                            className={styles.moveButton}
-                            icon={TrashIcon}
-                            label={t('routine.form.groups.removeExercise', { name })}
-                            onClick={() => onChange(removeEntry(groups, entry.key))}
-                          />
-                        )}
-                      </div>
-
-                      {/* A circuit rests on the way to the next exercise and on
-                          the way into the next round, so only straight sets have
-                          somewhere to put a rest of their own. Zero is an answer
-                          here: it turns the timer off for this occurrence. */}
-                      {!circuit && group.restTimers && (
-                        <div className={styles.entryRest}>
-                          <label
-                            className={styles.entryRestLabel}
-                            htmlFor={`rest-set-${entry.key}`}
-                          >
-                            {t('routine.form.groups.restSet')}
-                          </label>
-                          <AppDurationStepper
-                            id={`rest-set-${entry.key}`}
-                            // Every row's label reads the same, so the name is
-                            // what tells a screen reader which one this is.
-                            label={t('routine.form.groups.restSetAria', { name })}
-                            value={entry.restSeconds}
-                            onChange={(seconds) =>
-                              onChange(setEntryRest(groups, entry.key, seconds))
-                            }
-                          />
-                        </div>
-                      )}
-                    </li>
-                  )
-                })}
-              </ol>
-            ) : (
-              <p className={styles.emptyGroup}>{t('routine.form.groups.empty')}</p>
-            )}
-
-            <div className={styles.groupActions}>
-              <AppButton
-                type="button"
-                colour="secondary"
-                size="sm"
-                className={styles.addExercise}
-                onClick={() => onAddExercise(group.id)}
-              >
-                <PlusIcon className="size-4" aria-hidden="true" /> {t('workout.addExercise')}
-              </AppButton>
-
-              {/* The icon alone: naming the group again would take room from
-                  the action people actually come here for. */}
-              {groups.length > 1 && (
-                <AppIconButton
-                  icon={TrashIcon}
-                  tone="danger"
-                  label={t('routine.form.groups.removeGroup', { letter })}
-                  onClick={() => onChange(removeGroup(groups, group.id))}
-                />
-              )}
+              <div className={styles.groupActions}>
+                <AppButton
+                  type="button"
+                  colour="ghost"
+                  size="sm"
+                  className={styles.addExercise}
+                  onClick={() => onAddExercise(group.id)}
+                >
+                  <PlusIcon className="size-4" aria-hidden="true" /> {t('workout.addExercise')}
+                </AppButton>
+              </div>
             </div>
           </section>
         )

@@ -1,0 +1,24 @@
+@reference '../../assets/base.css';
+
+/* Reads as a value rather than as a button until it is wanted, so it never
+ * competes with the name beside it. The button carries the tap-target floor on
+ * both axes; what is painted inside it is chip-sized. */
+.chip {
+  @apply grid min-h-(--size-control-sm) min-w-(--size-control-sm) shrink-0 place-items-center rounded-pill;
+}
+
+.pill {
+  @apply rounded-pill bg-ink-surface px-2.5 py-1 text-meta font-bold tabular-nums text-text-muted transition;
+}
+
+.chip:hover .pill {
+  @apply bg-ink-tint text-text;
+}
+
+.chip.expanded .pill {
+  @apply bg-ink text-white;
+}
+
+.chip.expanded:hover .pill {
+  @apply bg-ink-strong text-white;
+}

@@ -9,41 +9,47 @@
  * developer reaching for "a bit of colour" should find no name that invites it.
  */
 @theme static {
-  /* Ink — the graphite identity, unchanged. */
-  --color-ink: #25282d;
-  --color-ink-strong: #1f2226;
-  --color-ink-muted: #565b61;
+  /* Ink — the identity, and the warm near-black the design is drawn in. The
+   * graphite it replaced carried a blue cast that fought the paper below it. */
+  --color-ink: #17171a;
+  --color-ink-strong: #0b0b0d;
+  --color-ink-muted: #56534e;
   /* The pale end of the same ramp: a chip, an icon tile or a hover behind ink
    * text. Same value as --color-surface-track, different job — a groove and a
    * tint are separable later without hunting through 69 files. */
-  --color-ink-tint: #e8e9e7;
-  --color-ink-surface: #f5f5f2;
-  --color-ink-border: #d4d5d3;
+  --color-ink-tint: #e4e2dd;
+  --color-ink-surface: #f5f3f0;
+  --color-ink-border: #d3d0c9;
 
   /* Surface. The canvas is ink-warm: the one neutral family everywhere. */
   --color-surface: #ffffff;
-  --color-surface-sunken: #f5f5f3;
-  --color-surface-inverse: #25282d;
+  --color-surface-sunken: #f5f4f2;
+  --color-surface-inverse: #17171a;
   /* The groove a segmented control's selected pill sits in. It needs to read
    * against a white card, which --color-surface-sunken does not. */
-  --color-surface-track: #e8e9e7;
-  --color-border: #e3e5e0;
-  --color-border-strong: #cbd5e1;
+  --color-surface-track: #e4e2dd;
+  /* The rule between two rows of the same card, and the edge of the card
+   * itself: the shadow is what separates a card from the paper, so the border
+   * only has to close it. */
+  --color-border: #edebe7;
+  --color-border-strong: #c9c6c0;
 
   /* Text. The ink family's own black and greys — no cool cast. A fourth,
    * paler step is deliberately absent: a low-contrast tint may decorate a
    * glyph beside a label, never carry meaning on its own.
    * text-subtle sits at 4.5:1 against --color-surface-sunken, the lightest
    * thing it is ever read on; anything paler fails WCAG AA on the canvas. */
-  --color-text: #16181b;
-  --color-text-muted: #5b6167;
-  --color-text-subtle: #656b71;
+  --color-text: #17171a;
+  --color-text-muted: #605d57;
+  --color-text-subtle: #6e6b65;
 
   /* State. One green where there were three, an amber that is not the
-   * achievement orange, a named informational slate, and a badge colour that
+   * achievement orange, a neutral informational step, and a badge colour that
    * is separable from danger later without hunting through 69 files. */
   --color-success: #047857;
-  --color-success-surface: #ecfdf5;
+  /* Warmed a step off the cool mint it was, so a green tile sits on the same
+   * paper as everything around it. */
+  --color-success-surface: #edf7f1;
   --color-warning: #b45309;
   --color-warning-surface: #fffbeb;
   --color-danger: #dc2626;
@@ -52,8 +58,8 @@
   --color-danger-strong: #b91c1c;
   --color-danger-surface: #fef2f2;
   --color-badge: #dc2626;
-  --color-info: #334155;
-  --color-info-surface: #f1f5f9;
+  --color-info: #4c4943;
+  --color-info-surface: #f1efec;
   /* Gold is for personal records, nowhere else. Champagne surface, its border,
    * and a darker text step that clears contrast on that surface. */
   --color-record: #ad7b1f;
@@ -73,24 +79,36 @@
   --radius-sheet: 1.5rem;
   --radius-pill: 9999px;
 
-  /* Elevation — six steps become three. */
-  --shadow-card: 0 1px 2px rgb(2 6 23 / 0.06);
-  --shadow-raised: 0 4px 12px rgb(2 6 23 / 0.08);
-  --shadow-overlay: 0 16px 40px rgb(2 6 23 / 0.16);
+  /* Elevation — six steps become three, cast in the ink rather than in a blue
+   * black. A card is lifted by two layers: the hairline that closes its edge,
+   * and the wide, shallow pool that puts it above the paper. */
+  --shadow-card: 0 1px 2px rgb(23 23 26 / 0.05), 0 8px 20px -14px rgb(23 23 26 / 0.18);
+  --shadow-raised: 0 4px 12px rgb(23 23 26 / 0.1);
+  --shadow-overlay: 0 16px 40px rgb(23 23 26 / 0.18);
+
+  /* The typeface. Plus Jakarta Sans is the app's own rather than whatever the
+   * device offers: the design is drawn in it, and a system stack renders the
+   * same screen three different ways across iOS, Android and the web. Shipped
+   * as one variable file per subset, so 200-800 costs a single download. */
+  --font-sans:
+    'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* Type — six steps, none below 12px. The eyebrow, the streak unit and the
    * nav timer wanted to be smaller than this; they get tracking and weight
-   * instead of less size. */
-  --text-display: 1.875rem; /* 30 */
-  --text-display--line-height: 1.15;
-  --text-display--letter-spacing: -0.025em;
+   * instead of less size. Everything from body up is tracked in a little: at
+   * these weights the typeface sets loose, and a title is the worst of it. */
+  --text-display: 2rem; /* 32 */
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.03em;
   --text-title: 1.375rem; /* 22 */
   --text-title--line-height: 1.25;
   --text-title--letter-spacing: -0.02em;
   --text-body-lg: 1.0625rem; /* 17 */
   --text-body-lg--line-height: 1.5;
+  --text-body-lg--letter-spacing: -0.015em;
   --text-body: 0.9375rem; /* 15 */
   --text-body--line-height: 1.5;
+  --text-body--letter-spacing: -0.01em;
   --text-meta: 0.8125rem; /* 13 */
   --text-meta--line-height: 1.4;
   --text-eyebrow: 0.75rem; /* 12 */

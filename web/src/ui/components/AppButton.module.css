@@ -27,6 +27,13 @@
   @apply control-sm px-3;
 }
 
+/* Beside a line of copy rather than on a line of its own: the height is still
+ * the tap-target floor, but the type is the copy's, so the action stops
+ * reading as the heading of the paragraph next to it. */
+.inline {
+  @apply control-sm px-2 text-meta font-semibold;
+}
+
 .md {
   @apply min-h-(--size-control);
 }

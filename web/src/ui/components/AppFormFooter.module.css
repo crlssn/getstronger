@@ -1,0 +1,18 @@
+@reference '../../assets/base.css';
+
+/* Above the tab bar, whose own height is 4.5rem plus whatever the device puts
+ * below it. Frosted rather than opaque, so the form reads as continuing under
+ * it instead of ending at it. */
+.footer {
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  @apply fixed inset-x-0 z-30 border-t border-border bg-surface-sunken/90 backdrop-blur;
+}
+
+.inner {
+  @apply mx-auto w-full max-w-3xl px-3 py-3 sm:px-5 lg:px-8;
+}
+
+/* The room the bar takes out of the scroll, kept whether or not it is drawn. */
+.spacer {
+  @apply h-[4.75rem];
+}

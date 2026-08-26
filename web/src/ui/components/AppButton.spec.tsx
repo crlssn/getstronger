@@ -121,4 +121,16 @@ describe('AppButton', () => {
 
     expect(screen.getByRole('button', { name: 'Save the workout' })).toBeInTheDocument()
   })
+
+  // A quiet action beside a line of copy keeps the tap target and gives up
+  // only the weight that made it read as that line's heading.
+  test('takes the copy type inline without leaving the control scale', () => {
+    render(
+      <AppButton type="button" colour="ghost" size="inline">
+        Remove
+      </AppButton>,
+    )
+
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument()
+  })
 })
