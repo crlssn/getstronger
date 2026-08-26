@@ -68,7 +68,12 @@
 }
 
 .completedBand.record {
-  @apply border-record-border bg-record-surface;
+  @apply border-b-record-border bg-record-surface;
+}
+
+/* First in the card, so the card's own edge is the line above it. */
+.completedBand:first-child {
+  @apply border-t-0;
 }
 
 .completedBand.record .eyebrow {
@@ -197,8 +202,10 @@
   @apply pl-2 text-meta font-semibold tabular-nums text-text-subtle;
 }
 
+/* A card firms its edge under the pointer rather than lifting off the page:
+   a feed of cards that rise as the cursor crosses them is a feed that moves. */
 .feedSummaryCard {
-  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:shadow-raised;
+  @apply relative mb-4 overflow-hidden transition hover:border-ink-border;
 }
 
 /* The whole feed card is one link, with the controls sitting above it so a tap

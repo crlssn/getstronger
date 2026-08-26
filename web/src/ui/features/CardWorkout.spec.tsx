@@ -119,10 +119,12 @@ describe('CardWorkout', () => {
       expect(screen.getByText('New PR')).toBeInTheDocument()
     })
 
+    // The quadrant always counts them; what a session with none does not get
+    // is the badge that celebrates them.
     test('says nothing about records when there were none', () => {
       render(<CardWorkout compact workout={workout()} />)
 
-      expect(screen.queryByText(/\bPRs?\b/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/\bnew PRs?\b/i)).not.toBeInTheDocument()
     })
 
     // The feed card stays where it is, so the toast is all there is to see.

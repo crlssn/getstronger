@@ -46,6 +46,9 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   const [deleted, setDeleted] = useState(false)
   const [comments, setComments] = useState<WorkoutComment[]>(() => [...workout.comments])
   const [commentInput, setCommentInput] = useState('')
+  // One exercise open at a time: the list is there so the session reads as its
+  // exercises, and two tables at once is what it was built to stop.
+  const [openExercise, setOpenExercise] = useState(0)
   const [postingComment, setPostingComment] = useState(false)
 
   const { setCount, personalBestCount, durationMinutes, finishedDate } = workoutSummary(workout)
@@ -213,7 +216,8 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           {workout.exerciseSets.map((exerciseSet, index) => (
             <CardWorkoutExercise
               key={exerciseSet.exercise?.id}
-              defaultOpen={index === 0}
+              open={openExercise === index}
+              onToggle={() => setOpenExercise((current) => (current === index ? -1 : index))}
               exerciseId={exerciseSet.exercise?.id}
               name={exerciseSet.exercise?.name}
               sets={exerciseSet.sets}

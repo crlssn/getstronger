@@ -5,7 +5,8 @@ import type { MessageInitShape } from '@bufbuild/protobuf'
 import { create } from '@bufbuild/protobuf'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, test } from 'vitest'
+import { useState } from 'react'
+import { describe, expect, test, vi } from 'vitest'
 
 import { DistanceUnit, ExerciseMetric, SetSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { renderWithProviders } from '@/ui/testing'
@@ -16,19 +17,30 @@ const set = (fields: MessageInitShape<typeof SetSchema>) => create(SetSchema, fi
 const weightAndReps = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS]
 const distanceAndTime = [ExerciseMetric.DISTANCE, ExerciseMetric.TIME]
 
-// Open by default here: what the tests are about is the table, and the session
-// opens on its first exercise anyway.
-const render = (props: Partial<React.ComponentProps<typeof CardWorkoutExercise>> = {}) =>
-  renderWithProviders(
+// The session owns which exercise is open; this stands in for it, and starts
+// open because what the tests are about is the table.
+const Harness = ({
+  startOpen = true,
+  ...props
+}: Partial<React.ComponentProps<typeof CardWorkoutExercise>> & { startOpen?: boolean }) => {
+  const [open, setOpen] = useState(startOpen)
+
+  return (
     <CardWorkoutExercise
-      defaultOpen
       exerciseId="exercise-1"
       name="Bench press"
       metrics={weightAndReps}
       sets={[set({ id: 'set-1', weight: 100, reps: 5 })]}
+      open={open}
+      onToggle={() => setOpen((shown) => !shown)}
       {...props}
-    />,
+    />
   )
+}
+
+const render = (
+  props: Partial<React.ComponentProps<typeof CardWorkoutExercise>> & { startOpen?: boolean } = {},
+) => renderWithProviders(<Harness {...props} />)
 
 const headers = () => screen.getAllByRole('columnheader').map((cell) => cell.textContent)
 const rows = () => screen.getAllByRole('row')
@@ -38,7 +50,7 @@ describe('CardWorkoutExercise', () => {
   // A six-exercise session was six tables and several screens of near-identical
   // rows, so the sets are one tap away rather than always printed.
   test('opens onto its sets, and folds them away again', async () => {
-    render({ defaultOpen: false })
+    render({ startOpen: false })
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(toggle()).toHaveAttribute('aria-expanded', 'false')
@@ -55,6 +67,26 @@ describe('CardWorkoutExercise', () => {
     render()
 
     expect(screen.getByRole('table', { name: 'Bench press sets' })).toBeInTheDocument()
+  })
+
+  // Which exercise is open is the session's business, not the row's.
+  test('reports a tap rather than opening itself', async () => {
+    const onToggle = vi.fn()
+    renderWithProviders(
+      <CardWorkoutExercise
+        exerciseId="exercise-1"
+        name="Bench press"
+        metrics={weightAndReps}
+        sets={[set({ id: 'set-1', weight: 100, reps: 5 })]}
+        open={false}
+        onToggle={onToggle}
+      />,
+    )
+
+    await userEvent.click(toggle())
+
+    expect(onToggle).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
   // The row is the toggle, so the way to the exercise itself is inside it.
@@ -138,18 +170,18 @@ describe('CardWorkoutExercise', () => {
     })
 
     const best = rows()[1]
-    expect(within(best!).getByLabelText('Set 1, personal best')).toHaveTextContent('1')
-    expect(within(best!).getByLabelText('Personal best')).toBeInTheDocument()
-    expect(within(rows()[2]!).queryByLabelText('Personal best')).not.toBeInTheDocument()
+    expect(within(best!).getByLabelText('Set 1, PR')).toHaveTextContent('1')
+    expect(within(best!).getByLabelText('PR')).toBeInTheDocument()
+    expect(within(rows()[2]!).queryByLabelText('PR')).not.toBeInTheDocument()
   })
 
   // What a reader scans the closed list for is which exercises went well.
   test('says on the row when the exercise set a record', () => {
     render({
-      defaultOpen: false,
+      startOpen: false,
       sets: [set({ id: 'set-1', weight: 100, reps: 5, metadata: { personalBest: true } })],
     })
 
-    expect(toggle()).toHaveTextContent('Personal best')
+    expect(toggle()).toHaveTextContent('PR')
   })
 })

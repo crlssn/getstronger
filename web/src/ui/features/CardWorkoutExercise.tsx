@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react'
 
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { TrophyIcon } from '@heroicons/react/24/solid'
-import { useId, useState } from 'react'
+import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
@@ -31,8 +31,12 @@ interface Props {
   exerciseId?: string
   name?: string
   metrics?: ExerciseMetric[]
-  /** The session opens on its first exercise, so the card is never all rows. */
-  defaultOpen?: boolean
+  /**
+   * Whether this exercise is the open one. The session holds it: one set of
+   * numbers at a time is what the list is for.
+   */
+  open: boolean
+  onToggle: () => void
 }
 
 /**
@@ -47,12 +51,12 @@ export const CardWorkoutExercise = ({
   exerciseId,
   name,
   metrics: exerciseMetricList,
-  defaultOpen = false,
+  open,
+  onToggle,
 }: Props) => {
   const { t } = useTranslation()
 
   const panelId = useId()
-  const [open, setOpen] = useState(defaultOpen)
 
   const metrics = exerciseMetrics({ metrics: exerciseMetricList ?? [] })
   const measurements = measurementDefinitions.filter(({ metric }) => metrics.includes(metric))
@@ -76,7 +80,7 @@ export const CardWorkoutExercise = ({
             aria-hidden="true"
           />
         }
-        onClick={() => setOpen((shown) => !shown)}
+        onClick={onToggle}
       >
         <span className={styles.summaryCopy}>
           <span className={styles.name}>{name}</span>
