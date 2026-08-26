@@ -1,6 +1,6 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
-import { BoltIcon, CheckIcon, ChevronRightIcon, PlayIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, ChevronRightIcon, PlayIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -178,9 +178,6 @@ export const WorkoutView = () => {
       )}
 
       <Link to="/workouts/quick" className={styles.quickCard}>
-        <span className={styles.quickIcon}>
-          <BoltIcon aria-hidden="true" />
-        </span>
         <span>
           <strong>{t('workout.quick')}</strong>
           <small>{t('workout.quickBody')}</small>

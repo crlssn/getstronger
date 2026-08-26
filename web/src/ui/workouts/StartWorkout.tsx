@@ -920,9 +920,6 @@ export const StartWorkout = () => {
       <main className={styles.exerciseStack}>
         {quickWorkout && !currentExercise && (
           <section className={styles.quickEmpty}>
-            <span>
-              <PlusIcon aria-hidden="true" />
-            </span>
             <h2>{t('workout.addFirstExercise')}</h2>
             <p>{t('workout.addFirstExerciseBody')}</p>
             <AppButton

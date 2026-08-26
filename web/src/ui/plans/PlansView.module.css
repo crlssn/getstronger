@@ -10,40 +10,23 @@
 
 .activePlan,
 .otherPlans,
-.pausedNote,
-.emptyPlanState {
+.pausedNote {
   @apply card p-5;
 }
 
 .activePlan h2,
 .otherPlans h2,
-.pausedNote h2,
-.emptyPlanState h2 {
+.pausedNote h2 {
   @apply text-title font-extrabold text-text;
 }
 
-.emptyPlanState {
-  @apply p-6;
-}
-
-.emptyPlanIcon {
-  @apply mb-5 grid size-12 place-items-center rounded-card bg-ink-tint text-ink-strong;
-}
-
-.emptyPlanIcon svg {
-  @apply size-6;
-}
-
-.emptyPlanState h2 {
-  @apply mt-2;
-}
-
-.emptyPlanCopy {
-  @apply mt-2 text-sm leading-6 text-text-muted;
+/* The explainer, in the sheet the empty state's link opens. */
+.planExplainer > p {
+  @apply text-sm leading-6 text-text-muted;
 }
 
 .planSteps {
-  @apply mt-6 divide-y divide-border border-y border-border;
+  @apply mt-5 divide-y divide-border border-y border-border;
 }
 
 .planSteps li {
@@ -73,10 +56,6 @@
 
 .activePlanRule {
   @apply mt-5 text-xs leading-5 text-text-subtle;
-}
-
-.firstPlanButton {
-  @apply mt-5;
 }
 
 .activePlan > header {

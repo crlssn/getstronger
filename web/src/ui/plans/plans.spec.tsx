@@ -73,17 +73,25 @@ describe('PlansView', () => {
       usePlanStore.setState({ plans: loaded })
     })
 
-  // A plan is an unfamiliar idea, so the empty state teaches it rather than
-  // just offering a button.
-  test('explains what a plan is when there are none', async () => {
+  // A plan is an unfamiliar idea, so the empty state offers to teach it — but
+  // behind a link. Spelled out in the card it spent the whole screen and
+  // pushed its own button off the bottom.
+  test('leads with the way in, and keeps the explainer behind a link', async () => {
     withPlans([])
     render()
 
-    expect(await screen.findByText('How plans work')).toBeInTheDocument()
+    expect(await screen.findByText('No plans yet')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Create your first plan/ })).toHaveAttribute(
       'href',
       '/plans/create',
     )
+    expect(screen.queryByText('Choose routines')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'How plans work' }))
+    const sheet = within(screen.getByRole('dialog'))
+    expect(sheet.getByText('Choose routines')).toBeVisible()
+    expect(sheet.getByText('Activate the plan')).toBeVisible()
+
     // The header's create link would be a second way to do the same thing.
     expect(screen.queryByRole('link', { name: /New plan/ })).not.toBeInTheDocument()
   })
@@ -97,7 +105,7 @@ describe('PlansView', () => {
     render()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
-    expect(screen.queryByText('How plans work')).not.toBeInTheDocument()
+    expect(screen.queryByText('No plans yet')).not.toBeInTheDocument()
   })
 
   test('leads with the running plan and where it is in the loop', async () => {

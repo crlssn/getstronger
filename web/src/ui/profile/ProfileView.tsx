@@ -4,11 +4,8 @@ import type { ReactNode } from 'react'
 import {
   ArrowRightOnRectangleIcon,
   BellIcon,
-  ChartBarIcon,
   ChevronRightIcon,
   PencilSquareIcon,
-  ShieldCheckIcon,
-  UserCircleIcon,
 } from '@heroicons/react/24/outline'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { useEffect, useState } from 'react'
@@ -278,9 +275,6 @@ export const ProfileView = () => {
 
       <section className={styles.settingsCard}>
         <Link to="/progress">
-          <span className={styles.settingsIcon}>
-            <ChartBarIcon aria-hidden="true" />
-          </span>
           <span>
             <strong>{t('profile.progress')}</strong>
             <small>{t('profile.progressBody')}</small>
@@ -288,9 +282,6 @@ export const ProfileView = () => {
           <ChevronRightIcon aria-hidden="true" />
         </Link>
         <Link to={`/users/${user.id}`}>
-          <span className={styles.settingsIcon}>
-            <UserCircleIcon aria-hidden="true" />
-          </span>
           <span>
             <strong>{t('profile.publicProfile')}</strong>
             <small>{t('profile.publicProfileBody')}</small>
@@ -298,9 +289,6 @@ export const ProfileView = () => {
           <ChevronRightIcon aria-hidden="true" />
         </Link>
         <Link to="/privacy">
-          <span className={styles.settingsIcon}>
-            <ShieldCheckIcon aria-hidden="true" />
-          </span>
           <span>
             <strong>{t('profile.privacyPolicy')}</strong>
             <small>{t('profile.privacyPolicyBody')}</small>

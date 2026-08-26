@@ -1,6 +1,6 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { BookOpenIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -130,7 +130,6 @@ export const ListExercises = () => {
           action={search ? 'none' : { label: t('exercise.new'), to: '/exercises/create' }}
           body={search ? t('exercise.tryAnotherSearch') : t('exercise.emptyBody')}
           title={search ? t('exercise.noMatches') : t('exercise.empty')}
-          icon={<BookOpenIcon />}
           actionIcon={<PlusIcon />}
         />
       )}

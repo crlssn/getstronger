@@ -57,15 +57,7 @@
 }
 
 .quickEmpty {
-  @apply card grid justify-items-center gap-3 p-8 text-center;
-}
-
-.quickEmpty > span {
-  @apply grid size-14 place-items-center rounded-card bg-ink-surface text-ink;
-}
-
-.quickEmpty > span svg {
-  @apply size-6;
+  @apply card grid justify-items-center gap-3 p-6 text-center;
 }
 
 .quickEmpty h2 {

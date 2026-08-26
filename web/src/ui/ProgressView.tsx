@@ -142,8 +142,7 @@ export const ProgressView = () => {
               action={{ label: t('home.startWorkout'), to: '/workout' }}
               body={t('progress.emptyBody')}
               title={t('progress.emptyTitle')}
-              icon={<TrophyIcon />}
-            />
+                />
           )}
         </section>
       )}

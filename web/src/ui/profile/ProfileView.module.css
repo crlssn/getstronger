@@ -71,19 +71,11 @@
 }
 
 .settingsCard a {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
 }
 
 .settingsCard > a > svg {
   @apply size-5 text-text-subtle;
-}
-
-.settingsIcon {
-  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-ink-strong;
-}
-
-.settingsIcon svg {
-  @apply size-5;
 }
 
 .settingsCard strong,

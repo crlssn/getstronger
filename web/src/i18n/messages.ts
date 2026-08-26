@@ -334,6 +334,8 @@ export const en = {
     yourRoutines: 'Your routines',
     searchRoutines: 'Search routines',
     howPlansWork: 'How plans work',
+    noPlansTitle: 'No plans yet',
+    noPlansBody: 'A plan repeats your routines in order, with no schedule or end date.',
     repeatingTitle: 'Turn routines into a repeating sequence',
     repeatingBody:
       'A plan works through your chosen routines in order, then starts again from the beginning.',
@@ -1080,6 +1082,8 @@ export const sv = {
     yourRoutines: 'Dina pass',
     searchRoutines: 'Sök pass',
     howPlansWork: 'Så fungerar planer',
+    noPlansTitle: 'Inga planer ännu',
+    noPlansBody: 'En plan upprepar dina pass i ordning, utan schema eller slutdatum.',
     repeatingTitle: 'Gör pass till en återkommande följd',
     repeatingBody: 'En plan går igenom dina valda pass i ordning och börjar sedan om från början.',
     chooseRoutines: 'Välj pass',

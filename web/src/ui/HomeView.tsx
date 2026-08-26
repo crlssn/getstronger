@@ -3,9 +3,7 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import {
   CheckIcon,
   FireIcon,
-  ListBulletIcon,
   PlayIcon,
-  UsersIcon,
 } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -219,8 +217,7 @@ export const HomeView = () => {
                 action={{ label: t('home.createRoutine'), to: '/routines/create' }}
                 body={t('home.createFirstRoutineBody')}
                 title={t('home.createFirstRoutine')}
-                icon={<ListBulletIcon />}
-              />
+                    />
             )}
 
             <section className={styles.followingFeed}>
@@ -246,8 +243,7 @@ export const HomeView = () => {
                   action={{ label: t('home.emptyFeedAction') }}
                   body={t('home.emptyFeed')}
                   title={t('home.emptyFeedTitle')}
-                  icon={<UsersIcon />}
-                  onAction={() => setSearchOpen(true)}
+                          onAction={() => setSearchOpen(true)}
                 />
               ) : feedLoading ? (
                 <div className={styles.feedStatus} aria-live="polite">

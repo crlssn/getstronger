@@ -1,30 +1,33 @@
 @reference '../../assets/base.css';
 
-/* A solid card, never dashed: dashed borders read as drop-zones, not states. */
+/* A solid card, never dashed: dashed borders read as drop-zones, not states.
+ * One shape everywhere, and under 160px: a heading, a line, and a way out. */
 .emptyState {
-  @apply card grid justify-items-start gap-3 p-6;
-}
-
-.emptyIcon {
-  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-text-muted;
-}
-
-.emptyIcon svg {
-  @apply size-5;
+  @apply card p-5;
 }
 
 .emptyState h2 {
-  @apply text-body-lg font-semibold text-text;
+  @apply text-body-lg font-extrabold text-text;
 }
 
 .emptyState p {
-  @apply text-sm leading-6 text-text-muted;
+  @apply mt-1.5 text-sm leading-6 text-text-muted;
+}
+
+.emptyActions {
+  @apply mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2;
 }
 
 .emptyAction {
-  @apply mt-1 inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:brightness-125;
+  @apply inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:brightness-125;
 }
 
 .emptyAction svg {
   @apply size-5;
+}
+
+/* The concept, for whoever wants it. Underlined rather than boxed, so it reads
+   as the footnote it is beside the action it is not competing with. */
+.emptyExplainer {
+  @apply min-h-(--size-control-sm) border-b border-border-strong text-sm font-semibold text-text-subtle transition hover:text-text;
 }
