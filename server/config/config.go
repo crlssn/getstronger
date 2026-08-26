@@ -51,8 +51,16 @@ type Environment string
 
 const (
 	EnvironmentLocal      Environment = "local"
+	EnvironmentBeta       Environment = "beta"
 	EnvironmentProduction Environment = "production"
 )
+
+// Seedable reports whether the environment's data may be truncated and replaced
+// by the seed tooling. Beta is a demo environment reseeded on every deploy;
+// production holds real accounts and never qualifies.
+func (e Environment) Seedable() bool {
+	return e == EnvironmentLocal || e == EnvironmentBeta
+}
 
 type DB struct {
 	Host     string

@@ -222,3 +222,32 @@ func TestTruncateDatabase(t *testing.T) {
 	require.NoError(t, err)
 	require.Zero(t, workoutCount)
 }
+
+func TestSeedConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		environment string
+		expectError bool
+	}{
+		{name: "local_seeds", environment: "local"},
+		{name: "beta_seeds", environment: "beta"},
+		{name: "production_refuses", environment: "production", expectError: true},
+		{name: "unset_refuses", environment: "", expectError: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("ENV", test.environment)
+
+			c, err := seedConfig()
+			if test.expectError {
+				require.ErrorIs(t, err, errNotSeedable)
+				require.Nil(t, c)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, test.environment, string(c.Environment))
+		})
+	}
+}

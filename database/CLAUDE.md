@@ -25,6 +25,9 @@ bobgen into `server/gen/`, which is never edited by hand.
   `mise run db:reset` only when an existing migration was edited in place and
   the database has to be rebuilt from scratch.
 - Then add any missing seed data and run `mise run db:seed` before verification.
+- The deploy workflow runs the same seed against beta on every beta deploy,
+  truncating it first. Seed data is therefore what beta shows: keep it
+  representative, and expect nothing entered on beta to survive.
 - Only ever touch the container named by this worktree's `DB_CONTAINER`, and
   never run `db:reset`, `db:init`, or `db:clean` against another worktree's.
 - Schema changes usually ripple outward: expect to touch `server/repo`, the

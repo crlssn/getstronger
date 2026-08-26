@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -43,21 +45,35 @@ type personaConfig struct {
 	new    factory.SeedUser
 }
 
-func main() {
-	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("load .env file: %w", err))
+var errNotSeedable = errors.New("environment is not seedable")
+
+// seedConfig loads the configuration and refuses any environment the seed may
+// not wipe. Seeding truncates every table, so this guard is what stands between
+// a misconfigured deploy and real accounts.
+func seedConfig() (*config.Config, error) {
+	// Only local runs have a .env to read; the deploy passes its configuration
+	// through the environment.
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("load .env file: %w", err)
 	}
 
 	c := config.New()
-	if c.Environment != config.EnvironmentLocal {
-		log.Printf("environment must be local, got %s", c.Environment)
-		return
+	if !c.Environment.Seedable() {
+		return nil, fmt.Errorf("%w: %q", errNotSeedable, c.Environment)
+	}
+
+	return c, nil
+}
+
+func main() {
+	c, err := seedConfig()
+	if err != nil {
+		log.Fatalf("resolve seed configuration: %v", err)
 	}
 
 	database, err := db.New(c)
 	if err != nil {
-		log.Printf("connect to database: %v", err)
-		return
+		log.Fatalf("connect to database: %v", err)
 	}
 
 	email := flag.String("email", defaultActiveEmail, "the active persona's email")
@@ -70,8 +86,7 @@ func main() {
 	flag.Parse()
 
 	if err = truncateDatabase(context.Background(), database); err != nil {
-		log.Printf("truncate database before seeding: %v", err)
-		return
+		log.Fatalf("truncate database before seeding: %v", err)
 	}
 
 	f := factory.NewFactory(database)

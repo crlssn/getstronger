@@ -350,6 +350,8 @@ A merge is therefore never a production deploy: `main` lands on beta, and produc
 
 Only a push deploys selectively, by the paths that changed since the last successful push deploy. A release and a labelled pull request deploy all three components, since neither wants an environment running half of one revision and half of another. Beta then keeps what the pull request left there until a later push or a manual run replaces it — run the workflow against `main` with all three components to put it back.
 
+Every beta deploy also reseeds beta's database, whatever else it deploys. Beta is a demo environment: it is meant to show the app's personas rather than whatever the last person testing it left behind. The seed truncates every table and rewrites it from `server/testing/factory/seed`, so any account created on beta is gone at the next deploy. Production is never seeded — the job runs only when the resolved environment is `beta`, and the seed itself refuses any `ENV` but `local` and `beta`. A manual run can skip it with the **Seed** input.
+
 Give the `production` environment a required reviewer under **Settings → Environments → production → Required reviewers**, so the promotion is an approval rather than an accident. Every deploying job names its environment, so a production run pauses before it touches anything.
 
 Leave beta's deployment branch policy at **All branches**: a pull request labelled `deploy:beta` runs from its own branch, and a restrictive policy would reject it.
@@ -366,6 +368,8 @@ Secrets:   DB_MIGRATION_PASSWORD
 `DEPLOY_ENVIRONMENT` is the environment's own name, `beta` or `production`. Every deploying job refuses to start unless it matches the environment it was asked to deploy to: GitHub falls back to repository-scoped variables when an environment defines none, so without that check a half-configured `beta` would quietly deploy to production infrastructure. `API_DOMAIN`, `COOKIE_DOMAIN`, `CORS_ALLOWED_ORIGIN`, and `EMAIL_FROM_ADDRESS` are the container's own configuration rather than workflow inputs; they live here so each environment's values are recorded in one place.
 
 `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` are set on `production` only, and nowhere else — see step 8.
+
+The seed's personas are configured on `beta` only, and all of it is optional: the `SEED_EMAIL`, `SEED_NAME`, `SEED_NEW_EMAIL`, and `SEED_NEW_NAME` variables and the `SEED_PASSWORD` secret each fall back to the seed's own default, so beta needs none of them set. Set `SEED_PASSWORD` if the demo accounts should not share the local `password123`.
 
 These stay at repository scope, shared by both environments:
 
@@ -388,7 +392,7 @@ The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secr
 
 To roll back, set the container's **Image** to an earlier commit's tag in the console and redeploy — a deploy pins that field rather than moving a tag, so nothing else has to change. Nothing prunes the registry, so clear out old commit tags there occasionally.
 
-For the initial cutover of either environment, open the **deploy** workflow in GitHub Actions and choose **Run workflow**. It asks which environment to target and can independently migrate the Serverless SQL Database, deploy the API, and deploy the web application. This is also the safe way to migrate a newly created database when no migration file changed in the triggering commit.
+For the initial cutover of either environment, open the **deploy** workflow in GitHub Actions and choose **Run workflow**. It asks which environment to target and can independently migrate the Serverless SQL Database, reseed it, deploy the API, and deploy the web application. This is also the safe way to migrate a newly created database when no migration file changed in the triggering commit.
 
 ### 8. Create the beta environment
 

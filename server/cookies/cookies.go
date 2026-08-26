@@ -50,7 +50,9 @@ func (c *Cookies) ExpiredRefreshToken() *http.Cookie {
 }
 
 func (c *Cookies) usesSecureCookies() bool {
-	return c.config.Environment == config.EnvironmentProduction || c.config.Server.HasCertificate()
+	return c.config.Environment == config.EnvironmentProduction ||
+		c.config.Environment == config.EnvironmentBeta ||
+		c.config.Server.HasCertificate()
 }
 
 func sameSiteMode(secure bool) http.SameSite {

@@ -114,3 +114,16 @@ func TestCookies_ExpiredRefreshToken(t *testing.T) {
 		SameSite: http.SameSiteDefaultMode,
 	}, cookie.ExpiredRefreshToken())
 }
+
+// Beta is served over TLS like production, so it must not fall back to the
+// local cookie settings.
+func TestCookies_BetaIsSecure(t *testing.T) {
+	t.Parallel()
+
+	cfg := new(config.Config)
+	cfg.Environment = config.EnvironmentBeta
+	cookie := cookies.New(cfg)
+
+	require.True(t, cookie.RefreshToken("value").Secure)
+	require.Equal(t, http.SameSiteNoneMode, cookie.RefreshToken("value").SameSite)
+}
