@@ -1,5 +1,42 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(mise run test)",
+      "Bash(mise run test:*)",
+      "Bash(mise run lint)",
+      "Bash(mise run lint:*)",
+      "Bash(mise run format)",
+      "Bash(mise run format:*)",
+      "Bash(mise run vet)",
+      "Bash(mise run vet:*)",
+      "Bash(mise run gen)",
+      "Bash(mise run gen:*)",
+      "Bash(mise run screenshots)",
+      "Bash(mise run screenshots:*)",
+      "Bash(mise run db:migrate)",
+      "Bash(mise run db:seed)",
+      "Bash(mise run db:start)",
+      "Bash(mise run env)",
+      "Bash(mise run worktree:env)",
+      "Bash(mise run install:*)",
+      "Bash(mise tasks*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show *)",
+      "Bash(git blame *)",
+      "Bash(git branch --show-current)",
+      "Bash(git fetch *)",
+      "Bash(git rev-parse *)",
+      "Bash(git merge-base *)",
+      "Bash(git ls-files*)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh run list*)",
+      "Bash(gh run view *)"
+    ],
     "deny": [
       "Read(./node_modules/**)",
       "Read(./web/node_modules/**)",
@@ -12,6 +49,19 @@
       "Read(./.secrets/**)",
       "Read(./.env)",
       "Read(./web/.env)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/scripts/claude_format_hook.sh"
+          }
+        ]
+      }
     ]
   }
 }
