@@ -15,7 +15,7 @@
 }
 
 .groupTitle {
-  @apply mr-auto min-w-0 truncate text-sm font-bold text-text;
+  @apply mr-auto min-w-0 truncate text-body font-bold text-text;
 }
 
 /* Auto-width beside the title rather than a second full-width control inside
@@ -25,7 +25,7 @@
 }
 
 .groupHint {
-  @apply mb-3 px-1 text-meta text-text-subtle;
+  @apply mb-3 px-1 text-meta font-medium text-text-subtle;
 }
 
 /* Nothing inside is boxed either: settings and exercises are ruled rows, so the
@@ -43,11 +43,11 @@
 }
 
 .settingLabel {
-  @apply min-w-0 text-sm font-medium text-text;
+  @apply min-w-0 text-body font-bold text-text;
 }
 
 .settingLabel small {
-  @apply block text-meta font-normal text-text-subtle;
+  @apply block text-meta font-medium text-text-subtle;
 }
 
 /* The lengths, once the switch has asked for them: tinted rows rather than

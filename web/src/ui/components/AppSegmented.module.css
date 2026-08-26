@@ -30,7 +30,7 @@
 }
 
 .segmented > .selected {
-  @apply bg-surface text-ink-strong shadow-card;
+  @apply bg-surface font-bold text-ink-strong shadow-card;
 }
 
 .segmented > *:disabled {

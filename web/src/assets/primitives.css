@@ -18,7 +18,7 @@
  * height is the tap-target floor rather than a suggestion, which is what turns
  * thirty-odd accessibility failures into a single value. */
 @utility control {
-  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control border px-4 py-3 text-sm font-semibold transition;
+  @apply inline-flex min-h-(--size-control) items-center justify-center gap-2 rounded-control border px-4 py-3 text-body font-bold transition;
 }
 
 /* Never below --size-control-sm. There is no smaller step on purpose. */

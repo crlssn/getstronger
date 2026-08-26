@@ -164,7 +164,7 @@ export const RoutineForm = ({
       {/* Pinned rather than parked at the end of the scroll, where a routine
           with ten exercises hid it. */}
       <AppFormFooter>
-        <AppButton type="submit" colour="primary" disabled={!canSubmit}>
+        <AppButton type="submit" colour="primary" size="lg" disabled={!canSubmit}>
           {saving ? t('training.planForm.saving') : submitLabel}
         </AppButton>
       </AppFormFooter>

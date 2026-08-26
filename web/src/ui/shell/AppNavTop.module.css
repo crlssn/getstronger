@@ -13,7 +13,7 @@
 }
 
 .titleRow > h1 {
-  @apply min-w-0 truncate text-display font-bold text-text;
+  @apply min-w-0 truncate text-display font-extrabold text-text;
 }
 
 .pageAction {

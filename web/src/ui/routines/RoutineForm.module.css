@@ -25,5 +25,5 @@
 }
 
 .structureHint {
-  @apply mb-5 mt-2 px-1 text-meta text-text-subtle;
+  @apply mb-5 mt-2 px-1 text-meta font-medium text-text-subtle;
 }

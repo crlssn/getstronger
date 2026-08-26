@@ -78,19 +78,29 @@
   --shadow-raised: 0 4px 12px rgb(2 6 23 / 0.08);
   --shadow-overlay: 0 16px 40px rgb(2 6 23 / 0.16);
 
+  /* The typeface. Plus Jakarta Sans is the app's own rather than whatever the
+   * device offers: the design is drawn in it, and a system stack renders the
+   * same screen three different ways across iOS, Android and the web. Shipped
+   * as one variable file per subset, so 200-800 costs a single download. */
+  --font-sans:
+    'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
   /* Type — six steps, none below 12px. The eyebrow, the streak unit and the
    * nav timer wanted to be smaller than this; they get tracking and weight
-   * instead of less size. */
-  --text-display: 1.875rem; /* 30 */
-  --text-display--line-height: 1.15;
-  --text-display--letter-spacing: -0.025em;
+   * instead of less size. Everything from body up is tracked in a little: at
+   * these weights the typeface sets loose, and a title is the worst of it. */
+  --text-display: 2rem; /* 32 */
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.03em;
   --text-title: 1.375rem; /* 22 */
   --text-title--line-height: 1.25;
   --text-title--letter-spacing: -0.02em;
   --text-body-lg: 1.0625rem; /* 17 */
   --text-body-lg--line-height: 1.5;
+  --text-body-lg--letter-spacing: -0.015em;
   --text-body: 0.9375rem; /* 15 */
   --text-body--line-height: 1.5;
+  --text-body--letter-spacing: -0.01em;
   --text-meta: 0.8125rem; /* 13 */
   --text-meta--line-height: 1.4;
   --text-eyebrow: 0.75rem; /* 12 */
