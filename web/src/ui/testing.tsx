@@ -29,3 +29,27 @@ export const renderWithProviders = (ui: ReactElement, options: Options = {}): Re
 
   return render(ui, { wrapper: Providers, ...rest })
 }
+
+/**
+ * Raises the on-screen keyboard, which is how a pinned footer is recognised.
+ *
+ * `<AppFormFooter>` is the only thing in the app that stands down while the
+ * keyboard is up, so a form whose submit disappears here is one whose submit
+ * is pinned above the tab bar rather than parked at the end of the scroll.
+ * Call `lowerKeyboard()` afterwards — `visualViewport` is on the shared window.
+ */
+export const raiseKeyboard = () => {
+  const target = new EventTarget()
+  Object.defineProperty(window, 'visualViewport', {
+    configurable: true,
+    value: {
+      height: window.innerHeight - 320,
+      addEventListener: target.addEventListener.bind(target),
+      removeEventListener: target.removeEventListener.bind(target),
+    },
+  })
+}
+
+export const lowerKeyboard = () => {
+  Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined })
+}

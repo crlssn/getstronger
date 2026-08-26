@@ -12,11 +12,19 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
-import { totalVolume, withinDays } from '@/utils/dailyVolume'
-import { formatToShortDateTime } from '@/utils/datetime'
+import { totalVolume, volumeSeries, withinDays, type VolumeGranularity } from '@/utils/dailyVolume'
+import { formatTimestamp } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import styles from './ProgressView.module.css'
+
+/* Spelled out rather than built from the grain's name: "day" + "lyTotals"
+   asks for progress.daylyTotals, which renders as the key. */
+const totalsLabel: Record<VolumeGranularity, string> = {
+  day: 'progress.dailyTotals',
+  week: 'progress.weeklyTotals',
+  month: 'progress.monthlyTotals',
+}
 
 const periodOptions = [
   { days: 7, label: '7D' },
@@ -43,6 +51,9 @@ export const ProgressView = () => {
   useEffect(load, [])
 
   const filtered = useMemo(() => withinDays(workouts, periodDays), [workouts, periodDays])
+  // The chart aggregates to weeks once a range has more days than bars will
+  // fit, so the chip beside the total says which grain is on screen.
+  const granularity = useMemo(() => volumeSeries(filtered).granularity, [filtered])
   const personalBests = dashboard?.personalBests ?? []
 
   return (
@@ -80,7 +91,7 @@ export const ProgressView = () => {
                 </h2>
               </div>
               <span>
-                <ArrowTrendingUpIcon aria-hidden="true" /> {t('progress.dailyTotals')}
+                <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[granularity])}
               </span>
             </div>
 
@@ -125,7 +136,7 @@ export const ProgressView = () => {
                     <strong>{personalBest.exercise?.name}</strong>
                     <ExerciseTags compact tags={personalBest.exercise?.tags} />
                     {personalBest.set?.metadata?.createdAt && (
-                      <small>{formatToShortDateTime(personalBest.set.metadata.createdAt)}</small>
+                      <small>{formatTimestamp(personalBest.set.metadata.createdAt)}</small>
                     )}
                   </span>
                   <span className={styles.recordValue}>
@@ -142,7 +153,6 @@ export const ProgressView = () => {
               action={{ label: t('home.startWorkout'), to: '/workout' }}
               body={t('progress.emptyBody')}
               title={t('progress.emptyTitle')}
-              icon={<TrophyIcon />}
             />
           )}
         </section>

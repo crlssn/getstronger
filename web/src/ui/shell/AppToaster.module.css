@@ -1,11 +1,14 @@
 @reference '../../assets/base.css';
 
-/* Anchored under the status bar rather than the bottom edge, which the offline
-   and update banners, the bottom navigation and the workout dock already share.
-   The region spans the top of the screen, so it lets taps through and only the
-   card itself takes them. */
+/* Over the tab bar, where nothing needs reading. Anchored at the top it landed
+   on the page's own title — "Routine created" covering the routine's name,
+   "Exercise created" covering the first rows of the list it was reporting on.
+   It clears the offline and update banners, which float higher up.
+
+   The region spans the width of the screen, so it lets taps through and only
+   the card itself takes them. */
 .toastRegion {
-  top: calc(env(safe-area-inset-top) + 0.75rem);
+  bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
   @apply pointer-events-none fixed inset-x-0 z-50 mx-auto flex w-full max-w-lg flex-col px-3;
 }
 

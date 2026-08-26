@@ -124,6 +124,8 @@ type SeedParams struct {
 	WorkoutSetsPerExerciseMax int
 	WorkoutCommentCount       int
 	WorkoutInterval           time.Duration
+	// How far each seeded account's history sits behind the previous one.
+	WorkoutStagger time.Duration
 }
 
 func (f *Factory) Seed(p SeedParams) *models.User {
@@ -145,19 +147,21 @@ func (f *Factory) Seed(p SeedParams) *models.User {
 			userOpts = append(userOpts, UserCreatedAt(p.User.CreatedAt))
 		}
 		primaryUser = f.NewUser(userOpts...)
-		f.seedUser(p, primaryUser)
+		f.seedUserAt(p, primaryUser, 0)
 	}
 
-	for range p.UserCount {
+	// Staggered, so a feed of several seeded accounts does not land every one
+	// of their workouts on the same timestamp.
+	for index := range p.UserCount {
 		auth := f.NewAuth(AuthEmailVerified())
 		user := f.NewUser(UserAuthID(auth.ID))
-		f.seedUser(p, user)
+		f.seedUserAt(p, user, index)
 	}
 
 	return primaryUser
 }
 
-func (f *Factory) seedUser(p SeedParams, user *models.User) {
+func (f *Factory) seedUserAt(p SeedParams, user *models.User, userIndex int) {
 	titles := uniqueExerciseTitles(p.ExerciseCount)
 	var exercises models.ExerciseSlice
 	for index := range p.ExerciseCount {
@@ -173,7 +177,10 @@ func (f *Factory) seedUser(p SeedParams, user *models.User) {
 		workoutOpts := []WorkoutOpt{WorkoutUserID(user.ID)}
 		var startedAt time.Time
 		if p.WorkoutInterval > 0 {
-			startedAt = f.Now().Add(-time.Hour).Add(-time.Duration(workoutIndex) * p.WorkoutInterval)
+			startedAt = f.Now().
+				Add(-time.Hour).
+				Add(-time.Duration(workoutIndex) * p.WorkoutInterval).
+				Add(-time.Duration(userIndex) * p.WorkoutStagger)
 			workoutOpts = append(
 				workoutOpts,
 				WorkoutStartedAt(startedAt),

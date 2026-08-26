@@ -5,7 +5,6 @@ import {
   EllipsisHorizontalIcon,
   PlayIcon,
   PlusIcon,
-  RectangleStackIcon,
 } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -211,7 +210,6 @@ export const ListRoutines = () => {
           action={search ? 'none' : { label: t('home.createRoutine'), to: '/routines/create' }}
           body={search ? t('exercise.tryAnotherSearch') : t('routine.list.emptyBody')}
           title={search ? t('training.noMatchingRoutines') : t('training.noRoutines')}
-          icon={<RectangleStackIcon />}
           actionIcon={<PlusIcon />}
         />
       )}

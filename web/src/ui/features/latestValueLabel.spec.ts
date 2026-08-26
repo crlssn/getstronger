@@ -9,10 +9,22 @@ import { latestValueLabel } from './latestValueLabel'
 const draw = latestValueLabel.afterDatasetsDraw as unknown as (chart: unknown) => void
 
 describe('latestValueLabel', () => {
-  const drawOn = (bars: { x: number; y: number }[], values: unknown[]) => {
-    const ctx = { save: vi.fn(), restore: vi.fn(), fillText: vi.fn() }
+  // jsdom measures no text, so the label is given a width the test controls.
+  const drawOn = (
+    bars: { x: number; y: number }[],
+    values: unknown[],
+    chartArea = { left: 0, right: 1000 },
+    labelWidth = 0,
+  ) => {
+    const ctx = {
+      save: vi.fn(),
+      restore: vi.fn(),
+      fillText: vi.fn(),
+      measureText: () => ({ width: labelWidth }),
+    }
     const chart = {
       ctx,
+      chartArea,
       // A real element: the label copies the canvas's font family off it.
       canvas: document.createElement('canvas'),
       data: { datasets: [{ data: values }] },
@@ -33,6 +45,21 @@ describe('latestValueLabel', () => {
     )
 
     expect(ctx.fillText).toHaveBeenCalledWith('2,500', 30, 36)
+  })
+
+  // The last bar sits at the right edge of the plot, so a centred label ran
+  // half its width past it and the canvas clipped the overhang: "8,293"
+  // arrived as "8,2".
+  test('keeps the label inside the plot at the right edge', () => {
+    const ctx = drawOn([{ x: 300, y: 40 }], [8293], { left: 0, right: 300 }, 40)
+
+    expect(ctx.fillText).toHaveBeenCalledWith('8,293', 280, 36)
+  })
+
+  test('keeps it inside at the left edge too', () => {
+    const ctx = drawOn([{ x: 0, y: 40 }], [8293], { left: 0, right: 300 }, 40)
+
+    expect(ctx.fillText).toHaveBeenCalledWith('8,293', 20, 36)
   })
 
   // A trailing zero would print a "0" floating over the axis, which reads as a

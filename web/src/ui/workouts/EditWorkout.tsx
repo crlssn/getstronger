@@ -18,6 +18,7 @@ import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
 import { AppListItemInput } from '@/ui/components/AppListItemInput'
@@ -115,7 +116,6 @@ export const EditWorkout = () => {
 
   return (
     <form
-      className={styles.editWorkoutForm}
       onSubmit={(event) => {
         event.preventDefault()
         void onSubmit()
@@ -236,14 +236,23 @@ export const EditWorkout = () => {
         }
       />
 
-      <footer className={styles.updateDock}>
-        <AppButton type="submit" colour="primary">
+      <AppFormFooter
+        secondary={
+          <AppButton
+            type="link"
+            to={`/workouts/${workout.id}`}
+            colour="ghost"
+            size="lg"
+            width="auto"
+          >
+            {t('common.cancel')}
+          </AppButton>
+        }
+      >
+        <AppButton type="submit" colour="primary" size="lg">
           {t('workout.edit.submit')}
         </AppButton>
-        <AppButton type="link" to={`/workouts/${workout.id}`} colour="secondary">
-          {t('common.cancel')}
-        </AppButton>
-      </footer>
+      </AppFormFooter>
     </form>
   )
 }

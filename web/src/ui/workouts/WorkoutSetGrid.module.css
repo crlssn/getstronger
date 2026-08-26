@@ -29,8 +29,10 @@
   @apply relative border-t border-border py-2;
 }
 
+/* A logged set is a value, and values are ink. Green is left to the tick,
+   which is the part that says "just logged". */
 .setRow.complete {
-  @apply text-success;
+  @apply text-text;
 }
 
 /* The set number carries completion, which frees the row of a second check
@@ -66,7 +68,7 @@
    again what it does to the values inside it. */
 .setRow.complete input,
 .setRow.complete > div {
-  @apply bg-surface-sunken text-success;
+  @apply bg-surface-sunken text-text;
 }
 
 /* Focus reveal must land below the session chrome — the header, and the rest

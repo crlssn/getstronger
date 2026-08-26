@@ -1,7 +1,17 @@
 @reference '../../assets/base.css';
 
 .row {
-  @apply flex min-h-16 w-full items-center gap-3 rounded-control border border-border px-4 py-3 text-left transition hover:border-ink-border hover:bg-ink-surface;
+  @apply flex min-h-16 w-full items-center gap-3 rounded-control border border-border px-4 py-3 text-left transition;
+}
+
+/* The edge only, and pointer only. A hover fill was the same tint as
+   .selected, so a row nobody had chosen read as already chosen — and on a
+   touch screen it stuck to whichever row was tapped last. A fill is what
+   "chosen" means here, so hovering may not use one. */
+@media (hover: hover) {
+  .row:hover {
+    @apply border-ink-border;
+  }
 }
 
 /* Inside a list that already draws its own dividers, a border per row would
@@ -10,8 +20,16 @@
   @apply rounded-none border-0 px-0;
 }
 
+/* A step darker than the hover tint above, so being chosen and being pointed
+   at never look alike. */
 .selected {
-  @apply border-ink-border bg-ink-surface;
+  @apply border-ink-border bg-ink-tint;
+}
+
+/* text-subtle clears 4.5:1 on the canvas, not on this tint: on a chosen row
+   the second line takes the darker step. */
+.selected .copy small {
+  @apply text-text-muted;
 }
 
 /* The copy takes the row's spare width and truncates, so a long exercise name

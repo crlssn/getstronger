@@ -67,10 +67,10 @@
 }
 
 .quickCard {
-  @apply card grid grid-cols-[3rem_1fr_auto] items-center gap-3 p-4;
+  @apply card grid grid-cols-[1fr_auto] items-center gap-3 p-4;
 }
 
-.quickCard > span:nth-child(2) {
+.quickCard > span:first-child {
   @apply min-w-0;
 }
 
@@ -85,14 +85,6 @@
 
 .quickCard > svg {
   @apply size-5 text-text-subtle;
-}
-
-.quickIcon {
-  @apply grid size-12 place-items-center rounded-control bg-ink-tint text-ink-strong;
-}
-
-.quickIcon svg {
-  @apply size-6;
 }
 
 .workoutHistory {
@@ -156,7 +148,7 @@
 }
 
 .historyEnd svg {
-  @apply size-4 text-success;
+  @apply size-4 text-text-muted;
 }
 
 .historySpinner {

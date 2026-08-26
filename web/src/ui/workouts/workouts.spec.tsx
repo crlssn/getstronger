@@ -30,7 +30,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
-import { renderWithProviders } from '@/ui/testing'
+import { lowerKeyboard, raiseKeyboard, renderWithProviders } from '@/ui/testing'
 import { EditWorkout } from './EditWorkout'
 import { ViewWorkout } from './ViewWorkout'
 import { WorkoutView } from './WorkoutView'
@@ -130,7 +130,26 @@ describe('EditWorkout', () => {
     )
 
   beforeEach(() => {
+    lowerKeyboard()
     mocked.getWorkout.mockResolvedValue(create(GetWorkoutResponseSchema, { workout: withSets() }))
+  })
+
+  test('offers the way back beside the update rather than under it', async () => {
+    render()
+
+    expect(await screen.findByRole('button', { name: 'Update workout' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Cancel' })).toBeVisible()
+  })
+
+  // The same pinned footer as every other create and edit screen, and the only
+  // thing in the app that stands down while the keyboard is up.
+  test('pins its update above the tab bar', async () => {
+    raiseKeyboard()
+    render()
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Update workout' })).not.toBeInTheDocument(),
+    )
   })
 
   // Refused here as well as by the API, so the form is never shown for one.

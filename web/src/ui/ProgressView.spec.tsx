@@ -54,6 +54,7 @@ const seed = (workouts: ReturnType<typeof workout>[], dashboard = dashboardWith(
 const period = (label: string) => screen.getByRole('button', { name: label })
 const chartValues = () =>
   JSON.parse(screen.getByRole('img').getAttribute('data-values') ?? '[]') as number[]
+const chartTotal = () => chartValues().reduce((total, value) => total + value, 0)
 
 describe('ProgressView', () => {
   beforeEach(() => {
@@ -71,39 +72,76 @@ describe('ProgressView', () => {
     expect(screen.queryByText('Personal records')).not.toBeInTheDocument()
   })
 
+  // The chart coarsens its grain as the range grows, and the chip beside the
+  // total says which one is on screen.
+  test('names the grain the chart is drawn at', async () => {
+    seed([
+      ...Array.from({ length: 3 }, (_, index) => workout(index + 1, 100)),
+      ...Array.from({ length: 30 }, (_, index) => workout(index + 1, 100)),
+      ...Array.from({ length: 300 }, (_, index) => workout(index + 1, 100)),
+    ])
+    renderWithProviders(<ProgressView />)
+
+    await userEvent.click(period('7D'))
+    expect(screen.getByText('Daily totals')).toBeInTheDocument()
+
+    await userEvent.click(period('3M'))
+    expect(screen.getByText('Weekly totals')).toBeInTheDocument()
+
+    await userEvent.click(period('1Y'))
+    expect(screen.getByText('Monthly totals')).toBeInTheDocument()
+  })
+
   test('totals the volume of the selected range', async () => {
-    seed([workout(1, 1000), workout(60, 5000)])
+    seed([workout(1, 1000), workout(3, 400), workout(5, 600), workout(60, 5000)])
     renderWithProviders(<ProgressView />)
 
     // Four weeks by default, so the two-month-old session is out of range.
-    await waitFor(() => expect(screen.getByText('1,000 kg')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('2,000 kg')).toBeInTheDocument())
 
     await userEvent.click(period('3M'))
-    expect(screen.getByText('6,000 kg')).toBeInTheDocument()
-    expect(chartValues()).toEqual([5000, 1000])
+    expect(screen.getByText('7,000 kg')).toBeInTheDocument()
+    expect(chartValues()).toEqual([5000, 600, 400, 1000])
   })
 
   // Returning to an earlier range, and picking the same one twice, must keep
   // producing that range's data rather than the last one's.
   test('gives every range its own data, in any order', async () => {
-    // One workout per bucket, so only 1Y sees all four.
-    seed([workout(2, 100), workout(20, 200), workout(60, 300), workout(200, 400)])
+    // Three workouts per bucket: below three points the card reads out a
+    // figure instead of drawing bars, so each range needs a shape to draw.
+    seed([
+      workout(1, 100),
+      workout(2, 100),
+      workout(3, 100),
+      workout(20, 200),
+      workout(21, 200),
+      workout(22, 200),
+      workout(60, 300),
+      workout(61, 300),
+      workout(62, 300),
+      workout(200, 400),
+      workout(201, 400),
+      workout(202, 400),
+    ])
     renderWithProviders(<ProgressView />)
 
-    await waitFor(() => expect(chartValues()).toHaveLength(2))
+    await waitFor(() => expect(chartTotal()).toBe(900))
 
-    for (const [label, bars] of [
-      ['7D', 1],
-      ['4W', 2],
-      ['3M', 3],
-      ['1Y', 4],
-      ['4W', 2],
-      ['7D', 1],
-      ['7D', 1],
-      ['1Y', 4],
+    // The volume each range covers, not the bar count: past eight days the
+    // chart aggregates to weeks, so the count is a property of the grain
+    // rather than of the range.
+    for (const [label, volume] of [
+      ['7D', 300],
+      ['4W', 900],
+      ['3M', 1800],
+      ['1Y', 3000],
+      ['4W', 900],
+      ['7D', 300],
+      ['7D', 300],
+      ['1Y', 3000],
     ] as const) {
       await userEvent.click(period(label))
-      expect(chartValues()).toHaveLength(bars)
+      expect(chartTotal()).toBe(volume)
       expect(period(label)).toHaveAttribute('aria-pressed', 'true')
     }
   })
@@ -123,7 +161,7 @@ describe('ProgressView', () => {
   // An empty range keeps the picker on screen and says so, rather than
   // unmounting the controls the reader needs to get back to a fuller range.
   test('keeps the picker when the chosen range has nothing in it', async () => {
-    seed([workout(200, 5000)])
+    seed([workout(200, 5000), workout(201, 5000), workout(202, 5000)])
     renderWithProviders(<ProgressView />)
 
     await waitFor(() => expect(screen.getByText('No workouts in this period.')).toBeInTheDocument())

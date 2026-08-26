@@ -1,6 +1,6 @@
 import type { Plugin } from 'chart.js'
 
-import { successColor } from '@/ui/chartTokens'
+import { inkColor } from '@/ui/chartTokens'
 import { formatNumber } from '@/utils/numbers'
 
 /**
@@ -24,10 +24,18 @@ export const latestValueLabel: Plugin<'bar'> = {
     const { ctx } = chart
     ctx.save()
     ctx.font = `700 11px ${getComputedStyle(chart.canvas).fontFamily}`
-    ctx.fillStyle = successColor
+    ctx.fillStyle = inkColor
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
-    ctx.fillText(formatNumber(raw), bar.x, bar.y - 4)
+
+    // The last bar sits at the right edge of the plot, so a centred label runs
+    // half its width past it and the canvas clips what hangs over — "8,293"
+    // arrived as "8,2". Nudged back inside whichever edge it would cross.
+    const label = formatNumber(raw)
+    const half = ctx.measureText(label).width / 2
+    const x = Math.min(Math.max(bar.x, chart.chartArea.left + half), chart.chartArea.right - half)
+
+    ctx.fillText(label, x, bar.y - 4)
     ctx.restore()
   },
 }

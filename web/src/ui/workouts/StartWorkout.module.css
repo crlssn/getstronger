@@ -4,21 +4,27 @@
   @apply mx-auto max-w-3xl space-y-4 pb-8;
 }
 
-/* The timer and the session header are one piece of chrome. The shell's usual
-   section gap belongs below the timer, not between these bars. */
-.workoutShell.resting > .workoutHeader {
-  margin-bottom: 0;
-}
-
 /* The chrome spans the viewport while its contents stay aligned with the app,
    and is opaque, or scrolled content bleeds through and reads as passing over
-   the header. */
-.workoutHeader {
+   the header.
+
+   Header and rest bar stick as one block. Pinned separately at the same offset
+   the bar won the z-index and rode up over the session title. */
+.sessionChrome {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  @apply sticky z-20 -mt-5 border-b border-border bg-white text-text lg:-mt-7;
+  @apply sticky z-20 -mt-5 bg-surface-sunken lg:-mt-7;
   /* Below the status-bar scrim in the native WebView; zero in browsers. */
   top: env(safe-area-inset-top);
+}
+
+.workoutHeader {
+  @apply border-b border-border bg-white text-text;
+}
+
+/* The bar is a card in the content column, so it takes the column's gutters. */
+.restDock {
+  @apply mx-auto w-full max-w-3xl px-3 pb-1 pt-3 sm:px-5 lg:px-8;
 }
 
 .workoutHeaderInner {
@@ -51,15 +57,7 @@
 }
 
 .quickEmpty {
-  @apply card grid justify-items-center gap-3 p-8 text-center;
-}
-
-.quickEmpty > span {
-  @apply grid size-14 place-items-center rounded-card bg-ink-surface text-ink;
-}
-
-.quickEmpty > span svg {
-  @apply size-6;
+  @apply card grid justify-items-center gap-3 p-6 text-center;
 }
 
 .quickEmpty h2 {
@@ -138,7 +136,7 @@
 }
 
 .completedExercise {
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-control bg-success-surface p-4 text-success;
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-control bg-ink-surface p-4 text-text;
 }
 
 .completedExercise strong {
@@ -146,7 +144,7 @@
 }
 
 .completedExercise p {
-  @apply mt-0.5 text-xs text-success;
+  @apply mt-0.5 text-xs text-text-muted;
 }
 
 /* A number on a neutral tile, in every state. Tinting it for completion put a
@@ -198,7 +196,7 @@
 }
 
 /* Reopening reads as a correction, not a warning, so it takes the completed
-   panel's green rather than the ghost role's neutral. */
+   panel's ink rather than the ghost role's grey. */
 .reopenExercise {
-  @apply text-success hover:bg-success/10 hover:text-success;
+  @apply text-text hover:bg-ink-surface hover:text-ink-strong;
 }

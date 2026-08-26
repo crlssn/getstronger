@@ -36,6 +36,25 @@ describe('AppFormFooter', () => {
     expect(screen.getByRole('button', { name: 'Create routine' })).toBeVisible()
   })
 
+  test('carries a secondary action beside the primary one', () => {
+    renderWithProviders(
+      <AppFormFooter
+        secondary={
+          <AppButton type="button" colour="ghost" width="auto">
+            Cancel
+          </AppButton>
+        }
+      >
+        <AppButton type="submit" colour="primary">
+          Save changes
+        </AppButton>
+      </AppFormFooter>,
+    )
+
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeVisible()
+  })
+
   // A bar floating on the keyboard covers the field being typed into.
   test('stands down while the keyboard is up', () => {
     openKeyboard()

@@ -5,53 +5,53 @@ import { dateLocale, i18n } from '@/i18n'
 
 const localized = (date: DateTime): DateTime => date.setLocale(dateLocale)
 
-export const formatToCompactDateTime = (date: Timestamp | undefined): string => {
-  if (!date) return ''
-  return localized(DateTime.fromSeconds(Number(date.seconds))).toFormat('EEE dd LLL HH:mm')
-}
+/** Below this, a count of seconds is noise rather than precision. */
+const justNowSeconds = 60
 
-export const formatToShortDateTime = (date: Timestamp | undefined): string => {
-  if (!date) return ''
-  return localized(DateTime.fromSeconds(Number(date.seconds))).toLocaleString(DateTime.DATE_MED)
-}
+/** Past this, the day it fell on says more than the count of days. */
+const relativeDays = 7
 
 /**
- * Renders a moment as "3 minutes ago", or "Just now" when it is too recent to
- * count.
+ * When something happened, in the one form every row in the app uses.
  *
- * Anything under a second becomes "0 seconds", and a server timestamp a few
- * hundred milliseconds ahead of the client clock renders as "in 0 seconds" —
- * both are read as broken rather than recent, so the threshold is on the
- * elapsed time rather than on the rendered string.
+ * The feed alone used to mix "Just now", "25 seconds ago", "7 days ago",
+ * "Wed, 8 July · 14:15" and "26 Aug 2026" — five formats, two of them on the
+ * same screen. One rule instead: under a minute it is just now, under a week it
+ * counts in the largest unit that fits, and past that it is the date. No time
+ * of day — that is a fact about a session, not a timestamp on a row, and it
+ * lives on the workout detail page in `formatMoment`.
  */
 const relativeToNow = (date: DateTime): string => {
-  if (date.diffNow('seconds').seconds > -1) return i18n.t('date.justNow')
-  return localized(date).toRelative() ?? ''
+  const elapsed = -date.diffNow('seconds').seconds
+
+  // A server timestamp a few hundred milliseconds ahead of the client clock
+  // renders as "in 0 seconds", which reads as broken rather than as recent.
+  if (elapsed < justNowSeconds) return i18n.t('date.justNow')
+
+  if (-date.diffNow('days').days < relativeDays) {
+    return localized(date).toRelative({ unit: ['days', 'hours', 'minutes'] }) ?? ''
+  }
+
+  return localized(date).toLocaleString(DateTime.DATE_MED)
 }
 
-export const formatToRelativeDateTime = (date: Timestamp | undefined): string => {
+export const formatTimestamp = (date: Timestamp | undefined): string => {
   if (!date) return ''
   return relativeToNow(DateTime.fromSeconds(Number(date.seconds)))
 }
 
-export const formatUnixToRelativeDateTime = (timestamp: bigint | undefined): string => {
+export const formatUnixTimestamp = (timestamp: bigint | undefined): string => {
   if (!timestamp) return ''
   return relativeToNow(DateTime.fromSeconds(Number(timestamp)))
 }
 
 /**
- * When a workout happened, read the way somebody asks about it.
+ * The exact moment a session ran, for the page that is about that session.
  *
- * Relative inside a month — "3 days ago" is what a reader scrolling a feed
- * wants — and the date itself once it is old enough that "7 weeks ago" says
- * less than the day it fell on. The weekday abbreviates there, because by then
- * it is orientation rather than information.
+ * The weekday is orientation, the time of day is the fact somebody came to the
+ * detail page for. Nowhere else — on a row it is a timestamp, not a fact.
  */
-export const formatWorkoutDate = (date: Timestamp | undefined): string => {
+export const formatMoment = (date: Timestamp | undefined): string => {
   if (!date) return ''
-
-  const finished = DateTime.fromSeconds(Number(date.seconds))
-  if (finished.diffNow('months').months > -1) return relativeToNow(finished)
-
-  return localized(finished).toFormat('ccc, d LLLL · HH:mm')
+  return localized(DateTime.fromSeconds(Number(date.seconds))).toFormat('ccc, d LLLL · HH:mm')
 }

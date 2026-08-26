@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 
 import { RichMessage } from '@/i18n/RichMessage'
 import { useAuthStore } from '@/stores/auth'
-import { formatUnixToRelativeDateTime } from '@/utils/datetime'
+import { formatUnixTimestamp } from '@/utils/datetime'
 import { handle } from '@/utils/names'
 
 interface Props {
@@ -42,7 +42,7 @@ export const NotificationWorkoutComment = ({ actor, timestamp, workout }: Props)
             }}
           />
         </div>
-        <p className="text-sm text-text-subtle">{formatUnixToRelativeDateTime(timestamp)}</p>
+        <p className="text-sm text-text-subtle">{formatUnixTimestamp(timestamp)}</p>
       </div>
     </Link>
   )

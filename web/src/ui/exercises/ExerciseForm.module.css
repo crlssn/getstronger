@@ -1,9 +1,5 @@
 @reference '../../assets/base.css';
 
-.formActions {
-  @apply mt-4;
-}
-
 .formStatus {
   @apply card p-6 text-sm text-text-subtle;
 }

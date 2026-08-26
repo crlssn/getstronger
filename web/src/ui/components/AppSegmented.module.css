@@ -19,6 +19,28 @@
   display: none;
 }
 
+/* The row already scrolled, but it ended flush at its own edge: "Distance ×
+ * time | Re…" read as a rendering fault rather than as something to swipe.
+ * Whichever side is still hiding an option fades out, and only that side —
+ * a permanent fade would soften the last pill of a row that fits. */
+.segmented.fadeEnd {
+  mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
+}
+
+.segmented.fadeStart {
+  mask-image: linear-gradient(to left, black calc(100% - 2rem), transparent);
+}
+
+.segmented.fadeStart.fadeEnd {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 2rem,
+    black calc(100% - 2rem),
+    transparent
+  );
+}
+
 /* Density is horizontal padding and type size. Height is the tap-target floor,
  * and there is no density below it. */
 .segmented > * {

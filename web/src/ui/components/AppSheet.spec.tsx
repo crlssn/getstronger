@@ -27,13 +27,13 @@ describe('AppSheet', () => {
       <AppSheet
         title="Leave workout?"
         eyebrow="Autosaved"
-        eyebrowTone="success"
+        eyebrowTone="danger"
         body="Your progress is saved on this device."
         onClose={vi.fn()}
       />,
     )
 
-    expect(screen.getByText('Autosaved').className).toContain('success')
+    expect(screen.getByText('Autosaved').className).toContain('danger')
     expect(screen.getByText('Your progress is saved on this device.')).toBeInTheDocument()
     expect(document.querySelector('[aria-hidden="true"]')).toBeInTheDocument()
   })

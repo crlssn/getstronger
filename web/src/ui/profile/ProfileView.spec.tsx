@@ -212,101 +212,126 @@ describe('ProfileView', () => {
     expect(usePreferencesStore.getState().autofillSets).toBe(true)
   })
 
-  describe('the username editor', () => {
+  // One action for the card, not a pencil per field: two 20px pencils were
+  // under the tap-target floor, and the one after the name pinned the heading
+  // into a column narrow enough to truncate it with 90px going spare.
+  describe('the profile editor', () => {
     const open = async () => {
-      await userEvent.click(await screen.findByRole('button', { name: 'Change username' }))
-      return screen.getByRole('textbox', { name: 'Username' })
+      await userEvent.click(await screen.findByRole('button', { name: 'Edit profile' }))
+      return {
+        name: screen.getByRole('textbox', { name: 'Name' }),
+        username: screen.getByRole('textbox', { name: 'Username' }),
+      }
     }
 
-    test('opens with the current username', async () => {
+    test('is the only way into either field', async () => {
       render()
 
-      expect(await open()).toHaveValue('alex')
+      expect(await screen.findByRole('button', { name: 'Edit profile' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Change name' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Change username' })).not.toBeInTheDocument()
+    })
+
+    test('opens with both fields as they stand', async () => {
+      render()
+
+      const fields = await open()
+      expect(fields.name).toHaveValue('Alex Morgan')
+      expect(fields.username).toHaveValue('alex')
     })
 
     // Usernames are lower-case, so the field settles the case rather than
     // rejecting what was typed.
-    test('lower-cases what is typed', async () => {
+    test('lower-cases the username as it is typed', async () => {
       render()
 
-      const field = await open()
-      await userEvent.clear(field)
-      await userEvent.type(field, 'Alex.Morgan')
+      const { username } = await open()
+      await userEvent.clear(username)
+      await userEvent.type(username, 'Alex.Morgan')
 
-      expect(field).toHaveValue('alex.morgan')
+      expect(username).toHaveValue('alex.morgan')
     })
 
-    test('saves the new username and closes', async () => {
+    test('saves both fields and closes', async () => {
+      mocked.updateUserName.mockResolvedValue(
+        create(UpdateUserNameResponseSchema, { user: profile({ name: 'Alexandra Morgan' }).user }),
+      )
       mocked.updateUserUsername.mockResolvedValue(
         create(UpdateUserUsernameResponseSchema, { user: profile({ username: 'newalex' }).user }),
       )
       render()
 
-      const field = await open()
-      await userEvent.clear(field)
-      await userEvent.type(field, 'newalex')
+      const fields = await open()
+      await userEvent.clear(fields.name)
+      await userEvent.type(fields.name, 'Alexandra Morgan')
+      await userEvent.clear(fields.username)
+      await userEvent.type(fields.username, 'newalex')
       await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
+      await waitFor(() => expect(mocked.updateUserName).toHaveBeenCalledWith('Alexandra Morgan'))
       await waitFor(() => expect(mocked.updateUserUsername).toHaveBeenCalledWith('newalex'))
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+      expect(screen.getByRole('heading', { name: 'Alexandra Morgan' })).toBeInTheDocument()
       expect(screen.getByText('@newalex')).toBeInTheDocument()
     })
 
-    // A taken username surfaces through the request helper's own toast, so the
-    // sheet stays open for the draft to be corrected.
-    test('stays open when the name could not be saved', async () => {
-      mocked.updateUserUsername.mockResolvedValue(undefined)
-      render()
-
-      await open()
-      await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-
-      await waitFor(() => expect(mocked.updateUserUsername).toHaveBeenCalled())
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-    })
-  })
-
-  describe('the name editor', () => {
-    const open = async () => {
-      await userEvent.click(await screen.findByRole('button', { name: 'Change name' }))
-      return screen.getByRole('textbox', { name: 'Name' })
-    }
-
-    test('opens with the current name', async () => {
-      render()
-
-      expect(await open()).toHaveValue('Alex Morgan')
-    })
-
-    test('saves the new name and closes', async () => {
+    // An untouched field is not an edit, so it is not sent.
+    test('sends only the field that changed', async () => {
       mocked.updateUserName.mockResolvedValue(
         create(UpdateUserNameResponseSchema, { user: profile({ name: 'Alexandra Morgan' }).user }),
       )
       render()
 
-      const field = await open()
-      await userEvent.clear(field)
-      await userEvent.type(field, 'Alexandra Morgan')
+      const fields = await open()
+      await userEvent.clear(fields.name)
+      await userEvent.type(fields.name, 'Alexandra Morgan')
       await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-      await waitFor(() => expect(mocked.updateUserName).toHaveBeenCalledWith('Alexandra Morgan'))
-      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+      await waitFor(() => expect(mocked.updateUserName).toHaveBeenCalled())
+      expect(mocked.updateUserUsername).not.toHaveBeenCalled()
+    })
+
+    // A taken username surfaces through the request helper's own toast, so the
+    // sheet stays open for the draft to be corrected — and the name that did
+    // save is not rolled back with it.
+    test('keeps a saved name when the username is refused', async () => {
+      mocked.updateUserName.mockResolvedValue(
+        create(UpdateUserNameResponseSchema, { user: profile({ name: 'Alexandra Morgan' }).user }),
+      )
+      mocked.updateUserUsername.mockResolvedValue(undefined)
+      render()
+
+      const fields = await open()
+      await userEvent.clear(fields.name)
+      await userEvent.type(fields.name, 'Alexandra Morgan')
+      await userEvent.clear(fields.username)
+      await userEvent.type(fields.username, 'taken')
+      await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+      await waitFor(() => expect(mocked.updateUserUsername).toHaveBeenCalled())
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: 'Alexandra Morgan' })).toBeInTheDocument()
     })
 
-    // The pencil sits beside the heading, not inside it, so the heading's
+    // The action sits beside the heading, not inside it, so the heading's
     // accessible name stays the name itself.
-    test('keeps the pencil out of the heading', async () => {
+    test('keeps the action out of the heading', async () => {
       render()
 
       expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
     })
   })
 
-  test('offers the way out', async () => {
+  // Three levels of alarm for something done once: the only filled red button
+  // in the app, in a tinted red card, under a red-outlined log out. Both are
+  // plain rows now, and the red waits in the confirmation.
+  test('offers the way out and the way off as two plain rows', async () => {
     render()
 
-    expect(await screen.findByRole('link', { name: /Log out/ })).toHaveAttribute('href', '/logout')
+    const account = within(await screen.findByRole('region', { name: 'Account' }))
+    expect(account.getByRole('link', { name: /Log out/ })).toHaveAttribute('href', '/logout')
+    expect(account.getByRole('button', { name: /Delete account/ })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Danger zone' })).not.toBeInTheDocument()
   })
 
   // Both app stores require the account to be deletable from inside the app.
@@ -315,8 +340,8 @@ describe('ProfileView', () => {
       render()
       await loaded()
       await userEvent.click(
-        within(screen.getByRole('region', { name: 'Danger zone' })).getByRole('button', {
-          name: 'Delete account',
+        within(screen.getByRole('region', { name: 'Account' })).getByRole('button', {
+          name: /Delete account/,
         }),
       )
 

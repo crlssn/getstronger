@@ -1,4 +1,4 @@
-import { ArrowPathIcon, CheckIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -8,6 +8,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { selectActivePlan, usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -85,52 +86,53 @@ export const PlansView = () => {
         // lesson for someone who already has three of them.
         <AppErrorState onRetry={() => void load()} />
       ) : plans.length === 0 ? (
-        // A plan is an unfamiliar idea, so the empty state teaches it rather
-        // than just offering a button.
-        <section className={styles.emptyPlanState}>
-          <span className={styles.emptyPlanIcon}>
-            <ArrowPathIcon aria-hidden="true" />
-          </span>
-          <p className={styles.eyebrow}>{t('training.howPlansWork')}</p>
-          <h2>{t('training.repeatingTitle')}</h2>
-          <p className={styles.emptyPlanCopy}>{t('training.repeatingBody')}</p>
+        // One shape, under 160px. The three-step tour of what a plan is spent
+        // an entire 844px and pushed its own button off the bottom of the
+        // screen; it lives behind the link now, read once rather than paid for
+        // on every visit.
+        <AppEmptyState
+          action={{ label: t('training.createFirstPlan'), to: '/plans/create' }}
+          actionIcon={<PlusIcon aria-hidden="true" />}
+          body={t('training.noPlansBody')}
+          title={t('training.noPlansTitle')}
+          learnMore={{
+            label: t('training.howPlansWork'),
+            title: t('training.repeatingTitle'),
+            children: (
+              <div className={styles.planExplainer}>
+                <p>{t('training.repeatingBody')}</p>
 
-          <ol className={styles.planSteps}>
-            <li>
-              <span>1</span>
-              <div>
-                <strong>{t('training.chooseRoutines')}</strong>
-                <small>{t('training.chooseRoutinesBody')}</small>
-              </div>
-            </li>
-            <li>
-              <span>2</span>
-              <div>
-                <strong>{t('training.activatePlan')}</strong>
-                <small>{t('training.activatePlanBody')}</small>
-              </div>
-            </li>
-            <li>
-              <span>
-                <CheckIcon aria-hidden="true" />
-              </span>
-              <div>
-                <strong>{t('training.keepTraining')}</strong>
-                <small>{t('training.keepTrainingBody')}</small>
-              </div>
-            </li>
-          </ol>
+                <ol className={styles.planSteps}>
+                  <li>
+                    <span>1</span>
+                    <div>
+                      <strong>{t('training.chooseRoutines')}</strong>
+                      <small>{t('training.chooseRoutinesBody')}</small>
+                    </div>
+                  </li>
+                  <li>
+                    <span>2</span>
+                    <div>
+                      <strong>{t('training.activatePlan')}</strong>
+                      <small>{t('training.activatePlanBody')}</small>
+                    </div>
+                  </li>
+                  <li>
+                    <span>
+                      <CheckIcon aria-hidden="true" />
+                    </span>
+                    <div>
+                      <strong>{t('training.keepTraining')}</strong>
+                      <small>{t('training.keepTrainingBody')}</small>
+                    </div>
+                  </li>
+                </ol>
 
-          <p className={styles.activePlanRule}>{t('training.oneActive')}</p>
-          <AppButton
-            type="link"
-            colour="primary"
-            className={styles.firstPlanButton}
-            to="/plans/create"
-          >
-            <PlusIcon className="size-5" aria-hidden="true" /> {t('training.createFirstPlan')}
-          </AppButton>
-        </section>
+                <p className={styles.activePlanRule}>{t('training.oneActive')}</p>
+              </div>
+            ),
+          }}
+        />
       ) : (
         <>
           {activePlan ? (

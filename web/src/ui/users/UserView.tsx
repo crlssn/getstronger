@@ -104,7 +104,9 @@ export const UserView = () => {
         ))}
 
       {/* Two points is the fewest that can show a direction. */}
-      {workouts.length > 1 && (
+      {/* The chart decides what it can honestly draw: a figure under three
+          points, bars above. */}
+      {workouts.length > 0 && (
         <div>
           <h6>{t('profile.trend')}</h6>
           <AppCard className="p-2">

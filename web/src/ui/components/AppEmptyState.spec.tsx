@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -59,17 +59,53 @@ describe('AppEmptyState', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
-  test('shows the icons it is given', () => {
+  test('shows the action icon it is given', () => {
     renderWithProviders(
       <AppEmptyState
         action={{ label: 'Go', to: '/home' }}
         title="Empty"
-        icon={<svg data-testid="icon" />}
         actionIcon={<svg data-testid="action-icon" />}
       />,
     )
 
-    expect(screen.getByTestId('icon')).toBeInTheDocument()
     expect(screen.getByTestId('action-icon')).toBeInTheDocument()
+  })
+
+  // A first-run reader wants the concept explained once; a returning one
+  // should not pay a screenful for it on every visit.
+  describe('the explainer', () => {
+    const render = () =>
+      renderWithProviders(
+        <AppEmptyState
+          action={{ label: 'Create a plan', to: '/plans/create' }}
+          title="No plans yet"
+          body="A plan repeats your routines in order."
+          learnMore={{
+            label: 'How plans work',
+            title: 'How plans work',
+            children: <p>Choose routines, activate the plan, keep training.</p>,
+          }}
+        />,
+      )
+
+    test('stays behind a link until it is asked for', () => {
+      render()
+
+      expect(screen.getByRole('button', { name: 'How plans work' })).toBeInTheDocument()
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText('Choose routines, activate the plan, keep training.'),
+      ).not.toBeInTheDocument()
+    })
+
+    test('opens in a sheet, beside the action rather than instead of it', async () => {
+      render()
+
+      await userEvent.click(screen.getByRole('button', { name: 'How plans work' }))
+
+      const sheet = within(screen.getByRole('dialog'))
+      expect(sheet.getByText('Choose routines, activate the plan, keep training.')).toBeVisible()
+      expect(screen.getByRole('link', { name: 'Create a plan' })).toBeInTheDocument()
+    })
   })
 })

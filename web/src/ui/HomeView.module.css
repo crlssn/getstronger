@@ -96,7 +96,7 @@
 }
 
 .feedEnd > span {
-  @apply grid size-9 place-items-center rounded-full bg-success-surface text-success;
+  @apply grid size-9 place-items-center rounded-full bg-ink-tint text-ink-strong;
 }
 
 .feedEnd svg {

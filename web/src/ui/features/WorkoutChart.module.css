@@ -3,3 +3,21 @@
 .frame {
   @apply h-64;
 }
+
+/* One datum is a statistic, not a trend: read out rather than drawn as a lone
+   bar filling the card. */
+.figure {
+  @apply grid gap-1 py-6;
+}
+
+.figure strong {
+  @apply text-display font-extrabold tabular-nums text-text;
+}
+
+.figureDate {
+  @apply font-semibold text-text-subtle;
+}
+
+.figure small {
+  @apply text-meta text-text-subtle;
+}

@@ -178,20 +178,36 @@ describe('UserView', () => {
   })
 
   describe('the trend chart', () => {
-    // One point is a dot, not a direction.
-    test('waits for a second workout', async () => {
+    // One point is a dot, not a direction — and as a chart it was a single bar
+    // filling the whole card in solid green.
+    test('reads one logged day as a figure rather than a chart', async () => {
       mocked.listWorkouts.mockResolvedValue(workoutsPage([workout('w1', '2026-08-14T08:00:00Z')]))
+      render()
+
+      await screen.findByRole('navigation', { name: 'Profile sections' })
+      expect(screen.queryByRole('img', { name: 'trend' })).not.toBeInTheDocument()
+      expect(screen.getByText('Only day logged in this range')).toBeInTheDocument()
+    })
+
+    test('still reads two as figures', async () => {
+      mocked.listWorkouts.mockResolvedValue(
+        workoutsPage([
+          workout('w1', '2026-08-14T08:00:00Z'),
+          workout('w2', '2026-08-13T08:00:00Z'),
+        ]),
+      )
       render()
 
       await screen.findByRole('navigation', { name: 'Profile sections' })
       expect(screen.queryByRole('img', { name: 'trend' })).not.toBeInTheDocument()
     })
 
-    test('appears once there are two', async () => {
+    test('draws the chart once three days have a shape', async () => {
       mocked.listWorkouts.mockResolvedValue(
         workoutsPage([
           workout('w1', '2026-08-14T08:00:00Z'),
           workout('w2', '2026-08-13T08:00:00Z'),
+          workout('w3', '2026-08-12T08:00:00Z'),
         ]),
       )
       render()

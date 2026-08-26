@@ -1,9 +1,5 @@
 @reference '../../assets/base.css';
 
-.editWorkoutForm {
-  @apply pb-32;
-}
-
 .exerciseHeading {
   @apply flex justify-between pr-4;
 }
@@ -18,9 +14,4 @@
 
 .note {
   @apply mb-4 min-h-20 w-full resize-none overflow-hidden rounded-control border-border py-3 text-base focus:border-ink-muted focus:ring-ink-muted;
-}
-
-.updateDock {
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-40 mx-auto flex max-w-3xl flex-col items-stretch gap-2 border-t border-border bg-white px-4 py-3 shadow-overlay sm:rounded-card sm:border;
 }

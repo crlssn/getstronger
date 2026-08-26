@@ -1,147 +1,71 @@
 @reference '../../assets/base.css';
 
-/* Registered so the hue can be transitioned: without this the gradient would
-   snap at each minute boundary instead of morphing. */
-@property --rest-hue {
-  syntax: '<number>';
-  inherits: false;
-  initial-value: 160;
-}
-
-/* A square, edge-to-edge band that rides over the header on scroll, so the
-   countdown owns the top of the screen while resting. Energy comes from
-   saturation, not lightness: near-full saturation reads vivid while staying
-   dark enough for white text. The gradient runs dark at the top-left, where the
-   countdown sits, out to a bright corner. */
+/* An ink card in the content column, not a coloured band across the viewport.
+   It rides inside the session chrome, so it is pinned under the header rather
+   than over it and never clips the exercise position it sits below. */
 .restBanner {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  @apply sticky z-30 !mt-0 text-white;
-  /* Level with the header it covers: below the status-bar scrim in the native
-     WebView, zero in browsers. */
-  top: env(safe-area-inset-top);
-  background-image: linear-gradient(
-    140deg,
-    hsl(var(--rest-hue, 165) 95% 21%) 0%,
-    hsl(var(--rest-hue, 165) 92% 31%) 58%,
-    hsl(calc(var(--rest-hue, 165) - 28) 96% 40%) 100%
-  );
-  transition: --rest-hue 900ms ease;
+  @apply rounded-card bg-surface-inverse px-4 py-3 text-white shadow-raised;
 }
 
-.restBannerInner {
-  @apply mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-3 px-3 pb-4 pt-3 sm:px-5 lg:px-8;
+.restRow {
+  @apply flex items-center justify-between gap-3;
 }
 
 .restCopy {
-  @apply min-w-0;
+  @apply flex min-w-0 items-baseline gap-2;
 }
 
-/* The digits are the whole message: as tall as the action chips beside them, so
-   the band reads as one row. */
+/* The countdown is the biggest thing on the bar: it is the only number being
+   read while it runs. */
 .restCopy strong {
-  @apply block font-mono text-(length:--size-control-sm) font-bold leading-none tabular-nums text-white;
+  @apply text-display font-extrabold leading-none tabular-nums text-white;
+}
+
+.restCopy span {
+  @apply text-eyebrow font-bold uppercase text-white/50;
 }
 
 .restActions {
-  @apply flex shrink-0 items-center gap-1;
+  @apply flex shrink-0 items-center gap-1.5;
 }
 
-/* A dark tint keeps the white label high-contrast wherever the chips land on
-   the gradient; a white tint washes out against the bright corner. */
-/* On the rest band, which is its own colour: the button borrows that
-   surface's contrast rather than the ghost role's. */
+/* On the ink card, so both borrow that surface's own contrast rather than the
+   ghost role's. Skipping is the quieter of the two. */
 .restBanner button {
-  @apply bg-black/25 text-white hover:bg-black/40 hover:text-white;
+  @apply bg-white/15 text-white hover:bg-white/25 hover:text-white;
+}
+
+.restBanner button.skip {
+  @apply bg-transparent text-white/65 hover:bg-white/10 hover:text-white;
 }
 
 .restProgress {
-  @apply col-span-2 h-1.5 overflow-hidden rounded-pill bg-white/15;
+  @apply mt-3 h-[3px] overflow-hidden rounded-pill bg-white/15;
 }
 
+/* The one place green is left on this surface, meaning what green means: this
+   is running right now. */
 .restProgress span {
-  @apply block h-full rounded-pill bg-white transition-[width] duration-1000 ease-linear;
+  @apply block h-full rounded-pill bg-success transition-[width] duration-1000 ease-linear;
 }
 
-/* The last minute goes sunny with dark text: warm hues only read as happy when
-   they are bright, and bright needs dark type to stay legible. */
-.restBanner.bright {
-  background-image: linear-gradient(
-    140deg,
-    hsl(42 100% 50%) 0%,
-    hsl(50 100% 56%) 55%,
-    hsl(70 92% 54%) 100%
-  );
-  @apply text-text;
+/* The last ten seconds, said with the fill rather than with the whole screen. */
+.restBanner.final .restProgress span {
+  animation: rest-pulse 1s ease-in-out infinite;
 }
 
-.restBanner.bright .restCopy strong {
-  @apply text-text;
-}
-
-.restBanner.bright button {
-  @apply bg-black/15 text-text hover:bg-black/25;
-}
-
-.restBanner.bright .restProgress {
-  @apply bg-black/15;
-}
-
-.restBanner.bright .restProgress span {
-  @apply bg-ink-strong;
-}
-
-/* One beat per second through the last ten: the band itself brightens rather
-   than the digits resizing, so the numbers stay steady and readable. The tick
-   class flips with the countdown, and swapping between the twin keyframe names
-   restarts the one-shot pulse — so every beat starts exactly when the digit
-   changes rather than drifting on its own clock. */
-.restBanner.final {
-  --pulse-brightness: 1.55;
-  --pulse-saturation: 1.25;
-}
-
-/* An already-bright band would blow out on the dark band's pulse range. */
-.restBanner.final.bright {
-  --pulse-brightness: 1.14;
-  --pulse-saturation: 1.3;
-}
-
-.restBanner.final.tickEven {
-  animation: rest-pulse-a 1s ease-in-out 1;
-}
-
-.restBanner.final.tickOdd {
-  animation: rest-pulse-b 1s ease-in-out 1;
-}
-
-/* Identical twins: alternating the name is what restarts the animation. */
-@keyframes rest-pulse-a {
+@keyframes rest-pulse {
   0%,
   100% {
-    filter: brightness(1) saturate(1);
+    opacity: 1;
   }
-  45% {
-    filter: brightness(var(--pulse-brightness)) saturate(var(--pulse-saturation));
-  }
-}
-
-@keyframes rest-pulse-b {
-  0%,
-  100% {
-    filter: brightness(1) saturate(1);
-  }
-  45% {
-    filter: brightness(var(--pulse-brightness)) saturate(var(--pulse-saturation));
+  50% {
+    opacity: 0.45;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .restBanner {
-    transition: none;
-  }
-  .restBanner.final.tickEven,
-  .restBanner.final.tickOdd {
+  .restBanner.final .restProgress span {
     animation: none;
   }
 }

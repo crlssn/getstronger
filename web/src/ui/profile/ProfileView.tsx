@@ -1,15 +1,7 @@
 import type { User } from '@/proto/api/v1/shared_pb'
 import type { ReactNode } from 'react'
 
-import {
-  ArrowRightOnRectangleIcon,
-  BellIcon,
-  ChartBarIcon,
-  ChevronRightIcon,
-  PencilSquareIcon,
-  ShieldCheckIcon,
-  UserCircleIcon,
-} from '@heroicons/react/24/outline'
+import { BellIcon, ChevronRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -33,7 +25,6 @@ import { usePreferencesStore } from '@/stores/preferences'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
-import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
@@ -63,9 +54,8 @@ export const ProfileView = () => {
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
 
   const [user, setUser] = useState<User>()
-  const [saving, setSaving] = useState<'weight' | 'distance' | 'autofill' | 'name' | 'username'>()
-  const [nameDraft, setNameDraft] = useState<string>()
-  const [usernameDraft, setUsernameDraft] = useState<string>()
+  const [saving, setSaving] = useState<'weight' | 'distance' | 'autofill' | 'profile'>()
+  const [draft, setDraft] = useState<{ name: string; username: string }>()
   const [deletePassword, setDeletePassword] = useState<string>()
   const [deleteError, setDeleteError] = useState<string>()
   const [deleting, setDeleting] = useState(false)
@@ -126,36 +116,43 @@ export const ProfileView = () => {
     useToastStore.getState().success(messages.updated)
   }
 
-  const saveName = async () => {
-    if (!user || nameDraft === undefined || saving === 'name') return
+  /**
+   * Saves whichever of the two fields was changed.
+   *
+   * They are separate requests, so a refused username must not roll back a
+   * name that already landed: the card takes each success as it comes, and the
+   * sheet stays open on the failure for the draft to be corrected. Failures —
+   * including a taken username — surface through the request helper's toast.
+   */
+  const saveProfile = async () => {
+    if (!user || !draft || saving === 'profile') return
 
-    setSaving('name')
-    const res = await updateUserName(nameDraft)
+    setSaving('profile')
+    let saved = user
+
+    if (draft.name !== user.name) {
+      const res = await updateUserName(draft.name)
+      if (!res) {
+        setSaving(undefined)
+        return
+      }
+      saved = { ...saved, name: res.user?.name ?? draft.name }
+    }
+
+    if (draft.username !== user.username) {
+      const res = await updateUserUsername(draft.username)
+      if (!res) {
+        setUser(saved)
+        setSaving(undefined)
+        return
+      }
+      saved = { ...saved, username: res.user?.username ?? draft.username }
+    }
+
+    setUser(saved)
+    setDraft(undefined)
     setSaving(undefined)
-
-    // Failures surface through the request helper's toast, so the sheet stays
-    // open for the draft to be corrected.
-    if (!res) return
-
-    setUser({ ...user, name: res.user?.name ?? nameDraft })
-    setNameDraft(undefined)
-    useToastStore.getState().success(t('profile.nameUpdated'))
-  }
-
-  const saveUsername = async () => {
-    if (!user || usernameDraft === undefined || saving === 'username') return
-
-    setSaving('username')
-    const res = await updateUserUsername(usernameDraft)
-    setSaving(undefined)
-
-    // Failures — including a taken username — surface through the request
-    // helper's toast, so the sheet stays open for the draft to be corrected.
-    if (!res) return
-
-    setUser({ ...user, username: res.user?.username ?? usernameDraft })
-    setUsernameDraft(undefined)
-    useToastStore.getState().success(t('profile.usernameUpdated'))
+    useToastStore.getState().success(t('profile.profileUpdated'))
   }
 
   /**
@@ -220,25 +217,23 @@ export const ProfileView = () => {
         <div className={styles.avatar}>{initials(user.name)}</div>
         <div className="min-w-0">
           <p className={styles.eyebrow}>{t('profile.account')}</p>
-          {/* The name keeps its own heading element, so the pencil beside it
-              stays out of the heading's accessible name. */}
-          <div className={styles.nameLine}>
-            <h2>{user.name}</h2>
-            <AppIconButton
-              icon={PencilSquareIcon}
-              label={t('profile.editName')}
-              onClick={() => setNameDraft(user.name)}
-            />
-          </div>
-          <p className={styles.usernameLine}>
-            <span className="truncate">{handle(user.username)}</span>
-            <AppIconButton
-              icon={PencilSquareIcon}
-              label={t('profile.editUsername')}
-              onClick={() => setUsernameDraft(user.username)}
-            />
-          </p>
-          <p>{user.email}</p>
+          {/* One action for the card rather than a pencil per field: two of
+              them sat under the tap-target floor, and the one pinned after the
+              name squeezed the heading into a column narrow enough to truncate
+              it while the card had 90px going spare. */}
+          <h2>{user.name}</h2>
+          <p className={styles.usernameLine}>{handle(user.username)}</p>
+          <p className={styles.email}>{user.email}</p>
+          <AppButton
+            type="button"
+            colour="ghost"
+            size="sm"
+            width="auto"
+            className={styles.editProfile}
+            onClick={() => setDraft({ name: user.name, username: user.username })}
+          >
+            <PencilSquareIcon className="size-4" aria-hidden="true" /> {t('profile.editProfile')}
+          </AppButton>
         </div>
         <Link
           to="/notifications"
@@ -275,9 +270,6 @@ export const ProfileView = () => {
 
       <section className={styles.settingsCard}>
         <Link to="/progress">
-          <span className={styles.settingsIcon}>
-            <ChartBarIcon aria-hidden="true" />
-          </span>
           <span>
             <strong>{t('profile.progress')}</strong>
             <small>{t('profile.progressBody')}</small>
@@ -285,9 +277,6 @@ export const ProfileView = () => {
           <ChevronRightIcon aria-hidden="true" />
         </Link>
         <Link to={`/users/${user.id}`}>
-          <span className={styles.settingsIcon}>
-            <UserCircleIcon aria-hidden="true" />
-          </span>
           <span>
             <strong>{t('profile.publicProfile')}</strong>
             <small>{t('profile.publicProfileBody')}</small>
@@ -295,9 +284,6 @@ export const ProfileView = () => {
           <ChevronRightIcon aria-hidden="true" />
         </Link>
         <Link to="/privacy">
-          <span className={styles.settingsIcon}>
-            <ShieldCheckIcon aria-hidden="true" />
-          </span>
           <span>
             <strong>{t('profile.privacyPolicy')}</strong>
             <small>{t('profile.privacyPolicyBody')}</small>
@@ -375,48 +361,62 @@ export const ProfileView = () => {
           ),
       )}
 
-      <AppButton type="link" colour="destructive" className={styles.logoutLink} to="/logout">
-        <ArrowRightOnRectangleIcon className="size-5" aria-hidden="true" /> {t('auth.logout')}
-      </AppButton>
+      {/* Two plain rows, in the shape every other settings row takes. Between
+          them these carried three levels of alarm — the app's only filled red
+          button, in a tinted red card, under a red-outlined log out — for
+          things done once or never. The red waits in the confirmation, which
+          is where it means something.
 
-      {/* Both app stores require an account made in the app to be deletable
-          from inside it, which is why this sits on the profile rather than
+          Both app stores require an account made in the app to be deletable
+          from inside it, which is why deleting sits on the profile rather than
           behind a support email. */}
-      <section className={styles.dangerZone} aria-label={t('profile.dangerZone')}>
-        <div>
-          <strong>{t('profile.deleteAccount')}</strong>
-          <small>{t('profile.deleteAccountBody')}</small>
-        </div>
+      <section className={styles.settingsCard} aria-label={t('profile.accountSection')}>
+        <Link to="/logout">
+          <span>
+            <strong>{t('auth.logout')}</strong>
+            <small>{t('profile.logoutBody')}</small>
+          </span>
+          <ChevronRightIcon aria-hidden="true" />
+        </Link>
         <AppButton
           type="button"
-          colour="destructive"
-          width="auto"
-          className={styles.deleteAccount}
+          colour="ghost"
+          className={styles.accountAction}
           onClick={() => {
             setDeleteError(undefined)
             setDeletePassword('')
           }}
         >
-          {t('profile.deleteAccount')}
+          <span>
+            <strong>{t('profile.deleteAccount')}</strong>
+            <small>{t('profile.deleteAccountBody')}</small>
+          </span>
+          <ChevronRightIcon aria-hidden="true" />
         </AppButton>
       </section>
 
-      {nameDraft !== undefined && (
+      {draft !== undefined && (
         <AppSheet
-          title={t('profile.editName')}
+          title={t('profile.editProfileTitle')}
           closeLabel={t('common.close')}
-          onClose={() => setNameDraft(undefined)}
+          onClose={() => setDraft(undefined)}
           actions={
-            <SheetAction type="submit" form="name-form" tone="primary" disabled={saving === 'name'}>
+            <SheetAction
+              type="submit"
+              form="profile-form"
+              tone="primary"
+              disabled={saving === 'profile'}
+            >
               {t('common.save')}
             </SheetAction>
           }
         >
           <form
-            id="name-form"
+            id="profile-form"
+            className={styles.profileForm}
             onSubmit={(event) => {
               event.preventDefault()
-              void saveName()
+              void saveProfile()
             }}
           >
             <AppInput
@@ -426,8 +426,33 @@ export const ProfileView = () => {
               label={t('auth.name')}
               autoComplete="name"
               required
-              value={nameDraft}
-              onChange={(event) => setNameDraft(event.target.value)}
+              value={draft.name}
+              onChange={(event) =>
+                setDraft((current) => current && { ...current, name: event.target.value })
+              }
+            />
+            <AppInput
+              id="edit-username"
+              name="username"
+              type="text"
+              label={t('auth.username')}
+              hint={t('auth.usernameHelp')}
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              minLength={minUsernameLength}
+              maxLength={maxUsernameLength}
+              pattern={usernamePattern}
+              required
+              value={draft.username}
+              // Usernames are lower-case, so the field settles the case rather
+              // than rejecting what was typed.
+              onChange={(event) =>
+                setDraft(
+                  (current) =>
+                    current && { ...current, username: event.target.value.toLowerCase() },
+                )
+              }
             />
           </form>
         </AppSheet>
@@ -479,51 +504,6 @@ export const ProfileView = () => {
                 {deleteError}
               </p>
             )}
-          </form>
-        </AppSheet>
-      )}
-
-      {usernameDraft !== undefined && (
-        <AppSheet
-          title={t('profile.editUsername')}
-          closeLabel={t('common.close')}
-          onClose={() => setUsernameDraft(undefined)}
-          actions={
-            <SheetAction
-              type="submit"
-              form="username-form"
-              tone="primary"
-              disabled={saving === 'username'}
-            >
-              {t('common.save')}
-            </SheetAction>
-          }
-        >
-          <form
-            id="username-form"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void saveUsername()
-            }}
-          >
-            <AppInput
-              id="edit-username"
-              name="username"
-              type="text"
-              label={t('auth.username')}
-              hint={t('auth.usernameHelp')}
-              autoComplete="username"
-              autoCapitalize="none"
-              spellCheck={false}
-              minLength={minUsernameLength}
-              maxLength={maxUsernameLength}
-              pattern={usernamePattern}
-              required
-              value={usernameDraft}
-              // Usernames are lower-case, so the field settles the case rather
-              // than rejecting what was typed.
-              onChange={(event) => setUsernameDraft(event.target.value.toLowerCase())}
-            />
           </form>
         </AppSheet>
       )}

@@ -75,11 +75,22 @@ describe('workoutSummary', () => {
     ).toBe('2 days ago')
   })
 
-  test('reads an older one as the day it finished, abbreviated', () => {
+  // Past a week a row carries the date and no time of day: the hour a session
+  // ran is a fact about that session, not a timestamp on a list row.
+  test('reads an older one as the date alone', () => {
+    const lastYear = new Date('2020-08-14T09:30:00Z')
+
+    expect(workoutSummary(workout({ finishedAt: timestampFromDate(lastYear) })).finishedDate).toBe(
+      '14 Aug 2020',
+    )
+  })
+
+  // The workout detail page is the one screen the hour belongs on.
+  test('keeps the time of day for the page about the session', () => {
     const lastYear = new Date('2020-08-14T09:30:00Z')
 
     expect(
-      workoutSummary(workout({ finishedAt: timestampFromDate(lastYear) })).finishedDate,
+      workoutSummary(workout({ finishedAt: timestampFromDate(lastYear) })).finishedMoment,
     ).toMatch(/^Fri, 14 August · \d{2}:\d{2}$/)
   })
 })

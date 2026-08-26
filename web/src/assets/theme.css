@@ -45,7 +45,7 @@
 
   /* State. One green where there were three, an amber that is not the
    * achievement orange, a neutral informational step, and a badge colour that
-   * is separable from danger later without hunting through 69 files. */
+   * is its own value rather than danger's. */
   --color-success: #047857;
   /* Warmed a step off the cool mint it was, so a green tile sits on the same
    * paper as everything around it. */
@@ -57,6 +57,9 @@
    * pink and fails AA, so the hover pair darkens the text a step. */
   --color-danger-strong: #b91c1c;
   --color-danger-surface: #fef2f2;
+  /* Unread notifications, in the red that reads as "look at this". It keeps
+   * its own name so the two can part company without hunting through 69
+   * files, even while they share a value. */
   --color-badge: #dc2626;
   --color-info: #4c4943;
   --color-info-surface: #f1efec;

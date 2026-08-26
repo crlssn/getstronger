@@ -3,7 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
@@ -106,11 +106,30 @@ describe('CardWorkout', () => {
       )
     })
 
-    test('leads with the headline numbers', () => {
+    // The session and the account share the title row; the numbers get the
+    // line under it. The 2x2 grid cost around 340px a card, so a phone showed
+    // one and a half of them.
+    test('names the session and the account on one row', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
-      expect(screen.getByText('4,200 kg')).toBeInTheDocument()
-      expect(screen.getByText('2')).toBeInTheDocument()
+      const title = screen.getByRole('heading', { name: 'Push Day' }).closest('div')
+      expect(within(title!).getByRole('link', { name: '@alice' })).toBeInTheDocument()
+    })
+
+    test('carries the numbers on the line under it', () => {
+      render(<CardWorkout compact workout={withSets()} />)
+
+      expect(screen.getByText(/4,200 kg/)).toHaveTextContent(/2 sets/)
+    })
+
+    // PRS repeated the badge beside the title, and DURATION was 60 min on
+    // nearly every card in a seeded year.
+    test('leaves the record count and the duration off the row', () => {
+      render(<CardWorkout compact workout={withSets()} />)
+
+      expect(screen.queryByText('Sets logged')).not.toBeInTheDocument()
+      expect(screen.queryByText('Duration')).not.toBeInTheDocument()
+      expect(screen.queryByText('Personal records')).not.toBeInTheDocument()
     })
 
     test('flags a session that set a personal best', () => {
@@ -119,22 +138,25 @@ describe('CardWorkout', () => {
       expect(screen.getByText('New PR')).toBeInTheDocument()
     })
 
-    // The quadrant always counts them; what a session with none does not get
-    // is the badge that celebrates them.
+    // The detail page always counts them; what a session with none does not
+    // get is the badge that celebrates them.
     test('says nothing about records when there were none', () => {
       render(<CardWorkout compact workout={workout()} />)
 
       expect(screen.queryByText(/\bnew PRs?\b/i)).not.toBeInTheDocument()
     })
 
-    // The feed card stays where it is, so the toast is all there is to see.
-    test('announces a deletion on the spot', async () => {
+    // Every card opens the workout, your own included: editing and deleting
+    // live in the nav bar once it is open, so the row stays one tap with one
+    // meaning.
+    test('offers no menu of its own, on anybody’s workout', () => {
+      useAuthStore.setState({ userId: 'user-1' })
       render(<CardWorkout compact workout={workout()} />)
 
-      await deleteViaMenu()
-
-      await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'success' }))
-      expect(screen.queryByText('Push Day')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Workout actions' })).not.toBeInTheDocument()
+      expect(
+        screen.getByRole('link', { name: 'View Push Day workout details' }),
+      ).toBeInTheDocument()
     })
 
     test('leaves out the exercises and the comments', () => {

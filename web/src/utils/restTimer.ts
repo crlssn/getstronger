@@ -17,16 +17,6 @@ export const restProgress = (remainingSeconds: number, totalSeconds: number): st
   return `${Math.min(1, remainingSeconds / totalSeconds) * 100}%`
 }
 
-// The banner warms from green through amber as the rest runs down, so a glance
-// reads roughly how long is left without reading the number.
-const restMinuteHues = [45, 100, 165, 205, 270]
-
-export const restHue = (remainingSeconds: number): number =>
-  restMinuteHues[Math.min(Math.floor(remainingSeconds / 60), restMinuteHues.length - 1)] ?? 165
-
-/** Under a minute the banner goes bright; under ten seconds it pulses. */
-export const isFinalMinute = (remainingSeconds: number): boolean =>
-  remainingSeconds > 0 && remainingSeconds < 60
-
+/** Under ten seconds the progress fill pulses. */
 export const isFinalCountdown = (remainingSeconds: number): boolean =>
   remainingSeconds > 0 && remainingSeconds <= 10
