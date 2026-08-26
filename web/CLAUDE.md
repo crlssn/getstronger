@@ -12,20 +12,23 @@ To see the app rather than reason about its markup — screenshots, accessibilit
 and tap-target measurements, visual diffs — follow
 `.claude/skills/design-review/SKILL.md`.
 
-Any change that alters what a page looks like ends with a screenshot of the
-changed page, shared in the reply rather than only written to disk, so the
-change can be judged by looking at it. Photograph the affected pages with
-`mise run screenshots:page <pattern>` once the change is in place, and attach
-the resulting image; when the change was meant to move an existing page, attach
-the highlighted difference from `mise run screenshots:diff` alongside it. A
-change with no visible effect — refactors, state, tests, tooling — needs no
-screenshot, and neither does one whose page cannot be reached without a
-backend the worktree cannot start; say so instead of skipping silently.
+Any change that alters what a page looks like ends with the page itself, before
+and after, shared in the reply rather than only written to disk, so the change
+is judged by looking at it. Photograph the pages before changing them — a set
+captured afterwards has nothing to compare with — then run
+`mise run screenshots:diff <pattern>` once the change is in place: it leaves the
+earlier image in `web/.screenshots-baseline/`, the new one in `web/screenshots/`,
+and a highlighted difference in `web/screenshots/changes/`. Attach all three.
 
-A change that becomes a pull request puts the same images in its body with
-`mise run pr:screenshots <number> --append`, which publishes them and appends
-the markdown that shows them. The review happens on GitHub, so a chat reply
-alone leaves the reviewer nothing to look at.
+A change that becomes a pull request puts the same evidence in its body with
+`mise run pr:screenshots <number> --append`, which publishes the images and
+appends a before, after and difference table. The review happens on GitHub, so a
+reply alone leaves the reviewer nothing to look at.
+
+A page the change adds has no before, and a change with no visible effect —
+refactors, state, tests, tooling — needs no screenshot at all; neither does one
+whose page cannot be reached without a backend the worktree cannot start. Say so
+instead of skipping silently.
 
 ## State
 

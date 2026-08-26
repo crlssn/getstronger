@@ -526,9 +526,11 @@ mise run pr:screenshots 1209
 mise run pr:screenshots 1209 --append
 ```
 
-The first prints the block to paste; the second also appends it to the pull request body, replacing an earlier block rather than leaving a reviewer two sets of images. It publishes `web/screenshots/changes/` — the highlighted differences `screenshots:diff` writes — and `--path web/screenshots/active` publishes another folder of the set instead. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
+The first prints the block to paste; the second also appends it to the pull request body, replacing an earlier block rather than leaving a reviewer two sets of images.
 
-Anything outside `web/screenshots/` is refused, symlinks included. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
+For every page in `web/screenshots/changes/` — the pages `screenshots:diff` found had moved — it publishes three images: the page as it was, from the baseline that run kept in `web/.screenshots-baseline/`; the page as it is now; and the highlighted difference. The block is a row per page, so a redesign is read as before, after and what moved. Without a baseline to compare against, it publishes the differences alone, and `--path web/screenshots/active` publishes a folder of the set as it is. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
+
+Anything outside `web/screenshots/` is refused, symlinks included; the baseline is the one exception, and only because the task reaches for it itself — it holds the same seeded photographs, one run older. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
 
 The bucket is not the one the web app is deployed to: `deploy.yml` syncs that one with `--delete`, so a `pr/` prefix in it would disappear on the next merge to `main`. Create it once, and give it a lifecycle rule so old images clean themselves up:
 

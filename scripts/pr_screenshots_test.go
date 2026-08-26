@@ -17,7 +17,7 @@ import (
 // Scaleway or GitHub.
 
 const stubAWS = `#!/bin/sh
-printf '%s\n' "$@" > "$AWS_LOG"
+printf '%s\n' "$@" >> "$AWS_LOG"
 exit "${AWS_EXIT:-0}"
 `
 
@@ -57,7 +57,8 @@ type screenshotsResult struct {
 }
 
 // Lays out a checkout holding the given screenshots, each named relative to
-// web/screenshots/, and returns its root.
+// web/ — so 'screenshots/changes/…' is a highlighted difference and
+// '.screenshots-baseline/…' the page as it was — and returns its root.
 func screenshotsCheckout(t *testing.T, images ...string) string {
 	t.Helper()
 
@@ -67,7 +68,7 @@ func screenshotsCheckout(t *testing.T, images ...string) string {
 	require.NoError(t, err)
 
 	for _, image := range images {
-		file := filepath.Join(root, "web", "screenshots", filepath.FromSlash(image))
+		file := filepath.Join(root, "web", filepath.FromSlash(image))
 		require.NoError(t, os.MkdirAll(filepath.Dir(file), 0o755))
 		require.NoError(t, os.WriteFile(file, []byte("not really a png"), 0o600))
 	}
@@ -163,6 +164,17 @@ func runPRScreenshots(t *testing.T, root string, args []string, env map[string]s
 	}
 }
 
+func count(args []string, want string) int {
+	total := 0
+	for _, arg := range args {
+		if arg == want {
+			total++
+		}
+	}
+
+	return total
+}
+
 func credentials() map[string]string {
 	return map[string]string{
 		"AWS_ACCESS_KEY_ID":           "SCWTESTACCESSKEY",
@@ -172,18 +184,28 @@ func credentials() map[string]string {
 	}
 }
 
+// The default run publishes what 'screenshots:diff' left behind: the page as it
+// was, the page as it is, and the highlighted difference between them.
 func TestPRScreenshotsUploadsTheChangedPages(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "changes/active/home.png", "changes/guest/login.png")
+	root := screenshotsCheckout(
+		t,
+		"screenshots/changes/active/home.png",
+		"screenshots/active/home.png",
+		".screenshots-baseline/active/home.png",
+	)
 
 	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
 
 	require.Equal(t, 0, result.exitCode, result.stderr)
 	require.True(t, result.awsRan)
-	require.Contains(t, result.awsArgs, "sync")
+	require.Equal(t, 3, count(result.awsArgs, "sync"), "before, after and difference")
 	require.Contains(t, result.awsArgs, filepath.Join(root, "web", "screenshots", "changes"))
-	require.Contains(t, result.awsArgs, "s3://getstronger-pull-requests/pr/1209/abc1234")
+	require.Contains(t, result.awsArgs, filepath.Join(root, "web", ".screenshots-baseline"))
+	require.Contains(t, result.awsArgs, "s3://getstronger-pull-requests/pr/1209/abc1234/before")
+	require.Contains(t, result.awsArgs, "s3://getstronger-pull-requests/pr/1209/abc1234/after")
+	require.Contains(t, result.awsArgs, "s3://getstronger-pull-requests/pr/1209/abc1234/difference")
 	require.Contains(t, result.awsArgs, "https://s3.fr-par.scw.cloud",
 		"the endpoint is Scaleway's, so nothing is ever created in AWS")
 	require.Contains(t, result.awsArgs, "public-read",
@@ -191,32 +213,79 @@ func TestPRScreenshotsUploadsTheChangedPages(t *testing.T) {
 	require.False(t, result.ghRan, "the body is only touched with --append")
 }
 
-// The markdown is the whole point: a block whose images GitHub can fetch.
-func TestPRScreenshotsPrintsMarkdownForEveryImage(t *testing.T) {
+// The markdown is the whole point: a block whose images GitHub can fetch, and
+// which shows a redesign as the two states side by side.
+func TestPRScreenshotsPrintsBeforeAndAfter(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "changes/active/home.png", "changes/guest/login.png")
+	root := screenshotsCheckout(
+		t,
+		"screenshots/changes/active/home.png",
+		"screenshots/active/home.png",
+		".screenshots-baseline/active/home.png",
+	)
 
 	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
 
 	require.Equal(t, 0, result.exitCode, result.stderr)
-	require.Contains(t, result.stdout,
-		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/active/home.png")
-	require.Contains(t, result.stdout,
-		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/guest/login.png")
+	require.Contains(t, result.stdout, "| Page | Before | After | Difference |")
+	for _, state := range []string{"before", "after", "difference"} {
+		require.Contains(t, result.stdout,
+			"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/"+state+"/active/home.png")
+	}
 	require.Contains(t, result.stdout, "active/home")
 	require.Contains(t, result.stdout, "abc1234", "the block names the commit the images show")
+}
+
+// A difference with nothing to compare against says so, rather than the block
+// linking an object that was never uploaded.
+func TestPRScreenshotsMarksAPageWithNoBefore(t *testing.T) {
+	t.Parallel()
+
+	root := screenshotsCheckout(
+		t,
+		"screenshots/changes/active/plans.png",
+		"screenshots/active/plans.png",
+		".screenshots-baseline/active/home.png",
+	)
+
+	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
+
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.NotContains(t, result.stdout,
+		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/before/active/plans.png")
+	require.Contains(t, result.stdout, "not in the baseline")
+	require.Contains(t, result.stdout,
+		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/after/active/plans.png")
+}
+
+// 'screenshots:page' leaves differences with no baseline to compare them with,
+// so the block falls back to the images it does have.
+func TestPRScreenshotsPublishesWithoutABaseline(t *testing.T) {
+	t.Parallel()
+
+	root := screenshotsCheckout(t, "screenshots/changes/active/home.png")
+
+	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
+
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.Equal(t, 1, count(result.awsArgs, "sync"))
+	require.Contains(t, result.awsArgs, "s3://getstronger-pull-requests/pr/1209/abc1234")
+	require.Contains(t, result.stdout, "| Page | Screenshot |")
+	require.Contains(t, result.stdout,
+		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/active/home.png")
 }
 
 func TestPRScreenshotsUploadsAnotherDirectoryUnderScreenshots(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "active/home.png")
+	root := screenshotsCheckout(t, "screenshots/active/home.png", ".screenshots-baseline/active/home.png")
 	path := filepath.Join(root, "web", "screenshots", "active")
 
 	result := runPRScreenshots(t, root, []string{"1209", "--path", path}, credentials())
 
 	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.Equal(t, 1, count(result.awsArgs, "sync"), "a folder of the set is published as it is")
 	require.Contains(t, result.awsArgs, path)
 	require.Contains(t, result.stdout,
 		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/home.png")
@@ -226,7 +295,7 @@ func TestPRScreenshotsUploadsAnotherDirectoryUnderScreenshots(t *testing.T) {
 func TestPRScreenshotsRefusesAPathOutsideScreenshots(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "changes/active/home.png")
+	root := screenshotsCheckout(t, "screenshots/changes/active/home.png")
 	outside := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(outside, "secret.png"), []byte("private"), 0o600))
 
@@ -243,7 +312,7 @@ func TestPRScreenshotsRefusesAPathOutsideScreenshots(t *testing.T) {
 func TestPRScreenshotsRefusesASymlinkOutOfScreenshots(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "changes/active/home.png")
+	root := screenshotsCheckout(t, "screenshots/changes/active/home.png")
 	outside := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(outside, "secret.png"), []byte("private"), 0o600))
 
@@ -269,44 +338,44 @@ func TestPRScreenshotsRefusesMissingInput(t *testing.T) {
 	}{
 		"no number": {
 			args:   []string{},
-			images: []string{"changes/active/home.png"},
+			images: []string{"screenshots/changes/active/home.png"},
 			want:   "no pull request number given",
 		},
 		"number that is not a number": {
 			args:   []string{"#1209"},
-			images: []string{"changes/active/home.png"},
+			images: []string{"screenshots/changes/active/home.png"},
 			want:   "not a pull request number",
 		},
 		"no bucket": {
 			args:    []string{"1209"},
-			images:  []string{"changes/active/home.png"},
+			images:  []string{"screenshots/changes/active/home.png"},
 			want:    "SCW_SCREENSHOTS_BUCKET_NAME",
 			without: "SCW_SCREENSHOTS_BUCKET_NAME",
 		},
 		"no credentials": {
 			args:    []string{"1209"},
-			images:  []string{"changes/active/home.png"},
+			images:  []string{"screenshots/changes/active/home.png"},
 			want:    "credentials",
 			without: "AWS_ACCESS_KEY_ID",
 		},
 		"no images": {
 			args:   []string{"1209"},
-			images: []string{"active/home.png"},
+			images: []string{"screenshots/active/home.png"},
 			want:   "no images",
 		},
 		"missing directory": {
 			args:   []string{"1209", "--path", "web/screenshots/nowhere"},
-			images: []string{"changes/active/home.png"},
+			images: []string{"screenshots/changes/active/home.png"},
 			want:   "no directory",
 		},
 		"path without a value": {
 			args:   []string{"1209", "--path"},
-			images: []string{"changes/active/home.png"},
+			images: []string{"screenshots/changes/active/home.png"},
 			want:   "no path given",
 		},
 		"unknown flag": {
 			args:   []string{"1209", "--force"},
-			images: []string{"changes/active/home.png"},
+			images: []string{"screenshots/changes/active/home.png"},
 			want:   "unknown argument",
 		},
 	}
@@ -330,7 +399,7 @@ func TestPRScreenshotsRefusesMissingInput(t *testing.T) {
 func TestPRScreenshotsReportsAFailedUpload(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "changes/active/home.png")
+	root := screenshotsCheckout(t, "screenshots/changes/active/home.png")
 	env := credentials()
 	env["AWS_EXIT"] = "1"
 
@@ -344,7 +413,7 @@ func TestPRScreenshotsReportsAFailedUpload(t *testing.T) {
 func TestPRScreenshotsAppendsTheBlockToTheBody(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "changes/active/home.png")
+	root := screenshotsCheckout(t, "screenshots/changes/active/home.png")
 	env := credentials()
 	env["GH_BODY"] = "## Why\n\nBecause.\n"
 
@@ -363,7 +432,7 @@ func TestPRScreenshotsAppendsTheBlockToTheBody(t *testing.T) {
 func TestPRScreenshotsReplacesAnEarlierBlock(t *testing.T) {
 	t.Parallel()
 
-	root := screenshotsCheckout(t, "changes/active/home.png")
+	root := screenshotsCheckout(t, "screenshots/changes/active/home.png")
 	env := credentials()
 	env["GH_BODY"] = "## Why\n\nBecause.\n\n<!-- pr:screenshots -->\n\n## Screenshots\n\nolder-upload.png\n"
 

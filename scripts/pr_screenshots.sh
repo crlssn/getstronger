@@ -93,35 +93,90 @@ readonly sha
 
 readonly PREFIX="pr/$NUMBER/$sha"
 
-# Under a prefix naming the commit, so re-photographing a branch adds a set
-# rather than overwriting the one a reviewer may be looking at. The lifecycle
-# rule on the bucket is what removes them again.
-#
+# 'screenshots:diff' leaves the previous set in web/.screenshots-baseline/ and
+# the highlighted differences in web/screenshots/changes/, so a default run can
+# show a redesign as the two states side by side. The baseline is the same
+# seeded photographs one run older, which is why publishing it is safe although
+# a --path may never name it.
+baseline="$(cd "$root/web/.screenshots-baseline" 2>/dev/null && pwd -P)"
+comparing=""
+if [ "$directory" = "$publishable/changes" ] && [ -n "$baseline" ]; then
+  comparing=1
+fi
+
 # public-read on each object rather than a policy on the bucket: GitHub's image
 # proxy fetches anonymously, and an ACL makes exactly what this task uploaded
 # readable, leaving the bucket itself private.
-aws s3 sync "$directory" "s3://$bucket/$PREFIX" \
-  --endpoint-url "https://s3.$REGION.scw.cloud" \
-  --acl public-read \
-  --exclude "*" \
-  --include "*.png" \
-  --cache-control "public, max-age=31536000, immutable" \
-  --no-progress ||
-  fail "the upload failed, so nothing was printed to put in the pull request"
+#
+# Everything goes under a prefix naming the commit, so re-photographing a branch
+# adds a set rather than overwriting the one a reviewer may be looking at. The
+# lifecycle rule on the bucket is what removes them again.
+publish() {
+  local source="$1" destination="$2"
+  shift 2
+
+  aws s3 sync "$source" "s3://$bucket/$destination" \
+    --endpoint-url "https://s3.$REGION.scw.cloud" \
+    --acl public-read \
+    --exclude "*" \
+    "$@" \
+    --cache-control "public, max-age=31536000, immutable" \
+    --no-progress ||
+    fail "the upload failed, so nothing was printed to put in the pull request"
+}
+
+image_tag() {
+  printf '<img src="https://%s.s3.%s.scw.cloud/%s/%s" width="%s" alt="%s">' \
+    "$bucket" "$REGION" "$PREFIX" "$1" "$2" "$3"
+}
 
 block="$MARKER
 
 ## Screenshots
 
-| Page | Screenshot |
+"
+
+if [ -n "$comparing" ]; then
+  # The pages that moved, and only those: the rest of the set is unchanged and
+  # would bury them.
+  includes=()
+  for image in "${images[@]}"; do
+    includes+=(--include "$image")
+  done
+
+  publish "$directory" "$PREFIX/difference" --include "*.png"
+  publish "$publishable" "$PREFIX/after" "${includes[@]}"
+  publish "$baseline" "$PREFIX/before" "${includes[@]}"
+
+  block+="| Page | Before | After | Difference |
+| --- | --- | --- | --- |
+"
+  for image in "${images[@]}"; do
+    page="${image%.png}"
+    # A third of the 780 px the phone-sized viewport renders at, so the three
+    # states sit side by side in a pull request's column.
+    before="_not in the baseline_"
+    [ -f "$baseline/$image" ] && before="$(image_tag "before/$image" 260 "$page before")"
+    after="_removed_"
+    [ -f "$publishable/$image" ] && after="$(image_tag "after/$image" 260 "$page after")"
+
+    block+="| \`$page\` | $before | $after | $(image_tag "difference/$image" 260 "$page difference") |
+"
+  done
+else
+  publish "$directory" "$PREFIX" --include "*.png"
+
+  block+="| Page | Screenshot |
 | --- | --- |
 "
-for image in "${images[@]}"; do
-  # Half of the 780 px the phone-sized viewport renders at, so several fit on
-  # a screen and each is still legible at its natural density.
-  block+="| \`${image%.png}\` | <img src=\"https://$bucket.s3.$REGION.scw.cloud/$PREFIX/$image\" width=\"390\" alt=\"${image%.png}\"> |
+  for image in "${images[@]}"; do
+    # Half of the 780 px the phone-sized viewport renders at, so several fit on
+    # a screen and each is still legible at its natural density.
+    block+="| \`${image%.png}\` | $(image_tag "$image" 390 "${image%.png}") |
 "
-done
+  done
+fi
+
 block+="
 <sub>Captured at $sha.</sub>"
 
