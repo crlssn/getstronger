@@ -52,10 +52,21 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('./web/package.json').devDependencies['@playwright/test']")" >> "$GITHUB_OUTPUT"
 
+  # One runner per shard, each with a database and a stack of its own, so the
+  # suite's wall-clock falls with the number of runners rather than with the
+  # number of tests. Playwright decides what goes where; because the config
+  # keeps `fullyParallel` off, it splits by spec file and project, which is the
+  # unit that resets the seeded data. See web/CLAUDE.md.
   browser:
     needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      # A shard that fails says nothing about the others, and cancelling them
+      # would hide the rest of the failures from the same push.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.version.outputs.playwright }}-noble
       options: --user 1001
@@ -135,18 +146,15 @@ jobs:
           -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
           -verbose up
 
-      - name: Seed test data
-        run: >-
-          go run server/testing/factory/seed/main.go
-          -email="${USER_EMAIL}"
-          -password="${USER_PASSWORD}"
-          -name="${USER_NAME}"
-
+      # The suite seeds itself, once per run, in its global setup: see
+      # web/tests/e2e/seed.ts.
       - name: Run end-to-end tests
         working-directory: web
-        run: npm run test:e2e
+        run: npm run test:e2e -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
 
       # Runs even when the suite fails, which is the run whose results matter.
+      # Every shard uploads its own results and Codecov merges them by commit,
+      # so Test Analytics still sees one run's worth of tests.
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
@@ -158,11 +166,14 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+      # A report per shard rather than one merged report: merging needs a job
+      # of its own after every shard has finished, and the shard a failure
+      # belongs to is the shard whose report you want to open anyway.
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           if-no-files-found: ignore
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: web/playwright-report/
           retention-days: 14

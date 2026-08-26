@@ -221,18 +221,22 @@ alias = "test_backend"
 description = "Run backend tests"
 run = "go test ./..."
 
+# The suite seeds itself in its global setup, once per run rather than once per
+# spec file, so no task reseeds ahead of it. The guard still runs: seeding
+# truncates the database, and a worktree with no stack of its own would truncate
+# the main checkout's.
 [tasks."test:e2e"]
 alias = "test_e2e"
-description = "Reset seeded data and run browser end-to-end tests"
+description = "Run browser end-to-end tests"
 run = [
-    { task = "db:seed" },
+    { task = "worktree:guard" },
     "cd web && npm run test:e2e",
     'echo "Open the report with: mise run test:e2e:report"',
 ]
 
 [tasks."test:e2e:headed"]
-description = "Reset seeded data and run visible browser end-to-end tests"
-run = [{ task = "db:seed" }, "cd web && npm run test:e2e:headed"]
+description = "Run visible browser end-to-end tests"
+run = [{ task = "worktree:guard" }, "cd web && npm run test:e2e:headed"]
 
 [tasks."test:e2e:live"]
 description = "Run the non-mutating browser smoke suite against E2E_BASE_URL"
@@ -247,8 +251,11 @@ description = "Open the latest browser end-to-end test report"
 run = 'cd web && npm run test:e2e:report -- --port "$PLAYWRIGHT_REPORT_PORT"'
 
 [tasks."test:e2e:ui"]
-description = "Reset seeded data and open the Playwright test UI"
-run = [{ task = "db:seed" }, 'cd web && npm run test:e2e:ui -- --ui-port "$PLAYWRIGHT_UI_PORT"']
+description = "Open the Playwright test UI"
+run = [
+    { task = "worktree:guard" },
+    'cd web && npm run test:e2e:ui -- --ui-port "$PLAYWRIGHT_UI_PORT"',
+]
 
 # Screenshot tasks
 

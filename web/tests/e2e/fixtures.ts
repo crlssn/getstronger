@@ -2,9 +2,8 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test as base, type Locator, type Page, type TestInfo } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import { seedEmail, seedPassword } from './seed'
 
-const email = process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'active@getstronger.test'
-const password = process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? 'password123'
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url))
 
 export const test = base.extend<{ runtimeErrors: string[] }>({
@@ -37,25 +36,9 @@ export const test = base.extend<{ runtimeErrors: string[] }>({
 })
 
 export { expect } from '@playwright/test'
-
-// Every spec calls this before its own tests so a suite that mutates seeded
-// data cannot decide whether the next spec — or the next browser project —
-// passes. Skipped against a deployed target, which owns its own data.
-export const resetSeedData = () => {
-  if (process.env.E2E_BASE_URL !== undefined) return
-
-  execFileSync(
-    'go',
-    [
-      'run',
-      'server/testing/factory/seed/main.go',
-      `-email=${email}`,
-      `-password=${password}`,
-      `-name=${process.env.USER_NAME ?? 'Alex Morgan'}`,
-    ],
-    { cwd: repositoryRoot, stdio: 'pipe' },
-  )
-}
+// Re-exported so a spec file has one place to import from; what it does, and
+// why it is cheap enough to run in every file, is in seed.ts.
+export { resetSeedData } from './seed'
 
 // End-to-end runs use the noop email provider, so the verification link has to
 // be read from the database instead of an inbox.
@@ -98,7 +81,7 @@ export const logInAs = async (page: Page, userEmail: string, userPassword: strin
   await waitForHome(page)
 }
 
-export const logIn = async (page: Page) => logInAs(page, email, password)
+export const logIn = async (page: Page) => logInAs(page, seedEmail, seedPassword)
 
 export const waitForHome = async (page: Page) => {
   // `.loading-card` is the one class the app still declares globally, and it is
