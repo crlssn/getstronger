@@ -5,19 +5,7 @@
 }
 
 .streakCard header {
-  @apply grid grid-cols-[auto_1fr_auto] items-center gap-3;
-}
-
-.streakIcon {
-  @apply grid size-11 place-items-center rounded-control bg-info-surface text-text-muted;
-}
-
-.streakCard.active .streakIcon {
-  @apply bg-success-surface text-success;
-}
-
-.streakIcon svg {
-  @apply size-6;
+  @apply flex items-baseline justify-between gap-3;
 }
 
 .streakCard header strong,
@@ -26,19 +14,31 @@
 }
 
 .streakCard header > div > strong {
-  @apply text-sm font-semibold text-text;
+  @apply text-body-lg font-bold text-text;
 }
 
 .streakCard .eyebrow {
   @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
 }
 
+/* The weeks a streak is worth, as a number rather than as a badge. Green once
+   there is a streak to hold: the colour is the streak's, everywhere it shows. */
+.streakCount {
+  @apply shrink-0 text-meta font-bold tabular-nums text-text-subtle;
+}
+
+.streakCard.active .streakCount {
+  @apply text-success;
+}
+
+/* No groove behind them: five blocks on the card read as five weeks, and the
+   track around them was a box drawn around a row of boxes. */
 .weekTrack {
-  @apply mt-4 grid grid-cols-5 gap-1 rounded-control bg-ink-surface p-1;
+  @apply mt-3 grid grid-cols-5 gap-1.5;
 }
 
 .weekBlock {
-  @apply flex h-9 items-center justify-center gap-1.5 rounded-lg bg-ink-tint text-text-subtle;
+  @apply flex h-9 items-center justify-center gap-1.5 rounded-control bg-ink-surface text-text-subtle;
 }
 
 .weekBlock.complete {
@@ -62,25 +62,17 @@
 }
 
 .trackLabels {
-  @apply mt-1.5 flex justify-between text-eyebrow font-semibold text-text-subtle;
+  @apply mt-2 flex justify-between text-eyebrow font-semibold tracking-normal text-text-subtle;
+}
+
+.thisWeekLabel {
+  @apply font-bold text-text;
 }
 
 .streakCard > p {
-  @apply mt-3 text-xs text-text-subtle;
+  @apply mt-3 text-meta font-medium text-text-subtle;
 }
 
-.streakCard.active:not(.safe) > p {
-  @apply font-medium text-success;
-}
-
-.streakCount {
-  @apply min-w-12 rounded-control bg-success-surface px-2.5 py-1.5 text-center text-success;
-}
-
-.streakCount strong {
-  @apply text-base font-bold leading-none;
-}
-
-.streakCount small {
-  @apply mt-0.5 text-eyebrow font-bold uppercase;
+.streakCard.active > p {
+  @apply text-success;
 }

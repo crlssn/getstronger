@@ -166,8 +166,15 @@ export const HomeView = () => {
                     )}
                   </div>
                   <h2>{nextRoutine.name}</h2>
-                  {activePlan && <p className={styles.planSource}>{activePlan.name}</p>}
+                  {/* What it is, how much of it, how long: one line, where three
+                      lines spread the card down the screen. */}
                   <p className={styles.sessionMeta}>
+                    {activePlan && (
+                      <>
+                        <strong>{activePlan.name}</strong>
+                        <span aria-hidden="true">•</span>
+                      </>
+                    )}
                     {t('home.exerciseCount', { count: nextRoutine.exercises.length })}
                     <span aria-hidden="true">•</span>
                     {t('home.aboutMinutes', { count: estimatedMinutes })}

@@ -49,11 +49,12 @@
 }
 
 .sessionMeta {
-  @apply mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-tint;
+  @apply mt-2 flex flex-wrap items-center gap-2 text-meta font-medium text-white/60;
 }
 
-.planSource {
-  @apply mt-1 text-sm font-semibold text-white;
+/* The plan is what the session belongs to, so it leads the line it shares. */
+.sessionMeta strong {
+  @apply font-semibold text-white/90;
 }
 
 .sessionActions {

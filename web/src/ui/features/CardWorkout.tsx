@@ -1,14 +1,7 @@
 import type { Workout, WorkoutComment } from '@/proto/api/v1/workout_service_pb'
 import type { DropdownItem } from '@/types/dropdown'
-import type { ReactNode } from 'react'
 
-import {
-  CalendarDaysIcon,
-  ClockIcon,
-  FireIcon,
-  RectangleStackIcon,
-  TrophyIcon,
-} from '@heroicons/react/24/outline'
+import { CheckIcon, TrophyIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -19,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
+import { PageNavAction } from '@/ui/components/PageNavAction'
 import { cn } from '@/ui/cn'
 import { CardWorkoutComment } from '@/ui/features/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
@@ -39,9 +33,10 @@ interface Props {
 /**
  * A finished workout, as a feed summary or as the full session.
  *
- * The two share their author row, their headline metrics and their note; what
- * differs is that the compact card is a single link to the workout, and the
- * full one adds the exercises and the comments.
+ * The two share their headline metrics and their note; what differs is that the
+ * compact card is a single link to the workout and carries its author, while
+ * the full one is read under the title the nav bar already shows, and adds the
+ * exercises and the comments.
  */
 export const CardWorkout = ({ workout, compact }: Props) => {
   const { t } = useTranslation()
@@ -98,24 +93,6 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
   if (deleted) return null
 
-  const authorRow = (
-    <header className={cn(styles.authorRow, compact && styles.feedCardControl)}>
-      <Link to={`/users/${workout.user?.id}`} className={styles.avatar}>
-        {/* The brand's own initials stand in for a name we were not given. */}
-        {initials(workout.user?.name) || 'GS'}
-      </Link>
-      <div className={styles.authorCopy}>
-        <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
-        <p>
-          <span className="truncate">{workout.user?.name}</span>
-          <span aria-hidden="true">·</span>
-          <CalendarDaysIcon aria-hidden="true" /> {finishedDate}
-        </p>
-      </div>
-      {isOwner && <DropdownButton items={dropdownItems} />}
-    </header>
-  )
-
   const personalBestBadge = personalBestCount > 0 && (
     <span className={styles.personalBestBadge}>
       <TrophyIcon aria-hidden="true" />
@@ -123,35 +100,22 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     </span>
   )
 
-  const metric = (icon: ReactNode, label: string, value: string, amber = false) => (
+  const metric = (label: string, value: string) => (
     <article>
-      <span className={cn(styles.metricIcon, amber && styles.amber)}>{icon}</span>
-      <div>
-        <small>{label}</small>
-        <strong>{value}</strong>
-      </div>
+      <small>{label}</small>
+      <strong>{value}</strong>
     </article>
   )
 
+  // Four numbers in a quadrant, and nothing else: each carried a grey icon tile
+  // that repeated eight times down a feed screen without saying anything the
+  // label beside it did not.
   const metricGrid = (
     <div className={styles.metricGrid}>
-      {metric(
-        <FireIcon aria-hidden="true" />,
-        t('workout.totalVolume'),
-        `${formatNumber(workout.intensity)} ${t('common.kg')}`,
-      )}
-      {metric(
-        <ClockIcon aria-hidden="true" />,
-        t('common.duration'),
-        `${durationMinutes} ${t('common.min')}`,
-      )}
-      {metric(<RectangleStackIcon aria-hidden="true" />, t('workout.setsLogged'), `${setCount}`)}
-      {metric(
-        <TrophyIcon aria-hidden="true" />,
-        t('workout.personalRecords'),
-        `${personalBestCount}`,
-        personalBestCount > 0,
-      )}
+      {metric(t('workout.totalVolume'), `${formatNumber(workout.intensity)} ${t('common.kg')}`)}
+      {metric(t('common.duration'), `${durationMinutes} ${t('common.min')}`)}
+      {metric(t('workout.setsLogged'), `${setCount}`)}
+      {metric(t('workout.personalRecords'), `${personalBestCount}`)}
     </div>
   )
 
@@ -164,29 +128,37 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
   if (compact) {
     return (
-      <article
-        className={cn(
-          styles.summaryCard,
-          styles.feedSummaryCard,
-          personalBestCount > 0 && styles.hasPersonalBest,
-        )}
-      >
+      <article className={cn(styles.summaryCard, styles.feedSummaryCard)}>
         <Link
           to={`/workouts/${workout.id}`}
           className={styles.feedCardLink}
           aria-label={t('workout.card.viewDetails', { name: workout.name })}
         />
 
-        {authorRow}
-
-        <div className={styles.workoutHeading}>
-          <div className={styles.workoutHeadingCopy}>
-            <div>
-              <p className={styles.eyebrow}>{t('workout.completed')}</p>
-              <h2>{workout.name}</h2>
-            </div>
-            {personalBestBadge}
+        {/* Handle and name share the top line and the date sits under them as
+            the metadata it is, where the two competed for one row and wrapped
+            the date onto a second. */}
+        <header className={cn(styles.authorRow, styles.feedCardControl)}>
+          <Link to={`/users/${workout.user?.id}`} className={styles.avatar}>
+            {/* The brand's own initials stand in for a name we were not given. */}
+            {initials(workout.user?.name) || 'GS'}
+          </Link>
+          <div className={styles.authorCopy}>
+            <p className={styles.authorNames}>
+              <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
+              <span>{workout.user?.name}</span>
+            </p>
+            <p className={styles.authorDate}>{finishedDate}</p>
           </div>
+          {isOwner && <DropdownButton items={dropdownItems} />}
+        </header>
+
+        <div className={cn(styles.completedBand, personalBestCount > 0 && styles.record)}>
+          <div>
+            <p className={styles.eyebrow}>{t('workout.completed')}</p>
+            <h2>{workout.name}</h2>
+          </div>
+          {personalBestBadge}
         </div>
 
         {metricGrid}
@@ -201,22 +173,29 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
   return (
     <div className={styles.workoutDetail}>
-      <section
-        className={cn(
-          styles.summaryCard,
-          styles.detailSummaryCard,
-          personalBestCount > 0 && styles.hasPersonalBest,
-        )}
-      >
-        {authorRow}
+      {isOwner && (
+        <PageNavAction>
+          <DropdownButton items={dropdownItems} />
+        </PageNavAction>
+      )}
 
-        <div className={styles.workoutHeading}>
-          <div className={styles.workoutHeadingCopy}>
-            {/* The nav bar above already carries this workout's name. The
-                eyebrow stays because it says what the title does not. */}
-            <p className={styles.eyebrow}>{t('workout.completed')}</p>
-            {personalBestBadge}
-          </div>
+      {/* The nav bar above carries the title, so the author is a byline under
+          it rather than a card between the title and the numbers. */}
+      <p className={styles.byline}>
+        <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
+        <span aria-hidden="true">·</span>
+        {finishedDate}
+      </p>
+
+      <section className={cn(styles.summaryCard, styles.detailSummaryCard)}>
+        <div className={cn(styles.completedBand, personalBestCount > 0 && styles.record)}>
+          <p className={styles.completedLabel}>
+            <span className={styles.completedMark}>
+              <CheckIcon aria-hidden="true" />
+            </span>
+            {t('workout.completed')}
+          </p>
+          {personalBestBadge}
         </div>
 
         {metricGrid}
@@ -232,14 +211,13 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           <span>{t('home.exerciseCount', { count: workout.exerciseSets.length })}</span>
         </header>
         <div className={styles.exerciseList}>
-          {workout.exerciseSets.map((exerciseSet) => (
+          {workout.exerciseSets.map((exerciseSet, index) => (
             <CardWorkoutExercise
               key={exerciseSet.exercise?.id}
-              flat
+              defaultOpen={index === 0}
               exerciseId={exerciseSet.exercise?.id}
               name={exerciseSet.exercise?.name}
               sets={exerciseSet.sets}
-              tags={exerciseSet.exercise?.tags}
               metrics={exerciseSet.exercise?.metrics}
             />
           ))}

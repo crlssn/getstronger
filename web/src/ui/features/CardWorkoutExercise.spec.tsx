@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 
-import type { Set } from '@/proto/api/v1/shared_pb'
-
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, test } from 'vitest'
 
 import { DistanceUnit, ExerciseMetric, SetSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
@@ -17,9 +16,12 @@ const set = (fields: MessageInitShape<typeof SetSchema>) => create(SetSchema, fi
 const weightAndReps = [ExerciseMetric.WEIGHT, ExerciseMetric.REPS]
 const distanceAndTime = [ExerciseMetric.DISTANCE, ExerciseMetric.TIME]
 
+// Open by default here: what the tests are about is the table, and the session
+// opens on its first exercise anyway.
 const render = (props: Partial<React.ComponentProps<typeof CardWorkoutExercise>> = {}) =>
   renderWithProviders(
     <CardWorkoutExercise
+      defaultOpen
       exerciseId="exercise-1"
       name="Bench press"
       metrics={weightAndReps}
@@ -30,15 +32,45 @@ const render = (props: Partial<React.ComponentProps<typeof CardWorkoutExercise>>
 
 const headers = () => screen.getAllByRole('columnheader').map((cell) => cell.textContent)
 const rows = () => screen.getAllByRole('row')
+const toggle = () => screen.getByRole('button', { name: /Bench press/ })
 
 describe('CardWorkoutExercise', () => {
-  test('links its name to the exercise', () => {
+  // A six-exercise session was six tables and several screens of near-identical
+  // rows, so the sets are one tap away rather than always printed.
+  test('opens onto its sets, and folds them away again', async () => {
+    render({ defaultOpen: false })
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(toggle()).toHaveAttribute('aria-expanded', 'false')
+
+    await userEvent.click(toggle())
+    expect(screen.getByRole('table', { name: 'Bench press sets' })).toBeInTheDocument()
+    expect(toggle()).toHaveAttribute('aria-expanded', 'true')
+
+    await userEvent.click(toggle())
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
+  test('opens on request from the session it belongs to', () => {
     render()
 
-    expect(screen.getByRole('link', { name: 'Bench press' })).toHaveAttribute(
+    expect(screen.getByRole('table', { name: 'Bench press sets' })).toBeInTheDocument()
+  })
+
+  // The row is the toggle, so the way to the exercise itself is inside it.
+  test('offers the exercise it trained', () => {
+    render()
+
+    expect(screen.getByRole('link', { name: 'View exercise' })).toHaveAttribute(
       'href',
       '/exercises/exercise-1',
     )
+  })
+
+  test('counts its sets on the row', () => {
+    render({ sets: [set({ id: 'set-1' }), set({ id: 'set-2' })] })
+
+    expect(toggle()).toHaveTextContent('2 sets')
   })
 
   // The columns follow what the exercise measures, so a run is never given a
@@ -56,6 +88,7 @@ describe('CardWorkoutExercise', () => {
     })
 
     expect(headers()).toEqual(['Set', 'Distance', 'Time', 'Pace'])
+    expect(rows().at(-1)).toHaveTextContent('5:00 min/km')
   })
 
   test('leaves the pace blank when a set has no distance to divide', () => {
@@ -76,12 +109,12 @@ describe('CardWorkoutExercise', () => {
     render({
       metrics: distanceAndTime,
       sets: [
-        set({ id: 'set-1', distance: 2, durationSeconds: 605, distanceUnit: DistanceUnit.MILES }),
+        set({ id: 'set-1', distance: 2, durationSeconds: 754, distanceUnit: DistanceUnit.MILES }),
       ],
     })
 
     const row = rows().at(-1)
-    expect(row).toHaveTextContent('10 min 5 sec')
+    expect(row).toHaveTextContent('12 min 34 sec')
     expect(row).toHaveTextContent('mi')
   })
 
@@ -94,51 +127,29 @@ describe('CardWorkoutExercise', () => {
     expect(screen.getByLabelText('Set 2')).toBeInTheDocument()
   })
 
-  test('replaces a best set’s number with a trophy, and says so', () => {
+  // The trophy used to replace the number, which made the record set the one
+  // row nobody could place. It keeps its number and gains a mark instead.
+  test('keeps a record set’s number, and marks the row beside it', () => {
     render({
+      sets: [
+        set({ id: 'set-1', weight: 100, reps: 5, metadata: { personalBest: true } }),
+        set({ id: 'set-2', weight: 90, reps: 8 }),
+      ],
+    })
+
+    const best = rows()[1]
+    expect(within(best!).getByLabelText('Set 1, personal best')).toHaveTextContent('1')
+    expect(within(best!).getByLabelText('Personal best')).toBeInTheDocument()
+    expect(within(rows()[2]!).queryByLabelText('Personal best')).not.toBeInTheDocument()
+  })
+
+  // What a reader scans the closed list for is which exercises went well.
+  test('says on the row when the exercise set a record', () => {
+    render({
+      defaultOpen: false,
       sets: [set({ id: 'set-1', weight: 100, reps: 5, metadata: { personalBest: true } })],
     })
 
-    const marker = screen.getByLabelText('Set 1, personal best')
-    expect(marker).toHaveTextContent('')
-    expect(marker.querySelector('svg')).toBeInTheDocument()
-  })
-
-  describe('compact', () => {
-    const compactSets: Set[] = [
-      set({ id: 'set-1', weight: 100, reps: 5, metadata: { personalBest: true } }),
-      set({ id: 'set-2', weight: 90, reps: 8 }),
-    ]
-
-    test('drops the header row and puts each set on one line', () => {
-      render({ compact: true, sets: compactSets })
-
-      expect(screen.queryAllByRole('columnheader')).toHaveLength(0)
-      expect(rows()).toHaveLength(2)
-      expect(rows()[0]).toHaveTextContent('100 kg · 5')
-    })
-
-    // There is no room to swap the number out, so the best keeps its number and
-    // gains a badge beside it.
-    test('keeps the set number and adds a badge for a best', () => {
-      render({ compact: true, sets: compactSets })
-
-      const best = rows()[0]
-      expect(best).toHaveTextContent('1')
-      expect(within(best!).getByRole('img', { name: 'Personal best' })).toBeInTheDocument()
-      expect(within(rows()[1]!).queryByRole('img')).not.toBeInTheDocument()
-    })
-
-    test('leaves out the set count that the full table carries', () => {
-      render({ compact: true, sets: compactSets })
-
-      expect(screen.queryByText('2 sets')).not.toBeInTheDocument()
-    })
-  })
-
-  test('counts its sets when it is not compact', () => {
-    render({ sets: [set({ id: 'set-1' }), set({ id: 'set-2' })] })
-
-    expect(screen.getByText('2 sets')).toBeInTheDocument()
+    expect(toggle()).toHaveTextContent('Personal best')
   })
 })

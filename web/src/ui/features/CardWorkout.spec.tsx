@@ -24,6 +24,7 @@ import {
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
+import { usePageNavActionStore } from '@/stores/pageNavAction'
 import { renderWithProviders } from '@/ui/testing'
 import { CardWorkout } from './CardWorkout'
 
@@ -88,6 +89,11 @@ describe('CardWorkout', () => {
     useAuthStore.setState({ userId: ownerId })
     useToastStore.getState().dismiss()
     useConfirmationStore.setState({ confirmation: null, resolver: null })
+
+    // The full workout portals its menu into the nav bar's action slot.
+    const slot = document.createElement('div')
+    document.body.append(slot)
+    usePageNavActionStore.setState({ container: slot })
   })
 
   describe('as a feed card', () => {
@@ -141,9 +147,10 @@ describe('CardWorkout', () => {
     test('lists every exercise with its sets', () => {
       render(<CardWorkout compact={false} workout={withSets()} />)
 
-      expect(screen.getByRole('link', { name: 'Bench press' })).toHaveAttribute(
-        'href',
-        '/exercises/exercise-1',
+      // The session opens on its first exercise; the rest are one tap away.
+      expect(screen.getByRole('button', { name: /Bench press/ })).toHaveAttribute(
+        'aria-expanded',
+        'true',
       )
       expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
       expect(screen.getAllByRole('row')).toHaveLength(3)

@@ -60,8 +60,7 @@ describe('StreakCard', () => {
     seed({ streak: 3, thisWeekLogged: true })
     renderWithProviders(<StreakCard />)
 
-    expect(screen.getByText('3')).toBeInTheDocument()
-    expect(screen.getByText('weeks')).toBeInTheDocument()
+    expect(screen.getByText('3 weeks')).toBeInTheDocument()
   })
 
   test('shows only a check for one workout and adds the count for more', () => {
