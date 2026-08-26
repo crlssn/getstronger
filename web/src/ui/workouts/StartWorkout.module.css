@@ -4,21 +4,27 @@
   @apply mx-auto max-w-3xl space-y-4 pb-8;
 }
 
-/* The timer and the session header are one piece of chrome. The shell's usual
-   section gap belongs below the timer, not between these bars. */
-.workoutShell.resting > .workoutHeader {
-  margin-bottom: 0;
-}
-
 /* The chrome spans the viewport while its contents stay aligned with the app,
    and is opaque, or scrolled content bleeds through and reads as passing over
-   the header. */
-.workoutHeader {
+   the header.
+
+   Header and rest bar stick as one block. Pinned separately at the same offset
+   the bar won the z-index and rode up over the session title. */
+.sessionChrome {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  @apply sticky z-20 -mt-5 border-b border-border bg-white text-text lg:-mt-7;
+  @apply sticky z-20 -mt-5 bg-surface-sunken lg:-mt-7;
   /* Below the status-bar scrim in the native WebView; zero in browsers. */
   top: env(safe-area-inset-top);
+}
+
+.workoutHeader {
+  @apply border-b border-border bg-white text-text;
+}
+
+/* The bar is a card in the content column, so it takes the column's gutters. */
+.restDock {
+  @apply mx-auto w-full max-w-3xl px-3 pb-1 pt-3 sm:px-5 lg:px-8;
 }
 
 .workoutHeaderInner {

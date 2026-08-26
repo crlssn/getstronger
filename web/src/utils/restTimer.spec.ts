@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest'
 
 import {
   isFinalCountdown,
-  isFinalMinute,
-  restHue,
   restLabel,
   restProgress,
   restRemainingSeconds,
@@ -63,34 +61,7 @@ describe('restProgress', () => {
   })
 })
 
-describe('restHue', () => {
-  // Warms from green through amber as the rest runs down, so a glance reads
-  // roughly how long is left without reading the number.
-  test.each([
-    [30, 45],
-    [90, 100],
-    [150, 165],
-    [210, 205],
-    [270, 270],
-  ])('gives %i seconds hue %i', (seconds, expected) => {
-    expect(restHue(seconds)).toBe(expected)
-  })
-
-  test('holds the coolest hue for a long rest', () => {
-    expect(restHue(3600)).toBe(270)
-  })
-})
-
 describe('the final stretch', () => {
-  test.each([
-    [59, true],
-    [60, false],
-    [120, false],
-    [0, false],
-  ])('%i seconds is the final minute: %s', (seconds, expected) => {
-    expect(isFinalMinute(seconds)).toBe(expected)
-  })
-
   test.each([
     [10, true],
     [1, true],

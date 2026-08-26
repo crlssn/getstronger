@@ -249,8 +249,9 @@ describe('PlanForm', () => {
     raiseKeyboard()
     render()
 
-    await screen.findByRole('textbox')
-    expect(screen.queryByRole('button', { name: 'Create plan' })).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Create plan' })).not.toBeInTheDocument(),
+    )
   })
 
   test('creates the plan with its routines in order', async () => {

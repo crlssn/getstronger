@@ -417,6 +417,16 @@ describe('StartWorkout', () => {
       expect(within(banner!).getByText('01:30')).toBeInTheDocument()
     })
 
+    // The band is drawn in the app's own ink rather than as a green flood, so
+    // it names what it is instead of relying on the colour to say it.
+    test('names the rest beside the countdown', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      await logFirstSet(user)
+
+      expect(within(restBanner()!).getByText('Resting')).toBeInTheDocument()
+    })
+
     test('extends by thirty seconds and skips', async () => {
       const user = userEvent.setup()
       await renderWorkout()

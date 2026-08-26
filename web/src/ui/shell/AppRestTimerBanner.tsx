@@ -1,5 +1,3 @@
-import type { CSSProperties } from 'react'
-
 import { BoltIcon } from '@heroicons/react/24/outline'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,8 +9,6 @@ import { AppButton } from '@/ui/components/AppButton'
 import { cn } from '@/ui/cn'
 import {
   isFinalCountdown,
-  isFinalMinute,
-  restHue,
   restLabel,
   restProgress,
   restRemainingSeconds,
@@ -68,23 +64,21 @@ export const AppRestTimerBanner = () => {
 
   return (
     <section
-      className={cn(
-        styles.restBanner,
-        isFinalMinute(remaining) && styles.bright,
-        isFinalCountdown(remaining) && styles.final,
-      )}
-      style={{ '--rest-hue': restHue(remaining) } as CSSProperties}
+      className={cn(styles.restBanner, isFinalCountdown(remaining) && styles.final)}
       aria-label={`${t('workout.restTimer')}: ${label}`}
     >
       <div className={styles.restBannerInner}>
-        <div className={styles.restCopy}>
-          {/* The label is in the section's aria-label; repeating it here would
-              re-announce every second. */}
-          <strong aria-hidden="true">{label}</strong>
+        <div className={styles.restRow}>
+          {/* The label is in the section's aria-label; repeating it here
+              would re-announce every second. The digits stand alone — the way
+              back beside them already says what the bar is. */}
+          <p className={styles.restCopy}>
+            <strong aria-hidden="true">{label}</strong>
+          </p>
+          <AppButton type="link" colour="ghost" size="sm" width="auto" to={savedHref}>
+            <BoltIcon className="size-5" aria-hidden="true" /> {t('workout.goToWorkout')}
+          </AppButton>
         </div>
-        <AppButton type="link" colour="ghost" size="sm" width="auto" to={savedHref}>
-          <BoltIcon className="size-5" aria-hidden="true" /> {t('workout.goToWorkout')}
-        </AppButton>
         <div className={styles.restProgress} aria-hidden="true">
           <span style={{ width: restProgress(remaining, totalSeconds) }} />
         </div>

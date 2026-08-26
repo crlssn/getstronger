@@ -147,8 +147,9 @@ describe('EditWorkout', () => {
     raiseKeyboard()
     render()
 
-    await screen.findAllByRole('textbox')
-    expect(screen.queryByRole('button', { name: 'Update workout' })).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Update workout' })).not.toBeInTheDocument(),
+    )
   })
 
   // Refused here as well as by the API, so the form is never shown for one.

@@ -105,7 +105,9 @@ describe('CreateExercise', () => {
     render(<CreateExercise />)
 
     await waitFor(() => expect(mocked.listExerciseTags).toHaveBeenCalled())
-    expect(screen.queryByRole('button', { name: 'Save Exercise' })).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Save Exercise' })).not.toBeInTheDocument(),
+    )
   })
 
   test('creates the exercise it was given and goes back to the list', async () => {

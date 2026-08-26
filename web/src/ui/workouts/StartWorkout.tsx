@@ -858,7 +858,7 @@ export const StartWorkout = () => {
 
   return (
     <form
-      className={cn(styles.workoutShell, restSeconds > 0 && styles.resting)}
+      className={styles.workoutShell}
       noValidate
       onSubmit={(event) => {
         event.preventDefault()
@@ -868,6 +868,10 @@ export const StartWorkout = () => {
       {/* The session chrome carries the two things worth glancing at between
           sets: where you are, and how long you have been here. The elapsed time
           is the larger of the two because it is the one being read. */}
+      {/* Header and rest bar are one piece of chrome, pinned together: the
+          bar used to stick at the same offset with a higher z-index, so it
+          rode up over the session title on scroll. */}
+      <div className={styles.sessionChrome}>
       <header className={styles.workoutHeader}>
         <div className={styles.workoutHeaderInner}>
           <AppIconButton
@@ -901,12 +905,17 @@ export const StartWorkout = () => {
         </div>
       </header>
 
-      <WorkoutRestBanner
-        remainingSeconds={restSeconds}
-        totalSeconds={restTotalSeconds}
-        onAddTime={() => startRest(restSeconds + restExtensionSeconds)}
-        onSkip={() => useWorkoutStore.getState().setRestTimer(routineID)}
-      />
+        {restSeconds > 0 && (
+          <div className={styles.restDock}>
+            <WorkoutRestBanner
+              remainingSeconds={restSeconds}
+              totalSeconds={restTotalSeconds}
+              onAddTime={() => startRest(restSeconds + restExtensionSeconds)}
+              onSkip={() => useWorkoutStore.getState().setRestTimer(routineID)}
+            />
+          </div>
+        )}
+      </div>
 
       <main className={styles.exerciseStack}>
         {quickWorkout && !currentExercise && (
