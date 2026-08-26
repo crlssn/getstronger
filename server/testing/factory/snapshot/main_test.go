@@ -82,6 +82,39 @@ func TestRestoreRepeatedly(t *testing.T) {
 	}
 }
 
+// A table the capture skipped is the failure nobody would see: the restore
+// would leave it empty, and whichever spec file ran next would fail on rows it
+// never wrote. The snapshot has to mirror the live schema exactly.
+func TestCaptureCoversTheWholeSchema(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		require.NoError(t, c.Terminate(ctx))
+	})
+
+	require.NoError(t, capture(ctx, c.DB))
+
+	live, err := tables(ctx, c.DB, "public")
+	require.NoError(t, err)
+	require.NotEmpty(t, live)
+	copied, err := tables(ctx, c.DB, snapshotSchema)
+	require.NoError(t, err)
+	require.Equal(t, live, copied)
+
+	byName := make(map[string][]string, len(live))
+	for _, copiedTable := range live {
+		byName[copiedTable.name] = copiedTable.columns
+	}
+	require.NotContains(t, byName, "schema_migrations")
+	require.Contains(t, byName, "users")
+	// Postgres computes this one and refuses a value for it, so a restore that
+	// named it would fail on the first row.
+	require.NotContains(t, byName["users"], "full_name_search")
+	require.Contains(t, byName["users"], "name")
+}
+
 func TestRestoreWithoutCapture(t *testing.T) {
 	t.Parallel()
 
