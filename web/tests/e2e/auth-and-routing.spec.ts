@@ -193,13 +193,15 @@ test.describe('guest authentication and routing', () => {
     )
     await expect(page.getByLabel('Email address')).toHaveValue('')
 
-    // The toast floats near the top of the viewport, clear of both edges, and
-    // stays inside the column the rest of the page is read in.
+    // The toast floats near the bottom of the viewport, over the tab bar where
+    // nothing needs reading, clear of both edges and inside the column the rest
+    // of the page is read in. At the top it covered the page's own title.
     const toast = await boxOf(page.getByRole('status'))
     const viewport = page.viewportSize()
+    const height = viewport?.height ?? 0
 
-    expect(toast.y).toBeGreaterThan(0)
-    expect(toast.y).toBeLessThan((viewport?.height ?? 0) / 2)
+    expect(toast.y).toBeGreaterThan(height / 2)
+    expect(toast.y + toast.height).toBeLessThanOrEqual(height)
     expect(toast.x).toBeGreaterThan(0)
     expect(toast.x + toast.width).toBeLessThanOrEqual(viewport?.width ?? 0)
 

@@ -83,8 +83,9 @@ test.describe('quick workout lifecycle', () => {
     // between sets. No progress rail: a glance should not do arithmetic.
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0)
     // Not a banner: the session runs inside the shell's <main>, which takes the
-    // role away. It is the form's own header.
-    const headerBox = await page.locator('form > header').boundingBox()
+    // role away. It is the form's own header, inside the sticky chrome it
+    // shares with the rest bar.
+    const headerBox = await page.locator('form header').first().boundingBox()
     expect(headerBox?.height).toBeLessThanOrEqual(80)
     await expect(page.getByRole('progressbar', { name: 'Session progress' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
@@ -111,12 +112,21 @@ test.describe('quick workout lifecycle', () => {
     const restCountdown = restRegion.locator('strong').first()
     const initialTimer = await restCountdown.innerText()
     expect(initialTimer).toMatch(/^\d{2}:\d{2}$/)
-    // The band owns the top of the screen and covers no editable field.
+    // A card in the content column rather than a coloured band across the
+    // viewport, sitting under the session header and covering neither the
+    // header nor an editable field.
     const bannerBox = await restRegion.boundingBox()
+    const headerBottom = await page
+      .locator('form header')
+      .first()
+      .boundingBox()
+      .then((box) => box!.y + box!.height)
     const repsBox = await page
       .getByRole('textbox', { name: `${firstExercise} set 1 reps`, exact: true })
       .boundingBox()
-    expect(bannerBox!.width).toBeGreaterThanOrEqual(page.viewportSize()!.width)
+    expect(bannerBox!.x).toBeGreaterThan(0)
+    expect(bannerBox!.width).toBeLessThan(page.viewportSize()!.width)
+    expect(bannerBox!.y).toBeGreaterThanOrEqual(headerBottom)
     expect(bannerBox!.y + bannerBox!.height).toBeLessThanOrEqual(repsBox!.y)
 
     await page.getByRole('button', { name: '+30 sec' }).click()

@@ -24,20 +24,18 @@
   @apply truncate text-title font-extrabold text-text;
 }
 
-.profileCard p:last-child {
+.profileCard .email {
   @apply mt-1 truncate text-sm text-text-subtle;
 }
 
-/* Each pencil is a full-size tap target, so its row's text centers against it
-   with negative margins instead of growing the card. The name keeps its own
-   heading element, so the pencil stays out of the heading's accessible name. */
-.nameLine,
 .usernameLine {
-  @apply -my-2 flex items-center gap-0.5;
+  @apply truncate text-sm text-text-muted;
 }
 
-.usernameLine {
-  @apply text-sm text-text-muted;
+/* One action for the card, under the three lines it edits. Pulled left so its
+   label lines up with them rather than with its own padding. */
+.editProfile {
+  @apply -ml-3 mt-2;
 }
 
 .notificationLink {
