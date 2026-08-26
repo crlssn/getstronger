@@ -4,13 +4,21 @@
   @apply mx-auto max-w-4xl;
 }
 
-/* No card: the switch is the whole of this section, and a box around one
-   control is a box around nothing. What each half means is answered by the
-   groups that appear under Advanced. */
-.structure {
-  @apply mb-4;
+.name {
+  @apply mb-5;
 }
 
-.formActions {
-  @apply mt-4 grid gap-2;
+/* No card: the switch is the whole of this section, and a box around one
+   control is a box around nothing. The line under it is what each half means,
+   which the two words alone never said. */
+.structure {
+  @apply w-full;
+}
+
+.structure > * {
+  @apply flex-1;
+}
+
+.structureHint {
+  @apply mb-5 mt-2 px-1 text-xs text-text-subtle;
 }

@@ -6,9 +6,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/ui/components/AppButton'
-import { AppList } from '@/ui/components/AppList'
-import { AppListItemInput } from '@/ui/components/AppListItemInput'
+import { AppFormFooter } from '@/ui/components/AppFormFooter'
+import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
+import { PageNavAction } from '@/ui/components/PageNavAction'
 import { RoutineGroupsEditor } from '@/ui/routines/RoutineGroupsEditor'
 import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
 import {
@@ -110,22 +111,30 @@ export const RoutineForm = ({
         if (canSubmit) submit()
       }}
     >
-      <h6>{t('routine.form.name')}</h6>
-      <AppList>
-        <AppListItemInput
-          label={t('routine.form.name')}
-          model={name}
-          type="text"
-          required
-          autoComplete="off"
-          placeholder={t('routine.form.namePlaceholder')}
-          onUpdate={setName}
-        />
-      </AppList>
+      {/* Out of the way of the thumb that is building the routine, and out of
+          reach of the one that saves it. */}
+      <PageNavAction>
+        <AppButton type="link" to="/routines" colour="ghost" size="sm" width="auto">
+          {t('common.cancel')}
+        </AppButton>
+      </PageNavAction>
+
+      {/* The field carries its own label: three grey section captions above
+          three different controls said only that a form was underneath. */}
+      <AppInput
+        className={styles.name}
+        label={t('routine.form.name')}
+        value={name}
+        type="text"
+        required
+        autoComplete="off"
+        placeholder={t('routine.form.namePlaceholder')}
+        onChange={(event) => setName(event.target.value)}
+      />
 
       {/* The question that decides the shape of everything below it, so it is
-          asked before any of it. */}
-      <h6>{t('routine.form.groups.section')}</h6>
+          asked before any of it — and answered in a line, because "Advanced"
+          on its own says nothing about what it does to the form. */}
       <AppSegmented
         className={styles.structure}
         label={t('routine.form.groups.section')}
@@ -136,8 +145,10 @@ export const RoutineForm = ({
         value={advanced}
         onChange={setAdvancedMode}
       />
+      <p className={styles.structureHint}>
+        {advanced ? t('routine.form.groups.advancedHint') : t('routine.form.groups.simpleHint')}
+      </p>
 
-      <h6>{t('common.exercises')}</h6>
       <RoutineGroupsEditor
         groups={groups}
         grouped={advanced}
@@ -146,16 +157,13 @@ export const RoutineForm = ({
         onAddExercise={setPickerGroupId}
       />
 
-      {/* At the end of the form rather than floating over it: the save belongs
-          to the routine above it, and every other form ends the same way. */}
-      <div className={styles.formActions}>
+      {/* Pinned rather than parked at the end of the scroll, where a routine
+          with ten exercises hid it. */}
+      <AppFormFooter>
         <AppButton type="submit" colour="primary" disabled={!canSubmit}>
           {saving ? t('training.planForm.saving') : submitLabel}
         </AppButton>
-        <AppButton type="link" to="/routines" colour="secondary">
-          {t('common.cancel')}
-        </AppButton>
-      </div>
+      </AppFormFooter>
 
       {pickerGroupId && (
         <ExercisePickerSheet

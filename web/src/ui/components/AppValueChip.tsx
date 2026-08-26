@@ -1,0 +1,34 @@
+import type { ReactNode } from 'react'
+
+import { cn } from '@/ui/cn'
+import styles from './AppValueChip.module.css'
+
+interface Props {
+  /** The chip's accessible name. A value on its own names nothing. */
+  label: string
+  /** What the chip reads — a duration, a count, a unit. */
+  value: ReactNode
+  /** Whether the control this chip opens is showing. */
+  expanded?: boolean
+  onClick: () => void
+  className?: string
+}
+
+/**
+ * A value on a row, and the way to the control that changes it.
+ *
+ * A setting that belongs to a row costs the row a second line to show and a
+ * stepper to change, whether or not anybody is tuning it. As a chip it reads at
+ * a glance and unfolds its control only when tapped.
+ */
+export const AppValueChip = ({ label, value, expanded = false, onClick, className }: Props) => (
+  <button
+    type="button"
+    className={cn(styles.chip, expanded && styles.expanded, className)}
+    aria-label={label}
+    aria-expanded={expanded}
+    onClick={onClick}
+  >
+    {value}
+  </button>
+)

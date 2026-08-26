@@ -14,11 +14,10 @@ import {
   draftGroupsFromRoutine,
   groupExerciseIds,
   isGrouped,
-  moveEntryToGroup,
-  moveEntryWithinGroup,
   removeEntry,
   newOccurrenceRestSeconds,
   removeGroup,
+  reorderEntry,
   saveableGroups,
   setEntryRest,
   singleStraightGroup,
@@ -198,43 +197,31 @@ describe('removeEntry', () => {
   })
 })
 
-describe('moveEntryToGroup', () => {
-  it('appends the exercise to its new group and removes it from the old one', () => {
-    const groups = twoGroups(['a', 'b'], [])
-    const moved = moveEntryToGroup(groups, entryKey(groups, 0, 0), groups[1]!.id)
-
-    expect(moved[0]?.entries.map((entry) => entry.exerciseId)).toEqual(['b'])
-    expect(moved[1]?.entries.map((entry) => entry.exerciseId)).toEqual(['a'])
-  })
-
-  it('leaves the groups alone when the target does not exist', () => {
-    const groups = singleStraightGroup(['a'])
-
-    expect(moveEntryToGroup(groups, entryKey(groups, 0, 0), 'missing')).toEqual(groups)
-  })
-
-  it('will not move an exercise into a group that already trains it', () => {
-    const groups = twoGroups(['a'], ['a'])
-
-    expect(moveEntryToGroup(groups, entryKey(groups, 0, 0), groups[1]!.id)).toEqual(groups)
-  })
-})
-
-describe('moveEntryWithinGroup', () => {
+describe('reorderEntry', () => {
   const groups = singleStraightGroup(['a', 'b', 'c'])
-  const keyOf = (position: number) => entryKey(groups, 0, position)
+  const groupId = groups[0]!.id
 
-  it('swaps the exercise with the one before it', () => {
-    expect(groupExerciseIds(moveEntryWithinGroup(groups, keyOf(1), -1))).toEqual(['b', 'a', 'c'])
+  it('puts the exercise where it was dropped', () => {
+    expect(groupExerciseIds(reorderEntry(groups, groupId, 2, 0))).toEqual(['c', 'a', 'b'])
+    expect(groupExerciseIds(reorderEntry(groups, groupId, 0, 2))).toEqual(['b', 'c', 'a'])
   })
 
-  it('swaps the exercise with the one after it', () => {
-    expect(groupExerciseIds(moveEntryWithinGroup(groups, keyOf(1), 1))).toEqual(['a', 'c', 'b'])
+  it('leaves the order alone when it lands where it started', () => {
+    expect(reorderEntry(groups, groupId, 1, 1)).toEqual(groups)
   })
 
-  it('stays put at either end', () => {
-    expect(groupExerciseIds(moveEntryWithinGroup(groups, keyOf(0), -1))).toEqual(['a', 'b', 'c'])
-    expect(groupExerciseIds(moveEntryWithinGroup(groups, keyOf(2), 1))).toEqual(['a', 'b', 'c'])
+  it('ignores a position no exercise is at', () => {
+    expect(reorderEntry(groups, groupId, 0, 9)).toEqual(groups)
+    expect(reorderEntry(groups, groupId, -1, 0)).toEqual(groups)
+  })
+
+  // Every group is dragged on its own, so a position only means anything
+  // inside the group it was reported for.
+  it('leaves the other groups alone', () => {
+    const two = twoGroups(['a', 'b'], ['c'])
+
+    expect(groupExerciseIds(reorderEntry(two, two[0]!.id, 1, 0))).toEqual(['b', 'a', 'c'])
+    expect(reorderEntry(two, 'missing', 1, 0)).toEqual(two)
   })
 })
 

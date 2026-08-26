@@ -37,8 +37,8 @@
   @apply cursor-not-allowed opacity-60;
 }
 
-/* Numeric labels only — 7D, 4W, 1Y. Nothing long enough to need the room, and
-   a min-width so the narrowest of them still clears the tap floor on both
+/* Short labels only — 7D, 4W, 1Y, or a switch that has to fit beside a title.
+   The min-width keeps the narrowest of them clear of the tap floor on both
    axes: "1Y" at this size is 43px of text and padding. */
 .compact > * {
   @apply min-w-(--size-control-sm) px-3.5 text-meta;

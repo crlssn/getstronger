@@ -30,6 +30,8 @@ aspirational.
 | A field the user searches with | `<AppSearchField>`                                  |
 | The next page of a list        | `<AppLoadMore>`                                     |
 | A screen's title block         | `<AppPageHeader>`                                   |
+| A form's pinned submit         | `<AppFormFooter>`                                   |
+| A value a row can unfold       | `<AppValueChip>`                                    |
 | A panel around content         | `<AppCard>`, or the `card` utility inside a module  |
 | Rows of things                 | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
 | A row that is one tap          | `<AppOptionRow>`                                    |
@@ -71,6 +73,14 @@ rendering it.
 
 One quiet affordance for every optional addition — "add a note", "add a tag".
 Findable when looked for, never competing with the page's primary action.
+
+### `<AppFormFooter>`
+
+A form's primary action, pinned above the tab bar instead of parked at the
+bottom of the scroll where a long form hides it. It stands down while the
+on-screen keyboard is up — a bar floating on the keyboard covers the field being
+typed into — and leaves a spacer behind either way, so the page does not jump as
+the keyboard comes and goes.
 
 ### `<AppLoadMore>`
 
@@ -124,16 +134,16 @@ changes what was logged.
 
 ### `<AppDurationStepper>`
 
-An `<AppDurationInput>` with a − and a + either side of it, stepping 30 seconds
-by default. For a duration that is read off a clock and adjusted in coarse
-nudges rather than typed exactly — every rest in the routine builder. `label`
-names the field and is what the two buttons build their own names from, so a
-card holding several of them still reads unambiguously to a screen reader.
+A duration nudged in coarse steps, shown as `m:ss` between a − and a +. For a
+rest that is read off a clock and adjusted in half-minutes rather than typed
+exactly — every rest in the routine builder. `label` names the control and is
+what the two buttons build their own names from, so a card holding several of
+them still reads unambiguously to a screen reader.
 
-Unlike the two fields above it, its value is never `undefined`: an empty field
-is a half-typed state rather than an answer, so clearing it leaves the last
-value standing and the field snaps back on blur. Zero is typed, or stepped
-down to.
+The value is shown, not typed: a field in the middle of the control asked every
+screen holding one to carry a border, a focus ring and a keyboard for an edit
+nobody was making. It is a `spinbutton`, so the value is announced as it changes
+and the arrow keys move it — what typing gave a keyboard, kept.
 
 ### `<AppSwitch>`
 
@@ -174,7 +184,9 @@ Pick one of these. `<AppSegmented>` takes `options` and reports the value that
 was chosen; `<AppSegmentedNav>` is the same control where each option is its own
 route. `label` is required — a row of unlabelled options says nothing to a
 screen reader — and each option carries `aria-pressed`, not just a class.
-`density="compact"` is for numeric labels (7D, 4W, 1Y) and nothing else.
+`density="compact"` is for short labels — numeric ranges (7D, 4W, 1Y) and a
+switch that has to share a row with a title. Nothing long enough to need the
+room it gives up.
 
 ### `<DropdownButton>`
 
@@ -199,6 +211,13 @@ A whole row that is one tap: an optional `leading` tile, the copy, an optional
 `trailing` icon. Pass `selected` only for a row that toggles — a row that picks
 and closes has no pressed state, and `aria-pressed="false"` on one says the
 wrong thing. `flat` drops the border for a row inside an already-divided list.
+
+### `<AppValueChip>`
+
+A value on a row, and the way to the control that changes it: the rest a routine
+gives an exercise reads as a pill on the row and unfolds its stepper only when
+tapped. `label` is required — a duration on its own names nothing — and
+`expanded` says whether what it opens is showing.
 
 ### `<AppEmptyState>`
 

@@ -34,8 +34,8 @@ export const newOccurrenceRestSeconds = (exercise: Exercise): number =>
  *
  * It carries a key of its own because the same exercise may be in more than one
  * group — a bench press in the warm-up and a bench press in the circuit — and
- * moving one of them must not move the other. Twice inside one group is not a
- * thing: a group is a block of distinct work.
+ * removing one of them must not remove the other. Twice inside one group is not
+ * a thing: a group is a block of distinct work.
  */
 export interface DraftEntry {
   key: string
@@ -216,39 +216,29 @@ export const removeEntry = (groups: readonly DraftGroup[], key: string): DraftGr
     entries: group.entries.filter((entry) => entry.key !== key),
   }))
 
-export const moveEntryToGroup = (
+/**
+ * Puts an exercise where it was dropped inside the group holding it.
+ *
+ * Positions rather than a direction: the row is dragged to a place in the list,
+ * and SortableJS reports where it landed.
+ */
+export const reorderEntry = (
   groups: readonly DraftGroup[],
-  key: string,
-  targetGroupId: string,
-): DraftGroup[] => {
-  const moved = groups.flatMap((group) => group.entries).find((entry) => entry.key === key)
-  const target = groups.find((group) => group.id === targetGroupId)
-  if (!moved || !target) return [...groups]
-  // The target already trains it, so there is nowhere for this one to land.
-  if (groupHasExercise(target, moved.exerciseId)) return [...groups]
-
-  return groups.map((group) => {
-    const entries = group.entries.filter((entry) => entry.key !== key)
-    return group.id === targetGroupId
-      ? { ...group, entries: [...entries, moved] }
-      : { ...group, entries }
-  })
-}
-
-/** Nudges an exercise one place up or down inside the group holding it. */
-export const moveEntryWithinGroup = (
-  groups: readonly DraftGroup[],
-  key: string,
-  offset: -1 | 1,
+  groupId: string,
+  from: number,
+  to: number,
 ): DraftGroup[] =>
   groups.map((group) => {
-    const index = group.entries.findIndex((entry) => entry.key === key)
-    const target = index + offset
-    if (index < 0 || target < 0 || target >= group.entries.length) return group
+    if (group.id !== groupId) return group
+
+    const outOfRange = [from, to].some(
+      (position) => position < 0 || position >= group.entries.length,
+    )
+    if (from === to || outOfRange) return group
 
     const entries = [...group.entries]
-    const [moved] = entries.splice(index, 1)
-    if (moved) entries.splice(target, 0, moved)
+    const [moved] = entries.splice(from, 1)
+    if (moved) entries.splice(to, 0, moved)
 
     return { ...group, entries }
   })

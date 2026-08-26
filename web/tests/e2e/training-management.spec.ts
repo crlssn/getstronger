@@ -29,8 +29,27 @@ const routineExercises = (page: Parameters<typeof logIn>[0]) => page.locator('ol
 // A rest field is a textbox between two nudge buttons, and the buttons quote the
 // field's own name so a screen reader can tell one row's from another's. That
 // makes a label match find all three, so the textbox is asked for by role.
-const restField = (page: Parameters<typeof logIn>[0], name: string) =>
-  page.getByRole('textbox', { name, exact: true })
+// A rest is a value between two nudge buttons rather than a field, and the
+// buttons quote the value's own name so one row's can be told from another's.
+const restValue = (page: Parameters<typeof logIn>[0], name: string) =>
+  page.getByRole('spinbutton', { name, exact: true })
+
+const stepRest = async (
+  page: Parameters<typeof logIn>[0],
+  name: string,
+  by: 'Add' | 'Subtract',
+  times = 1,
+) => {
+  const label = by === 'Add' ? `Add 30 seconds to ${name}` : `Subtract 30 seconds from ${name}`
+  for (let step = 0; step < times; step += 1) {
+    await page.getByRole('button', { name: label, exact: true }).click()
+  }
+}
+
+// The rest a routine gives an exercise reads as a chip on its row, and the
+// chip is what unfolds the stepper.
+const restChip = (page: Parameters<typeof logIn>[0], name: string, value: string) =>
+  page.getByRole('button', { name: `Rest between sets of ${name}: ${value}`, exact: true })
 
 const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) => {
   await page.goto('/exercises')
@@ -340,6 +359,60 @@ test.describe('routine lifecycle', () => {
     await expect(page.getByRole('status')).toContainText('Routine deleted')
   })
 
+  // Reordering is a drag: the row carries a handle, and where it is dropped is
+  // the order the routine is saved and read back in.
+  test('drags an exercise into a new place and saves the order @mutation', async ({ page }) => {
+    const routineName = uniqueName('E2E Drag')
+
+    try {
+      await page.goto('/routines/create')
+      await page.getByLabel('Routine name').fill(routineName)
+      const first = await addRoutineExercise(page)
+      const second = await addRoutineExercise(page)
+
+      const rows = routineExercises(page)
+      await expect(rows.first()).toContainText(first)
+
+      await page
+        .getByRole('button', { name: `Reorder ${second}`, exact: true })
+        .dragTo(page.getByRole('button', { name: `Reorder ${first}`, exact: true }))
+      await expect(rows.first()).toContainText(second)
+
+      await page.getByRole('button', { name: 'Create routine' }).click()
+      await expect(page).toHaveURL(/\/routines$/)
+
+      // Read back from the API rather than from the form that dragged it.
+      await page.getByLabel('Search routines').fill(routineName)
+      await page.getByRole('heading', { name: routineName }).click()
+      await expect(page.getByRole('listitem').first()).toContainText(second)
+    } finally {
+      await page.goto('/routines')
+      await page.getByLabel('Search routines').fill(routineName)
+      const saved = page.getByRole('heading', { name: routineName })
+      if (await saved.isVisible()) {
+        await saved.click()
+        await page.getByRole('button', { name: 'Delete' }).click()
+        await acceptConfirmDialog(page, 'Delete')
+      }
+    }
+  })
+
+  // The form's chrome: a save that a long routine cannot scroll away from, and
+  // a way out that is nowhere near the thumb building the routine.
+  test('keeps the save pinned and cancels from the header @mutation', async ({ page }) => {
+    await page.goto('/routines/create')
+    await page.getByLabel('Routine name').fill(uniqueName('E2E Pinned'))
+    for (let added = 0; added < 4; added += 1) await addRoutineExercise(page)
+
+    // Still in the viewport with the form scrolled to the top, which is where
+    // the old save — parked under the last exercise — was not.
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await expect(page.getByRole('button', { name: 'Create routine' })).toBeInViewport()
+
+    await page.getByRole('link', { name: 'Cancel' }).click()
+    await expect(page).toHaveURL(/\/routines$/)
+  })
+
   // The whole circuit, end to end: built in groups, saved, read back, and then
   // trained one set at a time with the rounds counting up.
   //
@@ -368,10 +441,8 @@ test.describe('routine lifecycle', () => {
       // Grouping is the advanced half of the form; a circuit lives inside it.
       await page.getByRole('button', { name: 'Advanced', exact: true }).click()
       await page.getByRole('button', { name: 'Circuit', exact: true }).click()
-      // The rest fields carry ±30s buttons whose names quote the field's own,
-      // so a label match would find all three. The textbox is the one to fill.
-      await restField(page, 'Rest after each exercise in group A').fill('0:05')
-      await restField(page, 'Rest after each round in group A').fill('0:10')
+      await stepRest(page, 'Rest after each exercise in group A', 'Subtract', 2)
+      await stepRest(page, 'Rest after each round in group A', 'Add')
       await page.getByRole('button', { name: 'Create routine' }).click()
 
       await expect(page).toHaveURL(/\/routines$/)
@@ -382,7 +453,7 @@ test.describe('routine lifecycle', () => {
       // with.
       await expect(page.getByText('Circuit', { exact: true })).toBeVisible()
       await expect(
-        page.getByText('Rest 5s between exercises · Rest 10s between rounds'),
+        page.getByText('Rest 30s between exercises · Rest 120s between rounds'),
       ).toBeVisible()
 
       // Reopened for editing, the builder shows the circuit as a circuit rather
@@ -399,11 +470,11 @@ test.describe('routine lifecycle', () => {
       )
       await expect(routineExercises(page)).toHaveCount(2)
 
-      await restField(page, 'Rest after each round in group A').fill('0:20')
+      await stepRest(page, 'Rest after each round in group A', 'Subtract', 3)
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       await expect(
-        page.getByText('Rest 5s between exercises · Rest 20s between rounds'),
+        page.getByText('Rest 30s between exercises · Rest 30s between rounds'),
       ).toBeVisible()
 
       await page.getByRole('link', { name: 'Start workout' }).click()
@@ -492,18 +563,18 @@ test.describe('routine lifecycle', () => {
       await addRoutineExercise(page, second)
 
       // Read off a clock, and a real value from the moment it is picked rather
-      // than a placeholder for a length written down somewhere else.
-      const rest = restField(page, `Rest between sets of ${lift}`)
-      await expect(rest).toHaveValue('1:30')
-
-      await rest.fill('5:00')
+      // than a placeholder for a length written down somewhere else. The
+      // stepper is folded away behind the chip until somebody tunes it.
+      await restChip(page, lift, '1:30').click()
+      await stepRest(page, `Rest between sets of ${lift}`, 'Add', 7)
+      await expect(restValue(page, `Rest between sets of ${lift}`)).toHaveText('5:00')
 
       // A plain routine says how long it pauses between exercises too, without
       // having to be turned into a circuit first.
-      const between = restField(page, 'Rest after each exercise')
-      await expect(between).toHaveValue('1:30')
-      await page.getByRole('button', { name: 'Add 30 seconds to Rest after each exercise' }).click()
-      await expect(between).toHaveValue('2:00')
+      const between = restValue(page, 'Rest after each exercise')
+      await expect(between).toHaveText('1:30')
+      await stepRest(page, 'Rest after each exercise', 'Add')
+      await expect(between).toHaveText('2:00')
 
       await page.getByRole('button', { name: 'Create routine' }).click()
 
@@ -514,8 +585,8 @@ test.describe('routine lifecycle', () => {
       // Saved and read back from the API: reopening the builder shows the
       // routine's own answers rather than a default.
       await page.getByRole('link', { name: 'Edit exercises' }).click()
-      await expect(restField(page, `Rest between sets of ${lift}`)).toHaveValue('5:00')
-      await expect(restField(page, 'Rest after each exercise')).toHaveValue('2:00')
+      await expect(restChip(page, lift, '5:00')).toBeVisible()
+      await expect(restValue(page, 'Rest after each exercise')).toHaveText('2:00')
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       await page.getByRole('link', { name: 'Start workout' }).click()

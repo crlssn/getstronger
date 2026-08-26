@@ -284,22 +284,18 @@ describe('CreateRoutine', () => {
     expect(screen.getByText('No exercises here yet.')).toBeInTheDocument()
   })
 
-  test('reorders an exercise inside its block', async () => {
+  // Reordering is a drag rather than a column of arrows, so the row carries one
+  // handle and the order it produces is tested against reorderEntry.
+  test('offers a handle to drag an exercise into place', async () => {
     render()
 
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Upper body')
     await addExercise(/Bench press/)
     await addExercise(/^Row/)
-    await userEvent.click(screen.getByRole('button', { name: 'Move Row up' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
-    await waitFor(() =>
-      expect(mocked.createRoutine).toHaveBeenCalledWith(
-        'Upper body',
-        ['row', 'bench'],
-        expect.anything(),
-      ),
-    )
+    expect(screen.getByRole('button', { name: 'Reorder Bench press' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reorder Row' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Move Row up' })).not.toBeInTheDocument()
   })
 
   // The grouping controls are the advanced half of the screen: a routine that
@@ -343,13 +339,14 @@ describe('CreateRoutine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
 
-    const betweenExercises = screen.getByLabelText('Rest after each exercise in group A')
-    await userEvent.clear(betweenExercises)
-    await userEvent.type(betweenExercises, '0:20')
-
-    const betweenRounds = screen.getByLabelText('Rest after each round in group A')
-    await userEvent.clear(betweenRounds)
-    await userEvent.type(betweenRounds, '2:00')
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Subtract 30 seconds from Rest after each exercise in group A',
+      }),
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Add 30 seconds to Rest after each round in group A' }),
+    )
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
@@ -359,7 +356,7 @@ describe('CreateRoutine', () => {
         ['bench', 'row'],
         [
           expect.objectContaining({
-            restBetweenExercisesSeconds: 20,
+            restBetweenExercisesSeconds: 60,
             restBetweenRoundsSeconds: 120,
           }),
         ],
@@ -425,35 +422,6 @@ describe('CreateRoutine', () => {
     expect(within(sheet).getByRole('button', { name: /^Row/ })).toBeInTheDocument()
   })
 
-  test('moves an exercise into a second group', async () => {
-    render()
-
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
-    await addExercise(/Bench press/)
-    await addExercise(/^Row/)
-
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
-    await userEvent.click(screen.getByRole('button', { name: 'New group' }))
-    // Moving between groups is a menu: on a phone a select this wide leaves the
-    // exercise name a couple of characters. A block with somewhere to move to
-    // keeps the menu; one without shows the single action it was hiding.
-    await userEvent.click(screen.getByRole('button', { name: 'Actions for Row' }))
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Move to group B' }))
-
-    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
-
-    await waitFor(() =>
-      expect(mocked.createRoutine).toHaveBeenCalledWith(
-        'Full body',
-        ['bench', 'row'],
-        [
-          expect.objectContaining({ mode: 'straight' }),
-          expect.objectContaining({ mode: 'circuit' }),
-        ],
-      ),
-    )
-  })
-
   test('folds a removed group back into the one before it', async () => {
     render()
 
@@ -486,11 +454,13 @@ describe('CreateRoutine', () => {
     await addExercise(/Row/)
 
     expect(screen.getByRole('switch', { name: 'Rest timers' })).toBeChecked()
-    expect(screen.getByLabelText('Rest between sets of Bench press')).toBeVisible()
+    expect(screen.getByLabelText('Rest between sets of Bench press: 1:30')).toBeVisible()
 
     await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
 
-    expect(screen.queryByLabelText('Rest between sets of Bench press')).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Rest between sets of Bench press: 1:30'),
+    ).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Rest after each exercise')).not.toBeInTheDocument()
     // Off is an answer rather than a folded-away setting, so the line says what
     // the routine trains with instead of quoting lengths it is not using.
@@ -526,13 +496,13 @@ describe('CreateRoutine', () => {
     expect(screen.queryByLabelText('Rest after each exercise')).not.toBeInTheDocument()
     await addExercise(/Row/)
 
-    const betweenExercises = screen.getByLabelText('Rest after each exercise')
-    expect(betweenExercises).toHaveValue('1:30')
+    const betweenExercises = screen.getByRole('spinbutton', { name: 'Rest after each exercise' })
+    expect(betweenExercises).toHaveTextContent('1:30')
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Add 30 seconds to Rest after each exercise' }),
     )
-    expect(betweenExercises).toHaveValue('2:00')
+    expect(betweenExercises).toHaveTextContent('2:00')
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
@@ -553,14 +523,24 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
     await addExercise(/Bench press/)
 
-    const rest = screen.getByLabelText('Rest between sets of Bench press')
     // A length read off a clock, not a second count — and a real value from the
     // moment it is picked rather than a placeholder for one written down
     // somewhere else.
-    expect(rest).toHaveValue('1:30')
+    const chip = screen.getByLabelText('Rest between sets of Bench press: 1:30')
+    expect(chip).toHaveTextContent('1:30')
 
-    await userEvent.clear(rest)
-    await userEvent.type(rest, '3:00')
+    // The stepper is a detour the row folds away until it is asked for.
+    expect(
+      screen.queryByRole('spinbutton', { name: 'Rest between sets of Bench press' }),
+    ).not.toBeInTheDocument()
+
+    await userEvent.click(chip)
+    const stepper = screen.getByRole('button', {
+      name: 'Add 30 seconds to Rest between sets of Bench press',
+    })
+    await userEvent.click(stepper)
+    await userEvent.click(stepper)
+    await userEvent.click(stepper)
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() =>
@@ -584,7 +564,7 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Cardio day')
     await addExercise(/Row/)
 
-    expect(screen.getByLabelText('Rest between sets of Row')).toHaveValue('0:00')
+    expect(screen.getByLabelText('Rest between sets of Row: 0:00')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
@@ -600,12 +580,14 @@ describe('CreateRoutine', () => {
 
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
-    expect(screen.getByLabelText('Rest between sets of Bench press')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rest between sets of Bench press: 1:30')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
 
-    expect(screen.queryByLabelText('Rest between sets of Bench press')).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Rest between sets of Bench press: 1:30'),
+    ).not.toBeInTheDocument()
   })
 
   test('drops the structure again when grouping is turned back off', async () => {

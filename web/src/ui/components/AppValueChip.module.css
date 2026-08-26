@@ -1,0 +1,12 @@
+@reference '../../assets/base.css';
+
+/* Reads as a value rather than as a button until it is wanted, so it never
+ * competes with the name beside it. The tap-target floor is the height, not the
+ * pill's own padding — a 28px chip is a mis-tap on a phone. */
+.chip {
+  @apply grid min-h-(--size-control-sm) shrink-0 place-items-center rounded-pill bg-ink-surface px-3 text-sm font-bold tabular-nums text-text-muted transition hover:bg-ink-tint hover:text-text;
+}
+
+.chip.expanded {
+  @apply bg-ink text-white hover:bg-ink-strong hover:text-white;
+}

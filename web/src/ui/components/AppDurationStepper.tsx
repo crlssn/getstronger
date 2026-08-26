@@ -2,16 +2,15 @@ import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
-import { AppDurationInput } from '@/ui/components/AppDurationInput'
 import { AppIconButton } from '@/ui/components/AppIconButton'
+import { formatMeasurementDuration } from '@/utils/exerciseMeasurements'
 import styles from './AppDurationStepper.module.css'
 
 interface Props {
   value: number
   onChange: (seconds: number) => void
-  /** The field's accessible name; the two buttons take theirs from it. */
+  /** The control's accessible name; the two buttons build theirs from it. */
   label: string
-  id?: string
   /** How far one nudge moves the duration. */
   step?: number
   min?: number
@@ -20,26 +19,21 @@ interface Props {
 }
 
 /**
- * A duration set either by typing it or by nudging it in coarse steps.
+ * A duration nudged in coarse steps, read off a clock.
  *
- * A rest is read off a clock rather than counted in seconds, so the value shows
- * as `m:ss`; the two buttons are there because adjusting one by half a minute
- * is the common edit, and selecting a field to retype it is a poor way to make
- * it. Typing still wins where the wanted length is not a multiple of the step.
+ * The value is shown rather than typed: a rest is chosen in half-minutes, and a
+ * field in the middle of the control asked every screen holding one to carry a
+ * border, a focus ring and a keyboard. What is left is a value with a thumb on
+ * either side of it, which is the edit people actually make.
  *
- * The three parts are drawn as one control — the value is what the buttons
- * change, not a field they happen to sit beside — so the border, the rounding
- * and the focus ring belong to the whole rather than to each piece.
- *
- * The value is always a number: an empty field is a half-typed state rather
- * than an answer, so clearing it leaves the last value alone and the field
- * snaps back to it on the way out. Zero is typed, or stepped down to.
+ * It is a `spinbutton` rather than three unrelated controls, so the value is
+ * announced as it changes and the arrow keys move it — the one thing typing
+ * gave a keyboard that the buttons alone would not.
  */
 export const AppDurationStepper = ({
   value,
   onChange,
   label,
-  id,
   step = 30,
   min = 0,
   max = 3600,
@@ -59,15 +53,24 @@ export const AppDurationStepper = ({
         disabled={value <= min}
         onClick={() => nudge(-step)}
       />
-      <AppDurationInput
-        id={id}
-        className={styles.field}
+      <span
+        className={styles.value}
+        role="spinbutton"
+        tabIndex={0}
         aria-label={label}
-        value={value}
-        // An empty field is nobody's answer, so the last value stands until the
-        // next readable one arrives.
-        onChange={(seconds) => seconds !== undefined && onChange(clamp(seconds))}
-      />
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        aria-valuetext={formatMeasurementDuration(value)}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowUp') nudge(step)
+          else if (event.key === 'ArrowDown') nudge(-step)
+          else return
+          event.preventDefault()
+        }}
+      >
+        {formatMeasurementDuration(value)}
+      </span>
       <AppIconButton
         className={styles.nudge}
         icon={PlusIcon}

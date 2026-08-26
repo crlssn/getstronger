@@ -1,28 +1,19 @@
 @reference '../../assets/base.css';
 
-/* One control, not three: the wrapper owns the border, the rounding and the
- * focus ring, and the parts inside are divided from each other rather than
- * floating beside each other. A rest is read as one thing, and the shortest
- * path from reading it to changing it is a thumb on either side of it. */
+/* Three parts reading as one control, without a box around them: the bordered
+ * three-cell version repeated four times on the routine builder and competed
+ * with the exercise names it sat beside. The value carries the weight, and the
+ * two buttons are raised off whatever surface the row is drawn on. */
 .stepper {
-  @apply inline-grid shrink-0 grid-cols-[auto_3.5rem_auto] items-center overflow-hidden rounded-control border border-border bg-surface shadow-card focus-within:border-ink focus-within:ring-1 focus-within:ring-ink;
+  @apply inline-flex shrink-0 items-center gap-1;
 }
 
-/* Inside the wrapper, which draws the border this would otherwise repeat. */
-.field {
-  @apply w-full rounded-none border-0 shadow-none focus:border-0 focus:ring-0;
-}
-
-/* Flat and squared off, joined to the value by the rule between them. Kept at
- * the same height as the control so the tap target keeps its floor. */
 .nudge {
-  @apply h-11 w-11 rounded-none border-0 shadow-none;
+  @apply border-border bg-surface text-text shadow-card hover:bg-ink-surface;
 }
 
-.nudge:first-child {
-  @apply border-r border-border;
-}
-
-.nudge:last-child {
-  @apply border-l border-border;
+/* Wide enough for 60:00 so a row does not shuffle sideways as it is stepped,
+ * and focusable, because the arrow keys move it. */
+.value {
+  @apply grid min-h-(--size-control-sm) min-w-14 place-items-center rounded-control text-sm font-bold tabular-nums text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-muted;
 }
