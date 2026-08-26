@@ -8,20 +8,50 @@ import { useTranslation } from 'react-i18next'
 
 import { borderColor, inkColor, subtleColor, successColor } from '@/ui/chartTokens'
 import { latestValueLabel } from '@/ui/features/latestValueLabel'
-import { dailyVolume } from '@/utils/dailyVolume'
+import { volumeSeries } from '@/utils/dailyVolume'
+import { formatNumber } from '@/utils/numbers'
 import styles from './WorkoutChart.module.css'
 
 ChartJS.register(Tooltip, BarElement, CategoryScale, LinearScale)
+
+/** Below this a bar chart is drawing a statistic, not a trend. */
+const minimumTrendPoints = 3
 
 interface Props {
   workouts: Workout[]
 }
 
-/** Daily training volume as bars, with the most recent day picked out. */
+/**
+ * Training volume as bars, at whichever grain still reads.
+ *
+ * Two things it refuses to draw. A year of daily bars is 52 slivers about 4px
+ * wide in a phone-width card, so past a handful of days the series aggregates
+ * to weeks. And one bar filling the whole card is a figure pretending to be a
+ * trend, so under three points it is read out instead.
+ */
 export const WorkoutChart = ({ workouts }: Props) => {
   const { t } = useTranslation()
 
-  const days = useMemo(() => dailyVolume(workouts), [workouts])
+  const { granularity, points } = useMemo(() => volumeSeries(workouts), [workouts])
+
+  if (points.length === 0) return null
+
+  if (points.length < minimumTrendPoints) {
+    const latest = points[points.length - 1]
+
+    return (
+      <div className={styles.figure}>
+        <strong>
+          {formatNumber(latest?.volume ?? 0)} {t('common.kg')}
+          <span aria-hidden="true"> · </span>
+          <span className={styles.figureDate}>{latest?.label}</span>
+        </strong>
+        <small>
+          {points.length === 1 ? t('progress.volumeSinglePoint') : t('progress.volumeFewPoints')}
+        </small>
+      </div>
+    )
+  }
 
   const options: ChartOptions<'bar'> = {
     maintainAspectRatio: false,
@@ -49,15 +79,15 @@ export const WorkoutChart = ({ workouts }: Props) => {
   }
 
   const data = {
-    labels: days.map((day) => day.label),
+    labels: points.map((point) => point.label),
     datasets: [
       {
-        // The most recent day picks up momentum green.
-        backgroundColor: days.map((_, index) =>
-          index === days.length - 1 ? successColor : inkColor,
+        // The most recent bar picks up momentum green.
+        backgroundColor: points.map((_, index) =>
+          index === points.length - 1 ? successColor : inkColor,
         ),
         borderRadius: 8,
-        data: days.map((day) => day.volume),
+        data: points.map((point) => point.volume),
         label: t('progress.trainingVolume'),
       },
     ],
@@ -69,7 +99,11 @@ export const WorkoutChart = ({ workouts }: Props) => {
         data={data}
         options={options}
         plugins={[latestValueLabel]}
-        aria-label={t('progress.volumeChartAria')}
+        aria-label={
+          granularity === 'week'
+            ? t('progress.volumeChartWeeklyAria')
+            : t('progress.volumeChartAria')
+        }
         role="img"
       />
     </div>

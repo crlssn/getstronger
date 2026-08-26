@@ -668,6 +668,8 @@ export const en = {
     personalBests_other: '{count} personal bests',
     trainingVolume: 'Training volume',
     dailyTotals: 'Daily totals',
+    weeklyTotals: 'Weekly totals',
+    monthlyTotals: 'Monthly totals',
     bestLifts: 'Best lifts',
     personalRecords: 'Personal records',
     periodAria: 'Progress period',
@@ -676,6 +678,10 @@ export const en = {
     emptyBody: 'Log your first workout and your volume trend and personal bests start here.',
     volumeAxis: 'Volume (kg)',
     volumeChartAria: 'Training volume by day',
+    volumeChartWeeklyAria: 'Training volume by week',
+    // One datum is a statistic, not a trend, so it is read rather than drawn.
+    volumeSinglePoint: 'Only day logged in this range',
+    volumeFewPoints: 'Not enough sessions in this range to show a trend yet',
   },
   notFound: {
     title: 'Page not found',
@@ -1417,6 +1423,8 @@ export const sv = {
     personalBests_other: '{count} personliga rekord',
     trainingVolume: 'Träningsvolym',
     dailyTotals: 'Dagliga totaler',
+    weeklyTotals: 'Veckototaler',
+    monthlyTotals: 'Månadstotaler',
     bestLifts: 'Bästa lyft',
     personalRecords: 'Personliga rekord',
     periodAria: 'Period för framsteg',
@@ -1425,6 +1433,9 @@ export const sv = {
     emptyBody: 'Logga ditt första pass så börjar din volymtrend och dina rekord här.',
     volumeAxis: 'Volym (kg)',
     volumeChartAria: 'Träningsvolym per dag',
+    volumeChartWeeklyAria: 'Träningsvolym per vecka',
+    volumeSinglePoint: 'Enda dagen som loggats i perioden',
+    volumeFewPoints: 'För få pass i perioden för att visa en trend ännu',
   },
   notFound: {
     title: 'Sidan hittades inte',
