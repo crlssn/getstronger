@@ -141,6 +141,32 @@ test.describe('profiles and notifications', () => {
       )
     }
   })
+
+  // Both lists read the same follow edge from opposite ends, so only a
+  // one-directional follow tells them apart. Alex and Jane follow each other in
+  // the seed; dropping one direction is what makes the two lists disagree.
+  test('separates who follows a profile from who it follows @mutation', async ({ page }) => {
+    await page.goto('/home')
+    await page.getByRole('link', { name: '@janedoe', exact: true }).first().click()
+    await expect(page).toHaveURL(/\/users\/[0-9a-f-]+$/)
+    const profile = page.url()
+
+    await openProfileActions(page)
+    await page.getByRole('menuitem', { name: 'Unfollow Jane Doe' }).click()
+    await expect(page.getByRole('button', { name: 'Follow Jane Doe' })).toBeVisible()
+
+    const tabs = page.getByRole('navigation', { name: 'Profile sections' })
+    await tabs.getByRole('link', { name: 'Follows', exact: true }).click()
+    await expect(page.getByRole('link', { name: /@alex/ })).toBeVisible()
+
+    await tabs.getByRole('link', { name: 'Followers', exact: true }).click()
+    await expect(page.getByText('Nothing here yet…')).toBeVisible()
+
+    // Put the seeded follow back for whatever runs next.
+    await page.goto(profile)
+    await page.getByRole('button', { name: 'Follow Jane Doe' }).click()
+    await expect(page.getByRole('button', { name: 'Profile actions' })).toBeVisible()
+  })
 })
 
 test.describe('account progress', () => {

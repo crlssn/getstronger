@@ -272,8 +272,9 @@ func (*UnfollowUserResponse) Descriptor() ([]byte, []int) {
 }
 
 type ListFollowersRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FollowerId    string                 `protobuf:"bytes,1,opt,name=follower_id,json=followerId,proto3" json:"follower_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The profile whose followers are wanted.
+	UserId        string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -308,9 +309,9 @@ func (*ListFollowersRequest) Descriptor() ([]byte, []int) {
 	return file_api_v1_user_service_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ListFollowersRequest) GetFollowerId() string {
+func (x *ListFollowersRequest) GetUserId() string {
 	if x != nil {
-		return x.FollowerId
+		return x.UserId
 	}
 	return ""
 }
@@ -360,8 +361,9 @@ func (x *ListFollowersResponse) GetFollowers() []*User {
 }
 
 type ListFolloweesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FolloweeId    string                 `protobuf:"bytes,1,opt,name=followee_id,json=followeeId,proto3" json:"followee_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The profile whose followees are wanted.
+	UserId        string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -396,9 +398,9 @@ func (*ListFolloweesRequest) Descriptor() ([]byte, []int) {
 	return file_api_v1_user_service_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *ListFolloweesRequest) GetFolloweeId() string {
+func (x *ListFolloweesRequest) GetUserId() string {
 	if x != nil {
-		return x.FolloweeId
+		return x.UserId
 	}
 	return ""
 }
@@ -1008,15 +1010,13 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x13UnfollowUserRequest\x12)\n" +
 	"\vunfollow_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"unfollowId\"\x16\n" +
-	"\x14UnfollowUserResponse\"A\n" +
-	"\x14ListFollowersRequest\x12)\n" +
-	"\vfollower_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
-	"followerId\"C\n" +
+	"\x14UnfollowUserResponse\"L\n" +
+	"\x14ListFollowersRequest\x12!\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userIdJ\x04\b\x01\x10\x02R\vfollower_id\"C\n" +
 	"\x15ListFollowersResponse\x12*\n" +
-	"\tfollowers\x18\x01 \x03(\v2\f.api.v1.UserR\tfollowers\"A\n" +
-	"\x14ListFolloweesRequest\x12)\n" +
-	"\vfollowee_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
-	"followeeId\"C\n" +
+	"\tfollowers\x18\x01 \x03(\v2\f.api.v1.UserR\tfollowers\"L\n" +
+	"\x14ListFolloweesRequest\x12!\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userIdJ\x04\b\x01\x10\x02R\vfollowee_id\"C\n" +
 	"\x15ListFolloweesResponse\x12*\n" +
 	"\tfollowees\x18\x01 \x03(\v2\f.api.v1.UserR\tfollowees\"v\n" +
 	"\x12SearchUsersRequest\x12\x1d\n" +

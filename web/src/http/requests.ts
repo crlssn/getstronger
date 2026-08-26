@@ -555,16 +555,16 @@ export const searchUsers = async (
   return tryCatch(() => userClient.searchUsers(req))
 }
 
-export const listFollowers = async (followerId: string): Promise<ListFollowersResponse | void> => {
+export const listFollowers = async (userId: string): Promise<ListFollowersResponse | void> => {
   const req = create(ListFollowersRequestSchema, {
-    followerId: followerId,
+    userId: userId,
   })
   return tryCatch(() => userClient.listFollowers(req))
 }
 
-export const listFollowees = async (followeeId: string): Promise<ListFolloweesResponse | void> => {
+export const listFollowees = async (userId: string): Promise<ListFolloweesResponse | void> => {
   const req = create(ListFolloweesRequestSchema, {
-    followeeId: followeeId,
+    userId: userId,
   })
   return tryCatch(() => userClient.listFollowees(req))
 }

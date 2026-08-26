@@ -145,7 +145,7 @@ func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[api
 func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[apiv1.ListFollowersRequest]) (*connect.Response[apiv1.ListFollowersResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	followers, err := h.repo.ListFollowers(ctx, req.Msg.GetFollowerId())
+	followers, err := h.repo.ListFollowers(ctx, req.Msg.GetUserId())
 	if err != nil {
 		log.Error("List followers", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -262,7 +262,7 @@ func (h *userHandler) updateUserPreference(ctx context.Context, preference strin
 func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[apiv1.ListFolloweesRequest]) (*connect.Response[apiv1.ListFolloweesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	followees, err := h.repo.ListFollowees(ctx, req.Msg.GetFolloweeId())
+	followees, err := h.repo.ListFollowees(ctx, req.Msg.GetUserId())
 	if err != nil {
 		log.Error("List followees", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
