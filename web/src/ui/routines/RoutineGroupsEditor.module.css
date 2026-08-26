@@ -25,7 +25,7 @@
 }
 
 .groupHint {
-  @apply mb-3 px-1 text-xs text-text-subtle;
+  @apply mb-3 px-1 text-meta text-text-subtle;
 }
 
 /* Nothing inside is boxed either: settings and exercises are ruled rows, so the
@@ -47,7 +47,7 @@
 }
 
 .settingLabel small {
-  @apply block text-xs font-normal text-text-subtle;
+  @apply block text-meta font-normal text-text-subtle;
 }
 
 /* The lengths, once the switch has asked for them: tinted rows rather than
@@ -61,7 +61,7 @@
 }
 
 .restLabel {
-  @apply min-w-0 truncate text-sm font-medium text-text;
+  @apply min-w-0 truncate text-sm font-semibold text-text;
 }
 
 .exercises {
@@ -73,18 +73,18 @@
 }
 
 .entryRow {
-  @apply flex min-h-(--size-control) items-center gap-1 px-2;
+  @apply flex min-h-(--size-control) items-center gap-1 pl-3 pr-2;
 }
 
 /* The rest is a second line rather than a fifth control on the first: on a
  * phone the exercise name has no width to spare. Indented to the name above it,
  * so the row reads as one exercise and its setting. */
 .entryRest {
-  @apply flex items-center justify-between gap-3 pb-2 pl-8 pr-2;
+  @apply flex items-center justify-between gap-3 pb-2 pl-11 pr-2;
 }
 
 .entryRestLabel {
-  @apply min-w-0 truncate text-xs text-text-subtle;
+  @apply min-w-0 truncate text-meta font-semibold text-text-subtle;
 }
 
 /* A count, not a tile: the number orders the list and nothing more. */
@@ -93,13 +93,20 @@
 }
 
 /* The name takes whatever the controls leave, and never less than legible: it
- * is the only part of the row that says which exercise this is. */
+ * is the only part of the row that says which exercise this is, so it is read
+ * at body size while everything around it is smaller. */
 .exerciseName {
-  @apply mr-auto min-w-0 flex-1 truncate pl-1 text-sm font-semibold text-text;
+  @apply mr-auto min-w-0 flex-1 truncate pl-2 text-body font-semibold text-text;
 }
 
+/* A grip, not a menu: short strokes that read as something to hold rather than
+   as three lines of anything. */
 .dragHandle {
   @apply cursor-grab text-ink-border active:cursor-grabbing;
+}
+
+.dragHandle svg {
+  @apply size-4;
 }
 
 /* SortableJS puts these on the DOM itself, so the hashed names are handed to

@@ -37,3 +37,41 @@
 .invalid {
   @apply border-danger focus:border-danger focus:ring-danger-surface;
 }
+
+/* The field as its own panel: no border of its own, because the card is the
+ * border, and a value read at title size rather than at form size. The label
+ * moves inside, which is what lets a screen drop the grey caption above it. */
+.card {
+  @apply card px-4 py-2;
+}
+
+.card .label {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.card .label + .control,
+.card .hint + .control {
+  @apply mt-0.5;
+}
+
+/* A trailing mark sits beside the value rather than over it: there is no
+   border here for it to sit inside. */
+.card .control {
+  @apply flex items-center gap-3;
+}
+
+/* Borderless, but still tall enough to land a thumb in: the panel is what is
+   drawn, and the input is what is tapped. */
+.card .input {
+  @apply min-h-(--size-control-sm) rounded-none border-0 bg-transparent p-0 text-title font-semibold shadow-none hover:border-0 focus:border-0 focus:ring-0;
+}
+
+.card .hasTrailing {
+  @apply pr-0;
+}
+
+/* The panel draws no focus state, so the ring the rest of the app uses is put
+   back on the input itself. */
+.card .input:focus-visible {
+  @apply rounded-control ring-2 ring-ink-muted;
+}

@@ -103,6 +103,11 @@ The app's text field: one height from the control scale, one border, one focus
 ring. `label` renders the field's own label; without it a caller must supply
 `aria-label`. Pass `invalid` to mark it, and `hint` for the line underneath.
 
+`variant="card"` draws the field as the panel it fills — the label inside it as
+an eyebrow, the value at title size, no border of its own. For the one field a
+screen is built around, like a routine's name; a form of many fields keeps the
+default.
+
 ### `<AppTextarea>`
 
 The multi-line field, matching `<AppInput>`'s border and focus treatment.

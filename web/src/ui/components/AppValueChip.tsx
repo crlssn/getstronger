@@ -29,6 +29,8 @@ export const AppValueChip = ({ label, value, expanded = false, onClick, classNam
     aria-expanded={expanded}
     onClick={onClick}
   >
-    {value}
+    {/* The pill is painted inside the button rather than as it: a chip drawn at
+        the tap-target floor reads as a slab beside the name it belongs to. */}
+    <span className={styles.pill}>{value}</span>
   </button>
 )

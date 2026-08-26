@@ -12,8 +12,14 @@
   @apply border-border bg-surface text-text shadow-card hover:bg-ink-surface;
 }
 
+/* A thinner mark than the app's icon buttons wear: two of these sit either side
+   of a value, and at full size they read as the loudest thing in the row. */
+.nudge svg {
+  @apply size-4;
+}
+
 /* Wide enough for 60:00 so a row does not shuffle sideways as it is stepped,
  * and focusable, because the arrow keys move it. */
 .value {
-  @apply grid min-h-(--size-control-sm) min-w-14 place-items-center rounded-control text-sm font-bold tabular-nums text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-muted;
+  @apply grid min-h-(--size-control-sm) min-w-12 place-items-center rounded-control px-1 text-body font-bold tabular-nums text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-muted;
 }

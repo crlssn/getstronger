@@ -38,8 +38,14 @@
 }
 
 /* Short labels only — 7D, 4W, 1Y, or a switch that has to fit beside a title.
-   The min-width keeps the narrowest of them clear of the tap floor on both
-   axes: "1Y" at this size is 43px of text and padding. */
+   Rounded to a pill, because at this size it reads as a control sitting beside
+   content rather than as a band across the page. The min-width keeps the
+   narrowest of them clear of the tap floor on both axes: "1Y" at this size is
+   43px of text and padding. */
+.segmented.compact {
+  @apply rounded-pill;
+}
+
 .compact > * {
-  @apply min-w-(--size-control-sm) px-3.5 text-meta;
+  @apply min-w-(--size-control-sm) rounded-pill px-3.5 text-meta;
 }

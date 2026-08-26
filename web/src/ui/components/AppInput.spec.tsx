@@ -63,6 +63,23 @@ describe('AppInput', () => {
     expect(container.firstElementChild?.className.split(' ').length).toBeGreaterThan(1)
   })
 
+  // The one field a screen is built around is drawn as the panel it fills, and
+  // is still the same labelled input underneath.
+  test('draws as a card without losing the field it is', async () => {
+    const onChange = vi.fn()
+    const { container } = render(
+      <AppInput variant="card" label="Routine name" value="" onChange={onChange} />,
+    )
+
+    const input = screen.getByLabelText('Routine name')
+    await userEvent.type(input, 'Upper body')
+
+    expect(onChange).toHaveBeenCalled()
+    expect(container.firstElementChild?.className).not.toBe(
+      render(<AppInput label="Routine name" />).container.firstElementChild?.className,
+    )
+  })
+
   // A reveal toggle, a unit, a clear button: whatever sits at the trailing edge
   // belongs inside the field's border rather than beside it.
   test('renders a trailing control inside the field', () => {
