@@ -33,11 +33,11 @@
 }
 
 .planProgress {
-  @apply rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white;
+  @apply rounded-pill border border-white/20 bg-white/15 px-3 py-1 text-eyebrow font-bold tracking-normal text-white;
 }
 
 .readyStatus {
-  @apply inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white;
+  @apply inline-flex items-center gap-1.5 rounded-pill border border-white/30 bg-white/10 px-3 py-1 text-eyebrow font-bold tracking-normal text-white;
 }
 
 .readyStatus svg {
@@ -45,15 +45,16 @@
 }
 
 .nextSession h2 {
-  @apply mt-1 text-display font-bold text-white;
+  @apply mt-1 text-display font-extrabold text-white;
 }
 
 .sessionMeta {
-  @apply mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-tint;
+  @apply mt-2 flex flex-wrap items-center gap-2 text-meta font-medium text-white/60;
 }
 
-.planSource {
-  @apply mt-1 text-sm font-semibold text-white;
+/* The plan is what the session belongs to, so it leads the line it shares. */
+.sessionMeta strong {
+  @apply font-semibold text-white/90;
 }
 
 .sessionActions {
@@ -79,7 +80,7 @@
 }
 
 .followingFeed > header h2 {
-  @apply mt-1 text-title font-semibold text-text;
+  @apply mt-1 text-title font-extrabold text-text;
 }
 
 .feedStatus {
@@ -108,11 +109,11 @@
 }
 
 .feedEnd strong {
-  @apply text-sm font-semibold text-text-muted;
+  @apply text-body font-bold text-text;
 }
 
 .feedEnd small {
-  @apply mt-0.5 text-xs;
+  @apply mt-0.5 text-meta font-medium text-text-subtle;
 }
 
 .feedSentinel {

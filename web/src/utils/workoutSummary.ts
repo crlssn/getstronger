@@ -1,8 +1,6 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
-import { DateTime } from 'luxon'
-
-import { dateLocale } from '@/i18n'
+import { formatWorkoutDate } from '@/utils/datetime'
 
 export interface WorkoutSummary {
   setCount: number
@@ -34,10 +32,6 @@ export const workoutSummary = (workout: Workout): WorkoutSummary => {
       startedAt && finishedAt
         ? Math.max(1, Math.round(Number(finishedAt.seconds - startedAt.seconds) / 60))
         : 0,
-    finishedDate: finishedAt
-      ? DateTime.fromSeconds(Number(finishedAt.seconds))
-          .setLocale(dateLocale)
-          .toFormat('cccc, d LLLL · HH:mm')
-      : '',
+    finishedDate: formatWorkoutDate(finishedAt),
   }
 }

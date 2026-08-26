@@ -41,7 +41,7 @@ test.describe('social feed and discovery', () => {
   })
 
   test('opens a feed workout and posts a comment @mutation', async ({ page }) => {
-    const card = page.getByRole('article').filter({ hasText: 'Jane Doe' }).first()
+    const card = page.getByRole('article').filter({ hasText: '@janedoe' }).first()
     await expect(card).toBeVisible()
     await card.getByRole('link', { name: /View .* workout details/ }).click()
 

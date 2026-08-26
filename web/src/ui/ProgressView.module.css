@@ -52,7 +52,7 @@
 }
 
 .sectionHeading h2 {
-  @apply mt-1 text-title font-semibold text-text;
+  @apply mt-1 text-title font-extrabold text-text;
 }
 
 .recordList {

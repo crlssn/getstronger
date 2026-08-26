@@ -21,7 +21,7 @@
 }
 
 .profileCard h2 {
-  @apply truncate text-title font-semibold text-text;
+  @apply truncate text-title font-extrabold text-text;
 }
 
 .profileCard p:last-child {

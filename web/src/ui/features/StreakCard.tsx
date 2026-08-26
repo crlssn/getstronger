@@ -1,4 +1,4 @@
-import { CheckIcon, FireIcon } from '@heroicons/react/24/outline'
+import { CheckIcon } from '@heroicons/react/24/outline'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -29,11 +29,6 @@ export const StreakCard = () => {
     : thisWeekLogged
       ? t('streak.securedTitle')
       : t('streak.keepAliveTitle')
-  const message = !streak
-    ? t('streak.startBody')
-    : thisWeekLogged
-      ? t('streak.securedBody')
-      : t('streak.keepAliveBody')
 
   const weeks = streakWeeks({ streak, thisWeekLogged, weekWorkoutCounts })
 
@@ -50,23 +45,17 @@ export const StreakCard = () => {
   }
 
   return (
-    <section
-      className={cn(styles.streakCard, streak > 0 && styles.active, thisWeekLogged && styles.safe)}
-    >
+    <section className={cn(styles.streakCard, streak > 0 && styles.active)}>
+      {/* The count is the headline number, not a boxed badge: the card is five
+          weeks of history and one line saying where they leave you. */}
       <header>
-        <span className={styles.streakIcon}>
-          <FireIcon aria-hidden="true" />
-        </span>
         <div className="min-w-0">
           <small className={styles.eyebrow}>{t('streak.eyebrow')}</small>
           <strong>{title}</strong>
         </div>
-        {streak > 0 && (
-          <span className={styles.streakCount}>
-            <strong>{streak}</strong>
-            <small>{t('streak.weeks', { count: streak })}</small>
-          </span>
-        )}
+        <span className={styles.streakCount}>
+          {streak} {t('streak.weeks', { count: streak })}
+        </span>
       </header>
 
       <div className={styles.weekTrack} role="list" aria-label={t('streak.trackAria')}>
@@ -97,10 +86,8 @@ export const StreakCard = () => {
 
       <div className={styles.trackLabels} aria-hidden="true">
         <span>{t('streak.weeksAgo', { count: 4 })}</span>
-        <span>{t('streak.thisWeek')}</span>
+        <span className={styles.thisWeekLabel}>{t('streak.thisWeek')}</span>
       </div>
-
-      <p>{message}</p>
     </section>
   )
 }

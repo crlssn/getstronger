@@ -42,7 +42,7 @@
 
 .setsCard h2,
 .emptyCard h1 {
-  @apply text-title font-semibold text-text;
+  @apply text-title font-extrabold text-text;
 }
 
 .setsCard > header > span {

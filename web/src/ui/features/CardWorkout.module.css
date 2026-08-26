@@ -14,91 +14,121 @@
   @apply overflow-hidden;
 }
 
+/* The author of a workout somebody else is reading: a handle, a name and when
+   it happened, in that order of importance. */
 .authorRow {
-  @apply flex items-center gap-3 border-b border-border p-4 sm:p-5;
+  @apply flex items-center gap-3 p-4;
 }
 
 .avatar {
-  @apply grid size-12 shrink-0 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-ink-strong;
+  @apply grid size-11 shrink-0 place-items-center rounded-control bg-ink-surface text-meta font-bold text-text-muted;
 }
 
 .authorCopy {
   @apply min-w-0 flex-1;
 }
 
+.authorNames {
+  @apply flex min-w-0 items-baseline gap-2;
+}
+
 /* A name in a card is a link, and the type size is right. What it lacked was
    somewhere for a thumb to land, so it gains a hit area rather than a font. */
-.authorCopy > a {
-  @apply -my-3 block truncate py-3 text-sm font-semibold text-text hover:text-ink-strong;
+.authorNames a {
+  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) shrink-0 items-center py-3 text-body font-bold text-text hover:text-ink-strong;
 }
 
-.authorCopy p {
-  @apply mt-1 flex items-center gap-1.5 text-xs text-text-subtle;
+.authorDate {
+  @apply mt-0.5 truncate text-meta font-medium text-text-subtle;
 }
 
-.authorCopy svg {
-  @apply size-4;
+/* The byline of the workout you opened, under the title the nav bar carries. */
+.byline {
+  @apply flex flex-wrap items-center gap-2 px-1 text-meta font-medium text-text-subtle;
 }
 
-.workoutHeading {
-  @apply bg-surface-inverse px-5 py-6 text-white sm:px-6;
+.byline a {
+  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center py-3 font-bold text-text hover:text-ink-strong;
 }
 
 .eyebrow {
   @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 
-.workoutHeading .eyebrow {
-  @apply text-ink-tint;
+/* One accent, not a theme: a completed card had an amber border, an amber bar,
+   an amber band and an amber pill, so a routine session read as a celebration.
+   The tint and the pill carry it; the card keeps the neutral edge every other
+   card has. */
+.completedBand {
+  @apply flex items-center justify-between gap-3 border-y border-border bg-ink-surface px-4 py-3;
 }
 
-.workoutHeading h2 {
-  @apply mt-1 text-title font-semibold;
+.completedBand h2 {
+  @apply mt-0.5 text-title font-extrabold text-text;
 }
 
-.workoutHeadingCopy {
-  @apply flex items-start justify-between gap-4;
+.completedBand.record {
+  @apply border-b-record-border bg-record-surface;
+}
+
+/* First in the card, so the card's own edge is the line above it. */
+.completedBand:first-child {
+  @apply border-t-0;
+}
+
+.completedBand.record .eyebrow {
+  @apply text-record-strong;
+}
+
+.completedLabel {
+  @apply flex items-center gap-2 text-meta font-bold text-text;
+}
+
+.completedBand.record .completedLabel {
+  @apply text-record-strong;
+}
+
+.completedMark {
+  @apply grid size-6 shrink-0 place-items-center rounded-lg bg-ink text-white;
+}
+
+.completedBand.record .completedMark {
+  @apply bg-record-strong;
+}
+
+.completedMark svg {
+  @apply size-3.5 stroke-[2.5];
 }
 
 .personalBestBadge {
-  @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-record-strong bg-record px-2.5 py-1 text-xs font-semibold text-white shadow-card;
+  @apply inline-flex shrink-0 items-center gap-1.5 rounded-pill bg-record-strong px-2.5 py-1 text-meta font-bold text-white;
 }
 
 .personalBestBadge svg {
-  @apply size-4;
+  @apply size-3.5;
 }
 
+/* Four numbers, divided by hairlines and set in tabular figures so a column of
+   them lines up. */
 .metricGrid {
-  @apply grid grid-cols-2 gap-px bg-ink-tint sm:grid-cols-4;
+  @apply grid grid-cols-2 gap-px bg-border sm:grid-cols-4;
 }
 
 .metricGrid article {
-  @apply flex items-center gap-3 bg-white p-4;
-}
-
-.metricIcon {
-  @apply grid size-10 shrink-0 place-items-center rounded-control bg-ink-tint text-ink-strong;
-}
-
-.metricIcon.amber {
-  @apply bg-record-surface text-record;
-}
-
-.metricIcon svg {
-  @apply size-5;
+  @apply bg-surface px-4 py-3;
 }
 
 .metricGrid small,
 .metricGrid strong {
-  @apply block;
+  @apply block truncate;
 }
 
 .metricGrid small {
-  @apply text-xs text-text-subtle;
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 
 .metricGrid strong {
-  @apply mt-0.5 text-sm font-semibold text-text;
+  @apply mt-0.5 text-body-lg font-bold tabular-nums text-text;
 }
 
 .detailSection,
@@ -106,28 +136,36 @@
   @apply p-4 sm:p-5;
 }
 
+.detailSection {
+  @apply px-0 pb-0 sm:px-0;
+}
+
 .sectionHeading {
-  @apply mb-4 flex items-end justify-between gap-3;
+  @apply flex items-end justify-between gap-3 px-4 pb-3 sm:px-5;
+}
+
+.commentsCard .sectionHeading {
+  @apply mb-1 px-0 sm:px-0;
 }
 
 .sectionHeading h2 {
-  @apply mt-1 text-title font-semibold text-text;
+  @apply mt-0.5 text-title font-extrabold text-text;
 }
 
 .sectionHeading > span {
-  @apply rounded-full bg-info-surface px-2.5 py-1 text-xs font-semibold text-text-muted;
+  @apply rounded-pill bg-ink-surface px-2.5 py-1 text-meta font-bold tabular-nums text-text-muted;
 }
 
 .exerciseList {
-  @apply divide-y divide-border;
+  @apply flex flex-col;
 }
 
 .summaryNote {
-  @apply border-t border-border bg-white px-5 py-4 sm:px-6;
+  @apply border-t border-border bg-ink-surface/50 px-4 py-3;
 }
 
 .summaryNote > p:last-child {
-  @apply mt-2 whitespace-pre-wrap text-sm leading-6 text-text-muted;
+  @apply mt-1 whitespace-pre-wrap text-sm leading-6 text-text-muted;
 }
 
 .summaryNoteCompact > p:last-child {
@@ -139,11 +177,11 @@
 }
 
 .noComments {
-  @apply rounded-control bg-ink-surface p-4 text-sm text-text-subtle;
+  @apply text-meta font-medium text-text-subtle;
 }
 
 .commentForm {
-  @apply mt-5 rounded-card border border-border bg-ink-surface p-3;
+  @apply mt-4 rounded-card bg-ink-surface p-3;
 }
 
 .commentForm label {
@@ -157,48 +195,17 @@
 }
 
 .commentForm > div {
-  @apply flex items-center justify-between gap-3 border-t border-border pt-3;
+  @apply flex items-center justify-between gap-3 pt-1;
 }
 
 .commentForm small {
-  @apply pl-2 text-xs text-text-subtle;
+  @apply pl-2 text-meta font-semibold tabular-nums text-text-subtle;
 }
 
+/* A card firms its edge under the pointer rather than lifting off the page:
+   a feed of cards that rise as the cursor crosses them is a feed that moves. */
 .feedSummaryCard {
-  @apply relative mb-4 overflow-hidden transition hover:-translate-y-0.5 hover:border-ink-border hover:shadow-raised;
-}
-
-.feedSummaryCard .workoutHeading {
-  @apply border-y border-border bg-ink-surface text-text;
-  background-image: none;
-  box-shadow: inset 4px 0 0 var(--color-ink-muted);
-}
-
-.feedSummaryCard .workoutHeading .eyebrow {
-  @apply text-ink;
-}
-
-.summaryCard.hasPersonalBest {
-  @apply border-record-border shadow-raised;
-}
-
-.feedSummaryCard.hasPersonalBest .workoutHeading {
-  @apply border-record-border bg-record-surface;
-  box-shadow: inset 4px 0 0 var(--color-record);
-}
-
-.detailSummaryCard.hasPersonalBest .workoutHeading {
-  @apply border-y border-record-border bg-record-surface text-text;
-  background-image: none;
-  box-shadow: inset 4px 0 0 var(--color-record);
-}
-
-.summaryCard.hasPersonalBest .workoutHeading .eyebrow {
-  @apply text-record-strong;
-}
-
-.summaryCard.hasPersonalBest .metricIcon.amber {
-  @apply bg-record-surface text-record-strong;
+  @apply relative mb-4 overflow-hidden transition hover:border-ink-border;
 }
 
 /* The whole feed card is one link, with the controls sitting above it so a tap
@@ -214,16 +221,4 @@
 .feedCardControl a,
 .feedCardControl button {
   @apply pointer-events-auto;
-}
-
-@media (max-width: 520px) {
-  .metricGrid article {
-    @apply gap-2 p-3;
-  }
-  .metricIcon {
-    @apply size-9;
-  }
-  .workoutHeading {
-    @apply px-5 py-6;
-  }
 }

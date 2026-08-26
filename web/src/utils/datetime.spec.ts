@@ -7,6 +7,7 @@ import {
   formatToRelativeDateTime,
   formatToShortDateTime,
   formatUnixToRelativeDateTime,
+  formatWorkoutDate,
 } from './datetime'
 
 // 2026-03-17T09:30:00Z, a Tuesday.
@@ -87,5 +88,25 @@ describe('formatUnixToRelativeDateTime', () => {
 
   test.each([undefined, 0n])('renders nothing for %o', (value) => {
     expect(formatUnixToRelativeDateTime(value)).toBe('')
+  })
+})
+
+describe('formatWorkoutDate', () => {
+  test('reads a workout inside the month as how long ago it was', () => {
+    at('2026-03-20T09:30:00Z')
+
+    expect(formatWorkoutDate(timestamp)).toBe('3 days ago')
+  })
+
+  // "7 weeks ago" says less than the day it fell on, and by then the weekday is
+  // orientation rather than information.
+  test('reads an older one as the date, with the weekday abbreviated', () => {
+    at('2026-06-17T09:30:00Z')
+
+    expect(formatWorkoutDate(timestamp)).toMatch(/^Tue, 17 March · \d{2}:\d{2}$/)
+  })
+
+  test('has nothing to say about a workout with no finish', () => {
+    expect(formatWorkoutDate(undefined)).toBe('')
   })
 })

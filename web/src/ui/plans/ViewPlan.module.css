@@ -39,7 +39,7 @@
 }
 
 .orderHeading h2 {
-  @apply mt-1 text-title font-semibold;
+  @apply mt-1 text-title font-extrabold;
 }
 
 .routineOrder {

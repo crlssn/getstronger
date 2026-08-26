@@ -105,7 +105,7 @@ describe('ViewWorkout', () => {
     mocked.getWorkout.mockResolvedValue(create(GetWorkoutResponseSchema, { workout: withSets() }))
     render()
 
-    expect(await screen.findByRole('link', { name: 'Bench press' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Bench press/ })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
   })
 

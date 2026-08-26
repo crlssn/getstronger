@@ -1,52 +1,80 @@
 @reference '../../assets/base.css';
 
-.exerciseBlock {
-  @apply card overflow-hidden shadow-none;
+.exercise {
+  @apply border-t border-border;
 }
 
-.exerciseBlock > header {
-  @apply flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5;
+/* The whole row is the toggle: a name, what it did, and how much of it.
+   Positioning only — the row's own shape is the design system's. */
+.summary {
+  @apply min-h-(--size-control) rounded-none border-0 px-4 py-2.5 sm:px-5;
 }
 
-.exerciseBlock > header > div {
+.summaryCopy {
   @apply flex min-w-0 items-center gap-2;
 }
 
-.exerciseBlock > header a {
-  @apply -mx-1.5 -my-2.5 inline-flex min-h-(--size-control-sm) items-center truncate px-1.5 py-2.5 text-base font-semibold text-text transition hover:text-ink-strong;
+.name {
+  @apply min-w-0 flex-1 truncate text-body-lg font-bold text-text;
+}
+
+.personalBestBadge {
+  @apply inline-flex shrink-0 items-center gap-1 rounded-pill bg-record-surface px-2 py-1 text-eyebrow font-bold uppercase tracking-normal text-record-strong;
+}
+
+.personalBestBadge svg {
+  @apply size-3.5;
 }
 
 .setCount {
-  @apply shrink-0 text-xs font-medium text-text-subtle;
+  @apply shrink-0 text-meta font-semibold tabular-nums text-text-subtle;
 }
 
-.setTable {
-  @apply px-4 py-2 sm:px-5;
+.caret {
+  @apply size-4 shrink-0 text-text-subtle transition-transform;
+}
+
+.caretOpen {
+  @apply rotate-180;
+}
+
+.panel {
+  @apply px-4 pb-4 sm:px-5;
 }
 
 .setRow {
-  grid-template-columns: 2.25rem repeat(var(--metric-count), minmax(4.5rem, 1fr));
-  @apply grid min-h-11 items-center gap-2 border-t border-border text-sm first:border-t-0;
+  grid-template-columns: 2.25rem repeat(var(--metric-count), minmax(4.5rem, 1fr)) 1.25rem;
+  @apply grid min-h-11 items-center gap-2 border-t border-border text-body;
 }
 
 .tableHead {
-  @apply min-h-9 border-0 text-eyebrow font-semibold uppercase text-text-subtle;
+  @apply min-h-9 border-0 text-eyebrow font-bold uppercase text-text-subtle;
 }
 
 .setNumber {
-  @apply grid size-7 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
+  @apply grid size-7 place-items-center rounded-lg bg-ink-surface text-xs font-bold tabular-nums text-text-muted;
+}
+
+/* Gold is for records, nowhere else — and it tints the row rather than the
+   whole card, which is what made a routine session look like a celebration. */
+.personalBestRow {
+  @apply -mx-2 rounded-control bg-record-surface px-2;
 }
 
 .setNumber.personalBest {
-  @apply bg-record-surface text-record-strong;
+  @apply bg-record-border text-record-strong;
 }
 
-.setNumber.personalBest svg {
+.personalBestMark {
+  @apply grid place-items-center text-record-strong;
+}
+
+.personalBestMark svg {
   @apply size-4;
 }
 
 .setRow strong {
-  @apply font-semibold text-text;
+  @apply font-semibold tabular-nums text-text;
 }
 
 .setRow small {
@@ -57,67 +85,16 @@
   @apply text-text-muted;
 }
 
-.flat {
-  @apply rounded-none border-0;
-}
-
-.flat > header {
-  @apply px-0 py-3;
-}
-
-.flat .setTable {
-  @apply px-0 pb-4 pt-2;
-}
-
-.compact {
-  @apply rounded-none border-0 bg-transparent py-3;
-}
-
-.compact > header {
-  @apply min-w-0 border-0 px-0 py-0;
-}
-
-.compact > header a {
-  @apply text-[0.9375rem];
-}
-
-.compact .setTable {
-  @apply mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 px-0 py-0;
-}
-
-.compact .setRow {
-  @apply min-h-8 grid-cols-[1.75rem_auto] justify-start gap-2 border-0;
-}
-
-.compact .setNumber {
-  @apply size-6;
-}
-
-.compact .setRow small {
-  @apply text-text-muted;
-}
-
-.compactSetValue {
-  @apply inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-text;
-}
-
-.compactSetValue > span {
-  @apply font-medium;
-}
-
-.compactSetValue .compactPersonalBest {
-  @apply ml-0.5 grid size-6 place-items-center rounded-lg bg-record-surface text-record-strong;
-}
-
-.compactPersonalBest svg {
-  @apply size-4;
+.viewExercise {
+  @apply mt-2;
 }
 
 @media (max-width: 520px) {
   .setRow {
-    grid-template-columns: 2rem repeat(var(--metric-count), minmax(3.75rem, 1fr));
+    grid-template-columns: 2rem repeat(var(--metric-count), minmax(3.75rem, 1fr)) 1.25rem;
     @apply gap-1.5;
   }
+
   .setRow,
   .tableHead {
     @apply text-xs;

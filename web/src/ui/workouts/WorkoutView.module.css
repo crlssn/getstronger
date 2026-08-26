@@ -59,7 +59,7 @@
 }
 
 .emptyCard h2 {
-  @apply text-title font-semibold;
+  @apply text-title font-extrabold;
 }
 
 .emptyCard p {
@@ -104,7 +104,7 @@
 }
 
 .workoutHistory > header h2 {
-  @apply mt-1 text-title font-semibold text-text;
+  @apply mt-1 text-title font-extrabold text-text;
 }
 
 .historyList {

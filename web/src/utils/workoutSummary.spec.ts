@@ -65,9 +65,21 @@ describe('workoutSummary', () => {
     expect(summary.finishedDate).toBe('')
   })
 
-  test('spells out the day it finished', () => {
+  // How long ago it was is what a reader scrolling a feed is asking; the day it
+  // fell on is what they ask about a session from last spring.
+  test('reads a recent workout as how long ago it was', () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+
     expect(
-      workoutSummary(workout({ finishedAt: at('2026-08-14T09:30:00Z') })).finishedDate,
-    ).toMatch(/^Friday, 14 August · \d{2}:\d{2}$/)
+      workoutSummary(workout({ finishedAt: timestampFromDate(twoDaysAgo) })).finishedDate,
+    ).toBe('2 days ago')
+  })
+
+  test('reads an older one as the day it finished, abbreviated', () => {
+    const lastYear = new Date('2020-08-14T09:30:00Z')
+
+    expect(
+      workoutSummary(workout({ finishedAt: timestampFromDate(lastYear) })).finishedDate,
+    ).toMatch(/^Fri, 14 August · \d{2}:\d{2}$/)
   })
 })

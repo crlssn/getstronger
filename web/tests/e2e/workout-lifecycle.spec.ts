@@ -681,5 +681,20 @@ test.describe('planned workouts and history', () => {
     await expect(page.getByRole('heading', { name: firstWorkoutName, exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: '@alex', exact: true }).first()).toBeVisible()
     await expect(page.getByText('Completed workout', { exact: true })).toBeVisible()
+
+    // Every exercise is a row that opens onto its sets, and the session opens
+    // on its first: six exercises used to be six tables and several screens.
+    const firstExercise = sectionWithHeading(page, 'Exercises')
+      .locator('button[aria-expanded]')
+      .first()
+    await expect(firstExercise).toHaveAttribute('aria-expanded', 'true')
+    await expect(page.getByRole('table').first()).toBeVisible()
+
+    await firstExercise.click()
+    await expect(firstExercise).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByRole('table')).toHaveCount(0)
+
+    await firstExercise.click()
+    await expect(page.getByRole('table').first()).toBeVisible()
   })
 })
