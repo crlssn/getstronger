@@ -106,8 +106,8 @@ excluded.
 ## The end-to-end suite
 
 `mise run test:e2e` runs `tests/e2e/` in four browser projects against a real
-backend and a real database. One thing about how it is arranged is
-load-bearing, and it is not visible from a spec file.
+backend and a real database. Two things about how it is arranged are
+load-bearing, and neither is visible from a spec file.
 
 **The data is seeded once per run and put back between spec files.** Global
 setup runs the seed command and then copies every table into an `e2e_snapshot`
@@ -118,6 +118,13 @@ copying back costs milliseconds, so a spec file stays free to delete and rewrite
 whatever it likes. Anything a spec needs that the personas do not have, it still
 creates itself. See `tests/e2e/seed.ts` and
 `server/testing/factory/snapshot/main.go`.
+
+**One run means one database, so `workers: 1` stays.** The suite gets faster by
+being split across runners rather than across workers: CI shards it four ways,
+and each shard is a runner with a Postgres, a backend and a dev server of its
+own. Turning `fullyParallel` on would first need per-worker data — an account
+per worker, or a database and a backend per worker — and nothing here provides
+it.
 
 ## Localisation
 

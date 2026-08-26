@@ -40,6 +40,9 @@ const localProjects = [
 export default defineConfig({
   expect: { timeout: 10_000 },
   forbidOnly: Boolean(process.env.CI),
+  // One database behind the whole run, so nothing may overlap. CI shards the
+  // suite across runners instead, each with a stack of its own; see
+  // web/CLAUDE.md for what turning this on would first require.
   fullyParallel: false,
   // Seeding costs seconds and the run needs it once. Global setup seeds and
   // copies the tables aside; the spec files put them back between themselves in
