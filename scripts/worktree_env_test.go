@@ -33,6 +33,24 @@ done
 exit 1
 `
 
+// stubFind hands the script a listing that came back short, the way a partial
+// directory read does. FIND_KEEP truncates every listing to that many entries;
+// FIND_DROP_FIRST leaves one entry out of the first listing only. Neither is
+// set for the tests that want the real thing.
+const stubFind = `#!/bin/sh
+out=$(/usr/bin/find "$@") || exit $?
+echo call >> "$FIND_CALL_LOG"
+if [ -n "${FIND_DROP_FIRST:-}" ] && [ "$(wc -l < "$FIND_CALL_LOG")" -eq 1 ]; then
+  printf '%s\n' "$out" | grep -v "/${FIND_DROP_FIRST}$"
+  exit 0
+fi
+if [ -n "${FIND_KEEP:-}" ]; then
+  printf '%s\n' "$out" | head -n "$FIND_KEEP"
+  exit 0
+fi
+printf '%s\n' "$out"
+`
+
 // stubDocker prints DOCKER_PS for any 'ps' invocation and records removals, so
 // a test can assert that nothing else was removed.
 const stubDocker = `#!/bin/sh
@@ -181,6 +199,88 @@ func TestItFailsRatherThanDoubleBookingWhenEverySlotIsClaimed(t *testing.T) {
 	require.NoFileExists(t, filepath.Join(tree, "mise.local.toml"))
 }
 
+// The CI failure in miniature: the first read comes back without one of the
+// claims, and the slot it seems to leave free is not handed out.
+func TestAShortReadDoesNotHandOutAClaimedSlot(t *testing.T) {
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+	for slot := 1; slot <= slotCount; slot++ {
+		claim := filepath.Join(main, ".claude/worktrees", fmt.Sprintf("claimed-%d", slot))
+		require.NoError(t, os.MkdirAll(claim, 0o755))
+		writeSlot(t, claim, slot)
+	}
+
+	result := runEnv(t, tree, []string{"FIND_DROP_FIRST=claimed-5"})
+
+	require.Equal(t, 1, result.exitCode, result.output)
+	require.Contains(t, result.output, "worktree:prune")
+	require.NoFileExists(t, filepath.Join(tree, "mise.local.toml"))
+}
+
+// A claim discovery that cannot read the directory this checkout sits in knows
+// nothing about the slots the worktrees beside it hold, and a slot handed out
+// on that footing is one another checkout may already have.
+func TestItFailsWhenTheClaimDirectoryCannotBeRead(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root reads a directory whatever its mode")
+	}
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+	worktrees := filepath.Join(main, ".claude/worktrees")
+	require.NoError(t, os.Chmod(worktrees, 0o111))
+	t.Cleanup(func() { _ = os.Chmod(worktrees, 0o755) })
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 1, result.exitCode, result.output)
+	require.Contains(t, result.output, "Could not read")
+	require.NoFileExists(t, filepath.Join(tree, "mise.local.toml"))
+}
+
+// The failure that double-booked a slot on CI: the listing comes back holding
+// only some of the directories, with nothing to say the rest were missed.
+func TestItFailsWhenTheClaimListingComesBackShort(t *testing.T) {
+	main := newCheckout(t)
+	addWorktree(t, main, "feature-a")
+	second := addWorktree(t, main, "feature-b")
+
+	result := runEnv(t, second, []string{"FIND_KEEP=1"})
+
+	require.Equal(t, 1, result.exitCode, result.output)
+	require.Contains(t, result.output, "came back short")
+	require.NoFileExists(t, filepath.Join(second, "mise.local.toml"))
+}
+
+// A short listing that still holds every worktree Git knows about is the one
+// the listing itself cannot give away, so the slot is taken only after a
+// second read agrees it is free.
+func TestAClaimSeenOnlyOnTheSecondReadIsHonoured(t *testing.T) {
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+	left := filepath.Join(main, ".claude/worktrees", "left-behind")
+	require.NoError(t, os.MkdirAll(left, 0o755))
+	writeSlot(t, left, 1)
+
+	result := runEnv(t, tree, []string{"FIND_DROP_FIRST=left-behind"})
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Equal(t, 2, readSlot(t, tree), "slot 1 is claimed by the directory the first read missed")
+}
+
+// Without the lock two runs read the same claims, pick the same slot, and
+// neither sees the other write it down, so failing to take it is a failure.
+func TestItRefusesToRunWithoutTheLock(t *testing.T) {
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+	require.NoError(t, os.MkdirAll(filepath.Join(main, ".git/worktree-slot.lock"), 0o755))
+
+	result := runEnv(t, tree, []string{"WORKTREE_LOCK_ATTEMPTS=1"})
+
+	require.Equal(t, 1, result.exitCode, result.output)
+	require.Contains(t, result.output, "worktree-slot.lock")
+	require.NoFileExists(t, filepath.Join(tree, "mise.local.toml"))
+}
+
 func TestItNamesCoreBareWhenThereIsNoWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
@@ -306,13 +406,14 @@ func runScript(t *testing.T, script, dir string, env []string) scriptResult {
 	removed := filepath.Join(bin, "removed.log")
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "nc"), []byte(stubNC), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "docker"), []byte(stubDocker), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(bin, "find"), []byte(stubFind), 0o755))
 
 	path, err := filepath.Abs(script)
 	require.NoError(t, err)
 
 	cmd := exec.CommandContext(t.Context(), path)
 	cmd.Dir = dir
-	cmd.Env = append(isolatedEnv(bin), "DOCKER_RM_LOG="+removed)
+	cmd.Env = append(isolatedEnv(bin), "DOCKER_RM_LOG="+removed, "FIND_CALL_LOG="+filepath.Join(bin, "find.log"))
 	cmd.Env = append(cmd.Env, env...)
 	out, err := cmd.CombinedOutput()
 

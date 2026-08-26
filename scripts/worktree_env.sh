@@ -17,6 +17,11 @@ set -euo pipefail
 # running. Probing the ports alone cannot see that: it hands a stopped
 # worktree's slot to the next one, which then silently shares its database. The
 # probe stays as a second check for whatever the claims do not record.
+#
+# Reading the claims therefore fails rather than under-reports. A claim that
+# goes unseen is indistinguishable from a free slot, so a directory this script
+# cannot read in full stops the run, and a slot is taken only once a second
+# read agrees that nothing else holds it.
 
 readonly SLOT_BASE=20000
 readonly SLOT_WIDTH=20
@@ -44,6 +49,7 @@ resolve() {
 
 root="$(resolve "$root")"
 name="$(basename "$root")"
+parent="$(dirname "$root")"
 local_toml="$root/mise.local.toml"
 
 # Renders the preview tool's launch configuration for a given web dev port.
@@ -81,16 +87,27 @@ pin_core_bare
 
 # Two agents can create worktrees at the same moment. Without a lock both read
 # the same claims, both find the same lowest free slot, and neither sees the
-# other write it down.
+# other write it down, so carrying on unlocked is not an option: a run that
+# cannot take the lock stops. The attempt count is overridable so the test does
+# not have to sit out the ten seconds.
 lock="$(git rev-parse --path-format=absolute --git-common-dir)/worktree-slot.lock"
-for _ in $(seq 1 50); do
+locked=false
+for _ in $(seq 1 "${WORKTREE_LOCK_ATTEMPTS:-50}"); do
   if mkdir "$lock" 2>/dev/null; then
     # shellcheck disable=SC2064 # $lock is deliberately expanded now.
     trap "rmdir '$lock' 2>/dev/null || true" EXIT
+    # An interrupted run exits rather than dying where the EXIT trap, and with
+    # it the lock, never runs: a lock nobody holds now stops the next run.
+    trap 'exit 130' INT TERM HUP
+    locked=true
     break
   fi
   sleep 0.2
 done
+
+[[ "$locked" == true ]] || die "Another worktree is being configured right now, or a run that was
+killed left its lock behind. Waiting for it did not help. If nothing else is
+running, remove '$lock' and try again."
 
 port_in_use() {
   nc -z 127.0.0.1 "$1" >/dev/null 2>&1
@@ -111,22 +128,37 @@ recorded_slot() {
   awk -F'"' '/^WORKTREE_SLOT =/ { print $2 }' "$1/mise.local.toml" 2>/dev/null || true
 }
 
+# Everything sitting beside this checkout, read with 'find' rather than a glob:
+# a glob hands back whatever it managed to read and says nothing about the
+# rest, and a claim that goes unseen is a slot handed out twice. Files and
+# symlinks come along because sorting them out costs a stat each and a
+# directory with no mise.local.toml in it claims nothing anyway.
+read_siblings() {
+  find "$parent" -mindepth 1 -maxdepth 1 2>/dev/null
+}
+
+# This checkout is one of the directories beside itself, and so is every
+# registered worktree that lives there. One of them missing from the listing is
+# a short read, which is indistinguishable from a directory holding no claim.
+assert_listing_is_complete() {
+  local path
+  while read -r path; do
+    [[ -n "$path" ]] || continue
+    path="$(resolve "$path")"
+    [[ -d "$path" && "$(dirname "$path")" == "$parent" ]] || continue
+    grep -qxF "$path" <<<"$siblings" || die "The listing of $parent came back short: $path
+is there and is not in it. A claim this run cannot see is a slot it would hand
+out twice, so it is assigning none. Try again."
+  done <<<"$root"$'\n'"$registered"
+}
+
 # Every checkout whose recorded slot has to be honoured: the registered
 # worktrees, plus any directory still sitting beside this one. A worktree
 # removed with 'git worktree remove' leaves the second kind behind.
-checkout_paths() {
-  git worktree list --porcelain 2>/dev/null | awk '/^worktree /{ print substr($0, 10) }'
-  local sibling
-  for sibling in "$(dirname "$root")"/*; do
-    if [[ -d "$sibling" ]]; then
-      printf '%s\n' "$sibling"
-    fi
-  done
-}
-
 claimed_by_checkouts() {
   local path slot
   while read -r path; do
+    [[ -n "$path" ]] || continue
     path="$(resolve "$path")"
     if [[ "$path" != "$root" ]]; then
       slot="$(recorded_slot "$path")"
@@ -134,7 +166,7 @@ claimed_by_checkouts() {
         printf '%s\n' "$slot"
       fi
     fi
-  done < <(checkout_paths)
+  done <<<"$registered"$'\n'"$siblings"
 }
 
 is_own_container() {
@@ -166,6 +198,29 @@ claimed_by_containers() {
   done <<<"$containers"
 }
 
+# Reads the claims and adds them to the ones already seen. They accumulate
+# rather than replace: a listing that comes back short loses claims, it never
+# invents them, so a slot seen taken once stays taken for the rest of the run.
+merge_claims() {
+  siblings="$(read_siblings)" || die "Could not read $parent, so which slots the checkouts beside
+this one have claimed is unknown. Assigning one now could hand this worktree a
+slot another already holds, and with it that worktree's database. Fix the
+directory's permissions and run this again."
+  registered="$(git worktree list --porcelain 2>/dev/null |
+    awk '/^worktree /{ print substr($0, 10) }' || true)"
+  assert_listing_is_complete
+  containers="$(docker ps -a --format '{{.Names}}'$'\t''{{.Ports}}' 2>/dev/null || true)"
+  claimed="$({
+    printf '%s\n' "$claimed"
+    claimed_by_checkouts
+    claimed_by_containers
+  } | awk 'NF' | sort -un)"
+}
+
+is_claimed() {
+  printf '%s\n' "$claimed" | grep -qx "$1"
+}
+
 set_env() {
   local file=$1 key=$2 value=$3 tmp
   tmp="$(mktemp)"
@@ -179,35 +234,49 @@ set_env() {
   fi
 }
 
-containers="$(docker ps -a --format '{{.Names}}'$'\t''{{.Ports}}' 2>/dev/null || true)"
-claimed="$({
-  claimed_by_checkouts
-  claimed_by_containers
-} | sort -un)"
-
-is_claimed() {
-  printf '%s\n' "$claimed" | grep -qx "$1"
-}
+claimed=""
+merge_claims
 
 slot="$(recorded_slot "$root")"
-if [[ -n "$slot" ]] && is_claimed "$slot"; then
-  echo "⚠️  Slot $slot is claimed by another worktree or by its containers. Renumbering this worktree."
-  slot=""
+if [[ -n "$slot" ]]; then
+  # A second read before trusting it: the first can come back short, and a
+  # claim it missed is one this worktree would go on sharing.
+  merge_claims
+  if is_claimed "$slot"; then
+    echo "⚠️  Slot $slot is claimed by another worktree or by its containers. Renumbering this worktree."
+    slot=""
+  fi
 fi
 
 if [[ -z "$slot" ]]; then
-  for candidate in $(seq 1 $SLOT_COUNT); do
-    if ! is_claimed "$candidate" && slot_is_free "$candidate"; then
-      slot="$candidate"
+  for _ in 1 2 3; do
+    candidate_slot=""
+    for candidate in $(seq 1 $SLOT_COUNT); do
+      if ! is_claimed "$candidate" && slot_is_free "$candidate"; then
+        candidate_slot="$candidate"
+        break
+      fi
+    done
+
+    [[ -n "$candidate_slot" ]] || die "All $SLOT_COUNT port slots are claimed, so this worktree cannot be
+given one of its own. Containers left behind by removed worktrees hold slots
+nothing will use again: 'mise run worktree:prune' lists them and
+'mise run worktree:prune -- --force' removes them."
+
+    # Read the claims again before taking it. A claim the first read missed
+    # looks exactly like a free slot, and only a second read tells the two
+    # apart: the port probe cannot, since a claimed worktree that is not
+    # running has all fourteen of its ports free.
+    merge_claims
+    if ! is_claimed "$candidate_slot"; then
+      slot="$candidate_slot"
       break
     fi
   done
 fi
 
-[[ -n "$slot" ]] || die "All $SLOT_COUNT port slots are claimed, so this worktree cannot be
-given one of its own. Containers left behind by removed worktrees hold slots
-nothing will use again: 'mise run worktree:prune' lists them and
-'mise run worktree:prune -- --force' removes them."
+[[ -n "$slot" ]] || die "The claims changed under all three attempts to pick a slot. Another
+'mise run worktree:env' is probably running; try again once it is done."
 
 base=$((SLOT_BASE + slot * SLOT_WIDTH))
 db_port=$((base + 0))
