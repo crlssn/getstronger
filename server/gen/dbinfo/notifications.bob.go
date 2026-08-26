@@ -98,7 +98,7 @@ var Notifications = Table[
 					IsExpression: false,
 				},
 				{
-					Name:         "read_at",
+					Name:         "created_at",
 					Desc:         null.FromCond(false, true),
 					IsExpression: false,
 				},
@@ -130,6 +130,28 @@ var Notifications = Table[
 			NullsFirst:    []bool{false, false},
 			NullsDistinct: false,
 			Where:         "(payload ? 'eventId'::text)",
+			Include:       []string{},
+		},
+		IdxNotificationsUserIDReadAt: index{
+			Type: "btree",
+			Name: "idx_notifications_user_id_read_at",
+			Columns: []indexColumn{
+				{
+					Name:         "user_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+				{
+					Name:         "read_at",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false, false},
+			NullsDistinct: false,
+			Where:         "",
 			Include:       []string{},
 		},
 	},
@@ -172,11 +194,12 @@ type notificationIndexes struct {
 	NotificationsPkey               index
 	IdxNotificationsUserIDCreatedAt index
 	IdxNotificationsUserIDEventID   index
+	IdxNotificationsUserIDReadAt    index
 }
 
 func (i notificationIndexes) AsSlice() []index {
 	return []index{
-		i.NotificationsPkey, i.IdxNotificationsUserIDCreatedAt, i.IdxNotificationsUserIDEventID,
+		i.NotificationsPkey, i.IdxNotificationsUserIDCreatedAt, i.IdxNotificationsUserIDEventID, i.IdxNotificationsUserIDReadAt,
 	}
 }
 
