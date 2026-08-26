@@ -103,6 +103,22 @@ Coverage is reported by `npm run test:unit -- --run --coverage` and enforced in
 CI; it sits above 95% statements. `src/proto`, `src/main.tsx` and the specs are
 excluded.
 
+## The end-to-end suite
+
+`mise run test:e2e` runs `tests/e2e/` in four browser projects against a real
+backend and a real database. One thing about how it is arranged is
+load-bearing, and it is not visible from a spec file.
+
+**The data is seeded once per run and put back between spec files.** Global
+setup runs the seed command and then copies every table into an `e2e_snapshot`
+schema. `resetSeedData`, which every spec file calls in a `beforeAll`, empties
+the live tables and copies them back; global teardown drops the schema. Seeding
+costs seconds — bcrypt for each persona, a couple of thousand inserts — and
+copying back costs milliseconds, so a spec file stays free to delete and rewrite
+whatever it likes. Anything a spec needs that the personas do not have, it still
+creates itself. See `tests/e2e/seed.ts` and
+`server/testing/factory/snapshot/main.go`.
+
 ## Localisation
 
 Every user-facing string must go through i18next. Never hard-code English text

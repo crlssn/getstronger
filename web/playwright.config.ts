@@ -41,6 +41,11 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   forbidOnly: Boolean(process.env.CI),
   fullyParallel: false,
+  // Seeding costs seconds and the run needs it once. Global setup seeds and
+  // copies the tables aside; the spec files put them back between themselves in
+  // milliseconds. See tests/e2e/seed.ts.
+  globalSetup: './tests/e2e/global-setup.ts',
+  globalTeardown: './tests/e2e/global-teardown.ts',
   grep: remoteTarget ? /@smoke/ : undefined,
   outputDir: 'test-results',
   projects: remoteTarget
