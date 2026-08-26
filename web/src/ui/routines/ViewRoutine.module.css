@@ -37,7 +37,7 @@
 
 .sectionHeading h2,
 .dangerZone h2 {
-  @apply text-title font-semibold text-text;
+  @apply text-title font-extrabold text-text;
 }
 
 .sectionHeading p,

@@ -38,10 +38,6 @@
   @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) shrink-0 items-center py-3 text-body font-bold text-text hover:text-ink-strong;
 }
 
-.authorNames span {
-  @apply truncate text-meta font-medium text-text-subtle;
-}
-
 .authorDate {
   @apply mt-0.5 truncate text-meta font-medium text-text-subtle;
 }

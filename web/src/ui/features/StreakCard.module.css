@@ -68,11 +68,3 @@
 .thisWeekLabel {
   @apply font-bold text-text;
 }
-
-.streakCard > p {
-  @apply mt-3 text-meta font-medium text-text-subtle;
-}
-
-.streakCard.active > p {
-  @apply text-success;
-}

@@ -44,7 +44,7 @@
 
 .setRow {
   grid-template-columns: 2.25rem repeat(var(--metric-count), minmax(4.5rem, 1fr)) 1.25rem;
-  @apply grid min-h-11 items-center gap-2 border-t border-border text-sm;
+  @apply grid min-h-11 items-center gap-2 border-t border-border text-body;
 }
 
 .tableHead {

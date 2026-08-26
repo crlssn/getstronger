@@ -38,3 +38,20 @@ export const formatUnixToRelativeDateTime = (timestamp: bigint | undefined): str
   if (!timestamp) return ''
   return relativeToNow(DateTime.fromSeconds(Number(timestamp)))
 }
+
+/**
+ * When a workout happened, read the way somebody asks about it.
+ *
+ * Relative inside a month — "3 days ago" is what a reader scrolling a feed
+ * wants — and the date itself once it is old enough that "7 weeks ago" says
+ * less than the day it fell on. The weekday abbreviates there, because by then
+ * it is orientation rather than information.
+ */
+export const formatWorkoutDate = (date: Timestamp | undefined): string => {
+  if (!date) return ''
+
+  const finished = DateTime.fromSeconds(Number(date.seconds))
+  if (finished.diffNow('months').months > -1) return relativeToNow(finished)
+
+  return localized(finished).toFormat('ccc, d LLLL · HH:mm')
+}

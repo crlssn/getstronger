@@ -135,9 +135,9 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           aria-label={t('workout.card.viewDetails', { name: workout.name })}
         />
 
-        {/* Handle and name share the top line and the date sits under them as
-            the metadata it is, where the two competed for one row and wrapped
-            the date onto a second. */}
+        {/* The account, and when it trained. The person's own name competed
+            with the handle for one row and said the same thing twice; it is on
+            the profile the handle links to. */}
         <header className={cn(styles.authorRow, styles.feedCardControl)}>
           <Link to={`/users/${workout.user?.id}`} className={styles.avatar}>
             {/* The brand's own initials stand in for a name we were not given. */}
@@ -146,7 +146,6 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           <div className={styles.authorCopy}>
             <p className={styles.authorNames}>
               <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
-              <span>{workout.user?.name}</span>
             </p>
             <p className={styles.authorDate}>{finishedDate}</p>
           </div>

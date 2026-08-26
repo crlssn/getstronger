@@ -29,11 +29,6 @@ export const StreakCard = () => {
     : thisWeekLogged
       ? t('streak.securedTitle')
       : t('streak.keepAliveTitle')
-  const message = !streak
-    ? t('streak.startBody')
-    : thisWeekLogged
-      ? t('streak.securedBody')
-      : t('streak.keepAliveBody')
 
   const weeks = streakWeeks({ streak, thisWeekLogged, weekWorkoutCounts })
 
@@ -93,8 +88,6 @@ export const StreakCard = () => {
         <span>{t('streak.weeksAgo', { count: 4 })}</span>
         <span className={styles.thisWeekLabel}>{t('streak.thisWeek')}</span>
       </div>
-
-      <p>{message}</p>
     </section>
   )
 }
