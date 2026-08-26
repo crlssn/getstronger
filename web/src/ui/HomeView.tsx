@@ -1,10 +1,6 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
-import {
-  CheckIcon,
-  FireIcon,
-  PlayIcon,
-} from '@heroicons/react/24/outline'
+import { CheckIcon, FireIcon, PlayIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -217,7 +213,7 @@ export const HomeView = () => {
                 action={{ label: t('home.createRoutine'), to: '/routines/create' }}
                 body={t('home.createFirstRoutineBody')}
                 title={t('home.createFirstRoutine')}
-                    />
+              />
             )}
 
             <section className={styles.followingFeed}>
@@ -243,7 +239,7 @@ export const HomeView = () => {
                   action={{ label: t('home.emptyFeedAction') }}
                   body={t('home.emptyFeed')}
                   title={t('home.emptyFeedTitle')}
-                          onAction={() => setSearchOpen(true)}
+                  onAction={() => setSearchOpen(true)}
                 />
               ) : feedLoading ? (
                 <div className={styles.feedStatus} aria-live="polite">

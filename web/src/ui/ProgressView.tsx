@@ -91,8 +91,7 @@ export const ProgressView = () => {
                 </h2>
               </div>
               <span>
-                <ArrowTrendingUpIcon aria-hidden="true" />{' '}
-                {t(totalsLabel[granularity])}
+                <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[granularity])}
               </span>
             </div>
 
@@ -154,7 +153,7 @@ export const ProgressView = () => {
               action={{ label: t('home.startWorkout'), to: '/workout' }}
               body={t('progress.emptyBody')}
               title={t('progress.emptyTitle')}
-                />
+            />
           )}
         </section>
       )}

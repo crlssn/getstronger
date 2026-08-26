@@ -507,7 +507,6 @@ export const ProfileView = () => {
           </form>
         </AppSheet>
       )}
-
     </div>
   )
 }

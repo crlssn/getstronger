@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import {
-  isFinalCountdown,
-  restLabel,
-  restProgress,
-  restRemainingSeconds,
-} from './restTimer'
+import { isFinalCountdown, restLabel, restProgress, restRemainingSeconds } from './restTimer'
 
 const now = Date.parse('2026-08-14T12:00:00Z')
 

@@ -7,12 +7,7 @@ import { isFocusedShellPath } from '@/router/routes'
 import { useWorkoutStore } from '@/stores/workout'
 import { AppButton } from '@/ui/components/AppButton'
 import { cn } from '@/ui/cn'
-import {
-  isFinalCountdown,
-  restLabel,
-  restProgress,
-  restRemainingSeconds,
-} from '@/utils/restTimer'
+import { isFinalCountdown, restLabel, restProgress, restRemainingSeconds } from '@/utils/restTimer'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
 import styles from './AppRestTimerBanner.module.css'
 

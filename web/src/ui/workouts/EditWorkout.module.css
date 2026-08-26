@@ -15,4 +15,3 @@
 .note {
   @apply mb-4 min-h-20 w-full resize-none overflow-hidden rounded-control border-border py-3 text-base focus:border-ink-muted focus:ring-ink-muted;
 }
-

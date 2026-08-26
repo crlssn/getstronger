@@ -45,7 +45,6 @@
   @apply bg-success-surface text-success;
 }
 
-
 .setRow.active .setNumber {
   @apply bg-surface-inverse text-white;
 }
