@@ -79,6 +79,40 @@ var WorkoutComments = Table[
 			Where:         "",
 			Include:       []string{},
 		},
+		WorkoutCommentsUserIDIdx: index{
+			Type: "btree",
+			Name: "workout_comments_user_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "user_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
+		WorkoutCommentsWorkoutIDIdx: index{
+			Type: "btree",
+			Name: "workout_comments_workout_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "workout_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 	},
 	PrimaryKey: &constraint{
 		Name:    "workout_comments_pkey",
@@ -124,12 +158,14 @@ func (c workoutCommentColumns) AsSlice() []column {
 }
 
 type workoutCommentIndexes struct {
-	WorkoutCommentsPkey index
+	WorkoutCommentsPkey         index
+	WorkoutCommentsUserIDIdx    index
+	WorkoutCommentsWorkoutIDIdx index
 }
 
 func (i workoutCommentIndexes) AsSlice() []index {
 	return []index{
-		i.WorkoutCommentsPkey,
+		i.WorkoutCommentsPkey, i.WorkoutCommentsUserIDIdx, i.WorkoutCommentsWorkoutIDIdx,
 	}
 }
 

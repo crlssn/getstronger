@@ -88,6 +88,23 @@ var ExercisesRoutines = Table[
 			Where:         "",
 			Include:       []string{},
 		},
+		ExercisesRoutinesExerciseIDIdx: index{
+			Type: "btree",
+			Name: "exercises_routines_exercise_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "exercise_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 		ExercisesRoutinesGroupIDIdx: index{
 			Type: "btree",
 			Name: "exercises_routines_group_id_idx",
@@ -193,13 +210,14 @@ func (c exercisesRoutineColumns) AsSlice() []column {
 
 type exercisesRoutineIndexes struct {
 	ExercisesRoutinesPkey                 index
+	ExercisesRoutinesExerciseIDIdx        index
 	ExercisesRoutinesGroupIDIdx           index
 	ExercisesRoutinesRoutineIDPositionIdx index
 }
 
 func (i exercisesRoutineIndexes) AsSlice() []index {
 	return []index{
-		i.ExercisesRoutinesPkey, i.ExercisesRoutinesGroupIDIdx, i.ExercisesRoutinesRoutineIDPositionIdx,
+		i.ExercisesRoutinesPkey, i.ExercisesRoutinesExerciseIDIdx, i.ExercisesRoutinesGroupIDIdx, i.ExercisesRoutinesRoutineIDPositionIdx,
 	}
 }
 

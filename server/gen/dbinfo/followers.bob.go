@@ -57,6 +57,28 @@ var Followers = Table[
 			Where:         "",
 			Include:       []string{},
 		},
+		FollowersFolloweeIDFollowerIDIdx: index{
+			Type: "btree",
+			Name: "followers_followee_id_follower_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "followee_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+				{
+					Name:         "follower_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false, false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 	},
 	PrimaryKey: &constraint{
 		Name:    "followers_pkey",
@@ -99,12 +121,13 @@ func (c followerColumns) AsSlice() []column {
 }
 
 type followerIndexes struct {
-	FollowersPkey index
+	FollowersPkey                    index
+	FollowersFolloweeIDFollowerIDIdx index
 }
 
 func (i followerIndexes) AsSlice() []index {
 	return []index{
-		i.FollowersPkey,
+		i.FollowersPkey, i.FollowersFolloweeIDFollowerIDIdx,
 	}
 }
 

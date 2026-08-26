@@ -79,6 +79,28 @@ var Routines = Table[
 			Where:         "",
 			Include:       []string{},
 		},
+		RoutinesUserIDCreatedAtIdx: index{
+			Type: "btree",
+			Name: "routines_user_id_created_at_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "user_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+				{
+					Name:         "created_at",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false, false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 	},
 	PrimaryKey: &constraint{
 		Name:    "routines_pkey",
@@ -115,12 +137,13 @@ func (c routineColumns) AsSlice() []column {
 }
 
 type routineIndexes struct {
-	RoutinesPkey index
+	RoutinesPkey               index
+	RoutinesUserIDCreatedAtIdx index
 }
 
 func (i routineIndexes) AsSlice() []index {
 	return []index{
-		i.RoutinesPkey,
+		i.RoutinesPkey, i.RoutinesUserIDCreatedAtIdx,
 	}
 }
 
