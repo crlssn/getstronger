@@ -1,6 +1,10 @@
 min_version = "2026.8.2"
 
 [tools]
+# The S3 client Scaleway recommends, and the one deploy.yml already uses
+# against their endpoint. It is here because 'scw object' manages buckets but
+# cannot put objects, which is what 'pr:screenshots' needs.
+aws-cli = "2.36.31"
 buf = "1.50.0"
 bun = "1.4.0"
 go = "1.26.6"
@@ -502,6 +506,19 @@ arg "<body_file>" help="Path to a file holding the pull request body as Markdown
 flag "--base <base>" help="Branch to target instead of the default one, for a pull request stacked on another"
 '''
 run = './scripts/pr_create.sh "$usage_title" "$usage_body_file" ${usage_base+--base "$usage_base"}'
+
+[tasks."pr:screenshots"]
+description = "Publish a pull request's screenshots and print the markdown that shows them"
+usage = '''
+arg "<number>" help="Pull request the screenshots belong to"
+flag "--path <path>" help="Directory to publish, defaulting to web/screenshots/changes; anything outside web/screenshots is refused"
+flag "--append" help="Append the markdown to the pull request body, replacing an earlier block"
+'''
+# The bucket name is deliberately absent from here: it is a GitHub repository
+# variable, and locally it comes from .env, so no clone publishes to a bucket
+# it did not configure. See the README's Scaleway section.
+env = { _.file = ".env" }
+run = './scripts/pr_screenshots.sh "$usage_number" ${usage_path+--path "$usage_path"} ${usage_append+--append}'
 
 # Local development tasks
 

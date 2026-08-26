@@ -1,0 +1,146 @@
+#!/bin/bash
+#
+# Publishes a pull request's screenshots to Object Storage and prints the
+# markdown that shows them. GitHub's image uploader is a session-authenticated
+# web endpoint, so neither 'gh' nor 'mise run pr:create' can attach an image;
+# without this the before/after evidence for a visual change stays in a chat
+# reply while the review happens on GitHub.
+#
+# Only web/screenshots/ may be published. The objects have to be world-readable
+# for GitHub's image proxy to fetch them, and that directory is photographed
+# from the seeded database by construction — the guard is what keeps real data
+# out of a public bucket.
+#
+# The bucket is not the one the web app is deployed to: that one is synced with
+# --delete, so a pr/ prefix in it would disappear on the next merge to main.
+
+set -uo pipefail
+
+# Opens the block, so publishing again replaces the images a reviewer has
+# rather than leaving them two sets.
+readonly MARKER="<!-- pr:screenshots -->"
+
+fail() {
+  echo "pr_screenshots: $1" >&2
+  exit 1
+}
+
+readonly NUMBER="${1:-}"
+shift $(($# < 1 ? $# : 1)) # leaves only the flags, however few positionals came in
+
+path=""
+append=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --path)
+      path="${2-}"
+      [ -n "$path" ] || fail "no path given after --path"
+      shift 2
+      ;;
+    --append)
+      append=1
+      shift
+      ;;
+    *) fail "unknown argument: $1" ;;
+  esac
+done
+
+[ -n "$NUMBER" ] || fail "no pull request number given"
+case "$NUMBER" in
+  *[!0-9]*) fail "'$NUMBER' is not a pull request number" ;;
+esac
+
+root="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -n "$root" ] || fail "no working tree here, so there are no screenshots to publish"
+
+[ -n "$path" ] || path="$root/web/screenshots/changes"
+
+# Both sides are resolved with 'cd' rather than compared as text, so a symlink
+# out of web/screenshots is caught as well as a path that names somewhere else.
+directory="$(cd "$path" 2>/dev/null && pwd -P)"
+[ -n "$directory" ] || fail "no directory at $path"
+publishable="$(cd "$root/web/screenshots" 2>/dev/null && pwd -P)"
+[ -n "$publishable" ] || fail "no directory at $root/web/screenshots"
+
+case "$directory" in
+  "$publishable" | "$publishable"/*) ;;
+  *) fail "$path is outside web/screenshots/, and only what was photographed from the seeded database may go to a public bucket" ;;
+esac
+
+images=()
+while IFS= read -r image; do
+  images+=("${image#"$directory"/}")
+done < <(find "$directory" -type f -name '*.png' | LC_ALL=C sort)
+
+[ "${#images[@]}" -gt 0 ] ||
+  fail "no images under $path; 'mise run screenshots:diff' writes the pages a change moved"
+
+bucket="${SCW_SCREENSHOTS_BUCKET_NAME:-}"
+[ -n "$bucket" ] ||
+  fail "SCW_SCREENSHOTS_BUCKET_NAME is not set, so there is no bucket to publish to; see the README's Scaleway section"
+readonly bucket
+readonly REGION="${SCW_REGION:-fr-par}"
+
+# The upload is the first thing that would reach the network, and the AWS CLI
+# reports missing credentials as an obscure SSL error, so say it plainly here.
+if [ -z "${AWS_ACCESS_KEY_ID:-}" ] && [ ! -r "${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}" ]; then
+  fail "no Scaleway credentials: put AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env, or configure them with 'aws configure'"
+fi
+
+sha="$(git rev-parse --short HEAD 2>/dev/null)"
+[ -n "$sha" ] || fail "no commit here, so there is nothing to publish the screenshots under"
+readonly sha
+
+readonly PREFIX="pr/$NUMBER/$sha"
+
+# Under a prefix naming the commit, so re-photographing a branch adds a set
+# rather than overwriting the one a reviewer may be looking at. The lifecycle
+# rule on the bucket is what removes them again.
+#
+# public-read on each object rather than a policy on the bucket: GitHub's image
+# proxy fetches anonymously, and an ACL makes exactly what this task uploaded
+# readable, leaving the bucket itself private.
+aws s3 sync "$directory" "s3://$bucket/$PREFIX" \
+  --endpoint-url "https://s3.$REGION.scw.cloud" \
+  --acl public-read \
+  --exclude "*" \
+  --include "*.png" \
+  --cache-control "public, max-age=31536000, immutable" \
+  --no-progress ||
+  fail "the upload failed, so nothing was printed to put in the pull request"
+
+block="$MARKER
+
+## Screenshots
+
+| Page | Screenshot |
+| --- | --- |
+"
+for image in "${images[@]}"; do
+  # Half of the 780 px the phone-sized viewport renders at, so several fit on
+  # a screen and each is still legible at its natural density.
+  block+="| \`${image%.png}\` | <img src=\"https://$bucket.s3.$REGION.scw.cloud/$PREFIX/$image\" width=\"390\" alt=\"${image%.png}\"> |
+"
+done
+block+="
+<sub>Captured at $sha.</sub>"
+
+printf '%s\n' "$block"
+
+[ -n "$append" ] || exit 0
+
+body="$(gh pr view "$NUMBER" --json body --jq .body)" ||
+  fail "could not read the body of #$NUMBER"
+
+# Everything before an earlier block, so a second run replaces those images
+# instead of appending a second set below them.
+body="${body%%"$MARKER"*}"
+while [ -n "$body" ] && [ "${body: -1}" = $'\n' ]; do
+  body="${body%$'\n'}"
+done
+
+file="$(mktemp)"
+trap 'rm -f "$file"' EXIT
+printf '%s\n\n%s\n' "$body" "$block" > "$file"
+
+gh pr edit "$NUMBER" --body-file "$file" || fail "could not update the body of #$NUMBER"

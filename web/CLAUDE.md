@@ -22,6 +22,11 @@ change with no visible effect — refactors, state, tests, tooling — needs no
 screenshot, and neither does one whose page cannot be reached without a
 backend the worktree cannot start; say so instead of skipping silently.
 
+A change that becomes a pull request puts the same images in its body with
+`mise run pr:screenshots <number> --append`, which publishes them and appends
+the markdown that shows them. The review happens on GitHub, so a chat reply
+alone leaves the reviewer nothing to look at.
+
 ## State
 
 Zustand, with module-level store singletons so non-component code

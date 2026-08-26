@@ -516,3 +516,42 @@ mise run screenshots:diff
 The run reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/changes/`. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does. This form deliberately leaves the database alone: the seed randomises names, so reseeding would move nearly every page and bury the change being looked at.
 
 Like the end-to-end suite, the run starts its own backend and web server — on ports `18280` and `15273` by default — so it neither depends on nor disturbs the local development services.
+
+### Publishing them to a pull request
+
+GitHub's image uploader is a session-authenticated web endpoint, so neither `gh` nor `mise run pr:create` can attach an image. This uploads the images to Object Storage instead and prints the markdown block that shows them:
+
+```bash
+mise run pr:screenshots 1209
+mise run pr:screenshots 1209 --append
+```
+
+The first prints the block to paste; the second also appends it to the pull request body, replacing an earlier block rather than leaving a reviewer two sets of images. It publishes `web/screenshots/changes/` — the highlighted differences `screenshots:diff` writes — and `--path web/screenshots/active` publishes another folder of the set instead. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
+
+Anything outside `web/screenshots/` is refused, symlinks included. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
+
+The bucket is not the one the web app is deployed to: `deploy.yml` syncs that one with `--delete`, so a `pr/` prefix in it would disappear on the next merge to `main`. Create it once, and give it a lifecycle rule so old images clean themselves up:
+
+```bash
+scw object bucket create getstronger-pull-requests region=fr-par
+
+aws s3api put-bucket-lifecycle-configuration \
+  --endpoint-url https://s3.fr-par.scw.cloud \
+  --bucket getstronger-pull-requests \
+  --lifecycle-configuration '{
+    "Rules": [
+      {
+        "ID": "expire-pull-request-screenshots",
+        "Filter": { "Prefix": "pr/" },
+        "Status": "Enabled",
+        "Expiration": { "Days": 30 }
+      }
+    ]
+  }'
+
+gh variable set SCW_SCREENSHOTS_BUCKET_NAME --body getstronger-pull-requests
+```
+
+The bucket itself stays private: only the objects the task uploads are readable, and only for thirty days.
+
+`SCW_SCREENSHOTS_BUCKET_NAME` is a repository variable rather than a value written into the task, so nothing publishes to a bucket it was not pointed at. Locally it comes from `.env`, alongside `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` — the `getstronger-deploy` API key from step 7 already carries the Object Storage permission sets the upload needs. Without either, the task fails and uploads nothing.
