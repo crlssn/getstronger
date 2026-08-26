@@ -114,6 +114,23 @@ var Plans = Table[
 			Where:         "active",
 			Include:       []string{},
 		},
+		PlansUserIDIdx: index{
+			Type: "btree",
+			Name: "plans_user_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "user_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 	},
 	PrimaryKey: &constraint{
 		Name:    "plans_pkey",
@@ -164,11 +181,12 @@ func (c planColumns) AsSlice() []column {
 type planIndexes struct {
 	PlansPkey             index
 	PlansOneActivePerUser index
+	PlansUserIDIdx        index
 }
 
 func (i planIndexes) AsSlice() []index {
 	return []index{
-		i.PlansPkey, i.PlansOneActivePerUser,
+		i.PlansPkey, i.PlansOneActivePerUser, i.PlansUserIDIdx,
 	}
 }
 

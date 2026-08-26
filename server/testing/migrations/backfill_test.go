@@ -4,6 +4,9 @@
 // migration. The test here boots a database with the migrations up to the one
 // under test, seeds it, and lets the remaining migration run against that
 // state.
+//
+// It also holds the invariants the finished schema must satisfy, which belong
+// to the migrations as a set rather than to any one of them.
 package migrations_test
 
 import (
