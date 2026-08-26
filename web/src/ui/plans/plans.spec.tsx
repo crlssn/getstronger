@@ -3,6 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
+import { DateTime } from 'luxon'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
@@ -23,6 +24,7 @@ import {
 import { useToastStore } from '@/stores/toasts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
+import { useActivityStore } from '@/stores/activity'
 import { usePlanStore } from '@/stores/plans'
 import { lowerKeyboard, raiseKeyboard, renderWithProviders } from '@/ui/testing'
 import { PlanForm } from './PlanForm'
@@ -56,6 +58,7 @@ const accept = async () => {
 
 beforeEach(() => {
   lowerKeyboard()
+  useActivityStore.setState({ routineLastPerformed: {}, loaded: true, failed: false })
   Object.values(mocked).forEach((mock) => mock.mockReset())
   mocked.listRoutines.mockResolvedValue(create(ListRoutinesResponseSchema, { routines }))
   mocked.getPlan.mockResolvedValue(create(GetPlanResponseSchema, { plan: plan() }))
@@ -274,6 +277,24 @@ describe('PlanForm', () => {
     // Trimmed, so a stray space does not become part of the name.
     await waitFor(() => expect(createPlan).toHaveBeenCalledWith('Upper lower', ['push', 'pull']))
     expect(useToastStore.getState().toast?.type).toBe('success')
+  })
+
+  // Three routines called Upper Body with the same "3 exercises" subtitle are
+  // impossible to tell apart, so the picker says when each was last trained.
+  test('says when each routine was last trained', async () => {
+    useActivityStore.setState({
+      routineLastPerformed: { push: DateTime.now().minus({ days: 3 }).toISO() ?? '' },
+      loaded: true,
+      failed: false,
+    })
+    render()
+
+    await userEvent.click(await screen.findByRole('button', { name: /Add routine/ }))
+
+    const pushRow = await screen.findByRole('button', { name: /Push day/ })
+    expect(pushRow).toHaveTextContent('3 days ago')
+    // A routine with no history says nothing rather than guessing.
+    expect(screen.getByRole('button', { name: /Leg day/ })).not.toHaveTextContent('ago')
   })
 
   // A routine appears once in a plan, so the picker stops offering it.

@@ -38,9 +38,10 @@
 }
 
 /* The handle is the way to the profile. The type size is right; what it lacks
-   is somewhere for a thumb to land, so it gains a hit area rather than a font. */
+   is somewhere for a thumb to land, so it gains a hit area rather than a font —
+   on both axes, because a short handle is narrower than a fingertip. */
 .feedMeta a {
-  @apply -my-3 inline-flex min-h-(--size-control-sm) items-center py-3 font-semibold text-text-muted hover:text-ink-strong;
+  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center py-3 font-semibold text-text-muted hover:text-ink-strong;
 }
 
 .feedChevron {

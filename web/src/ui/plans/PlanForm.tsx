@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { getPlan, listRoutines } from '@/http/requests'
 import posthog from '@/posthog'
+import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { usePlanStore } from '@/stores/plans'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
@@ -35,6 +36,8 @@ export const PlanForm = ({ planId }: Props) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
+  const routineLastPerformed = useActivityStore((state) => state.routineLastPerformed)
+
   const [name, setName] = useState('')
   const [routines, setRoutines] = useState<Routine[]>([])
   const [selected, setSelected] = useState<Routine[]>([])
@@ -46,6 +49,10 @@ export const PlanForm = ({ planId }: Props) => {
 
   useEffect(() => {
     const load = async () => {
+      // The picker says when each routine was last trained, which is what tells
+      // three routines with the same name and exercise count apart.
+      void useActivityStore.getState().load()
+
       const routinesResponse = await listRoutines(new Uint8Array(0))
       setRoutines(routinesResponse?.routines ?? [])
 
@@ -234,6 +241,9 @@ export const PlanForm = ({ planId }: Props) => {
         >
           {available.length > 0 ? (
             <div className={styles.routineOptions}>
+              {/* Three routines called Upper Body with the same "3 exercises"
+                  subtitle are impossible to tell apart, so each says when it
+                  was last trained. */}
               {available.map((routine) => (
                 <AppOptionRow
                   key={routine.id}
@@ -245,7 +255,14 @@ export const PlanForm = ({ planId }: Props) => {
                   }}
                 >
                   <strong>{routine.name}</strong>
-                  <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
+                  <small>
+                    {[
+                      t('home.exerciseCount', { count: routine.exercises.length }),
+                      lastPerformedIn(routineLastPerformed, routine.id)?.toRelative(),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </small>
                 </AppOptionRow>
               ))}
             </div>
