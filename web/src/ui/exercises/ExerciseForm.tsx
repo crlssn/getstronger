@@ -5,11 +5,11 @@ import { useTranslation } from 'react-i18next'
 
 import { listExerciseTags } from '@/http/requests'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItemInput } from '@/ui/components/AppListItemInput'
 import { ExerciseMeasurementSettings } from '@/ui/exercises/ExerciseMeasurementSettings'
 import { ExerciseTagsInput } from '@/ui/exercises/ExerciseTagsInput'
-import styles from './ExerciseForm.module.css'
 
 export interface ExerciseFormValues {
   name: string
@@ -83,11 +83,13 @@ export const ExerciseForm = ({
         suggestions={suggestions}
       />
 
-      <div className={styles.formActions}>
-        <AppButton type="submit" colour="primary">
+      {/* Pinned rather than parked at the end of the scroll, where the tab
+          bar sliced it in half. */}
+      <AppFormFooter>
+        <AppButton type="submit" colour="primary" size="lg">
           {submitLabel}
         </AppButton>
-      </div>
+      </AppFormFooter>
     </form>
   )
 }

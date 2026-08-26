@@ -24,7 +24,7 @@ import { useToastStore } from '@/stores/toasts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
-import { renderWithProviders } from '@/ui/testing'
+import { lowerKeyboard, raiseKeyboard, renderWithProviders } from '@/ui/testing'
 import { PlanForm } from './PlanForm'
 import { PlansView } from './PlansView'
 import { ViewPlan } from './ViewPlan'
@@ -55,6 +55,7 @@ const accept = async () => {
 }
 
 beforeEach(() => {
+  lowerKeyboard()
   Object.values(mocked).forEach((mock) => mock.mockReset())
   mocked.listRoutines.mockResolvedValue(create(ListRoutinesResponseSchema, { routines }))
   mocked.getPlan.mockResolvedValue(create(GetPlanResponseSchema, { plan: plan() }))
@@ -239,6 +240,17 @@ describe('PlanForm', () => {
 
     await addRoutine(/Push day/)
     expect(save).toBeEnabled()
+  })
+
+  // Parked at the end of the scroll the save was sliced in half by the tab
+  // bar. The pinned footer is the only thing in the app that stands down for
+  // the keyboard, so its absence while one is up says the save is in one.
+  test('pins its save above the tab bar', async () => {
+    raiseKeyboard()
+    render()
+
+    await screen.findByRole('textbox')
+    expect(screen.queryByRole('button', { name: 'Create plan' })).not.toBeInTheDocument()
   })
 
   test('creates the plan with its routines in order', async () => {

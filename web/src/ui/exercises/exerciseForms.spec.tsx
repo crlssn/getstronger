@@ -24,7 +24,7 @@ import {
 } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
-import { renderWithProviders } from '@/ui/testing'
+import { lowerKeyboard, raiseKeyboard, renderWithProviders } from '@/ui/testing'
 import { CreateExercise } from './CreateExercise'
 import { UpdateExercise } from './UpdateExercise'
 
@@ -65,6 +65,7 @@ const nameField = () => screen.getByRole('textbox', { name: 'Name' })
 const submit = (name: string) => screen.getByRole('button', { name })
 
 beforeEach(() => {
+  lowerKeyboard()
   Object.values(mocked).forEach((mock) => mock.mockReset())
   mocked.listExerciseTags.mockResolvedValue(['Chest', 'Push'])
   mocked.createExercise.mockResolvedValue(create(CreateExerciseResponseSchema, {}))
@@ -94,6 +95,17 @@ describe('CreateExercise', () => {
     await waitFor(() => expect(mocked.listExerciseTags).toHaveBeenCalled())
     expect(screen.queryByRole('switch')).not.toBeInTheDocument()
     expect(screen.queryByText('Rest timer')).not.toBeInTheDocument()
+  })
+
+  // Parked at the end of the scroll the submit was sliced in half by the tab
+  // bar. The pinned footer is the only thing in the app that stands down for
+  // the keyboard, so its absence while one is up says the submit is in one.
+  test('pins its submit above the tab bar', async () => {
+    raiseKeyboard()
+    render(<CreateExercise />)
+
+    await waitFor(() => expect(mocked.listExerciseTags).toHaveBeenCalled())
+    expect(screen.queryByRole('button', { name: 'Save Exercise' })).not.toBeInTheDocument()
   })
 
   test('creates the exercise it was given and goes back to the list', async () => {

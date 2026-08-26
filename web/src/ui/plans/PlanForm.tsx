@@ -16,6 +16,7 @@ import posthog from '@/posthog'
 import { usePlanStore } from '@/stores/plans'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
@@ -203,20 +204,23 @@ export const PlanForm = ({ planId }: Props) => {
               )}
             </section>
 
-            <div className={styles.saveArea}>
-              <small>
-                {editing
-                  ? t('training.planForm.saveNoteEditing')
-                  : t('training.planForm.saveNoteNew')}
-              </small>
-              <AppButton type="submit" colour="primary" disabled={!canSave || saving}>
+            <p className={styles.saveNote}>
+              {editing
+                ? t('training.planForm.saveNoteEditing')
+                : t('training.planForm.saveNoteNew')}
+            </p>
+
+            {/* Pinned rather than parked at the end of the scroll, where the
+                tab bar sliced it in half. */}
+            <AppFormFooter>
+              <AppButton type="submit" colour="primary" size="lg" disabled={!canSave || saving}>
                 {saving
                   ? t('training.planForm.saving')
                   : editing
                     ? t('training.planForm.saveChanges')
                     : t('training.planForm.createPlan')}
               </AppButton>
-            </div>
+            </AppFormFooter>
           </>
         )}
       </form>

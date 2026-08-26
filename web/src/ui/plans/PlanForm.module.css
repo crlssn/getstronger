@@ -103,11 +103,7 @@
   @apply border-t border-border bg-ink-surface px-5 py-4 text-sm text-text-muted;
 }
 
-.saveArea {
-  @apply grid gap-3;
-}
-
-.saveArea small {
+.saveNote {
   @apply text-center text-xs text-text-subtle;
 }
 
