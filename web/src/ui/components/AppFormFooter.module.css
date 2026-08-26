@@ -5,7 +5,7 @@
  * it instead of ending at it. */
 .footer {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-30 border-t border-border bg-surface/85 backdrop-blur;
+  @apply fixed inset-x-0 z-30 border-t border-border bg-surface-sunken/90 backdrop-blur;
 }
 
 .inner {

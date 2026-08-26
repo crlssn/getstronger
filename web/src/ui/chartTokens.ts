@@ -5,7 +5,7 @@ const token = (name: string, fallback: string) =>
     getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
   fallback
 
-export const inkColor = token('--color-ink', '#25282d')
+export const inkColor = token('--color-ink', '#17171a')
 export const successColor = token('--color-success', '#047857')
-export const subtleColor = token('--color-text-subtle', '#656b71')
-export const borderColor = token('--color-border', '#e3e5e0')
+export const subtleColor = token('--color-text-subtle', '#6e6b65')
+export const borderColor = token('--color-border', '#edebe7')
