@@ -197,6 +197,10 @@ screen reader — and each option carries `aria-pressed`, not just a class.
 switch that has to share a row with a title. Nothing long enough to need the
 room it gives up.
 
+A row too wide for its container scrolls, and the edge still hiding an option
+fades out. Without the fade a cut-off label — "Distance × time | Re…" — reads
+as a rendering fault rather than as something to swipe.
+
 ### `<DropdownButton>`
 
 The ⋯ menu. Items either navigate (`href`) or act (`func`); an item that acts is
