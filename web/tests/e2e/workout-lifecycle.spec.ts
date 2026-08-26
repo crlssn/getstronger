@@ -25,6 +25,10 @@ const pickerOptions = (page: E2EPage, dialog: ReturnType<E2EPage['getByRole']>) 
 const openExerciseName = async (page: E2EPage) =>
   (await page.getByRole('button', { expanded: true }).locator('strong').innerText()).trim()
 
+// One header per station, in session order. Two exercises may carry the same
+// title, so position is what tells the stations apart; a name is not.
+const stationHeaders = (page: E2EPage) => page.locator('button[aria-expanded]')
+
 // The unit is a label on the field, so it lives in the field's own box beside
 // the input rather than anywhere nameable.
 const unitFieldFor = (page: E2EPage, label: string) =>
@@ -180,14 +184,17 @@ test.describe('quick workout lifecycle', () => {
     await expect(weightInput).toHaveValue('26')
 
     await page.getByRole('button', { name: 'Complete exercise' }).click()
+    const stations = stationHeaders(page)
+    await expect(stations).toHaveCount(1)
     await page.getByRole('button', { name: 'Add exercise' }).click()
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
     const secondOption = pickerOptions(page, picker).first()
     const secondExercise = (await secondOption.locator('strong').innerText()).trim()
     await secondOption.click()
-    await expect(
-      page.locator('button[aria-expanded]').filter({ hasText: secondExercise }),
-    ).toHaveCount(1)
+    // The exercise joins the end of the session, so the count proves it was
+    // added exactly once and the last header proves it is the one added.
+    await expect(stations).toHaveCount(2)
+    await expect(stations.nth(1)).toContainText(secondExercise)
 
     await page.getByRole('button', { name: 'Finish workout' }).click()
     const finishDialog = page.getByRole('dialog', { name: 'Finish workout early?' })
@@ -621,19 +628,23 @@ test.describe('planned workouts and history', () => {
     await expect(nextCard).toContainText('1 of 2')
     await nextCard.getByRole('link', { name: /^Start / }).click()
 
+    const stations = stationHeaders(page)
+    const stationCount = await stations.count()
     const exercise = await openExerciseName(page)
     await logFirstSet(page, exercise, '30', '6')
     await page.getByRole('button', { name: 'Complete exercise' }).click()
 
-    // Seeded routines vary in length. One with a further exercise opens it on
-    // an empty set that blocks finishing until it is removed; a single-exercise
-    // routine is already finishable.
+    // Seeded routines vary in length, and the length is what says whether
+    // anything is left to clear: a routine with a further exercise advances to
+    // it and opens it on an empty set, and that empty set is what blocks
+    // finishing. A single-exercise routine is finishable the moment it is
+    // complete, and the row still on screen is the one just logged — a
+    // "Remove set 1" on screen is no evidence of anything to remove.
     const finishWorkout = page.getByRole('button', { name: 'Finish workout' })
-    const removeFirstSet = page.getByRole('button', { name: 'Remove set 1' })
-    await expect
-      .poll(async () => (await removeFirstSet.count()) > 0 || (await finishWorkout.isEnabled()))
-      .toBe(true)
-    if ((await removeFirstSet.count()) > 0) await removeFirstSet.click()
+    if (stationCount > 1) {
+      await expect(stations.nth(1)).toHaveAttribute('aria-expanded', 'true')
+      await page.getByRole('button', { name: 'Remove set 1' }).click()
+    }
 
     await expect(finishWorkout).toBeEnabled()
     await finishWorkout.click()

@@ -158,9 +158,10 @@ func (f *Factory) Seed(p SeedParams) *models.User {
 }
 
 func (f *Factory) seedUser(p SeedParams, user *models.User) {
+	titles := uniqueExerciseTitles(p.ExerciseCount)
 	var exercises models.ExerciseSlice
-	for range p.ExerciseCount {
-		exercises = append(exercises, f.NewExercise(ExerciseUserID(user.ID)))
+	for index := range p.ExerciseCount {
+		exercises = append(exercises, f.NewExercise(ExerciseUserID(user.ID), ExerciseTitle(titles[index])))
 	}
 
 	for range p.RoutineCount {
@@ -237,6 +238,28 @@ func (f *Factory) Now() time.Time {
 func Now() time.Time {
 	// Truncate to microseconds to unify precision across different databases.
 	return time.Now().UTC().Round(time.Microsecond)
+}
+
+// A title is what an exercise is called by, on screen and in a test that looks
+// for one. Drawing each independently gave a seeded library three exercises
+// called "Bench Press" and nothing to tell them apart, so a library hands its
+// titles out once, numbering the repeats it cannot avoid.
+func uniqueExerciseTitles(count int) []string {
+	pool := exerciseTitles()
+	rand.Shuffle(len(pool), func(i, j int) {
+		pool[i], pool[j] = pool[j], pool[i]
+	})
+
+	titles := make([]string, 0, count)
+	for index := range count {
+		title := pool[index%len(pool)]
+		if round := index / len(pool); round > 0 {
+			title = fmt.Sprintf("%s %d", title, round+1)
+		}
+		titles = append(titles, title)
+	}
+
+	return titles
 }
 
 func randomExercise(slice models.ExerciseSlice) *models.Exercise {
