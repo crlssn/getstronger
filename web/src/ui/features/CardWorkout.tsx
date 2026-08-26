@@ -136,7 +136,13 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     // one and a half. Two of those four numbers never earned it: PRS repeated
     // the badge beside the title, and DURATION was 60 min on nearly every card.
     return (
-      <article className={cn(styles.summaryCard, styles.feedSummaryCard)}>
+      <article
+        className={cn(
+          styles.summaryCard,
+          styles.feedSummaryCard,
+          personalBestCount > 0 && styles.feedRecord,
+        )}
+      >
         <Link
           to={`/workouts/${workout.id}`}
           className={styles.feedCardLink}
@@ -152,16 +158,16 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           </span>
 
           <div className={styles.feedCopy}>
-            <div className={styles.feedTitle}>
+            {/* Session and account on one line: whose it is belongs with what
+                it was, not on a row of its own. */}
+            <div className={cn(styles.feedTitle, styles.feedCardControl)}>
               <h2>{workout.name}</h2>
-              {personalBestBadge}
-            </div>
-            {/* Volume and sets before the date: the line truncates from the
-                end, and a long handle should cost the date rather than the
-                numbers the card exists to show. */}
-            <p className={cn(styles.feedMeta, styles.feedCardControl)}>
               <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
-              {' · '}
+            </div>
+
+            {/* Volume and sets before the date: the line truncates from the
+                end, and the date is the part worth losing first. */}
+            <p className={styles.feedMeta}>
               {[
                 `${formatNumber(workout.intensity)} ${t('common.kg')}`,
                 t('workout.setsCompact', { count: setCount }),
@@ -172,13 +178,17 @@ export const CardWorkout = ({ workout, compact }: Props) => {
             </p>
           </div>
 
-          {isOwner ? (
-            <div className={styles.feedCardControl}>
-              <DropdownButton items={dropdownItems} />
-            </div>
-          ) : (
-            <ChevronRightIcon className={styles.feedChevron} aria-hidden="true" />
+          {/* The card's amber is the record, so the count is said only to a
+              screen reader — a colour on its own tells them nothing. */}
+          {personalBestCount > 0 && (
+            <span className="sr-only">
+              {t('workout.card.prBadge', { count: personalBestCount })}
+            </span>
           )}
+
+          {/* Every card opens the workout, including your own: editing and
+              deleting live in the nav bar once it is open. */}
+          <ChevronRightIcon className={styles.feedChevron} aria-hidden="true" />
         </div>
       </article>
     )

@@ -57,10 +57,10 @@
    * pink and fails AA, so the hover pair darkens the text a step. */
   --color-danger-strong: #b91c1c;
   --color-danger-surface: #fef2f2;
-  /* A count of unread notifications is not an error. Sharing danger's red made
-   * two comments say "something is wrong"; ink says the same thing without the
-   * alarm, and leaves red doing one job. */
-  --color-badge: #17171a;
+  /* Unread notifications, in the red that reads as "look at this". It keeps
+   * its own name so the two can part company without hunting through 69
+   * files, even while they share a value. */
+  --color-badge: #dc2626;
   --color-info: #4c4943;
   --color-info-surface: #f1efec;
   /* Gold is for personal records, nowhere else. Champagne surface, its border,

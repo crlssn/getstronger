@@ -3,7 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
@@ -106,14 +106,20 @@ describe('CardWorkout', () => {
       )
     })
 
-    // One metadata line, not a 2x2 grid: the grid cost around 340px a card, so
-    // a phone showed one and a half of them.
-    test('carries who, when and the numbers on one line', () => {
+    // The session and the account share the title row; the numbers get the
+    // line under it. The 2x2 grid cost around 340px a card, so a phone showed
+    // one and a half of them.
+    test('names the session and the account on one row', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
-      const meta = screen.getByRole('link', { name: '@alice' }).closest('p')
-      expect(meta).toHaveTextContent(/4,200 kg/)
-      expect(meta).toHaveTextContent(/2 sets/)
+      const title = screen.getByRole('heading', { name: 'Push Day' }).closest('div')
+      expect(within(title!).getByRole('link', { name: '@alice' })).toBeInTheDocument()
+    })
+
+    test('carries the numbers on the line under it', () => {
+      render(<CardWorkout compact workout={withSets()} />)
+
+      expect(screen.getByText(/4,200 kg/)).toHaveTextContent(/2 sets/)
     })
 
     // PRS repeated the badge beside the title, and DURATION was 60 min on
@@ -140,14 +146,17 @@ describe('CardWorkout', () => {
       expect(screen.queryByText(/\bnew PRs?\b/i)).not.toBeInTheDocument()
     })
 
-    // The feed card stays where it is, so the toast is all there is to see.
-    test('announces a deletion on the spot', async () => {
+    // Every card opens the workout, your own included: editing and deleting
+    // live in the nav bar once it is open, so the row stays one tap with one
+    // meaning.
+    test('offers no menu of its own, on anybody’s workout', () => {
+      useAuthStore.setState({ userId: 'user-1' })
       render(<CardWorkout compact workout={workout()} />)
 
-      await deleteViaMenu()
-
-      await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'success' }))
-      expect(screen.queryByText('Push Day')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Workout actions' })).not.toBeInTheDocument()
+      expect(
+        screen.getByRole('link', { name: 'View Push Day workout details' }),
+      ).toBeInTheDocument()
     })
 
     test('leaves out the exercises and the comments', () => {

@@ -23,6 +23,8 @@
   @apply min-w-0 flex-1;
 }
 
+/* Centred, not baseline-aligned: the handle carries a tall hit area, and its
+   baseline inside that box sits below the name's. */
 .feedTitle {
   @apply flex min-w-0 items-center gap-2;
 }
@@ -31,17 +33,16 @@
   @apply truncate text-body-lg font-bold tracking-tight text-text;
 }
 
-/* Handle, volume, sets, when — one line, truncated rather than wrapped, so
-   every card in the feed is the same height. */
-.feedMeta {
-  @apply mt-0.5 truncate text-meta font-medium text-text-subtle;
+/* The account, beside the session rather than on a row of its own. It keeps a
+   thumb-sized hit area on both axes without taking the type of the name. */
+.feedTitle a {
+  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) shrink-0 items-center truncate py-3 text-meta font-semibold text-text-subtle hover:text-ink-strong;
 }
 
-/* The handle is the way to the profile. The type size is right; what it lacks
-   is somewhere for a thumb to land, so it gains a hit area rather than a font —
-   on both axes, because a short handle is narrower than a fingertip. */
-.feedMeta a {
-  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center py-3 font-semibold text-text-muted hover:text-ink-strong;
+/* Volume, sets, when — one line, truncated rather than wrapped, so every card
+   in the feed is the same height. */
+.feedMeta {
+  @apply truncate text-meta font-medium text-text-subtle;
 }
 
 .feedChevron {
@@ -212,6 +213,16 @@
    a feed of cards that rise as the cursor crosses them is a feed that moves. */
 .feedSummaryCard {
   @apply relative mb-3 overflow-hidden transition hover:border-ink-border;
+}
+
+/* A session that set a record, said by the card rather than by a pill on it.
+   Gold is for records, nowhere else. */
+.feedSummaryCard.feedRecord {
+  @apply border-record-border bg-record-surface;
+}
+
+.feedRecord .avatar {
+  @apply bg-record-border/50 text-record-strong;
 }
 
 /* The whole feed card is one link, with the controls sitting above it so a tap

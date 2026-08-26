@@ -18,8 +18,11 @@ import { describe, expect, test } from 'vitest'
  */
 const roles = {
   // Live right now: a rest running, a set just logged. Nothing that merely
-  // happened, and nothing that is simply true.
+  // happened, and nothing that is simply true — with one exception the app
+  // makes deliberately, the weekly streak, where the forest green is the
+  // card's whole point.
   success: [
+    'features/StreakCard.module.css',
     'shell/AppRestTimerBanner.module.css',
     'shell/AppToaster.module.css',
     'workouts/WorkoutRestBanner.module.css',
@@ -75,14 +78,16 @@ describe('the colour roles', () => {
     expect(spenders(colour)).toEqual([...allowed].sort())
   })
 
-  // The badge token exists so an unread count is separable from danger. If it
-  // ever resolves to danger's value again, two comments say "something is
-  // wrong" once more.
-  test('the unread badge is not danger wearing another name', () => {
+  // The unread count is drawn in red by choice, so it spends the badge token
+  // rather than danger's — the two share a value today and can part company
+  // without hunting through 69 files.
+  test('the unread badge spends its own token', () => {
     const theme = readFileSync(join(uiRoot, '..', 'assets', 'theme.css'), 'utf8')
-    const value = (name: string) => new RegExp(`--color-${name}:\\s*([^;]+);`).exec(theme)?.[1]
 
-    expect(value('badge')).toBeDefined()
-    expect(value('badge')).not.toBe(value('danger'))
+    expect(/--color-badge:\s*#[0-9a-f]{6};/.test(theme)).toBe(true)
+    expect(spenders('badge')).toEqual([
+      'profile/ProfileView.module.css',
+      'shell/AppNavBottom.module.css',
+    ])
   })
 })

@@ -21,14 +21,14 @@
   @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
 }
 
-/* The weeks a streak is worth, as a number rather than as a badge. Ink once
+/* The weeks a streak is worth, as a number rather than as a badge. Green once
    there is a streak to hold: the colour is the streak's, everywhere it shows. */
 .streakCount {
   @apply shrink-0 text-meta font-bold tabular-nums text-text-subtle;
 }
 
 .streakCard.active .streakCount {
-  @apply text-text;
+  @apply text-success;
 }
 
 /* No groove behind them: five blocks on the card read as five weeks, and the
@@ -42,11 +42,11 @@
 }
 
 .weekBlock.complete {
-  @apply bg-ink text-white;
+  @apply bg-success text-white;
 }
 
 .weekBlock.current:not(.complete) {
-  @apply bg-ink-surface ring-2 ring-inset ring-ink;
+  @apply bg-success-surface ring-2 ring-inset ring-success;
 }
 
 .weekBlock > svg {
