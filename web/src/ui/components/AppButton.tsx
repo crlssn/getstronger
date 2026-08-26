@@ -11,8 +11,10 @@ import styles from './AppButton.module.css'
 export type ButtonColour = 'primary' | 'secondary' | 'ghost' | 'destructive'
 
 // The control scale, not a set of paddings: sm is the tap-target floor, lg is
-// what a form's submit uses. There is nothing below sm on purpose.
-export type ButtonSize = 'sm' | 'md' | 'lg'
+// what a form's submit uses. There is nothing below sm on purpose — inline is
+// sm's height with the type of the copy it sits beside, which is a quieter
+// button rather than a smaller one.
+export type ButtonSize = 'inline' | 'sm' | 'md' | 'lg'
 
 interface Shared {
   colour: ButtonColour

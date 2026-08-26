@@ -2,6 +2,7 @@ export const en = {
   common: {
     cancel: 'Cancel',
     close: 'Close',
+    remove: 'Remove',
     save: 'Save',
     edit: 'Edit',
     delete: 'Delete',
@@ -748,6 +749,7 @@ export const sv = {
   common: {
     cancel: 'Avbryt',
     close: 'Stäng',
+    remove: 'Ta bort',
     save: 'Spara',
     edit: 'Redigera',
     delete: 'Ta bort',

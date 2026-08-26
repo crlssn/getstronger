@@ -200,11 +200,29 @@ export const RoutineGroupsEditor = ({
                     onChange={(mode) => onChange(setMode(groups, group.id, mode))}
                   />
                 </header>
-                <p className={styles.groupHint}>
-                  {circuit
-                    ? t('routine.form.groups.circuitSummary')
-                    : t('routine.form.groups.straightSummary')}
-                </p>
+                <div className={styles.groupHintRow}>
+                  <p className={styles.groupHint}>
+                    {circuit
+                      ? t('routine.form.groups.circuitSummary')
+                      : t('routine.form.groups.straightSummary')}
+                  </p>
+                  {/* Quiet, and nowhere near the button that fills the group:
+                      what it removes is the block, not the exercises in it —
+                      those fold into the group above. */}
+                  {groups.length > 1 && (
+                    <AppButton
+                      type="button"
+                      colour="ghost"
+                      size="inline"
+                      width="auto"
+                      className={styles.removeGroup}
+                      aria-label={t('routine.form.groups.removeGroup', { letter })}
+                      onClick={() => onChange(removeGroup(groups, group.id))}
+                    >
+                      {t('common.remove')}
+                    </AppButton>
+                  )}
+                </div>
               </>
             )}
 
@@ -312,18 +330,6 @@ export const RoutineGroupsEditor = ({
                 >
                   <PlusIcon className="size-4" aria-hidden="true" /> {t('workout.addExercise')}
                 </AppButton>
-
-                {/* The icon alone: naming the group again would take room from
-                    the action people actually come here for. */}
-                {groups.length > 1 && (
-                  <AppIconButton
-                    className={styles.removeGroup}
-                    icon={TrashIcon}
-                    tone="danger"
-                    label={t('routine.form.groups.removeGroup', { letter })}
-                    onClick={() => onChange(removeGroup(groups, group.id))}
-                  />
-                )}
               </div>
             </div>
           </section>

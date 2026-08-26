@@ -24,8 +24,19 @@
   @apply shrink-0;
 }
 
+/* The line that says how the group runs, and the one action that is about the
+   group rather than about what is in it. */
+.groupHintRow {
+  @apply mb-2 flex items-center gap-2 px-1;
+}
+
 .groupHint {
-  @apply mb-3 px-1 text-meta font-medium text-text-subtle;
+  @apply min-w-0 flex-1 text-meta font-medium text-text-subtle;
+}
+
+/* Positioning only: the button's own quiet is the design system's. */
+.removeGroup {
+  @apply shrink-0;
 }
 
 /* Nothing inside is boxed either: settings and exercises are ruled rows, so the
@@ -122,15 +133,11 @@
 /* Ruled off from the exercises above it: adding one is what a group is built
    with, so it is the width of the card rather than a button parked in a row. */
 .groupActions {
-  @apply flex items-center gap-1 border-t border-border px-2;
+  @apply border-t border-border px-2;
 }
 
 .addExercise {
-  @apply flex-1 font-bold;
-}
-
-.removeGroup {
-  @apply shrink-0;
+  @apply w-full;
 }
 
 .emptyGroup {
