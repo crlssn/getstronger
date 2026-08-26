@@ -350,7 +350,7 @@ A merge is therefore never a production deploy: `main` lands on beta, and produc
 
 Only a push deploys selectively, by the paths that changed since the last successful push deploy. A release and a labelled pull request deploy all three components, since neither wants an environment running half of one revision and half of another. Beta then keeps what the pull request left there until a later push or a manual run replaces it — run the workflow against `main` with all three components to put it back.
 
-Every beta deploy also reseeds beta's database, whatever else it deploys. Beta is a demo environment: it is meant to show the app's personas rather than whatever the last person testing it left behind. The seed truncates every table and rewrites it from `server/testing/factory/seed`, so any account created on beta is gone at the next deploy. Production is never seeded — the job runs only when the resolved environment is `beta`, and the seed itself refuses any `ENV` but `local` and `beta`. A manual run can skip it with the **Seed** input.
+Every beta deploy that ships a component also reseeds beta's database. Beta is a demo environment: it is meant to show the app's personas rather than whatever the last person testing it left behind. The seed truncates every table and rewrites it from `server/testing/factory/seed` in one transaction, so any account created on beta is gone at the next deploy — and a failed seed leaves the previous data in place. Production is never seeded: the job runs only when the resolved environment is `beta`, and the seed refuses any `ENV` it may not wipe. A manual run can skip it with the **Seed** input.
 
 Give the `production` environment a required reviewer under **Settings → Environments → production → Required reviewers**, so the promotion is an approval rather than an accident. Every deploying job names its environment, so a production run pauses before it touches anything.
 
@@ -369,7 +369,7 @@ Secrets:   DB_MIGRATION_PASSWORD
 
 `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` are set on `production` only, and nowhere else — see step 8.
 
-The seed's personas are configured on `beta` only, and all of it is optional: the `SEED_EMAIL`, `SEED_NAME`, `SEED_NEW_EMAIL`, and `SEED_NEW_NAME` variables and the `SEED_PASSWORD` secret each fall back to the seed's own default, so beta needs none of them set. Set `SEED_PASSWORD` if the demo accounts should not share the local `password123`.
+The `SEED_PASSWORD` secret is set on `beta` only, and it is required: the seeded logins are publicly reachable, so the seed refuses to run with the published local default password.
 
 These stay at repository scope, shared by both environments:
 
@@ -380,7 +380,7 @@ Secrets:   SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
 
 `DB_MIGRATION_PASSWORD` is the only secret that differs by environment; the API and web jobs authenticate to Scaleway with the shared `SCW_ACCESS_KEY_ID` and `SCW_SECRET_KEY`. A beta database in the production Project is reached by the same migration identity, so both environments hold the same value — set it on each anyway, so beta never depends on a repository-scoped fallback.
 
-Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key; the workflow uses the migration identity only in the database job. The runtime identity is configured directly on the Serverless Container, not in GitHub. `SCW_CONTAINER_ID` is the Serverless Container's UUID, shown on its **Overview** tab in the console. If beta runs in its own Scaleway Project, put that Project's `SCW_ACCESS_KEY_ID` and `SCW_SECRET_KEY` on the `beta` environment; environment secrets take precedence over repository ones.
+Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key; the workflow uses the migration identity only in the database and seed jobs. The runtime identity is configured directly on the Serverless Container, not in GitHub. `SCW_CONTAINER_ID` is the Serverless Container's UUID, shown on its **Overview** tab in the console. If beta runs in its own Scaleway Project, put that Project's `SCW_ACCESS_KEY_ID` and `SCW_SECRET_KEY` on the `beta` environment; environment secrets take precedence over repository ones.
 
 The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secret key goes in `SCW_SECRET_KEY`. See [Using IAM API keys with Object Storage](https://www.scaleway.com/en/docs/iam/api-cli/using-api-key-object-storage/) for the preferred-Project behavior.
 
@@ -408,7 +408,7 @@ Beta is a full copy of the production stack, serving `https://beta.getstronger.s
 
 Both environments push to the single `getstronger/server` registry namespace, which is safe because neither publishes a moving tag: every image is tagged with its commit, and a deploy repoints its own container at the commit it just built.
 
-Beta's container takes the same configuration as step 3 with its own values, including `ENV=production` — the backend only distinguishes `local` from `production`, and beta is a deployed environment in every respect.
+Beta's container takes the same configuration as step 3 with its own values, except `ENV=beta`: a deployed environment in every respect — secure cookies included — that the backend can still tell apart from production.
 
 Keeping beta in the production Scaleway Project reuses the IAM applications from step 1: the migration and runtime permission sets are Project-scoped and already cover a second database. A separate Project isolates beta more strictly, at the cost of its own IAM applications and deploy key.
 

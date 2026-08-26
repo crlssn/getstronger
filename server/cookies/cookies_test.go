@@ -127,3 +127,15 @@ func TestCookies_BetaIsSecure(t *testing.T) {
 	require.True(t, cookie.RefreshToken("value").Secure)
 	require.Equal(t, http.SameSiteNoneMode, cookie.RefreshToken("value").SameSite)
 }
+
+// An unknown or unset environment fails closed: every deployed environment is
+// served over TLS, so only an explicit local environment may drop Secure.
+func TestCookies_UnknownEnvironmentIsSecure(t *testing.T) {
+	t.Parallel()
+
+	cfg := new(config.Config)
+	cookie := cookies.New(cfg)
+
+	require.True(t, cookie.RefreshToken("value").Secure)
+	require.Equal(t, http.SameSiteNoneMode, cookie.RefreshToken("value").SameSite)
+}

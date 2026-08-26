@@ -83,3 +83,12 @@ func TestEnvironmentSeedable(t *testing.T) {
 		})
 	}
 }
+
+func TestEnvironmentLocal(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, config.EnvironmentLocal.Local())
+	require.False(t, config.EnvironmentBeta.Local())
+	require.False(t, config.EnvironmentProduction.Local())
+	require.False(t, config.Environment("").Local())
+}

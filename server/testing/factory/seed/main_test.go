@@ -11,6 +11,7 @@ import (
 
 	"github.com/stephenafamo/bob"
 
+	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -39,7 +40,7 @@ func TestSeedPersonas(t *testing.T) {
 		},
 	}
 
-	active, newlySignedUp := seedPersonas(c.DB, f, config)
+	active, newlySignedUp := seedPersonas(bob.NewDB(c.DB), f, config)
 	require.NotNil(t, active)
 	require.NotNil(t, newlySignedUp)
 
@@ -121,7 +122,7 @@ func TestSeedJaneDoe(t *testing.T) {
 	)
 	johnWorkouts := f.NewWorkoutSlice(4, factory.WorkoutUserID(john.ID))
 
-	seedJaneDoe(c.DB, f, john)
+	seedJaneDoe(bob.NewDB(c.DB), f, john)
 
 	jane, err := models.Users.Query(
 		models.SelectWhere.Users.Name.EQ("Jane Doe"),
@@ -210,7 +211,7 @@ func TestTruncateDatabase(t *testing.T) {
 	f.NewExercise(factory.ExerciseUserID(user.ID))
 	f.NewWorkout(factory.WorkoutUserID(user.ID))
 
-	require.NoError(t, truncateDatabase(ctx, c.DB))
+	require.NoError(t, truncateDatabase(ctx, bob.NewDB(c.DB)))
 
 	userCount, err := models.Users.Query().Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
@@ -250,4 +251,43 @@ func TestSeedConfig(t *testing.T) {
 			require.Equal(t, test.environment, string(c.Environment))
 		})
 	}
+}
+
+// The truncate and every insert share one transaction, so a mid-seed failure
+// leaves the previous data in place rather than a truncated, half-seeded
+// database. A rollback stands in for the failure here.
+func TestSeedIsAtomic(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		require.NoError(t, c.Terminate(ctx))
+	})
+	existing := factory.NewFactory(c.DB).NewUser(factory.UserName("Existing User"))
+
+	tx, err := c.DB.BeginTx(ctx, nil)
+	require.NoError(t, err)
+	exec := bob.NewTx(tx)
+	require.NoError(t, truncateDatabase(ctx, exec))
+	f := factory.NewFactoryExec(exec)
+	seedPersonas(exec, f, personaConfig{
+		active: factory.SeedUser{Email: "active@test.local", Password: "password123", Name: "Alex Morgan"},
+		new:    factory.SeedUser{Email: "new@test.local", Password: "password123", Name: "Sam Taylor"},
+	})
+	require.NoError(t, tx.Rollback())
+
+	users, err := models.Users.Query().All(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	require.Equal(t, existing.ID, users[0].ID)
+}
+
+func TestGuardSeedPassword(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, guardSeedPassword(config.EnvironmentLocal, defaultSeedPassword))
+	require.NoError(t, guardSeedPassword(config.EnvironmentBeta, "a-real-password"))
+	require.ErrorIs(t, guardSeedPassword(config.EnvironmentBeta, defaultSeedPassword), errDefaultSeedPassword)
+	require.ErrorIs(t, guardSeedPassword(config.EnvironmentProduction, defaultSeedPassword), errDefaultSeedPassword)
 }

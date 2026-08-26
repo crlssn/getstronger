@@ -49,10 +49,10 @@ func (c *Cookies) ExpiredRefreshToken() *http.Cookie {
 	}
 }
 
+// Deployed environments always use secure cookies — an unknown environment
+// fails closed. Locally, the mkcert TLS setup decides.
 func (c *Cookies) usesSecureCookies() bool {
-	return c.config.Environment == config.EnvironmentProduction ||
-		c.config.Environment == config.EnvironmentBeta ||
-		c.config.Server.HasCertificate()
+	return !c.config.Environment.Local() || c.config.Server.HasCertificate()
 }
 
 func sameSiteMode(secure bool) http.SameSite {

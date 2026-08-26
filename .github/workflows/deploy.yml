@@ -166,19 +166,20 @@ jobs:
             -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
             -verbose up
 
-  # Beta is a demo environment, so every deploy leaves it showing the personas
-  # the app is designed around rather than whatever the last person testing it
-  # left behind. Seeding truncates every table, which is why this job is fenced
-  # off from production three times over: by its own condition, by the
-  # environment check below, and by the seed refusing any ENV it may not wipe.
+  # Beta is a demo environment: every deploy that ships a component also
+  # reseeds it, so it shows the seed's personas rather than whatever the last
+  # person testing it left behind. The condition and the environment check
+  # confine the truncate to beta, and the seed refuses any ENV it may not wipe.
   seed:
     needs: [init, database]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     if: >-
       always() &&
+      needs.init.result == 'success' &&
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
       needs.init.outputs.environment == 'beta' &&
+      (github.event_name != 'push' || needs.init.outputs.web == 'true' || needs.init.outputs.server == 'true' || needs.init.outputs.database == 'true') &&
       (github.event_name != 'workflow_dispatch' || inputs.seed)
     environment: ${{ needs.init.outputs.environment }}
 
@@ -205,47 +206,33 @@ jobs:
           go-version-file: go.mod
 
       # The migration user, because seeding truncates and rewrites every table.
-      # ENV is hardcoded rather than read from the environment: the seed refuses
-      # anything but local and beta, so no misconfigured variable can point this
-      # at production.
+      # ENV carries the resolved environment, so the seed's own guard checks
+      # the same fact that selected the credentials.
       - name: Seed the database
         env:
-          ENV: beta
+          ENV: ${{ needs.init.outputs.environment }}
           DB_HOST: ${{ vars.DB_HOST }}
           DB_PORT: ${{ vars.DB_PORT }}
           DB_NAME: ${{ vars.DB_NAME }}
           DB_USER: ${{ vars.DB_MIGRATION_USER }}
           DB_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
-          SEED_EMAIL: ${{ vars.SEED_EMAIL }}
-          SEED_NAME: ${{ vars.SEED_NAME }}
-          SEED_NEW_EMAIL: ${{ vars.SEED_NEW_EMAIL }}
-          SEED_NEW_NAME: ${{ vars.SEED_NEW_NAME }}
           SEED_PASSWORD: ${{ secrets.SEED_PASSWORD }}
         run: |
-          # Every persona detail falls back to the seed's own default, so beta
-          # needs no variables configured to work.
-          args=()
-          add_flag() {
-            if [ -n "$2" ]; then
-              args+=("-$1=$2")
-            fi
-          }
-          add_flag email "$SEED_EMAIL"
-          add_flag name "$SEED_NAME"
-          add_flag new-email "$SEED_NEW_EMAIL"
-          add_flag new-name "$SEED_NEW_NAME"
-          add_flag password "$SEED_PASSWORD"
-
-          go run ./server/testing/factory/seed "${args[@]}"
+          # The seeded logins are publicly reachable, so the seed refuses its
+          # published local default password outside local.
+          if [ -z "$SEED_PASSWORD" ]; then
+            echo "::error::Set the SEED_PASSWORD secret on the beta environment."
+            exit 1
+          fi
+          go run ./server/testing/factory/seed -password="$SEED_PASSWORD"
 
   server:
-    needs: [init, database, seed]
+    needs: [init, database]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
       always() &&
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
-      (needs.seed.result == 'success' || needs.seed.result == 'skipped') &&
       (needs.init.outputs.server == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_server))
     environment: ${{ needs.init.outputs.environment }}
 
@@ -346,13 +333,12 @@ jobs:
           fi
 
   web:
-    needs: [init, database, seed, server]
+    needs: [init, database, server]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: >-
       always() &&
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
-      (needs.seed.result == 'success' || needs.seed.result == 'skipped') &&
       (needs.server.result == 'success' || needs.server.result == 'skipped') &&
       (needs.init.outputs.web == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
     environment: ${{ needs.init.outputs.environment }}

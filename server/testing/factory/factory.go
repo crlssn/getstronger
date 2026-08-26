@@ -59,9 +59,15 @@ func nativeUUID(value any) uuid.UUID {
 }
 
 func NewFactory(db *sql.DB) *Factory {
+	return NewFactoryExec(bob.NewDB(db))
+}
+
+// NewFactoryExec builds a factory over any Bob executor, which is what lets
+// the seed run its truncate and every insert inside one transaction.
+func NewFactoryExec(exec bob.Executor) *Factory {
 	return &Factory{
 		generated: bobfactory.New(),
-		exec:      bob.NewDB(db),
+		exec:      exec,
 		Faker:     gofakeit.New(0),
 	}
 }

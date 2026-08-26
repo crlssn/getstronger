@@ -62,6 +62,13 @@ func (e Environment) Seedable() bool {
 	return e == EnvironmentLocal || e == EnvironmentBeta
 }
 
+// Local reports whether this is a developer's own stack. Every deployed
+// environment is served over TLS, so environment branches treat anything
+// non-local — an unknown value included — as deployed and fail closed.
+func (e Environment) Local() bool {
+	return e == EnvironmentLocal
+}
+
 type DB struct {
 	Host     string
 	Port     string
