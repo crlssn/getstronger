@@ -13,7 +13,7 @@ import { PageNavAction } from '@/ui/components/PageNavAction'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
 import { totalVolume, withinDays } from '@/utils/dailyVolume'
-import { formatToShortDateTime } from '@/utils/datetime'
+import { formatTimestamp } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import styles from './ProgressView.module.css'
@@ -125,7 +125,7 @@ export const ProgressView = () => {
                     <strong>{personalBest.exercise?.name}</strong>
                     <ExerciseTags compact tags={personalBest.exercise?.tags} />
                     {personalBest.set?.metadata?.createdAt && (
-                      <small>{formatToShortDateTime(personalBest.set.metadata.createdAt)}</small>
+                      <small>{formatTimestamp(personalBest.set.metadata.createdAt)}</small>
                     )}
                   </span>
                   <span className={styles.recordValue}>

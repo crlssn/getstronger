@@ -33,9 +33,14 @@ const (
 	workoutCommentCount    = 2
 	activeAccountAge       = 365 * 24 * time.Hour
 	activeWorkoutInterval  = 7 * 24 * time.Hour
-	defaultActiveEmail     = "active@getstronger.test"
-	defaultNewEmail        = "new@getstronger.test"
-	defaultSeedPassword    = "password123"
+	// Without these the background accounts finish every workout at seed time,
+	// and the feed is a dozen consecutive "Just now" cards — which reads as
+	// broken rather than as fresh.
+	backgroundWorkoutInterval = 3 * 24 * time.Hour
+	backgroundWorkoutStagger  = 5 * time.Hour
+	defaultActiveEmail        = "active@getstronger.test"
+	defaultNewEmail           = "new@getstronger.test"
+	defaultSeedPassword       = "password123"
 )
 
 type personaConfig struct {
@@ -115,6 +120,8 @@ func seedPersonas(database *sql.DB, f *factory.Factory, config personaConfig) (*
 		WorkoutSetsPerExerciseMin: workoutSetsMin,
 		WorkoutSetsPerExerciseMax: workoutSetsMax,
 		WorkoutCommentCount:       workoutCommentCount,
+		WorkoutInterval:           backgroundWorkoutInterval,
+		WorkoutStagger:            backgroundWorkoutStagger,
 	})
 
 	newAuth := f.NewAuth(

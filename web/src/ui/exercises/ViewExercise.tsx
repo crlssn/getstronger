@@ -23,7 +23,7 @@ import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { ExerciseChart } from '@/ui/features/ExerciseChart'
 import { appendPage } from '@/utils/appendPage'
 import blurActiveElement from '@/utils/blurActiveElement'
-import { formatToShortDateTime } from '@/utils/datetime'
+import { formatTimestamp } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { downSample } from '@/utils/exerciseTrend'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
@@ -214,7 +214,7 @@ export const ViewExercise = () => {
               <Link key={set.id} to={`/workouts/${set.metadata?.workoutId}`}>
                 <span className={styles.setCopy}>
                   <strong>{formatExerciseSet(set, exercise)}</strong>
-                  <small>{formatToShortDateTime(set.metadata?.createdAt)}</small>
+                  <small>{formatTimestamp(set.metadata?.createdAt)}</small>
                 </span>
                 {set.metadata?.personalBest && (
                   <span className={styles.recordPill}>

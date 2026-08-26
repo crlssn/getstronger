@@ -106,11 +106,24 @@ describe('CardWorkout', () => {
       )
     })
 
-    test('leads with the headline numbers', () => {
+    // One metadata line, not a 2x2 grid: the grid cost around 340px a card, so
+    // a phone showed one and a half of them.
+    test('carries who, when and the numbers on one line', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
-      expect(screen.getByText('4,200 kg')).toBeInTheDocument()
-      expect(screen.getByText('2')).toBeInTheDocument()
+      const meta = screen.getByRole('link', { name: '@alice' }).closest('p')
+      expect(meta).toHaveTextContent(/4,200 kg/)
+      expect(meta).toHaveTextContent(/2 sets/)
+    })
+
+    // PRS repeated the badge beside the title, and DURATION was 60 min on
+    // nearly every card in a seeded year.
+    test('leaves the record count and the duration off the row', () => {
+      render(<CardWorkout compact workout={withSets()} />)
+
+      expect(screen.queryByText('Sets logged')).not.toBeInTheDocument()
+      expect(screen.queryByText('Duration')).not.toBeInTheDocument()
+      expect(screen.queryByText('Personal records')).not.toBeInTheDocument()
     })
 
     test('flags a session that set a personal best', () => {
@@ -119,8 +132,8 @@ describe('CardWorkout', () => {
       expect(screen.getByText('New PR')).toBeInTheDocument()
     })
 
-    // The quadrant always counts them; what a session with none does not get
-    // is the badge that celebrates them.
+    // The detail page always counts them; what a session with none does not
+    // get is the badge that celebrates them.
     test('says nothing about records when there were none', () => {
       render(<CardWorkout compact workout={workout()} />)
 

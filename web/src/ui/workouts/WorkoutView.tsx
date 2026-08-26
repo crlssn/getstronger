@@ -12,7 +12,7 @@ import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores
 import { usePlanStore } from '@/stores/plans'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { formatToShortDateTime } from '@/utils/datetime'
+import { formatTimestamp } from '@/utils/datetime'
 import { formatNumber } from '@/utils/numbers'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
 import { workoutSummary } from '@/utils/workoutSummary'
@@ -112,7 +112,7 @@ export const WorkoutView = () => {
   // The row earns its space with the stats that matter: date, volume, duration.
   const workoutMeta = (workout: Workout) => {
     const { durationMinutes } = workoutSummary(workout)
-    const parts = [formatToShortDateTime(workout.finishedAt)]
+    const parts = [formatTimestamp(workout.finishedAt)]
 
     if (workout.intensity > 0) {
       parts.push(`${formatNumber(workout.intensity)} ${t('common.kg')}`)

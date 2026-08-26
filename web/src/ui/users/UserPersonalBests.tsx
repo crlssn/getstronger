@@ -10,7 +10,7 @@ import { AppList } from '@/ui/components/AppList'
 import { AppListItem, AppListItemLink } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
-import { formatToRelativeDateTime } from '@/utils/datetime'
+import { formatTimestamp } from '@/utils/datetime'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 
 /** This profile's best set for every exercise they have logged. */
@@ -48,7 +48,7 @@ export const UserPersonalBests = () => {
             {best.exercise?.name}
             <ExerciseTags compact tags={best.exercise?.tags} />
             <p className="mt-1 text-sm font-normal text-text-muted">
-              {formatToRelativeDateTime(best.set?.metadata?.createdAt)}
+              {formatTimestamp(best.set?.metadata?.createdAt)}
             </p>
           </div>
           {best.set ? formatExerciseSet(best.set, best.exercise) : ''}

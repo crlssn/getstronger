@@ -4,7 +4,7 @@ import type { Timestamp } from '@bufbuild/protobuf/wkt'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import { formatToRelativeDateTime } from '@/utils/datetime'
+import { formatTimestamp } from '@/utils/datetime'
 import { handle, initials } from '@/utils/names'
 import styles from './CardWorkoutComment.module.css'
 
@@ -31,7 +31,7 @@ export const CardWorkoutComment = ({ comment, timestamp, user }: Props) => {
       <div className={styles.commentContent}>
         <div className={styles.commentMeta}>
           <Link to={`/users/${user?.id}`}>{handle(user?.username)}</Link>
-          <time>{formatToRelativeDateTime(timestamp)}</time>
+          <time>{formatTimestamp(timestamp)}</time>
         </div>
         <p>{comment}</p>
       </div>

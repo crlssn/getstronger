@@ -130,12 +130,20 @@ test.describe('the workout dock', () => {
     // escape hatch is the only thing called "Finish workout".
     const secondary = page.getByRole('button', { name: 'Finish workout' })
 
-    // 56px against 48px, and only one of them carries a fill.
+    // 56px against 48px, and only one of them carries the ink fill. The way
+    // out is outlined rather than text-only: as a ghost, its disabled state was
+    // grey on grey with no border and read as a caption.
     expect((await primary.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(56)
     const primaryFill = await primary.evaluate((node) => getComputedStyle(node).backgroundColor)
     const secondaryFill = await secondary.evaluate((node) => getComputedStyle(node).backgroundColor)
     expect(primaryFill).not.toBe(secondaryFill)
-    expect(secondaryFill).toBe('rgba(0, 0, 0, 0)')
+
+    const secondaryBorder = await secondary.evaluate((node) => {
+      const style = getComputedStyle(node)
+      return { colour: style.borderTopColor, width: style.borderTopWidth }
+    })
+    expect(parseFloat(secondaryBorder.width)).toBeGreaterThan(0)
+    expect(secondaryBorder.colour).not.toBe('rgba(0, 0, 0, 0)')
   })
 
   test('gives every set input the full control height', async ({ page }) => {

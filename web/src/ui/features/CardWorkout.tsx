@@ -1,7 +1,7 @@
 import type { Workout, WorkoutComment } from '@/proto/api/v1/workout_service_pb'
 import type { DropdownItem } from '@/types/dropdown'
 
-import { CheckIcon, TrophyIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -51,7 +51,8 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   const [openExercise, setOpenExercise] = useState(0)
   const [postingComment, setPostingComment] = useState(false)
 
-  const { setCount, personalBestCount, durationMinutes, finishedDate } = workoutSummary(workout)
+  const { setCount, personalBestCount, durationMinutes, finishedDate, finishedMoment } =
+    workoutSummary(workout)
   const isOwner = workout.user?.id === userId
 
   const onDeleteWorkout = async () => {
@@ -123,13 +124,17 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   )
 
   const note = workout.note && (
-    <div className={cn(styles.summaryNote, compact && styles.summaryNoteCompact)}>
+    <div className={styles.summaryNote}>
       <p className={styles.eyebrow}>{t('workout.note')}</p>
       <p>{workout.note}</p>
     </div>
   )
 
   if (compact) {
+    // One row, about 150px, so three fit a phone screen. It carried a byline
+    // row, a title band and a 2x2 stat grid — around 340px, and a phone showed
+    // one and a half. Two of those four numbers never earned it: PRS repeated
+    // the badge beside the title, and DURATION was 60 min on nearly every card.
     return (
       <article className={cn(styles.summaryCard, styles.feedSummaryCard)}>
         <Link
@@ -138,33 +143,43 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           aria-label={t('workout.card.viewDetails', { name: workout.name })}
         />
 
-        {/* The account, and when it trained. The person's own name competed
-            with the handle for one row and said the same thing twice; it is on
-            the profile the handle links to. */}
-        <header className={cn(styles.authorRow, styles.feedCardControl)}>
-          <Link to={`/users/${workout.user?.id}`} className={styles.avatar}>
-            {/* The brand's own initials stand in for a name we were not given. */}
+        <div className={styles.feedRow}>
+          {/* Decorative: the handle beside it is the link to the profile, and
+              two links to the same place is one too many for a screen reader.
+              The brand's own initials stand in for a name we were not given. */}
+          <span className={styles.avatar} aria-hidden="true">
             {initials(workout.user?.name) || 'GS'}
-          </Link>
-          <div className={styles.authorCopy}>
-            <p className={styles.authorNames}>
+          </span>
+
+          <div className={styles.feedCopy}>
+            <div className={styles.feedTitle}>
+              <h2>{workout.name}</h2>
+              {personalBestBadge}
+            </div>
+            {/* Volume and sets before the date: the line truncates from the
+                end, and a long handle should cost the date rather than the
+                numbers the card exists to show. */}
+            <p className={cn(styles.feedMeta, styles.feedCardControl)}>
               <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
+              {' · '}
+              {[
+                `${formatNumber(workout.intensity)} ${t('common.kg')}`,
+                t('workout.setsCompact', { count: setCount }),
+                finishedDate,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </p>
-            <p className={styles.authorDate}>{finishedDate}</p>
           </div>
-          {isOwner && <DropdownButton items={dropdownItems} />}
-        </header>
 
-        <div className={cn(styles.completedBand, personalBestCount > 0 && styles.record)}>
-          <div>
-            <p className={styles.eyebrow}>{t('workout.completed')}</p>
-            <h2>{workout.name}</h2>
-          </div>
-          {personalBestBadge}
+          {isOwner ? (
+            <div className={styles.feedCardControl}>
+              <DropdownButton items={dropdownItems} />
+            </div>
+          ) : (
+            <ChevronRightIcon className={styles.feedChevron} aria-hidden="true" />
+          )}
         </div>
-
-        {metricGrid}
-        {note}
       </article>
     )
   }
@@ -183,10 +198,12 @@ export const CardWorkout = ({ workout, compact }: Props) => {
 
       {/* The nav bar above carries the title, so the author is a byline under
           it rather than a card between the title and the numbers. */}
+      {/* The one place the time of day belongs: here it is a fact about the
+          session, not a timestamp on a row. */}
       <p className={styles.byline}>
         <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
         <span aria-hidden="true">·</span>
-        {finishedDate}
+        {finishedMoment}
       </p>
 
       <section className={cn(styles.summaryCard, styles.detailSummaryCard)}>

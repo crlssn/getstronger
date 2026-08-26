@@ -1,13 +1,16 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
-import { formatWorkoutDate } from '@/utils/datetime'
+import { formatMoment, formatTimestamp } from '@/utils/datetime'
 
 export interface WorkoutSummary {
   setCount: number
   personalBestCount: number
   /** Rounded to whole minutes, and never zero for a session that happened. */
   durationMinutes: number
+  /** When it finished, in the form every row in the app uses. */
   finishedDate: string
+  /** The same moment with its time of day, for the page about the session. */
+  finishedMoment: string
 }
 
 export const workoutSummary = (workout: Workout): WorkoutSummary => {
@@ -32,6 +35,7 @@ export const workoutSummary = (workout: Workout): WorkoutSummary => {
       startedAt && finishedAt
         ? Math.max(1, Math.round(Number(finishedAt.seconds - startedAt.seconds) / 60))
         : 0,
-    finishedDate: formatWorkoutDate(finishedAt),
+    finishedDate: formatTimestamp(finishedAt),
+    finishedMoment: formatMoment(finishedAt),
   }
 }
