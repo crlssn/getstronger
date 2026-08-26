@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/distanceunit"
+	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -345,4 +346,49 @@ func (s *userSuite) TestUpdateUserDistanceUnit() {
 			s.Require().Equal(t.expected, parser.DistanceUnitToProto(persisted.DistanceUnit))
 		})
 	}
+}
+
+// A follower, a profile, and someone that profile follows — the one graph both
+// list procedures read from opposite ends.
+func (s *userSuite) followGraph() (context.Context, *models.User, *models.User, *models.User) {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	follower := s.factory.NewUser()
+	user := s.factory.NewUser()
+	followee := s.factory.NewUser()
+
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: follower.ID.String(),
+		FolloweeID: user.ID.String(),
+	}))
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: user.ID.String(),
+		FolloweeID: followee.ID.String(),
+	}))
+
+	return ctx, follower, user, followee
+}
+
+// The request field names the profile whose followers are wanted, not one of
+// the people in the list that comes back.
+func (s *userSuite) TestListFollowers() {
+	ctx, follower, user, _ := s.followGraph()
+
+	res, err := s.handler.ListFollowers(ctx, &connect.Request[v1.ListFollowersRequest]{
+		Msg: &v1.ListFollowersRequest{UserId: user.ID.String()},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(res.Msg.GetFollowers(), 1)
+	s.Require().Equal(follower.ID.String(), res.Msg.GetFollowers()[0].GetId())
+}
+
+// As above, the field names the profile being read rather than anyone it follows.
+func (s *userSuite) TestListFollowees() {
+	ctx, _, user, followee := s.followGraph()
+
+	res, err := s.handler.ListFollowees(ctx, &connect.Request[v1.ListFolloweesRequest]{
+		Msg: &v1.ListFolloweesRequest{UserId: user.ID.String()},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(res.Msg.GetFollowees(), 1)
+	s.Require().Equal(followee.ID.String(), res.Msg.GetFollowees()[0].GetId())
 }
