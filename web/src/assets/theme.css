@@ -45,7 +45,7 @@
 
   /* State. One green where there were three, an amber that is not the
    * achievement orange, a neutral informational step, and a badge colour that
-   * is separable from danger later without hunting through 69 files. */
+   * is its own value rather than danger's. */
   --color-success: #047857;
   /* Warmed a step off the cool mint it was, so a green tile sits on the same
    * paper as everything around it. */
@@ -57,7 +57,10 @@
    * pink and fails AA, so the hover pair darkens the text a step. */
   --color-danger-strong: #b91c1c;
   --color-danger-surface: #fef2f2;
-  --color-badge: #dc2626;
+  /* A count of unread notifications is not an error. Sharing danger's red made
+   * two comments say "something is wrong"; ink says the same thing without the
+   * alarm, and leaves red doing one job. */
+  --color-badge: #17171a;
   --color-info: #4c4943;
   --color-info-surface: #f1efec;
   /* Gold is for personal records, nowhere else. Champagne surface, its border,

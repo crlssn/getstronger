@@ -872,38 +872,38 @@ export const StartWorkout = () => {
           bar used to stick at the same offset with a higher z-index, so it
           rode up over the session title on scroll. */}
       <div className={styles.sessionChrome}>
-      <header className={styles.workoutHeader}>
-        <div className={styles.workoutHeaderInner}>
-          <AppIconButton
-            className={styles.leaveWorkout}
-            icon={XMarkIcon}
-            label={t('workout.leaveTitle')}
-            onClick={() => {
-              blurActiveElement()
-              setDiscardConfirmationOpen(false)
-              setLeaveDialogOpen(true)
-            }}
-          />
-          <div className="min-w-0">
-            <h1>{session?.name ?? t('workout.loading')}</h1>
-            <p className={styles.sessionProgress}>
-              {inCircuit && activeBlock
-                ? t('workout.circuitPosition', {
-                    round: activeRound,
-                    current: activeIndexInBlock + 1,
-                    total: activeBlock.stations.length,
-                  })
-                : t('workout.exercisePosition', {
-                    current: Math.min(activeStationIndex + 1, stations.length),
-                    total: stations.length,
-                  })}
-            </p>
+        <header className={styles.workoutHeader}>
+          <div className={styles.workoutHeaderInner}>
+            <AppIconButton
+              className={styles.leaveWorkout}
+              icon={XMarkIcon}
+              label={t('workout.leaveTitle')}
+              onClick={() => {
+                blurActiveElement()
+                setDiscardConfirmationOpen(false)
+                setLeaveDialogOpen(true)
+              }}
+            />
+            <div className="min-w-0">
+              <h1>{session?.name ?? t('workout.loading')}</h1>
+              <p className={styles.sessionProgress}>
+                {inCircuit && activeBlock
+                  ? t('workout.circuitPosition', {
+                      round: activeRound,
+                      current: activeIndexInBlock + 1,
+                      total: activeBlock.stations.length,
+                    })
+                  : t('workout.exercisePosition', {
+                      current: Math.min(activeStationIndex + 1, stations.length),
+                      total: stations.length,
+                    })}
+              </p>
+            </div>
+            <span className={styles.elapsed} aria-label={t('workout.elapsed')}>
+              {elapsedLabel(elapsedSeconds)}
+            </span>
           </div>
-          <span className={styles.elapsed} aria-label={t('workout.elapsed')}>
-            {elapsedLabel(elapsedSeconds)}
-          </span>
-        </div>
-      </header>
+        </header>
 
         {restSeconds > 0 && (
           <div className={styles.restDock}>
@@ -1108,11 +1108,14 @@ export const StartWorkout = () => {
             />
 
             {/* The escape hatch: quieter than everything above it, but always in
-                the same place at the end of the page. */}
+                the same place at the end of the page. Outlined rather than
+                text-only — as ghost, the disabled state was grey text on grey
+                with no border, indistinguishable from a caption, and this is
+                the way out of the app's longest-lived screen. */}
             {!allExercisesComplete && (
               <AppButton
                 type="button"
-                colour="ghost"
+                colour="secondary"
                 disabled={!canFinish}
                 title={canFinish ? undefined : finishStatus}
                 aria-label={
