@@ -148,7 +148,7 @@
 }
 
 .historyEnd svg {
-  @apply size-4 text-success;
+  @apply size-4 text-text-muted;
 }
 
 .historySpinner {

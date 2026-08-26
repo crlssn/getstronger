@@ -51,7 +51,7 @@
 }
 
 .upNext {
-  @apply mb-2 inline-flex rounded-full bg-success-surface px-2.5 py-1 text-xs font-semibold text-success;
+  @apply mb-2 inline-flex rounded-full bg-ink-tint px-2.5 py-1 text-xs font-semibold text-ink-strong;
 }
 
 .routineActions {

@@ -28,5 +28,5 @@
 }
 
 .unreadDot {
-  @apply size-2 shrink-0 rounded-full bg-success;
+  @apply size-2 shrink-0 rounded-full bg-ink;
 }

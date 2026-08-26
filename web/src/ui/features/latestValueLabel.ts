@@ -1,6 +1,6 @@
 import type { Plugin } from 'chart.js'
 
-import { successColor } from '@/ui/chartTokens'
+import { inkColor } from '@/ui/chartTokens'
 import { formatNumber } from '@/utils/numbers'
 
 /**
@@ -24,7 +24,7 @@ export const latestValueLabel: Plugin<'bar'> = {
     const { ctx } = chart
     ctx.save()
     ctx.font = `700 11px ${getComputedStyle(chart.canvas).fontFamily}`
-    ctx.fillStyle = successColor
+    ctx.fillStyle = inkColor
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
 

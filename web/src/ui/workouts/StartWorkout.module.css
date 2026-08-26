@@ -136,7 +136,7 @@
 }
 
 .completedExercise {
-  @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-control bg-success-surface p-4 text-success;
+  @apply grid grid-cols-[1fr_auto] items-center gap-3 rounded-control bg-ink-surface p-4 text-text;
 }
 
 .completedExercise strong {
@@ -144,7 +144,7 @@
 }
 
 .completedExercise p {
-  @apply mt-0.5 text-xs text-success;
+  @apply mt-0.5 text-xs text-text-muted;
 }
 
 /* A number on a neutral tile, in every state. Tinting it for completion put a
@@ -196,7 +196,7 @@
 }
 
 /* Reopening reads as a correction, not a warning, so it takes the completed
-   panel's green rather than the ghost role's neutral. */
+   panel's ink rather than the ghost role's grey. */
 .reopenExercise {
-  @apply text-success hover:bg-success/10 hover:text-success;
+  @apply text-text hover:bg-ink-surface hover:text-ink-strong;
 }

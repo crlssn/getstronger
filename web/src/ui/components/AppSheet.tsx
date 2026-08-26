@@ -28,7 +28,10 @@ export const SheetAction = ({ tone, className, children, ...rest }: ActionProps)
 interface Props {
   title: string
   eyebrow?: string
-  eyebrowTone?: 'default' | 'success' | 'danger'
+  /* Two tones, because a sheet has two things to say about itself: this is
+     ordinary, or this destroys something. Green belongs to what is happening
+     right now, which a sheet never is. */
+  eyebrowTone?: 'default' | 'danger'
   body?: string
   closeLabel?: string
   onClose: () => void

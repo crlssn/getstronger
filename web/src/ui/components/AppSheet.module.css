@@ -26,10 +26,6 @@
   @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 
-.sheetEyebrow.success {
-  @apply text-success;
-}
-
 .sheetEyebrow.danger {
   @apply text-danger;
 }

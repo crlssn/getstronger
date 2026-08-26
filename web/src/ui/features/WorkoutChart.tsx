@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 
-import { borderColor, inkColor, subtleColor, successColor } from '@/ui/chartTokens'
+import { borderColor, inkColor, inkMutedColor, subtleColor } from '@/ui/chartTokens'
 import { latestValueLabel } from '@/ui/features/latestValueLabel'
 import { volumeSeries } from '@/utils/dailyVolume'
 import { formatNumber } from '@/utils/numbers'
@@ -82,9 +82,11 @@ export const WorkoutChart = ({ workouts }: Props) => {
     labels: points.map((point) => point.label),
     datasets: [
       {
-        // The most recent bar picks up momentum green.
+        // The latest bar is picked out by weight, not by hue: it takes full
+        // ink and the rest step back to the muted one. Green was saying "this
+        // week" here as well as four other things.
         backgroundColor: points.map((_, index) =>
-          index === points.length - 1 ? successColor : inkColor,
+          index === points.length - 1 ? inkColor : inkMutedColor,
         ),
         borderRadius: 8,
         data: points.map((point) => point.volume),

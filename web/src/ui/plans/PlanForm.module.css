@@ -38,7 +38,7 @@
 }
 
 .editNote {
-  @apply border-success/30 bg-success-surface text-success;
+  @apply border-border bg-ink-surface text-text-muted;
 }
 
 .routineOrder {
