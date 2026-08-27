@@ -532,6 +532,8 @@ mise run pr:screenshots 1209 --append
 
 The first prints the block to paste; the second also appends it to the pull request body, replacing an earlier block rather than leaving a reviewer two sets of images.
 
+The number only exists once the pull request is open, so `mise run pr:create` closes the loop from the other end: a branch that touched a component or stylesheet under `web/src/` gets the command printed back with its number filled in.
+
 For every page in `web/screenshots/changes/` — the pages `screenshots:diff` found had moved — it publishes three images: the page as it was, from the baseline that run kept in `web/.screenshots-baseline/`; the page as it is now; and the highlighted difference. The block is a row per page, so a redesign is read as before, after and what moved. Without a baseline to compare against, it publishes the differences alone, and `--path web/screenshots/active` publishes a folder of the set as it is. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
 
 Anything outside `web/screenshots/` is refused, symlinks included; the baseline is the one exception, and only because the task reaches for it itself — it holds the same seeded photographs, one run older. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
