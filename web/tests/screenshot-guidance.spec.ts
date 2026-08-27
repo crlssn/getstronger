@@ -41,6 +41,7 @@ const guidance = [
   'web/CLAUDE.md',
   '.claude/skills/pull-request/SKILL.md',
   '.claude/skills/design-review/SKILL.md',
+  '.github/pull_request_template.md',
 ]
 
 const publishCommand = 'mise run pr:screenshots <number> --append'
@@ -50,6 +51,7 @@ const publishCommand = 'mise run pr:screenshots <number> --append'
 const contradictions = [
   /not in the (?:PR|pull request) body/i,
   /images could not be attached/i,
+  /screenshots?[^.]{0,160}\bin (?:the|your) reply\b/i,
   /screenshots?[^.]{0,80}\bcannot\b[^.]{0,60}(?:PR|pull request) body/i,
 ]
 
