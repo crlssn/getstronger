@@ -18,14 +18,21 @@ description: Look at the GetStronger app instead of reasoning about its markup �
   reseeding.
 - To find out what a change moved rather than assuming, run
   `mise run screenshots:diff`. It re-photographs against the previous run, names
-  the pages whose pixels changed, and writes a highlighted image of each
-  difference to `web/screenshots/changes/`. Use it to check that a style change
-  reached every page it should and no page it should not.
-- Report a visual change by sharing the image, not by describing it. Attach the
-  screenshot of each changed page — and the highlighted difference when one
-  exists — to the reply, so the change is judged by looking at it. That reply is
-  also where a pull request's before/after screenshots go, since they cannot be
-  uploaded to a PR body from the command line.
+  the pages whose pixels changed, keeps the earlier images in
+  `web/.screenshots-baseline/`, and writes a highlighted image of each difference
+  to `web/screenshots/changes/`. Use it to check that a style change reached
+  every page it should and no page it should not. Photograph the pages before
+  changing them, or there is no before to compare with.
+- Report a visual change by sharing the images, not by describing it. Attach
+  each changed page before and after — the baseline image and the new one — with
+  the highlighted difference, so the change is judged by looking at it.
+- Put the same images in the pull request with
+  `mise run pr:screenshots <number> --append`. For each page in
+  `web/screenshots/changes/` it publishes the baseline image, the new one and the
+  difference, and appends a before, after and difference table to the body,
+  replacing an earlier block rather than adding a second one. Publish a folder of
+  the set as it is with `--path web/screenshots/active`; anything outside
+  `web/screenshots/` is refused.
 - Add a page, or a state that is only reachable by interacting with a page, by
   adding an entry to `web/tests/screenshots/catalogue.ts`. Creating an exercise,
   a routine, a plan, or a workout is photographed as a flow in
