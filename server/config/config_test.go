@@ -45,3 +45,50 @@ func TestNewReadsTheSMTPPort(t *testing.T) {
 	t.Setenv("MAILHOG_SMTP_PORT", "20387")
 	require.Equal(t, "localhost:20387", config.New().Email.SMTPAddr())
 }
+
+func TestEnvironmentSeedable(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		environment config.Environment
+		expected    bool
+	}{
+		{
+			name:        "local_is_seedable",
+			environment: config.EnvironmentLocal,
+			expected:    true,
+		},
+		{
+			name:        "beta_is_seedable",
+			environment: config.EnvironmentBeta,
+			expected:    true,
+		},
+		{
+			name:        "production_is_never_seedable",
+			environment: config.EnvironmentProduction,
+			expected:    false,
+		},
+		{
+			name:        "an_unset_environment_is_never_seedable",
+			environment: "",
+			expected:    false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, test.expected, test.environment.Seedable())
+		})
+	}
+}
+
+func TestEnvironmentLocal(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, config.EnvironmentLocal.Local())
+	require.False(t, config.EnvironmentBeta.Local())
+	require.False(t, config.EnvironmentProduction.Local())
+	require.False(t, config.Environment("").Local())
+}

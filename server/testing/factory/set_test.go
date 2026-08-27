@@ -29,6 +29,26 @@ func TestFactory_Set(t *testing.T) {
 		require.Len(t, slice, 3)
 	})
 
+	t.Run("Batch", func(t *testing.T) {
+		t.Parallel()
+		workout := f.NewWorkout()
+		exercise := f.NewExercise(factory.ExerciseUserID(workout.UserID))
+		sets := f.NewSetBatch(
+			[]factory.SetOpt{factory.SetUserID(workout.UserID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(exercise.ID), factory.SetReps(5)},
+			[]factory.SetOpt{factory.SetUserID(workout.UserID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(exercise.ID), factory.SetReps(8)},
+		)
+		require.Len(t, sets, 2)
+		reps := make([]int32, 0, len(sets))
+		for _, set := range sets {
+			created, findErr := models.FindSet(ctx, bob.NewDB(c.DB), set.ID)
+			require.NoError(t, findErr)
+			require.Equal(t, workout.ID, created.WorkoutID)
+			require.Equal(t, exercise.ID, created.ExerciseID)
+			reps = append(reps, created.Reps)
+		}
+		require.ElementsMatch(t, []int32{5, 8}, reps)
+	})
+
 	t.Run("Default", func(t *testing.T) {
 		t.Parallel()
 		expected := f.NewSet()

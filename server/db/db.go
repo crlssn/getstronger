@@ -20,7 +20,7 @@ func New(c *config.Config) (*sql.DB, error) {
 
 func connection(c *config.Config) string {
 	sslMode := "?sslmode=require"
-	if c.Environment == config.EnvironmentLocal {
+	if c.Environment.Local() {
 		sslMode = "?sslmode=disable"
 	}
 

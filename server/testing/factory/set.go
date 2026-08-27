@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/dialect"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
 	"github.com/crlssn/getstronger/server/distanceunit"
@@ -26,7 +28,53 @@ func (f *Factory) NewSetSlice(count int, opts ...SetOpt) models.SetSlice {
 
 type SetOpt func(set *models.SetSetter)
 
-func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
+func (f *Factory) NewSet(opts ...SetOpt) *models.Set {
+	setter, built := f.newSetSetter(opts...)
+	set, err := models.Sets.Insert(
+		setter,
+		setConflictUpdate(setter),
+	).One(context.Background(), f.exec)
+	if err != nil {
+		panic(fmt.Errorf("create set with Bob factory: %w", err))
+	}
+	set.R = built.R
+
+	return set
+}
+
+// NewSetBatch inserts one set per opt list in a single statement. The seed
+// creates a couple of thousand sets, which one at a time would each pay a
+// network round trip. Every opt list in a batch must set the same fields.
+func (f *Factory) NewSetBatch(optss ...[]SetOpt) models.SetSlice {
+	if len(optss) == 0 {
+		return nil
+	}
+
+	mods := make([]bob.Mod[*dialect.InsertQuery], 0, len(optss)+1)
+	var first *models.SetSetter
+	for _, opts := range optss {
+		setter, _ := f.newSetSetter(opts...)
+		if first == nil {
+			first = setter
+		}
+		mods = append(mods, setter)
+	}
+	mods = append(mods, setConflictUpdate(first))
+
+	sets, err := models.Sets.Insert(mods...).All(context.Background(), f.exec)
+	if err != nil {
+		panic(fmt.Errorf("create set batch with Bob factory: %w", err))
+	}
+
+	return sets
+}
+
+func setConflictUpdate(setter *models.SetSetter) bob.Mod[*dialect.InsertQuery] {
+	return im.OnConflict(models.Sets.Columns.ID.Name()).
+		DoUpdate(im.SetExcluded(setter.SetColumns()...))
+}
+
+func (f *Factory) newSetSetter(opts ...SetOpt) (*models.SetSetter, *models.Set) { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
 	const (
 		maxReps   = 10
 		maxWeight = 100
@@ -45,25 +93,16 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 		setter.UserID = omit.From(f.NewUser().ID)
 	}
 
-	ctx := context.Background()
 	var workout *models.Workout
 	if workoutID, ok := setter.WorkoutID.Get(); ok {
-		var err error
-		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve workout: %w", err))
-		}
+		workout = f.mustWorkout(workoutID)
 	} else {
 		workout = f.NewWorkout()
 	}
 
 	var exercise *models.Exercise
 	if exerciseID, ok := setter.ExerciseID.Get(); ok {
-		var err error
-		exercise, err = models.Exercises.Query(models.SelectWhere.Exercises.ID.EQ(exerciseID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve exercise: %w", err))
-		}
+		exercise = f.mustExercise(exerciseID)
 	} else {
 		exercise = f.NewExercise()
 	}
@@ -107,17 +146,8 @@ func (f *Factory) NewSet(opts ...SetOpt) *models.Set { //nolint:cyclop // Maps o
 	setter = template.BuildSetter()
 	setter.WorkoutID = omit.From(built.WorkoutID)
 	setter.ExerciseID = omit.From(built.ExerciseID)
-	set, err := models.Sets.Insert(
-		setter,
-		im.OnConflict(models.Sets.Columns.ID.Name()).
-			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
-	).One(ctx, f.exec)
-	if err != nil {
-		panic(fmt.Errorf("create set with Bob factory: %w", err))
-	}
-	set.R = built.R
 
-	return set
+	return setter, built
 }
 
 func SetID(id any) SetOpt {

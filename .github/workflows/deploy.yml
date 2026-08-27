@@ -28,6 +28,11 @@ on:
         required: true
         default: true
         type: boolean
+      seed:
+        description: Reseed the database (beta only, wipes its data)
+        required: true
+        default: true
+        type: boolean
       deploy_server:
         description: Deploy the API to Scaleway Serverless Containers
         required: true
@@ -160,6 +165,66 @@ jobs:
           migrate -path database/migrations/ \
             -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
             -verbose up
+
+  # Beta is a demo environment: every deploy that ships a component also
+  # reseeds it, so it shows the seed's personas rather than whatever the last
+  # person testing it left behind. The condition and the environment check
+  # confine the truncate to beta, and the seed refuses any ENV it may not wipe.
+  seed:
+    needs: [init, database]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >-
+      always() &&
+      needs.init.result == 'success' &&
+      (needs.database.result == 'success' || needs.database.result == 'skipped') &&
+      needs.init.outputs.environment == 'beta' &&
+      (github.event_name != 'push' || needs.init.outputs.web == 'true' || needs.init.outputs.server == 'true' || needs.init.outputs.database == 'true') &&
+      (github.event_name != 'workflow_dispatch' || inputs.seed)
+    environment: ${{ needs.init.outputs.environment }}
+
+    env:
+      DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
+      EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
+
+    steps:
+      - name: Verify the environment is configured
+        run: |
+          if [ "$DEPLOY_ENVIRONMENT" != "$EXPECTED_ENVIRONMENT" ]; then
+            echo "::error::Expected the ${EXPECTED_ENVIRONMENT} environment, but DEPLOY_ENVIRONMENT is '${DEPLOY_ENVIRONMENT:-unset}'. Configure the ${EXPECTED_ENVIRONMENT} GitHub Environment before deploying."
+            exit 1
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_REF }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # The migration user, because seeding truncates and rewrites every table.
+      # ENV carries the resolved environment, so the seed's own guard checks
+      # the same fact that selected the credentials.
+      - name: Seed the database
+        env:
+          ENV: ${{ needs.init.outputs.environment }}
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_PORT: ${{ vars.DB_PORT }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          DB_USER: ${{ vars.DB_MIGRATION_USER }}
+          DB_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
+          SEED_PASSWORD: ${{ secrets.SEED_PASSWORD }}
+        run: |
+          # The seeded logins are publicly reachable, so the seed refuses its
+          # published local default password outside local.
+          if [ -z "$SEED_PASSWORD" ]; then
+            echo "::error::Set the SEED_PASSWORD secret on the beta environment."
+            exit 1
+          fi
+          go run ./server/testing/factory/seed -password="$SEED_PASSWORD"
 
   server:
     needs: [init, database]
@@ -341,7 +406,7 @@ jobs:
             --cache-control "no-cache"
 
   cleanup:
-    needs: [init, database, server, web]
+    needs: [init, database, seed, server, web]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always() && github.event_name == 'pull_request' && github.event.label.name == 'deploy:beta'

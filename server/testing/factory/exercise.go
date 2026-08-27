@@ -34,7 +34,7 @@ func exerciseTitles() []string {
 	}
 }
 
-func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:cyclop // Maps optional fixture fields to generated Bob mods.
+func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise {
 	setter := &models.ExerciseSetter{
 		ID:    omit.From(newUUID()),
 		Title: omit.From(f.Faker.RandomString(exerciseTitles())),
@@ -47,11 +47,7 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:c
 	ctx := context.Background()
 	var user *models.User
 	if userID, ok := setter.UserID.Get(); ok {
-		var err error
-		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve user: %w", err))
-		}
+		user = f.mustUser(userID)
 	} else {
 		user = f.NewUser()
 	}
@@ -89,6 +85,7 @@ func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise { //nolint:c
 		panic(fmt.Errorf("create exercise with Bob factory: %w", err))
 	}
 	exercise.R = built.R
+	f.remember(exercise.ID, exercise)
 
 	return exercise
 }

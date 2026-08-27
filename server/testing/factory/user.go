@@ -37,11 +37,7 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 	ctx := context.Background()
 	var auth *models.Auth
 	if authID, ok := setter.AuthID.Get(); ok {
-		var err error
-		auth, err = models.Auths.Query(models.SelectWhere.Auths.ID.EQ(authID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve auth: %w", err))
-		}
+		auth = f.mustAuth(authID)
 	} else {
 		auth = f.NewAuth()
 	}
@@ -65,6 +61,7 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 		panic(fmt.Errorf("create user with Bob factory: %w", err))
 	}
 	user.R = built.R
+	f.remember(user.ID, user)
 
 	return user
 }

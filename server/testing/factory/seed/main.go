@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -48,21 +49,48 @@ type personaConfig struct {
 	new    factory.SeedUser
 }
 
-func main() {
-	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("load .env file: %w", err))
+var (
+	errNotSeedable         = errors.New("environment is not seedable")
+	errDefaultSeedPassword = errors.New("the default seed password is published in the repository: pass -password")
+)
+
+// guardSeedPassword keeps the published local default out of deployed
+// environments, whose seeded logins are publicly reachable.
+func guardSeedPassword(environment config.Environment, password string) error {
+	if !environment.Local() && password == defaultSeedPassword {
+		return errDefaultSeedPassword
+	}
+
+	return nil
+}
+
+// seedConfig loads the configuration and refuses any environment the seed may
+// not wipe. Seeding truncates every table, so this guard is what stands between
+// a misconfigured deploy and real accounts.
+func seedConfig() (*config.Config, error) {
+	// Only local runs have a .env to read; the deploy passes its configuration
+	// through the environment.
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("load .env file: %w", err)
 	}
 
 	c := config.New()
-	if c.Environment != config.EnvironmentLocal {
-		log.Printf("environment must be local, got %s", c.Environment)
-		return
+	if !c.Environment.Seedable() {
+		return nil, fmt.Errorf("%w: %q", errNotSeedable, c.Environment)
+	}
+
+	return c, nil
+}
+
+func main() {
+	c, err := seedConfig()
+	if err != nil {
+		log.Fatalf("Resolve seed configuration: %v", err)
 	}
 
 	database, err := db.New(c)
 	if err != nil {
-		log.Printf("connect to database: %v", err)
-		return
+		log.Fatalf("Connect to database: %v", err)
 	}
 
 	email := flag.String("email", defaultActiveEmail, "the active persona's email")
@@ -74,13 +102,26 @@ func main() {
 	newUsername := flag.String("new-username", "sam", "the newly signed-up persona's username")
 	flag.Parse()
 
-	if err = truncateDatabase(context.Background(), database); err != nil {
-		log.Printf("truncate database before seeding: %v", err)
-		return
+	if err = guardSeedPassword(c.Environment, *password); err != nil {
+		log.Fatalf("Validate seed password: %v", err)
 	}
 
-	f := factory.NewFactory(database)
-	active, newlySignedUp := seedPersonas(database, f, personaConfig{
+	// One transaction for the truncate and every insert: a failure at any
+	// point leaves the previous data in place rather than a truncated,
+	// half-seeded database.
+	ctx := context.Background()
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		log.Fatalf("Begin seed transaction: %v", err)
+	}
+	exec := bob.NewTx(tx)
+
+	if err = truncateDatabase(ctx, exec); err != nil {
+		log.Fatalf("Truncate database before seeding: %v", err)
+	}
+
+	f := factory.NewFactoryExec(exec)
+	active, newlySignedUp := seedPersonas(exec, f, personaConfig{
 		active: factory.SeedUser{
 			Email:    *email,
 			Password: *password,
@@ -94,10 +135,14 @@ func main() {
 			Username: *newUsername,
 		},
 	})
-	log.Printf("seeded active persona %s (%s) and new persona %s (%s)", active.FullNameSearch, *email, newlySignedUp.FullNameSearch, *newEmail)
+
+	if err = tx.Commit(); err != nil {
+		log.Fatalf("Commit seed transaction: %v", err)
+	}
+	log.Printf("Seeded active persona %s (%s) and new persona %s (%s)", active.FullNameSearch, *email, newlySignedUp.FullNameSearch, *newEmail)
 }
 
-func seedPersonas(database *sql.DB, f *factory.Factory, config personaConfig) (*models.User, *models.User) {
+func seedPersonas(exec bob.Executor, f *factory.Factory, config personaConfig) (*models.User, *models.User) {
 	config.active.CreatedAt = f.Now().Add(-activeAccountAge)
 	active := f.Seed(factory.SeedParams{
 		User:                      &config.active,
@@ -135,12 +180,12 @@ func seedPersonas(database *sql.DB, f *factory.Factory, config personaConfig) (*
 		factory.UserUsername(config.new.Username),
 	)
 
-	jane := seedJaneDoe(database, f, active)
-	seedActiveSocialGraph(database, active, newlySignedUp, jane)
+	jane := seedJaneDoe(exec, f, active)
+	seedActiveSocialGraph(exec, active, newlySignedUp, jane)
 	return active, newlySignedUp
 }
 
-func truncateDatabase(ctx context.Context, database *sql.DB) error {
+func truncateDatabase(ctx context.Context, exec bob.Executor) error {
 	const query = `
 DO $$
 DECLARE
@@ -157,20 +202,20 @@ BEGIN
     END IF;
 END $$;`
 
-	if _, err := database.ExecContext(ctx, query); err != nil {
+	if _, err := exec.ExecContext(ctx, query); err != nil {
 		return fmt.Errorf("truncate public schema: %w", err)
 	}
 
 	return nil
 }
 
-func seedJaneDoe(database *sql.DB, f *factory.Factory, active *models.User) *models.User {
+func seedJaneDoe(exec bob.Executor, f *factory.Factory, active *models.User) *models.User {
 	jane := f.NewUser(
 		factory.UserName("Jane Doe"),
 		factory.UserUsername("janedoe"),
 		factory.UserWeightUnit(weightunit.Pounds),
 	)
-	insertFollow(database, active, jane)
+	insertFollow(exec, active, jane)
 
 	squat := f.NewExercise(
 		factory.ExerciseUserID(jane.ID),
@@ -265,24 +310,26 @@ func seedJaneDoe(database *sql.DB, f *factory.Factory, active *models.User) *mod
 			factory.WorkoutCreatedAt(seededWorkout.finishedAt),
 		)
 
+		setBatch := make([][]factory.SetOpt, 0, len(seededWorkout.sets))
 		for index, seededSet := range seededWorkout.sets {
-			f.NewSet(
+			setBatch = append(setBatch, []factory.SetOpt{
 				factory.SetUserID(jane.ID),
 				factory.SetWorkoutID(workout.ID),
 				factory.SetExerciseID(seededSet.exercise.ID),
 				factory.SetWeight(seededSet.weight),
 				factory.SetReps(seededSet.reps),
-				factory.SetCreatedAt(startedAt.Add(time.Duration(index+1)*3*time.Minute)),
-			)
+				factory.SetCreatedAt(startedAt.Add(time.Duration(index+1) * 3 * time.Minute)),
+			})
 		}
+		f.NewSetBatch(setBatch...)
 	}
 
-	seedJaneComments(database, f, active, jane, now)
+	seedJaneComments(exec, f, active, jane, now)
 	return jane
 }
 
-func seedActiveSocialGraph(database *sql.DB, active, newlySignedUp, jane *models.User) {
-	users, err := models.Users.Query().All(context.Background(), bob.NewDB(database))
+func seedActiveSocialGraph(exec bob.Executor, active, newlySignedUp, jane *models.User) {
+	users, err := models.Users.Query().All(context.Background(), exec)
 	if err != nil {
 		panic(fmt.Errorf("retrieve users for active persona social graph: %w", err))
 	}
@@ -298,27 +345,27 @@ func seedActiveSocialGraph(database *sql.DB, active, newlySignedUp, jane *models
 	}
 
 	for _, followee := range peers[:2] {
-		insertFollow(database, active, followee)
+		insertFollow(exec, active, followee)
 	}
-	insertFollow(database, jane, active)
+	insertFollow(exec, jane, active)
 	for _, follower := range peers[2:4] {
-		insertFollow(database, follower, active)
+		insertFollow(exec, follower, active)
 	}
 }
 
-func insertFollow(database *sql.DB, follower, followee *models.User) {
+func insertFollow(exec bob.Executor, follower, followee *models.User) {
 	if _, err := models.Followers.Insert(&models.FollowerSetter{
 		FollowerID: omit.From(follower.ID),
 		FolloweeID: omit.From(followee.ID),
-	}).Exec(context.Background(), bob.NewDB(database)); err != nil {
+	}).Exec(context.Background(), exec); err != nil {
 		panic(fmt.Errorf("follow operation from %s to %s: %w", follower.FullNameSearch, followee.FullNameSearch, err))
 	}
 }
 
-func seedJaneComments(database *sql.DB, f *factory.Factory, active, jane *models.User, now time.Time) {
+func seedJaneComments(exec bob.Executor, f *factory.Factory, active, jane *models.User, now time.Time) {
 	activeWorkouts, err := models.Workouts.Query(
 		models.SelectWhere.Workouts.UserID.EQ(active.ID),
-	).All(context.Background(), bob.NewDB(database))
+	).All(context.Background(), exec)
 	if err != nil {
 		panic(fmt.Errorf("retrieve active persona workouts for Jane Doe comments: %w", err))
 	}

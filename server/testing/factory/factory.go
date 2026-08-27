@@ -2,10 +2,12 @@
 package factory
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -24,6 +26,12 @@ type Factory struct {
 	exec      bob.Executor
 	now       time.Time
 	userCount atomic.Int64
+
+	// created remembers every row this factory inserted, so a child fixture
+	// reuses a parent it just made instead of paying a query to re-read it.
+	// The seed runs over a WAN, where those queries dominated its runtime.
+	createdMu sync.Mutex
+	created   map[uuid.UUID]any
 }
 
 // usernameMaxLength mirrors users.username, which is VARCHAR(30).
@@ -59,11 +67,76 @@ func nativeUUID(value any) uuid.UUID {
 }
 
 func NewFactory(db *sql.DB) *Factory {
+	return NewFactoryExec(bob.NewDB(db))
+}
+
+// NewFactoryExec builds a factory over any Bob executor, which is what lets
+// the seed run its truncate and every insert inside one transaction.
+func NewFactoryExec(exec bob.Executor) *Factory {
 	return &Factory{
 		generated: bobfactory.New(),
-		exec:      bob.NewDB(db),
+		exec:      exec,
 		Faker:     gofakeit.New(0),
+		created:   map[uuid.UUID]any{},
 	}
+}
+
+func (f *Factory) remember(id uuid.UUID, model any) {
+	f.createdMu.Lock()
+	defer f.createdMu.Unlock()
+	f.created[id] = model
+}
+
+// createdModel returns the remembered model for id when it is a T.
+func createdModel[T any](f *Factory, id uuid.UUID) (T, bool) {
+	f.createdMu.Lock()
+	defer f.createdMu.Unlock()
+	model, ok := f.created[id].(T)
+	return model, ok
+}
+
+func (f *Factory) mustUser(id uuid.UUID) *models.User {
+	if user, ok := createdModel[*models.User](f, id); ok {
+		return user
+	}
+	user, err := models.Users.Query(models.SelectWhere.Users.ID.EQ(id)).One(context.Background(), f.exec)
+	if err != nil {
+		panic(fmt.Errorf("retrieve user: %w", err))
+	}
+	return user
+}
+
+func (f *Factory) mustAuth(id uuid.UUID) *models.Auth {
+	if auth, ok := createdModel[*models.Auth](f, id); ok {
+		return auth
+	}
+	auth, err := models.Auths.Query(models.SelectWhere.Auths.ID.EQ(id)).One(context.Background(), f.exec)
+	if err != nil {
+		panic(fmt.Errorf("retrieve auth: %w", err))
+	}
+	return auth
+}
+
+func (f *Factory) mustWorkout(id uuid.UUID) *models.Workout {
+	if workout, ok := createdModel[*models.Workout](f, id); ok {
+		return workout
+	}
+	workout, err := models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(id)).One(context.Background(), f.exec)
+	if err != nil {
+		panic(fmt.Errorf("retrieve workout: %w", err))
+	}
+	return workout
+}
+
+func (f *Factory) mustExercise(id uuid.UUID) *models.Exercise {
+	if exercise, ok := createdModel[*models.Exercise](f, id); ok {
+		return exercise
+	}
+	exercise, err := models.Exercises.Query(models.SelectWhere.Exercises.ID.EQ(id)).One(context.Background(), f.exec)
+	if err != nil {
+		panic(fmt.Errorf("retrieve exercise: %w", err))
+	}
+	return exercise
 }
 
 // Bob's WithExisting mods copy loaded relationships recursively. Strip the
@@ -191,6 +264,8 @@ func (f *Factory) seedUserAt(p SeedParams, user *models.User, userIndex int) {
 		workout := f.NewWorkout(workoutOpts...)
 		setIndex := 0
 
+		// One batched insert per workout rather than one per set.
+		var setBatch [][]SetOpt
 		if p.WorkoutExerciseCount > 0 && p.WorkoutSetsPerExerciseMin > 0 &&
 			p.WorkoutSetsPerExerciseMax >= p.WorkoutSetsPerExerciseMin {
 			for _, exercise := range randomExerciseSubset(exercises, p.WorkoutExerciseCount) {
@@ -208,20 +283,19 @@ func (f *Factory) seedUserAt(p SeedParams, user *models.User, userIndex int) {
 						setIndex++
 						setOpts = append(setOpts, SetCreatedAt(startedAt.Add(time.Duration(setIndex)*time.Minute)))
 					}
-					f.NewSet(
-						setOpts...,
-					)
+					setBatch = append(setBatch, setOpts)
 				}
 			}
 		} else {
 			for range p.WorkoutSetCount {
-				f.NewSet(
+				setBatch = append(setBatch, []SetOpt{
 					SetUserID(user.ID),
 					SetWorkoutID(workout.ID),
 					SetExerciseID(randomExercise(exercises).ID),
-				)
+				})
 			}
 		}
+		f.NewSetBatch(setBatch...)
 
 		for range p.WorkoutCommentCount {
 			f.NewWorkoutComment(
