@@ -39,11 +39,7 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cycl
 	ctx := context.Background()
 	var user *models.User
 	if userID, ok := setter.UserID.Get(); ok {
-		var err error
-		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve user: %w", err))
-		}
+		user = f.mustUser(userID)
 	} else {
 		user = f.NewUser()
 	}
@@ -84,6 +80,7 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cycl
 		panic(fmt.Errorf("create workout with Bob factory: %w", err))
 	}
 	workout.R = built.R
+	f.remember(workout.ID, workout)
 
 	return workout
 }
@@ -153,22 +150,14 @@ func (f *Factory) NewWorkoutComment(opts ...WorkoutCommentOpt) *models.WorkoutCo
 	ctx := context.Background()
 	var user *models.User
 	if userID, ok := setter.UserID.Get(); ok {
-		var err error
-		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve user: %w", err))
-		}
+		user = f.mustUser(userID)
 	} else {
 		user = f.NewUser()
 	}
 
 	var workout *models.Workout
 	if workoutID, ok := setter.WorkoutID.Get(); ok {
-		var err error
-		workout, err = models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(workoutID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve workout: %w", err))
-		}
+		workout = f.mustWorkout(workoutID)
 	} else {
 		workout = f.NewWorkout()
 	}

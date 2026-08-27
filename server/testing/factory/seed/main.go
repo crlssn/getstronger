@@ -303,16 +303,18 @@ func seedJaneDoe(exec bob.Executor, f *factory.Factory, active *models.User) *mo
 			factory.WorkoutCreatedAt(seededWorkout.finishedAt),
 		)
 
+		setBatch := make([][]factory.SetOpt, 0, len(seededWorkout.sets))
 		for index, seededSet := range seededWorkout.sets {
-			f.NewSet(
+			setBatch = append(setBatch, []factory.SetOpt{
 				factory.SetUserID(jane.ID),
 				factory.SetWorkoutID(workout.ID),
 				factory.SetExerciseID(seededSet.exercise.ID),
 				factory.SetWeight(seededSet.weight),
 				factory.SetReps(seededSet.reps),
-				factory.SetCreatedAt(startedAt.Add(time.Duration(index+1)*3*time.Minute)),
-			)
+				factory.SetCreatedAt(startedAt.Add(time.Duration(index+1) * 3 * time.Minute)),
+			})
 		}
+		f.NewSetBatch(setBatch...)
 	}
 
 	seedJaneComments(exec, f, active, jane, now)

@@ -38,11 +38,7 @@ func (f *Factory) NewRoutine(opts ...RoutineOpt) *models.Routine {
 	ctx := context.Background()
 	var user *models.User
 	if userID, ok := setter.UserID.Get(); ok {
-		var err error
-		user, err = models.Users.Query(models.SelectWhere.Users.ID.EQ(userID)).One(ctx, f.exec)
-		if err != nil {
-			panic(fmt.Errorf("retrieve user: %w", err))
-		}
+		user = f.mustUser(userID)
 	} else {
 		user = f.NewUser()
 	}

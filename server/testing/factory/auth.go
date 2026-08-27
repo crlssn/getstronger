@@ -80,6 +80,8 @@ func (f *Factory) NewAuth(opts ...AuthOpt) *models.Auth { //nolint:cyclop // Map
 		panic(fmt.Errorf("create auth with Bob factory: %w", err))
 	}
 
+	f.remember(auth.ID, auth)
+
 	return auth
 }
 

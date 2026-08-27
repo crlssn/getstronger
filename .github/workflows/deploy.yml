@@ -173,7 +173,7 @@ jobs:
   seed:
     needs: [init, database]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     if: >-
       always() &&
       needs.init.result == 'success' &&
