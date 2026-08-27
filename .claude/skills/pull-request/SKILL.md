@@ -30,10 +30,10 @@ is subtle.
   rejected alternative gets one clause, or is dropped if it does not change how
   the diff is read.
 - **Verification**: one line — commands run and tests added. Expand only for a
-  failure or a flake. A UI change needs before/after screenshots, and they belong
-  in your reply to the user, not in the PR body — `gh` cannot upload images, and
-  from the reply the user can drag them in themselves. The body says in words
-  what moved; it never explains that images could not be attached.
+  failure or a flake. A UI change puts its before/after screenshots in the body
+  with `mise run pr:screenshots <number> --append`, once the pull request is open
+  and its number known. The review happens on GitHub, so a chat reply alone
+  leaves the reviewer nothing to look at.
 - **Notes for the reviewer**: at most three bullets, and only what the reviewer
   genuinely needs — breaking changes, migration or deploy ordering, deliberately
   deferred work, where to start reading a large diff. Delete the section rather
