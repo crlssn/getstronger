@@ -1,0 +1,37 @@
+@reference '../../assets/base.css';
+
+.rounds {
+  @apply flex flex-col;
+}
+
+.round {
+  @apply border-t border-border px-4 py-3 sm:px-5;
+}
+
+/* The round is the heading of what follows it, not a row of the table: it is
+   the thing a circuit is counted in. */
+.roundLabel {
+  @apply mb-1.5 text-eyebrow font-bold uppercase tracking-normal text-text-subtle;
+}
+
+.roundSets {
+  @apply flex flex-col gap-1;
+}
+
+/* Name left, load right: down a column of rounds the loads line up, which is
+   what a reader compares one round against the next with. */
+.roundRow {
+  @apply flex min-h-7 items-baseline justify-between gap-3;
+}
+
+.exerciseName {
+  @apply min-w-0 flex-1 truncate text-body text-text;
+}
+
+.setValue {
+  @apply inline-flex shrink-0 items-center gap-1 text-body font-bold tabular-nums text-text;
+}
+
+.personalBest {
+  @apply size-3.5 text-record-strong;
+}

@@ -57,6 +57,7 @@ type WorkoutsQuery = *psql.ViewQuery[*Workout, WorkoutSlice]
 type workoutR struct {
 	Sets            SetSlice            // sets.sets_workout_id_fkey
 	WorkoutComments WorkoutCommentSlice // workout_comments.workout_comments_workout_id_fkey
+	WorkoutGroups   WorkoutGroupSlice   // workout_groups.workout_groups_workout_id_fkey
 	Routine         *Routine            // workouts.workouts_routine_id_fkey
 	User            *User               // workouts.workouts_user_id_fkey
 	// Loaded reports whether each relationship has been loaded.
@@ -69,6 +70,7 @@ type workoutR struct {
 type workoutRLoaded struct {
 	Sets            bool // sets.sets_workout_id_fkey
 	WorkoutComments bool // workout_comments.workout_comments_workout_id_fkey
+	WorkoutGroups   bool // workout_groups.workout_groups_workout_id_fkey
 	Routine         bool // workouts.workouts_routine_id_fkey
 	User            bool // workouts.workouts_user_id_fkey
 }
@@ -680,6 +682,29 @@ func (os WorkoutSlice) WorkoutComments(mods ...bob.Mod[*dialect.SelectQuery]) Wo
 	)...)
 }
 
+// WorkoutGroups starts a query for related objects on workout_groups
+func (o *Workout) WorkoutGroups(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutGroupsQuery {
+	return WorkoutGroups.Query(append(mods,
+		sm.Where(WorkoutGroups.Columns.WorkoutID.EQ(psql.Arg(o.ID))),
+	)...)
+}
+
+func (os WorkoutSlice) WorkoutGroups(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutGroupsQuery {
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	return WorkoutGroups.Query(append(mods,
+		sm.Where(WorkoutGroups.Columns.WorkoutID.EQ(PKArgExpr)),
+	)...)
+}
+
 // Routine starts a query for related objects on routines
 func (o *Workout) Routine(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuery {
 	return Routines.Query(append(mods,
@@ -880,6 +905,76 @@ func (workout0 *Workout) AttachWorkoutComments(ctx context.Context, exec bob.Exe
 	return nil
 }
 
+func insertWorkoutWorkoutGroups0(ctx context.Context, exec bob.Executor, workoutGroups1 []*WorkoutGroupSetter, workout0 *Workout) (WorkoutGroupSlice, error) {
+	for i := range workoutGroups1 {
+		workoutGroups1[i].WorkoutID = omit.From(workout0.ID)
+	}
+
+	ret, err := WorkoutGroups.Insert(bob.ToMods(workoutGroups1...)).All(ctx, exec)
+	if err != nil {
+		return ret, fmt.Errorf("insertWorkoutWorkoutGroups0: %w", err)
+	}
+
+	return ret, nil
+}
+
+func attachWorkoutWorkoutGroups0(ctx context.Context, exec bob.Executor, count int, workoutGroups1 WorkoutGroupSlice, workout0 *Workout) (WorkoutGroupSlice, error) {
+	setter := &WorkoutGroupSetter{
+		WorkoutID: omit.From(workout0.ID),
+	}
+
+	err := workoutGroups1.UpdateAll(ctx, exec, *setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachWorkoutWorkoutGroups0: %w", err)
+	}
+
+	return workoutGroups1, nil
+}
+
+func (workout0 *Workout) InsertWorkoutGroups(ctx context.Context, exec bob.Executor, related ...*WorkoutGroupSetter) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+
+	workoutGroups1, err := insertWorkoutWorkoutGroups0(ctx, exec, related, workout0)
+	if err != nil {
+		return err
+	}
+
+	workout0.R.WorkoutGroups = append(workout0.R.WorkoutGroups, workoutGroups1...)
+
+	for _, rel := range workoutGroups1 {
+		rel.R.Workout = workout0
+		rel.R.Loaded.Workout = true
+	}
+	return nil
+}
+
+func (workout0 *Workout) AttachWorkoutGroups(ctx context.Context, exec bob.Executor, related ...*WorkoutGroup) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	workoutGroups1 := WorkoutGroupSlice(related)
+
+	_, err = attachWorkoutWorkoutGroups0(ctx, exec, len(related), workoutGroups1, workout0)
+	if err != nil {
+		return err
+	}
+
+	workout0.R.WorkoutGroups = append(workout0.R.WorkoutGroups, workoutGroups1...)
+
+	for _, rel := range related {
+		rel.R.Workout = workout0
+		rel.R.Loaded.Workout = true
+	}
+
+	return nil
+}
+
 func attachWorkoutRoutine0(ctx context.Context, exec bob.Executor, count int, workout0 *Workout, routine1 *Routine) (*Workout, error) {
 	setter := &WorkoutSetter{
 		RoutineID: omitnull.From(routine1.ID),
@@ -1042,6 +1137,20 @@ func (w workoutWhereR[Q]) HasWorkoutComments(filters ...bob.Mod[*dialect.SelectQ
 		sm.Columns(psql.Raw("1")),
 		sm.From(WorkoutComments.NameExpr()),
 		sm.Where(WorkoutComments.Columns.WorkoutID.EQ(w.cols.ID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
+// HasWorkoutGroups filters parents that have a matching WorkoutGroups using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to WorkoutGroups).
+func (w workoutWhereR[Q]) HasWorkoutGroups(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(WorkoutGroups.NameExpr()),
+		sm.Where(WorkoutGroups.Columns.WorkoutID.EQ(w.cols.ID)),
 	)
 	q.Apply(filters...)
 	return mods.Where[Q]{E: psql.Exists(q)}
@@ -1221,6 +1330,22 @@ func (o *Workout) Preload(name string, retrieved any) error {
 			}
 		}
 		return nil
+	case "WorkoutGroups":
+		rels, ok := retrieved.(WorkoutGroupSlice)
+		if !ok {
+			return fmt.Errorf("workout cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.WorkoutGroups = rels
+		o.R.Loaded.WorkoutGroups = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.Workout = o
+				rel.R.Loaded.Workout = true
+			}
+		}
+		return nil
 	case "Routine":
 		rel, ok := retrieved.(*Routine)
 		if !ok {
@@ -1291,6 +1416,7 @@ func buildWorkoutPreloader() workoutPreloader {
 type workoutThenLoader[Q orm.Loadable] struct {
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	WorkoutGroups   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Routine         func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	User            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
@@ -1301,6 +1427,9 @@ func buildWorkoutThenLoader[Q orm.Loadable]() workoutThenLoader[Q] {
 	}
 	type WorkoutCommentsLoadInterface interface {
 		LoadWorkoutComments(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type WorkoutGroupsLoadInterface interface {
+		LoadWorkoutGroups(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type RoutineLoadInterface interface {
 		LoadRoutine(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -1320,6 +1449,12 @@ func buildWorkoutThenLoader[Q orm.Loadable]() workoutThenLoader[Q] {
 			"WorkoutComments",
 			func(ctx context.Context, exec bob.Executor, retrieved WorkoutCommentsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadWorkoutComments(ctx, exec, mods...)
+			},
+		),
+		WorkoutGroups: thenLoadBuilder[Q](
+			"WorkoutGroups",
+			func(ctx context.Context, exec bob.Executor, retrieved WorkoutGroupsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadWorkoutGroups(ctx, exec, mods...)
 			},
 		),
 		Routine: thenLoadBuilder[Q](
@@ -1478,6 +1613,80 @@ func (os WorkoutSlice) LoadWorkoutComments(ctx context.Context, exec bob.Executo
 			rel.R.Loaded.Workout = true
 
 			o.R.WorkoutComments = append(o.R.WorkoutComments, rel)
+
+		}
+	}
+
+	return nil
+}
+
+// LoadWorkoutGroups loads the workout's WorkoutGroups into the .R struct
+func (o *Workout) LoadWorkoutGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.WorkoutGroups = nil
+	o.R.Loaded.WorkoutGroups = false
+
+	related, err := o.WorkoutGroups(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.Workout = o
+		rel.R.Loaded.Workout = true
+	}
+
+	o.R.WorkoutGroups = related
+	o.R.Loaded.WorkoutGroups = true
+	return nil
+}
+
+// LoadWorkoutGroups loads the workout's WorkoutGroups into the .R struct
+func (os WorkoutSlice) LoadWorkoutGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	workoutGroups, err := os.WorkoutGroups(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.WorkoutGroups = nil
+		o.R.Loaded.WorkoutGroups = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	workoutByKey := make(map[uuid.UUID][]*Workout, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		workoutByKey[o.ID] = append(workoutByKey[o.ID], o)
+	}
+
+	for _, rel := range workoutGroups {
+
+		owners, ok := workoutByKey[rel.WorkoutID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.Workout = o
+			rel.R.Loaded.Workout = true
+
+			o.R.WorkoutGroups = append(o.R.WorkoutGroups, rel)
 
 		}
 	}
@@ -1644,6 +1853,7 @@ func (os WorkoutSlice) LoadUser(ctx context.Context, exec bob.Executor, mods ...
 type workoutC struct {
 	Sets            *int64
 	WorkoutComments *int64
+	WorkoutGroups   *int64
 }
 
 // PreloadCount sets a count in the C struct by name
@@ -1657,6 +1867,8 @@ func (o *Workout) PreloadCount(name string, count int64) error {
 		o.C.Sets = &count
 	case "WorkoutComments":
 		o.C.WorkoutComments = &count
+	case "WorkoutGroups":
+		o.C.WorkoutGroups = &count
 	}
 	return nil
 }
@@ -1664,6 +1876,7 @@ func (o *Workout) PreloadCount(name string, count int64) error {
 type workoutCountPreloader struct {
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+	WorkoutGroups   func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 }
 
 func buildWorkoutCountPreloader() workoutCountPreloader {
@@ -1702,12 +1915,30 @@ func buildWorkoutCountPreloader() workoutCountPreloader {
 				return psql.Group(psql.Select(subqueryMods...).Expression)
 			})
 		},
+		WorkoutGroups: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*Workout]("WorkoutGroups", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Workouts.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(WorkoutGroups.NameAsExpr()),
+					sm.Where(psql.Quote(WorkoutGroups.Alias(), "workout_id").EQ(psql.Quote(parent, "id"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
 	}
 }
 
 type workoutCountThenLoader[Q orm.Loadable] struct {
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	WorkoutGroups   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
 
 func buildWorkoutCountThenLoader[Q orm.Loadable]() workoutCountThenLoader[Q] {
@@ -1716,6 +1947,9 @@ func buildWorkoutCountThenLoader[Q orm.Loadable]() workoutCountThenLoader[Q] {
 	}
 	type WorkoutCommentsCountInterface interface {
 		LoadCountWorkoutComments(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type WorkoutGroupsCountInterface interface {
+		LoadCountWorkoutGroups(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 
 	return workoutCountThenLoader[Q]{
@@ -1729,6 +1963,12 @@ func buildWorkoutCountThenLoader[Q orm.Loadable]() workoutCountThenLoader[Q] {
 			"WorkoutComments",
 			func(ctx context.Context, exec bob.Executor, retrieved WorkoutCommentsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadCountWorkoutComments(ctx, exec, mods...)
+			},
+		),
+		WorkoutGroups: countThenLoadBuilder[Q](
+			"WorkoutGroups",
+			func(ctx context.Context, exec bob.Executor, retrieved WorkoutGroupsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountWorkoutGroups(ctx, exec, mods...)
 			},
 		),
 	}
@@ -1892,10 +2132,90 @@ func (os WorkoutSlice) LoadCountWorkoutComments(ctx context.Context, exec bob.Ex
 	return nil
 }
 
+// LoadCountWorkoutGroups loads the count of WorkoutGroups into the C struct
+func (o *Workout) LoadCountWorkoutGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.WorkoutGroups(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.WorkoutGroups = &count
+	return nil
+}
+
+// LoadCountWorkoutGroups loads the count of WorkoutGroups for a slice in a single batch query
+func (os WorkoutSlice) LoadCountWorkoutGroups(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		ID    uuid.UUID
+		Count int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			WorkoutGroups.Columns.WorkoutID.As("id"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(WorkoutGroups.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(WorkoutGroups.Columns.WorkoutID.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(WorkoutGroups.Columns.WorkoutID),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[uuid.UUID]int64, len(results))
+	for _, r := range results {
+		countMap[r.ID] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.ID]
+		o.C.WorkoutGroups = &count
+	}
+
+	return nil
+}
+
 type workoutJoins[Q dialect.Joinable] struct {
 	typ             string
 	Sets            modAs[Q, setColumns]
 	WorkoutComments modAs[Q, workoutCommentColumns]
+	WorkoutGroups   modAs[Q, workoutGroupColumns]
 	Routine         modAs[Q, routineColumns]
 	User            modAs[Q, userColumns]
 }
@@ -1928,6 +2248,20 @@ func buildWorkoutJoins[Q dialect.Joinable](cols workoutColumns, typ string) work
 
 				{
 					mods = append(mods, dialect.Join[Q](typ, WorkoutComments.NameExpr().As(to.Alias())).On(
+						to.WorkoutID.EQ(cols.ID),
+					))
+				}
+
+				return mods
+			},
+		},
+		WorkoutGroups: modAs[Q, workoutGroupColumns]{
+			c: WorkoutGroups.Columns,
+			f: func(to workoutGroupColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, WorkoutGroups.NameExpr().As(to.Alias())).On(
 						to.WorkoutID.EQ(cols.ID),
 					))
 				}

@@ -171,6 +171,32 @@
   @apply flex flex-col;
 }
 
+.blockList {
+  @apply flex flex-col;
+}
+
+/* Ruled rather than boxed, like the routine builder's groups: on a phone every
+   border an exercise name sits inside takes room from the name. */
+.block {
+  @apply flex flex-col border-t border-border;
+}
+
+.blockHeader {
+  @apply flex items-center gap-2.5 bg-ink-surface px-4 py-2.5 sm:px-5;
+}
+
+.blockHeader strong {
+  @apply block text-body font-bold text-text;
+}
+
+.blockHeader small {
+  @apply block text-meta text-text-subtle;
+}
+
+.blockBadge {
+  @apply grid size-7 shrink-0 place-items-center rounded-lg bg-text text-xs font-extrabold text-surface;
+}
+
 .summaryNote {
   @apply border-t border-border bg-ink-surface/50 px-4 py-3;
 }

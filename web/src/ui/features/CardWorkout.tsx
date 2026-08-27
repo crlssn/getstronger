@@ -1,4 +1,4 @@
-import type { Workout, WorkoutComment } from '@/proto/api/v1/workout_service_pb'
+import type { Workout, WorkoutComment, WorkoutGroup } from '@/proto/api/v1/workout_service_pb'
 import type { DropdownItem } from '@/types/dropdown'
 
 import { CheckIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/react/24/outline'
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { deleteWorkout, postWorkoutComment } from '@/http/requests'
+import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -14,11 +15,13 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { cn } from '@/ui/cn'
+import { CardWorkoutCircuit } from '@/ui/features/CardWorkoutCircuit'
 import { CardWorkoutComment } from '@/ui/features/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
+import { groupLetter } from '@/utils/routineGroups'
 import { workoutSummary } from '@/utils/workoutSummary'
 import styles from './CardWorkout.module.css'
 
@@ -47,13 +50,32 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   const [comments, setComments] = useState<WorkoutComment[]>(() => [...workout.comments])
   const [commentInput, setCommentInput] = useState('')
   // One exercise open at a time: the list is there so the session reads as its
-  // exercises, and two tables at once is what it was built to stop.
-  const [openExercise, setOpenExercise] = useState(0)
+  // exercises, and two tables at once is what it was built to stop. Keyed
+  // rather than indexed, because a grouped session may train one exercise in
+  // two blocks and each of them opens on its own.
+  const [openExercise, setOpenExercise] = useState('0')
   const [postingComment, setPostingComment] = useState(false)
 
   const { setCount, personalBestCount, durationMinutes, finishedDate, finishedMoment } =
     workoutSummary(workout)
   const isOwner = workout.user?.id === userId
+
+  // One straight block is the plain session every workout used to be, so it is
+  // shown as one rather than wearing a badge saying "Group A".
+  const grouped =
+    workout.groups.length > 1 ||
+    workout.groups.some((group) => group.mode === RoutineGroupMode.CIRCUIT)
+
+  // What the block was: how it ran, and — for a circuit — how many times round
+  // it actually went, which is the session's answer rather than the routine's.
+  const blockSummary = (group: WorkoutGroup) => {
+    if (group.mode !== RoutineGroupMode.CIRCUIT) return t('routine.view.groupStraight')
+
+    const rounds = Math.max(0, ...group.exercises.map((entry) => entry.sets.length))
+    return [t('routine.view.groupCircuit'), t('routine.view.groupRounds', { count: rounds })].join(
+      ' · ',
+    )
+  }
 
   const onDeleteWorkout = async () => {
     const confirmed = await useConfirmationStore.getState().confirm({
@@ -239,19 +261,73 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           </div>
           <span>{t('home.exerciseCount', { count: workout.exerciseSets.length })}</span>
         </header>
-        <div className={styles.exerciseList}>
-          {workout.exerciseSets.map((exerciseSet, index) => (
-            <CardWorkoutExercise
-              key={exerciseSet.exercise?.id}
-              open={openExercise === index}
-              onToggle={() => setOpenExercise((current) => (current === index ? -1 : index))}
-              exerciseId={exerciseSet.exercise?.id}
-              name={exerciseSet.exercise?.name}
-              sets={exerciseSet.sets}
-              metrics={exerciseSet.exercise?.metrics}
-            />
-          ))}
-        </div>
+
+        {/* A session trained in blocks reads as its blocks; one that was not —
+            a plain routine, a quick workout, anything logged before blocks were
+            recorded — reads as the flat list it always did. */}
+        {grouped ? (
+          <div className={styles.blockList}>
+            {workout.groups.map((group, groupIndex) => {
+              const circuit = group.mode === RoutineGroupMode.CIRCUIT
+
+              return (
+                <section key={group.id} className={styles.block}>
+                  <header className={styles.blockHeader}>
+                    <span className={styles.blockBadge} aria-hidden="true">
+                      {groupLetter(groupIndex)}
+                    </span>
+                    <div>
+                      <strong>
+                        {t('routine.form.groups.groupName', { letter: groupLetter(groupIndex) })}
+                      </strong>
+                      <small>{blockSummary(group)}</small>
+                    </div>
+                  </header>
+
+                  {circuit ? (
+                    <CardWorkoutCircuit exercises={group.exercises} />
+                  ) : (
+                    group.exercises.map((entry, index) => {
+                      const key = `${groupIndex}-${index}`
+
+                      return (
+                        <CardWorkoutExercise
+                          key={key}
+                          open={openExercise === key}
+                          onToggle={() =>
+                            setOpenExercise((current) => (current === key ? '' : key))
+                          }
+                          exerciseId={entry.exercise?.id}
+                          name={entry.exercise?.name}
+                          sets={entry.sets}
+                          metrics={entry.exercise?.metrics}
+                        />
+                      )
+                    })
+                  )}
+                </section>
+              )
+            })}
+          </div>
+        ) : (
+          <div className={styles.exerciseList}>
+            {workout.exerciseSets.map((exerciseSet, index) => {
+              const key = String(index)
+
+              return (
+                <CardWorkoutExercise
+                  key={exerciseSet.exercise?.id}
+                  open={openExercise === key}
+                  onToggle={() => setOpenExercise((current) => (current === key ? '' : key))}
+                  exerciseId={exerciseSet.exercise?.id}
+                  name={exerciseSet.exercise?.name}
+                  sets={exerciseSet.sets}
+                  metrics={exerciseSet.exercise?.metrics}
+                />
+              )
+            })}
+          </div>
+        )}
       </section>
 
       {showComments && (

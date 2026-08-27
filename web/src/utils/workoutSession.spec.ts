@@ -3,8 +3,8 @@ import type { SessionExercise } from './workoutSession'
 import { create } from '@bufbuild/protobuf'
 import { describe, expect, test } from 'vitest'
 
-import { RoutineGroupMode, RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
+import { RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
+import { ExerciseMetric, ExerciseSchema, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { defaultRestSeconds } from '@/utils/routineGroups'
 import {
   activeSetIndex,
@@ -16,6 +16,7 @@ import {
   nextCircuitStep,
   nextStationOutsideGroup,
   nextUnfinishedStation,
+  savedGroups,
   sessionGroups,
 } from './workoutSession'
 
@@ -245,6 +246,67 @@ describe('sessionGroups', () => {
     const groups = sessionGroups([circuit('two', ['a', 'b'], [], 3)], [lift('a'), lift('b')])
 
     expect(groups[0]?.rounds).toBe(3)
+  })
+})
+
+describe('savedGroups', () => {
+  test('states each block and what its stations logged there', () => {
+    const blocks = sessionGroups(
+      [straight('one', ['a']), circuit('two', ['b', 'c'], [], 2)],
+      [lift('a'), lift('b'), lift('c')],
+    )
+
+    expect(savedGroups(blocks, { a: 3, b: 2, c: 2 })).toEqual([
+      {
+        mode: 'straight',
+        restBetweenExercisesSeconds: 0,
+        restBetweenRoundsSeconds: 0,
+        rounds: 0,
+        exercises: [{ exerciseId: 'a', setCount: 3 }],
+      },
+      {
+        mode: 'circuit',
+        restBetweenExercisesSeconds: 15,
+        restBetweenRoundsSeconds: 90,
+        rounds: 2,
+        exercises: [
+          { exerciseId: 'b', setCount: 2 },
+          { exerciseId: 'c', setCount: 2 },
+        ],
+      },
+    ])
+  })
+
+  // A block's stations are counted in the order the blocks are listed, which is
+  // the order the workout's sets are saved in — that is what lets an exercise
+  // trained twice split between them.
+  test('counts an exercise trained in two blocks once per block', () => {
+    const blocks = sessionGroups(
+      [straight('one', ['a']), circuit('two', ['a', 'b'])],
+      [lift('a'), lift('a'), lift('b')],
+    )
+
+    expect(savedGroups(blocks, { a: 2, 'a#2': 3, b: 3 })).toEqual([
+      expect.objectContaining({ exercises: [{ exerciseId: 'a', setCount: 2 }] }),
+      expect.objectContaining({
+        exercises: [
+          { exerciseId: 'a', setCount: 3 },
+          { exerciseId: 'b', setCount: 3 },
+        ],
+      }),
+    ])
+  })
+
+  // Nothing was worked there, so it is not part of the session that happened.
+  test('leaves out a station that logged nothing, and a block left empty', () => {
+    const blocks = sessionGroups(
+      [straight('one', ['a']), circuit('two', ['b', 'c'])],
+      [lift('a'), lift('b'), lift('c')],
+    )
+
+    expect(savedGroups(blocks, { a: 1, b: 0, c: 0 })).toEqual([
+      expect.objectContaining({ exercises: [{ exerciseId: 'a', setCount: 1 }] }),
+    ])
   })
 })
 

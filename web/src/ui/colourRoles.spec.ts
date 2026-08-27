@@ -52,6 +52,9 @@ const roles = {
     'ProgressView.module.css',
     'exercises/ViewExercise.module.css',
     'features/CardWorkout.module.css',
+    // A circuit is read round by round rather than as a table of sets, so the
+    // trophy that marks a record has to travel with it.
+    'features/CardWorkoutCircuit.module.css',
     'features/CardWorkoutExercise.module.css',
   ],
 }

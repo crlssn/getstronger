@@ -24,10 +24,9 @@ import {
   CreateRoutineResponseSchema,
   GetRoutineResponseSchema,
   ListRoutinesResponseSchema,
-  RoutineGroupMode,
   UpdateRoutineResponseSchema,
 } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useActivityStore } from '@/stores/activity'
 import { useToastStore } from '@/stores/toasts'
 import { useDashboardStore } from '@/stores/dashboard'

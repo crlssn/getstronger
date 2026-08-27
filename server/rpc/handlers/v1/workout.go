@@ -109,6 +109,7 @@ func (h *workoutHandler) createWorkout(
 	var workout *models.Workout
 	var planAdvanceSkipped error
 	err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
+		exerciseSets := parser.ExerciseSetsFromPB(request.GetExerciseSets())
 		createdWorkout, createErr := tx.CreateWorkout(ctx, repo.CreateWorkoutParams{
 			Name:         workoutName,
 			Note:         request.GetNote(),
@@ -116,7 +117,8 @@ func (h *workoutHandler) createWorkout(
 			RoutineID:    request.GetRoutineId(),
 			StartedAt:    period.StartedAt,
 			FinishedAt:   period.FinishedAt,
-			ExerciseSets: parser.ExerciseSetsFromPB(request.GetExerciseSets()),
+			ExerciseSets: exerciseSets,
+			Groups:       workoutGroups(request.GetGroups(), exerciseSets),
 		})
 		if createErr != nil {
 			return fmt.Errorf("create workout: %w", createErr)
@@ -140,6 +142,36 @@ func (h *workoutHandler) createWorkout(
 	})
 
 	return workout, planAdvanceSkipped, err
+}
+
+// workoutGroups states a request's blocks in the training vocabulary, resolved
+// against the sets the request logged.
+func workoutGroups(groups []*apiv1.WorkoutGroup, exerciseSets []repo.ExerciseSet) []training.WorkoutGroup {
+	setCounts := make(map[string]int, len(exerciseSets))
+	for _, exerciseSet := range exerciseSets {
+		setCounts[exerciseSet.ExerciseID] = len(exerciseSet.Sets)
+	}
+
+	drafts := make([]training.WorkoutGroupDraft, 0, len(groups))
+	for _, group := range groups {
+		exercises := make([]training.WorkoutGroupExerciseDraft, 0, len(group.GetExercises()))
+		for _, entry := range group.GetExercises() {
+			exercises = append(exercises, training.WorkoutGroupExerciseDraft{
+				ExerciseID: entry.GetExercise().GetId(),
+				SetCount:   int(entry.GetSetCount()),
+			})
+		}
+
+		drafts = append(drafts, training.WorkoutGroupDraft{
+			Mode:                        parser.RoutineGroupModeFromProto(group.GetMode()),
+			RestBetweenExercisesSeconds: group.GetRestBetweenExercisesSeconds(),
+			RestBetweenRoundsSeconds:    group.GetRestBetweenRoundsSeconds(),
+			Rounds:                      group.GetRounds(),
+			Exercises:                   exercises,
+		})
+	}
+
+	return training.NormalizeWorkoutGroups(drafts, setCounts)
 }
 
 // A workout is worth keeping even when the plan refuses to rotate: the athlete
@@ -179,6 +211,14 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	// Only the full workout is read in its blocks: the feed and the history
+	// list show a session's totals, not how it was worked through.
+	groups, err := h.repo.ListWorkoutGroups(ctx, workout.ID.String())
+	if err != nil {
+		log.Error("List workout groups for workout", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
 	log.Info("Workout fetched")
 	return &connect.Response[apiv1.GetWorkoutResponse]{
 		Msg: &apiv1.GetWorkoutResponse{
@@ -186,6 +226,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 				workout,
 				parser.WorkoutIntensity(workout.R.Sets),
 				parser.WorkoutExerciseSets(workout.R.Sets, personalBests),
+				parser.WorkoutBlocks(groups[workout.ID.String()], workout.R.Sets, personalBests),
 			),
 		},
 	}, nil

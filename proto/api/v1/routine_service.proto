@@ -106,15 +106,6 @@ message Routine {
   repeated RoutineGroup groups = 4;
 }
 
-// How a group's exercises are worked through. Straight sets finish one exercise
-// before the next begins; a circuit takes one set of each in turn and goes round
-// again, for the rounds it is prescribed or for as many as the session takes.
-enum RoutineGroupMode {
-  ROUTINE_GROUP_MODE_UNSPECIFIED = 0;
-  ROUTINE_GROUP_MODE_STRAIGHT = 1;
-  ROUTINE_GROUP_MODE_CIRCUIT = 2;
-}
-
 message RoutineGroup {
   // Server-assigned. Requests may leave it empty: a save replaces a routine's
   // groups wholesale rather than matching them up by ID.

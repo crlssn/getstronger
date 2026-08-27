@@ -47,6 +47,18 @@ enum ExerciseMetric {
   EXERCISE_METRIC_TIME = 4;
 }
 
+// How a block's exercises are worked through. Straight sets finish one exercise
+// before the next begins; a circuit takes one set of each in turn and goes round
+// again, for the rounds it is prescribed or for as many as the session takes.
+//
+// Shared because a routine plans the blocks and a finished workout records the
+// ones it was trained in.
+enum RoutineGroupMode {
+  ROUTINE_GROUP_MODE_UNSPECIFIED = 0;
+  ROUTINE_GROUP_MODE_STRAIGHT = 1;
+  ROUTINE_GROUP_MODE_CIRCUIT = 2;
+}
+
 enum WeightUnit {
   WEIGHT_UNIT_UNSPECIFIED = 0;
   WEIGHT_UNIT_KILOGRAMS = 1;

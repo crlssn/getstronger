@@ -95,6 +95,20 @@ func TestExerciseHasRelationsEmitExists(t *testing.T) {
 			t.Errorf("HasSets: expected EXISTS in query, got: %s", sql)
 		}
 	})
+
+	t.Run("WorkoutGroupExercises", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Exercises.NameExpr()),
+			SelectWhere.Exercises.R.HasWorkoutGroupExercises(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkoutGroupExercises: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkoutGroupExercises: expected EXISTS in query, got: %s", sql)
+		}
+	})
 }
 
 // TestExercisesRoutineHasRelationsEmitExists verifies that every generated
@@ -418,6 +432,20 @@ func TestSetHasRelationsEmitExists(t *testing.T) {
 		}
 	})
 
+	t.Run("WorkoutGroupExercise", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Sets.NameExpr()),
+			SelectWhere.Sets.R.HasWorkoutGroupExercise(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkoutGroupExercise: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkoutGroupExercise: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
 	t.Run("Workout", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(Sets.NameExpr()),
@@ -587,6 +615,90 @@ func TestWorkoutCommentHasRelationsEmitExists(t *testing.T) {
 	})
 }
 
+// TestWorkoutGroupExerciseHasRelationsEmitExists verifies that every generated
+// Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
+// an INNER JOIN, so the parent rows are never multiplied.
+func TestWorkoutGroupExerciseHasRelationsEmitExists(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("Sets", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(WorkoutGroupExercises.NameExpr()),
+			SelectWhere.WorkoutGroupExercises.R.HasSets(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasSets: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasSets: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("Exercise", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(WorkoutGroupExercises.NameExpr()),
+			SelectWhere.WorkoutGroupExercises.R.HasExercise(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasExercise: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasExercise: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("WorkoutGroup", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(WorkoutGroupExercises.NameExpr()),
+			SelectWhere.WorkoutGroupExercises.R.HasWorkoutGroup(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkoutGroup: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkoutGroup: expected EXISTS in query, got: %s", sql)
+		}
+	})
+}
+
+// TestWorkoutGroupHasRelationsEmitExists verifies that every generated
+// Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
+// an INNER JOIN, so the parent rows are never multiplied.
+func TestWorkoutGroupHasRelationsEmitExists(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("WorkoutGroupExercises", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(WorkoutGroups.NameExpr()),
+			SelectWhere.WorkoutGroups.R.HasWorkoutGroupExercises(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkoutGroupExercises: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkoutGroupExercises: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("Workout", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(WorkoutGroups.NameExpr()),
+			SelectWhere.WorkoutGroups.R.HasWorkout(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkout: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkout: expected EXISTS in query, got: %s", sql)
+		}
+	})
+}
+
 // TestWorkoutHasRelationsEmitExists verifies that every generated
 // Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
 // an INNER JOIN, so the parent rows are never multiplied.
@@ -618,6 +730,20 @@ func TestWorkoutHasRelationsEmitExists(t *testing.T) {
 		}
 		if !strings.Contains(sql, "EXISTS") {
 			t.Errorf("HasWorkoutComments: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("WorkoutGroups", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Workouts.NameExpr()),
+			SelectWhere.Workouts.R.HasWorkoutGroups(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkoutGroups: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkoutGroups: expected EXISTS in query, got: %s", sql)
 		}
 	})
 

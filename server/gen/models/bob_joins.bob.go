@@ -30,19 +30,21 @@ func (j joinSet[Q]) AliasedAs(alias string) joinSet[Q] {
 }
 
 type joins[Q dialect.Joinable] struct {
-	Auths             joinSet[authJoins[Q]]
-	Exercises         joinSet[exerciseJoins[Q]]
-	ExercisesRoutines joinSet[exercisesRoutineJoins[Q]]
-	Followers         joinSet[followerJoins[Q]]
-	Notifications     joinSet[notificationJoins[Q]]
-	PlanRoutines      joinSet[planRoutineJoins[Q]]
-	Plans             joinSet[planJoins[Q]]
-	RoutineGroups     joinSet[routineGroupJoins[Q]]
-	Routines          joinSet[routineJoins[Q]]
-	Sets              joinSet[setJoins[Q]]
-	Users             joinSet[userJoins[Q]]
-	WorkoutComments   joinSet[workoutCommentJoins[Q]]
-	Workouts          joinSet[workoutJoins[Q]]
+	Auths                 joinSet[authJoins[Q]]
+	Exercises             joinSet[exerciseJoins[Q]]
+	ExercisesRoutines     joinSet[exercisesRoutineJoins[Q]]
+	Followers             joinSet[followerJoins[Q]]
+	Notifications         joinSet[notificationJoins[Q]]
+	PlanRoutines          joinSet[planRoutineJoins[Q]]
+	Plans                 joinSet[planJoins[Q]]
+	RoutineGroups         joinSet[routineGroupJoins[Q]]
+	Routines              joinSet[routineJoins[Q]]
+	Sets                  joinSet[setJoins[Q]]
+	Users                 joinSet[userJoins[Q]]
+	WorkoutComments       joinSet[workoutCommentJoins[Q]]
+	WorkoutGroupExercises joinSet[workoutGroupExerciseJoins[Q]]
+	WorkoutGroups         joinSet[workoutGroupJoins[Q]]
+	Workouts              joinSet[workoutJoins[Q]]
 }
 
 func buildJoinSet[Q interface{ aliasedAs(string) Q }, C any, F func(C, string) Q](c C, f F) joinSet[Q] {
@@ -55,19 +57,21 @@ func buildJoinSet[Q interface{ aliasedAs(string) Q }, C any, F func(C, string) Q
 
 func getJoins[Q dialect.Joinable]() joins[Q] {
 	return joins[Q]{
-		Auths:             buildJoinSet[authJoins[Q]](Auths.Columns, buildAuthJoins),
-		Exercises:         buildJoinSet[exerciseJoins[Q]](Exercises.Columns, buildExerciseJoins),
-		ExercisesRoutines: buildJoinSet[exercisesRoutineJoins[Q]](ExercisesRoutines.Columns, buildExercisesRoutineJoins),
-		Followers:         buildJoinSet[followerJoins[Q]](Followers.Columns, buildFollowerJoins),
-		Notifications:     buildJoinSet[notificationJoins[Q]](Notifications.Columns, buildNotificationJoins),
-		PlanRoutines:      buildJoinSet[planRoutineJoins[Q]](PlanRoutines.Columns, buildPlanRoutineJoins),
-		Plans:             buildJoinSet[planJoins[Q]](Plans.Columns, buildPlanJoins),
-		RoutineGroups:     buildJoinSet[routineGroupJoins[Q]](RoutineGroups.Columns, buildRoutineGroupJoins),
-		Routines:          buildJoinSet[routineJoins[Q]](Routines.Columns, buildRoutineJoins),
-		Sets:              buildJoinSet[setJoins[Q]](Sets.Columns, buildSetJoins),
-		Users:             buildJoinSet[userJoins[Q]](Users.Columns, buildUserJoins),
-		WorkoutComments:   buildJoinSet[workoutCommentJoins[Q]](WorkoutComments.Columns, buildWorkoutCommentJoins),
-		Workouts:          buildJoinSet[workoutJoins[Q]](Workouts.Columns, buildWorkoutJoins),
+		Auths:                 buildJoinSet[authJoins[Q]](Auths.Columns, buildAuthJoins),
+		Exercises:             buildJoinSet[exerciseJoins[Q]](Exercises.Columns, buildExerciseJoins),
+		ExercisesRoutines:     buildJoinSet[exercisesRoutineJoins[Q]](ExercisesRoutines.Columns, buildExercisesRoutineJoins),
+		Followers:             buildJoinSet[followerJoins[Q]](Followers.Columns, buildFollowerJoins),
+		Notifications:         buildJoinSet[notificationJoins[Q]](Notifications.Columns, buildNotificationJoins),
+		PlanRoutines:          buildJoinSet[planRoutineJoins[Q]](PlanRoutines.Columns, buildPlanRoutineJoins),
+		Plans:                 buildJoinSet[planJoins[Q]](Plans.Columns, buildPlanJoins),
+		RoutineGroups:         buildJoinSet[routineGroupJoins[Q]](RoutineGroups.Columns, buildRoutineGroupJoins),
+		Routines:              buildJoinSet[routineJoins[Q]](Routines.Columns, buildRoutineJoins),
+		Sets:                  buildJoinSet[setJoins[Q]](Sets.Columns, buildSetJoins),
+		Users:                 buildJoinSet[userJoins[Q]](Users.Columns, buildUserJoins),
+		WorkoutComments:       buildJoinSet[workoutCommentJoins[Q]](WorkoutComments.Columns, buildWorkoutCommentJoins),
+		WorkoutGroupExercises: buildJoinSet[workoutGroupExerciseJoins[Q]](WorkoutGroupExercises.Columns, buildWorkoutGroupExerciseJoins),
+		WorkoutGroups:         buildJoinSet[workoutGroupJoins[Q]](WorkoutGroups.Columns, buildWorkoutGroupJoins),
+		Workouts:              buildJoinSet[workoutJoins[Q]](Workouts.Columns, buildWorkoutJoins),
 	}
 }
 

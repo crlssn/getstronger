@@ -6,6 +6,8 @@ DROP TABLE IF EXISTS public.traces CASCADE;
 DROP TABLE IF EXISTS public.workout_comments CASCADE;
 DROP TABLE IF EXISTS public.followers CASCADE;
 DROP TABLE IF EXISTS public.sets CASCADE;
+DROP TABLE IF EXISTS public.workout_group_exercises CASCADE;
+DROP TABLE IF EXISTS public.workout_groups CASCADE;
 DROP TABLE IF EXISTS public.workouts CASCADE;
 DROP TABLE IF EXISTS public.exercises_routines CASCADE;
 DROP TABLE IF EXISTS public.routine_groups CASCADE;

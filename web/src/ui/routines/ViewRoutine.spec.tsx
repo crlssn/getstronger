@@ -21,11 +21,10 @@ import { GetPreviousWorkoutSetsResponseSchema } from '@/proto/api/v1/exercise_se
 import {
   DeleteRoutineResponseSchema,
   GetRoutineResponseSchema,
-  RoutineGroupMode,
   RoutineGroupSchema,
   UpdateExerciseOrderResponseSchema,
 } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
